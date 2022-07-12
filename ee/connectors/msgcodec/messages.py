@@ -194,7 +194,7 @@ class MouseMove(Message):
         self.y = y
 
 
-class MouseClick(Message):
+class MouseClickDepricated(Message):
     __id__ = 21
 
     def __init__(self, id, hesitation_time, label: str):
@@ -518,6 +518,21 @@ class GraphQLEvent(Message):
         self.name = name
 
 
+class FetchEvent(Message):
+    __id__ = 51
+
+    def __init__(self, message_id, timestamp, method: str, url, request, response: str,
+                  status, duration):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.duration = duration
+
+
 class DomDrop(Message):
     __id__ = 52
 
@@ -646,6 +661,41 @@ class PageClose(Message):
     __id__ = 65
 
 
+class AssetCache(Message):
+    __id__ = 66
+
+    def __init__(self, url):
+        self.url = url
+
+
+class CSSInsertRuleURLBased(Message):
+    __id__ = 67
+
+    def __init__(self, id, rule, index, base_url):
+        self.id = id
+        self.rule = rule
+        self.index = index
+        self.base_url = base_url
+
+
+class MouseClick(Message):
+    __id__ = 69
+
+    def __init__(self, id, hesitation_time, label: str, selector):
+        self.id = id
+        self.hesitation_time = hesitation_time
+        self.label = label
+        self.selector = selector
+
+
+class CreateIFrameDocument(Message):
+    __id__ = 70
+
+    def __init__(self, frame_id, id):
+        self.frame_id = frame_id
+        self.id = id
+
+
 class IOSSessionStart(Message):
     __id__ = 90
 
@@ -681,6 +731,16 @@ class IOSMetadata(Message):
         self.value = value
 
 
+class IOSCustomEvent(Message):
+    __id__ = 93
+
+    def __init__(self, timestamp, length, name: str, payload: str):
+        self.timestamp = timestamp
+        self.length = length
+        self.name = name
+        self.payload = payload
+
+
 class IOSUserID(Message):
     __id__ = 94
 
@@ -699,6 +759,39 @@ class IOSUserAnonymousID(Message):
         self.value = value
 
 
+class IOSScreenChanges(Message):
+    __id__ = 96
+
+    def __init__(self, timestamp, length, x, y, width, height):
+        self.timestamp = timestamp
+        self.length = length
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+
+class IOSCrash(Message):
+    __id__ = 97
+
+    def __init__(self, timestamp, length, name: str, reason: str, stacktrace):
+        self.timestamp = timestamp
+        self.length = length
+        self.name = name
+        self.reason = reason
+        self.stacktrace = stacktrace
+
+
+class IOSScreenEnter(Message):
+    __id__ = 98
+
+    def __init__(self, timestamp, length, title, view_name):
+        self.timestamp = timestamp
+        self.length = length
+        self.title = title
+        self.view_name = view_name
+
+
 class IOSScreenLeave(Message):
     __id__ = 99
 
@@ -707,6 +800,37 @@ class IOSScreenLeave(Message):
         self.length = length
         self.title = title
         self.view_name = view_name
+
+
+class IOSClickEvent(Message):
+    __id__ = 100
+
+    def __init__(self, timestamp, length, label, x, y):
+        self.timestamp = timestamp
+        self.length = length
+        self.label = label
+        self.x = x
+        self.y = y
+
+
+class IOSInputEvent(Message):
+    __id__ = 101
+
+    def __init__(self, timestamp, length, value: str, value_masked: bool, label: str):
+        self.timestamp = timestamp
+        self.length = length
+        self.value_masked = value_masked
+        self.label = label
+
+
+class IOSPerformanceEvent(Message):
+    __id__ = 102
+
+    def __init__(self, timestamp, length, name: str, value):
+        self.timestamp = timestamp
+        self.length = length
+        self.name = name
+        self.value = value
 
 
 class IOSLog(Message):
@@ -726,6 +850,30 @@ class IOSInternalError(Message):
         self.timestamp = timestamp
         self.length = length
         self.content = content
+
+
+class IOSNetworkCall(Message):
+    __id__ = 105
+
+    def __init__(self, timestamp, length, duration, headers, body, url, success: bool, method: str, status):
+        self.timestamp = timestamp
+        self.length = length
+        self.duration = duration
+        self.headers = headers
+        self.body = body
+        self.url = url
+        self.success = success
+        self.method = method
+        self.status = status
+
+
+class IOSBatchMeta(Message):
+    __id__ = 107
+
+    def __init__(self, timestamp, length, first_index):
+        self.timestamp = timestamp
+        self.length = length
+        self.first_index = first_index
 
 
 class IOSPerformanceAggregated(Message):
@@ -750,3 +898,14 @@ class IOSPerformanceAggregated(Message):
         self.min_battery = min_battery
         self.avg_battery = avg_battery
         self.max_battery = max_battery
+
+
+class IOSIssueEvent(Message):
+    __id__ = 111
+
+    def __init__(self, timestamp, type: str, context_string: str, context: str, payload: str):
+        self.timestamp = timestamp
+        self.type = type
+        self.context_string = context_string
+        self.context = context
+        self.payload = payload

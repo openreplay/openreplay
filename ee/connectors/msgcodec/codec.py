@@ -215,7 +215,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 21:
-            return MouseClick(
+            return MouseClickDepricated(
                 id=self.read_uint(reader),
                 hesitation_time=self.read_uint(reader),
                 label=self.read_string(reader)
@@ -461,6 +461,18 @@ class MessageCodec(Codec):
                 name=self.read_string(reader)
             )
 
+        if message_id == 51:
+            return FetchEvent(
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                duration=self.read_uint(reader)
+            )
+
         if message_id == 52:
             return DomDrop(
                 timestamp=self.read_uint(reader)
@@ -558,6 +570,33 @@ class MessageCodec(Codec):
         if message_id == 65:
             return PageClose()
 
+        if mesage_id == 66:
+            return AssetCache(
+                url=self.read_string(reader)
+            )
+
+        if message_id == 67:
+            return CSSInsertRuleURLBased(
+                id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader),
+                based_url=self.read_string(reader)
+            )
+
+        if message_id == 69:
+            return MouseClick(
+                id=self.read_uint(reader),
+                hesitation_time=self.read_uint(reader),
+                label=self.read_string(reader),
+                selector=self.read_string(reader)
+            )
+
+        if message_id == 70:
+            return CreateIFrameDocument(
+                frame_id=self.read_uint(reader),
+                id=self.read_uint(reader)
+            )
+
         if message_id == 90:
             return IOSSessionStart(
                 timestamp=self.read_uint(reader),
@@ -585,6 +624,14 @@ class MessageCodec(Codec):
                 value=self.read_string(reader)
             )
 
+        if message_id == 93:
+            return IOSCustomEvent(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                name=self.read_string(reader),
+                payload=self.read_string(reader)
+            )
+
         if message_id == 94:
             return IOSUserID(
                 timestamp=self.read_uint(reader),
@@ -599,12 +646,65 @@ class MessageCodec(Codec):
                 value=self.read_string(reader)
             )
 
+        if message_id == 96:
+            return IOSScreenChanges(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader),
+                width=self.read_uint(reader),
+                height=self.read_uint(reader)
+            )
+
+        if message_id == 97:
+            return IOSCrash(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                name=self.read_string(reader),
+                reason=self.read_string(reader),
+                stacktrace=self.read_string(reader)
+            )
+
+        if message_id == 98:
+            return IOSSCreenEnter(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                title=self.read_string(reader),
+                view_name=self.read_string(reader)
+            )
+
         if message_id == 99:
             return IOSScreenLeave(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 title=self.read_string(reader),
                 view_name=self.read_string(reader)
+            )
+
+        if message_id == 100:
+            return IOSClickEvent(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                label=self.read_string(reader),
+                x=self.read_uint(reader),
+                y=self.read_uint(reader)
+            )
+
+        if message_if == 101:
+            return IOSInputEvent(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                value=self.read_string(reader),
+                value_masked=self.read_boolean(reader),
+                label=self.read_string(reader)
+            )
+
+        if message_id == 102:
+            return IOSPreformanceEvent(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_uint(reader)
             )
 
         if message_id == 103:
@@ -620,6 +720,26 @@ class MessageCodec(Codec):
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 content=self.read_string(reader)
+            )
+
+        if message_id == 105:
+            return IOSNetworkCall(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                headers=self.read_string(reader),
+                body=self.read_string(reader),
+                url=self.read_string(reader),
+                success=self.read_boolean(reader),
+                method=self.read_string(reader),
+                status=self.read_uint(reader)
+            )
+
+        if message_id == 107:
+            return IOSBatchMeta(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                first_index=self.read_uint(reader)
             )
 
         if message_id == 110:
@@ -638,6 +758,14 @@ class MessageCodec(Codec):
                 min_battery=self.read_uint(reader),
                 avg_battery=self.read_uint(reader),
                 max_battery=self.read_uint(reader)
+            )
+        if message_id == 111:
+            return IOSIssueEvent(
+                timestamp=self.read_uint(reader),
+                type=self.read_string(reader),
+                context_string=self.read_string(reader),
+                context=self.read_string(reader),
+                payload=self.read_string(reader)
             )
 
     def read_message_id(self, reader: io.BytesIO) -> int:
