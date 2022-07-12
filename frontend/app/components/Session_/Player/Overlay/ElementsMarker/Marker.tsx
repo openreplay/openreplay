@@ -4,7 +4,7 @@ import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/Stated
 import cn from 'classnames';
 import stl from './Marker.module.css';
 import { activeTarget } from 'Player';
-import { Popup } from 'UI';
+import { Tooltip } from 'react-tippy';
 
 interface Props {
   target: MarkedTarget;
@@ -21,17 +21,17 @@ export default function Marker({ target, active }: Props) {
   return (
       <div className={ cn(stl.marker, { [stl.active] : active }) }  style={ style } onClick={() => activeTarget(target.index)}>
         <div className={stl.index}>{target.index + 1}</div>
-        <Popup      
+        <Tooltip      
           open={active}
           arrow
           sticky
           distance={15}
-          content={(
+          html={(
             <div>{target.count} Clicks</div>
           )}
         >
           <div className="absolute inset-0"></div>
-        </Popup>
+        </Tooltip>
     </div>    
   )    
 }
