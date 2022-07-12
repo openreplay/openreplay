@@ -21,7 +21,7 @@ export default class MFileReader extends RawMessageReader {
         return this.buf[ this.p + i ] - this.buf[ this.pLastMessageID + i ] < 0
       }
     }
-    return true
+    return false
   }
 
   private readRawMessage(): RawMessage | null {
