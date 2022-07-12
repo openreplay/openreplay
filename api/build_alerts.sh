@@ -26,7 +26,6 @@ function build_api(){
     }
     cp -R ../api ../_alerts
     docker build -f ../_alerts/Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
-    cd ..
     rm -rf ../_alerts
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/alerts:${git_sha1}
