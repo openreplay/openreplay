@@ -7,6 +7,10 @@ interface Props {
   trigger?: any
   position?: any
   className?: string
+  delay?: number
+  disabled?: boolean
+  arrow?: boolean
+  open?: boolean
   [x:string]: any;
 }
 export default ({
@@ -14,14 +18,21 @@ export default ({
   title='',
   className='',
   trigger = 'mouseenter',
+  delay = 1000,
+  disabled = false,
+  arrow = true,
   ...props
 }: Props) => (
   <Tooltip
-    { ...props }
+    // {...props}
     className={className}
     trigger={trigger}
     html={props.content || props.title}
-    arrow
+    disabled={disabled}
+    arrow={arrow}
+    delay={delay}
+    hideOnClick={true}
+    hideOnScroll={true}
   >
     { props.children }
   </Tooltip>

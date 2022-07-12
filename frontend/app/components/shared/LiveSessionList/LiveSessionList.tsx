@@ -116,67 +116,67 @@ function LiveSessionList(props: Props) {
                 <div className="flex items-center">
                     <div className="flex items-center ml-6 mr-4">
                         <span className="mr-2 color-gray-medium">Sort By</span>
-                        <Popup
-                          content="No metadata available to sort"
-                          disabled={sortOptions.length > 0}
-                        >
-                          <div className={ cn("flex items-center", { 'disabled': sortOptions.length === 0})} >
-                            <Select
-                                plain
-                                right
-                                options={sortOptions}
-                                // defaultValue={sort.field}
-                                onChange={onSortChange}
-                                value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                            />
-                            <div className="mx-2" />
-                            <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
-                          </div>
+                        <Popup content="No metadata available to sort" disabled={sortOptions.length > 0}>
+                            <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
+                                <Select
+                                    plain
+                                    right
+                                    options={sortOptions}
+                                    // defaultValue={sort.field}
+                                    onChange={onSortChange}
+                                    value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                                />
+                                <div className="mx-2" />
+                                <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                            </div>
                         </Popup>
                     </div>
                 </div>
             </div>
-            <Loader loading={loading}>
-                <NoContent
-                    title={'No live sessions.'}
-                    subtext={
-                        <span>
-                            See how to setup the{' '}
-                            <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
-                                {'Assist'}
-                            </a>{' '}
-                            plugin, if you haven’t done that already.
-                        </span>
-                    }
-                    image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
-                    show={!loading && list.size === 0}
-                >
-                    <div className="bg-white p-3 rounded border">
-                        {list.map((session) => (
-                            <>
-                                <SessionItem
-                                    key={session.sessionId}
-                                    session={session}
-                                    live
-                                    hasUserFilter={hasUserFilter}
-                                    onUserClick={onUserClick}
-                                    metaList={metaList}
-                                />
-                                <div className="border-b" />
-                            </>
-                        ))}
-
-                        <div className="w-full flex items-center justify-center py-6">
-                            <Pagination
-                                page={currentPage}
-                                totalPages={Math.ceil(total / PER_PAGE)}
-                                onPageChange={(page: any) => props.updateCurrentPage(page)}
-                                limit={PER_PAGE}
-                            />
+            <div className="bg-white p-3 rounded border">
+                <Loader loading={loading}>
+                    <NoContent
+                        title={'No live sessions.'}
+                        subtext={
+                            <span>
+                                See how to setup the{' '}
+                                <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
+                                    {'Assist'}
+                                </a>{' '}
+                                plugin, if you haven’t done that already.
+                            </span>
+                        }
+                        image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
+                        show={!loading && list.size === 0}
+                    >
+                        <div>
+                            {list.map((session) => (
+                                <>
+                                    <SessionItem
+                                        key={session.sessionId}
+                                        session={session}
+                                        live
+                                        hasUserFilter={hasUserFilter}
+                                        onUserClick={onUserClick}
+                                        metaList={metaList}
+                                    />
+                                    <div className="border-b" />
+                                </>
+                            ))}
                         </div>
-                    </div>
-                </NoContent>
-            </Loader>
+                    </NoContent>
+                </Loader>
+
+                <div className={cn("w-full flex items-center justify-center py-6", { 'disabled' : loading})}>
+                    <Pagination
+                        page={currentPage}
+                        totalPages={Math.ceil(total / PER_PAGE)}
+                        onPageChange={(page: any) => props.updateCurrentPage(page)}
+                        limit={PER_PAGE}
+                        debounceRequest={500}
+                    />
+                </div>
+            </div>
         </div>
     );
 }
