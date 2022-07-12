@@ -24,7 +24,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "iteration": 1657540002972,
+  "id": 33,
+  "iteration": 1657624243544,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -984,6 +985,95 @@
       }
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of all assets that have been downloaded / service",
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "hiddenSeries": false,
+      "id": 41,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "9.0.1",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "exemplar": true,
+          "expr": "sum(increase(assets_downloaded[${time}]))",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Assets downloaded / ${time}",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:85",
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:86",
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
@@ -1107,6 +1197,18 @@
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "exemplar": true,
+          "expr": "sum(rate(batch_size_lines_sum[${time}]))/sum(rate(batch_size_lines_count[${time}]))",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Number of sql requests before PG execution / ${time}",
@@ -1161,22 +1263,10 @@
             "uid": "prometheus"
           },
           "exemplar": true,
-          "expr": "sum(rate(sql_request_time_bucket[${time}]))",
+          "expr": "sum by (le) (rate(sql_request_time_bucket[${time}]))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "exemplar": true,
-          "expr": "sum(rate(sql_request_time_sum[${time}]))/sum(rate(sql_request_time_count[${time}]))",
-          "hide": true,
-          "interval": "",
-          "legendFormat": "",
-          "refId": "B"
         }
       ],
       "title": "Duration of sql request / ${time}",
@@ -1250,13 +1340,13 @@
     ]
   },
   "time": {
-    "from": "now-30m",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "Openreplay Components Dashboard",
-  "uid": "aq_tupq7k",
+  "uid": "asdfasd",
   "version": 1,
   "weekStart": ""
 }
