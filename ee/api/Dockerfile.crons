@@ -1,21 +1,21 @@
-FROM python:3.10-slim
+FROM python:3.10-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-ENV APP_NAME crons
-ENV pg_minconn 2
-ENV pg_maxconn 10
-RUN apt-get update && apt-get upgrade -y && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf /var/lib/apt/lists/*
+ARG envarg
+ENV APP_NAME=crons \
+    pg_minconn=2 \
+    pg_maxconn=10 \
+    TINI_VERSION=v0.19.0 \
+    ACTION=""
+
 # Add Tini
 # Startup daemon
-ENV TINI_VERSION=v0.19.0 \
-    ACTION=""
-ARG envarg
 ENV ENTERPRISE_BUILD ${envarg}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
 WORKDIR /work_tmp
-COPY requirements.txt /work_tmp/requirements.txt
+COPY requirements-crons.txt /work_tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /work_tmp/requirements.txt
 
 WORKDIR /work
