@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 touch .env.override
 if [[ -z "${ENV_CONFIG_OVERRIDE_PATH}" ]]; then
