@@ -34,7 +34,8 @@ def get_by_tenant_id(tenant_id):
                        t.created_at,
                         '{license.EDITION}' AS edition,
                         t.version_number,
-                        t.opt_out
+                        t.opt_out,
+                        t.tenant_key
                     FROM public.tenants AS t
                     WHERE t.tenant_id = %(tenantId)s AND t.deleted_at ISNULL
                     LIMIT 1;""",

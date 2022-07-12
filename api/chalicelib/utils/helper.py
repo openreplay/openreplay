@@ -398,3 +398,7 @@ def __time_value(row):
     if "chart" in row and factor > 1:
         for r in row["chart"]:
             r["value"] /= factor
+
+
+def is_saml2_available():
+    return config("hastSAML2", default=False, cast=bool)

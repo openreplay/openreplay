@@ -1,14 +1,13 @@
-FROM node:17-stretch
-WORKDIR /work
-COPY . .
-RUN npm install
-
-# Add Tini
-# Startup daemon
-ENV TINI_VERSION v0.19.0
+FROM node:18-alpine
+LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+RUN apk add --no-cache tini
 ARG envarg
-ENV ENTERPRISE_BUILD ${envarg}
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
+ENV ENTERPRISE_BUILD=${envarg}
+
+WORKDIR /work
+COPY package.json .
+COPY package-lock.json .
+RUN npm install
+COPY . .
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD npm start
