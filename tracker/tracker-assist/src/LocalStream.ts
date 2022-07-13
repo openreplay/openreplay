@@ -22,6 +22,7 @@ export default function RequestLocalStream(): Promise<LocalStream> {
   return navigator.mediaDevices.getUserMedia({ audio:true, })
     .then(aStream => {
       const aTrack = aStream.getAudioTracks()[0]
+
       if (!aTrack) { throw new Error('No audio tracks provided') }
       return new _LocalStream(aTrack)
     })
@@ -54,6 +55,7 @@ class _LocalStream {
       })
       .catch(e => {
         // TODO: log
+        console.error(e)
         return false
       })
     }

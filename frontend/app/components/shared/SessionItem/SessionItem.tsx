@@ -41,6 +41,8 @@ interface Props {
         userSessionsCount: number;
         issueTypes: [];
         active: boolean;
+        isCallActive?: boolean;
+        agentIds?: string[];
     };
     onUserClick?: (userId: string, userAnonymousId: string) => void;
     hasUserFilter?: boolean;
@@ -168,6 +170,15 @@ function SessionItem(props: RouteComponentProps & Props) {
 
                 <div className="flex items-center">
                     <div className={stl.playLink} id="play-button" data-viewed={viewed}>
+                        {live && session.isCallActive && session.agentIds.length > 0 ? (
+                            <div className="mr-4">
+                                <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
+                                    <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>
+                                        CALL IN PROGRESS
+                                    </span>
+                                </Label>
+                            </div>
+                        ) : null}
                         {isSessions && (
                             <div className="mr-4 flex-shrink-0 w-24">
                                 {isLastPlayed && (
