@@ -56,6 +56,7 @@ ALTER TABLE IF EXISTS events.resources
         PRIMARY KEY (session_id, message_id, timestamp);
 
 COMMIT;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS projects_tenant_id_idx ON public.projects (tenant_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
 ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'funnel';
 
