@@ -23,8 +23,8 @@ export interface StartOptions {
 }
 
 interface OnStartInfo {
-  sessionID: string, 
-  sessionToken: string, 
+  sessionID: string,
+  sessionToken: string,
   userUUID: string,
 }
 const CANCELED = "canceled" as const
@@ -60,8 +60,8 @@ type AppOptions = {
   __is_snippet: boolean;
   __debug_report_edp: string | null;
   __debug__?: LoggerOptions;
-  localStorage: Storage;
-  sessionStorage: Storage;
+  localStorage: Storage | null;
+  sessionStorage: Storage | null;
 
   // @deprecated
   onStart?: StartCallback;
@@ -117,8 +117,8 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        localStorage: window.localStorage,
-        sessionStorage: window.sessionStorage,
+        localStorage: null,
+        sessionStorage: null,
       },
       options,
     );
@@ -140,8 +140,8 @@ export default class App {
         Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)))
       }
     })
-    this.localStorage = this.options.localStorage;
-    this.sessionStorage = this.options.sessionStorage;
+    this.localStorage = this.options.localStorage ?? window.localStorage;
+    this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage;
 
     if (sessionToken != null) {
       this.sessionStorage.setItem(this.options.session_token_key, sessionToken);
@@ -175,7 +175,7 @@ export default class App {
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false);
       // TODO: stop session after inactivity timeout (make configurable)
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
-    } catch (e) { 
+    } catch (e) {
       this._debug("worker_start", e);
     }
   }
@@ -197,9 +197,9 @@ export default class App {
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) { return }
     this.messages.push(message);
-    // TODO: commit on start if there were `urgent` sends; 
+    // TODO: commit on start if there were `urgent` sends;
     // Clearify where urgent can be used for;
-    // Clearify workflow for each type of message in case it was sent before start 
+    // Clearify workflow for each type of message in case it was sent before start
     //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
     if (this.activityState === ActivityState.Active && urgent) {
       this.commit();
@@ -339,8 +339,8 @@ export default class App {
     if (!this.worker) {
       return Promise.resolve(UnsuccessfulStart("No worker found: perhaps, CSP is not set."))
     }
-    if (this.activityState !== ActivityState.NotActive) { 
-      return Promise.resolve(UnsuccessfulStart("OpenReplay: trying to call `start()` on the instance that has been started already.")) 
+    if (this.activityState !== ActivityState.NotActive) {
+      return Promise.resolve(UnsuccessfulStart("OpenReplay: trying to call `start()` on the instance that has been started already."))
     }
     this.activityState = ActivityState.Starting;
 
@@ -364,7 +364,7 @@ export default class App {
     this.worker.postMessage(startWorkerMsg)
 
     this.session.update({ // TODO: transparent "session" module logic AND explicit internal api for plugins.
-      // "updating" with old metadata in order to trigger session's UpdateCallbacks. 
+      // "updating" with old metadata in order to trigger session's UpdateCallbacks.
       // (for the case of internal .start() calls, like on "restart" webworker signal or assistent connection in tracker-assist )
       metadata: startOpts.metadata || this.session.getInfo().metadata,
       userID: startOpts.userID,
@@ -391,7 +391,7 @@ export default class App {
       if (r.status === 200) {
         return r.json()
       } else {
-        return r.text().then(text => text === CANCELED 
+        return r.text().then(text => text === CANCELED
           ? Promise.reject(CANCELED)
           : Promise.reject(`Server error: ${r.status}. ${text}`)
         );
@@ -418,7 +418,7 @@ export default class App {
       this.worker.postMessage(startWorkerMsg)
 
       this.activityState = ActivityState.Active
-      
+
       const onStartInfo = { sessionToken: token, userUUID, sessionID };
 
       this.startCallbacks.forEach((cb) => cb(onStartInfo)); // TODO: start as early as possible (before receiving the token)
@@ -432,7 +432,7 @@ export default class App {
       }
       return SuccessfulStart(onStartInfo)
     })
-    .catch(reason => {        
+    .catch(reason => {
       this.sessionStorage.removeItem(this.options.session_token_key)
       this.stop()
       if (reason === CANCELED) { return UnsuccessfulStart(CANCELED) }
