@@ -8,6 +8,7 @@ ENV ENTERPRISE_BUILD=${envarg} \
 WORKDIR /work
 ADD https://static.openreplay.com/geoip/GeoLite2-Country.mmdb  $MAXMINDDB_FILE
 COPY package.json .
+COPY package-lock.json .
 RUN npm install
 COPY . .
 ENTRYPOINT ["/sbin/tini", "--"]
