@@ -43,7 +43,7 @@ export default class CallWindow {
 
 
     //const baseHref = "https://static.openreplay.com/tracker-assist/test"
-    const baseHref = "https://static.openreplay.com/tracker-assist/3.4.4"
+    const baseHref = "https://static.openreplay.com/tracker-assist/3.5.15"
     this.load = fetch(baseHref + "/index.html")
     .then(r => r.text())
     .then((text) => {
@@ -119,8 +119,20 @@ export default class CallWindow {
     })
   }
 
-  private aRemote: HTMLAudioElement | null = null;
+  private aRemote: HTMLAudioElement[] = [];
   private checkRemoteVideoInterval: ReturnType<typeof setInterval>
+
+  addRemoteStream(rStream: MediaStream) {
+    this.load.then(() => {
+      const audioEl = document.createElement("audio");
+      this.aRemote = [...this.aRemote, audioEl]
+      audioEl.autoplay = true;
+      audioEl.style.display = "none"
+      audioEl.srcObject = rStream;
+      document.body.appendChild(audioEl)
+    })
+  }
+
   setRemoteStream(rStream: MediaStream) {
     this.load.then(() => {
       if (this.vRemote && !this.vRemote.srcObject) {
@@ -130,11 +142,12 @@ export default class CallWindow {
         }
 
         // Hack for audio. Doesen't work inside the iframe because of some magical reasons (check if it is connected to autoplay?)
-        this.aRemote = document.createElement("audio");
-        this.aRemote.autoplay = true;
-        this.aRemote.style.display = "none"
-        this.aRemote.srcObject = rStream;
-        document.body.appendChild(this.aRemote)
+        const audioEl = document.createElement("audio")
+        audioEl.autoplay = true;
+        audioEl.style.display = "none"
+        audioEl.srcObject = rStream;
+        this.aRemote.push(audioEl);
+        document.body.appendChild(this.aRemote[0])
       }
 
       // Hack to determine if the remote video is enabled
@@ -231,8 +244,8 @@ export default class CallWindow {
     if (this.iframe.parentElement) {
       document.body.removeChild(this.iframe)
     }
-    if (this.aRemote && this.aRemote.parentElement) {
-      document.body.removeChild(this.aRemote)
+    if (this.aRemote.length > 0 && this.aRemote[0].parentElement) {
+      this.aRemote.forEach(stream => document.body.removeChild(stream))
     }
     sessionStorage.removeItem(SS_START_TS_KEY)
   }

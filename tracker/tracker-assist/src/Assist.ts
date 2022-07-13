@@ -206,15 +206,19 @@ export default class Assist {
       remoteControl.reconnect(ids)
     })
 
-    let confirmCall:ConfirmWindow | null = null
+    let confirmCall: ConfirmWindow | null = null
 
     socket.on("AGENT_DISCONNECTED", (id) => {
       remoteControl.releaseControl(id)
 
       // close the call also
-      if (callingAgent === id) {
+      if (callingAgent.includes(id)) {
         confirmCall?.remove()
         this.onRemoteCallEnd()
+        callingAgent = callingAgent.filter(a => a !== id)
+        delete agentName[id]
+
+        updateCallerNames()
       }
 
       // @ts-ignore (wtf, typescript?!)
@@ -227,9 +231,23 @@ export default class Assist {
     socket.on("call_end", () => this.onRemoteCallEnd()) // TODO: check if agent calling id
 
     // TODO: fix the code
-    let agentName = ""
-    let callingAgent = ""
-    socket.on("_agent_name",(id, name) => { agentName = name; callingAgent = id })
+    let callUI: CallWindow | null = null
+    let agentName: Record<string, string> = {}
+    let callingAgent: string[] = []
+    socket.on("_agent_name",(id, name) => { 
+      agentName[id] = name; 
+      callingAgent.push(id);
+
+      updateCallerNames()
+    })
+
+    function updateCallerNames() {
+      if (callUI) {
+        const agentNames = Object.values(agentName).join(", ")
+        const safeNames = agentNames.length > 20 ? agentNames.substring(0, 20) + "..." : agentNames
+        callUI.setAssistentName(safeNames)
+      }
+    }
 
 
     // PeerJS call (todo: use native WebRTC)
@@ -247,13 +265,37 @@ export default class Assist {
     // @ts-ignore
     peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
     peer.on('disconnected', () => peer.reconnect())
-    peer.on('call', (call) => {
-      app.debug.log("Call: ", call)    
-      if (this.callingState !== CallingState.False) {
+
+    peer.on('call', async (call) => {
+      let lStream;
+      const onCallEnd = this.options.onCallStart()
+      const handleCallEnd = () => {
+        app.debug.log("Handle Call End")
         call.close()
-        //this.notifyCallEnd() // TODO: strictly connect calling peer with agent socket.id
-        app.debug.warn("Call closed instantly bacause line is busy. CallingState: ", this.callingState)
-        return;
+        callUI?.remove()
+        annot && annot.remove()
+        annot = null
+        setCallingState(CallingState.False)
+        onCallEnd && onCallEnd()
+      }
+      const initiateCallEnd = () => {
+        this.notifyCallEnd()
+        handleCallEnd()
+      }
+
+      try {
+        lStream = await RequestLocalStream()
+      } catch (e) {
+        app.debug.warn("Audio mediadevice request error:", e)
+        initiateCallEnd()
+      }
+      app.debug.log("Call: ", call)    
+      
+      if (this.callingState === CallingState.True) {
+        call.on('stream', (stream) => {
+          callUI?.addRemoteStream(stream)
+          return call.answer(lStream.stream)
+        })
       }
 
       const setCallingState = (newState: CallingState) => {
@@ -300,25 +342,11 @@ export default class Assist {
           return
         }
 
-        const callUI = new CallWindow()
+        callUI = new CallWindow()
         annot = new AnnotationCanvas()
         annot.mount()
-        callUI.setAssistentName(agentName)
-        
-        const onCallEnd = this.options.onCallStart()
-        const handleCallEnd = () => {
-          app.debug.log("Handle Call End")
-          call.close()
-          callUI.remove()
-          annot && annot.remove()
-          annot = null
-          setCallingState(CallingState.False)
-          onCallEnd && onCallEnd()
-        }
-        const initiateCallEnd = () => {
-          this.notifyCallEnd()
-          handleCallEnd()
-        }
+
+        updateCallerNames()
         this.onRemoteCallEnd = handleCallEnd
 
         call.on('error', e => {
@@ -326,35 +354,34 @@ export default class Assist {
           initiateCallEnd()
         });
 
-        RequestLocalStream().then(lStream => {
-          call.on('stream', function(rStream) {
-            callUI.setRemoteStream(rStream);
-            const onInteraction = () => { // only if hidden?
-              callUI.playRemote()
-              document.removeEventListener("click", onInteraction)
-            }
-            document.addEventListener("click", onInteraction)
-          });
-
-          lStream.onVideoTrack(vTrack => {
-            const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
-            if (!sender) {
-              app.debug.warn("No video sender found")
-              return
-            }
-            app.debug.log("sender found:", sender)
-            sender.replaceTrack(vTrack)
-          })
-
-          callUI.setCallEndAction(initiateCallEnd)
-          callUI.setLocalStream(lStream)
-          call.answer(lStream.stream)
-          setCallingState(CallingState.True)
-        })
-        .catch(e => {
-          app.debug.warn("Audio mediadevice request error:", e)
-          initiateCallEnd()
+        call.on('stream', (rStream) => {
+          if (this.callingState === CallingState.True) {
+            console.log('inside old call?')
+            callUI?.addRemoteStream(rStream)
+            return call.answer(lStream.stream)
+          }
+          callUI?.setRemoteStream(rStream);
+          const onInteraction = () => { // only if hidden?
+            callUI?.playRemote()
+            document.removeEventListener("click", onInteraction)
+          }
+          document.addEventListener("click", onInteraction)
         });
+
+        lStream.onVideoTrack(vTrack => {
+          const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
+          if (!sender) {
+            app.debug.warn("No video sender found")
+            return
+          }
+          app.debug.log("sender found:", sender)
+          sender.replaceTrack(vTrack)
+        })
+
+        callUI?.setCallEndAction(initiateCallEnd)
+        callUI?.setLocalStream(lStream)
+        call.answer(lStream.stream)
+        setCallingState(CallingState.True)
       }).catch(); // in case of Confirm.remove() without any confirmation/decline
     });
   }

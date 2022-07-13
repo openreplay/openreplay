@@ -47,7 +47,7 @@ function AssistActions({
     hasPermission,
     isEnterprise,
 }: Props) {
-    const [incomeStream, setIncomeStream] = useState<MediaStream | null>(null);
+    const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>(null);
     const [localStream, setLocalStream] = useState<LocalStream | null>(null);
     const [callObject, setCallObject] = useState<{ end: () => void } | null>(null);
 
@@ -61,11 +61,13 @@ function AssistActions({
         }
     }, [peerConnectionStatus]);
 
+    const addIncomeStream = (stream: MediaStream) => setIncomeStream((prev) => [...prev, stream]);
+
     function call() {
         RequestLocalStream()
             .then((lStream) => {
                 setLocalStream(lStream);
-                setCallObject(callPeer(lStream, setIncomeStream, lStream.stop.bind(lStream), onReject, onError));
+                setCallObject(callPeer(lStream, addIncomeStream, lStream.stop.bind(lStream), onReject, onError));
             })
             .catch(onError);
     }
