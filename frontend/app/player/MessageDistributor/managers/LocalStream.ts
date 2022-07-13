@@ -54,6 +54,7 @@ class _LocalStream {
       })
       .catch(e => {
         // TODO: log
+        console.error(e)
         return false
       })
     }
