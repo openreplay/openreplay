@@ -30,7 +30,7 @@ def main():
 
     codec = MessageCodec()
     consumer = KafkaConsumer(security_protocol="SSL",
-                             bootstrap_servers=os.environ['KAFKA_SERVER_2'],
+                             bootstrap_servers=[os.environ['KAFKA_SERVER_2'],
                                                 os.environ['KAFKA_SERVER_1']],
                              group_id=f"my_test3_connector_{DATABASE}",
                              auto_offset_reset="earliest",
