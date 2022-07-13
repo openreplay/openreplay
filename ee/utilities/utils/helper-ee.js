@@ -70,7 +70,10 @@ const extractPayloadFromRequest = async function (req, res) {
             filters.filter.userID = [req.getQuery("userId")];
         }
         if (!filters.query.value) {
-            let body = await getBodyFromUWSResponse(res);
+            let body = {};
+            if (req.getMethod() !== 'get') {
+                body = await getBodyFromUWSResponse(res);
+            }
             filters = {
                 ...filters,
                 "sort": {
