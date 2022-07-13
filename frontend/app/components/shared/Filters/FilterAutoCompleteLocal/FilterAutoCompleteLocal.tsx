@@ -46,7 +46,7 @@ function FilterAutoCompleteLocal(props: Props) {
   };
 
   useEffect(() => {
-    setQuery(value);
+    setQuery(value.value);
   }, [value])
 
   const onBlur = (e) => {
