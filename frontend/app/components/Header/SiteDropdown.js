@@ -11,6 +11,7 @@ import styles from './siteDropdown.module.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
+import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 import { withStore } from 'App/mstore'
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
@@ -27,6 +28,7 @@ import NewProjectButton from './NewProjectButton';
   pushNewSite,
   init,
   clearSearch,
+  clearSearchLive,
   fetchIntegrationVariables,
 })
 export default class SiteDropdown extends React.PureComponent {
@@ -45,8 +47,9 @@ export default class SiteDropdown extends React.PureComponent {
     const { mstore, location } = this.props
 
     this.props.setSiteId(siteId);
-    this.props.clearSearch(location.pathname.includes('/sessions'));
     this.props.fetchIntegrationVariables();
+    this.props.clearSearch(location.pathname.includes('/sessions'));
+    this.props.clearSearchLive();
 
     mstore.initClient();
   }
