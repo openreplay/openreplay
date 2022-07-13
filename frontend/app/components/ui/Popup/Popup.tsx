@@ -21,6 +21,7 @@ export default ({
   delay = 1000,
   disabled = false,
   arrow = true,
+  theme = 'dark',
   ...props
 }: Props) => (
   <Tooltip
@@ -33,6 +34,7 @@ export default ({
     delay={delay}
     hideOnClick={true}
     hideOnScroll={true}
+    theme={theme}
   >
     { props.children }
   </Tooltip>
