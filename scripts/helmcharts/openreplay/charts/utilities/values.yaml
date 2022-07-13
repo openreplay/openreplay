@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: "{{ .Values.global.openReplayContainerRegistry }}/utilities"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
@@ -16,7 +16,7 @@ telemetry:
   cron: "5 12 * * *"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   env:
@@ -27,7 +27,7 @@ report:
   cron: "0 5 * * 1"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   env:
@@ -38,7 +38,7 @@ sessionsCleaner:
   cron: "5 1 * * *"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   env:
