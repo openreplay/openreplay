@@ -232,7 +232,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className="bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className="bg-white" name={getPointerIcon('click_rage')} color="red" size="16" />
                 </Tooltip>
               </div>
             ))}
@@ -254,7 +254,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className=" rounded-full bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className="rounded-full bg-white" name={getPointerIcon('click_rage')} color="red" size="16" />
                 </Tooltip>
               </div>
             }
@@ -277,7 +277,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                   }
                   >
-                    <Icon className=" rounded-full bg-white" name={getPointerIcon('exception')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('exception')} color="red" size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -330,7 +330,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                     }
                   >
-                    <Icon className=" rounded-full bg-white" name={getPointerIcon('fetch')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('fetch')} color="red" size="16" />
                   </Tooltip>
                 </div>
               ))
