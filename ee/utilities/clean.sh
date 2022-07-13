@@ -7,4 +7,3 @@ rm -rf servers/peerjs-server.js
 rm -rf servers/sourcemaps-handler.js
 rm -rf servers/sourcemaps-server.js
 rm -rf build.sh
-rm -rf Dockerfile
