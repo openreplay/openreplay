@@ -5,7 +5,7 @@ metadata:
   name: sessions-cleaner-cron
   namespace: {{ .Release.Namespace }}
 spec:
-  schedule: "{{ .Values.cron }}"
+  schedule: "{{ .Values.sessionsCleaner.cron }}"
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 1
   jobTemplate:

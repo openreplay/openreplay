@@ -5,7 +5,7 @@ metadata:
   name: telemetry-cron
   namespace: {{ .Release.Namespace }}
 spec:
-  schedule: "{{ .Values.cron }}"
+  schedule: "{{ .Values.telemetry.cron }}"
   failedJobsHistoryLimit: 1
   successfulJobsHistoryLimit: 1
   jobTemplate:

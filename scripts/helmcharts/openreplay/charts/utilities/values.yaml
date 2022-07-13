@@ -35,6 +35,7 @@ report:
 sessionsCleaner:
   # https://crontab.guru/#5_1_*_*_*
   # Midnight 1.05
+  cron: "5 1 * * *"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
     pullPolicy: IfNotPresent
