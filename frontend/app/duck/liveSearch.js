@@ -96,7 +96,7 @@ export const fetchSessions = (filter) => (dispatch, getState) => {
 };
 
 export const clearSearch = () => (dispatch, getState) => {
-  dispatch(edit(new Filter({ filters: [] })));
+  dispatch(edit(new Filter({ filters: [], sort: 'timestamp' })));
   return dispatch({
     type: CLEAR_SEARCH,
   });

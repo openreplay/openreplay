@@ -51,6 +51,7 @@ const Header = (props) => {
       Promise.all([
         userStore.fetchLimits(),
         notificationStore.fetchNotificationsCount(),
+        props.fetchMetadata(),
       ]).then(() => {
         userStore.updateKey('initialDataFetched', true);
       });
@@ -60,7 +61,6 @@ const Header = (props) => {
   useEffect(() => {
     activeSite = sites.find(s => s.id == siteId);
     props.initSite(activeSite);
-    props.fetchMetadata();
   }, [siteId])
 
   return (

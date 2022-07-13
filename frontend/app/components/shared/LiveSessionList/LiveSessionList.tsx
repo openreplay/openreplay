@@ -46,12 +46,17 @@ function LiveSessionList(props: Props) {
         })).toJS());
 
     useEffect(() => {
-        props.applyFilter({ ...filter });
+        if (metaListLoading) return;
+        const _filter = { ...filter };
+        if (sortOptions[1]) {
+            _filter.sort = sortOptions[1].value;
+        }
+        props.applyFilter(_filter);
         timeout();
         return () => {
             clearTimeout(timeoutId);
         };
-    }, []);
+    }, [metaListLoading]);
 
     const onUserClick = (userId: string, userAnonymousId: string) => {
         if (userId) {
