@@ -168,7 +168,11 @@ def update(tenant_id, user_id, changes):
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id;""",
+                                users.role_id,
+                                (SELECT roles.name 
+                                    FROM roles 
+                                    WHERE roles.tenant_id=%(tenant_id)s 
+                                        AND roles.role_id=users.role_id) AS role_name;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -187,7 +191,11 @@ def update(tenant_id, user_id, changes):
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id;""",
+                                users.role_id,
+                                (SELECT roles.name 
+                                    FROM roles 
+                                    WHERE roles.tenant_id=%(tenant_id)s 
+                                        AND roles.role_id=users.role_id) AS role_name;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
 
