@@ -1,5 +1,5 @@
 import io
-
+from typing import List
 from msgcodec.messages import *
 
 
@@ -24,6 +24,8 @@ class Codec:
         i = 0  # n of byte (max 9 for uint64)
         while True:
             b = reader.read(1)
+            if len(b) == 0:
+                raise IndexError('bytes out of range')
             num = int.from_bytes(b, "big", signed=False)
             # print(i, x)
 
@@ -72,8 +74,20 @@ class MessageCodec(Codec):
 
     def decode(self, b: bytes) -> Message:
         reader = io.BytesIO(b)
-        message_id = self.read_message_id(reader)
+        return self.read_head_message(reader)
 
+    def decode_detailed(self, b: bytes) -> List[Message]:
+        reader = io.BytesIO(b)
+        messages_list = list()
+        while True:
+            try:
+                messages_list.append(self.read_head_message(reader))
+            except IndexError:
+                break
+        return messages_list
+
+    def read_head_message(self, reader: io.BytesIO) -> Message:
+        message_id = self.read_message_id(reader)
         if message_id == 0:
             return Timestamp(
                 timestamp=self.read_uint(reader)
@@ -570,7 +584,7 @@ class MessageCodec(Codec):
         if message_id == 65:
             return PageClose()
 
-        if mesage_id == 66:
+        if message_id == 66:
             return AssetCache(
                 url=self.read_string(reader)
             )
@@ -580,7 +594,7 @@ class MessageCodec(Codec):
                 id=self.read_uint(reader),
                 rule=self.read_string(reader),
                 index=self.read_uint(reader),
-                based_url=self.read_string(reader)
+                base_url=self.read_string(reader)
             )
 
         if message_id == 69:
@@ -595,6 +609,13 @@ class MessageCodec(Codec):
             return CreateIFrameDocument(
                 frame_id=self.read_uint(reader),
                 id=self.read_uint(reader)
+            )
+
+        if message_id == 80:
+            return BatchMeta(
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader)
             )
 
         if message_id == 90:
@@ -690,7 +711,7 @@ class MessageCodec(Codec):
                 y=self.read_uint(reader)
             )
 
-        if message_if == 101:
+        if message_id == 101:
             return IOSInputEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),

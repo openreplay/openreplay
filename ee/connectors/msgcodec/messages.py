@@ -696,6 +696,14 @@ class CreateIFrameDocument(Message):
         self.id = id
 
 
+class BatchMeta(Message):
+    __id__ = 80
+
+    def __init__(self, page_no, first_index, timestamp):
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+
 class IOSSessionStart(Message):
     __id__ = 90
 
