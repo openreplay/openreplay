@@ -855,7 +855,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 apply = False
                 for j, f in enumerate(event.filters):
                     is_any = _isAny_opreator(f.operator)
-                    if is_any or f.value is None or len(str(f.value)) == 0:
+                    if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
                     op = __get_sql_operator(f.operator)
@@ -863,30 +863,29 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType._url:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s",
-                                                 str(f.value),
-                                                 value_key=e_k_f))
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s::text",
+                                                 f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
-                            _multiple_conditions(f"main.status_code {f.operator} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.status_code {f.operator} %({e_k_f})s::integer", f.value,
                                                  value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._method:
                         event_where.append(
-                            _multiple_conditions(f"main.method {op} %({e_k_f})s", str(f.value), value_key=e_k_f))
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s::integer", f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._request_body:
                         event_where.append(
-                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", str(f.value), value_key=e_k_f))
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s::text", f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._response_body:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", str(f.value), value_key=e_k_f))
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s::text", f.value, value_key=e_k_f))
                         apply = True
                     else:
                         print(f"undefined FETCH filter: {f.type}")
