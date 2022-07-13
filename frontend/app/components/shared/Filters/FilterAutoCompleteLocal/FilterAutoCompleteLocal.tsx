@@ -35,18 +35,18 @@ function FilterAutoCompleteLocal(props: Props) {
     if(allowDecimals) {
       const value = e.target.value;
       setQuery(value);
-      props.onSelect(null, { value });
+      props.onSelect(null, value);
     } else {
       const value = e.target.value.replace(/[^\d]/, "");
       if (+value !== 0) {
         setQuery(value);
-        props.onSelect(null, { value });
+        props.onSelect(null, value);
       }
     }
   };
 
   useEffect(() => {
-    setQuery(value.value);
+    setQuery(value);
   }, [value])
 
   const onBlur = (e) => {
