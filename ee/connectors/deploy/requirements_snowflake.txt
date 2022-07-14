@@ -7,7 +7,7 @@ PyYAML==5.4.1
 asn1crypto==1.4.0
 azure-common==1.1.25
 azure-core==1.8.2
-azure-storage-blob==12.5.0
+azure-storage-blob==12.13.0
 boto3==1.15.18
 botocore==1.18.18
 certifi==2020.6.20
