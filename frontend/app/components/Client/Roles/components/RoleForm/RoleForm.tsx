@@ -49,7 +49,6 @@ const RoleForm = (props: Props) => {
   }
 
   const writeOption = ({ name, value }: any) => {
-    console.log('name', name);
     if (name === 'permissions') {
       onChangePermissions(value)
     } else if (name === 'projects') {

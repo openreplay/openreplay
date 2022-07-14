@@ -41,7 +41,6 @@ const reducer = (state = initialState, action = {}) => {
     case EDIT:
       return state.mergeIn([ 'instance' ], action.instance);
     case FETCH_PROJECTS.SUCCESS:
-      console.log('data', action.data)
       return state.set('projects', List(action.data)).set('projectsFetched', true);
     case FETCH_ASSIGNMENTS.SUCCESS:
       return state.set('list', List(action.data).map(Assignment));

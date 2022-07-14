@@ -134,7 +134,6 @@ export default class FunnelStore {
                 .then(response => {
                     this.issueInstance = new FunnelIssue().fromJSON(response.issue)
                     this.issueInstance.sessions = response.sessions.sessions.map(i => new Session().fromJson(i))
-                    console.log('response.sessions', response.sessions);
                     resolve(this.issueInstance)
                 }).catch(error => {
                     reject(error)
