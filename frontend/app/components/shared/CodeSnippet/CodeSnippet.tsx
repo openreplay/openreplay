@@ -21,7 +21,6 @@ interface Props {
 }
 function CodeSnippet(props: Props) {
     const { host, projectKey, ingestPoint, defaultInputMode, obscureTextNumbers, obscureTextEmails } = props;
-    console.log('defaultInputMode', defaultInputMode)
     const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>
   var initOpts = {

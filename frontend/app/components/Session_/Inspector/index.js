@@ -38,9 +38,7 @@ export default function Inspector () {
     const onKeyPress = e => {
       if (e.key === 'Backspace' || e.key === 'Delete') {
         const elem = selectedElementRef.current;
-        console.log(elem)
         if (elem !== null && elem.parentElement !== null) {
-          console.log('a?')
           elem.parentElement.removeChild(elem);
           setSelectedElement(null);
         }

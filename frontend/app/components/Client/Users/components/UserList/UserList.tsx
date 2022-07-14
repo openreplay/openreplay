@@ -9,10 +9,11 @@ import UserForm from '../UserForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
+    isOnboarding?: boolean;
     isEnterprise?: boolean;
 }
 function UserList(props: Props) {
-    const { isEnterprise  = false } = props;
+    const { isEnterprise  = false, isOnboarding = false } = props;
     const { userStore } = useStore();
     const loading = useObserver(() => userStore.loading);
     const users = useObserver(() => userStore.list);
@@ -55,7 +56,7 @@ function UserList(props: Props) {
                     <div className="grid grid-cols-12 p-3 border-b font-medium">
                         <div className="col-span-5">Name</div>
                         <div className="col-span-3">Role</div>
-                        <div className="col-span-2">Created On</div>
+                        {!isOnboarding && <div className="col-span-2">Created On</div> }
                         <div className="col-span-2"></div>
                     </div>
 
@@ -67,6 +68,7 @@ function UserList(props: Props) {
                                 generateInvite={() => userStore.generateInviteCode(user.userId)}
                                 copyInviteCode={() => userStore.copyInviteCode(user.userId)}
                                 isEnterprise={isEnterprise}
+                                isOnboarding={isOnboarding}
                             />
                         </div>
                     ))}

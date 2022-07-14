@@ -2,7 +2,7 @@
 import React from 'react';
 import { Icon, Popup } from 'UI';
 import { checkForRecent } from 'App/date';
-
+import cn from 'classnames';
 
 const AdminPrivilegeLabel = ({ user }) => {
     return (
@@ -13,6 +13,7 @@ const AdminPrivilegeLabel = ({ user }) => {
     )
 }
 interface Props {
+    isOnboarding?: boolean;
     user: any;
     editHandler?: any;
     generateInvite?: any;
@@ -26,6 +27,7 @@ function UserListItem(props: Props) {
         generateInvite = () => {},
         copyInviteCode = () => {},
         isEnterprise = false,
+        isOnboarding = false
     } = props;
     return (
         <div className="grid grid-cols-12 p-3 py-4 border-b items-center select-none hover:bg-active-blue group">
@@ -41,11 +43,13 @@ function UserListItem(props: Props) {
                     </span>
                 )}
             </div>
-            <div className="col-span-2">
-                <span>{user.createdAt && checkForRecent(user.createdAt, 'LLL dd, yyyy, hh:mm a')}</span>
-            </div>
+            {!isOnboarding && (
+                <div className="col-span-2">
+                    <span>{user.createdAt && checkForRecent(user.createdAt, 'LLL dd, yyyy, hh:mm a')}</span>
+                </div>
+            )}
 
-            <div className="col-span-2 justify-self-end invisible group-hover:visible">
+            <div className={cn("justify-self-end invisible group-hover:visible", { 'col-span-2' : !isOnboarding, 'col-span-4' : isOnboarding})}>
                 <div className="grid grid-cols-2 gap-3 items-center justify-end">
                     <div>
                         {!user.isJoined && user.invitationLink && !user.isExpiredInvite && (
