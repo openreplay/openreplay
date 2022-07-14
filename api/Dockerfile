@@ -1,7 +1,7 @@
 FROM python:3.10-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
-RUN apk add --no-cache nodejs npm tini
+RUN apk add --no-cache build-base nodejs npm tini
 ARG envarg
 # Add Tini
 # Startup daemon
