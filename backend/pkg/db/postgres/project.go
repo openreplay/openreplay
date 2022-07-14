@@ -6,7 +6,7 @@ import (
 
 func (conn *Conn) GetProjectByKey(projectKey string) (*Project, error) {
 	p := &Project{ProjectKey: projectKey}
-	if err := conn.queryRow(`
+	if err := conn.c.QueryRow(`
 		SELECT max_session_duration, sample_rate, project_id
 		FROM projects
 		WHERE project_key=$1 AND active = true
@@ -21,7 +21,7 @@ func (conn *Conn) GetProjectByKey(projectKey string) (*Project, error) {
 // TODO: logical separation of metadata
 func (conn *Conn) GetProject(projectID uint32) (*Project, error) {
 	p := &Project{ProjectID: projectID}
-	if err := conn.queryRow(`
+	if err := conn.c.QueryRow(`
 		SELECT project_key, max_session_duration, save_request_payloads,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
