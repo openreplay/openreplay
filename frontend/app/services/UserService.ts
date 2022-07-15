@@ -74,7 +74,7 @@ export default class UserService {
             .then((response: { data: any; }) => response.data || {});
     }
 
-    ignoreNotification(notificationId: string) {
+    ignoreNotification(notificationId: number) {
         return this.client.get(`/notifications/${notificationId}/view`)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || {});

@@ -44,6 +44,7 @@ export default class NotificationStore {
                         notification.viewed = true;
                         return notification;
                     });
+                    this.fetchNotificationsCount();
                     resolve(response);
                 }).catch((error: any) => {
                     reject(error);
@@ -63,6 +64,7 @@ export default class NotificationStore {
                         }
                         return notification;
                     });
+                    this.fetchNotificationsCount();
                     resolve(response);
                 }).catch((error: any) => {
                     reject(error);
