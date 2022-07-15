@@ -16,7 +16,7 @@ export default (props: Props) => {
     const {
         icon = '',
         className = '',
-        variant = 'default',
+        variant = 'default', // 'default|primary|text|text-primary|text-red|outline',
         type = 'button',
         size = '',
         disabled = false,

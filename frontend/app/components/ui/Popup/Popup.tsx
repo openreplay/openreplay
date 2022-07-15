@@ -11,6 +11,7 @@ interface Props {
   disabled?: boolean
   arrow?: boolean
   open?: boolean
+  style?: any
   [x:string]: any;
 }
 export default ({
@@ -22,6 +23,7 @@ export default ({
   disabled = false,
   arrow = true,
   theme = 'dark',
+  style = {},
   ...props
 }: Props) => (
   <Tooltip
@@ -35,6 +37,7 @@ export default ({
     hideOnClick={true}
     hideOnScroll={true}
     theme={theme}
+    style={style}
   >
     { props.children }
   </Tooltip>
