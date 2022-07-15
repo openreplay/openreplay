@@ -4,6 +4,8 @@ from decouple import config
 
 def get_by_session_id(session_id, project_id, start_ts, duration):
     with pg_client.PostgresClient() as cur:
+        if duration is None or (type(duration) != 'int' and type(duration) != 'float') or duration < 0:
+            duration = 0
         delta = config("events_ts_delta", cast=int, default=60 * 60) * 1000
         ch_query = """\
                 SELECT
