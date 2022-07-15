@@ -4,7 +4,7 @@ import { CircularLoader, Icon } from 'UI';
 
 interface Props {
     className?: string;
-    children: React.ReactNode;
+    children?: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     type?: 'button' | 'submit' | 'reset';
