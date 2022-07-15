@@ -162,6 +162,9 @@ const sortPaginate = function (list, filters) {
         const tB = getValue(b, "timestamp");
         return tA > tB ? 1 : tA < tB ? -1 : 0;
     });
+    if (filters.sort.order) {
+        list.reverse();
+    }
     if ((filters.sort.key || "timestamp") !== "timestamp") {
         list.sort((a, b) => {
             const vA = getValue(a, filters.sort.key);
