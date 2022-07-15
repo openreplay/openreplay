@@ -78,6 +78,7 @@ export function renderDuration(r) {
     playing: state.playing,
     domBuildingTime: state.domBuildingTime,
     fetchPresented: state.fetchList.length > 0,
+    listNow: state.resourceListNow,
 }))
 @connect(
     (state) => ({
@@ -110,31 +111,16 @@ export default class Network extends React.PureComponent {
         this.setState({ filter: value, filteredList: value ? filtered : resources, currentIndex: 0 });
     };
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        const { filteredList } = prevState;
-        if (nextProps.timelinePointer) {
-            const activeItem = filteredList.find((r) => r.time >= nextProps.timelinePointer.time);
-            return {
-                currentIndex: activeItem ? filteredList.indexOf(activeItem) : filteredList.length - 1,
-            };
-        }
-    }
-
     render() {
         const {
             location,
-            resources,
             domContentLoadedTime,
             loadTime,
             domBuildingTime,
             fetchPresented,
-            // time,
-            playing,
+            listNow,
         } = this.props;
-        const { filter, activeTab, currentIndex, filteredList } = this.state;
-        // const filterRE = getRE(filter, 'i');
-        // let filtered = resources.filter(({ type, name }) =>
-        //   filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
+        const { filteredList } = this.state;
         const resourcesSize = filteredList.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0);
         const transferredSize = filteredList.reduce((sum, { headerSize, encodedBodySize }) => sum + (headerSize || 0) + (encodedBodySize || 0), 0);
 
@@ -151,7 +137,7 @@ export default class Network extends React.PureComponent {
                     resourcesSize={resourcesSize}
                     transferredSize={transferredSize}
                     onRowClick={this.onRowClick}
-                    currentIndex={currentIndex}
+                    currentIndex={listNow.length - 0}
                 />
             </React.Fragment>
         );
