@@ -55,6 +55,7 @@ interface Props {
   showActive?: boolean;
   lastPlayedSessionId?: string;
   live?: boolean;
+  onClick?: any
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -69,6 +70,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     metaList = [],
     showActive = false,
     lastPlayedSessionId,
+    onClick = null,
   } = props;
 
   const {
@@ -179,6 +181,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                 isAssist={isAssist}
                 sessionId={sessionId}
                 viewed={viewed}
+                onClick={onClick}
               />
             </div>
           </div>
