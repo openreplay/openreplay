@@ -160,7 +160,7 @@ export default class Fetch extends React.PureComponent {
                     width: 60,
                   }, {
                     label: "Name",
-                    width: 180,
+                    width: 240,
                     render: renderName,
                   },
                   {
