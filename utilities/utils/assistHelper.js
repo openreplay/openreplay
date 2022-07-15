@@ -5,7 +5,7 @@ let debug = process.env.debug === "1" || false;
 
 const BASE_sessionInfo = {
     "pageTitle": "Page",
-    "active": true,
+    "active": false,
     "live": true,
     "sessionID": "0",
     "metadata": {},
