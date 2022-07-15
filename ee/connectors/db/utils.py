@@ -336,6 +336,7 @@ def get_df_from_batch(batch, level):
         df = pd.DataFrame([b.__dict__ for b in batch], columns=detailed_events_col)
     if level == 'sessions':
         df = pd.DataFrame([b.__dict__ for b in batch], columns=sessions_col)
+    print('if error is after me, then problem is later')
 
     try:
         df = df.drop('_sa_instance_state', axis=1)

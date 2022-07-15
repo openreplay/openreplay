@@ -687,7 +687,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 98:
-            return IOSSCreenEnter(
+            return IOSScreenEnter(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 title=self.read_string(reader),
