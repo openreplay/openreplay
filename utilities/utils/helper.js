@@ -149,7 +149,7 @@ const getValue = function (obj, key) {
             }
 
             if (val !== undefined) {
-                return val;
+                return isNaN(val) ? val : Number(val);
             }
         }
     }
