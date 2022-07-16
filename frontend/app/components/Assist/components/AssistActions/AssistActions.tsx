@@ -39,7 +39,7 @@ interface Props {
 }
 
 function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConnectionStatus, remoteControlStatus, hasPermission, isEnterprise }: Props) {
-  const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
+  const [ incomeStream, setIncomeStream ] = useState<MediaStream[] | null>([]);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ callObject, setCallObject ] = useState<{ end: ()=>void } | null >(null);
 
@@ -51,14 +51,16 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
     if (peerConnectionStatus == ConnectionStatus.Disconnected) {
       toast.info(`Live session was closed.`);
     }    
-  }, [peerConnectionStatus])
+  }, [peerConnectionStatus]);
+
+  const addIncomeStream = (stream: MediaStream) => setIncomeStream(oldState => [...oldState, stream]);
 
   function call() {
     RequestLocalStream().then(lStream => {
       setLocalStream(lStream);
       setCallObject(callPeer(
         lStream,
-        setIncomeStream,
+        addIncomeStream,
         lStream.stop.bind(lStream),
         onReject,
         onError
