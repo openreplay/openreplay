@@ -21,10 +21,8 @@ interface Props {
     loading: boolean;
     metaListLoading: boolean;
     list: List<any>;
-    // fetchLiveList: () => Promise<void>,
     applyFilter: (filter: any) => void;
     filter: any;
-    // addAttribute: (obj: any) => void,
     addFilterByKeyAndValue: (key: FilterKey, value: string) => void;
     updateCurrentPage: (page: number) => void;
     currentPage: number;
@@ -35,7 +33,7 @@ interface Props {
 }
 
 function LiveSessionList(props: Props) {
-    const { loading, metaListLoading, filter, list, currentPage, total, metaList = [], sort } = props;
+    const { loading, filter, list, currentPage, total, metaList = [] } = props;
     var timeoutId: any;
     const { filters } = filter;
     const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
@@ -45,35 +43,6 @@ function LiveSessionList(props: Props) {
             value: i,
         }))
         .toJS();
-
-    // useEffect(() => {
-    //   if (metaListLoading || metaList.size === 0 || !!filter.sort) return;
-
-    //   if (sortOptions[0]) {
-    //     props.applyFilter({ sort: sortOptions[0].value });
-    //   }
-    // }, [metaListLoading]);
-
-    // useEffect(() => {
-    //   const filteredSessions = filters.size > 0 ? props.list.filter(session => {
-    //     let hasValidFilter = true;
-    //     filters.forEach(filter => {
-    //       if (!hasValidFilter) return;
-
-    //       const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
-    //       if (filter.key === FilterKey.USERID) {
-    //         const _userId = session.userId ? session.userId.toLowerCase() : '';
-    //         hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
-    //       }
-    //       if (filter.category === FilterCategory.METADATA) {
-    //         const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
-    //         hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
-    //       }
-    //     })
-    //     return hasValidFilter;
-    //   }) : props.list;
-    //   setSessions(filteredSessions);
-    // }, [filters, list]);
 
     useEffect(() => {
         props.applyFilter({ ...filter });
@@ -117,28 +86,28 @@ function LiveSessionList(props: Props) {
                     <div className="flex items-center ml-6 mr-4">
                         <span className="mr-2 color-gray-medium">Sort By</span>
                         <Popup
-                          content="No metadata available to sort"
-                          disabled={sortOptions.length > 0}
+                            content="No metadata available to sort"
+                            disabled={sortOptions.length > 0}
                         >
-                          <div className={ cn("flex items-center", { 'disabled': sortOptions.length === 0})} >
-                            <Select
-                                plain
-                                right
-                                options={sortOptions}
-                                // defaultValue={sort.field}
-                                onChange={onSortChange}
-                                value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                            />
-                            <div className="mx-2" />
-                            <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
-                          </div>
+                            <div className={cn("flex items-center", { 'disabled': sortOptions.length === 0 })} >
+                                <Select
+                                    plain
+                                    right
+                                    options={sortOptions}
+                                    // defaultValue={sort.field}
+                                    onChange={onSortChange}
+                                    value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                                />
+                                <div className="mx-2" />
+                                <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                            </div>
                         </Popup>
                     </div>
                 </div>
             </div>
             <Loader loading={loading}>
                 <NoContent
-                    title={'No live sessions.'}
+                    title={<span>No live sessions.</span>}
                     subtext={
                         <span>
                             See how to setup the{' '}
@@ -153,7 +122,7 @@ function LiveSessionList(props: Props) {
                 >
                     <div className="bg-white p-3 rounded border">
                         {list.map((session) => (
-                            <>
+                            <React.Fragment key={session.sessionID}>
                                 <SessionItem
                                     key={session.sessionId}
                                     session={session}
@@ -163,7 +132,7 @@ function LiveSessionList(props: Props) {
                                     metaList={metaList}
                                 />
                                 <div className="border-b" />
-                            </>
+                            </React.Fragment>
                         ))}
 
                         <div className="w-full flex items-center justify-center py-6">

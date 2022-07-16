@@ -5,9 +5,9 @@ import styles from './noContent.module.css';
 export default ({
   title = <div>No data available.</div>,
   subtext,
-  icon,
+  icon = null,
   iconSize = 100,
-  size,
+  size = null,
   show = true,
   children = null,
   empty = false,

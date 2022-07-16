@@ -2,14 +2,14 @@ import Player from './Player';
 import { update, clean as cleanStore, getState } from './store';
 import { clean as cleanLists } from './lists';
 
-
 let instance = null;
 
-const initCheck = method => (...args) => {
+const initCheck = (method, assistWindow) => (...args) => {
   if (instance === null) {
     console.error("Player method called before Player have been initialized.");
     return;
   }
+  if (assistWindow)
   return method(...args);
 }
 
@@ -29,7 +29,6 @@ document.addEventListener("visibilitychange", function() {
 });
 
 export function init(session, config, live = false) {
-  // const live = session.live;
   const endTime = !live && session.duration.valueOf();
 
   instance = new Player(session, config, live);
@@ -44,6 +43,32 @@ export function init(session, config, live = false) {
   if (!document.hidden) {
     instance.play();
   }
+}
+
+export function initLocally(session, config, live = false) {
+   const endTime = !live && session.duration.valueOf();
+
+   const instance = new Player(session, config, live);
+   update({
+     initialized: true,
+     live,
+     livePlay: live,
+     endTime, // : 0, //TODO: through initialState
+     session,
+   });
+   
+   if (!document.hidden) {
+     instance.play();
+   }
+
+   function clearLocal() {
+    if (instance === null) return;
+    instance.clean();
+    cleanStore();
+    cleanLists();
+    instance = null;
+   }
+   return [instance, clearLocal];
 }
 
 export function clean() {
