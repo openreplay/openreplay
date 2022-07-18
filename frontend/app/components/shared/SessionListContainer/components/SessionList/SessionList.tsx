@@ -15,6 +15,7 @@ interface Props {
     filters: any;
     lastPlayedSessionId: string;
     metaList: any;
+    scrollY: number;
     addFilterByKeyAndValue: (key: string, value: any, operator?: string) => void;
     updateCurrentPage: (page: number) => void;
     setScrollPosition: (scrollPosition: number) => void;
@@ -25,7 +26,12 @@ function SessionList(props: Props) {
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
 
     useEffect(() => {
-        props.setScrollPosition(window.scrollY);
+        const { scrollY } = props;
+        window.scrollTo(0, scrollY);
+
+        return () => {
+            props.setScrollPosition(window.scrollY);
+        };
     }, []);
 
     const onUserClick = (userId: any) => {
@@ -87,6 +93,7 @@ export default connect(
         loading: state.getIn(['sessions', 'loading']),
         currentPage: state.getIn(['search', 'currentPage']) || 1,
         total: state.getIn(['sessions', 'total']) || 0,
+        scrollY: state.getIn(['search', 'scrollY']),
     }),
     { updateCurrentPage, addFilterByKeyAndValue, setScrollPosition }
 )(SessionList);
