@@ -23,8 +23,8 @@ function SessionList(props: Props) {
     }, []);
 
     return (
-        <div style={{ width: '45vw' }}>
-            <div className="border-r shadow h-screen" style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', minWidth: '800px' }}>
+        <div style={{ width: '50vw' }}>
+            <div className="border-r shadow h-screen" style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', minWidth: '700px' }}>
                 <div className="p-4">
                     <div className="text-2xl">
                         {props.userId}'s <span className="color-gray-medium">Live Sessions</span>{' '}
@@ -43,7 +43,7 @@ function SessionList(props: Props) {
                                             <span className="ml-2 font-medium">{session.pageTitle}</span>
                                         </div>
                                     )}
-                                    <SessionItem onClick={() => hideModal()} key={session.sessionId} session={session} showActive={session.active} />
+                                    <SessionItem onClick={() => hideModal()} key={session.sessionId} session={session} />
                                 </div>
                             ))}
                         </div>
