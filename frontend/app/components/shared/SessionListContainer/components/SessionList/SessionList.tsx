@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
@@ -16,11 +16,17 @@ interface Props {
     lastPlayedSessionId: string;
     metaList: any;
     addFilterByKeyAndValue: (key: string, value: any, operator?: string) => void;
+    updateCurrentPage: (page: number) => void;
+    setScrollPosition: (scrollPosition: number) => void;
 }
 function SessionList(props: Props) {
     const { loading, list, currentPage, total, filters, lastPlayedSessionId, metaList } = props;
     const _filterKeys = filters.map((i: any) => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
+
+    useEffect(() => {
+        props.setScrollPosition(window.scrollY);
+    }, []);
 
     const onUserClick = (userId: any) => {
         if (userId) {
@@ -57,25 +63,30 @@ function SessionList(props: Props) {
                 ))}
             </NoContent>
 
-            <div className="w-full flex items-center justify-center py-6">
-                <Pagination
-                    page={currentPage}
-                    totalPages={Math.ceil(total / 10)}
-                    onPageChange={(page) => this.props.updateCurrentPage(page)}
-                    limit={10}
-                    debounceRequest={1000}
-                />
-            </div>
+            {total > 0 && (
+                <div className="w-full flex items-center justify-center py-6">
+                    <Pagination
+                        page={currentPage}
+                        totalPages={Math.ceil(total / 10)}
+                        onPageChange={(page) => props.updateCurrentPage(page)}
+                        limit={10}
+                        debounceRequest={1000}
+                    />
+                </div>
+            )}
         </Loader>
     );
 }
 
-export default connect((state: any) => ({
-    list: state.getIn(['sessions', 'list']),
-    filters: state.getIn(['search', 'instance', 'filters']),
-    lastPlayedSessionId: state.getIn(['sessions', 'lastPlayedSessionId']),
-    metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
-    loading: state.getIn(['sessions', 'loading']),
-    currentPage: state.getIn([ 'search', 'currentPage' ]) || 1,
-    total: state.getIn([ 'sessions', 'total' ]) || 1,
-}))(SessionList);
+export default connect(
+    (state: any) => ({
+        list: state.getIn(['sessions', 'list']),
+        filters: state.getIn(['search', 'instance', 'filters']),
+        lastPlayedSessionId: state.getIn(['sessions', 'lastPlayedSessionId']),
+        metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
+        loading: state.getIn(['sessions', 'loading']),
+        currentPage: state.getIn(['search', 'currentPage']) || 1,
+        total: state.getIn(['sessions', 'total']) || 0,
+    }),
+    { updateCurrentPage, addFilterByKeyAndValue, setScrollPosition }
+)(SessionList);
