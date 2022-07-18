@@ -58,8 +58,8 @@ function TagItem({ isActive, onClick, label, icon = '', disabled = false }: any)
                     'disabled': disabled,
                 })}
             >
-                {icon && <Icon name={icon} color="teal" size="15" className={cn('group-hover:fill-white mr-2', { 'fill-white': isActive })} />}
-                <span>{label}</span>
+                {icon && <Icon name={icon} color="teal" size="14" className={cn('group-hover:fill-white mr-2', { 'fill-white': isActive })} />}
+                <span className="leading-none">{label}</span>
             </button>
         </div>
     );
