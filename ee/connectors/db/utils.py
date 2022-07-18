@@ -355,8 +355,17 @@ def get_df_from_batch(batch, level):
         df['issues'] = df['issues'].fillna('')
         df['urls'] = df['urls'].fillna('')
 
+    forced_type_cols_str = ['setnodeurlbasedattribute_name', 'setnodeurlbasedattribute_value',
+                        'setnodeurlbasedattribute_baseurl', 'setstyledata_data', 'setstyledata_baseurl',
+                        'customissue_payload', 'customissue_name', 'technicalinfo_value', 'technicalinfo_type',
+                        'issueevent_payload', 'issueevent_context', 'issueevent_contextstring', 'issueevent_type']
+    forced_type_cols_float = ['setnodeurlbasedattribute_id']
     for x in df.columns:
         try:
+            if x in forced_type_cols_str:
+                df[x] = df[x].apply(str)
+            if x in forced_type_cols_float:
+                df[x] = df[x].apply(float)
             if df[x].dtype == 'string':
                 df[x] = df[x].str.slice(0, 255)
                 df[x] = df[x].str.replace("|", "")
