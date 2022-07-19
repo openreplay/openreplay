@@ -149,7 +149,7 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp
 	if len(value) == 0 {
 		return
 	}
-	if err := conn.autocompletes.Append(tp, value, projectID); err != nil {
+	if err := conn.autocompletes.Append(value, tp, projectID); err != nil {
 		log.Printf("autocomplete bulk err: %s", err)
 	}
 }
