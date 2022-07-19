@@ -36,6 +36,11 @@ def create_tables_postgres(db):
     db.engine.execute(q)
     print(f"`connector_sessions` table created succesfully.")
 
+    #with open(base_path / 'sql' / 'postgres_events_detailed.sql') as f:
+    #    q = f.read()
+    #db.engine.execute(q)
+    #print(f"`connector_user_events_detailed` table created succesfully.")
+
 
 def create_tables_snowflake(db):
     with open(base_path / 'sql' / 'snowflake_events.sql') as f:
