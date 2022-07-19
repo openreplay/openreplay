@@ -91,7 +91,7 @@ func (c *PGCache) InsertWebFetchEvent(sessionID uint64, e *FetchEvent) error {
 	if err != nil {
 		return err
 	}
-	return c.Conn.InsertWebFetchEvent(sessionID, project.SaveRequestPayloads, e)
+	return c.Conn.InsertWebFetchEvent(sessionID, session.ProjectID, project.SaveRequestPayloads, e)
 }
 
 func (c *PGCache) InsertWebGraphQLEvent(sessionID uint64, e *GraphQLEvent) error {
@@ -103,5 +103,53 @@ func (c *PGCache) InsertWebGraphQLEvent(sessionID uint64, e *GraphQLEvent) error
 	if err != nil {
 		return err
 	}
-	return c.Conn.InsertWebGraphQLEvent(sessionID, project.SaveRequestPayloads, e)
+	return c.Conn.InsertWebGraphQLEvent(sessionID, session.ProjectID, project.SaveRequestPayloads, e)
+}
+
+func (c *PGCache) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebCustomEvent(sessionID, session.ProjectID, e)
+}
+
+func (c *PGCache) InsertWebUserID(sessionID uint64, userID *UserID) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebUserID(sessionID, session.ProjectID, userID)
+}
+
+func (c *PGCache) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *UserAnonymousID) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebUserAnonymousID(sessionID, session.ProjectID, userAnonymousID)
+}
+
+func (c *PGCache) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebPageEvent(sessionID, session.ProjectID, e)
+}
+
+func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebClickEvent(sessionID, session.ProjectID, e)
+}
+
+func (c *PGCache) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebInputEvent(sessionID, session.ProjectID, e)
 }
