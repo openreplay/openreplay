@@ -176,3 +176,13 @@ def get_general_stats():
 def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
                                           stack_integrations=True, user_id=context.user_id)}
+
+
+@app.post('/{projectId}/sessions/search2', tags=["sessions"])
+def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    if config("LEGACY_SEARCH", cast=bool, default=False):
+        data = sessions.search2_pg(data=data, project_id=projectId, user_id=context.user_id)
+    else:
+        data = sessions.search2_ch(data=data, project_id=projectId, user_id=context.user_id)
+    return {'data': data}
