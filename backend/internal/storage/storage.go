@@ -21,6 +21,7 @@ type Storage struct {
 	startBytes    []byte
 	totalSessions syncfloat64.Counter
 	sessionSize   syncfloat64.Histogram
+	readingTime   syncfloat64.Histogram
 	archivingTime syncfloat64.Histogram
 }
 
@@ -40,6 +41,10 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	if err != nil {
 		log.Printf("can't create session_size metric: %s", err)
 	}
+	readingTime, err := metrics.RegisterHistogram("reading_duration")
+	if err != nil {
+		log.Printf("can't create reading_duration metric: %s", err)
+	}
 	archivingTime, err := metrics.RegisterHistogram("archiving_duration")
 	if err != nil {
 		log.Printf("can't create archiving_duration metric: %s", err)
@@ -50,16 +55,17 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 		startBytes:    make([]byte, cfg.FileSplitSize),
 		totalSessions: totalSessions,
 		sessionSize:   sessionSize,
+		readingTime:   readingTime,
 		archivingTime: archivingTime,
 	}, nil
 }
 
 func (s *Storage) UploadKey(key string, retryCount int) error {
-	start := time.Now()
 	if retryCount <= 0 {
 		return nil
 	}
 
+	start := time.Now()
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
 		sessID, _ := strconv.ParseUint(key, 10, 64)
@@ -84,6 +90,9 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 		})
 		return nil
 	}
+	s.readingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
+
+	start = time.Now()
 	startReader := bytes.NewBuffer(s.startBytes[:nRead])
 	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
 		log.Fatalf("Storage: start upload failed.  %v\n", err)
@@ -93,6 +102,7 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
 	}
+	s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 
 	// Save metrics
 	var fileSize float64 = 0
@@ -103,7 +113,7 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 		fileSize = float64(fileInfo.Size())
 	}
 	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
-	s.archivingTime.Record(ctx, float64(time.Now().Sub(start).Milliseconds()))
+
 	s.sessionSize.Record(ctx, fileSize)
 	s.totalSessions.Add(ctx, 1)
 	return nil
