@@ -389,7 +389,6 @@ class EventType(str, Enum):
     request = "REQUEST"
     request_details = "FETCH"
     graphql = "GRAPHQL"
-    graphql_details = "GRAPHQL_DETAILS"
     state_action = "STATEACTION"
     error = "ERROR"
     click_ios = "CLICK_IOS"
@@ -568,9 +567,9 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
         elif values.get("type") == EventType.request_details:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
                 f"filters should be defined for {EventType.request_details.value}"
-        elif values.get("type") == EventType.graphql_details:
+        elif values.get("type") == EventType.graphql:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.graphql_details.value}"
+                f"filters should be defined for {EventType.graphql.value}"
 
         return values
 
