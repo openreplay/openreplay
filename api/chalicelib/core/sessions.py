@@ -390,14 +390,14 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
 def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.request_details,
-                                                                            schemas.EventType.graphql_details] \
+                                                                            schemas.EventType.graphql] \
                 or event.type in [schemas.PerformanceEventType.location_dom_complete,
                                   schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                   schemas.PerformanceEventType.location_ttfb,
                                   schemas.PerformanceEventType.location_avg_cpu_load,
                                   schemas.PerformanceEventType.location_avg_memory_usage
                                   ] and (event.source is None or len(event.source) == 0) \
-                or event.type in [schemas.EventType.request_details, schemas.EventType.graphql_details] and (
+                or event.type in [schemas.EventType.request_details, schemas.EventType.graphql] and (
                         event.filters is None or len(event.filters) == 0))
 
 
@@ -698,12 +698,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value,
                                              value_key=e_k))
-            elif event_type == events.event_type.GRAPHQL.ui_type:
-                event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
-                if not is_any:
-                    event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
-                                             value_key=e_k))
+            # elif event_type == events.event_type.GRAPHQL.ui_type:
+            #     event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
+            #     if not is_any:
+            #         event_where.append(
+            #             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
+            #                                  value_key=e_k))
             elif event_type == events.event_type.STATEACTION.ui_type:
                 event_from = event_from % f"{events.event_type.STATEACTION.table} AS main "
                 if not is_any:
@@ -891,7 +891,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         print(f"undefined FETCH filter: {f.type}")
                 if not apply:
                     continue
-            elif event_type == schemas.EventType.graphql_details:
+            elif event_type == schemas.EventType.graphql:
                 event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
                 for j, f in enumerate(event.filters):
                     is_any = _isAny_opreator(f.operator)

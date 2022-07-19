@@ -12,7 +12,7 @@ import { confirm } from 'UI';
 	site: state.getIn([ 'site', 'instance' ]),
 	sites: state.getIn([ 'site', 'list' ]),
 	siteList: state.getIn([ 'site', 'list' ]),
-	loading: state.getIn([ 'site', 'save', 'loading' ]),
+	loading: state.getIn([ 'site', 'save', 'loading' ]) || state.getIn([ 'site', 'remove', 'loading' ]),
 }), {
 	save,
 	remove,
@@ -103,9 +103,11 @@ export default class NewSiteForm extends React.PureComponent {
 						>
 							{site.exists() ? 'Update' : 'Add'}
 						</Button>
-						<Button variant="text" type="button" plain onClick={() => this.remove(site)}>
-							<Icon name="trash" size="16" />
-						</Button>
+						{site.exists() && (
+							<Button variant="text" type="button" onClick={() => this.remove(site)}>
+								<Icon name="trash" size="16" />
+							</Button>
+						)}
 					</div>
 					{ this.state.existsError &&
 						<div className={ styles.errorMessage }>
