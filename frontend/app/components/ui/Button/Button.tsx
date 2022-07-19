@@ -10,6 +10,7 @@ interface Props {
     type?: 'button' | 'submit' | 'reset';
     loading?: boolean;
     icon?: string;
+    rounded?: boolean;
     [x: string]: any;
 }
 export default (props: Props) => {
@@ -22,10 +23,12 @@ export default (props: Props) => {
         disabled = false,
         children,
         loading = false,
+        rounded = false,
         ...rest
     } = props;
 
-    const classes = ['relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap'];
+    let classes = ['relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap'];
+
     if (variant === 'default') {
         classes.push('bg-white hover:bg-gray-lightest border border-gray-light');
     }
@@ -60,6 +63,10 @@ export default (props: Props) => {
     }
     if (variant === 'text-red') {
         iconColor = 'red';
+    }
+
+    if (rounded) {
+        classes = classes.map((c) => c.replace('rounded', 'rounded-full h-10 w-10 justify-center'));
     }
 
     return (
