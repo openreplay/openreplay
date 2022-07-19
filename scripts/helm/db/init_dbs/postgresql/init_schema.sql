@@ -839,7 +839,7 @@ $$
                 project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE
             );
 
-            CREATE unique index autocomplete_unique ON autocomplete (project_id, value, type);
+            CREATE UNIQUE INDEX autocomplete_unique ON autocomplete (project_id, md5(value), type);
             CREATE index autocomplete_project_id_idx ON autocomplete (project_id);
             CREATE INDEX autocomplete_type_idx ON public.autocomplete (type);
 
