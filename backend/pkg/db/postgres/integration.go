@@ -15,7 +15,7 @@ type Integration struct {
 }
 
 func (conn *Conn) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
-	rows, err := conn.query(`
+	rows, err := conn.c.Query(`
 		SELECT project_id, provider, options, request_data
 		FROM integrations
 	`)
@@ -40,7 +40,7 @@ func (conn *Conn) IterateIntegrationsOrdered(iter func(integration *Integration,
 }
 
 func (conn *Conn) UpdateIntegrationRequestData(i *Integration) error {
-	return conn.exec(`
+	return conn.c.Exec(`
 		UPDATE integrations 
 		SET request_data = $1 
 		WHERE project_id=$2 AND provider=$3`,
