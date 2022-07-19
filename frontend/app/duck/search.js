@@ -137,13 +137,13 @@ export const reduceThenFetchResource =
         const filter = getState().getIn(['search', 'instance']).toData();
 
         const activeTab = getState().getIn(['search', 'activeTab']);
-        if (activeTab.type !== 'all' && activeTab.type !== 'bookmark') {
+        if (activeTab.type !== 'all' && activeTab.type !== 'bookmark' && activeTab.type !== 'vault') {
             const tmpFilter = filtersMap[FilterKey.ISSUE];
             tmpFilter.value = [activeTab.type];
             filter.filters = filter.filters.concat(tmpFilter);
         }
 
-        if (activeTab.type === 'bookmark') {
+        if (activeTab.type === 'bookmark' || activeTab.type === 'vault') {
             filter.bookmarked = true;
         }
 
