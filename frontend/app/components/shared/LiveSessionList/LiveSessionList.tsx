@@ -123,7 +123,7 @@ function LiveSessionList(props: Props) {
                     >
                         <div>
                             {list.map((session) => (
-                                <Fragment key={session.sessionId}>
+                                <>
                                     <SessionItem
                                         key={session.sessionId}
                                         session={session}
@@ -133,7 +133,7 @@ function LiveSessionList(props: Props) {
                                         metaList={metaList}
                                     />
                                     <div className="border-b" />
-                                </Fragment>
+                                </>
                             ))}
                         </div>
                     </NoContent>
