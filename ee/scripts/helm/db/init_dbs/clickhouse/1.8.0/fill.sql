@@ -2876,3 +2876,8 @@ SELECT session_id,
        metadata_10
 FROM massive_split.sessions_s AS s
          LEFT JOIN massive_split.metadata_s AS m ON (s.project_id = m.project_id AND s.session_id = m.session_id);
+
+
+INSERT INTO final.errors(error_id, project_id, source, name, message)
+SELECT error_id, project_id, toString(source), name, message
+FROM default.errors;

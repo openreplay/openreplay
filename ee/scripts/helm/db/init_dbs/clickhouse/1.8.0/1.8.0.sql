@@ -4,7 +4,7 @@ ALTER TABLE sessions
 
 CREATE TABLE projects_metadata
 (
-    project_id UInt32,
+    project_id UInt16,
     metadata_1 Nullable(String),
     metadata_2 Nullable(String),
     metadata_3 Nullable(String),
@@ -24,8 +24,8 @@ CREATE TABLE projects_metadata
 CREATE TABLE IF NOT EXISTS events_s
 (
     session_id                                     UInt64,
-    project_id                                     UInt32,
-    event_type Enum8('CLICK'=0, 'INPUT'=1, 'PAGE'=2,'RESOURCE'=3,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8),
+    project_id                                     UInt16,
+    event_type Enum8('CLICK'=0, 'INPUT'=1, 'PAGE'=2,'RESOURCE'=3,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8, 'GRAPHQL'=9, 'STATEACTION'=10),
     datetime                                       DateTime,
     label Nullable(String),
     hesitation_time Nullable(UInt32),
@@ -90,6 +90,8 @@ CREATE TABLE IF NOT EXISTS events_s
     success Nullable(UInt8),
     method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
     status Nullable(UInt16),
+    request_body Nullable(String),
+    response_body Nullable(String),
     _timestamp                                     DateTime DEFAULT now()
 ) ENGINE = MergeTree
       PARTITION BY toYYYYMM(datetime)
@@ -99,7 +101,7 @@ CREATE TABLE IF NOT EXISTS events_s
 CREATE TABLE IF NOT EXISTS sessions
 (
     session_id   UInt64,
-    project_id   UInt32,
+    project_id   UInt16,
     tracker_version LowCardinality(String),
     rev_id LowCardinality(Nullable(String)),
     user_uuid    UUID,
@@ -138,15 +140,31 @@ CREATE TABLE IF NOT EXISTS sessions
 
 CREATE TABLE IF NOT EXISTS autocomplete
 (
-    project_id UInt32 NOT NULL,
-    type LowCardinality(String) NOT NULL,
-    value      String NOT NULL,
+    project_id UInt16,
+    type LowCardinality(String),
+    value      String,
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id, type)
+      ORDER BY (project_id, type, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
+CREATE TABLE IF NOT EXISTS errors
+(
+    error_id   String,
+    project_id UInt16,
+    source Enum8('js_exception'=1,'bugsnag'=2,'cloudwatch'=3,'datadog'=4,'newrelic'=5,'rollbar'=6,'sentry'=7,'stackdriver'=8,'sumologic'=9, 'elasticsearch'=10),
+    name Nullable(String),
+    message    String,
+    payload    String,
+    stacktrace Nullable(String), --to save the stacktrace and not query S3 another time
+    stacktrace_parsed_at Nullable(DateTime),
+    _timestamp DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(_timestamp)
+      PARTITION BY toYYYYMMDD(_timestamp)
+      ORDER BY (project_id, source, error_id)
+      TTL _timestamp + INTERVAL 1 MONTH
+      SETTINGS index_granularity = 512;
 
 CREATE MATERIALIZED VIEW sessions_l7d_mv
             ENGINE = ReplacingMergeTree(_timestamp)
