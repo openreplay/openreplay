@@ -10,5 +10,7 @@ COPY package.json .
 COPY package-lock.json .
 RUN npm install
 COPY . .
+RUN adduser -u 1001 openreplay -D
+USER 1001
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD npm start

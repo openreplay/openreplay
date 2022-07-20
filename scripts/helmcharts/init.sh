@@ -107,8 +107,12 @@ sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPa
 sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
 sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 
+info "Setting proper permission for shared folder"
+sudo mkdir -p /openreplay/storage/nfs
+sudo chown -R 1001:1001 /openreplay/storage/nfs
+
 ## Installing OpenReplay
-info "Installing databases"
+info "installing databases"
 helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
-info "Installing application"
+info "installing application"
 helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
