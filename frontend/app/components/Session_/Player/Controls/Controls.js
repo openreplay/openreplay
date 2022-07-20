@@ -15,6 +15,7 @@ import {
   fullscreenOn,
   fullscreenOff,
   toggleBottomBlock,
+  OVERVIEW,
   CONSOLE,
   NETWORK,
   STACKEVENTS,
@@ -377,6 +378,17 @@ export default class Controls extends React.Component {
                   containerClassName="mx-2"
                 />
               )} */}
+              <ControlButton
+                // disabled={ disabled && !inspectorMode }
+                onClick={ () => toggleBottomTools(OVERVIEW) }
+                active={ bottomBlock === OVERVIEW && !inspectorMode}
+                label="OVERVIEW"
+                noIcon
+                labelClassName="!text-base font-semibold"
+                // count={ logCount }
+                // hasErrors={ logRedCount > 0 }
+                containerClassName="mx-2"
+              />
               <ControlButton
                 disabled={ disabled && !inspectorMode }
                 onClick={ () => toggleBottomTools(CONSOLE) }

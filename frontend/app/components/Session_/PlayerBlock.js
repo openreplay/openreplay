@@ -3,7 +3,7 @@ import cn from "classnames";
 import { connect } from 'react-redux';
 import {  } from 'Player';
 import {
-  NONE,
+  NONE, OVERVIEW,
 } from 'Duck/components/player';
 import Player from './Player';
 import SubHeader from './Subheader';
@@ -37,8 +37,9 @@ export default class PlayerBlock extends React.PureComponent {
           />}
         <Player
           className="flex-1"
-          bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
-          bottomBlock={bottomBlock}
+          // bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
+          bottomBlockIsActive={ true }
+          bottomBlock={OVERVIEW}
           fullscreen={fullscreen}
           activeTab={activeTab}
         />

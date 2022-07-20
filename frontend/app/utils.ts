@@ -324,8 +324,12 @@ export const fetchErrorCheck = async (response: any) => {
 export const cleanSessionFilters = (data: any) => {
     const { filters, ...rest } = data;
     const _fitlers = filters.filter((f: any) => {
-        if (f.operator === 'isAny' || f.operator === 'onAny') { return true } // ignore filter with isAny/onAny operator
-        if (Array.isArray(f.filters) && f.filters.length > 0) { return true } // ignore subfilters
+        if (f.operator === 'isAny' || f.operator === 'onAny') {
+            return true;
+        } // ignore filter with isAny/onAny operator
+        if (Array.isArray(f.filters) && f.filters.length > 0) {
+            return true;
+        } // ignore subfilters
 
         return f.value !== '' && Array.isArray(f.value) && f.value.length > 0;
     });
@@ -343,3 +347,8 @@ export const setSessionFilter = (filter: any) => {
 export const compareJsonObjects = (obj1: any, obj2: any) => {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
 };
+
+export function getTimelinePosition(value: any, scale: any) {
+    const pos = value * scale;
+    return pos > 100 ? 100 : pos;
+}
