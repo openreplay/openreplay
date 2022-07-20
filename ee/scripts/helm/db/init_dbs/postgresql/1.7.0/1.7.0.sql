@@ -56,6 +56,7 @@ ALTER TABLE IF EXISTS events.resources
         PRIMARY KEY (session_id, message_id, timestamp);
 
 COMMIT;
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_unique_project_id_md5value_type_idx ON autocomplete (project_id, md5(value), type);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS projects_tenant_id_idx ON public.projects (tenant_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
 ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'funnel';
@@ -211,4 +212,5 @@ $$
         END IF;
     END
 $$;
+DROP INDEX IF EXISTS autocomplete_unique;
 COMMIT;
