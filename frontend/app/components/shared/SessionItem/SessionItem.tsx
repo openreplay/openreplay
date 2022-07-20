@@ -109,7 +109,7 @@ function SessionItem(props: RouteComponentProps & Props) {
     <div className={ cn(stl.sessionItem, "flex flex-col p-2") } id="session-item" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start">
           <div className={ cn('flex items-center w-full')}>
-            <div className="flex items-center pr-2" style={{ width: "30%"}}>
+            <div className="flex items-center pr-2 shrink-0" style={{ width: "40%"}}>
               <div><Avatar isActive={active} seed={ userNumericHash } isAssist={isAssist} /></div>
               <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center shrink-0">
                 <div
@@ -120,8 +120,10 @@ function SessionItem(props: RouteComponentProps & Props) {
                 </div>
               </div>
             </div>
-            <div style={{ width: "30%" }} className="px-2 flex flex-col justify-between">
-              <div>{formatTimeOrDate(startedAt, timezone) }</div>
+            <div style={{ width: "20%" }} className="px-2 flex flex-col justify-between">
+              <div>
+                <TextEllipsis text={formatTimeOrDate(startedAt, timezone)} popupProps={{ inverted: true, size: 'tiny' }} />
+              </div>
               <div className="flex items-center color-gray-medium py-1">
                 {!isAssist && (
                     <>
