@@ -23,5 +23,7 @@ ARG envarg
 ENV ENTERPRISE_BUILD ${envarg}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
+RUN adduser -u 1001 openreplay -D
+USER 1001
 ENTRYPOINT ["/tini", "--"]
 CMD ./entrypoint.sh

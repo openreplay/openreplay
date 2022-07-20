@@ -69,4 +69,6 @@ RUN if [ "$SERVICE_NAME" = "http" ]; then \
 
 
 COPY --from=build /root/service /root/service
+RUN adduser -u 1001 openreplay -D
+USER 1001
 ENTRYPOINT /root/service

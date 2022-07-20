@@ -17,3 +17,11 @@ LABEL maintainer=Rajesh<rajesh@openreplay.com>
 RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 COPY --from=builder /work/public /var/www/openreplay
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+RUN chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx && \
+    chown -R nginx:nginx /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid
+
+USER nginx
