@@ -64,7 +64,7 @@ const Header = (props) => {
   }, [siteId])
 
   return (
-    <div className={ cn(styles.header) }>
+    <div className={ cn(styles.header) } style={{ height: '50px'}}>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
         <div className="relative">
           <div className="p-2">

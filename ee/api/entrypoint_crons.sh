@@ -1,4 +1,4 @@
 #!/bin/sh
 sh env_vars.sh
-source .env.override
+source /tmp/.env.override
 python app_crons.py $ACTION

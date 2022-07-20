@@ -4,7 +4,7 @@ import stl from './installDocs.module.css'
 import cn from 'classnames'
 import Highlight from 'react-highlight'
 import CircleNumber from '../../CircleNumber'
-import { Slider, CopyButton } from 'UI'
+import { CopyButton } from 'UI'
 import { Toggler } from 'UI';
 
 const installationCommand = 'npm i @openreplay/tracker'
@@ -30,8 +30,7 @@ function MyApp() {
   //...
 }`
 
-function InstallDocs({ siteId, sites }) {
-  const site = sites.find(s => s.id === siteId);
+function InstallDocs({ site }) {
   const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey)
   const _usageCodeSST = usageCodeSST.replace('PROJECT_KEY', site.projectKey)
   const [isSpa, setIsSpa] = useState(true)
@@ -98,9 +97,6 @@ function InstallDocs({ siteId, sites }) {
   )
 }
 
-// export default InstallDocs
-
 export default connect(state => ({
-  siteId: state.getIn([ 'site', 'siteId' ]),
-  sites: state.getIn([ 'site', 'list' ]),
+  site: state.getIn([ 'site', 'instance' ]),
 }))(InstallDocs)

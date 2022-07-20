@@ -241,7 +241,6 @@ def get(user_id, tenant_id):
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        api_key,
                         TRUE AS has_password
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
                     WHERE
