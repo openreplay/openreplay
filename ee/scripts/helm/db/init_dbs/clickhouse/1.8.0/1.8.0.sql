@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS sessions
     metadata_8 Nullable(String),
     metadata_9 Nullable(String),
     metadata_10 Nullable(String),
+    issue_types Array(LowCardinality(String)),
     _timestamp   DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)

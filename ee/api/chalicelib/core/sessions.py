@@ -895,8 +895,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     event_where.append(
                         _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                              event.value, value_key=e_k))
-                if event.source[0] not in [None, "*", ""]:
-                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.value, value_key=s_k))
+                if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
+                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
 
 
             # ----- IOS
@@ -1241,7 +1241,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             filter_type = f.type
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, **_multiple_values(f.value, value_key=f_k)}
+            full_args = {**full_args, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
             op = __get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.events_count] else f.operator
             is_any = _isAny_opreator(f.operator)
@@ -1432,15 +1432,15 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                          value_key=f_k))
             elif filter_type == schemas.FilterType.issue:
                 if is_any:
-                    extra_constraints.append("array_length(s.issue_types, 1) > 0")
-                    ss_constraints.append("array_length(ms.issue_types, 1) > 0")
+                    extra_constraints.append("notEmpty(s.issue_types)")
+                    ss_constraints.append("notEmpty(ms.issue_types)")
                 else:
-                    extra_constraints.append(
-                        _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
-                                             value_key=f_k))
-                    ss_constraints.append(
-                        _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                    extra_constraints.append(f"hasAny(s.issue_types,%({f_k})s)")
+                    # _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                    #                      value_key=f_k))
+                    ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
+                    #     _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                    #                          value_key=f_k))
             elif filter_type == schemas.FilterType.events_count:
                 extra_constraints.append(
                     _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
@@ -1457,6 +1457,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                                 FROM final.sessions AS s
                                                 WHERE {" AND ".join(extra_constraints)})""")
     # ---------------------------------------------------------------------------
+    events_extra_join = ""
     if len(data.events) > 0:
         valid_events_count = 0
         for event in data.events:
@@ -1485,7 +1486,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 op = __reverse_sql_operator(op)
             # if event_index == 0 or or_events:
             # event_from = "%s INNER JOIN final.sessions AS ms USING (session_id)"
-            event_from = "%s"
+            event_from = "TAHA %s"
             event_where = ["main.project_id = %(projectId)s",
                            "main.datetime >= toDateTime(%(startDate)s/1000)",
                            "main.datetime <= toDateTime(%(endDate)s/1000)"]
@@ -1577,8 +1578,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                              event.value, value_key=e_k))
                     events_conditions[-1]["condition"] = event_where[-1]
             elif event_type == events.event_type.ERROR.ui_type:
-
-                event_from = event_from % f"final.events AS main INNER JOIN final.errors AS main1 USING(error_id)"
+                event_from = event_from % f"final.events AS main"
+                events_extra_join = "SELECT * FROM final.errors AS main1 WHERE main1.project_id=%(project_id)s"
                 event_where.append(f"main.event_type='ERROR'")
                 events_conditions.append({"type": event_where[-1]})
                 event.source = tuple(event.source)
@@ -1588,9 +1589,12 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                         _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                              event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
-                if event.source[0] not in [None, "*", ""]:
-                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.value, value_key=s_k))
+                    events_extra_join += f" AND {event_where[-1]}"
+                if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
+                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
+                    events_extra_join += f" AND {event_where[-1]}"
+
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
             elif event_type == schemas.PerformanceEventType.fetch_failed:
@@ -1810,13 +1814,16 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
 
         if event_index < 2:
             data.events_order = schemas.SearchEventOrder._or
+        if len(events_extra_join) > 0:
+            if event_index < 2:
+                events_extra_join = f"INNER JOIN ({events_extra_join}) AS main1 USING(error_id)"
+            else:
+                events_extra_join = f"LEFT JOIN ({events_extra_join}) AS main1 USING(error_id)"
         if favorite_only and user_id is not None:
             events_conditions_where.append("""main.session_id IN (SELECT session_id
                                                         FROM final.user_favorite_sessions
                                                         WHERE user_id = %(userId)s)""")
-        for e in events_conditions:
-            print(e)
-            print("---")
+
         if data.events_order in [schemas.SearchEventOrder._then, schemas.SearchEventOrder._and]:
             events_conditions_where.append(f"({' OR '.join([c['type'] for c in events_conditions])})")
             events_conditions_where.append(f"({' OR '.join([c['condition'] for c in events_conditions])})")
@@ -1830,18 +1837,19 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
                                         MAX(main.datetime) AS last_event_ts
-                                    FROM final.events AS main
+                                    FROM final.events AS main {events_extra_join}
                                     WHERE {" AND ".join(events_conditions_where)}
                                     GROUP BY session_id
                                     {having}"""
         else:
+            print(">>>>MOM")
             events_conditions_where.append(f"({' OR '.join([c['type'] for c in events_conditions])})")
             events_conditions = [c['type'] + ' AND ' + c['condition'] for c in events_conditions]
             events_conditions_where.append(f"({' OR '.join(events_conditions)})")
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
                                         MAX(main.datetime) AS last_event_ts
-                                    FROM final.events AS main
+                                    FROM final.events AS main {events_extra_join}
                                     WHERE {" AND ".join(events_conditions_where)}
                                     GROUP BY session_id"""
     else:
