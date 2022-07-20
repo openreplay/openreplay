@@ -24,6 +24,16 @@ def create_tables_clickhouse(db):
     db.engine.execute(q)
     print(f"`connector_sessions_buffer` table created succesfully.")
 
+    #with open(base_path / 'sql' / 'clickhouse_events_detailed.sql') as f:
+    #    q = f.read()
+    #db.engine.execute(q)
+    #print(f"`connector_user_events_detailed` table created succesfully.")
+
+    #with open(base_path / 'sql' / 'clickhouse_events_detailed_buffer.sql') as f:
+    #    q = f.read()
+    #db.engine.execute(q)
+    #print(f"`connector_user_events_detailed_buffer` table created succesfully.")
+
 
 def create_tables_postgres(db):
     with open(base_path / 'sql' / 'postgres_events.sql') as f:

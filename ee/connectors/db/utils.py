@@ -264,7 +264,24 @@ dtypes_detailed_events = {
     "vuex_mutation": "object",
     "vuex_state": "string",
     "received_at": "Int64",
-    "batch_order_number": "Int64"
+    "batch_order_number": "Int64",
+
+    #NEW
+    'setnodeurlbasedattribute_id': 'Int64',
+    'setnodeurlbasedattribute_name': 'string',
+    'setnodeurlbasedattribute_value': 'string',
+    'setnodeurlbasedattribute_baseurl': 'string',
+    'setstyledata_id': 'Int64',
+    'setstyledata_data': 'string',
+    'setstyledata_baseurl': 'string',
+    'customissue_payload': 'string',
+    'customissue_name': 'string',
+    'technicalinfo_value': 'string',
+    'technicalinfo_type': 'string',
+    'issueevent_payload': 'string',
+    'issueevent_context': 'string',
+    'issueevent_contextstring': 'string',
+    'issueevent_type': 'string'
 }
 dtypes_sessions = {'sessionid': 'Int64',
                    'user_agent': 'string',
@@ -355,17 +372,8 @@ def get_df_from_batch(batch, level):
         df['issues'] = df['issues'].fillna('')
         df['urls'] = df['urls'].fillna('')
 
-    forced_type_cols_str = ['setnodeurlbasedattribute_name', 'setnodeurlbasedattribute_value',
-                        'setnodeurlbasedattribute_baseurl', 'setstyledata_data', 'setstyledata_baseurl',
-                        'customissue_payload', 'customissue_name', 'technicalinfo_value', 'technicalinfo_type',
-                        'issueevent_payload', 'issueevent_context', 'issueevent_contextstring', 'issueevent_type']
-    forced_type_cols_float = ['setnodeurlbasedattribute_id']
     for x in df.columns:
         try:
-            if x in forced_type_cols_str:
-                df[x] = df[x].apply(str)
-            if x in forced_type_cols_float:
-                df[x] = df[x].apply(float)
             if df[x].dtype == 'string':
                 df[x] = df[x].str.slice(0, 255)
                 df[x] = df[x].str.replace("|", "")
