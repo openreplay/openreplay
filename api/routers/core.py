@@ -1171,4 +1171,5 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
 @public_app.put('/', tags=["health"])
 @public_app.delete('/', tags=["health"])
 def health_check():
-    return {"data": f"live {config('version_number', default='')}"}
+    return {"data": {"stage": f"live {config('version_number', default='')}",
+                     "internalCrons": config("LOCAL_CRONS", default=False, cast=bool)}}
