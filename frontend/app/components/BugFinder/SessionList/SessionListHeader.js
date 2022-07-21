@@ -4,7 +4,10 @@ import SortDropdown from '../Filters/SortDropdown';
 import { numberWithCommas } from 'App/utils';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { applyFilter } from 'Duck/search';
-import Period from 'Types/app/period';
+import Record from 'Types/app/period';
+import { useStore } from 'App/mstore';
+import { useObserver } from 'mobx-react-lite';
+import { moment } from 'App/dateRange';
 
 const sortOptionsMap = {
     'startTs-desc': 'Newest',
@@ -15,13 +18,30 @@ const sortOptionsMap = {
 const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({ value, label }));
 
 function SessionListHeader({ activeTab, count, applyFilter, filter }) {
+    const { settingsStore } = useStore();
+
+    const label = useObserver(() => settingsStore.sessionSettings.timezone.label);
+    const getTimeZoneOffset = React.useCallback(() => {
+        return label.slice(-6);
+    }, [label]);
+
     const { startDate, endDate, rangeValue } = filter;
-    const period = new Period({ start: startDate, end: endDate, rangeName: rangeValue });
+    const period = new Record({ start: startDate, end: endDate, rangeName: rangeValue });
 
     const onDateChange = (e) => {
         const dateValues = e.toJSON();
+        dateValues.startDate = moment(dateValues.startDate).utcOffset(getTimeZoneOffset(), true).valueOf();
+        dateValues.endDate = moment(dateValues.endDate).utcOffset(getTimeZoneOffset(), true).valueOf();
         applyFilter(dateValues);
     };
+
+    React.useEffect(() => {
+        const dateValues = period.toJSON();
+        dateValues.startDate = moment(dateValues.startDate).startOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
+        dateValues.endDate = moment(dateValues.endDate).endOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
+        applyFilter(dateValues);
+    }, [label]);
+
     return (
         <div className="flex mb-2 justify-between items-end">
             <div className="flex items-baseline">
@@ -32,7 +52,7 @@ function SessionListHeader({ activeTab, count, applyFilter, filter }) {
                 {
                     <div className="ml-3 flex items-center">
                         <span className="mr-2 color-gray-medium">Sessions Captured in</span>
-                        <SelectDateRange period={period} onChange={onDateChange} />
+                        <SelectDateRange period={period} onChange={onDateChange} timezone={getTimeZoneOffset()} />
                     </div>
                 }
             </div>
