@@ -14,6 +14,7 @@ spec:
           containers:
           - name: efs-cleaner
             image: alpine
+            image: "{{ tpl .Values.efsCleaner.image.repository . }}:{{ .Values.efsCleaner.image.tag | default .Chart.AppVersion }}"
             command:
             - /bin/sh
             - -c
