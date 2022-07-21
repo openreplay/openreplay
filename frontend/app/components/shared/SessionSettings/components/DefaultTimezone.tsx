@@ -8,36 +8,10 @@ import { toast } from 'react-toastify';
 
 type TimezonesDropdown = Timezone[]
 
-const generateGMTZones = (): TimezonesDropdown => {
-    const timezones: TimezonesDropdown = []
-
-    const positiveNumbers = [...Array(12).keys()];
-    const negativeNumbers = [...Array(12).keys()].reverse();
-    negativeNumbers.pop(); // remove trailing zero since we have one in positive numbers array
-
-    const combinedArray = [...negativeNumbers, ...positiveNumbers];
-
-    for (let i = 0; i < combinedArray.length; i++) {
-        let symbol = i < 11 ? '-' : '+';
-        let isUTC = i === 11
-        let prefix = isUTC ? 'UTC / GMT' : 'GMT';
-        let value = String(combinedArray[i]).padStart(2, '0');
-
-        let tz = `${prefix} ${symbol}${String(combinedArray[i]).padStart(2, '0')}:00`
-
-        let dropdownValue = `UTC${symbol}${value}`
-        timezones.push({ label: tz, value: isUTC ? 'UTC' : dropdownValue })
-    }
-
-    timezones.splice(17, 0, { label: 'GMT +05:30', value: 'UTC+05:30' })
-    return timezones
-}
-
-const timezoneOptions: TimezonesDropdown = [...generateGMTZones()]
-
 function DefaultTimezone() {
     const [changed, setChanged] = React.useState(false);
     const { settingsStore } = useStore();
+    const timezoneOptions: TimezonesDropdown = settingsStore.sessionSettings.defaultTimezones;
     const [timezone, setTimezone] = React.useState(settingsStore.sessionSettings.timezone);
     const sessionSettings = useObserver(() => settingsStore.sessionSettings);
 
