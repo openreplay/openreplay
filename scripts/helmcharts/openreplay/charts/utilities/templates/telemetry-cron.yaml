@@ -10,6 +10,7 @@ spec:
   successfulJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      backoffLimit: 0 # Don't restart the failed jobs
       template:
         spec:
           restartPolicy: Never
