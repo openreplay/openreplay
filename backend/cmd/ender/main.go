@@ -82,9 +82,19 @@ func main() {
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
-				if err := pg.InsertSessionEnd(sessionID, msg.Timestamp); err != nil {
+				currDuration, err := pg.GetSessionDuration(sessionID)
+				if err != nil {
+					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
+				}
+				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
+				if err != nil {
 					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
 					return false
+				}
+				if currDuration == newDuration {
+					log.Printf("sessionEnd duplicate, sessID: %d, prevDur: %d, newDur: %d", sessionID,
+						currDuration, newDuration)
+					return true
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
 					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
