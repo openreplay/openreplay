@@ -92,6 +92,20 @@ nginx-ingress:
     # Overrides the image tag whose default is the chart appVersion.
     tag: "buster"
 
+# Running sink and storage as non root users, because of existing volume permission change will take time
+sink:
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+    fsGroupChangePolicy: "OnRootMismatch"
+storage:
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+    fsGroupChangePolicy: "OnRootMismatch"
+
 ingress-nginx:
   enabled: true
   controller:
