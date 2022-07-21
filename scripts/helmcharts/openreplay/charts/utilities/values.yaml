@@ -4,9 +4,11 @@
 
 replicaCount: 1
 
-image:
-  repository: "{{ .Values.global.openReplayContainerRegistry }}/utilities"
-  pullPolicy: Always
+efsCleaner:
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/alpine"
+    pullPolicy: Always
+    tag: 3.16.1
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
