@@ -92,7 +92,7 @@ func main() {
 					return false
 				}
 				if currDuration == newDuration {
-					log.Printf("sessionEnd duplicate")
+					log.Printf("sessionEnd duplicate, sessID: %d", sessionID)
 					return true
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
