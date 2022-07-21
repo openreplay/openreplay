@@ -103,3 +103,4 @@ ingress-nginx:
       ## use *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail
       ## repository:
       tag: "v1.3.0"
+      digest: ""
