@@ -32,7 +32,8 @@ func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) er
 }
 
 func (c *PGCache) InsertIOSSessionEnd(sessionID uint64, e *IOSSessionEnd) error {
-	return c.InsertSessionEnd(sessionID, e.Timestamp)
+	_, err := c.InsertSessionEnd(sessionID, e.Timestamp)
+	return err
 }
 
 func (c *PGCache) InsertIOSScreenEnter(sessionID uint64, screenEnter *IOSScreenEnter) error {
