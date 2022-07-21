@@ -84,7 +84,7 @@ func main() {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
 				currDuration, err := pg.GetSessionDuration(sessionID)
 				if err != nil {
-					log.Printf("getSessionDuration, sessID: %d, err: %s", sessionID, err)
+					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
 				}
 				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
 				if err != nil {
@@ -92,7 +92,8 @@ func main() {
 					return false
 				}
 				if currDuration == newDuration {
-					log.Printf("sessionEnd duplicate, sessID: %d", sessionID)
+					log.Printf("sessionEnd duplicate, sessID: %d, prevDur: %d, newDur: %d", sessionID,
+						currDuration, newDuration)
 					return true
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
