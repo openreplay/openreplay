@@ -7,11 +7,10 @@ $$ LANGUAGE sql IMMUTABLE;
 
 COMMIT;
 
-CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_unique_m ON autocomplete (project_id, md5(value), type);
+CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_unique_project_id_md5value_type_idx ON autocomplete (project_id, md5(value), type);
 
 BEGIN;
 
 DROP INDEX IF EXISTS autocomplete_unique;
-ALTER INDEX IF EXISTS autocomplete_unique_m RENAME TO autocomplete_unique;
 
 COMMIT;
