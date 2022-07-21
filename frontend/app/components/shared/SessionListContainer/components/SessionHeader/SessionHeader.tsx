@@ -31,7 +31,7 @@ function SessionHeader(props: Props) {
             </div>
 
             <div className="flex items-center">
-                <SelectDateRange period={period} onChange={onDateChange} />
+                <SelectDateRange period={period} onChange={onDateChange} right={true} />
                 <div className="mx-2" />
                 <SessionSort />
             </div>
