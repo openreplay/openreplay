@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS events_s
     load_event_start Nullable(UInt16),
     load_event_end Nullable(UInt16),
     first_paint Nullable(UInt16),
-    first_contentful_paint Nullable(UInt16),
+    first_contentful_paint_time Nullable(UInt16),
     speed_index Nullable(UInt16),
     visually_complete Nullable(UInt16),
     time_to_interactive Nullable(UInt16),

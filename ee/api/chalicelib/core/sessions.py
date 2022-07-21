@@ -50,6 +50,7 @@ s.errors_count AS errors_count,
 s.user_anonymous_id AS user_anonymous_id,
 s.platform AS platform,
 0 AS issue_score,
+s.issue_types AS issue_types,
 -- ,
 -- to_jsonb(s.issue_types) AS issue_types,
 isNotNull(favorite_sessions.session_id) AS favorite,
@@ -1441,6 +1442,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     ss_constraints.append(f"hasAny(ms.issue_types,%({f_k})s)")
                     #     _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
                     #                          value_key=f_k))
+                    if is_not:
+                        extra_constraints[-1] = f"not({extra_constraints[-1]})"
+                        ss_constraints[-1] = f"not({ss_constraints[-1]})"
             elif filter_type == schemas.FilterType.events_count:
                 extra_constraints.append(
                     _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
@@ -1598,14 +1602,21 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
             elif event_type == schemas.PerformanceEventType.fetch_failed:
-                event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                event_from = event_from % f"final.events AS main "
+                event_where.append(f"main.event_type='REQUEST'")
+                events_conditions.append({"type": event_where[-1]})
+                events_conditions[-1]["condition"] = []
                 if not is_any:
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s",
                                              event.value, value_key=e_k))
+                    events_conditions[-1]["condition"].append(event_where[-1])
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
-                event_where.append(f"main.{colname} = FALSE")
+                event_where.append(f"main.{colname} = 0")
+                events_conditions[-1]["condition"].append(event_where[-1])
+                events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
+
             # elif event_type == schemas.PerformanceEventType.fetch_duration:
             #     event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
             #     if not is_any:
@@ -1626,7 +1637,10 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                 schemas.PerformanceEventType.location_avg_cpu_load,
                                 schemas.PerformanceEventType.location_avg_memory_usage
                                 ]:
-                event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
+                event_from = event_from % f"final.events AS main "
+                event_where.append(f"main.event_type='PAGE'")
+                events_conditions.append({"type": event_where[-1]})
+                events_conditions[-1]["condition"] = []
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
                 tname = "main"
@@ -1639,12 +1653,15 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
                                              event.value, value_key=e_k))
+                    events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
                 full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
-                event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
+                event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
                                    _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
                                                         event.source, value_key=e_k))
+                events_conditions[-1]["condition"].append(event_where[-1])
+                events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
                 if not isinstance(event.value[0].value, list):

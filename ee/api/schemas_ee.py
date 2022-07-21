@@ -43,3 +43,27 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
+
+
+class SessionModel(BaseModel):
+    viewed: bool = Field(default=False)
+    userId: Optional[str]
+    userOs: str
+    duration: int
+    favorite: bool = Field(default=False)
+    platform: str
+    startTs: int
+    userUuid: str
+    projectId: int
+    sessionId: str
+    issueScore: int
+    issueTypes: List[schemas.IssueType] = Field(default=[])
+    pagesCount: int
+    userDevice: Optional[str]
+    errorsCount: int
+    eventsCount: int
+    userBrowser: str
+    userCountry: str
+    userDeviceType: str
+    userAnonymousId: Optional[str]
+    metadata: dict = Field(default={})
