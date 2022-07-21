@@ -73,24 +73,27 @@ export default class Exceptions extends React.PureComponent {
         />
         <BottomBlock>
           <BottomBlock.Header>
-            <Input
-              // className="input-small"
-              placeholder="Filter by name or message"
-              icon="search"
-              iconPosition="left"
-              name="filter"
-              onChange={ this.onFilterChange }
-            />
-            <div className="mr-8">
-            <QuestionMarkHint
-              onHover={true}
-              content={ 
-                <>
-                  <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/installation/upload-sourcemaps">Upload Source Maps </a>
-                  and see source code context obtained from stack traces in their original form.
-                </>
-              }
-            />
+            <div></div>
+            <div className="flex items-center">
+              <Input
+                // className="input-small"
+                placeholder="Filter by name or message"
+                icon="search"
+                iconPosition="left"
+                name="filter"
+                onChange={ this.onFilterChange }
+              />
+              <div className="mx-4">
+                <QuestionMarkHint
+                  onHover={true}
+                  content={ 
+                    <>
+                      <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/installation/upload-sourcemaps">Upload Source Maps </a>
+                      and see source code context obtained from stack traces in their original form.
+                    </>
+                  }
+                />
+              </div>
             </div>
           </BottomBlock.Header>
           <BottomBlock.Content>

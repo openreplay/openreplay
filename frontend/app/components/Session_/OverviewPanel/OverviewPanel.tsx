@@ -1,5 +1,5 @@
-import { connectPlayer } from 'App/player';
-import React from 'react';
+import { connectPlayer, Controls } from 'App/player';
+import React, { useEffect } from 'react';
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
 import { TYPES } from 'Types/session/event';
@@ -23,43 +23,99 @@ function OverviewPanel(props: Props) {
     const innerRef = React.createRef<HTMLDivElement>();
     const scale = 100 / endTime;
 
+    const createEventClickHandler = (pointer: any) => (e: any) => {
+        console.log('here...');
+        e.stopPropagation();
+        Controls.jump(pointer.time);
+        // props.setTimelinePointer(pointer);
+    };
+
     let width = 100;
     const SPEED = 5;
-
-    const onWheel = (e: React.UIEvent<HTMLDivElement>) => {
+    const onWheel = (e: any) => {
         e.preventDefault();
         e.stopPropagation();
-        const delta = e.deltaY;
-        if (delta > 0) {
-            width += SPEED;
-        } else {
-            width -= SPEED;
+        // console.log('e', e)
+
+        // horizontal
+        if (e.deltaX != '-0') {
+            // e.preventDefault();
+            console.log('e.deltaX', e.deltaX);
         }
-        if (width < 100) {
-            width = 100;
-        }
-        if (innerRef.current) {
-            innerRef.current.style.width = width + '%';
-            if (containerRef.current) {
-                containerRef.current.style.left = (100 - width) / 2 + '%';
+        // Vertical
+        if (e.deltaY != '-0') {
+            console.log('e.deltaY', e.deltaY);
+            // e.preventDefault();
+            const delta = e.deltaY;
+            if (delta > 0) {
+                width += SPEED;
+            } else {
+                width -= SPEED;
+            }
+            if (width < 100) {
+                width = 100;
+            }
+
+            if (innerRef.current) {
+                innerRef.current.style.width = width + '%';
+                if (containerRef.current) {
+                    containerRef.current.style.left = (100 - width) / 2 + '%';
+                }
             }
         }
     };
 
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.addEventListener('wheel', onWheel, { passive: false });
+        }
+
+        return () => {
+            if (containerRef.current) {
+                containerRef.current.removeEventListener('wheel', onWheel);
+            }
+        };
+    }, []);
+
     const renderNetworkElement = (item: any) => {
-        return <div className="h-2 w-2 rounded-full bg-red" />;
+        return (
+            <Tooltip
+                html={
+                    <div className={stl.popup}>
+                        <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
+                        <br />
+                        {item.name}
+                    </div>
+                }
+                delay={0}
+                position="top"
+            >
+                <div onClick={createEventClickHandler(item)} className="cursor-pointer">
+                    <div className="h-2 w-2 rounded-full bg-red" onClick={createEventClickHandler(item)} />
+                </div>
+            </Tooltip>
+        );
     };
 
     const renderClickRageElement = (item: any) => {
         return (
-            <div className="">
-                <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" />
-            </div>
+            <Tooltip
+                html={
+                    <div className={stl.popup}>
+                        <b>{'Click Rage'}</b>
+                    </div>
+                }
+                delay={0}
+                position="top"
+            >
+                <div onClick={createEventClickHandler(item)} className="cursor-pointer">
+                    <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" onClick={createEventClickHandler(item)} />
+                </div>
+            </Tooltip>
         );
     };
 
     const renderExceptionElement = (item: any) => {
-        // console.log('item', item);
         return (
             <Tooltip
                 html={
@@ -72,17 +128,17 @@ function OverviewPanel(props: Props) {
                 delay={0}
                 position="top"
             >
-                <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" />
+                <div onClick={createEventClickHandler(item)} className="cursor-pointer">
+                    <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" />
+                </div>
             </Tooltip>
         );
     };
 
     return (
-        <BottomBlock style={{ height: '300px' }}>
+        <BottomBlock style={{ height: '240px' }}>
             <BottomBlock.Header>
-                <div className="flex items-center">
-                    <span className="font-semibold color-gray-medium mr-4">Overview</span>
-                </div>
+                <span className="font-semibold color-gray-medium mr-4">Overview</span>
             </BottomBlock.Header>
             <BottomBlock.Content>
                 <div className="overflow-x-auto overflow-y-hidden bg-gray-lightest px-4" ref={containerRef}>
@@ -101,7 +157,7 @@ function OverviewPanel(props: Props) {
 }
 
 export default connectPlayer((state: any) => ({
-    resourceList: state.resourceList,
+    resourceList: state.resourceList.filter((r: any) => r.isRed() || r.isYellow()),
     exceptionsList: state.exceptionsList,
     eventsList: state.eventList,
     endTime: state.endTime,
@@ -112,5 +168,5 @@ const VerticalPointerLine = connectPlayer((state: any) => ({
     scale: 100 / state.endTime,
 }))(({ time, scale }: any) => {
     const left = time * scale;
-    return <div className="absolute border-r border-red border-dotted z-10" style={{ left: `${left}%`, height: '250px', width: '1px' }} />;
+    return <div className="absolute border-r border-teal border-dashed z-10" style={{ left: `${left}%`, height: '250px', width: '1px' }} />;
 });

@@ -37,9 +37,9 @@ export default class PlayerBlock extends React.PureComponent {
           />}
         <Player
           className="flex-1"
-          // bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
-          bottomBlockIsActive={ true }
-          bottomBlock={OVERVIEW}
+          bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
+          // bottomBlockIsActive={ true }
+          bottomBlock={bottomBlock}
           fullscreen={fullscreen}
           activeTab={activeTab}
         />

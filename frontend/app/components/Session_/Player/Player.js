@@ -106,7 +106,7 @@ export default class Player extends React.PureComponent {
         </div>
         { !fullscreen && !!bottomBlock &&
           <div style={{ maxWidth, width: '100%' }}>
-            { //bottomBlock === OVERVIEW &&
+            { bottomBlock === OVERVIEW &&
                <OverviewPanel />
             }
             { bottomBlock === CONSOLE &&

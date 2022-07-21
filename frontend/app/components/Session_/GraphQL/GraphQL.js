@@ -85,7 +85,7 @@ export default class GraphQL extends React.PureComponent {
         />
         <BottomBlock>
           <BottomBlock.Header>
-            <h4 className="text-lg">GraphQL</h4>
+            <span className="font-semibold color-gray-medium mr-4">GraphQL</span>
             <div className="flex items-center">
               <Input
                 // className="input-small"
