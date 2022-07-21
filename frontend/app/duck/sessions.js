@@ -67,8 +67,8 @@ const reducer = (state = initialState, action = {}) => {
     switch (action.type) {
         case INIT:
             return state.set('current', Session(action.session));
-        case FETCH_LIST.REQUEST:
-            return action.clear ? state.set('list', List()) : state;
+        // case FETCH_LIST.REQUEST:
+        //     return action.clear ? state.set('list', List()) : state;
         case FETCH_ERROR_STACK.SUCCESS:
             return state.set('errorStack', List(action.data.trace).map(ErrorStack)).set('sourcemapUploaded', action.data.sourcemapUploaded);
         case FETCH_LIVE_LIST.SUCCESS:
@@ -224,7 +224,7 @@ function init(session) {
 }
 
 export const fetchList =
-    (params = {}, clear = false, force = false) =>
+    (params = {}, force = false) =>
     (dispatch, getState) => {
         if (!force) { // compare with the last fetched filter
             const oldFilters = getSessionFilter();
@@ -237,7 +237,6 @@ export const fetchList =
         return dispatch({
             types: FETCH_LIST.toArray(),
             call: (client) => client.post('/sessions/search2', params),
-            clear,
             params: cleanParams(params),
         });
     };

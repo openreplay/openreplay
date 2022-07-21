@@ -20,5 +20,8 @@ WORKDIR /work
 COPY . .
 RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/.
 
+RUN adduser -u 1001 openreplay -D
+USER 1001
+
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ./entrypoint.sh
