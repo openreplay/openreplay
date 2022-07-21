@@ -32,17 +32,17 @@ spec:
             - mountPath: /mnt/efs
               name: datadir
           restartPolicy: Never
-          {{- if eq .Values.pvc.name "hostPath" }}
+          {{- if eq .Values.efsCleaner.pvc.name "hostPath" }}
           volumes:
           - name: datadir
             hostPath:
               # Ensure the file directory is created.
-              path: {{ .Values.pvc.hostMountPath }}
+              path: {{ .Values.efsCleaner.pvc.hostMountPath }}
               type: DirectoryOrCreate
           {{- else }}
           volumes:
           - name: datadir
             persistentVolumeClaim:
-              claimName: {{ .Values.pvc.name }}
+              claimName: {{ .Values.efsCleaner.pvc.name }}
           {{- end }}
 
