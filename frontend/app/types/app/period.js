@@ -120,7 +120,16 @@ export default Record(
                     endTimestamp: this.end,
                 };
             },
-            rangeFormatted(format = "MMM Do YY, HH:mm") {
+            rangeFormatted(format = "MMM Do YY, HH:mm", tz) {
+                if (tz) {
+                    const start = this.range.start.clone();
+                    const end = this.range.end.clone();
+                    return (
+                        start.utcOffset(tz).format(format) +
+                        " - " +
+                        end.utcOffset(tz).format(format)
+                    )
+                }
                 return (
                     this.range.start.format(format) +
                     " - " +
