@@ -63,7 +63,8 @@ func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error
 }
 
 func (c *PGCache) InsertWebSessionEnd(sessionID uint64, e *SessionEnd) error {
-	return c.InsertSessionEnd(sessionID, e.Timestamp)
+	_, err := c.InsertSessionEnd(sessionID, e.Timestamp)
+	return err
 }
 
 func (c *PGCache) HandleWebSessionEnd(sessionID uint64, e *SessionEnd) error {
