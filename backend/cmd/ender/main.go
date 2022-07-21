@@ -84,7 +84,7 @@ func main() {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
 				currDuration, err := pg.GetSessionDuration(sessionID)
 				if err != nil {
-					log.Printf("getSessionDuration err: %s", err)
+					log.Printf("getSessionDuration, sessID: %d, err: %s", sessionID, err)
 				}
 				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
 				if err != nil {

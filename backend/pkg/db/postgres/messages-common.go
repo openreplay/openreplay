@@ -62,7 +62,7 @@ func (conn *Conn) HandleSessionStart(sessionID uint64, s *types.Session) error {
 
 func (conn *Conn) GetSessionDuration(sessionID uint64) (uint64, error) {
 	var dur uint64
-	if err := conn.c.QueryRow("SELECT duration FROM sessions WHERE session_id=$1", sessionID).Scan(&dur); err != nil {
+	if err := conn.c.QueryRow("SELECT COALESCE( duration, 0 ) FROM sessions WHERE session_id=$1", sessionID).Scan(&dur); err != nil {
 		return 0, err
 	}
 	return dur, nil
