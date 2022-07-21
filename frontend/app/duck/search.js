@@ -150,6 +150,7 @@ export const reduceThenFetchResource =
         filter.filters = filter.filters.map(filterMap);
         filter.limit = 10;
         filter.page = getState().getIn(['search', 'currentPage']);
+        const forceFetch = filter.filters.length === 0;
 
         // duration filter from local storage
         if (!filter.filters.find((f) => f.type === FilterKey.DURATION)) {
@@ -172,7 +173,7 @@ export const reduceThenFetchResource =
             }
         }
 
-        return isRoute(ERRORS_ROUTE, window.location.pathname) ? dispatch(fetchErrorsList(filter)) : dispatch(fetchSessionList(filter));
+        return isRoute(ERRORS_ROUTE, window.location.pathname) ? dispatch(fetchErrorsList(filter)) : dispatch(fetchSessionList(filter, forceFetch));
     };
 
 export const edit = reduceThenFetchResource((instance) => ({
