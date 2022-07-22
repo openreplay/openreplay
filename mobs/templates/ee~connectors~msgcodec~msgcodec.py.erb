@@ -1,0 +1,29 @@
+# Auto-generated, do not edit
+
+from msgcodec.codec import Codec
+from msgcodec.messages import *
+
+class MessageCodec(Codec):
+
+    def read_message_id(self, reader: io.BytesIO) -> int:
+        """
+        Read and return the first byte where the message id is encoded
+        """
+        id_ = self.read_uint(reader)
+        return id_
+
+    def encode(self, m: Message) -> bytes:
+        ...
+
+    def decode(self, b: bytes) -> Message:
+        reader = io.BytesIO(b)
+        message_id = self.read_message_id(reader)
+<% $messages.each do |msg| %>
+        if message_id == <%= msg.id %>:
+            return <%= msg.name %>(
+                <%= msg.attributes.map { |attr| 
+                    "#{attr.name.underscore}=self.read_#{attr.type.to_s}(reader)" }
+                    .join ",\n                "
+                %>
+            )
+<% end %>
