@@ -1,0 +1,13 @@
+// Auto-generated, do not edit
+
+import type { Timed } from './timed'
+import type { RawMessage } from './raw'
+import type { 
+<%= $messages.select { |msg| msg.js || msg.replayer }.map { |msg| "  Raw#{msg.name.underscore.camel_case}," }.join "\n" %>
+} from './raw'
+
+export type Message = RawMessage & Timed
+
+<% $messages.select { |msg| msg.js || msg.replayer }.each do |msg| %>
+export type <%= msg.name.underscore.camel_case %> = Raw<%= msg.name.underscore.camel_case %> & Timed
+<% end %>
