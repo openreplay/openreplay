@@ -18,6 +18,7 @@ RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/al
 COPY --from=builder /work/public /var/www/openreplay
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+EXPOSE 8080
 RUN chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d && \

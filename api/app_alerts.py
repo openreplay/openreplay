@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from chalicelib.core import alerts_processor
 
-app = FastAPI()
+app = FastAPI(root_path="/alerts", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
 print("============= ALERTS =============")
 
 

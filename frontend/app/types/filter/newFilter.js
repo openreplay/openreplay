@@ -44,11 +44,11 @@ export const filters = [
   { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
   
     // PERFORMANCE
-  { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/dom-complete', isEvent: true, hasSource: true, sourceOperator: '>=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
-  { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/lcpt', isEvent: true, hasSource: true, sourceOperator: '>=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
-  { key: FilterKey.TTFB, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Time to First Byte', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/ttfb', isEvent: true, hasSource: true, sourceOperator: '>=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
-  { key: FilterKey.AVG_CPU_LOAD, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg CPU Load', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/cpu-load', isEvent: true, hasSource: true, sourceOperator: '>=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
-  { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg Memory Usage', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/memory-load', isEvent: true, hasSource: true, sourceOperator: '>=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
+  { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/dom-complete', isEvent: true, hasSource: true, sourceOperator: '>=', sourceUnit: 'ms', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
+  { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/lcpt', isEvent: true, hasSource: true, sourceOperator: '>=', sourceUnit: 'ms', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
+  { key: FilterKey.TTFB, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Time to First Byte', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/ttfb', isEvent: true, hasSource: true, sourceOperator: '>=', sourceUnit: 'ms', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
+  { key: FilterKey.AVG_CPU_LOAD, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg CPU Load', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/cpu-load', isEvent: true, hasSource: true, sourceOperator: '>=', sourceUnit: '%', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
+  { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg Memory Usage', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/memory-load', isEvent: true, hasSource: true, sourceOperator: '>=', sourceUnit: 'mb', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   { key: FilterKey.FETCH_FAILED, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Failed Request', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, icon: 'filters/fetch-failed', isEvent: true },
   { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/click', options: filterOptions.issueOptions },
 ];
@@ -142,6 +142,7 @@ export default Record({
   source: [""],
   sourceType: '',
   sourceOperator: '=',
+  sourceUnit: '',
   sourceOperatorOptions: [],
 
   operator: '',
