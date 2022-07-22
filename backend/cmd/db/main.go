@@ -8,6 +8,7 @@ import (
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/sessions"
 	"time"
 
@@ -24,6 +25,9 @@ import (
 )
 
 func main() {
+	// Profiler
+	pprof.StartProfilingServer()
+
 	metrics := monitoring.New("db")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
