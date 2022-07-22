@@ -1,7 +1,7 @@
 // Auto-generated, do not edit
 
 export const TP_MAP = {
-    80: "batch_meta",
+  80: "batch_meta",
   0: "timestamp",
   2: "session_disconnect",
   4: "set_page_location",
