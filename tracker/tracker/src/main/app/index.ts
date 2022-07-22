@@ -140,6 +140,8 @@ export default class App {
         Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)))
       }
     })
+
+    // window.localStorage and window.sessionStorage should only be accessed if required, see #490, #637
     this.localStorage = this.options.localStorage ?? window.localStorage;
     this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage;
 
