@@ -1633,10 +1633,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             #                                             event.source, value_key=e_k))
             elif event_type in [schemas.PerformanceEventType.location_dom_complete,
                                 schemas.PerformanceEventType.location_largest_contentful_paint_time,
-                                schemas.PerformanceEventType.location_ttfb,
-                                schemas.PerformanceEventType.location_avg_cpu_load,
-                                schemas.PerformanceEventType.location_avg_memory_usage
-                                ]:
+                                schemas.PerformanceEventType.location_ttfb]:
                 event_from = event_from % f"final.events AS main "
                 event_where.append(f"main.event_type='PAGE'")
                 events_conditions.append({"type": event_where[-1]})
@@ -1644,11 +1641,28 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
                 tname = "main"
-                if col.get("extraJoin") is not None:
-                    tname = "ej"
-                    event_from += f" INNER JOIN {col['extraJoin']} AS {tname} USING(session_id)"
-                    event_where += [f"{tname}.timestamp >= main.timestamp", f"{tname}.timestamp >= %(startDate)s",
-                                    f"{tname}.timestamp <= %(endDate)s"]
+                if not is_any:
+                    event_where.append(
+                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                                             event.value, value_key=e_k))
+                    events_conditions[-1]["condition"].append(event_where[-1])
+                e_k += "_custom"
+                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+
+                event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                        event.source, value_key=e_k))
+                events_conditions[-1]["condition"].append(event_where[-1])
+                events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
+            elif event_type in [schemas.PerformanceEventType.location_avg_cpu_load,
+                                schemas.PerformanceEventType.location_avg_memory_usage]:
+                event_from = event_from % f"final.events AS main "
+                event_where.append(f"main.event_type='PERFORMANCE'")
+                events_conditions.append({"type": event_where[-1]})
+                events_conditions[-1]["condition"] = []
+                col = performance_event.get_col(event_type)
+                colname = col["column"]
+                tname = "main"
                 if not is_any:
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
