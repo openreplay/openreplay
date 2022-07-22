@@ -74,3 +74,8 @@ def create_tables_redshift(db):
         q = f.read()
     db.engine.execute(q)
     print(f"`connector_sessions` table created succesfully.")
+   
+    #with open(base_path / 'sql' / 'redshift_events_detailed.sql') as f:
+    #    q = f.read()
+    #db.engine.execute(q)
+    #print(f"`connector_user_events_detailed` table created succesfully.")
