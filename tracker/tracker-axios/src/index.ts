@@ -88,8 +88,8 @@ export default function(opts: Partial<Options> = {}) {
     		} catch (e) {}
     	}
 
-      const reqHs: Record<string, string> = {}
-      const resHs: Record<string, string> = {}
+      let reqHs: Record<string, string> = {}
+      let resHs: Record<string, string> = {}
       // TODO: type safe axios headers
       if (ihOpt !== true) {
         function writeReqHeader([n, v]: [string, string]) {
@@ -160,6 +160,12 @@ export default function(opts: Partial<Options> = {}) {
           duration,
         ),
       );
+
+      // releasing memory
+      reqResData = null;
+      reqHs = {};
+      resHs = {};
+      resBody = '';
     }
 
     options.instance.interceptors.request.use(function (config) {

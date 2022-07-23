@@ -48,10 +48,17 @@ function isObservable(node: Node): boolean {
     - use document as a 0-node in the upper context (should be updated in player at first)
 */
 
+/* 
+  Nikita:
+    - rn we only send unbind event for parent (all child nodes will be cut in the live replay anyways) 
+      to prevent sending 1k+ unbinds for child nodes and making replay file bigger than it should be 
+*/
+
 enum RecentsType {
   New,
   Removed,
   Changed,
+  RemovedChild,
 }
 
 export default abstract class Observer {
@@ -73,7 +80,7 @@ export default abstract class Observer {
           }
           if (type === 'childList') {
             for (let i = 0; i < mutation.removedNodes.length; i++) {
-              this.bindTree(mutation.removedNodes[i]);
+              this.bindTree(mutation.removedNodes[i], true);
             }
             for (let i = 0; i < mutation.addedNodes.length; i++) {
               this.bindTree(mutation.addedNodes[i]);
@@ -180,16 +187,16 @@ export default abstract class Observer {
     this.app.send(new SetNodeData(id, data));
   }
 
-  private bindNode(node: Node): void {
+  private bindNode(node: Node, isRemove: boolean = false): void {
     const [ id,  isNew ]= this.app.nodes.registerNode(node);
     if (isNew){
       this.recents.set(id, RecentsType.New)
     } else if (this.recents.get(id) !== RecentsType.New) { // can we do just `else` here?
-      this.recents.set(id, RecentsType.Removed)
+      this.recents.set(id, isRemove ? RecentsType.RemovedChild : RecentsType.Removed)
     }
   }
 
-  private bindTree(node: Node): void {
+  private bindTree(node: Node, isRemove: boolean = false): void {
     if (!isObservable(node)) {
       return
     }
@@ -199,7 +206,8 @@ export default abstract class Observer {
       NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) =>
-          isIgnored(node) || this.app.nodes.getID(node) !== undefined
+          isIgnored(node) 
+          || (this.app.nodes.getID(node) !== undefined && !isRemove)
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT,
       },
@@ -207,15 +215,16 @@ export default abstract class Observer {
       false,
     );
     while (walker.nextNode()) {
-      this.bindNode(walker.currentNode);
+      this.bindNode(walker.currentNode, isRemove);
     }
   }
 
-  private unbindNode(node: Node): void {
+  private unbindNode(node: Node): number | undefined {
     const id = this.app.nodes.unregisterNode(node);
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       this.app.send(new RemoveNode(id));
     }
+    return id;
   }
 
   // A top-consumption function on the infinite lists test. (~1% of performance resources)

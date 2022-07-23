@@ -2,10 +2,13 @@ type NodeCallback = (node: Node, isStart: boolean) => void;
 type ElementListener = [string, EventListener];
 
 export default class Nodes {
-  private readonly nodes: Array<Node | undefined>;
+  private nodes: Array<Node | undefined>;
   private readonly nodeCallbacks: Array<NodeCallback>;
   private readonly elementListeners: Map<number, Array<ElementListener>>;
-  constructor(private readonly node_id: string) {
+
+  constructor(
+    private readonly node_id: string, 
+  ) {
     this.nodes = [];
     this.nodeCallbacks = [];
     this.elementListeners = new Map();
@@ -56,6 +59,23 @@ export default class Nodes {
       }
     }
     return id;
+  }
+  cleanTree() {
+    // sadly we keep empty items in array here resulting in some memory still being used
+    // but its still better than keeping dead nodes or undef elements
+    // plus we keep our index positions for new/alive nodes
+    // performance test: 3ms for 30k nodes with 17k dead ones
+    for (let i = 0; i < this.nodes.length; i++) {
+      const node = this.nodes[i];
+      if (node === undefined) {
+        delete this.nodes[i];
+        continue;
+      }
+      if (!document.contains(node)) {
+        this.unregisterNode(node);
+        delete this.nodes[i];
+      }
+    }
   }
   callNodeCallbacks(node: Node, isStart: boolean): void {
     this.nodeCallbacks.forEach((cb) => cb(node, isStart));

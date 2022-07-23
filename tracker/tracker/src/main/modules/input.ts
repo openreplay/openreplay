@@ -149,11 +149,11 @@ export default function (app: App, opts: Partial<Options>): void {
   app.ticker.attach((): void => {
     inputValues.forEach((value, id) => {
       const node = app.nodes.getNode(id);
-      if (!isTextEditable(node)) {
+      if (node && !isTextEditable(node)) {
         inputValues.delete(id);
         return;
       }
-      if (value !== node.value) {
+      if (node && value !== node.value) {
         inputValues.set(id, node.value);
         if (!registeredTargets.has(id)) {
           registeredTargets.add(id);
@@ -164,11 +164,11 @@ export default function (app: App, opts: Partial<Options>): void {
     });
     checkableValues.forEach((checked, id) => {
       const node = app.nodes.getNode(id);
-      if (!isCheckable(node)) {
+      if (node && !isCheckable(node)) {
         checkableValues.delete(id);
         return;
       }
-      if (checked !== node.checked) {
+      if (node && checked !== node.checked) {
         checkableValues.set(id, node.checked);
         app.send(new SetInputChecked(id, node.checked));
       }
