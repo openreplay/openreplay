@@ -3,7 +3,9 @@ package clickhouse
 import (
 	"errors"
 
+	. "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
+	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
 
