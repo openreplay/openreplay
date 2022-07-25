@@ -8,39 +8,34 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
-} from "../../../common/messages.js";
-import App from "../index.js";
-import { 
-  isRootNode,
-  isTextNode,
-  isElementNode,
-  isSVGElement,
-  hasTag,
-} from "../guards.js";
+} from '../../../common/messages.js';
+import App from '../index.js';
+import { isRootNode, isTextNode, isElementNode, isSVGElement, hasTag } from '../guards.js';
 
 function isIgnored(node: Node): boolean {
-  if (isTextNode(node)) { return false }
-  if (!isElementNode(node)) { return true }
+  if (isTextNode(node)) {
+    return false;
+  }
+  if (!isElementNode(node)) {
+    return true;
+  }
   const tag = node.tagName.toUpperCase();
   if (tag === 'LINK') {
     const rel = node.getAttribute('rel');
     const as = node.getAttribute('as');
-    return !(rel?.includes('stylesheet') || as === "style" || as === "font");
+    return !(rel?.includes('stylesheet') || as === 'style' || as === 'font');
   }
   return (
-    tag === 'SCRIPT' ||
-    tag === 'NOSCRIPT' ||
-    tag === 'META' ||
-    tag === 'TITLE' ||
-    tag === 'BASE'
+    tag === 'SCRIPT' || tag === 'NOSCRIPT' || tag === 'META' || tag === 'TITLE' || tag === 'BASE'
   );
 }
 
 function isObservable(node: Node): boolean {
-  if (isRootNode(node)) { return true }
-  return !isIgnored(node)
+  if (isRootNode(node)) {
+    return true;
+  }
+  return !isIgnored(node);
 }
-
 
 /*
   TODO:
@@ -57,14 +52,15 @@ enum RecentsType {
 export default abstract class Observer {
   private readonly observer: MutationObserver;
   private readonly commited: Array<boolean | undefined> = [];
-  private readonly recents: Map<number, RecentsType> = new Map()
+  private readonly recents: Map<number, RecentsType> = new Map();
   private readonly indexes: Array<number> = [];
   private readonly attributesMap: Map<number, Set<string>> = new Map();
   private readonly textSet: Set<number> = new Set();
   constructor(protected readonly app: App, protected readonly isTopContext = false) {
     this.observer = new MutationObserver(
       this.app.safe((mutations) => {
-        for (const mutation of mutations) {  // mutations order is sequential
+        for (const mutation of mutations) {
+          // mutations order is sequential
           const target = mutation.target;
           const type = mutation.type;
 
@@ -85,16 +81,16 @@ export default abstract class Observer {
             continue;
           }
           if (!this.recents.has(id)) {
-            this.recents.set(id, RecentsType.Changed) // TODO only when altered
+            this.recents.set(id, RecentsType.Changed); // TODO only when altered
           }
           if (type === 'attributes') {
             const name = mutation.attributeName;
             if (name === null) {
               continue;
             }
-            let attr = this.attributesMap.get(id)
+            let attr = this.attributesMap.get(id);
             if (attr === undefined) {
-              this.attributesMap.set(id, attr = new Set())
+              this.attributesMap.set(id, (attr = new Set()));
             }
             attr.add(name);
             continue;
@@ -110,18 +106,13 @@ export default abstract class Observer {
   }
   private clear(): void {
     this.commited.length = 0;
-    this.recents.clear()
+    this.recents.clear();
     this.indexes.length = 1;
     this.attributesMap.clear();
     this.textSet.clear();
   }
 
-  private sendNodeAttribute(
-    id: number,
-    node: Element,
-    name: string,
-    value: string | null,
-  ): void {
+  private sendNodeAttribute(id: number, node: Element, name: string, value: string | null): void {
     if (isSVGElement(node)) {
       if (name.substr(0, 6) === 'xlink:') {
         name = name.substr(6);
@@ -150,7 +141,7 @@ export default abstract class Observer {
     }
     if (
       name === 'value' &&
-      hasTag(node, "INPUT") &&
+      hasTag(node, 'INPUT') &&
       node.type !== 'button' &&
       node.type !== 'reset' &&
       node.type !== 'submit'
@@ -161,7 +152,7 @@ export default abstract class Observer {
       this.app.send(new RemoveNodeAttribute(id, name));
       return;
     }
-    if (name === 'style' || name === 'href' && hasTag(node, "LINK")) {
+    if (name === 'style' || (name === 'href' && hasTag(node, 'LINK'))) {
       this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       return;
     }
@@ -172,26 +163,27 @@ export default abstract class Observer {
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
-    if (hasTag(parentElement, "STYLE") || hasTag(parentElement, "style")) {
+    if (hasTag(parentElement, 'STYLE') || hasTag(parentElement, 'style')) {
       this.app.send(new SetCSSDataURLBased(id, data, this.app.getBaseHref()));
       return;
     }
-    data = this.app.sanitizer.sanitize(id, data)
+    data = this.app.sanitizer.sanitize(id, data);
     this.app.send(new SetNodeData(id, data));
   }
 
   private bindNode(node: Node): void {
-    const [ id,  isNew ]= this.app.nodes.registerNode(node);
-    if (isNew){
-      this.recents.set(id, RecentsType.New)
-    } else if (this.recents.get(id) !== RecentsType.New) { // can we do just `else` here?
-      this.recents.set(id, RecentsType.Removed)
+    const [id, isNew] = this.app.nodes.registerNode(node);
+    if (isNew) {
+      this.recents.set(id, RecentsType.New);
+    } else if (this.recents.get(id) !== RecentsType.New) {
+      // can we do just `else` here?
+      this.recents.set(id, RecentsType.Removed);
     }
   }
 
   private bindTree(node: Node): void {
     if (!isObservable(node)) {
-      return
+      return;
     }
     this.bindNode(node);
     const walker = document.createTreeWalker(
@@ -229,7 +221,7 @@ export default abstract class Observer {
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
     // TODO: Clean the logic (though now it workd fine)
-    if (!hasTag(node, "HTML") || !this.isTopContext) {
+    if (!hasTag(node, 'HTML') || !this.isTopContext) {
       if (parent === null) {
         // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
         // That shouldn't affect the visual rendering ( should it? )
@@ -264,15 +256,15 @@ export default abstract class Observer {
     if (sibling === null) {
       this.indexes[id] = 0;
     }
-    const recentsType = this.recents.get(id)
-    const isNew = recentsType === RecentsType.New
-    const index = this.indexes[id]
+    const recentsType = this.recents.get(id);
+    const isNew = recentsType === RecentsType.New;
+    const index = this.indexes[id];
     if (index === undefined) {
       throw 'commitNode: missing node index';
     }
     if (isNew) {
       if (isElementNode(node)) {
-        let el: Element = node
+        let el: Element = node;
         if (parentID !== undefined) {
           if (this.app.sanitizer.isMaskedContainer(id)) {
             const width = el.clientWidth;
@@ -282,15 +274,7 @@ export default abstract class Observer {
             (el as HTMLElement | SVGElement).style.height = height + 'px';
           }
 
-          this.app.send(new
-            CreateElementNode(
-              id,
-              parentID,
-              index,
-              el.tagName,
-              isSVGElement(node),
-            ),
-          );
+          this.app.send(new CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)));
         }
         for (let i = 0; i < el.attributes.length; i++) {
           const attr = el.attributes[i];
@@ -335,19 +319,23 @@ export default abstract class Observer {
     }
     return (this.commited[id] = this._commitNode(id, node));
   }
-  private commitNodes(isStart: boolean = false): void {
+  private commitNodes(isStart = false): void {
     let node;
     this.recents.forEach((type, id) => {
       this.commitNode(id);
       if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
-        this.app.nodes.callNodeCallbacks(node, isStart)
+        this.app.nodes.callNodeCallbacks(node, isStart);
       }
-    })
+    });
     this.clear();
   }
 
   // ISSSUE
-  protected observeRoot(node: Node, beforeCommit: (id?: number) => unknown, nodeToBind: Node = node) {
+  protected observeRoot(
+    node: Node,
+    beforeCommit: (id?: number) => unknown,
+    nodeToBind: Node = node,
+  ) {
     this.observer.observe(node, {
       childList: true,
       attributes: true,
@@ -357,8 +345,8 @@ export default abstract class Observer {
       characterDataOldValue: false,
     });
     this.bindTree(nodeToBind);
-    beforeCommit(this.app.nodes.getID(node))
-    this.commitNodes(true)
+    beforeCommit(this.app.nodes.getID(node));
+    this.commitNodes(true);
   }
 
   disconnect(): void {

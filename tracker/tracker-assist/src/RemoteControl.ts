@@ -1,7 +1,7 @@
-import Mouse from './Mouse.js';
-import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js';
-import { controlConfirmDefault } from './ConfirmWindow/defaults.js';
-import type { Options as AssistOptions } from './Assist';
+import Mouse from './Mouse.js'
+import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
+import { controlConfirmDefault, } from './ConfirmWindow/defaults.js'
+import type { Options as AssistOptions, } from './Assist'
 
 enum RCStatus {
   Disabled,
@@ -11,7 +11,7 @@ enum RCStatus {
 
 
 let setInputValue = function(this: HTMLInputElement | HTMLTextAreaElement,  value: string) { this.value = value }
-const nativeInputValueDescriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")
+const nativeInputValueDescriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')
 if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
   setInputValue = nativeInputValueDescriptor.set
 }
@@ -93,7 +93,7 @@ export default class RemoteControl {
     if (this.focused instanceof HTMLTextAreaElement 
       || this.focused instanceof HTMLInputElement) {
       setInputValue.call(this.focused, value)
-      const ev = new Event('input', { bubbles: true})
+      const ev = new Event('input', { bubbles: true,})
       this.focused.dispatchEvent(ev)
     } else if (this.focused.isContentEditable) {
       this.focused.innerText = value
