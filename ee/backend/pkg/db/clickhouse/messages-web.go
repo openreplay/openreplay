@@ -3,9 +3,7 @@ package clickhouse
 import (
 	"errors"
 
-	. "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
-	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
 
@@ -27,7 +25,7 @@ func (conn *Connector) InsertWebSession(session *Session) error {
 		session.UserCountry,
 		datetime(session.Timestamp),
 		uint32(*session.Duration),
-		session.PagesCount,
+		uint16(session.PagesCount),
 		session.EventsCount,
 		session.ErrorsCount,
 		// Web unique columns
