@@ -2,7 +2,7 @@ package clickhouse
 
 import (
 	"database/sql"
-	_ "github.com/ClickHouse/clickhouse-go"
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"log"
 
 	"openreplay/backend/pkg/license"
