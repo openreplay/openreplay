@@ -1,81 +1,37 @@
 import { connectPlayer, Controls } from 'App/player';
-import React, { useEffect } from 'react';
+import { toggleBottomBlock, NETWORK, EXCEPTIONS } from 'Duck/components/player';
+import React from 'react';
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
 import { TYPES } from 'Types/session/event';
 import { Icon } from 'UI';
 import { Tooltip } from 'react-tippy';
 import stl from './overviewPanel.module.css';
+import { connect } from 'react-redux';
 
 interface Props {
     resourceList: any[];
     exceptionsList: any[];
     eventsList: any[];
     endTime: number;
+    toggleBottomBlock: any;
 }
 function OverviewPanel(props: Props) {
     const { resourceList, exceptionsList, eventsList, endTime } = props;
     const clickRageList = React.useMemo(() => {
         return eventsList.filter((item: any) => item.type === TYPES.CLICKRAGE);
     }, [eventsList]);
-
-    const containerRef = React.useRef<HTMLDivElement>(null);
-    const innerRef = React.createRef<HTMLDivElement>();
     const scale = 100 / endTime;
 
-    const createEventClickHandler = (pointer: any) => (e: any) => {
-        console.log('here...');
+    const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
         e.stopPropagation();
         Controls.jump(pointer.time);
-        // props.setTimelinePointer(pointer);
+        if (!type) {
+            return;
+        }
+
+        props.toggleBottomBlock(type);
     };
-
-    let width = 100;
-    const SPEED = 5;
-    const onWheel = (e: any) => {
-        e.preventDefault();
-        e.stopPropagation();
-        // console.log('e', e)
-
-        // horizontal
-        if (e.deltaX != '-0') {
-            // e.preventDefault();
-            console.log('e.deltaX', e.deltaX);
-        }
-        // Vertical
-        if (e.deltaY != '-0') {
-            console.log('e.deltaY', e.deltaY);
-            // e.preventDefault();
-            const delta = e.deltaY;
-            if (delta > 0) {
-                width += SPEED;
-            } else {
-                width -= SPEED;
-            }
-            if (width < 100) {
-                width = 100;
-            }
-
-            if (innerRef.current) {
-                innerRef.current.style.width = width + '%';
-                if (containerRef.current) {
-                    containerRef.current.style.left = (100 - width) / 2 + '%';
-                }
-            }
-        }
-    };
-
-    useEffect(() => {
-        if (containerRef.current) {
-            containerRef.current.addEventListener('wheel', onWheel, { passive: false });
-        }
-
-        return () => {
-            if (containerRef.current) {
-                containerRef.current.removeEventListener('wheel', onWheel);
-            }
-        };
-    }, []);
 
     const renderNetworkElement = (item: any) => {
         return (
@@ -90,8 +46,8 @@ function OverviewPanel(props: Props) {
                 delay={0}
                 position="top"
             >
-                <div onClick={createEventClickHandler(item)} className="cursor-pointer">
-                    <div className="h-2 w-2 rounded-full bg-red" onClick={createEventClickHandler(item)} />
+                <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
+                    <div className="h-2 w-2 rounded-full bg-red" />
                 </div>
             </Tooltip>
         );
@@ -108,8 +64,8 @@ function OverviewPanel(props: Props) {
                 delay={0}
                 position="top"
             >
-                <div onClick={createEventClickHandler(item)} className="cursor-pointer">
-                    <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" onClick={createEventClickHandler(item)} />
+                <div onClick={createEventClickHandler(item, null)} className="cursor-pointer">
+                    <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" />
                 </div>
             </Tooltip>
         );
@@ -128,7 +84,7 @@ function OverviewPanel(props: Props) {
                 delay={0}
                 position="top"
             >
-                <div onClick={createEventClickHandler(item)} className="cursor-pointer">
+                <div onClick={createEventClickHandler(item, EXCEPTIONS)} className="cursor-pointer">
                     <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" />
                 </div>
             </Tooltip>
@@ -141,8 +97,8 @@ function OverviewPanel(props: Props) {
                 <span className="font-semibold color-gray-medium mr-4">Overview</span>
             </BottomBlock.Header>
             <BottomBlock.Content>
-                <div className="overflow-x-auto overflow-y-hidden bg-gray-lightest px-4" ref={containerRef}>
-                    <div style={{ width: '100%' }} ref={innerRef} className="transition relative">
+                <div className="overflow-x-auto overflow-y-hidden bg-gray-lightest px-4">
+                    <div style={{ width: '100%' }} className="transition relative">
                         <VerticalPointerLine />
                         <EventRow title="Network" className="" list={resourceList} scale={scale} renderElement={renderNetworkElement} />
                         <div className="bg-white border-t border-b -mx-4 px-4">
@@ -156,12 +112,16 @@ function OverviewPanel(props: Props) {
     );
 }
 
-export default connectPlayer((state: any) => ({
-    resourceList: state.resourceList.filter((r: any) => r.isRed() || r.isYellow()),
-    exceptionsList: state.exceptionsList,
-    eventsList: state.eventList,
-    endTime: state.endTime,
-}))(OverviewPanel);
+export default connect(null, {
+    toggleBottomBlock,
+})(
+    connectPlayer((state: any) => ({
+        resourceList: state.resourceList.filter((r: any) => r.isRed() || r.isYellow()),
+        exceptionsList: state.exceptionsList,
+        eventsList: state.eventList,
+        endTime: state.endTime,
+    }))(OverviewPanel)
+);
 
 const VerticalPointerLine = connectPlayer((state: any) => ({
     time: state.time,
