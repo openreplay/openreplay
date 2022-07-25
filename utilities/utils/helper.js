@@ -40,19 +40,20 @@ const extractSessionIdFromRequest = function (req) {
 }
 const isValidSession = function (sessionInfo, filters) {
     let foundAll = true;
-    for (const [key, values] of Object.entries(filters)) {
+    for (const [key, body] of Object.entries(filters)) {
         let found = false;
-        if (values !== undefined && values !== null) {
+        if (body.values !== undefined && body.values !== null) {
             for (const [skey, svalue] of Object.entries(sessionInfo)) {
                 if (svalue !== undefined && svalue !== null) {
                     if (typeof (svalue) === "object") {
-                        if (isValidSession(svalue, {[key]: values})) {
+                        if (isValidSession(svalue, {[key]: body})) {
                             found = true;
                             break;
                         }
                     } else if (skey.toLowerCase() === key.toLowerCase()) {
-                        for (let v of values) {
-                            if (String(svalue).toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+                        for (let v of body["values"]) {
+                            if (body.operator === "is" && String(svalue).toLowerCase() === v.toLowerCase()
+                                || body.operator !== "is" && String(svalue).toLowerCase().indexOf(v.toLowerCase()) >= 0) {
                                 found = true;
                                 break;
                             }
@@ -108,10 +109,26 @@ const objectToObjectOfArrays = function (obj) {
     }
     return _obj;
 }
+const transformFilters = function (filter) {
+    for (let key of Object.keys(filter)) {
+        //To support old v1.7.0 payload
+        if (Array.isArray(filter[key]) || filter[key] === undefined || filter[key] === null) {
+            debug && console.log(`[WS]old format for key=${key}`);
+            filter[key] = {"values": filter[key]};
+        }
+        if (filter[key].operator) {
+            debug && console.log(`[WS]where operator=${filter[key].operator}`);
+        } else {
+            debug && console.log(`[WS]where operator=DEFAULT-contains`);
+            filter[key].operator = "contains";
+        }
+    }
+    return filter;
+}
 const extractPayloadFromRequest = function (req) {
     let filters = {
-        "query": {},
-        "filter": {},
+        "query": {}, // for autocomplete
+        "filter": {}, // for sessions search
         "sort": {
             "key": req.body.sort && req.body.sort.key ? req.body.sort.key : undefined,
             "order": req.body.sort && req.body.sort.order === "DESC"
@@ -135,6 +152,7 @@ const extractPayloadFromRequest = function (req) {
     }
     filters.filter = objectToObjectOfArrays(filters.filter);
     filters.filter = {...filters.filter, ...(req.body.filter || {})};
+    filters.filter = transformFilters(filters.filter);
     debug && console.log("payload/filters:" + JSON.stringify(filters))
     return filters;
 }
@@ -194,6 +212,7 @@ const uniqueAutocomplete = function (list) {
     return _list;
 }
 module.exports = {
+    transformFilters,
     extractPeerId,
     request_logger,
     getValidAttributes,

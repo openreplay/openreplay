@@ -1031,6 +1031,8 @@ class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(None)
+    operator: Literal[SearchEventOperator._is.value,
+                      SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
 
     @root_validator
     def validator(cls, values):
