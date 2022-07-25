@@ -28,8 +28,8 @@ func (conn *Connector) InsertWebSession(session *Session) error {
 		datetime(session.Timestamp),
 		uint32(*session.Duration),
 		uint16(session.PagesCount),
-		session.EventsCount,
-		session.ErrorsCount,
+		uint16(session.EventsCount),
+		uint16(session.ErrorsCount),
 		// Web unique columns
 		session.UserBrowser,
 		nullableString(session.UserBrowserVersion),
