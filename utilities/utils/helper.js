@@ -98,11 +98,11 @@ const objectToObjectOfArrays = function (obj) {
         for (let k of Object.keys(obj)) {
             if (obj[k] !== undefined && obj[k] !== null) {
                 _obj[k] = obj[k];
-                if (!Array.isArray(_obj[k])) {
+                if (!Array.isArray(_obj[k].values)) {
                     _obj[k] = [_obj[k]];
                 }
-                for (let i = 0; i < _obj[k].length; i++) {
-                    _obj[k][i] = String(_obj[k][i]);
+                for (let i = 0; i < _obj[k].values.length; i++) {
+                    _obj[k].values[i] = String(_obj[k].values[i]);
                 }
             }
         }
