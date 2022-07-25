@@ -5,7 +5,7 @@ import Modal from './Modal';
 const ModalContext = createContext({
   component: null,
   props: {
-    right: false,
+    right: true,
     onClose: () => {},
   },
   showModal: (component: any, props: any) => {},
