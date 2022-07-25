@@ -1,30 +1,39 @@
-import App, { DEFAULT_INGEST_POINT } from "./app/index.js";
+import App, { DEFAULT_INGEST_POINT } from './app/index.js';
 export { default as App } from './app/index.js';
 
-import { UserID, UserAnonymousID, Metadata, RawCustomEvent, CustomIssue } from "../common/messages.js";
-import * as _Messages from "../common/messages.js";
+import {
+  UserID,
+  UserAnonymousID,
+  Metadata,
+  RawCustomEvent,
+  CustomIssue,
+} from '../common/messages.js';
+import * as _Messages from '../common/messages.js';
 export const Messages = _Messages;
 
-import Connection from "./modules/connection.js";
-import Console from "./modules/console.js";
-import Exception, { getExceptionMessageFromEvent, getExceptionMessage } from "./modules/exception.js";
-import Img from "./modules/img.js";
-import Input from "./modules/input.js";
-import Mouse from "./modules/mouse.js";
-import Timing from "./modules/timing.js";
-import Performance from "./modules/performance.js";
-import Scroll from "./modules/scroll.js";
-import Viewport from "./modules/viewport.js";
-import CSSRules from "./modules/cssrules.js";
-import { IN_BROWSER, deprecationWarn, DOCS_HOST } from "./utils.js";
+import Connection from './modules/connection.js';
+import Console from './modules/console.js';
+import Exception, {
+  getExceptionMessageFromEvent,
+  getExceptionMessage,
+} from './modules/exception.js';
+import Img from './modules/img.js';
+import Input from './modules/input.js';
+import Mouse from './modules/mouse.js';
+import Timing from './modules/timing.js';
+import Performance from './modules/performance.js';
+import Scroll from './modules/scroll.js';
+import Viewport from './modules/viewport.js';
+import CSSRules from './modules/cssrules.js';
+import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js';
 
-import type { Options as AppOptions } from "./app/index.js";
-import type { Options as ConsoleOptions } from "./modules/console.js";
-import type { Options as ExceptionOptions } from "./modules/exception.js";
-import type { Options as InputOptions } from "./modules/input.js";
-import type { Options as PerformanceOptions } from "./modules/performance.js";
-import type { Options as TimingOptions } from "./modules/timing.js";
-import type { StartOptions } from './app/index.js'
+import type { Options as AppOptions } from './app/index.js';
+import type { Options as ConsoleOptions } from './modules/console.js';
+import type { Options as ExceptionOptions } from './modules/exception.js';
+import type { Options as InputOptions } from './modules/input.js';
+import type { Options as PerformanceOptions } from './modules/performance.js';
+import type { Options as TimingOptions } from './modules/timing.js';
+import type { StartOptions } from './app/index.js';
 //TODO: unique options init
 import type { StartPromiseReturn } from './app/index.js';
 
@@ -44,25 +53,32 @@ const DOCS_SETUP = '/installation/setup-or';
 
 function processOptions(obj: any): obj is Options {
   if (obj == null) {
-    console.error(`OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`);
+    console.error(
+      `OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
+    );
     return false;
   }
   if (typeof obj.projectKey !== 'string') {
     if (typeof obj.projectKey !== 'number') {
-      if (typeof obj.projectID !== 'number') { // Back compatability
-        console.error(`OpenReplay: projectKey is missing or wrong type (string is expected). Please, check ${DOCS_HOST}${DOCS_SETUP} for more information.`)
-        return false
+      if (typeof obj.projectID !== 'number') {
+        // Back compatability
+        console.error(
+          `OpenReplay: projectKey is missing or wrong type (string is expected). Please, check ${DOCS_HOST}${DOCS_SETUP} for more information.`,
+        );
+        return false;
       } else {
         obj.projectKey = obj.projectID.toString();
-        deprecationWarn("`projectID` option", "`projectKey` option", DOCS_SETUP)
+        deprecationWarn('`projectID` option', '`projectKey` option', DOCS_SETUP);
       }
     } else {
-      console.warn("OpenReplay: projectKey is expected to have a string type.")
-      obj.projectKey = obj.projectKey.toString()
+      console.warn('OpenReplay: projectKey is expected to have a string type.');
+      obj.projectKey = obj.projectKey.toString();
     }
   }
   if (typeof obj.sessionToken !== 'string' && obj.sessionToken != null) {
-    console.warn(`OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
+    console.warn(
+      `OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
+    );
   }
   return true;
 }
@@ -74,18 +90,22 @@ export default class API {
       return;
     }
     if ((window as any).__OPENREPLAY__) {
-      console.error("OpenReplay: one tracker instance has been initialised already")
-      return
-    }
-    if (!options.__DISABLE_SECURE_MODE && location.protocol !== 'https:') {
-      console.error("OpenReplay: Your website must be publicly accessible and running on SSL in order for OpenReplay to properly capture and replay the user session. You can disable this check by setting `__DISABLE_SECURE_MODE` option to `true` if you are testing in localhost. Keep in mind, that asset files on a local machine are not available to the outside world. This might affect tracking if you use css files.")
+      console.error('OpenReplay: one tracker instance has been initialised already');
       return;
     }
-    const doNotTrack = options.respectDoNotTrack && 
-      (navigator.doNotTrack == '1' 
+    if (!options.__DISABLE_SECURE_MODE && location.protocol !== 'https:') {
+      console.error(
+        'OpenReplay: Your website must be publicly accessible and running on SSL in order for OpenReplay to properly capture and replay the user session. You can disable this check by setting `__DISABLE_SECURE_MODE` option to `true` if you are testing in localhost. Keep in mind, that asset files on a local machine are not available to the outside world. This might affect tracking if you use css files.',
+      );
+      return;
+    }
+    const doNotTrack =
+      options.respectDoNotTrack &&
+      (navigator.doNotTrack == '1' ||
         // @ts-ignore
-        || window.doNotTrack == '1');
-    const app = this.app = doNotTrack ||
+        window.doNotTrack == '1');
+    const app = (this.app =
+      doNotTrack ||
       !('Map' in window) ||
       !('Set' in window) ||
       !('MutationObserver' in window) ||
@@ -95,7 +115,7 @@ export default class API {
       !('Blob' in window) ||
       !('Worker' in window)
         ? null
-        : new App(options.projectKey, options.sessionToken, options);
+        : new App(options.projectKey, options.sessionToken, options));
     if (app !== null) {
       Viewport(app);
       CSSRules(app);
@@ -114,29 +134,33 @@ export default class API {
         const wOpen = window.open;
         app.attachStartCallback(() => {
           // @ts-ignore ?
-          window.open = function(...args) {
-            app.resetNextPageSession(true)
-            wOpen.call(window, ...args)
-            app.resetNextPageSession(false)
-          }
-        })
+          window.open = function (...args) {
+            app.resetNextPageSession(true);
+            wOpen.call(window, ...args);
+            app.resetNextPageSession(false);
+          };
+        });
         app.attachStopCallback(() => {
           window.open = wOpen;
-        })
+        });
       }
     } else {
-      console.log("OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1.")
+      console.log(
+        "OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1.",
+      );
       const req = new XMLHttpRequest();
       const orig = options.ingestPoint || DEFAULT_INGEST_POINT;
-      req.open("POST", orig + "/v1/web/not-started");
+      req.open('POST', orig + '/v1/web/not-started');
       // no-cors issue only with text/plain or not-set Content-Type
       // req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-      req.send(JSON.stringify({
-        trackerVersion: 'TRACKER_VERSION',
-        projectKey: options.projectKey,
-        doNotTrack,
-        // TODO: add precise reason (an exact API missing)
-      }));
+      req.send(
+        JSON.stringify({
+          trackerVersion: 'TRACKER_VERSION',
+          projectKey: options.projectKey,
+          doNotTrack,
+          // TODO: add precise reason (an exact API missing)
+        }),
+      );
     }
   }
 
@@ -151,10 +175,12 @@ export default class API {
     return this.app.active();
   }
 
-  start(startOpts?: Partial<StartOptions>) : Promise<StartPromiseReturn> {
+  start(startOpts?: Partial<StartOptions>): Promise<StartPromiseReturn> {
     if (!IN_BROWSER) {
-      console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
-      return Promise.reject("Trying to start not in browser.");
+      console.error(
+        `OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
+      );
+      return Promise.reject('Trying to start not in browser.');
     }
     if (this.app === null) {
       return Promise.reject("Browser doesn't support required api, or doNotTrack is active.");
@@ -182,7 +208,7 @@ export default class API {
     return this.app.getSessionID();
   }
   sessionID(): string | null | undefined {
-    deprecationWarn("'sessionID' method", "'getSessionID' method", "/");
+    deprecationWarn("'sessionID' method", "'getSessionID' method", '/');
     return this.getSessionID();
   }
 
@@ -192,7 +218,7 @@ export default class API {
     }
   }
   userID(id: string): void {
-    deprecationWarn("'userID' method", "'setUserID' method", "/");
+    deprecationWarn("'userID' method", "'setUserID' method", '/');
     this.setUserID(id);
   }
 
@@ -202,25 +228,21 @@ export default class API {
     }
   }
   userAnonymousID(id: string): void {
-    deprecationWarn("'userAnonymousID' method", "'setUserAnonymousID' method", "/")
+    deprecationWarn("'userAnonymousID' method", "'setUserAnonymousID' method", '/');
     this.setUserAnonymousID(id);
   }
 
   setMetadata(key: string, value: string): void {
-    if (
-      typeof key === 'string' &&
-      typeof value === 'string' &&
-      this.app !== null
-    ) {
+    if (typeof key === 'string' && typeof value === 'string' && this.app !== null) {
       this.app.session.setMetadata(key, value);
     }
   }
   metadata(key: string, value: string): void {
-    deprecationWarn("'metadata' method", "'setMetadata' method", "/")
+    deprecationWarn("'metadata' method", "'setMetadata' method", '/');
     this.setMetadata(key, value);
   }
 
-  event(key: string, payload: any, issue: boolean = false): void {
+  event(key: string, payload: any, issue = false): void {
     if (typeof key === 'string' && this.app !== null) {
       if (issue) {
         return this.issue(key, payload);
@@ -247,10 +269,13 @@ export default class API {
   }
 
   handleError = (e: Error | ErrorEvent | PromiseRejectionEvent) => {
-    if (this.app === null) { return; }
+    if (this.app === null) {
+      return;
+    }
     if (e instanceof Error) {
       this.app.send(getExceptionMessage(e, []));
-    } else if (e instanceof ErrorEvent ||
+    } else if (
+      e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
       const msg = getExceptionMessageFromEvent(e);
@@ -258,5 +283,5 @@ export default class API {
         this.app.send(msg);
       }
     }
-  }
+  };
 }

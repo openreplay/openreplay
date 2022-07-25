@@ -1,14 +1,14 @@
 export default class AnnotationCanvas {
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D | null = null
-  private painting: boolean = false
+  private painting = false
   constructor() {
     this.canvas = document.createElement('canvas')
     Object.assign(this.canvas.style, {
-      position: "fixed",
+      position: 'fixed',
       left: 0,
       top: 0,
-      pointerEvents: "none",
+      pointerEvents: 'none',
       zIndex: 2147483647 - 2,
     })
   }
@@ -18,7 +18,7 @@ export default class AnnotationCanvas {
     this.canvas.height = window.innerHeight
   }
 
-  private lastPosition: [number, number] = [0,0]
+  private lastPosition: [number, number] = [0,0,]
   start = (p: [number, number]) => {
     this.painting = true
     this.clrTmID && clearTimeout(this.clrTmID)
@@ -38,9 +38,9 @@ export default class AnnotationCanvas {
     this.ctx.moveTo(this.lastPosition[0], this.lastPosition[1])
     this.ctx.lineTo(p[0], p[1])
     this.ctx.lineWidth = 8
-    this.ctx.lineCap = "round"
-    this.ctx.lineJoin = "round"
-    this.ctx.strokeStyle = "red"
+    this.ctx.lineCap = 'round'
+    this.ctx.lineJoin = 'round'
+    this.ctx.strokeStyle = 'red'
     this.ctx.stroke()
     this.lastPosition = p
   }
@@ -51,7 +51,7 @@ export default class AnnotationCanvas {
     const fadeStep = () => {
       if (!this.ctx || this.painting ) { return }
       this.ctx.globalCompositeOperation = 'destination-out'
-      this.ctx.fillStyle = "rgba(255, 255, 255, 0.1)"
+      this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
       this.ctx.globalCompositeOperation = 'source-over'
       timeoutID = setTimeout(fadeStep,100)
@@ -67,8 +67,8 @@ export default class AnnotationCanvas {
 
   mount() {
     document.body.appendChild(this.canvas)
-    this.ctx = this.canvas.getContext("2d")
-    window.addEventListener("resize", this.resizeCanvas)
+    this.ctx = this.canvas.getContext('2d')
+    window.addEventListener('resize', this.resizeCanvas)
     this.resizeCanvas()
   }
 
@@ -76,6 +76,6 @@ export default class AnnotationCanvas {
     if (this.canvas.parentNode){
       this.canvas.parentNode.removeChild(this.canvas)
     }
-    window.removeEventListener("resize", this.resizeCanvas)
+    window.removeEventListener('resize', this.resizeCanvas)
   }
 }

@@ -1,8 +1,7 @@
-import type App from "../app/index.js";
-import { hasTag } from "../app/guards.js";
-import { isURL } from "../utils.js";
-import { ResourceTiming, PageLoadTiming, PageRenderTiming } from "../../common/messages.js";
-
+import type App from '../app/index.js';
+import { hasTag } from '../app/guards.js';
+import { isURL } from '../utils.js';
+import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../../common/messages.js';
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 
@@ -22,13 +21,11 @@ function getPaintBlocks(resources: ResourcesTimeMap): Array<PaintBlock> {
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     let src = '';
-    if (hasTag(element, "IMG")) {
+    if (hasTag(element, 'IMG')) {
       src = element.currentSrc || element.src;
     }
     if (!src) {
-      const backgroundImage = getComputedStyle(element).getPropertyValue(
-        'background-image',
-      );
+      const backgroundImage = getComputedStyle(element).getPropertyValue('background-image');
       if (backgroundImage) {
         const matches = styleURL.exec(backgroundImage);
         if (matches !== null) {
@@ -53,9 +50,7 @@ function getPaintBlocks(resources: ResourcesTimeMap): Array<PaintBlock> {
     );
     const right = Math.min(
       rect.right,
-      window.innerWidth ||
-        (document.documentElement && document.documentElement.clientWidth) ||
-        0,
+      window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0,
     );
     if (bottom <= top || right <= left) continue;
     const area = (bottom - top) * (right - left);
@@ -64,18 +59,14 @@ function getPaintBlocks(resources: ResourcesTimeMap): Array<PaintBlock> {
   return paintBlocks;
 }
 
-function calculateSpeedIndex(
-  firstContentfulPaint: number,
-  paintBlocks: Array<PaintBlock>,
-): number {
+function calculateSpeedIndex(firstContentfulPaint: number, paintBlocks: Array<PaintBlock>): number {
   let a =
     (Math.max(
       (document.documentElement && document.documentElement.clientWidth) || 0,
       window.innerWidth || 0,
     ) *
       Math.max(
-        (document.documentElement && document.documentElement.clientHeight) ||
-          0,
+        (document.documentElement && document.documentElement.clientHeight) || 0,
         window.innerHeight || 0,
       )) /
     10;
@@ -106,25 +97,23 @@ export default function (app: App, opts: Partial<Options>): void {
   if (!('PerformanceObserver' in window)) {
     options.captureResourceTimings = false;
   }
-  if (!options.captureResourceTimings) { return } // Resources are necessary for all timings
+  if (!options.captureResourceTimings) {
+    return;
+  } // Resources are necessary for all timings
 
-  let resources: ResourcesTimeMap | null = {}
+  let resources: ResourcesTimeMap | null = {};
 
   function resourceTiming(entry: PerformanceResourceTiming): void {
     if (entry.duration < 0 || !isURL(entry.name) || app.isServiceURL(entry.name)) return;
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration;
     }
-    app.send(new 
-      ResourceTiming(
+    app.send(
+      new ResourceTiming(
         entry.startTime + performance.timing.navigationStart,
         entry.duration,
-        entry.responseStart && entry.startTime
-          ? entry.responseStart - entry.startTime
-          : 0,
-        entry.transferSize > entry.encodedBodySize
-          ? entry.transferSize - entry.encodedBodySize
-          : 0,
+        entry.responseStart && entry.startTime ? entry.responseStart - entry.startTime : 0,
+        entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
         entry.encodedBodySize || 0,
         entry.decodedBodySize || 0,
         entry.name,
@@ -133,48 +122,45 @@ export default function (app: App, opts: Partial<Options>): void {
     );
   }
 
-  const observer: PerformanceObserver = new PerformanceObserver(
-    (list) => list.getEntries().forEach(resourceTiming),
-  )
+  const observer: PerformanceObserver = new PerformanceObserver((list) =>
+    list.getEntries().forEach(resourceTiming),
+  );
 
-  let prevSessionID: string | undefined
-  app.attachStartCallback(function({ sessionID }) {
-    if (sessionID !== prevSessionID) { // Send past page resources on a newly started session
-      performance.getEntriesByType('resource').forEach(resourceTiming)
-      prevSessionID = sessionID
+  let prevSessionID: string | undefined;
+  app.attachStartCallback(function ({ sessionID }) {
+    if (sessionID !== prevSessionID) {
+      // Send past page resources on a newly started session
+      performance.getEntriesByType('resource').forEach(resourceTiming);
+      prevSessionID = sessionID;
     }
-    observer.observe({ entryTypes: ['resource'] })
-  })
+    observer.observe({ entryTypes: ['resource'] });
+  });
 
-  app.attachStopCallback(function() {
-    observer.disconnect()
-  })
-
+  app.attachStopCallback(function () {
+    observer.disconnect();
+  });
 
   let firstPaint = 0,
     firstContentfulPaint = 0;
 
   if (options.capturePageLoadTimings) {
-
-    let pageLoadTimingSent: boolean = false;
+    let pageLoadTimingSent = false;
     app.ticker.attach(() => {
       if (pageLoadTimingSent) {
         return;
       }
       if (firstPaint === 0 || firstContentfulPaint === 0) {
-        performance
-          .getEntriesByType('paint')
-          .forEach((entry: PerformanceEntry) => {
-            const { name, startTime } = entry;
-            switch (name) {
-              case 'first-paint':
-                firstPaint = startTime;
-                break;
-              case 'first-contentful-paint':
-                firstContentfulPaint = startTime;
-                break;
-            }
-          });
+        performance.getEntriesByType('paint').forEach((entry: PerformanceEntry) => {
+          const { name, startTime } = entry;
+          switch (name) {
+            case 'first-paint':
+              firstPaint = startTime;
+              break;
+            case 'first-contentful-paint':
+              firstContentfulPaint = startTime;
+              break;
+          }
+        });
       }
       if (performance.timing.loadEventEnd || performance.now() > 30000) {
         pageLoadTimingSent = true;
@@ -188,8 +174,8 @@ export default function (app: App, opts: Partial<Options>): void {
           loadEventStart,
           loadEventEnd,
         } = performance.timing;
-        app.send(new 
-          PageLoadTiming(
+        app.send(
+          new PageLoadTiming(
             requestStart - navigationStart || 0,
             responseStart - navigationStart || 0,
             responseEnd - navigationStart || 0,
@@ -211,7 +197,7 @@ export default function (app: App, opts: Partial<Options>): void {
       interactiveWindowTickTime: number | null = 0,
       paintBlocks: Array<PaintBlock> | null = null;
 
-    let pageRenderTimingSent: boolean = false;
+    let pageRenderTimingSent = false;
     app.ticker.attach(() => {
       if (pageRenderTimingSent) {
         return;
@@ -231,37 +217,28 @@ export default function (app: App, opts: Partial<Options>): void {
         if (time - interactiveWindowTickTime > 50) {
           interactiveWindowStartTime = time;
         }
-        interactiveWindowTickTime =
-          time - interactiveWindowStartTime > 5000 ? null : time;
+        interactiveWindowTickTime = time - interactiveWindowStartTime > 5000 ? null : time;
       }
-      if (
-        (paintBlocks !== null && interactiveWindowTickTime === null) ||
-        time > 30000
-      ) {
+      if ((paintBlocks !== null && interactiveWindowTickTime === null) || time > 30000) {
         pageRenderTimingSent = true;
         resources = null;
         const speedIndex =
           paintBlocks === null
             ? 0
-            : calculateSpeedIndex(
-                firstContentfulPaint || firstPaint,
-                paintBlocks,
-              );
+            : calculateSpeedIndex(firstContentfulPaint || firstPaint, paintBlocks);
         const timeToInteractive =
           interactiveWindowTickTime === null
             ? Math.max(
                 interactiveWindowStartTime,
                 firstContentfulPaint,
-                performance.timing.domContentLoadedEventEnd -
-                  performance.timing.navigationStart || 0,
+                performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart ||
+                  0,
               )
             : 0;
-        app.send(new 
-          PageRenderTiming(
+        app.send(
+          new PageRenderTiming(
             speedIndex,
-            firstContentfulPaint > visuallyComplete
-              ? firstContentfulPaint
-              : visuallyComplete,
+            firstContentfulPaint > visuallyComplete ? firstContentfulPaint : visuallyComplete,
             timeToInteractive,
           ),
         );

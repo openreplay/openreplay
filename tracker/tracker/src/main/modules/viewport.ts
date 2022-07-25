@@ -1,9 +1,5 @@
-import type App from "../app/index.js";
-import {
-  SetPageLocation,
-  SetViewportSize,
-  SetPageVisibility,
-} from "../../common/messages.js";
+import type App from '../app/index.js';
+import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../../common/messages.js';
 
 export default function (app: App): void {
   let url: string, width: number, height: number;

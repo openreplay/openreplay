@@ -1,20 +1,21 @@
-import type { Socket } from 'socket.io-client';
-import { connect } from 'socket.io-client';
-import Peer from 'peerjs';
-import type { Properties } from 'csstype';
-import { App } from '@openreplay/tracker';
+/* eslint-disable @typescript-eslint/no-empty-function */
+import type { Socket, } from 'socket.io-client'
+import { connect, } from 'socket.io-client'
+import Peer from 'peerjs'
+import type { Properties, } from 'csstype'
+import { App, } from '@openreplay/tracker'
 
-import RequestLocalStream from './LocalStream.js';
-import RemoteControl from './RemoteControl.js';
-import CallWindow from './CallWindow.js';
-import AnnotationCanvas from './AnnotationCanvas.js';
-import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js';
-import { callConfirmDefault } from './ConfirmWindow/defaults.js';
-import type { Options as ConfirmOptions } from './ConfirmWindow/defaults.js';
+import RequestLocalStream from './LocalStream.js'
+import RemoteControl from './RemoteControl.js'
+import CallWindow from './CallWindow.js'
+import AnnotationCanvas from './AnnotationCanvas.js'
+import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
+import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
+import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 
 // TODO: fully specified  strict check (everywhere)
 
-type StartEndCallback = () => ((()=>{}) | void)
+type StartEndCallback = () => ((()=>Record<string, unknown>) | void)
 
 export interface Options {
   onAgentConnect: StartEndCallback,
@@ -40,7 +41,7 @@ enum CallingState {
 
 
 // TODO typing????
-type OptionalCallback = (()=>{}) | void
+type OptionalCallback = (()=>Record<string, unknown>) | void
 type Agent = {
   onDisconnect?: OptionalCallback,
   onControlReleased?: OptionalCallback,
@@ -49,11 +50,11 @@ type Agent = {
 }
 
 export default class Assist {
-  readonly version = "PACKAGE_VERSION"
+  readonly version = 'PACKAGE_VERSION'
 
   private socket: Socket | null = null
   private peer: Peer | null = null
-  private assistDemandedRestart: boolean = false
+  private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
 
   private agents: Record<string, Agent> = {}
@@ -64,8 +65,8 @@ export default class Assist {
     private readonly noSecureMode: boolean = false,
   ) {
     this.options = Object.assign({ 
-        session_calling_peer_key: "__openreplay_calling_peer",
-        session_control_peer_key: "__openreplay_control_peer",
+        session_calling_peer_key: '__openreplay_calling_peer',
+        session_control_peer_key: '__openreplay_control_peer',
         config: null,
         onCallStart: ()=>{},
         onAgentConnect: ()=>{},
@@ -74,10 +75,10 @@ export default class Assist {
         controlConfirm: {}, // TODO: clear options passing/merging/overriting
       },
       options,
-    );
+    )
 
     if (document.hidden !== undefined) {
-      const sendActivityState = () => this.emit("UPDATE_SESSION", { active: !document.hidden })
+      const sendActivityState = () => this.emit('UPDATE_SESSION', { active: !document.hidden, })
       app.attachEventListener(
         document,
         'visibilitychange',
@@ -88,15 +89,15 @@ export default class Assist {
     }
     const titleNode = document.querySelector('title')
     const observer = titleNode && new MutationObserver(() => {
-      this.emit("UPDATE_SESSION", { pageTitle: document.title })
+      this.emit('UPDATE_SESSION', { pageTitle: document.title, })
     })
     app.attachStartCallback(() => { 
-      if (this.assistDemandedRestart) { return; }
+      if (this.assistDemandedRestart) { return }
       this.onStart()
-      observer && observer.observe(titleNode, { subtree: true, characterData: true, childList: true })
+      observer && observer.observe(titleNode, { subtree: true, characterData: true, childList: true, })
     })
     app.attachStopCallback(() => { 
-      if (this.assistDemandedRestart) { return; } 
+      if (this.assistDemandedRestart) { return } 
       this.clean()
       observer && observer.disconnect()
     })
@@ -104,10 +105,10 @@ export default class Assist {
       if (this.agentsConnected) {
         // @ts-ignore No need in statistics messages. TODO proper filter
         if (messages.length === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
-        this.emit("messages", messages)
+        this.emit('messages', messages)
       }
     })
-    app.session.attachUpdateCallback(sessInfo => this.emit("UPDATE_SESSION", sessInfo))
+    app.session.attachUpdateCallback(sessInfo => this.emit('UPDATE_SESSION', sessInfo))
   }
 
   private emit(ev: string, ...args) {
@@ -119,7 +120,7 @@ export default class Assist {
   }
 
   private notifyCallEnd() {
-    this.emit("call_end");
+    this.emit('call_end')
   }
   private onRemoteCallEnd = () => {}
 
@@ -131,17 +132,17 @@ export default class Assist {
     const socket = this.socket = connect(app.getHost(), {
       path: '/ws-assist/socket',
       query: {
-        "peerId": peerID,
-        "identity": "session",
-        "sessionInfo": JSON.stringify({ 
+        'peerId': peerID,
+        'identity': 'session',
+        'sessionInfo': JSON.stringify({ 
           pageTitle: document.title,
           active: true,
-          ...this.app.getSessionInfo() 
+          ...this.app.getSessionInfo(), 
         }),
       },
-      transports: ["websocket"],
+      transports: ['websocket',],
     })
-    socket.onAny((...args) => app.debug.log("Socket:", ...args))
+    socket.onAny((...args) => app.debug.log('Socket:', ...args))
 
 
 
@@ -149,15 +150,15 @@ export default class Assist {
       this.options,
       id => {
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
-        this.emit("control_granted", id)
+        this.emit('control_granted', id)
         annot = new AnnotationCanvas()
         annot.mount()
       },
       id => {
         const cb = this.agents[id].onControlReleased
         delete this.agents[id].onControlReleased
-        typeof cb === "function" && cb()
-        this.emit("control_rejected", id)
+        typeof cb === 'function' && cb()
+        this.emit('control_rejected', id)
         if (annot != null) {
           annot.remove()
           annot = null
@@ -166,41 +167,41 @@ export default class Assist {
     )
 
     // TODO: check incoming args
-    socket.on("request_control", remoteControl.requestControl)
-    socket.on("release_control", remoteControl.releaseControl)
-    socket.on("scroll", remoteControl.scroll)
-    socket.on("click", remoteControl.click)
-    socket.on("move", remoteControl.move)
-    socket.on("focus", (clientID, nodeID) => {
+    socket.on('request_control', remoteControl.requestControl)
+    socket.on('release_control', remoteControl.releaseControl)
+    socket.on('scroll', remoteControl.scroll)
+    socket.on('click', remoteControl.click)
+    socket.on('move', remoteControl.move)
+    socket.on('focus', (clientID, nodeID) => {
       const el = app.nodes.getNode(nodeID)
       if (el instanceof HTMLElement) {
         remoteControl.focus(clientID, el)
       }
     })
-    socket.on("input", remoteControl.input)
+    socket.on('input', remoteControl.input)
 
     let annot: AnnotationCanvas | null = null
-    socket.on("moveAnnotation", (_, p) => annot && annot.move(p)) // TODO: restrict by id
-    socket.on("startAnnotation", (_, p) => annot && annot.start(p))
-    socket.on("stopAnnotation", () => annot && annot.stop())
+    socket.on('moveAnnotation', (_, p) => annot && annot.move(p)) // TODO: restrict by id
+    socket.on('startAnnotation', (_, p) => annot && annot.start(p))
+    socket.on('stopAnnotation', () => annot && annot.stop())
 
-    socket.on("NEW_AGENT", (id: string, info) => {
+    socket.on('NEW_AGENT', (id: string, info) => {
       this.agents[id] = {
         onDisconnect: this.options.onAgentConnect && this.options.onAgentConnect(),
         ...info, // TODO
       }
       this.assistDemandedRestart = true
-      this.app.stop();
+      this.app.stop()
       this.app.start().then(() => { this.assistDemandedRestart = false })
     })
-    socket.on("AGENTS_CONNECTED", (ids: string[]) => {
+    socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
         this.agents[id] = {
           onDisconnect: this.options.onAgentConnect && this.options.onAgentConnect(),
         }
       })
       this.assistDemandedRestart = true
-      this.app.stop();
+      this.app.stop()
       this.app.start().then(() => { this.assistDemandedRestart = false })
 
       remoteControl.reconnect(ids)
@@ -208,7 +209,7 @@ export default class Assist {
 
     let confirmCall:ConfirmWindow | null = null
 
-    socket.on("AGENT_DISCONNECTED", (id) => {
+    socket.on('AGENT_DISCONNECTED', (id) => {
       remoteControl.releaseControl(id)
 
       // close the call also
@@ -221,15 +222,15 @@ export default class Assist {
       this.agents[id] && this.agents[id].onDisconnect != null && this.agents[id].onDisconnect()
       delete this.agents[id]
     })
-    socket.on("NO_AGENT", () => {
+    socket.on('NO_AGENT', () => {
       this.agents = {}
     })
-    socket.on("call_end", () => this.onRemoteCallEnd()) // TODO: check if agent calling id
+    socket.on('call_end', () => this.onRemoteCallEnd()) // TODO: check if agent calling id
 
     // TODO: fix the code
-    let agentName = ""
-    let callingAgent = ""
-    socket.on("_agent_name",(id, name) => { agentName = name; callingAgent = id })
+    let agentName = ''
+    let callingAgent = ''
+    socket.on('_agent_name',(id, name) => { agentName = name; callingAgent = id })
 
 
     // PeerJS call (todo: use native WebRTC)
@@ -242,27 +243,27 @@ export default class Assist {
     if (this.options.config) {
       peerOptions['config'] = this.options.config
     }
-    const peer = this.peer = new Peer(peerID, peerOptions);
+    const peer = this.peer = new Peer(peerID, peerOptions)
     // app.debug.log('Peer created: ', peer)
     // @ts-ignore
-    peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
+    peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
     peer.on('disconnected', () => peer.reconnect())
     peer.on('call', (call) => {
-      app.debug.log("Call: ", call)    
+      app.debug.log('Call: ', call)    
       if (this.callingState !== CallingState.False) {
         call.close()
         //this.notifyCallEnd() // TODO: strictly connect calling peer with agent socket.id
-        app.debug.warn("Call closed instantly bacause line is busy. CallingState: ", this.callingState)
-        return;
+        app.debug.warn('Call closed instantly bacause line is busy. CallingState: ', this.callingState)
+        return
       }
 
       const setCallingState = (newState: CallingState) => {
         if (newState === CallingState.True) {
-          sessionStorage.setItem(this.options.session_calling_peer_key, call.peer);
+          sessionStorage.setItem(this.options.session_calling_peer_key, call.peer)
         } else if (newState === CallingState.False) {
-          sessionStorage.removeItem(this.options.session_calling_peer_key);
+          sessionStorage.removeItem(this.options.session_calling_peer_key)
         }
-        this.callingState = newState;
+        this.callingState = newState
       }
       
       let confirmAnswer: Promise<boolean>
@@ -278,7 +279,7 @@ export default class Assist {
         confirmAnswer = confirmCall.mount()
         this.playNotificationSound()
         this.onRemoteCallEnd = () => { // if call cancelled by a caller before confirmation
-          app.debug.log("Received call_end during confirm window opened")
+          app.debug.log('Received call_end during confirm window opened')
           confirmCall?.remove()
           setCallingState(CallingState.False)
           call.close()
@@ -307,7 +308,7 @@ export default class Assist {
         
         const onCallEnd = this.options.onCallStart()
         const handleCallEnd = () => {
-          app.debug.log("Handle Call End")
+          app.debug.log('Handle Call End')
           call.close()
           callUI.remove()
           annot && annot.remove()
@@ -322,27 +323,27 @@ export default class Assist {
         this.onRemoteCallEnd = handleCallEnd
 
         call.on('error', e => {
-          app.debug.warn("Call error:", e)
+          app.debug.warn('Call error:', e)
           initiateCallEnd()
-        });
+        })
 
         RequestLocalStream().then(lStream => {
           call.on('stream', function(rStream) {
-            callUI.setRemoteStream(rStream);
+            callUI.setRemoteStream(rStream)
             const onInteraction = () => { // only if hidden?
               callUI.playRemote()
-              document.removeEventListener("click", onInteraction)
+              document.removeEventListener('click', onInteraction)
             }
-            document.addEventListener("click", onInteraction)
-          });
+            document.addEventListener('click', onInteraction)
+          })
 
           lStream.onVideoTrack(vTrack => {
-            const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
+            const sender = call.peerConnection.getSenders().find(s => s.track?.kind === 'video')
             if (!sender) {
-              app.debug.warn("No video sender found")
+              app.debug.warn('No video sender found')
               return
             }
-            app.debug.log("sender found:", sender)
+            app.debug.log('sender found:', sender)
             sender.replaceTrack(vTrack)
           })
 
@@ -352,16 +353,16 @@ export default class Assist {
           setCallingState(CallingState.True)
         })
         .catch(e => {
-          app.debug.warn("Audio mediadevice request error:", e)
+          app.debug.warn('Audio mediadevice request error:', e)
           initiateCallEnd()
-        });
-      }).catch(); // in case of Confirm.remove() without any confirmation/decline
-    });
+        })
+      }).catch() // in case of Confirm.remove() without any confirmation/decline
+    })
   }
 
   private playNotificationSound() {
     if ('Audio' in window) {
-      new Audio("https://static.openreplay.com/tracker-assist/notification.mp3")
+      new Audio('https://static.openreplay.com/tracker-assist/notification.mp3')
       .play()
       .catch(e => {
         this.app.debug.warn(e)
@@ -372,11 +373,11 @@ export default class Assist {
   private clean() {
     if (this.peer) {
       this.peer.destroy()
-      this.app.debug.log("Peer destroyed")
+      this.app.debug.log('Peer destroyed')
     }
     if (this.socket) {
       this.socket.disconnect()
-      this.app.debug.log("Socket disconnected")
+      this.app.debug.log('Socket disconnected')
     }
   }
 }
