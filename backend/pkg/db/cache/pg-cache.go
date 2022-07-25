@@ -29,10 +29,9 @@ type PGCache struct {
 // TODO: create conn automatically
 func NewPGCache(pgConn *postgres.Conn, projectExpirationTimeoutMs int64) *PGCache {
 	return &PGCache{
-		Conn:     pgConn,
-		sessions: make(map[uint64]*Session),
-		projects: make(map[uint32]*ProjectMeta),
-		//projectsByKeys: make(map[string]*ProjectMeta),
+		Conn:                     pgConn,
+		sessions:                 make(map[uint64]*Session),
+		projects:                 make(map[uint32]*ProjectMeta),
 		projectExpirationTimeout: time.Duration(1000 * projectExpirationTimeoutMs),
 	}
 }

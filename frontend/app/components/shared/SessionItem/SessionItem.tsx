@@ -52,9 +52,10 @@ interface Props {
   hasUserFilter?: boolean;
   disableUser?: boolean;
   metaList?: Array<any>;
-  showActive?: boolean;
+  // showActive?: boolean;
   lastPlayedSessionId?: string;
   live?: boolean;
+  onClick?: any
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -67,8 +68,8 @@ function SessionItem(props: RouteComponentProps & Props) {
     hasUserFilter = false,
     disableUser = false,
     metaList = [],
-    showActive = false,
     lastPlayedSessionId,
+    onClick = null,
   } = props;
 
   const {
@@ -160,11 +161,6 @@ function SessionItem(props: RouteComponentProps & Props) {
           </div>
 
           <div className="flex items-center">
-            { isAssist && showActive && (
-              <Label success className={cn("bg-green color-white text-right mr-4", { 'opacity-0' : !active})}>
-                <span className="color-white">ACTIVE</span>
-              </Label>
-            )}
             <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
               { isSessions && (
                 <div className="mr-4 flex-shrink-0 w-24">
@@ -179,6 +175,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                 isAssist={isAssist}
                 sessionId={sessionId}
                 viewed={viewed}
+                onClick={onClick}
               />
             </div>
           </div>

@@ -4,17 +4,17 @@ import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
 import { fetch as fetchSession } from 'Duck/sessions';
 import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
-import { Link, NoContent, Loader } from 'UI';
-import { sessions as sessionsRoute } from 'App/routes';
+import { Loader } from 'UI';
+// import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 import LivePlayer from './LivePlayer';
 
-const SESSIONS_ROUTE = sessionsRoute();
+// const SESSIONS_ROUTE = sessionsRoute();
 
 function LiveSession({ 
 	sessionId,
 	loading,
-  	hasErrors,
+  	// hasErrors,
 	session, 
 	fetchSession,
   	fetchSlackList,
@@ -51,7 +51,7 @@ export default withPermissions(['ASSIST_LIVE'], '', true)(connect((state, props)
 	return {
 		sessionId,
 		loading: state.getIn([ 'sessions', 'loading' ]),
-		hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
+		// hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
 		session: state.getIn([ 'sessions', 'current' ]),
 		hasSessionsPath: hasSessiosPath && !isAssist,
 	};

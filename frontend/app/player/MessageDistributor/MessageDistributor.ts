@@ -45,6 +45,7 @@ export interface State extends SuperState, AssistState {
   domContentLoadedTime?: any,
   domBuildingTime?: any,
   loadTime?: any,
+  error: boolean,
 }
 export const INITIAL_STATE: State = {
   ...SUPER_INITIAL_STATE,
@@ -52,6 +53,7 @@ export const INITIAL_STATE: State = {
   ...ASSIST_INITIAL_STATE,
   performanceChartData: [],
   skipIntervals: [],
+  error: false
 };
 
 

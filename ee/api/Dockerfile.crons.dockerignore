@@ -1,0 +1,15 @@
+# ignore .git and .cache folders
+.git
+.cache
+**/build.sh
+**/build_*.sh
+**/*deploy.sh
+
+app.py
+app_alerts.py
+requirements.txt
+requirements-alerts.txt
+build.sh
+build_alerts.sh
+entrypoint.sh
+entrypoint_alerts.sh

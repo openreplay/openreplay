@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { NoContent, Loader, Pagination, Popup } from 'UI';
+import { NoContent, Loader, Pagination } from 'UI';
 import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
@@ -39,49 +39,24 @@ function LiveSessionList(props: Props) {
     var timeoutId: any;
     const { filters } = filter;
     const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-    const sortOptions = metaList
+    const sortOptions = [{ label: 'Newest', value: 'timestamp' }].concat(metaList
         .map((i: any) => ({
             label: capitalize(i),
             value: i,
-        }))
-        .toJS();
-
-    // useEffect(() => {
-    //   if (metaListLoading || metaList.size === 0 || !!filter.sort) return;
-
-    //   if (sortOptions[0]) {
-    //     props.applyFilter({ sort: sortOptions[0].value });
-    //   }
-    // }, [metaListLoading]);
-
-    // useEffect(() => {
-    //   const filteredSessions = filters.size > 0 ? props.list.filter(session => {
-    //     let hasValidFilter = true;
-    //     filters.forEach(filter => {
-    //       if (!hasValidFilter) return;
-
-    //       const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
-    //       if (filter.key === FilterKey.USERID) {
-    //         const _userId = session.userId ? session.userId.toLowerCase() : '';
-    //         hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
-    //       }
-    //       if (filter.category === FilterCategory.METADATA) {
-    //         const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
-    //         hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
-    //       }
-    //     })
-    //     return hasValidFilter;
-    //   }) : props.list;
-    //   setSessions(filteredSessions);
-    // }, [filters, list]);
+        })).toJS());
 
     useEffect(() => {
-        props.applyFilter({ ...filter });
+        if (metaListLoading) return;
+        const _filter = { ...filter };
+        if (sortOptions[1]) {
+            _filter.sort = sortOptions[1].value;
+        }
+        props.applyFilter(_filter);
         timeout();
         return () => {
             clearTimeout(timeoutId);
         };
-    }, []);
+    }, [metaListLoading]);
 
     const onUserClick = (userId: string, userAnonymousId: string) => {
         if (userId) {
@@ -116,67 +91,64 @@ function LiveSessionList(props: Props) {
                 <div className="flex items-center">
                     <div className="flex items-center ml-6 mr-4">
                         <span className="mr-2 color-gray-medium">Sort By</span>
-                        <Popup
-                          content="No metadata available to sort"
-                          disabled={sortOptions.length > 0}
-                        >
-                          <div className={ cn("flex items-center", { 'disabled': sortOptions.length === 0})} >
+                        <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
                             <Select
                                 plain
                                 right
                                 options={sortOptions}
-                                // defaultValue={sort.field}
                                 onChange={onSortChange}
                                 value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
                             />
                             <div className="mx-2" />
                             <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
-                          </div>
-                        </Popup>
+                        </div>
                     </div>
                 </div>
             </div>
-            <Loader loading={loading}>
-                <NoContent
-                    title={'No live sessions.'}
-                    subtext={
-                        <span>
-                            See how to setup the{' '}
-                            <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
-                                {'Assist'}
-                            </a>{' '}
-                            plugin, if you haven’t done that already.
-                        </span>
-                    }
-                    image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
-                    show={!loading && list.size === 0}
-                >
-                    <div className="bg-white p-3 rounded border">
-                        {list.map((session) => (
-                            <>
-                                <SessionItem
-                                    key={session.sessionId}
-                                    session={session}
-                                    live
-                                    hasUserFilter={hasUserFilter}
-                                    onUserClick={onUserClick}
-                                    metaList={metaList}
-                                />
-                                <div className="border-b" />
-                            </>
-                        ))}
-
-                        <div className="w-full flex items-center justify-center py-6">
-                            <Pagination
-                                page={currentPage}
-                                totalPages={Math.ceil(total / PER_PAGE)}
-                                onPageChange={(page: any) => props.updateCurrentPage(page)}
-                                limit={PER_PAGE}
-                            />
+            <div className="bg-white p-3 rounded border">
+                <Loader loading={loading}>
+                    <NoContent
+                        title={'No live sessions.'}
+                        subtext={
+                            <span>
+                                See how to setup the{' '}
+                                <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
+                                    {'Assist'}
+                                </a>{' '}
+                                plugin, if you haven’t done that already.
+                            </span>
+                        }
+                        image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
+                        show={!loading && list.size === 0}
+                    >
+                        <div>
+                            {list.map((session) => (
+                                <>
+                                    <SessionItem
+                                        key={session.sessionId}
+                                        session={session}
+                                        live
+                                        hasUserFilter={hasUserFilter}
+                                        onUserClick={onUserClick}
+                                        metaList={metaList}
+                                    />
+                                    <div className="border-b" />
+                                </>
+                            ))}
                         </div>
-                    </div>
-                </NoContent>
-            </Loader>
+                    </NoContent>
+                </Loader>
+
+                <div className={cn("w-full flex items-center justify-center py-6", { 'disabled' : loading})}>
+                    <Pagination
+                        page={currentPage}
+                        totalPages={Math.ceil(total / PER_PAGE)}
+                        onPageChange={(page: any) => props.updateCurrentPage(page)}
+                        limit={PER_PAGE}
+                        debounceRequest={500}
+                    />
+                </div>
+            </div>
         </div>
     );
 }

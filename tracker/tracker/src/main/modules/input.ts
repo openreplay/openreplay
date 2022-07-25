@@ -1,45 +1,38 @@
-import type App from "../app/index.js";
-import {
-  normSpaces,
-  IN_BROWSER,
-  getLabelAttribute,
-  hasOpenreplayAttribute,
-} from "../utils.js";
-import { hasTag } from "../app/guards.js";
-import { SetInputTarget, SetInputValue, SetInputChecked } from "../../common/messages.js";
+import type App from '../app/index.js';
+import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from '../utils.js';
+import { hasTag } from '../app/guards.js';
+import { SetInputTarget, SetInputValue, SetInputChecked } from '../../common/messages.js';
 
-const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date']
+const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date'];
 
 // TODO: take into consideration "contenteditable" attribute
-type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
+type TextEditableElement = HTMLInputElement | HTMLTextAreaElement;
 function isTextEditable(node: any): node is TextEditableElement {
-  if (hasTag(node, "TEXTAREA")) {
+  if (hasTag(node, 'TEXTAREA')) {
     return true;
   }
-  if (!hasTag(node, "INPUT")) {
+  if (!hasTag(node, 'INPUT')) {
     return false;
   }
 
-  return INPUT_TYPES.includes(node.type)
+  return INPUT_TYPES.includes(node.type);
 }
 
 function isCheckable(node: any): node is HTMLInputElement {
-  if (!hasTag(node, "INPUT")) {
+  if (!hasTag(node, 'INPUT')) {
     return false;
   }
   const type = node.type;
   return type === 'checkbox' || type === 'radio';
 }
 
-const labelElementFor: (
-  element: TextEditableElement,
-) => HTMLLabelElement | undefined =
+const labelElementFor: (element: TextEditableElement) => HTMLLabelElement | undefined =
   IN_BROWSER && 'labels' in HTMLInputElement.prototype
     ? (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (hasTag(p, "LABEL")) {
-            return p
+          if (hasTag(p, 'LABEL')) {
+            return p;
           }
         }
         const labels = node.labels;
@@ -50,8 +43,8 @@ const labelElementFor: (
     : (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (hasTag(p, "LABEL")) {
-            return p as HTMLLabelElement;
+          if (hasTag(p, 'LABEL')) {
+            return p;
           }
         }
         const id = node.id;
@@ -67,12 +60,13 @@ export function getInputLabel(node: TextEditableElement): string {
   let label = getLabelAttribute(node);
   if (label === null) {
     const labelElement = labelElementFor(node);
-    label = (labelElement && labelElement.innerText)
-      || node.placeholder
-      || node.name
-      || node.id
-      || node.className
-      || node.type
+    label =
+      (labelElement && labelElement.innerText) ||
+      node.placeholder ||
+      node.name ||
+      node.id ||
+      node.className ||
+      node.type;
   }
   return normSpaces(label).slice(0, 100);
 }
@@ -116,8 +110,7 @@ export default function (app: App, opts: Partial<Options>): void {
       (inputMode === InputMode.Plain &&
         ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
           (options.obscureInputDates && node.type === 'date') ||
-          (options.obscureInputEmails &&
-            (node.type === 'email' || !!~value.indexOf('@')))))
+          (options.obscureInputEmails && (node.type === 'email' || !!~value.indexOf('@')))))
     ) {
       inputMode = InputMode.Obscured;
     }
@@ -183,11 +176,11 @@ export default function (app: App, opts: Partial<Options>): void {
         return;
       }
       // TODO: support multiple select (?): use selectedOptions; Need send target?
-      if (hasTag(node, "SELECT")) {
-        sendInputValue(id, node)
-        app.attachEventListener(node, "change", () => {
-          sendInputValue(id, node)
-        })
+      if (hasTag(node, 'SELECT')) {
+        sendInputValue(id, node);
+        app.attachEventListener(node, 'change', () => {
+          sendInputValue(id, node);
+        });
       }
       if (isTextEditable(node)) {
         inputValues.set(id, node.value);

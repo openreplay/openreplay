@@ -13,11 +13,7 @@ export default class Nodes {
   attachNodeCallback(nodeCallback: NodeCallback): void {
     this.nodeCallbacks.push(nodeCallback);
   }
-  attachElementListener(
-    type: string,
-    node: Element,
-    elementListener: EventListener,
-  ): void {
+  attachElementListener(type: string, node: Element, elementListener: EventListener): void {
     const id = this.getID(node);
     if (id === undefined) {
       return;
@@ -50,9 +46,7 @@ export default class Nodes {
       const listeners = this.elementListeners.get(id);
       if (listeners !== undefined) {
         this.elementListeners.delete(id);
-        listeners.forEach((listener) =>
-          node.removeEventListener(listener[0], listener[1]),
-        );
+        listeners.forEach((listener) => node.removeEventListener(listener[0], listener[1]));
       }
     }
     return id;

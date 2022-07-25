@@ -4,11 +4,18 @@
 
 replicaCount: 1
 
-image:
-  repository: "{{ .Values.global.openReplayContainerRegistry }}/utilities"
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+efsCleaner:
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/alpine"
+    pullPolicy: Always
+    tag: 3.16.1
+  pvc:
+    # This can be either persistentVolumeClaim or hostPath.
+    # In case of pvc, you'll have to provide the pvc name.
+    # For example
+    # name: openreplay-efs
+    name: hostPath
+    hostMountPath: /openreplay/storage/nfs
 
 telemetry:
   # https://crontab.guru/#5_12_*_*_*
@@ -16,7 +23,7 @@ telemetry:
   cron: "5 12 * * *"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   env:
@@ -27,7 +34,7 @@ report:
   cron: "0 5 * * 1"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   env:
@@ -35,9 +42,10 @@ report:
 sessionsCleaner:
   # https://crontab.guru/#5_1_*_*_*
   # Midnight 1.05
+  cron: "5 1 * * *"
   image:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
   env:
@@ -75,10 +83,3 @@ fullnameOverride: "utilities-openreplay"
 # refer: https://crontab.guru/#5_3_*_*_1
 cron: "5 3 * * 1"
 
-pvc:
-  # This can be either persistentVolumeClaim or hostPath.
-  # In case of pvc, you'll have to provide the pvc name.
-  # For example
-  # name: openreplay-efs
-  name: hostPath
-  hostMountPath: /openreplay/storage/nfs

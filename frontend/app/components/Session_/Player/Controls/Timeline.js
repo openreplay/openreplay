@@ -95,7 +95,6 @@ export default class Timeline extends React.PureComponent {
     const { endTime } = this.props;
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
-    console.log(p, time, e, endTime)
     this.props.jump(time);
   }
 
@@ -232,7 +231,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className="bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className="bg-white" name={getPointerIcon('click_rage')} color="red" size="16" />
                 </Tooltip>
               </div>
             ))}
@@ -254,7 +253,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className=" rounded-full bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className="rounded-full bg-white" name={getPointerIcon('click_rage')} color="red" size="16" />
                 </Tooltip>
               </div>
             }
@@ -277,7 +276,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                   }
                   >
-                    <Icon className=" rounded-full bg-white" name={getPointerIcon('exception')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('exception')} color="red" size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -330,7 +329,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                     }
                   >
-                    <Icon className=" rounded-full bg-white" name={getPointerIcon('fetch')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('fetch')} color="red" size="16" />
                   </Tooltip>
                 </div>
               ))

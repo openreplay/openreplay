@@ -10,12 +10,13 @@ import { connect } from 'react-redux';
 import AddUserButton from './components/AddUserButton';
 
 interface Props {
+    isOnboarding?: boolean;
     account: any;
     isEnterprise: boolean;
     limits: any;
 }
 function UsersView(props: Props) {
-    const { account, limits, isEnterprise } = props;
+    const { account, limits, isEnterprise, isOnboarding = false } = props;
     const { userStore, roleStore } = useStore();
     const userCount = useObserver(() => userStore.list.length);
     const roles = useObserver(() => roleStore.list);
@@ -49,7 +50,7 @@ function UsersView(props: Props) {
                     <UserSearch />
                 </div>
             </div>
-            <UserList isEnterprise={isEnterprise} />
+            <UserList isEnterprise={isEnterprise} isOnboarding={isOnboarding} />
         </div>
     );
 }

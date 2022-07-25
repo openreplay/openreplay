@@ -20,7 +20,7 @@ const FETCH_SESSION_LIST = fetchListType(`${name}/FETCH_SESSION_LIST`);
 
 const initialState = Map({
 	list: List(),
-	instance: new Filter({ filters: [], sort: '' }),
+	instance: new Filter({ filters: [], sort: 'timestamp' }),
   filterSearchList: {},
   currentPage: 1,
 });
@@ -96,7 +96,7 @@ export const fetchSessions = (filter) => (dispatch, getState) => {
 };
 
 export const clearSearch = () => (dispatch, getState) => {
-  dispatch(edit(new Filter({ filters: [] })));
+  dispatch(edit(new Filter({ filters: [], sort: 'timestamp' })));
   return dispatch({
     type: CLEAR_SEARCH,
   });

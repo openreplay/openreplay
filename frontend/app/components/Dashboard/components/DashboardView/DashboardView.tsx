@@ -65,6 +65,9 @@ function DashboardView(props: Props) {
             trimQuery();
         }
     }, []);
+    useEffect(() => {
+        dashboardStore.selectDefaultDashboard();
+    }, [siteId])
 
     const onAddWidgets = () => {
         dashboardStore.initDashboard(dashboard);

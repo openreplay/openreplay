@@ -70,7 +70,6 @@ rm -rf ./routers/subs/dashboard.py
 rm -rf ./db_changes.sql
 rm -rf ./Dockerfile.bundle
 rm -rf ./entrypoint.bundle.sh
-rm -rf ./entrypoint.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./routers/subs/insights.py
 rm -rf ./schemas.py

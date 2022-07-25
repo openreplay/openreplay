@@ -12,3 +12,7 @@ input.no-focus:focus {
     outline: none !important;
     border: solid thin transparent !important;
 }
+
+.widget-wrapper {
+    @apply rounded border bg-white;
+}

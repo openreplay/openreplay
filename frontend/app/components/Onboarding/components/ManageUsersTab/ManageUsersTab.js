@@ -1,5 +1,5 @@
+import UsersView from 'App/components/Client/Users/UsersView'
 import React from 'react' 
-import ManageUsers from '../../../Client/ManageUsers'
 
 export default function ManageUsersTab() {
   return (
@@ -9,9 +9,8 @@ export default function ManageUsersTab() {
           <span>👨‍💻</span>
           <div className="ml-3">Invite Collaborators</div>
         </h1>
-        
-        <ManageUsers hideHeader />
-      
+
+        <UsersView isOnboarding={true} />      
       </div>
       <div className="w-4/12 py-6">
         <div className="p-5 bg-gray-lightest mb-4 rounded">

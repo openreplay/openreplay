@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 cd sourcemap-reader
 nohup npm start &> /tmp/sourcemap-reader.log &
 cd ..

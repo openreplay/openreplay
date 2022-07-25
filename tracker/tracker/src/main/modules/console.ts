@@ -1,7 +1,7 @@
-import type App from "../app/index.js";
-import { hasTag } from "../app/guards.js";
-import { IN_BROWSER } from "../utils.js";
-import { ConsoleLog } from "../../common/messages.js";
+import type App from '../app/index.js';
+import { hasTag } from '../app/guards.js';
+import { IN_BROWSER } from '../utils.js';
+import { ConsoleLog } from '../../common/messages.js';
 
 const printError: (e: Error) => string =
   IN_BROWSER && 'InstallTrigger' in window // detect Firefox
@@ -104,10 +104,7 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   );
-  if (
-    !Array.isArray(options.consoleMethods) ||
-    options.consoleMethods.length === 0
-  ) {
+  if (!Array.isArray(options.consoleMethods) || options.consoleMethods.length === 0) {
     return;
   }
 
@@ -139,18 +136,21 @@ export default function (app: App, opts: Partial<Options>): void {
     });
   patchConsole(window.console);
 
-  app.nodes.attachNodeCallback(app.safe(node => {
-    if (hasTag(node, "IFRAME")) { // TODO: newContextCallback
-      let context = node.contentWindow
-      if (context) {
-        patchConsole((context as (Window & typeof globalThis)).console)
-      }
-      app.attachEventListener(node, "load", () => {
-        if (node.contentWindow !== context) {
-          context = node.contentWindow
-          patchConsole((context as (Window & typeof globalThis)).console)
+  app.nodes.attachNodeCallback(
+    app.safe((node) => {
+      if (hasTag(node, 'IFRAME')) {
+        // TODO: newContextCallback
+        let context = node.contentWindow;
+        if (context) {
+          patchConsole((context as Window & typeof globalThis).console);
         }
-      })
-    }
-  }))
+        app.attachEventListener(node, 'load', () => {
+          if (node.contentWindow !== context) {
+            context = node.contentWindow;
+            patchConsole((context as Window & typeof globalThis).console);
+          }
+        });
+      }
+    }),
+  );
 }

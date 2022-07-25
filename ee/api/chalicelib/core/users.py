@@ -4,11 +4,9 @@ import secrets
 from decouple import config
 from fastapi import BackgroundTasks
 
-import schemas
 import schemas_ee
 from chalicelib.core import authorizers, metadata, projects, roles
 from chalicelib.core import tenants, assist
-from chalicelib.utils import dev, SAML2_helper
 from chalicelib.utils import helper, email_helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -170,7 +168,11 @@ def update(tenant_id, user_id, changes):
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id;""",
+                                users.role_id,
+                                (SELECT roles.name 
+                                    FROM roles 
+                                    WHERE roles.tenant_id=%(tenant_id)s 
+                                        AND roles.role_id=users.role_id) AS role_name;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -189,7 +191,11 @@ def update(tenant_id, user_id, changes):
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.role_id;""",
+                                users.role_id,
+                                (SELECT roles.name 
+                                    FROM roles 
+                                    WHERE roles.tenant_id=%(tenant_id)s 
+                                        AND roles.role_id=users.role_id) AS role_name;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
 
@@ -649,7 +655,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
 
         cur.execute(query)
         r = cur.fetchone()
-        if r is None and SAML2_helper.is_saml2_available():
+        if r is None and helper.is_saml2_available():
             query = cur.mogrify(
                 f"""SELECT 1
                     FROM public.users

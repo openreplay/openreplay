@@ -38,7 +38,7 @@ function Session({
 			subtext={
 				<span>
 				{'Please check your data retention plan, or try '}
-				<Link to={ SESSIONS_ROUTE }>{'another one'}</Link>
+				<Link to={ SESSIONS_ROUTE } className="link">{'another one'}</Link>
 				</span>
 			}
 		>

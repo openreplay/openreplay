@@ -17,9 +17,10 @@ interface Props {
     isAssist: boolean;
     viewed: boolean;
     sessionId: string;
+    onClick?: () => void;
 }
 export default function PlayLink(props: Props) {
-    const { isAssist, viewed, sessionId } = props
+    const { isAssist, viewed, sessionId, onClick = null } = props
     const defaultIconName = getDefaultIconName(viewed)
 
     const [isHovered, toggleHover] = useState(false)
@@ -31,7 +32,8 @@ export default function PlayLink(props: Props) {
     }, [isHovered, viewed])
 
     return (
-        <Link 
+        <Link
+            onClick={onClick ? onClick : () => {}}
             to={ isAssist ? liveSessionRoute(sessionId) : sessionRoute(sessionId) }
             onMouseEnter={() => toggleHover(true)}
             onMouseLeave={() => toggleHover(false)}

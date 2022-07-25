@@ -19,14 +19,16 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openrep
 
 
 FROM alpine AS entrypoint
+RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache ca-certificates
+RUN adduser -u 1001 openreplay -D
 
 ENV TZ=UTC \
     FS_ULIMIT=1000 \
     FS_DIR=/mnt/efs \
-    MAXMINDDB_FILE=/root/geoip.mmdb \
-    UAPARSER_FILE=/root/regexes.yaml \
-    HTTP_PORT=80 \
+    MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
+    UAPARSER_FILE=/home/openreplay/regexes.yaml \
+    HTTP_PORT=8080 \
     KAFKA_USE_SSL=true \
     KAFKA_MAX_POLL_INTERVAL_MS=400000 \
     REDIS_STREAMS_MAX_LEN=10000 \
@@ -67,5 +69,6 @@ RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi
 
 
-COPY --from=build /root/service /root/service
-ENTRYPOINT /root/service
+COPY --from=build /root/service /home/openreplay/service
+USER 1001
+ENTRYPOINT /home/openreplay/service

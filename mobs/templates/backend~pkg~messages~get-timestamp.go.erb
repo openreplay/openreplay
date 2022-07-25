@@ -1,0 +1,12 @@
+// Auto-generated, do not edit
+package messages
+
+func GetTimestamp(message Message) uint64 {
+	switch msg := message.(type) {
+<% $messages.select { |msg| msg.swift }.each do |msg| %>
+	case *<%= msg.name %>:
+		return msg.Timestamp
+<% end %>
+	}
+	return uint64(message.Meta().Timestamp)
+}
