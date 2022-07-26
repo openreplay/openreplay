@@ -52,31 +52,57 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                        AND users.tenant_id = %(tenant_id)s
                        AND (roles.all_projects OR roles_projects.project_id = s.project_id)
                     ) AS role_project ON (TRUE)"""
-        pre_select = ""
+        extra_projection = ""
+        extra_join = ""
+        if gdpr:
+            extra_projection += ',s.gdpr'
         if recorded:
-            pre_select = """WITH recorded_p AS (SELECT DISTINCT projects.project_id
-                            FROM projects INNER JOIN sessions USING (project_id)
-                            WHERE tenant_id =%(tenant_id)s
-                              AND deleted_at IS NULL
-                              AND duration > 0)"""
-        cur.execute(
-            cur.mogrify(f"""\
-                    {pre_select}
-                    SELECT
-                           s.project_id, s.name, s.project_key, s.save_request_payloads
-                            {',s.gdpr' if gdpr else ''} 
-                            {',EXISTS(SELECT 1 FROM recorded_p WHERE recorded_p.project_id = s.project_id) AS recorded' if recorded else ''}
-                            {',stack_integrations.count>0 AS stack_integrations' if stack_integrations else ''}
-                    FROM public.projects AS s
-                            {'LEFT JOIN recorded_p USING (project_id)' if recorded else ''}
-                            {'LEFT JOIN LATERAL (SELECT COUNT(*) AS count FROM public.integrations WHERE s.project_id = integrations.project_id LIMIT 1) AS stack_integrations ON TRUE' if stack_integrations else ''}
-                            {role_query if user_id is not None else ""}
-                    WHERE s.tenant_id =%(tenant_id)s
-                        AND s.deleted_at IS NULL
-                    ORDER BY s.project_id;""",
-                        {"tenant_id": tenant_id, "user_id": user_id})
-        )
+            extra_projection += """,COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT ,
+                                      (SELECT MIN(sessions.start_ts)
+                                       FROM public.sessions
+                                       WHERE sessions.project_id = s.project_id
+                                         AND sessions.start_ts >= (EXTRACT(EPOCH FROM 
+                                                            COALESCE(s.sessions_last_check_at, s.created_at)) * 1000-24*60*60*1000)
+                                         AND sessions.start_ts <= %(now)s
+                                       LIMIT 1), NULL) AS first_recorded"""
+        if stack_integrations:
+            extra_projection += ',stack_integrations.count>0 AS stack_integrations'
+
+        if stack_integrations:
+            extra_join = """LEFT JOIN LATERAL (SELECT COUNT(*) AS count 
+                                            FROM public.integrations 
+                                            WHERE s.project_id = integrations.project_id 
+                                            LIMIT 1) AS stack_integrations ON TRUE"""
+
+        query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
+                                SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at
+                                        {extra_projection}
+                                FROM public.projects AS s
+                                        {extra_join}
+                                        {role_query if user_id is not None else ""}
+                                WHERE s.tenant_id =%(tenant_id)s
+                                    AND s.deleted_at IS NULL
+                                ORDER BY s.project_id {") AS raw" if recorded else ""};""",
+                            {"tenant_id": tenant_id, "user_id": user_id, "now": TimeUTC.now()})
+        cur.execute(query)
         rows = cur.fetchall()
+
+        # if recorded is requested, check if it was saved or computed
+        if recorded:
+            for r in rows:
+                if r["first_recorded_session_at"] is None:
+                    extra_update = ""
+                    if r["recorded"]:
+                        extra_update = ", first_recorded_session_at=to_timestamp(%(first_recorded)s/1000)"
+                    query = cur.mogrify(f"""UPDATE public.projects 
+                                                       SET sessions_last_check_at=(now() at time zone 'utc')
+                                                        {extra_update} 
+                                                       WHERE project_id=%(project_id)s""",
+                                        {"project_id": r["project_id"], "first_recorded": r["first_recorded"]})
+                    cur.execute(query)
+                r.pop("first_recorded_session_at")
+                r.pop("first_recorded")
+
         if recording_state:
             project_ids = [f'({r["project_id"]})' for r in rows]
             query = cur.mogrify(f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
