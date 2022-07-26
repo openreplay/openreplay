@@ -14,7 +14,7 @@ import type { Options as ConfirmOptions } from './ConfirmWindow/defaults.js';
 
 // TODO: fully specified  strict check (everywhere)
 
-type StartEndCallback = () => ((()=>{}) | void)
+type StartEndCallback = () => ((() => void) | void)
 
 export interface Options {
   onAgentConnect: StartEndCallback,
@@ -39,8 +39,8 @@ enum CallingState {
 };
 
 
-// TODO typing????
-type OptionalCallback = (()=>{}) | void
+// TODO typing???? () => ((() => void) | void)
+type OptionalCallback = (() => void) | void
 type Agent = {
   onDisconnect?: OptionalCallback,
   onControlReleased?: OptionalCallback,
