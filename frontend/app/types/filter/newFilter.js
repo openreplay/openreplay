@@ -4,7 +4,10 @@ import filterOptions, { countries, platformOptions } from 'App/constants';
 import { capitalize } from 'App/utils';
 
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
-const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }]
+const containsFilters = [
+  { key: 'is', label: 'is', text: 'is', value: 'is' },
+  { key: 'contains', label: 'contains', text: 'contains', value: 'contains' },
+]
 
 export const filters = [
   { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
@@ -59,6 +62,7 @@ export const filtersMap = filters.reduce((acc, filter) => {
 }, {});
 
 export const liveFiltersMap = {}
+const liveFilterSupportedOperators = ['is', 'contains'];
 filters.forEach(filter => {
   if (
     filter.category !== FilterCategory.INTERACTIONS &&
@@ -68,11 +72,7 @@ filters.forEach(filter => {
     filter.key !== FilterKey.REFERRER
   ) {
     liveFiltersMap[filter.key] = {...filter};
-    liveFiltersMap[filter.key].operator = 'contains';
-    liveFiltersMap[filter.key].operatorDisabled = true;
-    if (filter.key === FilterKey.PLATFORM) {
-      liveFiltersMap[filter.key].operator = 'is';
-    }
+    liveFiltersMap[filter.key].operatorOptions = liveFiltersMap[filter.key].operatorOptions.filter(operator => liveFilterSupportedOperators.includes(operator.value));
   }
 })
 
@@ -106,7 +106,7 @@ export const addElementToLiveFiltersMap = (
   category = FilterCategory.METADATA,
   key,
   type = FilterType.MULTIPLE,
-  operator = 'contains',
+  operator = 'is',
   operatorOptions = containsFilters,
   icon = 'filters/metadata'
 ) => {
@@ -115,7 +115,7 @@ export const addElementToLiveFiltersMap = (
       operator: operator,
       operatorOptions,
       icon,
-      operatorDisabled: true,
+      // operatorDisabled: true,
       isLive: true
   }
 }
@@ -206,7 +206,7 @@ export const generateLiveFilterOptions = (map) => {
   Object.keys(map).filter(i => map[i].isLive).forEach(key => {
     const filter = map[key];
     filter.operator = 'contains';
-    filter.operatorDisabled = true;
+    // filter.operatorDisabled = true;
     if (filterSection.hasOwnProperty(filter.category)) {
       filterSection[filter.category].push(filter);
     } else {
