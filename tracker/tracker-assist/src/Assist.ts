@@ -39,7 +39,7 @@ enum CallingState {
 };
 
 
-// TODO typing???? () => ((() => void) | void)
+// TODO typing????
 type OptionalCallback = (() => void) | void
 type Agent = {
   onDisconnect?: OptionalCallback,
