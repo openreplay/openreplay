@@ -1,4 +1,4 @@
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import { Map } from 'immutable';
 import indexReducer from './duck';
@@ -9,13 +9,16 @@ const storage = new LocalStorage({
   jwt: String,
 });
 
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ && window.env.NODE_ENV === "development" 
+  ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ : compose;
+
 const storageState = storage.state();
 const initialState = Map({
   jwt: storageState.jwt,
   // TODO: store user
 });
 
-const store = createStore(indexReducer, initialState, applyMiddleware(thunk, apiMiddleware));
+const store = createStore(indexReducer, initialState, composeEnhancers(applyMiddleware(thunk, apiMiddleware)));
 store.subscribe(() => {
   const state = store.getState();
   storage.sync({
