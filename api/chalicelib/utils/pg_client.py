@@ -75,9 +75,11 @@ class PostgresClient:
     connection = None
     cursor = None
     long_query = False
+    unlimited_query = False
 
     def __init__(self, long_query=False, unlimited_query=False):
         self.long_query = long_query
+        self.unlimited_query = unlimited_query
         if unlimited_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-UNLIMITED"
@@ -85,7 +87,7 @@ class PostgresClient:
         elif long_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-LONG"
-            long_config["options"] = f"-c statement_timeout={config('pg_long_timeout', cast=int, default=5*60) * 1000}"
+            long_config["options"] = f"-c statement_timeout={config('pg_long_timeout', cast=int, default=5 * 60) * 1000}"
             self.connection = psycopg2.connect(**long_config)
         else:
             self.connection = postgreSQL_pool.getconn()
@@ -99,11 +101,11 @@ class PostgresClient:
         try:
             self.connection.commit()
             self.cursor.close()
-            if self.long_query:
+            if self.long_query or self.unlimited_query:
                 self.connection.close()
         except Exception as error:
             print("Error while committing/closing PG-connection", error)
-            if str(error) == "connection already closed":
+            if str(error) == "connection already closed" and not self.long_query and not self.unlimited_query:
                 print("Recreating the connexion pool")
                 make_pool()
             else:

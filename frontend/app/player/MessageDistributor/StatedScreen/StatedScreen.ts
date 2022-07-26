@@ -145,9 +145,9 @@ export default class StatedScreen extends Screen {
           ...s,
           el,
           index: index++,
-          percent: 0,
+          percent: Math.round((s.count * 100) / totalCount),
           boundingRect:  this.calculateRelativeBoundingRect(el),
-          count: Math.round((s.count * 100) / totalCount)
+          count: s.count,
         })
       });
 

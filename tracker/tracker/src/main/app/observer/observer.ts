@@ -43,10 +43,17 @@ function isObservable(node: Node): boolean {
     - use document as a 0-node in the upper context (should be updated in player at first)
 */
 
+/* 
+  Nikita:
+    - rn we only send unbind event for parent (all child nodes will be cut in the live replay anyways) 
+      to prevent sending 1k+ unbinds for child nodes and making replay file bigger than it should be 
+*/
+
 enum RecentsType {
   New,
   Removed,
   Changed,
+  RemovedChild,
 }
 
 export default abstract class Observer {
@@ -69,7 +76,7 @@ export default abstract class Observer {
           }
           if (type === 'childList') {
             for (let i = 0; i < mutation.removedNodes.length; i++) {
-              this.bindTree(mutation.removedNodes[i]);
+              this.bindTree(mutation.removedNodes[i], true);
             }
             for (let i = 0; i < mutation.addedNodes.length; i++) {
               this.bindTree(mutation.addedNodes[i]);
@@ -180,8 +187,12 @@ export default abstract class Observer {
       this.recents.set(id, RecentsType.Removed);
     }
   }
+  private unbindChildNode(node: Node): void {
+    const [id] = this.app.nodes.registerNode(node);
+    this.recents.set(id, RecentsType.RemovedChild);
+  }
 
-  private bindTree(node: Node): void {
+  private bindTree(node: Node, isChildUnbinding = false): void {
     if (!isObservable(node)) {
       return;
     }
@@ -191,7 +202,7 @@ export default abstract class Observer {
       NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) =>
-          isIgnored(node) || this.app.nodes.getID(node) !== undefined
+          isIgnored(node) || (this.app.nodes.getID(node) !== undefined && !isChildUnbinding)
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT,
       },
@@ -199,11 +210,15 @@ export default abstract class Observer {
       false,
     );
     while (walker.nextNode()) {
-      this.bindNode(walker.currentNode);
+      if (isChildUnbinding) {
+        this.unbindChildNode(walker.currentNode);
+      } else {
+        this.bindNode(walker.currentNode);
+      }
     }
   }
 
-  private unbindNode(node: Node): void {
+  private unbindNode(node: Node) {
     const id = this.app.nodes.unregisterNode(node);
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       this.app.send(new RemoveNode(id));

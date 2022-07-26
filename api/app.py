@@ -13,7 +13,7 @@ from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
 from routers.subs import dashboard, insights, metrics, v1_api
 
-app = FastAPI(root_path="/api")
+app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
 
 
 @app.middleware('http')

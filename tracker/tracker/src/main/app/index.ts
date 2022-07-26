@@ -467,7 +467,7 @@ export default class App {
       });
     }
   }
-  stop(calledFromAPI = false): void {
+  stop(calledFromAPI = false, restarting = false): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
         this.sanitizer.clear();
@@ -479,12 +479,16 @@ export default class App {
           this.session.reset();
         }
         this.notify.log('OpenReplay tracking stopped.');
-        if (this.worker) {
+        if (this.worker && !restarting) {
           this.worker.postMessage('stop');
         }
       } finally {
         this.activityState = ActivityState.NotActive;
       }
     }
+  }
+  restart() {
+    this.stop(false, true);
+    this.start({ forceNew: false });
   }
 }

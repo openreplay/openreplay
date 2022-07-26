@@ -10,7 +10,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 // const ALL = 'all';
 const PER_PAGE = 10;
-const AUTOREFRESH_INTERVAL = 3 * 60 * 1000;
+const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 var timeoutId;
 
 @connect(state => ({

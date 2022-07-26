@@ -6,17 +6,19 @@ import { components } from 'react-select';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
     period: any;
     onChange: (data: any) => void;
     disableCustom?: boolean;
     right?: boolean;
+    timezone?: string;
     [x: string]: any;
 }
 function SelectDateRange(props: Props) {
     const [isCustom, setIsCustom] = React.useState(false);
-    const { right = false, period, disableCustom = false, ...rest } = props;
+    const { right = false, period, disableCustom = false, timezone, ...rest } = props;
     let selectedValue = DATE_RANGE_OPTIONS.find((obj: any) => obj.value === period.rangeName);
     const options = DATE_RANGE_OPTIONS.filter((obj: any) => (disableCustom ? obj.value !== CUSTOM_RANGE : true));
 
@@ -24,15 +26,20 @@ function SelectDateRange(props: Props) {
         if (value === CUSTOM_RANGE) {
             setIsCustom(true);
         } else {
+            // @ts-ignore
             props.onChange(new Period({ rangeName: value }));
         }
     };
 
     const onApplyDateRange = (value: any) => {
-        props.onChange(new Period({ rangeName: CUSTOM_RANGE, start: value.start, end: value.end }));
+        // @ts-ignore
+        const range = new Period({ rangeName: CUSTOM_RANGE, start: value.start, end: value.end })
+        props.onChange(range);
         setIsCustom(false);
     };
 
+    const isCustomRange = period.rangeName === CUSTOM_RANGE;
+    const customRange = isCustomRange ? period.rangeFormatted() : '';
     return (
         <div className="relative">
             <Select
@@ -44,7 +51,7 @@ function SelectDateRange(props: Props) {
                     SingleValue: ({ children, ...props }: any) => {
                         return (
                             <components.SingleValue {...props}>
-                                {period.rangeName === CUSTOM_RANGE ? period.rangeFormatted() : children}
+                                {isCustomRange ? customRange : children}
                             </components.SingleValue>
                         );
                     },
@@ -66,11 +73,9 @@ function SelectDateRange(props: Props) {
                         className={cn('absolute top-0 mt-10 z-40', { 'right-0': right })}
                         style={{
                             width: '770px',
-                            // margin: 'auto 50vh 0',
-                            // transform: 'translateX(-50%)'
                         }}
                     >
-                        <DateRangePopup onApply={onApplyDateRange} onCancel={() => setIsCustom(false)} selectedDateRange={period.range} />
+                        <DateRangePopup timezone={timezone} onApply={onApplyDateRange} onCancel={() => setIsCustom(false)} selectedDateRange={period.range} />
                     </div>
                 </OutsideClickDetectingDiv>
             )}
@@ -78,4 +83,4 @@ function SelectDateRange(props: Props) {
     );
 }
 
-export default SelectDateRange;
+export default observer(SelectDateRange);

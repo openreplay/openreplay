@@ -32,7 +32,8 @@ def cron():
     if not helper.has_smtp():
         print("!!! No SMTP configuration found, ignoring weekly report")
         return
-    with pg_client.PostgresClient(long_query=True) as cur:
+    _now = TimeUTC.now()
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         params = {"tomorrow": TimeUTC.midnight(delta_days=1),
                   "3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),
@@ -87,6 +88,9 @@ def cron():
                               AND issues.timestamp >= %(5_week_ago)s
                      ) AS month_1_issues ON (TRUE);"""), params)
         projects_data = cur.fetchall()
+        _now2 = TimeUTC.now()
+        print(f">> Weekly report query: {_now2 - _now} ms")
+        _now = _now2
         emails_to_send = []
         for p in projects_data:
             params["project_id"] = p["project_id"]
@@ -117,6 +121,9 @@ def cron():
                          ) AS timestamp_i
                 ORDER BY timestamp_i;""", params))
             days_partition = cur.fetchall()
+            _now2 = TimeUTC.now()
+            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            _now = _now2
             max_days_partition = max(x['issues_count'] for x in days_partition)
             for d in days_partition:
                 if max_days_partition <= 0:
@@ -133,6 +140,9 @@ def cron():
             ORDER BY count DESC, type
             LIMIT 4;""", params))
             issues_by_type = cur.fetchall()
+            _now2 = TimeUTC.now()
+            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            _now = _now2
             max_issues_by_type = sum(i["count"] for i in issues_by_type)
             for i in issues_by_type:
                 i["type"] = get_issue_title(i["type"])
@@ -162,6 +172,9 @@ def cron():
                 GROUP BY timestamp_i
                 ORDER BY timestamp_i;""", params))
             issues_breakdown_by_day = cur.fetchall()
+            _now2 = TimeUTC.now()
+            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            _now = _now2
             for i in issues_breakdown_by_day:
                 i["sum"] = sum(x["count"] for x in i["partition"])
                 for j in i["partition"]:
@@ -208,6 +221,9 @@ def cron():
                 GROUP BY type
                 ORDER BY issue_count DESC;""", params))
             issues_breakdown_list = cur.fetchall()
+            _now2 = TimeUTC.now()
+            print(f">> Weekly report s-query-1: {_now2 - _now} ms project_id: {p['project_id']}")
+            _now = _now2
             if len(issues_breakdown_list) > 4:
                 others = {"type": "Others",
                           "sessions_count": sum(i["sessions_count"] for i in issues_breakdown_list[4:]),
