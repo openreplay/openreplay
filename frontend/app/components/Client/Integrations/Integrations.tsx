@@ -17,7 +17,6 @@ import SumoLogicForm from './SumoLogicForm';
 interface Props {}
 function Integrations(props: Props) {
     const { showModal } = useModal();
-    // group integrations by category
     const _integrations: any = React.useMemo(() => {
         return integrations.reduce((acc: any, curr: any) => {
             if (!acc[curr.category]) {
@@ -28,8 +27,6 @@ function Integrations(props: Props) {
         }, {});
     }, [integrations]);
 
-    console.log('_integrations', _integrations);
-
     const onClick = (integration: any) => {
         showModal(integration.component, { right: true });
     };
@@ -37,9 +34,13 @@ function Integrations(props: Props) {
     return (
         <div className="mb-4">
             {Object.keys(_integrations).map((cat: any) => (
-                <div>
-                    <h2 className="text-xl border-b">{cat}</h2>
-                    <div className="grid grid-cols-8 gap-4"></div>
+                <div className="mb-2">
+                    <h2 className="border-b py-3 uppercase color-gray-medium">{cat}</h2>
+                    <div className="grid grid-cols-8 gap-4 py-4">
+                        {_integrations[cat].map((integration: any) => (
+                            <IntegrationItem key={integration.name} integration={integration} onClick={() => onClick(integration)} />
+                        ))}
+                    </div>
                 </div>
             ))}
         </div>
