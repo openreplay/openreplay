@@ -1,5 +1,5 @@
 import { useModal } from 'App/components/Modal';
-import React from 'react';
+import React, { useEffect } from 'react';
 import BugsnagForm from './BugsnagForm';
 import CloudwatchForm from './CloudwatchForm';
 import DatadogForm from './DatadogForm';
@@ -13,19 +13,40 @@ import SentryForm from './SentryForm';
 import SlackForm from './SlackForm';
 import StackdriverForm from './StackdriverForm';
 import SumoLogicForm from './SumoLogicForm';
+import { fetchList, init } from 'Duck/integrations/actions';
+import { connect } from 'react-redux';
 
-interface Props {}
+interface Props {
+    fetchList: (name: string) => void;
+    init: () => void;
+}
 function Integrations(props: Props) {
     const { showModal } = useModal();
-    // const _integrations: any = React.useMemo(() => {
-    //     return integrations.reduce((acc: any, curr: any) => {
-    //         if (!acc[curr.category]) {
-    //             acc[curr.category] = [];
-    //         }
-    //         acc[curr.category].push(curr);
-    //         return acc;
-    //     }, {});
-    // }, [integrations]);
+    const [loading, setLoading] = React.useState(true);
+
+    useEffect(() => {
+        const promosies: any[] = [];
+        integrations.forEach((cat: any) => {
+            cat.integrations.forEach((integration: any) => {
+                if (integration.slug) {
+                    promosies.push(props.fetchList(integration.slug));
+                }
+            });
+        });
+
+        Promise.all(promosies)
+            .then(() => {
+                setLoading(false);
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
+        if (loading) {
+            return;
+        }
+        
+    }, [loading]);
 
     const onClick = (integration: any) => {
         showModal(integration.component, { right: true });
@@ -48,8 +69,7 @@ function Integrations(props: Props) {
     );
 }
 
-export default Integrations;
-
+export default connect(null, { fetchList, init })(Integrations);
 
 const integrations = [
     {
@@ -65,15 +85,21 @@ const integrations = [
         title: 'Backend Logging',
         description: 'Sync your backend errors with sessions replays and see what happened front-to-back.',
         integrations: [
-            { title: 'Sentry', icon: 'integrations/sentry', component: <SentryForm /> },
-            { title: 'Bugsnag', icon: 'integrations/bugsnag', component: <BugsnagForm /> },
-            { title: 'Rollbar', icon: 'integrations/rollbar', component: <RollbarForm /> },
-            { title: 'Elasticsearch', icon: 'integrations/elasticsearch', component: <ElasticsearchForm /> },
-            { title: 'Datadog', icon: 'integrations/datadog', component: <DatadogForm /> },
-            { title: 'Sumo Logic', icon: 'integrations/sumologic', component: <SumoLogicForm /> },
-            { title: 'Google Cloud', subtitle: "(Stackdriver)", icon: 'integrations/stackdriver', component: <StackdriverForm /> },
-            { title: 'AWS', subtitle: "(CloudWatch)", icon: 'integrations/cloudwatch', component: <CloudwatchForm /> },
-            { title: 'Newrelic', icon: 'integrations/newrelic', component: <NewrelicForm /> },
+            { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
+            { title: 'Datadog', slug: 'datadog', icon: 'integrations/datadog', component: <BugsnagForm /> },
+            { title: 'Rollbar', slug: 'rollbar', icon: 'integrations/rollbar', component: <RollbarForm /> },
+            { title: 'Elasticsearch', slug: 'elasticsearch', icon: 'integrations/elasticsearch', component: <ElasticsearchForm /> },
+            { title: 'Datadog', slug: 'datadog', icon: 'integrations/datadog', component: <DatadogForm /> },
+            { title: 'Sumo Logic', slug: 'sumologic', icon: 'integrations/sumologic', component: <SumoLogicForm /> },
+            {
+                title: 'Google Cloud',
+                slug: 'stackdriver',
+                subtitle: '(Stackdriver)',
+                icon: 'integrations/google-cloud',
+                component: <StackdriverForm />,
+            },
+            { title: 'AWS', slug: 'cloudwatch', subtitle: '(CloudWatch)', icon: 'integrations/aws', component: <CloudwatchForm /> },
+            { title: 'Newrelic', slug: 'newrelic', icon: 'integrations/newrelic', component: <NewrelicForm /> },
         ],
     },
     {
@@ -81,8 +107,8 @@ const integrations = [
         description:
             "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
         integrations: [
-            { title: 'Sentry', icon: 'integrations/sentry', component: <SentryForm /> },
-            { title: 'Bugsnag', icon: 'integrations/bugsnag', component: <BugsnagForm /> },
+            { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
+            { title: 'Bugsnag', slug: '', icon: 'integrations/bugsnag', component: <BugsnagForm /> },
         ],
     },
 ];

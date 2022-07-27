@@ -48,16 +48,14 @@ export default class IntegrationForm extends React.PureComponent {
     };
 
     save = () => {
-        const { config, name, customPath } = this.props;
-        console.log('config', config)
-        // const isExists = config.exists();
-        // const { currentSiteId } = this.state;
-        // const { ignoreProject } = this.props;
-        // this.props.save(customPath || name, !ignoreProject ? currentSiteId : null, config).then(() => {
-        //     this.props.fetchList(name);
-        //     this.props.onClose();
-        //     if (isExists) return;
-        // });
+        const { config, name, customPath, ignoreProject } = this.props;
+        const isExists = config.exists();
+        const { currentSiteId } = this.state;
+        this.props.save(customPath || name, !ignoreProject ? currentSiteId : null, config).then(() => {
+            this.props.fetchList(name);
+            this.props.onClose();
+            if (isExists) return;
+        });
     };
 
     remove = () => {
