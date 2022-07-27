@@ -1,0 +1,21 @@
+#
+# Index config file for gh-archive dataset.
+#
+
+version: 0
+
+index_id: quickwit-kafka
+
+doc_mapping:
+  field_mappings:
+    - name: title
+      type: text
+      tokenizer: default
+      record: position
+    - name: body
+      type: text
+      tokenizer: default
+      record: position
+
+search_settings:
+  default_search_fields: [title, body]

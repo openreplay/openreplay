@@ -1,0 +1,4 @@
+## In order to save data into S3
+version: 0
+metastore_uri: s3://quickwit/quickwit-indexes
+default_index_root_uri: s3://quickwit/quickwit-indexes

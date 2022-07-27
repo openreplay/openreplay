@@ -1,0 +1,2 @@
+docker run -v /etc/hosts:/etc/hosts:ro -v $(pwd)/qwdata:/quickwit/qwdata -v $(pwd)/s3-config.yaml:/quickwit/s3-config.yaml quickwit/quickwit source delete --index quickwit-kafka --source kafka-source --config s3-config.yaml
+docker run -v /etc/hosts:/etc/hosts:ro -v -v $(pwd)/s3-config.yaml:/quickwit/s3-config.yaml  $(pwd)/qwdata:/quickwit/qwdata quickwit/quickwit index delete --index quickwit-kafka --config s3-config.yaml
