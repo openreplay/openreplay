@@ -1,3 +1,4 @@
+import logger from 'App/logger';
 import APIClient from './api_client';
 import { UPDATE, DELETE } from './duck/jwt';
 
@@ -28,8 +29,9 @@ export default store => next => (action) => {
         next({ type: UPDATE, data: jwt });
       }
     })
-    .catch(() => {
-      return next({ type: FAILURE, errors: [ 'Connection error' ] });
+    .catch((e) => {
+      logger.error("Error during API request. ", e)
+      return next({ type: FAILURE, errors: [ "Connection error", String(e) ] });
     });
 };
 
