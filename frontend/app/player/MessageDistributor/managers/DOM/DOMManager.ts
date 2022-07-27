@@ -14,6 +14,16 @@ type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectE
 const IGNORED_ATTRS = [ "autocomplete", "name" ];
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 
+
+// TODO: filter out non-relevant  prefixes
+// function replaceCSSPrefixes(css: string) {
+//   return css
+//     .replace(/\-ms\-/g, "")
+//     .replace(/\-webkit\-/g, "")
+//     .replace(/\-moz\-/g, "")
+//     .replace(/\-webkit\-/g, "")
+// }
+
 export default class DOMManager extends ListWalker<Message> {
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
@@ -144,6 +154,9 @@ export default class DOMManager extends ListWalker<Message> {
         this.insertNode(msg)
         this.removeBodyScroll(msg.id, vn)
         this.removeAutocomplete(element)
+        if (['STYLE', 'style', 'link'].includes(msg.tag)) {
+          vn.enforceInsertion()
+        }
         return
       case "move_node":
         this.insertNode(msg);
@@ -287,7 +300,7 @@ export default class DOMManager extends ListWalker<Message> {
 
     // @ts-ignore
     this.vElements.get(0).applyChanges()
-    this.vRoots.forEach(rt => rt.applyChanges())
+    this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
