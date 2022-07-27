@@ -164,6 +164,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		session.Metadata8,
 		session.Metadata9,
 		session.Metadata10,
+                datetime(session.Timestamp),
 	); err != nil {
 		return fmt.Errorf("can't append to metadata batch: %s", err)
 	}
