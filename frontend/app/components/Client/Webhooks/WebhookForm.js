@@ -29,7 +29,7 @@ class WebhookForm extends React.PureComponent {
         const { webhook, loading } = this.props;
         return (
             <div className="bg-white h-screen overflow-y-auto" style={{ width: '350px' }}>
-                <h3 className="p-5 text-2xl">{webhook.exists() ? 'Update' : 'Add'} Metadata Field</h3>
+                <h3 className="p-5 text-2xl">{webhook.exists() ? 'Update' : 'Add'} Webhook</h3>
                 <Form className={styles.wrapper}>
                     <Form.Field>
                         <label>{'Name'}</label>
