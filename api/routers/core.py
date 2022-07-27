@@ -163,13 +163,6 @@ def events_search(projectId: int, q: str,
     return result
 
 
-@app.post('/{projectId}/sessions/search2', tags=["sessions"])
-def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search2_pg(data=data, project_id=projectId, user_id=context.user_id)
-    return {'data': data}
-
-
 @app.get('/{projectId}/sessions/filters', tags=["sessions"])
 def session_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_metas.get_key_values(projectId)}

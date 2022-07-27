@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.7.0'
+SELECT 'v1.8.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 -- --- accounts.sql ---
