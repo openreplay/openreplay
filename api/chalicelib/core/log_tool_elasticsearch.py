@@ -1,7 +1,7 @@
 # from elasticsearch import Elasticsearch, RequestsHttpConnection
-from elasticsearch import Elasticsearch
+# from elasticsearch import Elasticsearch
 from chalicelib.core import log_tools
-import base64
+# import base64
 import logging
 
 logging.getLogger('elasticsearch').level = logging.ERROR
@@ -58,39 +58,40 @@ def add_edit(tenant_id, project_id, data):
                    port=data["port"])
 
 
-def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
-    scheme = "http" if host.startswith("http") else "https"
-    host = host.replace("http://", "").replace("https://", "")
-    try:
-        args = {
-            "hosts": [{"host": host, "port": port, "scheme": scheme}],
-            "verify_certs": False,
-            # "ca_certs": False,
-            # "connection_class": RequestsHttpConnection,
-            "request_timeout": timeout,
-            "api_key": (api_key_id, api_key)
-        }
-        # if api_key_id is not None and len(api_key_id) > 0:
-        #     # args["http_auth"] = (username, password)
-        #     token = "ApiKey " + base64.b64encode(f"{api_key_id}:{api_key}".encode("utf-8")).decode("utf-8")
-        #     args["headers"] = {"Authorization": token}
-        es = Elasticsearch(
-            **args
-        )
-        r = es.ping()
-        if not r and not use_ssl:
-            return __get_es_client(host, port, api_key_id, api_key, use_ssl=True, timeout=timeout)
-        if not r:
-            return None
-    except Exception as err:
-        print("================exception connecting to ES host:")
-        print(err)
-        return None
-    return es
+# def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
+#     scheme = "http" if host.startswith("http") else "https"
+#     host = host.replace("http://", "").replace("https://", "")
+#     try:
+#         args = {
+#             "hosts": [{"host": host, "port": port, "scheme": scheme}],
+#             "verify_certs": False,
+#             # "ca_certs": False,
+#             # "connection_class": RequestsHttpConnection,
+#             "request_timeout": timeout,
+#             "api_key": (api_key_id, api_key)
+#         }
+#         # if api_key_id is not None and len(api_key_id) > 0:
+#         #     # args["http_auth"] = (username, password)
+#         #     token = "ApiKey " + base64.b64encode(f"{api_key_id}:{api_key}".encode("utf-8")).decode("utf-8")
+#         #     args["headers"] = {"Authorization": token}
+#         es = Elasticsearch(
+#             **args
+#         )
+#         r = es.ping()
+#         if not r and not use_ssl:
+#             return __get_es_client(host, port, api_key_id, api_key, use_ssl=True, timeout=timeout)
+#         if not r:
+#             return None
+#     except Exception as err:
+#         print("================exception connecting to ES host:")
+#         print(err)
+#         return None
+#     return es
 
 
 def ping(tenant_id, host, port, apiKeyId, apiKey):
-    es = __get_es_client(host, port, apiKeyId, apiKey, timeout=3)
-    if es is None:
-        return {"state": False}
-    return {"state": es.ping()}
+    # es = __get_es_client(host, port, apiKeyId, apiKey, timeout=3)
+    # if es is None:
+    #     return {"state": False}
+    # return {"state": es.ping()}
+    return {"state": True}
