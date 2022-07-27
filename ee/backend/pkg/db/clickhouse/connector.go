@@ -40,7 +40,8 @@ type connectorImpl struct {
 
 func NewConnector(url string) Connector {
 	license.CheckLicense()
-
+	url = strings.TrimPrefix(url, "tcp://")
+	url = strings.TrimSuffix(url, "/default")
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
@@ -164,7 +165,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		session.Metadata8,
 		session.Metadata9,
 		session.Metadata10,
-                datetime(session.Timestamp),
+		datetime(session.Timestamp),
 	); err != nil {
 		return fmt.Errorf("can't append to metadata batch: %s", err)
 	}
@@ -398,5 +399,9 @@ func nullableString(v string) *string {
 }
 
 func datetime(timestamp uint64) time.Time {
-	return time.Unix(int64(timestamp/1e3), 0)
+	t := time.Unix(int64(timestamp/1e3), 0)
+	if t.Year() != 2022 {
+		return time.Now()
+	}
+	return t
 }
