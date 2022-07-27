@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/db/clickhouse"
+	. "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
+	. "openreplay/backend/pkg/messages"
 )
 
 var ch clickhouse.Connector
