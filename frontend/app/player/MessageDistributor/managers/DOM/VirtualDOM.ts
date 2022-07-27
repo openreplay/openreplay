@@ -80,7 +80,7 @@ export class VElement extends VParent {
 		this.newAttributes.set(name, false)
 	}
 
-	enforceInsertion() {
+	enforceInsertion() { // mbtodo: priority insertion instead
 		let vNode: VElement = this
 		while (vNode.parentNode instanceof VElement) {
 			vNode = vNode.parentNode

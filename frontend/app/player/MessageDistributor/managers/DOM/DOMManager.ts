@@ -130,8 +130,11 @@ export default class DOMManager extends ListWalker<Message> {
         fRoot.innerText = '';
 
         vn = new VElement(fRoot)
-        this.vElements = new Map([[0, vn ]])
-        this.stylesManager.reset();
+        this.vElements = new Map([[0, vn]])
+        const vDoc = new VDocument(doc)
+        vDoc.insertChildAt(vn, 0)
+        this.vRoots = new Map([[-1, vDoc]]) // todo: start from 0 (sync logic with tracker)
+        this.stylesManager.reset()
         return
       case "create_text_node":
         vn = new VText()
@@ -298,8 +301,6 @@ export default class DOMManager extends ListWalker<Message> {
   moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)
 
-    // @ts-ignore
-    this.vElements.get(0).applyChanges()
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
     // Thinkabout (read): css preload
