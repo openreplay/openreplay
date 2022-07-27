@@ -80,7 +80,10 @@ export class VElement extends VParent {
 		this.newAttributes.set(name, false)
 	}
 
-	enforceInsertion() { // mbtodo: priority insertion instead
+	// mbtodo: priority insertion instead.
+	// rn this is for styles that should be inserted as prior, 
+	// otherwise it will show visual styling lag if there is a transition CSS property)
+	enforceInsertion() {
 		let vNode: VElement = this
 		while (vNode.parentNode instanceof VElement) {
 			vNode = vNode.parentNode

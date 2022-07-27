@@ -157,7 +157,7 @@ export default class DOMManager extends ListWalker<Message> {
         this.insertNode(msg)
         this.removeBodyScroll(msg.id, vn)
         this.removeAutocomplete(element)
-        if (['STYLE', 'style', 'link'].includes(msg.tag)) {
+        if (['STYLE', 'style', 'LINK'].includes(msg.tag)) { // Styles in priority
           vn.enforceInsertion()
         }
         return
@@ -175,7 +175,7 @@ export default class DOMManager extends ListWalker<Message> {
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (name === "href" && vn.node.tagName === "LINK") {
-          // @ts-ignore TODO: global ENV type   // It'd done on backend (remove after testing in saas)
+          // @ts-ignore  ?global ENV type   // It've been done on backend (remove after testing in saas)
           // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
           //   value = value.replace("?", "%3F");
           // }
@@ -221,7 +221,7 @@ export default class DOMManager extends ListWalker<Message> {
         (vn.node as HTMLInputElement).checked = msg.checked
         return
       case "set_node_data":
-      case "set_css_data": // TODO: remove  css transitions when timeflow is not natural (on jumps)
+      case "set_css_data": // mbtodo: remove  css transitions when timeflow is not natural (on jumps)
         vn = this.vTexts.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         vn.setData(msg.data)
@@ -230,12 +230,15 @@ export default class DOMManager extends ListWalker<Message> {
           // TODO: move to message parsing
           doc && rewriteNodeStyleSheet(doc, vn.node)
         }
+        if (msg.tp === "set_css_data") { // Styles in priority  (do we need inlines as well?)
+          vn.applyChanges()
+        }
         return
       case "css_insert_rule":
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (!(vn instanceof VStyleElement)) {
-          logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, node.sheet);
+          logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
         vn.onStyleSheet(sheet => {
