@@ -22,7 +22,10 @@ const IntegrationItem = (props: Props) => {
                 </div>
             )}
             <img className="h-12 w-12" src={'/assets/' + integration.icon + '.svg'} alt="integration" />
-            <h4 className="my-2">{integration.title}</h4>
+            <div className="text-center mt-2">
+                <h4 className="">{integration.title}</h4>
+                <p className="text-sm color-gray-medium m-0 p-0 h-3">{integration.subtitle && integration.subtitle}</p>
+            </div>
         </div>
     );
 };
