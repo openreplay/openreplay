@@ -302,6 +302,9 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   moveReady(t: number): Promise<void> {
+    // MBTODO (back jump optimisation): 
+    //    - store intemediate virtual dom state
+    //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)
 
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
