@@ -52,9 +52,14 @@ function CustomFields(props) {
             })
         ) {
             setDeletingItem(field.index);
-            props.remove(currentSite.id, field.index).then(() => {
-                hideModal();
-            });
+            props
+                .remove(currentSite.id, field.index)
+                .then(() => {
+                    hideModal();
+                })
+                .finally(() => {
+                    setDeletingItem(null);
+                });
         }
     };
 
