@@ -7,3 +7,4 @@ params:
   topic: quickwit-kafka
   client_params:
     bootstrap.servers: kafka-1.kafka-headless.db.svc.cluster.local:9092
+    # security.protocol: SSL
