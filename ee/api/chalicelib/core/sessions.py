@@ -1237,7 +1237,6 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
 
 
 def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
-    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
@@ -1509,7 +1508,6 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
         # events_joiner = " UNION " if or_events else " INNER JOIN LATERAL "
         for i, event in enumerate(data.events):
             event_type = event.type
-            print(f">>>>>>>>>>>>>{event_type}")
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
@@ -1755,7 +1753,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 #     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
                 #                          event.source, value_key=e_k))
                 # events_conditions[-2]["time"] = f"(?t{event.sourceOperator} %({e_k})s)"
-                events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator}%({e_k})s",event.source, value_key=e_k)
+                events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator}%({e_k})s", event.source,
+                                                                     value_key=e_k)
                 event_index += 1
 
             elif event_type == schemas.EventType.request_details:
@@ -1900,15 +1899,32 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
 
         if data.events_order in [schemas.SearchEventOrder._then, schemas.SearchEventOrder._and]:
             events_sequence = [f'(?{i + 1}){c.get("time", "")}' for i, c in enumerate(events_conditions)]
-            events_conditions_where.append(f"({' OR '.join([c['type'] for c in events_conditions])})")
-            events_conditions_where.append(f"({' OR '.join([c['condition'] for c in events_conditions])})")
-            events_conditions = [c['type'] + ' AND ' + c['condition'] for c in events_conditions]
+            type_conditions = []
+            value_conditions = []
+            sequence_conditions = []
+            for c in events_conditions:
+                if c['type'] not in type_conditions:
+                    type_conditions.append(c['type'])
+
+                if c.get('condition') and c['condition'] not in value_conditions:
+                    value_conditions.append(c['condition'])
+
+                sequence_conditions.append(c['type'])
+                if c.get('condition'):
+                    sequence_conditions[-1] += " AND " + c["condition"]
+
+            events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
+            del type_conditions
+            if len(value_conditions) > 0:
+                events_conditions_where.append(f"({' OR '.join([c for c in value_conditions])})")
+            del value_conditions
+
             if data.events_order == schemas.SearchEventOrder._then:
                 print(">>>>> THEN EVENTS")
-                having = f"""HAVING sequenceMatch('{''.join(events_sequence)}')(main.datetime,{','.join(events_conditions)})"""
+                having = f"""HAVING sequenceMatch('{''.join(events_sequence)}')(main.datetime,{','.join(sequence_conditions)})"""
             else:
                 print(">>>>> AND EVENTS")
-                having = f"""HAVING {" AND ".join([f"countIf({c})>0" for c in events_conditions])}"""
+                having = f"""HAVING {" AND ".join([f"countIf({c})>0" for c in list(set(sequence_conditions))])}"""
 
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
@@ -1919,9 +1935,22 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                     {having}"""
         else:
             print(">>>>> OR EVENTS")
-            events_conditions_where.append(f"({' OR '.join([c['type'] for c in events_conditions])})")
-            events_conditions = [c['type'] + ' AND ' + c['condition'] for c in events_conditions]
-            events_conditions_where.append(f"({' OR '.join(events_conditions)})")
+            type_conditions = []
+            sequence_conditions = []
+            has_values = False
+            for c in events_conditions:
+                if c['type'] not in type_conditions:
+                    type_conditions.append(c['type'])
+
+                sequence_conditions.append(c['type'])
+                if c.get('condition'):
+                    has_values = True
+                    sequence_conditions[-1] += " AND " + c["condition"]
+
+            events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
+            if has_values:
+                events_conditions = [c for c in list(set(sequence_conditions))]
+                events_conditions_where.append(f"({' OR '.join(events_conditions)})")
             events_query_part = f"""SELECT main.session_id,
                                         MIN(main.datetime) AS first_event_ts,
                                         MAX(main.datetime) AS last_event_ts
