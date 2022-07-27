@@ -31,6 +31,6 @@ const IntegrationItem = (props: Props) => {
 export default connect((state: any, props: Props) => {
     const list = state.getIn([props.integration.slug, 'list']) || [];
     return {
-        integrated: list.size > 0,
+        integrated: props.integration.slug === 'issues' ? !!(list.first() && list.first().token) : list.size > 0,
     };
 })(IntegrationItem);
