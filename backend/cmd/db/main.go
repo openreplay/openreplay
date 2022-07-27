@@ -126,10 +126,16 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			// Send collected batches to db
+			start := time.Now()
 			pg.CommitBatches()
+			log.Println("pg commit duration(ms): ", time.Now().Sub(start).Milliseconds())
+
+			start = time.Now()
 			if err := saver.CommitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}
+			log.Println("ch commit duration(ms): ", time.Now().Sub(start).Milliseconds())
+
 			// TODO?: separate stats & regular messages
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)
