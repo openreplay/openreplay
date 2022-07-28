@@ -5,16 +5,20 @@ export type VNode = VDocument | VFragment | VElement | VText
 abstract class VParent {
 	abstract node: Node | null
 	protected children: VChild[] = []
+	private insertedChildren: Set<VChild> = new Set()
+
 	insertChildAt(child: VChild, index: number) {
 		if (child.parentNode) {
 			child.parentNode.removeChild(child)
 		}
 		this.children.splice(index, 0, child)
+		this.insertedChildren.add(child)
 		child.parentNode = this
 	}
 
 	removeChild(child: VChild) {
 		this.children = this.children.filter(ch => ch !== child)
+		this.insertedChildren.delete(child)
 		child.parentNode = null
 	}
 
@@ -25,20 +29,26 @@ abstract class VParent {
 			console.error("No node found", this)
 			return
 		}
-		const realChildren = node.childNodes
-		let i: number
-		// apply correct children order
-		for (i = 0; i < this.children.length; i++) {
+		// inserting
+		for (let i = this.children.length-1; i >= 0; i--) {
 			const child = this.children[i]
 			child.applyChanges()
-			//while (realChildren[i] shouldn't be there) remove it //optimal way
-			if (realChildren[i] !== child.node) {
-				node.insertBefore(child.node, realChildren[i] || null)
+			if (this.insertedChildren.has(child)) {
+				const nextVSibling = this.children[i+1]
+				node.insertBefore(child.node, nextVSibling ? nextVSibling.node : null)
 			}
 		}
-		// remove rest
-		while(realChildren[i]) {
-			node.removeChild(realChildren[i])
+		this.insertedChildren.clear()
+		// removing
+		const realChildren = node.childNodes
+		for(let j = 0; j < this.children.length; j++) {
+			while (realChildren[j] !== this.children[j].node) {
+				node.removeChild(realChildren[j])
+			}
+		}
+		// removing rest
+		while(realChildren.length > this.children.length) {
+			node.removeChild(node.lastChild)
 		}
 	}
 }
