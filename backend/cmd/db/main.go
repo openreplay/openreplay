@@ -8,7 +8,6 @@ import (
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/sessions"
 	"time"
 
@@ -25,9 +24,6 @@ import (
 )
 
 func main() {
-	// Profiler
-	pprof.StartProfilingServer()
-
 	metrics := monitoring.New("db")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -128,15 +124,16 @@ func main() {
 			// Send collected batches to db
 			start := time.Now()
 			pg.CommitBatches()
-			log.Println("pg commit duration(ms): ", time.Now().Sub(start).Milliseconds())
+			pgDur := time.Now().Sub(start).Milliseconds()
 
 			start = time.Now()
 			if err := saver.CommitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}
-			log.Println("ch commit duration(ms): ", time.Now().Sub(start).Milliseconds())
+			chDur := time.Now().Sub(start).Milliseconds()
+			log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
 
-			// TODO?: separate stats & regular messages
+			// TODO: use commit worker to save time each tick
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)
 			}
@@ -144,7 +141,7 @@ func main() {
 			// Handle new message from queue
 			err := consumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on consumption: %v", err) // TODO: is always fatal?
+				log.Fatalf("Error on consumption: %v", err)
 			}
 		}
 	}
