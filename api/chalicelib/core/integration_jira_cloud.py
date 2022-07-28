@@ -1,8 +1,9 @@
+import schemas
 from chalicelib.core import integration_base
 from chalicelib.core.integration_jira_cloud_issue import JIRACloudIntegrationIssue
 from chalicelib.utils import pg_client, helper
 
-PROVIDER = "JIRA"
+PROVIDER = schemas.IntegrationType.jira
 
 
 def obfuscate_string(string):
