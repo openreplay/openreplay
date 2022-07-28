@@ -116,6 +116,14 @@ func (c *connectorImpl) FinaliseSessionsTable() error {
 	return nil
 }
 
+func (c *connectorImpl) checkError(name string, err error) {
+	if err != clickhouse.ErrBatchAlreadySent {
+		if batchErr := c.newBatch(name, batches[name]); batchErr != nil {
+			log.Printf("can't create %s batch after failed append operation: %s", name, batchErr)
+		}
+	}
+}
+
 func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
@@ -140,6 +148,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		session.UserBrowser,
 		nullableString(session.UserBrowserVersion),
 	); err != nil {
+		c.checkError("sessions", err)
 		return fmt.Errorf("can't append to sessions batch: %s", err)
 	}
 	if err := c.batches["metadata"].Append(
@@ -158,6 +167,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		session.Metadata10,
 		datetime(session.Timestamp),
 	); err != nil {
+		c.checkError("metadata", err)
 		return fmt.Errorf("can't append to metadata batch: %s", err)
 	}
 	return nil
@@ -191,6 +201,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 		nullableUint32(uint32(msg.DecodedBodySize)),
 		msg.Success,
 	); err != nil {
+		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
 	}
 	return nil
@@ -224,6 +235,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 		nullableUint16(uint16(msg.VisuallyComplete)),
 		nullableUint16(uint16(msg.TimeToInteractive)),
 	); err != nil {
+		c.checkError("pages", err)
 		return fmt.Errorf("can't append to pages batch: %s", err)
 	}
 	return nil
@@ -250,6 +262,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),
 	); err != nil {
+		c.checkError("clicks", err)
 		return fmt.Errorf("can't append to clicks batch: %s", err)
 	}
 	return nil
@@ -275,6 +288,7 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 		datetime(msg.Timestamp),
 		msg.Label,
 	); err != nil {
+		c.checkError("inputs", err)
 		return fmt.Errorf("can't append to inputs batch: %s", err)
 	}
 	return nil
@@ -300,6 +314,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *message
 		msg.Message,
 		hashid.WebErrorID(session.ProjectID, msg),
 	); err != nil {
+		c.checkError("errors", err)
 		return fmt.Errorf("can't append to errors batch: %s", err)
 	}
 	return nil
@@ -334,6 +349,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 		msg.AvgUsedJSHeapSize,
 		msg.MaxUsedJSHeapSize,
 	); err != nil {
+		c.checkError("performance", err)
 		return fmt.Errorf("can't append to performance batch: %s", err)
 	}
 	return nil
@@ -360,6 +376,7 @@ func (c *connectorImpl) InsertLongtask(session *types.Session, msg *messages.Lon
 		msg.ContainerName,
 		msg.ContainerSrc,
 	); err != nil {
+		c.checkError("longtasks", err)
 		return fmt.Errorf("can't append to longtasks batch: %s", err)
 	}
 	return nil
@@ -392,7 +409,7 @@ func nullableString(v string) *string {
 func datetime(timestamp uint64) time.Time {
 	t := time.Unix(int64(timestamp/1e3), 0)
 	// Temporal solution for not correct timestamps in performance messages
-	if t.Year() < 2022 && t.Year() > 2025 {
+	if t.Year() < 2022 || t.Year() > 2025 {
 		return time.Now()
 	}
 	return t
