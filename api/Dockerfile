@@ -3,6 +3,7 @@ LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache build-base nodejs npm tini
+RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 ARG envarg
 # Add Tini
 # Startup daemon

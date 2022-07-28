@@ -1,0 +1,22 @@
+// Auto-generated, do not edit
+package messages
+<% $messages.each do |msg| %>
+type <%= msg.name %> struct {
+	message
+<%= msg.attributes.map { |attr| 
+"	#{attr.name} #{attr.type_go}" }.join "\n" %>
+}
+
+func (msg *<%= msg.name %>) Encode() []byte {
+	buf := make([]byte, <%= msg.attributes.count * 10 + 1 %><%= msg.attributes.map { |attr| "+len(msg.#{attr.name})" if attr.lengh_encoded }.compact.join %>)
+	buf[0] = <%= msg.id %>
+	p := 1
+<%= msg.attributes.map { |attr| 
+"	p = Write#{attr.type.to_s.camel_case}(msg.#{attr.name}, buf, p)" }.join "\n" %>
+	return buf[:p]
+}
+
+func (msg *<%= msg.name %>) TypeID() int {
+	return <%= msg.id %>
+}
+<% end %>

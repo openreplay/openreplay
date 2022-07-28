@@ -1,5 +1,5 @@
-import type App from "../app/index.js";
-import { LongTask } from "../../common/messages.js";
+import type App from '../app/index.js';
+import { LongTask } from '../../common/messages.js';
 
 // https://w3c.github.io/performance-timeline/#the-performanceentry-interface
 interface TaskAttributionTiming extends PerformanceEntry {
@@ -7,22 +7,35 @@ interface TaskAttributionTiming extends PerformanceEntry {
   readonly containerSrc: string;
   readonly containerId: string;
   readonly containerName: string;
-};
+}
 
 // https://www.w3.org/TR/longtasks/#performancelongtasktiming
 interface PerformanceLongTaskTiming extends PerformanceEntry {
   readonly attribution: ReadonlyArray<TaskAttributionTiming>;
-};
+}
 
 export default function (app: App): void {
   if (!('PerformanceObserver' in window) || !('PerformanceLongTaskTiming' in window)) {
     return;
   }
 
-  const contexts: string[] = [ "unknown", "self", "same-origin-ancestor", "same-origin-descendant", "same-origin", "cross-origin-ancestor", "cross-origin-descendant", "cross-origin-unreachable", "multiple-contexts" ];
-  const containerTypes: string[] = [ "window", "iframe", "embed", "object" ];
+  const contexts: string[] = [
+    'unknown',
+    'self',
+    'same-origin-ancestor',
+    'same-origin-descendant',
+    'same-origin',
+    'cross-origin-ancestor',
+    'cross-origin-descendant',
+    'cross-origin-unreachable',
+    'multiple-contexts',
+  ];
+  const containerTypes: string[] = ['window', 'iframe', 'embed', 'object'];
   function longTask(entry: PerformanceLongTaskTiming): void {
-    let type: string = "", src: string = "", id: string = "", name: string = "";
+    let type = '',
+      src = '',
+      id = '',
+      name = '';
     const container = entry.attribution[0];
     if (container != null) {
       type = container.containerType;

@@ -1,20 +1,19 @@
-import type App from "../app/index.js";
-import { IN_BROWSER } from "../utils.js";
-import { PerformanceTrack } from "../../common/messages.js";
-
+import type App from '../app/index.js';
+import { IN_BROWSER } from '../utils.js';
+import { PerformanceTrack } from '../../common/messages.js';
 
 type Perf = {
-  memory: { 
-    totalJSHeapSize?: number,
-    usedJSHeapSize?: number,
-    jsHeapSizeLimit?: number,
-  }
-}
+  memory: {
+    totalJSHeapSize?: number;
+    usedJSHeapSize?: number;
+    jsHeapSizeLimit?: number;
+  };
+};
 
-const perf: Perf = IN_BROWSER && 'performance' in window && 'memory' in performance // works in Chrome only
-  ? performance as any
-  : { memory: {} }
-
+const perf: Perf =
+  IN_BROWSER && 'performance' in window && 'memory' in performance // works in Chrome only
+    ? (performance as any)
+    : { memory: {} };
 
 export const deviceMemory = IN_BROWSER ? ((navigator as any).deviceMemory || 0) * 1024 : 0;
 export const jsHeapSizeLimit = perf.memory.jsHeapSizeLimit || 0;
@@ -30,7 +29,9 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   );
-  if (!options.capturePerformance) { return; }
+  if (!options.capturePerformance) {
+    return;
+  }
 
   let frames: number | undefined;
   let ticks: number | undefined;
@@ -58,8 +59,8 @@ export default function (app: App, opts: Partial<Options>): void {
     if (frames === undefined || ticks === undefined) {
       return;
     }
-    app.send(new 
-      PerformanceTrack(
+    app.send(
+      new PerformanceTrack(
         frames,
         ticks,
         perf.memory.totalJSHeapSize || 0,

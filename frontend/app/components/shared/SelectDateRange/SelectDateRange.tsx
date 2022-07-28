@@ -39,7 +39,7 @@ function SelectDateRange(props: Props) {
     };
 
     const isCustomRange = period.rangeName === CUSTOM_RANGE;
-    const customRange = isCustomRange ? period.rangeFormatted(undefined, timezone) : '';
+    const customRange = isCustomRange ? period.rangeFormatted() : '';
     return (
         <div className="relative">
             <Select
@@ -75,7 +75,7 @@ function SelectDateRange(props: Props) {
                             width: '770px',
                         }}
                     >
-                        <DateRangePopup onApply={onApplyDateRange} onCancel={() => setIsCustom(false)} selectedDateRange={period.range} />
+                        <DateRangePopup timezone={timezone} onApply={onApplyDateRange} onCancel={() => setIsCustom(false)} selectedDateRange={period.range} />
                     </div>
                 </OutsideClickDetectingDiv>
             )}

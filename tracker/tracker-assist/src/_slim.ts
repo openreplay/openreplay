@@ -5,4 +5,4 @@
  */
 
 // @ts-ignore
-typeof window !== "undefined" && (window.parcelRequire = window.parcelRequire || undefined);
+typeof window !== 'undefined' && (window.parcelRequire = window.parcelRequire || undefined)

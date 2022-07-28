@@ -12,7 +12,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search
+    custom_metrics, saved_search, integrations_global
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper, helper, captcha
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -171,6 +171,14 @@ def session_filter_values(projectId: int, context: schemas.CurrentContext = Depe
 @app.get('/{projectId}/sessions/filters/top', tags=["sessions"])
 def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_metas.get_top_key_values(projectId)}
+
+
+@app.get('/{projectId}/integrations', tags=["integrations"])
+def get_integrations_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = integrations_global.get_global_integrations_status(tenant_id=context.tenant_id,
+                                                               user_id=context.user_id,
+                                                               project_id=projectId)
+    return {"data": data}
 
 
 @app.post('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])

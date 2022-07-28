@@ -1,14 +1,14 @@
-import type App from "../app/index.js";
-import { SetViewportScroll, SetNodeScroll } from "../../common/messages.js";
-import { isElementNode } from "../app/guards.js";
+import type App from '../app/index.js';
+import { SetViewportScroll, SetNodeScroll } from '../../common/messages.js';
+import { isElementNode } from '../app/guards.js';
 
 export default function (app: App): void {
   let documentScroll = false;
   const nodeScroll: Map<Element, [number, number]> = new Map();
 
   const sendSetViewportScroll = app.safe((): void =>
-    app.send(new 
-      SetViewportScroll(
+    app.send(
+      new SetViewportScroll(
         window.pageXOffset ||
           (document.documentElement && document.documentElement.scrollLeft) ||
           (document.body && document.body.scrollLeft) ||
@@ -39,7 +39,7 @@ export default function (app: App): void {
     if (isStart && isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
       nodeScroll.set(node, [node.scrollLeft, node.scrollTop]);
     }
-  })
+  });
 
   app.attachEventListener(window, 'scroll', (e: Event): void => {
     const target = e.target;

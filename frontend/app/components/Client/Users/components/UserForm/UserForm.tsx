@@ -153,6 +153,7 @@ function UserForm(props: Props) {
     ));
 }
 
-export default connect(state => ({
+export default connect((state: any) => ({
     isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
+    isSmtp: state.getIn([ 'user', 'account', 'smtp' ]),
 }))(UserForm);

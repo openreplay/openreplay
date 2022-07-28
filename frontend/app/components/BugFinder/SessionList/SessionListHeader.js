@@ -26,7 +26,7 @@ function SessionListHeader({ activeTab, count, applyFilter, filter }) {
     }, [label]);
 
     const { startDate, endDate, rangeValue } = filter;
-    const period = new Record({ start: startDate, end: endDate, rangeName: rangeValue });
+    const period = new Record({ start: startDate, end: endDate, rangeName: rangeValue, timezoneOffset: getTimeZoneOffset() });
 
     const onDateChange = (e) => {
         const dateValues = e.toJSON();
@@ -36,10 +36,12 @@ function SessionListHeader({ activeTab, count, applyFilter, filter }) {
     };
 
     React.useEffect(() => {
-        const dateValues = period.toJSON();
-        dateValues.startDate = moment(dateValues.startDate).startOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
-        dateValues.endDate = moment(dateValues.endDate).endOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
-        applyFilter(dateValues);
+        if (label) {
+            const dateValues = period.toJSON();
+            dateValues.startDate = moment(dateValues.startDate).startOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
+            dateValues.endDate = moment(dateValues.endDate).endOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
+            applyFilter(dateValues);
+        }
     }, [label]);
 
     return (

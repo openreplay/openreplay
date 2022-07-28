@@ -3,9 +3,6 @@
 import PrimitiveReader from './PrimitiveReader'
 import type { RawMessage } from './raw'
 
-export interface RawMessageReaderI {
-  readMessage(): RawMessage | null
-}
 
 export default class RawMessageReader extends PrimitiveReader {
   readMessage(): RawMessage | null {

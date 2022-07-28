@@ -45,15 +45,3 @@
   height: 166px;
   margin-bottom: 20px;
 }
-
-.empty-state {
-  display: block;
-  margin: auto;
-  background-image: svg-load(empty-state.svg, fill=#CCC);
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center center;
-  width: 166px;
-  height: 166px;
-  margin-bottom: 20px;
-}

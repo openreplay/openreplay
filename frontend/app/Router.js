@@ -31,7 +31,7 @@ const LiveSessionPure = lazy(() => import('Components/Session/LiveSession'));
 const OnboardingPure = lazy(() => import('Components/Onboarding/Onboarding'));
 const ClientPure = lazy(() => import('Components/Client/Client'));
 const AssistPure = lazy(() => import('Components/Assist'));
-const BugFinderPure = lazy(() => import('Components/BugFinder/BugFinder'));
+const BugFinderPure = lazy(() => import('Components/Overview'));
 const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
 const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
 const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));

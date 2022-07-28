@@ -1,8 +1,10 @@
+/* eslint-disable */
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ['./tsconfig.json'],
+    project: ['./tsconfig-base.json', './src/main/tsconfig-cjs.json'],
+    tsconfigRootDir: __dirname,
   },
   plugins: ['prettier', '@typescript-eslint'],
   extends: [
@@ -11,7 +13,7 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
     'plugin:@typescript-eslint/recommended-requiring-type-checking',
-    'prettier/@typescript-eslint',
+    'prettier',
   ],
   rules: {
     'prettier/prettier': ['error', require('./.prettierrc.json')],
@@ -27,8 +29,21 @@ module.exports = {
     '@typescript-eslint/unbound-method': 'off',
     '@typescript-eslint/explicit-function-return-type': 'warn',
     '@typescript-eslint/prefer-readonly': 'warn',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/no-unsafe-call': 'off',
+    '@typescript-eslint/restrict-plus-operands': 'warn',
+    '@typescript-eslint/no-unsafe-return': 'warn',
+    'no-useless-escape': 'warn',
+    'no-control-regex': 'warn',
+    '@typescript-eslint/restrict-template-expressions': 'warn',
+    '@typescript-eslint/no-useless-constructor': 'warn',
+    '@typescript-eslint/no-this-alias': 'off',
+    '@typescript-eslint/no-floating-promises': 'warn',
+    '@typescript-eslint/no-unsafe-argument': 'warn',
     'no-unused-expressions': 'off',
     '@typescript-eslint/no-unused-expressions': 'warn',
     '@typescript-eslint/no-useless-constructor': 'warn',
   },
-};
+}; 

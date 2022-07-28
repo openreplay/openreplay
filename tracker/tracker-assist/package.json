@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "3.5.15",
+  "version": "3.5.16",
   "keywords": [
     "WebRTC",
     "assistance",
@@ -13,7 +13,7 @@
   "type": "module",
   "main": "./lib/index.js",
   "scripts": {
-    "lint": "prettier --write 'src/**/*.ts' README.md && tsc --noEmit",
+    "lint": "eslint src --ext .ts,.js --fix --quiet",
     "build": "npm run build-es && npm run build-cjs",
     "build-es": "rm -Rf lib && tsc && npm run replace-versions",
     "build-cjs": "rm -Rf cjs && tsc --project tsconfig-cjs.json && echo '{ \"type\": \"commonjs\" }' > cjs/package.json && npm run replace-paths && npm run replace-versions",
@@ -21,7 +21,9 @@
     "replace-versions": "npm run replace-pkg-version && npm run replace-req-version",
     "replace-pkg-version": "replace-in-files lib/* cjs/* --string='PACKAGE_VERSION' --replacement=$npm_package_version",
     "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='3.5.14'",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "cd ../../ && husky install tracker/.husky/",
+    "lint-front": "lint-staged"
   },
   "dependencies": {
     "csstype": "^3.0.10",
@@ -32,9 +34,26 @@
     "@openreplay/tracker": "^3.5.3"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.30.0",
+    "@typescript-eslint/parser": "^5.30.0",
+    "eslint": "^7.8.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
     "@openreplay/tracker": "file:../tracker",
-    "prettier": "^2.7.0",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^4.6.0-dev.20211126"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "sh lint.sh"
+    }
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,ts,tsx}": [
+      "eslint --fix --quiet"
+    ]
   }
 }

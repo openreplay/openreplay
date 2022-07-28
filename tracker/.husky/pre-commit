@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+if git diff --cached --name-only | grep --quiet '^tracker/tracker/'
+then
+  echo "tracker"
+  pwd
+  cd tracker/tracker
+
+  npm run lint-front
+
+  cd ../../
+fi
+
+if git diff --cached --name-only | grep --quiet '^tracker/tracker-assist/'
+then
+  echo "tracker-assist"
+  cd tracker/tracker-assist
+
+  npm run lint-front
+
+  cd ../../
+fi
+
+exit 0
