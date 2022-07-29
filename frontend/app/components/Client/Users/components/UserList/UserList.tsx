@@ -13,7 +13,7 @@ interface Props {
     isEnterprise?: boolean;
 }
 function UserList(props: Props) {
-    const { isEnterprise  = false, isOnboarding = false } = props;
+    const { isEnterprise = false, isOnboarding = false } = props;
     const { userStore } = useStore();
     const loading = useObserver(() => userStore.loading);
     const users = useObserver(() => userStore.list);
@@ -22,24 +22,24 @@ function UserList(props: Props) {
 
     const filterList = (list) => {
         const filterRE = getRE(searchQuery, 'i');
-        let _list = list.filter(w => {
+        let _list = list.filter((w) => {
             return filterRE.test(w.email) || filterRE.test(w.roleName);
         });
-        return _list
-    }
-    
+        return _list;
+    };
+
     const list: any = searchQuery !== '' ? filterList(users) : users;
     const length = list.length;
-    
+
     useEffect(() => {
         userStore.fetchUsers();
     }, []);
 
-    const editHandler = (user) => {
+    const editHandler = (user: any) => {
         userStore.initUser(user).then(() => {
-            showModal(<UserForm />, { });
+            showModal(<UserForm />, { right: true });
         });
-    }
+    };
 
     return useObserver(() => (
         <Loader loading={loading}>
@@ -56,7 +56,7 @@ function UserList(props: Props) {
                     <div className="grid grid-cols-12 p-3 border-b font-medium">
                         <div className="col-span-5">Name</div>
                         <div className="col-span-3">Role</div>
-                        {!isOnboarding && <div className="col-span-2">Created On</div> }
+                        {!isOnboarding && <div className="col-span-2">Created On</div>}
                         <div className="col-span-2"></div>
                     </div>
 

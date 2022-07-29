@@ -21,15 +21,15 @@ function UsersView(props: Props) {
     const userCount = useObserver(() => userStore.list.length);
     const roles = useObserver(() => roleStore.list);
     const { showModal } = useModal();
-    
-    const reachedLimit = (limits.remaining + userStore.modifiedCount) <= 0;
+
+    const reachedLimit = limits.remaining + userStore.modifiedCount <= 0;
     const isAdmin = account.admin || account.superAdmin;
 
-    const editHandler = (user = null) => {
+    const editHandler = (user: any = null) => {
         userStore.initUser(user).then(() => {
-            showModal(<UserForm />, {});
+            showModal(<UserForm />, { right: true });
         });
-    }
+    };
 
     useEffect(() => {
         if (roles.length === 0 && isEnterprise) {
@@ -41,10 +41,12 @@ function UsersView(props: Props) {
         <div>
             <div className="flex items-center justify-between">
                 <PageTitle
-                    title={<div>Team <span className="color-gray-medium">{userCount}</span></div>}
-                    actionButton={(
-                        <AddUserButton isAdmin={isAdmin} onClick={() => editHandler(null)} />
-                    )}
+                    title={
+                        <div>
+                            Team <span className="color-gray-medium">{userCount}</span>
+                        </div>
+                    }
+                    actionButton={<AddUserButton isAdmin={isAdmin} onClick={() => editHandler(null)} />}
                 />
                 <div>
                     <UserSearch />
@@ -55,8 +57,8 @@ function UsersView(props: Props) {
     );
 }
 
-export default connect(state => ({
-    account: state.getIn([ 'user', 'account' ]),
-    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
-    limits: state.getIn([ 'user', 'account', 'limits', 'teamMember' ]),
+export default connect((state: any) => ({
+    account: state.getIn(['user', 'account']),
+    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    limits: state.getIn(['user', 'account', 'limits', 'teamMember']),
 }))(UsersView);
