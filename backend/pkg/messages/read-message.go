@@ -7,6 +7,10 @@ import (
 )
 
 func ReadMessage(reader io.Reader) (Message, error) {
+	t, err := ReadUint(reader)
+	if err != nil {
+		return nil, err
+	}
 	switch t {
 
 	case 80:
@@ -18,35 +22,6 @@ func ReadMessage(reader io.Reader) (Message, error) {
 			return nil, err
 		}
 		if msg.Timestamp, err = ReadInt(reader); err != nil {
-			return nil, err
-		}
-		return msg, nil
-
-	case 81:
-		msg := &BatchMetadata{}
-		if msg.Version, err = ReadUint(reader); err != nil {
-			return nil, err
-		}
-		if msg.PageNo, err = ReadUint(reader); err != nil {
-			return nil, err
-		}
-		if msg.FirstIndex, err = ReadUint(reader); err != nil {
-			return nil, err
-		}
-		if msg.Timestamp, err = ReadInt(reader); err != nil {
-			return nil, err
-		}
-		if msg.Location, err = ReadString(reader); err != nil {
-			return nil, err
-		}
-		return msg, nil
-
-	case 82:
-		msg := &PartitionedMessage{}
-		if msg.PartNo, err = ReadUint(reader); err != nil {
-			return nil, err
-		}
-		if msg.PartTotal, err = ReadUint(reader); err != nil {
 			return nil, err
 		}
 		return msg, nil

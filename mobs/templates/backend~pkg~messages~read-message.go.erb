@@ -7,6 +7,10 @@ import (
 )
 
 func ReadMessage(reader io.Reader) (Message, error) {
+	t, err := ReadUint(reader)
+	if err != nil {
+		return nil, err
+	}
 	switch t {
 <% $messages.each do |msg| %>
 	case <%= msg.id %>:

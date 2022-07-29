@@ -22,50 +22,6 @@ func (msg *BatchMeta) TypeID() int {
 	return 80
 }
 
-type BatchMetadata struct {
-	message
-	Version    uint64
-	PageNo     uint64
-	FirstIndex uint64
-	Timestamp  int64
-	Location   string
-}
-
-func (msg *BatchMetadata) Encode() []byte {
-	buf := make([]byte, 51+len(msg.Location))
-	buf[0] = 81
-	p := 1
-	p = WriteUint(msg.Version, buf, p)
-	p = WriteUint(msg.PageNo, buf, p)
-	p = WriteUint(msg.FirstIndex, buf, p)
-	p = WriteInt(msg.Timestamp, buf, p)
-	p = WriteString(msg.Location, buf, p)
-	return buf[:p]
-}
-
-func (msg *BatchMetadata) TypeID() int {
-	return 81
-}
-
-type PartitionedMessage struct {
-	message
-	PartNo    uint64
-	PartTotal uint64
-}
-
-func (msg *PartitionedMessage) Encode() []byte {
-	buf := make([]byte, 21)
-	buf[0] = 82
-	p := 1
-	p = WriteUint(msg.PartNo, buf, p)
-	p = WriteUint(msg.PartTotal, buf, p)
-	return buf[:p]
-}
-
-func (msg *PartitionedMessage) TypeID() int {
-	return 82
-}
-
 type Timestamp struct {
 	message
 	Timestamp uint64
