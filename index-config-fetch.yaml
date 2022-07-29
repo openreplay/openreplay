@@ -4,9 +4,10 @@
 
 version: 0
 
-index_id: quickwit-kafka
+index_id: fetch
 
 doc_mapping:
+  mode: strict
   field_mappings:
     - name: method
       type: text
@@ -25,17 +26,15 @@ doc_mapping:
       tokenizer: default
       record: position
     - name: status
-      type: text
-      tokenizer: default
+      type: i64
+      fast: true
       record: position
     - name: timestamp
-      type: text
-      tokenizer: default
-      record: position
+      type: i64
+      fast: true
     - name: duration
-      type: text
-      tokenizer: default
-      record: position
+      type: i64
+      fast: true
 
 search_settings:
   default_search_fields: [url, request, response]

@@ -5,19 +5,40 @@ from datetime import datetime
 from collections import defaultdict
 
 from msgcodec.codec import MessageCodec
-from msgcodec.messages import SessionEnd, Fetch, FetchEvent, PageEvent, SetCSSData, SetStyleData
+from msgcodec.messages import Fetch, FetchEvent, PageEvent, GraphQL
 import json
 
 import getopt, sys
 
 n = 0
-fetch_keys = ['method', 'url', 'request', 'response', 'status', 'timestamp', 'duration']
-def transform(data):
+def transform_fetch(data):
     global n
     n += 1
     return {
             'method': data.method, 'url': data.url, 'request': data.url, 'response': data.request,
             'status': data.status, 'timestamp': data.timestamp, 'duration': data.duration
+            }
+
+def transform_graphql(data):
+    global n
+    n += 1
+    return {
+            'operation_kind': data.operation_kind, 'operation_name': data.operation_name,
+            'variables': data.variables, 'response': data.response
+            }
+
+def transform_pageevent(data):
+    global n
+    n += 1
+    return {'massage_id': data.message_id, 'timestamp': data.timestamp, 'url': data.timestamp,
+            'referrer': data.referrer, 'loaded': data.loaded, 'request_start': data.request_start,
+            'response_start': data.response_start, 'response_end': data.response_end,
+            'dom_content_loaded_event_start': data.dom_content_loaded_event_start,
+            'dom_content_loaded_event_end': data.dom_content_loaded_event_end,
+            'load_event_start': data.load_event_start, 'load_event_end': data.load_event_end,
+            'first_paint': data.first_paint, 'first_contentful_paint': data.first_contentful_paint,
+            'speed_index': data.speed_index, 'visually_complete': data.visually_complete,
+            'time_to_interactive': data.time_to_interactive
             }
 
 def create_producer():
@@ -60,8 +81,16 @@ def consumer_producer_end():
         for message in messages:
             send = False
             if isinstance(message, Fetch) or isinstance(message, FetchEvent):
-                producer.send('quickwit-kafka', value=transform(message))
-                print(f'added message {n}')
+                producer.send('quickwit-kafka', value=transform_fetch(message))
+                print(f'added message {n} type Fetch')
+                sleep(5)
+            if isinstance(message, GraphQL):
+                producer.send('quickwit-kafka', value=transform_graphql(message))
+                print(f'added message {n} type GraphQL')
+                sleep(5)
+            if isinstance(message, PageEvent):
+                producer.send('quickwit-kafka', value=transform_pageevent(message))
+                print(f'added message {n} type PageEvent')
                 sleep(5)
 
 

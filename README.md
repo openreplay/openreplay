@@ -34,6 +34,6 @@ To deploy the indexer, search and UI services run the command:
 bash run_quickwit.sh
 ```
 UI server will start at localhost:7280. The api can also be called through the url http://127.0.0.1:7280/api/v1/quickwit-kafka/search?query={your_query} for example
-```angular2html
+```bash
 curl "http://127.0.0.1:7280/api/v1/quickwit-kafka/search?query=body:error"
 ```
