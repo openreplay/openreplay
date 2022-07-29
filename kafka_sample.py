@@ -56,7 +56,7 @@ def create_consumer():
     consumer = KafkaConsumer(#security_protocol="SSL",
                              bootstrap_servers=os.environ['KAFKA_SERVER_2'],
                                                # os.environ['KAFKA_SERVER_1']],
-                             group_id=f"quickwit_connector",
+                             group_id=f"quickwit_connector2",
                              auto_offset_reset="earliest",
                              enable_auto_commit=False
                              )
