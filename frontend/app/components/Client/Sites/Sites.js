@@ -84,7 +84,7 @@ class Sites extends React.PureComponent {
                         {filteredSites.map((_site) => (
                             <div
                                 key={_site.key}
-                                className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3"
+                                className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3 last:border-none"
                             >
                                 <div className="col-span-4">
                                     <div className="flex items-center">
