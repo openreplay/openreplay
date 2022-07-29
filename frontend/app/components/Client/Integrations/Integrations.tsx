@@ -15,42 +15,55 @@ import StackdriverForm from './StackdriverForm';
 import SumoLogicForm from './SumoLogicForm';
 import { fetchList, init } from 'Duck/integrations/actions';
 import { connect } from 'react-redux';
+import { withRequest } from 'HOCs';
 
 interface Props {
     fetchList: (name: string) => void;
     init: () => void;
+    fetchIntegratedList: () => void;
+    integratedList: any;
 }
 function Integrations(props: Props) {
     const { showModal } = useModal();
     const [loading, setLoading] = React.useState(true);
+    const [integratedList, setIntegratedList] = React.useState([]);
 
     useEffect(() => {
-        const promosies: any[] = [];
-        integrations.forEach((cat: any) => {
-            cat.integrations.forEach((integration: any) => {
-                if (integration.slug) {
-                    promosies.push(props.fetchList(integration.slug));
-                }
-            });
-        });
+        const list = props.integratedList.map((item: any) => item.name);
+        console.log('list', list)
+        setIntegratedList(list);
+    }, [props.integratedList]);
 
-        Promise.all(promosies)
-            .then(() => {
-                setLoading(false);
-            })
-            .catch(() => {});
+    useEffect(() => {
+    //     const promosies: any[] = [];
+        props.fetchIntegratedList();
+    //     console.log('fetchIntegratedList', props);
+    //     // integrations.forEach((cat: any) => {
+    //     //     cat.integrations.forEach((integration: any) => {
+    //     //         if (integration.slug) {
+    //     //             promosies.push(props.fetchList(integration.slug));
+    //     //         }
+    //     //     });
+    //     // });
+
+    //     // Promise.all(promosies)
+    //     //     .then(() => {
+    //     //         setLoading(false);
+    //     //     })
+    //     //     .catch(() => {});
     }, []);
 
     useEffect(() => {
         if (loading) {
             return;
         }
-        
     }, [loading]);
 
     const onClick = (integration: any) => {
         showModal(integration.component, { right: true });
     };
+
+    console.log('integratedList',integratedList);
 
     return (
         <div className="mb-4">
@@ -60,7 +73,12 @@ function Integrations(props: Props) {
                     <div className="">{cat.description}</div>
                     <div className="flex flex-wrap mt-4">
                         {cat.integrations.map((integration: any) => (
-                            <IntegrationItem key={integration.name} integration={integration} onClick={() => onClick(integration)} />
+                            <IntegrationItem
+                                integrated={integratedList.includes(integration.slug)}
+                                key={integration.name}
+                                integration={integration}
+                                onClick={() => onClick(integration)}
+                            />
                         ))}
                     </div>
                 </div>
@@ -69,7 +87,17 @@ function Integrations(props: Props) {
     );
 }
 
-export default connect(null, { fetchList, init })(Integrations);
+export default connect(null, { fetchList, init })(
+    withRequest({
+        dataName: 'integratedList',
+        initialData: [],
+        dataWrapper: (data: any) => data.filter((i: any) => i.integrated),
+        loadingName: 'listLoading',
+        requestName: 'fetchIntegratedList',
+        endpoint: `/integrations`,
+        method: 'GET',
+    })(Integrations)
+);
 
 const integrations = [
     {
