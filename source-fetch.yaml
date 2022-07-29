@@ -1,10 +1,12 @@
 #
-# Kafka source config file.
+# Source config file.
 #
-source_id: kafka-source
+
+source_id: fetch-kafka
 source_type: kafka
 params:
   topic: quickwit-kafka
   client_params:
     bootstrap.servers: kafka-1.kafka-headless.db.svc.cluster.local:9092
+    group.id: fetch-consumer
     # security.protocol: SSL

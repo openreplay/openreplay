@@ -4,7 +4,7 @@
 
 version: 0
 
-index_id: fetch
+index_id: fetchevent
 
 doc_mapping:
   mode: strict
@@ -27,8 +27,8 @@ doc_mapping:
       record: position
     - name: status
       type: i64
+      indexed: true
       fast: true
-      record: position
     - name: timestamp
       type: i64
       fast: true

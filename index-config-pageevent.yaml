@@ -11,8 +11,8 @@ doc_mapping:
   field_mappings:
     - name: message_id
       type: i64
+      indexed: true
       fast: true
-      record: position
     - name: timestamp
       type: i64
       fast: true
