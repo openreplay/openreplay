@@ -9,6 +9,7 @@ const siteIdRequiredPaths = [
   '/alerts',
   '/targets',
   '/metadata',
+  '/integrations',
   '/integrations/sentry/events',
   '/integrations/slack/notify',
   '/assignments',
