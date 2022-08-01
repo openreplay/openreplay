@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"log"
 	"openreplay/backend/pkg/queue/types"
@@ -54,6 +55,50 @@ func main() {
 		return tp == messages.MsgMetadata || tp == messages.MsgIssueEvent || tp == messages.MsgSessionStart || tp == messages.MsgSessionEnd || tp == messages.MsgUserID || tp == messages.MsgUserAnonymousID || tp == messages.MsgCustomEvent || tp == messages.MsgClickEvent || tp == messages.MsgInputEvent || tp == messages.MsgPageEvent || tp == messages.MsgErrorEvent || tp == messages.MsgFetchEvent || tp == messages.MsgGraphQLEvent || tp == messages.MsgIntegrationEvent || tp == messages.MsgPerformanceTrackAggr || tp == messages.MsgResourceEvent || tp == messages.MsgLongTask || tp == messages.MsgJSException || tp == messages.MsgResourceTiming || tp == messages.MsgRawCustomEvent || tp == messages.MsgCustomIssue || tp == messages.MsgFetch || tp == messages.MsgGraphQL || tp == messages.MsgStateAction || tp == messages.MsgSetInputTarget || tp == messages.MsgSetInputValue || tp == messages.MsgCreateDocument || tp == messages.MsgMouseClick || tp == messages.MsgSetPageLocation || tp == messages.MsgPageLoadTiming || tp == messages.MsgPageRenderTiming
 	}
 
+	// Producer for quickwit topic
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
+	defer producer.Close(15000)
+
+	// FetchEvent for quickwit
+	type FetchEvent struct {
+		Method    string `json:"method"`
+		URL       string `json:"url"`
+		Request   string `json:"request"`
+		Response  string `json:"response"`
+		Status    uint64 `json:"status"`
+		Timestamp uint64 `json:"timestamp"`
+		Duration  uint64 `json:"duration"`
+	}
+
+	// PageEvent for quickwit
+	type PageEvent struct {
+		MessageID                  uint64 `json:"message_id"`
+		Timestamp                  uint64 `json:"timestamp"`
+		URL                        string `json:"url"`
+		Referrer                   string `json:"referrer"`
+		Loaded                     bool   `json:"loaded"`
+		RequestStart               uint64 `json:"request_start"`
+		ResponseStart              uint64 `json:"response_start"`
+		ResponseEnd                uint64 `json:"response_end"`
+		DomContentLoadedEventStart uint64 `json:"dom_content_loaded_event_start"`
+		DomContentLoadedEventEnd   uint64 `json:"dom_content_loaded_event_end"`
+		LoadEventStart             uint64 `json:"load_event_start"`
+		LoadEventEnd               uint64 `json:"load_event_end"`
+		FirstPaint                 uint64 `json:"first_paint"`
+		FirstContentfulPaint       uint64 `json:"first_contentful_paint"`
+		SpeedIndex                 uint64 `json:"speed_index"`
+		VisuallyComplete           uint64 `json:"visually_complete"`
+		TimeToInteractive          uint64 `json:"time_to_interactive"`
+	}
+
+	// GraphQLEvent for quickwit
+	type GraphQLEvent struct {
+		OperationKind string `json:"operation_kind"`
+		OperationName string `json:"operation_name"`
+		Variables     string `json:"variables"`
+		Response      string `json:"response"`
+	}
+
 	// Handler logic
 	handler := func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
 		statsLogger.Collect(sessionID, meta)
@@ -63,6 +108,78 @@ func main() {
 				continue
 			}
 			msg := iter.Message().Decode()
+
+			// Send data to quickwit topic
+			var (
+				event []byte
+				err   error
+			)
+			switch m := msg.(type) {
+			// Common
+			case *messages.Fetch:
+				event, err = json.Marshal(FetchEvent{
+					Method:    m.Method,
+					URL:       m.URL,
+					Request:   m.Request,
+					Response:  m.Response,
+					Status:    m.Status,
+					Timestamp: m.Timestamp,
+					Duration:  m.Duration,
+				})
+			case *messages.FetchEvent:
+				event, err = json.Marshal(FetchEvent{
+					Method:    m.Method,
+					URL:       m.URL,
+					Request:   m.Request,
+					Response:  m.Response,
+					Status:    m.Status,
+					Timestamp: m.Timestamp,
+					Duration:  m.Duration,
+				})
+			case *messages.PageEvent:
+				event, err = json.Marshal(PageEvent{
+					MessageID:                  m.MessageID,
+					Timestamp:                  m.Timestamp,
+					URL:                        m.URL,
+					Referrer:                   m.Referrer,
+					Loaded:                     m.Loaded,
+					RequestStart:               m.RequestStart,
+					ResponseStart:              m.ResponseStart,
+					ResponseEnd:                m.ResponseEnd,
+					DomContentLoadedEventStart: m.DomContentLoadedEventStart,
+					DomContentLoadedEventEnd:   m.DomContentLoadedEventEnd,
+					LoadEventStart:             m.LoadEventStart,
+					LoadEventEnd:               m.LoadEventEnd,
+					FirstPaint:                 m.FirstPaint,
+					FirstContentfulPaint:       m.FirstContentfulPaint,
+					SpeedIndex:                 m.SpeedIndex,
+					VisuallyComplete:           m.VisuallyComplete,
+					TimeToInteractive:          m.TimeToInteractive,
+				})
+			case *messages.GraphQL:
+				event, err = json.Marshal(GraphQLEvent{
+					OperationKind: m.OperationKind,
+					OperationName: m.OperationName,
+					Variables:     m.Variables,
+					Response:      m.Response,
+				})
+			case *messages.GraphQLEvent:
+				event, err = json.Marshal(GraphQLEvent{
+					OperationKind: m.OperationKind,
+					OperationName: m.OperationName,
+					Variables:     m.Variables,
+					Response:      m.Response,
+				})
+			}
+			if err != nil {
+				log.Printf("can't marshal json for quickwit: %s", err)
+			} else {
+				if len(event) > 0 {
+					if err := producer.Produce("quickwit", sessionID, event); err != nil {
+						log.Printf("can't send event to quickwit: %s", err)
+					}
+				}
+			}
 
 			// Just save session data into db without additional checks
 			if err := saver.InsertMessage(sessionID, msg); err != nil {
