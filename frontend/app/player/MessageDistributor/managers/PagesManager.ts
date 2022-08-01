@@ -2,7 +2,7 @@ import type StatedScreen from '../StatedScreen';
 import type { Message } from '../messages';
 
 import ListWalker from './ListWalker';
-import DOMManager from './DOMManager'; 
+import DOMManager from './DOM/DOMManager'; 
 
 
 export default class PagesManager extends ListWalker<DOMManager> {
