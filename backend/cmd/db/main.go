@@ -178,47 +178,49 @@ func main() {
 					if err := producer.Produce("quickwit", sessionID, event); err != nil {
 						log.Printf("can't send event to quickwit: %s", err)
 					}
+				} else {
+					log.Printf("event is empty")
 				}
-			}
 
-			// Just save session data into db without additional checks
-			if err := saver.InsertMessage(sessionID, msg); err != nil {
-				if !postgres.IsPkeyViolation(err) {
-					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			session, err := pg.GetSession(sessionID)
-			if session == nil {
-				if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
-					log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			// Save statistics to db
-			err = saver.InsertStats(session, msg)
-			if err != nil {
-				log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
-			}
-
-			// Handle heuristics and save to temporary queue in memory
-			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
-
-			// Process saved heuristics messages as usual messages above in the code
-			builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
+				// Just save session data into db without additional checks
 				if err := saver.InsertMessage(sessionID, msg); err != nil {
 					if !postgres.IsPkeyViolation(err) {
-						log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+						log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 					}
 					return
 				}
 
-				if err := saver.InsertStats(session, msg); err != nil {
-					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+				session, err := pg.GetSession(sessionID)
+				if session == nil {
+					if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
+						log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
+					}
+					return
 				}
-			})
+
+				// Save statistics to db
+				err = saver.InsertStats(session, msg)
+				if err != nil {
+					log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
+				}
+
+				// Handle heuristics and save to temporary queue in memory
+				builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
+
+				// Process saved heuristics messages as usual messages above in the code
+				builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
+					if err := saver.InsertMessage(sessionID, msg); err != nil {
+						if !postgres.IsPkeyViolation(err) {
+							log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+						}
+						return
+					}
+
+					if err := saver.InsertStats(session, msg); err != nil {
+						log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+					}
+				})
+			}
 		}
 	}
 
