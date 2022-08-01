@@ -60,8 +60,8 @@ type AppOptions = {
   __is_snippet: boolean;
   __debug_report_edp: string | null;
   __debug__?: LoggerOptions;
-  localStorage: Storage;
-  sessionStorage: Storage;
+  localStorage: Storage | null;
+  sessionStorage: Storage | null;
 
   // @deprecated
   onStart?: StartCallback;
@@ -115,8 +115,8 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        localStorage: window.localStorage,
-        sessionStorage: window.sessionStorage,
+        localStorage: null,
+        sessionStorage: null,
       },
       options,
     );
@@ -139,8 +139,10 @@ export default class App {
         Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)));
       }
     });
-    this.localStorage = this.options.localStorage;
-    this.sessionStorage = this.options.sessionStorage;
+
+    // window.localStorage and window.sessionStorage should only be accessed if required, see #490, #637
+    this.localStorage = this.options.localStorage ?? window.localStorage;
+    this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage;
 
     if (sessionToken != null) {
       this.sessionStorage.setItem(this.options.session_token_key, sessionToken);
