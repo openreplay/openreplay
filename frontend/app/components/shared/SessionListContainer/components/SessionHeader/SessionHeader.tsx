@@ -33,20 +33,24 @@ function SessionHeader(props: Props) {
     };
 
     return (
-        <div className="flex items-center p-4 justify-between">
+        <div className="flex items-center px-4 pt-2 justify-between">
             <div className="flex items-center justify-between">
                 <div className="mr-3 text-lg flex items-center">
                     <div
-                        className={cn('py-3 cursor-pointer mr-4 ', { 'border-b color-teal border-teal': !isBookmark })}
+                        className={cn('py-3 cursor-pointer mr-4', {
+                            'border-b color-teal border-teal': !isBookmark,
+                        })}
                         onClick={() => props.setActiveTab({ type: 'all' })}
                     >
-                        <span className="font-bold">Sessions</span> <span className="color-gray-medium ml-2">{listCount}</span>
+                        <span className="font-bold">SESSIONS</span> <span className="color-gray-medium ml-2">{listCount}</span>
                     </div>
                     <div
-                        className={cn('py-3 cursor-pointer', { 'border-b color-teal border-teal': isBookmark })}
+                        className={cn('py-3 cursor-pointer', {
+                            'border-b color-teal border-teal': isBookmark,
+                        })}
                         onClick={() => props.setActiveTab({ type: 'bookmark' })}
                     >
-                        <span className="font-bold">{`${isEnterprise ? 'Vault' : 'Bookmarks'}`}</span>
+                        <span className="font-bold">{`${isEnterprise ? 'VAULT' : 'BOOKMARKS'}`}</span>
                     </div>
                 </div>
             </div>
