@@ -52,30 +52,28 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                        AND users.tenant_id = %(tenant_id)s
                        AND (roles.all_projects OR roles_projects.project_id = s.project_id)
                     ) AS role_project ON (TRUE)"""
-        pre_select = ""
+        recorded_q = ""
         if recorded:
-            pre_select = """WITH recorded_p AS (SELECT DISTINCT projects.project_id
-                            FROM projects INNER JOIN sessions USING (project_id)
-                            WHERE tenant_id =%(tenant_id)s
-                              AND deleted_at IS NULL
-                              AND duration > 0)"""
-        cur.execute(
-            cur.mogrify(f"""\
-                    {pre_select}
+            recorded_q = """, COALESCE((SELECT TRUE
+                                     FROM public.sessions
+                                     WHERE sessions.project_id = s.project_id
+                                       AND sessions.start_ts >= (EXTRACT(EPOCH FROM s.created_at) * 1000 - 24 * 60 * 60 * 1000)
+                                       AND sessions.start_ts <= %(now)s
+                                     LIMIT 1), FALSE)   AS recorded"""
+        query = cur.mogrify(f"""\
                     SELECT
                            s.project_id, s.name, s.project_key, s.save_request_payloads
                             {',s.gdpr' if gdpr else ''} 
-                            {',EXISTS(SELECT 1 FROM recorded_p WHERE recorded_p.project_id = s.project_id) AS recorded' if recorded else ''}
+                            {recorded_q}
                             {',stack_integrations.count>0 AS stack_integrations' if stack_integrations else ''}
                     FROM public.projects AS s
-                            {'LEFT JOIN recorded_p USING (project_id)' if recorded else ''}
                             {'LEFT JOIN LATERAL (SELECT COUNT(*) AS count FROM public.integrations WHERE s.project_id = integrations.project_id LIMIT 1) AS stack_integrations ON TRUE' if stack_integrations else ''}
                             {role_query if user_id is not None else ""}
                     WHERE s.tenant_id =%(tenant_id)s
                         AND s.deleted_at IS NULL
                     ORDER BY s.project_id;""",
-                        {"tenant_id": tenant_id, "user_id": user_id})
-        )
+                            {"tenant_id": tenant_id, "user_id": user_id, "now": TimeUTC.now()})
+        cur.execute(query)
         rows = cur.fetchall()
         if recording_state:
             project_ids = [f'({r["project_id"]})' for r in rows]

@@ -1110,14 +1110,6 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 
 
-@app.post('/account', tags=["account"])
-@app.put('/account', tags=["account"])
-def edit_account(data: schemas.EditUserSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
-                      editor_id=context.user_id)
-
-
 @app.post('/account/password', tags=["account"])
 @app.put('/account/password', tags=["account"])
 def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
