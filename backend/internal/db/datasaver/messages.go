@@ -35,12 +35,15 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 
 	// Unique Web messages
 	case *PageEvent:
+		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebPageEvent(sessionID, m)
 	case *ErrorEvent:
 		return mi.pg.InsertWebErrorEvent(sessionID, m)
 	case *FetchEvent:
+		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebFetchEvent(sessionID, m)
 	case *GraphQLEvent:
+		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebGraphQLEvent(sessionID, m)
 	case *IntegrationEvent:
 		return mi.pg.InsertWebErrorEvent(sessionID, &ErrorEvent{
