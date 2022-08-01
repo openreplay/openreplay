@@ -1,9 +1,27 @@
 # Special one for Batch Meta. Message id could define the version 
+# Depricated since tracker 3.6.0
 message 80, 'BatchMeta', :replayer => false do 
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
 end
+
+# since tracker 3.6.0
+message 81, 'BatchMetadata', :replayer => false do
+  uint 'Version'
+  uint 'PageNo'
+  uint 'FirstIndex'
+  int 'Timestamp'
+  string 'Location'
+end
+
+# since tracker 3.6.0
+message 82, 'PartitionedMessage', :replayer => false do
+  uint 'PartNo'
+  uint 'PartTotal'
+end
+
+
 message 0, 'Timestamp' do
   uint 'Timestamp'
 end
