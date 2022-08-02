@@ -10,7 +10,7 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-var ch *clickhouse.Connector
+var ch clickhouse.Connector
 var finalizeTicker <-chan time.Time
 
 func (si *Saver) InitStats() {

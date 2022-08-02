@@ -122,11 +122,18 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			// Send collected batches to db
+			start := time.Now()
 			pg.CommitBatches()
+			pgDur := time.Now().Sub(start).Milliseconds()
+
+			start = time.Now()
 			if err := saver.CommitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}
-			// TODO?: separate stats & regular messages
+			chDur := time.Now().Sub(start).Milliseconds()
+			log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
+
+			// TODO: use commit worker to save time each tick
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)
 			}
@@ -134,7 +141,7 @@ func main() {
 			// Handle new message from queue
 			err := consumer.ConsumeNext()
 			if err != nil {
-				log.Fatalf("Error on consumption: %v", err) // TODO: is always fatal?
+				log.Fatalf("Error on consumption: %v", err)
 			}
 		}
 	}

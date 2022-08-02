@@ -60,7 +60,7 @@ function SessionList(props: Props) {
                 show={!loading && list.size === 0}
             >
                 {list.map((session: any) => (
-                    <React.Fragment key={session.sessionId}>
+                    <div key={session.sessionId} className="border-b">
                         <SessionItem
                             session={session}
                             hasUserFilter={hasUserFilter}
@@ -68,8 +68,7 @@ function SessionList(props: Props) {
                             metaList={metaList}
                             lastPlayedSessionId={lastPlayedSessionId}
                         />
-                        <div className="border-b" />
-                    </React.Fragment>
+                    </div>
                 ))}
             </NoContent>
 
