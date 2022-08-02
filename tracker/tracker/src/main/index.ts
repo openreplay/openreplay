@@ -1,14 +1,8 @@
 import App, { DEFAULT_INGEST_POINT } from './app/index.js';
 export { default as App } from './app/index.js';
 
-import {
-  UserID,
-  UserAnonymousID,
-  Metadata,
-  RawCustomEvent,
-  CustomIssue,
-} from '../common/messages.js';
-import * as _Messages from '../common/messages.js';
+import { UserID, UserAnonymousID, RawCustomEvent, CustomIssue } from './app/messages.js';
+import * as _Messages from './app/messages.js';
 export const Messages = _Messages;
 
 import Connection from './modules/connection.js';
@@ -224,7 +218,7 @@ export default class API {
 
   setUserAnonymousID(id: string): void {
     if (typeof id === 'string' && this.app !== null) {
-      this.app.send(new UserAnonymousID(id));
+      this.app.send(UserAnonymousID(id));
     }
   }
   userAnonymousID(id: string): void {
@@ -252,7 +246,7 @@ export default class API {
         } catch (e) {
           return;
         }
-        this.app.send(new RawCustomEvent(key, payload));
+        this.app.send(RawCustomEvent(key, payload));
       }
     }
   }
@@ -264,7 +258,7 @@ export default class API {
       } catch (e) {
         return;
       }
-      this.app.send(new CustomIssue(key, payload));
+      this.app.send(CustomIssue(key, payload));
     }
   }
 

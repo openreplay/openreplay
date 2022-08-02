@@ -1,10 +1,6 @@
 import type App from '../app/index.js';
 import { timestamp, isURL } from '../utils.js';
-import {
-  ResourceTiming,
-  SetNodeAttributeURLBased,
-  SetNodeAttribute,
-} from '../../common/messages.js';
+import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from '../app/messages.js';
 import { hasTag } from '../app/guards.js';
 
 function resolveURL(url: string, location: Location = document.location) {
@@ -26,13 +22,13 @@ const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
 
 export default function (app: App): void {
   function sendPlaceholder(id: number, node: HTMLImageElement): void {
-    app.send(new SetNodeAttribute(id, 'src', PLACEHOLDER_SRC));
+    app.send(SetNodeAttribute(id, 'src', PLACEHOLDER_SRC));
     const { width, height } = node.getBoundingClientRect();
     if (!node.hasAttribute('width')) {
-      app.send(new SetNodeAttribute(id, 'width', String(width)));
+      app.send(SetNodeAttribute(id, 'width', String(width)));
     }
     if (!node.hasAttribute('height')) {
-      app.send(new SetNodeAttribute(id, 'height', String(height)));
+      app.send(SetNodeAttribute(id, 'height', String(height)));
     }
   }
 
@@ -48,18 +44,18 @@ export default function (app: App): void {
     const resolvedSrc = resolveURL(src || ''); // Src type is null sometimes. - is it true?
     if (naturalWidth === 0 && naturalHeight === 0) {
       if (isURL(resolvedSrc)) {
-        app.send(new ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'));
+        app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'));
       }
     } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isMasked(id)) {
       sendPlaceholder(id, this);
     } else {
-      app.send(new SetNodeAttribute(id, 'src', resolvedSrc));
+      app.send(SetNodeAttribute(id, 'src', resolvedSrc));
       if (srcset) {
         const resolvedSrcset = srcset
           .split(',')
           .map((str) => resolveURL(str))
           .join(',');
-        app.send(new SetNodeAttribute(id, 'srcset', resolvedSrcset));
+        app.send(SetNodeAttribute(id, 'srcset', resolvedSrcset));
       }
     }
   });
@@ -74,11 +70,11 @@ export default function (app: App): void {
         }
         if (mutation.attributeName === 'src') {
           const src = target.src;
-          app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+          app.send(SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
         }
         if (mutation.attributeName === 'srcset') {
           const srcset = target.srcset;
-          app.send(new SetNodeAttribute(id, 'srcset', srcset));
+          app.send(SetNodeAttribute(id, 'srcset', srcset));
         }
       }
     }

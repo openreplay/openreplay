@@ -1,3 +1,5 @@
+import Message from './messages.js';
+
 export interface Options {
   connAttemptCount?: number;
   connAttemptGap?: number;
@@ -8,6 +10,7 @@ type Start = {
   ingestPoint: string;
   pageNo: number;
   timestamp: number;
+  url: string;
 } & Options;
 
 type Auth = {
@@ -16,4 +19,4 @@ type Auth = {
   beaconSizeLimit?: number;
 };
 
-export type WorkerMessageData = null | 'stop' | Start | Auth | Array<{ _id: number }>;
+export type WorkerMessageData = null | 'stop' | Start | Auth | Array<Message>;

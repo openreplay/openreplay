@@ -1,6 +1,6 @@
 import type App from '../app/index.js';
-import type Message from '../../common/messages.js';
-import { JSException } from '../../common/messages.js';
+import type Message from '../app/messages.js';
+import { JSException } from '../app/messages.js';
 import ErrorStackParser from 'error-stack-parser';
 
 export interface Options {
@@ -32,7 +32,7 @@ export function getExceptionMessage(error: Error, fallbackStack: Array<StackFram
   try {
     stack = ErrorStackParser.parse(error);
   } catch (e) {}
-  return new JSException(error.name, error.message, JSON.stringify(stack));
+  return JSException(error.name, error.message, JSON.stringify(stack));
 }
 
 export function getExceptionMessageFromEvent(
@@ -47,7 +47,7 @@ export function getExceptionMessageFromEvent(
         name = 'Error';
         message = e.message;
       }
-      return new JSException(name, message, JSON.stringify(getDefaultStack(e)));
+      return JSException(name, message, JSON.stringify(getDefaultStack(e)));
     }
   } else if ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
@@ -59,7 +59,7 @@ export function getExceptionMessageFromEvent(
       } catch (_) {
         message = String(e.reason);
       }
-      return new JSException('Unhandled Promise Rejection', message, '[]');
+      return JSException('Unhandled Promise Rejection', message, '[]');
     }
   }
   return null;

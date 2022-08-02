@@ -1,5 +1,5 @@
-import type Message from '../../common/messages.js';
-import { Timestamp, Metadata, UserID } from '../../common/messages.js';
+import type Message from './messages.js';
+import { Timestamp, Metadata, UserID } from './messages.js';
 import { timestamp, deprecationWarn } from '../utils.js';
 import Nodes from './nodes.js';
 import Observer from './observer/top_observer.js';
@@ -13,7 +13,7 @@ import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js';
 import type { Options as ObserverOptions } from './observer/top_observer.js';
 import type { Options as SanitizerOptions } from './sanitizer.js';
 import type { Options as LoggerOptions } from './logger.js';
-import type { Options as WebworkerOptions, WorkerMessageData } from '../../common/webworker.js';
+import type { Options as WebworkerOptions, WorkerMessageData } from '../../common/interaction.js';
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -133,10 +133,10 @@ export default class App {
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
-        this.send(new UserID(userID));
+        this.send(UserID(userID));
       }
       if (metadata != null) {
-        Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)));
+        Object.entries(metadata).forEach(([key, value]) => this.send(Metadata(key, value)));
       }
     });
     this.localStorage = this.options.localStorage;
@@ -206,7 +206,7 @@ export default class App {
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(new Timestamp(timestamp()));
+      this.messages.unshift(Timestamp(timestamp()));
       this.worker.postMessage(this.messages);
       this.commitCallbacks.forEach((cb) => cb(this.messages));
       this.messages.length = 0;
@@ -358,6 +358,7 @@ export default class App {
       pageNo,
       ingestPoint: this.options.ingestPoint,
       timestamp: startInfo.timestamp,
+      url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
     };

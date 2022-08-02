@@ -1,5 +1,5 @@
 import type App from '../app/index.js';
-import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from '../../common/messages.js';
+import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from '../app/messages.js';
 import { hasTag } from '../app/guards.js';
 
 export default function (app: App | null) {
@@ -7,7 +7,7 @@ export default function (app: App | null) {
     return;
   }
   if (!window.CSSStyleSheet) {
-    app.send(new TechnicalInfo('no_stylesheet_prototype_in_window', ''));
+    app.send(TechnicalInfo('no_stylesheet_prototype_in_window', ''));
     return;
   }
 
@@ -15,8 +15,8 @@ export default function (app: App | null) {
     const sendMessage =
       typeof rule === 'string'
         ? (nodeID: number) =>
-            app.send(new CSSInsertRuleURLBased(nodeID, rule, index, app.getBaseHref()))
-        : (nodeID: number) => app.send(new CSSDeleteRule(nodeID, index));
+            app.send(CSSInsertRuleURLBased(nodeID, rule, index, app.getBaseHref()))
+        : (nodeID: number) => app.send(CSSDeleteRule(nodeID, index));
     // TODO: Extend messages to maintain nested rules (CSSGroupingRule prototype, as well as CSSKeyframesRule)
     if (stylesheet.ownerNode == null) {
       throw new Error('Owner Node not found');

@@ -1,5 +1,3 @@
-import { UserID, UserAnonymousID, Metadata } from '../../common/messages.js';
-
 interface SessionInfo {
   sessionID: string | null;
   metadata: Record<string, string>;

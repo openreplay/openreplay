@@ -1,7 +1,7 @@
 import type Message from '../common/messages.js';
-import { WorkerMessageData } from '../common/webworker.js';
+import { Type as MType } from '../common/messages.js';
+import { WorkerMessageData } from '../common/interaction.js';
 
-import { classes, SetPageVisibility } from '../common/messages.js';
 import QueueSender from './QueueSender.js';
 import BatchWriter from './BatchWriter.js';
 
@@ -66,13 +66,11 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>): any => {
     }
     const w = writer;
     // Message[]
-    data.forEach((data) => {
-      // @ts-ignore
-      const message: Message = new (classes.get(data._id))();
+    data.forEach((message) => {
       Object.assign(message, data);
-      if (message instanceof SetPageVisibility) {
-        // @ts-ignore
-        if ((<any>message).hidden) {
+      if (message[0] === MType.SetPageVisibility) {
+        if (message[1]) {
+          // .hidden
           restartTimeoutID = setTimeout(() => self.postMessage('restart'), 30 * 60 * 1000);
         } else {
           clearTimeout(restartTimeoutID);
@@ -102,6 +100,7 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>): any => {
     writer = new BatchWriter(
       data.pageNo,
       data.timestamp,
+      data.url,
       // onBatch
       (batch) => sender && sender.push(batch),
     );

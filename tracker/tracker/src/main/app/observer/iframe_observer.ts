@@ -1,5 +1,5 @@
 import Observer from './observer.js';
-import { CreateIFrameDocument } from '../../../common/messages.js';
+import { CreateIFrameDocument } from '../messages.js';
 
 export default class IFrameObserver extends Observer {
   observe(iframe: HTMLIFrameElement) {

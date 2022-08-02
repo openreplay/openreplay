@@ -8,7 +8,7 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
-} from '../../../common/messages.js';
+} from '../messages.js';
 import App from '../index.js';
 import { isRootNode, isTextNode, isElementNode, isSVGElement, hasTag } from '../guards.js';
 
@@ -125,14 +125,14 @@ export default abstract class Observer {
         name = name.substr(6);
       }
       if (value === null) {
-        this.app.send(new RemoveNodeAttribute(id, name));
+        this.app.send(RemoveNodeAttribute(id, name));
       } else if (name === 'href') {
         if (value.length > 1e5) {
           value = '';
         }
-        this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
+        this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       } else {
-        this.app.send(new SetNodeAttribute(id, name, value));
+        this.app.send(SetNodeAttribute(id, name, value));
       }
       return;
     }
@@ -156,26 +156,26 @@ export default abstract class Observer {
       return;
     }
     if (value === null) {
-      this.app.send(new RemoveNodeAttribute(id, name));
+      this.app.send(RemoveNodeAttribute(id, name));
       return;
     }
     if (name === 'style' || (name === 'href' && hasTag(node, 'LINK'))) {
-      this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
+      this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       return;
     }
     if (name === 'href' || value.length > 1e5) {
       value = '';
     }
-    this.app.send(new SetNodeAttribute(id, name, value));
+    this.app.send(SetNodeAttribute(id, name, value));
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (hasTag(parentElement, 'STYLE') || hasTag(parentElement, 'style')) {
-      this.app.send(new SetCSSDataURLBased(id, data, this.app.getBaseHref()));
+      this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()));
       return;
     }
     data = this.app.sanitizer.sanitize(id, data);
-    this.app.send(new SetNodeData(id, data));
+    this.app.send(SetNodeData(id, data));
   }
 
   private bindNode(node: Node): void {
@@ -221,7 +221,7 @@ export default abstract class Observer {
   private unbindNode(node: Node) {
     const id = this.app.nodes.unregisterNode(node);
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
-      this.app.send(new RemoveNode(id));
+      this.app.send(RemoveNode(id));
     }
   }
 
@@ -289,7 +289,7 @@ export default abstract class Observer {
             (el as HTMLElement | SVGElement).style.height = height + 'px';
           }
 
-          this.app.send(new CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)));
+          this.app.send(CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)));
         }
         for (let i = 0; i < el.attributes.length; i++) {
           const attr = el.attributes[i];
@@ -297,13 +297,13 @@ export default abstract class Observer {
         }
       } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
-        this.app.send(new CreateTextNode(id, parentID as number, index));
+        this.app.send(CreateTextNode(id, parentID as number, index));
         this.sendNodeData(id, parent as Element, node.data);
       }
       return true;
     }
     if (recentsType === RecentsType.Removed && parentID !== undefined) {
-      this.app.send(new MoveNode(id, parentID, index));
+      this.app.send(MoveNode(id, parentID, index));
     }
     const attr = this.attributesMap.get(id);
     if (attr !== undefined) {

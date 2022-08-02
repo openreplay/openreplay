@@ -1,7 +1,7 @@
 import type App from '../app/index.js';
 import { hasTag, isSVGElement } from '../app/guards.js';
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils.js';
-import { MouseMove, MouseClick } from '../../common/messages.js';
+import { MouseMove, MouseClick } from '../app/messages.js';
 import { getInputLabel } from './input.js';
 
 function _getSelector(target: Element): string {
@@ -115,7 +115,7 @@ export default function (app: App): void {
 
   const sendMouseMove = (): void => {
     if (mousePositionChanged) {
-      app.send(new MouseMove(mousePositionX, mousePositionY));
+      app.send(MouseMove(mousePositionX, mousePositionY));
       mousePositionChanged = false;
     }
   };
@@ -151,7 +151,7 @@ export default function (app: App): void {
     if (id !== undefined) {
       sendMouseMove();
       app.send(
-        new MouseClick(
+        MouseClick(
           id,
           mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
           getTargetLabel(target),

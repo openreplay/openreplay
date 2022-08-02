@@ -1,5 +1,5 @@
 import type App from '../app/index.js';
-import { SetViewportScroll, SetNodeScroll } from '../../common/messages.js';
+import { SetViewportScroll, SetNodeScroll } from '../app/messages.js';
 import { isElementNode } from '../app/guards.js';
 
 export default function (app: App): void {
@@ -8,7 +8,7 @@ export default function (app: App): void {
 
   const sendSetViewportScroll = app.safe((): void =>
     app.send(
-      new SetViewportScroll(
+      SetViewportScroll(
         window.pageXOffset ||
           (document.documentElement && document.documentElement.scrollLeft) ||
           (document.body && document.body.scrollLeft) ||
@@ -24,7 +24,7 @@ export default function (app: App): void {
   const sendSetNodeScroll = app.safe((s: [number, number], node: Node): void => {
     const id = app.nodes.getID(node);
     if (id !== undefined) {
-      app.send(new SetNodeScroll(id, s[0], s[1]));
+      app.send(SetNodeScroll(id, s[0], s[1]));
     }
   });
 

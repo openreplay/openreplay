@@ -1,33 +1,62 @@
 import type Message from '../common/messages.js';
-import PrimitiveWriter from './PrimitiveWriter.js';
-import { BatchMeta, Timestamp } from '../common/messages.js';
+import * as Messages from '../common/messages.js';
+import MessageEncoder from './MessageEncoder.js';
+import PrimitiveEncoder from './PrimitiveEncoder.js';
+
+const SIZE_RESERVED = 2;
+const MAX_M_SIZE = (1 << (SIZE_RESERVED * 8)) - 1;
 
 export default class BatchWriter {
   private nextIndex = 0;
   private beaconSize = 2 * 1e5; // Default 200kB
-  private writer = new PrimitiveWriter(this.beaconSize);
+  private encoder = new MessageEncoder(this.beaconSize);
+  private readonly sizeEncoder = new PrimitiveEncoder(SIZE_RESERVED);
   private isEmpty = true;
 
   constructor(
     private readonly pageNo: number,
     private timestamp: number,
+    private url: string,
     private readonly onBatch: (batch: Uint8Array) => void,
   ) {
     this.prepare();
   }
 
   private prepare(): void {
-    if (!this.writer.isEmpty()) {
+    if (!this.encoder.isEmpty()) {
       return;
     }
-    new BatchMeta(this.pageNo, this.nextIndex, this.timestamp).encode(this.writer);
+    // MBTODO: move service-messages creation to webworker
+    const batchMetadata: Messages.BatchMetadata = [
+      Messages.Type.BatchMetadata,
+      1,
+      this.pageNo,
+      this.nextIndex,
+      this.timestamp,
+      this.url,
+    ];
+    this.encoder.encode(batchMetadata);
   }
 
   private write(message: Message): boolean {
-    const wasWritten = message.encode(this.writer);
+    const e = this.encoder;
+    if (!e.uint(message[0]) || !e.skip(SIZE_RESERVED)) {
+      return false;
+    }
+    const startOffset = e.getCurrentOffset();
+    const wasWritten = e.encode(message);
     if (wasWritten) {
+      const endOffset = e.getCurrentOffset();
+      const size = endOffset - startOffset;
+      if (size > MAX_M_SIZE || !this.sizeEncoder.uint(size)) {
+        console.warn('OpenReplay: max message size overflow.');
+        return false;
+      }
+      this.sizeEncoder.checkpoint(); // TODO: separate checkpoint logic to an Encoder-inherit class
+      e.set(this.sizeEncoder.flush(), startOffset - SIZE_RESERVED);
+
+      e.checkpoint();
       this.isEmpty = false;
-      this.writer.checkpoint();
       this.nextIndex++;
     }
     return wasWritten;
@@ -39,21 +68,24 @@ export default class BatchWriter {
   }
 
   writeMessage(message: Message) {
-    if (message instanceof Timestamp) {
-      this.timestamp = (<any>message).timestamp;
+    if (message[0] === Messages.Type.Timestamp) {
+      this.timestamp = message[1]; // .timestamp
+    }
+    if (message[0] === Messages.Type.SetPageLocation) {
+      this.url = message[1]; // .url
     }
     while (!this.write(message)) {
       this.finaliseBatch();
       if (this.beaconSize === this.beaconSizeLimit) {
         console.warn('OpenReplay: beacon size overflow. Skipping large message.');
-        this.writer.reset();
+        this.encoder.reset();
         this.prepare();
         this.isEmpty = true;
         return;
       }
       // MBTODO: tempWriter for one message?
       this.beaconSize = Math.min(this.beaconSize * 2, this.beaconSizeLimit);
-      this.writer = new PrimitiveWriter(this.beaconSize);
+      this.encoder = new MessageEncoder(this.beaconSize);
       this.prepare();
       this.isEmpty = true;
     }
@@ -63,12 +95,12 @@ export default class BatchWriter {
     if (this.isEmpty) {
       return;
     }
-    this.onBatch(this.writer.flush());
+    this.onBatch(this.encoder.flush());
     this.prepare();
     this.isEmpty = true;
   }
 
   clean() {
-    this.writer.reset();
+    this.encoder.reset();
   }
 }

@@ -1,5 +1,5 @@
 import type App from '../app/index.js';
-import { LongTask } from '../../common/messages.js';
+import { LongTask } from '../app/messages.js';
 
 // https://w3c.github.io/performance-timeline/#the-performanceentry-interface
 interface TaskAttributionTiming extends PerformanceEntry {
@@ -45,7 +45,7 @@ export default function (app: App): void {
     }
 
     app.send(
-      new LongTask(
+      LongTask(
         entry.startTime + performance.timing.navigationStart,
         entry.duration,
         Math.max(contexts.indexOf(entry.name), 0),

@@ -1,5 +1,5 @@
 import type App from '../app/index.js';
-import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../../common/messages.js';
+import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.js';
 
 export default function (app: App): void {
   let url: string, width: number, height: number;
@@ -9,7 +9,7 @@ export default function (app: App): void {
     const { URL } = document;
     if (URL !== url) {
       url = URL;
-      app.send(new SetPageLocation(url, document.referrer, navigationStart));
+      app.send(SetPageLocation(url, document.referrer, navigationStart));
       navigationStart = 0;
     }
   });
@@ -19,14 +19,14 @@ export default function (app: App): void {
     if (innerWidth !== width || innerHeight !== height) {
       width = innerWidth;
       height = innerHeight;
-      app.send(new SetViewportSize(width, height));
+      app.send(SetViewportSize(width, height));
     }
   });
 
   const sendSetPageVisibility =
     document.hidden === undefined
       ? Function.prototype
-      : app.safe(() => app.send(new SetPageVisibility(document.hidden)));
+      : app.safe(() => app.send(SetPageVisibility(document.hidden)));
 
   app.attachStartCallback(() => {
     url = '';

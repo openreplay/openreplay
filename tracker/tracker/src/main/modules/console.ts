@@ -1,7 +1,7 @@
 import type App from '../app/index.js';
 import { hasTag } from '../app/guards.js';
 import { IN_BROWSER } from '../utils.js';
-import { ConsoleLog } from '../../common/messages.js';
+import { ConsoleLog } from '../app/messages.js';
 
 const printError: (e: Error) => string =
   IN_BROWSER && 'InstallTrigger' in window // detect Firefox
@@ -109,7 +109,7 @@ export default function (app: App, opts: Partial<Options>): void {
   }
 
   const sendConsoleLog = app.safe((level: string, args: unknown[]): void =>
-    app.send(new ConsoleLog(level, printf(args))),
+    app.send(ConsoleLog(level, printf(args))),
   );
 
   let n: number;

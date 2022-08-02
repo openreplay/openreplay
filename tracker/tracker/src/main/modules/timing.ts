@@ -1,7 +1,7 @@
 import type App from '../app/index.js';
 import { hasTag } from '../app/guards.js';
 import { isURL } from '../utils.js';
-import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../../common/messages.js';
+import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../app/messages.js';
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 
@@ -109,7 +109,7 @@ export default function (app: App, opts: Partial<Options>): void {
       resources[entry.name] = entry.startTime + entry.duration;
     }
     app.send(
-      new ResourceTiming(
+      ResourceTiming(
         entry.startTime + performance.timing.navigationStart,
         entry.duration,
         entry.responseStart && entry.startTime ? entry.responseStart - entry.startTime : 0,
@@ -175,7 +175,7 @@ export default function (app: App, opts: Partial<Options>): void {
           loadEventEnd,
         } = performance.timing;
         app.send(
-          new PageLoadTiming(
+          PageLoadTiming(
             requestStart - navigationStart || 0,
             responseStart - navigationStart || 0,
             responseEnd - navigationStart || 0,
@@ -236,7 +236,7 @@ export default function (app: App, opts: Partial<Options>): void {
               )
             : 0;
         app.send(
-          new PageRenderTiming(
+          PageRenderTiming(
             speedIndex,
             firstContentfulPaint > visuallyComplete ? firstContentfulPaint : visuallyComplete,
             timeToInteractive,

@@ -1,7 +1,7 @@
 import type App from '../app/index.js';
 import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from '../utils.js';
 import { hasTag } from '../app/guards.js';
-import { SetInputTarget, SetInputValue, SetInputChecked } from '../../common/messages.js';
+import { SetInputTarget, SetInputValue, SetInputChecked } from '../app/messages.js';
 
 const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date'];
 
@@ -97,7 +97,7 @@ export default function (app: App, opts: Partial<Options>): void {
   function sendInputTarget(id: number, node: TextEditableElement): void {
     const label = getInputLabel(node);
     if (label !== '') {
-      app.send(new SetInputTarget(id, label));
+      app.send(SetInputTarget(id, label));
     }
   }
   function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
@@ -126,7 +126,7 @@ export default function (app: App, opts: Partial<Options>): void {
         break;
     }
 
-    app.send(new SetInputValue(id, value, mask));
+    app.send(SetInputValue(id, value, mask));
   }
 
   const inputValues: Map<number, string> = new Map();
@@ -165,7 +165,7 @@ export default function (app: App, opts: Partial<Options>): void {
       }
       if (checked !== node.checked) {
         checkableValues.set(id, node.checked);
-        app.send(new SetInputChecked(id, node.checked));
+        app.send(SetInputChecked(id, node.checked));
       }
     });
   });
@@ -191,7 +191,7 @@ export default function (app: App, opts: Partial<Options>): void {
       }
       if (isCheckable(node)) {
         checkableValues.set(id, node.checked);
-        app.send(new SetInputChecked(id, node.checked));
+        app.send(SetInputChecked(id, node.checked));
         return;
       }
     }),

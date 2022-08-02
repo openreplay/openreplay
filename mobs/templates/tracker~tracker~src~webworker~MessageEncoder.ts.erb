@@ -1,0 +1,20 @@
+// Auto-generated, do not edit
+
+import * as Messages from '../common/messages.js'
+import Message from '../common/messages.js'
+import PrimitiveEncoder from './PrimitiveEncoder.js'
+
+
+export default class MessageEncoder extends PrimitiveEncoder {
+  encode(msg: Message): boolean {
+    switch(msg[0]) {
+    <% $messages.select { |msg| msg.js }.each do |msg| %>
+    case Messages.Type.<%= msg.name %>:
+      return <% if msg.attributes.size == 0 %> true <% else %> <%= msg.attributes.map.with_index { |attr, index| "this.#{attr.type}(msg[#{index+1}])" }.join " && " %> <% end %>
+    break
+    <% end %>
+    }
+  }
+  
+}
+

@@ -53,18 +53,28 @@ const textEncoder: { encode(str: string): Uint8Array } =
         },
       };
 
-export default class PrimitiveWriter {
+export default class PrimitiveEncoder {
   private offset = 0;
   private checkpointOffset = 0;
   private readonly data: Uint8Array;
   constructor(private readonly size: number) {
     this.data = new Uint8Array(size);
   }
+  getCurrentOffset(): number {
+    return this.offset;
+  }
   checkpoint() {
     this.checkpointOffset = this.offset;
   }
   isEmpty(): boolean {
     return this.offset === 0;
+  }
+  skip(n: number): boolean {
+    this.offset += n;
+    return this.offset <= this.size;
+  }
+  set(bytes: Uint8Array, offset: number) {
+    this.data.set(bytes, offset);
   }
   boolean(value: boolean): boolean {
     this.data[this.offset++] = +value;

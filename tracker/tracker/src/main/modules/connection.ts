@@ -1,5 +1,5 @@
 import App from '../app/index.js';
-import { ConnectionInformation } from '../../common/messages.js';
+import { ConnectionInformation } from '../app/messages.js';
 
 export default function (app: App): void {
   const connection:
@@ -18,10 +18,7 @@ export default function (app: App): void {
 
   const sendConnectionInformation = (): void =>
     app.send(
-      new ConnectionInformation(
-        Math.round(connection.downlink * 1000),
-        connection.type || 'unknown',
-      ),
+      ConnectionInformation(Math.round(connection.downlink * 1000), connection.type || 'unknown'),
     );
   sendConnectionInformation();
   connection.addEventListener('change', sendConnectionInformation);

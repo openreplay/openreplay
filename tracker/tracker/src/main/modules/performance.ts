@@ -1,6 +1,6 @@
 import type App from '../app/index.js';
 import { IN_BROWSER } from '../utils.js';
-import { PerformanceTrack } from '../../common/messages.js';
+import { PerformanceTrack } from '../app/messages.js';
 
 type Perf = {
   memory: {
@@ -60,7 +60,7 @@ export default function (app: App, opts: Partial<Options>): void {
       return;
     }
     app.send(
-      new PerformanceTrack(
+      PerformanceTrack(
         frames,
         ticks,
         perf.memory.totalJSHeapSize || 0,

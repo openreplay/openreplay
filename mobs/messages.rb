@@ -1,6 +1,6 @@
 # Special one for Batch Meta. Message id could define the version 
-# Depricated since tracker 3.6.0
-message 80, 'BatchMeta', :replayer => false do 
+# Depricated since tracker 3.6.0 in favor of BatchMetadata
+message 80, 'BatchMeta', :js => false, :replayer => false do 
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
@@ -98,7 +98,6 @@ message 14, 'SetNodeData' do
   uint 'ID'
   string 'Data'
 end
-# Depricated starting from 5.5.11 in favor of SetStyleData
 message 15, 'SetCSSData', :js => false do
   uint 'ID'
   string 'Data'
@@ -399,10 +398,6 @@ end
 message 64, 'CustomIssue', :replayer => false do
   string 'Name'
   string 'Payload'
-end
-# Since 5.6.6; only for websocket (might be probably replaced with ws.close())
-# Depricated
-message 65, 'PageClose', :replayer => false do
 end
 message 66, 'AssetCache', :replayer => false, :js => false do
   string 'URL'
