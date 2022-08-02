@@ -896,6 +896,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
     return {'data': data}
 
 
+@app.get('/{projectId}/unprocessed/{sessionId}', tags=["assist"])
 @app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
 def get_live_session_replay_file(projectId: int, sessionId: str,
                                  context: schemas.CurrentContext = Depends(OR_context)):
