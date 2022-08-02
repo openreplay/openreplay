@@ -61,13 +61,12 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>): any => {
   }
 
   if (Array.isArray(data)) {
+    // Message[]
     if (!writer) {
       throw new Error('WebWorker: writer not initialised. Service Should be Started.');
     }
     const w = writer;
-    // Message[]
     data.forEach((message) => {
-      Object.assign(message, data);
       if (message[0] === MType.SetPageVisibility) {
         if (message[1]) {
           // .hidden
