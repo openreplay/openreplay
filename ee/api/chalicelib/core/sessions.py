@@ -1217,10 +1217,10 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
     defs = {
         schemas.EventType.click: "CLICK",
         schemas.EventType.input: "INPUT",
-        schemas.EventType.location: "PAGE",
-        schemas.PerformanceEventType.location_dom_complete: "PAGE",
-        schemas.PerformanceEventType.location_largest_contentful_paint_time: "PAGE",
-        schemas.PerformanceEventType.location_ttfb: "PAGE",
+        schemas.EventType.location: "LOCATION",
+        schemas.PerformanceEventType.location_dom_complete: "LOCATION",
+        schemas.PerformanceEventType.location_largest_contentful_paint_time: "LOCATION",
+        schemas.PerformanceEventType.location_ttfb: "LOCATION",
         schemas.EventType.custom: "CUSTOM",
         schemas.EventType.request: "REQUEST",
         schemas.EventType.request_details: "REQUEST",
@@ -1385,7 +1385,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 referrer_constraint = f"""(SELECT DISTINCT session_id
                                                   FROM {MAIN_EVENTS_TABLE} AS r
                                                   WHERE {" AND ".join([f"r.{b}" for b in __events_where_basic])}
-                                                    AND event_type='PAGE'
+                                                    AND event_type='{__get_event_type(schemas.EventType.location)}'
                                                     AND {referrer_constraint})"""
                 # events_conditions_where.append(f"""main.session_id IN {referrer_constraint}""")
                 # extra_constraints.append(f"""s.session_id IN {referrer_constraint}""")

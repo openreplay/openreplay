@@ -113,8 +113,7 @@ def __generic_autocomplete(typename):
     def f(project_id, text):
         with pg_client.PostgresClient() as cur:
             query = cur.mogrify(__generic_query(typename,
-                                                value_length=len(text) \
-                                                    if SUPPORTED_TYPES[typename].change_by_length else None),
+                                                value_length=len(text)),
                                 {"project_id": project_id, "value": helper.string_to_sql_like(text),
                                  "svalue": helper.string_to_sql_like("^" + text)})
 
@@ -128,74 +127,57 @@ def __generic_autocomplete(typename):
 SUPPORTED_TYPES = {
     schemas.FilterType.user_os: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_os),
-        query=__generic_query(typename=schemas.FilterType.user_os),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_os)),
     schemas.FilterType.user_browser: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_browser),
-        query=__generic_query(typename=schemas.FilterType.user_browser),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_browser)),
     schemas.FilterType.user_device: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_device),
-        query=__generic_query(typename=schemas.FilterType.user_device),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_device)),
     schemas.FilterType.user_country: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_country),
-        query=__generic_query(typename=schemas.FilterType.user_country),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_country)),
     schemas.FilterType.user_id: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_id),
-        query=__generic_query(typename=schemas.FilterType.user_id),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_id)),
     schemas.FilterType.user_anonymous_id: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_anonymous_id),
-        query=__generic_query(typename=schemas.FilterType.user_anonymous_id),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_anonymous_id)),
     schemas.FilterType.rev_id: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.rev_id),
-        query=__generic_query(typename=schemas.FilterType.rev_id),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.rev_id)),
     schemas.FilterType.referrer: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.referrer),
-        query=__generic_query(typename=schemas.FilterType.referrer),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.referrer)),
     schemas.FilterType.utm_campaign: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.utm_campaign),
-        query=__generic_query(typename=schemas.FilterType.utm_campaign),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.utm_campaign)),
     schemas.FilterType.utm_medium: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.utm_medium),
-        query=__generic_query(typename=schemas.FilterType.utm_medium),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.utm_medium)),
     schemas.FilterType.utm_source: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.utm_source),
-        query=__generic_query(typename=schemas.FilterType.utm_source),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.utm_source)),
     # IOS
     schemas.FilterType.user_os_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_os_ios),
-        query=__generic_query(typename=schemas.FilterType.user_os_ios),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_os_ios)),
     schemas.FilterType.user_device_ios: SupportedFilter(
         get=__generic_autocomplete(
             typename=schemas.FilterType.user_device_ios),
-        query=__generic_query(typename=schemas.FilterType.user_device_ios),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_device_ios)),
     schemas.FilterType.user_country_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_country_ios),
-        query=__generic_query(typename=schemas.FilterType.user_country_ios),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_country_ios)),
     schemas.FilterType.user_id_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_id_ios),
-        query=__generic_query(typename=schemas.FilterType.user_id_ios),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_id_ios)),
     schemas.FilterType.user_anonymous_id_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_anonymous_id_ios),
-        query=__generic_query(typename=schemas.FilterType.user_anonymous_id_ios),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.user_anonymous_id_ios)),
     schemas.FilterType.rev_id_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.rev_id_ios),
-        query=__generic_query(typename=schemas.FilterType.rev_id_ios),
-        change_by_length=True),
+        query=__generic_query(typename=schemas.FilterType.rev_id_ios)),
 
 }
 
