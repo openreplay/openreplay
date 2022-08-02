@@ -175,3 +175,4 @@ SUBNETS.json
 
 ./chalicelib/.configs
 README/*
+.local

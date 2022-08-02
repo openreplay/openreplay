@@ -2,6 +2,7 @@ from typing import Union, Optional
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
 from starlette import status
 
 import schemas
@@ -183,8 +184,8 @@ def session_top_filter_values(projectId: int, context: schemas.CurrentContext = 
 @app.get('/{projectId}/integrations', tags=["integrations"])
 def get_integrations_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = integrations_global.get_global_integrations_status(tenant_id=context.tenant_id,
-                                                               user_id=context.user_id,
-                                                               project_id=projectId)
+                                                              user_id=context.user_id,
+                                                              project_id=projectId)
     return {"data": data}
 
 
@@ -893,6 +894,16 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
             background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId,
                                       user_id=context.user_id, session_id=sessionId)
     return {'data': data}
+
+
+@app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
+def get_live_session_replay_file(projectId: int, sessionId: str,
+                                 context: schemas.CurrentContext = Depends(OR_context)):
+    path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
+    if path is None:
+        return {"errors": ["Replay file not found"]}
+
+    return FileResponse(path=path, media_type="application/octet-stream")
 
 
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
