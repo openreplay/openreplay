@@ -18,24 +18,33 @@ interface RequestResponseData {
   response: ResponseData
 }
 
+type WindowFetch = typeof fetch
 
 export interface Options {
+  fetch: WindowFetch,
   sessionTokenHeader?: string
   failuresOnly: boolean
   overrideGlobal: boolean
   ignoreHeaders: Array<string> | boolean
   sanitiser?: (RequestResponseData) => RequestResponseData | null
 
+  // Depricated
   requestSanitizer?: any
   responseSanitizer?: any
 }
 
-export default function(opts: Partial<Options> = {}) {
+export default function(opts: Partial<Options> = {}): (app: App | null) => WindowFetch | null {
+  if (typeof window === 'undefined') {
+    // not in browser (SSR)
+    return () => opts.fetch || null 
+  } 
+
   const options: Options = Object.assign(
     {
       overrideGlobal: false,
       failuresOnly: false,
       ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
+      fetch: window.fetch,
     },
     opts,
   );
@@ -43,10 +52,9 @@ export default function(opts: Partial<Options> = {}) {
     console.warn("OpenReplay fetch plugin: `requestSanitizer` and `responseSanitizer` options are depricated. Please, use `sanitiser` instead (check out documentation at https://docs.openreplay.com/plugins/fetch).")
   }
 
-  const origFetch = window.fetch
   return (app: App | null) => {
     if (app === null) {
-      return origFetch
+      return options.fetch
     }
 
     const ihOpt = options.ignoreHeaders
@@ -56,7 +64,7 @@ export default function(opts: Partial<Options> = {}) {
 
     const fetch = async (input: RequestInfo, init: RequestInit = {}) => {
       if (typeof input !== 'string') {
-        return origFetch(input, init);
+        return options.fetch(input, init);
       }
       if (options.sessionTokenHeader) {
         const sessionToken = app.getSessionToken();
@@ -74,7 +82,7 @@ export default function(opts: Partial<Options> = {}) {
         }
       }
       const startTime = performance.now();
-      const response = await origFetch(input, init);
+      const response = await options.fetch(input, init);
       const duration = performance.now() - startTime;
       if (options.failuresOnly && response.status < 400) {
         return response
