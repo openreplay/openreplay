@@ -1,3 +1,4 @@
+// @ts-ignore
 import { Decoder } from "syncod";
 import logger from 'App/logger';
 
@@ -24,7 +25,7 @@ import ActivityManager from './managers/ActivityManager';
 import AssistManager from './managers/AssistManager';
 
 import MFileReader from './messages/MFileReader';
-import loadFiles from './network/loadFiles';
+import { loadFiles, checkUnprocessedMobs } from './network/loadFiles';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
@@ -135,55 +136,55 @@ export default class MessageDistributor extends StatedScreen {
 
     const r = new MFileReader(new Uint8Array(), this.sessionStart)
     const msgs: Array<Message> = []
-    loadFiles(this.session.mobsUrl,
-      b => {
-        r.append(b)
-        let next: ReturnType<MFileReader['next']>
-        while (next = r.next()) {
-          const [msg, index] = next
-          this.distributeMessage(msg, index)
-          msgs.push(msg)
-        }
 
-        logger.info("Messages count: ", msgs.length, msgs)
+    const onData = (b: Uint8Array) => {
+      r.append(b)
+      let next: ReturnType<MFileReader['next']>
+      while (next = r.next()) {
+        const [msg, index] = next
+        this.distributeMessage(msg, index)
+        msgs.push(msg)
+      }
 
-        // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
-        const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
-        this.pagesManager.sortPages((m1, m2) => {
-          if (m1.time === m2.time) {
-            if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
-              if (headChildrenIds.includes(m1.id)) {
-                return -1;
-              }
-            } else if (m2.tp === "remove_node" && m1.tp !== "remove_node") {
-              if (headChildrenIds.includes(m2.id)) {
-                return 1;
-              }
-            }  else if (m2.tp === "remove_node" && m1.tp === "remove_node") {
-              const m1FromHead = headChildrenIds.includes(m1.id);
-              const m2FromHead = headChildrenIds.includes(m2.id);
-              if (m1FromHead && !m2FromHead) {
-                return -1;
-              } else if (m2FromHead && !m1FromHead) {
-                return 1;
-              }
+      logger.info("Messages count: ", msgs.length, msgs)
+
+      // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
+      const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
+      this.pagesManager.sortPages((m1, m2) => {
+        if (m1.time === m2.time) {
+          if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
+            if (headChildrenIds.includes(m1.id)) {
+              return -1;
+            }
+          } else if (m2.tp === "remove_node" && m1.tp !== "remove_node") {
+            if (headChildrenIds.includes(m2.id)) {
+              return 1;
+            }
+          }  else if (m2.tp === "remove_node" && m1.tp === "remove_node") {
+            const m1FromHead = headChildrenIds.includes(m1.id);
+            const m2FromHead = headChildrenIds.includes(m2.id);
+            if (m1FromHead && !m2FromHead) {
+              return -1;
+            } else if (m2FromHead && !m1FromHead) {
+              return 1;
             }
           }
-          return 0;
-        })
-
-        const stateToUpdate: {[key:string]: any} = {
-          performanceChartData: this.performanceTrackManager.chartData,
-          performanceAvaliability: this.performanceTrackManager.avaliability,
         }
-        LIST_NAMES.forEach(key => {
-          stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
-        })
-        update(stateToUpdate)
-        this.setMessagesLoading(false)
+        return 0;
+      })
+
+      const stateToUpdate: {[key:string]: any} = {
+        performanceChartData: this.performanceTrackManager.chartData,
+        performanceAvaliability: this.performanceTrackManager.avaliability,
       }
-    )
-    .then(() => {
+      LIST_NAMES.forEach(key => {
+        stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
+      })
+      update(stateToUpdate)
+      this.setMessagesLoading(false)
+    }
+
+    const onSuccessRead = () => {
       this.windowNodeCounter.reset()
       if (this.activirtManager) {
         this.activirtManager.end()
@@ -193,12 +194,20 @@ export default class MessageDistributor extends StatedScreen {
       }
       this.waitingForFiles = false
       this.setMessagesLoading(false)
-    })
-    .catch(e => {
-      logger.error(e)
-      this.waitingForFiles = false
-      this.setMessagesLoading(false)
-      update({ error: true })
+    }
+
+    loadFiles(this.session.mobsUrl,
+      onData
+    )
+    .then(onSuccessRead)
+    .catch(async e => {
+      const isUnprocessed = await checkUnprocessedMobs('test', onData)
+      if (!isUnprocessed) {
+        logger.error(e)
+        this.waitingForFiles = false
+        this.setMessagesLoading(false)
+        update({ error: true })
+      }
     })
   }
 
