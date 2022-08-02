@@ -131,6 +131,7 @@ export default class MessageDistributor extends StatedScreen {
 
   private waitingForFiles: boolean = false
   private loadMessages(): void {
+    console.log('assist wtf')
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
@@ -185,6 +186,7 @@ export default class MessageDistributor extends StatedScreen {
     }
 
     const onSuccessRead = () => {
+      console.log('got to success read')
       this.windowNodeCounter.reset()
       if (this.activirtManager) {
         this.activirtManager.end()
@@ -201,7 +203,9 @@ export default class MessageDistributor extends StatedScreen {
     )
     .then(onSuccessRead)
     .catch(async e => {
-      const isUnprocessed = await checkUnprocessedMobs('test', onData)
+      console.log('im here')
+      // /5/assist/sessions/${this.session.sessionId}/replay
+      const isUnprocessed = await checkUnprocessedMobs(`/5/unprocessed/${this.session.sessionId}`, onData)
       if (!isUnprocessed) {
         logger.error(e)
         this.waitingForFiles = false

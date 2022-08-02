@@ -32,21 +32,20 @@ export const loadFiles = (
     if (e === NO_NTH_FILE) {
       return
     }
+    console.log('wtf')
     throw e
   })
 }
 
-export const checkUnprocessedMobs = async (url = 'test', onData: onDataCb) => {
+export const checkUnprocessedMobs = async (url: string, onData: onDataCb) => {
   try {
     const res = await window.fetch(url)
     if (res.status >= 400) {
       return false
     }
     const byteArray = await processAPIStreamResponse(res, false)
-    if (byteArray) {
-      onData(byteArray)
-      return true
-    }
+    onData(byteArray)
+    return true
   } catch (e) {
     return false
   }
