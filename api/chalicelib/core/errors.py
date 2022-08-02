@@ -450,8 +450,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
         # if favorite_only=True search for sessions associated with favorite_error
-        statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                       error_status=data.status)
+        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+                                            error_status=data.status)
         if len(statuses) == 0:
             return empty_response
         error_ids = [e["errorId"] for e in statuses]

@@ -345,8 +345,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
     }
 
 
-def search2_ch(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-               error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     print("------ search2_ch")
     full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
                                                   favorite_only=data.bookmarked, issue=issue, project_id=project_id,

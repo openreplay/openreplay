@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks, HTTPException
@@ -6,7 +6,7 @@ from starlette import status
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
-    sessions_metas, alerts, funnels, issues, integrations_manager, metadata, \
+    alerts, funnels, issues, integrations_manager, metadata, \
     log_tool_elasticsearch, log_tool_datadog, \
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
@@ -48,6 +48,13 @@ def login(data: schemas.UserLoginSchema = Body(...)):
             "user": r
         }
     }
+
+
+@app.post('/{projectId}/sessions/search2', tags=["sessions"])
+def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
+    return {'data': data}
 
 
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])

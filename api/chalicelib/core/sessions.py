@@ -172,8 +172,8 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._is_undefined]
 
 
-def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-               error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)
