@@ -56,6 +56,7 @@ def __generic_query(typename, value_length=None):
                       project_id = %(project_id)s
                       AND type='{typename}'
                       AND value ILIKE %(svalue)s
+                      ORDER BY value
                     LIMIT 5)
                     UNION DISTINCT
                     (SELECT DISTINCT value, type
@@ -64,6 +65,7 @@ def __generic_query(typename, value_length=None):
                       project_id = %(project_id)s
                       AND type='{typename}'
                       AND value ILIKE %(value)s
+                      ORDER BY value
                     LIMIT 5);"""
     return f"""SELECT DISTINCT value, type
                 FROM public.autocomplete
@@ -71,6 +73,7 @@ def __generic_query(typename, value_length=None):
                   project_id = %(project_id)s
                   AND type='{typename}'
                   AND value ILIKE %(svalue)s
+                  ORDER BY value
                 LIMIT 10;"""
 
 
@@ -82,5 +85,18 @@ def __generic_autocomplete(event: Event):
                       "svalue": helper.string_to_sql_like("^" + value)}
             cur.execute(cur.mogrify(query, params))
             return helper.list_to_camel_case(cur.fetchall())
+
+    return f
+
+
+def __generic_autocomplete_metas(typename):
+    def f(project_id, text):
+        with pg_client.PostgresClient() as cur:
+            query = cur.mogrify(__generic_query(typename, value_length=len(text)),
+                                {"project_id": project_id, "value": helper.string_to_sql_like(text),
+                                 "svalue": helper.string_to_sql_like("^" + text)})
+            cur.execute(query)
+            rows = cur.fetchall()
+        return rows
 
     return f

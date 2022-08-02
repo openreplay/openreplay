@@ -163,21 +163,11 @@ def events_search(projectId: int, q: str,
     return result
 
 
-@app.get('/{projectId}/sessions/filters', tags=["sessions"])
-def session_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {'data': sessions_metas.get_key_values(projectId)}
-
-
-@app.get('/{projectId}/sessions/filters/top', tags=["sessions"])
-def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {'data': sessions_metas.get_top_key_values(projectId)}
-
-
 @app.get('/{projectId}/integrations', tags=["integrations"])
 def get_integrations_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = integrations_global.get_global_integrations_status(tenant_id=context.tenant_id,
-                                                               user_id=context.user_id,
-                                                               project_id=projectId)
+                                                              user_id=context.user_id,
+                                                              project_id=projectId)
     return {"data": data}
 
 

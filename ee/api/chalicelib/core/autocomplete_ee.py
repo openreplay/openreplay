@@ -23,6 +23,7 @@ def __get_autocomplete_table(value, project_id):
                                 WHERE project_id = %(project_id)s
                                     AND type= '{e}' 
                                     AND value ILIKE %(svalue)s
+                                    ORDER BY value
                                 LIMIT 5)""")
         if len(value) > 2:
             sub_queries.append(f"""(SELECT type, value
@@ -30,6 +31,7 @@ def __get_autocomplete_table(value, project_id):
                                     WHERE project_id = %(project_id)s
                                         AND type= '{e}' 
                                         AND value ILIKE %(value)s
+                                        ORDER BY value
                                     LIMIT 5)""")
     with ch_client.ClickHouseClient() as cur:
         query = " UNION DISTINCT ".join(sub_queries) + ";"
@@ -58,6 +60,7 @@ def __generic_query(typename, value_length=None):
                       project_id = %(project_id)s
                       AND type='{typename}'
                       AND value ILIKE %(svalue)s
+                      ORDER BY value
                     LIMIT 5)
                     UNION DISTINCT
                     (SELECT DISTINCT value, type
@@ -66,6 +69,7 @@ def __generic_query(typename, value_length=None):
                       project_id = %(project_id)s
                       AND type='{typename}'
                       AND value ILIKE %(value)s
+                      ORDER BY value
                     LIMIT 5);"""
     return f"""SELECT DISTINCT value, type
                 FROM final.autocomplete
@@ -73,6 +77,7 @@ def __generic_query(typename, value_length=None):
                   project_id = %(project_id)s
                   AND type='{typename}'
                   AND value ILIKE %(svalue)s
+                  ORDER BY value
                 LIMIT 10;"""
 
 
@@ -84,5 +89,17 @@ def __generic_autocomplete(event: Event):
                       "svalue": helper.string_to_sql_like("^" + value)}
             results = cur.execute(query=query, params=params)
             return helper.list_to_camel_case(results)
+
+    return f
+
+
+def __generic_autocomplete_metas(typename):
+    def f(project_id, text):
+        with ch_client.ClickHouseClient() as cur:
+            query = __generic_query(typename, value_length=len(text))
+            params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
+                      "svalue": helper.string_to_sql_like("^" + text)}
+            results = cur.execute(query=query, params=params)
+        return results
 
     return f
