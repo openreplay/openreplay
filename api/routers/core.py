@@ -441,6 +441,26 @@ def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)
     return {"data": integration.get_obfuscated()}
 
 
+@app.get('/integrations/jira', tags=["integrations"])
+def get_integration_status_jira(context: schemas.CurrentContext = Depends(OR_context)):
+    error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
+                                                              user_id=context.user_id,
+                                                              tool=integration_jira_cloud.PROVIDER)
+    if error is not None and integration is None:
+        return error
+    return {"data": integration.get_obfuscated()}
+
+
+@app.get('/integrations/github', tags=["integrations"])
+def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_context)):
+    error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
+                                                              user_id=context.user_id,
+                                                              tool=integration_github.PROVIDER)
+    if error is not None and integration is None:
+        return error
+    return {"data": integration.get_obfuscated()}
+
+
 @app.post('/integrations/jira', tags=["integrations"])
 @app.put('/integrations/jira', tags=["integrations"])
 def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
