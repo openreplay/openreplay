@@ -1,5 +1,5 @@
-import type Message from '../common/messages.js';
-import { Type as MType } from '../common/messages.js';
+import type Message from '../common/messages.gen.js';
+import { Type as MType } from '../common/messages.gen.js';
 import { WorkerMessageData } from '../common/interaction.js';
 
 import QueueSender from './QueueSender.js';

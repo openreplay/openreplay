@@ -1,4 +1,4 @@
-import Message from './messages.js';
+import Message from './messages.gen.js';
 
 export interface Options {
   connAttemptCount?: number;

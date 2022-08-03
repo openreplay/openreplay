@@ -1,6 +1,6 @@
 import type App from '../app/index.js';
 import { IN_BROWSER } from '../utils.js';
-import { PerformanceTrack } from '../app/messages.js';
+import { PerformanceTrack } from '../app/messages.gen.js';
 
 type Perf = {
   memory: {

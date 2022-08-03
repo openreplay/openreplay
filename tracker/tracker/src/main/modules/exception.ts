@@ -1,6 +1,6 @@
 import type App from '../app/index.js';
-import type Message from '../app/messages.js';
-import { JSException } from '../app/messages.js';
+import type Message from '../app/messages.gen.js';
+import { JSException } from '../app/messages.gen.js';
 import ErrorStackParser from 'error-stack-parser';
 
 export interface Options {

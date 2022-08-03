@@ -1,7 +1,7 @@
 // Auto-generated, do not edit
 
-import * as Messages from '../common/messages.js';
-import Message from '../common/messages.js';
+import * as Messages from '../common/messages.gen.js';
+import Message from '../common/messages.gen.js';
 import PrimitiveEncoder from './PrimitiveEncoder.js';
 
 export default class MessageEncoder extends PrimitiveEncoder {

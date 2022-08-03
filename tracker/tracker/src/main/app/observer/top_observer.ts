@@ -4,7 +4,7 @@ import { isElementNode, hasTag } from '../guards.js';
 import IFrameObserver from './iframe_observer.js';
 import ShadowRootObserver from './shadow_root_observer.js';
 
-import { CreateDocument } from '../messages.js';
+import { CreateDocument } from '../messages.gen.js';
 import App from '../index.js';
 import { IN_BROWSER, hasOpenreplayAttribute } from '../../utils.js';
 

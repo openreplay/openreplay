@@ -131,6 +131,7 @@ Dir["templates/*.erb"].each do |tpl|
   path = tpl.split '/'
   t = '../' + path[1].gsub('~', '/')
   t = t[0..-5]
+  # TODO: .gen subextention
   File.write(t, e.result)
   puts tpl + ' --> ' + t
 end

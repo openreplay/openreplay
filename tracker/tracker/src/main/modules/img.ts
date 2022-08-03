@@ -1,6 +1,6 @@
 import type App from '../app/index.js';
 import { timestamp, isURL } from '../utils.js';
-import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from '../app/messages.js';
+import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from '../app/messages.gen.js';
 import { hasTag } from '../app/guards.js';
 
 function resolveURL(url: string, location: Location = document.location) {

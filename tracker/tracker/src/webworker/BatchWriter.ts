@@ -1,6 +1,6 @@
-import type Message from '../common/messages.js';
-import * as Messages from '../common/messages.js';
-import MessageEncoder from './MessageEncoder.js';
+import type Message from '../common/messages.gen.js';
+import * as Messages from '../common/messages.gen.js';
+import MessageEncoder from './MessageEncoder.gen.js';
 import PrimitiveEncoder from './PrimitiveEncoder.js';
 
 const SIZE_BYTES = 2;

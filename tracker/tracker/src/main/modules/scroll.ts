@@ -1,5 +1,5 @@
 import type App from '../app/index.js';
-import { SetViewportScroll, SetNodeScroll } from '../app/messages.js';
+import { SetViewportScroll, SetNodeScroll } from '../app/messages.gen.js';
 import { isElementNode } from '../app/guards.js';
 
 export default function (app: App): void {

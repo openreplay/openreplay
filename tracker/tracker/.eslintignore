@@ -5,4 +5,4 @@ cjs
 build
 .cache
 .eslintrc.cjs
-src/common/messages.ts
+*.gen.ts

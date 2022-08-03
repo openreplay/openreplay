@@ -1,7 +1,7 @@
 import type App from '../app/index.js';
 import { hasTag, isSVGElement } from '../app/guards.js';
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils.js';
-import { MouseMove, MouseClick } from '../app/messages.js';
+import { MouseMove, MouseClick } from '../app/messages.gen.js';
 import { getInputLabel } from './input.js';
 
 function _getSelector(target: Element): string {

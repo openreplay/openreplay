@@ -1,5 +1,5 @@
 import type App from '../app/index.js';
-import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from '../app/messages.js';
+import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from '../app/messages.gen.js';
 import { hasTag } from '../app/guards.js';
 
 export default function (app: App | null) {

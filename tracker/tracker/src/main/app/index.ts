@@ -1,5 +1,5 @@
-import type Message from './messages.js';
-import { Timestamp, Metadata, UserID } from './messages.js';
+import type Message from './messages.gen.js';
+import { Timestamp, Metadata, UserID } from './messages.gen.js';
 import { timestamp, deprecationWarn } from '../utils.js';
 import Nodes from './nodes.js';
 import Observer from './observer/top_observer.js';

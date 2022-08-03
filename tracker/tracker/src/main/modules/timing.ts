@@ -1,7 +1,7 @@
 import type App from '../app/index.js';
 import { hasTag } from '../app/guards.js';
 import { isURL } from '../utils.js';
-import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../app/messages.js';
+import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../app/messages.gen.js';
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 

@@ -8,7 +8,7 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
-} from '../messages.js';
+} from '../messages.gen.js';
 import App from '../index.js';
 import { isRootNode, isTextNode, isElementNode, isSVGElement, hasTag } from '../guards.js';
 
