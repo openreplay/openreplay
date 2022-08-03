@@ -453,10 +453,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        if data.startDate is None:
-            data.startDate = TimeUTC.now(-7)
-        if data.endDate is None:
-            data.endDate = TimeUTC.now()
         step_size = __get_step_size(data.startDate, data.endDate, data.density, factor=1)
         sort = __get_sort_key('datetime')
         if data.sort is not None:

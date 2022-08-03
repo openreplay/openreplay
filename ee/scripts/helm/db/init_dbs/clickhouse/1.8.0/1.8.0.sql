@@ -21,7 +21,7 @@ CREATE TABLE projects_metadata
       ORDER BY (project_id)
       SETTINGS index_granularity = 512;
 
-CREATE TABLE IF NOT EXISTS events_s
+CREATE TABLE IF NOT EXISTS events
 (
     session_id                                     UInt64,
     project_id                                     UInt16,
