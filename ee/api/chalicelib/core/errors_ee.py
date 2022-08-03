@@ -417,8 +417,10 @@ def get_details_chart(project_id, error_id, user_id, **data):
 
 
 def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_name="startDate",
-                            endTime_arg_name="endDate"):
+                            endTime_arg_name="endDate", type_condition=True):
     ch_sub_query = ["project_id =toUInt32(%(project_id)s)"]
+    if type_condition:
+        ch_sub_query.append("event_type='ERROR'")
     if time_constraint:
         ch_sub_query += [f"datetime >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"datetime < toDateTime(%({endTime_arg_name})s/1000)"]
@@ -462,23 +464,29 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
     return ch_sub_query
 
 
-# refactor this function after clickhouse structure changes (missing search by query)
 def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     empty_response = {"data": {
         'total': 0,
         'errors': []
     }}
+    MAIN_EVENTS_TABLE = "final.events"
+    MAIN_SESSIONS_TABLE = "final.sessions"
+    if data.startDate >= TimeUTC.now(delta_days=-7):
+        MAIN_EVENTS_TABLE = "final.events_l7d_mv"
+        MAIN_SESSIONS_TABLE = "final.sessions_l7d_mv"
+
     platform = None
     for f in data.filters:
         if f.type == schemas.FilterType.platform and len(f.value) > 0:
             platform = f.value[0]
-    ch_sub_query = __get_basic_constraints(platform)
+    ch_sessions_sub_query = __get_basic_constraints(platform, type_condition=False)
+    ch_sub_query = __get_basic_constraints(platform, type_condition=True)
     ch_sub_query.append("source ='js_exception'")
     # To ignore Script error
     ch_sub_query.append("message!='Script error.'")
     statuses = []
     error_ids = None
-    # Clickhouse keeps data for the past month only, so no need to search beyond that
+
     if data.startDate is None:
         data.startDate = TimeUTC.now(-7)
     if data.endDate is None:
@@ -526,51 +534,62 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
             params["error_ids"] = tuple(error_ids)
             ch_sub_query.append("error_id IN %(error_ids)s")
 
-        main_ch_query = f"""\
-                SELECT COUNT(DISTINCT error_id)  AS count
-                  FROM errors
-                  WHERE {" AND ".join(ch_sub_query)};"""
-        print("------------")
-        print(ch.format(main_ch_query, params))
-        print("------------")
-        total = ch.execute(query=main_ch_query, params=params)[0]["count"]
         if flows:
+            main_ch_query = f"""\
+                    SELECT COUNT(DISTINCT error_id)  AS count
+                      FROM {MAIN_EVENTS_TABLE}
+                      WHERE {" AND ".join(ch_sub_query)};"""
+            # print("------------")
+            # print(ch.format(main_ch_query, params))
+            # print("------------")
+            total = ch.execute(query=main_ch_query, params=params)[0]["count"]
+
             return {"data": {"count": total}}
-        if total == 0:
-            rows = []
+
         else:
             main_ch_query = f"""\
-                    SELECT details.error_id AS error_id, name, message, users, sessions, last_occurrence, first_occurrence, chart
+                    SELECT details.error_id AS error_id, 
+                            name, message, users, total,
+                            sessions, last_occurrence, first_occurrence, chart
                     FROM (SELECT error_id,
                                  name,
                                  message,
-                                 COUNT(DISTINCT user_uuid)  AS users,
+                                 COUNT(DISTINCT user_id)  AS users,
                                  COUNT(DISTINCT session_id) AS sessions,
                                  MAX(datetime)              AS max_datetime,
-                                 MIN(datetime)              AS min_datetime
-                          FROM errors
+                                 MIN(datetime)              AS min_datetime,
+                                 COUNT(DISTINCT error_id) OVER() AS total
+                          FROM {MAIN_EVENTS_TABLE} 
+                                INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
+                                            FROM {MAIN_SESSIONS_TABLE}
+                                            WHERE {" AND ".join(ch_sessions_sub_query)}) AS sessions USING (session_id)
                           WHERE {" AND ".join(ch_sub_query)}
                           GROUP BY error_id, name, message
                           ORDER BY {sort} {order}
                           LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
-                            INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
-                                         FROM errors
+                            INNER JOIN (SELECT error_id AS error_id, 
+                                                toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, 
+                                                toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
+                                         FROM {MAIN_EVENTS_TABLE}
+                                         WHERE project_id=%(project_id)s
+                                            AND event_type='ERROR'
                                          GROUP BY error_id) AS time_details
                     ON details.error_id=time_details.error_id
                         INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
                         FROM (SELECT error_id, toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                                 COUNT(DISTINCT session_id) AS count
-                                FROM errors
+                                FROM {MAIN_EVENTS_TABLE}
                                 WHERE {" AND ".join(ch_sub_query)}
                                 GROUP BY error_id, timestamp
                                 ORDER BY timestamp) AS sub_table
                                 GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
-            print("------------")
-            print(ch.format(main_ch_query, params))
-            print("------------")
+            # print("------------")
+            # print(ch.format(main_ch_query, params))
+            # print("------------")
 
             rows = ch.execute(query=main_ch_query, params=params)
+            total = rows[0]["total"] if len(rows) > 0 else 0
             if len(statuses) == 0:
                 query = cur.mogrify(
                     """SELECT error_id, status, parent_error_id, payload,
@@ -616,10 +635,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                 and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
     offset -= len(rows)
     return {
-        "data": {
-            'total': total - offset,
-            'errors': helper.list_to_camel_case(rows)
-        }
+        'total': total - offset,
+        'errors': helper.list_to_camel_case(rows)
     }
 
 

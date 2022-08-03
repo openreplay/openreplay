@@ -502,7 +502,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                                     FROM (SELECT error_id,
                                              name,
                                              message,
-                                             COUNT(DISTINCT user_uuid)  AS users,
+                                             COUNT(DISTINCT COALESCE(user_id,user_uuid))  AS users,
                                              COUNT(DISTINCT session_id) AS sessions,
                                              MAX(timestamp)             AS max_datetime,
                                              MIN(timestamp)             AS min_datetime
