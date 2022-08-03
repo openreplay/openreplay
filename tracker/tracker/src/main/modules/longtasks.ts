@@ -1,22 +1,22 @@
-import type App from '../app/index.js';
-import { LongTask } from '../app/messages.gen.js';
+import type App from '../app/index.js'
+import { LongTask } from '../app/messages.gen.js'
 
 // https://w3c.github.io/performance-timeline/#the-performanceentry-interface
 interface TaskAttributionTiming extends PerformanceEntry {
-  readonly containerType: string;
-  readonly containerSrc: string;
-  readonly containerId: string;
-  readonly containerName: string;
+  readonly containerType: string
+  readonly containerSrc: string
+  readonly containerId: string
+  readonly containerName: string
 }
 
 // https://www.w3.org/TR/longtasks/#performancelongtasktiming
 interface PerformanceLongTaskTiming extends PerformanceEntry {
-  readonly attribution: ReadonlyArray<TaskAttributionTiming>;
+  readonly attribution: ReadonlyArray<TaskAttributionTiming>
 }
 
 export default function (app: App): void {
   if (!('PerformanceObserver' in window) || !('PerformanceLongTaskTiming' in window)) {
-    return;
+    return
   }
 
   const contexts: string[] = [
@@ -29,19 +29,19 @@ export default function (app: App): void {
     'cross-origin-descendant',
     'cross-origin-unreachable',
     'multiple-contexts',
-  ];
-  const containerTypes: string[] = ['window', 'iframe', 'embed', 'object'];
+  ]
+  const containerTypes: string[] = ['window', 'iframe', 'embed', 'object']
   function longTask(entry: PerformanceLongTaskTiming): void {
     let type = '',
       src = '',
       id = '',
-      name = '';
-    const container = entry.attribution[0];
+      name = ''
+    const container = entry.attribution[0]
     if (container != null) {
-      type = container.containerType;
-      name = container.containerName;
-      id = container.containerId;
-      src = container.containerSrc;
+      type = container.containerType
+      name = container.containerName
+      id = container.containerId
+      src = container.containerSrc
     }
 
     app.send(
@@ -54,11 +54,11 @@ export default function (app: App): void {
         id,
         src,
       ),
-    );
+    )
   }
 
   const observer: PerformanceObserver = new PerformanceObserver((list) =>
     list.getEntries().forEach(longTask),
-  );
-  observer.observe({ entryTypes: ['longtask'] });
+  )
+  observer.observe({ entryTypes: ['longtask'] })
 }
