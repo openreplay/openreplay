@@ -53,6 +53,7 @@ export enum Type {
   CreateIFrameDocument = 70,
 }
 
+
 export type BatchMetadata = [
   type: Type.BatchMetadata,
   version: number,
@@ -60,24 +61,42 @@ export type BatchMetadata = [
   firstIndex: number,
   timestamp: number,
   location: string,
-];
+]
 
-export type PartitionedMessage = [type: Type.PartitionedMessage, partNo: number, partTotal: number];
+export type PartitionedMessage = [
+  type: Type.PartitionedMessage,
+  partNo: number,
+  partTotal: number,
+]
 
-export type Timestamp = [type: Type.Timestamp, timestamp: number];
+export type Timestamp = [
+  type: Type.Timestamp,
+  timestamp: number,
+]
 
 export type SetPageLocation = [
   type: Type.SetPageLocation,
   url: string,
   referrer: string,
   navigationStart: number,
-];
+]
 
-export type SetViewportSize = [type: Type.SetViewportSize, width: number, height: number];
+export type SetViewportSize = [
+  type: Type.SetViewportSize,
+  width: number,
+  height: number,
+]
 
-export type SetViewportScroll = [type: Type.SetViewportScroll, x: number, y: number];
+export type SetViewportScroll = [
+  type: Type.SetViewportScroll,
+  x: number,
+  y: number,
+]
 
-export type CreateDocument = [type: Type.CreateDocument];
+export type CreateDocument = [
+  type: Type.CreateDocument,
+  
+]
 
 export type CreateElementNode = [
   type: Type.CreateElementNode,
@@ -86,41 +105,83 @@ export type CreateElementNode = [
   index: number,
   tag: string,
   svg: boolean,
-];
+]
 
 export type CreateTextNode = [
   type: Type.CreateTextNode,
   id: number,
   parentID: number,
   index: number,
-];
+]
 
-export type MoveNode = [type: Type.MoveNode, id: number, parentID: number, index: number];
+export type MoveNode = [
+  type: Type.MoveNode,
+  id: number,
+  parentID: number,
+  index: number,
+]
 
-export type RemoveNode = [type: Type.RemoveNode, id: number];
+export type RemoveNode = [
+  type: Type.RemoveNode,
+  id: number,
+]
 
 export type SetNodeAttribute = [
   type: Type.SetNodeAttribute,
   id: number,
   name: string,
   value: string,
-];
+]
 
-export type RemoveNodeAttribute = [type: Type.RemoveNodeAttribute, id: number, name: string];
+export type RemoveNodeAttribute = [
+  type: Type.RemoveNodeAttribute,
+  id: number,
+  name: string,
+]
 
-export type SetNodeData = [type: Type.SetNodeData, id: number, data: string];
+export type SetNodeData = [
+  type: Type.SetNodeData,
+  id: number,
+  data: string,
+]
 
-export type SetNodeScroll = [type: Type.SetNodeScroll, id: number, x: number, y: number];
+export type SetNodeScroll = [
+  type: Type.SetNodeScroll,
+  id: number,
+  x: number,
+  y: number,
+]
 
-export type SetInputTarget = [type: Type.SetInputTarget, id: number, label: string];
+export type SetInputTarget = [
+  type: Type.SetInputTarget,
+  id: number,
+  label: string,
+]
 
-export type SetInputValue = [type: Type.SetInputValue, id: number, value: string, mask: number];
+export type SetInputValue = [
+  type: Type.SetInputValue,
+  id: number,
+  value: string,
+  mask: number,
+]
 
-export type SetInputChecked = [type: Type.SetInputChecked, id: number, checked: boolean];
+export type SetInputChecked = [
+  type: Type.SetInputChecked,
+  id: number,
+  checked: boolean,
+]
 
-export type MouseMove = [type: Type.MouseMove, x: number, y: number];
+export type MouseMove = [
+  type: Type.MouseMove,
+  x: number,
+  y: number,
+]
 
-export type ConsoleLog = [type: Type.ConsoleLog, level: string, value: string];
+export type ConsoleLog = [
+  type: Type.ConsoleLog,
+  level: string,
+  value: string,
+]
 
 export type PageLoadTiming = [
   type: Type.PageLoadTiming,
@@ -133,28 +194,56 @@ export type PageLoadTiming = [
   loadEventEnd: number,
   firstPaint: number,
   firstContentfulPaint: number,
-];
+]
 
 export type PageRenderTiming = [
   type: Type.PageRenderTiming,
   speedIndex: number,
   visuallyComplete: number,
   timeToInteractive: number,
-];
+]
 
-export type JSException = [type: Type.JSException, name: string, message: string, payload: string];
+export type JSException = [
+  type: Type.JSException,
+  name: string,
+  message: string,
+  payload: string,
+]
 
-export type RawCustomEvent = [type: Type.RawCustomEvent, name: string, payload: string];
+export type RawCustomEvent = [
+  type: Type.RawCustomEvent,
+  name: string,
+  payload: string,
+]
 
-export type UserID = [type: Type.UserID, id: string];
+export type UserID = [
+  type: Type.UserID,
+  id: string,
+]
 
-export type UserAnonymousID = [type: Type.UserAnonymousID, id: string];
+export type UserAnonymousID = [
+  type: Type.UserAnonymousID,
+  id: string,
+]
 
-export type Metadata = [type: Type.Metadata, key: string, value: string];
+export type Metadata = [
+  type: Type.Metadata,
+  key: string,
+  value: string,
+]
 
-export type CSSInsertRule = [type: Type.CSSInsertRule, id: number, rule: string, index: number];
+export type CSSInsertRule = [
+  type: Type.CSSInsertRule,
+  id: number,
+  rule: string,
+  index: number,
+]
 
-export type CSSDeleteRule = [type: Type.CSSDeleteRule, id: number, index: number];
+export type CSSDeleteRule = [
+  type: Type.CSSDeleteRule,
+  id: number,
+  index: number,
+]
 
 export type Fetch = [
   type: Type.Fetch,
@@ -165,7 +254,7 @@ export type Fetch = [
   status: number,
   timestamp: number,
   duration: number,
-];
+]
 
 export type Profiler = [
   type: Type.Profiler,
@@ -173,19 +262,44 @@ export type Profiler = [
   duration: number,
   args: string,
   result: string,
-];
+]
 
-export type OTable = [type: Type.OTable, key: string, value: string];
+export type OTable = [
+  type: Type.OTable,
+  key: string,
+  value: string,
+]
 
-export type StateAction = [type: Type.StateAction, type: string];
+export type StateAction = [
+  type: Type.StateAction,
+  type: string,
+]
 
-export type Redux = [type: Type.Redux, action: string, state: string, duration: number];
+export type Redux = [
+  type: Type.Redux,
+  action: string,
+  state: string,
+  duration: number,
+]
 
-export type Vuex = [type: Type.Vuex, mutation: string, state: string];
+export type Vuex = [
+  type: Type.Vuex,
+  mutation: string,
+  state: string,
+]
 
-export type MobX = [type: Type.MobX, type: string, payload: string];
+export type MobX = [
+  type: Type.MobX,
+  type: string,
+  payload: string,
+]
 
-export type NgRx = [type: Type.NgRx, action: string, state: string, duration: number];
+export type NgRx = [
+  type: Type.NgRx,
+  action: string,
+  state: string,
+  duration: number,
+]
 
 export type GraphQL = [
   type: Type.GraphQL,
@@ -193,7 +307,7 @@ export type GraphQL = [
   operationName: string,
   variables: string,
   response: string,
-];
+]
 
 export type PerformanceTrack = [
   type: Type.PerformanceTrack,
@@ -201,7 +315,7 @@ export type PerformanceTrack = [
   ticks: number,
   totalJSHeapSize: number,
   usedJSHeapSize: number,
-];
+]
 
 export type ResourceTiming = [
   type: Type.ResourceTiming,
@@ -213,15 +327,18 @@ export type ResourceTiming = [
   decodedBodySize: number,
   url: string,
   initiator: string,
-];
+]
 
 export type ConnectionInformation = [
   type: Type.ConnectionInformation,
   downlink: number,
   type: string,
-];
+]
 
-export type SetPageVisibility = [type: Type.SetPageVisibility, hidden: boolean];
+export type SetPageVisibility = [
+  type: Type.SetPageVisibility,
+  hidden: boolean,
+]
 
 export type LongTask = [
   type: Type.LongTask,
@@ -232,7 +349,7 @@ export type LongTask = [
   containerSrc: string,
   containerId: string,
   containerName: string,
-];
+]
 
 export type SetNodeAttributeURLBased = [
   type: Type.SetNodeAttributeURLBased,
@@ -240,18 +357,26 @@ export type SetNodeAttributeURLBased = [
   name: string,
   value: string,
   baseURL: string,
-];
+]
 
 export type SetCSSDataURLBased = [
   type: Type.SetCSSDataURLBased,
   id: number,
   data: string,
   baseURL: string,
-];
+]
 
-export type TechnicalInfo = [type: Type.TechnicalInfo, type: string, value: string];
+export type TechnicalInfo = [
+  type: Type.TechnicalInfo,
+  type: string,
+  value: string,
+]
 
-export type CustomIssue = [type: Type.CustomIssue, name: string, payload: string];
+export type CustomIssue = [
+  type: Type.CustomIssue,
+  name: string,
+  payload: string,
+]
 
 export type CSSInsertRuleURLBased = [
   type: Type.CSSInsertRuleURLBased,
@@ -259,7 +384,7 @@ export type CSSInsertRuleURLBased = [
   rule: string,
   index: number,
   baseURL: string,
-];
+]
 
 export type MouseClick = [
   type: Type.MouseClick,
@@ -267,59 +392,14 @@ export type MouseClick = [
   hesitationTime: number,
   label: string,
   selector: string,
-];
+]
 
-export type CreateIFrameDocument = [type: Type.CreateIFrameDocument, frameID: number, id: number];
+export type CreateIFrameDocument = [
+  type: Type.CreateIFrameDocument,
+  frameID: number,
+  id: number,
+]
 
-type Message =
-  | BatchMetadata
-  | PartitionedMessage
-  | Timestamp
-  | SetPageLocation
-  | SetViewportSize
-  | SetViewportScroll
-  | CreateDocument
-  | CreateElementNode
-  | CreateTextNode
-  | MoveNode
-  | RemoveNode
-  | SetNodeAttribute
-  | RemoveNodeAttribute
-  | SetNodeData
-  | SetNodeScroll
-  | SetInputTarget
-  | SetInputValue
-  | SetInputChecked
-  | MouseMove
-  | ConsoleLog
-  | PageLoadTiming
-  | PageRenderTiming
-  | JSException
-  | RawCustomEvent
-  | UserID
-  | UserAnonymousID
-  | Metadata
-  | CSSInsertRule
-  | CSSDeleteRule
-  | Fetch
-  | Profiler
-  | OTable
-  | StateAction
-  | Redux
-  | Vuex
-  | MobX
-  | NgRx
-  | GraphQL
-  | PerformanceTrack
-  | ResourceTiming
-  | ConnectionInformation
-  | SetPageVisibility
-  | LongTask
-  | SetNodeAttributeURLBased
-  | SetCSSDataURLBased
-  | TechnicalInfo
-  | CustomIssue
-  | CSSInsertRuleURLBased
-  | MouseClick
-  | CreateIFrameDocument;
-export default Message;
+
+type Message =  BatchMetadata | PartitionedMessage | Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | PageLoadTiming | PageRenderTiming | JSException | RawCustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument
+export default Message
