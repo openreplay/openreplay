@@ -443,27 +443,25 @@ def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)
 
 @app.post('/integrations/jira', tags=["integrations"])
 @app.put('/integrations/jira', tags=["integrations"])
-def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
+def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
         return error
-    data.provider = integration_jira_cloud.PROVIDER
     return {"data": integration.add_edit(data=data.dict())}
 
 
 @app.post('/integrations/github', tags=["integrations"])
 @app.put('/integrations/github', tags=["integrations"])
-def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
+def add_edit_github(data: schemas.GithubSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
         return error
-    data.provider = integration_github.PROVIDER
     return {"data": integration.add_edit(data=data.dict())}
 
 
