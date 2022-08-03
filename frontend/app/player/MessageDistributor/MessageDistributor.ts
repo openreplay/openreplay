@@ -203,9 +203,7 @@ export default class MessageDistributor extends StatedScreen {
     )
     .then(onSuccessRead)
     .catch(async e => {
-      console.log('im here')
-      // /5/assist/sessions/${this.session.sessionId}/replay
-      const isUnprocessed = await checkUnprocessedMobs(`/5/unprocessed/${this.session.sessionId}`, onData)
+      const isUnprocessed = await checkUnprocessedMobs(`/unprocessed/${this.session.sessionId}`, onData)
       if (!isUnprocessed) {
         logger.error(e)
         this.waitingForFiles = false

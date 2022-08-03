@@ -11,7 +11,6 @@ const Time = ({ time, isCustom, format = 'm:ss', }) => (
 
 Time.displayName = "Time";
 
-
 const ReduxTime = connectPlayer((state, { name, format }) => ({
   time: state[ name ],
   format,

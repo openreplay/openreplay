@@ -1,3 +1,5 @@
+import APIClient from 'App/api_client';
+
 const NO_NTH_FILE = "nnf"
 
 type onDataCb = (data: Uint8Array) => void
@@ -39,7 +41,8 @@ export const loadFiles = (
 
 export const checkUnprocessedMobs = async (url: string, onData: onDataCb) => {
   try {
-    const res = await window.fetch(url)
+    const api = new APIClient()
+    const res = await api.fetch(url)
     if (res.status >= 400) {
       return false
     }
