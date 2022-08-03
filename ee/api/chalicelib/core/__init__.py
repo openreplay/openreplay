@@ -1,6 +1,7 @@
 from decouple import config
 
-if config("LEGACY_SEARCH", cast=bool, default=True):
+if config("LEGACY_SEARCH", cast=bool, default=False):
+    print(">>> Using legacy search")
     from . import autocomplete as autocomplete
     from . import sessions as sessions
 else:

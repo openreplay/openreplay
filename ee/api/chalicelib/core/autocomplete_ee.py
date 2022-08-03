@@ -3,6 +3,8 @@ from chalicelib.utils import ch_client
 from chalicelib.utils import helper
 from chalicelib.utils.event_filter_definition import Event
 
+TABLE = "final.autocomplete"
+
 
 def __get_autocomplete_table(value, project_id):
     autocomplete_events = [schemas.FilterType.rev_id,
@@ -19,7 +21,7 @@ def __get_autocomplete_table(value, project_id):
     sub_queries = []
     for e in autocomplete_events:
         sub_queries.append(f"""(SELECT type, value
-                                FROM final.autocomplete
+                                FROM {TABLE}
                                 WHERE project_id = %(project_id)s
                                     AND type= '{e}' 
                                     AND value ILIKE %(svalue)s
@@ -27,7 +29,7 @@ def __get_autocomplete_table(value, project_id):
                                 LIMIT 5)""")
         if len(value) > 2:
             sub_queries.append(f"""(SELECT type, value
-                                    FROM final.autocomplete
+                                    FROM {TABLE}
                                     WHERE project_id = %(project_id)s
                                         AND type= '{e}' 
                                         AND value ILIKE %(value)s
@@ -55,7 +57,7 @@ def __get_autocomplete_table(value, project_id):
 def __generic_query(typename, value_length=None):
     if value_length is None or value_length > 2:
         return f"""(SELECT DISTINCT value, type
-                    FROM final.autocomplete
+                    FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
                       AND type='{typename}'
@@ -64,7 +66,7 @@ def __generic_query(typename, value_length=None):
                     LIMIT 5)
                     UNION DISTINCT
                     (SELECT DISTINCT value, type
-                    FROM final.autocomplete
+                    FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
                       AND type='{typename}'
@@ -72,7 +74,7 @@ def __generic_query(typename, value_length=None):
                       ORDER BY value
                     LIMIT 5);"""
     return f"""SELECT DISTINCT value, type
-                FROM final.autocomplete
+                FROM {TABLE}
                 WHERE
                   project_id = %(project_id)s
                   AND type='{typename}'
