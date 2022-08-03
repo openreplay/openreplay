@@ -251,10 +251,7 @@ def get_details(project_id, error_id, user_id, **data):
                         parent_error_id,session_id, user_anonymous_id,
                         user_id, user_uuid, user_browser, user_browser_version,
                         user_os, user_os_version, user_device, payload,
-                                    COALESCE((SELECT TRUE
-                                     FROM public.user_favorite_errors AS fe
-                                     WHERE pe.error_id = fe.error_id
-                                       AND fe.user_id = %(user_id)s), FALSE) AS favorite,
+                                    FALSE AS favorite,
                                        True AS viewed
                                 FROM public.errors AS pe
                                          INNER JOIN events.errors AS ee USING (error_id)
@@ -488,9 +485,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)
             pg_sub_query.append("error_id IN %(error_ids)s")
-        if data.bookmarked:
-            pg_sub_query.append("ufe.user_id = %(userId)s")
-            extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
+        # if data.bookmarked:
+        #     pg_sub_query.append("ufe.user_id = %(userId)s")
+        #     extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
         if data.query is not None and len(data.query) > 0:
             pg_sub_query.append("(pe.name ILIKE %(error_query)s OR pe.message ILIKE %(error_query)s)")
             params["error_query"] = helper.values_for_operator(value=data.query,
@@ -553,10 +550,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
             if len(statuses) == 0:
                 query = cur.mogrify(
                     """SELECT error_id, status, parent_error_id, payload,
-                            COALESCE((SELECT TRUE
-                                         FROM public.user_favorite_errors AS fe
-                                         WHERE errors.error_id = fe.error_id
-                                           AND fe.user_id = %(user_id)s LIMIT 1), FALSE) AS favorite,
+                            FALSE AS favorite,
                             COALESCE((SELECT TRUE
                                          FROM public.user_viewed_errors AS ve
                                          WHERE errors.error_id = ve.error_id
