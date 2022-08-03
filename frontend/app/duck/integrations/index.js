@@ -26,8 +26,8 @@ export default {
     elasticsearch: createIntegrationReducer('elasticsearch', ElasticsearchConfig),
     sumologic: createIntegrationReducer('sumologic', SumoLogicConfig),
     jira: createIntegrationReducer('jira', JiraConfig),
-    issues: createIntegrationReducer('issues', IssueTracker),
     github: createIntegrationReducer('github', GithubConfig),
+    issues: createIntegrationReducer('issues', IssueTracker),
     slack,
     integrations,
 };
