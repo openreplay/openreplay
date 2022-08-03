@@ -462,7 +462,7 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
     return ch_sub_query
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
+def search_pg(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     empty_response = {'total': 0,
                       'errors': []
                       }
@@ -488,7 +488,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
         # if favorite_only=True search for sessions associated with favorite_error
-        statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                        error_status=data.status)
         if len(statuses) == 0:
             return empty_response
@@ -634,7 +634,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
 
 
 # refactor this function after clickhouse structure changes (missing search by query)
-def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
+def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     empty_response = {"data": {
         'total': 0,
         'errors': []
@@ -657,7 +657,7 @@ def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flo
     if len(data.events) > 0 or len(data.filters) > 0 or data.status != schemas.ErrorStatus.all:
         print("-- searching for sessions before errors")
         # if favorite_only=True search for sessions associated with favorite_error
-        statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                        error_status=data.status)
         if len(statuses) == 0:
             return empty_response
