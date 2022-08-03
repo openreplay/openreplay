@@ -1,14 +1,14 @@
 // Auto-generated, do not edit
 
 export const TP_MAP = {
-<%= $messages.select { |msg| msg.js || msg.replayer }.map { |msg| "  #{msg.id}: \"#{msg.name.underscore}\"," }.join "\n" %>
+<%= $messages.select { |msg| msg.tracker || msg.replayer }.map { |msg| "  #{msg.id}: \"#{msg.name.underscore}\"," }.join "\n" %>
 }
 
-<% $messages.select { |msg| msg.js || msg.replayer }.each do |msg| %>
+<% $messages.select { |msg| msg.tracker || msg.replayer }.each do |msg| %>
 export interface Raw<%= msg.name.underscore.camel_case %> {
   tp: "<%= msg.name.underscore %>",
 <%= msg.attributes.map { |attr| "  #{attr.name.first_lower}: #{attr.type_js}," }.join "\n" %>
 }
 <% end %>
 
-export type RawMessage = <%= $messages.select { |msg| msg.js || msg.replayer }.map { |msg| "Raw#{msg.name.underscore.camel_case}" }.join " | " %>;
+export type RawMessage = <%= $messages.select { |msg| msg.tracker || msg.replayer }.map { |msg| "Raw#{msg.name.underscore.camel_case}" }.join " | " %>;

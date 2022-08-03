@@ -1,6 +1,6 @@
 # Special one for Batch Meta. Message id could define the version 
 # Depricated since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :js => false, :replayer => false do 
+message 80, 'BatchMeta', :tracker => false, :replayer => false do 
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
@@ -25,7 +25,7 @@ end
 message 0, 'Timestamp' do
   uint 'Timestamp'
 end
-message 1, 'SessionStart', :js => false, :replayer => false do
+message 1, 'SessionStart', :tracker => false, :replayer => false do
   uint 'Timestamp'
   uint 'ProjectID'
   string 'TrackerVersion'
@@ -44,10 +44,10 @@ message 1, 'SessionStart', :js => false, :replayer => false do
   string 'UserID'
 end
 # Depricated (not used) since OpenReplay tracker 3.0.0
-message 2, 'SessionDisconnect', :js => false do
+message 2, 'SessionDisconnect', :tracker => false do
   uint 'Timestamp'
 end
-message 3, 'SessionEnd', :js => false, :replayer => false do
+message 3, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
 message 4, 'SetPageLocation' do
@@ -98,7 +98,7 @@ message 14, 'SetNodeData' do
   uint 'ID'
   string 'Data'
 end
-message 15, 'SetCSSData', :js => false do
+message 15, 'SetCSSData', :tracker => false do
   uint 'ID'
   string 'Data'
 end
@@ -125,7 +125,7 @@ message 20, 'MouseMove' do
   uint 'Y'
 end
 # Depricated since OpenReplay 1.2.0
-message 21, 'MouseClickDepricated', :js => false, :replayer => false do
+message 21, 'MouseClickDepricated', :tracker => false, :replayer => false do
   uint 'ID'
   uint 'HesitationTime'
   string 'Label'
@@ -155,7 +155,7 @@ message 25, 'JSException', :replayer => false do
   string 'Message'
   string 'Payload'
 end
-message 26, 'IntegrationEvent', :js => false, :replayer => false do
+message 26, 'IntegrationEvent', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'Source'
   string 'Name'
@@ -176,7 +176,7 @@ message 30, 'Metadata', :replayer => false do
   string 'Key'
   string 'Value'
 end
-message 31, 'PageEvent', :js => false, :replayer => false do
+message 31, 'PageEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'URL'
@@ -195,21 +195,21 @@ message 31, 'PageEvent', :js => false, :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-message 32, 'InputEvent', :js => false, :replayer => false do
+message 32, 'InputEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Value'
   boolean 'ValueMasked'
   string 'Label'
 end
-message 33, 'ClickEvent', :js => false, :replayer => false do
+message 33, 'ClickEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   uint 'HesitationTime'
   string 'Label'
   string 'Selector'
 end
-message 34, 'ErrorEvent', :js => false, :replayer => false do
+message 34, 'ErrorEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Source'
@@ -217,7 +217,7 @@ message 34, 'ErrorEvent', :js => false, :replayer => false do
   string 'Message'
   string 'Payload'
 end
-message 35, 'ResourceEvent', :js => false, :replayer => false do
+message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   uint 'Duration'
@@ -231,7 +231,7 @@ message 35, 'ResourceEvent', :js => false, :replayer => false do
   string 'Method'
   uint 'Status'
 end
-message 36, 'CustomEvent', :js => false, :replayer => false do
+message 36, 'CustomEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Name'
@@ -272,7 +272,7 @@ end
 message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
-message 43, 'StateActionEvent', :js => false, :replayer => false do
+message 43, 'StateActionEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Type'
@@ -308,7 +308,7 @@ message 49, 'PerformanceTrack' do
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
-message 50, 'GraphQLEvent',  :js => false, :replayer => false do
+message 50, 'GraphQLEvent',  :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'OperationKind'
@@ -316,7 +316,7 @@ message 50, 'GraphQLEvent',  :js => false, :replayer => false do
   string 'Variables'
   string 'Response'
 end
-message 51, 'FetchEvent',  :js => false, :replayer => false do
+message 51, 'FetchEvent',  :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Method'
@@ -326,7 +326,7 @@ message 51, 'FetchEvent',  :js => false, :replayer => false do
   uint 'Status'
   uint 'Duration'
 end
-message 52, 'DOMDrop', :js => false, :replayer => false do
+message 52, 'DOMDrop', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
 message 53, 'ResourceTiming', :replayer => false do
@@ -346,7 +346,7 @@ end
 message 55, 'SetPageVisibility' do
   boolean 'hidden'
 end
-message 56, 'PerformanceTrackAggr', :js => false, :replayer => false do
+message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'TimestampStart'
   uint 'TimestampEnd'
   uint 'MinFPS'
@@ -383,7 +383,7 @@ message 61, 'SetCSSDataURLBased', :replayer => false do
   string 'Data'
   string 'BaseURL'
 end
-message 62, 'IssueEvent', :replayer => false, :js => false do
+message 62, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Type'
@@ -399,7 +399,7 @@ message 64, 'CustomIssue', :replayer => false do
   string 'Name'
   string 'Payload'
 end
-message 66, 'AssetCache', :replayer => false, :js => false do
+message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
 message 67, 'CSSInsertRuleURLBased', :replayer => false do
