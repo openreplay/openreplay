@@ -19,7 +19,6 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openrep
 
 
 FROM alpine AS entrypoint
-RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache ca-certificates
 RUN adduser -u 1001 openreplay -D
 
