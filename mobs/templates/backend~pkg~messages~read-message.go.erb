@@ -12,7 +12,7 @@ func ReadMessage(reader io.Reader) (Message, error) {
 	case <%= msg.id %>:
 		msg := &<%= msg.name %>{}
 <%= msg.attributes.map { |attr| 
-"		if msg.#{attr.name}, err = Read#{attr.type.to_s.camel_case}(reader); err != nil {
+"		if msg.#{attr.name}, err = Read#{attr.type.to_s.pascal_case}(reader); err != nil {
 			return nil, err
 		}" }.join "\n" %>
 		return msg, nil

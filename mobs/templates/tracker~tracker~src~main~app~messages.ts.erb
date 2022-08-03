@@ -5,11 +5,11 @@ export { default } from '../../common/messages.js'
 
 <% $messages.select { |msg| msg.tracker }.each do |msg| %>
 export function <%= msg.name %>(
-  <%= msg.attributes.map { |attr| "#{attr.name.first_lower}: #{attr.type_js}," }.join "\n  " %>
+  <%= msg.attributes.map { |attr| "#{attr.name.camel_case}: #{attr.type_js}," }.join "\n  " %>
 ): Messages.<%= msg.name %> {
   return [ 
     Messages.Type.<%= msg.name %>,
-    <%= msg.attributes.map { |attr| "#{attr.name.first_lower}," }.join "\n    " %>
+    <%= msg.attributes.map { |attr| "#{attr.name.camel_case}," }.join "\n    " %>
   ]
 }
 <% end %>

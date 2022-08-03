@@ -3,11 +3,11 @@
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
 import type { 
-<%= $messages.select { |msg| msg.tracker || msg.replayer }.map { |msg| "  Raw#{msg.name.underscore.camel_case}," }.join "\n" %>
+<%= $messages.select { |msg| msg.tracker || msg.replayer }.map { |msg| "  Raw#{msg.name.snake_case.pascal_case}," }.join "\n" %>
 } from './raw'
 
 export type Message = RawMessage & Timed
 
 <% $messages.select { |msg| msg.tracker || msg.replayer }.each do |msg| %>
-export type <%= msg.name.underscore.camel_case %> = Raw<%= msg.name.underscore.camel_case %> & Timed
+export type <%= msg.name.snake_case.pascal_case %> = Raw<%= msg.name.snake_case.pascal_case %> & Timed
 <% end %>

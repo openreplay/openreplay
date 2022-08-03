@@ -19,11 +19,11 @@ export default class RawMessageReader extends PrimitiveReader {
     <% $messages.select { |msg| msg.tracker || msg.replayer }.each do |msg| %>
     case <%= msg.id %>: {
 <%= msg.attributes.map { |attr| 
-"      const #{attr.name.first_lower} = this.read#{attr.type.to_s.camel_case}(); if (#{attr.name.first_lower} === null) { return resetPointer() }" }.join "\n" %>      
+"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>      
       return {
-        tp: "<%= msg.name.underscore %>", 
+        tp: "<%= msg.name.snake_case %>", 
 <%= msg.attributes.map { |attr| 
-"        #{attr.name.first_lower}," }.join "\n" %>      
+"        #{attr.name.camel_case}," }.join "\n" %>      
       };
     }
     <% end %>

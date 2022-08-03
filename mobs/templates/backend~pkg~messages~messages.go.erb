@@ -12,7 +12,7 @@ func (msg *<%= msg.name %>) Encode() []byte {
 	buf[0] = <%= msg.id %>
 	p := 1
 <%= msg.attributes.map { |attr| 
-"	p = Write#{attr.type.to_s.camel_case}(msg.#{attr.name}, buf, p)" }.join "\n" %>
+"	p = Write#{attr.type.to_s.pascal_case}(msg.#{attr.name}, buf, p)" }.join "\n" %>
 	return buf[:p]
 }
 
