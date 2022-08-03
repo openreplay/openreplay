@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { NoContent } from 'UI';
-import { remove, edit } from 'Duck/integrations/slack';
+import { remove, edit, init } from 'Duck/integrations/slack';
 import DocLink from 'Shared/DocLink/DocLink';
 
 function SlackChannelList(props) {
@@ -43,5 +43,5 @@ export default connect(
     (state) => ({
         list: state.getIn(['slack', 'list']),
     }),
-    { remove, edit }
+    { remove, edit, init }
 )(SlackChannelList);

@@ -8,11 +8,12 @@ interface Props {
     integration: any;
     onClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
     integrated?: boolean;
+    hide?: boolean;
 }
 
 const IntegrationItem = (props: Props) => {
-    const { integration, integrated } = props;
-    return (
+    const { integration, integrated, hide = false } = props;
+    return hide ? <></> : (
         <div className={cn(stl.wrapper, 'mb-4', { [stl.integrated]: integrated })} onClick={(e) => props.onClick(e)}>
             {integrated && (
                 <div className="m-2 absolute right-0 top-0 h-4 w-4 rounded-full bg-teal flex items-center justify-center">

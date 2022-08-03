@@ -96,6 +96,7 @@ function Integrations(props: Props) {
                                 key={integration.name}
                                 integration={integration}
                                 onClick={() => onClick(integration)}
+                                hide={(integration.slug === 'github' && integratedList.includes('jira') || integration.slug === 'jira' && integratedList.includes('github'))}
                             />
                         ))}
                     </div>
@@ -119,8 +120,8 @@ const integrations = [
         title: 'Issue Reporting and Collaborations',
         description: 'Seamlessly report issues or share issues with your team right from OpenReplay.',
         integrations: [
-            { title: 'Jira', category: 'Errors', icon: 'integrations/jira', component: <JiraForm /> },
-            { title: 'Github', category: 'Errors', icon: 'integrations/github', component: <GithubForm /> },
+            { title: 'Jira', slug: 'jira', category: 'Errors', icon: 'integrations/jira', component: <JiraForm /> },
+            { title: 'Github', slug: 'github', category: 'Errors', icon: 'integrations/github', component: <GithubForm /> },
             { title: 'Slack', category: 'Errors', icon: 'integrations/slack', component: <SlackForm /> },
         ],
     },

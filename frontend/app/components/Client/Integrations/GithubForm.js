@@ -14,7 +14,7 @@ const GithubForm = (props) => (
         <IntegrationForm
             {...props}
             ignoreProject
-            name="issues"
+            name="github"
             customPath="github"
             formFields={[
                 {
