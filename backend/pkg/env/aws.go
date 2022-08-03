@@ -24,7 +24,7 @@ func AWSSessionOnRegion(region string) *_session.Session {
 		config.S3ForcePathStyle = aws.Bool(true)
 
 		AWS_SKIP_SSL_VALIDATION := Bool("AWS_SKIP_SSL_VALIDATION")
-		if !AWS_SKIP_SSL_VALIDATION {
+		if AWS_SKIP_SSL_VALIDATION {
 			tr := &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
