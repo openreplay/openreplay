@@ -1,6 +1,6 @@
 import { List, Map } from 'immutable';
 import { createRequestReducer } from '../funcTools/request';
-import { fetchListType, saveType, removeType, editType, initType } from '../funcTools/types';
+import { fetchListType, saveType, removeType, editType, initType, fetchType } from '../funcTools/types';
 import { createItemInListUpdater } from '../funcTools/tools';
 
 const idKey = 'siteId';
@@ -12,6 +12,7 @@ export const createIntegrationReducer = (name, Config) => {
 	const REMOVE = removeType(name);
 	const EDIT = editType(name);
 	const INIT = initType(name);
+	const FETCH = fetchType(name);
 
 	const initialState = Map({
 		instance: Config(),
@@ -24,6 +25,8 @@ export const createIntegrationReducer = (name, Config) => {
 	    case FETCH_LIST.success:
 				return state.set('list', Array.isArray(action.data) ? 
 					List(action.data).map(Config) : List([new Config(action.data)])).set(action.name + 'Fetched', true);
+			case FETCH.success:
+				return state.set('instance', Config(action.data));
 	    case SAVE.success:
 	      const config = Config(action.data);
 	      return state

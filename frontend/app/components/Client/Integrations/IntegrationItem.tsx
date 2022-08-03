@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { Icon, Popup } from 'UI';
 import stl from './integrationItem.module.css';
 import { connect } from 'react-redux';
 
@@ -16,7 +16,9 @@ const IntegrationItem = (props: Props) => {
         <div className={cn(stl.wrapper, 'mb-4', { [stl.integrated]: integrated })} onClick={(e) => props.onClick(e)}>
             {integrated && (
                 <div className="m-2 absolute right-0 top-0 h-4 w-4 rounded-full bg-teal flex items-center justify-center">
-                    <Icon name="check" size="14" color="white" />
+                    <Popup content="Integrated" delay={0}>
+                        <Icon name="check" size="14" color="white" />
+                    </Popup>
                 </div>
             )}
             <img className="h-12 w-12" src={'/assets/' + integration.icon + '.svg'} alt="integration" />

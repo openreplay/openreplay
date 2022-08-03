@@ -1,10 +1,18 @@
 import { array } from '../funcTools/tools';
-import { fetchListType, saveType, editType, initType, removeType } from '../funcTools/types';
+import { fetchListType, fetchType, saveType, editType, initType, removeType } from '../funcTools/types';
 
 export function fetchList(name) {
   return {
     types: fetchListType(name).array,
     call: client => client.get(`/integrations/${ name }`),
+    name
+  };
+}
+
+export function fetch(name, siteId) {
+  return {
+    types: fetchType(name).array,
+    call: client => client.get(`/${siteId}/integrations/${ name }`),
     name
   };
 }

@@ -13,44 +13,48 @@ import SentryForm from './SentryForm';
 import SlackForm from './SlackForm';
 import StackdriverForm from './StackdriverForm';
 import SumoLogicForm from './SumoLogicForm';
-import { fetchList, init } from 'Duck/integrations/actions';
+import { fetch, init } from 'Duck/integrations/actions';
+import { fetchIntegrationList, setSiteId } from 'Duck/integrations/integrations';
 import { connect } from 'react-redux';
-import { withRequest } from 'HOCs';
+import SiteDropdown from 'Shared/SiteDropdown';
+import ReduxDoc from './ReduxDoc';
+import VueDoc from './VueDoc';
+import GraphQLDoc from './GraphQLDoc';
+import NgRxDoc from './NgRxDoc';
+import MobxDoc from './MobxDoc';
+import FetchDoc from './FetchDoc';
+import ProfilerDoc from './ProfilerDoc';
+import AxiosDoc from './AxiosDoc';
+import AssistDoc from './AssistDoc';
 
 interface Props {
-    fetchList: (name: string) => void;
+    fetch: (name: string, siteId: string) => void;
     init: () => void;
-    fetchIntegratedList: () => void;
+    fetchIntegrationList: (siteId: any) => void;
     integratedList: any;
+    initialSiteId: string;
+    setSiteId: (siteId: string) => void;
+    siteId: string;
 }
 function Integrations(props: Props) {
+    const { initialSiteId } = props;
     const { showModal } = useModal();
     const [loading, setLoading] = React.useState(true);
     const [integratedList, setIntegratedList] = React.useState([]);
+    // const [siteId, setSiteId] = React.useState(props.siteId || initialSiteId);
 
     useEffect(() => {
-        const list = props.integratedList.map((item: any) => item.name);
-        console.log('list', list)
+        const list = props.integratedList.filter((item: any) => item.integrated).map((item: any) => item.name);
         setIntegratedList(list);
     }, [props.integratedList]);
 
     useEffect(() => {
-    //     const promosies: any[] = [];
-        props.fetchIntegratedList();
-    //     console.log('fetchIntegratedList', props);
-    //     // integrations.forEach((cat: any) => {
-    //     //     cat.integrations.forEach((integration: any) => {
-    //     //         if (integration.slug) {
-    //     //             promosies.push(props.fetchList(integration.slug));
-    //     //         }
-    //     //     });
-    //     // });
-
-    //     // Promise.all(promosies)
-    //     //     .then(() => {
-    //     //         setLoading(false);
-    //     //     })
-    //     //     .catch(() => {});
+        if (!props.siteId) {
+            props.setSiteId(initialSiteId);
+            props.fetchIntegrationList(initialSiteId);
+        } else {
+            props.fetchIntegrationList(props.siteId);
+        }
     }, []);
 
     useEffect(() => {
@@ -60,17 +64,31 @@ function Integrations(props: Props) {
     }, [loading]);
 
     const onClick = (integration: any) => {
+        if (integration.slug) {
+            props.fetch(integration.slug, props.siteId);
+        }
         showModal(integration.component, { right: true });
     };
 
-    console.log('integratedList',integratedList);
+    const onChangeSelect = ({ value }: any) => {
+        props.setSiteId(value.value);
+        props.fetchIntegrationList(value.value);
+    };
 
     return (
         <div className="mb-4">
             {integrations.map((cat: any) => (
                 <div className="mb-2 border-b last:border-none py-3">
-                    <h2 className="font-medium text-lg">{cat.title}</h2>
+                    <div className="flex items-center">
+                        <h2 className="font-medium text-lg">{cat.title}</h2>
+                        {cat.isProject && (
+                            <div className="flex flex-wrap ml-4">
+                                <SiteDropdown value={props.siteId} onChange={onChangeSelect} />
+                            </div>
+                        )}
+                    </div>
                     <div className="">{cat.description}</div>
+
                     <div className="flex flex-wrap mt-4">
                         {cat.integrations.map((integration: any) => (
                             <IntegrationItem
@@ -87,17 +105,14 @@ function Integrations(props: Props) {
     );
 }
 
-export default connect(null, { fetchList, init })(
-    withRequest({
-        dataName: 'integratedList',
-        initialData: [],
-        dataWrapper: (data: any) => data.filter((i: any) => i.integrated),
-        loadingName: 'listLoading',
-        requestName: 'fetchIntegratedList',
-        endpoint: `/integrations`,
-        method: 'GET',
-    })(Integrations)
-);
+export default connect(
+    (state: any) => ({
+        initialSiteId: state.getIn(['site', 'siteId']),
+        integratedList: state.getIn(['integrations', 'list']),
+        siteId: state.getIn(['integrations', 'siteId']),
+    }),
+    { fetch, init, fetchIntegrationList, setSiteId }
+)(Integrations);
 
 const integrations = [
     {
@@ -111,6 +126,7 @@ const integrations = [
     },
     {
         title: 'Backend Logging',
+        isProject: true,
         description: 'Sync your backend errors with sessions replays and see what happened front-to-back.',
         integrations: [
             { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
@@ -135,8 +151,15 @@ const integrations = [
         description:
             "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
         integrations: [
-            { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
-            { title: 'Bugsnag', slug: '', icon: 'integrations/bugsnag', component: <BugsnagForm /> },
+            { title: 'Redux', slug: '', icon: 'integrations/redux', component: <ReduxDoc /> },
+            { title: 'VueX', slug: '', icon: 'integrations/vuejs', component: <VueDoc /> },
+            { title: 'GraphQL', slug: '', icon: 'integrations/graphql', component: <GraphQLDoc /> },
+            { title: 'NgRx', slug: '', icon: 'integrations/ngrx', component: <NgRxDoc /> },
+            { title: 'MobX', slug: '', icon: 'integrations/mobx', component: <MobxDoc /> },
+            { title: 'Fetch', slug: '', icon: 'integrations/openreplay', component: <FetchDoc /> },
+            { title: 'Profiler', slug: '', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
+            { title: 'Axios', slug: '', icon: 'integrations/openreplay', component: <AxiosDoc /> },
+            { title: 'Assist', slug: '', icon: 'integrations/openreplay', component: <AssistDoc /> },
         ],
     },
 ];
