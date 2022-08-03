@@ -182,6 +182,7 @@ Pipfile
 /chalicelib/core/announcements.py
 /chalicelib/core/autocomplete.py
 /chalicelib/core/collaboration_slack.py
+/chalicelib/core/errors.py
 /chalicelib/core/errors_favorite_viewed.py
 /chalicelib/core/events.py
 /chalicelib/core/events_ios.py

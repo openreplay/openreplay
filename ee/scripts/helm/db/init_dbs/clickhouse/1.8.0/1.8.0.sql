@@ -150,6 +150,7 @@ CREATE TABLE IF NOT EXISTS autocomplete
       ORDER BY (project_id, type, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
+-- TODO: remove this table
 CREATE TABLE IF NOT EXISTS errors
 (
     error_id   String,
