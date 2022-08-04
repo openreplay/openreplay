@@ -17,7 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <Provider store={store}>
             <StoreProvider store={new RootStore()}>
                 <DndProvider backend={HTML5Backend}>
-                    <Router />
+                    {/* <React.StrictMode> */}
+                        <Router />
+                    {/* </React.StrictMode> */}
                 </DndProvider>
             </StoreProvider>
         </Provider>
