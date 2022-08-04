@@ -89,6 +89,6 @@ function SessionSearch(props: Props) {
 }
 
 export default connect((state: any) => ({
-  saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
+  saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'search', 'instance' ]),
 }), { edit, addFilter })(SessionSearch);
