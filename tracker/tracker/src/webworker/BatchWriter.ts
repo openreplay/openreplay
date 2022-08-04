@@ -67,7 +67,7 @@ export default class BatchWriter {
       e.set(this.sizeEncoder.flush(), startOffset - SIZE_BYTES)
 
       e.checkpoint()
-      this.isEmpty = false
+      this.isEmpty = this.isEmpty && message[0] === Messages.Type.Timestamp
       this.nextIndex++
     }
     // app.debug.log
