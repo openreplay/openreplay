@@ -52,8 +52,9 @@ export default class EventsBlock extends React.PureComponent {
     const { filter } = this.state;
     this.setState({ query: '' })
     this.props.setEventFilter({ query: '', filter })
-
-    this.scroller.current.forceUpdateGrid();
+    if (this.scroller.current) {
+      this.scroller.current.forceUpdateGrid();
+    }
 
     setTimeout(() => {
       if (!this.scroller.current) return;
