@@ -58,7 +58,7 @@
     "react-tippy": "^1.4.0",
     "react-toastify": "^9.0.3",
     "react-virtualized": "^9.22.3",
-    "recharts": "^2.1.10",
+    "recharts": "^2.1.13",
     "redux": "^4.0.5",
     "redux-immutable": "^4.0.0",
     "redux-thunk": "^2.3.0",
