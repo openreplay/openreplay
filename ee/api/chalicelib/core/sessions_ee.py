@@ -58,7 +58,8 @@ isNotNull(favorite_sessions.session_id) AS favorite,
 -- COALESCE((SELECT TRUE
 --  FROM public.user_viewed_sessions AS fs
 --  WHERE s.session_id = fs.session_id
---    AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed 
+--    AND fs.user_id = %(userId)s 
+      AND fs.project_id = %(project_id)s LIMIT 1), FALSE) AS viewed 
    """
 
 SESSION_PROJECTION_COLS_CH_MAP = """\
@@ -225,8 +226,9 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._is_undefined]
 
 
+# This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-               error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)
@@ -239,19 +241,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
     meta_keys = []
     with pg_client.PostgresClient() as cur:
-        if errors_only:
-            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
-                                        COALESCE((SELECT TRUE
-                                         FROM public.user_favorite_sessions AS fs
-                                         WHERE s.session_id = fs.session_id
-                                           AND fs.user_id = %(userId)s), FALSE)   AS favorite,
-                                        COALESCE((SELECT TRUE
-                                                     FROM public.user_viewed_errors AS ve
-                                                     WHERE er.error_id = ve.error_id
-                                                       AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                                {query_part};""", full_args)
-
-        elif count_only:
+        if count_only:
             main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
                                                 COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""", full_args)
@@ -365,16 +355,15 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     meta_keys = []
     with ch_client.ClickHouseClient() as cur:
         if errors_only:
-            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
+            print("--------------------QP")
+            print(cur.format(query_part, full_args))
+            print("--------------------")
+            main_query = cur.format(f"""SELECT DISTINCT er.error_id,
                                         COALESCE((SELECT TRUE
-                                         FROM public.user_favorite_sessions AS fs
-                                         WHERE s.session_id = fs.session_id
-                                           AND fs.user_id = %(userId)s), FALSE)   AS favorite,
-                                        COALESCE((SELECT TRUE
-                                                     FROM public.user_viewed_errors AS ve
+                                                     FROM final.user_viewed_errors AS ve
                                                      WHERE er.error_id = ve.error_id
                                                        AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                                {query_part};""", full_args)
+                                        {query_part};""", full_args)
 
         elif count_only:
             main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
@@ -582,6 +571,7 @@ def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
                         event.filters is None or len(event.filters) == 0))
 
 
+# this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
@@ -1235,7 +1225,7 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
         raise Exception(f"unsupported event_type:{event_type}")
     return defs.get(event_type)
 
-
+# this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
@@ -2052,17 +2042,17 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     #         extra_constraints.append(
     #             b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
 
-    if errors_only:
-        extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
-        extra_constraints.append("ser.source = 'js_exception'")
-        extra_constraints.append("ser.project_id = %(project_id)s")
-        if error_status != schemas.ErrorStatus.all:
-            extra_constraints.append("ser.status = %(error_status)s")
-            full_args["error_status"] = error_status
-        if favorite_only:
-            extra_from += " INNER JOIN final.user_favorite_errors AS ufe USING (error_id)"
-            extra_constraints.append("ufe.user_id = %(userId)s")
-    # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
+    # if errors_only:
+    #     extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
+    #     extra_constraints.append("ser.source = 'js_exception'")
+    #     extra_constraints.append("ser.project_id = %(project_id)s")
+    # if error_status != schemas.ErrorStatus.all:
+    #     extra_constraints.append("ser.status = %(error_status)s")
+    #     full_args["error_status"] = error_status
+    # if favorite_only:
+    #     extra_from += " INNER JOIN final.user_favorite_errors AS ufe USING (error_id)"
+    #     extra_constraints.append("ufe.user_id = %(userId)s")
+
     if favorite_only and not errors_only and user_id is not None:
         extra_from += """INNER JOIN (SELECT 1 AS session_id) AS favorite_sessions
                                 ON (TRUE)"""
@@ -2087,19 +2077,22 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
         extra_join += f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
         extra_constraints.append("ev.timestamp>=%(startDate)s")
         extra_constraints.append("ev.timestamp<=%(endDate)s")
-    if len(events_query_part) > 0:
-        extra_join += f"""INNER JOIN (SELECT * 
-                                FROM {MAIN_SESSIONS_TABLE} AS s 
-                                WHERE {" AND ".join(extra_constraints)}) AS s ON(s.session_id=f.session_id)"""
+    if errors_only:
+        query_part = f"""{f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}"""
     else:
-        extra_join += f"""(SELECT * 
-                            FROM {MAIN_SESSIONS_TABLE} AS s 
-                            WHERE {" AND ".join(extra_constraints)}) AS s"""
-    query_part = f"""\
-                        FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}
-                        {extra_join}
-                        {extra_from}
-                        """
+        if len(events_query_part) > 0:
+            extra_join += f"""INNER JOIN (SELECT * 
+                                    FROM {MAIN_SESSIONS_TABLE} AS s 
+                                    WHERE {" AND ".join(extra_constraints)}) AS s ON(s.session_id=f.session_id)"""
+        else:
+            extra_join += f"""(SELECT * 
+                                FROM {MAIN_SESSIONS_TABLE} AS s 
+                                WHERE {" AND ".join(extra_constraints)}) AS s"""
+        query_part = f"""\
+                            FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}
+                            {extra_join}
+                            {extra_from}
+                            """
     return full_args, query_part
 
 

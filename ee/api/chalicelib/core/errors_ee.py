@@ -1,11 +1,57 @@
 import json
 
 import schemas
-from chalicelib.core import metrics
+from chalicelib.core import metrics, metadata
 from chalicelib.core import sourcemaps, sessions
 from chalicelib.utils import ch_client, metrics_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+
+
+def _multiple_values(values, value_key="value"):
+    query_values = {}
+    if values is not None and isinstance(values, list):
+        for i in range(len(values)):
+            k = f"{value_key}_{i}"
+            query_values[k] = values[i]
+    return query_values
+
+
+def __get_sql_operator(op: schemas.SearchEventOperator):
+    return {
+        schemas.SearchEventOperator._is: "=",
+        schemas.SearchEventOperator._is_any: "IN",
+        schemas.SearchEventOperator._on: "=",
+        schemas.SearchEventOperator._on_any: "IN",
+        schemas.SearchEventOperator._is_not: "!=",
+        schemas.SearchEventOperator._not_on: "!=",
+        schemas.SearchEventOperator._contains: "ILIKE",
+        schemas.SearchEventOperator._not_contains: "NOT ILIKE",
+        schemas.SearchEventOperator._starts_with: "ILIKE",
+        schemas.SearchEventOperator._ends_with: "ILIKE",
+    }.get(op, "=")
+
+
+def _isAny_opreator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
+
+
+def _isUndefined_operator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator._is_undefined]
+
+
+def __is_negation_operator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator._is_not,
+                  schemas.SearchEventOperator._not_on,
+                  schemas.SearchEventOperator._not_contains]
+
+
+def _multiple_conditions(condition, values, value_key="value", is_not=False):
+    query = []
+    for i in range(len(values)):
+        k = f"{value_key}_{i}"
+        query.append(condition.replace(value_key, k))
+    return "(" + (" AND " if is_not else " OR ").join(query) + ")"
 
 
 def get(error_id, family=False):
@@ -464,11 +510,7 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
     return ch_sub_query
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
-    empty_response = {"data": {
-        'total': 0,
-        'errors': []
-    }}
+def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     MAIN_EVENTS_TABLE = "final.events"
     MAIN_SESSIONS_TABLE = "final.sessions"
     if data.startDate >= TimeUTC.now(delta_days=-7):
@@ -484,22 +526,205 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     ch_sub_query.append("source ='js_exception'")
     # To ignore Script error
     ch_sub_query.append("message!='Script error.'")
-    statuses = []
     error_ids = None
 
     if data.startDate is None:
         data.startDate = TimeUTC.now(-7)
     if data.endDate is None:
         data.endDate = TimeUTC.now(1)
-    if len(data.events) > 0 or len(data.filters) > 0 or data.status != schemas.ErrorStatus.all:
-        print("-- searching for sessions before errors")
-        # if favorite_only=True search for sessions associated with favorite_error
-        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                            error_status=data.status)
-        if len(statuses) == 0:
-            return empty_response
-        error_ids = [e["errorId"] for e in statuses]
-    with ch_client.ClickHouseClient() as ch, pg_client.PostgresClient() as cur:
+
+    subquery_part = ""
+    params = {}
+    if len(data.events) > 0:
+        errors_filters = []
+        for e in data.events:
+            if e.type == schemas.EventType.error:
+                errors_filters.append(e)
+        if len(errors_filters) == len(data.events):
+            # TODO: search errors by name and message
+            print("----------Error conditions only")
+            print(errors_filters)
+        else:
+            print("----------Sessions conditions")
+            subquery_part_args, subquery_part = sessions.search_query_parts_ch(data=data, error_status=data.status,
+                                                                               errors_only=True,
+                                                                               project_id=project_id, user_id=user_id,
+                                                                               issue=None,
+                                                                               favorite_only=False)
+            subquery_part = f"INNER JOIN {subquery_part} USING(session_id)"
+            params = {**params, **subquery_part_args}
+    if len(data.filters) > 0:
+        meta_keys = None
+        # to reduce include a sub-query of sessions inside events query, in order to reduce the selected data
+        for i, f in enumerate(data.filters):
+            if not isinstance(f.value, list):
+                f.value = [f.value]
+            filter_type = f.type
+            f.value = helper.values_for_operator(value=f.value, op=f.operator)
+            f_k = f"f_value{i}"
+            params = {**params, f_k: f.value, **_multiple_values(f.value, value_key=f_k)}
+            op = __get_sql_operator(f.operator) \
+                if filter_type not in [schemas.FilterType.events_count] else f.operator
+            is_any = _isAny_opreator(f.operator)
+            is_undefined = _isUndefined_operator(f.operator)
+            if not is_any and not is_undefined and len(f.value) == 0:
+                continue
+            is_not = False
+            if __is_negation_operator(f.operator):
+                is_not = True
+            if filter_type == schemas.FilterType.user_browser:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.user_browser)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                             value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.user_os)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.user_device)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not,
+                                             value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.user_country)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                             value_key=f_k))
+
+
+            elif filter_type in [schemas.FilterType.utm_source]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.utm_source)')
+                elif is_undefined:
+                    ch_sessions_sub_query.append('isNull(s.utm_source)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.utm_source {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.utm_medium]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.utm_medium)')
+                elif is_undefined:
+                    ch_sessions_sub_query.append('isNull(s.utm_medium)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.utm_medium {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
+            elif filter_type in [schemas.FilterType.utm_campaign]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.utm_campaign)')
+                elif is_undefined:
+                    ch_sessions_sub_query.append('isNull(s.utm_campaign)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f's.utm_campaign {op} toString(%({f_k})s)', f.value, is_not=is_not,
+                                             value_key=f_k))
+
+            elif filter_type == schemas.FilterType.duration:
+                if len(f.value) > 0 and f.value[0] is not None:
+                    ch_sessions_sub_query.append("s.duration >= %(minDuration)s")
+                    params["minDuration"] = f.value[0]
+                if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
+                    ch_sessions_sub_query.append("s.duration <= %(maxDuration)s")
+                    params["maxDuration"] = f.value[1]
+            # TODO: support referrer search
+            # elif filter_type == schemas.FilterType.referrer:
+            #     # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+            #     if is_any:
+            #         referrer_constraint = 'isNotNull(r.base_referrer)'
+            #     else:
+            #         referrer_constraint = _multiple_conditions(f"r.base_referrer {op} %({f_k})s", f.value,
+            #                                                    is_not=is_not, value_key=f_k)
+            #     referrer_constraint = f"""(SELECT DISTINCT session_id
+            #                                       FROM {MAIN_EVENTS_TABLE} AS r
+            #                                       WHERE {" AND ".join([f"r.{b}" for b in __events_where_basic])}
+            #                                         AND event_type='{__get_event_type(schemas.EventType.location)}'
+            #                                         AND {referrer_constraint})"""
+            #     # events_conditions_where.append(f"""main.session_id IN {referrer_constraint}""")
+            #     # ch_sessions_sub_query.append(f"""s.session_id IN {referrer_constraint}""")
+            #     extra_from += f"\nINNER JOIN {referrer_constraint} AS referred ON(referred.session_id=s.session_id)"
+            elif filter_type == schemas.FilterType.metadata:
+                # get metadata list only if you need it
+                if meta_keys is None:
+                    meta_keys = metadata.get(project_id=project_id)
+                    meta_keys = {m["key"]: m["index"] for m in meta_keys}
+                if f.source in meta_keys.keys():
+                    if is_any:
+                        ch_sessions_sub_query.append(f"isNotNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
+                    elif is_undefined:
+                        ch_sessions_sub_query.append(f"isNull(s.{metadata.index_to_colname(meta_keys[f.source])})")
+                    else:
+                        ch_sessions_sub_query.append(
+                            _multiple_conditions(
+                                f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} toString(%({f_k})s)",
+                                f.value, is_not=is_not, value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.user_id)')
+                elif is_undefined:
+                    ch_sessions_sub_query.append('isNull(s.user_id)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f"s.user_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
+            elif filter_type in [schemas.FilterType.user_anonymous_id,
+                                 schemas.FilterType.user_anonymous_id_ios]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.user_anonymous_id)')
+                elif is_undefined:
+                    ch_sessions_sub_query.append('isNull(s.user_anonymous_id)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f"s.user_anonymous_id {op} toString(%({f_k})s)", f.value,
+                                             is_not=is_not,
+                                             value_key=f_k))
+
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
+                if is_any:
+                    ch_sessions_sub_query.append('isNotNull(s.rev_id)')
+                elif is_undefined:
+                    ch_sessions_sub_query.append('isNull(s.rev_id)')
+                else:
+                    ch_sessions_sub_query.append(
+                        _multiple_conditions(f"s.rev_id {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
+
+            elif filter_type == schemas.FilterType.platform:
+                # op = __get_sql_operator(f.operator)
+                ch_sessions_sub_query.append(
+                    _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                         value_key=f_k))
+            # elif filter_type == schemas.FilterType.issue:
+            #     if is_any:
+            #         ch_sessions_sub_query.append("notEmpty(s.issue_types)")
+            #     else:
+            #         ch_sessions_sub_query.append(f"hasAny(s.issue_types,%({f_k})s)")
+            #         # _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+            #         #                      value_key=f_k))
+            #
+            #         if is_not:
+            #             extra_constraints[-1] = f"not({extra_constraints[-1]})"
+            #             ss_constraints[-1] = f"not({ss_constraints[-1]})"
+            elif filter_type == schemas.FilterType.events_count:
+                ch_sessions_sub_query.append(
+                    _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                         value_key=f_k))
+
+    with ch_client.ClickHouseClient() as ch:
         step_size = __get_step_size(data.startDate, data.endDate, data.density)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
@@ -508,6 +733,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         if data.order is not None:
             order = data.order
         params = {
+            **params,
             "startDate": data.startDate,
             "endDate": data.endDate,
             "project_id": project_id,
@@ -534,108 +760,66 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
             params["error_ids"] = tuple(error_ids)
             ch_sub_query.append("error_id IN %(error_ids)s")
 
-        if flows:
-            main_ch_query = f"""\
-                    SELECT COUNT(DISTINCT error_id)  AS count
-                      FROM {MAIN_EVENTS_TABLE}
-                      WHERE {" AND ".join(ch_sub_query)};"""
-            # print("------------")
-            # print(ch.format(main_ch_query, params))
-            # print("------------")
-            total = ch.execute(query=main_ch_query, params=params)[0]["count"]
+        main_ch_query = f"""\
+                SELECT details.error_id AS error_id, 
+                        name, message, users, total, viewed,
+                        sessions, last_occurrence, first_occurrence, chart
+                FROM (SELECT error_id,
+                             name,
+                             message,
+                             COUNT(DISTINCT user_id)  AS users,
+                             COUNT(DISTINCT events.session_id) AS sessions,
+                             MAX(datetime)              AS max_datetime,
+                             MIN(datetime)              AS min_datetime,
+                             COUNT(DISTINCT events.error_id) OVER() AS total,
+                             any(isNotNull(viewed_error_id)) AS viewed
+                      FROM {MAIN_EVENTS_TABLE} AS events
+                            LEFT JOIN (SELECT error_id AS viewed_error_id
+                                        FROM final.user_viewed_errors
+                                        WHERE project_id=%(project_id)s
+                                            AND user_id=%(userId)s) AS viewed_errors ON(events.error_id=viewed_errors.viewed_error_id)
+                            INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
+                                        FROM {MAIN_SESSIONS_TABLE} AS s
+                                                {subquery_part}
+                                        WHERE {" AND ".join(ch_sessions_sub_query)}) AS sessions 
+                                                                                    ON (events.session_id = sessions.session_id)
+                      WHERE {" AND ".join(ch_sub_query)}
+                      GROUP BY error_id, name, message
+                      ORDER BY {sort} {order}
+                      LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
+                        INNER JOIN (SELECT error_id AS error_id, 
+                                            toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, 
+                                            toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
+                                     FROM {MAIN_EVENTS_TABLE}
+                                     WHERE project_id=%(project_id)s
+                                        AND event_type='ERROR'
+                                     GROUP BY error_id) AS time_details
+                ON details.error_id=time_details.error_id
+                    INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
+                    FROM (SELECT error_id, toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                            COUNT(DISTINCT session_id) AS count
+                            FROM {MAIN_EVENTS_TABLE}
+                            WHERE {" AND ".join(ch_sub_query)}
+                            GROUP BY error_id, timestamp
+                            ORDER BY timestamp) AS sub_table
+                            GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
-            return {"data": {"count": total}}
+        print("------------")
+        print(ch.format(main_ch_query, params))
+        print("------------")
 
-        else:
-            main_ch_query = f"""\
-                    SELECT details.error_id AS error_id, 
-                            name, message, users, total,
-                            sessions, last_occurrence, first_occurrence, chart
-                    FROM (SELECT error_id,
-                                 name,
-                                 message,
-                                 COUNT(DISTINCT user_id)  AS users,
-                                 COUNT(DISTINCT session_id) AS sessions,
-                                 MAX(datetime)              AS max_datetime,
-                                 MIN(datetime)              AS min_datetime,
-                                 COUNT(DISTINCT error_id) OVER() AS total
-                          FROM {MAIN_EVENTS_TABLE} 
-                                INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
-                                            FROM {MAIN_SESSIONS_TABLE}
-                                            WHERE {" AND ".join(ch_sessions_sub_query)}) AS sessions USING (session_id)
-                          WHERE {" AND ".join(ch_sub_query)}
-                          GROUP BY error_id, name, message
-                          ORDER BY {sort} {order}
-                          LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
-                            INNER JOIN (SELECT error_id AS error_id, 
-                                                toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, 
-                                                toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
-                                         FROM {MAIN_EVENTS_TABLE}
-                                         WHERE project_id=%(project_id)s
-                                            AND event_type='ERROR'
-                                         GROUP BY error_id) AS time_details
-                    ON details.error_id=time_details.error_id
-                        INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
-                        FROM (SELECT error_id, toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                                COUNT(DISTINCT session_id) AS count
-                                FROM {MAIN_EVENTS_TABLE}
-                                WHERE {" AND ".join(ch_sub_query)}
-                                GROUP BY error_id, timestamp
-                                ORDER BY timestamp) AS sub_table
-                                GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
-
-            # print("------------")
-            # print(ch.format(main_ch_query, params))
-            # print("------------")
-
-            rows = ch.execute(query=main_ch_query, params=params)
-            total = rows[0]["total"] if len(rows) > 0 else 0
-            if len(statuses) == 0:
-                query = cur.mogrify(
-                    """SELECT error_id, status, parent_error_id, payload,
-                            FALSE AS favorite,
-                            COALESCE((SELECT TRUE
-                                         FROM public.user_viewed_errors AS ve
-                                         WHERE errors.error_id = ve.error_id
-                                           AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                        FROM public.errors 
-                        WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
-                    {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
-                     "userId": user_id})
-                cur.execute(query=query)
-                statuses = helper.list_to_camel_case(cur.fetchall())
-    statuses = {
-        s["errorId"]: s for s in statuses
-    }
+        rows = ch.execute(query=main_ch_query, params=params)
+        total = rows[0]["total"] if len(rows) > 0 else 0
 
     for r in rows:
-        if r["error_id"] in statuses:
-            r["status"] = statuses[r["error_id"]]["status"]
-            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
-            r["favorite"] = statuses[r["error_id"]]["favorite"]
-            r["viewed"] = statuses[r["error_id"]]["viewed"]
-            r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]
-        else:
-            r["status"] = "untracked"
-            r["parent_error_id"] = None
-            r["favorite"] = False
-            r["viewed"] = False
-            r["stack"] = None
-
         r["chart"] = list(r["chart"])
         for i in range(len(r["chart"])):
             r["chart"][i] = {"timestamp": r["chart"][i][0], "count": r["chart"][i][1]}
         r["chart"] = metrics.__complete_missing_steps(rows=r["chart"], start_time=data.startDate,
                                                       end_time=data.endDate,
                                                       density=data.density, neutral={"count": 0})
-    offset = len(rows)
-    rows = [r for r in rows if r["stack"] is None
-            or (len(r["stack"]) == 0 or len(r["stack"]) > 1
-                or len(r["stack"]) > 0
-                and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
-    offset -= len(rows)
     return {
-        'total': total - offset,
+        'total': total,
         'errors': helper.list_to_camel_case(rows)
     }
 
