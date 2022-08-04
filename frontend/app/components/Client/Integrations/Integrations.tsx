@@ -26,6 +26,7 @@ import FetchDoc from './FetchDoc';
 import ProfilerDoc from './ProfilerDoc';
 import AxiosDoc from './AxiosDoc';
 import AssistDoc from './AssistDoc';
+import { PageTitle } from 'UI';
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -35,9 +36,10 @@ interface Props {
     initialSiteId: string;
     setSiteId: (siteId: string) => void;
     siteId: string;
+    hideHeader?: boolean;
 }
 function Integrations(props: Props) {
-    const { initialSiteId } = props;
+    const { initialSiteId, hideHeader = false } = props;
     const { showModal } = useModal();
     const [loading, setLoading] = React.useState(true);
     const [integratedList, setIntegratedList] = React.useState([]);
@@ -77,6 +79,7 @@ function Integrations(props: Props) {
 
     return (
         <div className="mb-4">
+            {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
             {integrations.map((cat: any) => (
                 <div className="mb-2 border-b last:border-none py-3">
                     <div className="flex items-center">
@@ -96,7 +99,10 @@ function Integrations(props: Props) {
                                 key={integration.name}
                                 integration={integration}
                                 onClick={() => onClick(integration)}
-                                hide={(integration.slug === 'github' && integratedList.includes('jira') || integration.slug === 'jira' && integratedList.includes('github'))}
+                                hide={
+                                    (integration.slug === 'github' && integratedList.includes('jira')) ||
+                                    (integration.slug === 'jira' && integratedList.includes('github'))
+                                }
                             />
                         ))}
                     </div>
