@@ -22,10 +22,18 @@ export default class BatchWriter {
     this.prepare()
   }
 
+  private writeType(m: Message): boolean {
+    return this.encoder.uint(m[0])
+  }
+  private writeFields(m: Message): boolean {
+    return this.encoder.encode(m)
+  }
+
   private prepare(): void {
     if (!this.encoder.isEmpty()) {
       return
     }
+
     // MBTODO: move service-messages creation to webworker
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
@@ -35,18 +43,19 @@ export default class BatchWriter {
       this.timestamp,
       this.url,
     ]
-    this.encoder.encode(batchMetadata)
+    this.writeType(batchMetadata)
+    this.writeFields(batchMetadata)
     this.isEmpty = true
   }
 
-  private write(message: Message): boolean {
+  private writeWithSize(message: Message): boolean {
     const e = this.encoder
-    if (!e.uint(message[0]) || !e.skip(SIZE_BYTES)) {
-      // TODO: app.debug.log
+    if (!this.writeType(message) || !e.skip(SIZE_BYTES)) {
+      // app.debug.log
       return false
     }
     const startOffset = e.getCurrentOffset()
-    const wasWritten = e.encode(message)
+    const wasWritten = this.writeFields(message)
     if (wasWritten) {
       const endOffset = e.getCurrentOffset()
       const size = endOffset - startOffset
@@ -77,11 +86,11 @@ export default class BatchWriter {
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1] // .url
     }
-    if (this.write(message)) {
+    if (this.writeWithSize(message)) {
       return
     }
     this.finaliseBatch()
-    while (!this.write(message)) {
+    while (!this.writeWithSize(message)) {
       if (this.beaconSize === this.beaconSizeLimit) {
         console.warn('OpenReplay: beacon size overflow. Skipping large message.', message)
         this.encoder.reset()
