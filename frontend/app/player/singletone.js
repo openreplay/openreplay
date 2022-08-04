@@ -2,7 +2,7 @@ import Player from './Player';
 import { update, clean as cleanStore, getState } from './store';
 import { clean as cleanLists } from './lists';
 
-
+/** @type {Player}  */
 let instance = null;
 
 const initCheck = method => (...args) => {
@@ -74,6 +74,8 @@ export const requestReleaseRemoteControl = initCheck((...args) => instance.assis
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
 export const toggleAnnotation = initCheck((...args) => instance.assistManager.toggleAnnotation(...args))
+export const toggleTimetravel = initCheck((...args) => instance.toggleTimetravel(...args))
+export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
 
 export const Controls = {
   jump,

@@ -9,6 +9,10 @@ import {
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
 import { session as sessionRoute, withSiteId } from 'App/routes';
+import {
+  toggleTimetravel,
+  jumpToLive,
+} from 'Player';
 
 import { Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
@@ -99,6 +103,7 @@ function getStorageName(type) {
   exceptionsCount: state.exceptionsListNow.length,
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
+  liveTimetravel: state.liveTimetravel,
 }))
 @connect((state, props) => {
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
@@ -162,7 +167,8 @@ export default class Controls extends React.Component {
       nextProps.graphqlCount !== this.props.graphqlCount ||
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
-      nextProps.showLongtasks !== this.props.showLongtasks
+      nextProps.showLongtasks !== this.props.showLongtasks ||
+      nextProps.liveTimetravel !== this.props.liveTimetravel
     ) return true;
     return false;
   }
@@ -286,7 +292,8 @@ export default class Controls extends React.Component {
       sessionId,
       toggleSpeed,
       toggleSkip,
-      siteId
+      siteId,
+      liveTimetravel
     } = this.props;
 
     const toggleBottomTools = (blockName) => {
@@ -299,10 +306,10 @@ export default class Controls extends React.Component {
       }
     }
     return (
-      <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
-        { !live && <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> }
+      <div className={ styles.controls }>
+        { !live || liveTimetravel ? <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> : null}
         { !fullscreen &&
-          <div className={ styles.buttons } data-is-live={ live }>
+          <div className={ cn(styles.buttons, {'!px-5 !pt-0' : live}) } data-is-live={ live }>
             <div>
               {!live && (
                 <PlayerControls 
@@ -321,7 +328,7 @@ export default class Controls extends React.Component {
 
               { live && !closedLive && (
                 <div className={ styles.buttonsLeft }>
-                  <LiveTag isLive={livePlay} />
+                  <LiveTag isLive={livePlay} onClick={() => livePlay ? null : jumpToLive()} />
                   {'Elapsed'}
                   <ReduxTime name="time" />
 
@@ -330,6 +337,9 @@ export default class Controls extends React.Component {
                       Recording
                     </div>
                   </a>
+                  <div onClick={toggleTimetravel} className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
+                      Toggle timeline
+                    </div>
                 </div>
               )}
             </div>

@@ -52,7 +52,8 @@ export const INITIAL_NON_RESETABLE_STATE = {
   skipToIssue: initialSkipToIssue,
   autoplay: initialAutoplay,
   speed: initialSpeed,
-  showEvents: initialShowEvents
+  showEvents: initialShowEvents,
+  liveTimetravel: false,
 }
 
 export default class Player extends MessageDistributor {
@@ -151,9 +152,9 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  jump(time = getState().time, index) {
-    const { live } = getState();
-    if (live) return;
+  jump(time = getState().time, index: number) {
+    const { live, liveTimetravel } = getState();
+    if (live && !liveTimetravel) return;
     
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
@@ -168,6 +169,13 @@ export default class Player extends MessageDistributor {
         update({ livePlay: time === getState().endTime });
       //});
     }
+  }
+
+  jumpToLive() {
+      cancelAnimationFrame(this._animationFrameRequestId);
+      this._setTime(getState().endTime);
+      this._startAnimation();
+      update({ livePlay: getState().time === getState().endTime });
   }
 
   toggleSkip() {
@@ -243,6 +251,11 @@ export default class Player extends MessageDistributor {
   speedDown() {
     const { speed } = getState();
     this._updateSpeed(Math.max(1, speed/2));
+  }
+
+  toggleTimetravel() {
+    const { liveTimetravel } = getState();
+    update({ liveTimetravel: !liveTimetravel });
   }
 
   clean() {

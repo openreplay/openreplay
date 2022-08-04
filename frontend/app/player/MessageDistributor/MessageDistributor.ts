@@ -89,7 +89,7 @@ export default class MessageDistributor extends StatedScreen {
   private readonly decoder = new Decoder();
   private readonly lists = initLists();
 
-  private activirtManager: ActivityManager | null = null;
+  private activityManager: ActivityManager | null = null;
 
   private readonly sessionStart: number;
   private navigationStartOffset: number = 0;
@@ -107,7 +107,7 @@ export default class MessageDistributor extends StatedScreen {
       initListsDepr({})
       this.assistManager.connect();
     } else {
-      this.activirtManager = new ActivityManager(this.session.duration.milliseconds);
+      this.activityManager = new ActivityManager(this.session.duration.milliseconds);
       /* == REFACTOR_ME == */
       const eventList = this.session.events.toJSON();
       initListsDepr({
@@ -188,10 +188,10 @@ export default class MessageDistributor extends StatedScreen {
     const onSuccessRead = () => {
       console.log('got to success read')
       this.windowNodeCounter.reset()
-      if (this.activirtManager) {
-        this.activirtManager.end()
+      if (this.activityManager) {
+        this.activityManager.end()
         update({
-          skipIntervals: this.activirtManager.list
+          skipIntervals: this.activityManager.list
         })
       }
       this.waitingForFiles = false
@@ -315,7 +315,7 @@ export default class MessageDistributor extends StatedScreen {
       "set_viewport_size",
       "set_viewport_scroll",
     ].includes(msg.tp)) {
-      this.activirtManager?.updateAcctivity(msg.time);
+      this.activityManager?.updateAcctivity(msg.time);
     }
     //const index = i + index; //?
     let decoded;
