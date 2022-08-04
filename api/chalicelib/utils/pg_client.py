@@ -111,7 +111,7 @@ class PostgresClient:
             else:
                 raise error
         finally:
-            if not self.long_query:
+            if not self.long_query and not self.unlimited_query:
                 postgreSQL_pool.putconn(self.connection)
 
 
