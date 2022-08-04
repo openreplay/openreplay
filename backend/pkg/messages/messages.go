@@ -1498,22 +1498,6 @@ func (msg *CustomIssue) TypeID() int {
 	return 64
 }
 
-type PageClose struct {
-	message
-}
-
-func (msg *PageClose) Encode() []byte {
-	buf := make([]byte, 1)
-	buf[0] = 65
-	p := 1
-
-	return buf[:p]
-}
-
-func (msg *PageClose) TypeID() int {
-	return 65
-}
-
 type AssetCache struct {
 	message
 	URL string
