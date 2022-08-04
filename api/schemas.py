@@ -734,7 +734,7 @@ class ErrorSort(str, Enum):
     sessions_count = 'sessions'
 
 
-class SearchErrorsSchema(SessionsSearchPayloadSchema):
+class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     sort: ErrorSort = Field(default=ErrorSort.occurrence)
     density: Optional[int] = Field(7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
@@ -766,7 +766,7 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema, SearchErrorsSchema):
+class CustomMetricSeriesFilterSchema(SearchErrorsSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)

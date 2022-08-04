@@ -187,16 +187,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     meta_keys = []
     with pg_client.PostgresClient() as cur:
         if errors_only:
-            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
-                                        COALESCE((SELECT TRUE
-                                         FROM public.user_favorite_sessions AS fs
-                                         WHERE s.session_id = fs.session_id
-                                           AND fs.user_id = %(userId)s), FALSE)   AS favorite,
-                                        COALESCE((SELECT TRUE
+            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id,
+                                         COALESCE((SELECT TRUE
                                                      FROM public.user_viewed_errors AS ve
                                                      WHERE er.error_id = ve.error_id
                                                        AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                                {query_part};""", full_args)
+                                        {query_part};""", full_args)
 
         elif count_only:
             main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 

@@ -545,8 +545,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         else:
             if len(statuses) == 0:
                 query = cur.mogrify(
-                    """SELECT error_id, status, parent_error_id, payload,
-                            FALSE AS favorite,
+                    """SELECT error_id,
                             COALESCE((SELECT TRUE
                                          FROM public.user_viewed_errors AS ve
                                          WHERE errors.error_id = ve.error_id
@@ -564,26 +563,12 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     for r in rows:
         r.pop("full_count")
         if r["error_id"] in statuses:
-            r["status"] = statuses[r["error_id"]]["status"]
-            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
-            r["favorite"] = statuses[r["error_id"]]["favorite"]
             r["viewed"] = statuses[r["error_id"]]["viewed"]
-            r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]
         else:
-            r["status"] = "untracked"
-            r["parent_error_id"] = None
-            r["favorite"] = False
             r["viewed"] = False
-            r["stack"] = None
 
-    offset = len(rows)
-    rows = [r for r in rows if r["stack"] is None
-            or (len(r["stack"]) == 0 or len(r["stack"]) > 1
-                or len(r["stack"]) > 0
-                and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
-    offset -= len(rows)
     return {
-        'total': total - offset,
+        'total': total,
         'errors': helper.list_to_camel_case(rows)
     }
 
