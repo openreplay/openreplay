@@ -421,10 +421,11 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
-    empty_response = {'total': 0,
-                      'errors': []
-                      }
+def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+    empty_response = {
+        'total': 0,
+        'errors': []
+    }
 
     platform = None
     for f in data.filters:
@@ -446,7 +447,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         data.endDate = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
-        # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                             error_status=data.status)
         if len(statuses) == 0:
@@ -537,8 +537,6 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         cur.execute(cur.mogrify(main_pg_query, params))
         rows = cur.fetchall()
         total = 0 if len(rows) == 0 else rows[0]["full_count"]
-        if flows:
-            return {"count": total}
 
         if total == 0:
             rows = []

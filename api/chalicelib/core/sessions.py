@@ -172,6 +172,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._is_undefined]
 
 
+# This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
@@ -397,6 +398,7 @@ def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
                         event.filters is None or len(event.filters) == 0))
 
 
+# this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
@@ -985,13 +987,13 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
         extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
         extra_constraints.append("ser.source = 'js_exception'")
         extra_constraints.append("ser.project_id = %(project_id)s")
-        if error_status != schemas.ErrorStatus.all:
-            extra_constraints.append("ser.status = %(error_status)s")
-            full_args["error_status"] = error_status
-        if favorite_only:
-            extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
-            extra_constraints.append("ufe.user_id = %(userId)s")
-    # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
+        # if error_status != schemas.ErrorStatus.all:
+        #     extra_constraints.append("ser.status = %(error_status)s")
+        #     full_args["error_status"] = error_status
+        # if favorite_only:
+        #     extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
+        #     extra_constraints.append("ufe.user_id = %(userId)s")
+
     if favorite_only and not errors_only and user_id is not None:
         extra_from += """INNER JOIN (SELECT user_id, session_id
                                     FROM public.user_favorite_sessions
