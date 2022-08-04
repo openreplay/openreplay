@@ -171,13 +171,6 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  jumpToLive() {
-      cancelAnimationFrame(this._animationFrameRequestId);
-      this._setTime(getState().endTime);
-      this._startAnimation();
-      update({ livePlay: getState().time === getState().endTime });
-  }
-
   toggleSkip() {
     const skip = !getState().skip;
     localStorage.setItem(SKIP_STORAGE_KEY, `${skip}`);
@@ -261,6 +254,13 @@ export default class Player extends MessageDistributor {
     }
     update({ liveTimetravel: !liveTimetravel });
   }
+  
+  jumpToLive() {
+    cancelAnimationFrame(this._animationFrameRequestId);
+    this._setTime(getState().endTime);
+    this._startAnimation();
+    update({ livePlay: getState().time === getState().endTime });
+}
 
   clean() {
     this.pause();

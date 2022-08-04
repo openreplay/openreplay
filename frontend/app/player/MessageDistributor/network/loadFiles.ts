@@ -39,7 +39,7 @@ export const loadFiles = (
   })
 }
 
-export const checkUnprocessedMobs = async (url: string, onData: onDataCb) => {
+export const checkUnprocessedMobs = async (url: string) => {
   try {
     const api = new APIClient()
     const res = await api.fetch(url)
@@ -47,8 +47,7 @@ export const checkUnprocessedMobs = async (url: string, onData: onDataCb) => {
       return false
     }
     const byteArray = await processAPIStreamResponse(res, false)
-    onData(byteArray)
-    return true
+    return byteArray
   } catch (e) {
     console.error(e)
     return false

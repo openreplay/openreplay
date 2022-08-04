@@ -132,9 +132,9 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   private waitingForFiles: boolean = false
-  public loadMessages(isTimeJump?: boolean): void {
+  public loadMessages(isTimeTravel?: boolean): void {
     // jumping back in time inside live assist session
-    if (isTimeJump) {
+    if (isTimeTravel) {
       this.assistManager.toggleTimeTravelJump()
 
       this.locationEventManager = new ListWalker();
@@ -163,7 +163,7 @@ export default class MessageDistributor extends StatedScreen {
       let next: ReturnType<MFileReader['next']>
       while (next = r.next()) {
         const [msg, index] = next
-        this.distributeMessage(msg, index, isTimeJump)
+        this.distributeMessage(msg, index, isTimeTravel)
         msgs.push(msg)
       }
 
@@ -206,7 +206,6 @@ export default class MessageDistributor extends StatedScreen {
     }
 
     const onSuccessRead = () => {
-      console.log('got to success read')
       this.windowNodeCounter.reset()
       if (this.activityManager) {
         this.activityManager.end()
@@ -223,19 +222,18 @@ export default class MessageDistributor extends StatedScreen {
     )
     .then(onSuccessRead)
     .catch(async e => {
-      console.error(e)
-      const isUnprocessed = await checkUnprocessedMobs(`/unprocessed/${this.session.sessionId}`, onData)
-      if (!isUnprocessed) {
+      const unprocessedFile = await checkUnprocessedMobs(`/unprocessed/${this.session.sessionId}`)
+      if (unprocessedFile) {
+        Promise.resolve(onData(unprocessedFile)).then(() => onSuccessRead())
+      } else {
         logger.error(e)
         this.waitingForFiles = false
         this.setMessagesLoading(false)
         update({ error: true })
-      } else {
-        onSuccessRead()
       }
     })
 
-    if (isTimeJump) {
+    if (isTimeTravel) {
       this.assistManager.toggleTimeTravelJump()
     }
   }
@@ -333,10 +331,10 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   /* Binded */
-  distributeMessage(msg: Message, index: number, isReload?: boolean): void {
+  distributeMessage(msg: Message, index: number, isTimeTravel?: boolean): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
-    if (isReload) {
+    if (isTimeTravel) {
       this.lastRecordedMessageTime = lastMessageTime
     }
     if ([
