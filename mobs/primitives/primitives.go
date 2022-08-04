@@ -19,7 +19,7 @@ func SkipBytes(reader io.ReadSeeker) error {
 	if err != nil {
 		return err
 	}
-	_, err := reader.Seek(n, io.SeekCurrent);
+	_, err = reader.Seek(int64(n), io.SeekCurrent)
 	return err
 }
 
@@ -29,13 +29,13 @@ func ReadData(reader io.Reader) ([]byte, error) {
 		return nil, err
 	}
 	p := make([]byte, n)
-	_, err := io.ReadFull(reader, p)
+	_, err = io.ReadFull(reader, p)
 	if err != nil {
 		return nil, err
 	}
 	return p, nil
 }
- 
+
 func ReadUint(reader io.Reader) (uint64, error) {
 	var x uint64
 	var s uint
