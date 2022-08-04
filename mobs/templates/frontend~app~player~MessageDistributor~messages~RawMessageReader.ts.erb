@@ -1,0 +1,35 @@
+// Auto-generated, do not edit
+
+import PrimitiveReader from './PrimitiveReader'
+import type { RawMessage } from './raw'
+
+
+export default class RawMessageReader extends PrimitiveReader {
+  readMessage(): RawMessage | null {
+    const p = this.p
+    const resetPointer = () => {
+      this.p = p
+      return null
+    }
+
+    const tp = this.readUint()
+    if (tp === null) { return resetPointer() }
+
+    switch (tp) {
+    <% $messages.select { |msg| msg.js || msg.replayer }.each do |msg| %>
+    case <%= msg.id %>: {
+<%= msg.attributes.map { |attr| 
+"      const #{attr.name.first_lower} = this.read#{attr.type.to_s.camel_case}(); if (#{attr.name.first_lower} === null) { return resetPointer() }" }.join "\n" %>      
+      return {
+        tp: "<%= msg.name.underscore %>", 
+<%= msg.attributes.map { |attr| 
+"        #{attr.name.first_lower}," }.join "\n" %>      
+      };
+    }
+    <% end %>
+    default:
+      throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
+      return null;
+    }
+  }
+}

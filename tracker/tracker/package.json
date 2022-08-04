@@ -14,33 +14,50 @@
   "type": "module",
   "main": "./lib/index.js",
   "scripts": {
-    "lint": "eslint src --ext .ts,.js --fix && tsc --noEmit",
+    "lint": "eslint src --ext .ts,.js --fix --quiet",
     "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
-    "tsc": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
+    "tscRun": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
-    "build": "npm run clean && npm run tsc && npm run rollup && npm run compile",
-    "prepare": "node scripts/checkver.cjs && npm run build"
+    "build": "npm run clean && npm run tscRun && npm run rollup && npm run compile",
+    "prepare": "cd ../../ && husky install tracker/.husky/",
+    "lint-front": "lint-staged"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
     "@rollup/plugin-babel": "^5.0.3",
     "@rollup/plugin-node-resolve": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.33.0",
+    "@typescript-eslint/eslint-plugin": "^5.30.0",
+    "@typescript-eslint/parser": "^5.30.0",
     "eslint": "^7.8.0",
-    "eslint-plugin-prettier": "^4.1.4",
-    "prettier": "^2.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
     "replace-in-files": "^2.0.3",
     "rollup": "^2.17.0",
     "rollup-plugin-terser": "^6.1.0",
     "semver": "^6.3.0",
-    "typescript": "^4.6.0-dev.20211126"
+    "typescript": "4.6.0-dev.20211126"
   },
   "dependencies": {
     "error-stack-parser": "^2.0.6"
   },
   "engines": {
     "node": ">=14.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "sh lint.sh"
+    }
+  },
+  "lint-staged": {
+    "*.{js,mjs,jsx,ts,tsx}": [
+      "eslint --fix --quiet"
+    ],
+    "*.{json,md,html,js,jsx,ts,tsx}": [
+      "prettier --write"
+    ]
   }
 }

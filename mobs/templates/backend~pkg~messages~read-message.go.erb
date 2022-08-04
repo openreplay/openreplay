@@ -1,0 +1,26 @@
+// Auto-generated, do not edit
+package messages
+
+import (
+	"fmt"
+	"io"
+)
+
+func ReadMessage(reader io.Reader) (Message, error) {
+	t, err := ReadUint(reader)
+	if err != nil {
+		return nil, err
+	}
+	switch t {
+<% $messages.each do |msg| %>
+	case <%= msg.id %>:
+		msg := &<%= msg.name %>{}
+<%= msg.attributes.map { |attr| 
+"		if msg.#{attr.name}, err = Read#{attr.type.to_s.camel_case}(reader); err != nil {
+			return nil, err
+		}" }.join "\n" %>
+		return msg, nil
+<% end %>
+	}
+	return nil, fmt.Errorf("Unknown message code: %v", t)
+}

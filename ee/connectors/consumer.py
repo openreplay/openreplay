@@ -49,7 +49,7 @@ def main():
         elif LEVEL == 'normal':
             n = handle_normal_message(message)
 
-        session_id = codec.decode_key(msg.key)
+        session_id = decode_key(msg.key)
         sessions[session_id] = handle_session(sessions[session_id], message)
         if sessions[session_id]:
             sessions[session_id].sessionid = session_id
@@ -116,6 +116,15 @@ def attempt_batch_insert(batch):
     except Exception as e:
         print(repr(e))
 
+def decode_key(b) -> int:
+    """
+    Decode the message key (encoded with little endian)
+    """
+    try:
+        decoded = int.from_bytes(b, "little", signed=False)
+    except Exception as e:
+        raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
+    return decoded
 
 if __name__ == '__main__':
     main()

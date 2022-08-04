@@ -42,5 +42,6 @@ module.exports = {
     default: '#DDDDDD',
     'gray-light-shade': '#EEEEEE',
     'primary': '#3490dc',
+    'transparent': 'transparent',
   }
 }
