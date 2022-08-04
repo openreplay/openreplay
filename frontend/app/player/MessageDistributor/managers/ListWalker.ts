@@ -16,6 +16,11 @@ export default class ListWalker<T extends Timed> {
 		this.p = 0
 	}
 
+	clear(): void {
+		this._list = [];
+		this.p = 0;
+	}
+
 	sort(comparator: (a: T, b: T) => number): void {
 		// @ts-ignore
 		this._list.sort((m1,m2) => comparator(m1,m2) || (m1._index - m2._index) ); // indexes for sort stability (TODO: fix types???)

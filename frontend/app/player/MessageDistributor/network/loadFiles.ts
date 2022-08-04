@@ -50,6 +50,7 @@ export const checkUnprocessedMobs = async (url: string, onData: onDataCb) => {
     onData(byteArray)
     return true
   } catch (e) {
+    console.error(e)
     return false
   }
 }

@@ -71,20 +71,20 @@ import type { Timed } from './messages/timed';
 
 export default class MessageDistributor extends StatedScreen {
   // TODO: consistent with the other data-lists
-  private readonly locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
-  private readonly locationManager: ListWalker<SetPageLocation> = new ListWalker();
-  private readonly loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
-  private readonly connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
-  private readonly performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
-  private readonly windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
-  private readonly clickManager: ListWalker<MouseClick> = new ListWalker();
+  private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
+  private locationManager: ListWalker<SetPageLocation> = new ListWalker();
+  private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
+  private connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
+  private performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
+  private windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
+  private clickManager: ListWalker<MouseClick> = new ListWalker();
 
-  private readonly resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
-  private readonly pagesManager: PagesManager;
-  private readonly mouseMoveManager: MouseMoveManager;
-  private readonly assistManager: AssistManager;
+  private resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
+  private pagesManager: PagesManager;
+  private mouseMoveManager: MouseMoveManager;
+  private assistManager: AssistManager;
 
-  private readonly scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
+  private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   private readonly decoder = new Decoder();
   private readonly lists = initLists();
@@ -94,6 +94,7 @@ export default class MessageDistributor extends StatedScreen {
   private readonly sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
+  lastRecordedMessageTime: number = 0;
 
   constructor(private readonly session: any /*Session*/, config: any, live: boolean) {
     super();
@@ -116,12 +117,13 @@ export default class MessageDistributor extends StatedScreen {
         resource: this.session.resources.toJSON(),
       });
 
-      eventList.forEach(e => {
+      // TODO: fix types for events, remove immutable js
+      eventList.forEach((e: Record<string, string>) => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
           this.locationEventManager.append(e); 
         }
       });
-      this.session.errors.forEach(e => {
+      this.session.errors.forEach((e: Record<string, string>) => {
         this.lists.exceptions.append(e);
       });
       /* === */
@@ -130,8 +132,26 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   private waitingForFiles: boolean = false
-  private loadMessages(): void {
-    console.log('assist wtf')
+  public loadMessages(isTimeJump?: boolean): void {
+    // jumping back in time inside live assist session
+    if (isTimeJump) {
+      this.assistManager.toggleTimeTravelJump()
+
+      this.locationEventManager = new ListWalker();
+      this.locationManager = new ListWalker();
+      this.loadedLocationManager = new ListWalker();
+      this.connectionInfoManger = new ListWalker();
+      this.clickManager = new ListWalker();
+      this.scrollManager = new ListWalker();
+      this.resizeManager = new ListWalker([]);
+
+      this.performanceTrackManager = new PerformanceTrackManager()
+      this.windowNodeCounter = new WindowNodeCounter();
+      this.pagesManager = new PagesManager(this, this.session.isMobile)
+      this.mouseMoveManager = new MouseMoveManager(this);
+      this.activityManager = new ActivityManager(this.session.duration.milliseconds);
+    }
+
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
@@ -143,7 +163,7 @@ export default class MessageDistributor extends StatedScreen {
       let next: ReturnType<MFileReader['next']>
       while (next = r.next()) {
         const [msg, index] = next
-        this.distributeMessage(msg, index)
+        this.distributeMessage(msg, index, isTimeJump)
         msgs.push(msg)
       }
 
@@ -203,14 +223,21 @@ export default class MessageDistributor extends StatedScreen {
     )
     .then(onSuccessRead)
     .catch(async e => {
+      console.error(e)
       const isUnprocessed = await checkUnprocessedMobs(`/unprocessed/${this.session.sessionId}`, onData)
       if (!isUnprocessed) {
         logger.error(e)
         this.waitingForFiles = false
         this.setMessagesLoading(false)
         update({ error: true })
+      } else {
+        onSuccessRead()
       }
     })
+
+    if (isTimeJump) {
+      this.assistManager.toggleTimeTravelJump()
+    }
   }
 
   move(t: number, index?: number): void {
@@ -257,6 +284,7 @@ export default class MessageDistributor extends StatedScreen {
     LIST_NAMES.forEach(key => {
       const lastMsg = this.lists[key].moveGetLast(t, key === 'exceptions' ? undefined : index);
       if (lastMsg != null) {
+        // @ts-ignore TODO: fix types
         stateToUpdate[`${key}ListNow`] = this.lists[key].listNow;
       }
     });
@@ -290,10 +318,11 @@ export default class MessageDistributor extends StatedScreen {
     }
   }
 
-  private decodeMessage(msg, keys: Array<string>) {
+  private decodeMessage(msg: any, keys: Array<string>) {
     const decoded = {};
     try {
       keys.forEach(key => {
+        // @ts-ignore TODO: types for decoder
         decoded[key] = this.decoder.decode(msg[key]);
       });
     } catch (e) {
@@ -304,8 +333,12 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   /* Binded */
-  distributeMessage(msg: Message, index: number): void {
-    this.lastMessageTime = Math.max(msg.time, this.lastMessageTime)
+  distributeMessage(msg: Message, index: number, isReload?: boolean): void {
+    const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
+    this.lastMessageTime = lastMessageTime
+    if (isReload) {
+      this.lastRecordedMessageTime = lastMessageTime
+    }
     if ([
       "mouse_move",
       "mouse_click",

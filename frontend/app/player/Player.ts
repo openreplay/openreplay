@@ -255,6 +255,10 @@ export default class Player extends MessageDistributor {
 
   toggleTimetravel() {
     const { liveTimetravel } = getState();
+    if (!liveTimetravel) {
+      this.loadMessages(true)
+      this.play()
+    }
     update({ liveTimetravel: !liveTimetravel });
   }
 

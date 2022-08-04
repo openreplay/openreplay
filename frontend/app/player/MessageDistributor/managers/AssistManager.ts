@@ -73,6 +73,9 @@ const MAX_RECONNECTION_COUNT = 4;
 
 
 export default class AssistManager {
+  private timeTravelJump = false;
+  private jumped = false;
+
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
@@ -147,7 +150,7 @@ export default class AssistManager {
       })
       socket.on('messages', messages => {
         //console.log(messages.filter(m => m._id === 41 || m._id === 44))
-        jmr.append(messages) // as RawMessage[]
+        !this.timeTravelJump && jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
@@ -159,8 +162,15 @@ export default class AssistManager {
           }
         }
 
+        if (this.timeTravelJump) {
+          return;
+        }
+
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
           //@ts-ignore
+          if (this.jumped) {
+            msg.time = this.md.lastRecordedMessageTime + msg.time
+          }
           this.md.distributeMessage(msg, msg._index)
         }
       })
@@ -479,6 +489,10 @@ export default class AssistManager {
     })
   }
 
+  toggleTimeTravelJump() {
+    this.jumped = true;
+    this.timeTravelJump = !this.timeTravelJump;
+  }
 
   /* ==== Cleaning ==== */
   private cleaned: boolean = false
@@ -502,5 +516,3 @@ export default class AssistManager {
     }
   }
 }
-
-
