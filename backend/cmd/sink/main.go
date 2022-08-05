@@ -2,22 +2,20 @@ package main
 
 import (
 	"context"
-	"encoding/binary"
 	"log"
-	"openreplay/backend/internal/sink/assetscache"
-	"openreplay/backend/internal/sink/oswriter"
-	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/monitoring"
-	"time"
-
+	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"openreplay/backend/internal/config/sink"
+	"openreplay/backend/internal/sink/assetscache"
+	"openreplay/backend/internal/sink/oswriter"
+	"openreplay/backend/internal/storage"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
 )
 
@@ -58,51 +56,49 @@ func main() {
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		func(sessionID uint64, message Message, _ *types.Meta) {
-			// Process assets
-			message = assetMessageHandler.ParseAssets(sessionID, message)
+		func(sessionID uint64, iter Iterator, meta *types.Meta) {
+			for iter.Next() {
+				// [METRICS] Increase the number of processed messages
+				totalMessages.Add(context.Background(), 1)
 
-			totalMessages.Add(context.Background(), 1)
-
-			// Filter message
-			typeID := message.TypeID()
-
-			// Send SessionEnd trigger to storage service
-			switch message.(type) {
-			case *SessionEnd:
-				if err := producer.Produce(cfg.TopicTrigger, sessionID, Encode(message)); err != nil {
-					log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
+				// Send SessionEnd trigger to storage service
+				if iter.Type() == MsgSessionEnd {
+					if err := producer.Produce(cfg.TopicTrigger, sessionID, iter.Message().Encode()); err != nil {
+						log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
+					}
+					continue
 				}
-				return
-			}
-			if !IsReplayerType(typeID) {
-				return
-			}
 
-			// If message timestamp is empty, use at least ts of session start
-			ts := message.Meta().Timestamp
-			if ts == 0 {
-				log.Printf("zero ts; sessID: %d, msg: %+v", sessionID, message)
-			} else {
-				// Log ts of last processed message
-				counter.Update(sessionID, time.UnixMilli(ts))
-			}
+				msg := iter.Message()
+				// Process assets
+				if iter.Type() == MsgSetNodeAttributeURLBased || iter.Type() == MsgSetCSSDataURLBased || iter.Type() == MsgCSSInsertRuleURLBased {
+					msg = assetMessageHandler.ParseAssets(sessionID, msg.Decode())
+				}
 
-			value := message.Encode()
-			var data []byte
-			if IsIOSType(typeID) {
-				data = value
-			} else {
-				data = make([]byte, len(value)+8)
-				copy(data[8:], value[:])
-				binary.LittleEndian.PutUint64(data[0:], message.Meta().Index)
-			}
-			if err := writer.Write(sessionID, data); err != nil {
-				log.Printf("Writer error: %v\n", err)
-			}
+				// Filter message
+				if !IsReplayerType(msg.TypeID()) {
+					return
+				}
 
-			messageSize.Record(context.Background(), float64(len(data)))
-			savedMessages.Add(context.Background(), 1)
+				// If message timestamp is empty, use at least ts of session start
+				ts := msg.Meta().Timestamp
+				if ts == 0 {
+					log.Printf("zero ts; sessID: %d, msgType: %d", sessionID, iter.Type())
+				} else {
+					// Log ts of last processed message
+					counter.Update(sessionID, time.UnixMilli(ts))
+				}
+
+				// Write encoded message with index to session file
+				data := msg.EncodeWithIndex()
+				if err := writer.Write(sessionID, data); err != nil {
+					log.Printf("Writer error: %v\n", err)
+				}
+
+				// [METRICS] Increase the number of written to the files messages and the message size
+				messageSize.Record(context.Background(), float64(len(data)))
+				savedMessages.Add(context.Background(), 1)
+			}
 		},
 		false,
 		cfg.MessageSizeLimit,

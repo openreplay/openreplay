@@ -3,24 +3,23 @@ package main
 import (
 	"errors"
 	"log"
-	"openreplay/backend/internal/config/db"
-	"openreplay/backend/internal/db/datasaver"
-	"openreplay/backend/pkg/handlers"
-	custom2 "openreplay/backend/pkg/handlers/custom"
-	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/sessions"
-	"time"
-
+	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"openreplay/backend/internal/config/db"
+	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/handlers"
+	custom2 "openreplay/backend/pkg/handlers/custom"
 	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 )
 
 func main() {
@@ -51,49 +50,59 @@ func main() {
 	saver.InitStats()
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
+	keepMessage := func(tp int) bool {
+		return tp == messages.MsgMetadata || tp == messages.MsgIssueEvent || tp == messages.MsgSessionStart || tp == messages.MsgSessionEnd || tp == messages.MsgUserID || tp == messages.MsgUserAnonymousID || tp == messages.MsgCustomEvent || tp == messages.MsgClickEvent || tp == messages.MsgInputEvent || tp == messages.MsgPageEvent || tp == messages.MsgErrorEvent || tp == messages.MsgFetchEvent || tp == messages.MsgGraphQLEvent || tp == messages.MsgIntegrationEvent || tp == messages.MsgPerformanceTrackAggr || tp == messages.MsgResourceEvent || tp == messages.MsgLongTask || tp == messages.MsgJSException || tp == messages.MsgResourceTiming || tp == messages.MsgRawCustomEvent || tp == messages.MsgCustomIssue || tp == messages.MsgFetch || tp == messages.MsgGraphQL || tp == messages.MsgStateAction || tp == messages.MsgSetInputTarget || tp == messages.MsgSetInputValue || tp == messages.MsgCreateDocument || tp == messages.MsgMouseClick || tp == messages.MsgSetPageLocation || tp == messages.MsgPageLoadTiming || tp == messages.MsgPageRenderTiming
+	}
+
 	// Handler logic
-	handler := func(sessionID uint64, msg messages.Message, meta *types.Meta) {
+	handler := func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
 		statsLogger.Collect(sessionID, meta)
 
-		// Just save session data into db without additional checks
-		if err := saver.InsertMessage(sessionID, msg); err != nil {
-			if !postgres.IsPkeyViolation(err) {
-				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
+		for iter.Next() {
+			if !keepMessage(iter.Type()) {
+				continue
 			}
-			return
-		}
+			msg := iter.Message().Decode()
 
-		session, err := pg.GetSession(sessionID)
-		if session == nil {
-			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
-				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
-			}
-			return
-		}
-
-		// Save statistics to db
-		err = saver.InsertStats(session, msg)
-		if err != nil {
-			log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
-		}
-
-		// Handle heuristics and save to temporary queue in memory
-		builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
-
-		// Process saved heuristics messages as usual messages above in the code
-		builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
-			// TODO: DRY code (carefully with the return statement logic)
+			// Just save session data into db without additional checks
 			if err := saver.InsertMessage(sessionID, msg); err != nil {
 				if !postgres.IsPkeyViolation(err) {
-					log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 				}
 				return
 			}
 
-			if err := saver.InsertStats(session, msg); err != nil {
-				log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+			session, err := pg.GetSession(sessionID)
+			if session == nil {
+				if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
+					log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
+				}
+				return
 			}
-		})
+
+			// Save statistics to db
+			err = saver.InsertStats(session, msg)
+			if err != nil {
+				log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
+			}
+
+			// Handle heuristics and save to temporary queue in memory
+			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
+
+			// Process saved heuristics messages as usual messages above in the code
+			builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
+				if err := saver.InsertMessage(sessionID, msg); err != nil {
+					if !postgres.IsPkeyViolation(err) {
+						log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+					}
+					return
+				}
+
+				if err := saver.InsertStats(session, msg); err != nil {
+					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+				}
+			})
+		}
 	}
 
 	// Init consumer

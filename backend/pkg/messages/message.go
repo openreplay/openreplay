@@ -16,6 +16,8 @@ func (m *message) SetMeta(origin *message) {
 
 type Message interface {
 	Encode() []byte
+	EncodeWithIndex() []byte
+	Decode() Message
 	TypeID() int
 	Meta() *message
 }
