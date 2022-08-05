@@ -9,10 +9,11 @@ function getStyles(
     isDragging: boolean,
   ): CSSProperties {
     // const transform = `translate3d(${(left * 1161) / 100}px, -8px, 0)`
+    const leftPosition = left > 100 ? 100 : left
     return {
         position: 'absolute',
         top: '-3px',
-        left: `${left}%`,
+        left: `${leftPosition}%`,
         // transform,
         // WebkitTransform: transform,
         // IE fallback: hide the real node using CSS when dragging

@@ -124,6 +124,10 @@ export default class AssistManager {
     let waitingForMessages = true
     let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+
+    const now = +new Date()
+    update({ assistStart: now })
+
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection

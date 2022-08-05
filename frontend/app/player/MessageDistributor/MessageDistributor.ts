@@ -91,7 +91,7 @@ export default class MessageDistributor extends StatedScreen {
 
   private activityManager: ActivityManager | null = null;
 
-  private readonly sessionStart: number;
+  private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
   private lastRecordedMessageTime: number = 0;
@@ -155,7 +155,7 @@ export default class MessageDistributor extends StatedScreen {
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    const r = new MFileReader(new Uint8Array(), this.sessionStart)
+    const r = new MFileReader(new Uint8Array(), isTimeTravel ? undefined : this.sessionStart)
     const msgs: Array<Message> = []
 
     const onData = (b: Uint8Array) => {
@@ -168,7 +168,7 @@ export default class MessageDistributor extends StatedScreen {
       }
 
       logger.info("Messages count: ", msgs.length, msgs)
-
+      if (isTimeTravel) this.sessionStart = msgs[0].time
       // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
       const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
       this.pagesManager.sortPages((m1, m2) => {
@@ -210,7 +210,8 @@ export default class MessageDistributor extends StatedScreen {
       if (this.activityManager) {
         this.activityManager.end()
         update({
-          skipIntervals: this.activityManager.list
+          skipIntervals: this.activityManager.list,
+          lastRecordedMessageTime: this.lastRecordedMessageTime
         })
       }
       this.waitingForFiles = false

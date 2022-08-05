@@ -46,6 +46,9 @@ export const INITIAL_STATE = {
   livePlay: false,
   liveTimeTravel: false,
   liveTimeTravelled: false,
+  lastRecordedMessageTime: 0,
+  timeTravelStart: 0,
+  assistStart: 0,
 } as const;
 
 
@@ -119,9 +122,12 @@ export default class Player extends MessageDistributor {
         });
       }
 
-      if (live && time > endTime) {
+      // throttle store updates
+      // TODO: make it possible to change frame rate
+      if (live && time - endTime > 100) {
         update({
           endTime: time,
+          livePlay: endTime - time < 1000
         });
       }
       this._setTime(time);
@@ -154,7 +160,7 @@ export default class Player extends MessageDistributor {
   }
 
   jump(time = getState().time, index: number) {
-    const { live, liveTimeTravel } = getState();
+    const { live, liveTimeTravel, endTime } = getState();
     if (live && !liveTimeTravel) return;
     
     if (getState().playing) {
@@ -162,12 +168,12 @@ export default class Player extends MessageDistributor {
       // this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
         this._startAnimation();
-        update({ livePlay: time === getState().endTime });
+        update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     } else {
       //this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
-        update({ livePlay: time === getState().endTime });
+        update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     }
   }
@@ -249,23 +255,25 @@ export default class Player extends MessageDistributor {
 
   toggleTimetravel() {
     const { liveTimeTravel, liveTimeTravelled } = getState();
+    const newState: Record<string, any> = {
+      liveTimeTravel: !liveTimeTravel,
+      liveTimeTravelled: true,
+    }
 
     if (!liveTimeTravel && !liveTimeTravelled) {
+      newState.timeTravelStart = getState().time,
       this.loadMessages(true)
       this.play()
     }
     
-    update({ 
-      liveTimeTravel: !liveTimeTravel, 
-      liveTimeTravelled: true, 
-    });
+    update(newState);
   }
   
   jumpToLive() {
     cancelAnimationFrame(this._animationFrameRequestId);
     this._setTime(getState().endTime);
     this._startAnimation();
-    update({ livePlay: getState().time === getState().endTime });
+    update({ livePlay: true });
 }
 
   clean() {

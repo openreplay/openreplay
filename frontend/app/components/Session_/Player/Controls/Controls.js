@@ -31,7 +31,7 @@ import {
   EXCEPTIONS,
   INSPECTOR,
 } from 'Duck/components/player';
-import { ReduxTime } from './Time';
+import { ReduxTime, AssistDuration } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 import PlayerControls from './components/PlayerControls'
@@ -85,7 +85,6 @@ function getStorageName(type) {
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
   logRedCount: state.logRedCountNow,
-  // resourceCount: state.resourceCountNow,
   resourceRedCount: state.resourceRedCountNow,
   fetchRedCount: state.fetchRedCountNow,
   showStack: state.stackList.length > 0,
@@ -115,8 +114,6 @@ function getStorageName(type) {
     showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
     showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
-    sessionId: state.getIn([ 'sessions', 'current', 'sessionId' ]),
-    siteId: state.getIn([ 'site', 'siteId' ]),
   }
 }, {
   fullscreenOn,
@@ -138,7 +135,6 @@ export default class Controls extends React.Component {
     if (
       nextProps.fullscreen !== this.props.fullscreen ||
       nextProps.bottomBlock !== this.props.bottomBlock ||
-      nextProps.endTime !== this.props.endTime ||
       nextProps.live !== this.props.live ||
       nextProps.livePlay !== this.props.livePlay ||
       nextProps.playing !== this.props.playing ||
@@ -168,7 +164,7 @@ export default class Controls extends React.Component {
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
       nextProps.showLongtasks !== this.props.showLongtasks ||
-      nextProps.liveTimeTravel !== this.props.liveTimeTravel
+      nextProps.liveTimeTravel !== this.props.liveTimeTravel 
     ) return true;
     return false;
   }
@@ -216,7 +212,7 @@ export default class Controls extends React.Component {
   goLive =() => this.props.jump(this.props.endTime)
 
   renderPlayBtn = () => {
-    const { completed, playing, disabled } = this.props;
+    const { completed, playing } = this.props;
     let label;
     let icon;
     if (completed) {
@@ -289,11 +285,9 @@ export default class Controls extends React.Component {
       fullscreen,
       inspectorMode,
       closedLive,
-      sessionId,
       toggleSpeed,
       toggleSkip,
-      siteId,
-      liveTimeTravel
+      liveTimeTravel,
     } = this.props;
 
     const toggleBottomTools = (blockName) => {
@@ -305,6 +299,7 @@ export default class Controls extends React.Component {
         toggleBottomBlock(blockName);
       }
     }
+
     return (
       <div className={ styles.controls }>
         { !live || liveTimeTravel ? <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> : null}
@@ -329,14 +324,8 @@ export default class Controls extends React.Component {
               { live && !closedLive && (
                 <div className={ styles.buttonsLeft }>
                   <LiveTag isLive={livePlay} onClick={() => livePlay ? null : jumpToLive()} />
-                  {'Elapsed'}
-                  <ReduxTime name="time" />
+                  <div className="font-semibold px-2"><AssistDuration isLivePlay={livePlay} /></div>
 
-                  <a href={withSiteId(sessionRoute(sessionId), siteId)} target="_blank" className="text-decoration-none">
-                    <div className="p-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
-                      Recording
-                    </div>
-                  </a>
                   <div onClick={toggleTimetravel} className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
                       Toggle timeline
                     </div>

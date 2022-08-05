@@ -6,11 +6,12 @@ import { TimelinePointer, Icon } from 'UI';
 import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
 import { TYPES } from 'Types/session/event';
-import { setTimelinePointer } from 'Duck/sessions';
+import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
 import DraggableCircle from './DraggableCircle';
 import CustomDragLayer from './CustomDragLayer';
 import { debounce } from 'App/utils';
 import { Tooltip } from 'react-tippy';
+import TooltipContainer from './components/TooltipContainer';
 
 const BOUNDRY = 15
 
@@ -86,16 +87,23 @@ let deboucneJump = () => null;
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
   returningLocationTime: state.getIn([ 'sessions', 'current', 'returningLocation' ]) &&
     state.getIn([ 'sessions', 'current', 'returningLocationTime' ]),
-}), { setTimelinePointer })
+}), { setTimelinePointer, setTimelineHoverTime })
 export default class Timeline extends React.PureComponent {
+  tooltipProps = {}
   progressRef = React.createRef()
   wasPlaying = false
 
   seekProgress = (e) => {
+    const time = this.getTime(e)
+    this.props.jump(time);
+  }
+
+  getTime = (e) => {
     const { endTime } = this.props;
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
-    this.props.jump(time);
+
+    return time
   }
 
   createEventClickHandler = pointer => (e) => {
@@ -133,6 +141,12 @@ export default class Timeline extends React.PureComponent {
     }
   }
 
+  showTimeTooltip = (e) => {
+    const time = this.getTime(e);
+    this.props.setTimelineHoverTime(time)
+  }
+
+
   render() {
     const {
       events,
@@ -140,8 +154,6 @@ export default class Timeline extends React.PureComponent {
       skipIntervals,
       disabled,
       endTime,
-      live,
-      logList,
       exceptionsList,
       resourceList,
       clickRageTime,
@@ -155,17 +167,22 @@ export default class Timeline extends React.PureComponent {
     return (
       <div
         className="flex items-center absolute w-full"
-        style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`}}
+        style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%' }}
+        onMouseMoveCapture={(e) => this.showTimeTooltip(e)}
+        onMouseEnter={(e) => this.showTimeTooltip(e)}
       >
         <div
           className={ stl.progress }
           onClick={ disabled ? null : this.seekProgress }
           ref={ this.progressRef }
           role="button"
+         
         >
+            <TooltipContainer />
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
             <CustomDragLayer onDrag={this.onDrag} minX={BOUNDRY} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY} />
             <TimeTracker scale={ scale } />
+
             { skip && skipIntervals.map(interval =>
               (<div
                 key={ interval.start }
@@ -359,7 +376,7 @@ export default class Timeline extends React.PureComponent {
                 </div>
               ))
             }
-        </div>
+          </div>
       </div>
     );
   }
