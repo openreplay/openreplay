@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import cn from 'classnames';
 import { connect } from 'react-redux'
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { Button, Link } from 'UI'
 import { session as sessionRoute, withSiteId } from 'App/routes'
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
 
-function AutoplayTimer({ nextId, siteId, history }) {
-  let timer
+interface IProps extends RouteComponentProps {
+  nextId: number;
+  siteId: string;
+}
+
+function AutoplayTimer({ nextId, siteId, history }: IProps) {
+  let timer: NodeJS.Timer
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
 
@@ -32,7 +37,7 @@ function AutoplayTimer({ nextId, siteId, history }) {
   }
 
   if (cancelled)
-    return ''
+    return null
 
   return (
     <div className={ cn(clsOv.overlay, stl.overlayBg) } >
@@ -49,7 +54,6 @@ function AutoplayTimer({ nextId, siteId, history }) {
     </div>
   )
 }
-
 
 export default withRouter(connect(state => ({
   siteId: state.getIn([ 'site', 'siteId' ]),

@@ -103,7 +103,7 @@ function getStorageName(type) {
   exceptionsCount: state.exceptionsListNow.length,
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
-  liveTimetravel: state.liveTimetravel,
+  liveTimeTravel: state.liveTimeTravel,
 }))
 @connect((state, props) => {
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
@@ -168,7 +168,7 @@ export default class Controls extends React.Component {
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
       nextProps.showLongtasks !== this.props.showLongtasks ||
-      nextProps.liveTimetravel !== this.props.liveTimetravel
+      nextProps.liveTimeTravel !== this.props.liveTimeTravel
     ) return true;
     return false;
   }
@@ -293,7 +293,7 @@ export default class Controls extends React.Component {
       toggleSpeed,
       toggleSkip,
       siteId,
-      liveTimetravel
+      liveTimeTravel
     } = this.props;
 
     const toggleBottomTools = (blockName) => {
@@ -307,7 +307,7 @@ export default class Controls extends React.Component {
     }
     return (
       <div className={ styles.controls }>
-        { !live || liveTimetravel ? <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> : null}
+        { !live || liveTimeTravel ? <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> : null}
         { !fullscreen &&
           <div className={ cn(styles.buttons, {'!px-5 !pt-0' : live}) } data-is-live={ live }>
             <div>

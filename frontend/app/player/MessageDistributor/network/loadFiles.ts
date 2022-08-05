@@ -2,6 +2,8 @@ import APIClient from 'App/api_client';
 
 const NO_NTH_FILE = "nnf"
 
+const getUnprocessedFileLink = (sessionId: string) => '/unprocessed/' + sessionId
+
 type onDataCb = (data: Uint8Array) => void
 
 export const loadFiles = (
@@ -39,10 +41,10 @@ export const loadFiles = (
   })
 }
 
-export const checkUnprocessedMobs = async (url: string) => {
+export const checkUnprocessedMobs = async (sessionId: string) => {
   try {
     const api = new APIClient()
-    const res = await api.fetch(url)
+    const res = await api.fetch(getUnprocessedFileLink(sessionId))
     if (res.status >= 400) {
       return false
     }

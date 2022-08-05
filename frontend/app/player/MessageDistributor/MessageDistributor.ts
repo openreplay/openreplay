@@ -222,7 +222,7 @@ export default class MessageDistributor extends StatedScreen {
     )
     .then(onSuccessRead)
     .catch(async e => {
-      const unprocessedFile = await checkUnprocessedMobs(`/unprocessed/${this.session.sessionId}`)
+      const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
       if (unprocessedFile) {
         Promise.resolve(onData(unprocessedFile)).then(() => onSuccessRead())
       } else {

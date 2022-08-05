@@ -25,7 +25,7 @@ const InitLoader = connectPlayer(state => ({
 function LivePlayer ({ session, toggleFullscreen, closeBottomBlock, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise, hasErrors }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, assistCredendials, true); 
+      initPlayer(session, assistCredendials, true);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
@@ -51,7 +51,7 @@ function LivePlayer ({ session, toggleFullscreen, closeBottomBlock, fullscreen, 
   return (
     <PlayerProvider>
       <InitLoader className="flex-1 p-3">
-      <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
+        <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
         <div className={ styles.session } data-fullscreen={fullscreen}>
             <PlayerBlock />
         </div>

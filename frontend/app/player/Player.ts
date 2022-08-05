@@ -44,6 +44,8 @@ export const INITIAL_STATE = {
   inspectorMode: false,
   live: false,
   livePlay: false,
+  liveTimeTravel: false,
+  liveTimeTravelled: false,
 } as const;
 
 
@@ -53,7 +55,6 @@ export const INITIAL_NON_RESETABLE_STATE = {
   autoplay: initialAutoplay,
   speed: initialSpeed,
   showEvents: initialShowEvents,
-  liveTimetravel: false,
 }
 
 export default class Player extends MessageDistributor {
@@ -153,8 +154,8 @@ export default class Player extends MessageDistributor {
   }
 
   jump(time = getState().time, index: number) {
-    const { live, liveTimetravel } = getState();
-    if (live && !liveTimetravel) return;
+    const { live, liveTimeTravel } = getState();
+    if (live && !liveTimeTravel) return;
     
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
@@ -247,12 +248,17 @@ export default class Player extends MessageDistributor {
   }
 
   toggleTimetravel() {
-    const { liveTimetravel } = getState();
-    if (!liveTimetravel) {
+    const { liveTimeTravel, liveTimeTravelled } = getState();
+
+    if (!liveTimeTravel && !liveTimeTravelled) {
       this.loadMessages(true)
       this.play()
     }
-    update({ liveTimetravel: !liveTimetravel });
+    
+    update({ 
+      liveTimeTravel: !liveTimeTravel, 
+      liveTimeTravelled: true, 
+    });
   }
   
   jumpToLive() {
