@@ -94,7 +94,7 @@ export default class MessageDistributor extends StatedScreen {
   private readonly sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
-  lastRecordedMessageTime: number = 0;
+  private lastRecordedMessageTime: number = 0;
 
   constructor(private readonly session: any /*Session*/, config: any, live: boolean) {
     super();
@@ -474,6 +474,10 @@ export default class MessageDistributor extends StatedScreen {
 
   getLastMessageTime(): number {
     return this.lastMessageTime;
+  }
+
+  getLastRecordedMessageTime(): number {
+    return this.lastRecordedMessageTime;
   }
 
   getFirstMessageTime(): number {
