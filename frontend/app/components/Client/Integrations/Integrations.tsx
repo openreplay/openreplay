@@ -26,7 +26,8 @@ import FetchDoc from './FetchDoc';
 import ProfilerDoc from './ProfilerDoc';
 import AxiosDoc from './AxiosDoc';
 import AssistDoc from './AssistDoc';
-import { PageTitle } from 'UI';
+import { PageTitle, Loader } from 'UI';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -37,13 +38,12 @@ interface Props {
     setSiteId: (siteId: string) => void;
     siteId: string;
     hideHeader?: boolean;
+    loading?: boolean;
 }
 function Integrations(props: Props) {
-    const { initialSiteId, hideHeader = false } = props;
+    const { initialSiteId, hideHeader = false, loading = false } = props;
     const { showModal } = useModal();
-    const [loading, setLoading] = React.useState(true);
     const [integratedList, setIntegratedList] = React.useState([]);
-    // const [siteId, setSiteId] = React.useState(props.siteId || initialSiteId);
 
     useEffect(() => {
         const list = props.integratedList.filter((item: any) => item.integrated).map((item: any) => item.name);
@@ -58,12 +58,6 @@ function Integrations(props: Props) {
             props.fetchIntegrationList(props.siteId);
         }
     }, []);
-
-    useEffect(() => {
-        if (loading) {
-            return;
-        }
-    }, [loading]);
 
     const onClick = (integration: any) => {
         if (integration.slug) {
@@ -85,14 +79,18 @@ function Integrations(props: Props) {
                     <div className="flex items-center">
                         <h2 className="font-medium text-lg">{cat.title}</h2>
                         {cat.isProject && (
-                            <div className="flex flex-wrap ml-4">
-                                <SiteDropdown value={props.siteId} onChange={onChangeSelect} />
+                            <div className="flex items-center">
+                                <div className="flex flex-wrap ml-4">
+                                    <SiteDropdown value={props.siteId} onChange={onChangeSelect} />
+                                </div>
+                                {loading && cat.isProject && <AnimatedSVG name={ICONS.LOADER} size={20} />}
                             </div>
                         )}
                     </div>
                     <div className="">{cat.description}</div>
 
                     <div className="flex flex-wrap mt-4">
+                        {/* <Loader loading={loading && cat.isProject}> */}
                         {cat.integrations.map((integration: any) => (
                             <IntegrationItem
                                 integrated={integratedList.includes(integration.slug)}
@@ -105,6 +103,7 @@ function Integrations(props: Props) {
                                 }
                             />
                         ))}
+                        {/* </Loader> */}
                     </div>
                 </div>
             ))}
@@ -116,6 +115,7 @@ export default connect(
     (state: any) => ({
         initialSiteId: state.getIn(['site', 'siteId']),
         integratedList: state.getIn(['integrations', 'list']),
+        loading: state.getIn(['integrations', 'fetchRequest', 'loading']),
         siteId: state.getIn(['integrations', 'siteId']),
     }),
     { fetch, init, fetchIntegrationList, setSiteId }
@@ -125,6 +125,7 @@ const integrations = [
     {
         title: 'Issue Reporting and Collaborations',
         description: 'Seamlessly report issues or share issues with your team right from OpenReplay.',
+        isProject: false,
         integrations: [
             { title: 'Jira', slug: 'jira', category: 'Errors', icon: 'integrations/jira', component: <JiraForm /> },
             { title: 'Github', slug: 'github', category: 'Errors', icon: 'integrations/github', component: <GithubForm /> },
@@ -155,6 +156,7 @@ const integrations = [
     },
     {
         title: 'Plugins',
+        isProject: false,
         description:
             "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
         integrations: [

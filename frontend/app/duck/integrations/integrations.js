@@ -1,6 +1,7 @@
 import { Map } from 'immutable';
 import withRequestState from 'Duck/requestStateCreator';
 import { fetchListType } from '../funcTools/types';
+import { createRequestReducer } from '../funcTools/request';
 
 const FETCH_LIST = fetchListType('integrations/FETCH_LIST');
 const SET_SITE_ID = 'integrations/SET_SITE_ID';
@@ -18,7 +19,7 @@ const reducer = (state = initialState, action = {}) => {
     return state;
 };
 
-export default withRequestState(
+export default createRequestReducer(
     {
         fetchRequest: FETCH_LIST,
     },
