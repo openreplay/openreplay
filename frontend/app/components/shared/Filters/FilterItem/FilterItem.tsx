@@ -29,7 +29,7 @@ function FilterItem(props: Props) {
     };
 
     const onOperatorChange = (e: any, { name, value }: any) => {
-        props.onUpdate({ ...filter, operator: value.value });
+        props.onUpdate({ ...filter, operator: value });
     };
 
     const onSourceOperatorChange = (e: any, { name, value }: any) => {

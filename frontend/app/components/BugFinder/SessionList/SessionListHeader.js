@@ -26,6 +26,7 @@ function SessionListHeader({ activeTab, count, applyFilter, filter }) {
     }, [label]);
 
     const { startDate, endDate, rangeValue } = filter;
+    console.log('startDate', startDate);
     const period = new Record({ start: startDate, end: endDate, rangeName: rangeValue, timezoneOffset: getTimeZoneOffset() });
 
     const onDateChange = (e) => {
@@ -40,7 +41,7 @@ function SessionListHeader({ activeTab, count, applyFilter, filter }) {
             const dateValues = period.toJSON();
             dateValues.startDate = moment(dateValues.startDate).startOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
             dateValues.endDate = moment(dateValues.endDate).endOf('day').utcOffset(getTimeZoneOffset(), true).valueOf();
-            applyFilter(dateValues);
+            // applyFilter(dateValues);
         }
     }, [label]);
 
