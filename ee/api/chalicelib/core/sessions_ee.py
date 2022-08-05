@@ -227,8 +227,8 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 
 # This function executes the query and return result
-def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+def search_sessions_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+                       error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)
@@ -335,6 +335,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     }
 
 
+# This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     print("------ search2_ch")
@@ -1224,6 +1225,7 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
     if event_type not in defs:
         raise Exception(f"unsupported event_type:{event_type}")
     return defs.get(event_type)
+
 
 # this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):

@@ -536,15 +536,19 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
     subquery_part = ""
     params = {}
     if len(data.events) > 0:
-        errors_filters = []
-        for e in data.events:
+        errors_condition_count = 0
+        for i, e in enumerate(data.events):
             if e.type == schemas.EventType.error:
-                errors_filters.append(e)
-        if len(errors_filters) == len(data.events):
-            # TODO: search errors by name and message
-            print("----------Error conditions only")
-            print(errors_filters)
-        else:
+                errors_condition_count += 1
+                is_any = _isAny_opreator(e.operator)
+                op = __get_sql_operator(e.operator)
+                e_k = f"e_value{i}"
+                params = {**params, **_multiple_values(e.value, value_key=e_k)}
+                if not is_any and e.value not in [None, "*", ""]:
+                    ch_sub_query.append(
+                        _multiple_conditions(f"(message {op} %({e_k})s OR name {op} %({e_k})s)",
+                                             e.value, value_key=e_k))
+        if len(data.events) > errors_condition_count:
             print("----------Sessions conditions")
             subquery_part_args, subquery_part = sessions.search_query_parts_ch(data=data, error_status=data.status,
                                                                                errors_only=True,
@@ -640,22 +644,14 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                 if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                     ch_sessions_sub_query.append("s.duration <= %(maxDuration)s")
                     params["maxDuration"] = f.value[1]
-            # TODO: support referrer search
-            # elif filter_type == schemas.FilterType.referrer:
-            #     # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
-            #     if is_any:
-            #         referrer_constraint = 'isNotNull(r.base_referrer)'
-            #     else:
-            #         referrer_constraint = _multiple_conditions(f"r.base_referrer {op} %({f_k})s", f.value,
-            #                                                    is_not=is_not, value_key=f_k)
-            #     referrer_constraint = f"""(SELECT DISTINCT session_id
-            #                                       FROM {MAIN_EVENTS_TABLE} AS r
-            #                                       WHERE {" AND ".join([f"r.{b}" for b in __events_where_basic])}
-            #                                         AND event_type='{__get_event_type(schemas.EventType.location)}'
-            #                                         AND {referrer_constraint})"""
-            #     # events_conditions_where.append(f"""main.session_id IN {referrer_constraint}""")
-            #     # ch_sessions_sub_query.append(f"""s.session_id IN {referrer_constraint}""")
-            #     extra_from += f"\nINNER JOIN {referrer_constraint} AS referred ON(referred.session_id=s.session_id)"
+
+            elif filter_type == schemas.FilterType.referrer:
+                # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+                if is_any:
+                    referrer_constraint = 'isNotNull(s.base_referrer)'
+                else:
+                    referrer_constraint = _multiple_conditions(f"s.base_referrer {op} %({f_k})s", f.value,
+                                                               is_not=is_not, value_key=f_k)
             elif filter_type == schemas.FilterType.metadata:
                 # get metadata list only if you need it
                 if meta_keys is None:

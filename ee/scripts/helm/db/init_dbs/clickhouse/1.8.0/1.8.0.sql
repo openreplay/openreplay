@@ -1,25 +1,25 @@
-ALTER TABLE sessions
-    DROP COLUMN pages_count;
+-- ALTER TABLE sessions
+--     DROP COLUMN pages_count;
 
 
-CREATE TABLE projects_metadata
-(
-    project_id UInt16,
-    metadata_1 Nullable(String),
-    metadata_2 Nullable(String),
-    metadata_3 Nullable(String),
-    metadata_4 Nullable(String),
-    metadata_5 Nullable(String),
-    metadata_6 Nullable(String),
-    metadata_7 Nullable(String),
-    metadata_8 Nullable(String),
-    metadata_9 Nullable(String),
-    metadata_10 Nullable(String),
-    _timestamp DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
-      PARTITION BY toYYYYMM(_timestamp)
-      ORDER BY (project_id)
-      SETTINGS index_granularity = 512;
+-- CREATE TABLE projects_metadata
+-- (
+--     project_id UInt16,
+--     metadata_1 Nullable(String),
+--     metadata_2 Nullable(String),
+--     metadata_3 Nullable(String),
+--     metadata_4 Nullable(String),
+--     metadata_5 Nullable(String),
+--     metadata_6 Nullable(String),
+--     metadata_7 Nullable(String),
+--     metadata_8 Nullable(String),
+--     metadata_9 Nullable(String),
+--     metadata_10 Nullable(String),
+--     _timestamp DateTime DEFAULT now()
+-- ) ENGINE = ReplacingMergeTree(_timestamp)
+--       PARTITION BY toYYYYMM(_timestamp)
+--       ORDER BY (project_id)
+--       SETTINGS index_granularity = 512;
 
 CREATE TABLE IF NOT EXISTS events
 (
@@ -132,6 +132,8 @@ CREATE TABLE IF NOT EXISTS sessions
     metadata_9 Nullable(String),
     metadata_10 Nullable(String),
     issue_types Array(LowCardinality(String)),
+    referrer Nullable(String),
+    base_referrer Nullable(String),
     _timestamp   DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)
@@ -142,7 +144,7 @@ CREATE TABLE IF NOT EXISTS sessions
 CREATE TABLE IF NOT EXISTS user_viewed_sessions
 (
     project_id UInt16,
-    user_id    UInt64,
+    user_id    UInt32,
     session_id UInt64,
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -153,7 +155,7 @@ CREATE TABLE IF NOT EXISTS user_viewed_sessions
 CREATE TABLE IF NOT EXISTS user_viewed_errors
 (
     project_id UInt16,
-    user_id    UInt64,
+    user_id    UInt32,
     error_id   String,
     _timestamp DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -172,23 +174,22 @@ CREATE TABLE IF NOT EXISTS autocomplete
       ORDER BY (project_id, type, value)
       TTL _timestamp + INTERVAL 1 MONTH;
 
--- TODO: remove this table
-CREATE TABLE IF NOT EXISTS errors
-(
-    error_id   String,
-    project_id UInt16,
-    source Enum8('js_exception'=1,'bugsnag'=2,'cloudwatch'=3,'datadog'=4,'newrelic'=5,'rollbar'=6,'sentry'=7,'stackdriver'=8,'sumologic'=9, 'elasticsearch'=10),
-    name Nullable(String),
-    message    String,
-    payload    String,
-    stacktrace Nullable(String), --to save the stacktrace and not query S3 another time
-    stacktrace_parsed_at Nullable(DateTime),
-    _timestamp DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(_timestamp)
-      PARTITION BY toYYYYMMDD(_timestamp)
-      ORDER BY (project_id, source, error_id)
-      TTL _timestamp + INTERVAL 1 MONTH
-      SETTINGS index_granularity = 512;
+-- CREATE TABLE IF NOT EXISTS errors
+-- (
+--     error_id   String,
+--     project_id UInt16,
+--     source Enum8('js_exception'=1,'bugsnag'=2,'cloudwatch'=3,'datadog'=4,'newrelic'=5,'rollbar'=6,'sentry'=7,'stackdriver'=8,'sumologic'=9, 'elasticsearch'=10),
+--     name Nullable(String),
+--     message    String,
+--     payload    String,
+--     stacktrace Nullable(String), --to save the stacktrace and not query S3 another time
+--     stacktrace_parsed_at Nullable(DateTime),
+--     _timestamp DateTime DEFAULT now()
+-- ) ENGINE = ReplacingMergeTree(_timestamp)
+--       PARTITION BY toYYYYMMDD(_timestamp)
+--       ORDER BY (project_id, source, error_id)
+--       TTL _timestamp + INTERVAL 1 MONTH
+--       SETTINGS index_granularity = 512;
 
 CREATE MATERIALIZED VIEW sessions_l7d_mv
             ENGINE = ReplacingMergeTree(_timestamp)
@@ -215,86 +216,87 @@ SELECT *
 FROM massive_split.events_s
 WHERE datetime >= now() - INTERVAL 7 DAY;
 
-
-CREATE MATERIALIZED VIEW sessions_info_l1m_mv
-            ENGINE = ReplacingMergeTree(_timestamp)
-                PARTITION BY toYYYYMM(datetime)
-                ORDER BY (project_id, datetime, session_id)
-                TTL datetime + INTERVAL 1 MONTH
-                SETTINGS index_granularity = 512
-            POPULATE
-AS
-SELECT project_id,
-       session_id,
-       datetime,
-       now()  AS _timestamp,
-       toJSONString(map('project_id', toString(project_id),
-                        'session_id', toString(session_id),
-                        'user_uuid', toString(user_uuid),
-                        'user_id', user_id,
-                        'user_os', user_os,
-                        'user_browser', user_browser,
-                        'user_device', user_device,
-           --'user_device_type', user_device_type,
---'user_country', user_country,
-                        'start_ts', toString(datetime),
-                        'duration', toString(duration),
-                        'events_count', toString(events_count),
-                        'pages_count', toString(pages_count),
-                        'errors_count', toString(errors_count),
-           -- 'user_anonymous_id', user_anonymous_id,
--- 'platform', platform,
--- 'issue_score', issue_score,
--- issue_types,
--- favorite,
--- viewed,
-                        'metadata', CAST((arrayFilter(x->isNotNull(x),
-                                                      arrayMap(
-                                                              x->if(isNotNull(x[1]) AND isNotNull(x[2]), toString(x[1]),
-                                                                    NULL),
-                                                              [
-                                                                  [projects_meta.metadata_1,sessions.metadata_1],
-                                                                  [projects_meta.metadata_2,sessions.metadata_2],
-                                                                  [projects_meta.metadata_3,sessions.metadata_3],
-                                                                  [projects_meta.metadata_4,sessions.metadata_4],
-                                                                  [projects_meta.metadata_5,sessions.metadata_5],
-                                                                  [projects_meta.metadata_6,sessions.metadata_6],
-                                                                  [projects_meta.metadata_7,sessions.metadata_7],
-                                                                  [projects_meta.metadata_8,sessions.metadata_8],
-                                                                  [projects_meta.metadata_9,sessions.metadata_9],
-                                                                  [projects_meta.metadata_10,sessions.metadata_10]
-                                                                  ])),
-                                          arrayFilter(x->isNotNull(x),
-                                                      arrayMap(
-                                                              x->if(isNotNull(x[1]) AND isNotNull(x[2]), toString(x[2]),
-                                                                    NULL),
-                                                              [
-                                                                  [projects_meta.metadata_1,sessions.metadata_1],
-                                                                  [projects_meta.metadata_2,sessions.metadata_2],
-                                                                  [projects_meta.metadata_3,sessions.metadata_3],
-                                                                  [projects_meta.metadata_4,sessions.metadata_4],
-                                                                  [projects_meta.metadata_5,sessions.metadata_5],
-                                                                  [projects_meta.metadata_6,sessions.metadata_6],
-                                                                  [projects_meta.metadata_7,sessions.metadata_7],
-                                                                  [projects_meta.metadata_8,sessions.metadata_8],
-                                                                  [projects_meta.metadata_9,sessions.metadata_9],
-                                                                  [projects_meta.metadata_10,sessions.metadata_10]
-                                                                  ]))), 'Map(String,String)')
-           )) AS info
-FROM massive_split.sessions
-         INNER JOIN projects_metadata USING (project_id)
-WHERE datetime >= now() - INTERVAL 1 MONTH
-  AND isNotNull(duration)
-  AND duration > 0;
-
-CREATE MATERIALIZED VIEW sessions_info_l7d_mv
-            ENGINE = ReplacingMergeTree(_timestamp)
-                PARTITION BY toYYYYMMDD(datetime)
-                ORDER BY (project_id, datetime, session_id)
-                TTL datetime + INTERVAL 7 DAY
-                SETTINGS index_granularity = 512
-            POPULATE
-AS
-SELECT *
-FROM sessions_info_l1m_mv
-WHERE datetime >= now() - INTERVAL 7 DAY;
+--
+--
+-- CREATE MATERIALIZED VIEW sessions_info_l1m_mv
+--             ENGINE = ReplacingMergeTree(_timestamp)
+--                 PARTITION BY toYYYYMM(datetime)
+--                 ORDER BY (project_id, datetime, session_id)
+--                 TTL datetime + INTERVAL 1 MONTH
+--                 SETTINGS index_granularity = 512
+--             POPULATE
+-- AS
+-- SELECT project_id,
+--        session_id,
+--        datetime,
+--        now()  AS _timestamp,
+--        toJSONString(map('project_id', toString(project_id),
+--                         'session_id', toString(session_id),
+--                         'user_uuid', toString(user_uuid),
+--                         'user_id', user_id,
+--                         'user_os', user_os,
+--                         'user_browser', user_browser,
+--                         'user_device', user_device,
+--            --'user_device_type', user_device_type,
+-- --'user_country', user_country,
+--                         'start_ts', toString(datetime),
+--                         'duration', toString(duration),
+--                         'events_count', toString(events_count),
+--                         'pages_count', toString(pages_count),
+--                         'errors_count', toString(errors_count),
+--            -- 'user_anonymous_id', user_anonymous_id,
+-- -- 'platform', platform,
+-- -- 'issue_score', issue_score,
+-- -- issue_types,
+-- -- favorite,
+-- -- viewed,
+--                         'metadata', CAST((arrayFilter(x->isNotNull(x),
+--                                                       arrayMap(
+--                                                               x->if(isNotNull(x[1]) AND isNotNull(x[2]), toString(x[1]),
+--                                                                     NULL),
+--                                                               [
+--                                                                   [projects_meta.metadata_1,sessions.metadata_1],
+--                                                                   [projects_meta.metadata_2,sessions.metadata_2],
+--                                                                   [projects_meta.metadata_3,sessions.metadata_3],
+--                                                                   [projects_meta.metadata_4,sessions.metadata_4],
+--                                                                   [projects_meta.metadata_5,sessions.metadata_5],
+--                                                                   [projects_meta.metadata_6,sessions.metadata_6],
+--                                                                   [projects_meta.metadata_7,sessions.metadata_7],
+--                                                                   [projects_meta.metadata_8,sessions.metadata_8],
+--                                                                   [projects_meta.metadata_9,sessions.metadata_9],
+--                                                                   [projects_meta.metadata_10,sessions.metadata_10]
+--                                                                   ])),
+--                                           arrayFilter(x->isNotNull(x),
+--                                                       arrayMap(
+--                                                               x->if(isNotNull(x[1]) AND isNotNull(x[2]), toString(x[2]),
+--                                                                     NULL),
+--                                                               [
+--                                                                   [projects_meta.metadata_1,sessions.metadata_1],
+--                                                                   [projects_meta.metadata_2,sessions.metadata_2],
+--                                                                   [projects_meta.metadata_3,sessions.metadata_3],
+--                                                                   [projects_meta.metadata_4,sessions.metadata_4],
+--                                                                   [projects_meta.metadata_5,sessions.metadata_5],
+--                                                                   [projects_meta.metadata_6,sessions.metadata_6],
+--                                                                   [projects_meta.metadata_7,sessions.metadata_7],
+--                                                                   [projects_meta.metadata_8,sessions.metadata_8],
+--                                                                   [projects_meta.metadata_9,sessions.metadata_9],
+--                                                                   [projects_meta.metadata_10,sessions.metadata_10]
+--                                                                   ]))), 'Map(String,String)')
+--            )) AS info
+-- FROM massive_split.sessions
+--          INNER JOIN projects_metadata USING (project_id)
+-- WHERE datetime >= now() - INTERVAL 1 MONTH
+--   AND isNotNull(duration)
+--   AND duration > 0;
+--
+-- CREATE MATERIALIZED VIEW sessions_info_l7d_mv
+--             ENGINE = ReplacingMergeTree(_timestamp)
+--                 PARTITION BY toYYYYMMDD(datetime)
+--                 ORDER BY (project_id, datetime, session_id)
+--                 TTL datetime + INTERVAL 7 DAY
+--                 SETTINGS index_granularity = 512
+--             POPULATE
+-- AS
+-- SELECT *
+-- FROM sessions_info_l1m_mv
+-- WHERE datetime >= now() - INTERVAL 7 DAY;
