@@ -4,12 +4,12 @@ import styles from './listItem.module.css';
 
 const ListItem = ({ webhook, onEdit, onDelete }) => {
     return (
-        <div className="hover:bg-active-blue border-b last:border-none" onClick={onEdit}>
+        <div className="border-b group last:border-none hover:bg-active-blue flex items-center justify-between p-3 cursor-pointer" onClick={onEdit}>
             <div>
                 <span>{webhook.name}</span>
                 <div className={styles.endpoint}>{webhook.endpoint}</div>
             </div>
-            <div className={styles.actions}>
+            <div className="invisible group-hover:visible">
                 <div className={styles.button}>
                     <Icon name="edit" color="teal" size="16" />
                 </div>
