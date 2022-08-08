@@ -242,8 +242,8 @@ export default class MessageDistributor extends StatedScreen {
           logger.error(e)
           update({ error: true })
         }
-      } catch {
-        logger.error(e)
+      } catch (unprocessedFilesError) {
+        logger.error(unprocessedFilesError)
         update({ error: true })
         toast.error('Error getting a session replay')
 
