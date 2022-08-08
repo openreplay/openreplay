@@ -256,7 +256,7 @@ export default class Player extends MessageDistributor {
   toggleTimetravel() {
     const { liveTimeTravel, liveTimeTravelled } = getState();
     const newState: Record<string, any> = {
-      liveTimeTravel: !liveTimeTravel,
+      liveTimeTravel: true,
       liveTimeTravelled: true,
     }
 

@@ -4,7 +4,8 @@ import { connect } from 'react-redux';
 import stl from './timeline.module.css';
 
 function TimeTooltip({ time, offset, isVisible }: { time: number; offset: number; isVisible: boolean }) {
-    const duration = Duration.fromMillis(time).toFormat('mm:ss');
+    const duration = Duration.fromMillis(time).toFormat('-mm:ss');
+    console.log(time)
     return (
         <div
             className={stl.timeTooltip}
@@ -14,7 +15,7 @@ function TimeTooltip({ time, offset, isVisible }: { time: number; offset: number
               display: isVisible ? 'block' : 'none' }
             }
         >
-            {duration}
+            {!time ? 'Loading' : duration}
         </div>
     );
 }

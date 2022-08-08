@@ -326,9 +326,11 @@ export default class Controls extends React.Component {
                   <LiveTag isLive={livePlay} onClick={() => livePlay ? null : jumpToLive()} />
                   <div className="font-semibold px-2"><AssistDuration isLivePlay={livePlay} /></div>
 
-                  <div onClick={toggleTimetravel} className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
-                      Toggle timeline
+                  {!liveTimeTravel && (
+                    <div onClick={toggleTimetravel} className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
+                      See past activity
                     </div>
+                  )}
                 </div>
               )}
             </div>

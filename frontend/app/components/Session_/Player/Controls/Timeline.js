@@ -152,7 +152,9 @@ export default class Timeline extends React.PureComponent {
       return this.props.tooltipVisible && this.hideTimeTooltip()
     }
     const time = this.getTime(e);
-    const timeLineTooltip = { time, offset: e.nativeEvent.offsetX, isVisible: true }
+    const { endTime } = this.props;
+
+    const timeLineTooltip = { time: endTime - time, offset: e.nativeEvent.offsetX, isVisible: true }
     debounceTooltipChange(timeLineTooltip)
   }
 
