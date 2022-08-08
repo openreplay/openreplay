@@ -222,7 +222,7 @@ def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_c
 
 
 @app.get('/{projectId}/integrations/sentry/events/{eventId}', tags=["integrations"])
-def proxy_sentry(projectId: int, eventId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def proxy_sentry(projectId: int, eventId: str, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.proxy_get(tenant_id=context.tenant_id, project_id=projectId, event_id=eventId)}
 
 
