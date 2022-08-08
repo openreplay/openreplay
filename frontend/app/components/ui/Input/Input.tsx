@@ -11,13 +11,14 @@ interface Props {
     rows?: number;
     [x: string]: any;
 }
-function Input(props: Props) {
+const Input = React.forwardRef((props: Props, ref: any) => {
     const { className = '', leadingButton = '', wrapperClassName = '', icon = '', type = 'text', rows = 4, ...rest } = props;
     return (
         <div className={cn({ relative: icon || leadingButton }, wrapperClassName)}>
             {icon && <Icon name={icon} className="absolute top-0 bottom-0 my-auto ml-4" size="14" />}
             {type === 'textarea' ? (
                 <textarea
+                    ref={ref}
                     rows={rows}
                     style={{ resize: 'none' }}
                     maxLength={500}
@@ -26,6 +27,7 @@ function Input(props: Props) {
                 />
             ) : (
                 <input
+                    ref={ref}
                     type={type}
                     style={{ height: '36px' }}
                     className={cn('p-2 border border-gray-light bg-white w-full rounded', className, { 'pl-10': icon })}
@@ -36,6 +38,6 @@ function Input(props: Props) {
             {leadingButton && <div className="absolute top-0 bottom-0 right-0">{leadingButton}</div>}
         </div>
     );
-}
+});
 
 export default Input;

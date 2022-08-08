@@ -19,7 +19,6 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openrep
 
 
 FROM alpine AS entrypoint
-RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache ca-certificates
 RUN adduser -u 1001 openreplay -D
 
@@ -46,6 +45,7 @@ ENV TZ=UTC \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
+    AWS_SKIP_SSL_VALIDATION=false \
     CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
     ASSETS_HEADERS="{ \"Cookie\": \"ABv=3;\" }" \

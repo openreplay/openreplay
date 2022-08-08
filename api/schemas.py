@@ -100,10 +100,12 @@ class NotificationsViewSchema(BaseModel):
     endTimestamp: Optional[int] = Field(default=None)
 
 
-class JiraGithubSchema(BaseModel):
-    provider: str = Field(...)
-    username: str = Field(...)
+class GithubSchema(BaseModel):
     token: str = Field(...)
+
+
+class JiraSchema(GithubSchema):
+    username: str = Field(...)
     url: HttpUrl = Field(...)
 
     @validator('url')

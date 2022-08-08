@@ -97,7 +97,7 @@ export default class Assist {
       observer && observer.observe(titleNode, { subtree: true, characterData: true, childList: true, })
     })
     app.attachStopCallback(() => { 
-      if (this.assistDemandedRestart) { return } 
+      if (this.assistDemandedRestart) { return }
       this.clean()
       observer && observer.disconnect()
     })
@@ -134,10 +134,10 @@ export default class Assist {
       query: {
         'peerId': peerID,
         'identity': 'session',
-        'sessionInfo': JSON.stringify({ 
+        'sessionInfo': JSON.stringify({
           pageTitle: document.title,
           active: true,
-          ...this.app.getSessionInfo(), 
+          ...this.app.getSessionInfo(),
         }),
       },
       transports: ['websocket',],
@@ -249,7 +249,7 @@ export default class Assist {
     peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
     peer.on('disconnected', () => peer.reconnect())
     peer.on('call', (call) => {
-      app.debug.log('Call: ', call)    
+      app.debug.log('Call: ', call)
       if (this.callingState !== CallingState.False) {
         call.close()
         //this.notifyCallEnd() // TODO: strictly connect calling peer with agent socket.id
