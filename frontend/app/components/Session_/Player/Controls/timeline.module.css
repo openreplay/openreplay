@@ -165,3 +165,28 @@
     }
   }
 }
+
+.timeTooltip {
+  position: absolute;
+  padding: 0.25rem;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  background: black;
+  top: -35px;
+  color: white;
+
+  &:after {
+    content:'';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 0;
+    height: 0;
+    border-top: solid 5px black;
+    border-left: solid 5px transparent;
+    border-right: solid 5px transparent;
+  }
+}

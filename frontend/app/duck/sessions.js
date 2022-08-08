@@ -63,7 +63,7 @@ const initialState = Map({
     timelinePointer: null,
     sessionPath: {},
     lastPlayedSessionId: null,
-    timelineHoverPointerTime: 0
+    timeLineTooltip: { time: 0, offset: 0, isVisible: false }
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -191,7 +191,7 @@ const reducer = (state = initialState, action = {}) => {
         case SET_TIMELINE_POINTER:
             return state.set('timelinePointer', action.pointer);
         case SET_TIMELINE_HOVER_POINTER:
-            return state.set('timelineHoverPointerTime', action.time);
+            return state.set('timeLineTooltip', action.timeLineTooltip);
         case SET_SESSION_PATH:
             return state.set('sessionPath', action.path);
         case LAST_PLAYED_SESSION_ID:
@@ -355,10 +355,10 @@ export function setTimelinePointer(pointer) {
     };
 }
 
-export function setTimelineHoverTime(time) {
+export function setTimelineHoverTime(timeLineTooltip) {
     return {
         type: SET_TIMELINE_HOVER_POINTER,
-        time,
+        timeLineTooltip
     };
 }
 

@@ -64,6 +64,7 @@ const getPointerIcon = (type) => {
 
 
 let deboucneJump = () => null;
+let debounceTooltipChange = () => null;
 @connectPlayer(state => ({
   playing: state.playing,
   time: state.time,
@@ -87,15 +88,18 @@ let deboucneJump = () => null;
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
   returningLocationTime: state.getIn([ 'sessions', 'current', 'returningLocation' ]) &&
     state.getIn([ 'sessions', 'current', 'returningLocationTime' ]),
+  tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible'])
 }), { setTimelinePointer, setTimelineHoverTime })
 export default class Timeline extends React.PureComponent {
   tooltipProps = {}
   progressRef = React.createRef()
+  timelineRef = React.createRef()
   wasPlaying = false
 
   seekProgress = (e) => {
     const time = this.getTime(e)
     this.props.jump(time);
+    this.hideTimeTooltip()
   }
 
   getTime = (e) => {
@@ -117,6 +121,7 @@ export default class Timeline extends React.PureComponent {
     const skipToIssue = Controls.updateSkipToIssue();
     const firstIssue = issues.get(0);
     deboucneJump = debounce(this.props.jump, 500);
+    debounceTooltipChange = debounce(this.props.setTimelineHoverTime, 50);
 
     if (firstIssue && skipToIssue) {
       this.props.jump(firstIssue.time);
@@ -135,6 +140,7 @@ export default class Timeline extends React.PureComponent {
     const p = (offset.x - BOUNDRY) / this.progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
     deboucneJump(time);
+    this.hideTimeTooltip();
     if (this.props.playing) {
       this.wasPlaying = true;
       this.props.pause();
@@ -142,10 +148,18 @@ export default class Timeline extends React.PureComponent {
   }
 
   showTimeTooltip = (e) => {
+    if (e.target !== this.progressRef.current && e.target !== this.timelineRef.current) {
+      return this.props.tooltipVisible && this.hideTimeTooltip()
+    }
     const time = this.getTime(e);
-    this.props.setTimelineHoverTime(time)
+    const timeLineTooltip = { time, offset: e.nativeEvent.offsetX, isVisible: true }
+    debounceTooltipChange(timeLineTooltip)
   }
 
+  hideTimeTooltip = () => {
+    const timeLineTooltip = { isVisible: false }
+    debounceTooltipChange(timeLineTooltip)
+  }
 
   render() {
     const {
@@ -168,15 +182,15 @@ export default class Timeline extends React.PureComponent {
       <div
         className="flex items-center absolute w-full"
         style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%' }}
-        onMouseMoveCapture={(e) => this.showTimeTooltip(e)}
-        onMouseEnter={(e) => this.showTimeTooltip(e)}
       >
         <div
           className={ stl.progress }
           onClick={ disabled ? null : this.seekProgress }
           ref={ this.progressRef }
           role="button"
-         
+          onMouseMoveCapture={this.showTimeTooltip}
+          onMouseEnter={ this.showTimeTooltip}
+          onMouseLeave={this.hideTimeTooltip}
         >
             <TooltipContainer />
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
@@ -193,7 +207,8 @@ export default class Timeline extends React.PureComponent {
                 } }
               />))
             }
-            <div className={ stl.timeline }/>
+            <div className={ stl.timeline } ref={this.timelineRef} />
+
             { events.map(e => (
               <div
                 key={ e.key }
