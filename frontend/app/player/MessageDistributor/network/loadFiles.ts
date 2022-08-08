@@ -36,7 +36,6 @@ export const loadFiles = (
     if (e === NO_NTH_FILE) {
       return
     }
-    console.log('wtf')
     throw e
   })
 }

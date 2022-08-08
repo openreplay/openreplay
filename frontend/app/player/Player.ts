@@ -127,7 +127,7 @@ export default class Player extends MessageDistributor {
       if (live && time - endTime > 100) {
         update({
           endTime: time,
-          livePlay: endTime - time < 1000
+          livePlay: endTime - time < 900
         });
       }
       this._setTime(time);

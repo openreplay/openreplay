@@ -91,7 +91,6 @@ let debounceTooltipChange = () => null;
   tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible'])
 }), { setTimelinePointer, setTimelineHoverTime })
 export default class Timeline extends React.PureComponent {
-  tooltipProps = {}
   progressRef = React.createRef()
   timelineRef = React.createRef()
   wasPlaying = false

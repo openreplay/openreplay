@@ -5,7 +5,6 @@ import stl from './timeline.module.css';
 
 function TimeTooltip({ time, offset, isVisible }: { time: number; offset: number; isVisible: boolean }) {
     const duration = Duration.fromMillis(time).toFormat('-mm:ss');
-    console.log(time)
     return (
         <div
             className={stl.timeTooltip}
