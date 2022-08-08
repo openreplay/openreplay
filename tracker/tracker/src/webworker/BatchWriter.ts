@@ -1,16 +1,15 @@
 import type Message from '../common/messages.gen.js'
 import * as Messages from '../common/messages.gen.js'
 import MessageEncoder from './MessageEncoder.gen.js'
-import PrimitiveEncoder from './PrimitiveEncoder.js'
 
-const SIZE_BYTES = 2
+const SIZE_BYTES = 3
 const MAX_M_SIZE = (1 << (SIZE_BYTES * 8)) - 1
 
 export default class BatchWriter {
   private nextIndex = 0
   private beaconSize = 2 * 1e5 // Default 200kB
   private encoder = new MessageEncoder(this.beaconSize)
-  private readonly sizeEncoder = new PrimitiveEncoder(SIZE_BYTES)
+  private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
 
   constructor(
@@ -27,6 +26,13 @@ export default class BatchWriter {
   }
   private writeFields(m: Message): boolean {
     return this.encoder.encode(m)
+  }
+  private writeSizeAt(size: number, offset: number): void {
+    //boolean?
+    for (let i = 0; i < SIZE_BYTES; i++) {
+      this.sizeBuffer[i] = size >> (i * 8) // BigEndian
+    }
+    this.encoder.set(this.sizeBuffer, offset)
   }
 
   private prepare(): void {
@@ -59,12 +65,11 @@ export default class BatchWriter {
     if (wasWritten) {
       const endOffset = e.getCurrentOffset()
       const size = endOffset - startOffset
-      if (size > MAX_M_SIZE || !this.sizeEncoder.uint(size)) {
+      if (size > MAX_M_SIZE) {
         console.warn('OpenReplay: max message size overflow.')
         return false
       }
-      this.sizeEncoder.checkpoint() // TODO: separate checkpoint logic to an Encoder-inherit class
-      e.set(this.sizeEncoder.flush(), startOffset - SIZE_BYTES)
+      this.writeSizeAt(size, startOffset - SIZE_BYTES)
 
       e.checkpoint()
       this.isEmpty = this.isEmpty && message[0] === Messages.Type.Timestamp
