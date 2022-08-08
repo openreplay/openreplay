@@ -27,7 +27,7 @@ interface Props {
 }
 function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, projects }: Props) {
   return (
-    <div className={cn('flex items-start relative py-4 hover border-b px-3 pr-20 group')}>
+    <div className={cn('flex items-start relative py-4 hover border-b last:border-none px-3 pr-20 group')}>
       <div className="flex" style={{ width: '20%'}}>
         <Icon name="user-alt" size="16" marginRight="10" />
         { role.name }
