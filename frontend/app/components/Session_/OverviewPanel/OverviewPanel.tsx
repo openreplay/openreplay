@@ -4,10 +4,13 @@ import React from 'react';
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
 import { TYPES } from 'Types/session/event';
-import { Icon } from 'UI';
+import { Icon, Checkbox, ErrorDetails } from 'UI';
 import { Tooltip } from 'react-tippy';
 import stl from './overviewPanel.module.css';
 import { connect } from 'react-redux';
+import TimelineScale from './components/TimelineScale';
+import FeatureSelection from './components/FeatureSelection/FeatureSelection';
+import { useModal } from 'App/components/Modal';
 
 interface Props {
     resourceList: any[];
@@ -22,6 +25,8 @@ function OverviewPanel(props: Props) {
         return eventsList.filter((item: any) => item.type === TYPES.CLICKRAGE);
     }, [eventsList]);
     const scale = 100 / endTime;
+    const selectedFeatures = React.useMemo(() => ['NETWORK', 'ERRORS', 'EVENTS'], []);
+    const { showModal } = useModal();
 
     const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
         e.stopPropagation();
@@ -30,7 +35,10 @@ function OverviewPanel(props: Props) {
             return;
         }
 
-        props.toggleBottomBlock(type);
+        if (type === EXCEPTIONS) {
+            showModal(<ErrorDetails error={pointer} />, { right: true });
+        }
+        // props.toggleBottomBlock(type);
     };
 
     const renderNetworkElement = (item: any) => {
@@ -92,12 +100,16 @@ function OverviewPanel(props: Props) {
     };
 
     return (
-        <BottomBlock style={{ height: '240px' }}>
+        <BottomBlock style={{ height: '260px' }}>
             <BottomBlock.Header>
                 <span className="font-semibold color-gray-medium mr-4">Overview</span>
+                <div className="flex items-center">
+                    <FeatureSelection list={selectedFeatures} updateList={() => {}} />
+                </div>
             </BottomBlock.Header>
             <BottomBlock.Content>
-                <div className="overflow-x-auto overflow-y-hidden bg-gray-lightest px-4">
+                <div className="overflow-x-auto overflow-y-hidden bg-gray-lightest">
+                    <TimelineScale />
                     <div style={{ width: '100%' }} className="transition relative">
                         <VerticalPointerLine />
                         <EventRow title="Network" className="" list={resourceList} scale={scale} renderElement={renderNetworkElement} />

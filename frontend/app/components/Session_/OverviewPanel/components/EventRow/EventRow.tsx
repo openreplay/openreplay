@@ -20,7 +20,7 @@ function EventRow(props: Props) {
         })
     }, [list]);
     return (
-        <div className={cn('h-20 w-full flex flex-col py-2', className)}>
+        <div className={cn('h-20 w-full flex flex-col py-2 px-4', className)}>
             <div className="uppercase color-gray-medium">{title}</div>
             <div className="relative w-full py-3">
                 {_list.map((item: any, index: number) => {
