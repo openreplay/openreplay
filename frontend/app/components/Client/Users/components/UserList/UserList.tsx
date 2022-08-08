@@ -65,8 +65,14 @@ function UserList(props: Props) {
                             <UserListItem
                                 user={user}
                                 editHandler={() => editHandler(user)}
-                                generateInvite={() => userStore.generateInviteCode(user.userId)}
-                                copyInviteCode={() => userStore.copyInviteCode(user.userId)}
+                                generateInvite={(e: any) => {
+                                    e.stopPropagation();
+                                    userStore.generateInviteCode(user.userId);
+                                }}
+                                copyInviteCode={(e) => {
+                                    e.stopPropagation();
+                                    userStore.copyInviteCode(user.userId);
+                                }}
                                 isEnterprise={isEnterprise}
                                 isOnboarding={isOnboarding}
                             />
