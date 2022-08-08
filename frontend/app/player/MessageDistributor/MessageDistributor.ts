@@ -6,7 +6,9 @@ import Resource, { TYPES } from 'Types/session/resource'; // MBTODO: player type
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import Log from 'Types/session/log';
 
-import { update } from '../store';
+import { update, getState } from '../store';
+import { toast } from 'react-toastify';
+
 import {
   init as initListsDepr,
   append as listAppend,
@@ -216,6 +218,14 @@ export default class MessageDistributor extends StatedScreen {
       }
       this.waitingForFiles = false
       this.setMessagesLoading(false)
+
+      if (isTimeTravel) {
+        this.assistManager.toggleTimeTravelJump()
+        update({
+          liveTimeTravel: true,
+          timeTravelStart: getState().time
+        });
+      }
     }
 
     loadFiles(this.session.mobsUrl,
@@ -223,20 +233,28 @@ export default class MessageDistributor extends StatedScreen {
     )
     .then(onSuccessRead)
     .catch(async e => {
-      const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
-      if (unprocessedFile) {
-        Promise.resolve(onData(unprocessedFile)).then(() => onSuccessRead())
-      } else {
+      try {
+        const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
+        if (unprocessedFile) {
+          Promise.resolve(onData(unprocessedFile))
+            .then(() => onSuccessRead())
+        } else {
+          logger.error(e)
+          update({ error: true })
+        }
+      } catch {
         logger.error(e)
+        update({ error: true })
+        toast.error('Error getting a session replay')
+
+        if (isTimeTravel) {
+          this.assistManager.toggleTimeTravelJump()
+        }
+      } finally {
         this.waitingForFiles = false
         this.setMessagesLoading(false)
-        update({ error: true })
       }
     })
-
-    if (isTimeTravel) {
-      this.assistManager.toggleTimeTravelJump()
-    }
   }
 
   move(t: number, index?: number): void {

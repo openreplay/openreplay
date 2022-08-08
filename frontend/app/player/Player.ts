@@ -45,7 +45,6 @@ export const INITIAL_STATE = {
   live: false,
   livePlay: false,
   liveTimeTravel: false,
-  liveTimeTravelled: false,
   lastRecordedMessageTime: 0,
   timeTravelStart: 0,
   assistStart: 0,
@@ -254,19 +253,10 @@ export default class Player extends MessageDistributor {
   }
 
   toggleTimetravel() {
-    const { liveTimeTravel, liveTimeTravelled } = getState();
-    const newState: Record<string, any> = {
-      liveTimeTravel: true,
-      liveTimeTravelled: true,
-    }
-
-    if (!liveTimeTravel && !liveTimeTravelled) {
-      newState.timeTravelStart = getState().time,
+    if (!getState().liveTimeTravel) {
       this.loadMessages(true)
       this.play()
     }
-    
-    update(newState);
   }
   
   jumpToLive() {

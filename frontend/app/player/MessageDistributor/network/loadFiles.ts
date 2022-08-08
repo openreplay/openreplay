@@ -1,6 +1,7 @@
 import APIClient from 'App/api_client';
 
 const NO_NTH_FILE = "nnf"
+const NO_UNPROCESSED_FILES = "nuf"
 
 const getUnprocessedFileLink = (sessionId: string) => '/unprocessed/' + sessionId
 
@@ -45,13 +46,12 @@ export const checkUnprocessedMobs = async (sessionId: string) => {
     const api = new APIClient()
     const res = await api.fetch(getUnprocessedFileLink(sessionId))
     if (res.status >= 400) {
-      return false
+      throw NO_UNPROCESSED_FILES
     }
     const byteArray = await processAPIStreamResponse(res, false)
     return byteArray
   } catch (e) {
-    console.error(e)
-    return false
+    throw e
   }
 }
 
