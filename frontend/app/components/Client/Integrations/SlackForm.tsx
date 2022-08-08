@@ -24,16 +24,16 @@ const SlackForm = (props: Props) => {
     }, []);
 
     return (
-        <div className="bg-white h-screen overflow-y-auto flex items-start" style={{ width: active ? '650px' : '350px' }}>
-            <div style={{ width: '350px' }}>
-                <h3 className="p-5 text-2xl">Slack</h3>
-                <SlackChannelList onEdit={onEdit} />
-            </div>
+        <div className="bg-white h-screen overflow-y-auto flex items-start" style={{ width: active ? '700px' : '350px' }}>
             {active && (
-                <div className="border-l h-full">
+                <div className="border-r h-full" style={{ width: '350px' }}>
                     <SlackAddForm onClose={() => setActive(false)} />
                 </div>
             )}
+            <div className="shrink-0" style={{ width: '350px' }}>
+                <h3 className="p-5 text-2xl">Slack</h3>
+                <SlackChannelList onEdit={onEdit} />
+            </div>
         </div>
     );
 };
