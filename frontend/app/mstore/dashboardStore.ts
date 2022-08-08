@@ -19,7 +19,7 @@ import Session from "./types/session";
 import Error from "./types/error";
 import { FilterKey } from "Types/filter/filterType";
 
-export interface IDashboardSotre {
+export interface IDashboardStore {
     dashboards: IDashboard[];
     selectedDashboard: IDashboard | null;
     dashboardInstance: IDashboard;
@@ -85,12 +85,12 @@ export interface IDashboardSotre {
     ): Promise<any>;
     setPeriod(period: any): void;
 }
-export default class DashboardStore implements IDashboardSotre {
+export default class DashboardStore implements IDashboardStore {
     siteId: any = null;
     // Dashbaord / Widgets
     dashboards: Dashboard[] = [];
     selectedDashboard: Dashboard | null = null;
-    dashboardInstance: IDashboard = new Dashboard();
+    dashboardInstance: Dashboard = new Dashboard();
     selectedWidgets: IWidget[] = [];
     currentWidget: Widget = new Widget();
     widgetCategories: any[] = [];
@@ -214,7 +214,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     fetch(dashboardId: string): Promise<any> {
-        this.fetchingDashboard = true;
+        this.setFetchingDashboard(true);
         return dashboardService
             .getDashboard(dashboardId)
             .then((response) => {
@@ -223,8 +223,12 @@ export default class DashboardStore implements IDashboardSotre {
                 });
             })
             .finally(() => {
-                this.fetchingDashboard = false;
+                this.setFetchingDashboard(false);
             });
+    }
+
+    setFetchingDashboard(value: boolean) {
+        this.fetchingDashboard = value;
     }
 
     save(dashboard: IDashboard): Promise<any> {
