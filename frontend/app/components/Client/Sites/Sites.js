@@ -130,5 +130,5 @@ function EditButton({ isAdmin, onClick }) {
         onClick();
         showModal(<NewSiteForm onClose={hideModal} />);
     };
-    return <Button icon="edit" variant="text" disabled={!isAdmin} onClick={_onClick} />;
+    return <Button icon="edit" variant="text-primary" disabled={!isAdmin} onClick={_onClick} />;
 }
