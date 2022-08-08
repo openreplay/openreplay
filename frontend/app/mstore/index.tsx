@@ -1,5 +1,5 @@
 import React from 'react';
-import DashboardStore, { IDashboardSotre } from './dashboardStore';
+import DashboardStore, { IDashboardStore } from './dashboardStore';
 import MetricStore, { IMetricStore } from './metricStore';
 import UserStore from './userStore';
 import RoleStore from './roleStore';
@@ -12,7 +12,7 @@ import NotificationStore from './notificationStore';
 import ErrorStore from './errorStore';
 
 export class RootStore {
-    dashboardStore: IDashboardSotre;
+    dashboardStore: IDashboardStore;
     metricStore: IMetricStore;
     funnelStore: FunnelStore;
     settingsStore: SettingsStore;

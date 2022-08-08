@@ -2,6 +2,7 @@
 import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
+import { toJS } from 'mobx'
 import { 
     BarChart, Bar, CartesianGrid, Tooltip,
     LineChart, Line, Legend, ResponsiveContainer, 
@@ -14,6 +15,7 @@ interface Props {
 }
 function ErrorsByOrigin(props: Props) {
     const { data, metric } = props;
+
     return (
         <NoContent
           size="small"
