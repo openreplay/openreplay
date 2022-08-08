@@ -114,7 +114,7 @@ function Integrations(props: Props) {
 export default connect(
     (state: any) => ({
         initialSiteId: state.getIn(['site', 'siteId']),
-        integratedList: state.getIn(['integrations', 'list']),
+        integratedList: state.getIn(['integrations', 'list']) || [],
         loading: state.getIn(['integrations', 'fetchRequest', 'loading']),
         siteId: state.getIn(['integrations', 'siteId']),
     }),
@@ -144,13 +144,12 @@ const integrations = [
             { title: 'Datadog', slug: 'datadog', icon: 'integrations/datadog', component: <DatadogForm /> },
             { title: 'Sumo Logic', slug: 'sumologic', icon: 'integrations/sumologic', component: <SumoLogicForm /> },
             {
-                title: 'Google Cloud',
+                title: 'Stackdriver',
                 slug: 'stackdriver',
-                subtitle: '(Stackdriver)',
                 icon: 'integrations/google-cloud',
                 component: <StackdriverForm />,
             },
-            { title: 'AWS', slug: 'cloudwatch', subtitle: '(CloudWatch)', icon: 'integrations/aws', component: <CloudwatchForm /> },
+            { title: 'CloudWatch', slug: 'cloudwatch', icon: 'integrations/aws', component: <CloudwatchForm /> },
             { title: 'Newrelic', slug: 'newrelic', icon: 'integrations/newrelic', component: <NewrelicForm /> },
         ],
     },

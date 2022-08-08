@@ -4,7 +4,7 @@ import styles from './listItem.module.css';
 
 const ListItem = ({ webhook, onEdit, onDelete }) => {
     return (
-        <div className={styles.wrapper} onClick={onEdit}>
+        <div className="hover:bg-active-blue border-b last:border-none" onClick={onEdit}>
             <div>
                 <span>{webhook.name}</span>
                 <div className={styles.endpoint}>{webhook.endpoint}</div>
