@@ -56,7 +56,7 @@ function MetricsList(props: Props) {
 
             <div className="w-full flex items-center justify-between pt-4">
                 <div className="text-disabled-text">
-                    Showing <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out of <span className="font-semibold">{list.length}</span> Sessions
+                    Showing <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out of <span className="font-semibold">{list.length}</span> metrics
                 </div>
                 <Pagination
                     page={metricStore.page}
