@@ -10,6 +10,7 @@ function getStyles(
   ): CSSProperties {
     // const transform = `translate3d(${(left * 1161) / 100}px, -8px, 0)`
     const leftPosition = left > 100 ? 100 : left
+
     return {
         position: 'absolute',
         top: '-3px',
@@ -60,7 +61,7 @@ const DraggableCircle: FC<Props> = memo(function DraggableCircle(props) {
             style={getStyles(left, isDragging)}
             role="DraggableBox"
         >
-            <Circle />
+            <Circle isGreen={left > 99} />
         </div>
     );
 })

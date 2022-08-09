@@ -199,6 +199,7 @@ export default class Timeline extends React.PureComponent {
           onMouseLeave={this.hideTimeTooltip}
         >
             <TooltipContainer liveTimeTravel={liveTimeTravel} />
+            {/* custo color is live */}
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
             <CustomDragLayer onDrag={this.onDrag} minX={BOUNDRY} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY} />
             <TimeTracker scale={ scale } />

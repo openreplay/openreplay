@@ -328,7 +328,7 @@ export default class Controls extends React.Component {
 
                   {!liveTimeTravel && (
                     <div onClick={toggleTimetravel} className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
-                      See past activity
+                      See Past Activity
                     </div>
                   )}
                 </div>
