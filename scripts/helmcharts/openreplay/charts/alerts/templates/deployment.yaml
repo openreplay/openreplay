@@ -53,7 +53,14 @@ spec:
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
+              {{- if .Values.global.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgresql.existingSecret }}
+                  key: postgresql-postgres-password
+              {{- else }}
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+              {{- end}}
             - name: SITE_URL
               value: 'https://{{ .Values.global.domainName }}'
             - name: S3_HOST
