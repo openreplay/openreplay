@@ -361,13 +361,14 @@ export default class Assist {
           callUI = new CallWindow(app.debug.error)
           // TODO: as constructor options
           callUI.setCallEndAction(initiateCallEnd)
-          callUI.setLocalStreams(Object.values(lStreams)) 
         }
         if (!annot) {
           annot = new AnnotationCanvas()
           annot.mount()
         }
-
+        // have to be updated
+        callUI.setLocalStreams(Object.values(lStreams)) 
+        
         call.on('error', e => {
           app.debug.warn('Call error:', e)
           initiateCallEnd()
