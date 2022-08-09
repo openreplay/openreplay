@@ -5,7 +5,7 @@ RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/al
 RUN apk add --no-cache build-base tini
 ARG envarg
 ENV APP_NAME=alerts \
-    pg_minconn=2 \
+    pg_minconn=1 \
     pg_maxconn=10 \
     ENTERPRISE_BUILD=${envarg}
 

@@ -8,7 +8,8 @@ ENV APP_NAME=crons \
     pg_minconn=2 \
     pg_maxconn=10 \
     ENTERPRISE_BUILD=${envarg} \
-    ACTION=""
+    ACTION="" \
+    PG_POOL=false
 
 WORKDIR /work_tmp
 COPY requirements-crons.txt /work_tmp/requirements.txt
