@@ -73,7 +73,7 @@ function FilterItem(props: Props) {
                 )}
 
                 {/* Filter values */}
-                {!isSubFilter && (
+                {!isSubFilter && filter.operatorOptions && (
                     <>
                         <FilterOperator
                             options={filter.operatorOptions}
