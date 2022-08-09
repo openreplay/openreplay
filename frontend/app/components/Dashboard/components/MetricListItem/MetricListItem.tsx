@@ -51,8 +51,8 @@ function MetricTypeIcon({ type }: any) {
 
     return (
         <PopupWrapper>
-            <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
-                <Icon name={getIcon()} size="14" color="tealx" />
+            <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
+                <Icon name={getIcon()} size="16" color="tealx" />
             </div>
         </PopupWrapper>
     )
@@ -63,7 +63,7 @@ function MetricListItem(props: Props) {
 
     
     return (
-        <div className="grid grid-cols-12 p-3 border-t select-none">
+        <div className="grid grid-cols-12 p-4 border-t select-none">
             <div className="col-span-3 flex items-start">
                 <div className="flex items-center">
                     {/* <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
@@ -76,17 +76,14 @@ function MetricListItem(props: Props) {
                 </div>
             </div>
             {/* <div><Label className="capitalize">{metric.metricType}</Label></div> */}
-            <div className="col-span-2">
-                <DashboardLink dashboards={metric.dashboards} />
-            </div>
             <div className="col-span-3">{metric.owner}</div>
-            <div>
+            <div className="col-span-4">
                 <div className="flex items-center">
                     <Icon name={metric.isPublic ? "user-friends" : "person-fill"} className="mr-2" />
                     <span>{metric.isPublic ? 'Team' : 'Private'}</span>
                 </div>
             </div>
-            <div className="col-span-2">{metric.lastModified && checkForRecent(metric.lastModified, 'LLL dd, yyyy, hh:mm a')}</div>
+            <div className="col-span-2 text-right">{metric.lastModified && checkForRecent(metric.lastModified, 'LLL dd, yyyy, hh:mm a')}</div>
         </div>
     );
 }
