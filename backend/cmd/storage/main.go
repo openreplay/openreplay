@@ -48,6 +48,7 @@ func main() {
 				if iter.Type() == messages.MsgSessionEnd {
 					msg := iter.Message().Decode().(*messages.SessionEnd)
 					if err := srv.UploadKey(strconv.FormatUint(sessionID, 10), 5); err != nil {
+						log.Printf("can't find session: %d", sessionID)
 						sessionFinder.Find(sessionID, msg.Timestamp)
 					}
 					// Log timestamp of last processed session
