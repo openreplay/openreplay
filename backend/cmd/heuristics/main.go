@@ -59,7 +59,7 @@ func main() {
 		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
 			for iter.Next() {
 				statsLogger.Collect(sessionID, meta)
-				builderMap.HandleMessage(sessionID, iter.Message(), iter.Message().Meta().Index)
+				builderMap.HandleMessage(sessionID, iter.Message().Decode(), iter.Message().Meta().Index)
 			}
 		},
 		false,
