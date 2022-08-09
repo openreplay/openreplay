@@ -1,16 +1,14 @@
-import { connectPlayer, Controls } from 'App/player';
+import { connectPlayer } from 'App/player';
 import { toggleBottomBlock, NETWORK, EXCEPTIONS } from 'Duck/components/player';
 import React from 'react';
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
 import { TYPES } from 'Types/session/event';
-import { Icon, Checkbox, ErrorDetails } from 'UI';
-import { Tooltip } from 'react-tippy';
-import stl from './overviewPanel.module.css';
 import { connect } from 'react-redux';
 import TimelineScale from './components/TimelineScale';
 import FeatureSelection from './components/FeatureSelection/FeatureSelection';
-import { useModal } from 'App/components/Modal';
+import TimelinePointer from './components/TimelinePointer';
+import VerticalPointerLine from './components/VerticalPointerLine';
 
 interface Props {
     resourceList: any[];
@@ -26,78 +24,6 @@ function OverviewPanel(props: Props) {
     }, [eventsList]);
     const scale = 100 / endTime;
     const selectedFeatures = React.useMemo(() => ['NETWORK', 'ERRORS', 'EVENTS'], []);
-    const { showModal } = useModal();
-
-    const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
-        e.stopPropagation();
-        Controls.jump(pointer.time);
-        if (!type) {
-            return;
-        }
-
-        if (type === EXCEPTIONS) {
-            showModal(<ErrorDetails error={pointer} />, { right: true });
-        }
-        // props.toggleBottomBlock(type);
-    };
-
-    const renderNetworkElement = (item: any) => {
-        return (
-            <Tooltip
-                html={
-                    <div className={stl.popup}>
-                        <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
-                        <br />
-                        {item.name}
-                    </div>
-                }
-                delay={0}
-                position="top"
-            >
-                <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
-                    <div className="h-2 w-2 rounded-full bg-red" />
-                </div>
-            </Tooltip>
-        );
-    };
-
-    const renderClickRageElement = (item: any) => {
-        return (
-            <Tooltip
-                html={
-                    <div className={stl.popup}>
-                        <b>{'Click Rage'}</b>
-                    </div>
-                }
-                delay={0}
-                position="top"
-            >
-                <div onClick={createEventClickHandler(item, null)} className="cursor-pointer">
-                    <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" />
-                </div>
-            </Tooltip>
-        );
-    };
-
-    const renderExceptionElement = (item: any) => {
-        return (
-            <Tooltip
-                html={
-                    <div className={stl.popup}>
-                        <b>{'Exception'}</b>
-                        <br />
-                        <span>{item.message}</span>
-                    </div>
-                }
-                delay={0}
-                position="top"
-            >
-                <div onClick={createEventClickHandler(item, EXCEPTIONS)} className="cursor-pointer">
-                    <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" />
-                </div>
-            </Tooltip>
-        );
-    };
 
     return (
         <BottomBlock style={{ height: '260px' }}>
@@ -112,11 +38,29 @@ function OverviewPanel(props: Props) {
                     <TimelineScale />
                     <div style={{ width: '100%' }} className="transition relative">
                         <VerticalPointerLine />
-                        <EventRow title="Network" className="" list={resourceList} scale={scale} renderElement={renderNetworkElement} />
+                        <EventRow
+                            title="Network"
+                            className=""
+                            list={resourceList}
+                            scale={scale}
+                            renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={NETWORK} />}
+                        />
                         <div className="bg-white border-t border-b -mx-4 px-4">
-                            <EventRow title="Click Rage" className="" list={clickRageList} scale={scale} renderElement={renderClickRageElement} />
+                            <EventRow
+                                title="Click Rage"
+                                className=""
+                                list={clickRageList}
+                                scale={scale}
+                                renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={TYPES.CLICKRAGE} />}
+                            />
                         </div>
-                        <EventRow title="Errors & Issues" className="" list={exceptionsList} scale={scale} renderElement={renderExceptionElement} />
+                        <EventRow
+                            title="Errors & Issues"
+                            className=""
+                            list={exceptionsList}
+                            scale={scale}
+                            renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={EXCEPTIONS} />}
+                        />
                     </div>
                 </div>
             </BottomBlock.Content>
@@ -134,11 +78,3 @@ export default connect(null, {
         endTime: state.endTime,
     }))(OverviewPanel)
 );
-
-const VerticalPointerLine = connectPlayer((state: any) => ({
-    time: state.time,
-    scale: 100 / state.endTime,
-}))(({ time, scale }: any) => {
-    const left = time * scale;
-    return <div className="absolute border-r border-teal border-dashed z-10" style={{ left: `${left}%`, height: '250px', width: '1px' }} />;
-});
