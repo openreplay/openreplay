@@ -24,10 +24,32 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 //     .replace(/\-webkit\-/g, "")
 // }
 
+function insertRule(sheet: CSSStyleSheet, msg: { rule: string, index: number }) {
+  try {
+    sheet.insertRule(msg.rule, msg.index)
+  } catch (e) {
+    logger.warn(e, msg)
+    try {
+      sheet.insertRule(msg.rule)
+    } catch (e) {
+      logger.warn("Cannot insert rule.", e, msg)
+    }
+  }
+}
+
+function deleteRule(sheet: CSSStyleSheet, msg: { index: number }) {
+  try {
+    sheet.deleteRule(msg.index)
+  } catch (e) {
+    logger.warn(e, msg)
+  }
+}
+
 export default class DOMManager extends ListWalker<Message> {
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
   private vRoots: Map<number, VFragment | VDocument> = new Map()
+  private styleSheets: Map<number, CSSStyleSheet> = new Map()
   
 
   private upperBodyId: number = -1;
@@ -116,6 +138,7 @@ export default class DOMManager extends ListWalker<Message> {
     let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
+    let styleSheet: CSSStyleSheet | undefined
     switch (msg.tp) {
       case "create_document":
         doc = this.screen.document;
@@ -133,7 +156,9 @@ export default class DOMManager extends ListWalker<Message> {
         this.vElements = new Map([[0, vn]])
         const vDoc = new VDocument(doc)
         vDoc.insertChildAt(vn, 0)
-        this.vRoots = new Map([[-1, vDoc]]) // todo: start from 0 (sync logic with tracker)
+        this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
+        // this is done for the AdoptedCSS logic
+        // todo: start from 0 (sync logic with tracker) 
         this.stylesManager.reset()
         return
       case "create_text_node":
@@ -241,18 +266,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
-        vn.onStyleSheet(sheet => {
-          try {
-            sheet.insertRule(msg.rule, msg.index)
-          } catch (e) {
-            logger.warn(e, msg)
-            try {
-              sheet.insertRule(msg.rule)
-            } catch (e) {
-              logger.warn("Cannot insert rule.", e, msg)
-            }
-          }
-        })
+        vn.onStyleSheet(sheet => insertRule(sheet, msg))
         return
       case "css_delete_rule":
         vn = this.vElements.get(msg.id)
@@ -261,13 +275,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
-        vn.onStyleSheet(sheet => {
-          try {
-            sheet.deleteRule(msg.index)
-          } catch (e) {
-            logger.warn(e, msg)
-          }
-        })
+        vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
       case "create_i_frame_document":
         vn = this.vElements.get(msg.frameID)
@@ -297,6 +305,53 @@ export default class DOMManager extends ListWalker<Message> {
         } else {
           logger.warn("Context message host is not Element", msg)
         }
+        return
+      case "adopted_ss_insert_rule":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          styleSheet = new CSSStyleSheet()
+          this.styleSheets.set(msg.sheetID, styleSheet)
+        }
+        insertRule(styleSheet, msg)
+        return
+      case "adopted_ss_delete_rule":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        deleteRule(styleSheet, msg)
+        return
+      case "adopted_ss_replace":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        // @ts-ignore
+        styleSheet.replaceSync(msg.text)
+        return
+      case "adopted_ss_add_owner":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        vn = this.vRoots.get(msg.id)
+        if (!vn) { logger.error("Node not found", msg); return }
+        //@ts-ignore
+        vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets, styleSheet]
+        return
+      case "adopted_ss_remove_owner":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        vn = this.vRoots.get(msg.id)
+        if (!vn) { logger.error("Node not found", msg); return }
+        //@ts-ignore
+        vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
     } 
   }

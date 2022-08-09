@@ -29,18 +29,36 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
+    case 81: {
+      const version = this.readUint(); if (version === null) { return resetPointer() }
+      const pageNo = this.readUint(); if (pageNo === null) { return resetPointer() }
+      const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
+      const timestamp = this.readInt(); if (timestamp === null) { return resetPointer() }
+      const location = this.readString(); if (location === null) { return resetPointer() }      
+      return {
+        tp: "batch_metadata", 
+        version,
+        pageNo,
+        firstIndex,
+        timestamp,
+        location,      
+      };
+    }
+    
+    case 82: {
+      const partNo = this.readUint(); if (partNo === null) { return resetPointer() }
+      const partTotal = this.readUint(); if (partTotal === null) { return resetPointer() }      
+      return {
+        tp: "partitioned_message", 
+        partNo,
+        partTotal,      
+      };
+    }
+    
     case 0: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }      
       return {
         tp: "timestamp", 
-        timestamp,      
-      };
-    }
-    
-    case 2: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }      
-      return {
-        tp: "session_disconnect", 
         timestamp,      
       };
     }
@@ -575,14 +593,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
-    case 65: {
-      
-      return {
-        tp: "page_close", 
-      
-      };
-    }
-    
     case 67: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const rule = this.readString(); if (rule === null) { return resetPointer() }
@@ -617,6 +627,84 @@ export default class RawMessageReader extends PrimitiveReader {
       return {
         tp: "create_i_frame_document", 
         frameID,
+        id,      
+      };
+    }
+    
+    case 71: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const text = this.readString(); if (text === null) { return resetPointer() }
+      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_replace_url_based", 
+        sheetID,
+        text,
+        baseURL,      
+      };
+    }
+    
+    case 72: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const text = this.readString(); if (text === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_replace", 
+        sheetID,
+        text,      
+      };
+    }
+    
+    case 73: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const rule = this.readString(); if (rule === null) { return resetPointer() }
+      const index = this.readUint(); if (index === null) { return resetPointer() }
+      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_insert_rule_url_based", 
+        sheetID,
+        rule,
+        index,
+        baseURL,      
+      };
+    }
+    
+    case 74: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const rule = this.readString(); if (rule === null) { return resetPointer() }
+      const index = this.readUint(); if (index === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_insert_rule", 
+        sheetID,
+        rule,
+        index,      
+      };
+    }
+    
+    case 75: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const index = this.readUint(); if (index === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_delete_rule", 
+        sheetID,
+        index,      
+      };
+    }
+    
+    case 76: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_add_owner", 
+        sheetID,
+        id,      
+      };
+    }
+    
+    case 77: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_remove_owner", 
+        sheetID,
         id,      
       };
     }

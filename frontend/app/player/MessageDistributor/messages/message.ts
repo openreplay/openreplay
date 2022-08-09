@@ -4,8 +4,9 @@ import type { Timed } from './timed'
 import type { RawMessage } from './raw'
 import type { 
   RawBatchMeta,
+  RawBatchMetadata,
+  RawPartitionedMessage,
   RawTimestamp,
-  RawSessionDisconnect,
   RawSetPageLocation,
   RawSetViewportSize,
   RawSetViewportScroll,
@@ -51,10 +52,16 @@ import type {
   RawSetCssDataURLBased,
   RawTechnicalInfo,
   RawCustomIssue,
-  RawPageClose,
   RawCssInsertRuleURLBased,
   RawMouseClick,
   RawCreateIFrameDocument,
+  RawAdoptedSsReplaceURLBased,
+  RawAdoptedSsReplace,
+  RawAdoptedSsInsertRuleURLBased,
+  RawAdoptedSsInsertRule,
+  RawAdoptedSsDeleteRule,
+  RawAdoptedSsAddOwner,
+  RawAdoptedSsRemoveOwner,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -69,9 +76,11 @@ export type Message = RawMessage & Timed
 
 export type BatchMeta = RawBatchMeta & Timed
 
-export type Timestamp = RawTimestamp & Timed
+export type BatchMetadata = RawBatchMetadata & Timed
 
-export type SessionDisconnect = RawSessionDisconnect & Timed
+export type PartitionedMessage = RawPartitionedMessage & Timed
+
+export type Timestamp = RawTimestamp & Timed
 
 export type SetPageLocation = RawSetPageLocation & Timed
 
@@ -163,13 +172,25 @@ export type TechnicalInfo = RawTechnicalInfo & Timed
 
 export type CustomIssue = RawCustomIssue & Timed
 
-export type PageClose = RawPageClose & Timed
-
 export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 
 export type MouseClick = RawMouseClick & Timed
 
 export type CreateIFrameDocument = RawCreateIFrameDocument & Timed
+
+export type AdoptedSsReplaceURLBased = RawAdoptedSsReplaceURLBased & Timed
+
+export type AdoptedSsReplace = RawAdoptedSsReplace & Timed
+
+export type AdoptedSsInsertRuleURLBased = RawAdoptedSsInsertRuleURLBased & Timed
+
+export type AdoptedSsInsertRule = RawAdoptedSsInsertRule & Timed
+
+export type AdoptedSsDeleteRule = RawAdoptedSsDeleteRule & Timed
+
+export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
+
+export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 
