@@ -46,7 +46,6 @@ export const INITIAL_STATE = {
   live: false,
   livePlay: false,
   liveTimeTravel: false,
-  lastRecordedMessageTime: 0,
 } as const;
 
 

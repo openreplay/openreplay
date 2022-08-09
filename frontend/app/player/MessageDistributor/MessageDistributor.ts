@@ -96,7 +96,6 @@ export default class MessageDistributor extends StatedScreen {
   private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
-  private lastRecordedMessageTime: number = 0;
 
   constructor(private readonly session: any /*Session*/, config: any, live: boolean) {
     super();
@@ -141,8 +140,7 @@ export default class MessageDistributor extends StatedScreen {
     if (this.activityManager) {
       this.activityManager.end()
       update({
-        skipIntervals: this.activityManager.list,
-        lastRecordedMessageTime: this.lastRecordedMessageTime
+        skipIntervals: this.activityManager.list
       })
     }
 
@@ -231,7 +229,7 @@ export default class MessageDistributor extends StatedScreen {
       } catch (unprocessedFilesError) {
         logger.error(unprocessedFilesError)
         update({ error: true })
-        toast.error('Error getting a session replay')
+        toast.error('Error getting a session replay file')
       } finally {
         this.waitingForFiles = false
         this.setMessagesLoading(false)
@@ -248,7 +246,7 @@ export default class MessageDistributor extends StatedScreen {
     this.waitingForFiles = true
 
     const onData = (byteArray: Uint8Array) => {
-      const onReadCallback = () =>  this.lastRecordedMessageTime = this.lastMessageTime
+      const onReadCallback = () => this.assistManager.setLastRecordedMessageTime(this.lastMessageTime)
       const msgs = this.readAndDistributeMessages(byteArray, onReadCallback)
       this.sessionStart = msgs[0].time
       this.processStateUpdates(msgs)
@@ -271,7 +269,7 @@ export default class MessageDistributor extends StatedScreen {
     } catch (unprocessedFilesError) {
       logger.error(unprocessedFilesError)
       update({ error: true })
-      toast.error('Error getting a session replay')
+      toast.error('Error getting a session replay file')
       this.assistManager.toggleTimeTravelJump()
     } finally {
       this.waitingForFiles = false
@@ -528,10 +526,6 @@ export default class MessageDistributor extends StatedScreen {
 
   getLastMessageTime(): number {
     return this.lastMessageTime;
-  }
-
-  getLastRecordedMessageTime(): number {
-    return this.lastRecordedMessageTime;
   }
 
   getFirstMessageTime(): number {
