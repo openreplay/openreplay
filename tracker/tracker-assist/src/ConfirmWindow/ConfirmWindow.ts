@@ -110,17 +110,15 @@ export default class ConfirmWindow {
     this.wrapper = wrapper
 
     confirmBtn.onclick = () => {
-      this._remove()
       this.resolve(true)
     }
     declineBtn.onclick = () => {
-      this._remove()
       this.resolve(false)
     }
   }
 
   private resolve: (result: boolean) => void = () => {};
-  private reject: () => void = () => {};
+  private reject: (reason: string) => void = () => {};
 
   mount(): Promise<boolean> {
     document.body.appendChild(this.wrapper)
@@ -135,10 +133,10 @@ export default class ConfirmWindow {
     if (!this.wrapper.parentElement) {
       return
     }
-    document.body.removeChild(this.wrapper)
+    this.wrapper.parentElement.removeChild(this.wrapper)
   }
   remove() {
     this._remove()
-    this.reject()
+    this.reject('no answer')
   }
 }

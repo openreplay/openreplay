@@ -2,6 +2,7 @@ from typing import Union, Optional
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse
 from starlette import status
 
 import schemas
@@ -183,8 +184,8 @@ def session_top_filter_values(projectId: int, context: schemas.CurrentContext = 
 @app.get('/{projectId}/integrations', tags=["integrations"])
 def get_integrations_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = integrations_global.get_global_integrations_status(tenant_id=context.tenant_id,
-                                                               user_id=context.user_id,
-                                                               project_id=projectId)
+                                                              user_id=context.user_id,
+                                                              project_id=projectId)
     return {"data": data}
 
 
@@ -440,29 +441,47 @@ def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)
     return {"data": integration.get_obfuscated()}
 
 
+@app.get('/integrations/jira', tags=["integrations"])
+def get_integration_status_jira(context: schemas.CurrentContext = Depends(OR_context)):
+    error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
+                                                              user_id=context.user_id,
+                                                              tool=integration_jira_cloud.PROVIDER)
+    if error is not None and integration is None:
+        return error
+    return {"data": integration.get_obfuscated()}
+
+
+@app.get('/integrations/github', tags=["integrations"])
+def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_context)):
+    error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
+                                                              user_id=context.user_id,
+                                                              tool=integration_github.PROVIDER)
+    if error is not None and integration is None:
+        return error
+    return {"data": integration.get_obfuscated()}
+
+
 @app.post('/integrations/jira', tags=["integrations"])
 @app.put('/integrations/jira', tags=["integrations"])
-def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
+def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
         return error
-    data.provider = integration_jira_cloud.PROVIDER
     return {"data": integration.add_edit(data=data.dict())}
 
 
 @app.post('/integrations/github', tags=["integrations"])
 @app.put('/integrations/github', tags=["integrations"])
-def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
+def add_edit_github(data: schemas.GithubSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
         return error
-    data.provider = integration_github.PROVIDER
     return {"data": integration.add_edit(data=data.dict())}
 
 
@@ -893,6 +912,17 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
             background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId,
                                       user_id=context.user_id, session_id=sessionId)
     return {'data': data}
+
+
+@app.get('/{projectId}/unprocessed/{sessionId}', tags=["assist"])
+@app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
+def get_live_session_replay_file(projectId: int, sessionId: str,
+                                 context: schemas.CurrentContext = Depends(OR_context)):
+    path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
+    if path is None:
+        return {"errors": ["Replay file not found"]}
+
+    return FileResponse(path=path, media_type="application/octet-stream")
 
 
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])

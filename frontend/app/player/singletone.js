@@ -2,7 +2,7 @@ import Player from './Player';
 import { update, clean as cleanStore, getState } from './store';
 import { clean as cleanLists } from './lists';
 
-/** @type {Player}  */
+/** @type {Player} */
 let instance = null;
 
 const initCheck = method => (...args) => {
@@ -69,7 +69,10 @@ export const attach = initCheck((...args) => instance.attach(...args));
 export const markElement = initCheck((...args) => instance.marker && instance.marker.mark(...args));
 export const scale = initCheck(() => instance.scale());
 export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
+/** @type {Player.assistManager.call} */
 export const callPeer = initCheck((...args) => instance.assistManager.call(...args))
+/** @type {Player.assistManager.setCallArgs} */
+export const setCallArgs = initCheck((...args) => instance.assistManager.setCallArgs(...args))
 export const requestReleaseRemoteControl = initCheck((...args) => instance.assistManager.requestReleaseRemoteControl(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))

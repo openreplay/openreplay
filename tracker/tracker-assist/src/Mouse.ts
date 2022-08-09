@@ -2,7 +2,7 @@ type XY = [number, number]
 
 
 export default class Mouse {
-  private mouse: HTMLDivElement
+  private readonly mouse: HTMLDivElement
   private position: [number,number] = [0,0,]
   constructor() {
     this.mouse = document.createElement('div')
@@ -52,8 +52,8 @@ export default class Mouse {
 
   private readonly pScrEl = document.scrollingElement || document.documentElement // Is it always correct
   private lastScrEl: Element | 'window' | null = null
-  private resetLastScrEl = () => { this.lastScrEl = null }
-  private handleWScroll = e => {
+  private readonly resetLastScrEl = () => { this.lastScrEl = null }
+  private readonly handleWScroll = e => {
     if (e.target !== this.lastScrEl &&
       this.lastScrEl !== 'window') {
       this.resetLastScrEl()

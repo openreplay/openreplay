@@ -79,6 +79,8 @@ export default Record({
   isIOS: false,
   revId: '',
   userSessionsCount: 0,
+  agentIds: [],
+  isCallActive: false
 }, {
   fromJS:({ 
     startTs=0,

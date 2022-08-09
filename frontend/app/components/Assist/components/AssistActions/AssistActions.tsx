@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Popup, Icon, Button, IconButton } from 'UI';
+import logger from 'App/logger';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { toggleChatWindow } from 'Duck/sessions';
 import { connectPlayer } from 'Player/store';
 import ChatWindow from '../../ChatWindow';
-import { callPeer, requestReleaseRemoteControl, toggleAnnotation } from 'Player';
+import { callPeer, setCallArgs, requestReleaseRemoteControl, toggleAnnotation } from 'Player';
 import { CallingState, ConnectionStatus, RemoteControlStatus } from 'Player/MessageDistributor/managers/AssistManager';
 import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
@@ -14,15 +15,12 @@ import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
 
-function onClose(stream) {
-    stream.getTracks().forEach((t) => t.stop());
-}
-
 function onReject() {
     toast.info(`Call was rejected.`);
 }
 
 function onError(e) {
+    console.log(e)
     toast.error(typeof e === 'string' ? e : e.message);
 }
 
@@ -35,6 +33,8 @@ interface Props {
     remoteControlStatus: RemoteControlStatus;
     hasPermission: boolean;
     isEnterprise: boolean;
+    isCallActive: boolean;
+    agentIds: string[];
 }
 
 function AssistActions({
@@ -46,14 +46,21 @@ function AssistActions({
     remoteControlStatus,
     hasPermission,
     isEnterprise,
+    isCallActive,
+    agentIds
 }: Props) {
-    const [incomeStream, setIncomeStream] = useState<MediaStream | null>(null);
+    const [isPrestart, setPrestart] = useState(false);
+    const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
     const [localStream, setLocalStream] = useState<LocalStream | null>(null);
     const [callObject, setCallObject] = useState<{ end: () => void } | null>(null);
 
+    const onCall = calling === CallingState.OnCall || calling === CallingState.Reconnecting;
+    const cannotCall = peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
+    const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled;
+
     useEffect(() => {
-        return callObject?.end();
-    }, []);
+        return callObject?.end()
+    }, [])
 
     useEffect(() => {
         if (peerConnectionStatus == ConnectionStatus.Disconnected) {
@@ -61,14 +68,34 @@ function AssistActions({
         }
     }, [peerConnectionStatus]);
 
-    function call() {
-        RequestLocalStream()
-            .then((lStream) => {
-                setLocalStream(lStream);
-                setCallObject(callPeer(lStream, setIncomeStream, lStream.stop.bind(lStream), onReject, onError));
-            })
-            .catch(onError);
+    const addIncomeStream = (stream: MediaStream) => {
+        setIncomeStream(oldState => [...oldState, stream]);
     }
+
+    function call(agentIds?: string[]) {
+        RequestLocalStream().then(lStream => {
+            setLocalStream(lStream);
+            setCallArgs(
+                lStream,
+                addIncomeStream,
+                lStream.stop.bind(lStream),
+                onReject,
+                onError
+            )
+            setCallObject(callPeer());
+            if (agentIds) {
+                callPeer(agentIds)
+            }
+        }).catch(onError)
+    }
+
+    React.useEffect(() => {
+        if (!onCall && isCallActive && agentIds) {
+            logger.log('joinig the party', agentIds)
+            setPrestart(true);
+            call(agentIds)
+        }
+    }, [agentIds, isCallActive])
 
     const confirmCall = async () => {
         if (
@@ -81,10 +108,6 @@ function AssistActions({
             call();
         }
     };
-
-    const onCall = calling === CallingState.OnCall || calling === CallingState.Reconnecting;
-    const cannotCall = peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
-    const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled;
 
     return (
         <div className="flex items-center">
@@ -123,7 +146,7 @@ function AssistActions({
             </div>
             <div className={stl.divider} />
 
-            <Popup content={cannotCall ? 'You don’t have the permissions to perform this action.' : `Call ${userId ? userId : 'User'}`}>
+            <Popup content={cannotCall ? `You don't have the permissions to perform this action.` : `Call ${userId ? userId : 'User'}`}>
                 <div
                     className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall })}
                     onClick={onCall ? callObject?.end : confirmCall}
@@ -138,7 +161,7 @@ function AssistActions({
 
             <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
                 {onCall && callObject && (
-                    <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} />
+                    <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} isPrestart={isPrestart} />
                 )}
             </div>
         </div>
