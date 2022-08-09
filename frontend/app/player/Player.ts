@@ -46,8 +46,6 @@ export const INITIAL_STATE = {
   livePlay: false,
   liveTimeTravel: false,
   lastRecordedMessageTime: 0,
-  timeTravelStart: 0,
-  assistStart: 0,
 } as const;
 
 
@@ -167,6 +165,8 @@ export default class Player extends MessageDistributor {
       // this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
         this._startAnimation();
+        // throttilg the redux state update from each frame to nearly half a second
+        // which is better for performance and component rerenders
         update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     } else {
@@ -254,7 +254,7 @@ export default class Player extends MessageDistributor {
 
   toggleTimetravel() {
     if (!getState().liveTimeTravel) {
-      this.loadMessages(true)
+      this.reloadWithUnprocessedFile()
       this.play()
     }
   }

@@ -1,10 +1,12 @@
 import React from 'react';
+// @ts-ignore
 import { Duration } from 'luxon';
 import { connect } from 'react-redux';
+// @ts-ignore
 import stl from './timeline.module.css';
 
-function TimeTooltip({ time, offset, isVisible }: { time: number; offset: number; isVisible: boolean }) {
-    const duration = Duration.fromMillis(time).toFormat('-mm:ss');
+function TimeTooltip({ time, offset, isVisible, liveTimeTravel }: { time: number; offset: number; isVisible: boolean, liveTimeTravel: boolean }) {
+    const duration = Duration.fromMillis(time).toFormat(`${liveTimeTravel ? '-' : ''}mm:ss`);
     return (
         <div
             className={stl.timeTooltip}

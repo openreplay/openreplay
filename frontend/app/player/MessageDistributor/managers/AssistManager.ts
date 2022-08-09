@@ -56,10 +56,11 @@ export function getStatusText(status: ConnectionStatus): string {
 }
  
 export interface State {
-  calling: CallingState,
-  peerConnectionStatus: ConnectionStatus,
-  remoteControl: RemoteControlStatus,
-  annotating: boolean,
+  calling: CallingState;
+  peerConnectionStatus: ConnectionStatus;
+  remoteControl: RemoteControlStatus;
+  annotating: boolean;
+  assistStart: number;
 }
 
 export const INITIAL_STATE: State = {
@@ -67,6 +68,7 @@ export const INITIAL_STATE: State = {
   peerConnectionStatus: ConnectionStatus.Connecting,
   remoteControl: RemoteControlStatus.Disabled,
   annotating: false,
+  assistStart: 0,
 }
 
 const MAX_RECONNECTION_COUNT = 4;

@@ -151,9 +151,13 @@ export default class Timeline extends React.PureComponent {
       return this.props.tooltipVisible && this.hideTimeTooltip()
     }
     const time = this.getTime(e);
-    const { endTime } = this.props;
+    const { endTime, liveTimeTravel } = this.props;
 
-    const timeLineTooltip = { time: endTime - time, offset: e.nativeEvent.offsetX, isVisible: true }
+    const timeLineTooltip = { 
+      time: liveTimeTravel ? endTime - time : time,
+      offset: e.nativeEvent.offsetX, 
+      isVisible: true 
+    }
     debounceTooltipChange(timeLineTooltip)
   }
 
@@ -175,6 +179,7 @@ export default class Timeline extends React.PureComponent {
       stackList,
       fetchList,
       issues,
+      liveTimeTravel,
     } = this.props;
 
     const scale = 100 / endTime;
@@ -193,7 +198,7 @@ export default class Timeline extends React.PureComponent {
           onMouseEnter={ this.showTimeTooltip}
           onMouseLeave={this.hideTimeTooltip}
         >
-            <TooltipContainer />
+            <TooltipContainer liveTimeTravel={liveTimeTravel} />
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
             <CustomDragLayer onDrag={this.onDrag} minX={BOUNDRY} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY} />
             <TimeTracker scale={ scale } />

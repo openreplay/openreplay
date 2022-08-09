@@ -134,110 +134,96 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   private waitingForFiles: boolean = false
-  public loadMessages(isTimeTravel?: boolean): void {
-    // jumping back in time inside live assist session
-    if (isTimeTravel) {
-      this.assistManager.toggleTimeTravelJump()
 
-      this.locationEventManager = new ListWalker();
-      this.locationManager = new ListWalker();
-      this.loadedLocationManager = new ListWalker();
-      this.connectionInfoManger = new ListWalker();
-      this.clickManager = new ListWalker();
-      this.scrollManager = new ListWalker();
-      this.resizeManager = new ListWalker([]);
+  private onFileSuccessRead() {
+    this.windowNodeCounter.reset()
 
-      this.performanceTrackManager = new PerformanceTrackManager()
-      this.windowNodeCounter = new WindowNodeCounter();
-      this.pagesManager = new PagesManager(this, this.session.isMobile)
-      this.mouseMoveManager = new MouseMoveManager(this);
-      this.activityManager = new ActivityManager(this.session.duration.milliseconds);
+    if (this.activityManager) {
+      this.activityManager.end()
+      update({
+        skipIntervals: this.activityManager.list,
+        lastRecordedMessageTime: this.lastRecordedMessageTime
+      })
     }
 
+    this.waitingForFiles = false
+    this.setMessagesLoading(false)
+  }
+
+  private readAndDistributeMessages(byteArray: Uint8Array, onReadCb?: (msg: Message) => void) {
+    const msgs: Array<Message> = []
+    const reader = new MFileReader(new Uint8Array(), this.sessionStart)
+
+    reader.append(byteArray)
+    let next: ReturnType<MFileReader['next']>
+    while (next = reader.next()) {
+      const [msg, index] = next
+      this.distributeMessage(msg, index)
+      msgs.push(msg)
+      onReadCb?.(msg)
+    }
+
+    logger.info("Messages count: ", msgs.length, msgs)
+
+    return msgs
+  }
+
+  private processStateUpdates(msgs: Message[]) {
+    // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
+    const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
+    this.pagesManager.sortPages((m1, m2) => {
+      if (m1.time === m2.time) {
+        if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
+          if (headChildrenIds.includes(m1.id)) {
+            return -1;
+          }
+        } else if (m2.tp === "remove_node" && m1.tp !== "remove_node") {
+          if (headChildrenIds.includes(m2.id)) {
+            return 1;
+          }
+        }  else if (m2.tp === "remove_node" && m1.tp === "remove_node") {
+          const m1FromHead = headChildrenIds.includes(m1.id);
+          const m2FromHead = headChildrenIds.includes(m2.id);
+          if (m1FromHead && !m2FromHead) {
+            return -1;
+          } else if (m2FromHead && !m1FromHead) {
+            return 1;
+          }
+        }
+      }
+      return 0;
+    })
+
+    const stateToUpdate: {[key:string]: any} = {
+      performanceChartData: this.performanceTrackManager.chartData,
+      performanceAvaliability: this.performanceTrackManager.avaliability,
+    }
+    LIST_NAMES.forEach(key => {
+      stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
+    })
+    update(stateToUpdate)
+    this.setMessagesLoading(false)
+  }
+
+  private loadMessages() {
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    const r = new MFileReader(new Uint8Array(), isTimeTravel ? undefined : this.sessionStart)
-    const msgs: Array<Message> = []
-
-    const onData = (b: Uint8Array) => {
-      r.append(b)
-      let next: ReturnType<MFileReader['next']>
-      while (next = r.next()) {
-        const [msg, index] = next
-        this.distributeMessage(msg, index, isTimeTravel)
-        msgs.push(msg)
-      }
-
-      logger.info("Messages count: ", msgs.length, msgs)
-      if (isTimeTravel) this.sessionStart = msgs[0].time
-      // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
-      const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
-      this.pagesManager.sortPages((m1, m2) => {
-        if (m1.time === m2.time) {
-          if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
-            if (headChildrenIds.includes(m1.id)) {
-              return -1;
-            }
-          } else if (m2.tp === "remove_node" && m1.tp !== "remove_node") {
-            if (headChildrenIds.includes(m2.id)) {
-              return 1;
-            }
-          }  else if (m2.tp === "remove_node" && m1.tp === "remove_node") {
-            const m1FromHead = headChildrenIds.includes(m1.id);
-            const m2FromHead = headChildrenIds.includes(m2.id);
-            if (m1FromHead && !m2FromHead) {
-              return -1;
-            } else if (m2FromHead && !m1FromHead) {
-              return 1;
-            }
-          }
-        }
-        return 0;
-      })
-
-      const stateToUpdate: {[key:string]: any} = {
-        performanceChartData: this.performanceTrackManager.chartData,
-        performanceAvaliability: this.performanceTrackManager.avaliability,
-      }
-      LIST_NAMES.forEach(key => {
-        stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
-      })
-      update(stateToUpdate)
-      this.setMessagesLoading(false)
-    }
-
-    const onSuccessRead = () => {
-      this.windowNodeCounter.reset()
-      if (this.activityManager) {
-        this.activityManager.end()
-        update({
-          skipIntervals: this.activityManager.list,
-          lastRecordedMessageTime: this.lastRecordedMessageTime
-        })
-      }
-      this.waitingForFiles = false
-      this.setMessagesLoading(false)
-
-      if (isTimeTravel) {
-        this.assistManager.toggleTimeTravelJump()
-        update({
-          liveTimeTravel: true,
-          timeTravelStart: getState().time
-        });
-      }
+    const onData = (byteArray: Uint8Array) => {
+      const msgs = this.readAndDistributeMessages(byteArray)
+      this.processStateUpdates(msgs)
     }
 
     loadFiles(this.session.mobsUrl,
       onData
     )
-    .then(onSuccessRead)
+    .then(() => this.onFileSuccessRead())
     .catch(async e => {
       try {
         const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
         if (unprocessedFile) {
           Promise.resolve(onData(unprocessedFile))
-            .then(() => onSuccessRead())
+          .then(() => this.onFileSuccessRead())
         } else {
           logger.error(e)
           update({ error: true })
@@ -246,15 +232,67 @@ export default class MessageDistributor extends StatedScreen {
         logger.error(unprocessedFilesError)
         update({ error: true })
         toast.error('Error getting a session replay')
-
-        if (isTimeTravel) {
-          this.assistManager.toggleTimeTravelJump()
-        }
       } finally {
         this.waitingForFiles = false
         this.setMessagesLoading(false)
       }
     })
+  }
+
+  public async reloadWithUnprocessedFile() {
+    // assist will pause and skip messages to prevent timestamp related errors
+    this.assistManager.toggleTimeTravelJump()
+    this.reloadMessageManagers()
+
+    this.setMessagesLoading(true)
+    this.waitingForFiles = true
+
+    const onData = (byteArray: Uint8Array) => {
+      const onReadCallback = () =>  this.lastRecordedMessageTime = this.lastMessageTime
+      const msgs = this.readAndDistributeMessages(byteArray, onReadCallback)
+      this.sessionStart = msgs[0].time
+      this.processStateUpdates(msgs)
+    }
+
+    // unpausing assist
+    const unpauseAssist = () => {
+      this.assistManager.toggleTimeTravelJump()
+      update({
+        liveTimeTravel: true,
+      });
+    }
+
+    try {
+      const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
+
+      Promise.resolve(onData(unprocessedFile))
+      .then(() => this.onFileSuccessRead())
+      .then(unpauseAssist)
+    } catch (unprocessedFilesError) {
+      logger.error(unprocessedFilesError)
+      update({ error: true })
+      toast.error('Error getting a session replay')
+      this.assistManager.toggleTimeTravelJump()
+    } finally {
+      this.waitingForFiles = false
+      this.setMessagesLoading(false)
+    }
+  }
+
+  private reloadMessageManagers() {
+    this.locationEventManager = new ListWalker();
+    this.locationManager = new ListWalker();
+    this.loadedLocationManager = new ListWalker();
+    this.connectionInfoManger = new ListWalker();
+    this.clickManager = new ListWalker();
+    this.scrollManager = new ListWalker();
+    this.resizeManager = new ListWalker([]);
+
+    this.performanceTrackManager = new PerformanceTrackManager()
+    this.windowNodeCounter = new WindowNodeCounter();
+    this.pagesManager = new PagesManager(this, this.session.isMobile)
+    this.mouseMoveManager = new MouseMoveManager(this);
+    this.activityManager = new ActivityManager(this.session.duration.milliseconds);
   }
 
   move(t: number, index?: number): void {
@@ -350,12 +388,9 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   /* Binded */
-  distributeMessage(msg: Message, index: number, isTimeTravel?: boolean): void {
+  distributeMessage(msg: Message, index: number): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
-    if (isTimeTravel) {
-      this.lastRecordedMessageTime = lastMessageTime
-    }
     if ([
       "mouse_move",
       "mouse_click",

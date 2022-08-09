@@ -3,11 +3,11 @@ import TimeTooltip from '../TimeTooltip';
 import store from 'App/store';
 import { Provider } from 'react-redux';
 
-function TooltipContainer() {
+function TooltipContainer({ liveTimeTravel }: { liveTimeTravel: boolean }) {
 
   return (
     <Provider store={store}>
-      <TimeTooltip />
+      <TimeTooltip liveTimeTravel={liveTimeTravel} />
     </Provider>
   )
 }
