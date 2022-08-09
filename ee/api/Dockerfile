@@ -18,7 +18,7 @@ RUN cd /work_tmp && npm install
 
 WORKDIR /work
 COPY . .
-RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/.
+RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/. && chmod 644 /mappings.wasm
 
 RUN adduser -u 1001 openreplay -D
 USER 1001
