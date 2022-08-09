@@ -118,7 +118,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     autoScroll = true;
 
     componentDidMount() {
-        this.scroller.current.scrollToRow(this.props.activeIndex);
+        if (this.scroller.current) {
+            this.scroller.current.scrollToRow(this.props.activeIndex);
+        }
     }
 
     componentDidUpdate(prevProps: any, prevState: any) {
@@ -135,7 +137,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                 ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
             });
         }
-        if (this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex) {
+        if (this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current) {
             this.scroller.current.scrollToRow(this.props.activeIndex);
         }
     }
