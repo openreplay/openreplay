@@ -31,6 +31,7 @@ export default class FilterItem {
             filters: observable,
             isActive: observable,
             sourceOperator: observable,
+            category: observable,
 
             merge: action,
         });
@@ -77,6 +78,7 @@ export default class FilterItem {
         this.isEvent = _filter.isEvent;
 
         (this.value = json.value.length === 0 || !json.value ? [''] : json.value), (this.operator = json.operator);
+        this.source = json.source;
         this.sourceOperator = json.sourceOperator;
 
         this.filters =

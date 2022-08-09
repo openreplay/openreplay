@@ -227,8 +227,24 @@ export default class TimeTable extends React.PureComponent<Props, State> {
             <div className={cn(className, 'relative')}>
                 {navigation && (
                     <div className={cn(autoscrollStl.navButtons, 'flex items-center')}>
-                        <Button variant="text-primary" icon="chevron-up" onClick={this.onPrevClick} />
-                        <Button variant="text-primary" icon="chevron-down" onClick={this.onNextClick} />
+                        <Button
+                            variant="text-primary"
+                            icon="chevron-up"
+                            tooltip={{
+                                title: 'Previous Error',
+                                delay: 0,
+                            }}
+                            onClick={this.onPrevClick}
+                        />
+                        <Button
+                            variant="text-primary"
+                            icon="chevron-down"
+                            tooltip={{
+                                title: 'Next Error',
+                                delay: 0,
+                            }}
+                            onClick={this.onNextClick}
+                        />
                         {/* <IconButton 
               size="small" 
               icon="chevron-up" 

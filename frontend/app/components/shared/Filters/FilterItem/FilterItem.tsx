@@ -33,7 +33,7 @@ function FilterItem(props: Props) {
     };
 
     const onSourceOperatorChange = (e: any, { name, value }: any) => {
-        props.onUpdate({ ...filter, sourceOperator: value.value });
+        props.onUpdate({ ...filter, sourceOperator: value });
     };
 
     const onUpdateSubFilter = (subFilter: any, subFilterIndex: any) => {
