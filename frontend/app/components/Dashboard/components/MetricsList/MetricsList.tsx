@@ -27,6 +27,7 @@ function MetricsList(props: Props) {
         metricStore.updateKey('sessionsPage', 1);
     }, [])
 
+    console.log(list, list.length)
     return useObserver(() => (
         <NoContent
             show={lenth === 0}
@@ -37,14 +38,13 @@ function MetricsList(props: Props) {
                 </div>
             }   
         >
-            <div className="mt-3 border rounded bg-white">
-                <div className="grid grid-cols-12 p-3 font-medium">
-                    <div className="col-span-3">Metric</div>
+            <div className="mt-3 border-b rounded bg-white">
+                <div className="grid grid-cols-12 p-4 font-medium">
+                    <div className="col-span-3">Title</div>
                     {/* <div>Type</div> */}
-                    <div className="col-span-2">Dashboards</div>
                     <div className="col-span-3">Owner</div>
-                    <div>Visibility</div>
-                    <div className="col-span-2">Last Modified</div>
+                    <div  className="col-span-4">Visibility</div>
+                    <div className="col-span-2 text-right">Last Modified</div>
                 </div>
 
                 {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
@@ -54,7 +54,10 @@ function MetricsList(props: Props) {
                 ))}
             </div>
 
-            <div className="w-full flex items-center justify-center py-6">
+            <div className="w-full flex items-center justify-between pt-4">
+                <div className="text-disabled-text">
+                    Showing <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out of <span className="font-semibold">{list.length}</span> Sessions
+                </div>
                 <Pagination
                     page={metricStore.page}
                     totalPages={Math.ceil(lenth / metricStore.pageSize)}

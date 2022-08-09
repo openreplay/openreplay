@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
@@ -8,7 +8,6 @@ import FilterSeries from '../FilterSeries';
 import { confirm, Popup } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
-import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
 interface Props {
     history: any;
@@ -17,8 +16,8 @@ interface Props {
 }
 
 function WidgetForm(props: Props) {
-    const [showDashboardSelectionModal, setShowDashboardSelectionModal] = useState(false);
-    const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
+    
+    const { history, match: { params: { siteId, dashboardId } } } = props;
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
     const isSaving = useObserver(() => metricStore.isSaving);
@@ -201,31 +200,13 @@ function WidgetForm(props: Props) {
                 </Popup>
                 <div className="flex items-center">
                     {metric.exists() && (
-                        <>
-                            <Button variant="text-primary" onClick={onDelete}>
-                                <Icon name="trash" size="14" className="mr-2" color="teal"/>
-                                Delete
-                            </Button>
-                            <Button
-                                variant="text-primary"
-                                className="ml-2"
-                                onClick={() => setShowDashboardSelectionModal(true)}
-                                disabled={!canAddToDashboard}
-                            >
-                                <Icon name="columns-gap" size="14" className="mr-2" color="teal"/>
-                                Add to Dashboard
-                            </Button>
-                        </>
+                        <Button variant="text-primary" onClick={onDelete}>
+                            <Icon name="trash" size="14" className="mr-2" color="teal"/>
+                            Delete
+                        </Button>
                     )}
                 </div>
             </div>
-            { canAddToDashboard && (
-                <DashboardSelectionModal
-                    metricId={metric.metricId}
-                    show={showDashboardSelectionModal}
-                    closeHandler={() => setShowDashboardSelectionModal(false)}
-                />
-            )}
         </div>
     ));
 }

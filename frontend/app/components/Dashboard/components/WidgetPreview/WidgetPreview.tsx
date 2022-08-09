@@ -2,19 +2,22 @@ import React from 'react';
 import cn from 'classnames';
 import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
-import { SegmentSelection } from 'UI';
+import { SegmentSelection, Button, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 // import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
 interface Props {
     className?: string;
 }
 function WidgetPreview(props: Props) {
+    const [showDashboardSelectionModal, setShowDashboardSelectionModal] = React.useState(false);
     const { className = '' } = props;
     const { metricStore, dashboardStore } = useStore();
+    const dashboards = dashboardStore.dashboards;
     const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
@@ -53,9 +56,12 @@ function WidgetPreview(props: Props) {
         }
     }
 
+    const canAddToDashboard = metric.exists() && dashboards.length > 0;
+
     return useObserver(() => (
-        <div className={cn(className)}>
-            <div className="flex items-center justify-between mb-2">
+        <>
+        <div className={cn(className, 'bg-white rounded')}>
+            <div className="flex items-center justify-between px-4">
                 <h2 className="text-2xl">
                     {getWidgetTitle()}
                 </h2>
@@ -99,12 +105,32 @@ function WidgetPreview(props: Props) {
                     )}
                     <div className="mx-4" />
                     <WidgetDateRange />
+                    {/* add to dashboard */}
+                    {metric.exists() && (
+                        <Button
+                        variant="text-primary"
+                        className="ml-2 p-0"
+                        onClick={() => setShowDashboardSelectionModal(true)}
+                        disabled={!canAddToDashboard}
+                    > 
+                        <Icon name="columns-gap-filled" size="14" className="mr-2" color="teal"/>
+                        Add to Dashboard
+                    </Button>
+                    )}
                 </div>
             </div>
-            <div className="bg-white rounded p-4">
+            <div className="p-4 pt-0">
                 <WidgetWrapper widget={metric} isPreview={true} isWidget={false} />
             </div>
         </div>
+        { canAddToDashboard && (
+            <DashboardSelectionModal
+                metricId={metric.metricId}
+                show={showDashboardSelectionModal}
+                closeHandler={() => setShowDashboardSelectionModal(false)}
+            />
+        )}
+        </>
     ));
 }
 

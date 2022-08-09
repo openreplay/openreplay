@@ -18,16 +18,20 @@ function MetricsView(props: Props) {
         metricStore.fetchList();
     }, []);
     return useObserver(() => (
-        <div style={{ maxWidth: '1300px', margin: 'auto'}}>
-            <div className="flex items-center mb-4 justify-between">
+        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded p-4">
+            <div className="flex items-center mb-4 justify-between px-4">
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Metrics" className="" />
                     <span className="text-2xl color-gray-medium ml-2">{metricsCount}</span>
                 </div>
                 <Link to={'/metrics/create'}><Button variant="primary">Create Metric</Button></Link>
-                <div className="ml-auto w-1/3">
+                <div className="ml-auto w-1/4">
                     <MetricsSearch />
                 </div>
+            </div>
+            <div className="text-xl text-disabled-text flex items-center pl-4">
+                <Icon name="info-circle-fill" className="mr-2" size={18} />
+                Create custom Metrics to capture key interactions and track KPIs.
             </div>
             <MetricsList />
         </div>
