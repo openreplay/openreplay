@@ -91,7 +91,14 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
-            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+            {{- if .Values.global.postgresql.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.postgresql.existingSecret }}
+                key: postgresql-postgres-password
+            {{- else }}
+            value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+            {{- end}}
         image: bitnami/postgresql:13.3.0-debian-10-r53
         command: 
         - /bin/bash

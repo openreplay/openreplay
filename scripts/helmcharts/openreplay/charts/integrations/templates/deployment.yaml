@@ -51,8 +51,17 @@ spec:
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: pg_password
+              {{- if .Values.global.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgresql.existingSecret }}
+                  key: postgresql-postgres-password
+              {{- else }}
+              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+              {{- end}}
             - name: POSTGRES_STRING
-              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
