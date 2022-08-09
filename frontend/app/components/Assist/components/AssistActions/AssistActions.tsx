@@ -69,7 +69,6 @@ function AssistActions({
     }, [peerConnectionStatus]);
 
     const addIncomeStream = (stream: MediaStream) => {
-        console.log('new stream in component')
         setIncomeStream(oldState => [...oldState, stream]);
     }
 

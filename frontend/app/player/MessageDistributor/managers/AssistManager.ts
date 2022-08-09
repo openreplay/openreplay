@@ -341,7 +341,7 @@ export default class AssistManager {
           call.on('stream', stream => {
             this.callArgs && this.callArgs.onStream(stream)
           });
-          call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
+          // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
     
           call.on("close", this.onRemoteCallEnd)
           call.on("error", (e) => {
@@ -467,7 +467,7 @@ export default class AssistManager {
         getState().calling !== CallingState.OnCall && update({ calling: CallingState.OnCall })
         this.callArgs && this.callArgs.onStream(stream)
       });
-      call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
+      // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
       call.on("close", this.onRemoteCallEnd)
       call.on("error", (e) => {
