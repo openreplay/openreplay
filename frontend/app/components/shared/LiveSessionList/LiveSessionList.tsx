@@ -39,16 +39,19 @@ function LiveSessionList(props: Props) {
     var timeoutId: any;
     const { filters } = filter;
     const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-    const sortOptions = [{ label: 'Newest', value: 'timestamp' }].concat(metaList
-        .map((i: any) => ({
-            label: capitalize(i),
-            value: i,
-        })).toJS());
+    const sortOptions = [{ label: 'Newest', value: 'timestamp' }].concat(
+        metaList
+            .map((i: any) => ({
+                label: capitalize(i),
+                value: i,
+            }))
+            .toJS()
+    );
 
     useEffect(() => {
         if (metaListLoading) return;
         const _filter = { ...filter };
-        if (sortOptions[1]) {
+        if (sortOptions[1] && !filter.sort) {
             _filter.sort = sortOptions[1].value;
         }
         props.applyFilter(_filter);
@@ -139,7 +142,7 @@ function LiveSessionList(props: Props) {
                     </NoContent>
                 </Loader>
 
-                <div className={cn("w-full flex items-center justify-center py-6", { 'disabled' : loading})}>
+                <div className={cn('w-full flex items-center justify-center py-6', { disabled: loading })}>
                     <Pagination
                         page={currentPage}
                         totalPages={Math.ceil(total / PER_PAGE)}
