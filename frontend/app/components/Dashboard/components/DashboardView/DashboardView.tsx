@@ -15,8 +15,10 @@ import withPageTitle from "HOCs/withPageTitle";
 import withReport from "App/components/hocs/withReport";
 import DashboardOptions from "../DashboardOptions";
 import SelectDateRange from "Shared/SelectDateRange";
+// @ts-ignore
 import DashboardIcon from "../../../../svg/dashboard-icn.svg";
 import { Tooltip } from "react-tippy";
+import Breadcrumb from 'Shared/Breadcrumb';
 
 interface IProps {
     siteId: string;
@@ -68,6 +70,10 @@ function DashboardView(props: Props) {
     useEffect(() => {
         dashboardStore.selectDefaultDashboard();
     }, [siteId])
+
+    useEffect(() => {
+        dashboardStore.selectDashboardById(dashboardId);
+    }, [dashboardId])
 
     const onAddWidgets = () => {
         dashboardStore.initDashboard(dashboard);
@@ -138,21 +144,21 @@ function DashboardView(props: Props) {
                     </div>
                 }
                 size="small"
-                subtext={
-                    <Button
-                        variant="primary"
-                        size="small"
-                        onClick={onAddDashboardClick}
-                    >
-                        + Create Dashboard
-                    </Button>
-                }
             >
                 <div style={{ maxWidth: "1300px", margin: "auto" }}>
                     <DashboardEditModal
                         show={showEditModal}
                         closeHandler={() => setShowEditModal(false)}
                         focusTitle={focusTitle}
+                    />
+                    <Breadcrumb
+                        items={[
+                            {
+                                label: 'Dashboards',
+                                to: withSiteId('/dashboard', siteId),
+                            },
+                            { label: dashboard && dashboard.name || '' },
+                        ]}
                     />
                     <div className="flex items-center mb-4 justify-between">
                         <div className="flex items-center" style={{ flex: 3 }}>

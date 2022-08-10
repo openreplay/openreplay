@@ -46,6 +46,11 @@ export interface IDashboardSotre {
 
     showAlertModal: boolean;
 
+    page: number
+    pageSize: number
+    dashboardsSearch: string
+    sort: any
+
     selectWidgetsByCategory: (category: string) => void;
     toggleAllSelectedWidgets: (isSelected: boolean) => void;
     removeSelectedWidgetByCategory(category: string): void;
@@ -115,6 +120,12 @@ export default class DashboardStore implements IDashboardSotre {
     sessionsLoading: boolean = false;
     showAlertModal: boolean = false;
 
+    // Pagination
+    page: number = 1
+    pageSize: number = 15
+    dashboardsSearch: string = ''
+    sort: any = {}
+
     constructor() {
         makeAutoObservable(this);
 
@@ -183,6 +194,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     updateKey(key: any, value: any) {
+        console.log(key, value)
         this[key] = value;
     }
 
