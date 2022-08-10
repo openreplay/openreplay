@@ -23,7 +23,7 @@ function DashboardListItem(props: Props) {
     };
     return (
         <>
-            <div className="grid grid-cols-12 p-4 border-t select-none">
+            <div className="grid grid-cols-12 py-4 border-t select-none">
                 <div className="col-span-8 flex items-start">
                     <div className="flex items-center link capitalize-first" onClick={onItemClick}>
                         <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
