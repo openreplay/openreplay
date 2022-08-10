@@ -29,13 +29,6 @@ function NewDashboard(props: RouteComponentProps<RouterProps>) {
                 dashboardStore.selectDashboardById(dashboardId);
             }
         });
-        if (!dashboardId && location.pathname.includes('dashboard')) {
-            dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
-                props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
-            }, () => {
-                props.history.push(withSiteId('/dashboard', siteId));
-            })
-        }
     }, [siteId]);
 
     return useObserver(() => (

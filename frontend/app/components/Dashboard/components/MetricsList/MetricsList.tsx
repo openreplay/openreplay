@@ -37,7 +37,7 @@ function MetricsList() {
             }   
         >
             <div className="mt-3 border-b rounded bg-white">
-                <div className="grid grid-cols-12 p-4 font-medium">
+                <div className="grid grid-cols-12 py-2 font-medium">
                     <div className="col-span-3">Title</div>
                     <div className="col-span-3">Owner</div>
                     <div  className="col-span-4">Visibility</div>
