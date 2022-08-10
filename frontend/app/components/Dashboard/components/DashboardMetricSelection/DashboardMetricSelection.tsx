@@ -6,9 +6,16 @@ import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 
-function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
+interface IWiProps {
+    category: Record<string, any>
+    onClick: (category: Record<string, any>) => void
+    isSelected: boolean
+    selectedWidgetIds: string[]
+}
+
+export function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }: IWiProps) {
     const selectedCategoryWidgetsCount = useObserver(() => {
-        return category.widgets.filter(widget => selectedWidgetIds.includes(widget.metricId)).length;
+        return category.widgets.filter((widget: any) => selectedWidgetIds.includes(widget.metricId)).length;
     });
     return (
         <div

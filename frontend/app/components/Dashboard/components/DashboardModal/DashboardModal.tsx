@@ -3,23 +3,22 @@ import { useObserver } from 'mobx-react-lite';
 import DashboardMetricSelection from '../DashboardMetricSelection';
 import DashboardForm from '../DashboardForm';
 import { Button } from 'UI';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
-import { dashboardMetricCreate, withSiteId, dashboardSelected } from 'App/routes';
+import { dashboardMetricCreate, withSiteId } from 'App/routes';
 
-interface Props {
+interface Props extends RouteComponentProps {
     history: any
     siteId?: string
     dashboardId?: string
     onMetricAdd?: () => void;
 }
-function DashboardModal(props) {
+function DashboardModal(props: Props) {
     const { history, siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
     const selectedWidgetsCount = useObserver(() => dashboardStore.selectedWidgets.length);
     const { hideModal } = useModal();
-    const loadingTemplates = useObserver(() => dashboardStore.loadingTemplates);
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
     const loading = useObserver(() => dashboardStore.isSaving);
 

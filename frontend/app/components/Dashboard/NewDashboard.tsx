@@ -9,12 +9,20 @@ import cn from 'classnames';
 import { withSiteId } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 
-function NewDashboard(props: RouteComponentProps<{}>) {
-    const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
+interface RouterProps {
+    siteId: string;
+    dashboardId: string;
+    metricId: string;
+}
+
+function NewDashboard(props: RouteComponentProps<RouterProps>) {
+    const { history, match: { params: { siteId, dashboardId } } } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
     const isMetricDetails = history.location.pathname.includes('/metrics/') || history.location.pathname.includes('/metric/');
+    const isDashboardDetails = history.location.pathname.includes('/dashboard/')
 
+    const shouldHideMenu = isMetricDetails || isDashboardDetails;
     useEffect(() => {
         dashboardStore.fetchList().then((resp) => {
             if (parseInt(dashboardId) > 0) {
@@ -33,16 +41,16 @@ function NewDashboard(props: RouteComponentProps<{}>) {
     return useObserver(() => (
         <Loader loading={loading}>
              <div className="page-margin container-90">
-                <div className={cn("side-menu", { 'hidden' : isMetricDetails })}>
+                <div className={cn("side-menu", { 'hidden' : shouldHideMenu })}>
                     <DashboardSideMenu siteId={siteId} />
                 </div>
                 <div
                     className={cn({
-                        "side-menu-margined" : !isMetricDetails,
-                        "container-70" : isMetricDetails
+                        "side-menu-margined" : !shouldHideMenu,
+                        "container-70" : shouldHideMenu
                     })}
                 >
-                    <DashboardRouter siteId={siteId} />
+                    <DashboardRouter />
                 </div>
             </div>
         </Loader>
