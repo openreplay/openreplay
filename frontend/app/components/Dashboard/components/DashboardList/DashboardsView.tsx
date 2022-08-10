@@ -1,17 +1,32 @@
 import React from 'react';
-import { Button, PageTitle, Icon, Link } from 'UI';
+import { Button, PageTitle, Icon } from 'UI';
 import withPageTitle from 'HOCs/withPageTitle';
+import { useStore } from 'App/mstore';
+import { withSiteId } from 'App/routes';
+
 import DashboardList from './DashboardList';
 import DashboardSearch from './DashboardSearch';
- 
-function DashboardsView() {
+
+function DashboardsView({ history, siteId }: { history: any, siteId: string }) {
+    const { dashboardStore } = useStore();
+
+    const onAddDashboardClick = () => {
+        dashboardStore.initDashboard();
+        dashboardStore
+        .save(dashboardStore.dashboardInstance)
+        .then(async (syncedDashboard) => {
+          dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
+          history.push(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
+        })
+    }
+
     return (
         <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded p-4">
             <div className="flex items-center mb-4 justify-between px-4">
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Dashboards" className="" />
                 </div>
-                <Link to={'/metrics/create'}><Button variant="primary">Create Dashboard</Button></Link>
+                <Button variant="primary" onClick={onAddDashboardClick}>Create Dashboard</Button>
                 <div className="ml-auto w-1/4">
                     <DashboardSearch />
                 </div>

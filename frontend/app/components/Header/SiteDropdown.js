@@ -54,7 +54,8 @@ export default class SiteDropdown extends React.PureComponent {
         this.props.clearSearchLive();
 
         mstore.initClient();
-    };
+        mstore.dashboardStore.selectDefaultDashboard();
+  }
 
     render() {
         const {

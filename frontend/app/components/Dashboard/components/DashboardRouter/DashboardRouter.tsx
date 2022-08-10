@@ -1,6 +1,6 @@
 import React from 'react';
 import { Switch, Route } from 'react-router';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 
 import {
     metrics,
@@ -18,18 +18,18 @@ import WidgetView from '../WidgetView';
 import WidgetSubDetailsView from '../WidgetSubDetailsView';
 import DashboardsView from '../DashboardList';
 
-function DashboardViewSelected({ siteId, dashboardId }) {
+function DashboardViewSelected({ siteId, dashboardId }: { siteId: string, dashboardId: string }) {
     return (
         <DashboardView siteId={siteId} dashboardId={dashboardId} />
     )
 }
 
-interface Props {
-    history: any
+interface Props extends RouteComponentProps {
     match: any
 }
 function DashboardRouter(props: Props) {
-    const { match: { params: { siteId, dashboardId, metricId } } } = props;
+    const { match: { params: { siteId, dashboardId } }, history } = props;
+
     return (
         <div>
             <Switch>
@@ -46,7 +46,7 @@ function DashboardRouter(props: Props) {
                 </Route>
 
                 <Route exact path={withSiteId(dashboard(), siteId)}>
-                    <DashboardsView /> 
+                    <DashboardsView siteId={siteId} history={history} /> 
                 </Route>
 
                 <Route exact strict path={withSiteId(dashboardMetricDetails(dashboardId), siteId)}>

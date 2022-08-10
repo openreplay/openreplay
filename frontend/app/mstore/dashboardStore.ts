@@ -53,7 +53,7 @@ export interface IDashboardSotre {
 
     selectWidgetsByCategory: (category: string) => void;
     toggleAllSelectedWidgets: (isSelected: boolean) => void;
-    removeSelectedWidgetByCategory(category: string): void;
+    removeSelectedWidgetByCategory(category: Record<string, any>): void;
     toggleWidgetSelection(widget: IWidget): void;
 
     initDashboard(dashboard?: IDashboard): void;
@@ -72,6 +72,7 @@ export interface IDashboardSotre {
     getDashboardCount(): void;
     updateDashboard(dashboard: IDashboard): void;
     selectDashboardById(dashboardId: string): void;
+    getDashboardById(dashboardId: string): boolean;
     setSiteId(siteId: any): void;
     selectDefaultDashboard(): Promise<IDashboard>;
 
@@ -371,6 +372,18 @@ export default class DashboardStore implements IDashboardSotre {
             this.dashboards.find((d) => d.dashboardId == dashboardId) ||
             new Dashboard();
     };
+
+    getDashboardById = (dashboardId: string) => {
+        const dashboard = this.dashboards.find((d) => d.dashboardId == dashboardId)
+
+        if (dashboard) {
+            this.selectedDashboard = dashboard
+            return true;
+        } else {
+            this.selectedDashboard = null
+            return false;
+        }
+    }
 
     setSiteId = (siteId: any) => {
         this.siteId = siteId;
