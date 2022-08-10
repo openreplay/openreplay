@@ -78,6 +78,7 @@ spec:
           volumeMounts:
           - name: datadir
             mountPath: /mnt/efs
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 10 }}
           {{- with .Values.persistence.mounts  }}
             {{- toYaml . | nindent 10 }}
           {{- end }}
@@ -100,6 +101,7 @@ spec:
         persistentVolumeClaim:
           claimName: {{ .Values.pvc.name }}
       {{- end }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

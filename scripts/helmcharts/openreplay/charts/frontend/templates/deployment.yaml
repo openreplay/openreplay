@@ -87,6 +87,11 @@ spec:
               containerPort: {{ $val }}
               protocol: TCP
             {{- end }}
+          volumeMounts:
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 12 }}
+          {{- with .Values.persistence.mounts  }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
@@ -101,3 +106,8 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+      {{- with .Values.persistence.volumes }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 8 }}
