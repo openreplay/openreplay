@@ -5,10 +5,10 @@ import (
 	"openreplay/backend/pkg/redisstream"
 )
 
-func NewConsumer(group string, topics []string, handler types.MessageHandler, _ bool) types.Consumer {
+func NewConsumer(group string, topics []string, handler types.MessageHandler, _ bool, _ int) types.Consumer {
 	return redisstream.NewConsumer(group, topics, handler)
 }
 
-func NewProducer() types.Producer {
+func NewProducer(_ int, _ bool) types.Producer {
 	return redisstream.NewProducer()
 }

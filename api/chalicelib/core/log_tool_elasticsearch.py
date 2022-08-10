@@ -1,4 +1,5 @@
-from elasticsearch import Elasticsearch, RequestsHttpConnection
+# from elasticsearch import Elasticsearch, RequestsHttpConnection
+from elasticsearch import Elasticsearch
 from chalicelib.core import log_tools
 import base64
 import logging
@@ -58,20 +59,21 @@ def add_edit(tenant_id, project_id, data):
 
 
 def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
+    scheme = "http" if host.startswith("http") else "https"
     host = host.replace("http://", "").replace("https://", "")
     try:
         args = {
-            "hosts": [{"host": host, "port": port}],
-            "use_ssl": use_ssl,
+            "hosts": [{"host": host, "port": port, "scheme": scheme}],
             "verify_certs": False,
-            "ca_certs": False,
-            "connection_class": RequestsHttpConnection,
-            "timeout": timeout
+            # "ca_certs": False,
+            # "connection_class": RequestsHttpConnection,
+            "request_timeout": timeout,
+            "api_key": (api_key_id, api_key)
         }
-        if api_key_id is not None and len(api_key_id) > 0:
-            # args["http_auth"] = (username, password)
-            token = "ApiKey " + base64.b64encode(f"{api_key_id}:{api_key}".encode("utf-8")).decode("utf-8")
-            args["headers"] = {"Authorization": token}
+        # if api_key_id is not None and len(api_key_id) > 0:
+        #     # args["http_auth"] = (username, password)
+        #     token = "ApiKey " + base64.b64encode(f"{api_key_id}:{api_key}".encode("utf-8")).decode("utf-8")
+        #     args["headers"] = {"Authorization": token}
         es = Elasticsearch(
             **args
         )

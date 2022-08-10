@@ -32,9 +32,10 @@ interface Props {
     data: any;
     predefinedKey: string
     metric?: any;
+    isTemplate?: boolean;
 }
 function WidgetPredefinedChart(props: Props) {
-    const { data, predefinedKey, metric } = props;
+    const { data, predefinedKey, metric, isTemplate } = props;
 
     const renderWidget = () => {
         switch (predefinedKey) {
@@ -52,7 +53,7 @@ function WidgetPredefinedChart(props: Props) {
             case 'domains_errors_5xx':
                 return <CallsErrors5xx data={data} metric={metric} />
             case 'calls_errors':
-                return <CallWithErrors data={data} metric={metric} />
+                return <CallWithErrors isTemplate={isTemplate} data={data} metric={metric} />
 
             // PERFORMANCE
             case 'impacted_sessions_by_slow_pages':
@@ -86,18 +87,18 @@ function WidgetPredefinedChart(props: Props) {
             case 'resources_count_by_type':
                 return <BreakdownOfLoadedResources data={data} metric={metric} />
             case 'missing_resources':
-                return <MissingResources data={data} metric={metric} />
+                return <MissingResources isTemplate={isTemplate} data={data} metric={metric} />
             case 'resource_type_vs_response_end':
                 return <ResourceLoadedVsResponseEnd data={data} metric={metric} />
             case 'resources_loading_time':
                 return <ResourceLoadingTime data={data} metric={metric} />
             case 'slowest_resources':
-                return <SlowestResources data={data} metric={metric} />
+                return <SlowestResources isTemplate={isTemplate} data={data} metric={metric} />
 
             default:
                 return <div className="h-40 color-red">Widget not supported</div>
         }
-    }    
+    }
 
     return useObserver(() => (
         <>

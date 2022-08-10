@@ -1,5 +1,6 @@
+import React from 'react';
 import cn from 'classnames';
-import cls from './infoLine.css';
+import cls from './infoLine.module.css';
 
 const InfoLine = ({ children }) => (
 	<div className={ cls.info }>

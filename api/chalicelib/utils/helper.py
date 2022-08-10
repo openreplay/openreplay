@@ -1,12 +1,13 @@
+import math
 import random
 import re
 import string
 from typing import Union
 
-import math
 import requests
 
 import schemas
+from chalicelib.utils.TimeUTC import TimeUTC
 
 local_prefix = 'local-'
 from decouple import config
@@ -364,10 +365,6 @@ def has_smtp():
     return config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0
 
 
-def get_edition():
-    return "ee" if "ee" in config("ENTERPRISE_BUILD", default="").lower() else "foss"
-
-
 def old_search_payload_to_flat(values):
     # in case the old search body was passed
     if values.get("events") is not None:
@@ -384,3 +381,24 @@ def custom_alert_to_front(values):
     if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.custom:
         values["query"]["left"] = values["seriesId"]
     return values
+
+
+def __time_value(row):
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    factor = 1
+    if row["value"] > TimeUTC.MS_MINUTE:
+        row["value"] = row["value"] / TimeUTC.MS_MINUTE
+        row["unit"] = schemas.TemplatePredefinedUnits.minute
+        factor = TimeUTC.MS_MINUTE
+    elif row["value"] > 1 * 1000:
+        row["value"] = row["value"] / 1000
+        row["unit"] = schemas.TemplatePredefinedUnits.second
+        factor = 1000
+
+    if "chart" in row and factor > 1:
+        for r in row["chart"]:
+            r["value"] /= factor
+
+
+def is_saml2_available():
+    return config("hastSAML2", default=False, cast=bool)

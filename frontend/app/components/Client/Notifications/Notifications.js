@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import cn from 'classnames'
-import stl from './notifications.css'
+import stl from './notifications.module.css'
 import { Checkbox } from 'UI'
 import { connect } from 'react-redux'
 import { withRequest } from 'HOCs'
@@ -35,7 +35,7 @@ function Notifications(props) {
           className="mr-8"
           label="Send me a weekly report for each project."
         />
-        <img src="/img/img-newsletter.png" style={{ width: '400px'}}/>
+        <img src="/assets/img/img-newsletter.png" style={{ width: '400px'}}/>
       </div>
     </div>
   )

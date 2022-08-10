@@ -1,19 +1,19 @@
 import React from 'react'
 import ReloadButton from '../ReloadButton'
 import { connect } from 'react-redux'
-import { fetchLiveList } from 'Duck/sessions'
+// import { fetchSessions } from 'Duck/liveSearch'
 
 interface Props {
     loading: boolean
-    fetchLiveList: typeof fetchLiveList
+    onClick: () => void
 }
 function LiveSessionReloadButton(props: Props) {
-    const { loading } = props
+    const { loading, onClick } = props
   return (
-    <ReloadButton loading={loading} onClick={props.fetchLiveList} className="cursor-pointer" />
+    <ReloadButton loading={loading} onClick={onClick} className="cursor-pointer" />
   )
 }
 
-export default connect(state => ({
+export default connect((state: any) => ({
     loading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
-}), { fetchLiveList })(LiveSessionReloadButton)
+}))(LiveSessionReloadButton)

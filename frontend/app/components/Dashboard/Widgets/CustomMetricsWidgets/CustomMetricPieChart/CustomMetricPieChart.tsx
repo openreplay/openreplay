@@ -9,8 +9,6 @@ import { numberWithCommas } from 'App/utils';
 interface Props {
     metric: any,
     data: any;
-    params: any;
-    // seriesMap: any;
     colors: any;
     onClick?: (filters) => void;
 }

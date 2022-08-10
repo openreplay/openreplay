@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import stl from './installDocs.css'
+import stl from './installDocs.module.css'
 import cn from 'classnames'
 import Highlight from 'react-highlight'
 import CircleNumber from '../../CircleNumber'
-import { Slider, CopyButton } from 'UI'
+import { CopyButton } from 'UI'
+import { Toggler } from 'UI';
 
 const installationCommand = 'npm i @openreplay/tracker'
 const usageCode = `import Tracker from '@openreplay/tracker';
@@ -29,9 +30,7 @@ function MyApp() {
   //...
 }`
 
-
-function InstallDocs({ sites, siteId }) {  
-  const site = sites.find(s => s.id === siteId);
+function InstallDocs({ site }) {
   const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey)
   const _usageCodeSST = usageCodeSST.replace('PROJECT_KEY', site.projectKey)
   const [isSpa, setIsSpa] = useState(true)
@@ -57,13 +56,11 @@ function InstallDocs({ sites, siteId }) {
 
         <div className="flex items-center ml-10 cursor-pointer">
           <div className="mr-2" onClick={() => setIsSpa(!isSpa)}>Server-Side-Rendered (SSR)?</div>
-          <Slider
+          <Toggler
+            checked={!isSpa}
             name="sessionsLive"
             onChange={ () => setIsSpa(!isSpa) }
-            checked={ !isSpa }
-            // className={stl.customSlider}
-            style={{ lineHeight: '23px' }}
-            // label="Server-Side-Rendered (SSR)?"
+            // style={{ lineHeight: '23px' }}
           />
         </div>
         
@@ -100,9 +97,6 @@ function InstallDocs({ sites, siteId }) {
   )
 }
 
-// export default InstallDocs
-
 export default connect(state => ({
-  siteId: state.getIn([ 'site', 'siteId' ]),
-  sites: state.getIn([ 'site', 'list' ]),
+  site: state.getIn([ 'site', 'instance' ]),
 }))(InstallDocs)

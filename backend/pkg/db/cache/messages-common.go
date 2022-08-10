@@ -7,18 +7,15 @@ import (
 	//	. "openreplay/backend/pkg/db/types"
 )
 
-func (c *PGCache) insertSessionEnd(sessionID uint64, timestamp uint64) error {
-	//duration, err := c.Conn.InsertSessionEnd(sessionID, timestamp)
-	_, err := c.Conn.InsertSessionEnd(sessionID, timestamp)
-	if err != nil {
-		return err
+func (c *PGCache) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
+	return c.Conn.InsertSessionEnd(sessionID, timestamp)
+}
+
+func (c *PGCache) HandleSessionEnd(sessionID uint64) error {
+	if err := c.Conn.HandleSessionEnd(sessionID); err != nil {
+		log.Printf("can't handle session end: %s", err)
 	}
 	c.DeleteSession(sessionID)
-	// session, err := c.GetSession(sessionID)
-	// if err != nil {
-	// 	return err
-	// }
-	// session.Duration = &duration
 	return nil
 }
 

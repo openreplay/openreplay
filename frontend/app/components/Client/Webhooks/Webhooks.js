@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -5,7 +6,10 @@ import { IconButton, SlideModal, Loader, NoContent } from 'UI';
 import { init, fetchList, remove } from 'Duck/webhook';
 import WebhookForm from './WebhookForm';
 import ListItem from './ListItem';
-import styles from './webhooks.css';
+import styles from './webhooks.module.css';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { confirm } from 'UI';
+import { toast } from 'react-toastify';
 
 @connect(state => ({
   webhooks: state.getIn(['webhooks', 'list']),
@@ -29,10 +33,16 @@ class Webhooks extends React.PureComponent {
     this.setState({ showModal: true });    
   }
 
-  removeWebhook = id => {
-    const sure = window.confirm("Are you sure you want to remove this webhook?");
-    if (!sure) return;
-    this.props.remove(id);
+  removeWebhook = async (id) => {
+    if (await confirm({
+      header: 'Confirm',
+      confirmButton: 'Yes, delete',
+      confirmation: `Are you sure you want to remove this webhook?`
+    })) {
+      this.props.remove(id).then(() => {
+        toast.success('Webhook removed successfully');
+      });
+    }
   }
 
   render() {
@@ -56,10 +66,15 @@ class Webhooks extends React.PureComponent {
         
         <Loader loading={ loading }>
           <NoContent
-            title="No webhooks available."
+            title={
+              <div className="flex flex-col items-center justify-center">
+                <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                <div className="mt-6 text-2xl">No webhooks available.</div>
+              </div>
+            }
             size="small"
             show={ noSlackWebhooks.size === 0 }
-            animatedIcon="no-results"
+            // animatedIcon="no-results"
           >
             <div className={ styles.list }>
               { noSlackWebhooks.map(webhook => (

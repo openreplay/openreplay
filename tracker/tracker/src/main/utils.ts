@@ -13,7 +13,7 @@ export function normSpaces(str: string): string {
 
 // isAbsoluteUrl regexp:  /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url)
 export function isURL(s: string): boolean {
-  return s.substr(0, 8) === 'https://' || s.substr(0, 7) === 'http://';
+  return s.startsWith('https://')|| s.startsWith('http://');
 }
 
 export const IN_BROWSER = !(typeof window === "undefined");

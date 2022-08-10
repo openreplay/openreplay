@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from 'UI';
-import stl from './FilterAutoCompleteLocal.css';
+import stl from './FilterAutoCompleteLocal.module.css';
 interface Props {
   showOrButton?: boolean;
   showCloseButton?: boolean;
@@ -35,12 +35,12 @@ function FilterAutoCompleteLocal(props: Props) {
     if(allowDecimals) {
       const value = e.target.value;
       setQuery(value);
-      props.onSelect(null, { value });
+      props.onSelect(null, value);
     } else {
       const value = e.target.value.replace(/[^\d]/, "");
       if (+value !== 0) {
         setQuery(value);
-        props.onSelect(null, { value });
+        props.onSelect(null, value);
       }
     }
   };

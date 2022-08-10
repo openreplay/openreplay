@@ -13,6 +13,7 @@ type Consumer interface {
 
 type Producer interface {
 	Produce(topic string, key uint64, value []byte) error
+	ProduceToPartition(topic string, partition, key uint64, value []byte) error
 	Close(timeout int)
 	Flush(timeout int)
 }

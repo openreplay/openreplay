@@ -25,6 +25,22 @@ def get_all(tenant_id, user_id):
     return rows
 
 
+def get_all_count(tenant_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+                    SELECT COALESCE(COUNT(notifications.*),0) AS count
+                    FROM public.notifications
+                             LEFT JOIN (SELECT notification_id
+                                        FROM public.user_viewed_notifications
+                                        WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications USING (notification_id)
+                    WHERE (notifications.user_id IS NULL OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL;""",
+                        {"user_id": user_id})
+        )
+        row = cur.fetchone()
+    return row
+
+
 def view_notification(user_id, notification_ids=[], tenant_id=None, startTimestamp=None, endTimestamp=None):
     if (notification_ids is None or len(notification_ids) == 0) and endTimestamp is None:
         return False

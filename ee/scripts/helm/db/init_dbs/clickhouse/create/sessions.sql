@@ -21,6 +21,6 @@ CREATE TABLE IF NOT EXISTS sessions
     utm_medium           Nullable(String),
     utm_campaign         Nullable(String)
 ) ENGINE = ReplacingMergeTree(duration)
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime, session_id)
       TTL datetime + INTERVAL 1 MONTH;

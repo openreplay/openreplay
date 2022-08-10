@@ -1,14 +1,13 @@
+import React from 'react';
 import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
-import { Button } from 'UI';
+import { Button, Input, Form } from 'UI';
 import { updateAccount, updateClient } from 'Duck/user';
-
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
 
 @connect(state => ({
   accountName: state.getIn([ 'user', 'account', 'name' ]),
-  apiKey: state.getIn([ 'user', 'client', 'apiKey' ]),
-  organizationName: state.getIn([ 'user', 'client', 'name' ]),
+  organizationName: state.getIn([ 'user', 'account', 'tenantName' ]),
   loading: state.getIn([ 'user', 'updateAccountRequest', 'loading' ]) ||
     state.getIn([ 'user', 'putClientRequest', 'loading' ]),
 }), {
@@ -25,15 +24,6 @@ export default class Settings extends React.PureComponent {
     this.setState({ changed: true, [ name ]: value });
   }
 
-  copyHandler = () => {
-    const { apiKey } = this.props;
-    this.setState({ copied: true });
-    copy(apiKey);
-    setTimeout(() => {
-      this.setState({ copied: false });
-    }, 1000);
-  };
-
   handleSubmit = (e) => {
     e.preventDefault();
     const { accountName, organizationName } = this.state;
@@ -49,35 +39,35 @@ export default class Settings extends React.PureComponent {
   }
 
   render() {
-    const { loading, apiKey } = this.props;
+    const { loading } = this.props;
     const { accountName, organizationName, changed, copied } = this.state;
 
     return (
-      <form onSubmit={ this.handleSubmit } className={ styles.form }>
-        <div className={ styles.formGroup }>
+      <Form onSubmit={ this.handleSubmit } className={ styles.form }>
+        <Form.Field>
           <label htmlFor="accountName">{ 'Name' }</label>
-          <input
+          <Input
             name="accountName"
             id="accountName"
             type="text"
             onChange={ this.onChange }
             value={ accountName }
           />
-        </div>
+        </Form.Field>
 
-        <div className={ styles.formGroup }>
+        <Form.Field>
           <label htmlFor="organizationName">{ 'Organization' }</label>
-          <input
+          <Input
             name="organizationName"
             id="organizationName"
             type="text"
             onChange={ this.onChange }
             value={ organizationName }
           />
-        </div>
+        </Form.Field>
 
-        <Button outline loading={ loading } disabled={ !changed } type="submit">{ 'Update' }</Button>
-      </form>
+        <Button variant="outline" loading={ loading } disabled={ !changed } type="submit">{ 'Update' }</Button>
+      </Form>
     );
   }
 }

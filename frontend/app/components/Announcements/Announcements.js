@@ -1,11 +1,12 @@
 import React from 'react';
-import stl from './announcements.css';
+import stl from './announcements.module.css';
 import ListItem from './ListItem';
 import { connect } from 'react-redux';
 import { SlideModal, Icon, NoContent, Popup } from 'UI';
 import { fetchList, setLastRead } from 'Duck/announcements';
 import withToggle from 'Components/hocs/withToggle';
 import { withRouter } from 'react-router-dom';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 @withToggle('visible', 'toggleVisisble')
 @withRouter
@@ -13,7 +14,7 @@ class Announcements extends React.Component {
   
   navigateToUrl = url => {
     if (url) {
-      if (url.startsWith(window.ENV.ORIGIN)) {
+      if (url.startsWith(window.env.ORIGIN || window.location.origin)) {
         const { history } = this.props;
         var path = new URL(url).pathname
         if (path.includes('/metrics')) {
@@ -44,20 +45,14 @@ class Announcements extends React.Component {
 
     return (
       <div>
-        <Popup
-          trigger={
-            <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
+        <Popup content={ `Announcements` } >
+          <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
             <div className={ stl.counter } data-hidden={ unReadNotificationsCount === 0 }>
               { unReadNotificationsCount }
             </div>
             <Icon name="bullhorn" size="18" />
           </div>
-          }
-          content={ `Announcements` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+        </Popup>
         
         <SlideModal
           title="Announcements"
@@ -69,9 +64,13 @@ class Announcements extends React.Component {
           content={ 
             <div className="mx-4">
               <NoContent
-                title=""
+                title={
+                  <div className="flex items-center justify-between">
+                    <AnimatedSVG name={ICONS.EMPTY_STATE} size="100" />
+                  </div>
+                }
                 subtext="There are no announcements to show."
-                animatedIcon="no-results"
+                // animatedIcon="no-results"
                 show={ !loading && announcements.size === 0 }
                 size="small"
               >

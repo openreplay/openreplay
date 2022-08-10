@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 // import { connectPlayer } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
@@ -9,7 +10,7 @@ import { formatMs } from 'App/date';
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-import stl from './network.css';
+import stl from './network.module.css';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -37,23 +38,17 @@ const LOAD_TIME_COLOR = "red";
 
 export function renderType(r) { 
   return (
-    <Popup
-      trigger={ <div className={ stl.popupNameTrigger }>{ r.type }</div> }
-      content={ <div className={ stl.popupNameContent }>{ r.type }</div> }
-      size="mini"
-      position="right center"
-    />
+    <Popup style={{width: '100%'}} content={ <div className={ stl.popupNameContent }>{ r.type }</div> } >
+      <div className={ stl.popupNameTrigger }>{ r.type }</div>
+    </Popup>
   );
 }
 
 export function renderName(r) { 
   return (
-    <Popup
-      trigger={ <div className={ stl.popupNameTrigger }>{ r.name }</div> }
-      content={ <div className={ stl.popupNameContent }>{ r.url }</div> }
-      size="mini"
-      position="right center"
-    />
+    <Popup style={{width: '100%'}} content={ <div className={ stl.popupNameContent }>{ r.url }</div> } >
+      <div className={ stl.popupNameTrigger }>{ r.name }</div> 
+    </Popup>
   );
 }
 
@@ -61,6 +56,7 @@ const renderXHRText = () => (
   <span className="flex items-center">
     {XHR}
     <QuestionMarkHint
+      onHover={true}
       content={ 
         <>
           Use our <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/plugins/fetch">Fetch plugin</a>
@@ -99,12 +95,9 @@ function renderSize(r) {
   }
 
   return (
-    <Popup
-      trigger={ <div>{ triggerText }</div> }
-      content={ content }
-      size="mini"
-      position="right center"
-    />
+    <Popup style={{width: '100%'}} content={ content } >
+      <div>{ triggerText }</div>
+    </Popup>
   );
 }
 
@@ -126,12 +119,11 @@ export function renderDuration(r) {
 
   return (
     <Popup
+      style={{width: '100%'}}
       content={ tooltipText }
-      inverted
-      trigger={ 
-        <div className={ cn(className, stl.duration) } > { text } </div>
-      }
-    />
+    >
+      <div className={ cn(className, stl.duration) } > { text } </div>
+    </Popup>
   );
 }
 
@@ -142,7 +134,7 @@ export default class NetworkContent extends React.PureComponent {
   }
 
   onTabClick = activeTab => this.setState({ activeTab })
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
 
   render() {
     const { 
@@ -199,15 +191,18 @@ export default class NetworkContent extends React.PureComponent {
       <React.Fragment>
         <BottomBlock style={{ height: 300 + additionalHeight + 'px' }} className="border">
           <BottomBlock.Header showClose={!isResult}>
-            <Tabs 
-              className="uppercase"
-              tabs={ tabs }
-              active={ activeTab }
-              onClick={ this.onTabClick }
-              border={ false }
-            />
+            <div className="flex items-center">
+              <span className="font-semibold color-gray-medium mr-4">Network</span>
+              <Tabs 
+                className="uppercase"
+                tabs={ tabs }
+                active={ activeTab }
+                onClick={ this.onTabClick }
+                border={ false }
+              />
+            </div>
             <Input
-              className="input-small"
+              // className="input-small"
               placeholder="Filter by Name"
               icon="search"
               iconPosition="left"
@@ -293,4 +288,3 @@ export default class NetworkContent extends React.PureComponent {
     );
   }
 }
-

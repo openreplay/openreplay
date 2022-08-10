@@ -53,7 +53,7 @@ function ResponseTimeDistribution(props: Props) {
           style={ { height: '240px' } }
         >
           <div className="flex items-center justify-end mb-3">
-            <AvgLabel text="Avg" unit="ms" className="ml-3" count={metric.data.avg} />
+            <AvgLabel text="Avg" unit="ms" className="ml-3" count={metric.data.value} />
           </div>
           <div className="flex mb-4">
             <ResponsiveContainer height={ 240 } width="100%">

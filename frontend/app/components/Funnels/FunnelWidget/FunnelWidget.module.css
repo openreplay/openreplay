@@ -1,0 +1,25 @@
+.step {
+    /* display: flex; */
+    position: relative;
+    transition: all 0.5s ease;
+    &:before {
+        content: '';
+        border-left: 2px solid $gray-lightest;
+        position: absolute;
+        top: 16px;
+        bottom: 9px;
+        left: 10px;
+        /* width: 1px; */
+        height: 100%;
+        z-index: 0;
+    }
+    &:last-child:before {
+        display: none;
+    }
+}
+
+.step-disabled {
+    filter: grayscale(1);
+    opacity: 0.8;
+    transition: all 0.2s ease-in-out;
+}

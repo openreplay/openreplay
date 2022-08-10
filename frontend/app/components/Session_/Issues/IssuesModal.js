@@ -1,9 +1,10 @@
 import React from 'react';
-import stl from './issuesModal.css';
+import stl from './issuesModal.module.css';
 import IssueForm from './IssueForm';
-import { Icon } from 'UI';
+import { Provider } from 'react-redux';
+import store from 'App/store';
 
-const IssuesModal = React.forwardRef(({
+const IssuesModal = ({
   sessionId,
   closeHandler,
   provider
@@ -14,9 +15,11 @@ const IssuesModal = React.forwardRef(({
         {/* <Icon name={headerIcon} size="18" color="color-gray-darkest" />  */}
         <span>{`Report an Issue on ${provider === 'jira' ? 'Jira' : 'Github'}`}</span>
       </h3>
-      <IssueForm sessionId={ sessionId } closeHandler={ closeHandler } />
+      <Provider store={store}>
+        <IssueForm sessionId={ sessionId } closeHandler={ closeHandler } />
+      </Provider>
     </div>
   );
-})
+}
 
 export default IssuesModal;

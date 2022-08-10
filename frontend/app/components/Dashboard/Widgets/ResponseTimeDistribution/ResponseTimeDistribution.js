@@ -1,9 +1,9 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
-import { widgetHOC, domain, Styles, AvgLabel } from '../common';
-import { numberWithCommas } from 'App/utils';
+import { widgetHOC, Styles, AvgLabel } from '../common';
 import { 
   ComposedChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, 
-  XAxis, YAxis, ReferenceLine, Tooltip, Legend
+  XAxis, YAxis, ReferenceLine, Tooltip
 } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import cn from 'classnames'
-import stl from './alertTypeLabel.css'
+import stl from './alertTypeLabel.module.css'
 
 function AlertTypeLabel({ filterKey, type = '' }) {
   return (

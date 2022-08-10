@@ -1,6 +1,6 @@
+import type App from "./index.js";
 import { stars, hasOpenreplayAttribute } from "../utils.js";
-import App from "./index.js";
-import { isInstance } from "./context.js";
+import { isElementNode } from "./guards.js";
 
 export interface Options {
   obscureTextEmails: boolean;
@@ -9,6 +9,7 @@ export interface Options {
 
 export default class Sanitizer {
   private readonly masked: Set<number> = new Set();
+  private readonly maskedContainers: Set<number> = new Set();
   private readonly options: Options;
 
   constructor(private readonly app: App, options: Partial<Options>) {
@@ -21,9 +22,17 @@ export default class Sanitizer {
   handleNode(id: number, parentID: number, node: Node) {
     if (
         this.masked.has(parentID) ||
-        (isInstance(node, Element) && hasOpenreplayAttribute(node, 'masked'))
+        (isElementNode(node) &&
+          hasOpenreplayAttribute(node, 'masked'))
       ) {
         this.masked.add(id);
+      }
+      if (
+          this.maskedContainers.has(parentID) ||
+          (isElementNode(node) && 
+            hasOpenreplayAttribute(node, 'htmlmasked'))
+        ) {
+        this.maskedContainers.add(id);
       }
   }
 
@@ -34,7 +43,7 @@ export default class Sanitizer {
         /[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g,
         '█',
       );
-    } 
+    }
     if (this.options.obscureTextNumbers) {
       data = data.replace(/\d/g, '0');
     }
@@ -51,6 +60,9 @@ export default class Sanitizer {
   isMasked(id: number): boolean {
     return this.masked.has(id);
   }
+  isMaskedContainer(id: number) {
+    return this.maskedContainers.has(id);
+  }
 
   getInnerTextSecure(el: HTMLElement): string {
     const id = this.app.nodes.getID(el)
@@ -61,6 +73,7 @@ export default class Sanitizer {
 
   clear(): void {
     this.masked.clear();
+    this.maskedContainers.clear();
   }
 
 }

@@ -1,4 +1,4 @@
-import styles from './screen.css';
+import styles from './screen.module.css';
 import { getState } from '../../../store';
 
 import type { Point } from './types';
@@ -138,7 +138,8 @@ export default abstract class BaseScreen {
   getElementBySelector(selector: string): Element | null {
     if (!selector) return null;
     try {
-      return this.document?.querySelector(selector) || null;
+      const safeSelector = selector.replace(/:/g, '\\\\3A ').replace(/\//g, '\\/');
+      return this.document?.querySelector(safeSelector) || null;
     } catch (e) {
       console.error("Can not select element. ", e)
       return null

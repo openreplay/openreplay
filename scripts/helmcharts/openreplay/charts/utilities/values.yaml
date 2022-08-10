@@ -1,0 +1,85 @@
+# Default values for openreplay.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+efsCleaner:
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/alpine"
+    pullPolicy: Always
+    tag: 3.16.1
+  pvc:
+    # This can be either persistentVolumeClaim or hostPath.
+    # In case of pvc, you'll have to provide the pvc name.
+    # For example
+    # name: openreplay-efs
+    name: hostPath
+    hostMountPath: /openreplay/storage/nfs
+
+telemetry:
+  # https://crontab.guru/#5_12_*_*_*
+  # Midnight 12.05
+  cron: "5 12 * * *"
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  env:
+    ACTION: "TELEMETRY"
+report:
+  # Ref: https://crontab.guru/#0_5_*_*_1
+  # Monday morning 5am
+  cron: "0 5 * * 1"
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  env:
+    ACTION: "REPORT"
+sessionsCleaner:
+  # https://crontab.guru/#5_1_*_*_*
+  # Midnight 1.05
+  cron: "5 1 * * *"
+  image:
+    repository: "{{ .Values.global.openReplayContainerRegistry }}/crons"
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  env:
+    ACTION: "JOB"
+
+# Common env values are from chalice for the crons
+chalice:
+  env:
+    ch_host: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+    ch_port: 9000
+    captcha_server: ''
+    captcha_key: ''
+    async_Token: ''
+    announcement_url: ''
+    jwt_secret: "SetARandomStringHere"
+    jwt_algorithm: HS512
+    jwt_exp_delta_seconds: '2592000'
+    # Enable logging for python app
+    # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
+    PYTHONUNBUFFERED: '0'
+    SAML2_MD_URL: ''
+    idp_entityId: ''
+    idp_sso_url: ''
+    idp_x509cert: ''
+    idp_sls_url: ''
+    idp_name: ''
+    idp_tenantKey: ''
+    assist_secret: ''
+    iceServers: ''
+
+nameOverride: "utilities"
+fullnameOverride: "utilities-openreplay"
+
+# 5 3 * * 1 “At 03:05 on Monday.”
+# refer: https://crontab.guru/#5_3_*_*_1
+cron: "5 3 * * 1"
+

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { applyFilter, fetchList } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';

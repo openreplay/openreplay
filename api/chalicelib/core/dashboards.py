@@ -6,8 +6,9 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+# category name should be lower cased
 CATEGORY_DESCRIPTION = {
-    'overview': 'High-level metrics and web vitals.',
+    'web vitals': 'A set of metrics that assess app performance on criteria such as load time, load performance, and stability.',
     'custom': 'Previously created custom metrics by me and my team.',
     'errors': 'Keep a closer eye on errors and track their type, origin and domain.',
     'performance': 'Optimize your app’s performance by tracking slow domains, page response times, memory consumption, CPU usage and more.',
@@ -33,20 +34,20 @@ def get_templates(project_id, user_id):
         cur.execute(pg_query)
         rows = cur.fetchall()
     for r in rows:
-        r["description"] = CATEGORY_DESCRIPTION.get(r["category"], "")
+        r["description"] = CATEGORY_DESCRIPTION.get(r["category"].lower(), "")
         for w in r["widgets"]:
             w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
             w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
             for s in w["series"]:
-                s["created_at"] = TimeUTC.datetime_to_timestamp(s["created_at"])
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+
     return helper.list_to_camel_case(rows)
 
 
 def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned) 
-                        VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s)
+        pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned, description) 
+                        VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s, %(description)s)
                         RETURNING *"""
         params = {"userId": user_id, "projectId": project_id, **data.dict()}
         if data.metrics is not None and len(data.metrics) > 0:
@@ -137,7 +138,8 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         row = cur.fetchone()
         offset = row["count"]
         pg_query = f"""UPDATE dashboards
-                      SET name = %(name)s 
+                      SET name = %(name)s,
+                          description= %(description)s
                             {", is_public = %(is_public)s" if data.is_public is not None else ""}
                             {", is_pinned = %(is_pinned)s" if data.is_pinned is not None else ""}
                         WHERE dashboards.project_id = %(projectId)s

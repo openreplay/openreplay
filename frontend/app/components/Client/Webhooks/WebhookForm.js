@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { edit, save } from 'Duck/webhook';
-import { Form, Button } from 'UI';
-import styles from './webhookForm.css';
+import { Form, Button, Input } from 'UI';
+import styles from './webhookForm.module.css';
 
 @connect(state => ({
   webhook: state.getIn(['webhooks', 'instance']),
@@ -28,7 +28,7 @@ class WebhookForm extends React.PureComponent {
       <Form className={ styles.wrapper }>
         <Form.Field>
           <label>{'Name'}</label>
-          <input
+          <Input
             ref={ (ref) => { this.focusElement = ref; } }
             name="name"
             value={ webhook.name }
@@ -39,7 +39,7 @@ class WebhookForm extends React.PureComponent {
 
         <Form.Field>
           <label>{'Endpoint'}</label>
-          <input
+          <Input
             ref={ (ref) => { this.focusElement = ref; } }
             name="endpoint"
             value={ webhook.endpoint }
@@ -50,7 +50,7 @@ class WebhookForm extends React.PureComponent {
 
         <Form.Field>
           <label>{'Auth Header (optional)'}</label>
-          <input
+          <Input
             ref={ (ref) => { this.focusElement = ref; } }
             name="authHeader"
             value={ webhook.authHeader }
@@ -63,18 +63,18 @@ class WebhookForm extends React.PureComponent {
           onClick={ this.save }    
           disabled={ !webhook.validate() }
           loading={ loading }
-          primary
-          marginRight
+          variant="primary"
+          className="float-left mr-2"
         >
           { webhook.exists() ? 'Update' : 'Add' }
         </Button>
-        <Button
-          data-hidden={ !webhook.exists() }
-          onClick={ this.props.onClose }
-          outline
-        >
-          { 'Cancel' }
-        </Button>
+        { webhook.exists() && (
+          <Button
+            onClick={ this.props.onClose }
+          >
+            { 'Cancel' }
+          </Button>
+        )}
       </Form>
     );
   }

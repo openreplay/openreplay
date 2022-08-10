@@ -3,9 +3,8 @@ import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
-import { IconButton, Button } from 'UI';
+import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/search';
-import SaveFunnelButton from '../SaveFunnelButton';
 
 interface Props {
   appliedFilter: any;
@@ -15,15 +14,15 @@ interface Props {
 }
 function SessionSearch(props: Props) {
   const { appliedFilter, saveRequestPayloads = false } = props;
-  const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
-  const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
+  const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
+  const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
 
-  const onAddFilter = (filter) => {
+  const onAddFilter = (filter: any) => {
     props.addFilter(filter);
   }
 
-  const onUpdateFilter = (filterIndex, filter) => {
-    const newFilters = appliedFilter.filters.map((_filter, i) => {
+  const onUpdateFilter = (filterIndex: any, filter: any) => {
+    const newFilters = appliedFilter.filters.map((_filter: any, i: any) => {
       if (i === filterIndex) {
         return filter;
       } else {
@@ -37,8 +36,8 @@ function SessionSearch(props: Props) {
     });
   }
 
-  const onRemoveFilter = (filterIndex) => {
-    const newFilters = appliedFilter.filters.filter((_filter, i) => {
+  const onRemoveFilter = (filterIndex: any) => {
+    const newFilters = appliedFilter.filters.filter((_filter: any, i: any) => {
       return i !== filterIndex;
     });
 
@@ -47,7 +46,7 @@ function SessionSearch(props: Props) {
     });
   }
 
-  const onChangeEventsOrder = (e, { name, value }) => {
+  const onChangeEventsOrder = (e: any, { value }: any) => {
     props.edit({
       eventsOrder: value,
     });
@@ -71,11 +70,17 @@ function SessionSearch(props: Props) {
             filter={undefined}
             onFilterClick={onAddFilter}
           >
-            <IconButton primaryText label="ADD STEP" icon="plus" />
+            {/* <IconButton primaryText label="ADD STEP" icon="plus" /> */}
+            <Button
+              variant="text-primary"
+              className="mr-2"
+              // onClick={() => setshowModal(true)}
+              icon="plus">
+                ADD STEP
+            </Button>
           </FilterSelection>
         </div>
         <div className="ml-auto flex items-center">
-          <SaveFunnelButton />
           <SaveFilterButton />
         </div>
       </div>
@@ -83,7 +88,7 @@ function SessionSearch(props: Props) {
   ) : <></>;
 }
 
-export default connect(state => ({
-  saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
+export default connect((state: any) => ({
+  saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'search', 'instance' ]),
 }), { edit, addFilter })(SessionSearch);

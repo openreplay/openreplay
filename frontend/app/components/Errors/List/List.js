@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Set, List as ImmutableList } from "immutable";
 import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain, Pagination } from 'UI';
@@ -9,6 +9,8 @@ import SortDropdown from 'Components/BugFinder/Filters/SortDropdown';
 import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
 import { debounce } from 'App/utils';
+import Select from 'Shared/Select';
+import EmptyStateSvg from '../../../svg/no-results.svg';
 
 const sortOptionsMap = {
 	'occurrence-desc': 'Last Occurrence',
@@ -19,7 +21,7 @@ const sortOptionsMap = {
 	'users-desc': 'Users Descending',
 };
 const sortOptions = Object.entries(sortOptionsMap)
-  .map(([ value, text ]) => ({ value, text }));
+  .map(([ value, label ]) => ({ value, label }));
 
 @connect(state => ({
 	loading: state.getIn([ "errors", "loading" ]),
@@ -116,14 +118,16 @@ export default class List extends React.PureComponent {
 
 	addPage = () => this.props.updateCurrentPage(this.props.currentPage + 1)
 
-	writeOption = (e, { name, value }) => {
+	writeOption = ({ name, value }) => {
 		const [ sort, order ] = value.split('-');
 		if (name === 'sort') {
 			this.props.editOptions({ sort, order });
 		}
 	}
 
-	onQueryChange = (e, { value }) => {
+	// onQueryChange = ({ target: { value, name } }) => props.edit({ [ name ]: value })
+
+	onQueryChange = ({ target: { value, name } }) => {
 		this.setState({ query: value });
 		this.debounceFetch({ query: value });
 	}
@@ -196,15 +200,16 @@ export default class List extends React.PureComponent {
 					</div>
 					<div className="flex items-center ml-6">
 						<span className="mr-2 color-gray-medium">Sort By</span>	          
-						<DropdownPlain
+						<Select
 							defaultValue={ `${sort}-${order}` }
 							name="sort"
+							plain
 							options={ sortOptions }
 							onChange={ this.writeOption }
 						/>
 						<Input
 							style={{ width: '350px'}}
-							className="input-small ml-3"
+							wrapperClassName="ml-3"
 							placeholder="Filter by Name or Message"
 							icon="search"
 							iconPosition="left"
@@ -216,9 +221,14 @@ export default class List extends React.PureComponent {
 					</div>
 					<Divider />
 					<NoContent
-						title="No Errors Found!"
+						title={
+							<div className="flex flex-col items-center justify-center">
+								<object style={{ width: "180px"}} type="image/svg+xml" data={EmptyStateSvg} />
+								<span className="mr-2">No Errors Found!</span>
+							</div>
+						}
 						subtext="Please try to change your search parameters."
-						animatedIcon="empty-state"
+						// animatedIcon="empty-state"
 						show={ !loading && list.size === 0}
 					>
 					<Loader loading={ loading }>

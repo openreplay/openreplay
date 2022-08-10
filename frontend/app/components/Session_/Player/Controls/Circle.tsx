@@ -1,5 +1,5 @@
 import React, { memo, FC } from 'react';
-import styles from './timeline.css';
+import styles from './timeline.module.css';
 
 interface Props {
     preview?: boolean;

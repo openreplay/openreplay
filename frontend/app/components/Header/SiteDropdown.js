@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
@@ -6,14 +7,16 @@ import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
 import { Icon, SlideModal } from 'UI';
 import { pushNewSite } from 'Duck/user'
 import { init } from 'Duck/site';
-import styles from './siteDropdown.css';
+import styles from './siteDropdown.module.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
+import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
-import { fetchList as fetchAlerts } from 'Duck/alerts';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { withStore } from 'App/mstore'
+import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
+import NewProjectButton from './NewProjectButton';
+
 @withStore
 @withRouter
 @connect(state => ({  
@@ -25,16 +28,11 @@ import { withStore } from 'App/mstore'
   pushNewSite,
   init,
   clearSearch,
+  clearSearchLive,
   fetchIntegrationVariables,
-  fetchAlerts,
-  fetchWatchdogStatus,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
-
-  // componentDidMount() {
-  //   this.props.fetchIntegrationVariables();
-  // }
 
   closeModal = (e, newSite) => {
     this.setState({ showProductModal: false })    
@@ -48,12 +46,10 @@ export default class SiteDropdown extends React.PureComponent {
   switchSite = (siteId) => {
     const { mstore, location } = this.props
 
-
     this.props.setSiteId(siteId);
-    this.props.clearSearch(location.pathname.includes('/sessions'));
     this.props.fetchIntegrationVariables();
-    this.props.fetchAlerts();
-    this.props.fetchWatchdogStatus();
+    this.props.clearSearch(location.pathname.includes('/sessions'));
+    this.props.clearSearchLive();
 
     mstore.initClient();
   }
@@ -65,15 +61,16 @@ export default class SiteDropdown extends React.PureComponent {
     const activeSite = sites.find(s => s.id == siteId);
     const disabled = !siteChangeAvaliable(pathname);
     const showCurrent = hasSiteId(pathname) || siteChangeAvaliable(pathname);
-    const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
+    // const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
+
     return (
       <div className={ styles.wrapper }>
         {
           showCurrent ?
-            <div className={ activeSite && activeSite.status === GREEN ? styles.statusGreenIcon : styles.statusRedIcon }></div> :
+            (activeSite && activeSite.status === GREEN) ? <AnimatedSVG name={ICONS.SIGNAL_GREEN} size="10" /> : <AnimatedSVG name={ICONS.SIGNAL_RED} size="10" /> :
             <Icon name="window-alt" size="14" marginRight="10" />
         }
-        <div className={ styles.currentSite }>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>
+        <div className={ cn(styles.currentSite, 'ml-2')}>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>
         <Icon className={ styles.drodownIcon } color="gray-light" name="chevron-down" size="16" />
         <div className={styles.menu}>
           <ul data-can-disable={ disabled }>
@@ -92,18 +89,7 @@ export default class SiteDropdown extends React.PureComponent {
               ))
             }
           </ul>
-          <div
-            className={cn(styles.btnNew, 'flex items-center justify-center py-3 cursor-pointer', { [styles.disabled] : !canAddSites })}
-            onClick={this.newSite}
-          >
-            <Icon 
-              name="plus"
-              size="12"
-              marginRight="5" 
-              color="teal"
-            /> 
-            <span className="color-teal">Add New Project</span>
-          </div>
+          <NewProjectButton onClick={this.newSite} isAdmin={isAdmin} />
         </div>
 
         <SlideModal

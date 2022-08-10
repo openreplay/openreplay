@@ -20,12 +20,10 @@ function SessionCopyLink({ content = '', time }: Props) {
 
   return (
     <div className="flex justify-between items-center w-full mt-2">
-        <IconButton label="Copy Link" primaryText icon="link-45deg" onClick={copyHandler} />
-        { copied && <div className="color-teal">Copied to Clipboard</div> }
+        <IconButton label="Copy URL at current time" primaryText icon="link-45deg" onClick={copyHandler} />
+        { copied && <div className="color-gray-medium">Copied</div> }
     </div>
   )
 }
 
-export default connectPlayer(state => ({
-  time: state.time,
-}))(SessionCopyLink);
+export default SessionCopyLink

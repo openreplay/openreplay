@@ -1,4 +1,4 @@
-fromVersion: "v1.6.0"
+fromVersion: "v1.7.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -14,6 +14,7 @@ postgresql: &postgres
   #     cpu: 250m
   #   limits:
   #     memory: 3000Mi
+  # asdf
   #     cpu: 2
 
 clickhouse:
@@ -24,8 +25,21 @@ kafka: &kafka
   # For enterpriseEdition
   # enabled: true
   kafkaHost: "kafka.db.svc.cluster.local"
+  # For now, clickhouse doesn't support zookeeper tls intgration.
+  # So we need http endpoint
+  zookeeperHost: "databases-zookeeper.svc.cluster.local"
+  zookeeperNonTLSPort: 2181
   kafkaPort: "9092"
   kafkaUseSsl: "false"
+  maxMessageBytes: _3145728
+  # deleteTopicEnable: true
+  extraEnvVars:
+    - name: KAFKA_CFG_REPLICA_FETCH_MAX_BYTES
+      value: "3145728"
+    # This value already exist in the kafka values.yaml file, so overriding in top
+    # - name: KAFKA_CFG_MESSAGE_MAX_BYTES
+    #   value: "3000000"
+
 
 redis: &redis
   # enabled: false
@@ -33,6 +47,9 @@ redis: &redis
   redisPort: "6379"
 
 minio:
+  # If you have extrenal s3 storage, like AWS, or GCP
+  # Disable it.
+  enabled: true
   global:
     minio:
       # For generating passwords
@@ -53,6 +70,8 @@ ingress-nginx: &ingress-nginx
     extraArgs:
       default-ssl-certificate: "app/openreplay-ssl"
     config:
+      use-gzip: true
+      load-balance: ewma
       enable-real-ip: true
       # Enable LB forwarded protocol
       # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers
@@ -71,6 +90,7 @@ global:
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
+  openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"

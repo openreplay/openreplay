@@ -1,4 +1,4 @@
-import { Icon } from 'UI';
+import React from 'react';
 import cn from "classnames";
 
 function ErrorText({ className, icon, name, message, bold, lineThrough = false }) {

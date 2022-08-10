@@ -1,10 +1,11 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { Table, widgetHOC } from '../common';
 import { getRE } from 'App/utils';
 import ImageInfo from './ImageInfo';
 import MethodType from './MethodType';
 import cn from 'classnames';
-import stl from './callWithErrors.css';
+import stl from './callWithErrors.module.css';
 
 const cols = [
   {
@@ -68,6 +69,7 @@ export default class CallWithErrors extends React.PureComponent {
           <Table
             cols={ cols }
             rows={ _data }
+            isTemplate={this.props.isTemplate}
           />
         </NoContent>
       </Loader>

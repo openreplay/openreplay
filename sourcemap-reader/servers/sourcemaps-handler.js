@@ -1,14 +1,14 @@
 'use strict';
+const fs = require('fs');
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
-const sourceMapVersion = require('../package.json').dependencies["source-map"];
 const URL = require('url');
-const getVersion = version => version.replace(/[\^\$\=\~]/, "");
+const wasm = fs.readFileSync('/mappings.wasm');
+sourceMap.SourceMapConsumer.initialize({
+    "lib/mappings.wasm": wasm
+});
 
 module.exports.sourcemapReader = async event => {
-    sourceMap.SourceMapConsumer.initialize({
-        "lib/mappings.wasm": `https://unpkg.com/source-map@${getVersion(sourceMapVersion)}/lib/mappings.wasm`
-    });
     let s3;
     if (event.S3_HOST) {
         s3 = new AWS.S3({

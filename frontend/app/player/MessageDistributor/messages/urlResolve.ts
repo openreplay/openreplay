@@ -6,7 +6,6 @@ export function resolveURL(baseURL: string, relURL: string): string {
 }
 
 
-var match = /bar/.exec("foobar");
 const re1 = /url\(("[^"]*"|'[^']*'|[^)]*)\)/g
 const re2 = /@import "(.*?)"/g
 function cssUrlsIndex(css: string): Array<[number, number]> {

@@ -1,8 +1,9 @@
 import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
-import stl from './roleForm.css'
+import stl from './roleForm.module.css'
 import { save, edit } from 'Duck/roles'
-import { Input, Button, Checkbox, Dropdown, Icon } from 'UI'
+import { Form, Input, Button, Checkbox, Icon } from 'UI'
+import Select from 'Shared/Select';
 
 interface Permission {
   name: string,
@@ -47,7 +48,7 @@ const RoleForm = (props: Props) => {
     edit({ projects: _projects })
   }
 
-  const writeOption = (e, { name, value }) => {
+  const writeOption = ({ name, value }: any) => {
     if (name === 'permissions') {
       onChangePermissions(value)
     } else if (name === 'projects') {
@@ -66,8 +67,8 @@ const RoleForm = (props: Props) => {
 
   return (
     <div className={ stl.form }>
-      <form onSubmit={ _save } >
-        <div className="form-group">
+      <Form onSubmit={ _save } >
+        <Form.Field>
           <label>{ 'Title' }</label>
           <Input
             ref={ focusElement }
@@ -78,9 +79,9 @@ const RoleForm = (props: Props) => {
             id="name-field"
             placeholder="Ex. Admin"
           />
-        </div>
+        </Form.Field>
 
-        <div className="form-group flex flex-col">
+        <Form.Field>
           <label>{ 'Project Access' }</label>
 
           <div className="flex my-3">
@@ -101,18 +102,12 @@ const RoleForm = (props: Props) => {
           </div>
           { !role.allProjects && (
             <>
-              <Dropdown
-                search
-                className="fluid"
-                placeholder="Select"
-                selection
-                options={ projectOptions }
+              <Select
+                isSearchable
                 name="projects"
+                options={ projectOptions }
+                onChange={ ({ value }: any) => writeOption({ name: 'projects', value: value.value }) }
                 value={null}
-                onChange={ writeOption }
-                id="change-dropdown"
-                selectOnBlur={false}
-                selectOnNavigation={false}
               />
               { role.projects.size > 0 && (
                 <div className="flex flex-row items-start flex-wrap mt-4">
@@ -123,22 +118,16 @@ const RoleForm = (props: Props) => {
               )}
             </>
           )}
-        </div>
+        </Form.Field>
 
-        <div className="form-group flex flex-col">
+        <Form.Field>
           <label>{ 'Capability Access' }</label>
-          <Dropdown
-            search
-            className="fluid"
-            placeholder="Select"
-            selection
-            options={ permissions }
+          <Select
+            isSearchable
             name="permissions"
+            options={ permissions }
+            onChange={ ({ value }: any) => writeOption({ name: 'permissions', value: value.value }) }
             value={null}
-            onChange={ writeOption }
-            id="change-dropdown"
-            selectOnBlur={false}
-            selectOnNavigation={false}
           />
           { role.permissions.size > 0 && (
             <div className="flex flex-row items-start flex-wrap mt-4">
@@ -147,8 +136,8 @@ const RoleForm = (props: Props) => {
               )) }
             </div>
           )}
-        </div>
-      </form>
+        </Form.Field>
+      </Form>
 
       <div className="flex items-center">
         <div className="flex items-center mr-auto">
@@ -156,51 +145,47 @@ const RoleForm = (props: Props) => {
             onClick={ _save }
             disabled={ !role.validate() }
             loading={ saving }
-            primary
-            marginRight
+            variant="primary"
+            className="float-left mr-2"
           >
             { role.exists() ? 'Update' : 'Add' }
           </Button>
-          <Button
-            data-hidden={ !role.exists() }
-            onClick={ closeModal }
-            outline
-          >
-            { 'Cancel' }
-          </Button>
+          { role.exists() && (
+            <Button
+              onClick={ closeModal }
+            >
+              { 'Cancel' }
+            </Button>
+          )}
         </div>
         { role.exists() && (
-          <div>
-            <Button
-              data-hidden={ !role.exists() }
-              onClick={ () => props.deleteHandler(role) }
-              hover
-              noPadding
-            >
-              <Icon name="trash" size="18"/>
-            </Button>
-          </div>
+          <Button
+            variant="text"
+            onClick={ () => props.deleteHandler(role) }
+          >
+            <Icon name="trash" size="18"/>
+          </Button>
         )}
       </div>
     </div>
   );
 }
 
-export default connect(state => {
+export default connect((state: any) => {
   const role = state.getIn(['roles', 'instance'])
   const projects = state.getIn([ 'site', 'list' ])
   return {
     role,
-    projectOptions: projects.map(p => ({
+    projectOptions: projects.map((p: any) => ({
       key: p.get('id'),
       value: p.get('id'),
-      text: p.get('name'),
-      disabled: role.projects.includes(p.get('id')),
-    })).toJS(),
-    permissions: state.getIn(['roles', 'permissions'])
-      .map(({ text, value }) => ({ text, value, disabled: role.permissions.includes(value) })).toJS(),
+      label: p.get('name'),
+      // isDisabled: role.projects.includes(p.get('id')),
+    })).filter(({ value }: any) => !role.projects.includes(value)).toJS(),
+    permissions: state.getIn(['roles', 'permissions']).filter(({ value }: any) => !role.permissions.includes(value))
+      .map(({ text, value }: any) => ({ label: text, value })).toJS(),
     saving: state.getIn([ 'roles', 'saveRequest', 'loading' ]),
-    projectsMap: projects.reduce((acc, p) => {
+    projectsMap: projects.reduce((acc: any, p: any) => {
       acc[ p.get('id') ] = p.get('name')
       return acc
     }

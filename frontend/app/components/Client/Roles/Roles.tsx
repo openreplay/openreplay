@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react'
 import cn from 'classnames'
 import { Loader, IconButton, Popup, NoContent, SlideModal } from 'UI'
 import { connect } from 'react-redux'
-import stl from './roles.css'
+import stl from './roles.module.css'
 import RoleForm from './components/RoleForm'
 import { init, edit, fetchList, remove as deleteRole, resetErrors } from 'Duck/roles';
 import RoleItem from './components/RoleItem'
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import withPageTitle from 'HOCs/withPageTitle';
 
@@ -85,24 +85,20 @@ function Roles(props: Props) {
             <div className="flex items-center mr-auto">
               <h3 className={ cn(stl.tabTitle, "text-2xl") }>Roles and Access</h3>
               <Popup
-                trigger={
-                  <div>
-                    <IconButton
-                      id="add-button"
-                      circle
-                      icon="plus"
-                      outline
-                      disabled={ !isAdmin }
-                      onClick={ () => setShowmModal(true) }
-                    />
-                  </div>
-                }
                 content="You don’t have the permissions to perform this action."
                 disabled={ isAdmin }
-                size="tiny"
-                inverted
-                position="top left"
-              />
+              >
+                <div>
+                  <IconButton
+                    id="add-button"
+                    circle
+                    icon="plus"
+                    outline
+                    disabled={ !isAdmin }
+                    onClick={ () => setShowmModal(true) }
+                  />
+                </div>
+              </Popup>
             </div>              
           </div>
 
@@ -113,10 +109,11 @@ function Roles(props: Props) {
             icon
           >
             <div className={''}>
-              <div className={cn(stl.wrapper, 'flex items-start py-3 border-b px-3 pr-20')}>
-                <div className="flex" style={{ width: '20%'}}>Title</div>
-                <div className="flex" style={{ width: '30%'}}>Project Access</div>
-                <div className="flex" style={{ width: '50%'}}>Feature Access</div>
+              <div className={cn('flex items-start py-3 border-b px-3 pr-20')}>
+                <div className="" style={{ width: '20%'}}>Title</div>
+                <div className="" style={{ width: '30%'}}>Project Access</div>
+                <div className="" style={{ width: '50%'}}>Feature Access</div>
+                <div></div>
               </div>
               {roles.map(role => (
                 <RoleItem

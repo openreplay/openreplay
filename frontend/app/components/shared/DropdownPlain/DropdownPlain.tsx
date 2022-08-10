@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './DropdownPlain.css';
+import stl from './DropdownPlain.module.css';
 import { Dropdown, Icon } from 'UI';
 
 interface Props {

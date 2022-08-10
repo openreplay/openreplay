@@ -1,3 +1,4 @@
+import React from 'react';
 import { tokenRE } from 'Types/integrations/bugsnagConfig';
 import IntegrationForm from '../IntegrationForm'; 
 import ProjectListDropdown from './ProjectListDropdown';

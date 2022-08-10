@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './listHeader.css';
+import stl from './listHeader.module.css';
 
 const ListHeader = ({ title }) => {
   return (

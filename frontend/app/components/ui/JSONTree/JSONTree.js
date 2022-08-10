@@ -1,3 +1,4 @@
+import React from 'react';
 import JSONTree from 'react-json-view';
 
 function updateObjectLink(obj) {

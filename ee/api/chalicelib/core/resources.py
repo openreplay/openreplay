@@ -6,7 +6,9 @@ from decouple import config
 
 def get_by_session_id(session_id, project_id, start_ts, duration):
     with ch_client.ClickHouseClient() as ch:
-        delta = config("events_ts_delta", cast=int, default=5 * 60) * 1000
+        if duration is None or (type(duration) != 'int' and type(duration) != 'float') or duration < 0:
+            duration = 0
+        delta = config("events_ts_delta", cast=int, default=60 * 60) * 1000
         ch_query = """\
                 SELECT
                        datetime,url,type,duration,ttfb,header_size,encoded_body_size,decoded_body_size,success,coalesce(status,if(success, 200, status)) AS status

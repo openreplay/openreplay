@@ -9,7 +9,7 @@ import {
   editSeriesFilter,
 } from 'Duck/customMetrics';
 import { connect } from 'react-redux';
-import { IconButton, Icon } from 'UI';
+import { Button, Icon } from 'UI';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
@@ -20,7 +20,7 @@ interface Props {
   series: any;
   edit: typeof edit;
   updateSeries: typeof updateSeries;
-  onRemoveSeries: (seriesIndex) => void;
+  onRemoveSeries: (seriesIndex: any) => void;
   canDelete?: boolean; 
   addSeriesFilterFilter: typeof addSeriesFilterFilter;
   editSeriesFilterFilter: typeof editSeriesFilterFilter;
@@ -36,22 +36,24 @@ function FilterSeries(props: Props) {
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
 
-  useEffect(observeChanges, [series.filter]);
-
-  const onAddFilter = (filter) => {
+  const onAddFilter = (filter: any) => {
     series.filter.addFilter(filter)
+    observeChanges()
   }
 
-  const onUpdateFilter = (filterIndex, filter) => {
+  const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter)
+    observeChanges()
   }
 
-  const onChangeEventsOrder = (e, { name, value }) => {
+  const onChangeEventsOrder = (e, { name, value }: any) => {
     series.filter.updateKey(name, value)
+    observeChanges()
   }
 
-  const onRemoveFilter = (filterIndex) => {
+  const onRemoveFilter = (filterIndex: any) => {
     series.filter.removeFilter(filterIndex)
+    observeChanges()
   }
 
   return (
@@ -80,7 +82,6 @@ function FilterSeries(props: Props) {
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}
                 onChangeEventsOrder={onChangeEventsOrder}
-                observeChanges={observeChanges}
               />
             ): (
               <div className="color-gray-medium">{emptyMessage}</div>
@@ -92,7 +93,7 @@ function FilterSeries(props: Props) {
                 filter={undefined}
                 onFilterClick={onAddFilter}
               >
-                <IconButton primaryText label="ADD STEP" icon="plus" />
+                <Button variant="text-primary" icon="plus">ADD STEP</Button>
               </FilterSelection>
             </div>
           </div>

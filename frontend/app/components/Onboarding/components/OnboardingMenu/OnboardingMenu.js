@@ -1,7 +1,7 @@
 import React from 'react'
 import { Icon, SideMenuitem } from 'UI'
 import cn from 'classnames'
-import stl from './onboardingMenu.css'
+import stl from './onboardingMenu.module.css'
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes'
 import { withRouter } from 'react-router-dom'
 import * as routes from '../../../../routes'

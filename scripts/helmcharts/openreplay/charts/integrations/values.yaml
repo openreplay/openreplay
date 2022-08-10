@@ -5,14 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: rg.fr-par.scw.cloud/foss/integrations
+  repository: "{{ .Values.global.openReplayContainerRegistry }}/integrations"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 imagePullSecrets: []
 nameOverride: "integrations"
-fullnameOverride: "integrations"
+fullnameOverride: "integrations-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,7 +38,21 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 9000
+  ports:
+    http: 9000 
+    metrics: 8888
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: observability
+  scrapeConfigs:
+    - port: metrics
+      honorLabels: true
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
 
 ingress:
   enabled: false
@@ -84,3 +98,15 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+
+persistence: {}
+  # # Spec of spec.template.spec.containers[*].volumeMounts
+  # mounts:
+  # - name: kafka-ssl
+  #   mountPath: /opt/kafka/ssl
+  # # Spec of spec.template.spec.volumes
+  # volumes:
+  # - name: kafka-ssl
+  #   secret:
+  #     secretName: kafka-ssl

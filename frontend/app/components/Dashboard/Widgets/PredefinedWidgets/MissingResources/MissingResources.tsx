@@ -7,17 +7,17 @@ import Chart from './Chart';
 import ResourceInfo from './ResourceInfo';
 import CopyPath from './CopyPath';
 
-const cols = [
+const cols: Array<Object> = [
   {
     key: 'resource',
     title: 'Resource',
-    Component: ResourceInfo,    
+    Component: ResourceInfo,
     width: '40%',
   },
   {
     key: 'sessions',
     title: 'Sessions',
-    toText: count => `${ count > 1000 ? Math.trunc(count / 1000) : count }${ count > 1000 ? 'k' : '' }`,
+    toText: (count: number) => `${ count > 1000 ? Math.trunc(count / 1000) : count }${ count > 1000 ? 'k' : '' }`,
     width: '20%',
   },
   {
@@ -25,23 +25,29 @@ const cols = [
     title: 'Trend',
     Component: Chart,
     width: '20%',
-  },
-  {
-    key: 'copy-path',
-    title: '',
-    Component: CopyPath,
-    cellClass: 'invisible group-hover:visible text-right',
-    width: '20%',
   }
 ];
+
+const copyPathCol = {
+  key: 'copy-path',
+  title: '',
+  Component: CopyPath,
+  cellClass: 'invisible group-hover:visible text-right',
+  width: '20%',
+}
 
 interface Props {
     data: any
     metric?: any
+    isTemplate?: boolean
 }
 function MissingResources(props: Props) {
-    const { data, metric } = props;
+    const { data, metric, isTemplate } = props;
 
+    if (!isTemplate) {
+      cols.push(copyPathCol);
+    }
+    
     return (
         <NoContent
           title="No resources missing."
@@ -54,6 +60,7 @@ function MissingResources(props: Props) {
               cols={ cols }
               rows={ List(metric.data.chart) }
               rowClass="group"
+              isTemplate={isTemplate}
             />
           </div>
         </NoContent>

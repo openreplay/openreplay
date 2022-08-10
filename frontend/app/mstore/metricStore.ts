@@ -1,7 +1,8 @@
 import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
 import Widget, { IWidget } from "./types/widget";
-import { metricService } from "App/services";
+import { metricService, errorService } from "App/services";
 import { toast } from 'react-toastify';
+import Error from "./types/error";
 
 export interface IMetricStore {
     paginatedList: any;
@@ -29,12 +30,13 @@ export interface IMetricStore {
     updateInList(metric: IWidget): void
     findById(metricId: string): void
     removeById(metricId: string): void
+    fetchError(errorId: string): Promise<any>
 
     // API
     save(metric: IWidget, dashboardId?: string): Promise<any>
     fetchList(): void
-    fetch(metricId: string)
-    delete(metric: IWidget)
+    fetch(metricId: string, period?: any): Promise<any>
+    delete(metric: IWidget): Promise<any>
 }
 
 export default class MetricStore implements IMetricStore {
@@ -76,16 +78,10 @@ export default class MetricStore implements IMetricStore {
             fetch: action,
             delete: action,
 
+            fetchError: action,
+
             paginatedList: computed,
         })
-
-        // reaction(
-        //     () => this.metricsSearch,
-        //     (metricsSearch) => { // TODO filter the list for View
-        //         this.page = 1
-        //         this.paginatedList
-        //     }
-        // )
     }
 
     // State Actions
@@ -99,6 +95,7 @@ export default class MetricStore implements IMetricStore {
 
     merge(object: any) {
         Object.assign(this.instance, object)
+        this.instance.updateKey('hasChanged', true)
     }
 
     reset(id: string) {
@@ -137,41 +134,46 @@ export default class MetricStore implements IMetricStore {
     save(metric: IWidget, dashboardId?: string): Promise<any> {
         const wasCreating = !metric.exists()
         this.isSaving = true
-        return metricService.saveMetric(metric, dashboardId)
-            .then((metric) => {
-                const _metric = new Widget().fromJson(metric)
-                if (wasCreating) {
-                    toast.success('Metric created successfully')
-                    this.addToList(_metric)
-                    this.instance = _metric
-                } else {
-                    toast.success('Metric updated successfully')
-                    this.updateInList(_metric)
-                }
-                return _metric
-            }).catch(() => {
-                toast.error('Error saving metric')
-            }).finally(() => {
-                this.isSaving = false
-            })
+        return new Promise((resolve, reject) => {
+            metricService.saveMetric(metric, dashboardId)
+                .then((metric: any) => {
+                    const _metric = new Widget().fromJson(metric)
+                    if (wasCreating) {
+                        toast.success('Metric created successfully')
+                        this.addToList(_metric)
+                        this.instance = _metric
+                    } else {
+                        toast.success('Metric updated successfully')
+                        this.updateInList(_metric)
+                    }
+                    resolve(_metric)
+                }).catch(() => {
+                    toast.error('Error saving metric')
+                    reject()
+                }).finally(() => {
+                    this.instance.updateKey('hasChanged', false)
+                    this.isSaving = false
+                })
+        })
     }
 
     fetchList() {
         this.isLoading = true
         return metricService.getMetrics()
-            .then(metrics => {
+            .then((metrics: any[]) => {
                 this.metrics = metrics.map(m => new Widget().fromJson(m))
             }).finally(() => {
                 this.isLoading = false
             })
     }
 
-    fetch(id: string) {
+    fetch(id: string, period?: any) {
         this.isLoading = true
         return metricService.getMetric(id)
-            .then(metric => {
-                return this.instance = new Widget().fromJson(metric)
-            }).finally(() => {
+            .then((metric: any) => {
+                return this.instance = new Widget().fromJson(metric, period)
+            })
+            .finally(() => {
                 this.isLoading = false
             })
     }
@@ -183,7 +185,19 @@ export default class MetricStore implements IMetricStore {
                 this.removeById(metric[Widget.ID_KEY])
                 toast.success('Metric deleted successfully')
             }).finally(() => {
+                this.instance.updateKey('hasChanged', false)
                 this.isSaving = false
             })
+    }
+
+    fetchError(errorId: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            errorService.one(errorId).then((error: any) => {
+                resolve(new Error().fromJSON(error))
+            }).catch((error: any) => {
+                toast.error('Failed to fetch error details.')
+                reject(error)
+            })
+        })
     }
 }

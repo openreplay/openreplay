@@ -1,19 +1,20 @@
+import React from 'react';
 import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
 import { fetch as fetchSession } from 'Duck/sessions';
 import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
-import { Link, NoContent, Loader } from 'UI';
-import { sessions as sessionsRoute } from 'App/routes';
+import { Loader } from 'UI';
+// import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 import LivePlayer from './LivePlayer';
 
-const SESSIONS_ROUTE = sessionsRoute();
+// const SESSIONS_ROUTE = sessionsRoute();
 
 function LiveSession({ 
 	sessionId,
 	loading,
-  	hasErrors,
+  	// hasErrors,
 	session, 
 	fetchSession,
   	fetchSlackList,
@@ -46,11 +47,11 @@ function LiveSession({
 export default withPermissions(['ASSIST_LIVE'], '', true)(connect((state, props) => {
 	const { match: { params: { sessionId } } } = props;
   	const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
-  	const hasSessiosPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
+  	const hasSessiosPath = state.getIn([ 'sessions', 'sessionPath' ]).pathname.includes('/sessions');
 	return {
 		sessionId,
 		loading: state.getIn([ 'sessions', 'loading' ]),
-		hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
+		// hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
 		session: state.getIn([ 'sessions', 'current' ]),
 		hasSessionsPath: hasSessiosPath && !isAssist,
 	};

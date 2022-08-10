@@ -1,7 +1,9 @@
 package env
 
 import (
+	"crypto/tls"
 	"log"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -19,7 +21,16 @@ func AWSSessionOnRegion(region string) *_session.Session {
 	if AWS_ENDPOINT != "" {
 		config.Endpoint = aws.String(AWS_ENDPOINT)
 		config.DisableSSL = aws.Bool(true)
-    config.S3ForcePathStyle = aws.Bool(true)
+		config.S3ForcePathStyle = aws.Bool(true)
+
+		AWS_SKIP_SSL_VALIDATION := Bool("AWS_SKIP_SSL_VALIDATION")
+		if AWS_SKIP_SSL_VALIDATION {
+			tr := &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+			client := &http.Client{Transport: tr}
+			config.HTTPClient = client
+		}
 	}
 	aws_session, err := _session.NewSession(config)
 	if err != nil {

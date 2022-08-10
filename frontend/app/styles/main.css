@@ -129,7 +129,7 @@
   text-decoration: underline dotted !important;
 }
 
-.divider {
+/* .divider {
   width: 1px;
   margin: 0 15px;
   background-color: $gray-light;
@@ -141,19 +141,10 @@
   
   margin: 25px 0;
   background-color: $gray-light;
-}
+} */
 
 .no-scroll { 
   height: 100vh;
   overflow-y: hidden;
   padding-right: 15px;
 }
-
-/* .svg-map__location {
-		fill: #EEE !important;
-		cursor: pointer;
-
-    &:hover {
-      fill: #fff !important;
-    }
-} */

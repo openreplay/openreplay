@@ -1,7 +1,8 @@
+import { useModal } from 'App/components/Modal';
 import React, { useEffect, useState } from 'react';
 import { SlideModal, Avatar, TextEllipsis, Icon } from 'UI';
 import SessionList from '../SessionList';
-import stl from './assistTabs.css'
+import stl from './assistTabs.module.css'
 
 interface Props {
   userId: any,
@@ -10,36 +11,28 @@ interface Props {
 
 const AssistTabs = (props: Props) => {
   const [showMenu, setShowMenu] = useState(false)
+  const { showModal } = useModal();
 
   return (
     <div className="relative mr-4">
       <div className="flex items-center">
         {props.userId && (
           <>
-            <div className="flex items-center mr-3">
-              {/* <Icon name="user-alt" color="gray-darkest" /> */}
-              <Avatar iconSize="20" width="30px" height="30px" seed={ props.userNumericHash } />
-              <div className="ml-2 font-medium">
-                <TextEllipsis maxWidth={120} inverted popupProps={{ inverted: true, size: 'tiny' }}>
-                  {props.userId}'s
-                </TextEllipsis>
-              </div>
-            </div>
             <div
               className={stl.btnLink}
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={() => showModal(<SessionList userId={props.userId} />, {})}
             >
               Active Sessions
             </div>
           </>
         )}
       </div>
-      <SlideModal
+      {/* <SlideModal
         title={ <div>{props.userId}'s <span className="color-gray-medium">Live Sessions</span> </div> }
         isDisplayed={ showMenu }
         content={ showMenu && <SessionList /> }
         onClose={ () => setShowMenu(false) }
-      />
+      /> */}
     </div>
   );
 };

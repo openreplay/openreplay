@@ -4,7 +4,7 @@ import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { 
     BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
 
@@ -13,7 +13,8 @@ interface Props {
     metric?: any
 }
 function ErrorsByOrigin(props: Props) {
-    const { data, metric } = props;
+    const { metric } = props;
+
     return (
         <NoContent
           size="small"
@@ -33,6 +34,7 @@ function ErrorsByOrigin(props: Props) {
               />
               <YAxis
                 {...Styles.yaxis}
+                tickFormatter={val => Styles.tickFormatter(val)}
                 label={{ ...Styles.axisLabelLeft, value: "Number of Errors" }}
                 allowDecimals={false}
               />

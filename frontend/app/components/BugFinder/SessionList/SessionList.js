@@ -1,14 +1,16 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, Button, Pagination } from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 // const ALL = 'all';
 const PER_PAGE = 10;
-const AUTOREFRESH_INTERVAL = 3 * 60 * 1000;
+const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 var timeoutId;
 
 @connect(state => ({
@@ -81,8 +83,6 @@ export default class SessionList extends React.PureComponent {
     const {
       loading,
       filters,
-      // onMenuItemClick,
-      // allList,
       activeTab,
       metaList,
       currentPage,
@@ -93,67 +93,52 @@ export default class SessionList extends React.PureComponent {
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
 
     return (
-      <NoContent
-        title={this.getNoContentMessage(activeTab)}
-        // subtext="Please try changing your search parameters."
-        animatedIcon="no-results"
-        show={ !loading && list.size === 0}
-        subtext={
-          <div>
-            <div>Please try changing your search parameters.</div>
-            {/* {allList.size > 0 && (
-              <div className="pt-2">
-                However, we found other sessions based on your search parameters. 
-                <div>
-                  <Button
-                    plain
-                    onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
-                  >See All</Button>
-                </div>
-              </div>
-            )} */}
-          </div>
-        }
-      >
-        <Loader loading={ loading }>
-          { list.map(session => (
-            <SessionItem
-              key={ session.sessionId }
-              session={ session }
-              hasUserFilter={hasUserFilter}
-              onUserClick={this.onUserClick}
-              metaList={metaList}
-              lastPlayedSessionId={lastPlayedSessionId}
-            />
-          ))}
-        </Loader>
-        <div className="w-full flex items-center justify-center py-6">
-          <Pagination
-            page={currentPage}
-            totalPages={Math.ceil(total / PER_PAGE)}
-            onPageChange={(page) => this.props.updateCurrentPage(page)}
-            limit={PER_PAGE}
-            debounceRequest={1000}
-          />
+      <div className="bg-white p-3 rounded border">
+        <NoContent
+          title={<div className="flex items-center justify-center flex-col">
+            <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+            {this.getNoContentMessage(activeTab)}
+          </div>}
+          // subtext="Please try changing your search parameters."
+          // animatedIcon="no-results"
+          show={ !loading && list.size === 0}
+          subtext={
+            <div>
+              <div>Please try changing your search parameters.</div>
+            </div>
+          }
+        >
+          
+            <Loader loading={ loading }>
+              { list.map(session => (
+                <React.Fragment key={ session.sessionId }>
+                <SessionItem
+                  session={ session }
+                  hasUserFilter={hasUserFilter}
+                  onUserClick={this.onUserClick}
+                  metaList={metaList}
+                  lastPlayedSessionId={lastPlayedSessionId}
+                />
+                <div className="border-b" />
+                </React.Fragment>
+              ))}
+            </Loader>
+            <div className="w-full flex items-center justify-center py-6">
+              <Pagination
+                page={currentPage}
+                totalPages={Math.ceil(total / PER_PAGE)}
+                onPageChange={(page) => this.props.updateCurrentPage(page)}
+                limit={PER_PAGE}
+                debounceRequest={1000}
+              />
+            </div>
+          </NoContent>
         </div>
-      </NoContent>
     );
   }
 
   render() {
     const { activeTab, allList, total }  = this.props;
-    // var filteredList;
-
-    // if (activeTab.type !== ALL && activeTab.type !== 'bookmark' && activeTab.type !== 'live') { // Watchdog sessions
-    //   filteredList = allList.filter(session => activeTab.fits(session))
-    // } else {
-    //   filteredList = allList
-    // }
-
-    // if (activeTab.type === 'bookmark') {
-    //   filteredList = filteredList.filter(item => item.favorite)
-    // }
-    // const _total = activeTab.type === 'all' ? total : allList.size
     
     return (
       <div className="">

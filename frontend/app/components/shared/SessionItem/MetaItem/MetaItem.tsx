@@ -14,7 +14,7 @@ export default function MetaItem(props: Props) {
             <span className="rounded-tl rounded-bl bg-gray-light-shade px-2 color-gray-medium capitalize" style={{ maxWidth: "150px"}}>
                 <TextEllipsis text={label} className="p-0" popupProps={{ size: 'small', disabled: true }}  />
             </span>
-            <span className="rounded-tr rounded-br bg-gray-lightest px-2 color-gray-dark capitalize" style={{ maxWidth: "150px"}}>
+            <span className="rounded-tr rounded-br bg-gray-lightest px-2 color-gray-dark" style={{ maxWidth: "150px"}}>
                 <TextEllipsis text={value} className="p-0" popupProps={{ size: 'small', disabled: true }}  />
             </span>
         </div>

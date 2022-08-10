@@ -31,7 +31,6 @@ rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
-rm -rf ./chalicelib/core/sessions_favorite_viewed.py
 rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
 rm -rf ./chalicelib/core/significance.py
@@ -39,7 +38,6 @@ rm -rf ./chalicelib/core/slack.py
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
 rm -rf ./chalicelib/core/sourcemaps_parser.py
-rm -rf ./chalicelib/core/weekly_report.py
 rm -rf ./chalicelib/saml
 rm -rf ./chalicelib/utils/html/
 rm -rf ./chalicelib/utils/__init__.py
@@ -72,7 +70,6 @@ rm -rf ./routers/subs/dashboard.py
 rm -rf ./db_changes.sql
 rm -rf ./Dockerfile.bundle
 rm -rf ./entrypoint.bundle.sh
-rm -rf ./entrypoint.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./routers/subs/insights.py
 rm -rf ./schemas.py

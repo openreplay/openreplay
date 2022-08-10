@@ -1,17 +1,15 @@
 from typing import Optional
 
 from decouple import config
-from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
+from fastapi import Body, Depends, BackgroundTasks
 from starlette.responses import RedirectResponse
 
 import schemas
-from chalicelib.core import assist
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
 from chalicelib.core import tenants, users, metadata, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from or_dependencies import OR_context
 from routers.base import get_routers
@@ -24,62 +22,33 @@ def get_all_signup():
     return {"data": {"tenants": tenants.tenants_exists(),
                      "sso": None,
                      "ssoProvider": None,
-                     "edition": helper.get_edition()}}
-
-
-@public_app.post('/login', tags=["authentication"])
-def login(data: schemas.UserLoginSchema = Body(...)):
-    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid captcha."
-        )
-
-    r = users.authenticate(data.email, data.password, for_plugin=False)
-    if r is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You’ve entered invalid Email or Password."
-        )
-
-    tenant_id = r.pop("tenantId")
-
-    r["limits"] = {
-        "teamMember": -1,
-        "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
-
-    c = tenants.get_by_tenant_id(tenant_id)
-    c.pop("createdAt")
-    c["smtp"] = helper.has_smtp()
-    c["iceServers"] = assist.get_ice_servers()
-    r["smtp"] = c["smtp"]
-    r["iceServers"] = c["iceServers"]
-    return {
-        'jwt': r.pop('jwt'),
-        'data': {
-            "user": r,
-            "client": c
-        }
-    }
+                     "edition": license.EDITION}}
 
 
 @app.get('/account', tags=['accounts'])
 def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
+    t = tenants.get_by_tenant_id(context.tenant_id)
+    if t is not None:
+        t.pop("createdAt")
+        t["tenantName"] = t.pop("name")
     return {
         'data': {
             **r,
-            "limits": {
-                "teamMember": -1,
-                "projects": -1,
-                "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
-            },
+            **t,
             **license.get_status(context.tenant_id),
             "smtp": helper.has_smtp(),
-            "iceServers": assist.get_ice_servers()
+            # "iceServers": assist.get_ice_servers()
         }
     }
+
+
+@app.post('/account', tags=["account"])
+@app.put('/account', tags=["account"])
+def edit_account(data: schemas.EditUserSchema = Body(...),
+                 context: schemas.CurrentContext = Depends(OR_context)):
+    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
+                      editor_id=context.user_id)
 
 
 @app.get('/projects/limit', tags=['projects'])
@@ -181,7 +150,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 @app.post('/client/members/{memberId}', tags=["client"])
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data.dict(),
+    return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
                       user_id_to_update=memberId)
 
 
@@ -199,26 +168,9 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
                                             m_key=key, project_id=projectId)}
 
 
-@app.get('/plans', tags=["plan"])
-def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": license.get_status(context.tenant_id)
-    }
-
-
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
 def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
-
-
-@app.get('/client', tags=['projects'])
-def get_client(context: schemas.CurrentContext = Depends(OR_context)):
-    r = tenants.get_by_tenant_id(context.tenant_id)
-    if r is not None:
-        r.pop("createdAt")
-    return {
-        'data': r
-    }
 
 
 @app.get('/projects', tags=['projects'])

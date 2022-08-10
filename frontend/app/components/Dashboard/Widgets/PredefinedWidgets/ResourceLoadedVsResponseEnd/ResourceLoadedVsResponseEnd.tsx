@@ -18,7 +18,7 @@ function ResourceLoadedVsResponseEnd(props: Props) {
           size="small"
           show={ metric.data.chart.length === 0 }
         >
-          <ResponsiveContainer height={ 240 } width="100%">
+          <ResponsiveContainer height={ 246 } width="100%">
             <ComposedChart
                 data={metric.data.chart}
                 margin={ Styles.chartMargins}

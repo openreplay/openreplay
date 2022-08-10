@@ -51,7 +51,7 @@
 }
 
 .dateRange {
-  color: red;
+  color: #CC0000;
   z-index: 8;
   position: absolute;
   right: 9px;

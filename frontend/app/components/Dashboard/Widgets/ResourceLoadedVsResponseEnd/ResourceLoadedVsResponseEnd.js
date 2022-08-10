@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { widgetHOC, Styles } from '../common';
 import { ComposedChart, Bar, CartesianGrid, Line, Legend, ResponsiveContainer, 
@@ -28,7 +29,7 @@ export default class ResourceLoadedVsResponseEnd extends React.PureComponent {
           size="small"
           show={ data.chart.length === 0 }
         >
-          <ResponsiveContainer height={ 240 } width="100%">
+          <ResponsiveContainer height={ 247 } width="100%">
             <ComposedChart
               data={data.chart}
               margin={Styles.chartMargins}

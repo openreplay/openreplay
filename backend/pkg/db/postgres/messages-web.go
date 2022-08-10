@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"log"
 	"math"
 
 	"openreplay/backend/pkg/hashid"
@@ -13,104 +14,54 @@ func getSqIdx(messageID uint64) uint {
 	return uint(messageID % math.MaxInt32)
 }
 
-func (conn *Conn) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
+func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
 	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
 		e.MessageID,
 		e.Name, e.Payload)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "CUSTOM", e.Name)
+		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
 	}
 	return err
 }
 
-func (conn *Conn) InsertWebUserID(sessionID uint64, userID *UserID) error {
+func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *UserID) error {
 	err := conn.InsertUserID(sessionID, userID.ID)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "USERID", userID.ID)
+		conn.insertAutocompleteValue(sessionID, projectID, "USERID", userID.ID)
 	}
 	return err
 }
 
-func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *UserAnonymousID) error {
+func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, userAnonymousID *UserAnonymousID) error {
 	err := conn.InsertUserAnonymousID(sessionID, userAnonymousID.ID)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "USERANONYMOUSID", userAnonymousID.ID)
+		conn.insertAutocompleteValue(sessionID, projectID, "USERANONYMOUSID", userAnonymousID.ID)
 	}
 	return err
 }
 
-// func (conn *Conn) InsertWebResourceEvent(sessionID uint64, e *ResourceEvent) error {
-// 	if e.Type != "fetch" {
-// 		return nil
-// 	}
-// 	err := conn.InsertRequest(sessionID, e.Timestamp,
-// 		e.MessageID,
-// 		e.URL, e.Duration, e.Success,
-// 	)
-// 	if err == nil {
-// 		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
-// 	}
-// 	return err
-// }
-
 // TODO: fix column "dom_content_loaded_event_end" of relation "pages"
-func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
+func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *PageEvent) error {
 	host, path, query, err := url.GetURLParts(e.URL)
 	if err != nil {
 		return err
 	}
-	tx, err := conn.begin()
-	if err != nil {
-		return err
+	// base_path is deprecated
+	if err = conn.webPageEvents.Append(sessionID, e.MessageID, e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
+		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
+		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
+		log.Printf("insert web page event in bulk err: %s", err)
 	}
-	defer tx.rollback()
-	// base_path is depricated
-	if err := tx.exec(`
-		INSERT INTO events.pages (
-			session_id, message_id, timestamp, referrer, base_referrer, host, path, query,
-			dom_content_loaded_time, load_time, response_end, first_paint_time, first_contentful_paint_time, 
-			speed_index, visually_complete, time_to_interactive,
-			response_time, dom_building_time
-		) VALUES (
-			$1, $2, $3, 
-			$4, $5, 
-			$6, $7, $8,
-			NULLIF($9, 0), NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), 
-			NULLIF($14, 0), NULLIF($15, 0), NULLIF($16, 0),
-			NULLIF($17, 0), NULLIF($18, 0)
-		)
-		`,
-		sessionID, e.MessageID, e.Timestamp,
-		e.Referrer, url.DiscardURLQuery(e.Referrer),
-		host, path, query,
-		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
-		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive,
-		calcResponseTime(e), calcDomBuildingTime(e),
-	); err != nil {
-		return err
-	}
-	if err = tx.exec(`
-		UPDATE sessions SET (pages_count, events_count) = (pages_count + 1, events_count + 1)
-		WHERE session_id = $1`,
-		sessionID,
-	); err != nil {
-		return err
-	}
-	if err = tx.commit(); err != nil {
-		return err
-	}
-	conn.insertAutocompleteValue(sessionID, "LOCATION", url.DiscardURLQuery(path))
-	conn.insertAutocompleteValue(sessionID, "REFERRER", url.DiscardURLQuery(e.Referrer))
+	// Accumulate session updates and exec inside batch with another sql commands
+	conn.updateSessionEvents(sessionID, 1, 1)
+	// Add new value set to autocomplete bulk
+	conn.insertAutocompleteValue(sessionID, projectID, "LOCATION", url.DiscardURLQuery(path))
+	conn.insertAutocompleteValue(sessionID, projectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
 	return nil
 }
 
-func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
-	tx, err := conn.begin()
-	if err != nil {
-		return err
-	}
-	defer tx.rollback()
-	if err = tx.exec(`
+func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
+	sqlRequest := `
 		INSERT INTO events.clicks
 			(session_id, message_id, timestamp, label, selector, url)
 		(SELECT
@@ -118,65 +69,40 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 			FROM events.pages
 			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
 		)
-		`,
-		sessionID, e.MessageID, e.Timestamp, e.Label, e.Selector,
-	); err != nil {
-		return err
-	}
-	if err = tx.exec(`
-		UPDATE sessions SET events_count = events_count + 1
-		WHERE session_id = $1`,
-		sessionID,
-	); err != nil {
-		return err
-	}
-	if err = tx.commit(); err != nil {
-		return err
-	}
-	conn.insertAutocompleteValue(sessionID, "CLICK", e.Label)
+		`
+	conn.batchQueue(sessionID, sqlRequest, sessionID, e.MessageID, e.Timestamp, e.Label, e.Selector)
+	// Accumulate session updates and exec inside batch with another sql commands
+	conn.updateSessionEvents(sessionID, 1, 0)
+	// Add new value set to autocomplete bulk
+	conn.insertAutocompleteValue(sessionID, projectID, "CLICK", e.Label)
 	return nil
 }
 
-func (conn *Conn) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
-	tx, err := conn.begin()
-	if err != nil {
-		return err
-	}
-	defer tx.rollback()
+func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *InputEvent) error {
 	value := &e.Value
 	if e.ValueMasked {
 		value = nil
 	}
-	if err = tx.exec(`
-		INSERT INTO events.inputs
-			(session_id, message_id, timestamp, value, label)
-		VALUES
-			($1, $2, $3, $4, NULLIF($5,''))
-		`,
-		sessionID, e.MessageID, e.Timestamp, value, e.Label,
-	); err != nil {
-		return err
+	if err := conn.webInputEvents.Append(sessionID, e.MessageID, e.Timestamp, value, e.Label); err != nil {
+		log.Printf("insert web input event err: %s", err)
 	}
-	if err = tx.exec(`
-		UPDATE sessions SET events_count = events_count + 1
-		WHERE session_id = $1`,
-		sessionID,
-	); err != nil {
-		return err
-	}
-	if err = tx.commit(); err != nil {
-		return err
-	}
-	conn.insertAutocompleteValue(sessionID, "INPUT", e.Label)
+	conn.updateSessionEvents(sessionID, 1, 0)
+	conn.insertAutocompleteValue(sessionID, projectID, "INPUT", e.Label)
 	return nil
 }
 
-func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) error {
-	tx, err := conn.begin()
+func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) (err error) {
+	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
 	}
-	defer tx.rollback()
+	defer func() {
+		if err != nil {
+			if rollbackErr := tx.rollback(); rollbackErr != nil {
+				log.Printf("rollback err: %s", rollbackErr)
+			}
+		}
+	}()
 	errorID := hashid.WebErrorID(projectID, e)
 
 	if err = tx.exec(`
@@ -206,21 +132,23 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 	); err != nil {
 		return err
 	}
-	return tx.commit()
+	err = tx.commit()
+	return
 }
 
-func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *FetchEvent) error {
+func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePayload bool, e *FetchEvent) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Request
 		response = &e.Response
 	}
 	host, path, query, err := url.GetURLParts(e.URL)
-	conn.insertAutocompleteValue(sessionID, "REQUEST", path)
+	conn.insertAutocompleteValue(sessionID, projectID, "REQUEST", path)
 	if err != nil {
 		return err
 	}
-	return conn.batchQueue(sessionID, `
+
+	sqlRequest := `
 		INSERT INTO events_common.requests (
 			session_id, timestamp, seq_index, 
 			url, host, path, query,
@@ -228,37 +156,32 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 			duration, success
 		) VALUES (
 			$1, $2, $3, 
-			$4, $5, $6, $7,
+			left($4, 2700), $5, $6, $7,
 			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
 			$12, $13
-		) ON CONFLICT DO NOTHING`,
+		) ON CONFLICT DO NOTHING`
+	conn.batchQueue(sessionID, sqlRequest,
 		sessionID, e.Timestamp, getSqIdx(e.MessageID),
 		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
 		e.Duration, e.Status < 400,
 	)
 
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.URL)+len(host)+len(path)+len(query)+
+		len(e.Request)+len(e.Response)+len(url.EnsureMethod(e.Method))+8*5+1)
+	return nil
 }
 
-func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *GraphQLEvent) error {
+func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, savePayload bool, e *GraphQLEvent) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Variables
 		response = &e.Response
 	}
-	conn.insertAutocompleteValue(sessionID, "GRAPHQL", e.OperationName)
-	return conn.batchQueue(sessionID, `
-		INSERT INTO events.graphql (
-			session_id, timestamp, message_id, 
-			name,
-			request_body, response_body
-		) VALUES (
-			$1, $2, $3, 
-			$4,
-			$5, $6
-		) ON CONFLICT DO NOTHING`,
-		sessionID, e.Timestamp, e.MessageID,
-		e.OperationName,
-		request, response,
-	)
+	if err := conn.webGraphQLEvents.Append(sessionID, e.Timestamp, e.MessageID, e.OperationName, request, response); err != nil {
+		log.Printf("insert web graphQL event err: %s", err)
+	}
+	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)
+	return nil
 }

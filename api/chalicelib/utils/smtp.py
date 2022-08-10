@@ -30,7 +30,8 @@ class SMTPClient:
             self.server.starttls()
             # stmplib docs recommend calling ehlo() before & after starttls()
             self.server.ehlo()
-        self.server.login(user=config("EMAIL_USER"), password=config("EMAIL_PASSWORD"))
+        if len(config("EMAIL_USER", default="")) > 0 and len(config("EMAIL_PASSWORD", default="")) > 0:
+            self.server.login(user=config("EMAIL_USER"), password=config("EMAIL_PASSWORD"))
         return self.server
 
     def __exit__(self, *args):

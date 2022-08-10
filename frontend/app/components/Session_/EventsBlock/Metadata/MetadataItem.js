@@ -1,8 +1,9 @@
+import React from 'react';
 import { List } from 'immutable';
 import cn from 'classnames';
 import { withRequest, withToggle } from 'HOCs';
 import { Button, Icon, SlideModal, TextEllipsis } from 'UI';
-import stl from './metadataItem.css';
+import stl from './metadataItem.module.css';
 import SessionList from './SessionList';
 
 @withToggle()
@@ -60,13 +61,13 @@ export default class extends React.PureComponent {
 						</TextEllipsis>
 					</div>
 	        <Button
-            onClick={ this.switchOpen }
-						plain
-						className={ stl.searchButton }
-						id="metadata-item"
-          >
-						<Icon name="search" size="16" color="teal" />
-					</Button>
+            	onClick={ this.switchOpen }
+				variant="text"
+				className={ stl.searchButton }
+				id="metadata-item"
+			>
+				<Icon name="search" size="16" color="teal" />
+			</Button>
 	      </div>
 	     </div>
 		);

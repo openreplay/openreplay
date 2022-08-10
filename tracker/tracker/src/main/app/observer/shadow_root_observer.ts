@@ -1,5 +1,5 @@
 import Observer from "./observer.js";
-import { CreateIFrameDocument } from "../../../messages/index.js";
+import { CreateIFrameDocument } from "../../../common/messages.js";
 
 export default class ShadowRootObserver extends Observer {
   observe(el: Element) {

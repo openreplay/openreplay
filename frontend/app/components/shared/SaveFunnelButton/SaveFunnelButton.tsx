@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IconButton } from 'UI';
+import { Button } from 'UI';
 import FunnelSaveModal from 'App/components/Funnels/FunnelSaveModal';
 import { connect } from 'react-redux';
 import { init } from 'Duck/funnels';
@@ -16,10 +16,11 @@ function SaveFunnelButton(props: Props) {
   }
   return (
     <div>
-        <IconButton
-            className="mr-2"
-            onClick={handleClick} primaryText label="SAVE FUNNEL" icon="funnel"
-        />
+        <Button
+            variant="text-primary"
+            icon="funnel"
+            onClick={handleClick}
+        >SAVE FUNNEL</Button>
 
         <FunnelSaveModal
             show={showModal}

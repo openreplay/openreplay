@@ -99,9 +99,6 @@ redis:
         cpu: 100m
         memory: 128Mi
 
-minio:
-  enabled: true
-
 postgresql:
   # postgresqlPassword: asayerPostgres
   fullnameOverride: postgresql
@@ -121,6 +118,7 @@ minio:
   #    accessKey: "{{ minio_access_key }}"
   #    secretKey: "{{ minio_secret_key }}"
   fullnameOverride: minio
+  enabled: true
   resources:
     limits:
       cpu: 256m
@@ -142,4 +140,3 @@ clickhouse:
 
 postgreql:
   enabled: true
-

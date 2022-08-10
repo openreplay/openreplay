@@ -1,9 +1,9 @@
 //@ts-nocheck
 import React from 'react'
-import { Icon } from 'UI'
+import { Icon, Popup } from 'UI'
 import cn from 'classnames'
 import { debounce } from 'App/utils';
-import { Tooltip } from 'react-tippy';
+import { numberWithCommas } from 'App/utils';
 interface Props {
     page: number
     totalPages: number
@@ -32,12 +32,11 @@ export default function Pagination(props: Props) {
     const isLastPage = currentPage === totalPages;
     return (
         <div className="flex items-center">
-            <Tooltip
-                arrow
-                sticky
-                title="Previous Page"  
-                trigger="mouseenter"
-                hideOnClick={true}
+            <Popup
+                content="Previous Page"  
+                // hideOnClick={true}
+                animation="none"
+                delay={1500}
             >
                 <button
                     className={cn("py-2 px-3", { "opacity-50 cursor-default": isFirstPage })}
@@ -46,24 +45,23 @@ export default function Pagination(props: Props) {
                 >
                     <Icon name="chevron-left" size="18" color={isFirstPage ? 'gray-medium' : 'teal'} />
                 </button>
-            </Tooltip>
+            </Popup>
             <span className="mr-2 color-gray-medium">Page</span>
             <input
                 type="number"
                 className={cn("py-1 px-2 bg-white border border-gray-light rounded w-16", { "opacity-50 cursor-default": totalPages === 1 })}
                 value={currentPage}
                 min={1}
-                max={totalPages}
+                max={totalPages ? totalPages : 1}
                 onChange={(e) => changePage(parseInt(e.target.value))}
             />
             <span className="mx-3 color-gray-medium">of</span>
-            <span >{totalPages}</span>
-            <Tooltip
-                arrow
-                sticky
-                title="Next Page"
-                trigger="mouseenter"
-                hideOnClick={true}
+            <span >{numberWithCommas(totalPages)}</span>
+            <Popup
+                content="Next Page"
+                // hideOnClick={true}
+                animation="none"
+                delay={1500}
             >
                 <button
                     className={cn("py-2 px-3", { "opacity-50 cursor-default": isLastPage })}
@@ -72,7 +70,7 @@ export default function Pagination(props: Props) {
                 >
                     <Icon name="chevron-right" size="18" color={isLastPage ? 'gray-medium' : 'teal'} />
                 </button>
-            </Tooltip>
+            </Popup>
         </div>
     )
 }

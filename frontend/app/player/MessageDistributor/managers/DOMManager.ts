@@ -34,18 +34,18 @@ export default class DOMManager extends ListWalker<Message> {
     return this.startTime;
   }
 
-  add(m: Message): void {
+  append(m: Message): void {
     switch (m.tp) {
     case "set_node_scroll":
       if (!this.nodeScrollManagers[ m.id ]) {
         this.nodeScrollManagers[ m.id ] = new ListWalker();
       }
-      this.nodeScrollManagers[ m.id ].add(m);
+      this.nodeScrollManagers[ m.id ].append(m);
       return;
     //case "css_insert_rule": // ||   //set_css_data ???
     //case "css_delete_rule":
     // (m.tp === "set_node_attribute" && this.isLink[ m.id ] && m.key === "href")) {
-    //  this.stylesManager.add(m);
+    //  this.stylesManager.append(m);
     //  return;
     default:
       if (m.tp === "create_element_node") {
@@ -62,7 +62,7 @@ export default class DOMManager extends ListWalker<Message> {
         logger.log("Ignorring message: ", m)
         return; // Ignoring...
       }
-      super.add(m);
+      super.append(m);
     }
 
   }
@@ -155,13 +155,12 @@ export default class DOMManager extends ListWalker<Message> {
         this.insertNode(msg);
         return
       case "create_element_node":
-      // console.log('elementnode', msg)
         if (msg.svg) {
           this.nl[ msg.id ] = document.createElementNS('http://www.w3.org/2000/svg', msg.tag);
         } else {
           this.nl[ msg.id ] = document.createElement(msg.tag);
         }
-        if (this.bodyId === msg.id) {
+        if (this.bodyId === msg.id) { // there are several bodies in iframes TODO: optimise & cache prebuild
           this.postponedBodyMessage = msg;
         } else {
           this.insertNode(msg);
@@ -184,7 +183,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (!node) { logger.error("Node not found", msg); return }
         if (this.isLink[ id ] && name === "href") {
           // @ts-ignore TODO: global ENV type
-          if (value.startsWith(window.ENV.ASSETS_HOST)) { // Hack for queries in rewrited urls
+          if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) { // Hack for queries in rewrited urls
             value = value.replace("?", "%3F");
           }
           this.stylesManager.setStyleHandlers(node, value);
@@ -210,9 +209,9 @@ export default class DOMManager extends ListWalker<Message> {
       case "set_input_value":
         node = this.nl[ msg.id ]
         if (!node) { logger.error("Node not found", msg); return }
-        if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement)) { 
-          logger.error("Trying to set value of non-Input element", msg) 
-          return 
+        if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement)) {
+          logger.error("Trying to set value of non-Input element", msg)
+          return
         }
         const val = msg.mask > 0 ? '*'.repeat(msg.mask) : msg.value
         doc = this.screen.document
@@ -311,7 +310,7 @@ export default class DOMManager extends ListWalker<Message> {
     return this.stylesManager.moveReady(t).then(() => {
       // Apply all scrolls after the styles got applied
       this.nodeScrollManagers.forEach(manager => {
-        const msg = manager.moveToLast(t)
+        const msg = manager.moveGetLast(t)
         if (!!msg && !!this.nl[msg.id]) {
           const node = this.nl[msg.id] as HTMLElement
           node.scrollLeft = msg.x

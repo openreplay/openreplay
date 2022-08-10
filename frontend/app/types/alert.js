@@ -2,7 +2,6 @@ import Record from 'Types/Record';
 import { notEmptyString, validateName, validateNumber, validateEmail } from 'App/validate';
 import { List, Map } from 'immutable';
 import { alertMetrics as metrics, alertConditions as conditions } from 'App/constants';
-import { ItemDescription } from 'semantic-ui-react';
 // import Filter from './filter';
 
 const metricsMap = {}

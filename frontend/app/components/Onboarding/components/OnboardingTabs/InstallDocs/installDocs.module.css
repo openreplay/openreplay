@@ -1,0 +1,29 @@
+@import 'zindex.css';
+
+.snippetWrapper {
+  position: relative;
+  & .codeCopy {
+    position: absolute;
+    right: 0px;
+    top: -3px;
+    z-index: $codeSnippet;
+    padding: 5px 10px; 
+    color: $teal;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.4s;
+    user-select: none;
+
+    &:hover {
+      background-color: $gray-light;
+      transition: all 0.2s;
+    }
+  }
+  & .snippet {
+    overflow: hidden;
+    line-height: 20px;
+    border-radius: 5px;
+    user-select: none;
+  }
+}

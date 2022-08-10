@@ -12,6 +12,7 @@ interface Props {
     history: any
     siteId?: string
     dashboardId?: string
+    onMetricAdd?: () => void;
 }
 function DashboardModal(props) {
     const { history, siteId, dashboardId } = props;
@@ -23,59 +24,60 @@ function DashboardModal(props) {
     const loading = useObserver(() => dashboardStore.isSaving);
 
     const onSave = () => {
-        dashboardStore.save(dashboard).then(async (_dashboard: any) => {
+        dashboardStore.save(dashboard).then(async (syncedDashboard) => {
             if (dashboard.exists()) {
                 await dashboardStore.fetch(dashboard.dashboardId)
             }
-            dashboardStore.selectDashboardById(_dashboard.dashboardId).then(() => {
-                history.push(withSiteId(dashboardSelected(_dashboard.dashboardId), siteId));
-            });
-            hideModal();
+            dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
+            history.push(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
         })
+        .then(hideModal)
     }
 
     const handleCreateNew = () => {
         const path = withSiteId(dashboardMetricCreate(dashboardId), siteId);
+        props.onMetricAdd();
         history.push(path);
         hideModal();
     }
+    const isDashboardExists = dashboard.exists()
 
     return useObserver(() => (
-        <div
-            className="fixed border-r shadow p-4 h-screen"
-            style={{ backgroundColor: '#FAFAFA', zIndex: '999', width: '85%', maxWidth: '1300px' }}
-        >
-            <div className="mb-6 flex items-end justify-between">
-                <div>
-                    <h1 className="text-2xl">
-                        { dashboard.exists() ? "Add metric(s) to dashboard" : "Create Dashboard" }
-                    </h1>
+        <div style={{ maxWidth: '85vw' }}>
+            <div
+                className="border-r shadow p-4 h-screen"
+                style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', maxWidth: '1300px' }}
+            >
+                <div className="mb-6 flex items-end justify-between">
+                    <div>
+                        <h1 className="text-2xl">
+                            { isDashboardExists ? "Add metrics to dashboard" : "Create Dashboard" }
+                        </h1>
+                    </div>
+                    <div>
+                        <span className="text-md">Past 7 days data</span>
+                    </div>
                 </div>
-                <div>
-                    {dashboard.exists() && <Button outline size="small" onClick={handleCreateNew}>Create New</Button>}
-                </div>
-            </div>
-            { !dashboard.exists() && (
-                <>
-                    <DashboardForm />
-                    <p>Create new dashboard by choosing from the range of predefined metrics that you care about. You can always add your custom metrics later.</p>
-                </>
-            )}
-            <DashboardMetricSelection />
-            
-            {!loadingTemplates && (
+                { !isDashboardExists && (
+                    <>
+                        <DashboardForm />
+                        <p>Create new dashboard by choosing from the range of predefined metrics that you care about. You can always add your custom metrics later.</p>
+                    </>
+                )}
+                <DashboardMetricSelection handleCreateNew={handleCreateNew} isDashboardExists={isDashboardExists} />
+
                 <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                     <Button
-                        primary
-                        className=""
+                        variant="primary"
                         disabled={!dashboard.isValid || loading}
                         onClick={onSave}
+                        className="flaot-left mr-2"
                     >
-                        { dashboard.exists() ? "Add Selected to Dashboard" : "Create" }
+                        {isDashboardExists ? "Add Selected to Dashboard" : "Create" }
                     </Button>
-                    <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Widgets</span>
+                    <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Metrics</span>
                 </div>
-            )}
+            </div>
         </div>
     ));
 }

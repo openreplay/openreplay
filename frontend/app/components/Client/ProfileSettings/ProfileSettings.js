@@ -1,7 +1,8 @@
+import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import Settings from './Settings';
 import ChangePassword from './ChangePassword';
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
 import Api from './Api';
 import TenantKey from './TenantKey';
 import OptOut from './OptOut';
@@ -11,7 +12,7 @@ import { connect } from 'react-redux';
 @withPageTitle('Account - OpenReplay Preferences')
 @connect(state => ({
   account: state.getIn([ 'user', 'account' ]),
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }))
 export default class ProfileSettings extends React.PureComponent {  
   render() {
@@ -26,17 +27,22 @@ export default class ProfileSettings extends React.PureComponent {
           <div><Settings /></div>
         </div>
 
-        <div className="divider-h" />
+        <div className="border-b my-10" />
 
-        <div className="flex items-center">
-          <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Change Password' }</h4>
-            <div className={ styles.info }>{ 'Updating your password from time to time enhances your account’s security.' }</div>
-          </div>
-          <div><ChangePassword /></div>
-        </div>
+        { account.hasPassword && (
+          <>
+            <div className="flex items-center">
+              <div className={ styles.left }>
+                <h4 className="text-lg mb-4">{ 'Change Password' }</h4>
+                <div className={ styles.info }>{ 'Updating your password from time to time enhances your account’s security.' }</div>
+              </div>
+              <div><ChangePassword /></div>
+            </div>
+          
 
-        <div className="divider-h" />
+            <div className="border-b my-10" />
+          </>
+        )}
 
         <div className="flex items-center">
           <div className={ styles.left }>
@@ -46,19 +52,22 @@ export default class ProfileSettings extends React.PureComponent {
           <div><Api /></div>
         </div>
 
-        <div className="divider-h" />
-
-        <div className="flex items-center">
-          <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Tenant Key' }</h4>
-            <div className={ styles.info }>{ 'For SSO (SAML) authentication.' }</div>
-          </div>
-          <div><TenantKey /></div>
-        </div>
+        { isEnterprise && (
+          <>
+            <div className="border-b my-10" />
+            <div className="flex items-center">
+              <div className={ styles.left }>
+                <h4 className="text-lg mb-4">{ 'Tenant Key' }</h4>
+                <div className={ styles.info }>{ 'For SSO (SAML) authentication.' }</div>
+              </div>
+              <div><TenantKey /></div>
+            </div>
+          </>
+        )}
 
         { !isEnterprise && (
           <>
-            <div className="divider-h" />
+            <div className="border-b my-10" />
             <div className="flex items-center">
               <div className={ styles.left }>
                 <h4 className="text-lg mb-4">{ 'Data Collection' }</h4>
@@ -71,7 +80,7 @@ export default class ProfileSettings extends React.PureComponent {
 
         { account.license && (
           <>
-            <div className="divider-h" />
+            <div className="border-b my-10" />
 
             <div className="flex items-center">
               <div className={ styles.left }>

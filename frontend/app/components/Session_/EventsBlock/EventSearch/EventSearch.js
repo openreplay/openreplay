@@ -1,52 +1,45 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Input, Icon } from 'UI'
+import { connectPlayer, toggleEvents, scale } from 'Player';
 
-export default function EventSearch(props) {
-  const { onChange, clearSearch, value, header } = props;
-  const [showSearch, setShowSearch] = useState(false)
+function EventSearch(props) {
+  const { onChange, clearSearch, value, header, toggleEvents, setActiveTab } = props;
 
-  useEffect(() => {    
+  useEffect(() => {
     return () => {
       clearSearch()
     }
   }, [])
+
   return (
-    <div className="flex items-center w-full">
-      <div className="flex flex-1 relative items-center" style={{ height: '32px' }}>
-        { showSearch ? 
-          <div className="flex items-center">
+    <div className="flex items-center w-full relative">
+      <div className="flex flex-1 flex-col">
+        <div className='flex flex-center justify-between'>
+          <span>{header}</span>
+          <div
+            onClick={() => { setActiveTab(''); toggleEvents(); }}
+            className=" flex items-center justify-center bg-white cursor-pointer"
+          >
+            <Icon name="close" size="18" />
+          </div>
+        </div>
+          <div className="flex items-center mt-2">
             <Input
               autoFocus
               type="text"
-              placeholder="Filter Events"
-              className="absolute inset-0 w-full"
+              placeholder="Filter by Event Type, URL or Keyword"
+              className="inset-0 w-full"
               name="query"
               value={value}
               onChange={onChange}
+              wrapperClassName="w-full"
               style={{ height: '32px' }}
-              autocomplete="off"
+              autoComplete="off chromebugfix"
             />
-            <div
-              onClick={() => { setShowSearch(!showSearch); clearSearch() }}
-              className="flex items-center justify-center cursor-pointer absolute right-0"
-              style={{ height: '30px', width: '32px' }}
-            >
-              <Icon name={'close'} size="18" color="teal" />
-            </div>
           </div>
-        :
-          header
-        }
       </div>
-      { !showSearch &&
-        <div
-          onClick={() => setShowSearch(!showSearch)}
-          className="border rounded flex items-center justify-center bg-white cursor-pointer"
-          style={{ height: '32px', width: '32px' }}
-        >
-          <Icon name={ showSearch ? 'close' : 'search'} size="12" color="teal" />
-        </div>
-      }
     </div>
   )
 }
+
+export default connectPlayer(() => ({}), { toggleEvents })(EventSearch)

@@ -27,6 +27,6 @@ CREATE TABLE IF NOT EXISTS resources
     method               Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
     status               Nullable(UInt16)
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;

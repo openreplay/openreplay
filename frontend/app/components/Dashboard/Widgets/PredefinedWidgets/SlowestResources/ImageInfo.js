@@ -1,6 +1,7 @@
+import React from 'react';
 import { Popup } from 'UI';
 import cn from 'classnames';
-import styles from './imageInfo.css';
+import styles from './imageInfo.module.css';
 
 const supportedTypes = ['png', 'jpg', 'jpeg', 'svg'];
 
@@ -10,14 +11,13 @@ const ImageInfo = ({ data }) => {
     <div className={ styles.name }>      
       <Popup
         className={ styles.popup }
-        trigger={
-          <div className={cn({ [styles.hasPreview]: canPreview})}>
-            <div className={ styles.label }>{data.name}</div>
-          </div>
-        }
         disabled={!canPreview}
         content={ <img src={ `${ data.url }` } className={ styles.imagePreview } alt="One of the slowest images" /> }
-      />
+      >
+        <div className={cn({ [styles.hasPreview]: canPreview})}>
+          <div className={ styles.label }>{data.name}</div>
+        </div>
+      </Popup>
     </div>
   )
 };

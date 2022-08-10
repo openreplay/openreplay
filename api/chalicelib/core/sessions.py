@@ -99,14 +99,16 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                                                                     duration=data["duration"])
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['issues'] = issues.get_by_session_id(session_id=session_id)
+                data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
                 data['live'] = live and assist.is_live(project_id=project_id,
                                                        session_id=session_id,
                                                        project_key=data["projectKey"])
             data["inDB"] = True
             return data
-        else:
+        elif live:
             return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+        else:
+            return None
 
 
 def __get_sql_operator(op: schemas.SearchEventOperator):
@@ -203,12 +205,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             else:
                 data.order = data.order.upper()
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
-                g_sort = f"{'MIN' if data.order == 'DESC' else 'MAX'}({sort})"
+                g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
             else:
                 sort = 'start_ts'
 
@@ -232,7 +234,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
                                      full_args)
         else:
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -256,9 +258,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
             cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
-            print(main_query)
+            print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.dict())
+            print(data.json())
             print("--------------------")
             raise err
         if errors_only:
@@ -388,14 +390,14 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
 def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
     return not (not is_any and len(event.value) == 0 and event.type not in [schemas.EventType.request_details,
-                                                                            schemas.EventType.graphql_details] \
+                                                                            schemas.EventType.graphql] \
                 or event.type in [schemas.PerformanceEventType.location_dom_complete,
                                   schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                   schemas.PerformanceEventType.location_ttfb,
                                   schemas.PerformanceEventType.location_avg_cpu_load,
                                   schemas.PerformanceEventType.location_avg_memory_usage
                                   ] and (event.source is None or len(event.source) == 0) \
-                or event.type in [schemas.EventType.request_details, schemas.EventType.graphql_details] and (
+                or event.type in [schemas.EventType.request_details, schemas.EventType.graphql] and (
                         event.filters is None or len(event.filters) == 0))
 
 
@@ -696,12 +698,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value,
                                              value_key=e_k))
-            elif event_type == events.event_type.GRAPHQL.ui_type:
-                event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
-                if not is_any:
-                    event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
-                                             value_key=e_k))
+            # elif event_type == events.event_type.GRAPHQL.ui_type:
+            #     event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
+            #     if not is_any:
+            #         event_where.append(
+            #             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
+            #                                  value_key=e_k))
             elif event_type == events.event_type.STATEACTION.ui_type:
                 event_from = event_from % f"{events.event_type.STATEACTION.table} AS main "
                 if not is_any:
@@ -710,13 +712,13 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                              event.value, value_key=e_k))
             elif event_type == events.event_type.ERROR.ui_type:
                 event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
-                event.source = tuple(event.source)
+                event.source = list(set(event.source))
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                              event.value, value_key=e_k))
                 if event.source[0] not in [None, "*", ""]:
-                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.value, value_key=s_k))
+                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
 
 
             # ----- IOS
@@ -861,12 +863,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType._url:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s", f.value,
-                                                 value_key=e_k_f))
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s::text",
+                                                 f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
-                            _multiple_conditions(f"main.status_code {f.operator} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.status_code {f.operator} %({e_k_f})s::integer", f.value,
                                                  value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._method:
@@ -875,21 +877,23 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s::integer", f.value,
+                                                 value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._request_body:
                         event_where.append(
-                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s::text", f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._response_body:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s::text", f.value,
+                                                 value_key=e_k_f))
                         apply = True
                     else:
                         print(f"undefined FETCH filter: {f.type}")
                 if not apply:
                     continue
-            elif event_type == schemas.EventType.graphql_details:
+            elif event_type == schemas.EventType.graphql:
                 event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
                 for j, f in enumerate(event.filters):
                     is_any = _isAny_opreator(f.operator)

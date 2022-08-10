@@ -21,7 +21,6 @@ const AlertsList = props => {
       <div className="mb-3 w-full px-3">
         <Input
           name="searchQuery"
-          fluid
           placeholder="Search by Name or Metric"
           onChange={({ target: { value } }) => setQuery(value)}
         />

@@ -1,6 +1,6 @@
-var express = require('express');
-var handler = require('./sourcemaps-handler');
-var router = express.Router();
+const express = require('express');
+const handler = require('./sourcemaps-handler');
+const router = express.Router();
 
 router.post('/', (req, res) => {
     let data = '';

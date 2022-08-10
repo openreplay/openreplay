@@ -35,6 +35,6 @@ CREATE TABLE IF NOT EXISTS pages
     dom_content_loaded_event_time  Nullable(UInt16) MATERIALIZED if (greaterOrEquals(dom_content_loaded_event_end, dom_content_loaded_event_start), minus(dom_content_loaded_event_end, dom_content_loaded_event_start), Null),
     load_event_time                Nullable(UInt16) MATERIALIZED if (greaterOrEquals(load_event_end, load_event_start), minus(load_event_end, load_event_start), Null)
 ) ENGINE = MergeTree
-PARTITION BY toDate(datetime)
+PARTITION BY toStartOfWeek(datetime)
 ORDER BY (project_id, datetime)
 TTL datetime + INTERVAL 1 MONTH;

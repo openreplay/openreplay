@@ -1,129 +1,235 @@
-import React, { useEffect } from 'react';
-import { observer, useObserver } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
-import { Button, PageTitle, Link, Loader, NoContent, ItemMenu } from 'UI';
-import { withSiteId, dashboardMetricCreate, dashboardSelected, dashboard } from 'App/routes';
-import withModal from 'App/components/Modal/withModal';
-import DashboardWidgetGrid from '../DashboardWidgetGrid';
-import { confirm } from 'UI/Confirmation';
-import { withRouter } from 'react-router-dom';
-import { useModal } from 'App/components/Modal';
-import DashboardModal from '../DashboardModal';
-import DashboardEditModal from '../DashboardEditModal';
-import DateRange from 'Shared/DateRange';
-import AlertFormModal from 'App/components/Alerts/AlertFormModal';
-import withPageTitle from 'HOCs/withPageTitle';
+import React, { useEffect } from "react";
+import { observer } from "mobx-react-lite";
+import { useStore } from "App/mstore";
+import { Button, PageTitle, Loader, NoContent } from "UI";
+import { withSiteId } from "App/routes";
+import withModal from "App/components/Modal/withModal";
+import DashboardWidgetGrid from "../DashboardWidgetGrid";
+import { confirm } from "UI";
+import { withRouter, RouteComponentProps } from "react-router-dom";
+import { useModal } from "App/components/Modal";
+import DashboardModal from "../DashboardModal";
+import DashboardEditModal from "../DashboardEditModal";
+import AlertFormModal from "App/components/Alerts/AlertFormModal";
+import withPageTitle from "HOCs/withPageTitle";
+import withReport from "App/components/hocs/withReport";
+import DashboardOptions from "../DashboardOptions";
+import SelectDateRange from "Shared/SelectDateRange";
+import DashboardIcon from "../../../../svg/dashboard-icn.svg";
+import { Tooltip } from "react-tippy";
 
-interface Props {
-    siteId: number;
-    history: any
-    match: any
-    dashboardId: any
+interface IProps {
+    siteId: string;
+    dashboardId: any;
+    renderReport?: any;
 }
+
+type Props = IProps & RouteComponentProps;
+
 function DashboardView(props: Props) {
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
-    const { hideModal, showModal } = useModal();
-    const showAlertModal = useObserver(() => dashboardStore.showAlertModal);
-    const loading = useObserver(() => dashboardStore.fetchingDashboard);
-    const dashboards = useObserver(() => dashboardStore.dashboards);
-    const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
-    const period = useObserver(() => dashboardStore.period);
+    const [focusTitle, setFocusedInput] = React.useState(true);
     const [showEditModal, setShowEditModal] = React.useState(false);
+    const { showModal } = useModal();
+
+    const showAlertModal = dashboardStore.showAlertModal;
+    const loading = dashboardStore.fetchingDashboard;
+    const dashboards = dashboardStore.dashboards;
+    const dashboard: any = dashboardStore.selectedDashboard;
+    const period = dashboardStore.period;
+
+    const queryParams = new URLSearchParams(props.location.search);
 
     useEffect(() => {
         if (!dashboard || !dashboard.dashboardId) return;
-        dashboardStore.fetch(dashboard.dashboardId)
+        dashboardStore.fetch(dashboard.dashboardId);
     }, [dashboard]);
 
+    const trimQuery = () => {
+        if (!queryParams.has("modal")) return;
+        queryParams.delete("modal");
+        props.history.replace({
+            search: queryParams.toString(),
+        });
+    };
+    const pushQuery = () => {
+        if (!queryParams.has("modal")) props.history.push("?modal=addMetric");
+    };
+
     useEffect(() => {
-        if (dashboardId) return;
-        dashboardStore.selectDefaultDashboard();
+        if (!dashboardId || (!dashboard && dashboardStore.dashboards.length > 0)) dashboardStore.selectDefaultDashboard();
+
+        if (queryParams.has("modal")) {
+            onAddWidgets();
+            trimQuery();
+        }
     }, []);
-    
+    useEffect(() => {
+        dashboardStore.selectDefaultDashboard();
+    }, [siteId])
+
     const onAddWidgets = () => {
-        dashboardStore.initDashboard(dashboard)
-        showModal(<DashboardModal siteId={siteId} dashboardId={dashboardId} />, {})
+        dashboardStore.initDashboard(dashboard);
+        showModal(
+            <DashboardModal
+                siteId={siteId}
+                onMetricAdd={pushQuery}
+                dashboardId={dashboardId}
+            />,
+            { right: true }
+        );
+    };
+
+    const onAddDashboardClick = () => {
+        dashboardStore.initDashboard();
+        showModal(<DashboardModal siteId={siteId} />, { right: true })
     }
 
-    const onEdit = () => {
-        dashboardStore.initDashboard(dashboard)
-        setShowEditModal(true)
-    }
+    const onEdit = (isTitle: boolean) => {
+        dashboardStore.initDashboard(dashboard);
+        setFocusedInput(isTitle);
+        setShowEditModal(true);
+    };
 
     const onDelete = async () => {
-        if (await confirm({
-          header: 'Confirm',
-          confirmButton: 'Yes, delete',
-          confirmation: `Are you sure you want to permanently delete this Dashboard?`
-        })) {
+        if (
+            await confirm({
+                header: "Confirm",
+                confirmButton: "Yes, delete",
+                confirmation: `Are you sure you want to permanently delete this Dashboard?`,
+            })
+        ) {
             dashboardStore.deleteDashboard(dashboard).then(() => {
-                dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
-                    props.history.push(withSiteId(dashboard(), siteId));
-                });
+                dashboardStore.selectDefaultDashboard().then(
+                    ({ dashboardId }) => {
+                        props.history.push(
+                            withSiteId(`/dashboard/${dashboardId}`, siteId)
+                        );
+                    },
+                    () => {
+                        props.history.push(withSiteId("/dashboard", siteId));
+                    }
+                );
             });
         }
-    }
-    
-    return useObserver(() => (
+    };
+
+    return (
         <Loader loading={loading}>
             <NoContent
-                show={dashboards.length === 0 || !dashboard || !dashboard.dashboardId}
-                icon="no-metrics-chart"
-                title="No dashboards available."
+                show={
+                    dashboards.length === 0 ||
+                    !dashboard ||
+                    !dashboard.dashboardId
+                }
+                title={
+                    <div className="flex items-center justify-center flex-col">
+                        <object
+                            style={{ width: "180px" }}
+                            type="image/svg+xml"
+                            data={DashboardIcon}
+                            className="no-result-icon"
+                        />
+                        <span>
+                            Gather and analyze <br /> important metrics in one
+                            place.
+                        </span>
+                    </div>
+                }
                 size="small"
-                iconSize={180}
                 subtext={
-                    <Button primary size="small" onClick={onAddWidgets}>Create Dashboard</Button>
+                    <Button
+                        variant="primary"
+                        size="small"
+                        onClick={onAddDashboardClick}
+                    >
+                        + Create Dashboard
+                    </Button>
                 }
             >
-                <div style={{ maxWidth: '1300px', margin: 'auto'}}>
+                <div style={{ maxWidth: "1300px", margin: "auto" }}>
                     <DashboardEditModal
                         show={showEditModal}
                         closeHandler={() => setShowEditModal(false)}
+                        focusTitle={focusTitle}
                     />
                     <div className="flex items-center mb-4 justify-between">
-                        <div className="flex items-center">
-                            <PageTitle title={dashboard?.name} className="mr-3" />
-                            <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
+                        <div className="flex items-center" style={{ flex: 3 }}>
+                            <PageTitle
+                                // @ts-ignore
+                                title={
+                                    <Tooltip
+                                        delay={100}
+                                        arrow
+                                        title="Double click to rename"
+                                    >
+                                        {dashboard?.name}
+                                    </Tooltip>
+                                }
+                                onDoubleClick={() => onEdit(true)}
+                                className="mr-3 select-none hover:border-dotted hover:border-b border-gray-medium cursor-pointer"
+                                actionButton={
+                                    <Button
+                                        variant="primary"
+                                        onClick={onAddWidgets}
+                                    >
+                                        Add Metric
+                                    </Button>
+                                }
+                            />
                         </div>
-                        <div className="flex items-center">
-                            <div className="flex items-center">
-                                {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
-                                <DateRange
-                                    rangeValue={period.rangeName}
-                                    startDate={period.start}
-                                    endDate={period.end}
-                                    onDateChange={(period) => dashboardStore.setPeriod(period)}
-                                    customRangeRight
-                                    direction="left"
+                        <div
+                            className="flex items-center"
+                            style={{ flex: 1, justifyContent: "end" }}
+                        >
+                            <div
+                                className="flex items-center flex-shrink-0 justify-end"
+                                style={{ width: "300px" }}
+                            >
+                                <SelectDateRange
+                                    style={{ width: "300px" }}
+                                    period={period}
+                                    onChange={(period: any) =>
+                                        dashboardStore.setPeriod(period)
+                                    }
+                                    right={true}
                                 />
                             </div>
                             <div className="mx-4" />
-                            <div className="flex items-center">
-                                <ItemMenu
-                                    label="Options"
-                                    items={[
-                                        { text: 'Rename', onClick: onEdit },
-                                        { text: 'Delete', onClick: onDelete },
-                                    ]}
+                            <div className="flex items-center flex-shrink-0">
+                                <DashboardOptions
+                                    editHandler={onEdit}
+                                    deleteHandler={onDelete}
+                                    renderReport={props.renderReport}
+                                    isTitlePresent={!!dashboard?.description}
                                 />
                             </div>
                         </div>
+                    </div>
+                    <div>
+                        <h2 className="my-4 font-normal color-gray-dark">
+                            {dashboard?.description}
+                        </h2>
                     </div>
                     <DashboardWidgetGrid
                         siteId={siteId}
                         dashboardId={dashboardId}
                         onEditHandler={onAddWidgets}
+                        id="report"
                     />
                     <AlertFormModal
                         showModal={showAlertModal}
-                        onClose={() => dashboardStore.updateKey('showAlertModal', false)}
+                        onClose={() =>
+                            dashboardStore.updateKey("showAlertModal", false)
+                        }
                     />
                 </div>
             </NoContent>
         </Loader>
-    ));
+    );
 }
 
-export default withPageTitle('Dashboards - OpenReplay')(withRouter(withModal(DashboardView)));
+export default withPageTitle("Dashboards - OpenReplay")(
+    withReport(withRouter(withModal(observer(DashboardView))))
+);

@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './sessionStack.css'
+import stl from './sessionStack.module.css'
 import cn from 'classnames';
 import { Icon } from 'UI'
 import { names } from 'Types/watchdog'

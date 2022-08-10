@@ -1,8 +1,9 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { withSiteId } from 'App/routes';
-import styles from './link.css';
+import styles from './link.module.css';
 
 const OpenReplayLink = ({ siteId, to, className="", dispatch, ...other })  => (
   <Link 

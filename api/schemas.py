@@ -12,7 +12,7 @@ def attribute_to_camel_case(snake_str):
 
 
 def transform_email(email: str) -> str:
-    return email.lower() if isinstance(email, str) else email
+    return email.lower().strip() if isinstance(email, str) else email
 
 
 class _Grecaptcha(BaseModel):
@@ -37,14 +37,9 @@ class UserSignupSchema(UserLoginSchema):
 class EditUserSchema(BaseModel):
     name: Optional[str] = Field(None)
     email: Optional[EmailStr] = Field(None)
-    admin: Optional[bool] = Field(False)
-    appearance: Optional[dict] = Field({})
+    admin: Optional[bool] = Field(None)
 
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
-
-
-class EditUserAppearanceSchema(BaseModel):
-    appearance: dict = Field(...)
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):
@@ -132,12 +127,10 @@ class CreateMemberSchema(BaseModel):
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
-class EditMemberSchema(BaseModel):
+class EditMemberSchema(EditUserSchema):
     name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
-
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -396,7 +389,6 @@ class EventType(str, Enum):
     request = "REQUEST"
     request_details = "FETCH"
     graphql = "GRAPHQL"
-    graphql_details = "GRAPHQL_DETAILS"
     state_action = "STATEACTION"
     error = "ERROR"
     click_ios = "CLICK_IOS"
@@ -486,6 +478,10 @@ class IssueType(str, Enum):
     js_exception = 'js_exception'
 
 
+class MetricFormatType(str, Enum):
+    session_count = 'sessionCount'
+
+
 class __MixedSearchFilter(BaseModel):
     is_event: bool = Field(...)
 
@@ -571,9 +567,9 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
         elif values.get("type") == EventType.request_details:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
                 f"filters should be defined for {EventType.request_details.value}"
-        elif values.get("type") == EventType.graphql_details:
+        elif values.get("type") == EventType.graphql:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.graphql_details.value}"
+                f"filters should be defined for {EventType.graphql.value}"
 
         return values
 
@@ -618,16 +614,27 @@ class _PaginatedSchema(BaseModel):
     page: int = Field(default=1, gt=0)
 
 
+class SortOrderType(str, Enum):
+    asc = "ASC"
+    desc = "DESC"
+
+
 class SessionsSearchPayloadSchema(_PaginatedSchema):
     events: List[_SessionSearchEventSchema] = Field([])
     filters: List[SessionSearchFilterSchema] = Field([])
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
-    order: Literal["asc", "desc"] = Field(default="desc")
+    order: SortOrderType = Field(default=SortOrderType.desc)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
     bookmarked: bool = Field(default=False)
+
+    @root_validator(pre=True)
+    def transform_order(cls, values):
+        if values.get("order") is not None:
+            values["order"] = values["order"].upper()
+        return values
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -757,8 +764,7 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
-    # class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema, SearchErrorsSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
@@ -790,6 +796,8 @@ class MetricTableViewType(str, Enum):
 class MetricType(str, Enum):
     timeseries = "timeseries"
     table = "table"
+    predefined = "predefined"
+    funnel = "funnel"
 
 
 class TableMetricOfType(str, Enum):
@@ -800,6 +808,8 @@ class TableMetricOfType(str, Enum):
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
     visited_url = EventType.location.value
+    sessions = "SESSIONS"
+    errors = IssueType.js_exception.value
 
 
 class TimeseriesMetricOfType(str, Enum):
@@ -815,7 +825,7 @@ class CustomMetricSessionsPayloadSchema(FlatSessionsSearch, _PaginatedSchema):
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema):
+class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema, _PaginatedSchema):
     density: int = Field(7)
 
     class Config:
@@ -830,7 +840,7 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
     metric_type: MetricType = Field(MetricType.timeseries)
     metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
     metric_value: List[IssueType] = Field([])
-    metric_format: Optional[str] = Field(None)
+    metric_format: Optional[MetricFormatType] = Field(None)
 
     # metricFraction: float = Field(None, gt=0, lt=1)
     # This is used to handle wrong values sent by the UI
@@ -863,8 +873,23 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
         alias_generator = attribute_to_camel_case
 
 
+class CustomMetricsConfigSchema(BaseModel):
+    col: Optional[int] = Field(default=2)
+    row: Optional[int] = Field(default=2)
+    position: Optional[int] = Field(default=0)
+
+
 class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
+    config: CustomMetricsConfigSchema = Field(default=CustomMetricsConfigSchema())
+
+    @root_validator(pre=True)
+    def transform_series(cls, values):
+        if values.get("series") is not None and len(values["series"]) > 1 and values.get(
+                "metric_type") == MetricType.funnel.value:
+            values["series"] = [values["series"][0]]
+
+        return values
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
@@ -888,6 +913,7 @@ class SavedSearchSchema(FunnelSchema):
 
 class CreateDashboardSchema(BaseModel):
     name: str = Field(..., min_length=1)
+    description: Optional[str] = Field(default='')
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
     metrics: Optional[List[int]] = Field(default=[])
@@ -966,6 +992,7 @@ class TemplatePredefinedKeys(str, Enum):
 
 class TemplatePredefinedUnits(str, Enum):
     millisecond = "ms"
+    second = "s"
     minute = "min"
     memory = "mb"
     frame = "f/s"
@@ -977,6 +1004,67 @@ class CustomMetricAndTemplate(BaseModel):
     is_template: bool = Field(...)
     project_id: Optional[int] = Field(...)
     predefined_key: Optional[TemplatePredefinedKeys] = Field(...)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class LiveFilterType(str, Enum):
+    user_os = FilterType.user_os.value
+    user_browser = FilterType.user_browser.value
+    user_device = FilterType.user_device.value
+    user_country = FilterType.user_country.value
+    user_id = FilterType.user_id.value
+    user_anonymous_id = FilterType.user_anonymous_id.value
+    rev_id = FilterType.rev_id.value
+    platform = FilterType.platform.value
+    page_title = "PAGETITLE"
+    session_id = "SESSIONID"
+    metadata = "METADATA"
+    user_UUID = "USERUUID"
+    tracker_version = "TRACKERVERSION"
+    user_browser_version = "USERBROWSERVERSION"
+    user_device_type = "USERDEVICETYPE",
+
+
+class LiveSessionSearchFilterSchema(BaseModel):
+    value: Union[List[str], str] = Field(...)
+    type: LiveFilterType = Field(...)
+    source: Optional[str] = Field(None)
+    operator: Literal[SearchEventOperator._is.value,
+                      SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
+
+    @root_validator
+    def validator(cls, values):
+        if values.get("type") is not None and values["type"] == LiveFilterType.metadata.value:
+            assert values.get("source") is not None, "source should not be null for METADATA type"
+            assert len(values.get("source")) > 0, "source should not be empty for METADATA type"
+        return values
+
+
+class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
+    filters: List[LiveSessionSearchFilterSchema] = Field([])
+    sort: Union[LiveFilterType, str] = Field(default="TIMESTAMP")
+    order: SortOrderType = Field(default=SortOrderType.desc)
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        if values.get("order") is not None:
+            values["order"] = values["order"].upper()
+        if values.get("filters") is not None:
+            i = 0
+            while i < len(values["filters"]):
+                if values["filters"][i]["value"] is None or len(values["filters"][i]["value"]) == 0:
+                    del values["filters"][i]
+                else:
+                    i += 1
+            for i in values["filters"]:
+                if i.get("type") == LiveFilterType.platform.value:
+                    i["type"] = LiveFilterType.user_device_type.value
+        if values.get("sort") is not None:
+            if values["sort"].lower() == "startts":
+                values["sort"] = "TIMESTAMP"
+        return values
 
     class Config:
         alias_generator = attribute_to_camel_case

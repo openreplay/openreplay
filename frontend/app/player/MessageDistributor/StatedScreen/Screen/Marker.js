@@ -1,4 +1,4 @@
-import styles from './marker.css';
+import styles from './marker.module.css';
 
 export default class Marker {
   _target = null;

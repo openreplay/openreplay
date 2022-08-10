@@ -1,10 +1,11 @@
+import React from 'react';
 import { useCallback } from 'react';
 import cn from 'classnames';
 import { Popup } from 'UI';
 import { CRASHES, EVENTS } from 'Player/ios/state';
 import TimeTracker from './TimeTracker';
 import PlayerTime from './PlayerTime';
-import cls from './timeline.css';
+import cls from './timeline.module.css';
 
 export default function Timeline({ player }) {
 
@@ -36,14 +37,6 @@ export default function Timeline({ player }) {
             offset="-19"
             pinned
             className="error"
-            trigger={
-              <div
-                key={ e.key }
-                className={ cn(cls.markup, cls.error) }
-                style={ { left: `${ e.time * scale }%` } }
-                // onClick={ }
-              />
-            }
             content={ 
               <div className={ cls.popup } >
                 <b>{ `Crash ${e.name}:` }</b>
@@ -51,7 +44,13 @@ export default function Timeline({ player }) {
                 <span>{ e.reason }</span>
               </div>  
             }
-          />
+          >
+            <div
+                key={ e.key }
+                className={ cn(cls.markup, cls.error) }
+                style={ { left: `${ e.time * scale }%` } }
+            />
+          </Popup>
 	      ))}
 	    </div>
 	    <PlayerTime player={player}  timeKey="endTime"/>

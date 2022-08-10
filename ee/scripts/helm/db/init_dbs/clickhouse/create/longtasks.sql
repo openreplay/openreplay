@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS longtasks
     container_name       String,
     container_src        String
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;
 

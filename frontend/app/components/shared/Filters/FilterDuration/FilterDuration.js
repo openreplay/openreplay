@@ -1,12 +1,13 @@
-import { Input, Label } from 'semantic-ui-react';
-import styles from './FilterDuration.css';
+import React from 'react';
+import styles from './FilterDuration.module.css';
+import { Input } from 'UI'
 
 const fromMs = value => value ? `${ value / 1000 / 60 }` : ''
 const toMs = value => value !== '' ? value * 1000 * 60 : null
 
 export default class FilterDuration extends React.PureComponent {
   state = { focused: false }
-  onChange = (e, { name, value }) => {
+  onChange = ({ target: { name, value }}) => {
     const { onChange } = this.props;
     if (typeof onChange === 'function') {
       onChange({
@@ -30,36 +31,36 @@ export default class FilterDuration extends React.PureComponent {
 
     return (
       <div className={ styles.wrapper }>
-        <Input
-          labelPosition="left"
-          type="number"
-          placeholder="0 min"
-          name="minDuration"
-          value={ fromMs(minDuration) }
-          onChange={ this.onChange }
-          // className="customInput"
-          onKeyPress={ this.onKeyPress }
-          onFocus={() => this.setState({ focused: true })}
-          onBlur={this.props.onBlur}
-        >
-          <Label basic className={ styles.label }>{ 'Min' }</Label>
-          <input min="1" />
-        </Input>
-        <Input
-          labelPosition="left"
-          type="number"
-          placeholder="∞ min"
-          name="maxDuration"
-          value={ fromMs(maxDuration) }
-          onChange={ this.onChange }
-          // className="customInput"
-          onKeyPress={ this.onKeyPress }
-          onFocus={() => this.setState({ focused: true })}
-          onBlur={this.props.onBlur}
-        >
-          <Label basic className={ styles.label }>{ 'Max' }</Label>
-          <input min="1" />
-        </Input>
+        <div className="flex items-center">
+          <span basic className={ styles.label }>{ 'Min' }</span>
+          <Input
+            min="1"
+            type="number"
+            placeholder="0 min"
+            name="minDuration"
+            value={ fromMs(minDuration) }
+            onChange={ this.onChange }
+            onKeyPress={ this.onKeyPress }
+            onFocus={() => this.setState({ focused: true })}
+            onBlur={this.props.onBlur}
+            style={{ height: '26px' }}
+          />
+        </div>
+        <div className="flex items-center">
+          <span basic className={ styles.label }>{ 'Max' }</span>
+          <Input
+            min="1"
+            type="number"
+            placeholder="∞ min"
+            name="maxDuration"
+            value={ fromMs(maxDuration) }
+            onChange={ this.onChange }
+            onKeyPress={ this.onKeyPress }
+            onFocus={() => this.setState({ focused: true })}
+            onBlur={this.props.onBlur}
+            style={{ height: '26px' }}
+          />
+        </div>
       </div>
     );
   }

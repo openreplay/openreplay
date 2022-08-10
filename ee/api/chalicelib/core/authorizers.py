@@ -52,7 +52,7 @@ def generate_jwt(id, tenant_id, iat, aud, exp=None):
         key=config("jwt_secret"),
         algorithm=config("jwt_algorithm")
     )
-    return token.decode("utf-8")
+    return token
 
 
 def api_key_authorizer(token):

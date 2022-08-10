@@ -2,20 +2,24 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { SlideModal } from 'UI'
 import NewSiteForm from '../../../Client/Sites/NewSiteForm'
+import { init } from 'Duck/site';
 
-const ProjectFormButton = ({ children, sites, siteId }) => {
+const ProjectFormButton = ({ sites, siteId, init }) => {
   const [showModal, setShowModal] = useState(false)
   const site = sites.find(({ id }) => id === siteId)
 
   const closeModal = () => setShowModal(!showModal);
+  const openModal = () => {
+    setShowModal(true)
+    init(site)
+  };
 
   return (
     <>
       <span
         className="text-3xl font-bold ml-2 color-teal underline-dashed cursor-pointer"
-        onClick={ () => setShowModal(true)}
+        onClick={ () => openModal()}
       >{site && site.name}</span>
-      {/* { React.cloneElement( children, { onClick: () => setShowModal(true) } ) } */}
       <SlideModal
         title={ 'Project' }
         size="small"
@@ -30,4 +34,4 @@ const ProjectFormButton = ({ children, sites, siteId }) => {
 export default connect(state => ({
   siteId: state.getIn([ 'site', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ]),
-}))(ProjectFormButton)
+}), { init })(ProjectFormButton)

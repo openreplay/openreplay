@@ -1,0 +1,28 @@
+{
+  "name": "snippet",
+  "version": "3.5.15",
+  "description": "CDN wrapper for tracker",
+  "scripts": {
+    "prettier": "prettier --write index.js rollup.config.js $(git ls-files '*.js')",
+    "bundle": "rollup -c -i src/$0.js -o dist/$0.js",
+    "minify": "echo \"(function(){$(cat dist/$0.js)})()\" | ./node_modules/.bin/uglifyjs --compress --mangle --comments -o dist/$0.min.js",
+    "bundle:or": "yarn bundle tracker && yarn minify tracker",
+    "bundle:assist": "yarn bundle tracker-assist && yarn minify tracker-assist",
+    "update-version": "node scripts/upd_ver.js"
+  },
+  "dependencies": {
+    "@openreplay/tracker": "file:../tracker/tracker",
+    "@openreplay/tracker-assist": "file:../tracker/tracker-assist"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-commonjs": "^22.0.1",
+    "@rollup/plugin-node-resolve": "^13.3.0",
+    "prettier": "^1.19.1",
+    "rollup": "^2.57.0",
+    "uglify-js": "^3.14.2"
+  },
+  "packageManager": "yarn@3.2.1"
+}

@@ -12,9 +12,9 @@ envarg="default-foss"
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
-        exit=1
+        exit 1
     }
-    [[ exit -eq 1 ]] && exit 1
+    return
 }
 
 function build_api(){
@@ -32,9 +32,16 @@ function build_api(){
         docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/chalice:${tag}latest
-}
+    }
+    echo "api docker build completed"
 }
 
 check_prereq
 build_api $1
-IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
+echo buil_complete
+source build_alerts.sh $1
+
+[[ $1 == "ee" ]] && {
+  IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
+}
+echo "api done"

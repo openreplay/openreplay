@@ -1,7 +1,7 @@
 import React from 'react'
 import { numberWithCommas } from 'App/utils';
 
-const AvgLabel = ({ className, text, count, unit}) =>
+const AvgLabel = ({ className = '', text, count, unit}) =>
     <div className={className}>
       <span className="text-sm color-gray-medium">{text}</span>
       <span className="text-2xl ml-1 font-medium">

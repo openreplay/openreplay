@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
-import stl from './integrationItem.css';
+import stl from './integrationItem.module.css';
 
 const onDocLinkClick = (e, link) => {
   e.stopPropagation();
@@ -18,7 +18,7 @@ const IntegrationItem = ({
           <Icon name="check" size="14" color="white" />
         </div>
       )}
-      <Icon name={ icon } size="40" />
+      <img className="h-12 w-12" src={'/assets/' + icon + '.svg'} alt="integration" />
       <h4 className="my-2">{ title }</h4>
     </div>
   )

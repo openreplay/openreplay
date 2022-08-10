@@ -1,10 +1,10 @@
 //@ts-nocheck
 import React from 'react';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
-import { Tooltip } from 'react-tippy';
 import cn from 'classnames';
-import stl from './Marker.css';
+import stl from './Marker.module.css';
 import { activeTarget } from 'Player';
+import { Tooltip } from 'react-tippy';
 
 interface Props {
   target: MarkedTarget;
@@ -28,8 +28,7 @@ export default function Marker({ target, active }: Props) {
           distance={15}
           html={(
             <div>{target.count} Clicks</div>
-          )}        
-          trigger="mouseenter"
+          )}
         >
           <div className="absolute inset-0"></div>
         </Tooltip>

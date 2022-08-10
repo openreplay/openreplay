@@ -1,0 +1,25 @@
+.rawLine {
+  margin-left: 30px;
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+  font-size: 13px;
+}
+.formatted {
+  border: solid thin #EEE;
+  border-radius: 3px;
+}
+.header {
+  background-color: $gray-lightest;
+  padding: 8px;
+  border-bottom: solid thin #EEE;
+}
+.content {
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+  list-style-position: inside;
+  list-style-type: decimal-leading-zero;
+}
+
+.errorLine {
+  background-color: $teal;
+  color: white !important;
+  font-weight: bold;
+}

@@ -1,16 +1,18 @@
 package cache
 
 import (
+	"errors"
 	"github.com/jackc/pgx/v4"
 
 	. "openreplay/backend/pkg/db/types"
 )
 
+var NilSessionInCacheError = errors.New("nil session in error")
+
 func (c *PGCache) GetSession(sessionID uint64) (*Session, error) {
 	if s, inCache := c.sessions[sessionID]; inCache {
-		// TODO: review. Might cause bugs in case of multiple instances
 		if s == nil {
-			return nil, pgx.ErrNoRows
+			return s, NilSessionInCacheError
 		}
 		return s, nil
 	}

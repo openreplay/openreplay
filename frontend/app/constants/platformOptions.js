@@ -1,5 +1,5 @@
 export default [
-  { value: 'desktop', text: 'Desktop' },
-  { value: 'mobile', text: 'Mobile' },
-  { value: 'tablet', text: 'Tablet' },
+  { value: 'desktop', label: 'Desktop' },
+  { value: 'mobile', label: 'Mobile' },
+  { value: 'tablet', label: 'Tablet' },
 ]

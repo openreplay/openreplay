@@ -20,6 +20,5 @@ def reset(data: schemas.ForgetPasswordPayloadSchema):
         invitation_link = users.generate_new_invitation(user_id=a_users["id"])
         email_helper.send_forgot_password(recipient=data.email, invitation_link=invitation_link)
     else:
-        print(f"invalid email address [{data.email}]")
-        return {"errors": ["invalid email address"]}
-    return {"data": {"state": "success"}}
+        print(f"!!!invalid email address [{data.email}]")
+    return {"data": {"state": "A reset link will be sent if this email exists in our system."}}

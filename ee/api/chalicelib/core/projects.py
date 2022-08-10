@@ -52,12 +52,19 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                        AND users.tenant_id = %(tenant_id)s
                        AND (roles.all_projects OR roles_projects.project_id = s.project_id)
                     ) AS role_project ON (TRUE)"""
-        cur.execute(
-            cur.mogrify(f"""\
+        recorded_q = ""
+        if recorded:
+            recorded_q = """, COALESCE((SELECT TRUE
+                                     FROM public.sessions
+                                     WHERE sessions.project_id = s.project_id
+                                       AND sessions.start_ts >= (EXTRACT(EPOCH FROM s.created_at) * 1000 - 24 * 60 * 60 * 1000)
+                                       AND sessions.start_ts <= %(now)s
+                                     LIMIT 1), FALSE)   AS recorded"""
+        query = cur.mogrify(f"""\
                     SELECT
                            s.project_id, s.name, s.project_key, s.save_request_payloads
                             {',s.gdpr' if gdpr else ''} 
-                            {',COALESCE((SELECT TRUE FROM public.sessions WHERE sessions.project_id = s.project_id LIMIT 1), FALSE) AS recorded' if recorded else ''}
+                            {recorded_q}
                             {',stack_integrations.count>0 AS stack_integrations' if stack_integrations else ''}
                     FROM public.projects AS s
                             {'LEFT JOIN LATERAL (SELECT COUNT(*) AS count FROM public.integrations WHERE s.project_id = integrations.project_id LIMIT 1) AS stack_integrations ON TRUE' if stack_integrations else ''}
@@ -65,8 +72,8 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                     WHERE s.tenant_id =%(tenant_id)s
                         AND s.deleted_at IS NULL
                     ORDER BY s.project_id;""",
-                        {"tenant_id": tenant_id, "user_id": user_id})
-        )
+                            {"tenant_id": tenant_id, "user_id": user_id, "now": TimeUTC.now()})
+        cur.execute(query)
         rows = cur.fetchall()
         if recording_state:
             project_ids = [f'({r["project_id"]})' for r in rows]
@@ -76,7 +83,6 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                                     WHERE sessions.start_ts >= %(startDate)s AND sessions.start_ts <= %(endDate)s
                                     GROUP BY project_id;""",
                                 {"startDate": TimeUTC.now(delta_days=-3), "endDate": TimeUTC.now(delta_days=1)})
-
             cur.execute(query=query)
             status = cur.fetchall()
             for r in rows:

@@ -1,0 +1,23 @@
+@import 'zindex.css';
+
+.positionTracker {
+  width: 15px;
+  height: 15px;
+  border: solid 1px $teal;
+  margin-left: -7px;
+  border-radius: 50%;
+  background-color: $active-blue;
+  position: absolute;
+  left: 0;
+  z-index: $positionTracker;
+  pointer-events: none; /* temporary. DnD should be */
+}
+
+.playedTimeline {
+  height: 100%;
+  border-radius: 4px;
+  background-color: $teal;
+  pointer-events: none;
+  height: 2px;
+  z-index: 1;
+}

@@ -25,7 +25,7 @@ const HIGHEST_SPEED = 16;
 
 const SPEED_STORAGE_KEY = "__$player-speed$__";
 const SKIP_STORAGE_KEY = "__$player-skip$__";
-const SKIP_TO_ISSUE_STORAGE_KEY = "__$player-skip-to-issue$__";
+const SKIP_TO_ISSUE_STORAGE_KEY = "__$session-skipToIssue$__";
 const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
 const SHOW_EVENTS_STORAGE_KEY = "__$player-show-events$__";
 const storedSpeed: number = parseInt(localStorage.getItem(SPEED_STORAGE_KEY) || "") ;
@@ -206,6 +206,12 @@ export default class Player extends MessageDistributor {
     localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
     update({ skipToIssue });
   }
+
+  updateSkipToIssue() {
+    const skipToIssue = localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY) === 'true';
+    update({ skipToIssue });
+    return skipToIssue;
+  }
   
   toggleAutoplay() {
     const autoplay = !getState().autoplay;
@@ -213,8 +219,8 @@ export default class Player extends MessageDistributor {
     update({ autoplay });
   }
   
-  toggleEvents() {
-    const showEvents = !getState().showEvents;
+  toggleEvents(shouldShow = undefined) {
+    const showEvents = shouldShow || !getState().showEvents;
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
     update({ showEvents });
   }

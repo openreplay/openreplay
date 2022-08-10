@@ -4,8 +4,8 @@ import { Loader, NoContent, Icon, Popup } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
-import stl from './CustomMetricWidget.css';
-import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
+import stl from './CustomMetricWidget.module.css';
+import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { init, edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
 import APIClient from 'App/api_client';
 import { setShowAlerts } from 'Duck/dashboard';
@@ -21,7 +21,7 @@ const customParams = rangeName => {
   // if (rangeName === LAST_30_MINUTES) params.density = 70
   // if (rangeName === YESTERDAY) params.density = 70
   // if (rangeName === LAST_7_DAYS) params.density = 70
-  
+
   return params
 }
 
@@ -29,7 +29,6 @@ interface Props {
   metric: any;
   // loading?: boolean;
   data?: any;
-  showSync?: boolean;
   compare?: boolean;
   period?: any;
   onClickEdit: (e) => void;
@@ -37,48 +36,25 @@ interface Props {
   setShowAlerts: (showAlerts) => void;
   setAlertMetricId: (id) => void;
   onAlertClick: (e) => void;
-  init: (metric) => void;
+  init: (metric: any) => void;
   edit: (setDefault?) => void;
   setActiveWidget: (widget) => void;
   updateActiveState: (metricId, state) => void;
+  isTemplate?: boolean;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync, compare, period } = props;
+  const { metric, period, isTemplate } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>([]);
-  const [seriesMap, setSeriesMap] = useState<any>([]);
+  // const [seriesMap, setSeriesMap] = useState<any>([]);
 
   const colors = Styles.customMetricColors;
   const params = customParams(period.rangeName)
-  const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
+  // const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
   const isLineChart = metric.viewType === 'lineChart';
   const isProgress = metric.viewType === 'progress';
   const isTable = metric.viewType === 'table';
   const isPieChart = metric.viewType === 'pieChart';
-
-  // useEffect(() => {
-  //   new APIClient()['post'](`/custom_metrics/${metricParams.metricId}/chart`, { ...metricParams, q: metric.name })
-  //     .then(response => response.json())
-  //     .then(({ errors, data }) => {
-  //       if (errors) {
-  //         console.log('err', errors)
-  //       } else {
-  //         const namesMap = data
-  //           .map(i => Object.keys(i))
-  //           .flat()
-  //           .filter(i => i !== 'time' && i !== 'timestamp')
-  //           .reduce((unique: any, item: any) => {
-  //             if (!unique.includes(item)) {
-  //               unique.push(item);
-  //             }
-  //             return unique;
-  //           }, []);
-
-  //         setSeriesMap(namesMap);
-  //         setData(getChartFormatter(period)(data));
-  //       }
-  //     }).finally(() => setLoading(false));
-  // }, [period])
 
   const clickHandlerTable = (filters) => {
     const activeWidget = {
@@ -97,7 +73,7 @@ function CustomMetricWidget(props: Props) {
       const periodTimestamps = metric.metricType === 'timeseries' ?
         getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density) :
         period.toTimestamps();
-      
+
       const activeWidget = {
         widget: metric,
         period: period,
@@ -146,7 +122,6 @@ function CustomMetricWidget(props: Props) {
                   <CustomMetricPieChart
                     metric={metric}
                     data={ data[0] }
-                    params={ params }
                     colors={ colors }
                     onClick={ clickHandlerTable }
                   />
@@ -166,6 +141,7 @@ function CustomMetricWidget(props: Props) {
                     metric={ metric }
                     data={ data[0] }
                     onClick={ clickHandlerTable }
+                    isTemplate={isTemplate}
                   />
                 )}
               </>
@@ -193,13 +169,10 @@ export default connect(state => ({
 const WidgetIcon = ({ className = '', tooltip = '', icon, onClick }) => (
   <Popup
     size="small"
-    trigger={
-      <div className={className} onClick={onClick}>
-        <Icon name={icon} size="14" />
-      </div>
-    }
     content={tooltip}
-    position="top center"
-    inverted
-  />
+  >
+    <div className={className} onClick={onClick}>
+        <Icon name={icon} size="14" />
+    </div>
+  </Popup>
 )

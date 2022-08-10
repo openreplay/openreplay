@@ -102,6 +102,3 @@ export default class QueueSender {
   }
 
 }
-
-
-

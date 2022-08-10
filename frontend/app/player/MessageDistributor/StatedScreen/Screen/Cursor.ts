@@ -1,5 +1,5 @@
 import type { Point } from './types';
-import styles from './cursor.css';
+import styles from './cursor.module.css';
 
 
 export default class Cursor {
@@ -27,12 +27,15 @@ export default class Cursor {
   }
 
   click() {
-    console.log("clickong ", styles.clicked)
     this.cursor.classList.add(styles.clicked)
     setTimeout(() => {
       this.cursor.classList.remove(styles.clicked)
     }, 600)
   }
+
+  // TODO (to keep on a different playig speed):
+  // transition
+  // setTransitionSpeed()
 
   getPosition(): Point {
     return { x: this.position.x, y: this.position.y };
