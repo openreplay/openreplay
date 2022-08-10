@@ -2,24 +2,24 @@ import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
-import { getRE } from 'App/utils';
+import { getRE, filterList } from 'App/utils';
 import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { IWidget } from 'App/mstore/types/widget';
 
 function MetricsList() {
     const { metricStore } = useStore();
     const metrics = useObserver(() => metricStore.metrics);
     const metricsSearch = useObserver(() => metricStore.metricsSearch);
-    const filterList = <T extends Record<string, any>>(list: T[]): T[] => {
-        const filterRE = getRE(metricsSearch, 'i');
-        let _list = list.filter((w: T) => {
-            const dashbaordNames = w.dashboards.map((d: any) => d.name).join(' ');
-            return filterRE.test(w.name) || filterRE.test(w.metricType) || filterRE.test(w.owner) || filterRE.test(dashbaordNames);
-        });
-        return _list
+
+    const filterByDashboard = (item: IWidget, searchRE: RegExp) => {
+        const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ')
+        return searchRE.test(dashboardsStr)
     }
-    const list = metricsSearch !== '' ? filterList(metrics) : metrics;
+    const list = metricsSearch !== '' 
+    ? filterList(metrics, metricsSearch, ['name', 'metricType', 'owner'], filterByDashboard) 
+    : metrics;
     const lenth = list.length;
 
     useEffect(() => {

@@ -2,20 +2,10 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
-import { getRE } from 'App/utils';
+import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import DashboardListItem from './DashboardListItem';
-
-const filterList = <T extends Record<string, any>>(list: T[], searchQuery: string): T[] => {
-  const filterRE = getRE(searchQuery, 'i');
-  console.log(filterRE)
-  let _list = list.filter((w: T) => {
-      console.log(w.name, w.owner, w.description, filterRE.test(w.name))
-      return filterRE.test(w.name) || filterRE.test(w.owner) || filterRE.test(w.description);
-  });
-  return _list
-}
 
 function DashboardList() {
     const { dashboardStore } = useStore();
@@ -24,7 +14,7 @@ function DashboardList() {
     const dashboardsSearch = dashboardStore.dashboardsSearch;
 
     React.useEffect(() => {
-      setDashboards(filterList(dashboards, dashboardsSearch))
+      setDashboards(filterList(dashboards, dashboardsSearch, ['name', 'owner', 'description']))
     }, [dashboardsSearch])
     
     const list = dashboardsSearch !== '' ? shownDashboards : dashboards;
