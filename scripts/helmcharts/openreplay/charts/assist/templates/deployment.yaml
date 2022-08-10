@@ -51,9 +51,23 @@ spec:
               value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
             - name: S3_KEY
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: access-key
+              {{- else }}
               value: {{ .Values.global.s3.accessKey }}
+              {{- end }}
             - name: S3_SECRET
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: secret-key
+              {{- else }}
               value: {{ .Values.global.s3.secretKey }}
+              {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
