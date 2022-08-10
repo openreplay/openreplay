@@ -13,59 +13,31 @@ interface Props {
 }
 function FeatureSelection(props: Props) {
     const { list } = props;
-    
+    const features = [NETWORK, ERRORS, EVENTS, CLICKRAGE, PERFORMANCE];
+    const disabled = list.length >= 3;
+
     return (
         <React.Fragment>
-            <Checkbox
-                name="slack"
-                className="mr-8"
-                type="checkbox"
-                checked={list.includes(NETWORK)}
-                onClick={(e: any) => {
-                    console.log(e);
-                }}
-                label={NETWORK}
-            />
-            <Checkbox
-                name="slack"
-                className="mr-8"
-                type="checkbox"
-                checked={list.includes(ERRORS)}
-                onClick={(e: any) => {
-                    console.log(e);
-                }}
-                label={ERRORS}
-            />
-            <Checkbox
-                name="slack"
-                className="mr-8"
-                type="checkbox"
-                checked={list.includes(EVENTS)}
-                onClick={(e: any) => {
-                    console.log(e);
-                }}
-                label={EVENTS}
-            />
-            <Checkbox
-                name="slack"
-                className="mr-8"
-                type="checkbox"
-                checked={list.includes(CLICKRAGE)}
-                onClick={(e: any) => {
-                    console.log(e);
-                }}
-                label={CLICKRAGE}
-            />
-            <Checkbox
-                name="slack"
-                className="mr-8"
-                type="checkbox"
-                checked={list.includes(PERFORMANCE)}
-                onClick={(e: any) => {
-                    console.log(e);
-                }}
-                label={PERFORMANCE}
-            />
+            {features.map((feature, index) => {
+                const checked = list.includes(feature);
+                const _disabled = disabled && !checked;
+                return (
+                    <Checkbox
+                        key={index}
+                        label={feature}
+                        checked={checked}
+                        className="mx-4"
+                        disabled={_disabled}
+                        onClick={() => {
+                            if (checked) {
+                                props.updateList(list.filter((item: any) => item !== feature));
+                            } else {
+                                props.updateList([...list, feature]);
+                            }
+                        }}
+                    />
+                );
+            })}
         </React.Fragment>
     );
 }

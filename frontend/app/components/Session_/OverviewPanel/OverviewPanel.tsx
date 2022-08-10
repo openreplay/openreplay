@@ -9,6 +9,7 @@ import TimelineScale from './components/TimelineScale';
 import FeatureSelection from './components/FeatureSelection/FeatureSelection';
 import TimelinePointer from './components/TimelinePointer';
 import VerticalPointerLine from './components/VerticalPointerLine';
+import cn from 'classnames';
 
 interface Props {
     resourceList: any[];
@@ -23,14 +24,14 @@ function OverviewPanel(props: Props) {
         return eventsList.filter((item: any) => item.type === TYPES.CLICKRAGE);
     }, [eventsList]);
     const scale = 100 / endTime;
-    const selectedFeatures = React.useMemo(() => ['NETWORK', 'ERRORS', 'EVENTS'], []);
+    const [selectedFeatures, setSelectedFeatures] = React.useState(['NETWORK', 'ERRORS', 'EVENTS']);
 
     return (
         <BottomBlock style={{ height: '260px' }}>
             <BottomBlock.Header>
                 <span className="font-semibold color-gray-medium mr-4">Overview</span>
                 <div className="flex items-center">
-                    <FeatureSelection list={selectedFeatures} updateList={() => {}} />
+                    <FeatureSelection list={selectedFeatures} updateList={setSelectedFeatures} />
                 </div>
             </BottomBlock.Header>
             <BottomBlock.Content>
@@ -38,29 +39,17 @@ function OverviewPanel(props: Props) {
                     <TimelineScale />
                     <div style={{ width: '100%' }} className="transition relative">
                         <VerticalPointerLine />
-                        <EventRow
-                            title="Network"
-                            className=""
-                            list={resourceList}
-                            scale={scale}
-                            renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={NETWORK} />}
-                        />
-                        <div className="bg-white border-t border-b -mx-4 px-4">
-                            <EventRow
-                                title="Click Rage"
-                                className=""
-                                list={clickRageList}
-                                scale={scale}
-                                renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={TYPES.CLICKRAGE} />}
-                            />
-                        </div>
-                        <EventRow
-                            title="Errors & Issues"
-                            className=""
-                            list={exceptionsList}
-                            scale={scale}
-                            renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={EXCEPTIONS} />}
-                        />
+                        {selectedFeatures.map((feature: any, index: number) => (
+                            <div className={cn("-mx-4 px-4", { 'bg-white border-t border-b' : index % 2})}>
+                                <EventRow
+                                    key={feature}
+                                    title={feature}
+                                    list={resourceList}
+                                    scale={scale}
+                                    renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={feature} />}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </BottomBlock.Content>
