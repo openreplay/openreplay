@@ -50,22 +50,6 @@ spec:
               value: '{{ .Values.global.s3.region }}'
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
-            {{- if .Values.global.redis.existingSecret }}
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.redis.existingSecret }}
-                  key: redis-password
-            {{- else if .Values.global.redis.redisPassword }}
-            - name: REDIS_PASSWORD
-              value: {{ .Values.global.redis.redisPassword }}
-            {{- end}}
-            - name: REDIS_STRING
-              {{- if or .Values.global.redis.existingSecret .Values.global.redis.redisPassword }}
-              value: '{{ ternary "rediss" "redis" .Values.global.redis.tls.enabled }}://{{ .Values.global.redis.redisUsername }}:$(REDIS_PASSWORD)@{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
-              {{- else }}
-              value: '{{ ternary "rediss" "redis" .Values.global.redis.tls.enabled }}://{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
-              {{- end}}
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
@@ -92,6 +76,7 @@ spec:
               # S3 compatible storage
               value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
             {{- end }}
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
