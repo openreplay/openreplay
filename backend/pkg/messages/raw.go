@@ -52,7 +52,7 @@ func (m *RawMessage) Decode() Message {
 	if !m.encoded {
 		m.Encode()
 	}
-	msg, err := ReadMessage(m.tp, bytes.NewReader(m.data))
+	msg, err := ReadMessage(m.tp, bytes.NewReader(m.data[1:]))
 	if err != nil {
 		log.Printf("decode err: %s", err)
 	}
