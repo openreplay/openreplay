@@ -67,7 +67,7 @@ function AddMetric({ metrics, history, siteId, title, description }: IProps) {
                 </div>
 
                 <div className="grid h-full grid-cols-4 gap-4 px-8 items-start py-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
-                    {metrics.map((metric: any) => (
+                    {metrics ? metrics.map((metric: any) => (
                         <WidgetWrapper
                             key={metric.metricId}
                             widget={metric}
@@ -76,7 +76,9 @@ function AddMetric({ metrics, history, siteId, title, description }: IProps) {
                             isWidget={metric.metricType === 'predefined'}
                             onClick={() => dashboardStore.toggleWidgetSelection(metric)}
                         />
-                    ))}
+                    )) : (
+                        <div>No custom metrics created.</div>
+                    )}
                 </div>
 
                 <div className="py-4 border-t px-8 bg-white w-full flex items-center justify-between">

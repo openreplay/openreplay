@@ -51,5 +51,5 @@ function DashboardListItem(props: Props) {
         </>
     );
 }
-
+// @ts-ignore
 export default connect(state => ({ siteId: state.getIn([ 'site', 'siteId' ]) }))(withRouter(DashboardListItem))
