@@ -83,3 +83,22 @@ Create the environment configuration for REDIS_STRING
 - name: REDIS_STRING
   value: '{{ $scheme }}://{{ $auth }}{{ .redisHost }}:{{ .redisPort }}'
 {{- end }}
+
+{{/*
+Create the volume mount config for redis TLS certificates
+*/}}
+{{- define "openreplay.volume.redis_ca_certificate" -}}
+{{- if and (.tls.enabled) (.tls.certificatesSecret) (.tls.certCAFilename) -}}
+- name: redis-ca-certificate
+  secret:
+    secretName: {{ .tls.certificatesSecret }}
+{{- end }}
+{{- end }}
+
+{{- define "openreplay.volume.redis_ca_certificate.mount" -}}
+{{- if and (.tls.enabled) (.tls.certificatesSecret) (.tls.certCAFilename) -}}
+- name: redis-ca-certificate
+  mountPath: /etc/ssl/certs/redis-ca-certificate.pem
+  subPath: {{ .tls.certCAFilename }}
+{{- end }}
+{{- end }}
