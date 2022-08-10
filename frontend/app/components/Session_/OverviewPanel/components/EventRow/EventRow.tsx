@@ -1,16 +1,18 @@
 import React from 'react';
 import cn from 'classnames'
 import { getTimelinePosition } from 'App/utils';
+import { connectPlayer } from 'App/player';
 
 interface Props {
     list?: any[];
-    scale?: number;
     title: string;
     className?: string;
+    endTime?: number;
     renderElement?: (item: any) => React.ReactNode;
 }
 function EventRow(props: Props) {
-    const { title, className, list = [], scale = 0 } = props;
+    const { title, className, list = [], endTime = 0 } = props;
+    const scale = 100 / endTime;
     const _list = React.useMemo(() => {
         return list.map((item: any, _index: number) => {
             return {
@@ -36,4 +38,6 @@ function EventRow(props: Props) {
     );
 }
 
-export default EventRow;
+export default connectPlayer((state: any) => ({
+    endTime: state.endTime,
+}))(EventRow);

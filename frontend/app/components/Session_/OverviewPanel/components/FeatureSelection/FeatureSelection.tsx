@@ -4,7 +4,7 @@ import { Checkbox } from 'UI';
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
 const EVENTS = 'EVENTS';
-const CLICKRAGE = 'CLICK RAGE';
+const CLICKRAGE = 'CLICKRAGE';
 const PERFORMANCE = 'PERFORMANCE';
 
 interface Props {

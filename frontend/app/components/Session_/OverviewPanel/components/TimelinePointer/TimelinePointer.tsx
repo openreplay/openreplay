@@ -1,17 +1,18 @@
 import React from 'react';
 import { connectPlayer, Controls } from 'App/player';
-import { toggleBottomBlock, NETWORK, EXCEPTIONS } from 'Duck/components/player';
+import { toggleBottomBlock, NETWORK, EXCEPTIONS, PERFORMANCE } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
 import { Icon, ErrorDetails } from 'UI';
 import { Tooltip } from 'react-tippy';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
+import StackEventModal from '../StackEventModal';
 
 interface Props {
     pointer: any;
     type: any;
 }
 function TimelinePointer(props: Props) {
-    const { showModal } = useModal();
+    const { showModal, hideModal } = useModal();
     const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
         e.stopPropagation();
         Controls.jump(pointer.time);
@@ -19,8 +20,12 @@ function TimelinePointer(props: Props) {
             return;
         }
 
-        if (type === EXCEPTIONS) {
+        if (type === 'EXCEPTIONS') {
             showModal(<ErrorDetails error={pointer} />, { right: true });
+        }
+
+        if (type === 'EVENT') {
+            showModal(<StackEventModal event={pointer} />, { right: true });
         }
         // props.toggleBottomBlock(type);
     };
@@ -63,6 +68,43 @@ function TimelinePointer(props: Props) {
         );
     };
 
+    const renderStackEventElement = (item: any) => {
+        return (
+            <Tooltip
+                html={
+                    <div className="">
+                        <b>{'Stack Event'}</b>
+                    </div>
+                }
+                delay={0}
+                position="top"
+            >
+                <div onClick={createEventClickHandler(item, 'EVENT')} className="cursor-pointer w-1 h-4 bg-red">
+                    {/* <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" /> */}
+                </div>
+            </Tooltip>
+        );
+    };
+
+    const renderPerformanceElement = (item: any) => {
+        console.log('item', item)
+        return (
+            <Tooltip
+                html={
+                    <div className="">
+                        <b>{item.name}</b>
+                    </div>
+                }
+                delay={0}
+                position="top"
+            >
+                <div onClick={createEventClickHandler(item, EXCEPTIONS)} className="cursor-pointer w-1 h-4 bg-red">
+                    {/* <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" /> */}
+                </div>
+            </Tooltip>
+        );
+    };
+
     const renderExceptionElement = (item: any) => {
         return (
             <Tooltip
@@ -85,14 +127,21 @@ function TimelinePointer(props: Props) {
 
     const render = () => {
         const { pointer, type } = props;
-        if (type === NETWORK) {
+        if (type === 'NETWORK') {
             return renderNetworkElement(pointer);
         }
-        if (type === EVENT_TYPES.CLICKRAGE) {
+        if (type === 'CLICKRAGE') {
             return renderClickRageElement(pointer);
         }
-        if (type === EXCEPTIONS) {
+        if (type === 'ERRORS') {
             return renderExceptionElement(pointer);
+        }
+        if (type === 'EVENTS') {
+            return renderStackEventElement(pointer);
+        }
+
+        if (type === 'PERFORMANCE') {
+            return renderPerformanceElement(pointer);
         }
     };
     return <div>{render()}</div>;
