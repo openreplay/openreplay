@@ -16,6 +16,7 @@ import DashboardView from '../DashboardView';
 import MetricsView from '../MetricsView';
 import WidgetView from '../WidgetView';
 import WidgetSubDetailsView from '../WidgetSubDetailsView';
+import DashboardsView from '../DashboardList';
 
 function DashboardViewSelected({ siteId, dashboardId }) {
     return (
@@ -44,8 +45,8 @@ function DashboardRouter(props: Props) {
                     <WidgetSubDetailsView siteId={siteId} {...props} />
                 </Route>
 
-                <Route exact strict path={withSiteId(dashboard(), siteId)}>
-                    <DashboardView siteId={siteId} dashboardId={dashboardId} />
+                <Route exact path={withSiteId(dashboard(), siteId)}>
+                    <DashboardsView /> 
                 </Route>
 
                 <Route exact strict path={withSiteId(dashboardMetricDetails(dashboardId), siteId)}>

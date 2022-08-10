@@ -239,10 +239,10 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
     return major > majorC || (major === majorC && minor > minorC) || (major === majorC && minor === minorC && patch >= patchC);
 };
 
-export const sliceListPerPage = (list, page, perPage = 10) => {
+export const sliceListPerPage = <T extends Array<any>>(list: T, page: number, perPage = 10): T => {
     const start = page * perPage;
     const end = start + perPage;
-    return list.slice(start, end);
+    return list.slice(start, end) as T;
 };
 
 export const positionOfTheNumber = (min, max, value, length) => {

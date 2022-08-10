@@ -7,33 +7,31 @@ import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
-interface Props { }
-function MetricsList(props: Props) {
+function MetricsList() {
     const { metricStore } = useStore();
     const metrics = useObserver(() => metricStore.metrics);
     const metricsSearch = useObserver(() => metricStore.metricsSearch);
-    const filterList = (list) => {
+    const filterList = <T extends Record<string, any>>(list: T[]): T[] => {
         const filterRE = getRE(metricsSearch, 'i');
-        let _list = list.filter(w => {
-            const dashbaordNames = w.dashboards.map(d => d.name).join(' ');
+        let _list = list.filter((w: T) => {
+            const dashbaordNames = w.dashboards.map((d: any) => d.name).join(' ');
             return filterRE.test(w.name) || filterRE.test(w.metricType) || filterRE.test(w.owner) || filterRE.test(dashbaordNames);
         });
         return _list
     }
-    const list: any = metricsSearch !== '' ? filterList(metrics) : metrics;
+    const list = metricsSearch !== '' ? filterList(metrics) : metrics;
     const lenth = list.length;
 
     useEffect(() => {
         metricStore.updateKey('sessionsPage', 1);
     }, [])
 
-    console.log(list, list.length)
     return useObserver(() => (
         <NoContent
             show={lenth === 0}
             title={
                 <div className="flex flex-col items-center justify-center">
-                    <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                    <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
                     <div className="mt-6 text-2xl">No data available.</div>
                 </div>
             }   
@@ -41,7 +39,6 @@ function MetricsList(props: Props) {
             <div className="mt-3 border-b rounded bg-white">
                 <div className="grid grid-cols-12 p-4 font-medium">
                     <div className="col-span-3">Title</div>
-                    {/* <div>Type</div> */}
                     <div className="col-span-3">Owner</div>
                     <div  className="col-span-4">Visibility</div>
                     <div className="col-span-2 text-right">Last Modified</div>

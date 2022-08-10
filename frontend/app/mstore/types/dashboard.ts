@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, action, runInAction } from "mobx"
 import Widget, { IWidget } from "./widget"
 import { dashboardService  } from "App/services"
 import { toast } from 'react-toastify';
+import { DateTime } from 'luxon';
 
 export interface IDashboard {
     dashboardId: any
@@ -14,6 +15,7 @@ export interface IDashboard {
     isPinned: boolean
     currentWidget: IWidget
     config: any
+    createdAt: Date
 
     update(data: any): void
     toJson(): any
@@ -44,6 +46,7 @@ export default class Dashboard implements IDashboard {
     isPinned: boolean = false
     currentWidget: IWidget = new Widget()
     config: any = {}
+    createdAt: Date = new Date()
 
     constructor() {
         makeAutoObservable(this)
@@ -63,8 +66,7 @@ export default class Dashboard implements IDashboard {
             dashboardId: this.dashboardId,
             name: this.name,
             isPublic: this.isPublic,
-            // widgets: this.widgets.map(w => w.toJson())
-            // widgets: this.widgets
+            createdAt: this.createdAt,
             metrics: this.metrics,
             description: this.description,
         }
@@ -77,7 +79,8 @@ export default class Dashboard implements IDashboard {
             this.description = json.description
             this.isPublic = json.isPublic
             this.isPinned = json.isPinned
-            this.widgets = json.widgets ? json.widgets.map(w => new Widget().fromJson(w)).sort((a, b) => a.position - b.position) : []
+            this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
+            this.widgets = json.widgets ? json.widgets.map((w: Widget) => new Widget().fromJson(w)).sort((a: Widget, b: Widget) => a.position - b.position) : []
         })
         return this
     }
