@@ -150,7 +150,7 @@ export const reduceThenFetchResource =
         filter.filters = filter.filters.map(filterMap);
         filter.limit = 10;
         filter.page = getState().getIn(['search', 'currentPage']);
-        const forceFetch = filter.filters.length === 0;
+        const forceFetch = filter.filters.length === 0 || args[1] === true;
 
         // duration filter from local storage
         if (!filter.filters.find((f) => f.type === FilterKey.DURATION)) {
@@ -204,10 +204,10 @@ export const remove = (id) => (dispatch, getState) => {
 
 // export const remove = createRemove(name, (id) => `/saved_search/${id}`);
 
-export const applyFilter = reduceThenFetchResource((filter, fromUrl = false) => ({
+export const applyFilter = reduceThenFetchResource((filter, force = false) => ({
     type: APPLY,
     filter,
-    fromUrl,
+    force,
 }));
 
 export const updateCurrentPage = reduceThenFetchResource((page) => ({
@@ -223,9 +223,9 @@ export const applySavedSearch = (filter) => (dispatch, getState) => {
     });
 };
 
-export const fetchSessions = (filter) => (dispatch, getState) => {
+export const fetchSessions = (filter, force = false) => (dispatch, getState) => {
     const _filter = filter ? filter : getState().getIn(['search', 'instance']);
-    return dispatch(applyFilter(_filter));
+    return dispatch(applyFilter(_filter, force));
 };
 
 export const updateSeries = (index, series) => ({
