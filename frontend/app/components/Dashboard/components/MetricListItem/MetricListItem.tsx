@@ -1,7 +1,7 @@
 import React from 'react';
-import { Icon, NoContent, Label, Link, Pagination, Popup } from 'UI';
-import { checkForRecent, formatDateTimeDefault, convertTimestampToUtcTimestamp } from 'App/date';
-import { getIcon } from 'react-toastify/dist/components';
+import { Icon, Link, Popup } from 'UI';
+import { checkForRecent } from 'App/date';
+import { Tooltip } from 'react-tippy'
 
 interface Props {
     metric: any;
@@ -25,19 +25,6 @@ function DashboardLink({ dashboards}: any) {
 }
 
 function MetricTypeIcon({ type }: any) {
-    const PopupWrapper = (props: any) => {
-        return (
-            <Popup
-                content={<div className="capitalize">{type}</div>}
-                position="top center"
-                on="hover"
-                hideOnScroll={true}
-            >
-                {props.children}
-            </Popup>
-        );
-    }
-
     const getIcon = () => {
         switch (type) {
             case 'funnel':
@@ -50,11 +37,15 @@ function MetricTypeIcon({ type }: any) {
     }
 
     return (
-        <PopupWrapper>
+        <Tooltip
+            html={<div className="capitalize">{type}</div>}
+            position="top"
+            arrow
+        >
             <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
                 <Icon name={getIcon()} size="16" color="tealx" />
             </div>
-        </PopupWrapper>
+        </Tooltip>
     )
 }
 
