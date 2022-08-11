@@ -7,6 +7,9 @@ import psycopg2.extras
 from decouple import config
 from psycopg2 import pool
 
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
+
 _PG_CONFIG = {"host": config("pg_host"),
               "database": config("pg_dbname"),
               "user": config("pg_user"),
