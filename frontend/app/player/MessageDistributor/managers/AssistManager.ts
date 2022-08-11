@@ -77,13 +77,8 @@ const MAX_RECONNECTION_COUNT = 4;
 export default class AssistManager {
   private timeTravelJump = false;
   private jumped = false;
-  private lastRecordedMessageTime: number = 0;
-
+  
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
-
-  public setLastRecordedMessageTime(time: number) {
-    this.lastRecordedMessageTime = time;
-  }
 
   private setStatus(status: ConnectionStatus) {
     if (getState().peerConnectionStatus === ConnectionStatus.Disconnected && 
@@ -179,7 +174,7 @@ export default class AssistManager {
           //@ts-ignore
           if (this.jumped) {
             // @ts-ignore
-            msg.time = this.lastRecordedMessageTime + msg.time
+            msg.time = this.md.getLastRecordedMessageTime() + msg.time
           }
           // @ts-ignore TODO: fix msg types in generator
           this.md.distributeMessage(msg, msg._index)

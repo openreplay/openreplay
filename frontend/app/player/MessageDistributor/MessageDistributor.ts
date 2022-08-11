@@ -96,6 +96,7 @@ export default class MessageDistributor extends StatedScreen {
   private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
+  private lastRecordedMessageTime: number = 0;
 
   constructor(private readonly session: any /*Session*/, config: any, live: boolean) {
     super();
@@ -216,24 +217,20 @@ export default class MessageDistributor extends StatedScreen {
       onData
     )
     .then(() => this.onFileSuccessRead())
-    .catch(async e => {
-      try {
-        const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
-        if (unprocessedFile) {
-          Promise.resolve(onData(unprocessedFile))
-          .then(() => this.onFileSuccessRead())
-        } else {
+    .catch(async () => {
+        checkUnprocessedMobs(this.session.sessionId)
+       .then(file => file ? onData(file) : Promise.reject('No session file'))
+       .then(() => this.onFileSuccessRead())
+       .catch((e) => {
           logger.error(e)
           update({ error: true })
-        }
-      } catch (unprocessedFilesError) {
-        logger.error(unprocessedFilesError)
-        update({ error: true })
-        toast.error('Error getting a session replay file')
-      } finally {
-        this.waitingForFiles = false
-        this.setMessagesLoading(false)
-      }
+          toast.error('Error getting a session replay file')
+       })
+       .finally(() => {
+         this.waitingForFiles = false
+         this.setMessagesLoading(false)
+        })
+      
     })
   }
 
@@ -246,7 +243,7 @@ export default class MessageDistributor extends StatedScreen {
     this.waitingForFiles = true
 
     const onData = (byteArray: Uint8Array) => {
-      const onReadCallback = () => this.assistManager.setLastRecordedMessageTime(this.lastMessageTime)
+      const onReadCallback = () => this.setLastRecordedMessageTime(this.lastMessageTime)
       const msgs = this.readAndDistributeMessages(byteArray, onReadCallback)
       this.sessionStart = msgs[0].time
       this.processStateUpdates(msgs)
@@ -537,5 +534,13 @@ export default class MessageDistributor extends StatedScreen {
     super.clean();
     update(INITIAL_STATE);
     this.assistManager.clear();
+  }
+
+  public setLastRecordedMessageTime(time: number) {
+    this.lastRecordedMessageTime = time;
+  }
+
+  public getLastRecordedMessageTime(): number {
+    return this.lastRecordedMessageTime;
   }
 }
