@@ -79,7 +79,7 @@ function AddMetricContainer({ siteId }: any) {
         );
     };
     return (
-        <div style={{ borderColor: 'rgb(238, 238, 238)', height: 300 }} className="bg-white border border-dashed rounded p-8 grid grid-cols-2 gap-8">
+        <div style={{ borderColor: 'rgb(238, 238, 238)', height: 285 }} className="bg-white border border-dashed rounded p-8 grid grid-cols-2 gap-8">
             <AddMetricButton
                 title="+ Add custom Metric"
                 description="Metrics that are manually created by you or your team"
