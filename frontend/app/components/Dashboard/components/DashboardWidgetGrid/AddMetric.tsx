@@ -50,20 +50,11 @@ function AddMetric({ metrics, history, siteId, title, description }: IProps) {
                         <h1 className="text-2xl">{title}</h1>
                         <div className="text-disabled-text">{description}</div>
                     </div>
-                    {title.includes('Custom') ? (
-                        <div>
-                            <span className="text-md link" onClick={onCreateNew}>
-                                + Create new
-                            </span>
-                        </div>
-                    ) : (
-                        <div>
-                            Don’t find the one you need?
-                            <span className="text-md link ml-2" onClick={onCreateNew}>
-                                + Create custom metric
-                            </span>
-                        </div>
-                    )}
+                   
+                    <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
+                        + Create new
+                    </Button>
+                    
                 </div>
 
                 <div className="grid h-full grid-cols-4 gap-4 px-8 items-start py-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', gridTemplateRows: 'max-content' }}>

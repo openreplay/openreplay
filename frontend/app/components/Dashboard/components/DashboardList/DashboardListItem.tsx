@@ -1,15 +1,15 @@
 import React from 'react';
 import { Icon } from 'UI';
 import { connect } from 'react-redux';
-import{ IDashboard } from "App/mstore/types/dashboard";
+import { IDashboard } from 'App/mstore/types/dashboard';
 import { checkForRecent } from 'App/date';
 import { withSiteId, dashboardSelected } from 'App/routes';
 import { useStore } from 'App/mstore';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 
 interface Props extends RouteComponentProps {
-  dashboard: IDashboard;
-  siteId: string;
+    dashboard: IDashboard;
+    siteId: string;
 }
 
 function DashboardListItem(props: Props) {
@@ -22,34 +22,28 @@ function DashboardListItem(props: Props) {
         history.push(path);
     };
     return (
-        <>
+        <div className="hover:bg-active-blue px-2 cursor-pointer" onClick={onItemClick}>
             <div className="grid grid-cols-12 py-4 border-t select-none">
                 <div className="col-span-8 flex items-start">
-                    <div className="flex items-center link capitalize-first" onClick={onItemClick}>
+                    <div className="flex items-center capitalize-first">
                         <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
                             <Icon name="columns-gap" size="16" color="tealx" />
                         </div>
-                        <div>
-                            {dashboard.name}
-                        </div>
+                        <div>{dashboard.name}</div>
                     </div>
                 </div>
                 {/* <div><Label className="capitalize">{metric.metricType}</Label></div> */}
                 <div className="col-span-2">
                     <div className="flex items-center">
-                        <Icon name={dashboard.isPublic ? "user-friends" : "person-fill"} className="mr-2" />
+                        <Icon name={dashboard.isPublic ? 'user-friends' : 'person-fill'} className="mr-2" />
                         <span>{dashboard.isPublic ? 'Team' : 'Private'}</span>
                     </div>
                 </div>
-                <div className="col-span-2 text-right">
-                    {checkForRecent(dashboard.createdAt, 'LLL dd, yyyy, hh:mm a')}
-                </div>
+                <div className="col-span-2 text-right">{checkForRecent(dashboard.createdAt, 'LLL dd, yyyy, hh:mm a')}</div>
             </div>
-            <div className="text-disabled-text px-4 pb-2">
-                {dashboard.description}
-            </div>
-        </>
+            {dashboard.description ? <div className="text-disabled-text px-4 pb-2">{dashboard.description}</div> : null}
+        </div>
     );
 }
 // @ts-ignore
-export default connect(state => ({ siteId: state.getIn([ 'site', 'siteId' ]) }))(withRouter(DashboardListItem))
+export default connect((state) => ({ siteId: state.getIn(['site', 'siteId']) }))(withRouter(DashboardListItem));

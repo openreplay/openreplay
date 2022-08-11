@@ -278,6 +278,9 @@ p {
 .tippy-tooltip.openreplay-theme .tippy-backdrop {
   background-color: $tealx;
 }
+.tippy-tooltip[data-theme~='nopadding'], .nopadding-theme {
+  padding: 0!important
+}
 
 @media print {
   .no-print {
