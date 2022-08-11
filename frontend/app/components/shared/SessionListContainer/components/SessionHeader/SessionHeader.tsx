@@ -33,7 +33,7 @@ function SessionHeader(props: Props) {
     };
 
     return (
-        <div className="flex items-center px-4 pt-2 justify-between">
+        <div className="flex items-center px-4 justify-between">
             <div className="flex items-center justify-between">
                 <div className="mr-3 text-lg flex items-center">
                     <div

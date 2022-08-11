@@ -30,7 +30,7 @@ export default (props: Props) => {
     let classes = ['relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap'];
 
     if (variant === 'default') {
-        classes.push('bg-white hover:bg-gray-lightest border border-gray-light');
+        classes.push('bg-white hover:bg-gray-light border border-gray-light');
     }
 
     if (variant === 'primary') {
@@ -38,7 +38,7 @@ export default (props: Props) => {
     }
 
     if (variant === 'text') {
-        classes.push('bg-transparent color-gray-dark hover:bg-gray-lightest hover:color-gray-dark');
+        classes.push('bg-transparent color-gray-dark hover:bg-gray-light hover:color-gray-dark');
     }
 
     if (variant === 'text-primary') {
