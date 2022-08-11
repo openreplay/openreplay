@@ -12,39 +12,42 @@ interface AddMetricButtonProps {
     title: string;
     description: string;
     isPremade?: boolean;
+    isPopup?: boolean;
     onClick: () => void;
 }
 
-function AddMetricButton({ iconName, title, description, onClick, isPremade }: AddMetricButtonProps) {
+function AddMetricButton({ iconName, title, description, onClick, isPremade, isPopup }: AddMetricButtonProps) {
     return (
         <div
             onClick={onClick}
             className={cn(
-                'px-4 py-8 flex items-center flex-col hover:bg-gray-lightest group rounded border cursor-pointer',
-                isPremade ? 'bg-figmaColors-primary-outlined-hover-background' : 'bg-figmaColors-secondary-outlined-hover-background'
+                'flex items-center hover:bg-gray-lightest hover:!border-gray-light group rounded border cursor-pointer',
+                isPremade ? 'bg-figmaColors-primary-outlined-hover-background' : 'bg-figmaColors-secondary-outlined-hover-background',
+                isPopup ? 'p-4 z-50' : 'px-4 py-8 flex-col'
             )}
             style={{ borderColor: 'rgb(238, 238, 238)' }}
         >
             <div
                 className={cn(
                     'p-6 my-3 rounded-full group-hover:bg-gray-light',
-                    isPremade ? 'bg-figmaColors-primary-outlined-hover-background' : 'bg-figmaColors-secondary-outlined-hover-background'
+                    isPremade
+                        ? 'bg-figmaColors-primary-outlined-hover-background fill-figmaColors-accent-secondary group-hover:!bg-figmaColors-accent-secondary group-hover:!fill-white'
+                        : 'bg-figmaColors-secondary-outlined-hover-background fill-figmaColors-secondary-outlined-resting-border group-hover:!bg-teal group-hover:!fill-white'
                 )}
             >
-                <Icon
-                    name={iconName}
-                    size={26}
-                    className="group-hover:fill-gray-medium"
-                    style={{ fill: isPremade ? '#3EAAAF' : 'rgba(63, 81, 181, 0.5)' }}
-                />
+                <Icon name={iconName} size={26} style={{ fill: 'inherit' }} />
             </div>
-            <div className="font-bold mb-2 text-figmaColors-text-primary">{title}</div>
-            <div className="text-disabled-test w-2/3 text-center text-figmaColors-text-primary">{description}</div>
+            <div className={isPopup ? 'flex flex-col text-left ml-4' : 'flex flex-col text-center items-center'}>
+                <div className="font-bold text-base text-figmaColors-text-primary">{title}</div>
+                <div className={cn('text-disabled-test text-figmaColors-text-primary text-base', isPopup ? 'w-full' : 'mt-2 w-2/3 text-center')}>
+                    {description}
+                </div>
+            </div>
         </div>
     );
 }
 
-function AddMetricContainer({ siteId }: any) {
+function AddMetricContainer({ siteId, isPopup }: any) {
     const { showModal } = useModal();
     const [categories, setCategories] = React.useState<Record<string, any>[]>([]);
     const { dashboardStore } = useStore();
@@ -78,20 +81,26 @@ function AddMetricContainer({ siteId }: any) {
             { right: true }
         );
     };
+
+    const classes = isPopup
+        ? 'bg-white border rounded p-4 grid grid-rows-2 gap-4'
+        : 'bg-white border border-dashed hover:!border-gray-medium rounded p-8 grid grid-cols-2 gap-8';
     return (
-        <div style={{ borderColor: 'rgb(238, 238, 238)', height: 285 }} className="bg-white border border-dashed rounded p-8 grid grid-cols-2 gap-8">
+        <div style={{ borderColor: 'rgb(238, 238, 238)', height: isPopup ? undefined : 300 }} className={classes}>
             <AddMetricButton
                 title="+ Add custom Metric"
                 description="Metrics that are manually created by you or your team"
                 iconName="bar-pencil"
                 onClick={onAddCustomMetrics}
                 isPremade
+                isPopup={isPopup}
             />
             <AddMetricButton
                 title="+ Add Ready-Made Metric"
                 description="Curated metrics predfined by OpenReplay."
                 iconName="grid-check"
                 onClick={onAddPredefinedMetrics}
+                isPopup={isPopup}
             />
         </div>
     );

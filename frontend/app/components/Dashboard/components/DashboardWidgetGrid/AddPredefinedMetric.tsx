@@ -83,23 +83,16 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
                         <h1 className="text-2xl">{title}</h1>
                         <div className="text-disabled-text">{description}</div>
                     </div>
-                    {title.includes('Custom') ? (
-                        <div>
-                            <span className="text-md link" onClick={onCreateNew}>
-                                + Create new
-                            </span>
-                        </div>
-                    ) : (
-                        <div>
-                            Don’t find the one you need?
-                            <span className="text-md link ml-2" onClick={onCreateNew}>
-                                + Create custom metric
-                            </span>
-                        </div>
-                    )}
+
+                    <div className="flex items-center">
+                        Don’t find the one you need?
+                        <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
+                            + Create custom metric
+                        </Button>
+                    </div>
                 </div>
 
-                <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)'}}>
+                <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)' }}>
                     <div style={{ flex: 3 }}>
                         <div className="grid grid-cols-1 gap-4 py-1 pr-2" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
                             {activeCategory &&

@@ -17,6 +17,10 @@ import DashboardOptions from '../DashboardOptions';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
+// @ts-ignore
+import stl from './DashboardView.module.css';
 
 interface IProps {
     siteId: string;
@@ -27,6 +31,7 @@ interface IProps {
 type Props = IProps & RouteComponentProps;
 
 function DashboardView(props: Props) {
+    const [isTooltipShown, setTooltip] = React.useState(false);
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
     const { showModal } = useModal();
@@ -123,9 +128,21 @@ function DashboardView(props: Props) {
                             onDoubleClick={() => onEdit(true)}
                             className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
                             actionButton={
-                                <Button variant="primary" onClick={onAddWidgets}>
-                                    Add Metric
-                                </Button>
+                                <OutsideClickDetectingDiv onClickOutside={() => setTooltip(false)}>
+                                    {/* @ts-ignore */}
+                                    <Tooltip 
+                                        interactive
+                                        useContext
+                                        // @ts-ignore
+                                        theme="nopadding"
+                                        open={isTooltipShown}
+                                        html={<div style={{ padding: 0 }}><AddMetricContainer isPopup siteId={siteId} /></div>}
+                                    >
+                                        <Button variant="primary" onClick={() => setTooltip(true)}>
+                                            Add Metric
+                                        </Button>
+                                    </Tooltip>
+                                </OutsideClickDetectingDiv>
                             }
                         />
                     </div>
