@@ -37,7 +37,7 @@ export interface IDashboard {
 export default class Dashboard implements IDashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
-    name: string = "New Dashboard"
+    name: string = "Untitled Dashboard"
     description: string = ""
     isPublic: boolean = true
     widgets: IWidget[] = []
