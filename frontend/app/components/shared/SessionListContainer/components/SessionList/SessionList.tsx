@@ -79,7 +79,7 @@ function SessionList(props: Props) {
                     </div>
                 }
                 subtext={
-                    <div>
+                    <div className="flex flex-col items-center">
                         {(isVault || isBookmark) && (
                             <div>
                                 {isVault
