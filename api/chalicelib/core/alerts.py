@@ -139,9 +139,9 @@ def send_by_email(notification, destination):
 
 def send_by_email_batch(notifications_list):
     if not helper.has_smtp():
-        print("no SMTP configuration for email notifications")
+        logging.info("no SMTP configuration for email notifications")
     if notifications_list is None or len(notifications_list) == 0:
-        print("no email notifications")
+        logging.info("no email notifications")
         return
     for n in notifications_list:
         send_by_email(notification=n.get("notification"), destination=n.get("destination"))

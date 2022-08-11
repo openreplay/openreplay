@@ -1,3 +1,4 @@
+import logging
 import time
 from threading import Semaphore
 
@@ -52,18 +53,18 @@ def make_pool():
         try:
             postgreSQL_pool.closeall()
         except (Exception, psycopg2.DatabaseError) as error:
-            print("Error while closing all connexions to PostgreSQL", error)
+            logging.error("Error while closing all connexions to PostgreSQL", error)
     try:
         postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20),
                                                    config("pg_maxconn", cast=int, default=80),
                                                    **PG_CONFIG)
         if (postgreSQL_pool):
-            print("Connection pool created successfully")
+            logging.info("Connection pool created successfully")
     except (Exception, psycopg2.DatabaseError) as error:
-        print("Error while connecting to PostgreSQL", error)
+        logging.error("Error while connecting to PostgreSQL", error)
         if RETRY < RETRY_MAX:
             RETRY += 1
-            print(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
+            logging.info(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
             time.sleep(RETRY_INTERVAL)
             make_pool()
         else:
@@ -113,12 +114,12 @@ class PostgresClient:
             if self.long_query or self.unlimited_query:
                 self.connection.close()
         except Exception as error:
-            print("Error while committing/closing PG-connection", error)
+            logging.error("Error while committing/closing PG-connection", error)
             if str(error) == "connection already closed" \
                     and not self.long_query \
                     and not self.unlimited_query \
                     and config('PG_POOL', cast=bool, default=True):
-                print("Recreating the connexion pool")
+                logging.info("Recreating the connexion pool")
                 make_pool()
             else:
                 raise error

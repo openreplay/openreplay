@@ -1,12 +1,14 @@
 import base64
+import logging
 import re
 from email.header import Header
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from chalicelib.utils import helper, smtp
 from decouple import config
+
+from chalicelib.utils import smtp
 
 
 def __get_subject(subject):
@@ -64,11 +66,11 @@ def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
             if bcc is not None and len(bcc) > 0:
                 r += [bcc]
             try:
-                print(f"Email sending to: {r}")
+                logging.info(f"Email sending to: {r}")
                 s.sendmail(msg['FROM'], r, msg.as_string().encode('ascii'))
             except Exception as e:
-                print("!!! Email error!")
-                print(e)
+                logging.error("!!! Email error!")
+                logging.error(e)
 
 
 def send_text(recipients, text, subject):
@@ -82,8 +84,8 @@ def send_text(recipients, text, subject):
         try:
             s.sendmail(msg['FROM'], recipients, msg.as_string().encode('ascii'))
         except Exception as e:
-            print("!! Text-email failed: " + subject),
-            print(e)
+            logging.error("!! Text-email failed: " + subject),
+            logging.error(e)
 
 
 def __escape_text_html(text):

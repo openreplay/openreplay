@@ -1,3 +1,4 @@
+import logging
 import smtplib
 from smtplib import SMTPAuthenticationError
 
@@ -7,7 +8,7 @@ from starlette.exceptions import HTTPException
 
 class EmptySMTP:
     def sendmail(self, from_addr, to_addrs, msg, mail_options=(), rcpt_options=()):
-        print("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
+        logging.error("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
 
 
 class SMTPClient:
