@@ -12,7 +12,7 @@
   transition: all 0.2s;
   padding: 40px;
 
-  &.small {
+  /* &.small {
     & .title {
       font-size: 20px !important;
     }
@@ -20,7 +20,7 @@
     & .subtext {
       font-size: 16px;
     }
-  }
+  } */
 }
 
 .title {
