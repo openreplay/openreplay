@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { NoContent, Loader, Pagination } from 'UI';
+import { NoContent, Loader, Pagination, Button } from 'UI';
 import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
@@ -13,6 +13,7 @@ import SortOrderButton from 'Shared/SortOrderButton';
 import { capitalize } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 import cn from 'classnames';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const AUTOREFRESH_INTERVAL = 0.5 * 60 * 1000;
 const PER_PAGE = 10;
@@ -39,11 +40,14 @@ function LiveSessionList(props: Props) {
     var timeoutId: any;
     const { filters } = filter;
     const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
-    const sortOptions = [{ label: 'Newest', value: 'timestamp' }].concat(metaList
-        .map((i: any) => ({
-            label: capitalize(i),
-            value: i,
-        })).toJS());
+    const sortOptions = [{ label: 'Newest', value: 'timestamp' }].concat(
+        metaList
+            .map((i: any) => ({
+                label: capitalize(i),
+                value: i,
+            }))
+            .toJS()
+    );
 
     useEffect(() => {
         if (metaListLoading) return;
@@ -108,17 +112,28 @@ function LiveSessionList(props: Props) {
             <div className="bg-white p-3 rounded border">
                 <Loader loading={loading}>
                     <NoContent
-                        title={'No live sessions.'}
-                        subtext={
-                            <span>
-                                See how to setup the{' '}
-                                <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
-                                    {'Assist'}
-                                </a>{' '}
-                                plugin, if you haven’t done that already.
-                            </span>
+                        title={
+                            <div className="flex items-center justify-center flex-col">
+                                <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />
+                                <div className="mt-2" />
+                                <div className="text-center text-gray-600">No live sessions found.</div>
+                            </div>
                         }
-                        image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
+                        subtext={
+                            <div className="text-center flex justify-center items-center flex-col">
+                                <span>
+                                    Assist allows you to support your users through live screen viewing and audio/video calls.{' '}
+                                    <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
+                                        {'Learn More'}
+                                    </a>
+                                </span>
+
+                                <Button variant="text-primary" className="mt-4" icon="sync-alt" onClick={() => props.applyFilter({ ...filter })}>
+                                    Refresh
+                                </Button>
+                            </div>
+                        }
+                        // image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
                         show={!loading && list.size === 0}
                     >
                         <div>
@@ -139,7 +154,7 @@ function LiveSessionList(props: Props) {
                     </NoContent>
                 </Loader>
 
-                <div className={cn("w-full flex items-center justify-center py-6", { 'disabled' : loading})}>
+                <div className={cn('w-full flex items-center justify-center py-6', { disabled: loading })}>
                     <Pagination
                         page={currentPage}
                         totalPages={Math.ceil(total / PER_PAGE)}
