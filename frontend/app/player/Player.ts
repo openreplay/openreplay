@@ -45,6 +45,7 @@ export const INITIAL_STATE = {
   inspectorMode: false,
   live: false,
   livePlay: false,
+  liveTimeTravel: false,
 } as const;
 
 
@@ -53,7 +54,7 @@ export const INITIAL_NON_RESETABLE_STATE = {
   skipToIssue: initialSkipToIssue,
   autoplay: initialAutoplay,
   speed: initialSpeed,
-  showEvents: initialShowEvents
+  showEvents: initialShowEvents,
 }
 
 export default class Player extends MessageDistributor {
@@ -118,9 +119,12 @@ export default class Player extends MessageDistributor {
         });
       }
 
-      if (live && time > endTime) {
+      // throttle store updates
+      // TODO: make it possible to change frame rate
+      if (live && time - endTime > 100) {
         update({
           endTime: time,
+          livePlay: endTime - time < 900
         });
       }
       this._setTime(time);
@@ -153,20 +157,22 @@ export default class Player extends MessageDistributor {
   }
 
   jump(time = getState().time, index: number) {
-    const { live } = getState();
-    if (live) return;
+    const { live, liveTimeTravel, endTime } = getState();
+    if (live && !liveTimeTravel) return;
     
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
       // this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
         this._startAnimation();
-        update({ livePlay: time === getState().endTime });
+        // throttilg the redux state update from each frame to nearly half a second
+        // which is better for performance and component rerenders
+        update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     } else {
       //this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
-        update({ livePlay: time === getState().endTime });
+        update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     }
   }
@@ -245,6 +251,20 @@ export default class Player extends MessageDistributor {
     const { speed } = getState();
     this._updateSpeed(Math.max(1, speed/2));
   }
+
+  toggleTimetravel() {
+    if (!getState().liveTimeTravel) {
+      this.reloadWithUnprocessedFile()
+      this.play()
+    }
+  }
+  
+  jumpToLive() {
+    cancelAnimationFrame(this._animationFrameRequestId);
+    this._setTime(getState().endTime);
+    this._startAnimation();
+    update({ livePlay: true });
+}
 
   clean() {
     this.pause();

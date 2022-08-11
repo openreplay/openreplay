@@ -56,10 +56,11 @@ export function getStatusText(status: ConnectionStatus): string {
 }
  
 export interface State {
-  calling: CallingState,
-  peerConnectionStatus: ConnectionStatus,
-  remoteControl: RemoteControlStatus,
-  annotating: boolean,
+  calling: CallingState;
+  peerConnectionStatus: ConnectionStatus;
+  remoteControl: RemoteControlStatus;
+  annotating: boolean;
+  assistStart: number;
 }
 
 export const INITIAL_STATE: State = {
@@ -67,12 +68,16 @@ export const INITIAL_STATE: State = {
   peerConnectionStatus: ConnectionStatus.Connecting,
   remoteControl: RemoteControlStatus.Disabled,
   annotating: false,
+  assistStart: 0,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
 
 
 export default class AssistManager {
+  private timeTravelJump = false;
+  private jumped = false;
+  
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
@@ -121,6 +126,10 @@ export default class AssistManager {
     let waitingForMessages = true
     let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+
+    const now = +new Date()
+    update({ assistStart: now })
+
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
@@ -145,7 +154,7 @@ export default class AssistManager {
         update({ calling: CallingState.NoCall })
       })
       socket.on('messages', messages => {
-        jmr.append(messages) // as RawMessage[]
+        !this.timeTravelJump && jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
@@ -153,12 +162,21 @@ export default class AssistManager {
 
           // Call State
           if (getState().calling === CallingState.Reconnecting) {
-            this._call()  // reconnecting call (todo improve code separation)
+            this._callSessionPeer() // reconnecting call (todo improve code separation)
           }
+        }
+
+        if (this.timeTravelJump) {
+          return;
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
           //@ts-ignore
+          if (this.jumped) {
+            // @ts-ignore
+            msg.time = this.md.getLastRecordedMessageTime() + msg.time
+          }
+          // @ts-ignore TODO: fix msg types in generator
           this.md.distributeMessage(msg, msg._index)
         }
       })
@@ -520,6 +538,11 @@ export default class AssistManager {
   }
 
   private annot: AnnotationCanvas | null = null
+
+  toggleTimeTravelJump() {
+    this.jumped = true;
+    this.timeTravelJump = !this.timeTravelJump;
+  }
 
   /* ==== Cleaning ==== */
   private cleaned: boolean = false

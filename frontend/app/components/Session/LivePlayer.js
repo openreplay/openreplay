@@ -57,7 +57,7 @@ function LivePlayer ({
   return (
     <PlayerProvider>
       <InitLoader className="flex-1 p-3">
-      <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
+        <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
         <div className={ styles.session } data-fullscreen={fullscreen}>
             <PlayerBlock />
         </div>
