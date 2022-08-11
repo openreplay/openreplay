@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
-import { NoContent, Loader, Pagination } from 'UI';
+import { NoContent, Loader, Pagination, Button } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import NoContentMessage from '../NoContentMessage';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
@@ -19,7 +19,7 @@ interface Props {
     addFilterByKeyAndValue: (key: string, value: any, operator?: string) => void;
     updateCurrentPage: (page: number) => void;
     setScrollPosition: (scrollPosition: number) => void;
-    fetchSessions: () => void;
+    fetchSessions: (filters: any, force: boolean) => void;
     activeTab: any;
     isEnterprise?: boolean;
 }
@@ -33,17 +33,17 @@ function SessionList(props: Props) {
         if (isBookmark && !isEnterprise) {
             return {
                 icon: ICONS.NO_BOOKMARKS,
-                message: 'You have no bookmarks',
+                message: 'No sessions bookmarked.',
             };
         } else if (isVault) {
             return {
                 icon: ICONS.NO_SESSIONS_IN_VAULT,
-                message: 'You have no sessions in your vault',
+                message: 'No sessions found in vault.',
             };
         }
         return {
             icon: ICONS.NO_SESSIONS,
-            message: activeTab.type === 'all' ? 'You have no sessions' : 'You have no sessions with ' + activeTab.name,
+            message: 'No relevant sessions found for the selected time period.',
         };
     }, [isBookmark, isVault, activeTab]);
 
@@ -78,7 +78,20 @@ function SessionList(props: Props) {
                         {/* <NoContentMessage /> */}
                     </div>
                 }
-                subtext={<div>Please try changing your search parameters.</div>}
+                subtext={
+                    <div>
+                        {(isVault || isBookmark) && (
+                            <div>
+                                {isVault
+                                    ? 'Add a session to your vault from player screen to retain it for ever.'
+                                    : 'Bookmark important sessions in player screen and quickly find them here.'}
+                            </div>
+                        )}
+                        <Button variant="text-primary" className="mt-4" icon="sync-alt" onClick={() => props.fetchSessions(null, true)}>
+                            Refresh
+                        </Button>
+                    </div>
+                }
                 show={!loading && list.size === 0}
             >
                 {list.map((session: any) => (
