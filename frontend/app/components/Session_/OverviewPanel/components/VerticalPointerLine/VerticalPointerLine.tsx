@@ -1,5 +1,6 @@
 import React from 'react';
 import { connectPlayer } from 'App/player';
+import VerticalLine from '../VerticalLine';
 
 interface Props {
     time: number;
@@ -8,7 +9,7 @@ interface Props {
 function VerticalPointerLine(props: Props) {
     const { time, scale } = props;
     const left = time * scale;
-    return <div className="absolute border-r border-teal border-dashed z-10" style={{ left: `${left}%`, height: '250px', width: '1px' }} />;
+    return <VerticalLine left={left} className="border-teal" />;
 }
 
 export default connectPlayer((state: any) => ({

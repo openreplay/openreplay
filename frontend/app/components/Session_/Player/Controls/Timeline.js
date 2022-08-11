@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import cn from 'classnames';
+// import cn from 'classnames';
 import { connectPlayer, Controls } from 'Player';
-import { TimelinePointer, Icon } from 'UI';
+// import { TimelinePointer, Icon } from 'UI';
 import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
 import { TYPES } from 'Types/session/event';
@@ -10,7 +10,7 @@ import { setTimelinePointer } from 'Duck/sessions';
 import DraggableCircle from './DraggableCircle';
 import CustomDragLayer from './CustomDragLayer';
 import { debounce } from 'App/utils';
-import { Tooltip } from 'react-tippy';
+// import { Tooltip } from 'react-tippy';
 
 const BOUNDRY = 0;
 
@@ -20,46 +20,46 @@ function getTimelinePosition(value, scale) {
     return pos > 100 ? 100 : pos;
 }
 
-const getPointerIcon = (type) => {
-    // exception,
-    switch (type) {
-        case 'fetch':
-            return 'funnel/file-earmark-minus-fill';
-        case 'exception':
-            return 'funnel/exclamation-circle-fill';
-        case 'log':
-            return 'funnel/exclamation-circle-fill';
-        case 'stack':
-            return 'funnel/patch-exclamation-fill';
-        case 'resource':
-            return 'funnel/file-earmark-minus-fill';
+// const getPointerIcon = (type) => {
+//     // exception,
+//     switch (type) {
+//         case 'fetch':
+//             return 'funnel/file-earmark-minus-fill';
+//         case 'exception':
+//             return 'funnel/exclamation-circle-fill';
+//         case 'log':
+//             return 'funnel/exclamation-circle-fill';
+//         case 'stack':
+//             return 'funnel/patch-exclamation-fill';
+//         case 'resource':
+//             return 'funnel/file-earmark-minus-fill';
 
-        case 'dead_click':
-            return 'funnel/dizzy';
-        case 'click_rage':
-            return 'funnel/dizzy';
-        case 'excessive_scrolling':
-            return 'funnel/mouse';
-        case 'bad_request':
-            return 'funnel/file-medical-alt';
-        case 'missing_resource':
-            return 'funnel/file-earmark-minus-fill';
-        case 'memory':
-            return 'funnel/sd-card';
-        case 'cpu':
-            return 'funnel/microchip';
-        case 'slow_resource':
-            return 'funnel/hourglass-top';
-        case 'slow_page_load':
-            return 'funnel/hourglass-top';
-        case 'crash':
-            return 'funnel/file-exclamation';
-        case 'js_exception':
-            return 'funnel/exclamation-circle-fill';
-    }
+//         case 'dead_click':
+//             return 'funnel/dizzy';
+//         case 'click_rage':
+//             return 'funnel/dizzy';
+//         case 'excessive_scrolling':
+//             return 'funnel/mouse';
+//         case 'bad_request':
+//             return 'funnel/file-medical-alt';
+//         case 'missing_resource':
+//             return 'funnel/file-earmark-minus-fill';
+//         case 'memory':
+//             return 'funnel/sd-card';
+//         case 'cpu':
+//             return 'funnel/microchip';
+//         case 'slow_resource':
+//             return 'funnel/hourglass-top';
+//         case 'slow_page_load':
+//             return 'funnel/hourglass-top';
+//         case 'crash':
+//             return 'funnel/file-exclamation';
+//         case 'js_exception':
+//             return 'funnel/exclamation-circle-fill';
+//     }
 
-    return 'info';
-};
+//     return 'info';
+// };
 
 let deboucneJump = () => null;
 @connectPlayer((state) => ({
@@ -73,11 +73,11 @@ let deboucneJump = () => null;
     disabled: state.cssLoading || state.messagesLoading || state.markedTargets,
     endTime: state.endTime,
     live: state.live,
-    logList: state.logList,
-    exceptionsList: state.exceptionsList,
-    resourceList: state.resourceList,
-    stackList: state.stackList,
-    fetchList: state.fetchList,
+    // logList: state.logList,
+    // exceptionsList: state.exceptionsList,
+    // resourceList: state.resourceList,
+    // stackList: state.stackList,
+    // fetchList: state.fetchList,
 }))
 @connect(
     (state) => ({
@@ -141,14 +141,14 @@ export default class Timeline extends React.PureComponent {
             skipIntervals,
             disabled,
             endTime,
-            live,
-            logList,
-            exceptionsList,
-            resourceList,
-            clickRageTime,
-            stackList,
-            fetchList,
-            issues,
+            // live,
+            // logList,
+            // exceptionsList,
+            // resourceList,
+            // clickRageTime,
+            // stackList,
+            // fetchList,
+            // issues,
         } = this.props;
 
         const scale = 100 / endTime;
@@ -175,9 +175,9 @@ export default class Timeline extends React.PureComponent {
                             />
                         ))}
                     <div className={stl.timeline} />
-                    {/* {events.map((e) => (
+                    {events.map((e) => (
                         <div key={e.key} className={stl.event} style={{ left: `${getTimelinePosition(e.time, scale)}%` }} />
-                    ))} */}
+                    ))}
                     {/* {issues.map((iss) => (
                         <div
                             style={{

@@ -28,7 +28,7 @@ function ErrorDetails(props: Props) {
     }, []);
 
     return (
-        <div className="bg-white p-5 h-screen" style={{ width: '700px' }}>
+        <div className="bg-white p-5 h-screen">
             {!sourcemapUploaded && (
                 <div
                     style={{ backgroundColor: 'rgba(204, 0, 0, 0.1)' }}
