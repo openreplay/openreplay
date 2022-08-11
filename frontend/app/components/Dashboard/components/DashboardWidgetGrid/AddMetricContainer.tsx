@@ -5,25 +5,41 @@ import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import AddMetric from './AddMetric';
 import AddPredefinedMetric from './AddPredefinedMetric';
+import cn from 'classnames';
 
 interface AddMetricButtonProps {
     iconName: string;
     title: string;
     description: string;
+    isPremade?: boolean;
     onClick: () => void;
 }
 
-function AddMetricButton({ iconName, title, description, onClick }: AddMetricButtonProps) {
+function AddMetricButton({ iconName, title, description, onClick, isPremade }: AddMetricButtonProps) {
     return (
         <div
             onClick={onClick}
-            className="px-4 py-8 flex items-center flex-col bg-tealx-lightest hover:bg-active-blue group border-teal-light border cursor-pointer"
+            className={cn(
+                'px-4 py-8 flex items-center flex-col hover:bg-gray-lightest group rounded border cursor-pointer',
+                isPremade ? 'bg-figmaColors-primary-outlined-hover-background' : 'bg-figmaColors-secondary-outlined-hover-background'
+            )}
+            style={{ borderColor: 'rgb(238, 238, 238)' }}
         >
-            <div className="p-4 mb-2 bg-gray-light rounded-full group-hover:bg-teal-light">
-                <Icon name={iconName} size={26} />
+            <div
+                className={cn(
+                    'p-6 my-3 rounded-full group-hover:bg-gray-light',
+                    isPremade ? 'bg-figmaColors-primary-outlined-hover-background' : 'bg-figmaColors-secondary-outlined-hover-background'
+                )}
+            >
+                <Icon
+                    name={iconName}
+                    size={26}
+                    className="group-hover:fill-gray-medium"
+                    style={{ fill: isPremade ? '#3EAAAF' : 'rgba(63, 81, 181, 0.5)' }}
+                />
             </div>
-            <div className="font-bold mb-2">{title}</div>
-            <div className="text-disabled-test w-2/3">{description}</div>
+            <div className="font-bold mb-2 text-figmaColors-text-primary">{title}</div>
+            <div className="text-disabled-test w-2/3 text-center text-figmaColors-text-primary">{description}</div>
         </div>
     );
 }
@@ -63,17 +79,18 @@ function AddMetricContainer({ siteId }: any) {
         );
     };
     return (
-        <div className="bg-white rounded p-8 grid grid-cols-2 gap-4 w-4/5 m-auto">
+        <div style={{ borderColor: 'rgb(238, 238, 238)', height: 300 }} className="bg-white border border-dashed rounded p-8 grid grid-cols-2 gap-8">
             <AddMetricButton
                 title="+ Add custom Metric"
                 description="Metrics that are manually created by you or your team"
-                iconName="bar-chart-line"
+                iconName="bar-pencil"
                 onClick={onAddCustomMetrics}
+                isPremade
             />
             <AddMetricButton
                 title="+ Add Ready-Made Metric"
                 description="Curated metrics predfined by OpenReplay."
-                iconName="bar-chart-line"
+                iconName="grid-check"
                 onClick={onAddPredefinedMetrics}
             />
         </div>
