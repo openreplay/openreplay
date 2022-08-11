@@ -1,6 +1,6 @@
 import React from 'react';
 import { getRE } from 'App/utils';
-import { Label, NoContent, Input, SlideModal, CloseButton } from 'UI';
+import { Label, NoContent, Input, SlideModal, CloseButton, Icon } from 'UI';
 import { connectPlayer, pause, jump } from 'Player';
 // import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
@@ -129,7 +129,17 @@ export default class Fetch extends React.PureComponent {
                         </div>
                     </BottomBlock.Header>
                     <BottomBlock.Content>
-                        <NoContent size="small" show={filteredList.length === 0}>
+                        <NoContent
+                            title={
+                                <div className="capitalize flex items-center mt-16">
+                                    <Icon name="info-circle" className="mr-2" size="18" />
+                                    No Data
+                                </div>
+                            }
+                            // size="small"
+                            show={filteredList.length === 0}
+                        >
+                            {/* <NoContent size="small" show={filteredList.length === 0}> */}
                             <TimeTable rows={filteredList} onRowClick={this.onRowClick} hoverable navigation activeIndex={listNow.length - 1}>
                                 {[
                                     {
