@@ -21,18 +21,18 @@ function DashboardsView({ history, siteId }: { history: any, siteId: string }) {
     }
 
     return (
-        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded p-4">
+        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded p-4 border">
             <div className="flex items-center mb-4 justify-between">
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Dashboards" className="" />
                 </div>
                 <Button variant="primary" onClick={onAddDashboardClick}>Create Dashboard</Button>
-                <div className="ml-auto w-1/4">
+                <div className="ml-auto w-1/4" style={{ minWidth: 300 }}>
                     <DashboardSearch />
                 </div>
             </div>
-            <div className="text-xl text-disabled-text flex items-center">
-                <Icon name="info-circle-fill" className="mr-2" size={18} />
+            <div className="text-base text-disabled-text flex items-center">
+                <Icon name="info-circle-fill" className="mr-2" size={16} />
                 A dashboard is a custom visualization using your OpenReplay data.
             </div>
             <DashboardList />
