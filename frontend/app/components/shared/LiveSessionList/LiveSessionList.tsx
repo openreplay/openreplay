@@ -151,18 +151,18 @@ function LiveSessionList(props: Props) {
                                 </>
                             ))}
                         </div>
+
+                        <div className={cn('w-full flex items-center justify-center py-6', { disabled: loading })}>
+                            <Pagination
+                                page={currentPage}
+                                totalPages={Math.ceil(total / PER_PAGE)}
+                                onPageChange={(page: any) => props.updateCurrentPage(page)}
+                                limit={PER_PAGE}
+                                debounceRequest={500}
+                            />
+                        </div>
                     </NoContent>
                 </Loader>
-
-                <div className={cn('w-full flex items-center justify-center py-6', { disabled: loading })}>
-                    <Pagination
-                        page={currentPage}
-                        totalPages={Math.ceil(total / PER_PAGE)}
-                        onPageChange={(page: any) => props.updateCurrentPage(page)}
-                        limit={PER_PAGE}
-                        debounceRequest={500}
-                    />
-                </div>
             </div>
         </div>
     );
