@@ -56,6 +56,7 @@ func (m *RawMessage) Decode() Message {
 	if err != nil {
 		log.Printf("decode err: %s", err)
 	}
+	msg.Meta().SetMeta(m.meta)
 	return msg
 }
 
