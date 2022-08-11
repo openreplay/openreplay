@@ -1,10 +1,14 @@
+import logging
 import smtplib
+from smtplib import SMTPAuthenticationError
+
 from decouple import config
+from starlette.exceptions import HTTPException
 
 
 class EmptySMTP:
     def sendmail(self, from_addr, to_addrs, msg, mail_options=(), rcpt_options=()):
-        print("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
+        logging.error("!! CANNOT SEND EMAIL, NO VALID SMTP CONFIGURATION FOUND")
 
 
 class SMTPClient:
@@ -31,7 +35,10 @@ class SMTPClient:
             # stmplib docs recommend calling ehlo() before & after starttls()
             self.server.ehlo()
         if len(config("EMAIL_USER", default="")) > 0 and len(config("EMAIL_PASSWORD", default="")) > 0:
-            self.server.login(user=config("EMAIL_USER"), password=config("EMAIL_PASSWORD"))
+            try:
+                self.server.login(user=config("EMAIL_USER"), password=config("EMAIL_PASSWORD"))
+            except SMTPAuthenticationError:
+                raise HTTPException(401, "SMTP Authentication Error")
         return self.server
 
     def __exit__(self, *args):

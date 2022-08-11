@@ -1,5 +1,5 @@
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.email_handler import __get_html_from_file, send_html, __escape_text_html
+from chalicelib.utils.email_handler import __get_html_from_file, send_html
 
 
 def send_team_invitation(recipient, client_id, sender_name, invitation_link):
