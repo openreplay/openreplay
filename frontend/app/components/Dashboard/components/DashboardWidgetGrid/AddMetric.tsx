@@ -66,7 +66,7 @@ function AddMetric({ metrics, history, siteId, title, description }: IProps) {
                     )}
                 </div>
 
-                <div className="grid h-full grid-cols-4 gap-4 px-8 items-start py-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
+                <div className="grid h-full grid-cols-4 gap-4 px-8 items-start py-1" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', gridTemplateRows: 'max-content' }}>
                     {metrics ? metrics.map((metric: any) => (
                         <WidgetWrapper
                             key={metric.metricId}
