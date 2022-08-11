@@ -64,7 +64,7 @@ export default class Exceptions extends React.PureComponent {
                   show={ !loading && errorStack.size === 0 }
                   title="Nothing found!"
                 >
-                  <ErrorDetails error={ currentError.name } errorStack={errorStack} sourcemapUploaded={sourcemapUploaded} />
+                  <ErrorDetails error={ currentError } errorStack={errorStack} sourcemapUploaded={sourcemapUploaded} />
                 </NoContent>
               </Loader> 
             </div>

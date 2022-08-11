@@ -36,10 +36,10 @@ function OverviewPanel(props: Props) {
     };
 
     return (
-        <BottomBlock style={{ height: '260px' }}>
+        <BottomBlock style={{ height: '263px' }}>
             <BottomBlock.Header>
                 <span className="font-semibold color-gray-medium mr-4">Overview</span>
-                <div className="flex items-center">
+                <div className="flex items-center h-20">
                     <FeatureSelection list={selectedFeatures} updateList={setSelectedFeatures} />
                 </div>
             </BottomBlock.Header>

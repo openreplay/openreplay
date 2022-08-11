@@ -12,7 +12,7 @@ import CustomDragLayer from './CustomDragLayer';
 import { debounce } from 'App/utils';
 import { Tooltip } from 'react-tippy';
 
-const BOUNDRY = 15;
+const BOUNDRY = 0;
 
 function getTimelinePosition(value, scale) {
     const pos = value * scale;

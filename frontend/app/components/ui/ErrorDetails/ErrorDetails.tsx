@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ErrorFrame from '../ErrorFrame/ErrorFrame';
 import { fetchErrorStackList } from 'Duck/sessions';
-import { IconButton, Icon } from 'UI';
+import { Button, Icon } from 'UI';
 import { connect } from 'react-redux';
 
 const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
@@ -46,8 +46,12 @@ function ErrorDetails(props: Props) {
             <div className="flex items-center my-3">
                 <h3 className="text-xl mr-auto">Stacktrace</h3>
                 <div className="flex justify-end mr-2">
-                    <IconButton onClick={() => setShowRaw(false)} label="FULL" plain={!showRaw} primaryText={!showRaw} />
-                    <IconButton primaryText={showRaw} onClick={() => setShowRaw(true)} plain={showRaw} label="RAW" />
+                    <Button variant={!showRaw ? 'text-primary' : 'text'} onClick={() => setShowRaw(false)}>
+                        FULL
+                    </Button>
+                    <Button variant={showRaw ? 'text-primary' : 'text'} onClick={() => setShowRaw(true)}>
+                        RAW
+                    </Button>
                 </div>
             </div>
             <div className="mb-6 code-font" data-hidden={showRaw}>
@@ -59,7 +63,6 @@ function ErrorDetails(props: Props) {
                     {error.name} : {firstFunc ? firstFunc : '?'}
                 </div>
             )}
-            ;
             {errorStack.map((frame: any, i: any) => (
                 <div className="mb-3" key={frame.key}>
                     <ErrorFrame frame={frame} showRaw={showRaw} isFirst={i == 0} />

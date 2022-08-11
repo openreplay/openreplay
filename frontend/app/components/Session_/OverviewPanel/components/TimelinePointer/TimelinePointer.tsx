@@ -2,16 +2,17 @@ import React from 'react';
 import { connectPlayer, Controls } from 'App/player';
 import { toggleBottomBlock, NETWORK, EXCEPTIONS, PERFORMANCE } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
-import { Icon, ErrorDetails } from 'UI';
+import { Icon, ErrorDetails, Popup } from 'UI';
 import { Tooltip } from 'react-tippy';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import StackEventModal from '../StackEventModal';
+import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 
 interface Props {
     pointer: any;
     type: any;
 }
-function TimelinePointer(props: Props) {
+const TimelinePointer = React.memo((props: Props) => {
     const { showModal, hideModal } = useModal();
     const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
         e.stopPropagation();
@@ -20,8 +21,8 @@ function TimelinePointer(props: Props) {
             return;
         }
 
-        if (type === 'EXCEPTIONS') {
-            showModal(<ErrorDetails error={pointer} />, { right: true });
+        if (type === 'ERRORS') {
+            showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true });
         }
 
         if (type === 'EVENT') {
@@ -32,8 +33,8 @@ function TimelinePointer(props: Props) {
 
     const renderNetworkElement = (item: any) => {
         return (
-            <Tooltip
-                html={
+            <Popup
+                content={
                     <div className="">
                         <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
                         <br />
@@ -46,14 +47,14 @@ function TimelinePointer(props: Props) {
                 <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
                     <div className="h-2 w-2 rounded-full bg-red" />
                 </div>
-            </Tooltip>
+            </Popup>
         );
     };
 
     const renderClickRageElement = (item: any) => {
         return (
-            <Tooltip
-                html={
+            <Popup
+                content={
                     <div className="">
                         <b>{'Click Rage'}</b>
                     </div>
@@ -64,14 +65,14 @@ function TimelinePointer(props: Props) {
                 <div onClick={createEventClickHandler(item, null)} className="cursor-pointer">
                     <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" />
                 </div>
-            </Tooltip>
+            </Popup>
         );
     };
 
     const renderStackEventElement = (item: any) => {
         return (
-            <Tooltip
-                html={
+            <Popup
+                content={
                     <div className="">
                         <b>{'Stack Event'}</b>
                     </div>
@@ -82,15 +83,14 @@ function TimelinePointer(props: Props) {
                 <div onClick={createEventClickHandler(item, 'EVENT')} className="cursor-pointer w-1 h-4 bg-red">
                     {/* <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" /> */}
                 </div>
-            </Tooltip>
+            </Popup>
         );
     };
 
     const renderPerformanceElement = (item: any) => {
-        console.log('item', item)
         return (
-            <Tooltip
-                html={
+            <Popup
+                content={
                     <div className="">
                         <b>{item.name}</b>
                     </div>
@@ -101,14 +101,14 @@ function TimelinePointer(props: Props) {
                 <div onClick={createEventClickHandler(item, EXCEPTIONS)} className="cursor-pointer w-1 h-4 bg-red">
                     {/* <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" /> */}
                 </div>
-            </Tooltip>
+            </Popup>
         );
     };
 
     const renderExceptionElement = (item: any) => {
         return (
-            <Tooltip
-                html={
+            <Popup
+                content={
                     <div className="">
                         <b>{'Exception'}</b>
                         <br />
@@ -118,10 +118,10 @@ function TimelinePointer(props: Props) {
                 delay={0}
                 position="top"
             >
-                <div onClick={createEventClickHandler(item, EXCEPTIONS)} className="cursor-pointer">
+                <div onClick={createEventClickHandler(item, 'ERRORS')} className="cursor-pointer">
                     <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" />
                 </div>
-            </Tooltip>
+            </Popup>
         );
     };
 
@@ -145,6 +145,6 @@ function TimelinePointer(props: Props) {
         }
     };
     return <div>{render()}</div>;
-}
+});
 
 export default TimelinePointer;
