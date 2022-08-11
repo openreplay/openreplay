@@ -63,6 +63,7 @@ func main() {
 				continue
 			}
 			msg := iter.Message().Decode()
+			log.Printf("process message, type: %d", iter.Type())
 
 			// Just save session data into db without additional checks
 			if err := saver.InsertMessage(sessionID, msg); err != nil {
