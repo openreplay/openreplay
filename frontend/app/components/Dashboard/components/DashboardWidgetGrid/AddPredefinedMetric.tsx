@@ -99,7 +99,7 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
                     )}
                 </div>
 
-                <div className="flex px-8">
+                <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)'}}>
                     <div style={{ flex: 3 }}>
                         <div className="grid grid-cols-1 gap-4 py-1 pr-2" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
                             {activeCategory &&
