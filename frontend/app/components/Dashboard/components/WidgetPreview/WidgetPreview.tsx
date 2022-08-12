@@ -4,7 +4,6 @@ import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { SegmentSelection, Button, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-import SelectDateRange from 'Shared/SelectDateRange';
 import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 // import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
@@ -12,6 +11,7 @@ import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelecti
 
 interface Props {
     className?: string;
+    name: string;
 }
 function WidgetPreview(props: Props) {
     const [showDashboardSelectionModal, setShowDashboardSelectionModal] = React.useState(false);
@@ -38,24 +38,6 @@ function WidgetPreview(props: Props) {
     //     })
     // }
 
-    const getWidgetTitle = () => {
-        if (isTimeSeries) {
-            return 'Time Series';
-        } else if (isTable) {
-            if (metric.metricOf === FilterKey.SESSIONS) {
-                // return 'Table of Sessions';
-                return <div>Sessions <span className="color-gray-medium">{metric.data.total}</span></div>;
-            } else if (metric.metricOf === FilterKey.ERRORS) {
-                // return 'Table of Errors';
-                return <div>Errors <span className="color-gray-medium">{metric.data.total}</span></div>;
-            } else {
-                return 'Table';
-            }
-        } else if (metric.metricType === 'funnel') {
-            return 'Funnel';
-        }
-    }
-
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
 
     return useObserver(() => (
@@ -63,7 +45,7 @@ function WidgetPreview(props: Props) {
         <div className={cn(className, 'bg-white rounded')}>
             <div className="flex items-center justify-between px-4 pt-2">
                 <h2 className="text-2xl">
-                    {getWidgetTitle()}
+                    {props.name}
                 </h2>
                 <div className="flex items-center">
                     {isTimeSeries && (
@@ -120,7 +102,7 @@ function WidgetPreview(props: Props) {
                 </div>
             </div>
             <div className="p-4 pt-0">
-                <WidgetWrapper widget={metric} isPreview={true} isWidget={false} />
+                <WidgetWrapper widget={metric} isPreview={true} isWidget={false} hideName />
             </div>
         </div>
         { canAddToDashboard && (

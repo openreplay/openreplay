@@ -62,7 +62,7 @@ function WidgetSessions(props: Props) {
     }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage]);
 
     return useObserver(() => (
-        <div className={cn(className)}>
+        <div className={cn(className, "bg-white p-3 pb-0 rounded border")}>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline">
                     <h2 className="text-2xl">Sessions</h2>
@@ -80,7 +80,7 @@ function WidgetSessions(props: Props) {
                 )}
             </div>
 
-            <div className="mt-3 bg-white p-3 rounded border">
+            <div className="mt-3">
                 <Loader loading={loading}>
                     <NoContent
                         title={
