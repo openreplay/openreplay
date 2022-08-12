@@ -9,7 +9,7 @@ import (
 func (conn *Conn) InsertIOSCustomEvent(sessionID uint64, e *messages.IOSCustomEvent) error {
 	err := conn.InsertCustomEvent(sessionID, e.Timestamp, e.Index, e.Name, e.Payload)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, 0, "CUSTOM_IOS", e.Name)
+		conn.insertAutocompleteValue(0, "CUSTOM_IOS", e.Name)
 	}
 	return err
 }
@@ -17,7 +17,7 @@ func (conn *Conn) InsertIOSCustomEvent(sessionID uint64, e *messages.IOSCustomEv
 func (conn *Conn) InsertIOSUserID(sessionID uint64, userID *messages.IOSUserID) error {
 	err := conn.InsertUserID(sessionID, userID.Value)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, 0, "USERID_IOS", userID.Value)
+		conn.insertAutocompleteValue(0, "USERID_IOS", userID.Value)
 	}
 	return err
 }
@@ -25,7 +25,7 @@ func (conn *Conn) InsertIOSUserID(sessionID uint64, userID *messages.IOSUserID) 
 func (conn *Conn) InsertIOSUserAnonymousID(sessionID uint64, userAnonymousID *messages.IOSUserAnonymousID) error {
 	err := conn.InsertUserAnonymousID(sessionID, userAnonymousID.Value)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, 0, "USERANONYMOUSID_IOS", userAnonymousID.Value)
+		conn.insertAutocompleteValue(0, "USERANONYMOUSID_IOS", userAnonymousID.Value)
 	}
 	return err
 }
@@ -33,7 +33,7 @@ func (conn *Conn) InsertIOSUserAnonymousID(sessionID uint64, userAnonymousID *me
 func (conn *Conn) InsertIOSNetworkCall(sessionID uint64, e *messages.IOSNetworkCall) error {
 	err := conn.InsertRequest(sessionID, e.Timestamp, e.Index, e.URL, e.Duration, e.Success)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, 0, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
+		conn.insertAutocompleteValue(0, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
 	}
 	return err
 }
@@ -65,7 +65,7 @@ func (conn *Conn) InsertIOSScreenEnter(sessionID uint64, screenEnter *messages.I
 	if err = tx.commit(); err != nil {
 		return err
 	}
-	conn.insertAutocompleteValue(sessionID, 0, "VIEW_IOS", screenEnter.ViewName)
+	conn.insertAutocompleteValue(0, "VIEW_IOS", screenEnter.ViewName)
 	return nil
 }
 
@@ -96,7 +96,7 @@ func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOS
 	if err = tx.commit(); err != nil {
 		return err
 	}
-	conn.insertAutocompleteValue(sessionID, 0, "CLICK_IOS", clickEvent.Label)
+	conn.insertAutocompleteValue(0, "CLICK_IOS", clickEvent.Label)
 	return nil
 }
 
@@ -132,7 +132,7 @@ func (conn *Conn) InsertIOSInputEvent(sessionID uint64, inputEvent *messages.IOS
 	if err = tx.commit(); err != nil {
 		return err
 	}
-	conn.insertAutocompleteValue(sessionID, 0, "INPUT_IOS", inputEvent.Label)
+	conn.insertAutocompleteValue(0, "INPUT_IOS", inputEvent.Label)
 	// conn.insertAutocompleteValue(sessionID, "INPUT_VALUE", inputEvent.Label)
 	return nil
 }

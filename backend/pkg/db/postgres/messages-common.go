@@ -51,12 +51,12 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 }
 
 func (conn *Conn) HandleSessionStart(sessionID uint64, s *types.Session) error {
-	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USEROS", s.Platform), s.UserOS)
-	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USERDEVICE", s.Platform), s.UserDevice)
-	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("USERCOUNTRY", s.Platform), s.UserCountry)
-	conn.insertAutocompleteValue(sessionID, s.ProjectID, getAutocompleteType("REVID", s.Platform), s.RevID)
+	conn.insertAutocompleteValue(s.ProjectID, getAutocompleteType("USEROS", s.Platform), s.UserOS)
+	conn.insertAutocompleteValue(s.ProjectID, getAutocompleteType("USERDEVICE", s.Platform), s.UserDevice)
+	conn.insertAutocompleteValue(s.ProjectID, getAutocompleteType("USERCOUNTRY", s.Platform), s.UserCountry)
+	conn.insertAutocompleteValue(s.ProjectID, getAutocompleteType("REVID", s.Platform), s.RevID)
 	// s.Platform == "web"
-	conn.insertAutocompleteValue(sessionID, s.ProjectID, "USERBROWSER", s.UserBrowser)
+	conn.insertAutocompleteValue(s.ProjectID, "USERBROWSER", s.UserBrowser)
 	return nil
 }
 

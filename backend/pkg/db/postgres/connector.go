@@ -53,7 +53,7 @@ func (conn *Conn) Close() error {
 	return nil
 }
 
-func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp string, value string) {
+func (conn *Conn) insertAutocompleteValue(projectID uint32, tp string, value string) {
 	if len(value) == 0 {
 		return
 	}

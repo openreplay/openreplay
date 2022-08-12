@@ -19,7 +19,7 @@ func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *Cu
 		e.MessageID,
 		e.Name, e.Payload)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
+		conn.insertAutocompleteValue(projectID, "CUSTOM", e.Name)
 	}
 	return err
 }
@@ -27,7 +27,7 @@ func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *Cu
 func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *UserID) error {
 	err := conn.InsertUserID(sessionID, userID.ID)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, projectID, "USERID", userID.ID)
+		conn.insertAutocompleteValue(projectID, "USERID", userID.ID)
 	}
 	return err
 }
@@ -35,7 +35,7 @@ func (conn *Conn) InsertWebUserID(sessionID uint64, projectID uint32, userID *Us
 func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, userAnonymousID *UserAnonymousID) error {
 	err := conn.InsertUserAnonymousID(sessionID, userAnonymousID.ID)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, projectID, "USERANONYMOUSID", userAnonymousID.ID)
+		conn.insertAutocompleteValue(projectID, "USERANONYMOUSID", userAnonymousID.ID)
 	}
 	return err
 }
@@ -55,8 +55,8 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 1)
 	// Add new value set to autocomplete bulk
-	conn.insertAutocompleteValue(sessionID, projectID, "LOCATION", url.DiscardURLQuery(path))
-	conn.insertAutocompleteValue(sessionID, projectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
+	conn.insertAutocompleteValue(projectID, "LOCATION", url.DiscardURLQuery(path))
+	conn.insertAutocompleteValue(projectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
 	return nil
 }
 
@@ -74,7 +74,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 0)
 	// Add new value set to autocomplete bulk
-	conn.insertAutocompleteValue(sessionID, projectID, "CLICK", e.Label)
+	conn.insertAutocompleteValue(projectID, "CLICK", e.Label)
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
-	conn.insertAutocompleteValue(sessionID, projectID, "INPUT", e.Label)
+	conn.insertAutocompleteValue(projectID, "INPUT", e.Label)
 	return nil
 }
 
@@ -143,7 +143,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 		response = &e.Response
 	}
 	host, path, query, err := url.GetURLParts(e.URL)
-	conn.insertAutocompleteValue(sessionID, projectID, "REQUEST", path)
+	conn.insertAutocompleteValue(projectID, "REQUEST", path)
 	if err != nil {
 		return err
 	}
@@ -182,6 +182,6 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, save
 	if err := conn.bulks.Get("webGraphQLEvents").Append(sessionID, e.Timestamp, e.MessageID, e.OperationName, request, response); err != nil {
 		log.Printf("insert web graphQL event err: %s", err)
 	}
-	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)
+	conn.insertAutocompleteValue(projectID, "GRAPHQL", e.OperationName)
 	return nil
 }
