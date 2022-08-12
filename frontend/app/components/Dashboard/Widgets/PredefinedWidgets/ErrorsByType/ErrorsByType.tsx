@@ -16,6 +16,7 @@ function ErrorsByType(props: Props) {
     return (
         <NoContent
           size="small"
+          title="No recordings found"
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

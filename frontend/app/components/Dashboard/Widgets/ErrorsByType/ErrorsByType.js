@@ -31,6 +31,7 @@ export default class ErrorsByType extends React.PureComponent {
       <Loader loading={ loading } size="small">
         <NoContent
           size="small"
+          title="No recordings found"
           show={ data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">

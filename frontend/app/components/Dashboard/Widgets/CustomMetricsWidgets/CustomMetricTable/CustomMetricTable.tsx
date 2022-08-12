@@ -49,8 +49,8 @@ function CustomMetricTable(props: Props) {
         onClick(filters);
     }
     return (
-        <div className="" style={{ maxHeight: '240px'}}>
-           <NoContent show={data.values && data.values.length === 0} size="small">
+        <div className="" style={{ height: 240 }}>
+           <NoContent show={data.values && data.values.length === 0} size="small" title="No recordings found">
                 <Table
                     small
                     cols={ getColumns(metric) }

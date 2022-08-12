@@ -258,7 +258,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                     </div>
                 </div>
 
-                <NoContent size="small" show={rows.length === 0}>
+                <NoContent size="small" show={rows.length === 0} title="No recordings found">
                     <div className="relative">
                         <div className={stl.timePart} style={{ left: `${columnsSumWidth}px` }}>
                             {timeColumns.map((_, index) => (

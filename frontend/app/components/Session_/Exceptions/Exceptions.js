@@ -97,6 +97,7 @@ export default class Exceptions extends React.PureComponent {
             <NoContent
               size="small"
               show={ filtered.length === 0}
+              title="No recordings found"
             >
               <Autoscroll>
                 { filtered.map(e => (

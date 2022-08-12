@@ -31,6 +31,7 @@ function Crashes({ player }) {
 			<PanelLayout.Body>
 				<NoContent
 		      size="small"
+					title="No recordings found"
 		      show={ filtered.length === 0}
 		    >
 		      <Autoscroll>

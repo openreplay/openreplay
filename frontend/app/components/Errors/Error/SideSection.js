@@ -87,7 +87,7 @@ export default class SideSection extends React.PureComponent {
 					<h3 className="text-xl mb-2">Overview</h3>
 					<Trend
 						chart={ data.chart24 }
-						title="Last 24 hours"						
+						title="Past 24 hours"
 					/>
 					<div className="mb-6" />
 					<Trend
@@ -121,5 +121,3 @@ export default class SideSection extends React.PureComponent {
 		);
 	}
 }
-
-
