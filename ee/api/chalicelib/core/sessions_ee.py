@@ -3,7 +3,7 @@ from typing import List, Union
 import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -467,44 +467,44 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
                    metric_of: schemas.TableMetricOfType, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
-                                                   density=density, factor=1, decimal=True))
+                                                   density=density))
     extra_event = None
     if metric_of == schemas.TableMetricOfType.visited_url:
         extra_event = "events.pages"
     elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
-    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
-                                               favorite_only=False, issue=None, project_id=project_id,
-                                               user_id=None, extra_event=extra_event)
+    full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
+                                                  favorite_only=False, issue=None, project_id=project_id,
+                                                  user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
     sessions = []
-    with pg_client.PostgresClient() as cur:
+    with ch_client.ClickHouseClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
-                                                                {query_part})
-                                            SELECT generated_timestamp AS timestamp,
-                                                   COUNT(s)            AS count
-                                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                     LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                         FROM full_sessions
-                                                                         WHERE start_ts >= generated_timestamp
-                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
-                                            GROUP BY generated_timestamp
-                                            ORDER BY generated_timestamp;""", full_args)
+                query = f"""SELECT toUnixTimestamp(
+                                    toStartOfInterval(processed_sessions.datetime, INTERVAL %(step_size)s second)
+                                    ) * 1000 AS timestamp,
+                                COUNT(processed_sessions.session_id) AS count
+                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id AS session_id,
+                                        s.datetime AS datetime
+                                    {query_part}) AS processed_sessions
+                            GROUP BY timestamp
+                            ORDER BY timestamp;"""
+                main_query = cur.format(query, full_args)
             else:
-                main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
+                main_query = cur.format(f"""SELECT count(DISTINCT s.session_id) AS count
                                             {query_part};""", full_args)
 
             # print("--------------------")
             # print(main_query)
             # print("--------------------")
-            cur.execute(main_query)
+            sessions = cur.execute(main_query)
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
-                sessions = cur.fetchall()
+                sessions = metrics.__complete_missing_steps(start_time=data.startDate, end_time=data.endDate,
+                                                            density=density, neutral={"count": 0}, rows=sessions)
             else:
-                sessions = cur.fetchone()["count"]
+                sessions = sessions[0]["count"] if len(sessions) > 0 else 0
         elif metric_type == schemas.MetricType.table:
             if isinstance(metric_of, schemas.TableMetricOfType):
                 main_col = "user_id"
