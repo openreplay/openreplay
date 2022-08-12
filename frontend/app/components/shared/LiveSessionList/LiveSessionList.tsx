@@ -14,6 +14,7 @@ import { capitalize } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { numberWithCommas } from 'App/utils';
 
 const AUTOREFRESH_INTERVAL = 0.5 * 60 * 1000;
 const PER_PAGE = 10;
@@ -83,33 +84,33 @@ function LiveSessionList(props: Props) {
 
     return (
         <div>
-            <div className="flex mb-6 justify-between items-end">
-                <div className="flex items-baseline">
-                    <h3 className="text-2xl capitalize">
-                        <span>Live Sessions</span>
-                        <span className="ml-2 font-normal color-gray-medium">{total}</span>
-                    </h3>
+            <div className="bg-white p-3 rounded border">
+                <div className="flex mb-6 justify-between items-center">
+                    <div className="flex items-baseline">
+                        <h3 className="text-2xl capitalize">
+                            <span>Live Sessions</span>
+                            <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span>
+                        </h3>
 
-                    <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
-                </div>
-                <div className="flex items-center">
-                    <div className="flex items-center ml-6 mr-4">
-                        <span className="mr-2 color-gray-medium">Sort By</span>
-                        <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
-                            <Select
-                                plain
-                                right
-                                options={sortOptions}
-                                onChange={onSortChange}
-                                value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                            />
-                            <div className="mx-2" />
-                            <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                        <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
+                    </div>
+                    <div className="flex items-center">
+                        <div className="flex items-center ml-6">
+                            <span className="mr-2 color-gray-medium">Sort By</span>
+                            <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
+                                <Select
+                                    plain
+                                    right
+                                    options={sortOptions}
+                                    onChange={onSortChange}
+                                    value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                                />
+                                <div className="mx-2" />
+                                <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className="bg-white p-3 rounded border">
                 <Loader loading={loading}>
                     <NoContent
                         title={
