@@ -8,7 +8,6 @@ import {
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
-import { session as sessionRoute, withSiteId } from 'App/routes';
 import {
   toggleTimetravel,
   jumpToLive,
@@ -31,7 +30,7 @@ import {
   EXCEPTIONS,
   INSPECTOR,
 } from 'Duck/components/player';
-import { ReduxTime, AssistDuration } from './Time';
+import { AssistDuration } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 import PlayerControls from './components/PlayerControls'
@@ -121,7 +120,6 @@ function getStorageName(type) {
   toggleBottomBlock,
 })
 export default class Controls extends React.Component {
-
   componentDidMount() {
     document.addEventListener('keydown', this.onKeyDown);
   }
@@ -318,6 +316,7 @@ export default class Controls extends React.Component {
                   toggleSkip={toggleSkip}
                   playButton={this.renderPlayBtn()}
                   controlIcon={this.controlIcon}
+                  ref={this.speedRef}
                 />
               )}
 

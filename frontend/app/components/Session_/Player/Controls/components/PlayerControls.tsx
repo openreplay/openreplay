@@ -1,10 +1,10 @@
-import React from 'react'
+import React from 'react';
 import { Tooltip } from 'react-tippy';
 import { ReduxTime } from '../Time';
 import { Icon } from 'UI';
 import cn from 'classnames';
 // @ts-ignore
-import styles from '../controls.module.css'
+import styles from '../controls.module.css';
 
 interface Props {
   live: boolean;
@@ -16,22 +16,51 @@ interface Props {
   forthTenSeconds: () => void;
   toggleSpeed: () => void;
   toggleSkip: () => void;
-  controlIcon: (icon: string, size: number, action: () => void, isBackwards: boolean, additionalClasses: string) => JSX.Element;
+  controlIcon: (
+    icon: string,
+    size: number,
+    action: () => void,
+    isBackwards: boolean,
+    additionalClasses: string
+  ) => JSX.Element;
 }
 
 function PlayerControls(props: Props) {
-  const { 
-    live, 
-    skip, 
-    speed, 
-    disabled, 
-    playButton, 
-    backTenSeconds, 
-    forthTenSeconds, 
-    toggleSpeed, 
-    toggleSkip, 
-    controlIcon 
+  const {
+    live,
+    skip,
+    speed,
+    disabled,
+    playButton,
+    backTenSeconds,
+    forthTenSeconds,
+    toggleSpeed,
+    toggleSkip,
+    controlIcon,
   } = props;
+
+  const speedRef = React.useRef(null);
+  const arrowBackRef = React.useRef(null);
+  const arrowForwardRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        arrowForwardRef.current.focus();
+      }
+      if (e.key === 'ArrowLeft') {
+        arrowBackRef.current.focus();
+      }
+      if (e.key === 'ArrowDown') {
+        speedRef.current.focus();
+      }
+      if (e.key === 'ArrowUp') {
+        speedRef.current.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyboard);
+    return () => document.removeEventListener('keydown', handleKeyboard);
+  }, [speedRef, arrowBackRef, arrowForwardRef]);
   return (
     <div className="flex items-center">
       {playButton}
@@ -47,46 +76,41 @@ function PlayerControls(props: Props) {
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
-        <Tooltip
-          title='Rewind 10s'
-          delay={0}
-          position="top"
-        >
-          {controlIcon(
-            "skip-forward-fill",
-            18,
-            backTenSeconds,
-            true,
-            'hover:bg-active-blue-border color-main h-full flex items-center'
-          )}
+        <Tooltip title="Rewind 10s" delay={0} position="top">
+          <button ref={arrowBackRef} className="h-full focus:border focus:border-blue">
+            {controlIcon(
+              'skip-forward-fill',
+              18,
+              backTenSeconds,
+              true,
+              'hover:bg-active-blue-border color-main h-full flex items-center'
+            )}
+          </button>
         </Tooltip>
-        <div className='p-1 border-l border-r bg-active-blue-border border-active-blue-border'>10s</div>
+        <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
+          10s
+        </div>
         {/* @ts-ignore */}
-        <Tooltip
-          title='Forward 10s'
-          delay={0}
-          position="top"
-        >
-          {controlIcon(
-            "skip-forward-fill",
-            18,
-            forthTenSeconds,
-            false,
-            'hover:bg-active-blue-border color-main h-full flex items-center'
-          )}
+        <Tooltip title="Forward 10s" delay={0} position="top">
+          <button ref={arrowForwardRef} className="h-full focus:border focus:border-blue">
+            {controlIcon(
+              'skip-forward-fill',
+              18,
+              forthTenSeconds,
+              false,
+              'hover:bg-active-blue-border color-main h-full flex items-center'
+            )}
+          </button>
         </Tooltip>
       </div>
 
-      {!live &&
-        <div className='flex items-center mx-4'>
+      {!live && (
+        <div className="flex items-center mx-4">
           {/* @ts-ignore */}
-          <Tooltip
-            title='Playback speed'
-            delay={0}
-            position="top"
-          >
+          <Tooltip title="Control play back speed (↑↓)" delay={0} position="top">
             <button
-              className={styles.speedButton}
+              ref={speedRef}
+              className={cn(styles.speedButton, 'focus:border focus:border-blue')}
               onClick={toggleSpeed}
               data-disabled={disabled}
             >
@@ -95,7 +119,11 @@ function PlayerControls(props: Props) {
           </Tooltip>
 
           <button
-            className={cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip, [styles.active]: skip }, 'ml-4')}
+            className={cn(
+              styles.skipIntervalButton,
+              { [styles.withCheckIcon]: skip, [styles.active]: skip },
+              'ml-4'
+            )}
             onClick={toggleSkip}
             data-disabled={disabled}
           >
@@ -103,9 +131,9 @@ function PlayerControls(props: Props) {
             {'Skip Inactivity'}
           </button>
         </div>
-      }
+      )}
     </div>
-  )
+  );
 }
 
 export default PlayerControls;

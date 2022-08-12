@@ -24,8 +24,8 @@ function DashboardList() {
             show={lenth === 0}
             title={
               <div className="flex flex-col items-center justify-center">
-                <Icon name="no-dashboard" size={170} color="figmaColors-accent-secondary" />
-                <div className="mt-6 text-xl">You haven't created any dashboards yet</div>
+                <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" />
+                <div className="mt-3 text-xl">You haven't created any dashboards yet</div>
               </div>
             }   
         >
