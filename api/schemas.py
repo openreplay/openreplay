@@ -100,10 +100,12 @@ class NotificationsViewSchema(BaseModel):
     endTimestamp: Optional[int] = Field(default=None)
 
 
-class JiraGithubSchema(BaseModel):
-    provider: str = Field(...)
-    username: str = Field(...)
+class GithubSchema(BaseModel):
     token: str = Field(...)
+
+
+class JiraSchema(GithubSchema):
+    username: str = Field(...)
     url: HttpUrl = Field(...)
 
     @validator('url')
@@ -1024,13 +1026,15 @@ class LiveFilterType(str, Enum):
     user_UUID = "USERUUID"
     tracker_version = "TRACKERVERSION"
     user_browser_version = "USERBROWSERVERSION"
-    user_device_type = "USERDEVICETYPE",
+    user_device_type = "USERDEVICETYPE"
 
 
 class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(None)
+    operator: Literal[SearchEventOperator._is.value,
+                      SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
 
     @root_validator
     def validator(cls, values):
@@ -1066,3 +1070,18 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class IntegrationType(str, Enum):
+    github = "GITHUB"
+    jira = "JIRA"
+    slack = "SLACK"
+    sentry = "SENTRY"
+    bugsnag = "BUGSNAG"
+    rollbar = "ROLLBAR"
+    elasticsearch = "ELASTICSEARCH"
+    datadog = "DATADOG"
+    sumologic = "SUMOLOGIC"
+    stackdriver = "STACKDRIVER"
+    cloudwatch = "CLOUDWATCH"
+    newrelic = "NEWRELIC"

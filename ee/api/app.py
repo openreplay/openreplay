@@ -5,18 +5,20 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette import status
 from starlette.responses import StreamingResponse, JSONResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from routers import core, core_dynamic, ee, saml
-from routers.subs import v1_api
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
 from routers.subs import dashboard, insights, metrics, v1_api_ee
+from routers.subs import v1_api
 
-app = FastAPI(root_path="/api")
+app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.middleware('http')

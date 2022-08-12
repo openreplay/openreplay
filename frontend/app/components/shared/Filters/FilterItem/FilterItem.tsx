@@ -10,7 +10,7 @@ import SubFilterItem from '../SubFilterItem';
 interface Props {
     filterIndex: number;
     filter: any; // event/filter
-    onUpdate: (filter) => void;
+    onUpdate: (filter: any) => void;
     onRemoveFilter: () => void;
     isFilter?: boolean;
     saveRequestPayloads?: boolean;
@@ -20,26 +20,26 @@ function FilterItem(props: Props) {
     const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
     const isSubFilter = filter.type === FilterType.SUB_FILTERS;
 
-    const replaceFilter = (filter) => {
+    const replaceFilter = (filter: any) => {
         props.onUpdate({
             ...filter,
             value: [''],
-            filters: filter.filters ? filter.filters.map((i) => ({ ...i, value: [''] })) : [],
+            filters: filter.filters ? filter.filters.map((i: any) => ({ ...i, value: [''] })) : [],
         });
     };
 
-    const onOperatorChange = (e, { name, value }) => {
+    const onOperatorChange = (e: any, { name, value }: any) => {
         props.onUpdate({ ...filter, operator: value.value });
     };
 
-    const onSourceOperatorChange = (e, { name, value }) => {
+    const onSourceOperatorChange = (e: any, { name, value }: any) => {
         props.onUpdate({ ...filter, sourceOperator: value.value });
     };
 
-    const onUpdateSubFilter = (subFilter, subFilterIndex) => {
+    const onUpdateSubFilter = (subFilter: any, subFilterIndex: any) => {
         props.onUpdate({
             ...filter,
-            filters: filter.filters.map((i, index) => {
+            filters: filter.filters.map((i: any, index: any) => {
                 if (index === subFilterIndex) {
                     return subFilter;
                 }
@@ -90,8 +90,8 @@ function FilterItem(props: Props) {
                 {isSubFilter && (
                     <div className="grid grid-col ml-3 w-full">
                         {filter.filters
-                            .filter((i) => (i.key !== FilterKey.FETCH_REQUEST_BODY && i.key !== FilterKey.FETCH_RESPONSE_BODY) || saveRequestPayloads)
-                            .map((subFilter, subFilterIndex) => (
+                            .filter((i: any) => (i.key !== FilterKey.FETCH_REQUEST_BODY && i.key !== FilterKey.FETCH_RESPONSE_BODY) || saveRequestPayloads)
+                            .map((subFilter: any, subFilterIndex: any) => (
                                 <SubFilterItem
                                     filterIndex={subFilterIndex}
                                     filter={subFilter}

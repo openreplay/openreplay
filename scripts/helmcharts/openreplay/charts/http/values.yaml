@@ -39,7 +39,7 @@ securityContext: {}
 service:
   type: ClusterIP
   ports:
-    http: 80 
+    http: 8080
     metrics: 8888
 
 serviceMonitor:
@@ -90,7 +90,6 @@ env:
   TOKEN_SECRET: secret_token_string # TODO: generate on buld
   S3_BUCKET_IOS_IMAGES: sessions-mobile-assets
   CACHE_ASSETS: true
-  HTTP_PORT: 80
 
 
 nodeSelector: {}
@@ -98,3 +97,15 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+
+persistence: {}
+  # # Spec of spec.template.spec.containers[*].volumeMounts
+  # mounts:
+  # - name: kafka-ssl
+  #   mountPath: /opt/kafka/ssl
+  # # Spec of spec.template.spec.volumes
+  # volumes:
+  # - name: kafka-ssl
+  #   secret:
+  #     secretName: kafka-ssl

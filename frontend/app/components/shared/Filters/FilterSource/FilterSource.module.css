@@ -1,6 +1,6 @@
 .inputField {
   display: inline-block;
-  margin-right: 10px;
+  /* margin-right: 10px; */
   border: solid thin $gray-light;
   border-radius: 3px;
   height: 26px;

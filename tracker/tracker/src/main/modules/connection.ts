@@ -1,13 +1,13 @@
-import App from "../app/index.js";
-import { ConnectionInformation } from "../../common/messages.js";
+import App from '../app/index.js';
+import { ConnectionInformation } from '../../common/messages.js';
 
-export default function(app: App): void {
+export default function (app: App): void {
   const connection:
     | {
-      downlink: number;
-      type?: string;
-      addEventListener: (type: 'change', cb: () => void) => void;
-    }
+        downlink: number;
+        type?: string;
+        addEventListener: (type: 'change', cb: () => void) => void;
+      }
     | undefined =
     (navigator as any).connection ||
     (navigator as any).mozConnection ||

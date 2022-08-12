@@ -32,7 +32,8 @@ func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) er
 }
 
 func (c *PGCache) InsertIOSSessionEnd(sessionID uint64, e *IOSSessionEnd) error {
-	return c.InsertSessionEnd(sessionID, e.Timestamp)
+	_, err := c.InsertSessionEnd(sessionID, e.Timestamp)
+	return err
 }
 
 func (c *PGCache) InsertIOSScreenEnter(sessionID uint64, screenEnter *IOSScreenEnter) error {
@@ -84,13 +85,5 @@ func (c *PGCache) InsertIOSCrash(sessionID uint64, crash *IOSCrash) error {
 }
 
 func (c *PGCache) InsertIOSIssueEvent(sessionID uint64, issueEvent *IOSIssueEvent) error {
-	// session, err := c.GetSession(sessionID)
-	// if err != nil {
-	// 	return err
-	// }
-	// TODO: unite IssueEvent message for the all platforms
-	// if err := c.Conn.InsertIssueEvent(sessionID, session.ProjectID, issueEvent); err != nil {
-	// 	return err
-	// }
 	return nil
 }

@@ -39,7 +39,7 @@ securityContext: {}
 service:
   type: ClusterIP
   ports:
-    frontend: 80 
+    frontend: 8080
 
 serviceMonitor:
   enabled: true

@@ -9,9 +9,11 @@ import type {
   RawCssInsertRule,
 } from './raw'
 import RawMessageReader from './RawMessageReader'
-import type { RawMessageReaderI } from './RawMessageReader'
 import { resolveURL, resolveCSS } from './urlResolve'
 
+interface RawMessageReaderI {
+  readMessage(): RawMessage | null
+}
 
 const resolveMsg = {
   "set_node_attribute_url_based": (msg: RawSetNodeAttributeURLBased): RawSetNodeAttribute => 

@@ -143,6 +143,11 @@
   font-size: 14px;
 }
 
+.placeholder-lg::placeholder {
+  color: $gray-medium !important;
+  font-size: 16px;
+}
+
 .ui[class*="top fixed"].menu {
   background-color: white !important;
   border-bottom: solid thin #ddd !important;
@@ -254,7 +259,7 @@ p {
 }
 
 .link {
-  color: $blue !important;
+  color: $teal !important;
   cursor: pointer;
   &:hover {
     text-decoration: underline !important;

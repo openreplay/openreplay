@@ -66,8 +66,8 @@ const Header = (props) => {
   return (
     <div className={ cn(styles.header) } style={{ height: '50px'}}>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
-        <div className="relative">
-          <div className="p-2">
+        <div className="relative select-none">
+          <div className="px-4 py-2">
             <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
           </div>
           <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>

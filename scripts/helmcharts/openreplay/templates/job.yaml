@@ -103,6 +103,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
+      {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
@@ -128,6 +129,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
+      {{- end}}
       {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
       - name: clickhouse

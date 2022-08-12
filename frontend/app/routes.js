@@ -86,7 +86,7 @@ export const sessions = params => queried('/sessions', params);
 export const assist = params => queried('/assist', params);
 
 export const session = (sessionId = ':sessionId', hash) => hashed(`/session/${ sessionId }`, hash);
-export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/assist/${ sessionId }`, hash);
+export const liveSession = (sessionId = ':sessionId', params, hash) => hashed(queried(`/assist/${ sessionId }`, params), hash);
 // export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/live/session/${ sessionId }`, hash);
 
 export const errors = params => queried('/errors', params);

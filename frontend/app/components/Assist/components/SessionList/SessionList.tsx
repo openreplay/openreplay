@@ -4,6 +4,7 @@ import { fetchLiveList } from 'Duck/sessions';
 import { Loader, NoContent, Label } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import { useModal } from 'App/components/Modal';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
     loading: boolean;
@@ -24,14 +25,26 @@ function SessionList(props: Props) {
 
     return (
         <div style={{ width: '50vw' }}>
-            <div className="border-r shadow h-screen" style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', minWidth: '700px' }}>
+            <div
+                className="border-r shadow h-screen overflow-y-auto"
+                style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', minWidth: '700px' }}
+            >
                 <div className="p-4">
                     <div className="text-2xl">
                         {props.userId}'s <span className="color-gray-medium">Live Sessions</span>{' '}
                     </div>
                 </div>
                 <Loader loading={props.loading}>
-                    <NoContent show={!props.loading && props.list.size === 0} title="No live sessions.">
+                    <NoContent
+                        show={!props.loading && props.list.size === 0}
+                        title={
+                            <div className="flex items-center justify-center flex-col">
+                                <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />
+                                <div className="mt-2" />
+                                <div className="text-center text-gray-600">No live sessions found.</div>
+                            </div>
+                        }
+                    >
                         <div className="p-4">
                             {props.list.map((session: any) => (
                                 <div className="mb-6">

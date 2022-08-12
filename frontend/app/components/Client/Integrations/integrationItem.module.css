@@ -9,7 +9,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   /* min-height: 250px; */
   /* min-width: 260px; */
   /* max-width: 300px; */

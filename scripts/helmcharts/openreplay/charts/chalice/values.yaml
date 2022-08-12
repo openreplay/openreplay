@@ -120,3 +120,16 @@ healthCheck:
     initialDelaySeconds: 100
     periodSeconds: 15
     timeoutSeconds: 10
+
+
+persistence:
+  # Spec of spec.template.spec.containers[*].volumeMounts
+  mounts:
+  - mountPath: /mnt/efs
+    name: datadir
+  # Spec of spec.template.spec.volumes
+  volumes:
+  - hostPath:
+      path: /openreplay/storage/nfs
+      type: DirectoryOrCreate
+    name: datadir

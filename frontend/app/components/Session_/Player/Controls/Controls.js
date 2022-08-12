@@ -8,6 +8,11 @@ import {
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
+import { session as sessionRoute, withSiteId } from 'App/routes';
+import {
+  toggleTimetravel,
+  jumpToLive,
+} from 'Player';
 
 import { Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
@@ -27,9 +32,10 @@ import {
   EXCEPTIONS,
   INSPECTOR,
 } from 'Duck/components/player';
-import { ReduxTime } from './Time';
+import { ReduxTime, AssistDuration } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
+import PlayerControls from './components/PlayerControls'
 
 import styles from './controls.module.css';
 import { Tooltip } from 'react-tippy';
@@ -80,7 +86,6 @@ function getStorageName(type) {
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
   logRedCount: state.logRedCountNow,
-  // resourceCount: state.resourceCountNow,
   resourceRedCount: state.resourceRedCountNow,
   fetchRedCount: state.fetchRedCountNow,
   showStack: state.stackList.length > 0,
@@ -98,6 +103,7 @@ function getStorageName(type) {
   exceptionsCount: state.exceptionsListNow.length,
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
+  liveTimeTravel: state.liveTimeTravel,
 }))
 @connect((state, props) => {
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
@@ -130,7 +136,6 @@ export default class Controls extends React.Component {
     if (
       nextProps.fullscreen !== this.props.fullscreen ||
       nextProps.bottomBlock !== this.props.bottomBlock ||
-      nextProps.endTime !== this.props.endTime ||
       nextProps.live !== this.props.live ||
       nextProps.livePlay !== this.props.livePlay ||
       nextProps.playing !== this.props.playing ||
@@ -159,7 +164,8 @@ export default class Controls extends React.Component {
       nextProps.graphqlCount !== this.props.graphqlCount ||
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
-      nextProps.showLongtasks !== this.props.showLongtasks
+      nextProps.showLongtasks !== this.props.showLongtasks ||
+      nextProps.liveTimeTravel !== this.props.liveTimeTravel 
     ) return true;
     return false;
   }
@@ -207,7 +213,7 @@ export default class Controls extends React.Component {
   goLive =() => this.props.jump(this.props.endTime)
 
   renderPlayBtn = () => {
-    const { completed, playing, disabled } = this.props;
+    const { completed, playing } = this.props;
     let label;
     let icon;
     if (completed) {
@@ -280,6 +286,9 @@ export default class Controls extends React.Component {
       fullscreen,
       inspectorMode,
       closedLive,
+      toggleSpeed,
+      toggleSkip,
+      liveTimeTravel,
     } = this.props;
 
     const toggleBottomTools = (blockName) => {
@@ -291,75 +300,38 @@ export default class Controls extends React.Component {
         toggleBottomBlock(blockName);
       }
     }
+
     return (
-      <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
-        { !live && <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> }
+      <div className={ styles.controls }>
+        { !live || liveTimeTravel ? <Timeline jump={ this.props.jump } liveTimeTravel={liveTimeTravel} pause={this.props.pause} togglePlay={this.props.togglePlay} /> : null}
         { !fullscreen &&
-          <div className={ styles.buttons } data-is-live={ live }>
+          <div className={ cn(styles.buttons, {'!px-5 !pt-0' : live}) } data-is-live={ live }>
             <div>
-              { !live && (
-                <div className="flex items-center">
-                  { this.renderPlayBtn() }
-                  { !live && (
-                    <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
-                      <ReduxTime isCustom name="time" format="mm:ss" />
-                      <span className="px-1">/</span>
-                      <ReduxTime isCustom name="endTime" format="mm:ss" />
-                    </div>
-                  )}
-
-                  <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-                    <Tooltip
-                        title='Rewind 10s'
-                        delay={0}
-                        position="top"
-                      >
-                        {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border color-main h-full flex items-center')}
-                      </Tooltip>
-                    <div className='p-1 border-l border-r bg-active-blue-border border-active-blue-border'>10s</div>
-                    <Tooltip
-                        title='Forward 10s'
-                        delay={0}
-                        position="top"
-                      >
-                        {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border color-main h-full flex items-center')}
-                    </Tooltip>
-                  </div>
-
-                  {!live &&
-                    <div className='flex items-center mx-4'>
-                      <Tooltip
-                        title='Playback speed'
-                        delay={0}
-                        position="top"
-                      >
-                        <button
-                          className={ styles.speedButton }
-                          onClick={ this.props.toggleSpeed }
-                          data-disabled={ disabled }
-                        >
-                          <div>{ speed + 'x' }</div>
-                        </button>
-                      </Tooltip>
-
-                      <button
-                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip, [styles.active]: skip }, 'ml-4') }
-                        onClick={ this.props.toggleSkip }
-                        data-disabled={ disabled }
-                      >
-                        {skip && <Icon name="check" size="24" className="mr-1" />}
-                        { 'Skip Inactivity' }
-                      </button>
-                    </div>
-                  }
-                </div>
+              {!live && (
+                <PlayerControls 
+                  live={live} 
+                  skip={skip} 
+                  speed={speed} 
+                  disabled={disabled} 
+                  backTenSeconds={this.backTenSeconds} 
+                  forthTenSeconds={this.forthTenSeconds} 
+                  toggleSpeed={toggleSpeed}
+                  toggleSkip={toggleSkip}
+                  playButton={this.renderPlayBtn()}
+                  controlIcon={this.controlIcon}
+                />
               )}
 
               { live && !closedLive && (
                 <div className={ styles.buttonsLeft }>
-                  <LiveTag isLive={livePlay} />
-                  {'Elapsed'}
-                  <ReduxTime name="time" />
+                  <LiveTag isLive={livePlay} onClick={() => livePlay ? null : jumpToLive()} />
+                  <div className="font-semibold px-2"><AssistDuration isLivePlay={livePlay} /></div>
+
+                  {!liveTimeTravel && (
+                    <div onClick={toggleTimetravel} className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer">
+                      See Past Activity
+                    </div>
+                  )}
                 </div>
               )}
             </div>

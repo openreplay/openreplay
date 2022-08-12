@@ -7,12 +7,12 @@
   align-items: center;
   flex-direction: column;
   justify-content: center;
-  color: $gray-medium;
-  font-weight: 300;
+  color: $gray-dark;
+  /* font-weight: 500; */
   transition: all 0.2s;
-  padding-top: 40px;
+  padding: 40px;
 
-  &.small {
+  /* &.small {
     & .title {
       font-size: 20px !important;
     }
@@ -20,17 +20,18 @@
     & .subtext {
       font-size: 16px;
     }
-  }
+  } */
 }
 
 .title {
-  font-size: 32px;
-  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 500;
+  /* margin-bottom: 15px; */
 }
 
 .subtext {
-  font-size: 16px;
-  margin-bottom: 20px;
+  font-size: 14px;
+  /* margin-bottom: 20px; */
 }
 
 
@@ -38,18 +39,6 @@
   display: block;
   margin: auto;
   background-image: svg-load(no-results.svg, fill=#CCC);
-  background-repeat: no-repeat;
-  background-size: contain;
-  background-position: center center;
-  width: 166px;
-  height: 166px;
-  margin-bottom: 20px;
-}
-
-.empty-state {
-  display: block;
-  margin: auto;
-  background-image: svg-load(empty-state.svg, fill=#CCC);
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center center;

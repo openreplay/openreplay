@@ -5,44 +5,45 @@ declare global {
 }
 
 function dummyTrack(): MediaStreamTrack { 
-  const canvas = document.createElement("canvas")//, { width: 0, height: 0})
+  const canvas = document.createElement('canvas')//, { width: 0, height: 0})
   canvas.width=canvas.height=2 // Doesn't work when 1 (?!)
-  const ctx = canvas.getContext('2d');
-  ctx?.fillRect(0, 0, canvas.width, canvas.height);
+  const ctx = canvas.getContext('2d')
+  ctx?.fillRect(0, 0, canvas.width, canvas.height)
   requestAnimationFrame(function draw(){
     ctx?.fillRect(0,0, canvas.width, canvas.height)
-    requestAnimationFrame(draw);
-  });
+    requestAnimationFrame(draw)
+  })
   // Also works. Probably it should be done once connected.
   //setTimeout(() => { ctx?.fillRect(0,0, canvas.width, canvas.height) }, 4000)
-  return canvas.captureStream(60).getTracks()[0];
+  return canvas.captureStream(60).getTracks()[0]
 }
 
 export default function RequestLocalStream(): Promise<LocalStream> {
-  return navigator.mediaDevices.getUserMedia({ audio:true })
+  return navigator.mediaDevices.getUserMedia({ audio:true, })
     .then(aStream => {
       const aTrack = aStream.getAudioTracks()[0]
-      if (!aTrack) { throw new Error("No audio tracks provided") }
+
+      if (!aTrack) { throw new Error('No audio tracks provided') }
       return new _LocalStream(aTrack)
     })
 }
 
 class _LocalStream {
-  private mediaRequested: boolean = false
+  private mediaRequested = false
   readonly stream: MediaStream
   private readonly vdTrack: MediaStreamTrack
   constructor(aTrack: MediaStreamTrack) {
     this.vdTrack = dummyTrack()
-    this.stream = new MediaStream([ aTrack, this.vdTrack ])
+    this.stream = new MediaStream([ aTrack, this.vdTrack, ])
   }
 
   toggleVideo(): Promise<boolean> {
     if (!this.mediaRequested) {
-      return navigator.mediaDevices.getUserMedia({video:true})
+      return navigator.mediaDevices.getUserMedia({video:true,})
       .then(vStream => {
         const vTrack = vStream.getVideoTracks()[0]
         if (!vTrack) {
-          throw new Error("No video track provided")
+          throw new Error('No video track provided')
         }
         this.stream.addTrack(vTrack)
         this.stream.removeTrack(this.vdTrack)
@@ -54,6 +55,7 @@ class _LocalStream {
       })
       .catch(e => {
         // TODO: log
+        console.error(e)
         return false
       })
     }

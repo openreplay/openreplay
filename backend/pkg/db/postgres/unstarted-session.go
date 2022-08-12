@@ -16,7 +16,7 @@ type UnstartedSession struct {
 }
 
 func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
-	return conn.exec(`
+	return conn.c.Exec(`
 		INSERT INTO unstarted_sessions (
 			project_id, 
 			tracker_version, do_not_track, 

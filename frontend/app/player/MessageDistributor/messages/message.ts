@@ -2,7 +2,8 @@
 
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
-import type {   RawBatchMeta,
+import type { 
+  RawBatchMeta,
   RawTimestamp,
   RawSessionDisconnect,
   RawSetPageLocation,
@@ -60,7 +61,8 @@ import type {   RawBatchMeta,
   RawIosClickEvent,
   RawIosPerformanceEvent,
   RawIosLog,
-  RawIosNetworkCall, } from './raw'
+  RawIosNetworkCall,
+} from './raw'
 
 export type Message = RawMessage & Timed
 

@@ -1,6 +1,6 @@
 import requests
 from decouple import config
-
+from os.path import exists
 import schemas
 from chalicelib.core import projects
 
@@ -35,9 +35,10 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
     }
     for f in body.filters:
         if f.type == schemas.LiveFilterType.metadata:
-            data["filter"][f.source] = f.value
+            data["filter"][f.source] = {"values": f.value, "operator": f.operator}
+
         else:
-            data["filter"][f.type.value] = f.value
+            data["filter"][f.type.value] = {"values": f.value, "operator": f.operator}
     return __get_live_sessions_ws(project_id=project_id, data=data)
 
 
@@ -157,3 +158,11 @@ def autocomplete(project_id, q: str, key: str = None):
 def get_ice_servers():
     return config("iceServers") if config("iceServers", default=None) is not None \
                                    and len(config("iceServers")) > 0 else None
+
+
+def get_raw_mob_by_id(project_id, session_id):
+    path_to_file = config("FS_DIR") + "/" + str(session_id)
+
+    if exists(path_to_file):
+        return path_to_file
+    return None
