@@ -62,7 +62,7 @@ func (conn *Conn) insertAutocompleteValue(projectID uint32, tp string, value str
 }
 
 func (conn *Conn) batchQueue(sessionID uint64, sql string, args ...interface{}) {
-	conn.batches.batchQueue(sessionID, sql, args)
+	conn.batches.batchQueue(sessionID, sql, args...)
 }
 
 func (conn *Conn) updateSessionEvents(sessionID uint64, events, pages int) {
