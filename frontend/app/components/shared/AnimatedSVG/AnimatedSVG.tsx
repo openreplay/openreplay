@@ -40,7 +40,7 @@ function AnimatedSVG(props: Props) {
             case ICONS.EMPTY_STATE:
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={EmptyStateSvg} />;
             case ICONS.LOGO_SMALL:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={LogoSmall} />;
+                return <img style={{ width: size + 'px' }} src={LogoSmall} />;
             case ICONS.NO_RESULTS:
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoResultsSVG} />;
             case ICONS.SIGNAL_GREEN:
