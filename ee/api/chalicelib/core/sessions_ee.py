@@ -506,6 +506,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             else:
                 sessions = sessions[0]["count"] if len(sessions) > 0 else 0
         elif metric_type == schemas.MetricType.table:
+            full_args["limit_s"] = 0
+            full_args["limit_e"] = 200
             if isinstance(metric_of, schemas.TableMetricOfType):
                 main_col = "user_id"
                 extra_col = ""
@@ -530,31 +532,32 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.TableMetricOfType.visited_url:
                     main_col = "path"
                     extra_col = ", path"
-                main_query = cur.mogrify(f"""{pre_query}
-                                             SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
-                                                        FROM (SELECT {main_col} AS name,
-                                                                 count(full_sessions)                                   AS session_count,
-                                                                 ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
-                                                            FROM (SELECT *
-                                                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id, s.user_uuid, 
-                                                                        s.user_id, s.user_os, 
-                                                                        s.user_browser, s.user_device, 
-                                                                        s.user_device_type, s.user_country, s.issue_types{extra_col}
-                                                            {query_part}
-                                                            ORDER BY s.session_id desc) AS filtred_sessions
-                                                            ) AS full_sessions
-                                                            {extra_where}
-                                                            GROUP BY {main_col}
-                                                            ORDER BY session_count DESC) AS users_sessions;""",
-                                         full_args)
-            # print("--------------------")
-            # print(main_query)
-            # print("--------------------")
-            cur.execute(main_query)
-            sessions = cur.fetchone()
-            for s in sessions["values"]:
-                s.pop("rn")
-            sessions["values"] = helper.list_to_camel_case(sessions["values"])
+                main_query = cur.format(f"""{pre_query}
+                                            SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
+                                                 {main_col} AS name,
+                                                 count(session_id) AS session_count
+                                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id, s.user_uuid, 
+                                                        s.user_id, s.user_os, 
+                                                        s.user_browser, s.user_device, 
+                                                        s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                            {query_part}
+                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                            {extra_where}
+                                            GROUP BY {main_col}
+                                            ORDER BY session_count DESC
+                                            LIMIT %(limit_e)s OFFSET %(limit_s)s;""",
+                                        full_args)
+            print("--------------------")
+            print(main_query)
+            print("--------------------")
+            sessions = cur.execute(main_query)
+            # cur.fetchone()
+            count = 0
+            if len(sessions) > 0:
+                count = sessions[0]["main_count"]
+                for s in sessions:
+                    s.pop("main_count")
+            sessions = {"count": count, "values": helper.list_to_camel_case(sessions)}
 
         return sessions
 
