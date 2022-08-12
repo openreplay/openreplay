@@ -1,10 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { NoContent, Pagination } from 'UI';
+import { NoContent, Pagination, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import DashboardListItem from './DashboardListItem';
 
 function DashboardList() {
@@ -25,8 +24,8 @@ function DashboardList() {
             show={lenth === 0}
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
-                <div className="mt-6 text-2xl">No data available.</div>
+                <Icon name="no-dashboard" size={170} color="figmaColors-accent-secondary" />
+                <div className="mt-6 text-xl">You haven't created any dashboards yet</div>
               </div>
             }   
         >

@@ -1,11 +1,10 @@
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
-import { NoContent, Pagination } from 'UI';
+import { NoContent, Pagination, Icon } from 'UI';
 import { useStore } from 'App/mstore';
-import { getRE, filterList } from 'App/utils';
+import { filterList } from 'App/utils';
 import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
-import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { IWidget } from 'App/mstore/types/widget';
 
 function MetricsList({ siteId }: { siteId: string }) {
@@ -31,8 +30,8 @@ function MetricsList({ siteId }: { siteId: string }) {
             show={lenth === 0}
             title={
                 <div className="flex flex-col items-center justify-center">
-                    <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
-                    <div className="mt-6 text-2xl">No data available.</div>
+                    <Icon name="no-metrics" size={170} color="figmaColors-accent-secondary" />
+                    <div className="mt-6 text-xl">You haven't created any metrics yet</div>
                 </div>
             }   
         >
