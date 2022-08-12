@@ -1,6 +1,9 @@
 package postgres
 
-import "log"
+import (
+	"log"
+	"time"
+)
 
 type BulkSet struct {
 	c                Pool
@@ -10,11 +13,14 @@ type BulkSet struct {
 	webPageEvents    Bulk
 	webInputEvents   Bulk
 	webGraphQLEvents Bulk
+	sentPrevious     bool
+	bulksToSend      []Bulk
 }
 
 func NewBulkSet(c Pool) *BulkSet {
 	bs := &BulkSet{
-		c: c,
+		c:            c,
+		sentPrevious: true,
 	}
 	bs.initBulks()
 	return bs
@@ -92,25 +98,36 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk")
 	}
+
 }
 
-func (conn *BulkSet) SendBulks() {
-	if err := conn.autocompletes.Send(); err != nil {
-		log.Printf("autocomplete bulk send err: %s", err)
+func (conn *BulkSet) Send() {
+	// Check that previous bulks has been sent to db
+	if !conn.sentPrevious {
+		log.Printf("previous bulks still in memory, should wait...")
+		for {
+			time.Sleep(time.Millisecond * 50)
+			if conn.sentPrevious {
+				break
+			}
+		}
 	}
-	if err := conn.requests.Send(); err != nil {
-		log.Printf("requests bulk send err: %s", err)
-	}
-	if err := conn.customEvents.Send(); err != nil {
-		log.Printf("customEvents bulk send err: %s", err)
-	}
-	if err := conn.webPageEvents.Send(); err != nil {
-		log.Printf("webPageEvents bulk send err: %s", err)
-	}
-	if err := conn.webInputEvents.Send(); err != nil {
-		log.Printf("webInputEvents bulk send err: %s", err)
-	}
-	if err := conn.webGraphQLEvents.Send(); err != nil {
-		log.Printf("webGraphQLEvents bulk send err: %s", err)
-	}
+	// Prepare set of bulks to send
+	conn.bulksToSend = []Bulk{conn.autocompletes, conn.requests, conn.customEvents, conn.webPageEvents, conn.webInputEvents, conn.webGraphQLEvents}
+	conn.sentPrevious = false
+	// Reset new bulks
+	conn.initBulks()
+	// Send "old" bulks in goroutine (to save time on insert operations)
+	go func() {
+		start := time.Now()
+		for _, b := range conn.bulksToSend {
+			if err := b.Send(); err != nil {
+				log.Printf("%s bulk send err: %s", b.Table(), err)
+			}
+		}
+		conn.bulksToSend = nil
+		conn.sentPrevious = true
+		log.Printf("bulks insert duration(ms): %d", time.Now().Sub(start).Milliseconds())
+	}()
+	return
 }

@@ -15,6 +15,7 @@ const (
 type Bulk interface {
 	Append(args ...interface{}) error
 	Send() error
+	Table() string
 }
 
 type bulkImpl struct {
@@ -45,6 +46,10 @@ func (b *bulkImpl) Send() error {
 	return b.send()
 }
 
+func (b *bulkImpl) Table() string {
+	return b.table
+}
+
 func (b *bulkImpl) send() error {
 	request := bytes.NewBufferString(insertPrefix + b.table + b.columns + insertValues)
 	args := make([]interface{}, b.setSize)
@@ -59,7 +64,7 @@ func (b *bulkImpl) send() error {
 	}
 	request.WriteString(insertSuffix)
 	err := b.conn.Exec(request.String(), b.values...)
-	b.values = make([]interface{}, 0, b.setSize*b.sizeLimit)
+	//b.values = make([]interface{}, 0, b.setSize*b.sizeLimit)
 	if err != nil {
 		return fmt.Errorf("send bulk err: %s", err)
 	}

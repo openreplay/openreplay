@@ -40,7 +40,7 @@ func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 	}
 	conn := &Conn{
 		c:                 pool,
-		batches:           NewBatchSet(queueLimit, sizeLimit, metrics),
+		batches:           NewBatchSet(pool, queueLimit, sizeLimit, metrics),
 		bulks:             NewBulkSet(pool),
 		sqlRequestTime:    sqlRequestTime,
 		sqlRequestCounter: sqlRequestCounter,
@@ -48,9 +48,8 @@ func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 	return conn
 }
 
-func (conn *Conn) Close() error {
+func (conn *Conn) Close() {
 	conn.c.Close()
-	return nil
 }
 
 func (conn *Conn) insertAutocompleteValue(projectID uint32, tp string, value string) {
@@ -70,16 +69,12 @@ func (conn *Conn) updateSessionEvents(sessionID uint64, events, pages int) {
 	conn.batches.updateSessionEvents(sessionID, events, pages)
 }
 
-func (conn *Conn) CommitBatches() {
-	conn.bulks.SendBulks()
-	conn.batches.CommitBatches(conn.c)
-}
-
 func (conn *Conn) updateBatchSize(sessionID uint64, reqSize int) {
-	conn.batches.updateBatchSize(sessionID, reqSize, conn.c)
+	conn.batches.updateBatchSize(sessionID, reqSize)
 }
 
-// Send only one batch to pg
-func (conn *Conn) commitBatch(sessionID uint64) {
-	conn.batches.commitBatch(sessionID, conn.c)
+// Commit runs async worker to insert local bulks and batches (that we store in memory)
+func (conn *Conn) Commit() {
+	conn.bulks.Send()
+	conn.batches.Commit()
 }

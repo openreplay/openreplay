@@ -131,19 +131,12 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-commitTick:
-			// Send collected batches to db
-			start := time.Now()
-			pg.CommitBatches()
-			pgDur := time.Now().Sub(start).Milliseconds()
-
-			start = time.Now()
+			// Async call
+			pg.Commit()
+			// Sync call
 			if err := saver.CommitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}
-			chDur := time.Now().Sub(start).Milliseconds()
-			log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
-
-			// TODO: use commit worker to save time each tick
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)
 			}

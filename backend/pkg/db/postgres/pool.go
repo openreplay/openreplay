@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 )
-
+ 
 // Pool is a pgx.Pool wrapper with metrics integration
 type Pool interface {
 	Query(sql string, args ...interface{}) (pgx.Rows, error)
