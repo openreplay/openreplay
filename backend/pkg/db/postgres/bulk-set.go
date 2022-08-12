@@ -13,14 +13,11 @@ type BulkSet struct {
 	webPageEvents    Bulk
 	webInputEvents   Bulk
 	webGraphQLEvents Bulk
-	sentPrevious     bool
-	bulksToSend      []Bulk
 }
 
 func NewBulkSet(c Pool) *BulkSet {
 	bs := &BulkSet{
-		c:            c,
-		sentPrevious: true,
+		c: c,
 	}
 	bs.initBulks()
 	return bs
@@ -102,31 +99,19 @@ func (conn *BulkSet) initBulks() {
 }
 
 func (conn *BulkSet) Send() {
-	// Check that previous bulks has been sent to db
-	if !conn.sentPrevious {
-		log.Printf("previous bulks still in memory, should wait...")
-		for {
-			time.Sleep(time.Millisecond * 50)
-			if conn.sentPrevious {
-				break
-			}
-		}
-	}
 	// Prepare set of bulks to send
-	conn.bulksToSend = []Bulk{conn.autocompletes, conn.requests, conn.customEvents, conn.webPageEvents, conn.webInputEvents, conn.webGraphQLEvents}
-	conn.sentPrevious = false
+	bulksToSend := []Bulk{conn.autocompletes, conn.requests, conn.customEvents, conn.webPageEvents, conn.webInputEvents, conn.webGraphQLEvents}
 	// Reset new bulks
 	conn.initBulks()
 	// Send "old" bulks in goroutine (to save time on insert operations)
 	go func() {
 		start := time.Now()
-		for _, b := range conn.bulksToSend {
+		for _, b := range bulksToSend {
 			if err := b.Send(); err != nil {
 				log.Printf("%s bulk send err: %s", b.Table(), err)
 			}
 		}
-		conn.bulksToSend = nil
-		conn.sentPrevious = true
+		bulksToSend = nil
 		log.Printf("bulks insert duration(ms): %d", time.Now().Sub(start).Milliseconds())
 	}()
 	return
