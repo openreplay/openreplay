@@ -92,6 +92,7 @@ export default class MessageDistributor extends StatedScreen {
   private readonly lists = initLists();
 
   private activityManager: ActivityManager | null = null;
+  private fileReader: MFileReader;
 
   private sessionStart: number;
   private navigationStartOffset: number = 0;
@@ -151,11 +152,13 @@ export default class MessageDistributor extends StatedScreen {
 
   private readAndDistributeMessages(byteArray: Uint8Array, onReadCb?: (msg: Message) => void) {
     const msgs: Array<Message> = []
-    const reader = new MFileReader(new Uint8Array(), this.sessionStart)
+    if (!this.fileReader) {
+      this.fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
+    }
 
-    reader.append(byteArray)
+    this.fileReader.append(byteArray)
     let next: ReturnType<MFileReader['next']>
-    while (next = reader.next()) {
+    while (next = this.fileReader.next()) {
       const [msg, index] = next
       this.distributeMessage(msg, index)
       msgs.push(msg)
