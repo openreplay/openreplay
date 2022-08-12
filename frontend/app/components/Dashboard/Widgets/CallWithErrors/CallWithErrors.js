@@ -64,6 +64,7 @@ export default class CallWithErrors extends React.PureComponent {
         </div>
         <NoContent
           size="small"
+          title="No recordings found"
           show={ images.size === 0 }
         >
           <Table

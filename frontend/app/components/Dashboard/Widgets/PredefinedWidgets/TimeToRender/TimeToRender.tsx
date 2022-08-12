@@ -35,6 +35,7 @@ function TimeToRender(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title="No recordings found"
         >
           <>
             <div className="flex items-center mb-3">

@@ -19,8 +19,6 @@ import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
-// @ts-ignore
-import stl from './DashboardView.module.css';
 
 interface IProps {
     siteId: string;
@@ -31,7 +29,6 @@ interface IProps {
 type Props = IProps & RouteComponentProps;
 
 function DashboardView(props: Props) {
-    const [isTooltipShown, setTooltip] = React.useState(false);
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
     const { showModal } = useModal();
@@ -116,7 +113,7 @@ function DashboardView(props: Props) {
                         { label: (dashboard && dashboard.name) || '' },
                     ]}
                 />
-                <div className="flex items-center mb-4 justify-between">
+                <div className="flex items-center mb-2 justify-between">
                     <div className="flex items-center" style={{ flex: 3 }}>
                         <PageTitle
                             title={
@@ -128,21 +125,22 @@ function DashboardView(props: Props) {
                             onDoubleClick={() => onEdit(true)}
                             className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
                             actionButton={
-                                <OutsideClickDetectingDiv onClickOutside={() => setTooltip(false)}>
-                                    {/* @ts-ignore */}
+                                    /* @ts-ignore */
                                     <Tooltip 
                                         interactive
                                         useContext
                                         // @ts-ignore
                                         theme="nopadding"
-                                        open={isTooltipShown}
+                                        animation="none"
+                                        hideDelay={200}
+                                        duration={0}
+                                        distance={20}
                                         html={<div style={{ padding: 0 }}><AddMetricContainer isPopup siteId={siteId} /></div>}
                                     >
-                                        <Button variant="primary" onClick={() => setTooltip(true)}>
+                                        <Button variant="primary">
                                             Add Metric
                                         </Button>
                                     </Tooltip>
-                                </OutsideClickDetectingDiv>
                             }
                         />
                     </div>
@@ -166,7 +164,7 @@ function DashboardView(props: Props) {
                         </div>
                     </div>
                 </div>
-                <div>
+                <div className="pb-4">
                     {/* @ts-ignore */}
                     <Tooltip delay={100} arrow title="Double click to rename" className='w-fit !block'>
                         <h2

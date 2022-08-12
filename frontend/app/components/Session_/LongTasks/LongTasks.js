@@ -75,6 +75,7 @@ export default class GraphQL extends React.PureComponent {
         <BottomBlock.Content>
           <NoContent
             size="small"
+            title="No recordings found"
             show={ filtered.length === 0}
           >
             <TimeTable

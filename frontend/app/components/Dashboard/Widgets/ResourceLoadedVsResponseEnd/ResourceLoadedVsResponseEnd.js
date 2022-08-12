@@ -28,6 +28,7 @@ export default class ResourceLoadedVsResponseEnd extends React.PureComponent {
         <NoContent
           size="small"
           show={ data.chart.length === 0 }
+          title="No recordings found"
         >
           <ResponsiveContainer height={ 247 } width="100%">
             <ComposedChart

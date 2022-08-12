@@ -84,17 +84,17 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
                         <div className="text-disabled-text">{description}</div>
                     </div>
 
-                    <div className="flex items-center">
-                        Don’t find the one you need?
-                        <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
-                            + Create custom metric
-                        </Button>
-                    </div>
+                    <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
+                        + Create Custom Metric
+                    </Button>
                 </div>
 
                 <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)' }}>
                     <div style={{ flex: 3 }}>
-                        <div className="grid grid-cols-1 gap-4 py-1 pr-2" style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
+                        <div
+                            className="grid grid-cols-1 gap-4 py-1 pr-2"
+                            style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', gridAutoRows: 'max-content' }}
+                        >
                             {activeCategory &&
                                 categories.map((category) => (
                                     <WidgetCategoryItem
@@ -110,7 +110,7 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
 
                     <div
                         className="grid h-full grid-cols-4 gap-4 p-1 items-start"
-                        style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', flex: 9 }}
+                        style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto', flex: 9, gridAutoRows: 'max-content' }}
                     >
                         {activeCategory &&
                             activeCategory.widgets.map((metric: any) => (

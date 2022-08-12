@@ -12,6 +12,7 @@ export default class LastFeedbacks extends React.PureComponent {
       <Loader loading={ loading } size="small">
         <NoContent
           size="small"
+          title="No recordings found"
           show={ sessions.size === 0 }
         >
           { sessions.map(({ 

@@ -26,6 +26,7 @@ export default class FPS extends React.PureComponent {
     return (
       <Loader loading={ loading } size="small">
         <NoContent
+          title="No recordings found"
           size="small"
           show={ data.chart.length === 0 }
         >

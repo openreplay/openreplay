@@ -88,7 +88,7 @@ function AddMetricContainer({ siteId, isPopup }: any) {
     return (
         <div style={{ borderColor: 'rgb(238, 238, 238)', height: isPopup ? undefined : 300 }} className={classes}>
             <AddMetricButton
-                title="+ Add custom Metric"
+                title="+ Add Custom Metric"
                 description="Metrics that are manually created by you or your team"
                 iconName="bar-pencil"
                 onClick={onAddCustomMetrics}

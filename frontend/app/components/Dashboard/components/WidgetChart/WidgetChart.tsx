@@ -179,7 +179,7 @@ function WidgetChart(props: Props) {
     }
     return (
         <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
-            {renderChart()}
+            <div style={{ minHeight: isOverviewWidget ? 100 : 240 }}>{renderChart()}</div>
         </Loader>
     );
 }
