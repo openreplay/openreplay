@@ -104,14 +104,14 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {
-	if err := conn.requests.Append(sessionID, timestamp, getSqIdx(index), url, duration, success); err != nil {
+	if err := conn.bulks.Get("requests").Append(sessionID, timestamp, getSqIdx(index), url, duration, success); err != nil {
 		return fmt.Errorf("insert request in bulk err: %s", err)
 	}
 	return nil
 }
 
 func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint64, name string, payload string) error {
-	if err := conn.customEvents.Append(sessionID, timestamp, getSqIdx(index), name, payload); err != nil {
+	if err := conn.bulks.Get("customEvents").Append(sessionID, timestamp, getSqIdx(index), name, payload); err != nil {
 		return fmt.Errorf("insert custom event in bulk err: %s", err)
 	}
 	return nil
