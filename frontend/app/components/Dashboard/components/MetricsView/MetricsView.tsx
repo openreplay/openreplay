@@ -9,14 +9,14 @@ import { useObserver } from 'mobx-react-lite';
 interface Props{
     siteId: number;
 }
-function MetricsView(props: Props) {
+function MetricsView({ siteId }: Props) {
     const { metricStore } = useStore();
 
     React.useEffect(() => {
         metricStore.fetchList();
     }, []);
     return useObserver(() => (
-        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded p-4 border">
+        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded py-4 px-6 border">
             <div className="flex items-center mb-4 justify-between">
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Metrics" className="" />
@@ -30,7 +30,7 @@ function MetricsView(props: Props) {
                 <Icon name="info-circle-fill" className="mr-2" size={16} />
                 Create custom Metrics to capture key interactions and track KPIs.
             </div>
-            <MetricsList />
+            <MetricsList siteId={siteId} />
         </div>
     ));
 }

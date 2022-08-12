@@ -1,27 +1,13 @@
 import React from 'react';
-import { Icon, Link, Popup } from 'UI';
+import { Icon, Link } from 'UI';
 import { checkForRecent } from 'App/date';
 import { Tooltip } from 'react-tippy'
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withSiteId } from 'App/routes';
 
-interface Props {
+interface Props extends RouteComponentProps {
     metric: any;
-}
-
-function DashboardLink({ dashboards}: any) {
-    return (
-        dashboards.map((dashboard: any) => (
-            <React.Fragment key={dashboard.dashboardId}>
-            <Link to={`/dashboard/${dashboard.dashboardId}`}>
-                <div className="flex items-center mb-1 py-1">
-                    <div className="mr-2">
-                        <Icon name="circle-fill" size={4} color="gray-medium" />
-                    </div>
-                    <span className="link leading-4 capitalize-first">{dashboard.name}</span>
-                </div>
-            </Link>
-            </React.Fragment>
-        ))
-    );
+    siteId: string;
 }
 
 function MetricTypeIcon({ type }: any) {
@@ -49,18 +35,23 @@ function MetricTypeIcon({ type }: any) {
     )
 }
 
-function MetricListItem(props: Props) {
-    const { metric } = props;
 
-    
+
+function MetricListItem(props: Props) {
+    const { metric, history, siteId } = props;
+
+    const onItemClick = () => {
+        const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
+        history.push(path);
+    };
     return (
-        <div className="grid grid-cols-12 py-4 border-t select-none">
+        <div className="grid grid-cols-12 py-4 border-t select-none hover:bg-active-blue cursor-pointer" onClick={onItemClick}>
             <div className="col-span-3 flex items-start">
                 <div className="flex items-center">
                     <MetricTypeIcon type={metric.metricType} />
-                    <Link to={`/metrics/${metric.metricId}`} className="link capitalize-first">
+                    <div className="color-blue capitalize-first">
                         {metric.name}
-                    </Link>
+                    </div>
                 </div>
             </div>
             <div className="col-span-3">{metric.owner}</div>
@@ -75,4 +66,4 @@ function MetricListItem(props: Props) {
     );
 }
 
-export default MetricListItem;
+export default withRouter(MetricListItem);

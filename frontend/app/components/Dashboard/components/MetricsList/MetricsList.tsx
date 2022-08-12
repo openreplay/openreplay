@@ -8,7 +8,7 @@ import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { IWidget } from 'App/mstore/types/widget';
 
-function MetricsList() {
+function MetricsList({ siteId }: { siteId: string }) {
     const { metricStore } = useStore();
     const metrics = useObserver(() => metricStore.metrics);
     const metricsSearch = useObserver(() => metricStore.metricsSearch);
@@ -46,7 +46,7 @@ function MetricsList() {
 
                 {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
                     <React.Fragment key={metric.metricId}>
-                        <MetricListItem metric={metric} />
+                        <MetricListItem metric={metric} siteId={siteId} />
                     </React.Fragment>
                 ))}
             </div>
