@@ -1,4 +1,4 @@
-FROM python:3.9.12-slim
+FROM python:3.11.0b5-slim
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 WORKDIR /work
 COPY . .
