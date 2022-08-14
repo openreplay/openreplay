@@ -1,12 +1,13 @@
-# Special one for Batch Meta. Message id could define the version 
+# Special one for Batch Metadata. Message id could define the version 
+
 # Depricated since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :tracker => false, :replayer => false do 
+message 80, 'BatchMeta', :replayer => false, :tracker => false do 
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
 end
 
-# since tracker 3.6.0
+# since tracker 3.6.0   TODO: for webworker only
 message 81, 'BatchMetadata', :replayer => false do
   uint 'Version'
   uint 'PageNo'
@@ -43,10 +44,8 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
   string 'UserCountry'
   string 'UserID'
 end
-# Depricated (not used) since OpenReplay tracker 3.0.0
-message 2, 'SessionDisconnect', :tracker => false do
-  uint 'Timestamp'
-end
+# message 2, 'CreateDocument', do
+# end
 message 3, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
@@ -63,6 +62,8 @@ message 6, 'SetViewportScroll' do
   int 'X'
   int 'Y'
 end
+# Depricated sinse tracker 3.6.0 in favor of  CreateDocument(id=2)
+# in order to use Document as a default root node instead of the documentElement
 message 7, 'CreateDocument' do
 end
 message 8, 'CreateElementNode' do
@@ -124,7 +125,7 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
-# Depricated since OpenReplay 1.2.0
+# Depricated since OpenReplay 1.2.0 (tracker version?)
 message 21, 'MouseClickDepricated', :tracker => false, :replayer => false do
   uint 'ID'
   uint 'HesitationTime'
@@ -371,14 +372,14 @@ message 59, 'LongTask' do
   string 'ContainerId'
   string 'ContainerName'
 end
-message 60, 'SetNodeAttributeURLBased', :replayer => false do
+message 60, 'SetNodeAttributeURLBased' do
   uint 'ID'
   string 'Name'
   string 'Value'
   string 'BaseURL'
 end
 # Might replace SetCSSData (although BaseURL is useless after rewriting)
-message 61, 'SetCSSDataURLBased', :replayer => false do
+message 61, 'SetCSSDataURLBased' do
   uint 'ID'
   string 'Data'
   string 'BaseURL'
@@ -402,7 +403,7 @@ end
 message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
-message 67, 'CSSInsertRuleURLBased', :replayer => false do
+message 67, 'CSSInsertRuleURLBased' do
   uint 'ID'
   string 'Rule'
   uint 'Index'
