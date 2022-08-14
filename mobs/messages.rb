@@ -421,3 +421,37 @@ message 70, 'CreateIFrameDocument' do
   uint 'FrameID'
   uint 'ID'
 end
+ 
+#Since 3.6.0 AdoptedStyleSheets
+message 71, 'AdoptedSSReplaceURLBased' do
+  uint 'SheetID'
+  string 'Text'
+  string 'BaseURL'
+end
+message 72, 'AdoptedSSReplace', :tracker => false do
+  uint 'SheetID'
+  string 'Text'
+end
+message 73, 'AdoptedSSInsertRuleURLBased' do 
+  uint 'SheetID'
+  string 'Rule'
+  uint 'Index'
+  string 'BaseURL'
+end
+message 74, 'AdoptedSSInsertRule', :tracker => false do 
+  uint 'SheetID'
+  string 'Rule'
+  uint 'Index'
+end
+message 75, 'AdoptedSSDeleteRule' do 
+  uint 'SheetID'
+  uint 'Index'
+end
+message 76, 'AdoptedSSAddOwner' do 
+  uint 'SheetID'
+  uint 'ID'
+end
+message 77, 'AdoptedSSRemoveOwner' do 
+  uint 'SheetID'
+  uint 'ID'
+end
