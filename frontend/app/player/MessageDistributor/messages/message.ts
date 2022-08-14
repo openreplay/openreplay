@@ -3,9 +3,6 @@
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
 import type { 
-  RawBatchMeta,
-  RawBatchMetadata,
-  RawPartitionedMessage,
   RawTimestamp,
   RawSetPageLocation,
   RawSetViewportSize,
@@ -20,38 +17,26 @@ import type {
   RawSetNodeData,
   RawSetCssData,
   RawSetNodeScroll,
-  RawSetInputTarget,
   RawSetInputValue,
   RawSetInputChecked,
   RawMouseMove,
   RawConsoleLog,
-  RawPageLoadTiming,
-  RawPageRenderTiming,
-  RawJsException,
-  RawRawCustomEvent,
-  RawUserID,
-  RawUserAnonymousID,
-  RawMetadata,
   RawCssInsertRule,
   RawCssDeleteRule,
   RawFetch,
   RawProfiler,
   RawOTable,
-  RawStateAction,
   RawRedux,
   RawVuex,
   RawMobX,
   RawNgRx,
   RawGraphQl,
   RawPerformanceTrack,
-  RawResourceTiming,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLongTask,
   RawSetNodeAttributeURLBased,
   RawSetCssDataURLBased,
-  RawTechnicalInfo,
-  RawCustomIssue,
   RawCssInsertRuleURLBased,
   RawMouseClick,
   RawCreateIFrameDocument,
@@ -73,12 +58,6 @@ import type {
 
 export type Message = RawMessage & Timed
 
-
-export type BatchMeta = RawBatchMeta & Timed
-
-export type BatchMetadata = RawBatchMetadata & Timed
-
-export type PartitionedMessage = RawPartitionedMessage & Timed
 
 export type Timestamp = RawTimestamp & Timed
 
@@ -108,8 +87,6 @@ export type SetCssData = RawSetCssData & Timed
 
 export type SetNodeScroll = RawSetNodeScroll & Timed
 
-export type SetInputTarget = RawSetInputTarget & Timed
-
 export type SetInputValue = RawSetInputValue & Timed
 
 export type SetInputChecked = RawSetInputChecked & Timed
@@ -117,20 +94,6 @@ export type SetInputChecked = RawSetInputChecked & Timed
 export type MouseMove = RawMouseMove & Timed
 
 export type ConsoleLog = RawConsoleLog & Timed
-
-export type PageLoadTiming = RawPageLoadTiming & Timed
-
-export type PageRenderTiming = RawPageRenderTiming & Timed
-
-export type JsException = RawJsException & Timed
-
-export type RawCustomEvent = RawRawCustomEvent & Timed
-
-export type UserID = RawUserID & Timed
-
-export type UserAnonymousID = RawUserAnonymousID & Timed
-
-export type Metadata = RawMetadata & Timed
 
 export type CssInsertRule = RawCssInsertRule & Timed
 
@@ -141,8 +104,6 @@ export type Fetch = RawFetch & Timed
 export type Profiler = RawProfiler & Timed
 
 export type OTable = RawOTable & Timed
-
-export type StateAction = RawStateAction & Timed
 
 export type Redux = RawRedux & Timed
 
@@ -156,8 +117,6 @@ export type GraphQl = RawGraphQl & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
 
-export type ResourceTiming = RawResourceTiming & Timed
-
 export type ConnectionInformation = RawConnectionInformation & Timed
 
 export type SetPageVisibility = RawSetPageVisibility & Timed
@@ -167,10 +126,6 @@ export type LongTask = RawLongTask & Timed
 export type SetNodeAttributeURLBased = RawSetNodeAttributeURLBased & Timed
 
 export type SetCssDataURLBased = RawSetCssDataURLBased & Timed
-
-export type TechnicalInfo = RawTechnicalInfo & Timed
-
-export type CustomIssue = RawCustomIssue & Timed
 
 export type CssInsertRuleURLBased = RawCssInsertRuleURLBased & Timed
 

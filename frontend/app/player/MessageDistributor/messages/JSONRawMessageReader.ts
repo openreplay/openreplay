@@ -11,11 +11,24 @@ import type {
   RawAdoptedSsReplaceURLBased,
   RawAdoptedSsReplace,
 } from './raw'
-import { TP_MAP } from './raw'
+import type { TrackerMessage } from './tracker'
+import  translate from './tracker'
+import { TP_MAP } from './tracker-legacy'
 import { resolveURL, resolveCSS } from './urlResolve'
 
 
-// TODO: commonURLBased logic
+function legacyTranslate(msg: any): RawMessage | null {
+  const type = TP_MAP[msg._id as keyof typeof TP_MAP]
+  if (!type) {
+    return null
+  }
+  msg.tp = type
+  delete msg._id
+  return msg as RawMessage
+}
+
+
+// TODO: commonURLBased logic for feilds
 const resolvers = {
   "set_node_attribute_url_based": (msg: RawSetNodeAttributeURLBased): RawSetNodeAttribute =>
   ({
@@ -54,32 +67,34 @@ const resolvers = {
   })
 } as const
 
-type ResolvingTypes = keyof typeof resolvers
-type Resolver = typeof resolvers[ResolvingTypes]
+type ResolvableType = keyof typeof resolvers
+type ResolvableRawMessage = RawMessage & { tp: ResolvableType }
 
-type NumTypes = keyof typeof TP_MAP
+function isResolvable(msg: RawMessage): msg is ResolvableRawMessage {
+  //@ts-ignore
+  return resolvers[msg.tp] !== undefined
+}
+
 
 export default class JSONRawMessageReader {
-  constructor(private messages: any[] = []){}
-  append(messages: any[]) {
+  constructor(private messages: TrackerMessage[] = []){}
+  append(messages: TrackerMessage[]) {
     this.messages = this.messages.concat(messages)
   }
   readMessage(): RawMessage | null {
     let msg = this.messages.shift()
     if (!msg) { return null }
-    const type = TP_MAP[msg._id as NumTypes]
-    if (!type) { // Ignore unknown message types
-      // log here
+    const rawMsg = Array.isArray(msg) 
+      ? translate(msg)
+      : legacyTranslate(msg)
+    if (!rawMsg) {
       return this.readMessage()
     }
-    msg.tp = type
-    delete msg._id
-
-    const resolver: Resolver | undefined = resolvers[type as ResolvingTypes]
-    if (resolver) {
-      msg = resolver(msg)
+    if (isResolvable(rawMsg)) {
+      //@ts-ignore ??? too complex typscript...
+      return resolvers[rawMsg.tp](rawMsg)
     }
-    return msg as RawMessage
+    return rawMsg
   }
 
 }
