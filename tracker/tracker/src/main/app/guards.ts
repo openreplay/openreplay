@@ -10,7 +10,11 @@ export function isTextNode(node: Node): node is Text {
   return node.nodeType === Node.TEXT_NODE
 }
 
-export function isRootNode(node: Node): boolean {
+export function isDocument(node: Node): node is Document {
+  return node.nodeType === Node.DOCUMENT_NODE
+}
+
+export function isRootNode(node: Node): node is Document | DocumentFragment {
   return node.nodeType === Node.DOCUMENT_NODE || node.nodeType === Node.DOCUMENT_FRAGMENT_NODE
 }
 

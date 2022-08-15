@@ -83,7 +83,7 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
-  private readonly observer: Observer
+  /* private */ readonly observer: Observer // non-privat for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
@@ -256,7 +256,13 @@ export default class App {
     const reqVer = version.split(/[.-]/)
     const ver = this.version.split(/[.-]/)
     for (let i = 0; i < 3; i++) {
-      if (Number(ver[i]) < Number(reqVer[i]) || isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
+      if (isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
+        return false
+      }
+      if (Number(ver[i]) > Number(reqVer[i])) {
+        return true
+      }
+      if (Number(ver[i]) < Number(reqVer[i])) {
         return false
       }
     }
@@ -298,7 +304,7 @@ export default class App {
     if (typeof this.options.resourceBaseHref === 'string') {
       return this.options.resourceBaseHref
     } else if (typeof this.options.resourceBaseHref === 'object') {
-      //switch between  types
+      //TODO: switch between types
     }
     if (document.baseURI) {
       return document.baseURI

@@ -8,9 +8,11 @@ export default class Nodes {
 
   constructor(private readonly node_id: string) {}
 
+  // Attached once per Tracker instance
   attachNodeCallback(nodeCallback: NodeCallback): void {
     this.nodeCallbacks.push(nodeCallback)
   }
+  // TODO: what is the difference with app.attachEventListener. can we use only one of those?
   attachElementListener(type: string, node: Element, elementListener: EventListener): void {
     const id = this.getID(node)
     if (id === undefined) {
