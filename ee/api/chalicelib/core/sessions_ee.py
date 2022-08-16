@@ -4,7 +4,7 @@ import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics
-from chalicelib.utils import pg_client, helper, metrics_helper, ch_client
+from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, sessions_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 SESSION_PROJECTION_COLS = """\
@@ -470,13 +470,12 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                    density=density))
     extra_event = None
     if metric_of == schemas.TableMetricOfType.visited_url:
-        extra_event = lambda MAIN_EVENTS_TABLE: \
-            f"""SELECT DISTINCT ev.session_id, ev.path
-                FROM {MAIN_EVENTS_TABLE} AS ev
-                WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
-                  AND ev.datetime <= toDateTime(%(endDate)s / 1000)
-                  AND ev.project_id = %(project_id)s
-                  AND ev.event_type = 'LOCATION'"""
+        extra_event = f"""SELECT DISTINCT ev.session_id, ev.path
+                            FROM {sessions_helper.get_main_events_table(data.startDate)} AS ev
+                            WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
+                              AND ev.datetime <= toDateTime(%(endDate)s / 1000)
+                              AND ev.project_id = %(project_id)s
+                              AND ev.event_type = 'LOCATION'"""
     elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
@@ -1243,11 +1242,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
 
-    MAIN_EVENTS_TABLE = "final.events"
-    MAIN_SESSIONS_TABLE = "final.sessions"
-    if data.startDate >= TimeUTC.now(delta_days=-7):
-        MAIN_EVENTS_TABLE = "final.events_l7d_mv"
-        MAIN_SESSIONS_TABLE = "final.sessions_l7d_mv"
+    MAIN_EVENTS_TABLE = sessions_helper.get_main_events_table(data.startDate)
+    MAIN_SESSIONS_TABLE = sessions_helper.get_main_sessions_table(data.startDate)
+
     full_args["MAIN_EVENTS_TABLE"] = MAIN_EVENTS_TABLE
     full_args["MAIN_SESSIONS_TABLE"] = MAIN_SESSIONS_TABLE
     extra_constraints = [
@@ -2088,7 +2085,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
         full_args["issue_type"] = issue["type"]
 
     if extra_event:
-        extra_event = f"INNER JOIN ({extra_event(MAIN_EVENTS_TABLE)}) AS extra_event USING(session_id)"
+        extra_event = f"INNER JOIN ({extra_event}) AS extra_event USING(session_id)"
         # extra_join = f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
         # extra_constraints.append("ev.timestamp>=%(startDate)s")
         # extra_constraints.append("ev.timestamp<=%(endDate)s")
