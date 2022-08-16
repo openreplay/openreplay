@@ -64,9 +64,9 @@ export function getRE(string: string, options: string) {
 }
 
 export const filterList = <T extends Record<string, any>>(
-    list: T[], 
-    searchQuery: string, 
-    testKeys: string[], 
+    list: T[],
+    searchQuery: string,
+    testKeys: string[],
     searchCb?: (listItem: T, query: string | RegExp
 ) => boolean): T[] => {
     const filterRE = getRE(searchQuery, 'i');
@@ -337,8 +337,12 @@ export const fetchErrorCheck = async (response: any) => {
 export const cleanSessionFilters = (data: any) => {
     const { filters, ...rest } = data;
     const _fitlers = filters.filter((f: any) => {
-        if (f.operator === 'isAny' || f.operator === 'onAny') { return true } // ignore filter with isAny/onAny operator
-        if (Array.isArray(f.filters) && f.filters.length > 0) { return true } // ignore subfilters
+        if (f.operator === 'isAny' || f.operator === 'onAny') {
+            return true;
+        } // ignore filter with isAny/onAny operator
+        if (Array.isArray(f.filters) && f.filters.length > 0) {
+            return true;
+        } // ignore subfilters
 
         return f.value !== '' && Array.isArray(f.value) && f.value.length > 0;
     });
@@ -360,4 +364,14 @@ export const compareJsonObjects = (obj1: any, obj2: any) => {
 export const getInitials = (name: any) => {
     const names = name.split(' ');
     return names.slice(0, 2).map((n: any) => n[0]).join('');
+}
+export function getTimelinePosition(value: any, scale: any) {
+    const pos = value * scale;
+    return pos > 100 ? 100 : pos;
+}
+
+export function millisToMinutesAndSeconds(millis: any) {
+    const minutes = Math.floor(millis / 60000);
+    const seconds: any = ((millis % 60000) / 1000).toFixed(0);
+    return minutes + 'm' + (seconds < 10 ? '0' : '') + seconds + 's';
 }

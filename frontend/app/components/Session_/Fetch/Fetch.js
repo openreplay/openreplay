@@ -116,7 +116,7 @@ export default class Fetch extends React.PureComponent {
                 />
                 <BottomBlock>
                     <BottomBlock.Header>
-                        <h4 className="text-lg">Fetch</h4>
+                        <span className="font-semibold color-gray-medium mr-4">Fetch</span>
                         <div className="flex items-center">
                             <Input
                                 className="input-small"

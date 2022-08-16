@@ -127,6 +127,7 @@ const Header = (props) => {
           </div>
 
           <ul>
+            <li><button onClick={ onLogoutClick }>{ 'Account' }</button></li>
             <li><button onClick={ onLogoutClick }>{ 'Logout' }</button></li>
           </ul>
         </div>

@@ -50,7 +50,7 @@ export default class GraphQL extends React.PureComponent {
     return (
       <BottomBlock>
         <BottomBlock.Header>
-          <h4 className="text-lg">Long Tasks</h4>
+          <span className="font-semibold color-gray-medium mr-4">Long Tasks</span>
           <div className="flex items-center">
             <Input
               className="input-small mr-3"
