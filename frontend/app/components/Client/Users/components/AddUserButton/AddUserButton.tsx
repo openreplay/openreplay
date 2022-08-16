@@ -1,5 +1,5 @@
 import React from 'react';
-import { Popup, IconButton } from 'UI';
+import { Popup, IconButton, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
@@ -14,7 +14,8 @@ function AddUserButton({ isAdmin = false, onClick }: any ) {
         <Popup
             content={ `${ !isAdmin ? PERMISSION_WARNING : (!cannAddUser ? LIMIT_WARNING : 'Add team member') }` }
         >
-            <IconButton
+            <Button disabled={ !cannAddUser || !isAdmin } variant="primary" onClick={ onClick }>Add</Button>
+            {/* <IconButton
                 id="add-button"
                 disabled={ !cannAddUser || !isAdmin }
                 circle
@@ -22,7 +23,7 @@ function AddUserButton({ isAdmin = false, onClick }: any ) {
                 outline
                 onClick={ onClick }
                 className="ml-4"
-            />
+            /> */}
         </Popup>
     );
 }

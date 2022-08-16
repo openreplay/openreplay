@@ -44,13 +44,14 @@ function UserList(props: Props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <NoContent
-                show={!loading && length === 0}
                 title={
                     <div className="flex flex-col items-center justify-center">
-                        <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
-                        <div className="mt-6 text-2xl">No data available.</div>
+                    <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
+                    <div className="text-center text-gray-600 my-4">No matching results.</div>
                     </div>
                 }
+                size="small"
+                show={!loading && length === 0}
             >
                 <div className="mt-3 rounded bg-white">
                     <div className="grid grid-cols-12 p-3 border-b font-medium">
