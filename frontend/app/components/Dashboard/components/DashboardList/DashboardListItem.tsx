@@ -22,8 +22,8 @@ function DashboardListItem(props: Props) {
         history.push(path);
     };
     return (
-        <div className="hover:bg-active-blue cursor-pointer" onClick={onItemClick}>
-            <div className="grid grid-cols-12 py-4 border-t select-none">
+        <div className="hover:bg-active-blue cursor-pointer border-t -mx-2 px-2" onClick={onItemClick}>
+            <div className="grid grid-cols-12 py-4 select-none">
                 <div className="col-span-8 flex items-start">
                     <div className="flex items-center capitalize-first">
                         <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
