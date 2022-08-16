@@ -30,7 +30,7 @@ function DashboardList() {
             }   
         >
             <div className="mt-3 border-b">
-                <div className="grid grid-cols-12 py-2 font-medium -mx-2 px-2">
+                <div className="grid grid-cols-12 py-2 font-medium px-3">
                   <div className="col-span-8">Title</div>
                   <div  className="col-span-2">Visibility</div>
                   <div className="col-span-2 text-right">Created</div>
