@@ -3,7 +3,7 @@ import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
-import { Button, Icon } from 'UI'
+import { Button, Icon, SegmentSelection } from 'UI'
 import FilterSeries from '../FilterSeries';
 import { confirm, Popup } from 'UI';
 import Select from 'Shared/Select'
@@ -13,6 +13,12 @@ interface Props {
     history: any;
     match: any;
     onDelete: () => void;
+}
+
+const metricIcons = {
+    timeseries: 'graph-up',
+    table: 'table', 
+    funnel: 'funnel',
 }
 
 function WidgetForm(props: Props) {
@@ -64,13 +70,15 @@ function WidgetForm(props: Props) {
         metricStore.merge(obj);
     };
 
+    const onSelect = (_: any, option: Record<string, any>) => writeOption({ value: { value: option.value }, name: option.name})
+
     const onSave = () => {
         const wasCreating = !metric.exists()
         metricStore.save(metric, dashboardId)
             .then((metric: any) => {
                 if (wasCreating) {
                     if (parseInt(dashboardId) > 0) {
-                        history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                        history.replace(withSiteId(dashboardMetricDetails(dashboardId, metric.metricId), siteId));
                     } else {
                         history.replace(withSiteId(metricDetails(metric.metricId), siteId));
                     }
@@ -93,11 +101,15 @@ function WidgetForm(props: Props) {
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <Select
+                    <SegmentSelection 
+                        icons
+                        outline
                         name="metricType"
-                        options={metricTypes}
-                        value={metricTypes.find((i: any) => i.value === metric.metricType) || metricTypes[0]}
-                        onChange={ writeOption }
+                        className="my-3"
+                        onSelect={ onSelect }
+                        value={metricTypes.find((i) => i.value === metric.metricType) || metricTypes[0]}
+                        // @ts-ignore
+                        list={metricTypes.map((i) => ({ value: i.value, name: i.label, icon: metricIcons[i.value] }))}
                     />
 
                     {metric.metricType === 'timeseries' && (
