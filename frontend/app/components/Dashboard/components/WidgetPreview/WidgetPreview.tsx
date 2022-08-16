@@ -42,7 +42,7 @@ function WidgetPreview(props: Props) {
 
     return useObserver(() => (
         <>
-        <div className={cn(className, 'bg-white rounded')}>
+        <div className={cn(className, 'bg-white rounded border')}>
             <div className="flex items-center justify-between px-4 pt-2">
                 <h2 className="text-2xl">
                     {props.name}
