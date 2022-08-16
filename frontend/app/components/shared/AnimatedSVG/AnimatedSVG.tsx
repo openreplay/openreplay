@@ -10,6 +10,8 @@ import NoBookmarks from '../../../svg/ca-no-bookmarked-session.svg';
 import NoLiveSessions from '../../../svg/ca-no-live-sessions.svg';
 import NoSessions from '../../../svg/ca-no-sessions.svg';
 import NoSessionsInVault from '../../../svg/ca-no-sessions-in-vault.svg';
+import NoWebhooks from '../../../svg/ca-no-webhooks.svg';
+import NoMetadata from '../../../svg/ca-no-metadata.svg';
 import NoIssues from '../../../svg/ca-no-issues.svg';
 
 export enum ICONS {
@@ -23,6 +25,9 @@ export enum ICONS {
     NO_BOOKMARKS = 'ca-no-bookmarked-session',
     NO_LIVE_SESSIONS = 'ca-no-live-sessions',
     NO_SESSIONS = 'ca-no-sessions',
+    NO_SESSIONS_IN_VAULT = 'ca-no-sessions-in-vault',
+    NO_WEBHOOKS = 'ca-no-webhooks',
+    NO_METADATA = 'ca-no-metadata',
     NO_SESSIONS_IN_VAULT = 'ca-no-sessions-in-vault',
     NO_ISSUES = 'ca-no-issues',
 }
@@ -57,6 +62,10 @@ function AnimatedSVG(props: Props) {
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoSessions} />;
             case ICONS.NO_SESSIONS_IN_VAULT:
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoSessionsInVault} />;
+            case ICONS.NO_WEBHOOKS:
+                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoWebhooks} />;
+            case ICONS.NO_METADATA:
+                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoMetadata} />;
             case ICONS.NO_ISSUES:
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoIssues} />;
             default:

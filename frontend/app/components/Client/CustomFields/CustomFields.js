@@ -84,8 +84,12 @@ function CustomFields(props) {
                 <NoContent
                     title={
                         <div className="flex flex-col items-center justify-center">
-                            <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
-                            <div className="mt-6 text-2xl">No data available.</div>
+                            <AnimatedSVG name={ICONS.NO_METADATA} size={120} />
+                            {/* <div className="mt-4" /> */}
+                            <div className="text-center text-gray-600 my-4">None added yet</div>
+                            <Button icon="plus" variant="text-primary" onClick={() => init()}>
+                                Add
+                            </Button>
                         </div>
                     }
                     size="small"
