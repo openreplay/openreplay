@@ -44,7 +44,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
 
     return (
         <NoContent
-        title={<div className="flex items-center"><Icon name="info-circle" size={18} className="mr-2" />No errors found in the selected time range</div>}
+        title={<div className="flex items-center"><Icon name="info-circle" size={18} className="mr-2" />No data for the selected time period</div>}
         show={!data.errors || data.errors.length === 0}
         size="small"
         >

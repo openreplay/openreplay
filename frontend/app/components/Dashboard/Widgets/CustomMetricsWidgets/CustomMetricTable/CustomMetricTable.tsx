@@ -2,7 +2,7 @@ import React from 'react'
 import { Table } from '../../common';
 import { List } from 'immutable';
 import { filtersMap } from 'Types/filter/newFilter';
-import { NoContent } from 'UI';
+import { NoContent, Icon } from 'UI';
 import { tableColumnName } from 'App/constants/filterOptions';
 import { numberWithCommas } from 'App/utils';
 
@@ -50,7 +50,7 @@ function CustomMetricTable(props: Props) {
     }
     return (
         <div className="" style={{ height: 240 }}>
-           <NoContent show={data.values && data.values.length === 0} size="small" title="No recordings found">
+           <NoContent show={data.values && data.values.length === 0} size="small" title={<div className="flex items-center"><Icon name="info-circle" className="mr-2" size="18" /> No data for the selected time period</div>}>
                 <Table
                     small
                     cols={ getColumns(metric) }
