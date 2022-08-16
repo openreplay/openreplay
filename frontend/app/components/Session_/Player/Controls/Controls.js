@@ -304,7 +304,7 @@ export default class Controls extends React.Component {
         return (
             <div className={styles.controls}>
                 {!live || liveTimeTravel ? (
-                    <Timeline jump={this.props.jump} liveTimeTravel={liveTimeTravel} pause={this.props.pause} togglePlay={this.props.togglePlay} />
+                    <Timeline live={live} jump={this.props.jump} liveTimeTravel={liveTimeTravel} pause={this.props.pause} togglePlay={this.props.togglePlay} />
                 ) : null}
                 {!fullscreen && (
                     <div className={cn(styles.buttons, { '!px-5 !pt-0': live })} data-is-live={live}>

@@ -115,7 +115,8 @@ function PlayerControls(props: Props) {
                     onClick={() => setSkipInterval(parseInt(interval, 10))}
                     className="py-2 px-4 cursor-pointer hover:bg-active-blue border-t w-full text-left border-borderColor-gray-light-shade font-semibold"
                   >
-                    {interval} <span className="text-disabled-text">(Secs)</span>
+                    {interval}
+                    <span className="text-disabled-text">s</span>
                   </div>
                 ))}
               </div>

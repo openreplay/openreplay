@@ -52,7 +52,7 @@ function AddMetric({ metrics, history, siteId, title, description }: IProps) {
                     </div>
                    
                     <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
-                        + Create new
+                        + Create New
                     </Button>
                     
                 </div>

@@ -18,7 +18,7 @@ const BOUNDRY = 0;
 function getTimelinePosition(value, scale) {
     const pos = value * scale;
 
-    return pos > 100 ? 100 : pos;
+    return pos > 100 ? 99 : pos;
 }
 
 const getPointerIcon = (type) => {
@@ -186,7 +186,7 @@ export default class Timeline extends React.PureComponent {
         const scale = 100 / endTime;
 
         return (
-            <div className="flex items-center absolute w-full" style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%' }}>
+            <div className="flex items-center absolute w-full" style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%', overflowX: 'hidden' }}>
                 <div
                     className={stl.progress}
                     onClick={disabled ? null : this.seekProgress}
@@ -198,13 +198,13 @@ export default class Timeline extends React.PureComponent {
                 >
                     <TooltipContainer liveTimeTravel={liveTimeTravel} />
                     {/* custo color is live */}
-                    <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
+                    <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} live={this.props.live} />
                     <CustomDragLayer
                         onDrag={this.onDrag}
                         minX={BOUNDRY}
                         maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY}
                     />
-                    <TimeTracker scale={scale} />
+                    <TimeTracker scale={scale}  />
 
                     {skip &&
                         skipIntervals.map((interval) => (

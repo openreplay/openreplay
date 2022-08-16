@@ -37,7 +37,7 @@ interface Props {
 }
 
 const DraggableCircle: FC<Props> = memo(function DraggableCircle(props) {
-    const { left, top } = props
+    const { left, top, live } = props
     const [{ isDragging, item }, dragRef, preview] = useDrag(
         () => ({
             type: ItemTypes.BOX,
@@ -61,7 +61,7 @@ const DraggableCircle: FC<Props> = memo(function DraggableCircle(props) {
             style={getStyles(left, isDragging)}
             role="DraggableBox"
         >
-            <Circle isGreen={left > 99} />
+            <Circle isGreen={left > 99 && live} />
         </div>
     );
 })
