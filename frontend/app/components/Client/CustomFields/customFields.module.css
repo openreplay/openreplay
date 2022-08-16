@@ -1,7 +1,7 @@
 .tabHeader {
   display: flex;
   align-items: center;
-  margin-bottom: 25px;
+  /* margin-bottom: 25px; */
 
   & .tabTitle {
     margin: 0 15px 0 0;

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Loader, NoContent, TextLink } from 'UI';
+import { Button, Loader, NoContent, Icon } from 'UI';
 import { init, fetchList, save, remove } from 'Duck/customField';
 import SiteDropdown from 'Shared/SiteDropdown';
 import styles from './customFields.module.css';
@@ -71,25 +71,21 @@ function CustomFields(props) {
                 <div style={{ marginRight: '15px' }}>
                     <SiteDropdown value={currentSite && currentSite.id} onChange={onChangeSelect} />
                 </div>
-                <Button rounded={true} icon="plus" variant="outline" onClick={() => init()} />
-                <TextLink
-                    icon="book"
-                    className="ml-auto color-gray-medium"
-                    href="https://docs.openreplay.com/installation/metadata"
-                    label="Documentation"
-                />
+                <Button variant="primary" onClick={() => init()}>Add</Button>
+            </div>
+            <div className="text-base text-disabled-text flex items-center mt-3">
+                <Icon name="info-circle-fill" className="mr-2" size={16} />
+                See additonal user information in sessions.
+                <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank">Learn more</a>
             </div>
 
             <Loader loading={loading}>
                 <NoContent
                     title={
                         <div className="flex flex-col items-center justify-center">
-                            <AnimatedSVG name={ICONS.NO_METADATA} size={120} />
+                            <AnimatedSVG name={ICONS.NO_METADATA} size={80} />
                             {/* <div className="mt-4" /> */}
                             <div className="text-center text-gray-600 my-4">None added yet</div>
-                            <Button icon="plus" variant="text-primary" onClick={() => init()}>
-                                Add
-                            </Button>
                         </div>
                     }
                     size="small"
