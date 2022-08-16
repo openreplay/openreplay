@@ -31,7 +31,7 @@ function MetricsList({ siteId }: { siteId: string }) {
             title={
                 <div className="flex flex-col items-center justify-center">
                     <Icon name="no-metrics" size={80} color="figmaColors-accent-secondary" />
-                    <div className="mt-3 text-xl">You haven't created any metrics yet</div>
+                    <div className="text-center text-gray-600 my-4">You haven't created any metrics yet</div>
                 </div>
             }   
         >
