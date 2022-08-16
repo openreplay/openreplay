@@ -49,19 +49,29 @@ function CustomMetricTable(props: Props) {
         onClick(filters);
     }
     return (
-        <div className="" style={{ height: 240 }}>
-           <NoContent show={data.values && data.values.length === 0} size="small" title={<div className="flex items-center"><Icon name="info-circle" className="mr-2" size="18" /> No data for the selected time period</div>}>
-                <Table
-                    small
-                    cols={ getColumns(metric) }
-                    rows={ rows }
-                    rowClass="group"
-                    onRowClick={ onClickHandler }
-                    isTemplate={isTemplate}
-                />
-           </NoContent>
-        </div>
-    )
+      <div className="" style={{ height: 240 }}>
+        <NoContent
+          style={{ minHeight: 220 }}
+          show={data.values && data.values.length === 0}
+          size="small"
+          title={
+            <div className="flex items-center">
+              <Icon name="info-circle" className="mr-2" size="18" />
+              No data for the selected time period
+            </div>
+          }
+        >
+          <Table
+            small
+            cols={getColumns(metric)}
+            rows={rows}
+            rowClass="group"
+            onRowClick={onClickHandler}
+            isTemplate={isTemplate}
+          />
+        </NoContent>
+      </div>
+    );
 }
 
 export default CustomMetricTable;
