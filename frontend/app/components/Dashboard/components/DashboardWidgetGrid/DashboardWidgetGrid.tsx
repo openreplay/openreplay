@@ -26,7 +26,7 @@ function DashboardWidgetGrid(props: Props) {
                 icon="no-metrics-chart"
                 title={<span className="text-2xl capitalize-first text-figmaColors-text-primary">Build your dashboard</span>}
                 subtext={
-                    <div className="w-4/5 m-auto"><AddMetricContainer siteId={siteId} /></div>
+                    <div className="w-4/5 m-auto mt-4"><AddMetricContainer siteId={siteId} /></div>
                 }
             >
                 <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>

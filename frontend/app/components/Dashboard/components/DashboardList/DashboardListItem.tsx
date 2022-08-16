@@ -29,7 +29,7 @@ function DashboardListItem(props: Props) {
                         <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
                             <Icon name="columns-gap" size="16" color="tealx" />
                         </div>
-                        <div className="color-blue capitalize-first">{dashboard.name}</div>
+                        <div className="link capitalize-first">{dashboard.name}</div>
                     </div>
                 </div>
                 {/* <div><Label className="capitalize">{metric.metricType}</Label></div> */}

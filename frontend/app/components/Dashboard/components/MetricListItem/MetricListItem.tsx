@@ -49,7 +49,7 @@ function MetricListItem(props: Props) {
             <div className="col-span-3 flex items-start">
                 <div className="flex items-center">
                     <MetricTypeIcon type={metric.metricType} />
-                    <div className="color-blue capitalize-first">
+                    <div className="link capitalize-first">
                         {metric.name}
                     </div>
                 </div>
