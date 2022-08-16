@@ -44,10 +44,10 @@ function OverviewPanel(props: Props) {
             return;
         }
 
-        if (props.resourceList.length > 0) {
+        if (props.resourceList.length > 0 || props.exceptionsList.length > 0 || props.eventsList.length > 0 || props.stackEventList.length > 0 || props.issuesList.length > 0 || props.performanceChartData.length > 0) {
             setDataLoaded(true);
         }
-    }, [props.resourceList]);
+    }, [props.resourceList, props.exceptionsList, props.eventsList, props.stackEventList, props.performanceChartData]);
 
     return (
         dataLoaded && (
