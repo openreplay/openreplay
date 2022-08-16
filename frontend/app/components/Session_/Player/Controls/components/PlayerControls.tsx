@@ -134,7 +134,10 @@ function PlayerControls(props: Props) {
               </div>
             }
           >
-            <div onClick={toggleTooltip}>{currentInterval}s</div>
+            <div onClick={toggleTooltip}>
+              {/* @ts-ignore */}
+              <Tooltip disabled={showTooltip} title="Set default skip duration">{currentInterval}s</Tooltip>
+            </div>
           </Tooltip>
         </div>
         {/* @ts-ignore */}
