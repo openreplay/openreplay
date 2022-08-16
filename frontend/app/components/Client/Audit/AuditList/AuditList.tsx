@@ -35,13 +35,14 @@ function AuditList(props: Props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <NoContent
-                show={list.length === 0}
                 title={
                     <div className="flex flex-col items-center justify-center">
-                        <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
-                        <div className="mt-6 text-2xl">No data available.</div>
+                    <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
+                    <div className="text-center text-gray-600 my-4">No data available</div>
                     </div>
                 }
+                size="small"
+                show={list.length === 0}
             >
                 <div className="px-2 grid grid-cols-12 gap-4 items-center py-3 font-medium">
                     <div className="col-span-5">Name</div>
