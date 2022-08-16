@@ -32,7 +32,7 @@ function NewDashboard(props: RouteComponentProps<RouterProps>) {
     }, [siteId]);
 
     return useObserver(() => (
-        <Loader loading={true} className="mt-12">
+        <Loader loading={loading} className="mt-12">
              <div className="page-margin container-90">
                 <div className={cn("side-menu", { 'hidden' : shouldHideMenu })}>
                     <DashboardSideMenu siteId={siteId} />
