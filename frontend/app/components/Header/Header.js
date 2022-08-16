@@ -46,6 +46,10 @@ const Header = (props) => {
   const initialDataFetched = useObserver(() => userStore.initialDataFetched);
   let activeSite = null;
 
+  const onAccountClick = () => {
+    props.history.push(CLIENT_PATH);
+  }
+
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
     
@@ -127,7 +131,7 @@ const Header = (props) => {
           </div>
 
           <ul>
-            <li><button onClick={ onLogoutClick }>{ 'Account' }</button></li>
+            <li><button onClick={ onAccountClick }>{ 'Account' }</button></li>
             <li><button onClick={ onLogoutClick }>{ 'Logout' }</button></li>
           </ul>
         </div>
