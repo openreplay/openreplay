@@ -21,8 +21,8 @@ function AddMetricButton({ iconName, title, description, onClick, isPremade, isP
         <div
             onClick={onClick}
             className={cn(
-                'flex items-center hover:bg-gray-lightest hover:!border-gray-light group rounded border cursor-pointer',
-                isPremade ? 'bg-figmaColors-primary-outlined-hover-background' : 'bg-figmaColors-secondary-outlined-hover-background',
+                'flex items-center hover:bg-gray-lightest  group rounded border cursor-pointer',
+                isPremade ? 'bg-figmaColors-primary-outlined-hover-background hover:!border-tealx' : 'hover:!border-teal bg-figmaColors-secondary-outlined-hover-background',
                 isPopup ? 'p-4 z-50' : 'px-4 py-8 flex-col'
             )}
             style={{ borderColor: 'rgb(238, 238, 238)' }}
