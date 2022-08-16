@@ -12,7 +12,7 @@ function MetricsSearch(props) {
         debounceUpdate = debounce((key, value) => metricStore.updateKey(key, value), 500);
     }, [])
 
-    const write = ({ target: { name, value } }) => {
+    const write = ({ target: { value } }) => {
         setQuery(value);
         debounceUpdate('metricsSearch', value);
     }
@@ -23,7 +23,7 @@ function MetricsSearch(props) {
             <input
                 value={query}
                 name="metricsSearch"
-                className="bg-white p-2 border rounded w-full pl-10"
+                className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
                 placeholder="Filter by title, type, dashboard and owner"
                 onChange={write}
             />

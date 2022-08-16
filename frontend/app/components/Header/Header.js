@@ -4,6 +4,7 @@ import { NavLink, withRouter } from 'react-router-dom';
 import cn from 'classnames';
 import { 
   sessions,
+  metrics,
   assist,
   client,
   dashboard,
@@ -27,6 +28,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
 const DASHBOARD_PATH = dashboard();
+const METRICS_PATH = metrics();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
@@ -94,6 +96,9 @@ const Header = (props) => {
         to={ withSiteId(DASHBOARD_PATH, siteId) }
         className={ styles.nav }
         activeClassName={ styles.active }
+        isActive={ (_, location) => {
+          return location.pathname.includes(DASHBOARD_PATH) || location.pathname.includes(METRICS_PATH);
+        }}
       >         
         <span>{ 'Dashboards' }</span>
       </NavLink>

@@ -18,6 +18,7 @@ function ResourceLoadedVsVisuallyComplete(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title="No recordings found"
         >
           <ResponsiveContainer height={ 240 } width="100%">
             <ComposedChart

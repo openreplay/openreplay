@@ -7,7 +7,7 @@ interface Props {
     subtext?: any;
     icon?: string;
     iconSize?: number;
-    size?: number;
+    size?: string;
     show?: boolean;
     children?: any;
     image?: any;

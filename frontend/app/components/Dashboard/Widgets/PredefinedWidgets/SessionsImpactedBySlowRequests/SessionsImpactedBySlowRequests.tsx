@@ -18,6 +18,7 @@ function SessionsImpactedBySlowRequests(props: Props) {
 
     return (
         <NoContent
+        title="No recordings found"
           size="small"
           show={ metric.data.chart.length === 0 }
         >

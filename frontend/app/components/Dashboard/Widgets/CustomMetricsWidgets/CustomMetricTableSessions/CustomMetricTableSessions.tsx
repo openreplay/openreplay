@@ -3,7 +3,7 @@ import React from "react";
 import SessionItem from "Shared/SessionItem";
 import { Pagination, NoContent } from "UI";
 import { useStore } from "App/mstore";
-import { overPastString } from "App/dateRange";
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
     metric: any;
@@ -26,7 +26,13 @@ function CustomMetricTableSessions(props: Props) {
                 data.sessions.length === 0
             }
             size="small"
-            title={`No sessions found ${overPastString(period)}`}
+            title={
+                <div className="flex items-center justify-center flex-col">
+                    <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
+                    <div className="mt-2" />
+                    <div className="text-center text-gray-600">No relevant sessions found for the selected time period.</div>
+                </div>
+            } 
         >
             <div className="pb-4">
                 {data.sessions &&

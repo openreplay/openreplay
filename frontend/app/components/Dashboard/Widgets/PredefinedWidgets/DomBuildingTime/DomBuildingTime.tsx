@@ -33,6 +33,7 @@ function DomBuildingTime(props: Props) {
     return (
         <NoContent
           size="small"
+          title="No recordings found"
           show={ metric.data.chart.length === 0 }
         >
           <>

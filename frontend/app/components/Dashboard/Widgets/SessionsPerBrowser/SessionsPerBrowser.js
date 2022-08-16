@@ -22,6 +22,7 @@ export default class SessionsPerBrowser extends React.PureComponent {
         <NoContent
           size="small"
           show={ data.chart.size === 0 }
+          title="No recordings found"
         >          
           <div className="w-full pt-3" style={{ height: '240px' }}>
             {data.chart.map((item, i) => 

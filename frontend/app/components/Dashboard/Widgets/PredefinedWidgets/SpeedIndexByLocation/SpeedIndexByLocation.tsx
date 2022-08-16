@@ -63,7 +63,7 @@ function SpeedIndexByLocation(props: Props) {
     };
 
     return (
-        <NoContent size="small" show={false} style={{ height: '240px' }}>
+        <NoContent size="small" show={false} style={{ height: '240px' }} title="No recordings found">
             <div className="absolute right-0 mr-4 top=0 w-full flex justify-end">
                 <AvgLabel text="Avg" count={Math.round(metric.data.value)} unit="ms" />
             </div>

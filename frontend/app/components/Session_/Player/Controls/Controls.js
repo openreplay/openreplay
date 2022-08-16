@@ -11,6 +11,7 @@ import {
     fullscreenOn,
     fullscreenOff,
     toggleBottomBlock,
+    changeSkipInterval,
     OVERVIEW,
     CONSOLE,
     NETWORK,
@@ -23,7 +24,7 @@ import {
     EXCEPTIONS,
     INSPECTOR,
 } from 'Duck/components/player';
-import { ReduxTime, AssistDuration } from './Time';
+import { AssistDuration } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 import PlayerControls from './components/PlayerControls';
@@ -46,6 +47,16 @@ function getStorageIconName(type) {
             return 'store';
     }
 }
+
+const SKIP_INTERVALS = {
+  2: 2e3,
+  5: 5e3,
+  10: 1e4,
+  15: 15e3,
+  20: 2e4,
+  30: 3e4,
+  60: 6e4,
+};
 
 function getStorageName(type) {
     switch (type) {
@@ -107,13 +118,14 @@ function getStorageName(type) {
             showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
             showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
             closedLive: !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current', 'live']),
-        };
+        skipInterval: state.getIn(['components', 'player', 'skipInterval']),
+  };
     },
     {
         fullscreenOn,
         fullscreenOff,
         toggleBottomBlock,
-    }
+    changeSkipInterval,}
 )
 export default class Controls extends React.Component {
     componentDidMount() {
@@ -158,8 +170,8 @@ export default class Controls extends React.Component {
             nextProps.showExceptions !== this.props.showExceptions ||
             nextProps.exceptionsCount !== this.props.exceptionsCount ||
             nextProps.showLongtasks !== this.props.showLongtasks ||
-            nextProps.liveTimeTravel !== this.props.liveTimeTravel
-        )
+            nextProps.liveTimeTravel !== this.props.liveTimeTravel||
+        nextProps.skipInterval !== this.props.skipInterval)
             return true;
         return false;
     }
@@ -195,14 +207,14 @@ export default class Controls extends React.Component {
     };
 
     forthTenSeconds = () => {
-        const { time, endTime, jump } = this.props;
-        jump(Math.min(endTime, time + 1e4));
+        const { time, endTime, jump, skipInterval } = this.props;
+        jump(Math.min(endTime, time + SKIP_INTERVALS[skipInterval]));
     };
 
     backTenSeconds = () => {
         //shouldComponentUpdate
-        const { time, jump } = this.props;
-        jump(Math.max(0, time - 1e4));
+        const { time, jump, skipInterval } = this.props;
+        jump(Math.max(0, time - SKIP_INTERVALS[skipInterval]));
     };
 
     goLive = () => this.props.jump(this.props.endTime);
@@ -275,7 +287,9 @@ export default class Controls extends React.Component {
             toggleSpeed,
             toggleSkip,
             liveTimeTravel,
-        } = this.props;
+        changeSkipInterval,
+      skipInterval,
+    } = this.props;
 
         const toggleBottomTools = (blockName) => {
             if (blockName === INSPECTOR) {
@@ -308,7 +322,10 @@ export default class Controls extends React.Component {
                                         toggleSkip={toggleSkip}
                                         playButton={this.renderPlayBtn()}
                                         controlIcon={this.controlIcon}
-                                    />
+                                    ref={this.speedRef}
+                  skipIntervals={SKIP_INTERVALS}
+                  setSkipInterval={changeSkipInterval}
+                  currentInterval={skipInterval}/>
                                     {/* <Button variant="text" onClick={() => toggleBottomTools(OVERVIEW)}>X-RAY</Button> */}
                                     <div className={cn('h-14 border-r bg-gray-light mx-6')} />
                                     <XRayButton isActive={bottomBlock === OVERVIEW && !inspectorMode} onClick={() => toggleBottomTools(OVERVIEW)} />

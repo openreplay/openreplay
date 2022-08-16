@@ -48,6 +48,7 @@ export default class MostImpactfulErrors extends React.PureComponent {
       <Loader loading={ loading } size="small">
         <NoContent
           size="small"
+          title="No recordings found"
           show={ errors.size === 0 }
         >
           <Table

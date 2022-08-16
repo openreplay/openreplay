@@ -8,6 +8,7 @@ interface Props {
     onClick?: () => void;
     disabled?: boolean;
     type?: 'button' | 'submit' | 'reset';
+    variant?: 'default' | 'primary' | 'text' | 'text-primary' | 'text-red' | 'outline'
     loading?: boolean;
     icon?: string;
     rounded?: boolean;

@@ -60,7 +60,7 @@ export default class Widget implements IWidget {
     public static get ID_KEY():string { return "metricId" }
     metricId: any = undefined
     widgetId: any = undefined
-    name: string = "New Metric"
+    name: string = "Untitled Metric"
     // metricType: string = "timeseries"
     metricType: string = "timeseries"
     metricOf: string = "sessionCount"

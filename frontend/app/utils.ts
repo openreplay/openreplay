@@ -53,7 +53,7 @@ export const cutURL = (url, prefix = '.../') => `${prefix + url.split('/').slice
 
 export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export function getRE(string, options) {
+export function getRE(string: string, options: string) {
     let re;
     try {
         re = new RegExp(string, options);
@@ -62,6 +62,19 @@ export function getRE(string, options) {
     }
     return re;
 }
+
+export const filterList = <T extends Record<string, any>>(
+    list: T[],
+    searchQuery: string,
+    testKeys: string[],
+    searchCb?: (listItem: T, query: string | RegExp
+) => boolean): T[] => {
+    const filterRE = getRE(searchQuery, 'i');
+    let _list = list.filter((listItem: T) => {
+        return testKeys.some((key) => filterRE.test(listItem[key]) || searchCb?.(listItem, filterRE));
+    });
+    return _list
+  }
 
 export const getStateColor = (state) => {
     switch (state) {
@@ -239,10 +252,10 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
     return major > majorC || (major === majorC && minor > minorC) || (major === majorC && minor === minorC && patch >= patchC);
 };
 
-export const sliceListPerPage = (list, page, perPage = 10) => {
+export const sliceListPerPage = <T extends Array<any>>(list: T, page: number, perPage = 10): T => {
     const start = page * perPage;
     const end = start + perPage;
-    return list.slice(start, end);
+    return list.slice(start, end) as T;
 };
 
 export const positionOfTheNumber = (min, max, value, length) => {
