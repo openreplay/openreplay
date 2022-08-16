@@ -22,7 +22,7 @@ function AddProjectButton({ isAdmin = false, init = () => {} }: any) {
     };
     return (
         <Popup content={`${!isAdmin ? PERMISSION_WARNING : !canAddProject ? LIMIT_WARNING : 'Add a Project'}`}>
-            <Button rounded={true} variant="outline" icon="plus" onClick={onClick} disabled={!canAddProject || !isAdmin}></Button>
+            <Button variant="primary" onClick={onClick} disabled={!canAddProject || !isAdmin}>Add</Button>
         </Popup>
     );
 }
