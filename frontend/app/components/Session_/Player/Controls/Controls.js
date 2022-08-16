@@ -485,7 +485,7 @@ export default class Controls extends React.Component {
                                     containerClassName="mx-2"
                                 />
                             )}
-                            {!live && <div className={cn(styles.divider, 'h-full')} />}
+                            {!live && <div className={cn('h-14 border-r bg-gray-light ml-6')} />}
                             {!live && (
                                 <Tooltip title="Fullscreen" delay={0} position="top-end" className="mx-4">
                                     {this.controlIcon(
