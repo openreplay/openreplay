@@ -83,7 +83,10 @@ function PlayerControls(props: Props) {
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
         <Tooltip title="Rewind 10s" delay={0} position="top">
-          <button ref={arrowBackRef} className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent">
+          <button
+            ref={arrowBackRef}
+            className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
+          >
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -123,7 +126,10 @@ function PlayerControls(props: Props) {
         </div>
         {/* @ts-ignore */}
         <Tooltip title="Forward 10s" delay={0} position="top">
-          <button ref={arrowForwardRef} className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent">
+          <button
+            ref={arrowForwardRef}
+            className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
+          >
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -136,7 +142,7 @@ function PlayerControls(props: Props) {
       </div>
 
       {!live && (
-        <div className="flex items-center mx-4">
+        <div className="flex items-center ml-4">
           {/* @ts-ignore */}
           <Tooltip title="Control play back speed (↑↓)" delay={0} position="top">
             <button
