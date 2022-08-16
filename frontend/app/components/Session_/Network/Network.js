@@ -95,10 +95,10 @@ export default class Network extends React.PureComponent {
     };
 
     onRowClick = (e, index) => {
-        pause();
-        jump(e.time);
-        this.setState({ currentIndex: index });
-        this.props.setTimelinePointer(null);
+        // pause();
+        // jump(e.time);
+        // this.setState({ currentIndex: index });
+        // this.props.setTimelinePointer(null);
     };
 
     onTabClick = (activeTab) => this.setState({ activeTab });
@@ -108,8 +108,18 @@ export default class Network extends React.PureComponent {
         const filterRE = getRE(value, 'i');
         const filtered = resources.filter(({ type, name }) => filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]));
 
-        this.setState({ filter: value, filteredList: value ? filtered : resources, currentIndex: 0 });
-    };
+    this.setState({ filter: value, filteredList: value ? filtered : resources, currentIndex: 0 });
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { filteredList } = prevState;
+    if (nextProps.timelinePointer) {
+      const activeItem = filteredList.find((r) => r.time >= nextProps.timelinePointer.time);
+      return {
+        currentIndex: activeItem ? filteredList.indexOf(activeItem) : filteredList.length - 1,
+      };
+    }
+  }
 
     render() {
         const {
@@ -137,7 +147,7 @@ export default class Network extends React.PureComponent {
                     resourcesSize={resourcesSize}
                     transferredSize={transferredSize}
                     onRowClick={this.onRowClick}
-                    currentIndex={listNow.length - 0}
+                    currentIndex={listNow.length - 1}
                 />
             </React.Fragment>
         );

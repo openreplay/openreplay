@@ -36,7 +36,7 @@ export function validateName(value, options) {
   } = Object.assign({}, defaultOptions, options);
 
   if (typeof value !== 'string') return false; // throw Error?
-  if (!empty && value.trim() === '') return false;
+  if (!empty && value && value.trim() === '') return false;
 
   const charsRegex = admissibleChars
     ? `|${ admissibleChars.split('').map(escapeRegexp).join('|') }`

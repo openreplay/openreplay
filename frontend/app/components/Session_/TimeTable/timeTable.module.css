@@ -102,3 +102,7 @@ $offset: 10px;
 .activeRow {
   background-color: rgba(54, 108, 217, 0.1);
 }
+
+.inactiveRow {
+  opacity: 0.5;
+}

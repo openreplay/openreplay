@@ -18,11 +18,18 @@
   border-bottom: solid thin $gray-light-shade;
 }
 
+.timestamp {
+  padding: 7px 0 7px 15px;
+}
+
 .activeRow {
-  background-color: $teal !important;
-  color: white !important;
+  background-color: rgba(54, 108, 217, 0.1) !important;
 }
 
 .icon {
   padding-top: 4px;
+}
+
+.inactiveRow {
+  opacity: 0.5;
 }

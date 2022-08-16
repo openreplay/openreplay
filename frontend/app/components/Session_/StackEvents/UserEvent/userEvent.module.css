@@ -2,9 +2,6 @@
 .userEvent {
   border-radius: 3px;
   background-color: rgba(0, 118, 255, 0.05);
-  font-family: 'Menlo', 'monaco', 'consolas', monospace;
-  padding: 8px 10px;
-  margin: 3px 0;
 
   &.modalTrigger {
     cursor: pointer;
@@ -35,4 +32,12 @@
   &::-webkit-scrollbar {
     height: 1px;
   }
+}
+
+.inactive {
+  opacity: 0.5;
+}
+
+.selected {
+  background-color: rgba(54, 108, 217, 0.1);
 }
