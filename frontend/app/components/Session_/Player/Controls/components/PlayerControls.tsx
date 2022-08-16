@@ -1,8 +1,9 @@
 import React from 'react';
 import { Tooltip } from 'react-tippy';
-import { ReduxTime } from '../Time';
 import { Icon } from 'UI';
 import cn from 'classnames';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import { ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
 
@@ -44,6 +45,7 @@ function PlayerControls(props: Props) {
     currentInterval,
     controlIcon,
   } = props;
+  const [showTooltip, setShowTooltip] = React.useState(false);
   const speedRef = React.useRef(null);
   const arrowBackRef = React.useRef(null);
   const arrowForwardRef = React.useRef(null);
@@ -67,6 +69,9 @@ function PlayerControls(props: Props) {
     return () => document.removeEventListener('keydown', handleKeyboard);
   }, [speedRef, arrowBackRef, arrowForwardRef]);
 
+  const toggleTooltip = () => {
+    setShowTooltip(!showTooltip);
+  }
   return (
     <div className="flex items-center">
       {playButton}
@@ -98,13 +103,13 @@ function PlayerControls(props: Props) {
         </Tooltip>
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
           <Tooltip
+            open={showTooltip}
             interactive
             // @ts-ignore
             theme="nopadding"
             animation="none"
-            hideDelay={200}
             duration={0}
-            className="cursor-pointer"
+            className="cursor-pointer select-none"
             distance={20}
             html={
               <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
@@ -113,8 +118,14 @@ function PlayerControls(props: Props) {
                 </div>
                 {Object.keys(skipIntervals).map((interval) => (
                   <div
-                    onClick={() => setSkipInterval(parseInt(interval, 10))}
-                    className="py-2 px-4 cursor-pointer hover:bg-active-blue border-t w-full text-left border-borderColor-gray-light-shade font-semibold"
+                    onClick={() => {
+                      toggleTooltip();
+                      setSkipInterval(parseInt(interval, 10))
+                    }}
+                    className={cn(
+                      "py-2 px-4 cursor-pointer w-full text-left font-semibold", 
+                      "hover:bg-active-blue border-t  border-borderColor-gray-light-shade",
+                    )}
                   >
                     {interval}
                     <span className="text-disabled-text">s</span>
@@ -123,7 +134,7 @@ function PlayerControls(props: Props) {
               </div>
             }
           >
-            {currentInterval}s
+            <div onClick={toggleTooltip}>{currentInterval}s</div>
           </Tooltip>
         </div>
         {/* @ts-ignore */}

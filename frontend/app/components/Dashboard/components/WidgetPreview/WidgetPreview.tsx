@@ -66,7 +66,7 @@ function WidgetPreview(props: Props) {
                         </>
                     )}
 
-                    {isTable && (
+                    {!disableVisualization && isTable && (
                         <>
                             <span className="mr-4 color-gray-medium">Visualization</span>
                             <SegmentSelection
@@ -80,7 +80,6 @@ function WidgetPreview(props: Props) {
                                     { value: 'table', name: 'Table', icon: 'table' },
                                     { value: 'pieChart', name: 'Chart', icon: 'pie-chart-fill' },
                                 ]}
-                                disabled={disableVisualization}
                                 disabledMessage="Chart view is not supported"
                             />
                         </>

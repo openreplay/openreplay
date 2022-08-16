@@ -186,7 +186,7 @@ export default class Timeline extends React.PureComponent {
         const scale = 100 / endTime;
 
         return (
-            <div className="flex items-center absolute w-full" style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%', overflowX: 'hidden' }}>
+            <div className="flex items-center absolute w-full" style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%' }}>
                 <div
                     className={stl.progress}
                     onClick={disabled ? null : this.seekProgress}

@@ -29,7 +29,7 @@ export default class PlayerBlock extends React.PureComponent {
      } = this.props;
 
     return (
-      <div className={ cn(styles.playerBlock, "flex flex-col") }>
+      <div className={ cn(styles.playerBlock, "flex flex-col overflow-x-hidden") }>
           {!fullscreen && <SubHeader
             sessionId={sessionId}
             disabled={disabled}

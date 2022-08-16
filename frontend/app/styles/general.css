@@ -279,7 +279,11 @@ p {
   background-color: $tealx;
 }
 .tippy-tooltip[data-theme~='nopadding'], .nopadding-theme {
-  padding: 0!important
+  padding: 0!important;
+  transition: none!important;
+}
+.tippy-notransition {
+  transition: none!important;
 }
 
 @media print {
