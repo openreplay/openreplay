@@ -12,6 +12,9 @@ interface Props {
   speed: number;
   disabled: boolean;
   playButton: JSX.Element;
+  skipIntervals: Record<number, number>;
+  currentInterval: number;
+  setSkipInterval: (interval: number) => void;
   backTenSeconds: () => void;
   forthTenSeconds: () => void;
   toggleSpeed: () => void;
@@ -36,9 +39,11 @@ function PlayerControls(props: Props) {
     forthTenSeconds,
     toggleSpeed,
     toggleSkip,
+    skipIntervals,
+    setSkipInterval,
+    currentInterval,
     controlIcon,
   } = props;
-
   const speedRef = React.useRef(null);
   const arrowBackRef = React.useRef(null);
   const arrowForwardRef = React.useRef(null);
@@ -61,6 +66,7 @@ function PlayerControls(props: Props) {
     document.addEventListener('keydown', handleKeyboard);
     return () => document.removeEventListener('keydown', handleKeyboard);
   }, [speedRef, arrowBackRef, arrowForwardRef]);
+
   return (
     <div className="flex items-center">
       {playButton}
@@ -77,7 +83,7 @@ function PlayerControls(props: Props) {
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
         <Tooltip title="Rewind 10s" delay={0} position="top">
-          <button ref={arrowBackRef} className="h-full focus:border focus:border-blue">
+          <button ref={arrowBackRef} className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent">
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -88,11 +94,36 @@ function PlayerControls(props: Props) {
           </button>
         </Tooltip>
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
-          10s
+          <Tooltip
+            interactive
+            // @ts-ignore
+            theme="nopadding"
+            animation="none"
+            hideDelay={200}
+            duration={0}
+            distance={20}
+            html={
+              <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
+                <div className="font-semibold py-2 px-4 w-full text-left">
+                  Jump <span className="text-disabled-text">(Secs)</span>
+                </div>
+                {Object.keys(skipIntervals).map((interval) => (
+                  <div
+                    onClick={() => setSkipInterval(parseInt(interval, 10))}
+                    className="py-2 px-4 cursor-pointer hover:bg-active-blue border-t w-full text-left border-borderColor-gray-light-shade font-semibold"
+                  >
+                    {interval} <span className="text-disabled-text">(Secs)</span>
+                  </div>
+                ))}
+              </div>
+            }
+          >
+            {currentInterval}s
+          </Tooltip>
         </div>
         {/* @ts-ignore */}
         <Tooltip title="Forward 10s" delay={0} position="top">
-          <button ref={arrowForwardRef} className="h-full focus:border focus:border-blue">
+          <button ref={arrowForwardRef} className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent">
             {controlIcon(
               'skip-forward-fill',
               18,

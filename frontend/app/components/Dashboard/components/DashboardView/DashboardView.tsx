@@ -17,7 +17,6 @@ import DashboardOptions from '../DashboardOptions';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
 
 interface IProps {

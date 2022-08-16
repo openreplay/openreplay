@@ -19,6 +19,7 @@ import {
   fullscreenOn,
   fullscreenOff,
   toggleBottomBlock,
+  changeSkipInterval,
   CONSOLE,
   NETWORK,
   STACKEVENTS,
@@ -53,6 +54,16 @@ function getStorageIconName(type) {
       return "store"
   }
 }
+
+const SKIP_INTERVALS = {
+  2: 2e3,
+  5: 5e3,
+  10: 1e4,
+  15: 15e3,
+  20: 2e4,
+  30: 3e4,
+  60: 6e4,
+};
 
 function getStorageName(type) {
   switch(type) {
@@ -113,11 +124,13 @@ function getStorageName(type) {
     showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
     showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
+    skipInterval: state.getIn(['components', 'player', 'skipInterval']),
   }
 }, {
   fullscreenOn,
   fullscreenOff,
   toggleBottomBlock,
+  changeSkipInterval,
 })
 export default class Controls extends React.Component {
   componentDidMount() {
@@ -162,7 +175,8 @@ export default class Controls extends React.Component {
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
       nextProps.showLongtasks !== this.props.showLongtasks ||
-      nextProps.liveTimeTravel !== this.props.liveTimeTravel 
+      nextProps.liveTimeTravel !== this.props.liveTimeTravel ||
+      nextProps.skipInterval !== this.props.skipInterval
     ) return true;
     return false;
   }
@@ -198,13 +212,13 @@ export default class Controls extends React.Component {
   }
 
   forthTenSeconds = () => {
-    const { time, endTime, jump } = this.props;
-    jump(Math.min(endTime, time + 1e4))
+    const { time, endTime, jump, skipInterval } = this.props;
+    jump(Math.min(endTime, time + SKIP_INTERVALS[skipInterval]))
   }
 
   backTenSeconds = () => {  //shouldComponentUpdate
-    const { time, jump } = this.props;
-    jump(Math.max(0, time - 1e4));
+    const { time, jump, skipInterval } = this.props;
+    jump(Math.max(0, time - SKIP_INTERVALS[skipInterval]));
   }
 
   goLive =() => this.props.jump(this.props.endTime)
@@ -286,6 +300,8 @@ export default class Controls extends React.Component {
       toggleSpeed,
       toggleSkip,
       liveTimeTravel,
+      changeSkipInterval,
+      skipInterval,
     } = this.props;
 
     const toggleBottomTools = (blockName) => {
@@ -317,6 +333,9 @@ export default class Controls extends React.Component {
                   playButton={this.renderPlayBtn()}
                   controlIcon={this.controlIcon}
                   ref={this.speedRef}
+                  skipIntervals={SKIP_INTERVALS}
+                  setSkipInterval={changeSkipInterval}
+                  currentInterval={skipInterval}
                 />
               )}
 
