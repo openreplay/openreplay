@@ -45,7 +45,7 @@ const TimelinePointer = React.memo((props: Props) => {
                 position="top"
             >
                 <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
-                    <div className="h-2 w-2 rounded-full bg-red" />
+                    <div className="h-3 w-3 rounded-full bg-red" />
                 </div>
             </Popup>
         );
@@ -92,7 +92,7 @@ const TimelinePointer = React.memo((props: Props) => {
             <Popup
                 content={
                     <div className="">
-                        <b>{item.name}</b>
+                        <b>{item.type}</b>
                     </div>
                 }
                 delay={0}

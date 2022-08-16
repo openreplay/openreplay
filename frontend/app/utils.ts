@@ -356,3 +356,9 @@ export function getTimelinePosition(value: any, scale: any) {
     const pos = value * scale;
     return pos > 100 ? 100 : pos;
 }
+
+export function millisToMinutesAndSeconds(millis: any) {
+    const minutes = Math.floor(millis / 60000);
+    const seconds: any = ((millis % 60000) / 1000).toFixed(0);
+    return minutes + 'm' + (seconds < 10 ? '0' : '') + seconds + 's';
+}
