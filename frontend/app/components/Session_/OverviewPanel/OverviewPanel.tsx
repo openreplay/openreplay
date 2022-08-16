@@ -12,6 +12,7 @@ import VerticalPointerLine from './components/VerticalPointerLine';
 import cn from 'classnames';
 // import VerticalLine from './components/VerticalLine';
 import OverviewPanelContainer from './components/OverviewPanelContainer';
+import { NoContent, Icon } from 'UI';
 
 interface Props {
     resourceList: any[];
@@ -62,19 +63,25 @@ function OverviewPanel(props: Props) {
                         <OverviewPanelContainer endTime={props.endTime}>
                             <TimelineScale endTime={props.endTime} />
                             <div style={{ width: '100%', height: '200px' }} className="transition relative">
-                                <VerticalPointerLine />
-                                {selectedFeatures.map((feature: any, index: number) => (
-                                    <div className={cn('border-b', { 'bg-white': index % 2 })}>
-                                        <EventRow
-                                            isGraph={feature === 'PERFORMANCE'}
-                                            key={feature}
-                                            title={feature}
-                                            list={resources[feature]}
-                                            renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={feature} />}
-                                            endTime={props.endTime}
-                                        />
-                                    </div>
-                                ))}
+                                <NoContent show={selectedFeatures.length === 0} title={
+                                <div className="flex items-center mt-16">
+                                    <Icon name="info-circle" className="mr-2" size="18" />
+                                    Select a debug option to visualize on timeline.
+                                </div>}>
+                                    <VerticalPointerLine />
+                                    {selectedFeatures.map((feature: any, index: number) => (
+                                        <div className={cn('border-b', { 'bg-white': index % 2 })}>
+                                            <EventRow
+                                                isGraph={feature === 'PERFORMANCE'}
+                                                key={feature}
+                                                title={feature}
+                                                list={resources[feature]}
+                                                renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={feature} />}
+                                                endTime={props.endTime}
+                                            />
+                                        </div>
+                                    ))}
+                                </NoContent>
                             </div>
                         </OverviewPanelContainer>
                     </BottomBlock.Content>

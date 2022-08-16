@@ -8,6 +8,10 @@
     &.default {
         color: white;
         background: linear-gradient(90deg, rgba(57, 78, 255, 0.87) 0%, rgba(62, 170, 175, 0.87) 100%);
+        &:hover {
+            /* color: $teal; */
+            background: linear-gradient(90deg, rgba(57, 78, 255, 0.87) 100%, rgba(62, 170, 175, 0.87) 100%);
+        }
     }
 
     &.active {
