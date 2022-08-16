@@ -91,7 +91,6 @@ function AssistActions({
 
     React.useEffect(() => {
         if (!onCall && isCallActive && agentIds) {
-            logger.log('joinig the party', agentIds)
             setPrestart(true);
             call(agentIds)
         }

@@ -195,7 +195,6 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     updateKey(key: any, value: any) {
-        console.log(key, value)
         this[key] = value;
     }
 
