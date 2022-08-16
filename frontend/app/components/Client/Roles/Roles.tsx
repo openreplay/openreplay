@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import cn from 'classnames';
-import { Loader, IconButton, Popup, NoContent, SlideModal } from 'UI';
+import { Loader, Popup, NoContent, Button } from 'UI';
 import { connect } from 'react-redux';
 import stl from './roles.module.css';
 import RoleForm from './components/RoleForm';
@@ -78,26 +78,17 @@ function Roles(props: Props) {
     return (
         <React.Fragment>
             <Loader loading={loading}>
-                {/* <SlideModal
-                    title={instance.exists() ? 'Edit Role' : 'Create Role'}
-                    size="small"
-                    isDisplayed={showModal}
-                    content={showModal && <RoleForm closeModal={closeModal} permissionsMap={permissionsMap} deleteHandler={deleteHandler} />}
-                    onClose={closeModal}
-                /> */}
                 <div className={stl.wrapper}>
                     <div className={cn(stl.tabHeader, 'flex items-center')}>
                         <div className="flex items-center mr-auto">
                             <h3 className={cn(stl.tabTitle, 'text-2xl')}>Roles and Access</h3>
                             <Popup content="You don’t have the permissions to perform this action." disabled={isAdmin}>
-                                <div>
-                                    <IconButton id="add-button" circle icon="plus" outline disabled={!isAdmin} onClick={() => setShowmModal(true)} />
-                                </div>
+                                <Button variant="primary" onClick={() => setShowmModal(true)}>Add</Button>
                             </Popup>
                         </div>
                     </div>
 
-                    <NoContent title="No roles are available." size="small" show={false} icon>
+                    <NoContent title="No roles are available." size="small" show={false}>
                         <div className={''}>
                             <div className={cn('flex items-start py-3 border-b px-3 pr-20 font-medium')}>
                                 <div className="" style={{ width: '20%' }}>
