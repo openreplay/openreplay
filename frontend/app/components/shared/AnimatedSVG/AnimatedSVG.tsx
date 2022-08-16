@@ -13,6 +13,7 @@ import NoSessionsInVault from '../../../svg/ca-no-sessions-in-vault.svg';
 import NoWebhooks from '../../../svg/ca-no-webhooks.svg';
 import NoMetadata from '../../../svg/ca-no-metadata.svg';
 import NoIssues from '../../../svg/ca-no-issues.svg';
+import NoAuditTrail from '../../../svg/ca-no-audit-trail.svg';
 
 export enum ICONS {
     DASHBOARD_ICON = 'dashboard-icn',
@@ -30,6 +31,7 @@ export enum ICONS {
     NO_METADATA = 'ca-no-metadata',
     NO_SESSIONS_IN_VAULT = 'ca-no-sessions-in-vault',
     NO_ISSUES = 'ca-no-issues',
+    NO_AUDIT_TRAIL = 'ca-no-audit-trail',
 }
 
 interface Props {
@@ -68,6 +70,8 @@ function AnimatedSVG(props: Props) {
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoMetadata} />;
             case ICONS.NO_ISSUES:
                 return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoIssues} />;
+            case ICONS.NO_AUDIT_TRAIL:
+                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoAuditTrail} />;
             default:
                 return null;
         }
