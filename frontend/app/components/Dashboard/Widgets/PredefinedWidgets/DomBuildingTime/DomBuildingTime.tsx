@@ -67,7 +67,7 @@ function DomBuildingTime(props: Props) {
                     type="monotone"
                     // unit="%"
                     dataKey="value"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

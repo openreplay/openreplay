@@ -4,10 +4,11 @@ import cn from 'classnames';
 import stl from './scale.module.css';
 
 function Scale({ colors }) {
-  const lastIndex = (Styles.colors.length - 1)
+  const lastIndex = (Styles.colorsTeal.length - 1)
+  
   return (
     <div className={ cn(stl.bars, 'absolute bottom-0 mb-4')}>
-      {colors.map((c, i) => (
+      {Styles.colorsTeal.map((c, i) => (
         <div
           key={i}
           style={{ backgroundColor: c, width: '6px', height: '15px', marginBottom: '1px' }}

@@ -41,7 +41,7 @@ function Crashes(props: Props) {
                   name="Crashes"
                   type="monotone"
                   dataKey="count"
-                  stroke={Styles.colors[0]}
+                  stroke={Styles.strokeColor}
                   fillOpacity={ 1 }
                   strokeWidth={ 2 }
                   strokeOpacity={ 0.8 }

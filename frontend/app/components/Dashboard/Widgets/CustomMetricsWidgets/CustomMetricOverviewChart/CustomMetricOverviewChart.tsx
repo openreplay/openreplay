@@ -42,7 +42,7 @@ function CustomMetricOverviewChart(props: Props) {
                         // unit={unit && ' ' + unit}
                         type="monotone"
                         dataKey="value"
-                        stroke={Styles.colors[0]}
+                        stroke={Styles.strokeColor}
                         fillOpacity={ 1 }
                         strokeWidth={ 2 }
                         strokeOpacity={ 0.8 }
