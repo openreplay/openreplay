@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Loader, NoContent } from 'UI';
+import { Button, Loader, NoContent, Icon } from 'UI';
 import { init, fetchList, remove } from 'Duck/webhook';
 import WebhookForm from './WebhookForm';
 import ListItem from './ListItem';
@@ -45,18 +45,21 @@ function Webhooks(props) {
     <div>
       <div className={styles.tabHeader}>
         <h3 className={cn(styles.tabTitle, 'text-2xl')}>{'Webhooks'}</h3>
-        <Button rounded={true} icon="plus" variant="outline" onClick={() => init()} />
+        {/* <Button rounded={true} icon="plus" variant="outline" onClick={() => init()} /> */}
+        <Button variant="primary" onClick={() => init()}>Add</Button>
+      </div>
+
+      <div className="text-base text-disabled-text flex items-center mt-3">
+          <Icon name="info-circle-fill" className="mr-2" size={16} />
+          Leverage webhooks to push OpenReplay data to other systems.
       </div>
 
       <Loader loading={loading}>
         <NoContent
           title={
             <div className="flex flex-col items-center justify-center">
-              <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={120} />
+              <AnimatedSVG name={ICONS.NO_WEBHOOKS} size={80} />
               <div className="text-center text-gray-600 my-4">None added yet</div>
-              <Button icon="plus" variant="text-primary" onClick={() => init()}>
-                Add
-              </Button>
             </div>
           }
           size="small"
