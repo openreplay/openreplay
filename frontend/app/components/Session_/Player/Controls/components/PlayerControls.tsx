@@ -104,6 +104,7 @@ function PlayerControls(props: Props) {
             animation="none"
             hideDelay={200}
             duration={0}
+            className="cursor-pointer"
             distance={20}
             html={
               <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
