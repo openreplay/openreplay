@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { useHistory } from 'react-router';
 import { connect } from 'react-redux';
-import { addFilterByKeyAndValue } from 'Duck/search';
+import { addFilterByKeyAndValue, addFilter } from 'Duck/search';
 import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
+import { FilterCategory, FilterKey } from 'Types/filter/filterType';
+import { filtersMap } from 'Types/filter/newFilter';
 
 const allowedQueryKeys = [
   'userId',
@@ -41,6 +43,7 @@ const allowedQueryKeys = [
 interface Props {
   appliedFilter: any;
   addFilterByKeyAndValue: typeof addFilterByKeyAndValue;
+  addFilter: typeof addFilter;
 }
 const SessionSearchQueryParamHandler = React.memo((props: Props) => {
   const { appliedFilter } = props;
@@ -51,17 +54,22 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
     filters.forEach((filter: any) => {
       if (filter.value.length > 0) {
         const _key = setQueryParamKeyFromFilterkey(filter.key);
-        let str = `${filter.operator}|${filter.value.join('|')}`;
-        if (filter.hasSource) {
-          str = `${str}^${filter.sourceOperator}|${filter.source.join('|')}`;
+        if (_key) {
+          let str = `${filter.operator}|${filter.value.join('|')}`;
+          if (filter.hasSource) {
+            str = `${str}^${filter.sourceOperator}|${filter.source.join('|')}`;
+          }
+          query[_key] = str;
+        } else {
+          let str = `${filter.operator}|${filter.value.join('|')}`;
+          query[filter.key] = str;
         }
-        query[_key] = str;
       }
     });
     return query;
   };
 
-  const addFilter = ([key, value]: [string, string]): void => {
+  const addFilter = ([key, value]: [any, any]): void => {
     if (value !== '') {
       const filterKey = getFilterKeyTypeByKey(key);
       const tmp = value.split('^');
@@ -73,6 +81,8 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
       // TODO validate operator
       if (filterKey) {
         props.addFilterByKeyAndValue(filterKey, valueArr, operator, sourceOperator, sourceArr);
+      } else {
+        console.warn(`Filter key ${key} not found`);
       }
     }
   };
@@ -100,14 +110,12 @@ export default connect(
   (state: any) => ({
     appliedFilter: state.getIn(['search', 'instance']),
   }),
-  { addFilterByKeyAndValue }
+  { addFilterByKeyAndValue, addFilter }
 )(SessionSearchQueryParamHandler);
 
 function getQueryObject(search: any) {
   const queryParams = Object.fromEntries(
-    Object.entries(Object.fromEntries(new URLSearchParams(search))).filter(([key]) =>
-      allowedQueryKeys.includes(key)
-    )
+    Object.entries(Object.fromEntries(new URLSearchParams(search)))
   );
   return Object.entries(queryParams);
 }
