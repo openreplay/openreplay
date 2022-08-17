@@ -119,8 +119,16 @@ export default class AssistManager {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
-    let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let disconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+    function clearDisconnectTimeout() {
+      disconnectTimeout && clearTimeout(disconnectTimeout)
+      disconnectTimeout = undefined
+    }
+    function clearInactiveTimeout() {
+      inactiveTimeout && clearTimeout(inactiveTimeout)
+      inactiveTimeout = undefined
+    }
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
@@ -171,17 +179,17 @@ export default class AssistManager {
         id === socket.id && this.toggleRemoteControl(false)
       })
       socket.on('SESSION_RECONNECTED', () => {
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        inactiveTimeout && clearTimeout(inactiveTimeout)
+        clearDisconnectTimeout()
+        clearInactiveTimeout()
         this.setStatus(ConnectionStatus.Connected)
       })
 
       socket.on('UPDATE_SESSION', ({ active }) => {
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
+        clearDisconnectTimeout()
         !inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
         if (typeof active === "boolean") {
+          clearInactiveTimeout()
           if (active) {
-            inactiveTimeout && clearTimeout(inactiveTimeout)
             this.setStatus(ConnectionStatus.Connected)
           } else {
             inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
@@ -190,8 +198,8 @@ export default class AssistManager {
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        showDisconnectTimeout = setTimeout(() => {
+        clearDisconnectTimeout()
+        disconnectTimeout = setTimeout(() => {
           if (this.cleaned) { return }
           this.setStatus(ConnectionStatus.Disconnected)
         }, 30000)
