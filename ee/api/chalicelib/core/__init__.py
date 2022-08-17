@@ -5,7 +5,9 @@ if config("LEGACY_SEARCH", cast=bool, default=False):
     from . import autocomplete as autocomplete
     from . import sessions as sessions
     from . import errors as errors
+    from . import metrics as metrics
 else:
     from . import autocomplete_ee as autocomplete
     from . import sessions_ee as sessions
     from . import errors_ee as errors
+    from . import metrics_new as metrics
