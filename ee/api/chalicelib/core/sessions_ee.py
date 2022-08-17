@@ -544,7 +544,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                             SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                                  {main_col} AS name,
                                                  count(DISTINCT session_id) AS session_count
-                                            FROM (SELECT s.session_id, 
+                                            FROM (SELECT s.session_id AS session_id, 
                                                         {extra_col}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
@@ -2096,7 +2096,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     else:
         if len(events_query_part) > 0:
             extra_join += f"""INNER JOIN (SELECT * 
-                                    FROM {MAIN_SESSIONS_TABLE} AS s 
+                                    FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
                                     WHERE {" AND ".join(extra_constraints)}) AS s ON(s.session_id=f.session_id)"""
         else:
             extra_join += f"""(SELECT * 
