@@ -1,12 +1,11 @@
 import React from 'react';
-import { NoContent, Input, SlideModal, CloseButton, Popup, Button } from 'UI';
+import { NoContent, Input, SlideModal, CloseButton, Button } from 'UI';
 import { getRE } from 'App/utils';
 import { connectPlayer, pause, jump } from 'Player';
 import BottomBlock from '../BottomBlock';
 import TimeTable from '../TimeTable';
 import GQLDetails from './GQLDetails';
 import { renderStart } from 'Components/Session_/Network/NetworkContent';
-import stl from 'Components/Session_/Network/network.module.css';
 
 function renderDefaultStatus() {
   return '2xx-3xx';
@@ -102,7 +101,6 @@ export default class GraphQL extends React.PureComponent {
   }
 
   render() {
-    const { list, listNow, timelinePointer } = this.props;
     const { current, currentIndex, filteredList, lastActiveItem } = this.state;
 
     return (

@@ -218,10 +218,6 @@ export default class NetworkContent extends React.PureComponent {
       );
     }
 
-    // const resourcesSize = filtered.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0);
-    // const transferredSize = filtered
-    //   .reduce((sum, { headerSize, encodedBodySize }) => sum + (headerSize || 0) + (encodedBodySize || 0), 0);
-
     return (
       <React.Fragment>
         <BottomBlock style={{ height: 300 + additionalHeight + 'px' }} className="border">
@@ -243,11 +239,6 @@ export default class NetworkContent extends React.PureComponent {
             />
           </BottomBlock.Header>
           <BottomBlock.Content>
-            {/* <div className={ stl.location }> */}
-            {/*   <Icon name="window" marginRight="8" /> */}
-            {/*   <div>{ location }</div> */}
-            {/*   <div></div> */}
-            {/* </div> */}
             <InfoLine>
               <InfoLine.Point label={filtered.length} value=" requests" />
               <InfoLine.Point

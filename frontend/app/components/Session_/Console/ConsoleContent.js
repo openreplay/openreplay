@@ -96,7 +96,7 @@ export default class ConsoleContent extends React.PureComponent {
               <Autoscroll autoScrollTo={Math.max(lastIndex, 0)}>
                 {filtered.map((l, index) => (
                   <div
-                    className={cn('flex', {
+                    className={cn('flex py-2 px-4', {
                       info: !l.isYellow() && !l.isRed(),
                       warn: l.isYellow(),
                       error: l.isRed(),

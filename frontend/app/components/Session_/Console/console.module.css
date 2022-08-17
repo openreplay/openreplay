@@ -11,7 +11,6 @@
 
 .line {
   font-family: 'Menlo', 'monaco', 'consolas', monospace;
-  padding: 7px 0 7px 15px;
   /* margin-top: -1px; ??? */
   display: flex;
   align-items: flex-start;
@@ -19,15 +18,16 @@
 }
 
 .timestamp {
-  padding: 7px 0 7px 15px;
+  
 }
 
 .activeRow {
-  background-color: rgba(54, 108, 217, 0.1) !important;
+  background-color: $teal-light !important;
 }
 
 .icon {
   padding-top: 4px;
+  margin-right: 7px;
 }
 
 .inactiveRow {

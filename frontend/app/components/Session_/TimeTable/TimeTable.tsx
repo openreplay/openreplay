@@ -4,7 +4,6 @@ import cn from 'classnames';
 import { Duration } from "luxon";
 import { NoContent, IconButton, Button } from 'UI';
 import { percentOf } from 'App/utils';
-import { formatMs } from 'App/date';
 
 import BarRow from './BarRow';
 import stl from './timeTable.module.css';
@@ -24,7 +23,9 @@ type CanBeRed = {
   isRed: () => boolean;
 };
 
-type Row = Timed & Durationed & CanBeRed & { [key: string]: any, key: string };
+interface Row extends Timed, Durationed, CanBeRed {
+  [key: string]: any, key: string
+}
 
 type Line = {
   color: string; // Maybe use typescript?
@@ -38,7 +39,7 @@ type Column = {
   dataKey?: string;
   render?: (row: any) => void
   referenceLines?: Array<Line>;
-  style?: Object;
+  style?: React.CSSProperties;
 } & RenderOrKey;
 
 // type RenderOrKey = { // Disjoint?

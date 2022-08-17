@@ -40,7 +40,7 @@ export default class UserEvent extends React.PureComponent {
         data-scroll-item={userEvent.isRed()}
         // onClick={ this.props.switchOpen } //
         onClick={this.props.onJump} //
-        className={cn('group flex py-3 px-4 ', stl.userEvent, this.getLevelClassname(), {
+        className={cn('group flex py-2 px-4 ', stl.userEvent, this.getLevelClassname(), {
           [stl.inactive]: inactive,
           [stl.selected]: selected,
         })}
