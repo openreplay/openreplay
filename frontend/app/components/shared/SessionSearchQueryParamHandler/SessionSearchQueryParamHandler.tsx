@@ -51,7 +51,11 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
     filters.forEach((filter: any) => {
       if (filter.value.length > 0) {
         const _key = setQueryParamKeyFromFilterkey(filter.key);
-        query[_key] = `${filter.operator}|${filter.value.join('|')}`;
+        let str = `${filter.operator}|${filter.value.join('|')}`;
+        if (filter.hasSource) {
+          str = `${str}^${filter.sourceOperator}|${filter.source.join('|')}`;
+        }
+        query[_key] = str;
       }
     });
     return query;
@@ -60,11 +64,15 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
   const addFilter = ([key, value]: [string, string]): void => {
     if (value !== '') {
       const filterKey = getFilterKeyTypeByKey(key);
-      const valueArr = value.split('|');
+      const tmp = value.split('^');
+      const valueArr = tmp[0].split('|');
       const operator = valueArr.shift();
+      const sourceArr = tmp[1] ? tmp[1].split('|') : [];
+      const sourceOperator = sourceArr.shift();
+      const source = sourceArr;
       // TODO validate operator
       if (filterKey) {
-        props.addFilterByKeyAndValue(filterKey, valueArr, operator);
+        props.addFilterByKeyAndValue(filterKey, valueArr, operator, sourceOperator, source);
       }
     }
   };
@@ -78,7 +86,8 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
 
   const generateUrlQuery = () => {
     const query: any = createUrlQuery(appliedFilter.filters);
-    history.replace({ search: new URLSearchParams(query).toString() });
+    const queryString = new URLSearchParams(query).toString();
+    history.replace({ search: queryString });
   };
 
   useEffect(applyFilterFromQuery, []);

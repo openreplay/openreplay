@@ -315,12 +315,16 @@ export const addFilter = (filter) => (dispatch, getState) => {
 };
 
 export const addFilterByKeyAndValue =
-    (key, value, operator = undefined) =>
+    (key, value, operator = undefined, sourceOperator = undefined, source = undefined) =>
     (dispatch, getState) => {
         let defaultFilter = filtersMap[key];
         defaultFilter.value = value;
         if (operator) {
             defaultFilter.operator = operator;
+        }
+        if (defaultFilter.hasSource && source && sourceOperator) {
+            defaultFilter.sourceOperator = sourceOperator;
+            defaultFilter.source = source;
         }
         dispatch(addFilter(defaultFilter));
     };
