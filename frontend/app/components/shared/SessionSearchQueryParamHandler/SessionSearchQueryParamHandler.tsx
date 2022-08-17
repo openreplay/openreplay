@@ -21,11 +21,6 @@ const allowedQueryKeys = [
   'revid',
 
   'country',
-
-  // 'startDate',
-  // 'endDate',
-  // 'minDuration',
-  // 'maxDuration',
   'ref',
   'sort',
   'order',
@@ -47,7 +42,7 @@ interface Props {
   appliedFilter: any;
   addFilterByKeyAndValue: typeof addFilterByKeyAndValue;
 }
-function SessionSearchQueryParamHandler(props: Props) {
+const SessionSearchQueryParamHandler = React.memo((props: Props) => {
   const { appliedFilter } = props;
   const history = useHistory();
 
@@ -81,16 +76,15 @@ function SessionSearchQueryParamHandler(props: Props) {
     }
   };
 
-  useEffect(() => {
-    applyFilterFromQuery();
-  }, []);
-
-  useEffect(() => {
+  const generateUrlQuery = () => {
     const query: any = createUrlQuery(appliedFilter.filters);
     history.replace({ search: new URLSearchParams(query).toString() });
-  }, [appliedFilter]);
+  };
+
+  useEffect(applyFilterFromQuery, []);
+  useEffect(generateUrlQuery, [appliedFilter]);
   return <></>;
-}
+});
 
 export default connect(
   (state: any) => ({
