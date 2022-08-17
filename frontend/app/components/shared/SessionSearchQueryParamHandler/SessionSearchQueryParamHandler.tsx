@@ -76,14 +76,12 @@ function SessionSearchQueryParamHandler(props: Props) {
 
   const applyFilterFromQuery = () => {
     const entires = getQueryObject(history.location.search);
-    console.log('entires', entires);
     if (entires.length > 0) {
       entires.forEach(addFilter);
     }
   };
 
   useEffect(() => {
-    console.log('rerender');
     applyFilterFromQuery();
   }, []);
 
