@@ -16,12 +16,63 @@ type batchItem struct {
 	arguments []interface{}
 }
 
+type SessionBatch struct {
+	sessID  uint64
+	batch   *pgx.Batch
+	size    int
+	items   []*batchItem
+	updates *sessionUpdates
+}
+
+func NewSessionBatch(sessionID uint64) *SessionBatch {
+	return &SessionBatch{
+		sessID:  sessionID,
+		batch:   &pgx.Batch{},
+		size:    0,
+		items:   make([]*batchItem, 0),
+		updates: NewSessionUpdates(sessionID),
+	}
+}
+
+func (b *SessionBatch) SessionID() uint64 {
+	return b.sessID
+}
+
+func (b *SessionBatch) Queue(query string, arguments ...interface{}) {
+	b.batch.Queue(query, arguments...)
+	b.items = append(b.items, &batchItem{
+		query:     query,
+		arguments: arguments,
+	})
+}
+
+func (b *SessionBatch) Update(pages, events int) {
+	b.updates.add(pages, events)
+}
+
+func (b *SessionBatch) AddToSize(size int) {
+	b.size += size
+}
+
+func (b *SessionBatch) Size() int {
+	return b.size
+}
+
+func (b *SessionBatch) Len() int {
+	return b.batch.Len()
+}
+
+func (b *SessionBatch) Prepare() {
+	sql, args := b.updates.request()
+	if sql != "" {
+		b.Queue(sql, args...)
+	}
+}
+
 type BatchSet struct {
 	c                 Pool
-	batches           map[uint64]*pgx.Batch
-	batchSizes        map[uint64]int
-	rawBatches        map[uint64][]*batchItem
-	sessionUpdates    map[uint64]*sessionUpdates
+	batches           map[uint64]*SessionBatch
+	batchesToSend     chan *SessionBatch
 	batchQueueLimit   int
 	batchSizeLimit    int
 	batchSizeBytes    syncfloat64.Histogram
@@ -33,15 +84,49 @@ type BatchSet struct {
 func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *BatchSet {
 	bs := &BatchSet{
 		c:               c,
-		batches:         make(map[uint64]*pgx.Batch),
-		batchSizes:      make(map[uint64]int),
-		rawBatches:      make(map[uint64][]*batchItem),
-		sessionUpdates:  make(map[uint64]*sessionUpdates),
+		batches:         make(map[uint64]*SessionBatch),
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
+		batchesToSend:   make(chan *SessionBatch, 10000), // TODO: move to config
 	}
 	bs.initMetrics(metrics)
+	go bs.worker()
 	return bs
+}
+
+func (conn *BatchSet) worker() {
+	for {
+		batch := <-conn.batchesToSend
+		// Append session update sql request to the end of batch
+		batch.Prepare()
+		// Record batch size in bytes and number of lines
+		conn.batchSizeBytes.Record(context.Background(), float64(batch.Size()))
+		conn.batchSizeLines.Record(context.Background(), float64(batch.Len()))
+
+		start := time.Now()
+		isFailed := false
+
+		// Send batch to db and execute
+		br := conn.c.SendBatch(batch.batch)
+		l := batch.Len()
+		for i := 0; i < l; i++ {
+			if _, err := br.Exec(); err != nil {
+				log.Printf("Error in PG batch (session: %d): %v \n", batch.SessionID(), err)
+				failedSql := batch.items[i]
+				query := strings.ReplaceAll(failedSql.query, "\n", " ")
+				log.Println("failed sql req:", query, failedSql.arguments)
+				isFailed = true
+			}
+		}
+		br.Close() // returns err
+		dur := time.Now().Sub(start).Milliseconds()
+		conn.sqlRequestTime.Record(context.Background(), float64(dur),
+			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
+		conn.sqlRequestCounter.Add(context.Background(), 1,
+			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
+		// TODO: remove DEBUG log
+		log.Printf("insert batch in %d ms", dur)
+	}
 }
 
 func (conn *BatchSet) initMetrics(metrics *monitoring.Metrics) {
@@ -64,158 +149,31 @@ func (conn *BatchSet) initMetrics(metrics *monitoring.Metrics) {
 	}
 }
 
-func (conn *BatchSet) batchQueue(sessionID uint64, sql string, args ...interface{}) {
-	batch, ok := conn.batches[sessionID]
-	if !ok {
-		conn.batches[sessionID] = &pgx.Batch{}
-		conn.rawBatches[sessionID] = make([]*batchItem, 0)
-		batch = conn.batches[sessionID]
+func (conn *BatchSet) getBatch(sessionID uint64) *SessionBatch {
+	if _, ok := conn.batches[sessionID]; !ok {
+		conn.batches[sessionID] = NewSessionBatch(sessionID)
 	}
-	batch.Queue(sql, args...)
-	conn.rawBatch(sessionID, sql, args...)
+	return conn.batches[sessionID]
 }
 
-func (conn *BatchSet) rawBatch(sessionID uint64, sql string, args ...interface{}) {
-	// Temp raw batch store
-	raw := conn.rawBatches[sessionID]
-	raw = append(raw, &batchItem{
-		query:     sql,
-		arguments: args,
-	})
-	conn.rawBatches[sessionID] = raw
+func (conn *BatchSet) batchQueue(sessionID uint64, sql string, args ...interface{}) {
+	conn.getBatch(sessionID).Queue(sql, args...)
 }
 
 func (conn *BatchSet) updateSessionEvents(sessionID uint64, events, pages int) {
-	if _, ok := conn.sessionUpdates[sessionID]; !ok {
-		conn.sessionUpdates[sessionID] = NewSessionUpdates(sessionID)
-	}
-	conn.sessionUpdates[sessionID].add(pages, events)
+	conn.getBatch(sessionID).Update(pages, events)
+}
+
+func (conn *BatchSet) updateBatchSize(sessionID uint64, reqSize int) {
+	conn.getBatch(sessionID).AddToSize(reqSize)
+	// TODO: add batch check and commit call if we reached limits
 }
 
 func (conn *BatchSet) Commit() {
 	// Copy batches
-	batches := conn.batches
-	batchSizes := conn.batchSizes
-	rawBatches := conn.rawBatches
-	sessionsUpdates := conn.sessionUpdates
-
+	for _, b := range conn.batches {
+		conn.batchesToSend <- b
+	}
 	// Reset current batches
-	conn.batches = make(map[uint64]*pgx.Batch)
-	conn.batchSizes = make(map[uint64]int)
-	conn.rawBatches = make(map[uint64][]*batchItem)
-	conn.sessionUpdates = make(map[uint64]*sessionUpdates)
-
-	// Async insert
-	go func() {
-		start := time.Now()
-		for sessID, b := range batches {
-			// Append session update sql request to the end of batch
-			if update, ok := sessionsUpdates[sessID]; ok {
-				sql, args := update.request()
-				if sql != "" {
-					b.Queue(sql, args...)
-					r := rawBatches[sessID]
-					r = append(r, &batchItem{
-						query:     sql,
-						arguments: args,
-					})
-					rawBatches[sessID] = r
-					b, _ = batches[sessID]
-				}
-			}
-			// Record batch size in bytes and number of lines
-			conn.batchSizeBytes.Record(context.Background(), float64(batchSizes[sessID]))
-			conn.batchSizeLines.Record(context.Background(), float64(b.Len()))
-
-			start := time.Now()
-			isFailed := false
-
-			// Send batch to db and execute
-			br := conn.c.SendBatch(b)
-			l := b.Len()
-			for i := 0; i < l; i++ {
-				if ct, err := br.Exec(); err != nil {
-					log.Printf("Error in PG batch (command tag %s, session: %d): %v \n", ct.String(), sessID, err)
-					failedSql := rawBatches[sessID][i]
-					query := strings.ReplaceAll(failedSql.query, "\n", " ")
-					log.Println("failed sql req:", query, failedSql.arguments)
-					isFailed = true
-				}
-			}
-			br.Close() // returns err
-			conn.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-				attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-			conn.sqlRequestCounter.Add(context.Background(), 1,
-				attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-			if !isFailed {
-				delete(sessionsUpdates, sessID)
-			}
-		}
-
-		// Session updates
-		for sessID, su := range sessionsUpdates {
-			sql, args := su.request()
-			if sql == "" {
-				continue
-			}
-			if err := conn.c.Exec(sql, args...); err != nil {
-				log.Printf("failed session update, sessID: %d, err: %s", sessID, err)
-			}
-		}
-		log.Printf("batches insert duration(ms): %d", time.Now().Sub(start).Milliseconds())
-	}()
-}
-
-func (conn *BatchSet) updateBatchSize(sessionID uint64, reqSize int) {
-	conn.batchSizes[sessionID] += reqSize
-	if conn.batchSizes[sessionID] >= conn.batchSizeLimit || conn.batches[sessionID].Len() >= conn.batchQueueLimit {
-		conn.commitBatch(sessionID)
-	}
-}
-
-func (conn *BatchSet) commitBatch(sessionID uint64) {
-	b, ok := conn.batches[sessionID]
-	if !ok {
-		log.Printf("can't find batch for session: %d", sessionID)
-		return
-	}
-	// Append session update sql request to the end of batch
-	if update, ok := conn.sessionUpdates[sessionID]; ok {
-		sql, args := update.request()
-		if sql != "" {
-			conn.batchQueue(sessionID, sql, args...)
-			b, _ = conn.batches[sessionID]
-		}
-	}
-	// Record batch size in bytes and number of lines
-	conn.batchSizeBytes.Record(context.Background(), float64(conn.batchSizes[sessionID]))
-	conn.batchSizeLines.Record(context.Background(), float64(b.Len()))
-
-	start := time.Now()
-	isFailed := false
-
-	// Send batch to db and execute
-	br := conn.c.SendBatch(b)
-	l := b.Len()
-	for i := 0; i < l; i++ {
-		if ct, err := br.Exec(); err != nil {
-			log.Printf("Error in PG batch (command tag %s, session: %d): %v \n", ct.String(), sessionID, err)
-			failedSql := conn.rawBatches[sessionID][i]
-			query := strings.ReplaceAll(failedSql.query, "\n", " ")
-			log.Println("failed sql req:", query, failedSql.arguments)
-			isFailed = true
-		}
-	}
-	br.Close()
-
-	conn.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-	conn.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-
-	// Clean batch info
-	delete(conn.batches, sessionID)
-	delete(conn.batchSizes, sessionID)
-	delete(conn.rawBatches, sessionID)
-	delete(conn.sessionUpdates, sessionID)
+	conn.batches = make(map[uint64]*SessionBatch)
 }
