@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS events
 ) ENGINE = MergeTree
       PARTITION BY toYYYYMM(datetime)
       ORDER BY (project_id, datetime, event_type, session_id)
-      TTL datetime + INTERVAL 1 MONTH;
+      TTL datetime + INTERVAL 3 MONTH;
 
 CREATE TABLE IF NOT EXISTS sessions
 (
@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS sessions
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)
       ORDER BY (project_id, datetime, session_id)
-      TTL datetime + INTERVAL 1 MONTH
+      TTL datetime + INTERVAL 3 MONTH
       SETTINGS index_granularity = 512;
 
 CREATE TABLE IF NOT EXISTS user_viewed_sessions
@@ -150,7 +150,7 @@ CREATE TABLE IF NOT EXISTS user_viewed_sessions
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
       ORDER BY (project_id, user_id, session_id)
-      TTL _timestamp + INTERVAL 1 MONTH;
+      TTL _timestamp + INTERVAL 3 MONTH;
 
 CREATE TABLE IF NOT EXISTS user_viewed_errors
 (
@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS user_viewed_errors
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(_timestamp)
       ORDER BY (project_id, user_id, error_id)
-      TTL _timestamp + INTERVAL 1 MONTH;
+      TTL _timestamp + INTERVAL 3 MONTH;
 
 CREATE TABLE IF NOT EXISTS autocomplete
 (
