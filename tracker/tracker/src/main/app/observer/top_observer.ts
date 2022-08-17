@@ -14,6 +14,16 @@ export interface Options {
 
 type ContextCallback = (context: Window & typeof globalThis) => void
 
+// Le truc - for defining an absolute offset for (nested) iframe documents. (To track mouse movments)
+type Offset = { top: number; left: number }
+type PatchedDocument = Document & {
+  __openreplay__getOffset: () => Offset
+}
+function isPatchedDocument(doc: Document): doc is PatchedDocument {
+  // @ts-ignore
+  return typeof doc.__openreplay__getOffset === 'function'
+}
+
 const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : () => new ShadowRoot()
 
 export default class TopObserver extends Observer {
@@ -53,6 +63,14 @@ export default class TopObserver extends Observer {
     this.contextCallbacks.push(cb)
   }
 
+  // Le truc
+  getDocumentOffset(doc: Document): Offset {
+    if (isPatchedDocument(doc)) {
+      return doc.__openreplay__getOffset()
+    }
+    return { top: 0, left: 0 }
+  }
+
   private iframeObservers: IFrameObserver[] = []
   private handleIframe(iframe: HTMLIFrameElement): void {
     let doc: Document | null = null
@@ -70,6 +88,15 @@ export default class TopObserver extends Observer {
         this.iframeObservers.push(observer)
         observer.observe(iframe)
         doc = currentDoc
+
+        // Le truc
+        ;(doc as PatchedDocument).__openreplay__getOffset = () => {
+          const { top, left } = this.getDocumentOffset(iframe.ownerDocument)
+          return {
+            top: iframe.offsetTop + top,
+            left: iframe.offsetLeft + left,
+          }
+        }
       }
       if (currentWin && currentWin !== win) {
         //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
