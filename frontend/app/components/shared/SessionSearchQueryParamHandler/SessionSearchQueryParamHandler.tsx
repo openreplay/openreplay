@@ -67,12 +67,12 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
       const tmp = value.split('^');
       const valueArr = tmp[0].split('|');
       const operator = valueArr.shift();
+
       const sourceArr = tmp[1] ? tmp[1].split('|') : [];
       const sourceOperator = sourceArr.shift();
-      const source = sourceArr;
       // TODO validate operator
       if (filterKey) {
-        props.addFilterByKeyAndValue(filterKey, valueArr, operator, sourceOperator, source);
+        props.addFilterByKeyAndValue(filterKey, valueArr, operator, sourceOperator, sourceArr);
       }
     }
   };
@@ -86,6 +86,7 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
 
   const generateUrlQuery = () => {
     const query: any = createUrlQuery(appliedFilter.filters);
+    // const queryString = Object.entries(query).map(([key, value]) => `${key}=${value}`).join('&');
     const queryString = new URLSearchParams(query).toString();
     history.replace({ search: queryString });
   };
