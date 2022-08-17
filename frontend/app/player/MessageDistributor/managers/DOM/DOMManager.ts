@@ -5,13 +5,13 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
 import ListWalker from '../ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
-import { VElement, VText, VFragment, VDocument, VNode, VStyleElement } from './VirtualDOM';
+import { VElement, VText, VShadowRoot, VDocument, VNode, VStyleElement } from './VirtualDOM';
 import type { StyleElement } from './VirtualDOM';
 
 
 type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
 
-const IGNORED_ATTRS = [ "autocomplete", "name" ];
+const IGNORED_ATTRS = [ "autocomplete" ];
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 
 
@@ -48,7 +48,7 @@ function deleteRule(sheet: CSSStyleSheet, msg: { index: number }) {
 export default class DOMManager extends ListWalker<Message> {
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
-  private vRoots: Map<number, VFragment | VDocument> = new Map()
+  private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   
 
@@ -64,6 +64,7 @@ export default class DOMManager extends ListWalker<Message> {
   ) {
     super()
     this.stylesManager = new StylesManager(screen)
+    logger.log(this.vElements)
   }
 
   append(m: Message): void {
@@ -199,6 +200,10 @@ export default class DOMManager extends ListWalker<Message> {
         let { name, value } = msg;
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
+        if (vn.node.tagName === "INPUT" && name === "name") {
+          // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
+          return
+        }
         if (name === "href" && vn.node.tagName === "LINK") {
           // @ts-ignore  ?global ENV type   // It've been done on backend (remove after testing in saas)
           // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
@@ -280,24 +285,25 @@ export default class DOMManager extends ListWalker<Message> {
       case "create_i_frame_document":
         vn = this.vElements.get(msg.frameID)
         if (!vn) { logger.error("Node not found", msg); return }
+        vn.enforceInsertion()
         const host = vn.node
         if (host instanceof HTMLIFrameElement) {
           const vDoc = new VDocument()
           this.vRoots.set(msg.id, vDoc)
-          host.onload = () => {
+          //host.onload = () => {
             const doc = host.contentDocument
             if (!doc) {
               logger.warn("No iframe doc onload", msg, host)
               return
             }
             vDoc.setDocument(doc)
-            vDoc.applyChanges()
-          }    
+            //vDoc.applyChanges()
+          //}    
           return;
         } else if (host instanceof Element) { // shadow DOM
           try {
             const shadowRoot = host.attachShadow({ mode: 'open' })
-            vn = new VFragment(shadowRoot)
+            vn = new VShadowRoot(shadowRoot)
             this.vRoots.set(msg.id, vn)
           } catch(e) {
             logger.warn("Can not attach shadow dom", e, msg)
@@ -309,8 +315,8 @@ export default class DOMManager extends ListWalker<Message> {
       case "adopted_ss_insert_rule":
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
-          styleSheet = new CSSStyleSheet()
-          this.styleSheets.set(msg.sheetID, styleSheet)
+          logger.warn("No stylesheet was created for ", msg)
+          return
         }
         insertRule(styleSheet, msg)
         return
@@ -332,13 +338,20 @@ export default class DOMManager extends ListWalker<Message> {
         styleSheet.replaceSync(msg.text)
         return
       case "adopted_ss_add_owner":
-        styleSheet = this.styleSheets.get(msg.sheetID)
-        if (!styleSheet) {
-          logger.warn("No stylesheet was created for ", msg)
-          return
-        }
         vn = this.vRoots.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          let context: typeof globalThis
+          const rootNode = vn.node
+          if (rootNode.nodeType === Node.DOCUMENT_NODE) {
+            context = (rootNode as Document).defaultView
+          } else {
+            context = (rootNode as ShadowRoot).ownerDocument.defaultView
+          }
+          styleSheet = new context.CSSStyleSheet()
+          this.styleSheets.set(msg.sheetID, styleSheet)
+        }
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets, styleSheet]
         return

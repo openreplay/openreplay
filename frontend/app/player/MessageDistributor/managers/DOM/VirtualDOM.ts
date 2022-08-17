@@ -1,6 +1,6 @@
 type VChild = VElement | VText
 
-export type VNode = VDocument | VFragment | VElement | VText
+export type VNode = VDocument | VShadowRoot | VElement | VText
 
 abstract class VParent {
 	abstract node: Node | null
@@ -67,6 +67,7 @@ export class VDocument extends VParent {
 			return
 		}
 		const child = this.children[0]
+		if (!child) { return }
 		child.applyChanges()
 		const htmlNode = child.node
 		if (htmlNode.parentNode !== this.node) {
@@ -75,8 +76,8 @@ export class VDocument extends VParent {
 	}
 }
 
-export class VFragment extends VParent {
-	constructor(public readonly node: DocumentFragment) { super() }
+export class VShadowRoot extends VParent {
+	constructor(public readonly node: ShadowRoot) { super() }
 }
 
 export class VElement extends VParent {
@@ -122,31 +123,32 @@ export class VElement extends VParent {
 type StyleSheetCallback = (s: CSSStyleSheet) => void
 export type StyleElement = HTMLStyleElement | SVGStyleElement
 export class VStyleElement extends VElement {
-	// private loaded = false
+	private loaded = false
 	private stylesheetCallbacks: StyleSheetCallback[] = []
 	constructor(public readonly node: StyleElement) { 
 		super(node)  // Is it compiled correctly or with 2 node assignments?
-		// node.onload = () => {
-		//   const sheet = node.sheet
-		//   if (sheet) {
-		//     this.stylesheetCallbacks.forEach(cb => cb(sheet))
-		//   } else {
-		//     console.warn("Style onload: sheet is null")
-		//   }
-		//   this.loaded = true
-		// }
+		node.onload = () => {
+		  const sheet = node.sheet
+		  if (sheet) {
+		    this.stylesheetCallbacks.forEach(cb => cb(sheet))
+		    this.stylesheetCallbacks = []
+		  } else {
+		    console.warn("Style onload: sheet is null")
+		  }
+		  this.loaded = true
+		}
 	}
 
 	onStyleSheet(cb: StyleSheetCallback) {
-		// if (this.loaded) {
+		if (this.loaded) {
 			if (!this.node.sheet) {
 				console.warn("Style tag is loaded, but sheet is null")
 				return
 			}
 			cb(this.node.sheet)
-		// } else {
-		//   this.stylesheetCallbacks.push(cb)
-		// }
+		} else {
+		  this.stylesheetCallbacks.push(cb)
+		}
 	}
 }
 
