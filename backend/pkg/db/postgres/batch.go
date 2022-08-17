@@ -124,8 +124,6 @@ func (conn *BatchSet) worker() {
 			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
 		conn.sqlRequestCounter.Add(context.Background(), 1,
 			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-		// TODO: remove DEBUG log
-		log.Printf("insert batch in %d ms", dur)
 	}
 }
 

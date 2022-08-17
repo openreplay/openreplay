@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"log"
-	"time"
 )
 
 type BulkSet struct {
@@ -116,12 +115,9 @@ func (conn *BulkSet) Send() {
 
 func (conn *BulkSet) worker() {
 	for {
-		start := time.Now()
 		bulk := <-conn.bulksToSend
 		if err := bulk.Send(); err != nil {
 			log.Printf("%s bulk send err: %s", bulk.Table(), err)
 		}
-		// TODO: remove DEBUG log
-		log.Printf("sent bulk: %s in %d ms", bulk.Table(), time.Now().Sub(start).Milliseconds())
 	}
 }
