@@ -117,15 +117,6 @@ func DecodeSessionStart(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSessionDisconnect(reader io.Reader) (Message, error) {
-	var err error = nil
-	msg := &SessionDisconnect{}
-	if msg.Timestamp, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeSessionEnd(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &SessionEnd{}
@@ -1219,6 +1210,102 @@ func DecodeCreateIFrameDocument(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
+func DecodeAdoptedSSReplaceURLBased(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSReplaceURLBased{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Text, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.BaseURL, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeAdoptedSSReplace(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSReplace{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Text, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeAdoptedSSInsertRuleURLBased(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSInsertRuleURLBased{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Rule, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Index, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.BaseURL, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeAdoptedSSInsertRule(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSInsertRule{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Rule, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Index, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeAdoptedSSDeleteRule(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSDeleteRule{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Index, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeAdoptedSSAddOwner(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSAddOwner{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.ID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeAdoptedSSRemoveOwner(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &AdoptedSSRemoveOwner{}
+	if msg.SheetID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.ID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIOSBatchMeta(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &IOSBatchMeta{}
@@ -1639,9 +1726,6 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 	case 1:
 		return DecodeSessionStart(reader)
 
-	case 2:
-		return DecodeSessionDisconnect(reader)
-
 	case 3:
 		return DecodeSessionEnd(reader)
 
@@ -1833,6 +1917,27 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 70:
 		return DecodeCreateIFrameDocument(reader)
+
+	case 71:
+		return DecodeAdoptedSSReplaceURLBased(reader)
+
+	case 72:
+		return DecodeAdoptedSSReplace(reader)
+
+	case 73:
+		return DecodeAdoptedSSInsertRuleURLBased(reader)
+
+	case 74:
+		return DecodeAdoptedSSInsertRule(reader)
+
+	case 75:
+		return DecodeAdoptedSSDeleteRule(reader)
+
+	case 76:
+		return DecodeAdoptedSSAddOwner(reader)
+
+	case 77:
+		return DecodeAdoptedSSRemoveOwner(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)
