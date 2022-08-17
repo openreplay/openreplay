@@ -75,6 +75,6 @@ func (conn *Conn) updateBatchSize(sessionID uint64, reqSize int) {
 
 // Commit runs async worker to insert local bulks and batches (that we store in memory)
 func (conn *Conn) Commit() {
-	conn.bulks.Send()
+	conn.bulks.Send() // sync
 	conn.batches.Commit()
 }
