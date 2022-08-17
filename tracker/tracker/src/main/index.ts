@@ -19,6 +19,7 @@ import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
+import AdoptedStyleSheets from './modules/adoptedStyleSheets.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
 import type { Options as AppOptions } from './app/index.js'
@@ -113,6 +114,7 @@ export default class API {
     if (app !== null) {
       Viewport(app)
       CSSRules(app)
+      AdoptedStyleSheets(app)
       Connection(app)
       Console(app, options)
       Exception(app, options)
