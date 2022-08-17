@@ -2,6 +2,7 @@ interface SessionInfo {
   sessionID: string | null
   metadata: Record<string, string>
   userID: string | null
+  timestamp: number
 }
 type OnUpdateCallback = (i: Partial<SessionInfo>) => void
 
@@ -10,6 +11,7 @@ export default class Session {
   private userID: string | null = null
   private sessionID: string | null = null
   private readonly callbacks: OnUpdateCallback[] = []
+  private timestamp = 0
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)
@@ -35,6 +37,9 @@ export default class Session {
     if (newInfo.sessionID !== undefined) {
       this.sessionID = newInfo.sessionID
     }
+    if (newInfo.timestamp !== undefined) {
+      this.timestamp = newInfo.timestamp
+    }
     this.handleUpdate(newInfo)
   }
 
@@ -52,6 +57,7 @@ export default class Session {
       sessionID: this.sessionID,
       metadata: this.metadata,
       userID: this.userID,
+      timestamp: this.timestamp,
     }
   }
 
@@ -59,5 +65,6 @@ export default class Session {
     this.metadata = {}
     this.userID = null
     this.sessionID = null
+    this.timestamp = 0
   }
 }

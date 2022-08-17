@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID } from './messages.gen.js'
-import { timestamp, deprecationWarn } from '../utils.js'
+import { timestamp as now, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -206,7 +206,7 @@ export default class App {
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(Timestamp(timestamp()))
+      this.messages.unshift(Timestamp(now()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
@@ -220,7 +220,7 @@ export default class App {
         fn.apply(this, args)
       } catch (e) {
         app._debug('safe_fn_call', e)
-        // time: timestamp(),
+        // time: now(),
         // name: e.name,
         // message: e.message,
         // stack: e.stack
@@ -274,7 +274,6 @@ export default class App {
       userUUID: this.localStorage.getItem(this.options.local_uuid_key),
       projectKey: this.projectKey,
       revID: this.revID,
-      timestamp: timestamp(), // shouldn't it be set once?
       trackerVersion: this.version,
       isSnippet: this.options.__is_snippet,
     }
@@ -358,12 +357,12 @@ export default class App {
     }
     this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString())
 
-    const startInfo = this.getStartInfo()
+    const timestamp = now()
     const startWorkerMsg: WorkerMessageData = {
       type: 'start',
       pageNo,
       ingestPoint: this.options.ingestPoint,
-      timestamp: startInfo.timestamp,
+      timestamp,
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
@@ -388,7 +387,8 @@ export default class App {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...startInfo,
+          ...this.getStartInfo(),
+          timestamp,
           userID: this.session.getInfo().userID,
           token: this.sessionStorage.getItem(this.options.session_token_key),
           deviceMemory,
@@ -413,17 +413,25 @@ export default class App {
         if (!this.worker) {
           return Promise.reject('no worker found after start request (this might not happen)')
         }
-        const { token, userUUID, sessionID, beaconSizeLimit } = r
+        const {
+          token,
+          userUUID,
+          sessionID,
+          beaconSizeLimit,
+          startTimestamp, // real startTS, derived from sessionID
+        } = r
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
+          //typeof startTimestamp !== 'number' ||
+          //typeof sessionID !== 'string' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
         this.sessionStorage.setItem(this.options.session_token_key, token)
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
-        this.session.update({ sessionID }) // TODO: no no-explicit 'any'
+        this.session.update({ sessionID, timestamp: startTimestamp || timestamp }) // TODO: no no-explicit 'any'
         const startWorkerMsg: WorkerMessageData = {
           type: 'auth',
           token,
