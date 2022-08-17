@@ -18,7 +18,6 @@ interface IProps extends RouteComponentProps {
 function AddPredefinedMetric({ categories, history, siteId, title, description }: IProps) {
     const { dashboardStore } = useStore();
     const { hideModal } = useModal();
-    const [allCheck, setAllCheck] = React.useState(false);
     const [activeCategory, setActiveCategory] = React.useState<Record<string, any>>();
 
     const scrollContainer = React.useRef<HTMLDivElement>(null);
@@ -43,7 +42,6 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
 
     const handleWidgetCategoryClick = (category: any) => {
         setActiveCategory(category);
-        setAllCheck(false);
     };
 
     const onSave = () => {
@@ -64,15 +62,6 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
         if (!queryParams.has('modal')) history.push('?modal=addMetric');
         history.push(path);
         hideModal();
-    };
-
-    const toggleAllMetrics = ({ target: { checked } }: any) => {
-        setAllCheck(checked);
-        if (checked) {
-            dashboardStore.selectWidgetsByCategory(activeCategory.name);
-        } else {
-            dashboardStore.removeSelectedWidgetByCategory(activeCategory);
-        }
     };
 
     return (
@@ -97,13 +86,15 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
                         >
                             {activeCategory &&
                                 categories.map((category) => (
-                                    <WidgetCategoryItem
-                                        key={category.name}
-                                        onClick={handleWidgetCategoryClick}
-                                        category={category}
-                                        isSelected={activeCategory.name === category.name}
-                                        selectedWidgetIds={selectedWidgetIds}
-                                    />
+                                    <React.Fragment key={category.name}>
+                                        <WidgetCategoryItem
+                                            key={category.name}
+                                            onClick={handleWidgetCategoryClick}
+                                            category={category}
+                                            isSelected={activeCategory.name === category.name}
+                                            selectedWidgetIds={selectedWidgetIds}
+                                        />
+                                    </React.Fragment>
                                 ))}
                         </div>
                     </div>
@@ -114,14 +105,16 @@ function AddPredefinedMetric({ categories, history, siteId, title, description }
                     >
                         {activeCategory &&
                             activeCategory.widgets.map((metric: any) => (
-                                <WidgetWrapper
-                                    key={metric.metricId}
-                                    widget={metric}
-                                    active={selectedWidgetIds.includes(metric.metricId)}
-                                    isTemplate={true}
-                                    isWidget={metric.metricType === 'predefined'}
-                                    onClick={() => dashboardStore.toggleWidgetSelection(metric)}
-                                />
+                                <React.Fragment key={metric.metricId}>
+                                    <WidgetWrapper
+                                        key={metric.metricId}
+                                        widget={metric}
+                                        active={selectedWidgetIds.includes(metric.metricId)}
+                                        isTemplate={true}
+                                        isWidget={metric.metricType === 'predefined'}
+                                        onClick={() => dashboardStore.toggleWidgetSelection(metric)}
+                                    />
+                                </React.Fragment>
                             ))}
                     </div>
                 </div>
