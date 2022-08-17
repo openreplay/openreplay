@@ -8,18 +8,107 @@ export enum FilterCategory {
   PERFORMANCE = 'Performance',
 }
 
+export const setQueryParamKeyFromFilterkey = (filterKey: string) => {
+  switch (filterKey) {
+    case FilterKey.USERID:
+      return 'uid';
+    case FilterKey.USERANONYMOUSID:
+      return 'usera';
+    case FilterKey.CLICK:
+      return 'clk';
+    case FilterKey.INPUT:
+      return 'inp';
+    case FilterKey.LOCATION:
+      return 'loc';
+    case FilterKey.USER_OS:
+      return 'os';
+    case FilterKey.USER_BROWSER:
+      return 'browser';
+    case FilterKey.USER_DEVICE:
+      return 'device';
+    case FilterKey.PLATFORM:
+      return 'platform';
+    case FilterKey.REVID:
+      return 'revid';
+    case FilterKey.USER_COUNTRY:
+      return 'country';
+    case FilterKey.REFERRER:
+      return 'ref';
+    case FilterKey.CUSTOM:
+      return 'ce';
+    case FilterKey.STATEACTION:
+      return 'sa';
+    case FilterKey.ERROR:
+      return 'err';
+    case FilterKey.ISSUE:
+      return 'iss';
+
+    // PERFORMANCE
+    case FilterKey.DOM_COMPLETE:
+      return 'domc';
+    case FilterKey.LARGEST_CONTENTFUL_PAINT_TIME:
+      return 'lcp';
+    case FilterKey.TTFB:
+      return 'ttfb';
+    case FilterKey.AVG_CPU_LOAD:
+      return 'acpu';
+    case FilterKey.AVG_MEMORY_USAGE:
+      return 'amem';
+    case FilterKey.FETCH_FAILED:
+      return 'ff';
+  }
+};
+
 export const getFilterKeyTypeByKey = (key: string) => {
   switch (key) {
     case 'userId':
+    case 'uid':
+    case 'userid':
       return FilterKey.USERID;
-    case 'userOs':
+    case 'usera':
+      return FilterKey.USERANONYMOUSID;
+    case 'clk':
+      return FilterKey.CLICK;
+    case 'inp':
+      return FilterKey.INPUT;
+    case 'loc':
+      return FilterKey.LOCATION;
+    case 'os':
       return FilterKey.USER_OS;
-    case 'userBrowser':
+    case 'browser':
       return FilterKey.USER_BROWSER;
-    case 'userDevice':
+    case 'device':
       return FilterKey.USER_DEVICE;
-    case 'userCountry':
+    case 'platform':
+      return FilterKey.PLATFORM;
+    case 'revid':
+      return FilterKey.REVID;
+    case 'country':
       return FilterKey.USER_COUNTRY;
+    case 'ref':
+      return FilterKey.REFERRER;
+    case 'ce':
+      return FilterKey.CUSTOM;
+    case 'sa':
+      return FilterKey.STATEACTION;
+    case 'err':
+      return FilterKey.ERROR;
+    case 'iss':
+      return FilterKey.ISSUE;
+
+    // PERFORMANCE
+    case 'domc':
+      return FilterKey.DOM_COMPLETE;
+    case 'lcp':
+      return FilterKey.LARGEST_CONTENTFUL_PAINT_TIME;
+    case 'ttfb':
+      return FilterKey.TTFB;
+    case 'acpu':
+      return FilterKey.AVG_CPU_LOAD;
+    case 'amem':
+      return FilterKey.AVG_MEMORY_USAGE;
+    case 'ff':
+      return FilterKey.FETCH_FAILED;
   }
 };
 
