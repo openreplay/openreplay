@@ -1,92 +1,159 @@
 import React, { useEffect } from 'react';
-import { Button, Form, Input, SegmentSelection, Checkbox, Icon } from 'UI';
-import { alertConditions as conditions } from 'App/constants';
+import { Form, SegmentSelection, Icon } from 'UI';
 import { connect } from 'react-redux';
-// @ts-ignore
-import stl from './alertForm.module.css';
-import DropdownChips from './DropdownChips';
 import { validateEmail } from 'App/validate';
+import { fetchTriggerOptions, init, edit, save, remove, fetchList } from 'Duck/alerts';
+import { confirm } from 'UI';
+import { toast } from 'react-toastify';
+import { SLACK, WEBHOOK } from 'App/constants/schedule';
+import { fetchList as fetchWebhooks } from 'Duck/webhook';
+import Breadcrumb from 'Shared/Breadcrumb';
+import { withSiteId, alerts } from 'App/routes';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+
 import cn from 'classnames';
-import { fetchTriggerOptions } from 'Duck/alerts';
-import Select from 'Shared/Select';
+import WidgetName from '../WidgetName';
+import BottomButtons from './AlertForm/BottomButtons';
+import NotifyHooks from './AlertForm/NotifyHooks';
+import AlertListItem from './AlertListItem';
+import Condition from './AlertForm/Condition';
 
-const thresholdOptions = [
-  { label: '15 minutes', value: 15 },
-  { label: '30 minutes', value: 30 },
-  { label: '1 hour', value: 60 },
-  { label: '2 hours', value: 120 },
-  { label: '4 hours', value: 240 },
-  { label: '1 day', value: 1440 },
-];
 
-const changeOptions = [
-  { label: 'change', value: 'change' },
-  { label: '% change', value: 'percent' },
-];
-
-const Circle = ({ text }: { text: string}) => (
-  <div className="circle mr-4 w-6 h-6 rounded-full bg-gray-light flex items-center justify-center">
+const Circle = ({ text }: { text: string }) => (
+  <div style={{ left: -14, height: 26, width: 26 }} className="circle rounded-full bg-gray-light flex items-center justify-center absolute top-0">
     {text}
   </div>
 );
 
 interface ISection {
-  index: string
-  title: string
-  description?: string
-  content: React.ReactNode
+  index: string;
+  title: string;
+  description?: string;
+  content: React.ReactNode;
 }
 
 const Section = ({ index, title, description, content }: ISection) => (
-  <div className="w-full">
-    <div className="flex items-start">
+  <div className="w-full border-l-2 last:border-l-borderColor-transparent">
+    <div className="flex items-start relative">
       <Circle text={index} />
-      <div>
+      <div className="ml-6">
         <span className="font-medium">{title}</span>
         {description && <div className="text-sm color-gray-medium">{description}</div>}
       </div>
     </div>
 
-    <div className="ml-10">{content}</div>
+    <div className="ml-6">{content}</div>
   </div>
 );
 
-interface IProps {
-  instance: Alert
-  style: Record<string, string | number>
-  slackChannels: any[]
-  webhooks: any[]
-  loading: boolean
-  deleting: boolean
-  triggerOptions: any[]
-  onDelete: (instance: Alert) => void
-  onClose: () => void
-  fetchTriggerOptions: () => void
-  edit: (query: any) => void
-  onSubmit: (instance: Alert) => void
+interface IProps extends RouteComponentProps {
+  siteId: string;
+  instance: Alert;
+  slackChannels: any[];
+  webhooks: any[];
+  loading: boolean;
+  deleting: boolean;
+  triggerOptions: any[];
+  list: any,
+  fetchTriggerOptions: () => void;
+  edit: (query: any) => void;
+  init: (alert?: Alert) => any;
+  save: (alert: Alert) => Promise<any>;
+  remove: (alertId: string) => Promise<any>;
+  onSubmit: (instance: Alert) => void;
+  fetchWebhooks: () => void;
+  fetchList: () => void;
 }
 
 const NewAlert = (props: IProps) => {
   const {
     instance,
-    slackChannels,
+    siteId,
     webhooks,
     loading,
-    onDelete,
     deleting,
     triggerOptions,
-    style,
+    init,
+    edit,
+    save,
+    remove,
+    fetchWebhooks,
+    fetchList,
+    list,
   } = props;
 
-  const write = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) => props.edit({ [name]: value });
-  const writeOption = (_: React.ChangeEvent, { name, value }: { name: string, value: Record<string, any>}) => props.edit({ [name]: value.value });
-  const onChangeCheck = ({ target: { checked, name } }: React.ChangeEvent<HTMLInputElement>) => props.edit({ [name]: checked });
+  const [expanded, setExpanded] = React.useState(false);
 
   useEffect(() => {
+    if (list.size === 0) fetchList();
     props.fetchTriggerOptions();
+    fetchWebhooks();
   }, []);
 
-  const writeQueryOption = (e: React.ChangeEvent, { name, value }: { name: string, value: string }) => {
+  useEffect(() => {
+    if (list.size > 0) {
+      const alertId = location.pathname.split('/').pop()
+      const currentAlert = list.toJS().find((alert: Alert) => alert.alertId === parseInt(alertId, 10));
+      init(currentAlert);
+    }
+  }, [list])
+
+
+  const write = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) =>
+    props.edit({ [name]: value });
+  const writeOption = (
+    _: React.ChangeEvent,
+    { name, value }: { name: string; value: Record<string, any> }
+  ) => props.edit({ [name]: value.value });
+  const onChangeCheck = ({ target: { checked, name } }: React.ChangeEvent<HTMLInputElement>) =>
+    props.edit({ [name]: checked });
+
+  const onDelete = async (instance: Alert) => {
+    if (
+      await confirm({
+        header: 'Confirm',
+        confirmButton: 'Yes, delete',
+        confirmation: `Are you sure you want to permanently delete this alert?`,
+      })
+    ) {
+      remove(instance.alertId).then(() => {
+        props.history.push(withSiteId(alerts(), siteId))
+      });
+    }
+  };
+  const onSave = (instance: Alert) => {
+    const wasUpdating = instance.exists();
+    save(instance).then(() => {
+      if (!wasUpdating) {
+        toast.success('New alert saved');
+        props.history.push(withSiteId(alerts(), siteId))
+      } else {
+        toast.success('Alert updated');
+      }
+    });
+  };
+
+  const onClose = () => {
+    props.history.push(withSiteId(alerts(), siteId))
+  }
+
+  const slackChannels = webhooks
+    .filter((hook) => hook.type === SLACK)
+    .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
+    // @ts-ignore
+    .toJS();
+  const hooks = webhooks
+    .filter((hook) => hook.type === WEBHOOK)
+    .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
+    // @ts-ignore
+    .toJS();
+
+  
+
+  const writeQueryOption = (
+    e: React.ChangeEvent,
+    { name, value }: { name: string; value: string }
+  ) => {
     const { query } = instance;
     props.edit({ query: { ...query, [name]: value } });
   };
@@ -104,291 +171,137 @@ const NewAlert = (props: IProps) => {
   const isThreshold = instance.detectionMethod === 'threshold';
 
   return (
-    <Form
-      className={cn('p-6 pb-10', stl.wrapper)}
-      style={style}
-      onSubmit={() => props.onSubmit(instance)}
-      id="alert-form"
-    >
-      <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>
-        <input
-          autoFocus={true}
-          className="text-lg border border-gray-light rounded w-full"
-          name="name"
-          style={{ fontSize: '18px', padding: '10px', fontWeight: '600' }}
-          value={instance && instance.name}
-          onChange={write}
-          placeholder="Untiltled Alert"
-          id="name-field"
-        />
-        <div className="mb-8" />
-        <Section
-          index="1"
-          title={'What kind of alert do you want to set?'}
-          content={
-            <div>
-              <SegmentSelection
-                primary
-                name="detectionMethod"
-                className="my-3"
-                onSelect={(e: any, { name, value }: any) => props.edit({ [name]: value })}
-                value={{ value: instance.detectionMethod }}
-                list={[
-                  { name: 'Threshold', value: 'threshold' },
-                  { name: 'Change', value: 'change' },
-                ]}
-              />
-              <div className="text-sm color-gray-medium">
-                {isThreshold &&
-                  'Eg. Alert me if memory.avg is greater than 500mb over the past 4 hours.'}
-                {!isThreshold &&
-                  'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
-              </div>
-              <div className="my-4" />
-            </div>
-          }
-        />
-
-        <hr className="my-8" />
-
-        <Section
-          index="2"
-          title="Condition"
-          content={
-            <div>
-              {!isThreshold && (
-                <div className="flex items-center my-3">
-                  <label className="w-2/6 flex-shrink-0 font-normal">{'Trigger when'}</label>
-                  <Select
-                    className="w-4/6"
-                    placeholder="change"
-                    options={changeOptions}
-                    name="change"
-                    defaultValue={instance.change}
-                    onChange={({ value }) => writeOption(null, { name: 'change', value })}
-                    id="change-dropdown"
-                  />
-                </div>
-              )}
-
-              <div className="flex items-center my-3">
-                <label className="w-2/6 flex-shrink-0 font-normal">
-                  {isThreshold ? 'Trigger when' : 'of'}
-                </label>
-                <Select
-                  className="w-4/6"
-                  placeholder="Select Metric"
-                  isSearchable={true}
-                  options={triggerOptions}
-                  name="left"
-                  value={triggerOptions.find((i) => i.value === instance.query.left)}
-                  // onChange={ writeQueryOption }
-                  onChange={({ value }) =>
-                    writeQueryOption(null, { name: 'left', value: value.value })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center my-3">
-                <label className="w-2/6 flex-shrink-0 font-normal">{'is'}</label>
-                <div className="w-4/6 flex items-center">
-                  <Select
-                    placeholder="Select Condition"
-                    options={conditions}
-                    name="operator"
-                    defaultValue={instance.query.operator}
-                    // onChange={ writeQueryOption }
-                    onChange={({ value }) =>
-                      writeQueryOption(null, { name: 'operator', value: value.value })
-                    }
-                  />
-                  {unit && (
-                    <>
-                      <Input
-                        className="px-4"
-                        style={{ marginRight: '31px' }}
-                        // label={{ basic: true, content: unit }}
-                        // labelPosition='right'
-                        name="right"
-                        value={instance.query.right}
-                        onChange={writeQuery}
-                        placeholder="E.g. 3"
-                      />
-                      <span className="ml-2">{'test'}</span>
-                    </>
-                  )}
-                  {!unit && (
-                    <Input
-                      wrapperClassName="ml-2"
-                      // className="pl-4"
-                      name="right"
-                      value={instance.query.right}
-                      onChange={writeQuery}
-                      placeholder="Specify Value"
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center my-3">
-                <label className="w-2/6 flex-shrink-0 font-normal">{'over the past'}</label>
-                <Select
-                  className="w-2/6"
-                  placeholder="Select timeframe"
-                  options={thresholdOptions}
-                  name="currentPeriod"
-                  defaultValue={instance.currentPeriod}
-                  // onChange={ writeOption }
-                  onChange={({ value }) => writeOption(null, { name: 'currentPeriod', value })}
-                />
-              </div>
-              {!isThreshold && (
-                <div className="flex items-center my-3">
-                  <label className="w-2/6 flex-shrink-0 font-normal">
-                    {'compared to previous'}
-                  </label>
-                  <Select
-                    className="w-2/6"
-                    placeholder="Select timeframe"
-                    options={thresholdOptions}
-                    name="previousPeriod"
-                    defaultValue={instance.previousPeriod}
-                    // onChange={ writeOption }
-                    onChange={({ value }) => writeOption(null, { name: 'previousPeriod', value })}
-                  />
-                </div>
-              )}
-            </div>
-          }
-        />
-
-        <hr className="my-8" />
-
-        <Section
-          index="3"
-          title="Notify Through"
-          description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
-          content={
-            <div className="flex flex-col">
-              <div className="flex items-center my-4">
-                <Checkbox
-                  name="slack"
-                  className="mr-8"
-                  type="checkbox"
-                  checked={instance.slack}
-                  onClick={onChangeCheck}
-                  label="Slack"
-                />
-                <Checkbox
-                  name="email"
-                  type="checkbox"
-                  checked={instance.email}
-                  onClick={onChangeCheck}
-                  className="mr-8"
-                  label="Email"
-                />
-                <Checkbox
-                  name="webhook"
-                  type="checkbox"
-                  checked={instance.webhook}
-                  onClick={onChangeCheck}
-                  label="Webhook"
-                />
-              </div>
-
-              {instance.slack && (
-                <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Slack'}</label>
-                  <div className="w-4/6">
-                    <DropdownChips
-                      fluid
-                      selected={instance.slackInput}
-                      options={slackChannels}
-                      placeholder="Select Channel"
-                      // @ts-ignore
-                      onChange={(selected) => props.edit({ slackInput: selected })}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {instance.email && (
-                <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Email'}</label>
-                  <div className="w-4/6">
-                    <DropdownChips
-                      textFiled
-                      validate={validateEmail}
-                      selected={instance.emailInput}
-                      placeholder="Type and press Enter key"
-                      // @ts-ignore
-                      onChange={(selected) => props.edit({ emailInput: selected })}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {instance.webhook && (
-                <div className="flex items-start my-4">
-                  <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Webhook'}</label>
-                  <DropdownChips
-                    fluid
-                    selected={instance.webhookInput}
-                    options={webhooks}
-                    placeholder="Select Webhook"
-                    // @ts-ignore
-                    onChange={(selected) => props.edit({ webhookInput: selected })}
-                  />
-                </div>
-              )}
-            </div>
-          }
-        />
-      </div>
-
-      <div className="flex items-center justify-between absolute bottom-0 left-0 right-0 p-6 border-t z-10 bg-white">
-        <div className="flex items-center">
-          <Button
-            loading={loading}
-            variant="primary"
-            type="submit"
-            disabled={loading || !instance.validate()}
-            id="submit-button"
+    <>
+      <Breadcrumb
+        items={[
+          {
+            label: 'Alerts',
+            to: withSiteId('/alerts', siteId),
+          },
+          { label: (instance && instance.name) || 'Alert' },
+        ]}
+      />
+      <Form
+        className="relative bg-white rounded border"
+        onSubmit={() => onSave(instance)}
+        id="alert-form"
+      >
+        <div
+          onClick={() => expanded ? null : setExpanded(!expanded)}
+          className={cn('px-6 py-4 flex justify-between items-center', {
+            'cursor-pointer hover:bg-active-blue hover:shadow-border-blue rounded': !expanded,
+          })}
+        >
+          <h1 className="mb-0 text-2xl mr-4 min-w-fit">
+            <WidgetName name={instance.name} onUpdate={(name) => write({ target: { value: name, name: 'name' }} as any)} canEdit={expanded} />
+          </h1>
+          <div
+            className="text-gray-600 w-full cursor-pointer"
+            onClick={() => setExpanded(!expanded)}
           >
-            {instance.exists() ? 'Update' : 'Create'}
-          </Button>
-          <div className="mx-1" />
-          <Button onClick={props.onClose}>Cancel</Button>
+            <div className="flex items-center select-none w-fit ml-auto">
+              <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
+              <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
+            </div>
+          </div>
         </div>
-        <div>
-          {instance.exists() && (
-            <Button
-              hover
-              variant="text"
-              loading={deleting}
-              type="button"
-              onClick={() => onDelete(instance)}
-              id="trash-button"
-            >
-              <Icon name="trash" color="gray-medium" size="18" />
-            </Button>
-          )}
-        </div>
+        {expanded ? (
+          <>
+            <div className="px-6 pb-3 flex flex-col">
+              <Section
+                index="1"
+                title={'Alert based on'}
+                content={
+                  <div className="">
+                    <SegmentSelection
+                      outline
+                      name="detectionMethod"
+                      className="my-3 w-1/4"
+                      onSelect={(e: any, { name, value }: any) => props.edit({ [name]: value })}
+                      value={{ value: instance.detectionMethod }}
+                      list={[
+                        { name: 'Threshold', value: 'threshold' },
+                        { name: 'Change', value: 'change' },
+                      ]}
+                    />
+                    <div className="text-sm color-gray-medium">
+                      {isThreshold &&
+                        'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
+                      {!isThreshold &&
+                        'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
+                    </div>
+                    <div className="my-4" />
+                  </div>
+                }
+              />
+              <Section
+                index="2"
+                title="Condition"
+                content={
+                  <Condition
+                    isThreshold={isThreshold}
+                    writeOption={writeOption}
+                    instance={instance}
+                    triggerOptions={triggerOptions}
+                    writeQueryOption={writeQueryOption}
+                    writeQuery={writeQuery}
+                    unit={unit}
+                  />
+                }
+              />
+              <Section
+                index="3"
+                title="Notify Through"
+                description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
+                content={
+                  <NotifyHooks 
+                    instance={instance}
+                    onChangeCheck={onChangeCheck}
+                    slackChannels={slackChannels}
+                    validateEmail={validateEmail}
+                    hooks={hooks}
+                    edit={edit}
+                  />
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-6 border-t bg-white">
+              <BottomButtons 
+                loading={loading}
+                instance={instance}
+                deleting={deleting}
+                onDelete={onDelete}
+              />
+            </div>
+          </>
+        ) : null}
+      </Form>
+
+      <div className="bg-white mt-4 border rounded">
+        {instance && (
+          <AlertListItem alert={instance} demo siteId="" init={() => null} webhooks={webhooks} />
+        )}
       </div>
-    </Form>
+    </>
   );
 };
 
-export default connect(
+export default withRouter(connect(
   (state) => ({
     // @ts-ignore
     instance: state.getIn(['alerts', 'instance']),
+    //@ts-ignore
+    list: state.getIn(['alerts', 'list']),
     // @ts-ignore
     triggerOptions: state.getIn(['alerts', 'triggerOptions']),
     // @ts-ignore
     loading: state.getIn(['alerts', 'saveRequest', 'loading']),
     // @ts-ignore
     deleting: state.getIn(['alerts', 'removeRequest', 'loading']),
+    // @ts-ignore
+    webhooks: state.getIn(['webhooks', 'list']),
   }),
-  { fetchTriggerOptions }
-)(NewAlert);
+  { fetchTriggerOptions, init, edit, save, remove, fetchWebhooks, fetchList }
+  // @ts-ignore
+)(NewAlert));
