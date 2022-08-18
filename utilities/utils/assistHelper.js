@@ -2,6 +2,20 @@ const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
 
 let debug = process.env.debug === "1" || false;
+const IDENTITIES = {agent: 'agent', session: 'session'};
+const EVENTS_DEFINITION = {
+    listen: {UPDATE_EVENT: "UPDATE_SESSION"}
+};
+EVENTS_DEFINITION.emit = {
+    NEW_AGENT: "NEW_AGENT",
+    NO_AGENTS: "NO_AGENT",
+    AGENT_DISCONNECT: "AGENT_DISCONNECTED",
+    AGENTS_CONNECTED: "AGENTS_CONNECTED",
+    NO_SESSIONS: "SESSION_DISCONNECTED",
+    SESSION_ALREADY_CONNECTED: "SESSION_ALREADY_CONNECTED",
+    SESSION_RECONNECTED: "SESSION_RECONNECTED",
+    UPDATE_EVENT: EVENTS_DEFINITION.listen.UPDATE_EVENT
+};
 
 const BASE_sessionInfo = {
     "pageTitle": "Page",
@@ -57,5 +71,5 @@ const extractSessionInfo = function (socket) {
 
 
 module.exports = {
-    extractSessionInfo
+    extractSessionInfo, EVENTS_DEFINITION, IDENTITIES
 };
