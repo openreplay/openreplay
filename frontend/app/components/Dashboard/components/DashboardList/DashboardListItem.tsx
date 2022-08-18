@@ -41,7 +41,7 @@ function DashboardListItem(props: Props) {
                 </div>
                 <div className="col-span-2 text-right">{checkForRecent(dashboard.createdAt, 'LLL dd, yyyy, hh:mm a')}</div>
             </div>
-            {dashboard.description ? <div className="text-disabled-text px-4 pb-2">{dashboard.description}</div> : null}
+            {dashboard.description ? <div className="text-disabled-text px-2 pb-2">{dashboard.description}</div> : null}
         </div>
     );
 }
