@@ -9,6 +9,7 @@ import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 import WebPlayer from './WebPlayer';
 import IOSPlayer from './IOSPlayer';
+import { useStore } from 'App/mstore';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -22,6 +23,7 @@ function Session({
  }) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)
+	const { sessionStore }	= useStore();
 	useEffect(() => {
 		if (sessionId != null) {
 			fetchSession(sessionId)
@@ -30,6 +32,10 @@ function Session({
 		}
 		setInitializing(false)
 	},[ sessionId ]);
+
+	useEffect(() => {
+		sessionStore.resetUserFilter();
+	} ,[])
 
 	return (
 		<NoContent

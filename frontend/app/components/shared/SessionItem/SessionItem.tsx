@@ -50,6 +50,7 @@ interface Props {
     lastPlayedSessionId?: string;
     live?: boolean;
     onClick?: any;
+    compact?: boolean;
 }
 
 function SessionItem(props: RouteComponentProps & Props) {
@@ -65,6 +66,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         metaList = [],
         lastPlayedSessionId,
         onClick = null,
+        compact = false,
     } = props;
 
     const {
@@ -107,24 +109,26 @@ function SessionItem(props: RouteComponentProps & Props) {
         <div className={cn(stl.sessionItem, 'flex flex-col p-2')} id="session-item" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start">
                 <div className={cn('flex items-center w-full')}>
-                    <div className="flex items-center pr-2 shrink-0" style={{ width: '40%' }}>
-                        <div>
-                            <Avatar isActive={active} seed={userNumericHash} isAssist={isAssist} />
-                        </div>
-                        <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center shrink-0">
-                            <div
-                                className={cn('text-lg', {
-                                    'color-teal cursor-pointer': !disableUser && hasUserId,
-                                    [stl.userName]: !disableUser && hasUserId,
-                                    'color-gray-medium': disableUser || !hasUserId,
-                                })}
-                                onClick={() => !disableUser && !hasUserFilter && onUserClick(userId, userAnonymousId)}
-                            >
-                                <TextEllipsis text={userDisplayName} maxWidth="200px" popupProps={{ inverted: true, size: 'tiny' }} />
+                    {!compact && (
+                        <div className="flex items-center pr-2 shrink-0" style={{ width: '40%' }}>
+                            <div>
+                                <Avatar isActive={active} seed={userNumericHash} isAssist={isAssist} />
+                            </div>
+                            <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center shrink-0">
+                                <div
+                                    className={cn('text-lg', {
+                                        'color-teal cursor-pointer': !disableUser && hasUserId,
+                                        [stl.userName]: !disableUser && hasUserId,
+                                        'color-gray-medium': disableUser || !hasUserId,
+                                    })}
+                                    onClick={() => !disableUser && !hasUserFilter && onUserClick(userId, userAnonymousId)}
+                                >
+                                    <TextEllipsis text={userDisplayName} maxWidth="200px" popupProps={{ inverted: true, size: 'tiny' }} />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div style={{ width: '20%' }} className="px-2 flex flex-col justify-between">
+                    )}
+                    <div style={{ width: compact ? '40%' : '20%' }} className="px-2 flex flex-col justify-between">
                         <div>
                             <TextEllipsis text={formatTimeOrDate(startedAt, timezone)} popupProps={{ inverted: true, size: 'tiny' }} />
                         </div>
