@@ -11,7 +11,8 @@ const {
 const {
     IDENTITIES,
     EVENTS_DEFINITION,
-    extractSessionInfo
+    extractSessionInfo,
+    socketConnexionTimeout
 } = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
@@ -260,6 +261,7 @@ module.exports = {
         createSocketIOServer(server, prefix);
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+            socket._connectedAt = new Date();
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -304,7 +306,7 @@ module.exports = {
                 }
                 if (c_sessions === 0) {
                     debug && console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
-                    socket.to(socket.peerId).emit(NO_SESSIONS);
+                    socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
                 }
                 if (c_agents === 0) {
                     debug && console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
@@ -335,7 +337,7 @@ module.exports = {
                     let socketId = await findSessionSocketId(io, socket.peerId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.peerId}`);
-                        io.to(socket.id).emit(NO_SESSIONS);
+                        io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
                     } else {
                         debug && console.log("message sent");
                         io.to(socketId).emit(eventName, socket.id, args[0]);
@@ -344,13 +346,13 @@ module.exports = {
             });
 
         });
-        console.log("WS server started")
+        console.log("WS server started");
         setInterval(async (io) => {
             try {
                 let count = 0;
                 console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
-                const arr = Array.from(io.sockets.adapter.rooms)
-                const filtered = arr.filter(room => !room[1].has(room[0]))
+                const arr = Array.from(io.sockets.adapter.rooms);
+                const filtered = arr.filter(room => !room[1].has(room[0]));
                 for (let i of filtered) {
                     let {projectKey, sessionId} = extractPeerId(i[0]);
                     if (projectKey !== null && sessionId !== null) {
@@ -360,13 +362,15 @@ module.exports = {
                 console.log(` ====== Valid Rooms: ${count} ====== `);
                 if (debug) {
                     for (let item of filtered) {
-                        console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                        console.log(`Room: ${item[0]} connected: ${item[1].size}`);
                     }
                 }
             } catch (e) {
                 console.error(e);
             }
-        }, 20000, io);
+        }, 30000, io);
+
+        socketConnexionTimeout(io);
     },
     handlers: {
         socketsList,

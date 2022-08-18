@@ -14,7 +14,8 @@ const {
 const {
     IDENTITIES,
     EVENTS_DEFINITION,
-    extractSessionInfo
+    extractSessionInfo,
+    socketConnexionTimeout
 } = require('../utils/assistHelper');
 const wsRouter = express.Router();
 
@@ -241,6 +242,7 @@ module.exports = {
         createSocketIOServer(server, prefix);
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+            socket._connectedAt = new Date();
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -325,13 +327,13 @@ module.exports = {
             });
 
         });
-        console.log("WS server started")
+        console.log("WS server started");
         setInterval(async (io) => {
             try {
                 let count = 0;
                 console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
-                const arr = Array.from(io.sockets.adapter.rooms)
-                const filtered = arr.filter(room => !room[1].has(room[0]))
+                const arr = Array.from(io.sockets.adapter.rooms);
+                const filtered = arr.filter(room => !room[1].has(room[0]));
                 for (let i of filtered) {
                     let {projectKey, sessionId} = extractPeerId(i[0]);
                     if (projectKey !== null && sessionId !== null) {
@@ -341,13 +343,15 @@ module.exports = {
                 console.log(` ====== Valid Rooms: ${count} ====== `);
                 if (debug) {
                     for (let item of filtered) {
-                        console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                        console.log(`Room: ${item[0]} connected: ${item[1].size}`);
                     }
                 }
             } catch (e) {
                 console.error(e);
             }
-        }, 20000, io);
+        }, 30000, io);
+
+        socketConnexionTimeout(io);
     },
     handlers: {
         socketsList,
