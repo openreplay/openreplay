@@ -4,7 +4,7 @@ import cn from 'classnames';
 
 function ModalOverlay({ hideModal, children, left = false, right = false }: any) {
     return (
-        <div className="fixed w-full h-screen" style={{ zIndex: 999 }}>
+        <div className="fixed w-full h-screen" style={{ zIndex: 9999 }}>
             <div
                 onClick={hideModal}
                 className={stl.overlay}
