@@ -17,6 +17,7 @@ function ErrorsPerDomain(props: Props) {
           size="small"
           show={ metric.data.chart.length === 0 }
           style={{ height: '240px'}}
+          title="No recordings found"
         >
           <div className="w-full" style={{ height: '240px' }}>
             {metric.data.chart.map((item, i) => 

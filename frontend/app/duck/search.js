@@ -86,6 +86,8 @@ function reducer(state = initialState, action = {}) {
             return state.set('filterSearchList', groupedList);
         case APPLY_SAVED_SEARCH:
             return state.set('savedSearch', action.filter);
+        case CLEAR_SEARCH:
+            return state.set('savedSearch', new SavedFilter({}));
         case EDIT_SAVED_SEARCH:
             return state.mergeIn(['savedSearch'], action.instance);
         case UPDATE_CURRENT_PAGE:
@@ -150,7 +152,7 @@ export const reduceThenFetchResource =
         filter.filters = filter.filters.map(filterMap);
         filter.limit = 10;
         filter.page = getState().getIn(['search', 'currentPage']);
-        const forceFetch = filter.filters.length === 0;
+        const forceFetch = filter.filters.length === 0 || args[1] === true;
 
         // duration filter from local storage
         if (!filter.filters.find((f) => f.type === FilterKey.DURATION)) {
@@ -204,10 +206,10 @@ export const remove = (id) => (dispatch, getState) => {
 
 // export const remove = createRemove(name, (id) => `/saved_search/${id}`);
 
-export const applyFilter = reduceThenFetchResource((filter, fromUrl = false) => ({
+export const applyFilter = reduceThenFetchResource((filter, force = false) => ({
     type: APPLY,
     filter,
-    fromUrl,
+    force,
 }));
 
 export const updateCurrentPage = reduceThenFetchResource((page) => ({
@@ -223,9 +225,9 @@ export const applySavedSearch = (filter) => (dispatch, getState) => {
     });
 };
 
-export const fetchSessions = (filter) => (dispatch, getState) => {
+export const fetchSessions = (filter, force = false) => (dispatch, getState) => {
     const _filter = filter ? filter : getState().getIn(['search', 'instance']);
-    return dispatch(applyFilter(_filter));
+    return dispatch(applyFilter(_filter, force));
 };
 
 export const updateSeries = (index, series) => ({
@@ -286,8 +288,9 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ filters: [] })));
+    const filter = getState().getIn(['search', 'instance']);
+    // dispatch(applySavedSearch(new SavedFilter({})));
+    dispatch(edit(new Filter({ startDate: filter.startDate, endDate: filter.endDate, rangeValue: filter.rangeValue, filters: [] })));
     return dispatch({
         type: CLEAR_SEARCH,
     });
@@ -315,12 +318,16 @@ export const addFilter = (filter) => (dispatch, getState) => {
 };
 
 export const addFilterByKeyAndValue =
-    (key, value, operator = undefined) =>
+    (key, value, operator = undefined, sourceOperator = undefined, source = undefined) =>
     (dispatch, getState) => {
         let defaultFilter = filtersMap[key];
         defaultFilter.value = value;
         if (operator) {
             defaultFilter.operator = operator;
+        }
+        if (defaultFilter.hasSource && source && sourceOperator) {
+            defaultFilter.sourceOperator = sourceOperator;
+            defaultFilter.source = source;
         }
         dispatch(addFilter(defaultFilter));
     };

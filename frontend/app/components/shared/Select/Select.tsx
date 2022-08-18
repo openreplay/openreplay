@@ -5,8 +5,8 @@ import colors from 'App/theme/colors';
 const { ValueContainer } = components;
 
 type ValueObject = {
-    value: string,
-    label: string
+    value: string | number,
+    label: string,
 }
 
 interface Props<Value extends ValueObject> {

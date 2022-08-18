@@ -102,7 +102,7 @@ function UserForm(props: Props) {
                     <Form.Field>
                         <label htmlFor="role">{ 'Role' }</label>
                         <Select
-                            placeholder="Selct Role"
+                            placeholder="Select Role"
                             selection
                             options={ roles }
                             name="roleId"

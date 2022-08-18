@@ -29,11 +29,11 @@ function FilterItem(props: Props) {
     };
 
     const onOperatorChange = (e: any, { name, value }: any) => {
-        props.onUpdate({ ...filter, operator: value.value });
+        props.onUpdate({ ...filter, operator: value });
     };
 
     const onSourceOperatorChange = (e: any, { name, value }: any) => {
-        props.onUpdate({ ...filter, sourceOperator: value.value });
+        props.onUpdate({ ...filter, sourceOperator: value });
     };
 
     const onUpdateSubFilter = (subFilter: any, subFilterIndex: any) => {
@@ -73,7 +73,7 @@ function FilterItem(props: Props) {
                 )}
 
                 {/* Filter values */}
-                {!isSubFilter && (
+                {!isSubFilter && filter.operatorOptions && (
                     <>
                         <FilterOperator
                             options={filter.operatorOptions}

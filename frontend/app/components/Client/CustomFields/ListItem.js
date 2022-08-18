@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { Button } from 'UI';
 import styles from './listItem.module.css';
 
 const ListItem = ({ field, onEdit, disabled }) => {
@@ -17,9 +17,7 @@ const ListItem = ({ field, onEdit, disabled }) => {
         >
             <span>{field.key}</span>
             <div className="invisible group-hover:visible" data-hidden={field.index === 0}>
-                <div className={styles.button}>
-                    <Icon name="edit" color="teal" size="18" />
-                </div>
+                <Button variant="text-primary" icon="pencil" />
             </div>
         </div>
     );

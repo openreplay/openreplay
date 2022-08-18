@@ -14,7 +14,7 @@ import styles from '../Session_/session.module.css';
 import { countDaysFrom } from 'App/date';
 
 const TABS = {
-    EVENTS: 'Events',
+    EVENTS: 'User Actions',
     HEATMAPS: 'Click Map',
 };
 

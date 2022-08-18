@@ -80,7 +80,7 @@ function Integrations(props: Props) {
                         <h2 className="font-medium text-lg">{cat.title}</h2>
                         {cat.isProject && (
                             <div className="flex items-center">
-                                <div className="flex flex-wrap ml-4">
+                                <div className="flex flex-wrap mx-4">
                                     <SiteDropdown value={props.siteId} onChange={onChangeSelect} />
                                 </div>
                                 {loading && cat.isProject && <AnimatedSVG name={ICONS.LOADER} size={20} />}

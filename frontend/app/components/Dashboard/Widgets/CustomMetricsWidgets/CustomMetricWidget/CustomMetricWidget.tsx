@@ -104,6 +104,7 @@ function CustomMetricWidget(props: Props) {
         <Loader loading={ loading } size="small">
           <NoContent
             size="small"
+            title="No recordings found"
             show={ data.length === 0 }
           >
             <ResponsiveContainer height={ 240 } width="100%">

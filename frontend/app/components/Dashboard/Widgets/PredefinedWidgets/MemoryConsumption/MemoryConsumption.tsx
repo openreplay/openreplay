@@ -22,6 +22,7 @@ function MemoryConsumption(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title="No recordings found"
         >
           <>
             <div className="flex items-center justify-end mb-3">
@@ -47,7 +48,7 @@ function MemoryConsumption(props: Props) {
                     unit=" mb"
                     type="monotone"
                     dataKey="value"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

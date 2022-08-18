@@ -122,14 +122,13 @@ healthCheck:
     timeoutSeconds: 10
 
 
-persistence:
-  # Spec of spec.template.spec.containers[*].volumeMounts
-  mounts:
-  - mountPath: /mnt/efs
-    name: datadir
-  # Spec of spec.template.spec.volumes
-  volumes:
-  - hostPath:
-      path: /openreplay/storage/nfs
-      type: DirectoryOrCreate
-    name: datadir
+persistence: {}
+  # # Spec of spec.template.spec.containers[*].volumeMounts
+  # mounts:
+  # - name: kafka-ssl
+  #   mountPath: /opt/kafka/ssl
+  # # Spec of spec.template.spec.volumes
+  # volumes:
+  # - name: kafka-ssl
+  #   secret:
+  #     secretName: kafka-ssl

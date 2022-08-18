@@ -10,8 +10,8 @@ interface Props {
 function LiveTag({ isLive, onClick }: Props) {
   return (
     <button onClick={ onClick } className={ stl.liveTag } data-is-live={ isLive }>
-      <Icon name="circle" size="8" marginRight="5" color="white" />
-      <div>{'Live'}</div>
+      <Icon name="circle" size="8" marginRight={5} color="white" />
+      <div>{isLive ? 'Live' : 'Go live'}</div>
     </button>
   )
 }

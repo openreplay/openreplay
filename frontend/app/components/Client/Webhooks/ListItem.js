@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from 'UI';
 import styles from './listItem.module.css';
+import { Button } from 'UI';
 
 const ListItem = ({ webhook, onEdit, onDelete }) => {
     return (
@@ -10,9 +11,7 @@ const ListItem = ({ webhook, onEdit, onDelete }) => {
                 <div className={styles.endpoint}>{webhook.endpoint}</div>
             </div>
             <div className="invisible group-hover:visible">
-                <div className={styles.button}>
-                    <Icon name="edit" color="teal" size="16" />
-                </div>
+                <Button variant="text-primary" icon="pencil" />
             </div>
         </div>
     );

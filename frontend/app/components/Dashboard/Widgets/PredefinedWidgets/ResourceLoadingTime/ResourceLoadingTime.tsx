@@ -53,6 +53,7 @@ function ResourceLoadingTime(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title="No recordings found"
         >
           <>
             <div className="flex items-center mb-3">
@@ -98,7 +99,7 @@ function ResourceLoadingTime(props: Props) {
                     unit=" ms"
                     type="monotone"
                     dataKey="avg"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

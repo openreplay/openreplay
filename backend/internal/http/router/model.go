@@ -16,6 +16,7 @@ type StartSessionRequest struct {
 
 type StartSessionResponse struct {
 	Timestamp       int64  `json:"timestamp"`
+	StartTimestamp  int64  `json:"startTimestamp"`
 	Delay           int64  `json:"delay"`
 	Token           string `json:"token"`
 	UserUUID        string `json:"userUUID"`

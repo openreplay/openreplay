@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, Button, Popup, TextLink } from 'UI';
+import { Loader, Button, Popup, TextLink, NoContent } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
 import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
 import stl from './sites.module.css';
@@ -13,6 +13,7 @@ import InstallButton from './InstallButton';
 import ProjectKey from './ProjectKey';
 import { useModal } from 'App/components/Modal';
 import { getInitials } from 'App/utils';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const STATUS_MESSAGE_MAP = {
     [RED]: ' There seems to be an issue (please verify your installation)',
@@ -74,8 +75,18 @@ class Sites extends React.PureComponent {
                             <SiteSearch onChange={(value) => this.setState({ searchQuery: value })} />
                         </div>
                     </div>
-
+                    
                     <div className={stl.list}>
+                    <NoContent
+                        title={
+                            <div className="flex flex-col items-center justify-center">
+                            <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
+                            <div className="text-center text-gray-600 my-4">No matching results.</div>
+                            </div>
+                        }
+                        size="small"
+                        show={!loading && filteredSites.size === 0}
+                    >
                         <div className="grid grid-cols-12 gap-2 w-full items-center border-b px-2 py-3 font-medium">
                             <div className="col-span-4">Project Name</div>
                             <div className="col-span-4">Key</div>
@@ -115,6 +126,7 @@ class Sites extends React.PureComponent {
                                 </div>
                             </div>
                         ))}
+                        </NoContent>
                     </div>
                 </div>
             </Loader>
@@ -130,5 +142,5 @@ function EditButton({ isAdmin, onClick }) {
         onClick();
         showModal(<NewSiteForm onClose={hideModal} />);
     };
-    return <Button icon="edit" variant="text" disabled={!isAdmin} onClick={_onClick} />;
+    return <Button icon="edit" variant="text-primary" disabled={!isAdmin} onClick={_onClick} />;
 }

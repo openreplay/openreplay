@@ -87,6 +87,7 @@ export default class SlowestResources extends React.PureComponent {
           <NoContent
             size="small"
             show={ data.size === 0 }
+            title="No recordings found"
           >
             <Table cols={ cols } rows={ data } isTemplate={isTemplate} rowClass="group" compare={compare} />
           </NoContent>

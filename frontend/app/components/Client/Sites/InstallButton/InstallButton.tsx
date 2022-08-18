@@ -16,7 +16,7 @@ function InstallButton(props: Props) {
         );
     };
     return (
-        <Button size="small" variant="primary" onClick={onClick}>
+        <Button size="small" variant="text-primary" onClick={onClick}>
             {'Installation Steps'}
         </Button>
     );

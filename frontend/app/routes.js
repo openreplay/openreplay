@@ -114,6 +114,10 @@ export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
 export const metricDetailsSub = (id = ':metricId', subId = ':subId', hash) => hashed(`/metrics/${ id }/details/${subId}`, hash);
 
+export const alerts = () => '/alerts';
+export const alertCreate = () => '/alert/create';
+export const alertEdit = (id = ':alertId', hash) => hashed(`/alert/${id}`, hash);
+
 const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),
     session(''),
@@ -129,6 +133,10 @@ const REQUIRED_SITE_ID_ROUTES = [
     dashboardMetrics(''),
     dashboardMetricCreate(''),
     dashboardMetricDetails(''),
+
+    alerts(),
+    alertCreate(),
+    alertEdit(''),
 
     error(''),
     errors(),
@@ -167,6 +175,7 @@ const SITE_CHANGE_AVALIABLE_ROUTES = [
   dashboard(),
   dashboardSelected(),
   metrics(),
+  alerts(),
   errors(),
   onboarding('')
 ];

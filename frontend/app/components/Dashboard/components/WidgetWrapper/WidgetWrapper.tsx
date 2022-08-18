@@ -25,6 +25,7 @@ interface Props {
     history?: any
     onClick?: () => void;
     isWidget?: boolean;
+    hideName?: boolean;
 }
 function WidgetWrapper(props: Props & RouteComponentProps) {
     const { dashboardStore } = useStore();
@@ -112,7 +113,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
                     <div
                         className={cn("p-3 pb-4 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
                     >
-                        <div className="capitalize-first w-full font-medium">{widget.name}</div>
+                        {!props.hideName ? <div className="capitalize-first w-full font-medium">{widget.name}</div> : null}
                         {isWidget && (
                             <div className="flex items-center" id="no-print">
                                 {!isPredefined && isTimeSeries && (

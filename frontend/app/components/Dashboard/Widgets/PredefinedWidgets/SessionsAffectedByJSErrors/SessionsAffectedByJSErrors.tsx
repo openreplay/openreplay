@@ -15,6 +15,7 @@ function SessionsAffectedByJSErrors(props: Props) {
     const { data, metric } = props;
     return (
         <NoContent
+          title="No recordings found"
           size="small"
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }

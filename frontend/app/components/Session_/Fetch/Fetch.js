@@ -1,6 +1,6 @@
 import React from 'react';
 import { getRE } from 'App/utils';
-import { Label, NoContent, Input, SlideModal, CloseButton } from 'UI';
+import { Label, NoContent, Input, SlideModal, CloseButton, Icon } from 'UI';
 import { connectPlayer, pause, jump } from 'Player';
 // import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
@@ -80,6 +80,7 @@ export default class Fetch extends React.PureComponent {
     render() {
         const { listNow } = this.props;
         const { current, currentIndex, showFetchDetails, filteredList } = this.state;
+        const hasErrors = filteredList.some((r) => r.status >= 400);
         return (
             <React.Fragment>
                 <SlideModal
@@ -116,7 +117,7 @@ export default class Fetch extends React.PureComponent {
                 />
                 <BottomBlock>
                     <BottomBlock.Header>
-                        <h4 className="text-lg">Fetch</h4>
+                        <span className="font-semibold color-gray-medium mr-4">Fetch</span>
                         <div className="flex items-center">
                             <Input
                                 className="input-small"
@@ -129,8 +130,18 @@ export default class Fetch extends React.PureComponent {
                         </div>
                     </BottomBlock.Header>
                     <BottomBlock.Content>
-                        <NoContent size="small" show={filteredList.length === 0}>
-                            <TimeTable rows={filteredList} onRowClick={this.onRowClick} hoverable navigation activeIndex={listNow.length - 1}>
+                        <NoContent
+                            title={
+                                <div className="capitalize flex items-center mt-16">
+                                    <Icon name="info-circle" className="mr-2" size="18" />
+                                    No Data
+                                </div>
+                            }
+                            // size="small"
+                            show={filteredList.length === 0}
+                        >
+                            {/* <NoContent size="small" show={filteredList.length === 0}> */}
+                            <TimeTable rows={filteredList} onRowClick={this.onRowClick} hoverable navigation={hasErrors} activeIndex={listNow.length - 1}>
                                 {[
                                     {
                                         label: 'Status',

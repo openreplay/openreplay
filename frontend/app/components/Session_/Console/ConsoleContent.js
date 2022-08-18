@@ -86,7 +86,13 @@ export default class ConsoleContent extends React.PureComponent {
                         />
                     </BottomBlock.Header>
                     <BottomBlock.Content>
-                        <NoContent size="small" show={filtered.length === 0}>
+                        <NoContent
+                            title={<div className="capitalize flex items-center mt-16">
+                                <Icon name="info-circle" className="mr-2" size="18" />
+                                No {activeTab === ALL ? 'Data' : activeTab.toLowerCase()}</div>}
+                            size="small"
+                            show={filtered.length === 0}
+                        >
                             <Autoscroll>
                                 {filtered.map((l, index) => (
                                     <div

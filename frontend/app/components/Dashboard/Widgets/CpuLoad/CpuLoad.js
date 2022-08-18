@@ -27,6 +27,7 @@ export default class CpuLoad extends React.PureComponent {
       <Loader loading={ loading } size="small">
         <NoContent
           size="small"
+          title="No recordings found"
           show={ data.chart.length === 0 }
         >
           <div className="flex items-center justify-end mb-3">

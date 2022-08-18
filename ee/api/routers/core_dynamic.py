@@ -46,6 +46,14 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     }
 
 
+@app.post('/account', tags=["account"])
+@app.put('/account', tags=["account"])
+def edit_account(data: schemas_ee.EditUserSchema = Body(...),
+                 context: schemas.CurrentContext = Depends(OR_context)):
+    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
+                      editor_id=context.user_id)
+
+
 @app.get('/projects/limit', tags=['projects'])
 def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": {

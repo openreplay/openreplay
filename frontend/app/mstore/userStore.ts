@@ -23,6 +23,7 @@ export default class UserStore {
             updateUser: action,
             updateKey: action,
             initUser: action,
+            setLimits: action,
         })
     }
 
@@ -30,12 +31,16 @@ export default class UserStore {
         return new Promise((resolve, reject) => {
             userService.getLimits()
                 .then((response: any) => {
-                    this.limits = response;
+                    this.setLimits(response);
                     resolve(response);
                 }).catch((error: any) => {
                     reject(error);
                 });
         });
+    }
+
+    setLimits(limits: any) {
+        this.limits = limits;
     }
 
     initUser(user?: any ): Promise<void> {

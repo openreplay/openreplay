@@ -1,11 +1,10 @@
 import React, { useEffect } from "react";
-import { Pagination, NoContent } from "UI";
+import { Pagination, NoContent, Icon } from "UI";
 import ErrorListItem from "App/components/Dashboard/components/Errors/ErrorListItem";
 import { withRouter, RouteComponentProps } from "react-router-dom";
 import { useModal } from "App/components/Modal";
 import ErrorDetailsModal from "App/components/Dashboard/components/Errors/ErrorDetailsModal";
 import { useStore } from "App/mstore";
-import { overPastString } from "App/dateRange";
 interface Props {
     metric: any;
     data: any;
@@ -18,7 +17,6 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
     const errorId = new URLSearchParams(props.location.search).get("errorId");
     const { showModal, hideModal } = useModal();
     const { dashboardStore } = useStore();
-    const period = dashboardStore.period;
 
     const onErrorClick = (e: any, error: any) => {
         e.stopPropagation();
@@ -46,9 +44,10 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
 
     return (
         <NoContent
-            title={`No errors found ${overPastString(period)}`}
+            title={<div className="flex items-center"><Icon name="info-circle" size={18} className="mr-2" />No data for the selected time period</div>}
             show={!data.errors || data.errors.length === 0}
             size="small"
+            style={{ minHeight: 220 }}
         >
             <div className="pb-4">
                 {data.errors &&

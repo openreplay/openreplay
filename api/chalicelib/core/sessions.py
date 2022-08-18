@@ -710,7 +710,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                              event.value, value_key=e_k))
             elif event_type == events.event_type.ERROR.ui_type:
                 event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
-                event.source = tuple(event.source)
+                event.source = list(set(event.source))
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",

@@ -19,6 +19,7 @@ function FPS(props: Props) {
     return (
         <NoContent
           size="small"
+          title="No recordings found"
           show={ metric.data.chart.length === 0 }
         >
           <>
@@ -44,7 +45,7 @@ function FPS(props: Props) {
                     name="Avg"
                     type="monotone"
                     dataKey="value"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

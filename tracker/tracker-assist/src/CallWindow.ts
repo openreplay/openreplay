@@ -4,7 +4,7 @@ import attachDND from './dnd.js'
 const SS_START_TS_KEY = '__openreplay_assist_call_start_ts'
 
 export default class CallWindow {
-  private iframe: HTMLIFrameElement
+  private readonly iframe: HTMLIFrameElement
   private vRemote: HTMLVideoElement | null = null
   private vLocal: HTMLVideoElement | null = null
   private audioBtn: HTMLElement | null = null
@@ -16,9 +16,9 @@ export default class CallWindow {
 
   private tsInterval: ReturnType<typeof setInterval>
 
-  private load: Promise<void>
+  private readonly load: Promise<void>
 
-  constructor() {
+  constructor(private readonly logError: (...args: any[]) => void) {
     const iframe = this.iframe = document.createElement('iframe')
     Object.assign(iframe.style, {
       position: 'fixed',
@@ -107,8 +107,8 @@ export default class CallWindow {
   private adjustIframeSize() {
     const doc = this.iframe.contentDocument
     if (!doc) { return }
-    this.iframe.style.height = doc.body.scrollHeight + 'px'
-    this.iframe.style.width = doc.body.scrollWidth + 'px'
+    this.iframe.style.height = `${doc.body.scrollHeight}px`
+    this.iframe.style.width = `${doc.body.scrollWidth}px`
   }
 
   setCallEndAction(endCall: () => void) {
@@ -116,40 +116,46 @@ export default class CallWindow {
       if (this.endCallBtn) {
         this.endCallBtn.onclick = endCall
       }
-    })
+    }).catch(e => this.logError(e))
   }
 
-  private aRemote: HTMLAudioElement | null = null;
   private checkRemoteVideoInterval: ReturnType<typeof setInterval>
-  setRemoteStream(rStream: MediaStream) {
+  private audioContainer: HTMLDivElement | null = null
+  addRemoteStream(rStream: MediaStream) {
     this.load.then(() => {
+      // Video
       if (this.vRemote && !this.vRemote.srcObject) {
         this.vRemote.srcObject = rStream
         if (this.vPlaceholder) {
           this.vPlaceholder.innerText = 'Video has been paused. Click anywhere to resume.'
         }
-
-        // Hack for audio. Doesen't work inside the iframe because of some magical reasons (check if it is connected to autoplay?)
-        this.aRemote = document.createElement('audio')
-        this.aRemote.autoplay = true
-        this.aRemote.style.display = 'none'
-        this.aRemote.srcObject = rStream
-        document.body.appendChild(this.aRemote)
+        // Hack to determine if the remote video is enabled 
+        // TODO: pass this info through socket
+        if (this.checkRemoteVideoInterval) { clearInterval(this.checkRemoteVideoInterval) } // just in case
+        let enabled = false
+        this.checkRemoteVideoInterval = setInterval(() => {
+          const settings = rStream.getVideoTracks()[0]?.getSettings()
+          const isDummyVideoTrack = !!settings && (settings.width === 2 || settings.frameRate === 0)
+          const shouldBeEnabled = !isDummyVideoTrack
+          if (enabled !== shouldBeEnabled) {
+            this.toggleRemoteVideoUI(enabled=shouldBeEnabled)
+          }
+        }, 1000)
       }
 
-      // Hack to determine if the remote video is enabled
-      if (this.checkRemoteVideoInterval) { clearInterval(this.checkRemoteVideoInterval) } // just in case
-      let enabled = false
-      this.checkRemoteVideoInterval = setInterval(() => {
-        const settings = rStream.getVideoTracks()[0]?.getSettings()
-        //console.log(settings)
-        const isDummyVideoTrack = !!settings && (settings.width === 2 || settings.frameRate === 0)
-        const shouldBeEnabled = !isDummyVideoTrack
-        if (enabled !== shouldBeEnabled) {
-          this.toggleRemoteVideoUI(enabled=shouldBeEnabled)
-        }
-      }, 1000)
-    })
+      // Audio 
+      if (!this.audioContainer) {
+        this.audioContainer = document.createElement('div')
+        document.body.appendChild(this.audioContainer)
+      }
+      // Hack for audio. Doesen't work inside the iframe 
+      // because of some magical reasons (check if it is connected to autoplay?)
+      const audioEl = document.createElement('audio')
+      audioEl.autoplay = true
+      audioEl.style.display = 'none'
+      audioEl.srcObject = rStream
+      this.audioContainer.appendChild(audioEl)
+    }).catch(e => this.logError(e))
   }
 
   toggleRemoteVideoUI(enable: boolean) {
@@ -162,26 +168,27 @@ export default class CallWindow {
         }
         this.adjustIframeSize()
       }
-    })
+    }).catch(e => this.logError(e))
   }
 
-  private localStream: LocalStream | null = null;
-
-  // TODO: on construction?
-  setLocalStream(lStream: LocalStream) {
-    this.localStream = lStream
+  private localStreams: LocalStream[]  = []
+  // !TODO: separate  streams manipulation from ui
+  setLocalStreams(streams: LocalStream[]) {
+    this.localStreams = streams
   }
 
   playRemote() {
     this.vRemote && this.vRemote.play()
   }
 
-  setAssistentName(name: string) {
+  setAssistentName(callingAgents: Map<string, string>) {
     this.load.then(() => {
       if (this.agentNameElem) {
-        this.agentNameElem.innerText = name
+        const nameString = Array.from(callingAgents.values()).join(', ')
+        const safeNames = nameString.length > 20 ? nameString.substring(0, 20) + '...' : nameString
+        this.agentNameElem.innerText = safeNames
       }
-    })
+    }).catch(e => this.logError(e))
   }
 
 
@@ -195,7 +202,10 @@ export default class CallWindow {
   }
 
   private toggleAudio() {
-    const enabled = this.localStream?.toggleAudio() || false
+    let enabled = false
+    this.localStreams.forEach(stream => {
+      enabled = stream.toggleAudio() || false
+    })
     this.toggleAudioUI(enabled)
   }
 
@@ -211,30 +221,32 @@ export default class CallWindow {
     this.adjustIframeSize()
   }
 
-  private videoRequested = false
   private toggleVideo() {
-    this.localStream?.toggleVideo()
-    .then(enabled => {
-      this.toggleVideoUI(enabled)
-      this.load.then(() => {
-        if (this.vLocal && this.localStream && !this.vLocal.srcObject) {
-          this.vLocal.srcObject = this.localStream.stream
-        }
-      })
+    this.localStreams.forEach(stream => {
+      stream.toggleVideo()
+      .then(enabled => {
+        this.toggleVideoUI(enabled)
+        this.load.then(() => {
+          if (this.vLocal && stream && !this.vLocal.srcObject) {
+            this.vLocal.srcObject = stream.stream
+          }
+        }).catch(e => this.logError(e))
+      }).catch(e => this.logError(e))
     })
   }
 
   remove() {
-    this.localStream?.stop()
     clearInterval(this.tsInterval)
     clearInterval(this.checkRemoteVideoInterval)
-    if (this.iframe.parentElement) {
-      document.body.removeChild(this.iframe)
+    if (this.audioContainer && this.audioContainer.parentElement) {
+      this.audioContainer.parentElement.removeChild(this.audioContainer)
+      this.audioContainer = null
     }
-    if (this.aRemote && this.aRemote.parentElement) {
-      document.body.removeChild(this.aRemote)
+    if (this.iframe.parentElement) {
+      this.iframe.parentElement.removeChild(this.iframe)
     }
     sessionStorage.removeItem(SS_START_TS_KEY)
+    this.localStreams = []
   }
 
 }

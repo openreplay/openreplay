@@ -35,6 +35,7 @@ function TimeToRender(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title="No recordings found"
         >
           <>
             <div className="flex items-center mb-3">
@@ -67,7 +68,7 @@ function TimeToRender(props: Props) {
                     type="monotone"
                     unit=" ms"
                     dataKey="value"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

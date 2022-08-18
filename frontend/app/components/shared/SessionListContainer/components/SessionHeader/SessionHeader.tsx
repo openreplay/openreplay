@@ -33,7 +33,7 @@ function SessionHeader(props: Props) {
     };
 
     return (
-        <div className="flex items-center px-4 pt-2 justify-between">
+        <div className="flex items-center px-4 justify-between">
             <div className="flex items-center justify-between">
                 <div className="mr-3 text-lg flex items-center">
                     <div
@@ -42,7 +42,7 @@ function SessionHeader(props: Props) {
                         })}
                         onClick={() => props.setActiveTab({ type: 'all' })}
                     >
-                        <span className="font-bold">SESSIONS</span> <span className="color-gray-medium ml-2">{listCount}</span>
+                        <span className="font-bold">SESSIONS</span>
                     </div>
                     <div
                         className={cn('py-3 cursor-pointer', {

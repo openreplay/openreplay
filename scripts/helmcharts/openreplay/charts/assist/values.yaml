@@ -90,6 +90,7 @@ env:
   debug: 0
   uws: false
   redis: false
+  CLEAR_SOCKET_TIME: 0
 
 
 nodeSelector: {}

@@ -9,9 +9,10 @@ interface Props {
   stream: LocalStream | null,
   endCall: () => void,
   videoEnabled: boolean,
-  setVideoEnabled: (boolean) => void
+  isPrestart?: boolean,
+  setVideoEnabled: (isEnabled: boolean) => void
 }
-function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled } : Props) {
+function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled, isPrestart } : Props) {
   const [audioEnabled, setAudioEnabled] = useState(true)
 
   const toggleAudio = () => {
@@ -24,6 +25,13 @@ function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled } : Props
     stream.toggleVideo()
     .then(setVideoEnabled)
   }
+
+  /** muting user if he is auto connected to the call */
+  React.useEffect(() => {
+    if (isPrestart) {
+      audioEnabled && toggleAudio();
+    }
+  }, [])
 
   return (
     <div className={cn(stl.controls, "flex items-center w-full justify-start bottom-0 px-2")}>

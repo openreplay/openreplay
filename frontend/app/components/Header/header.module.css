@@ -9,7 +9,7 @@ $height: 50px;
   display: flex;
   justify-content: space-between;  
   border-bottom: solid thin $gray-light;
-  padding: 0 15px;
+  /* padding: 0 15px; */
   background: $white;
   z-index: $header;
 }

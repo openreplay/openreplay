@@ -6,16 +6,36 @@ import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { Loader } from 'UI';
 
-function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
+interface IWiProps {
+    category: Record<string, any>
+    onClick: (category: Record<string, any>) => void
+    isSelected: boolean
+    selectedWidgetIds: string[]
+}
+
+const ICONS: Record<string, string | null> = {
+    errors: 'errors-icon',
+    performance: 'performance-icon',
+    resources: 'resources-icon',
+    overview: null,
+    custom: null,
+    'web vitals': 'web-vitals',
+}
+
+export function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }: IWiProps) {
     const selectedCategoryWidgetsCount = useObserver(() => {
-        return category.widgets.filter(widget => selectedWidgetIds.includes(widget.metricId)).length;
+        return category.widgets.filter((widget: any) => selectedWidgetIds.includes(widget.metricId)).length;
     });
     return (
         <div
             className={cn("rounded p-4 border cursor-pointer hover:bg-active-blue", { 'bg-active-blue border-blue':isSelected, 'bg-white': !isSelected })}
             onClick={() => onClick(category)}
         >
-            <div className="font-medium text-lg mb-2 capitalize">{category.name}</div>
+            <div className="font-medium text-lg mb-2 capitalize flex items-center">
+                {/* @ts-ignore */}
+                {ICONS[category.name] && <Icon name={ICONS[category.name]} size={18} className="mr-2" />}
+                {category.name}
+            </div>
             <div className="mb-2 text-sm leading-tight">{category.description}</div>
             {selectedCategoryWidgetsCount > 0 && (
                 <div className="flex items-center">

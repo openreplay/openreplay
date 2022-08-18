@@ -18,6 +18,7 @@ function SessionsImpactedBySlowRequests(props: Props) {
 
     return (
         <NoContent
+        title="No recordings found"
           size="small"
           show={ metric.data.chart.length === 0 }
         >
@@ -40,7 +41,7 @@ function SessionsImpactedBySlowRequests(props: Props) {
                   name="Sessions"
                   type="monotone"
                   dataKey="count"
-                  stroke={Styles.colors[0]}
+                  stroke={Styles.strokeColor}
                   fillOpacity={ 1 }
                   strokeWidth={ 2 }
                   strokeOpacity={ 0.8 }
