@@ -1251,12 +1251,19 @@ def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     if value is not None:
         ch_sub_query.append("pages.url_path = %(value)s")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT (SELECT COALESCE(avgOrNull(pages.response_time),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.response_time) AND pages.response_time>0) AS avg_response_time,
-                            (SELECT COUNT(pages.session_id) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)}) AS count_requests,
-                            (SELECT COALESCE(avgOrNull(pages.first_paint),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.first_paint) AND pages.first_paint>0) AS avg_first_paint,
-                            (SELECT COALESCE(avgOrNull(pages.dom_content_loaded_event_time),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.dom_content_loaded_event_time) AND pages.dom_content_loaded_event_time>0) AS avg_dom_content_loaded,
-                            (SELECT COALESCE(avgOrNull(pages.ttfb),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.ttfb) AND pages.ttfb>0) AS avg_till_first_bit,
-                            (SELECT COALESCE(avgOrNull(pages.time_to_interactive),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.time_to_interactive) AND pages.time_to_interactive >0) AS avg_time_to_interactive;"""
+        ch_query = f"""SELECT COALESCE(avgOrNull(if(pages.response_time>0,pages.response_time,null)),0) AS avg_response_time,
+                              COALESCE(avgOrNull(if(pages.first_paint>0,pages.first_paint,null)),0) AS avg_first_paint,
+                              COALESCE(avgOrNull(if(pages.dom_content_loaded_event_time>0,pages.dom_content_loaded_event_time,null)),0) AS avg_dom_content_loaded,
+                              COALESCE(avgOrNull(if(pages.ttfb>0,pages.ttfb,null)),0) AS avg_till_first_bit,
+                              COALESCE(avgOrNull(if(pages.time_to_interactive>0,pages.time_to_interactive,null)),0) AS avg_time_to_interactive,
+                            (SELECT COUNT(pages.session_id) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)}) AS count_requests
+                            FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
+                            WHERE {" AND ".join(ch_sub_query)} 
+                                AND (isNotNull(pages.response_time) AND pages.response_time>0 OR
+                                     isNotNull(pages.first_paint) AND pages.first_paint>0 OR
+                                     isNotNull(pages.dom_content_loaded_event_time) AND pages.dom_content_loaded_event_time>0 OR
+                                     isNotNull(pages.ttfb) AND pages.ttfb>0 OR
+                                     isNotNull(pages.time_to_interactive) AND pages.time_to_interactive >0);"""
         rows = ch.execute(query=ch_query,
                           params={"project_id": project_id,
                                   "startTimestamp": startTimestamp,

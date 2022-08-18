@@ -21,11 +21,35 @@
 --       ORDER BY (project_id)
 --       SETTINGS index_granularity = 512;
 
+CREATE TABLE IF NOT EXISTS resources
+(
+    session_id                          UInt64,
+    project_id                          UInt16,
+    datetime                            DateTime,
+    url                                 String,
+    url_host                            String MATERIALIZED lower(domain(url)),
+    url_path                            String MATERIALIZED lower(path(url)),
+    type Enum8('other'=-1, 'script'=0, 'stylesheet'=1, 'fetch'=2, 'img'=3, 'media'=4),
+    duration Nullable(UInt16),
+    ttfb Nullable(UInt16),
+    header_size Nullable(UInt16),
+    encoded_body_size Nullable(UInt32),
+    decoded_body_size Nullable(UInt32),
+    compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size),
+    success                             UInt8,
+    method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
+    status Nullable(UInt16)
+) ENGINE = MergeTree
+      PARTITION BY toYYYYMM(datetime)
+      ORDER BY (project_id, datetime, type, session_id)
+      TTL datetime + INTERVAL 3 MONTH;
+
 CREATE TABLE IF NOT EXISTS events
 (
     session_id                                     UInt64,
     project_id                                     UInt16,
-    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'RESOURCE'=3,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8, 'GRAPHQL'=9, 'STATEACTION'=10),
+--     event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'RESOURCE'=3,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8, 'GRAPHQL'=9, 'STATEACTION'=10),
+    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8, 'GRAPHQL'=9, 'STATEACTION'=10),
     datetime                                       DateTime,
     label Nullable(String),
     hesitation_time Nullable(UInt32),
@@ -82,14 +106,14 @@ CREATE TABLE IF NOT EXISTS events
     min_used_js_heap_size Nullable(UInt64),
     avg_used_js_heap_size Nullable(UInt64),
     max_used_js_heap_size Nullable(UInt64),
-    type Nullable(Enum8('other'=-1, 'script'=0, 'stylesheet'=1, 'fetch'=2, 'img'=3, 'media'=4)),
-    header_size Nullable(UInt16),
-    encoded_body_size Nullable(UInt32),
-    decoded_body_size Nullable(UInt32),
-    compression_ratio Nullable(Float32)            MATERIALIZED divide(decoded_body_size, encoded_body_size),
-    success Nullable(UInt8),
-    method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
-    status Nullable(UInt16),
+--     type Nullable(Enum8('other'=-1, 'script'=0, 'stylesheet'=1, 'fetch'=2, 'img'=3, 'media'=4)),
+--     header_size Nullable(UInt16),
+--     encoded_body_size Nullable(UInt32),
+--     decoded_body_size Nullable(UInt32),
+--     compression_ratio Nullable(Float32)            MATERIALIZED divide(decoded_body_size, encoded_body_size),
+--     success Nullable(UInt8),
+--     method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
+--     status Nullable(UInt16),
     request_body Nullable(String),
     response_body Nullable(String),
     _timestamp                                     DateTime DEFAULT now()
