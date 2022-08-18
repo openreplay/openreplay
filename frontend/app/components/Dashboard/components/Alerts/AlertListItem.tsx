@@ -66,7 +66,7 @@ function AlertListItem(props: Props) {
 
   return (
     <div
-      className={cn('border-t px-3', !demo ? 'hover:bg-active-blue cursor-pointer' : '')}
+      className={cn('px-3', !demo ? 'hover:bg-active-blue cursor-pointer border-t' : '')}
       onClick={onItemClick}
     >
       <div className="grid grid-cols-12 py-4 select-none">

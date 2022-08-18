@@ -49,8 +49,8 @@ function NotifyHooks({
 
       {instance.slack && (
         <div className="flex items-start my-4">
-          <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Slack'}</label>
-          <div className="w-4/6">
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">{'Slack'}</label>
+          <div className="w-2/6">
             <DropdownChips
               fluid
               selected={instance.slackInput}
@@ -65,8 +65,8 @@ function NotifyHooks({
 
       {instance.email && (
         <div className="flex items-start my-4">
-          <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Email'}</label>
-          <div className="w-4/6">
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">{'Email'}</label>
+          <div className="w-2/6">
             <DropdownChips
               textFiled
               validate={validateEmail}
@@ -81,15 +81,17 @@ function NotifyHooks({
 
       {instance.webhook && (
         <div className="flex items-start my-4">
-          <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Webhook'}</label>
-          <DropdownChips
-            fluid
-            selected={instance.webhookInput}
-            options={hooks}
-            placeholder="Select Webhook"
-            // @ts-ignore
-            onChange={(selected) => edit({ webhookInput: selected })}
-          />
+          <label className="w-1/6 flex-shrink-0 font-normal pt-2">{'Webhook'}</label>
+          <div className="w-2/6">
+            <DropdownChips
+              fluid
+              selected={instance.webhookInput}
+              options={hooks}
+              placeholder="Select Webhook"
+              // @ts-ignore
+              onChange={(selected) => edit({ webhookInput: selected })}
+            />
+          </div>
         </div>
       )}
     </div>

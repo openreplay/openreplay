@@ -82,8 +82,6 @@ const NewAlert = (props: IProps) => {
     list,
   } = props;
 
-  const [expanded, setExpanded] = React.useState(false);
-
   useEffect(() => {
     if (list.size === 0) fetchList();
     props.fetchTriggerOptions();
@@ -187,26 +185,18 @@ const NewAlert = (props: IProps) => {
         id="alert-form"
       >
         <div
-          onClick={() => expanded ? null : setExpanded(!expanded)}
-          className={cn('px-6 py-4 flex justify-between items-center', {
-            'cursor-pointer hover:bg-active-blue hover:shadow-border-blue rounded': !expanded,
-          })}
+          className={cn('px-6 py-4 flex justify-between items-center',
+          )}
         >
           <h1 className="mb-0 text-2xl mr-4 min-w-fit">
-            <WidgetName name={instance.name} onUpdate={(name) => write({ target: { value: name, name: 'name' }} as any)} canEdit={expanded} />
+            <WidgetName name={instance.name} onUpdate={(name) => write({ target: { value: name, name: 'name' }} as any)} canEdit />
           </h1>
           <div
             className="text-gray-600 w-full cursor-pointer"
-            onClick={() => setExpanded(!expanded)}
           >
-            <div className="flex items-center select-none w-fit ml-auto">
-              <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
-              <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
-            </div>
           </div>
         </div>
-        {expanded ? (
-          <>
+        
             <div className="px-6 pb-3 flex flex-col">
               <Section
                 index="1"
@@ -266,7 +256,7 @@ const NewAlert = (props: IProps) => {
               />
             </div>
 
-            <div className="flex items-center justify-between p-6 border-t bg-white">
+            <div className="flex items-center justify-between p-6 border-t">
               <BottomButtons 
                 loading={loading}
                 instance={instance}
@@ -274,8 +264,7 @@ const NewAlert = (props: IProps) => {
                 onDelete={onDelete}
               />
             </div>
-          </>
-        ) : null}
+         
       </Form>
 
       <div className="bg-white mt-4 border rounded">

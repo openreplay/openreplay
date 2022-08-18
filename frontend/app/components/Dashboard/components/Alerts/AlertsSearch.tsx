@@ -29,7 +29,7 @@ function AlertsSearch({ changeSearch }: Props) {
         value={inputValue}
         name="alertsSearch"
         className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
-        placeholder="Filter by title or description"
+        placeholder="Filter by title or type"
         onChange={write}
       />
     </div>

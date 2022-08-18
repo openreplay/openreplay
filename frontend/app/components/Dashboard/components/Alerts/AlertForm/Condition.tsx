@@ -118,7 +118,7 @@ function Condition({
       </div>
       {!isThreshold && (
         <div className="flex items-center my-3">
-          <label className="w-2/6 flex-shrink-0 font-normal">{'compared to previous'}</label>
+          <label className="w-1/6 flex-shrink-0 font-normal">{'compared to previous'}</label>
           <Select
             className="w-2/6"
             placeholder="Select timeframe"
