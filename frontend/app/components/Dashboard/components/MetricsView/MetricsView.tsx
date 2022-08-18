@@ -6,8 +6,8 @@ import MetricsSearch from '../MetricsSearch';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
-interface Props{
-    siteId: number;
+interface Props {
+    siteId: string;
 }
 function MetricsView({ siteId }: Props) {
     const { metricStore } = useStore();

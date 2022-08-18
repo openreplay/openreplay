@@ -4,6 +4,7 @@ import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import { fetchList } from 'Duck/alerts';
 import { connect } from 'react-redux';
+import { fetchList as fetchWebhooks } from 'Duck/webhook';
 
 import AlertListItem from './AlertListItem'
 
@@ -14,13 +15,13 @@ interface Props {
   list: any;
   alertsSearch: any;
   siteId: string;
-  onDelete: (instance: Alert) => void;
-  onSave: (instance: Alert) => void;
+  webhooks: Array<any>;
   init: (instance?: Alert) => void
+  fetchWebhooks: () => void;
 }
 
-function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init }: Props) {
-  React.useEffect(() => { fetchList() }, []);
+function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, fetchWebhooks, webhooks }: Props) {
+  React.useEffect(() => { fetchList(); fetchWebhooks() }, []);
 
   const alertsArray = alertsList.toJS();
   const [page, setPage] = React.useState(1);
@@ -50,7 +51,7 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init }:
 
         {sliceListPerPage(list, page - 1, pageSize).map((alert: any) => (
           <React.Fragment key={alert.alertId}>
-            <AlertListItem alert={alert} siteId={siteId} init={init} />
+            <AlertListItem alert={alert} siteId={siteId} init={init} webhooks={webhooks} />
           </React.Fragment>
         ))}
       </div>
@@ -78,6 +79,8 @@ export default connect(
     list: state.getIn(['alerts', 'list']).sort((a, b) => b.createdAt - a.createdAt),
     // @ts-ignore
     alertsSearch: state.getIn(['alerts', 'alertsSearch']),
+    // @ts-ignore
+    webhooks: state.getIn(['webhooks', 'list']),
   }),
-  { fetchList }
+  { fetchList, fetchWebhooks }
 )(AlertsList);

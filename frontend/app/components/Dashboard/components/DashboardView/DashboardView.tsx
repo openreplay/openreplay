@@ -180,5 +180,5 @@ function DashboardView(props: Props) {
         </Loader>
     );
 }
-
+// @ts-ignore
 export default withPageTitle('Dashboards - OpenReplay')(withReport(withRouter(withModal(observer(DashboardView)))));
