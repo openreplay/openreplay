@@ -2,7 +2,7 @@ import { makeAutoObservable, observable, action } from 'mobx';
 import { sessionService } from 'App/services';
 import { filterMap } from 'Duck/search';
 import Session from './types/session';
-import Record, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
+import Record, { LAST_7_DAYS } from 'Types/app/period';
 
 class UserFilter {
     endDate: number = new Date().getTime();
