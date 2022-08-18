@@ -69,7 +69,30 @@ const extractSessionInfo = function (socket) {
     }
 }
 
+function socketConnexionTimeout(io) {
+    if (process.env.CLEAR_SOCKET_TIME !== undefined && parseFloat(process.env.CLEAR_SOCKET_TIME) > 0) {
+        const CLEAR_SOCKET_TIME = parseFloat(process.env.CLEAR_SOCKET_TIME);
+        console.log(`WS manually disconnecting sockets after ${CLEAR_SOCKET_TIME} min`);
+        setInterval(async (io) => {
+            try {
+                const now = new Date();
+                let allSockets = await io.fetchSockets();
+                for (let socket of allSockets) {
+                    if (socket._connectedAt !== undefined && ((now - socket._connectedAt) / 1000) / 60 > CLEAR_SOCKET_TIME) {
+                        debug && console.log(`disconnecting ${socket.id} after more than ${CLEAR_SOCKET_TIME} of connexion.`);
+                        socket.disconnect();
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }, 0.5 * 60 * 1000, io);
+        // }, 2.5 * 60 * 1000, io);
+    } else {
+        debug && console.log(`WS no manually disconnecting sockets.`);
+    }
+}
 
 module.exports = {
-    extractSessionInfo, EVENTS_DEFINITION, IDENTITIES
+    extractSessionInfo, EVENTS_DEFINITION, IDENTITIES, socketConnexionTimeout
 };

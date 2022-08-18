@@ -11,7 +11,8 @@ const {
 const {
     IDENTITIES,
     EVENTS_DEFINITION,
-    extractSessionInfo
+    extractSessionInfo,
+    socketConnexionTimeout
 } = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
@@ -282,6 +283,7 @@ module.exports = {
         createSocketIOServer(server, prefix);
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+            socket._connectedAt = new Date();
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -368,7 +370,7 @@ module.exports = {
             });
 
         });
-        console.log("WS server started")
+        console.log("WS server started");
         setInterval(async (io) => {
             try {
                 let rooms = await io.of('/').adapter.allRooms();
@@ -386,13 +388,16 @@ module.exports = {
                 if (debug) {
                     for (let item of validRooms) {
                         let connectedSockets = await io.in(item).fetchSockets();
-                        console.log(`Room: ${item} connected: ${connectedSockets.length}`)
+                        console.log(`Room: ${item} connected: ${connectedSockets.length}`);
                     }
                 }
             } catch (e) {
                 console.error(e);
             }
-        }, 20000, io);
+        }, 30000, io);
+
+        socketConnexionTimeout(io);
+
         Promise.all([pubClient.connect(), subClient.connect()])
             .then(() => {
                 io.adapter(createAdapter(pubClient, subClient));
