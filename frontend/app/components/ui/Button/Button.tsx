@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { CircularLoader, Icon } from 'UI';
+import { CircularLoader, Icon, Popup } from 'UI';
 
 interface Props {
     className?: string;
@@ -12,6 +12,7 @@ interface Props {
     loading?: boolean;
     icon?: string;
     rounded?: boolean;
+    tooltip?: any;
     [x: string]: any;
 }
 export default (props: Props) => {
@@ -25,6 +26,7 @@ export default (props: Props) => {
         children,
         loading = false,
         rounded = false,
+        tooltip = null,
         ...rest
     } = props;
 
@@ -70,7 +72,7 @@ export default (props: Props) => {
         classes = classes.map((c) => c.replace('rounded', 'rounded-full h-10 w-10 justify-center'));
     }
 
-    return (
+    const render = () => (
         <button {...rest} type={type} className={cn(classes, className)}>
             {icon && <Icon className={cn({ 'mr-2': children })} name={icon} color={iconColor} size="16" />}
             {loading && (
@@ -81,4 +83,6 @@ export default (props: Props) => {
             <div className={cn({ 'opacity-0': loading }, 'flex items-center')}>{children}</div>
         </button>
     );
+
+    return tooltip ? <Popup content={tooltip.title} {...tooltip}>{render()}</Popup> : render();
 };

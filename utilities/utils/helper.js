@@ -174,6 +174,13 @@ const getValue = function (obj, key) {
     return undefined;
 }
 const sortPaginate = function (list, filters) {
+    if (typeof (list) === "object" && !Array.isArray(list)) {
+        for (const [key, value] of Object.entries(list)) {
+            list[key] = sortPaginate(value, filters);
+        }
+        return list
+    }
+
     const total = list.length;
     list.sort((a, b) => {
         const tA = getValue(a, "timestamp");

@@ -80,6 +80,7 @@ export default class Fetch extends React.PureComponent {
     render() {
         const { listNow } = this.props;
         const { current, currentIndex, showFetchDetails, filteredList } = this.state;
+        const hasErrors = filteredList.some((r) => r.status >= 400);
         return (
             <React.Fragment>
                 <SlideModal
@@ -140,7 +141,7 @@ export default class Fetch extends React.PureComponent {
                             show={filteredList.length === 0}
                         >
                             {/* <NoContent size="small" show={filteredList.length === 0}> */}
-                            <TimeTable rows={filteredList} onRowClick={this.onRowClick} hoverable navigation activeIndex={listNow.length - 1}>
+                            <TimeTable rows={filteredList} onRowClick={this.onRowClick} hoverable navigation={hasErrors} activeIndex={listNow.length - 1}>
                                 {[
                                     {
                                         label: 'Status',

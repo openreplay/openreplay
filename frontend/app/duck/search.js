@@ -86,6 +86,8 @@ function reducer(state = initialState, action = {}) {
             return state.set('filterSearchList', groupedList);
         case APPLY_SAVED_SEARCH:
             return state.set('savedSearch', action.filter);
+        case CLEAR_SEARCH:
+            return state.set('savedSearch', new SavedFilter({}));
         case EDIT_SAVED_SEARCH:
             return state.mergeIn(['savedSearch'], action.instance);
         case UPDATE_CURRENT_PAGE:
@@ -286,8 +288,9 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ filters: [] })));
+    const filter = getState().getIn(['search', 'instance']);
+    // dispatch(applySavedSearch(new SavedFilter({})));
+    dispatch(edit(new Filter({ startDate: filter.startDate, endDate: filter.endDate, rangeValue: filter.rangeValue, filters: [] })));
     return dispatch({
         type: CLEAR_SEARCH,
     });

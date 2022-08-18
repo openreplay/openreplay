@@ -53,7 +53,7 @@ function LiveSessionList(props: Props) {
     useEffect(() => {
         if (metaListLoading) return;
         const _filter = { ...filter };
-        if (sortOptions[1]) {
+        if (sortOptions[1] && !filter.sort) {
             _filter.sort = sortOptions[1].value;
         }
         props.applyFilter(_filter);

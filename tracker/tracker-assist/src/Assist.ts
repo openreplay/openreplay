@@ -230,7 +230,7 @@ export default class Assist {
       endAgentCall(id)
     })
 
-    socket.on('_agent_name', (id, name) => { 
+    socket.on('_agent_name', (id, name) => {
       callingAgents.set(id, name)
       updateCallerNames()
     })
@@ -285,7 +285,7 @@ export default class Assist {
       if (callConfirmAnswer) { // Already asking
         return callConfirmAnswer
       }
-      callConfirmWindow = new ConfirmWindow(callConfirmDefault(this.options.callConfirm || { 
+      callConfirmWindow = new ConfirmWindow(callConfirmDefault(this.options.callConfirm || {
         text: this.options.confirmText,
         style: this.options.confirmStyle,
       })) // TODO: reuse ?
@@ -345,7 +345,7 @@ export default class Assist {
         // Request local stream for the new connection
         try {
           // lStreams are reusable so fare we don't delete them in the `endAgentCall`
-          if (!lStreams[call.peer]) { 
+          if (!lStreams[call.peer]) {
             app.debug.log('starting new stream for', call.peer)
             lStreams[call.peer] = await RequestLocalStream()
           }
@@ -367,8 +367,8 @@ export default class Assist {
           annot.mount()
         }
         // have to be updated
-        callUI.setLocalStreams(Object.values(lStreams)) 
-        
+        callUI.setLocalStreams(Object.values(lStreams))
+
         call.on('error', e => {
           app.debug.warn('Call error:', e)
           initiateCallEnd()

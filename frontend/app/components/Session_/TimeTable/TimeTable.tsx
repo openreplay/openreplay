@@ -118,7 +118,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     autoScroll = true;
 
     componentDidMount() {
-        this.scroller.current.scrollToRow(this.props.activeIndex);
+        if (this.scroller.current) {
+            this.scroller.current.scrollToRow(this.props.activeIndex);
+        }
     }
 
     componentDidUpdate(prevProps: any, prevState: any) {
@@ -135,7 +137,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                 ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
             });
         }
-        if (this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex) {
+        if (this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current) {
             this.scroller.current.scrollToRow(this.props.activeIndex);
         }
     }
@@ -227,8 +229,24 @@ export default class TimeTable extends React.PureComponent<Props, State> {
             <div className={cn(className, 'relative')}>
                 {navigation && (
                     <div className={cn(autoscrollStl.navButtons, 'flex items-center')}>
-                        <Button variant="text-primary" icon="chevron-up" onClick={this.onPrevClick} />
-                        <Button variant="text-primary" icon="chevron-down" onClick={this.onNextClick} />
+                        <Button
+                            variant="text-primary"
+                            icon="chevron-up"
+                            tooltip={{
+                                title: 'Previous Error',
+                                delay: 0,
+                            }}
+                            onClick={this.onPrevClick}
+                        />
+                        <Button
+                            variant="text-primary"
+                            icon="chevron-down"
+                            tooltip={{
+                                title: 'Next Error',
+                                delay: 0,
+                            }}
+                            onClick={this.onNextClick}
+                        />
                         {/* <IconButton 
               size="small" 
               icon="chevron-up" 

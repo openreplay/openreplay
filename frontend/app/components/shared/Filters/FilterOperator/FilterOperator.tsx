@@ -79,7 +79,7 @@ function FilterOperator(props: Props) {
         placeholder="Select"
         isDisabled={isDisabled}
         value={value ? options.find((i: any) => i.value === value) : null}
-        onChange={({ value }: any) => onChange(null, { name: 'operator', value })}
+        onChange={({ value }: any) => onChange(null, { name: 'operator', value: value.value })}
       />
     </div>
   );

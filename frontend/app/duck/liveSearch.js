@@ -20,7 +20,7 @@ const FETCH_SESSION_LIST = fetchListType(`${name}/FETCH_SESSION_LIST`);
 
 const initialState = Map({
 	list: List(),
-	instance: new Filter({ filters: [], sort: 'timestamp' }),
+	instance: new Filter({ filters: [], sort: '' }),
   filterSearchList: {},
   currentPage: 1,
 });
