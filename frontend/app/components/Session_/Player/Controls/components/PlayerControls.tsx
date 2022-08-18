@@ -71,7 +71,7 @@ function PlayerControls(props: Props) {
 
   const toggleTooltip = () => {
     setShowTooltip(!showTooltip);
-  }
+  };
   return (
     <div className="flex items-center">
       {playButton}
@@ -112,31 +112,35 @@ function PlayerControls(props: Props) {
             className="cursor-pointer select-none"
             distance={20}
             html={
-              <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
-                <div className="font-semibold py-2 px-4 w-full text-left">
-                  Jump <span className="text-disabled-text">(Secs)</span>
-                </div>
-                {Object.keys(skipIntervals).map((interval) => (
-                  <div
-                    onClick={() => {
-                      toggleTooltip();
-                      setSkipInterval(parseInt(interval, 10))
-                    }}
-                    className={cn(
-                      "py-2 px-4 cursor-pointer w-full text-left font-semibold", 
-                      "hover:bg-active-blue border-t  border-borderColor-gray-light-shade",
-                    )}
-                  >
-                    {interval}
-                    <span className="text-disabled-text">s</span>
+              <OutsideClickDetectingDiv onClickOutside={() => showTooltip ? toggleTooltip() : null}>
+                <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
+                  <div className="font-semibold py-2 px-4 w-full text-left">
+                    Jump <span className="text-disabled-text">(Secs)</span>
                   </div>
-                ))}
-              </div>
+                  {Object.keys(skipIntervals).map((interval) => (
+                    <div
+                      onClick={() => {
+                        toggleTooltip();
+                        setSkipInterval(parseInt(interval, 10));
+                      }}
+                      className={cn(
+                        'py-2 px-4 cursor-pointer w-full text-left font-semibold',
+                        'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
+                      )}
+                    >
+                      {interval}
+                      <span className="text-disabled-text">s</span>
+                    </div>
+                  ))}
+                </div>
+              </OutsideClickDetectingDiv>
             }
           >
             <div onClick={toggleTooltip}>
               {/* @ts-ignore */}
-              <Tooltip disabled={showTooltip} title="Set default skip duration">{currentInterval}s</Tooltip>
+              <Tooltip disabled={showTooltip} title="Set default skip duration">
+                {currentInterval}s
+              </Tooltip>
             </div>
           </Tooltip>
         </div>

@@ -18,9 +18,10 @@ const SelectedValue = ({ icon, text }) => {
 class IssueForm extends React.PureComponent {  
   componentDidMount() {
     const { projects, issueTypes } = this.props;
+
     this.props.init({
-      projectId: projects.first() ? projects.first().id : '',
-      issueType: issueTypes.first() ? issueTypes.first().id : ''
+      projectId: projects[0] ? projects[0].id : '',
+      issueType: issueTypes[0] ? issueTypes[0].id : ''
     });
   }
 

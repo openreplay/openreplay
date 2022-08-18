@@ -55,6 +55,10 @@ const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
 const METRICS_DETAILS_SUB = routes.metricDetailsSub();
 
+const ALERTS_PATH = routes.alerts();
+const ALERT_CREATE_PATH = routes.alertCreate();
+const ALERT_EDIT_PATH = routes.alertEdit();
+
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
 const DASHBOARD_METRIC_CREATE_PATH = routes.dashboardMetricCreate();
@@ -198,6 +202,9 @@ class Router extends React.Component {
                             {onboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
 
                             {/* DASHBOARD and Metrics */}
+                            <Route exact strict path={withSiteId(ALERTS_PATH, siteIdList)} component={Dashboard} />
+                            <Route exact strict path={withSiteId(ALERT_EDIT_PATH, siteIdList)} component={Dashboard} />
+                            <Route exact strict path={withSiteId(ALERT_CREATE_PATH, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(METRICS_PATH, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(METRICS_DETAILS, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(METRICS_DETAILS_SUB, siteIdList)} component={Dashboard} />

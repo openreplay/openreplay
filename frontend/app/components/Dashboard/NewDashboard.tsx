@@ -6,7 +6,6 @@ import DashboardSideMenu from './components/DashboardSideMenu';
 import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
 import cn from 'classnames';
-import { withSiteId } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 
 interface RouterProps {
@@ -21,8 +20,9 @@ function NewDashboard(props: RouteComponentProps<RouterProps>) {
     const loading = useObserver(() => dashboardStore.isLoading);
     const isMetricDetails = history.location.pathname.includes('/metrics/') || history.location.pathname.includes('/metric/');
     const isDashboardDetails = history.location.pathname.includes('/dashboard/')
+    const isAlertsDetails = history.location.pathname.includes('/alert/')
 
-    const shouldHideMenu = isMetricDetails || isDashboardDetails;
+    const shouldHideMenu = isMetricDetails || isDashboardDetails || isAlertsDetails;
     useEffect(() => {
         dashboardStore.fetchList().then((resp) => {
             if (parseInt(dashboardId) > 0) {
