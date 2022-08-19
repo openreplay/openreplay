@@ -1,5 +1,7 @@
 FROM openresty/openresty:1.21.4.1-alpine
 
+RUN apk add --no-cache curl
+
 # Adding prometheus monitoring support
 ADD https://raw.githubusercontent.com/knyar/nginx-lua-prometheus/master/prometheus.lua /usr/local/openresty/lualib/
 ADD https://raw.githubusercontent.com/knyar/nginx-lua-prometheus/master/prometheus_keys.lua /usr/local/openresty/lualib/
