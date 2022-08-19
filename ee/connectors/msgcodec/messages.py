@@ -15,6 +15,25 @@ class BatchMeta(Message):
         self.timestamp = timestamp
 
 
+class BatchMetadata(Message):
+    __id__ = 81
+
+    def __init__(self, version, page_no, first_index, timestamp, location):
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+        self.location = location
+
+
+class PartitionedMessage(Message):
+    __id__ = 82
+
+    def __init__(self, part_no, part_total):
+        self.part_no = part_no
+        self.part_total = part_total
+
+
 class Timestamp(Message):
     __id__ = 0
 
@@ -42,13 +61,6 @@ class SessionStart(Message):
         self.user_device_heap_size = user_device_heap_size
         self.user_country = user_country
         self.user_id = user_id
-
-
-class SessionDisconnect(Message):
-    __id__ = 2
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
 
 
 class SessionEnd(Message):
@@ -637,13 +649,6 @@ class CustomIssue(Message):
         self.payload = payload
 
 
-class PageClose(Message):
-    __id__ = 65
-
-    def __init__(self, ):
-        
-
-
 class AssetCache(Message):
     __id__ = 66
 
@@ -676,6 +681,66 @@ class CreateIFrameDocument(Message):
 
     def __init__(self, frame_id, id):
         self.frame_id = frame_id
+        self.id = id
+
+
+class AdoptedSSReplaceURLBased(Message):
+    __id__ = 71
+
+    def __init__(self, sheet_id, text, base_url):
+        self.sheet_id = sheet_id
+        self.text = text
+        self.base_url = base_url
+
+
+class AdoptedSSReplace(Message):
+    __id__ = 72
+
+    def __init__(self, sheet_id, text):
+        self.sheet_id = sheet_id
+        self.text = text
+
+
+class AdoptedSSInsertRuleURLBased(Message):
+    __id__ = 73
+
+    def __init__(self, sheet_id, rule, index, base_url):
+        self.sheet_id = sheet_id
+        self.rule = rule
+        self.index = index
+        self.base_url = base_url
+
+
+class AdoptedSSInsertRule(Message):
+    __id__ = 74
+
+    def __init__(self, sheet_id, rule, index):
+        self.sheet_id = sheet_id
+        self.rule = rule
+        self.index = index
+
+
+class AdoptedSSDeleteRule(Message):
+    __id__ = 75
+
+    def __init__(self, sheet_id, index):
+        self.sheet_id = sheet_id
+        self.index = index
+
+
+class AdoptedSSAddOwner(Message):
+    __id__ = 76
+
+    def __init__(self, sheet_id, id):
+        self.sheet_id = sheet_id
+        self.id = id
+
+
+class AdoptedSSRemoveOwner(Message):
+    __id__ = 77
+
+    def __init__(self, sheet_id, id):
+        self.sheet_id = sheet_id
         self.id = id
 
 
