@@ -7,6 +7,14 @@ const EVENTS = 'EVENTS';
 const CLICKRAGE = 'CLICKRAGE';
 const PERFORMANCE = 'PERFORMANCE';
 
+export const HELP_MESSAGE: any = {
+    NETWORK: 'Network requests made in this session',
+    EVENTS: 'Visualizes the events that takes place in the DOM',
+    ERRORS: 'Visualizes native JS errors like Type, URI, Syntax etc.',
+    CLICKRAGE: 'Indicates user frustration when repeated clicks are recorded',
+    PERFORMANCE: 'Summary of this session’s memory, and CPU consumption on the timeline',
+}
+
 interface Props {
     list: any[];
     updateList: any;

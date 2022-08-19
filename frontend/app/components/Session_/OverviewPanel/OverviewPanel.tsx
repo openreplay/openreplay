@@ -6,7 +6,7 @@ import EventRow from './components/EventRow';
 import { TYPES } from 'Types/session/event';
 import { connect } from 'react-redux';
 import TimelineScale from './components/TimelineScale';
-import FeatureSelection from './components/FeatureSelection/FeatureSelection';
+import FeatureSelection, { HELP_MESSAGE } from './components/FeatureSelection/FeatureSelection';
 import TimelinePointer from './components/TimelinePointer';
 import VerticalPointerLine from './components/VerticalPointerLine';
 import cn from 'classnames';
@@ -52,7 +52,7 @@ function OverviewPanel(props: Props) {
     return (
         dataLoaded && (
             <Wrapper {...props}>
-                <BottomBlock style={{ height: '250px' }}>
+                <BottomBlock style={{ height: '245px' }}>
                     <BottomBlock.Header>
                         <span className="font-semibold color-gray-medium mr-4">X-RAY</span>
                         <div className="flex items-center h-20">
@@ -62,7 +62,7 @@ function OverviewPanel(props: Props) {
                     <BottomBlock.Content>
                         <OverviewPanelContainer endTime={props.endTime}>
                             <TimelineScale endTime={props.endTime} />
-                            <div style={{ width: '100%', height: '200px' }} className="transition relative">
+                            <div style={{ width: '100%', height: '187px' }} className="transition relative">
                                 <NoContent show={selectedFeatures.length === 0} title={
                                 <div className="flex items-center mt-16">
                                     <Icon name="info-circle" className="mr-2" size="18" />
@@ -70,7 +70,7 @@ function OverviewPanel(props: Props) {
                                 </div>}>
                                     <VerticalPointerLine />
                                     {selectedFeatures.map((feature: any, index: number) => (
-                                        <div className={cn('border-b', { 'bg-white': index % 2 })}>
+                                        <div className={cn('border-b last:border-none', { 'bg-white': index % 2 })}>
                                             <EventRow
                                                 isGraph={feature === 'PERFORMANCE'}
                                                 key={feature}
@@ -78,6 +78,7 @@ function OverviewPanel(props: Props) {
                                                 list={resources[feature]}
                                                 renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={feature} />}
                                                 endTime={props.endTime}
+                                                message={HELP_MESSAGE[feature]}
                                             />
                                         </div>
                                     ))}
