@@ -37,8 +37,7 @@ CREATE TABLE IF NOT EXISTS resources
     decoded_body_size Nullable(UInt32),
     compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size),
     success                             UInt8,
-    method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
-    status Nullable(UInt16)
+    method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8))
 ) ENGINE = MergeTree
       PARTITION BY toYYYYMM(datetime)
       ORDER BY (project_id, datetime, type, session_id)
@@ -111,9 +110,10 @@ CREATE TABLE IF NOT EXISTS events
 --     encoded_body_size Nullable(UInt32),
 --     decoded_body_size Nullable(UInt32),
 --     compression_ratio Nullable(Float32)            MATERIALIZED divide(decoded_body_size, encoded_body_size),
---     success Nullable(UInt8),
---     method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
---     status Nullable(UInt16),
+    method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8)),
+    status Nullable(UInt16),
+    success Nullable(UInt8),
+--     success Nullable(UInt8)                        MATERIALIZED if(event_type != 'REQUEST', null, 99 < status < 400),
     request_body Nullable(String),
     response_body Nullable(String),
     _timestamp                                     DateTime DEFAULT now()
