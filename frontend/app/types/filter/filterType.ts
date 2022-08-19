@@ -66,48 +66,70 @@ export const getFilterKeyTypeByKey = (key: string) => {
     case 'userid':
       return FilterKey.USERID;
     case 'usera':
+    case 'userAnonymousId':
       return FilterKey.USERANONYMOUSID;
     case 'clk':
+    case 'click':
       return FilterKey.CLICK;
     case 'inp':
+    case 'input':
       return FilterKey.INPUT;
     case 'loc':
+    case 'location':
       return FilterKey.LOCATION;
     case 'os':
+    case 'userOs':
       return FilterKey.USER_OS;
     case 'browser':
+    case 'userBrowser':
       return FilterKey.USER_BROWSER;
     case 'device':
+    case 'userDevice':
       return FilterKey.USER_DEVICE;
     case 'platform':
       return FilterKey.PLATFORM;
     case 'revid':
+    case 'revisionId':
+    case 'revId':
       return FilterKey.REVID;
     case 'country':
+    case 'userCountry':
       return FilterKey.USER_COUNTRY;
     case 'ref':
+    case 'referrer':
       return FilterKey.REFERRER;
     case 'ce':
+    case 'custom':
+    case 'customEvent':
       return FilterKey.CUSTOM;
     case 'sa':
+    case 'stateAction':
       return FilterKey.STATEACTION;
     case 'err':
+    case 'error':
       return FilterKey.ERROR;
     case 'iss':
+    case 'issue':
       return FilterKey.ISSUE;
 
     // PERFORMANCE
     case 'domc':
+    case 'domComplete':
       return FilterKey.DOM_COMPLETE;
     case 'lcp':
+    case 'largestContentfulPaintTime':
       return FilterKey.LARGEST_CONTENTFUL_PAINT_TIME;
     case 'ttfb':
+    case 'timeToFirstByte':
       return FilterKey.TTFB;
     case 'acpu':
+    case 'avgCpuLoad':
       return FilterKey.AVG_CPU_LOAD;
     case 'amem':
+    case 'avgMemoryUsage':
       return FilterKey.AVG_MEMORY_USAGE;
     case 'ff':
+    case 'fetchFailed':
       return FilterKey.FETCH_FAILED;
   }
 };

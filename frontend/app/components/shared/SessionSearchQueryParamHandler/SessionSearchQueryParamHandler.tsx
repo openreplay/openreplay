@@ -3,42 +3,6 @@ import { useHistory } from 'react-router';
 import { connect } from 'react-redux';
 import { addFilterByKeyAndValue, addFilter } from 'Duck/search';
 import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
-import { FilterCategory, FilterKey } from 'Types/filter/filterType';
-import { filtersMap } from 'Types/filter/newFilter';
-
-const allowedQueryKeys = [
-  'userId',
-  'userid',
-  'uid',
-  'usera',
-
-  'clk',
-  'inp',
-  'loc',
-
-  'os',
-  'browser',
-  'device',
-  'platform',
-  'revid',
-
-  'country',
-  'ref',
-  'sort',
-  'order',
-  'ce',
-  'sa',
-  'err',
-  'iss',
-
-  // PERFORMANCE
-  'domc',
-  'lcp',
-  'ttfb',
-  'acpu',
-  'amem',
-  'ff',
-];
 
 interface Props {
   appliedFilter: any;
