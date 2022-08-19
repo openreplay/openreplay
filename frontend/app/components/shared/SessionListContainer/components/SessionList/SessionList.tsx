@@ -4,9 +4,10 @@ import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Button } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import NoContentMessage from '../NoContentMessage';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
+import useTimeout from 'App/hooks/useTimeout';
 
+const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 interface Props {
     loading: boolean;
     list: any;
@@ -47,13 +48,19 @@ function SessionList(props: Props) {
         };
     }, [isBookmark, isVault, activeTab]);
 
+    useTimeout(() => {
+        props.fetchSessions(null, true);
+    }, AUTOREFRESH_INTERVAL);
+    
+    
     useEffect(() => {
+        // handle scroll position
         const { scrollY } = props;
         window.scrollTo(0, scrollY);
         if (total === 0) {
-            props.fetchSessions();
+            props.fetchSessions(null, true);
         }
-
+        
         return () => {
             props.setScrollPosition(window.scrollY);
         };
@@ -75,7 +82,6 @@ function SessionList(props: Props) {
                         <AnimatedSVG name={NO_CONTENT.icon} size={170} />
                         <div className="mt-2" />
                         <div className="text-center text-gray-600">{NO_CONTENT.message}</div>
-                        {/* <NoContentMessage /> */}
                     </div>
                 }
                 subtext={
