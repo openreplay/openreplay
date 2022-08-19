@@ -32,13 +32,15 @@ const EventRow = React.memo((props: Props) => {
                 {isGraph ? (
                     <PerformanceGraph list={list} />
                 ) : (
-                    _list.map((item: any, index: number) => {
+                    _list.length > 0 ? _list.map((item: any, index: number) => {
                         return (
                             <div key={index} className="absolute" style={{ left: item.left + '%' }}>
                                 {props.renderElement ? props.renderElement(item) : null}
                             </div>
                         );
-                    })
+                    }) : (
+                        <div className="ml-4 color-gray-medium text-sm pt-1">No records captured.</div>
+                    )
                 )}
             </div>
         </div>
