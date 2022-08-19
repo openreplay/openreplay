@@ -1,5 +1,5 @@
 import React from 'react';
-import { Checkbox } from 'UI';
+import { Checkbox, Popup } from 'UI';
 
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
@@ -22,20 +22,22 @@ function FeatureSelection(props: Props) {
                 const checked = list.includes(feature);
                 const _disabled = disabled && !checked;
                 return (
-                    <Checkbox
-                        key={index}
-                        label={feature}
-                        checked={checked}
-                        className="mx-4"
-                        disabled={_disabled}
-                        onClick={() => {
-                            if (checked) {
-                                props.updateList(list.filter((item: any) => item !== feature));
-                            } else {
-                                props.updateList([...list, feature]);
-                            }
+                    <Popup content="X-RAY supports up to 3 views" disabled={!_disabled} delay={0}>
+                        <Checkbox
+                            key={index}
+                            label={feature}
+                            checked={checked}
+                            className="mx-4"
+                            disabled={_disabled}
+                            onClick={() => {
+                                if (checked) {
+                                    props.updateList(list.filter((item: any) => item !== feature));
+                                } else {
+                                    props.updateList([...list, feature]);
+                                }
                         }}
                     />
+                    </Popup>
                 );
             })}
         </React.Fragment>
