@@ -8,6 +8,7 @@ import SessionItem from 'Shared/SessionItem';
 import SelectDateRange from 'Shared/SelectDateRange';
 import Period from 'Types/app/period';
 import { useObserver, observer } from 'mobx-react-lite';
+import { useModal } from 'App/components/Modal';
 
 const PER_PAGE = 10;
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 function UserSessionsModal(props: Props) {
     const { userId, hash, name } = props;
     const { sessionStore } = useStore();
+    const { hideModal } = useModal();
     const [loading, setLoading] = React.useState(false);
     const [data, setData] = React.useState<any>({ sessions: [], total: 0 });
     const filter = useObserver(() => sessionStore.userFilter);
@@ -64,7 +66,7 @@ function UserSessionsModal(props: Props) {
                     <Loader loading={loading}>
                         {data.sessions.map((session: any) => (
                             <div className="border-b last:border-none">
-                                <SessionItem key={session.sessionId} session={session} compact={true} />
+                                <SessionItem key={session.sessionId} session={session} compact={true} onClick={hideModal} />
                             </div>
                         ))}
                     </Loader>
