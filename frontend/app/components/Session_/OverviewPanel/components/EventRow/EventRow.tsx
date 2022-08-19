@@ -56,7 +56,7 @@ export default EventRow;
 function RowInfo({ message} : any) {
     return (
      <Popup content={message} delay={0}>
-        <Icon name="info-circle" />
+        <Icon name="info-circle" color="gray-medium"/>
      </Popup>   
     )
 }
