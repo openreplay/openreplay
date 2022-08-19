@@ -9,7 +9,7 @@ if (process.env.redis === "true") {
 }
 
 const HOST = '0.0.0.0';
-const PORT = 9001;
+const PORT = process.env.LISTEN_PORT || 9001;
 
 let debug = process.env.debug === "1" || false;
 const PREFIX = process.env.prefix || `/assist`

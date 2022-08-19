@@ -4,7 +4,7 @@ const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
 
 const HOST = '0.0.0.0';
-const PORT = 9001;
+const PORT = process.env.LISTEN_PORT || 9001;
 
 const wsapp = express();
 wsapp.use(express.json());
