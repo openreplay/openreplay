@@ -288,9 +288,9 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    const filter = getState().getIn(['search', 'instance']);
+    // const filter = getState().getIn(['search', 'instance']);
     // dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ startDate: filter.startDate, endDate: filter.endDate, rangeValue: filter.rangeValue, filters: [] })));
+    dispatch(edit(new Filter({ filters: [] })));
     return dispatch({
         type: CLEAR_SEARCH,
     });
