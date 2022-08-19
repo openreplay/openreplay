@@ -77,7 +77,7 @@ function AddMetric({ metrics, history, siteId, title, description }: IProps) {
                         {'Selected '}
                         <span className="font-semibold">{selectedWidgetIds.length}</span>
                         {' out of '}
-                        <span className="font-semibold">{metrics.length}</span>
+                        <span className="font-semibold">{metrics ? metrics.length : 0}</span>
                     </div>
                     <Button variant="primary" disabled={selectedWidgetIds.length === 0} onClick={onSave}>
                         Add Selected
