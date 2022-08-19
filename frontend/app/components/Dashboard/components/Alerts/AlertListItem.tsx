@@ -92,29 +92,29 @@ function AlertListItem(props: Props) {
               )}
         </div>
       </div>
-      <div className="text-disabled-text px-2 pb-2">
+      <div className="color-gray-medium px-2 pb-2">
         {'When the '}
-        <span className="font-medium">{alert.detectionMethod}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.detectionMethod}</span>
         {' of '}
-        <span className="font-medium">{alert.query.left}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.query.left}</span>
         {' is '}
-        <span className="font-medium">
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
           {alert.query.operator}
           {alert.query.right} {alert.metric.unit}
         </span>
         {' over the past '}
-        <span className="font-medium">{getThreshold(alert.currentPeriod)}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{getThreshold(alert.currentPeriod)}</span>
         {alert.detectionMethod === 'change' ? (
           <>
             {' compared to the previous '}
-            <span className="font-medium">{getThreshold(alert.previousPeriod)}</span>
+            <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas ' }}>{getThreshold(alert.previousPeriod)}</span>
           </>
         ) : null}
         {', notify me on '}
         <span>{getNotifyChannel(alert, webhooks)}</span>.
       </div>
       {alert.description ? (
-        <div className="text-disabled-text px-2 pb-2">{alert.description}</div>
+        <div className="color-gray-medium px-2 pb-2">{alert.description}</div>
       ) : null}
     </div>
   );
