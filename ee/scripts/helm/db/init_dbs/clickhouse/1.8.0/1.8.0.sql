@@ -35,9 +35,10 @@ CREATE TABLE IF NOT EXISTS resources
     header_size Nullable(UInt16),
     encoded_body_size Nullable(UInt32),
     decoded_body_size Nullable(UInt32),
-    compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size),
-    success                             UInt8,
-    method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8))
+    compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size)
+-- ,
+--     success                             UInt8,
+--     method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8))
 ) ENGINE = MergeTree
       PARTITION BY toYYYYMM(datetime)
       ORDER BY (project_id, datetime, type, session_id)
@@ -48,7 +49,7 @@ CREATE TABLE IF NOT EXISTS events
     session_id                                     UInt64,
     project_id                                     UInt16,
 --     event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'RESOURCE'=3,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8, 'GRAPHQL'=9, 'STATEACTION'=10),
-    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=4,'PERFORMANCE'=5,'LONGTASK'=6,'ERROR'=7,'CUSTOM'=8, 'GRAPHQL'=9, 'STATEACTION'=10),
+    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'LONGTASK'=5,'ERROR'=6,'CUSTOM'=7, 'GRAPHQL'=8, 'STATEACTION'=9),
     datetime                                       DateTime,
     label Nullable(String),
     hesitation_time Nullable(UInt32),

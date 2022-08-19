@@ -844,7 +844,8 @@ def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                       FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)}
                       GROUP BY timestamp, resources.url_hostpath
-                      ORDER BY timestamp;"""
+                      ORDER BY timestamp, doc_count DESC
+                      LIMIT 10 BY timestamp;"""
         r = ch.execute(query=ch_query,
                        params={"step_size": step_size, "project_id": project_id,
                                "startTimestamp": startTimestamp,

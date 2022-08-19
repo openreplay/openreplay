@@ -9,7 +9,7 @@ import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
     alerts, funnels, issues, integrations_manager, metadata, \
     log_tool_elasticsearch, log_tool_datadog, \
-    log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
+    log_tool_stackdriver, reset_password, sessions_favorite, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
@@ -82,7 +82,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: B
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        "data": sessions_favorite_viewed.favorite_session(project_id=projectId, user_id=context.user_id,
+        "data": sessions_favorite.favorite_session(project_id=projectId, user_id=context.user_id,
                                                           session_id=sessionId)}
 
 

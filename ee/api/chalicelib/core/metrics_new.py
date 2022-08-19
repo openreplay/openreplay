@@ -390,14 +390,14 @@ def __get_application_activity(ch, project_id, startTimestamp, endTimestamp, **a
     row = ch.execute(query=ch_query, params=params)[0]
     result = {**result, **row}
 
-    ch_sub_query = __get_basic_constraints(table_name="events", data=args)
-    ch_sub_query.append("events.event_type='RESOURCE'")
+    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
+    # ch_sub_query.append("events.event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("events.type= %(type)s")
-    ch_query = f"""SELECT COALESCE(avgOrNull(events.duration),0) AS avg 
-                    FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
-                    WHERE {" AND ".join(ch_sub_query)} AND events.duration>0;"""
+    ch_sub_query.append("resources.type= %(type)s")
+    ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS avg 
+                    FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
+                    WHERE {" AND ".join(ch_sub_query)} AND resources.duration>0;"""
     row = ch.execute(query=ch_query,
                      params={"project_id": project_id, "type": 'img', "startTimestamp": startTimestamp,
                              "endTimestamp": endTimestamp, **__get_constraint_values(args)})[0]
@@ -457,24 +457,24 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(),
                        density=7, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
-    ch_sub_query = __get_basic_constraints(table_name="events", data=args)
-    ch_sub_query.append("events.event_type='RESOURCE'")
-    ch_sub_query.append("events.type = 'img'")
-    ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True, data=args)
-    ch_sub_query_chart.append("events.event_type='RESOURCE'")
-    ch_sub_query_chart.append("events.type = 'img'")
-    ch_sub_query_chart.append("events.url IN %(url)s")
+    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
+    # ch_sub_query.append("events.event_type='RESOURCE'")
+    ch_sub_query.append("resources.type = 'img'")
+    ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
+    # ch_sub_query_chart.append("events.event_type='RESOURCE'")
+    ch_sub_query_chart.append("resources.type = 'img'")
+    ch_sub_query_chart.append("resources.url IN %(url)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT events.url,
-                              COALESCE(avgOrNull(events.duration),0) AS avg,
-                              COUNT(events.session_id) AS count 
-                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events 
-                        WHERE {" AND ".join(ch_sub_query)} AND events.duration>0
-                        GROUP BY events.url ORDER BY avg DESC LIMIT 10;"""
+        ch_query = f"""SELECT resources.url,
+                              COALESCE(avgOrNull(resources.duration),0) AS avg,
+                              COUNT(resources.session_id) AS count 
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources 
+                        WHERE {" AND ".join(ch_sub_query)} AND resources.duration>0
+                        GROUP BY resources.url ORDER BY avg DESC LIMIT 10;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
@@ -486,10 +486,10 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
         charts = {}
         ch_query = f"""SELECT url, 
-                               toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                               COALESCE(avgOrNull(events.duration),0) AS avg
-                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
-                        WHERE {" AND ".join(ch_sub_query_chart)} AND events.duration>0
+                               toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                               COALESCE(avgOrNull(resources.duration),0) AS avg
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
+                        WHERE {" AND ".join(ch_sub_query_chart)} AND resources.duration>0
                         GROUP BY url, timestamp
                         ORDER BY url, timestamp;"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
@@ -528,8 +528,8 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
     location_constraints = []
     img_constraints = []
     request_constraints = []
-    ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True, data=args)
-    ch_sub_query_chart.append("event_type='RESOURCE'")
+    ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
+    # ch_sub_query_chart.append("event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -540,22 +540,22 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
     if resources and len(resources) > 0:
         for r in resources:
             if r["type"] == "IMG":
-                img_constraints.append(f"events.url = %(val_{len(img_constraints)})s")
+                img_constraints.append(f"resources.url = %(val_{len(img_constraints)})s")
                 img_constraints_vals["val_" + str(len(img_constraints) - 1)] = r['value']
             elif r["type"] == "LOCATION":
-                location_constraints.append(f"events.url_path = %(val_{len(location_constraints)})s")
+                location_constraints.append(f"resources.url_path = %(val_{len(location_constraints)})s")
                 location_constraints_vals["val_" + str(len(location_constraints) - 1)] = r['value']
             else:
-                request_constraints.append(f"events.url = %(val_{len(request_constraints)})s")
+                request_constraints.append(f"resources.url = %(val_{len(request_constraints)})s")
                 request_constraints_vals["val_" + str(len(request_constraints) - 1)] = r['value']
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              COALESCE(avgOrNull(events.duration),0) AS avg 
-                      FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                              COALESCE(avgOrNull(resources.duration),0) AS avg 
+                      FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                       WHERE {" AND ".join(ch_sub_query_chart)}
-                          AND events.type = 'img' AND events.duration>0 
+                          AND resources.type = 'img' AND resources.duration>0 
                           {(f' AND ({" OR ".join(img_constraints)})') if len(img_constraints) > 0 else ""}
                       GROUP BY timestamp
                       ORDER BY timestamp;"""
@@ -564,11 +564,11 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
                   __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                            end_time=endTimestamp,
                                            density=density, neutral={"avg": 0})]
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              COALESCE(avgOrNull(events.duration),0) AS avg 
-                      FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                              COALESCE(avgOrNull(resources.duration),0) AS avg 
+                      FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                       WHERE {" AND ".join(ch_sub_query_chart)} 
-                          AND events.type = 'fetch' AND events.duration>0  
+                          AND resources.type = 'fetch' AND resources.duration>0  
                           {(f' AND ({" OR ".join(request_constraints)})') if len(request_constraints) > 0 else ""}
                       GROUP BY timestamp
                       ORDER BY timestamp;"""
@@ -792,6 +792,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
 def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(),
                                 density=7, **args):
+    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="events", data=args)
     ch_sub_query.append("events.event_type='RESOURCE'")
@@ -849,18 +850,19 @@ def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(),
                 density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True, data=args)
-    ch_sub_query_chart.append("events.event_type='RESOURCE'")
+    ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
+    # ch_sub_query_chart.append("events.event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              events.path, COUNT(events.session_id) AS doc_count
-                      FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                              resources.url_path, COUNT(resources.session_id) AS doc_count
+                      FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                       WHERE {" AND ".join(ch_sub_query_chart)}
-                      GROUP BY timestamp, events.path
-                      ORDER BY timestamp;"""
+                      GROUP BY timestamp, resources.url_path
+                      ORDER BY timestamp, doc_count DESC
+                      LIMIT 10 BY timestamp;"""
         r = ch.execute(query=ch_query,
                        params={"step_size": step_size, "project_id": project_id,
                                "startTimestamp": startTimestamp,
@@ -873,7 +875,7 @@ def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
             results.append({"timestamp": r[i]["timestamp"], "domains": []})
             i += 1
             while i < len(r) and r[i]["timestamp"] == results[-1]["timestamp"]:
-                results[-1]["domains"].append({r[i]["path"]: r[i]["doc_count"]})
+                results[-1]["domains"].append({r[i]["url_path"]: r[i]["doc_count"]})
                 i += 1
 
     return {"startTimestamp": startTimestamp, "endTimestamp": endTimestamp, "chart": results}
@@ -913,7 +915,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
                               COALESCE(avgOrNull(resources.duration),0) AS avg 
-                          FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                          FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                           WHERE {" AND ".join(ch_sub_query_chart)} 
                           GROUP BY timestamp
                           ORDER BY timestamp;"""
@@ -923,7 +925,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
                   "value": url, "type": type, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS avg 
-                      FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                      FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                       WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"avg": avg, "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
@@ -972,28 +974,28 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
 def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), type="all", density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="events", data=args)
-    ch_sub_query.append("events.event_type='RESOURCE'")
-    ch_sub_query.append("isNotNull(events.path)")
-    ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True, data=args)
-    ch_sub_query_chart.append("events.event_type='RESOURCE'")
+    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
+    # ch_sub_query.append("events.event_type='RESOURCE'")
+    ch_sub_query.append("isNotNull(resources.url_path)")
+    ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
+    # ch_sub_query_chart.append("events.event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query_chart += meta_condition
 
     if type is not None and type.upper() != "ALL":
-        sq = f"events.type = '{__get_resource_db_type_from_type(type.upper())}'"
+        sq = f"resources.type = '{__get_resource_db_type_from_type(type.upper())}'"
     else:
-        sq = "events.type != 'fetch'"
+        sq = "resources.type != 'fetch'"
     ch_sub_query.append(sq)
     ch_sub_query_chart.append(sq)
-    ch_sub_query_chart.append("isNotNull(events.duration)")
-    ch_sub_query_chart.append("events.duration>0")
+    ch_sub_query_chart.append("isNotNull(resources.duration)")
+    ch_sub_query_chart.append("resources.duration>0")
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT any(url) AS url, any(type) AS type,
-                              splitByChar('/', assumeNotNull(events.path))[-1] AS name,
-                              COALESCE(avgOrNull(NULLIF(events.duration,0)),0) AS avg 
-                          FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events 
+                              splitByChar('/', assumeNotNull(resources.url_path))[-1] AS name,
+                              COALESCE(avgOrNull(NULLIF(resources.duration,0)),0) AS avg 
+                          FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources 
                           WHERE {" AND ".join(ch_sub_query)}
                           GROUP BY name
                           ORDER BY avg DESC
@@ -1009,12 +1011,12 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         results = []
         names = {f"name_{i}": r["name"] for i, r in enumerate(rows)}
         # TODO: fix this
-        ch_query = f"""SELECT splitByChar('/', assumeNotNull(events.path))[-1] AS name,
-                            toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                            COALESCE(avgOrNull(events.duration),0) AS avg 
-                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+        ch_query = f"""SELECT splitByChar('/', assumeNotNull(resources.url_path))[-1] AS name,
+                            toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                            COALESCE(avgOrNull(resources.duration),0) AS avg 
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query_chart)}
-                            AND ({" OR ".join([f"endsWith(events.path, %(name_{i})s)>0" for i in range(len(names.keys()))])})
+                            AND ({" OR ".join([f"endsWith(resources.url_path, %(name_{i})s)>0" for i in range(len(names.keys()))])})
                         GROUP BY name,timestamp
                         ORDER BY name,timestamp;"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -1304,6 +1306,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     ch_sub_query_chart.append("isNotNull(pages.visually_complete)")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
@@ -1314,7 +1317,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                         COALESCE(avgOrNull(pages.visually_complete),0) AS value
-                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS pages
                         WHERE {" AND ".join(ch_sub_query_chart)} 
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
@@ -1324,7 +1327,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, "value": url, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(pages.visually_complete),0) AS avg
-                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS pages
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     results = {"value": avg, "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
@@ -1338,6 +1341,7 @@ def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(d
                                         endTimestamp=TimeUTC.now(), value=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="pages", round_start=True, data=args)
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query.append("isNotNull(pages.response_time)")
     ch_sub_query.append("pages.response_time>0")
     sch_sub_query = ch_sub_query[:]
@@ -1349,10 +1353,10 @@ def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(d
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                               COUNT(DISTINCT pages.session_id) AS count
-                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS pages
                         WHERE {" AND ".join(ch_sub_query)}
                             AND (pages.response_time)>(SELECT COALESCE(avgOrNull(pages.response_time),0) 
-                                                    FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
+                                                    FROM {sessions_helper.get_main_events_table(startTimestamp)} AS pages 
                                                     WHERE {" AND ".join(sch_sub_query)})*2
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
@@ -1372,13 +1376,14 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
+    ch_sub_query_chart.append("performance.event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(performance.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                               COALESCE(avgOrNull(performance.avg_used_js_heap_size),0) AS value
-                        FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS performance
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp ASC;"""
@@ -1388,7 +1393,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(performance.avg_used_js_heap_size),0) AS avg
-                        FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS performance
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg,
@@ -1404,13 +1409,14 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
+    ch_sub_query_chart.append("performance.event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(performance.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                               COALESCE(avgOrNull(performance.avg_cpu),0) AS value
-                        FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS performance
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp ASC;"""
@@ -1420,7 +1426,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(performance.avg_cpu),0) AS avg
-                        FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS performance
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg,
@@ -1436,13 +1442,14 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
+    ch_sub_query_chart.append("performance.event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(performance.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                               COALESCE(avgOrNull(performance.avg_fps),0) AS value
-                        FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS performance
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp ASC;"""
@@ -1452,7 +1459,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(performance.avg_fps),0) AS avg
-                        FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS performance
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg,
@@ -1478,7 +1485,7 @@ def __get_crashed_sessions_ids(project_id, startTimestamp, endTimestamp):
         cur.execute(query=query)
         return [r["session_id"] for r in cur.fetchall()]
 
-
+# TODO: change this
 def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
@@ -1571,6 +1578,7 @@ def __merge_rows_with_neutral(rows, neutral):
 
 def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=6, **args):
+    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query.append("intDiv(resources.status, 100) == %(status_code)s")
@@ -1582,7 +1590,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                groupArray([domain, toString(count)]) AS keys
                         FROM (SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                                         resources.url_host AS domain, COUNT(resources.session_id) AS count
-                                FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                                FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                                 WHERE {" AND ".join(ch_sub_query)} 
                                 GROUP BY timestamp,resources.url_host
                                 ORDER BY timestamp, count DESC 
@@ -1614,6 +1622,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=6, **args):
+    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query.append("intDiv(resources.status, 100) == %(status_code)s")
@@ -1648,6 +1657,7 @@ def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 
 def get_domains_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=6, **args):
+    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query.append("intDiv(resources.status, 100) == %(status_code)s")
@@ -1699,7 +1709,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT resources.url_host AS domain,
                               COALESCE(avgOrNull(resources.duration),0) AS value
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY resources.url_host
                         ORDER BY value DESC
@@ -1709,7 +1719,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS avg
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
@@ -1717,6 +1727,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
+    raise Exception("not supported widget")
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
     ch_sub_query.append("resources.success = 0")
     meta_condition = __get_meta_constraint(args)
@@ -1752,7 +1763,7 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
                     (
                         SELECT sessions.user_browser,
                                COUNT(sessions.session_id) AS count
-                        FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_sessions_table(startTimestamp)} AS sessions
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY sessions.user_browser
                         ORDER BY count DESC
@@ -1763,7 +1774,7 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
                         SELECT sessions.user_browser,
                                sessions.user_browser_version,
                                COUNT(sessions.session_id) AS count
-                        FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_sessions_table(startTimestamp)} AS sessions
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY
                             sessions.user_browser,
@@ -1789,6 +1800,7 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
 
 def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                      platform=None, **args):
+    raise Exception("not supported widget")
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
     ch_sub_query.append("resources.type = 'fetch'")
     ch_sub_query.append("intDiv(resources.status, 100) != 2")
@@ -1815,6 +1827,7 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
 
 def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
+    raise Exception("not supported widget")
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
     ch_sub_query.append("resources.type = 'fetch'")
     ch_sub_query.append("intDiv(resources.status, 100) == 4")
@@ -1839,6 +1852,7 @@ def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
 
 def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
+    raise Exception("not supported widget")
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
     ch_sub_query.append("resources.type = 'fetch'")
     ch_sub_query.append("intDiv(resources.status, 100) == 5")
@@ -1863,6 +1877,7 @@ def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                         platform=None, density=7, **args):
+    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart_r = __get_basic_constraints(table_name="resources", round_start=True,
                                                    data=args)
@@ -1918,6 +1933,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query_chart_response_end = __get_basic_constraints(table_name="pages", round_start=True,
                                                               data=args)
+    ch_sub_query_chart_response_end.append("pages.event_type='LOCATION'")
     ch_sub_query_chart_response_end.append("isNotNull(pages.response_end)")
     ch_sub_query_chart_response_end.append("pages.response_end>0")
     meta_condition = __get_meta_constraint(args)
@@ -1931,7 +1947,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
                               COUNT(resources.session_id) AS total,
                               SUM(if(resources.type='fetch',1,0)) AS xhr
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
@@ -1942,7 +1958,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
                                            neutral={"total": 0, "xhr": 0})
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp, 
                               COALESCE(avgOrNull(pages.response_end),0) AS avg_response_end
-                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS pages
                         WHERE {" AND ".join(ch_sub_query_chart_response_end)}
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
@@ -1958,6 +1974,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="errors", round_start=True, data=args)
+    ch_sub_query_chart.append("errors.event_type='ERROR'")
     ch_sub_query_chart.append("errors.source == 'js_exception'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
@@ -1966,7 +1983,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(errors.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
                               COUNT(DISTINCT errors.session_id) AS sessions_count,
                               COUNT(DISTINCT errors.error_id) AS errors_count
-                        FROM errors {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS errors
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp;;"""
@@ -1977,7 +1994,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
                                   "endTimestamp": endTimestamp, **__get_constraint_values(args)})
         ch_query = f"""SELECT   COUNT(DISTINCT errors.session_id) AS sessions_count,
                                 COUNT(DISTINCT errors.error_id) AS errors_count
-                        FROM errors {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS errors
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         counts = ch.execute(query=ch_query,
                             params={"step_size": step_size,
@@ -1992,7 +2009,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
                                                                         neutral={"sessions_count": 0,
                                                                                  "errors_count": 0}))}
 
-
+# TODO: super slow
 def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
@@ -2010,7 +2027,7 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
                         (   SELECT resources.session_id,
                                    MIN(resources.datetime) AS base_datetime,
                                    COUNT(resources.url) AS count
-                            FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                            FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                             WHERE {" AND ".join(ch_sub_query_chart)}
                             GROUP BY resources.session_id
                         ) AS s
@@ -2019,7 +2036,7 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
                                  type,
                                  COALESCE(avgOrNull(NULLIF(count,0)),0) AS xavg
                           FROM (SELECT resources.session_id, resources.type, COUNT(resources.url) AS count
-                                FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                                FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                                 WHERE {" AND ".join(ch_sub_query)}
                                 GROUP BY resources.session_id, resources.type) AS ss
                           GROUP BY ss.session_id, ss.type) AS t USING (session_id)
@@ -2066,7 +2083,7 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
                         FROM(SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
                             resources.type,
                             COUNT(resources.session_id) AS count
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query_chart)} 
                         GROUP BY timestamp,resources.type
                         ORDER BY timestamp) AS t
@@ -2088,6 +2105,7 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
 
 def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
+    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query.append("resources.success = 0")
