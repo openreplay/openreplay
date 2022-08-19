@@ -7,6 +7,7 @@ import {
     LineChart, Line, Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -22,7 +23,7 @@ function MemoryConsumption(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
-          title="No recordings found"
+          title={NO_METRIC_DATA}
         >
           <>
             <div className="flex items-center justify-end mb-3">

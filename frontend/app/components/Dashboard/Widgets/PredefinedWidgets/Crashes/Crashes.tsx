@@ -7,6 +7,7 @@ import {
     LineChart, Line, Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -18,7 +19,7 @@ function Crashes(props: Props) {
     return (
         <NoContent
           size="small"
-          title="No recordings found"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

@@ -5,20 +5,20 @@ import {
   ComposedChart, Bar, CartesianGrid, Line, Legend, ResponsiveContainer, 
   XAxis, YAxis, Tooltip
 } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
     metric?: any
 }
 function ResourceLoadedVsVisuallyComplete(props: Props) {
-    const { data, metric } = props;
-    const gradientDef = Styles.gradientDef();
+    const { metric } = props;
 
     return (
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
-          title="No recordings found"
+          title={NO_METRIC_DATA}
         >
           <ResponsiveContainer height={ 240 } width="100%">
             <ComposedChart

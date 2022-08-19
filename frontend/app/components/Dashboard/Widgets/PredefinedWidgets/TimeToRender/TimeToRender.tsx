@@ -4,12 +4,12 @@ import { Styles, AvgLabel } from '../../common';
 import { withRequest } from 'HOCs'
 import { 
     AreaChart, Area,
-    BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    CartesianGrid, Tooltip,
+    ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
-import WidgetAutoComplete from 'Shared/WidgetAutoComplete';
 import { toUnderscore } from 'App/utils';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 const WIDGET_KEY = 'timeToRender';
 
@@ -35,7 +35,7 @@ function TimeToRender(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
-          title="No recordings found"
+          title={NO_METRIC_DATA}
         >
           <>
             <div className="flex items-center mb-3">

@@ -19,7 +19,7 @@ function BreakdownOfLoadedResources(props: Props) {
     return (
         <NoContent
           size="small"
-          title="No recordings found"
+          title="No data available"
           show={ metric.data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">

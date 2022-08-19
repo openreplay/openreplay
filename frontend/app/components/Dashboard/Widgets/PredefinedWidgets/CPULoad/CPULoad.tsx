@@ -19,7 +19,7 @@ function CPULoad(props: Props) {
     return (
         <NoContent
           size="small"
-          title="No recordings found"
+          title="No data available"
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >
