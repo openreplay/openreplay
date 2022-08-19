@@ -35,6 +35,7 @@ rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
+rm -rf ./chalicelib/core/sessions_viewed.py
 rm -rf ./chalicelib/core/significance.py
 rm -rf ./chalicelib/core/slack.py
 rm -rf ./chalicelib/core/socket_ios.py

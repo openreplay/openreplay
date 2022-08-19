@@ -2,7 +2,7 @@ from typing import List
 
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite
 from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -175,6 +175,9 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+    if data.bookmarked:
+        data.startDate,data.endDate = sessions_favorite.get_start_end_timestamp(project_id,user_id)
+
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)

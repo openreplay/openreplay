@@ -13,7 +13,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    custom_metrics, saved_search, integrations_global, sessions_viewed
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper, helper, captcha
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -51,9 +51,10 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     }
 
 
+@app.post('/{projectId}/sessions/search', tags=["sessions"])
 @app.post('/{projectId}/sessions/search2', tags=["sessions"])
-def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
+def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+                    context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
     return {'data': data}
 
@@ -69,7 +70,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: B
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
-        background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId, user_id=context.user_id,
+        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
                                   session_id=sessionId)
     return {
         'data': data
@@ -899,7 +900,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
-            background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId,
+            background_tasks.add_task(sessions_viewed.view_session, project_id=projectId,
                                       user_id=context.user_id, session_id=sessionId)
     return {'data': data}
 
