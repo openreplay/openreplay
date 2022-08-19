@@ -9,6 +9,7 @@ const AdminPrivilegeLabel = ({ user }) => {
         <>
             {user.isAdmin && <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Admin</span>}
             {user.isSuperAdmin && <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Owner</span>}
+            {!user.isAdmin && !user.isSuperAdmin && <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Member</span>}
         </>
     );
 };

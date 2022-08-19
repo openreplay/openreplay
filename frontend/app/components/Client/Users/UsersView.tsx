@@ -13,16 +13,13 @@ interface Props {
     isOnboarding?: boolean;
     account: any;
     isEnterprise: boolean;
-    limits: any;
 }
 function UsersView(props: Props) {
-    const { account, limits, isEnterprise, isOnboarding = false } = props;
+    const { account, isEnterprise, isOnboarding = false } = props;
     const { userStore, roleStore } = useStore();
     const userCount = useObserver(() => userStore.list.length);
     const roles = useObserver(() => roleStore.list);
     const { showModal } = useModal();
-
-    const reachedLimit = limits.remaining + userStore.modifiedCount <= 0;
     const isAdmin = account.admin || account.superAdmin;
 
     const editHandler = (user: any = null) => {
@@ -60,5 +57,4 @@ function UsersView(props: Props) {
 export default connect((state: any) => ({
     account: state.getIn(['user', 'account']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    limits: state.getIn(['user', 'account', 'limits', 'teamMember']),
 }))(UsersView);
