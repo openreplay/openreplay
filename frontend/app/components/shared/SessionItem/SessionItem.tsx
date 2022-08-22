@@ -108,7 +108,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         });
 
     return (
-        <div className={cn(stl.sessionItem, 'flex flex-col p-2')} id="session-item" onClick={(e) => e.stopPropagation()}>
+        <div className={cn(stl.sessionItem, 'flex flex-col py-2 px-4')} id="session-item" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start">
                 <div className={cn('flex items-center w-full')}>
                     {!compact && (
@@ -123,7 +123,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                                         [stl.userName]: !disableUser && hasUserId,
                                         'color-gray-medium': disableUser || !hasUserId,
                                     })}
-                                    onClick={() => !disableUser && !hasUserFilter && onUserClick(userId, userAnonymousId)}
+                                    onClick={() => !disableUser && !hasUserFilter && hasUserId ? onUserClick(userId, userAnonymousId) : null}
                                 >
                                     <TextEllipsis text={userDisplayName} maxWidth="200px" popupProps={{ inverted: true, size: 'tiny' }} />
                                 </div>

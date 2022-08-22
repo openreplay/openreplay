@@ -34,7 +34,7 @@ function DashboardList() {
       }
     >
       <div className="mt-3 border-b">
-        <div className="grid grid-cols-12 py-2 font-medium px-3">
+        <div className="grid grid-cols-12 py-3 font-medium px-6">
           <div className="col-span-8">Title</div>
           <div className="col-span-2">Visibility</div>
           <div className="col-span-2 text-right">Created</div>
@@ -49,7 +49,7 @@ function DashboardList() {
         )}
       </div>
 
-      <div className="w-full flex items-center justify-between pt-4">
+      <div className="w-full flex items-center justify-between pt-4 px-6">
         <div className="text-disabled-text">
           Showing{' '}
           <span className="font-semibold">{Math.min(list.length, dashboardStore.pageSize)}</span>{' '}

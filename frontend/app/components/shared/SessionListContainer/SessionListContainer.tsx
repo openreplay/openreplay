@@ -7,9 +7,7 @@ function SessionListContainer() {
         <div className="widget-wrapper">
             <SessionHeader />
             <div className="border-b" />
-            <div className="px-4">
-                <SessionList />
-            </div>
+            <SessionList />
         </div>
     );
 }

@@ -16,8 +16,8 @@ function MetricsView({ siteId }: Props) {
         metricStore.fetchList();
     }, []);
     return useObserver(() => (
-        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded py-4 px-6 border">
-            <div className="flex items-center mb-4 justify-between">
+        <div style={{ maxWidth: '1300px', margin: 'auto'}} className="bg-white rounded py-4 border">
+            <div className="flex items-center mb-4 justify-between px-6">
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Metrics" className="" />
                 </div>
@@ -26,7 +26,7 @@ function MetricsView({ siteId }: Props) {
                     <MetricsSearch />
                 </div>
             </div>
-            <div className="text-base text-disabled-text flex items-center">
+            <div className="text-base text-disabled-text flex items-center px-6">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />
                 Create custom Metrics to capture key interactions and track KPIs.
             </div>

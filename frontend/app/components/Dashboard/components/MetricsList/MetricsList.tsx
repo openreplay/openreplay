@@ -39,7 +39,7 @@ function MetricsList({ siteId }: { siteId: string }) {
       }
     >
       <div className="mt-3 border-b rounded bg-white">
-        <div className="grid grid-cols-12 py-2 font-medium px-3">
+        <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-3">Title</div>
           <div className="col-span-3">Owner</div>
           <div className="col-span-4">Visibility</div>
@@ -53,7 +53,7 @@ function MetricsList({ siteId }: { siteId: string }) {
         ))}
       </div>
 
-      <div className="w-full flex items-center justify-between pt-4">
+      <div className="w-full flex items-center justify-between pt-4 px-6">
         <div className="text-disabled-text">
           Showing{' '}
           <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out

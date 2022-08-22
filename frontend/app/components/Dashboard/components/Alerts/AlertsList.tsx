@@ -43,7 +43,7 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, f
       }
     >
       <div className="mt-3 border-b">
-        <div className="grid grid-cols-12 py-2 font-medium px-3">
+        <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-5">Title</div>
           <div className="col-span-2">Type</div>
           <div className="col-span-5 text-right">Modified</div>
@@ -56,7 +56,7 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, f
         ))}
       </div>
 
-      <div className="w-full flex items-center justify-between pt-4">
+      <div className="w-full flex items-center justify-between pt-4 px-6">
         <div className="text-disabled-text">
           Showing <span className="font-semibold">{Math.min(list.length, pageSize)}</span> out of{' '}
           <span className="font-semibold">{list.length}</span> Alerts

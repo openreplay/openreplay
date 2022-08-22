@@ -114,7 +114,7 @@ function SessionList(props: Props) {
             </NoContent>
 
             {total > 0 && (
-                <div className="w-full flex items-center justify-center py-6">
+                <div className="w-full flex items-center justify-center py-6 px-4">
                     <Pagination
                         page={currentPage}
                         totalPages={Math.ceil(total / 10)}
