@@ -16,12 +16,13 @@ import { withStore } from 'App/mstore';
 
 import APIClient from './api_client';
 import * as routes from './routes';
-import { OB_DEFAULT_TAB } from 'App/routes';
+import { OB_DEFAULT_TAB, isRoute } from 'App/routes';
 import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
 import { GLOBAL_DESTINATION_PATH } from 'App/constants/storageKeys';
+import SupportCallout from 'Shared/SupportCallout';
 
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
@@ -104,6 +105,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
             tenants: state.getIn(['user', 'tenants']),
             existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
             onboarding: state.getIn(['user', 'onboarding']),
+            isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' || state.getIn(['user', 'authDetails', 'edition']) === 'ee',
         };
     },
     {
@@ -169,9 +171,10 @@ class Router extends React.Component {
     }
 
     render() {
-        const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding } = this.props;
+        const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding, isEnterprise } = this.props;
         const siteIdList = sites.map(({ id }) => id).toJS();
         const hideHeader = (location.pathname && location.pathname.includes('/session/')) || location.pathname.includes('/assist/');
+        const isPlayer = isRoute(SESSION_PATH, location.pathname);
 
         return isLoggedIn ? (
             <ModalProvider>
@@ -228,6 +231,7 @@ class Router extends React.Component {
                         </Switch>
                     </Suspense>
                 </Loader>
+                {!isEnterprise && !isPlayer && <SupportCallout /> }
             </ModalProvider>
         ) : (
             <Suspense fallback={<Loader loading={true} className="flex-1" />}>
@@ -237,6 +241,7 @@ class Router extends React.Component {
                     {!existingTenant && <Route exact strict path={SIGNUP_PATH} component={Signup} />}
                     <Redirect to={LOGIN_PATH} />
                 </Switch>
+                {!isEnterprise && <SupportCallout /> }
             </Suspense>
         );
     }
