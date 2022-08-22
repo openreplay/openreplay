@@ -57,7 +57,7 @@ const Header = (props) => {
       Promise.all([
         userStore.fetchLimits(),
         notificationStore.fetchNotificationsCount(),
-        props.fetchMetadata(),
+        // props.fetchMetadata(),
       ]).then(() => {
         userStore.updateKey('initialDataFetched', true);
       });

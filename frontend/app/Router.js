@@ -89,13 +89,14 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
         const jwt = state.get('jwt');
         const changePassword = state.getIn(['user', 'account', 'changePassword']);
         const userInfoLoading = state.getIn(['user', 'fetchUserInfoRequest', 'loading']);
+        const metaLoading = state.getIn(['customFields', 'fetchRequest', 'loading']);
         return {
             jwt,
             siteId,
             changePassword,
             sites: state.getIn(['site', 'list']),
             isLoggedIn: jwt !== null && !changePassword,
-            loading: siteId === null || userInfoLoading,
+            loading: siteId === null || userInfoLoading || metaLoading,
             email: state.getIn(['user', 'account', 'email']),
             account: state.getIn(['user', 'account']),
             organisation: state.getIn(['user', 'account', 'name']),
@@ -125,15 +126,12 @@ class Router extends React.Component {
         }
     }
 
-    fetchInitialData = () => {
-        Promise.all([
-            this.props.fetchUserInfo().then(() => {
-                this.props.fetchSiteList().then(() => {
-                    const { mstore } = this.props;
-                    mstore.initClient();
-                });
-            }),
-        ]);
+    fetchInitialData = async () => {
+        await this.props.fetchUserInfo(),
+        await this.props.fetchSiteList()
+        const { mstore } = this.props;
+        mstore.initClient();
+        await this.props.fetchMetadata();
     };
 
     componentDidMount() {
