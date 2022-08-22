@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"openreplay/backend/internal/http/uuid"
+	"openreplay/backend/pkg/flakeid"
 	"strconv"
 	"time"
 
@@ -134,7 +135,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
-		StartTimestamp:  e.services.Flaker.ExtractTimestamp(tokenData.ID),
+		StartTimestamp:  int64(flakeid.ExtractTimestamp(tokenData.ID)),
 	})
 }
 

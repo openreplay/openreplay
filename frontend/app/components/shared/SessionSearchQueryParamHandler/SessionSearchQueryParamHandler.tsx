@@ -3,6 +3,7 @@ import { useHistory } from 'react-router';
 import { connect } from 'react-redux';
 import { addFilterByKeyAndValue, addFilter } from 'Duck/search';
 import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
+import { filtersMap } from 'App/types/filter/newFilter';
 
 interface Props {
   appliedFilter: any;
@@ -46,7 +47,12 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
       if (filterKey) {
         props.addFilterByKeyAndValue(filterKey, valueArr, operator, sourceOperator, sourceArr);
       } else {
-        console.warn(`Filter key ${key} not found`);
+        const _filters: any = { ...filtersMap };
+        const _filter = _filters[key];
+        _filter.value = valueArr;
+        _filter.operator = operator;
+        _filter.source = sourceArr;
+        props.addFilter(_filter);
       }
     }
   };
