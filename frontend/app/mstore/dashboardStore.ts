@@ -19,7 +19,7 @@ import Session from "./types/session";
 import Error from "./types/error";
 import { FilterKey } from "Types/filter/filterType";
 
-export interface IDashboardSotre {
+export interface IDashboardStore {
     dashboards: IDashboard[];
     selectedDashboard: IDashboard | null;
     dashboardInstance: IDashboard;
@@ -46,9 +46,14 @@ export interface IDashboardSotre {
 
     showAlertModal: boolean;
 
+    page: number
+    pageSize: number
+    dashboardsSearch: string
+    sort: any
+
     selectWidgetsByCategory: (category: string) => void;
     toggleAllSelectedWidgets: (isSelected: boolean) => void;
-    removeSelectedWidgetByCategory(category: string): void;
+    removeSelectedWidgetByCategory(category: Record<string, any>): void;
     toggleWidgetSelection(widget: IWidget): void;
 
     initDashboard(dashboard?: IDashboard): void;
@@ -67,6 +72,7 @@ export interface IDashboardSotre {
     getDashboardCount(): void;
     updateDashboard(dashboard: IDashboard): void;
     selectDashboardById(dashboardId: string): void;
+    getDashboardById(dashboardId: string): boolean;
     setSiteId(siteId: any): void;
     selectDefaultDashboard(): Promise<IDashboard>;
 
@@ -85,12 +91,12 @@ export interface IDashboardSotre {
     ): Promise<any>;
     setPeriod(period: any): void;
 }
-export default class DashboardStore implements IDashboardSotre {
+export default class DashboardStore implements IDashboardStore {
     siteId: any = null;
     // Dashbaord / Widgets
     dashboards: Dashboard[] = [];
     selectedDashboard: Dashboard | null = null;
-    dashboardInstance: IDashboard = new Dashboard();
+    dashboardInstance: Dashboard = new Dashboard();
     selectedWidgets: IWidget[] = [];
     currentWidget: Widget = new Widget();
     widgetCategories: any[] = [];
@@ -114,6 +120,12 @@ export default class DashboardStore implements IDashboardSotre {
     fetchingDashboard: boolean = false;
     sessionsLoading: boolean = false;
     showAlertModal: boolean = false;
+
+    // Pagination
+    page: number = 1
+    pageSize: number = 15
+    dashboardsSearch: string = ''
+    sort: any = {}
 
     constructor() {
         makeAutoObservable(this);
@@ -214,7 +226,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     fetch(dashboardId: string): Promise<any> {
-        this.fetchingDashboard = true;
+        this.setFetchingDashboard(true);
         return dashboardService
             .getDashboard(dashboardId)
             .then((response) => {
@@ -223,8 +235,12 @@ export default class DashboardStore implements IDashboardSotre {
                 });
             })
             .finally(() => {
-                this.fetchingDashboard = false;
+                this.setFetchingDashboard(false);
             });
+    }
+
+    setFetchingDashboard(value: boolean) {
+        this.fetchingDashboard = value;
     }
 
     save(dashboard: IDashboard): Promise<any> {
@@ -359,6 +375,18 @@ export default class DashboardStore implements IDashboardSotre {
             this.dashboards.find((d) => d.dashboardId == dashboardId) ||
             new Dashboard();
     };
+
+    getDashboardById = (dashboardId: string) => {
+        const dashboard = this.dashboards.find((d) => d.dashboardId == dashboardId)
+
+        if (dashboard) {
+            this.selectedDashboard = dashboard
+            return true;
+        } else {
+            this.selectedDashboard = null
+            return false;
+        }
+    }
 
     setSiteId = (siteId: any) => {
         this.siteId = siteId;

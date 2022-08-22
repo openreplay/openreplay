@@ -66,6 +66,7 @@ export default class ResourceLoadingTime extends React.PureComponent {
       <NoContent
         size="small"
         show={ data.chart.length === 0 }
+        title="No recordings found"
       >
         <React.Fragment>
           <div className="flex items-center mb-3">
@@ -96,6 +97,7 @@ export default class ResourceLoadingTime extends React.PureComponent {
             <NoContent
               size="small"
               show={ data.chart.size === 0 }
+              title="No recordings found"
             >
               <ResponsiveContainer height={ 200 } width="100%">
                 <AreaChart

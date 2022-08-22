@@ -18,7 +18,7 @@ const RANGE_LABELS = {
     [LAST_30_MINUTES]: "Last 30 Minutes",
     [TODAY]: "Today",
     [YESTERDAY]: "Yesterday",
-    [LAST_24_HOURS]: "Last 24 Hours",
+    [LAST_24_HOURS]: "Past 24 Hours",
     [LAST_7_DAYS]: "Last 7 Days",
     [LAST_30_DAYS]: "Last 30 Days",
     [THIS_MONTH]: "This Month",

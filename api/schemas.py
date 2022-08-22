@@ -100,10 +100,12 @@ class NotificationsViewSchema(BaseModel):
     endTimestamp: Optional[int] = Field(default=None)
 
 
-class JiraGithubSchema(BaseModel):
-    provider: str = Field(...)
-    username: str = Field(...)
+class GithubSchema(BaseModel):
     token: str = Field(...)
+
+
+class JiraSchema(GithubSchema):
+    username: str = Field(...)
     url: HttpUrl = Field(...)
 
     @validator('url')
@@ -560,6 +562,8 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
                 assert len(values["source"]) > 0 and isinstance(values["source"][0], int), \
                     f"source of type int if required for {PerformanceEventType.time_between_events}"
             else:
+                assert "source" in values, f"source is required for {values.get('type')}"
+                assert isinstance(values["source"], list), f"source of type list is required for {values.get('type')}"
                 for c in values["source"]:
                     assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
         elif values.get("type") == EventType.error and values.get("source") is None:

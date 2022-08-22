@@ -6,6 +6,7 @@ import {
     LineChart, Line, Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
+  import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -15,6 +16,7 @@ function SessionsAffectedByJSErrors(props: Props) {
     const { data, metric } = props;
     return (
         <NoContent
+          title={NO_METRIC_DATA}
           size="small"
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }

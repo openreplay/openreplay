@@ -712,13 +712,13 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                              event.value, value_key=e_k))
             elif event_type == events.event_type.ERROR.ui_type:
                 event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
-                event.source = tuple(event.source)
+                event.source = list(set(event.source))
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                              event.value, value_key=e_k))
                 if event.source[0] not in [None, "*", ""]:
-                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.value, value_key=s_k))
+                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
 
 
             # ----- IOS
@@ -877,7 +877,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s::integer", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s::integer", f.value,
+                                                 value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._request_body:
                         event_where.append(
@@ -885,7 +886,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         apply = True
                     elif f.type == schemas.FetchFilterType._response_body:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s::text", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s::text", f.value,
+                                                 value_key=e_k_f))
                         apply = True
                     else:
                         print(f"undefined FETCH filter: {f.type}")

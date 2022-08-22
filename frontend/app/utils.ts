@@ -53,7 +53,7 @@ export const cutURL = (url, prefix = '.../') => `${prefix + url.split('/').slice
 
 export const escapeRegExp = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-export function getRE(string, options) {
+export function getRE(string: string, options: string) {
     let re;
     try {
         re = new RegExp(string, options);
@@ -62,6 +62,20 @@ export function getRE(string, options) {
     }
     return re;
 }
+
+export const filterList = <T extends Record<string, any>>(
+    list: T[],
+    searchQuery: string,
+    testKeys: string[],
+    searchCb?: (listItem: T, query: RegExp
+) => boolean): T[] => {
+    if (searchQuery === '') return list;
+    const filterRE = getRE(searchQuery, 'i');
+    let _list = list.filter((listItem: T) => {
+        return testKeys.some((key) => filterRE.test(listItem[key]) || searchCb?.(listItem, filterRE));
+    });
+    return _list;
+  }
 
 export const getStateColor = (state) => {
     switch (state) {
@@ -239,10 +253,10 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
     return major > majorC || (major === majorC && minor > minorC) || (major === majorC && minor === minorC && patch >= patchC);
 };
 
-export const sliceListPerPage = (list, page, perPage = 10) => {
+export const sliceListPerPage = <T extends Array<any>>(list: T, page: number, perPage = 10): T => {
     const start = page * perPage;
     const end = start + perPage;
-    return list.slice(start, end);
+    return list.slice(start, end) as T;
 };
 
 export const positionOfTheNumber = (min, max, value, length) => {
@@ -324,8 +338,12 @@ export const fetchErrorCheck = async (response: any) => {
 export const cleanSessionFilters = (data: any) => {
     const { filters, ...rest } = data;
     const _fitlers = filters.filter((f: any) => {
-        if (f.operator === 'isAny' || f.operator === 'onAny') { return true } // ignore filter with isAny/onAny operator
-        if (Array.isArray(f.filters) && f.filters.length > 0) { return true } // ignore subfilters
+        if (f.operator === 'isAny' || f.operator === 'onAny') {
+            return true;
+        } // ignore filter with isAny/onAny operator
+        if (Array.isArray(f.filters) && f.filters.length > 0) {
+            return true;
+        } // ignore subfilters
 
         return f.value !== '' && Array.isArray(f.value) && f.value.length > 0;
     });
@@ -343,3 +361,18 @@ export const setSessionFilter = (filter: any) => {
 export const compareJsonObjects = (obj1: any, obj2: any) => {
     return JSON.stringify(obj1) === JSON.stringify(obj2);
 };
+
+export const getInitials = (name: any) => {
+    const names = name.split(' ');
+    return names.slice(0, 2).map((n: any) => n[0]).join('');
+}
+export function getTimelinePosition(value: any, scale: any) {
+    const pos = value * scale;
+    return pos > 100 ? 100 : pos;
+}
+
+export function millisToMinutesAndSeconds(millis: any) {
+    const minutes = Math.floor(millis / 60000);
+    const seconds: any = ((millis % 60000) / 1000).toFixed(0);
+    return minutes + 'm' + (seconds < 10 ? '0' : '') + seconds + 's';
+}

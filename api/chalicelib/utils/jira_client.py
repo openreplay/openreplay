@@ -18,7 +18,7 @@ class JiraManager:
         self._config = {"JIRA_PROJECT_ID": project_id, "JIRA_URL": url, "JIRA_USERNAME": username,
                         "JIRA_PASSWORD": password}
         try:
-            self._jira = JIRA(url, basic_auth=(username, password), logging=True, max_retries=1)
+            self._jira = JIRA(url, basic_auth=(username, password), logging=True, max_retries=0, timeout=3)
         except Exception as e:
             print("!!! JIRA AUTH ERROR")
             print(e)

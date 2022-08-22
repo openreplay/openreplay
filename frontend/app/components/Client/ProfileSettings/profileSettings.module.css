@@ -2,6 +2,7 @@
 .left {
   padding: 40px;
   width: 320px;
+  font-weight: 300;
   & .info {
     color: $gray-medium;
     font-weight: 300;

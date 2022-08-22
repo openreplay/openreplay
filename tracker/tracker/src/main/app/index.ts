@@ -115,8 +115,8 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        localStorage: window.localStorage,
-        sessionStorage: window.sessionStorage,
+        localStorage: null,
+        sessionStorage: null,
       },
       options,
     )

@@ -1,11 +1,12 @@
 import { goTo as listsGoTo } from './lists';
 import { update, getState } from './store';
-import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState }  from './MessageDistributor/MessageDistributor';
+import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE }  from './MessageDistributor/MessageDistributor';
 
 const fps = 60;
 const performance = window.performance || { now: Date.now.bind(Date) };
 const requestAnimationFrame =
   window.requestAnimationFrame ||
+  // @ts-ignore
   window.webkitRequestAnimationFrame ||
   // @ts-ignore
   window.mozRequestAnimationFrame ||
@@ -13,7 +14,7 @@ const requestAnimationFrame =
   window.oRequestAnimationFrame ||
   // @ts-ignore
   window.msRequestAnimationFrame ||
-  (callback => window.setTimeout(() => { callback(performance.now()); }, 1000 / fps));
+  ((callback: (args: any) => void) => window.setTimeout(() => { callback(performance.now()); }, 1000 / fps));
 const cancelAnimationFrame =
   window.cancelAnimationFrame ||
   // @ts-ignore
@@ -44,6 +45,7 @@ export const INITIAL_STATE = {
   inspectorMode: false,
   live: false,
   livePlay: false,
+  liveTimeTravel: false,
 } as const;
 
 
@@ -52,7 +54,7 @@ export const INITIAL_NON_RESETABLE_STATE = {
   skipToIssue: initialSkipToIssue,
   autoplay: initialAutoplay,
   speed: initialSpeed,
-  showEvents: initialShowEvents
+  showEvents: initialShowEvents,
 }
 
 export default class Player extends MessageDistributor {
@@ -71,7 +73,7 @@ export default class Player extends MessageDistributor {
     let prevTime = getState().time;
     let animationPrevTime = performance.now();
     
-    const nextFrame = (animationCurrentTime) => {
+    const nextFrame = (animationCurrentTime: number) => {
       const { 
         speed, 
         skip,
@@ -91,7 +93,7 @@ export default class Player extends MessageDistributor {
 
       let time = prevTime + diffTime;
 
-      const skipInterval = skip && skipIntervals.find(si => si.contains(time));  // TODO: good skip by messages
+      const skipInterval = skip && skipIntervals.find((si: Node) => si.contains(time));  // TODO: good skip by messages
       if (skipInterval) time = skipInterval.end;
 
       const fmt = super.getFirstMessageTime();
@@ -117,9 +119,12 @@ export default class Player extends MessageDistributor {
         });
       }
 
-      if (live && time > endTime) {
+      // throttle store updates
+      // TODO: make it possible to change frame rate
+      if (live && time - endTime > 100) {
         update({
           endTime: time,
+          livePlay: endTime - time < 900
         });
       }
       this._setTime(time);
@@ -151,21 +156,23 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  jump(time = getState().time, index) {
-    const { live } = getState();
-    if (live) return;
+  jump(time = getState().time, index: number) {
+    const { live, liveTimeTravel, endTime } = getState();
+    if (live && !liveTimeTravel) return;
     
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
       // this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
         this._startAnimation();
-        update({ livePlay: time === getState().endTime });
+        // throttilg the redux state update from each frame to nearly half a second
+        // which is better for performance and component rerenders
+        update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     } else {
       //this._animationFrameRequestId = requestAnimationFrame(() => {
         this._setTime(time, index);
-        update({ livePlay: time === getState().endTime });
+        update({ livePlay: Math.abs(time - endTime) < 500 });
       //});
     }
   }
@@ -176,7 +183,7 @@ export default class Player extends MessageDistributor {
     update({ skip });
   }
 
-  toggleInspectorMode(flag, clickCallback) {
+  toggleInspectorMode(flag: boolean, clickCallback?: (args: any) => void) {
     if (typeof flag !== 'boolean') {
       const { inspectorMode } = getState();
       flag = !inspectorMode;
@@ -197,7 +204,7 @@ export default class Player extends MessageDistributor {
     this.setMarkedTargets(targets);
   }
 
-  activeTarget(index) {
+  activeTarget(index: number) {
     this.setActiveTarget(index);
   }
   
@@ -219,7 +226,7 @@ export default class Player extends MessageDistributor {
     update({ autoplay });
   }
   
-  toggleEvents(shouldShow = undefined) {
+  toggleEvents(shouldShow?: boolean) {
     const showEvents = shouldShow || !getState().showEvents;
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
     update({ showEvents });
@@ -244,6 +251,20 @@ export default class Player extends MessageDistributor {
     const { speed } = getState();
     this._updateSpeed(Math.max(1, speed/2));
   }
+
+  toggleTimetravel() {
+    if (!getState().liveTimeTravel) {
+      this.reloadWithUnprocessedFile()
+      this.play()
+    }
+  }
+  
+  jumpToLive() {
+    cancelAnimationFrame(this._animationFrameRequestId);
+    this._setTime(getState().endTime);
+    this._startAnimation();
+    update({ livePlay: true });
+}
 
   clean() {
     this.pause();

@@ -1,5 +1,5 @@
 import React from 'react';
-import DashboardStore, { IDashboardSotre } from './dashboardStore';
+import DashboardStore, { IDashboardStore } from './dashboardStore';
 import MetricStore, { IMetricStore } from './metricStore';
 import UserStore from './userStore';
 import RoleStore from './roleStore';
@@ -10,9 +10,10 @@ import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
 import NotificationStore from './notificationStore';
 import ErrorStore from './errorStore';
+import SessionStore from './sessionStore';
 
 export class RootStore {
-    dashboardStore: IDashboardSotre;
+    dashboardStore: IDashboardStore;
     metricStore: IMetricStore;
     funnelStore: FunnelStore;
     settingsStore: SettingsStore;
@@ -21,6 +22,7 @@ export class RootStore {
     auditStore: AuditStore;
     errorStore: ErrorStore;
     notificationStore: NotificationStore
+    sessionStore: SessionStore;
 
     constructor() {
         this.dashboardStore = new DashboardStore();
@@ -32,6 +34,7 @@ export class RootStore {
         this.auditStore = new AuditStore();
         this.errorStore = new ErrorStore();
         this.notificationStore = new NotificationStore();
+        this.sessionStore = new SessionStore();
     }
 
     initClient() {

@@ -5,19 +5,20 @@ import {
   ComposedChart, Bar, CartesianGrid, Line, Legend, ResponsiveContainer, 
   XAxis, YAxis, Tooltip
 } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
     metric?: any
 }
 function ResourceLoadedVsVisuallyComplete(props: Props) {
-    const { data, metric } = props;
-    const gradientDef = Styles.gradientDef();
+    const { metric } = props;
 
     return (
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title={NO_METRIC_DATA}
         >
           <ResponsiveContainer height={ 240 } width="100%">
             <ComposedChart
@@ -50,8 +51,8 @@ function ResourceLoadedVsVisuallyComplete(props: Props) {
                 />
                 <Tooltip {...Styles.tooltip} />
                 <Legend />
-                <Bar minPointSize={1} yAxisId="right" name="Images" type="monotone" dataKey="types.img" stackId="a" fill={Styles.colors[0]} />
-                <Bar yAxisId="right" name="Scripts" type="monotone" dataKey="types.script" stackId="a" fill={Styles.colors[2]} />
+                <Bar minPointSize={1} yAxisId="right" name="Images" type="monotone" dataKey="types.img" stackId="a" fill={Styles.colors[2]} />
+                <Bar yAxisId="right" name="Scripts" type="monotone" dataKey="types.script" stackId="a" fill={Styles.colors[3]} />
                 <Bar yAxisId="right" name="CSS" type="monotone" dataKey="types.stylesheet" stackId="a" fill={Styles.colors[4]} />
                 <Line
                   yAxisId="left"

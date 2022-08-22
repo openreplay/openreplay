@@ -1,10 +1,10 @@
 import React from 'react';
 import cn from 'classnames';
-import SVG from 'UI/SVG';
+import SVG, { IconNames } from 'UI/SVG';
 import styles from './icon.module.css';
 
-interface IProps {
-  name: string
+interface IProps { 
+  name: IconNames
   size?: number | string
   height?: number
   width?: number

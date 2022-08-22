@@ -6,3 +6,8 @@
     background-color: $teal !important;
     border-color: $teal !important;
 }
+
+
+.DateRangePicker__Date .DateRangePicker__CalendarHighlight--single {
+    border-color: $teal !important;
+}

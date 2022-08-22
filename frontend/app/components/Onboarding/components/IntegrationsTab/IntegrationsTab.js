@@ -17,17 +17,17 @@ function IntegrationsTab() {
       <div className="w-8/12 px-4">
         <h1 className="text-3xl font-bold flex items-center mb-4">
           <span>🔌</span>
-          <div className="ml-3">Plugins</div>
+          <div className="ml-3">Integrations</div>
         </h1>
-        <Integrations hideHeader plugins />
+        <Integrations hideHeader={true} />
 
-        <div className="my-4"/>
+        {/* <div className="my-4"/>
         <h1 className="text-3xl font-bold flex items-center mb-4">
           <span>🔌</span>
           <div className="ml-3">Integrations</div>
         </h1>
 
-        <Integrations hideHeader />
+        <Integrations hideHeader /> */}
         
         {/* <div className="mt-6">
           <div className="font-bold mb-4">How are you handling store management?</div>

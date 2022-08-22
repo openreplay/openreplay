@@ -29,6 +29,7 @@ export default class ResourceLoadedVsVisuallyComplete extends React.PureComponen
       <Loader loading={ loading } size="small">
         <NoContent
           size="small"
+          title="No recordings found"
           show={ data.size === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">

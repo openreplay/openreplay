@@ -2,6 +2,7 @@ import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import Bar from './Bar';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -19,7 +20,9 @@ function SessionsPerBrowser(props: Props) {
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
+          style={{ minHeight: 220 }}
         >
           <div className="w-full" style={{ height: '240px' }}>
             {metric.data.chart.map((item, i) => 

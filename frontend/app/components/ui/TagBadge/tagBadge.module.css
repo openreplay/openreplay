@@ -12,7 +12,7 @@
   margin-right: 8px;
   font-weight: 300;
   user-select: none;
-  text-transform: capitalize;
+  /* text-transform: capitalize; */
   color: $gray-dark !important;
 
   &[data-outline=true] {

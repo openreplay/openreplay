@@ -1,18 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { Loader, NoContent, Icon, Popup } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer } from 'recharts';
-import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidget.module.css';
-import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
+import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { init, edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
-import APIClient from 'App/api_client';
 import { setShowAlerts } from 'Duck/dashboard';
 import CustomMetriLineChart from '../CustomMetriLineChart';
 import CustomMetricPieChart from '../CustomMetricPieChart';
 import CustomMetricPercentage from '../CustomMetricPercentage';
 import CustomMetricTable from '../CustomMetricTable';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 const customParams = rangeName => {
   const params = { density: 70 }
@@ -104,6 +103,7 @@ function CustomMetricWidget(props: Props) {
         <Loader loading={ loading } size="small">
           <NoContent
             size="small"
+            title={NO_METRIC_DATA}
             show={ data.length === 0 }
           >
             <ResponsiveContainer height={ 240 } width="100%">

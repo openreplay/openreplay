@@ -5,6 +5,7 @@ import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/search';
+import SessionSearchQueryParamHandler from 'Shared/SessionSearchQueryParamHandler';
 
 interface Props {
   appliedFilter: any;
@@ -19,7 +20,7 @@ function SessionSearch(props: Props) {
 
   const onAddFilter = (filter: any) => {
     props.addFilter(filter);
-  }
+  };
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     const newFilters = appliedFilter.filters.map((_filter: any, i: any) => {
@@ -31,10 +32,10 @@ function SessionSearch(props: Props) {
     });
 
     props.edit({
-        ...appliedFilter,
-        filters: newFilters,
+      ...appliedFilter,
+      filters: newFilters,
     });
-  }
+  };
 
   const onRemoveFilter = (filterIndex: any) => {
     const newFilters = appliedFilter.filters.filter((_filter: any, i: any) => {
@@ -44,51 +45,59 @@ function SessionSearch(props: Props) {
     props.edit({
       filters: newFilters,
     });
-  }
+  };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
     props.edit({
       eventsOrder: value,
     });
-  }
+  };
 
-  return (hasEvents || hasFilters) ? (
-    <div className="border bg-white rounded mt-4">
-      <div className="p-5">
-        <FilterList
-          filter={appliedFilter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-          saveRequestPayloads={saveRequestPayloads}
-        />
-      </div>
+  return (
+    <>
+      <SessionSearchQueryParamHandler />
+      {hasEvents || hasFilters ? (
+        <div className="border bg-white rounded mt-4">
+          <div className="p-5">
+            <FilterList
+              filter={appliedFilter}
+              onUpdateFilter={onUpdateFilter}
+              onRemoveFilter={onRemoveFilter}
+              onChangeEventsOrder={onChangeEventsOrder}
+              saveRequestPayloads={saveRequestPayloads}
+            />
+          </div>
 
-      <div className="border-t px-5 py-1 flex items-center -mx-2">
-        <div>
-          <FilterSelection
-            filter={undefined}
-            onFilterClick={onAddFilter}
-          >
-            {/* <IconButton primaryText label="ADD STEP" icon="plus" /> */}
-            <Button
-              variant="text-primary"
-              className="mr-2"
-              // onClick={() => setshowModal(true)}
-              icon="plus">
-                ADD STEP
-            </Button>
-          </FilterSelection>
+          <div className="border-t px-5 py-1 flex items-center -mx-2">
+            <div>
+              <FilterSelection filter={undefined} onFilterClick={onAddFilter}>
+                {/* <IconButton primaryText label="ADD STEP" icon="plus" /> */}
+                <Button
+                  variant="text-primary"
+                  className="mr-2"
+                  // onClick={() => setshowModal(true)}
+                  icon="plus"
+                >
+                  ADD STEP
+                </Button>
+              </FilterSelection>
+            </div>
+            <div className="ml-auto flex items-center">
+              <SaveFilterButton />
+            </div>
+          </div>
         </div>
-        <div className="ml-auto flex items-center">
-          <SaveFilterButton />
-        </div>
-      </div>
-    </div>
-  ) : <></>;
+      ) : (
+        <></>
+      )}
+    </>
+  );
 }
 
-export default connect((state: any) => ({
-  saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
-  appliedFilter: state.getIn([ 'search', 'instance' ]),
-}), { edit, addFilter })(SessionSearch);
+export default connect(
+  (state: any) => ({
+    saveRequestPayloads: state.getIn(['site', 'instance', 'saveRequestPayloads']),
+    appliedFilter: state.getIn(['search', 'instance']),
+  }),
+  { edit, addFilter }
+)(SessionSearch);

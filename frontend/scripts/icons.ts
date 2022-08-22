@@ -68,8 +68,10 @@ const plugins = (removeFill = true) => {
         fs.writeFileSync(`${UI_DIRNAME}/SVG.tsx`, `
 import React from 'react';
 
+export type IconNames = ${icons.map(icon => "'"+ icon.slice(0, -4) + "'").join(' | ')};
+
 interface Props {
-    name: string;
+    name: IconNames;
     size?: number | string;
     width?: number | string;
     height?: number | string;

@@ -4,19 +4,22 @@ import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { 
     BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
     metric?: any
 }
 function ErrorsByOrigin(props: Props) {
-    const { data, metric } = props;
+    const { metric } = props;
+
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

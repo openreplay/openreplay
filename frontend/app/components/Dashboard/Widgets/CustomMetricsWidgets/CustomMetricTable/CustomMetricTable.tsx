@@ -2,7 +2,7 @@ import React from 'react'
 import { Table } from '../../common';
 import { List } from 'immutable';
 import { filtersMap } from 'Types/filter/newFilter';
-import { NoContent } from 'UI';
+import { NoContent, Icon } from 'UI';
 import { tableColumnName } from 'App/constants/filterOptions';
 import { numberWithCommas } from 'App/utils';
 
@@ -49,19 +49,29 @@ function CustomMetricTable(props: Props) {
         onClick(filters);
     }
     return (
-        <div className="" style={{ maxHeight: '240px'}}>
-           <NoContent show={data.values && data.values.length === 0} size="small">
-                <Table
-                    small
-                    cols={ getColumns(metric) }
-                    rows={ rows }
-                    rowClass="group"
-                    onRowClick={ onClickHandler }
-                    isTemplate={isTemplate}
-                />
-           </NoContent>
-        </div>
-    )
+      <div className="" style={{ height: 240 }}>
+        <NoContent
+          style={{ minHeight: 220 }}
+          show={data.values && data.values.length === 0}
+          size="small"
+          title={
+            <div className="flex items-center">
+              <Icon name="info-circle" className="mr-2" size="18" />
+              No data for the selected time period
+            </div>
+          }
+        >
+          <Table
+            small
+            cols={getColumns(metric)}
+            rows={rows}
+            rowClass="group"
+            onRowClick={onClickHandler}
+            isTemplate={isTemplate}
+          />
+        </NoContent>
+      </div>
+    );
 }
 
 export default CustomMetricTable;

@@ -45,6 +45,7 @@ ENV TZ=UTC \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
+    AWS_SKIP_SSL_VALIDATION=false \
     CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
     ASSETS_HEADERS="{ \"Cookie\": \"ABv=3;\" }" \

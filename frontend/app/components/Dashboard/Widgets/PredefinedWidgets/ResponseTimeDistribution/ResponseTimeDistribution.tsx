@@ -5,6 +5,7 @@ import {
   ComposedChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, 
   XAxis, YAxis, ReferenceLine, Tooltip, Legend
 } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 
 const PercentileLine = props => {
@@ -49,6 +50,7 @@ function ResponseTimeDistribution(props: Props) {
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

@@ -7,6 +7,7 @@ import {
     LineChart, Line, Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -18,6 +19,7 @@ function Crashes(props: Props) {
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >
@@ -40,7 +42,7 @@ function Crashes(props: Props) {
                   name="Crashes"
                   type="monotone"
                   dataKey="count"
-                  stroke={Styles.colors[0]}
+                  stroke={Styles.strokeColor}
                   fillOpacity={ 1 }
                   strokeWidth={ 2 }
                   strokeOpacity={ 0.8 }

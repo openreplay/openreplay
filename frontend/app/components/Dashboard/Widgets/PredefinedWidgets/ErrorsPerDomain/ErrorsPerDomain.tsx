@@ -3,6 +3,7 @@ import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { numberWithCommas } from 'App/utils';
 import Bar from 'App/components/Dashboard/Widgets/ErrorsPerDomain/Bar';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -17,6 +18,7 @@ function ErrorsPerDomain(props: Props) {
           size="small"
           show={ metric.data.chart.length === 0 }
           style={{ height: '240px'}}
+          title={NO_METRIC_DATA}
         >
           <div className="w-full" style={{ height: '240px' }}>
             {metric.data.chart.map((item, i) => 

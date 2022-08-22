@@ -9,7 +9,7 @@ export const CUSTOM_RANGE = "CUSTOM_RANGE";
 const DATE_RANGE_LABELS = {
     // LAST_30_MINUTES: '30 Minutes',
     // TODAY: 'Today',
-    LAST_24_HOURS: "Last 24 Hours",
+    LAST_24_HOURS: "Past 24 Hours",
     // YESTERDAY: 'Yesterday',
     LAST_7_DAYS: "Past 7 Days",
     LAST_30_DAYS: "Past 30 Days",

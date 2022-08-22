@@ -16,6 +16,7 @@ export default class ResponseTime extends React.PureComponent {
         <NoContent
           size="small"
           show={ data.partition && data.partition.size === 0 }
+          title="No recordings found"
         >          
           <div className="w-full pt-3" style={{ height: '240px' }}>
             {data.partition && data.partition.map((item, i) => 

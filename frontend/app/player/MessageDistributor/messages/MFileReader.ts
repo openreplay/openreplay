@@ -8,9 +8,9 @@ import RawMessageReader from './RawMessageReader';
 // which should be probably somehow incapsulated
 export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
-  private currentTime: number = 0
+  private currentTime: number
   public error: boolean = false
-  constructor(data: Uint8Array, private readonly startTime: number) {
+  constructor(data: Uint8Array, private startTime?: number) {
     super(data)
   }
 
@@ -60,6 +60,9 @@ export default class MFileReader extends RawMessageReader {
     }
 
     if (rMsg.tp === "timestamp") {
+      if (!this.startTime) {
+        this.startTime = rMsg.timestamp
+      }
       this.currentTime = rMsg.timestamp - this.startTime
       return this.next()
     } 
@@ -68,6 +71,7 @@ export default class MFileReader extends RawMessageReader {
       time: this.currentTime,
       _index: this.pLastMessageID,
     })
+
     return [msg, this.pLastMessageID]
   }
 }

@@ -23,9 +23,9 @@ export default class RemoteControl {
   private agentID: string | null = null
 
   constructor(
-    private options: AssistOptions,
-    private onGrand: (sting?) => void, 
-    private onRelease: (sting?) => void) {}
+    private readonly options: AssistOptions,
+    private readonly onGrand: (sting?) => void, 
+    private readonly onRelease: (sting?) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -56,7 +56,7 @@ export default class RemoteControl {
       } else {
         this.releaseControl(id)
       }
-    }).catch()
+    }).catch(e => console.error(e))
   }
   grantControl = (id: string) => {
     this.agentID = id

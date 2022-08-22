@@ -18,9 +18,6 @@
   height: 65px;
   padding-left: 30px;
   padding-right: 0;
-  &[data-is-live=true] {
-    padding: 0;
-  }
 }
 
 .buttonsLeft {

@@ -37,7 +37,7 @@ function AlertTriggersModal(props: Props) {
                 { count > 0 && (
                     <div className="">
                         <Button
-                            loading={loading}
+                            // loading={loading} // TODO should use the different loading state for this
                             variant="text"
                             onClick={onClearAll}
                             disabled={count === 0}

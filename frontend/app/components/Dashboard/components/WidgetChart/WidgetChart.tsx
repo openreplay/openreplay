@@ -79,8 +79,8 @@ function WidgetChart(props: Props) {
     const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
     useEffect(() => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
-          prevMetricRef.current = metric;
-          return
+            prevMetricRef.current = metric;
+            return
         };
         prevMetricRef.current = metric;
         const timestmaps = drillDownPeriod.toTimestamps();
@@ -106,10 +106,11 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'predefined') {
+            const defaultMetric = metric.data.chart.length === 0 ? metricWithData : metric
             if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
-            return <WidgetPredefinedChart isTemplate={isTemplate} metric={metric} data={data} predefinedKey={metric.predefinedKey} />
+            return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data} predefinedKey={metric.predefinedKey} />
         }
 
         if (metricType === 'timeseries') {
@@ -179,7 +180,7 @@ function WidgetChart(props: Props) {
     }
     return (
         <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
-            {renderChart()}
+            <div style={{ minHeight: isOverviewWidget ? 100 : 240 }}>{renderChart()}</div>
         </Loader>
     );
 }

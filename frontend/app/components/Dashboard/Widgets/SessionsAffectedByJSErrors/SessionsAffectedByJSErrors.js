@@ -36,6 +36,7 @@ export default class SessionsAffectedByJSErrors extends React.PureComponent {
           <NoContent
             size="small"
             show={ data.chart.length === 0 }
+            title="No recordings found"
           >
             <ResponsiveContainer height={ 207 } width="100%">
               <ComposedChart

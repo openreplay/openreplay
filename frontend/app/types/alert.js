@@ -12,7 +12,7 @@ conditions.forEach(c => { conditionsMap[c.value] = c });
 export default Record({
   alertId: '',
   projectId: undefined,
-  name: 'New Alert',
+  name: 'Untitled Alert',
   description: '',
   active: true,
   currentPeriod: 15,
