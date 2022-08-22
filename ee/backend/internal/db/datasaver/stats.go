@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/db/clickhouse"
-	. "openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
-	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/messages"
 )
 
 var ch clickhouse.Connector
@@ -23,26 +23,26 @@ func (si *Saver) InitStats() {
 
 }
 
-func (si *Saver) InsertStats(session *Session, msg Message) error {
+func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error {
 	switch m := msg.(type) {
 	// Web
-	case *SessionEnd:
+	case *messages.SessionEnd:
+		// TODO: get issue_types and base_referrer before session end
 		return ch.InsertWebSession(session)
-	case *PerformanceTrackAggr:
+	case *messages.PerformanceTrackAggr:
+		// TODO: page_path
 		return ch.InsertWebPerformanceTrackAggr(session, m)
-	case *ClickEvent:
+	case *messages.ClickEvent:
 		return ch.InsertWebClickEvent(session, m)
-	case *InputEvent:
+	case *messages.InputEvent:
 		return ch.InsertWebInputEvent(session, m)
-		// Unique for Web
-	case *PageEvent:
-		ch.InsertWebPageEvent(session, m)
-	case *ResourceEvent:
+	// Unique for Web
+	case *messages.PageEvent:
+		return ch.InsertWebPageEvent(session, m)
+	case *messages.ResourceEvent:
 		return ch.InsertWebResourceEvent(session, m)
-	case *ErrorEvent:
+	case *messages.ErrorEvent:
 		return ch.InsertWebErrorEvent(session, m)
-	case *LongTask:
-		return ch.InsertLongtask(session, m)
 	}
 	return nil
 }
@@ -55,10 +55,5 @@ func (si *Saver) CommitStats() error {
 		}
 	default:
 	}
-	errCommit := ch.Commit()
-	errPrepare := ch.Prepare()
-	if errCommit != nil {
-		return errCommit
-	}
-	return errPrepare
+	return ch.Commit()
 }
