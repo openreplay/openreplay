@@ -22,7 +22,7 @@ class MessageCodec(Codec):
         if message_id == <%= msg.id %>:
             return <%= msg.name %>(
                 <%= msg.attributes.map { |attr| 
-                    "#{attr.name.underscore}=self.read_#{attr.type.to_s}(reader)" }
+                    "#{attr.name.snake_case}=self.read_#{attr.type.to_s}(reader)" }
                     .join ",\n                "
                 %>
             )

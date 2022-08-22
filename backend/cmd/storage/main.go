@@ -2,8 +2,7 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/failover"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"strconv"
@@ -12,9 +11,10 @@ import (
 
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/failover"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/queue/types"
 	s3storage "openreplay/backend/pkg/storage"
 )
 
@@ -43,14 +43,17 @@ func main() {
 		[]string{
 			cfg.TopicTrigger,
 		},
-		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			switch m := msg.(type) {
-			case *messages.SessionEnd:
-				if err := srv.UploadKey(strconv.FormatUint(sessionID, 10), 5); err != nil {
-					sessionFinder.Find(sessionID, m.Timestamp)
+		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
+			for iter.Next() {
+				if iter.Type() == messages.MsgSessionEnd {
+					msg := iter.Message().Decode().(*messages.SessionEnd)
+					if err := srv.UploadKey(strconv.FormatUint(sessionID, 10), 5); err != nil {
+						log.Printf("can't find session: %d", sessionID)
+						sessionFinder.Find(sessionID, msg.Timestamp)
+					}
+					// Log timestamp of last processed session
+					counter.Update(sessionID, time.UnixMilli(meta.Timestamp))
 				}
-				// Log timestamp of last processed session
-				counter.Update(sessionID, time.UnixMilli(meta.Timestamp))
 			}
 		},
 		true,

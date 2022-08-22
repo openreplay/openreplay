@@ -1,5 +1,12 @@
 // Auto-generated, do not edit
 package messages
+
+const (
+<% $messages.each do |msg| %>
+    Msg<%= msg.name %> = <%= msg.id %>
+<% end %>
+)
+
 <% $messages.each do |msg| %>
 type <%= msg.name %> struct {
 	message
@@ -12,8 +19,23 @@ func (msg *<%= msg.name %>) Encode() []byte {
 	buf[0] = <%= msg.id %>
 	p := 1
 <%= msg.attributes.map { |attr| 
-"	p = Write#{attr.type.to_s.camel_case}(msg.#{attr.name}, buf, p)" }.join "\n" %>
+"	p = Write#{attr.type.to_s.pascal_case}(msg.#{attr.name}, buf, p)" }.join "\n" %>
 	return buf[:p]
+}
+
+func (msg *<%= msg.name %>) EncodeWithIndex() []byte {
+    encoded := msg.Encode()
+    if IsIOSType(msg.TypeID()) {
+        return encoded
+    }
+    data := make([]byte, len(encoded)+8)
+    copy(data[8:], encoded[:])
+    binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+    return data
+}
+
+func (msg *<%= msg.name %>) Decode() Message {
+	return msg
 }
 
 func (msg *<%= msg.name %>) TypeID() int {

@@ -2,15 +2,15 @@
 import UIKit
 
 enum ASMessageType: UInt64 {
-<%= $messages.map { |msg| "    case #{msg.name.first_lower} = #{msg.id}" }.join "\n" %>
+<%= $messages.map { |msg| "    case #{msg.name.camel_case} = #{msg.id}" }.join "\n" %>
 }
 <% $messages.each do |msg| %>
-class AS<%= msg.name.to_s.camel_case %>: ASMessage {
+class AS<%= msg.name.to_s.pascal_case %>: ASMessage {
 <%= msg.attributes[2..-1].map { |attr| "    let #{attr.property}: #{attr.type_swift}" }.join "\n" %>
 
     init(<%= msg.attributes[2..-1].map { |attr| "#{attr.property}: #{attr.type_swift}" }.join ", " %>) {
 <%= msg.attributes[2..-1].map { |attr| "        self.#{attr.property} = #{attr.property}" }.join "\n" %>
-        super.init(messageType: .<%= "#{msg.name.first_lower}" %>)
+        super.init(messageType: .<%= "#{msg.name.camel_case}" %>)
     }
 
     override init?(genericMessage: GenericMessage) {
@@ -30,7 +30,7 @@ class AS<%= msg.name.to_s.camel_case %>: ASMessage {
     }
 
     override var description: String {
-        return "-->> <%= msg.name.to_s.camel_case %>(<%= "#{msg.id}"%>): timestamp:\(timestamp) <%= msg.attributes[2..-1].map { |attr| "#{attr.property}:\\(#{attr.property})" }.join " "%>";
+        return "-->> <%= msg.name.to_s.pascal_case %>(<%= "#{msg.id}"%>): timestamp:\(timestamp) <%= msg.attributes[2..-1].map { |attr| "#{attr.property}:\\(#{attr.property})" }.join " "%>";
     }
 }
 <% end %>

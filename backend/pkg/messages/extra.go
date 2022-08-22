@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 )
@@ -18,6 +19,21 @@ func (msg *SessionSearch) Encode() []byte {
 	p = WriteUint(msg.Timestamp, buf, p)
 	p = WriteUint(msg.Partition, buf, p)
 	return buf[:p]
+}
+
+func (msg *SessionSearch) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *SessionSearch) Decode() Message {
+	return msg
 }
 
 func (msg *SessionSearch) TypeID() int {

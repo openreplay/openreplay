@@ -9,8 +9,8 @@ class Message(ABC):
 class <%= msg.name %>(Message):
     __id__ = <%= msg.id %>
 
-    def __init__(self, <%= msg.attributes.map { |attr| "#{attr.name.underscore}" }.join ", " %>):
-        <%= msg.attributes.map { |attr| "self.#{attr.name.underscore} = #{attr.name.underscore}" }.join "\n        "
+    def __init__(self, <%= msg.attributes.map { |attr| "#{attr.name.snake_case}" }.join ", " %>):
+        <%= msg.attributes.map { |attr| "self.#{attr.name.snake_case} = #{attr.name.snake_case}" }.join "\n        "
         %>
 
 <% end %>

@@ -71,6 +71,7 @@ func (w *Writer) Write(key uint64, data []byte) error {
 	if err != nil {
 		return err
 	}
+	// TODO: add check for the number of recorded bytes to file
 	_, err = file.Write(data)
 	return err
 }

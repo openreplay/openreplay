@@ -3,24 +3,23 @@ require 'erb'
 
 # TODO: change method names to correct (CapitalCase and camelCase, not CamalCase and firstLower)
 class String
-  def camel_case
-    return self if self !~ /_/ && self =~ /[A-Z]+.*/
-    split('_').map{|e| e.capitalize}.join.upperize
-  end
-
-  def camel_case_lower
-    self.split('_').inject([]){ |buffer,e| buffer.push(buffer.empty? ? e : e.capitalize) }.join.upperize
-  end
-
-  def upperize
+  def upperize_abbreviations
     self.sub('Id', 'ID').sub('Url', 'URL')
   end
 
-  def first_lower
+  # pascal_case
+  def pascal_case
+    return self if self !~ /_/ && self =~ /[A-Z]+.*/
+    split('_').map{|e| e.capitalize}.join.upperize_abbreviations
+  end
+
+  # camelCase
+  def camel_case
     self.sub(/^[A-Z]+/) {|f| f.downcase }
   end
 
-  def underscore
+  # snake_case
+  def snake_case
     self.gsub(/::/, '/').
     gsub(/([A-Z]+)([A-Z][a-z])/,'\1_\2').
     gsub(/([a-z\d])([A-Z])/,'\1_\2').
@@ -85,16 +84,17 @@ end
 $context = :web
 
 class Message
-  attr_reader :id, :name, :js, :replayer, :swift, :seq_index, :attributes, :context
-  def initialize(name:, id:, js: $context == :web, replayer: $context == :web, swift: $context == :ios, seq_index: false, &block)
+  attr_reader :id, :name, :tracker, :replayer, :swift, :seq_index, :attributes, :context
+  def initialize(name:, id:, tracker: $context == :web, replayer: $context == :web, swift: $context == :ios, seq_index: false, &block)
     @id = id
     @name = name
-    @js = js
+    @tracker = tracker
     @replayer = replayer
     @swift = swift
     @seq_index = seq_index
     @context = $context
     @attributes = []
+    # opts.each { |key, value| send "#{key}=", value }
     instance_eval &block
   end
 
@@ -131,6 +131,7 @@ Dir["templates/*.erb"].each do |tpl|
   path = tpl.split '/'
   t = '../' + path[1].gsub('~', '/')
   t = t[0..-5]
+  # TODO: .gen subextention
   File.write(t, e.result)
   puts tpl + ' --> ' + t
 end

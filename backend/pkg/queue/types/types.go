@@ -26,3 +26,4 @@ type Meta struct {
 
 type MessageHandler func(uint64, []byte, *Meta)
 type DecodedMessageHandler func(uint64, messages.Message, *Meta)
+type RawMessageHandler func(uint64, messages.Iterator, *Meta)

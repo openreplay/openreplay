@@ -60,10 +60,12 @@ func NewSessionFinder(cfg *config.Config, stg *storage.Storage) (SessionFinder, 
 		[]string{
 			cfg.TopicFailover,
 		},
-		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			switch m := msg.(type) {
-			case *messages.SessionSearch:
-				finder.findSession(sessionID, m.Timestamp, m.Partition)
+		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
+			for iter.Next() {
+				if iter.Type() == 127 {
+					m := iter.Message().Decode().(*messages.SessionSearch)
+					finder.findSession(sessionID, m.Timestamp, m.Partition)
+				}
 			}
 		},
 		true,

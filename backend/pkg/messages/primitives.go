@@ -3,6 +3,7 @@ package messages
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 )
@@ -15,15 +16,6 @@ func ReadByte(reader io.Reader) (byte, error) {
 	}
 	return p[0], nil
 }
-
-// func SkipBytes(reader io.ReadSeeker) error {
-// 	n, err := ReadUint(reader)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	_, err = reader.Seek(n, io.SeekCurrent);
-// 	return err
-// }
 
 func ReadData(reader io.Reader) ([]byte, error) {
 	n, err := ReadUint(reader)
@@ -152,4 +144,29 @@ func WriteJson(v interface{}, buf []byte, p int) int {
 		return WriteString("null", buf, p)
 	}
 	return WriteData(data, buf, p)
+}
+
+func WriteSize(size uint64, buf []byte, p int) {
+	var m uint64 = 255
+	for i := 0; i < 3; i++ {
+		buf[p+i] = byte(size & m)
+		size = size >> 8
+	}
+	fmt.Println(buf)
+}
+
+func ReadSize(reader io.Reader) (uint64, error) {
+	buf := make([]byte, 3)
+	n, err := io.ReadFull(reader, buf)
+	if err != nil {
+		return 0, err
+	}
+	if n != 3 {
+		return 0, fmt.Errorf("read only %d of 3 size bytes", n)
+	}
+	var size uint64
+	for i, b := range buf {
+		size += uint64(b) << (8 * i)
+	}
+	return size, nil
 }

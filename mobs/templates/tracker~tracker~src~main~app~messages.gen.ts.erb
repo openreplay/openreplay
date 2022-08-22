@@ -1,0 +1,15 @@
+// Auto-generated, do not edit
+
+import * as Messages from '../../common/messages.gen.js'
+export { default } from '../../common/messages.gen.js'
+
+<% $messages.select { |msg| msg.tracker }.each do |msg| %>
+export function <%= msg.name %>(
+  <%= msg.attributes.map { |attr| "#{attr.name.camel_case}: #{attr.type_js}," }.join "\n  " %>
+): Messages.<%= msg.name %> {
+  return [ 
+    Messages.Type.<%= msg.name %>,
+    <%= msg.attributes.map { |attr| "#{attr.name.camel_case}," }.join "\n    " %>
+  ]
+}
+<% end %>
