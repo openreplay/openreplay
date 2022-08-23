@@ -1,24 +1,7 @@
 import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import FilterItem from "./filterItem"
 
-export interface IFilter {
-    filterId: string
-    name: string
-    filters: FilterItem[]
-    eventsOrder: string
-    startTimestamp: number
-    endTimestamp: number
-
-    merge: (filter: any) => void
-    addFilter: (filter: FilterItem) => void
-    updateFilter: (index:number, filter: any) => void
-    updateKey: (key: any, value: any) => void
-    removeFilter: (index: number) => void
-    fromJson: (json: any) => void
-    toJson: () => any
-    toJsonDrilldown: () => any
-}
-export default class Filter implements IFilter {
+export default class Filter {
     public static get ID_KEY():string { return "filterId" }
     filterId: string = ''
     name: string = ''

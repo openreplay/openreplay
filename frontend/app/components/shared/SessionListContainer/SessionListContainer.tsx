@@ -2,14 +2,12 @@ import React from 'react';
 import SessionList from './components/SessionList';
 import SessionHeader from './components/SessionHeader';
 
-interface Props {}
-function SessionListContainer(props: Props) {
+function SessionListContainer() {
     return (
         <div className="widget-wrapper">
             <SessionHeader />
-            <div className="p-4">
-                <SessionList />
-            </div>
+            <div className="border-b" />
+            <SessionList />
         </div>
     );
 }

@@ -105,7 +105,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
         const { hideBack } = this.state;
 
-        const { sessionId, userId, userNumericHash, live, metadata } = session;
+        const { sessionId, userId, userNumericHash, live, metadata, isCallActive, agentIds } = session;
         let _metaList = Object.keys(metadata)
             .filter((i) => metaList.includes(i))
             .map((key) => {
@@ -142,7 +142,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                             </div>
                         )}
 
-                        {isAssist && <AssistActions userId={userId} />}
+                        {isAssist && <AssistActions userId={userId} isCallActive={isCallActive} agentIds={agentIds} />}
                     </div>
                 </div>
                 {!isAssist && (

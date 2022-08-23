@@ -32,7 +32,6 @@ func NewIterator(data []byte) Iterator {
 
 func (i *iteratorImpl) Next() bool {
 	if i.canSkip {
-		log.Printf("skip message, type: %d, size: %d", i.msgType, i.msgSize)
 		if _, err := i.data.Seek(int64(i.msgSize), io.SeekCurrent); err != nil {
 			log.Printf("seek err: %s", err)
 			return false
@@ -49,7 +48,6 @@ func (i *iteratorImpl) Next() bool {
 		log.Printf("can't read message type: %s", err)
 		return false
 	}
-	log.Printf("message type: %d", i.msgType)
 
 	if i.version > 0 && messageHasSize(i.msgType) {
 		// Read message size if it is a new protocol version
@@ -58,7 +56,6 @@ func (i *iteratorImpl) Next() bool {
 			log.Printf("can't read message size: %s", err)
 			return false
 		}
-		log.Println("message size:", i.msgSize)
 		i.msg = &RawMessage{
 			tp:      i.msgType,
 			size:    i.msgSize,

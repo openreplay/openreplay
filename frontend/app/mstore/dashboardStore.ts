@@ -1,11 +1,9 @@
 import {
     makeAutoObservable,
     runInAction,
-    observable,
-    action,
 } from "mobx";
-import Dashboard, { IDashboard } from "./types/dashboard";
-import Widget, { IWidget } from "./types/widget";
+import Dashboard from "./types/dashboard";
+import Widget from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from "react-toastify";
 import Period, {
@@ -13,91 +11,24 @@ import Period, {
     LAST_7_DAYS,
 } from "Types/app/period";
 import { getChartFormatter } from "Types/dashboard/helper";
-import Filter, { IFilter } from "./types/filter";
+import Filter from "./types/filter";
 import Funnel from "./types/funnel";
 import Session from "./types/session";
 import Error from "./types/error";
 import { FilterKey } from "Types/filter/filterType";
 
-export interface IDashboardSotre {
-    dashboards: IDashboard[];
-    selectedDashboard: IDashboard | null;
-    dashboardInstance: IDashboard;
-    selectedWidgets: IWidget[];
-    startTimestamp: number;
-    endTimestamp: number;
-    period: Period;
-    drillDownFilter: IFilter;
-    drillDownPeriod: Period;
-
-    siteId: any;
-    currentWidget: Widget;
-    widgetCategories: any[];
-    widgets: Widget[];
-    metricsPage: number;
-    metricsPageSize: number;
-    metricsSearch: string;
-
-    isLoading: boolean;
-    isSaving: boolean;
-    isDeleting: boolean;
-    fetchingDashboard: boolean;
-    sessionsLoading: boolean;
-
-    showAlertModal: boolean;
-
-    selectWidgetsByCategory: (category: string) => void;
-    toggleAllSelectedWidgets: (isSelected: boolean) => void;
-    removeSelectedWidgetByCategory(category: string): void;
-    toggleWidgetSelection(widget: IWidget): void;
-
-    initDashboard(dashboard?: IDashboard): void;
-    updateKey(key: string, value: any): void;
-    resetCurrentWidget(): void;
-    editWidget(widget: any): void;
-    fetchList(): Promise<any>;
-    fetch(dashboardId: string): Promise<any>;
-    save(dashboard: IDashboard): Promise<any>;
-    deleteDashboard(dashboard: IDashboard): Promise<any>;
-    toJson(): void;
-    fromJson(json: any): void;
-    addDashboard(dashboard: IDashboard): void;
-    removeDashboard(dashboard: IDashboard): void;
-    getDashboard(dashboardId: string): IDashboard | null;
-    getDashboardCount(): void;
-    updateDashboard(dashboard: IDashboard): void;
-    selectDashboardById(dashboardId: string): void;
-    setSiteId(siteId: any): void;
-    selectDefaultDashboard(): Promise<IDashboard>;
-
-    saveMetric(metric: IWidget, dashboardId?: string): Promise<any>;
-    fetchTemplates(hardRefresh: boolean): Promise<any>;
-    deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>;
-    addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>;
-    setDrillDownPeriod(period: any): void;
-
-    updatePinned(dashboardId: string): Promise<any>;
-    fetchMetricChartData(
-        metric: IWidget,
-        data: any,
-        isWidget: boolean,
-        period: Period
-    ): Promise<any>;
-    setPeriod(period: any): void;
-}
-export default class DashboardStore implements IDashboardSotre {
+export default class DashboardStore {
     siteId: any = null;
-    // Dashbaord / Widgets
     dashboards: Dashboard[] = [];
     selectedDashboard: Dashboard | null = null;
-    dashboardInstance: IDashboard = new Dashboard();
-    selectedWidgets: IWidget[] = [];
+    dashboardInstance: Dashboard = new Dashboard();
+    selectedWidgets: Widget[] = [];
     currentWidget: Widget = new Widget();
     widgetCategories: any[] = [];
     widgets: Widget[] = [];
-    period: Period = Period({ rangeName: LAST_24_HOURS });
+    period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
     drillDownFilter: Filter = new Filter();
-    drillDownPeriod: Period = Period({ rangeName: LAST_7_DAYS });
+    drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
     startTimestamp: number = 0;
     endTimestamp: number = 0;
 
@@ -114,6 +45,12 @@ export default class DashboardStore implements IDashboardSotre {
     fetchingDashboard: boolean = false;
     sessionsLoading: boolean = false;
     showAlertModal: boolean = false;
+
+    // Pagination
+    page: number = 1
+    pageSize: number = 10
+    dashboardsSearch: string = ''
+    sort: any = {}
 
     constructor() {
         makeAutoObservable(this);
@@ -214,7 +151,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     fetch(dashboardId: string): Promise<any> {
-        this.fetchingDashboard = true;
+        this.setFetchingDashboard(true);
         return dashboardService
             .getDashboard(dashboardId)
             .then((response) => {
@@ -223,8 +160,12 @@ export default class DashboardStore implements IDashboardSotre {
                 });
             })
             .finally(() => {
-                this.fetchingDashboard = false;
+                this.setFetchingDashboard(false);
             });
+    }
+
+    setFetchingDashboard(value: boolean) {
+        this.fetchingDashboard = value;
     }
 
     save(dashboard: IDashboard): Promise<any> {
@@ -328,7 +269,7 @@ export default class DashboardStore implements IDashboardSotre {
         );
     }
 
-    getDashboard(dashboardId: string): IDashboard | null {
+    getDashboard(dashboardId: string): Dashboard | null {
         return (
             this.dashboards.find((d) => d.dashboardId === dashboardId) || null
         );
@@ -360,27 +301,23 @@ export default class DashboardStore implements IDashboardSotre {
             new Dashboard();
     };
 
+    getDashboardById = (dashboardId: string) => {
+        const dashboard = this.dashboards.find((d) => d.dashboardId == dashboardId)
+
+        if (dashboard) {
+            this.selectedDashboard = dashboard
+            return true;
+        } else {
+            this.selectedDashboard = null
+            return false;
+        }
+    }
+
     setSiteId = (siteId: any) => {
         this.siteId = siteId;
     };
 
-    selectDefaultDashboard = (): Promise<Dashboard> => {
-        return new Promise((resolve, reject) => {
-            if (this.dashboards.length > 0) {
-                const pinnedDashboard = this.dashboards.find((d) => d.isPinned);
-                if (pinnedDashboard) {
-                    this.selectedDashboard = pinnedDashboard;
-                } else {
-                    this.selectedDashboard = this.dashboards[0];
-                }
-
-                resolve(this.selectedDashboard);
-            }
-            reject(new Error("No dashboards found"));
-        });
-    };
-
-    fetchTemplates(hardRefresh): Promise<any> {
+    fetchTemplates(hardRefresh: boolean): Promise<any> {
         this.loadingTemplates = true
         return new Promise((resolve, reject) => {
             if (this.widgetCategories.length > 0 && !hardRefresh) {
@@ -445,28 +382,6 @@ export default class DashboardStore implements IDashboardSotre {
             });
     }
 
-    updatePinned(dashboardId: string): Promise<any> {
-        // this.isSaving = true
-        return dashboardService
-            .updatePinned(dashboardId)
-            .then(() => {
-                toast.success("Dashboard pinned successfully");
-                this.dashboards.forEach((d) => {
-                    if (d.dashboardId === dashboardId) {
-                        d.isPinned = true;
-                    } else {
-                        d.isPinned = false;
-                    }
-                });
-            })
-            .catch(() => {
-                toast.error("Dashboard could not be pinned");
-            })
-            .finally(() => {
-                // this.isSaving = false
-            });
-    }
-
     setPeriod(period: any) {
         this.period = Period({
             start: period.start,
@@ -487,7 +402,7 @@ export default class DashboardStore implements IDashboardSotre {
         metric: IWidget,
         data: any,
         isWidget: boolean = false,
-        period: Period
+        period: Record<string, any>
     ): Promise<any> {
         period = period.toTimestamps();
         const params = { ...period, ...data, key: metric.predefinedKey };

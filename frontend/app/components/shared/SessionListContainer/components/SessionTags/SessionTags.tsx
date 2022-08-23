@@ -52,14 +52,14 @@ function TagItem({ isActive, onClick, label, icon = '', disabled = false }: any)
         <div>
             <button
                 onClick={onClick}
-                className={cn('transition group rounded ml-2 px-2 py-1 flex items-center uppercase text-sm hover:bg-teal hover:text-white', {
-                    'bg-teal text-white': isActive,
-                    'bg-active-blue color-teal': !isActive,
-                    'disabled': disabled,
+                className={cn('transition group rounded ml-2 px-2 py-1 flex items-center uppercase text-sm hover:bg-active-blue hover:text-teal', {
+                    'bg-active-blue text-teal': isActive,
+                    disabled: disabled,
                 })}
+                style={{ height: '36px' }}
             >
-                {icon && <Icon name={icon} color="teal" size="14" className={cn('group-hover:fill-white mr-2', { 'fill-white': isActive })} />}
-                <span className="leading-none font-bold">{label}</span>
+                {icon && <Icon name={icon} color={isActive ? 'teal' : 'gray-medium'} size="14" className={cn('group-hover:fill-teal mr-2')} />}
+                <span className="leading-none font-medium">{label}</span>
             </button>
         </div>
     );

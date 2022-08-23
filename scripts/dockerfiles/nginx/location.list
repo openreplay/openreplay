@@ -1,0 +1,38 @@
+location ~* /general_stats {
+      deny all;
+}
+location /healthz {
+  return 200 'OK';
+}
+location /api/ {
+  set $target $api_endpoint;
+
+  rewrite ^/api/(.*) /$1 break;
+
+	proxy_ssl_server_name on;
+  proxy_ssl_session_reuse on;
+
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "Upgrade";
+
+  proxy_pass $target;
+}
+location / {
+  set $target $frontend_endpoint;
+  include /etc/nginx/conf.d/compression.conf;
+
+  index /index.html;
+  rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
+  proxy_intercept_errors on; # see frontend://nginx.org/en/docs/frontend/ngx_frontend_proxy_module.html#proxy_intercept_errors
+  error_page 404 =200 /index.html;
+
+	proxy_ssl_server_name on;
+  proxy_ssl_session_reuse on;
+
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "Upgrade";
+
+  proxy_pass $target;
+}

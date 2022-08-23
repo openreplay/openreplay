@@ -35,7 +35,7 @@ export default class ProcessedSessions extends React.PureComponent {
               </defs>
               <XAxis {...Styles.xaxis} dataKey="time" />
               <YAxis hide interval={ 0 }  domain={ domain } />
-              <Area type="monotone" dataKey="count" stroke={Styles.colors[0]} fillOpacity={ 1 } strokeWidth={ 2 } strokeOpacity={ 0.8 } fill="url(#colorCount)" />
+              <Area type="monotone" dataKey="count" stroke={Styles.strokeColor} fillOpacity={ 1 } strokeWidth={ 2 } strokeOpacity={ 0.8 } fill="url(#colorCount)" />
             </AreaChart>
           </ResponsiveContainer>
         </Loader>

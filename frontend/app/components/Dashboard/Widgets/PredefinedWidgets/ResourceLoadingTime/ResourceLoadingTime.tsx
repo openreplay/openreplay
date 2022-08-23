@@ -1,15 +1,15 @@
 import React from 'react';
-import { NoContent, DropdownPlain } from 'UI';
+import { NoContent } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import { withRequest } from 'HOCs'
 import { 
     AreaChart, Area,
-    BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+   CartesianGrid, Tooltip,
+     ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
-import WidgetAutoComplete from 'Shared/WidgetAutoComplete';
 import { toUnderscore } from 'App/utils';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 const WIDGET_KEY = 'resourcesLoadingTime';
 export const RESOURCE_OPTIONS = [
@@ -30,52 +30,17 @@ interface Props {
     metric?: any
 }
 function ResourceLoadingTime(props: Props) {
-    const { data, optionsLoading, metric } = props;
+    const { data, metric } = props;
     const gradientDef = Styles.gradientDef();
-    const [autoCompleteSelected, setSutoCompleteSelected] = React.useState('');
-    const [type, setType] = React.useState('');
-
-    const onSelect = (params) => {
-      // const _params = { density: 70 }
-      setSutoCompleteSelected(params.value);
-      // TODO reload the data with new params;
-      // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
-    }
-
-    const writeOption = (e, { name, value }) => {
-      // this.setState({ [name]: value })
-      setType(value);
-      const _params = { density: 70 } // TODO reload the data with new params;
-      // this.props.fetchWidget(WIDGET_KEY, this.props.period, this.props.platform, { ..._params, [ name ]: value === 'all' ? null : value  })
-    }
 
     return (
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          title={NO_METRIC_DATA}
         >
           <>
             <div className="flex items-center mb-3">
-              {/* <WidgetAutoComplete
-                loading={optionsLoading}
-                fetchOptions={props.fetchOptions}
-                options={props.options}
-                onSelect={onSelect}
-                placeholder="Search for Page"
-              />
-              <DropdownPlain
-                disabled={!!autoCompleteSelected}
-                name="type"
-                label="Resource"
-                options={ RESOURCE_OPTIONS }
-                onChange={ writeOption }
-                defaultValue={'all'}
-                wrapperStyle={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '170px',
-                }}
-              /> */}
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.avg)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 207 } width="100%">
@@ -98,7 +63,7 @@ function ResourceLoadingTime(props: Props) {
                     unit=" ms"
                     type="monotone"
                     dataKey="avg"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

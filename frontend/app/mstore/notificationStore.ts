@@ -18,6 +18,7 @@ export default class NotificationStore {
             fetchNotifications: action,
             ignoreAllNotifications: action,
             ignoreNotification: action,
+            setNotificationsCount: action,
         });
     }
 
@@ -74,11 +75,15 @@ export default class NotificationStore {
         });
     }
 
+    setNotificationsCount(count: number) {
+        this.notificationsCount = count;
+    }
+
     fetchNotificationsCount(): Promise<any> {
         return new Promise((resolve, reject) => {
             userService.getNotificationsCount()
                 .then((response: any) => {
-                    this.notificationsCount = response.count;
+                    this.setNotificationsCount(response.count);
                     resolve(response);
                 }).catch((error: any) => {
                     reject(error);

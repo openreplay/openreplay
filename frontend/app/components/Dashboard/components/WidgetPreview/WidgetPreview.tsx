@@ -2,19 +2,22 @@ import React from 'react';
 import cn from 'classnames';
 import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
-import { SegmentSelection } from 'UI';
+import { SegmentSelection, Button, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-import SelectDateRange from 'Shared/SelectDateRange';
 import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 // import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
 interface Props {
     className?: string;
+    name: string;
 }
 function WidgetPreview(props: Props) {
+    const [showDashboardSelectionModal, setShowDashboardSelectionModal] = React.useState(false);
     const { className = '' } = props;
     const { metricStore, dashboardStore } = useStore();
+    const dashboards = dashboardStore.dashboards;
     const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
@@ -35,29 +38,14 @@ function WidgetPreview(props: Props) {
     //     })
     // }
 
-    const getWidgetTitle = () => {
-        if (isTimeSeries) {
-            return 'Time Series';
-        } else if (isTable) {
-            if (metric.metricOf === FilterKey.SESSIONS) {
-                // return 'Table of Sessions';
-                return <div>Sessions <span className="color-gray-medium">{metric.data.total}</span></div>;
-            } else if (metric.metricOf === FilterKey.ERRORS) {
-                // return 'Table of Errors';
-                return <div>Errors <span className="color-gray-medium">{metric.data.total}</span></div>;
-            } else {
-                return 'Table';
-            }
-        } else if (metric.metricType === 'funnel') {
-            return 'Funnel';
-        }
-    }
+    const canAddToDashboard = metric.exists() && dashboards.length > 0;
 
     return useObserver(() => (
-        <div className={cn(className)}>
-            <div className="flex items-center justify-between mb-2">
+        <>
+        <div className={cn(className, 'bg-white rounded border')}>
+            <div className="flex items-center justify-between px-4 pt-2">
                 <h2 className="text-2xl">
-                    {getWidgetTitle()}
+                    {props.name}
                 </h2>
                 <div className="flex items-center">
                     {isTimeSeries && (
@@ -78,7 +66,7 @@ function WidgetPreview(props: Props) {
                         </>
                     )}
 
-                    {isTable && (
+                    {!disableVisualization && isTable && (
                         <>
                             <span className="mr-4 color-gray-medium">Visualization</span>
                             <SegmentSelection
@@ -92,19 +80,38 @@ function WidgetPreview(props: Props) {
                                     { value: 'table', name: 'Table', icon: 'table' },
                                     { value: 'pieChart', name: 'Chart', icon: 'pie-chart-fill' },
                                 ]}
-                                disabled={disableVisualization}
                                 disabledMessage="Chart view is not supported"
                             />
                         </>
                     )}
                     <div className="mx-4" />
                     <WidgetDateRange />
+                    {/* add to dashboard */}
+                    {metric.exists() && (
+                        <Button
+                        variant="text-primary"
+                        className="ml-2 p-0"
+                        onClick={() => setShowDashboardSelectionModal(true)}
+                        disabled={!canAddToDashboard}
+                    > 
+                        <Icon name="columns-gap-filled" size="14" className="mr-2" color="teal"/>
+                        Add to Dashboard
+                    </Button>
+                    )}
                 </div>
             </div>
-            <div className="bg-white rounded p-4">
-                <WidgetWrapper widget={metric} isPreview={true} isWidget={false} />
+            <div className="p-4 pt-0">
+                <WidgetWrapper widget={metric} isPreview={true} isWidget={false} hideName />
             </div>
         </div>
+        { canAddToDashboard && (
+            <DashboardSelectionModal
+                metricId={metric.metricId}
+                show={showDashboardSelectionModal}
+                closeHandler={() => setShowDashboardSelectionModal(false)}
+            />
+        )}
+        </>
     ));
 }
 

@@ -8,6 +8,7 @@ import Chart from './Chart';
 import ImageInfo from './ImageInfo';
 import ResourceType from './ResourceType';
 import CopyPath from './CopyPath';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 export const RESOURCE_OPTIONS = [
   { text: 'All', value: 'ALL', },
@@ -68,9 +69,10 @@ function SlowestResources(props: Props) {
     
     return (
         <NoContent
-          title="No resources missing."
+          title={NO_METRIC_DATA}
           size="small"
           show={ metric.data.chart.length === 0 }
+          style={{ minHeight: 220 }}
         >
           <div style={{ height: '240px', marginBottom:'10px'}}>
             <Table

@@ -1,122 +1,68 @@
 import React from 'react';
 import cn from 'classnames';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent'; 
-import { Icon, SlideModal, IconButton } from 'UI';
+import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { Icon, IconButton } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import Sentry from './Sentry';
 import JsonViewer from './JsonViewer';
 import stl from './userEvent.module.css';
+import { Duration } from 'luxon';
 
 // const modalSources = [ SENTRY, DATADOG ];
 
-@withToggle()  //
+@withToggle() //
 export default class UserEvent extends React.PureComponent {
-	getIconProps() {
-		const { source } = this.props.userEvent;
-		return {
-			name: `integrations/${ source }`,
-			size: 18,
-			marginRight: source === OPENREPLAY ? 11 : 10
-		}
-	}
+  getIconProps() {
+    const { source } = this.props.userEvent;
+    return {
+      name: `integrations/${source}`,
+      size: 18,
+      marginRight: source === OPENREPLAY ? 11 : 10,
+    };
+  }
 
-	getLevelClassname() {
-		const { userEvent } = this.props;
-		if (userEvent.isRed()) return "error color-red";
-		return '';
-	}
+  getLevelClassname() {
+    const { userEvent } = this.props;
+    if (userEvent.isRed()) return 'error color-red';
+    return '';
+  }
 
-	// getEventMessage() {
-	// 	const { userEvent } = this.props;
-	// 	switch(userEvent.source) {
-	// 		case SENTRY:
-	// 		case DATADOG:
-	// 			return null;
-	// 		default:
-	// 			return JSON.stringify(userEvent.data);
-	// 	}
-	// }
+  onClickDetails = (e) => {
+    e.stopPropagation();
+    this.props.onDetailsClick(this.props.userEvent);
+  };
 
-	renderPopupContent() {
-		const { userEvent: { source, payload, name} } = this.props;
-		switch(source) {
-			case SENTRY:
-				return <Sentry event={ payload } />;
-			case DATADOG:
-				return <JsonViewer title={ name } data={ payload } icon="integrations/datadog" />;
-			case STACKDRIVER:
-				return <JsonViewer title={ name } data={ payload } icon="integrations/stackdriver" />;
-			default:
-				return <JsonViewer title={ name } data={ payload } icon={ `integrations/${ source }` } />;
-		}
-	}
-
-	ifNeedModal() {
-		return !!this.props.userEvent.payload;
-	}
-
-	onClickDetails = (e) => {
-		e.stopPropagation();
-		this.props.switchOpen();
-	}
-
-	renderContent(modalTrigger) {
-		const { userEvent } = this.props;
-		//const message = this.getEventMessage();
-		return (
-			<div
-				data-scroll-item={ userEvent.isRed() }
-				// onClick={ this.props.switchOpen } //
-				onClick={ this.props.onJump } //
-				className={ 
-					cn(
-						"group",
-						stl.userEvent,
-						this.getLevelClassname(),
-						{ [ stl.modalTrigger ]: modalTrigger }
-					)
-				} 
-		  	>
-				<div className={ stl.infoWrapper }>
-					<div className={ stl.title } >
-						<Icon { ...this.getIconProps() } />
-						{ userEvent.name }
-					</div>
-					{ /* message && 
-						<div className={ stl.message }>
-							{ message }
-						</div> */
-					}
-					<div className="invisible self-end ml-auto group-hover:visible">
-						<IconButton size="small" plain onClick={this.onClickDetails} label="DETAILS" />
-					</div>
-				</div>
-		  </div>
-		); 
-	}
-
-	render() {
-		const { userEvent } = this.props;
-		if (this.ifNeedModal()) {
-			return (
-				<React.Fragment>
-					<SlideModal
-						//title="Add Custom Field"
-						size="middle"
-						isDisplayed={ this.props.open }
-						content={ this.props.open && this.renderPopupContent() }
-						onClose={ this.props.switchOpen }
-					/>
-					{ this.renderContent(true) }
-        		</React.Fragment>
-				//<Modal 
-				//	trigger={ this.renderContent(true) }
-				//	content={ this.renderPopupContent() }
-				//	centered={ false }
-				// 	size="small"
-				// />
-			);
-		}
-	  return this.renderContent();
-	}
+  render() {
+    const { userEvent, inactive, selected } = this.props;
+    //const message = this.getEventMessage();
+    return (
+      <div
+        data-scroll-item={userEvent.isRed()}
+        // onClick={ this.props.switchOpen } //
+        onClick={this.props.onJump} //
+        className={cn('group flex py-2 px-4 ', stl.userEvent, this.getLevelClassname(), {
+          [stl.inactive]: inactive,
+          [stl.selected]: selected,
+        })}
+      >
+        <div className={'self-start pr-4'}>
+          {Duration.fromMillis(userEvent.time).toFormat('mm:ss.SSS')}
+        </div>
+        <div className={cn('mr-auto', stl.infoWrapper)}>
+          <div className={stl.title}>
+            <Icon {...this.getIconProps()} />
+            {userEvent.name}
+          </div>
+        </div>
+        <div className="self-center">
+          <IconButton
+            outline={!userEvent.isRed()}
+            red={userEvent.isRed()}
+            onClick={this.onClickDetails}
+            label="DETAILS"
+          />
+        </div>
+      </div>
+    );
+  }
 }

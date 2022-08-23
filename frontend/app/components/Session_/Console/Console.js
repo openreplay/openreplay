@@ -12,7 +12,7 @@ export default class Console extends React.PureComponent {
   render() {
     const { logs, time, listNow } = this.props;
     return (
-        <ConsoleContent jump={!this.props.livePlay && jump} logs={logs} lastIndex={listNow.length - 1} />
+      <ConsoleContent jump={!this.props.livePlay && jump} logs={logs} lastIndex={listNow.length - 1} logsNow={listNow} />
     );
   }
 }

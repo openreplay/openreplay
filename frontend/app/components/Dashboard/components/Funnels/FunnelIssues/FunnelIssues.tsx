@@ -53,8 +53,8 @@ function FunnelIssues() {
     }, [stages.length, drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage]);
 
     return useObserver(() => (
-        <div className="my-8">
-            <div className="flex justify-between">
+        <div className="my-8 bg-white rounded p-4 border">
+            <div className="flex">
                 <h1 className="font-medium text-2xl">Most significant issues <span className="font-normal">identified in this funnel</span></h1>
             </div>
             <div className="my-6 flex justify-between items-start">

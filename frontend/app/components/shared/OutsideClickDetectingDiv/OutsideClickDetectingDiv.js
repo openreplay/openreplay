@@ -29,8 +29,7 @@ function handleClickOutside(e) {
 
 document.addEventListener('click', handleClickOutside);
 
-
-export default React.memo(function OutsideClickDetectingDiv({ onClickOutside, children, ...props}) {
+function OutsideClickDetectingDiv({ onClickOutside, children, ...props}) {
   const ref = useRef(null);
   useLayoutEffect(() => {
     function handleClickOutside(event) {
@@ -44,7 +43,6 @@ export default React.memo(function OutsideClickDetectingDiv({ onClickOutside, ch
   }, [ ref ]);
 
   return <div ref={ref} {...props}>{children}</div>;
-});
+}
 
-
-
+export default React.memo(OutsideClickDetectingDiv);

@@ -16,6 +16,7 @@ function CallsErrors5xx(props: Props) {
     return (
         <NoContent
           size="small"
+          title="No data available"
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

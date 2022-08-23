@@ -42,5 +42,19 @@ module.exports = {
     default: '#DDDDDD',
     'gray-light-shade': '#EEEEEE',
     'primary': '#3490dc',
+    'transparent': 'transparent',
+  },
+
+  // actual theme colors - use this for new components
+  figmaColors: {
+    'accent-secondary': 'rgba(62, 170, 175, 1)',
+    'main': 'rgba(57, 78, 255, 1)',
+    'primary-outlined-hover-background':  'rgba(62, 170, 175, 0.08)',
+    'primary-outlined-resting-border': 'rgba(62, 170, 175, 0.5)',
+    'secondary-outlined-hover-background': 'rgba(63, 81, 181, 0.08)',
+    'secondary-outlined-resting-border': 'rgba(63, 81, 181, 0.5)',
+    'text-disabled': 'rgba(0,0,0, 0.38)',
+    'text-primary': 'rgba(0,0,0, 0.87)',
+    'outlined-border': 'rgba(0,0,0, 0.23)',
   }
 }

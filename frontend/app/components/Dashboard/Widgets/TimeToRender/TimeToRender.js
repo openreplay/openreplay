@@ -59,6 +59,7 @@ export default class TimeToRender extends React.PureComponent {
           <NoContent
             size="small"
             show={ data.chart.length === 0 }
+            title="No recordings found"
           >
             <ResponsiveContainer height={ 200 } width="100%">
               <AreaChart

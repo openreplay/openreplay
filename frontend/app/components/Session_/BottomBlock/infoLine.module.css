@@ -11,13 +11,13 @@
     align-items: center;
     &:not(:last-child):after {
       content: '';
-      margin: 0 10px;
+      margin: 0 12px;
       height: 30px;
       border-right: 1px solid $gray-light-shade;
     }
     & .label {
       font-weight: 500;
-      margin-right: 3px;
+      margin-right: 6px;
     }
   }
 }

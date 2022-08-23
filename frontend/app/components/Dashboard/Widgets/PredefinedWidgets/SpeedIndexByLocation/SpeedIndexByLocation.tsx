@@ -8,6 +8,7 @@ import WorldMap from '@svg-maps/world';
 import { SVGMap } from 'react-svg-map';
 import stl from './SpeedIndexByLocation.module.css';
 import cn from 'classnames';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     metric?: any;
@@ -63,7 +64,7 @@ function SpeedIndexByLocation(props: Props) {
     };
 
     return (
-        <NoContent size="small" show={false} style={{ height: '240px' }}>
+        <NoContent size="small" show={false} style={{ height: '240px' }} title={NO_METRIC_DATA}>
             <div className="absolute right-0 mr-4 top=0 w-full flex justify-end">
                 <AvgLabel text="Avg" count={Math.round(metric.data.value)} unit="ms" />
             </div>

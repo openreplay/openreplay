@@ -21,14 +21,21 @@
   
 }
 
+.greenTracker {
+  background-color: #42AE5E!important;
+  box-shadow: 0 0 0 1px #42AE5E;
+}
+
 .progress {
   height: 10px;
   padding: 8px 0;
   cursor: pointer;
   width: 100%;
+  max-width: 100%;
   position: relative;
   display: flex;
   align-items: center;
+
 }
 
 
@@ -161,5 +168,30 @@
       left: 50%;
       box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.1);
     }
+  }
+}
+
+.timeTooltip {
+  position: absolute;
+  padding: 0.25rem;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  background: black;
+  top: -35px;
+  color: white;
+
+  &:after {
+    content:'';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 0;
+    height: 0;
+    border-top: solid 5px black;
+    border-left: solid 5px transparent;
+    border-right: solid 5px transparent;
   }
 }

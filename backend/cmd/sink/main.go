@@ -77,7 +77,7 @@ func main() {
 
 				// Filter message
 				if !IsReplayerType(msg.TypeID()) {
-					return
+					continue
 				}
 
 				// If message timestamp is empty, use at least ts of session start

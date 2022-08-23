@@ -126,6 +126,7 @@ export default class DOMManager extends ListWalker<Message> {
         pNode.sheet && 
         pNode.sheet.cssRules &&
         pNode.sheet.cssRules.length > 0 &&
+        pNode.innerText &&
         pNode.innerText.trim().length === 0
     ) {
       logger.log("Trying to insert child to a style tag with virtual rules: ", parent, child);

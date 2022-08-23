@@ -11,7 +11,7 @@ export const filters = [
   { key: FilterKey.INPUT, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Input', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/input', isEvent: true },
   { key: FilterKey.LOCATION, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Path', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/location', isEvent: true },
   { key: FilterKey.CUSTOM, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Custom Events', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/custom', isEvent: true },
-  { key: FilterKey.REQUEST, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Fetch', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', isEvent: true },
+  // { key: FilterKey.REQUEST, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Fetch', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', isEvent: true },
   { key: FilterKey.FETCH, type: FilterType.SUB_FILTERS, category: FilterCategory.JAVASCRIPT, operator: 'is', label: 'Network Request', filters: [
       { key: FilterKey.FETCH_URL, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with URL', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
       { key: FilterKey.FETCH_STATUS_CODE, type: FilterType.NUMBER_MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with status code', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
@@ -53,34 +53,47 @@ export const filters = [
   { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/click', options: filterOptions.issueOptions },
 ];
 
-export const filtersMap = filters.reduce((acc, filter) => {
+const mapFilters = (list) => {
+  return list.reduce((acc, filter) => {
     acc[filter.key] = filter;
     return acc;
-}, {});
+  }, {});
+}
 
-export const liveFiltersMap = {}
-filters.forEach(filter => {
-  if (
-    filter.category !== FilterCategory.INTERACTIONS &&
-    filter.category !== FilterCategory.JAVASCRIPT &&
-    filter.category !== FilterCategory.PERFORMANCE &&
-    filter.key !== FilterKey.DURATION &&
-    filter.key !== FilterKey.REFERRER
-  ) {
-    liveFiltersMap[filter.key] = {...filter};
-    liveFiltersMap[filter.key].operator = 'contains';
-    liveFiltersMap[filter.key].operatorDisabled = true;
-    if (filter.key === FilterKey.PLATFORM) {
-      liveFiltersMap[filter.key].operator = 'is';
+const mapLiveFilters = (list) => {
+  const obj = {};
+  list.forEach(filter => {
+    if (
+      filter.category !== FilterCategory.INTERACTIONS &&
+      filter.category !== FilterCategory.JAVASCRIPT &&
+      filter.category !== FilterCategory.PERFORMANCE &&
+      filter.key !== FilterKey.DURATION &&
+      filter.key !== FilterKey.REFERRER
+    ) {
+      obj[filter.key] = {...filter};
+      obj[filter.key].operator = 'contains';
+      obj[filter.key].operatorDisabled = true;
+      if (filter.key === FilterKey.PLATFORM) {
+        obj[filter.key].operator = 'is';
+      }
     }
-  }
-})
+  })
 
+  return obj;
+}
 
 export const filterLabelMap = filters.reduce((acc, filter) => {
   acc[filter.key] = filter.label
   return acc
 }, {})
+
+export let filtersMap = mapFilters(filters)
+export let liveFiltersMap = mapLiveFilters(filters)
+
+export const clearMetaFilters = () => {
+  filtersMap = mapFilters(filters);
+  liveFiltersMap = mapLiveFilters(filters);
+};
 
 /**
  * Add a new filter to the filter list

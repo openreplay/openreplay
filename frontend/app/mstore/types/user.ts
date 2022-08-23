@@ -2,26 +2,7 @@ import { runInAction, makeAutoObservable, observable } from 'mobx'
 import { DateTime } from 'luxon';
 import { validateEmail, validateName } from 'App/validate';
 
-export interface IUser {
-    userId: string
-    email: string
-    createdAt: string
-    isAdmin: boolean
-    isSuperAdmin: boolean
-    isJoined: boolean
-    isExpiredInvite: boolean
-    roleId: string
-    roleName: string
-    invitationLink: string
-
-
-    updateKey(key: string, value: any): void
-    fromJson(json: any): IUser
-    toJson(): any
-    toSave(): any
-}
-
-export default class User implements IUser {
+export default class User {
     userId: string = '';
     name: string = '';
     email: string = '';

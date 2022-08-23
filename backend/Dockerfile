@@ -45,6 +45,7 @@ ENV TZ=UTC \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
+    AWS_SKIP_SSL_VALIDATION=false \
     CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
     ASSETS_HEADERS="{ \"Cookie\": \"ABv=3;\" }" \
@@ -56,7 +57,7 @@ ENV TZ=UTC \
     PARTITIONS_NUMBER=16 \
     QUEUE_MESSAGE_SIZE_LIMIT=1048576 \
     BEACON_SIZE_LIMIT=1000000 \
-    USE_FAILOVER=false \
+    USE_FAILOVER=true \
     GROUP_STORAGE_FAILOVER=failover \
     TOPIC_STORAGE_FAILOVER=storage-failover
 

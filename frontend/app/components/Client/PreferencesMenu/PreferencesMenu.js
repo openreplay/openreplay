@@ -13,14 +13,14 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
     };
 
     return (
-        <div className={stl.wrapper}>
+        <div className={cn(stl.wrapper, 'h-full overflow-y-auto pb-24')}>
             <div className={cn(stl.header, 'flex items-end')}>
                 <div className={stl.label}>
                     <span>Preferences</span>
                 </div>
             </div>
 
-            <div className="mb-4">
+            <div className="mb-2">
                 <SideMenuitem
                     active={activeTab === CLIENT_TABS.PROFILE}
                     title="Account"
@@ -29,7 +29,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
                 />
             </div>
 
-            <div className="mb-4">
+            <div className="mb-2">
                 <SideMenuitem
                     active={activeTab === CLIENT_TABS.INTEGRATIONS}
                     title="Integrations"
@@ -38,7 +38,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
                 />
             </div>
 
-            <div className="mb-4">
+            <div className="mb-2">
                 <SideMenuitem
                     iconName="tags"
                     active={activeTab === CLIENT_TABS.CUSTOM_FIELDS}
@@ -48,7 +48,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             </div>
 
             {
-                <div className="mb-4">
+                <div className="mb-2">
                     <SideMenuitem
                         active={activeTab === CLIENT_TABS.WEBHOOKS}
                         title="Webhooks"
@@ -58,7 +58,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
                 </div>
             }
 
-            <div className="mb-4">
+            <div className="mb-2">
                 <SideMenuitem
                     active={activeTab === CLIENT_TABS.SITES}
                     title="Projects"
@@ -68,7 +68,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             </div>
 
             {isEnterprise && isAdmin && (
-                <div className="mb-4">
+                <div className="mb-2">
                     <SideMenuitem
                         active={activeTab === CLIENT_TABS.MANAGE_ROLES}
                         title="Roles & Access"
@@ -79,7 +79,7 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             )}
 
             {isEnterprise && isAdmin && (
-                <div className="mb-4">
+                <div className="mb-2">
                     <SideMenuitem
                         active={activeTab === CLIENT_TABS.AUDIT}
                         title="Audit"
@@ -90,17 +90,17 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             )}
 
             {isAdmin && (
-              <div className="mb-4">
-                  <SideMenuitem
-                      active={activeTab === CLIENT_TABS.MANAGE_USERS}
-                      title="Team"
-                      iconName="users"
-                      onClick={() => setTab(CLIENT_TABS.MANAGE_USERS)}
-                  />
-              </div>
+                <div className="mb-2">
+                    <SideMenuitem
+                        active={activeTab === CLIENT_TABS.MANAGE_USERS}
+                        title="Team"
+                        iconName="users"
+                        onClick={() => setTab(CLIENT_TABS.MANAGE_USERS)}
+                    />
+                </div>
             )}
 
-            <div className="mb-4">
+            <div className="mb-2">
                 <SideMenuitem
                     active={activeTab === CLIENT_TABS.NOTIFICATIONS}
                     title="Notifications"

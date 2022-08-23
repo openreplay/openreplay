@@ -11,27 +11,29 @@ interface Props {
   active: boolean;
 }
 
-export default function Marker({ target, active }: Props) {  
+export default function Marker({ target, active }: Props) {
   const style = {
-    top: `${ target.boundingRect.top }px`,
-    left: `${ target.boundingRect.left }px`,
-    width: `${ target.boundingRect.width }px`,
-    height: `${ target.boundingRect.height }px`,
-  }  
+    top: `${target.boundingRect.top}px`,
+    left: `${target.boundingRect.left}px`,
+    width: `${target.boundingRect.width}px`,
+    height: `${target.boundingRect.height}px`,
+  }
   return (
-      <div className={ cn(stl.marker, { [stl.active] : active }) }  style={ style } onClick={() => activeTarget(target.index)}>
-        <div className={stl.index}>{target.index + 1}</div>
-        <Tooltip      
-          open={active}
-          arrow
-          sticky
-          distance={15}
-          html={(
-            <div>{target.count} Clicks</div>
-          )}
-        >
-          <div className="absolute inset-0"></div>
-        </Tooltip>
-    </div>    
-  )    
+    <div className={cn(stl.marker, { [stl.active]: active })} style={style} onClick={() => activeTarget(target.index)}>
+      <div className={stl.index}>{target.index + 1}</div>
+      {/* @ts-expect-error Tooltip doesn't have children property */}
+      <Tooltip
+        open={active}
+        arrow
+        sticky
+        distance={15}
+        html={(
+          <div>{target.count} Clicks</div>
+        )}
+        trigger="mouseenter"
+      >
+        <div className="absolute inset-0"></div>
+      </Tooltip>
+    </div>
+  )
 }

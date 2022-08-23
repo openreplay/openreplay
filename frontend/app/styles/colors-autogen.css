@@ -35,6 +35,7 @@
 .fill-light-blue-bg { fill: $light-blue-bg }
 .fill-white { fill: $white }
 .fill-borderColor { fill: $borderColor }
+.fill-figmaColors { fill: $figmaColors }
 
 /* color */
 .color-main { color: $main }
@@ -71,6 +72,7 @@
 .color-light-blue-bg { color: $light-blue-bg }
 .color-white { color: $white }
 .color-borderColor { color: $borderColor }
+.color-figmaColors { color: $figmaColors }
 
 /* hover color */
 .hover-main:hover { color: $main }
@@ -107,6 +109,7 @@
 .hover-light-blue-bg:hover { color: $light-blue-bg }
 .hover-white:hover { color: $white }
 .hover-borderColor:hover { color: $borderColor }
+.hover-figmaColors:hover { color: $figmaColors }
 
 .border-main { border-color: $main }
 .border-gray-light-shade { border-color: $gray-light-shade }
@@ -142,3 +145,4 @@
 .border-light-blue-bg { border-color: $light-blue-bg }
 .border-white { border-color: $white }
 .border-borderColor { border-color: $borderColor }
+.border-figmaColors { border-color: $figmaColors }

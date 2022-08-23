@@ -44,12 +44,6 @@ function Overlay({
   togglePlay,
   closedLive
 }: Props) {
-
-  // useEffect(() =>{
-  //   setTimeout(() => markTargets([{ selector: 'div', count:6}]), 5000)
-  //   setTimeout(() => markTargets(null), 8000)
-  // },[])
-  
   const showAutoplayTimer = !live && completed && autoplay && nextId
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
   const showLiveStatusText = live && liveStatusText && !loading;
@@ -60,7 +54,7 @@ function Overlay({
       { showLiveStatusText && 
         <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
       }
-      { messagesLoading && <Loader/> }
+      { messagesLoading && <Loader /> }
       { showPlayIconLayer && 
         <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       }

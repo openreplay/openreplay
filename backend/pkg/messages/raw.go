@@ -22,10 +22,11 @@ func (m *RawMessage) Encode() []byte {
 	if m.encoded {
 		return m.data
 	}
-	m.data = make([]byte, m.size)
+	m.data = make([]byte, m.size+1)
+	m.data[0] = uint8(m.tp)
 	m.encoded = true
 	*m.skipped = false
-	n, err := io.ReadFull(m.reader, m.data)
+	n, err := io.ReadFull(m.reader, m.data[1:])
 	if err != nil {
 		log.Printf("message encode err: %s", err)
 		return nil
@@ -51,10 +52,11 @@ func (m *RawMessage) Decode() Message {
 	if !m.encoded {
 		m.Encode()
 	}
-	msg, err := ReadMessage(m.tp, bytes.NewReader(m.data))
+	msg, err := ReadMessage(m.tp, bytes.NewReader(m.data[1:]))
 	if err != nil {
 		log.Printf("decode err: %s", err)
 	}
+	msg.Meta().SetMeta(m.meta)
 	return msg
 }
 

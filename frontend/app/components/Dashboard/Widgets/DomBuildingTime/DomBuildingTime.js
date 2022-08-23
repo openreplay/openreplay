@@ -44,6 +44,7 @@ export default class DomBuildingTime extends React.PureComponent {
     return (
       <NoContent
         size="small"
+        title="No recordings found"
         show={ data.chart.length === 0 }
       >
         <React.Fragment>
@@ -60,6 +61,7 @@ export default class DomBuildingTime extends React.PureComponent {
           <Loader loading={ loading } size="small">
             <NoContent
               size="small"
+              title="No recordings found"
               show={ data.chart.size === 0 }
             >
               <ResponsiveContainer height={ 200 } width="100%">

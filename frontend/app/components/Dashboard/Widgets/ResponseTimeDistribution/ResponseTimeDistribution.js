@@ -60,6 +60,7 @@ export default class ResponseTimeDistribution extends React.PureComponent {
         <NoContent
           size="small"
           show={ data.chart.length === 0 }
+          title="No recordings found"
         >
           <div className="flex items-center justify-end mb-3">
             <AvgLabel text="Avg" unit="ms" className="ml-3" count={data.avg} />

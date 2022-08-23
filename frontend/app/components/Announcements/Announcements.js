@@ -64,15 +64,14 @@ class Announcements extends React.Component {
           content={ 
             <div className="mx-4">
               <NoContent
-                title={
-                  <div className="flex items-center justify-between">
-                    <AnimatedSVG name={ICONS.EMPTY_STATE} size="100" />
-                  </div>
-                }
-                subtext="There are no announcements to show."
-                // animatedIcon="no-results"
-                show={ !loading && announcements.size === 0 }
-                size="small"
+                  title={
+                      <div className="flex flex-col items-center justify-center">
+                        <AnimatedSVG name={ICONS.NO_ANNOUNCEMENTS} size={80} />
+                        <div className="text-center text-gray-600 my-4">No announcements to show.</div>
+                      </div>
+                  }
+                  size="small"
+                  show={ !loading && announcements.size === 0 }
               >
                 {
                   announcements.map(item => (

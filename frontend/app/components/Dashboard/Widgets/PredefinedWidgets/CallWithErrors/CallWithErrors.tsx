@@ -6,6 +6,7 @@ import ImageInfo from './ImageInfo';
 import MethodType from './MethodType';
 import cn from 'classnames';
 import stl from './callWithErrors.module.css';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 const cols = [
   {
@@ -61,6 +62,7 @@ function CallWithErrors(props: Props) {
 
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
           style={{ height: '240px'}}
         >

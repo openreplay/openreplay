@@ -15,6 +15,7 @@ export default class ErrorsPerDomain extends React.PureComponent {
       <Loader loading={ loading } size="small">
         <NoContent
           size="small"
+          title="No recordings found"
           show={ data.size === 0 }
         >          
           <div className="w-full pt-3" style={{ height: '240px' }}>

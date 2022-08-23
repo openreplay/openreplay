@@ -12,7 +12,6 @@ function SubHeader(props) {
     const [isCopied, setCopied] = React.useState(false);
 
     const isAssist = window.location.pathname.includes('/assist/');
-    if (isAssist) return null;
 
     const location = props.currentLocation && props.currentLocation.length > 60 ? `${props.currentLocation.slice(0, 60)}...` : props.currentLocation
     return (
@@ -39,37 +38,39 @@ function SubHeader(props) {
                     </Tooltip>
                 </div>
             )}
-            <div className="ml-auto text-sm flex items-center color-gray-medium" style={{ width: 'max-content' }}>
-                <div className="cursor-pointer mr-4 hover:bg-gray-light-shade rounded-md p-1">
-                {!isAssist && props.jiraConfig && props.jiraConfig.token && <Issues sessionId={props.sessionId} />}
+            {!isAssist ? (
+                <div className="ml-auto text-sm flex items-center color-gray-medium" style={{ width: 'max-content' }}>
+                    <div className="cursor-pointer mr-4 hover:bg-gray-light-shade rounded-md p-1">
+                    {props.jiraConfig && props.jiraConfig.token && <Issues sessionId={props.sessionId} />}
+                    </div>
+                    <div className="cursor-pointer">
+                        <SharePopup
+                            entity="sessions"
+                            id={ props.sessionId }
+                            showCopyLink={true}
+                            trigger={
+                                <div className="flex items-center hover:bg-gray-light-shade rounded-md p-1">
+                                    <Icon
+                                        className="mr-2"
+                                        disabled={ props.disabled }
+                                        name="share-alt"
+                                        size="16"
+                                    />
+                                    <span>Share</span>
+                                </div>
+                            }
+                        />
+                    </div>
+                    <div className="mx-4 hover:bg-gray-light-shade rounded-md p-1">
+                        <Bookmark noMargin sessionId={props.sessionId} />
+                    </div>
+                    <div>
+                        <Autoplay />
+                    </div>
+                    <div>
+                    </div>
                 </div>
-                <div className="cursor-pointer">
-                    <SharePopup
-                        entity="sessions"
-                        id={ props.sessionId }
-                        showCopyLink={true}
-                        trigger={
-                            <div className="flex items-center hover:bg-gray-light-shade rounded-md p-1">
-                                <Icon
-                                    className="mr-2"
-                                    disabled={ props.disabled }
-                                    name="share-alt"
-                                    size="16"
-                                />
-                                <span>Share</span>
-                            </div>
-                        }
-                    />
-                </div>
-                <div className="mx-4 hover:bg-gray-light-shade rounded-md p-1">
-                    <Bookmark noMargin sessionId={props.sessionId} />
-                </div>
-                <div>
-                    <Autoplay />
-                </div>
-                <div>
-                </div>
-            </div>
+            ) : null}
         </div>
     )
 }
