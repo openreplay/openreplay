@@ -144,7 +144,7 @@ var batches = map[string]string{
 	"errors":        "INSERT INTO a_migration.events (session_id, project_id, datetime, source, name, message, error_id, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"performance":   "INSERT INTO a_migration.events (session_id, project_id, datetime, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"autocompletes": "INSERT INTO a_migration.autocomplete (project_id, type, value) VALUES (?, ?, ?)",
-	"requests":      "INSERT INTO a_migration.events (session_id, project_id, datetime, url, request_body, response_body, status_code, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"requests":      "INSERT INTO a_migration.events (session_id, project_id, datetime, url, request_body, response_body, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"custom":        "INSERT INTO a_migration.events (session_id, project_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?)",
 	"graphql":       "INSERT INTO a_migration.events (session_id, project_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 }
@@ -378,7 +378,6 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 		msg.URL,
 		nullableString(msg.Request),
 		nullableString(msg.Response),
-		msg.Status,
 		url.EnsureMethod(msg.Method),
 		msg.Duration,
 		msg.Status < 400,
