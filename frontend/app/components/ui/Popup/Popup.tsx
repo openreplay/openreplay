@@ -9,7 +9,6 @@ interface Props {
     className?: string;
     delay?: number;
     hideDelay?: number;
-    duration?: number;
     disabled?: boolean;
     arrow?: boolean;
     open?: boolean;
@@ -24,12 +23,11 @@ export default ({
     title = '',
     className = '',
     trigger = 'mouseenter',
-    delay = 1000,
+    delay = 0,
     hideDelay = 0,
     content = '',
-    duration = 0,
     disabled = false,
-    arrow = true,
+    arrow = false,
     theme = 'dark',
     style = {},
     interactive = false,
@@ -37,6 +35,7 @@ export default ({
 }: // ...props
 Props) => (
     <Tooltip
+        animation="fade"
         position={position}
         className={className}
         trigger={trigger}
@@ -49,7 +48,6 @@ Props) => (
         theme={theme}
         style={style}
         interactive={interactive}
-        duration={0}
         hideDelay={hideDelay}
     >
         {children}
