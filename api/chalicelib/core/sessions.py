@@ -680,6 +680,17 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                                             value_key=f"custom{i}"))
                     full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
 
+            elif event_type == events.event_type.INPUT_VALUE.ui_type:
+                event_from = event_from % f"{events.event_type.INPUT_VALUE.table} AS main "
+                if not is_any:
+                    event_where.append(
+                        _multiple_conditions(f"main.{events.event_type.INPUT_VALUE.column} {op} %({e_k})s", event.value,
+                                             value_key=e_k))
+                if event.source is not None and len(event.source) > 0:
+                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
+                                                            value_key=f"custom{i}"))
+                    full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
+
             elif event_type == events.event_type.LOCATION.ui_type:
                 event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                 if not is_any:

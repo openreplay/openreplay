@@ -339,6 +339,7 @@ def __generic_autocomplete(event: Event):
 class event_type:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
+    INPUT_VALUE = Event(ui_type=schemas.EventType.input_value, table="events.inputs", column="value")
     LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="path")
     CUSTOM = Event(ui_type=schemas.EventType.custom, table="events_common.customs", column="name")
     REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="path")
@@ -364,6 +365,9 @@ SUPPORTED_TYPES = {
     event_type.INPUT.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT),
                                               query=__generic_query(typename=event_type.INPUT.ui_type),
                                               change_by_length=True),
+    event_type.INPUT_VALUE.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT_VALUE),
+                                                    query=__generic_query(typename=event_type.INPUT_VALUE.ui_type),
+                                                    change_by_length=True),
     event_type.LOCATION.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.LOCATION),
                                                  query=__generic_query(typename=event_type.LOCATION.ui_type),
                                                  change_by_length=True),
@@ -414,7 +418,8 @@ def __get_autocomplete_table(value, project_id):
                            schemas.EventType.custom,
                            schemas.FilterType.user_country,
                            schemas.EventType.location,
-                           schemas.EventType.input]
+                           schemas.EventType.input,
+                           schemas.EventType.input_value]
     autocomplete_events.sort()
     sub_queries = []
     for e in autocomplete_events:

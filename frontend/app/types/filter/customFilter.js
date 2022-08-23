@@ -5,6 +5,7 @@ import { getEventIcon } from 'Types/filter';
 
 const CLICK = 'CLICK';
 const INPUT = 'INPUT';
+const INPUT_VALUE = 'INPUT_VALUE';
 const LOCATION = 'LOCATION';
 const VIEW = 'VIEW_IOS';
 const CONSOLE = 'ERROR';
@@ -51,6 +52,7 @@ export const KEYS = {
   CLICK_RAGE,
   CLICK,
   INPUT,
+  INPUT_VALUE,
   LOCATION,
   VIEW,
   CONSOLE,

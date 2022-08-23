@@ -88,6 +88,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
 	conn.insertAutocompleteValue(sessionID, projectID, "INPUT", e.Label)
+	conn.insertAutocompleteValue(sessionID, projectID, "INPUT_VALUE", e.Value)
 	return nil
 }
 

@@ -386,6 +386,7 @@ class ErrorSource(str, Enum):
 class EventType(str, Enum):
     click = "CLICK"
     input = "INPUT"
+    input_value = "INPUT_VALUE"
     location = "LOCATION"
     custom = "CUSTOM"
     request = "REQUEST"

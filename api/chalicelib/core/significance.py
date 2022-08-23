@@ -141,6 +141,9 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         elif event_type == events.event_type.INPUT.ui_type:
             next_table = events.event_type.INPUT.table
             next_col_name = events.event_type.INPUT.column
+        elif event_type == events.event_type.INPUT_VALUE.ui_type:
+            next_table = events.event_type.INPUT_VALUE.table
+            next_col_name = events.event_type.INPUT_VALUE.column
         elif event_type == events.event_type.LOCATION.ui_type:
             next_table = events.event_type.LOCATION.table
             next_col_name = events.event_type.LOCATION.column

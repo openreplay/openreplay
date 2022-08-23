@@ -122,6 +122,7 @@ export const defaultFilters = [
       { label: 'Avg CPU Load', key: KEYS.AVG_CPU_LOAD, type: KEYS.AVG_CPU_LOAD, filterKey: KEYS.AVG_CPU_LOAD, icon: 'filters/click', isFilter: false },
       { label: 'Memory Usage', key: KEYS.AVG_MEMORY_USAGE, type: KEYS.AVG_MEMORY_USAGE, filterKey: KEYS.AVG_MEMORY_USAGE, icon: 'filters/click', isFilter: false },
       { label: 'Input', key: KEYS.INPUT, type: KEYS.INPUT, filterKey: KEYS.INPUT, icon: 'event/input', isFilter: false },
+      { label: 'Input Value', key: KEYS.INPUT_VALUE, type: KEYS.INPUT_VALUE, filterKey: KEYS.INPUT_VALUE, icon: 'event/input', isFilter: false },
       { label: 'Path', key: KEYS.LOCATION, type: KEYS.LOCATION, filterKey: KEYS.LOCATION, icon: 'event/link', isFilter: false },
       // { label: 'View', key: KEYS.VIEW, type: KEYS.VIEW, filterKey: KEYS.VIEW, icon: 'event/view', isFilter: false }
 		]

@@ -171,6 +171,7 @@ export enum FilterKey {
   CLICK_RAGE = 'CLICK_RAGE',
   CLICK = 'CLICK',
   INPUT = 'INPUT',
+  INPUT_VALUE = "INPUT_VALUE",
   LOCATION = 'LOCATION',
   VIEW = 'VIEW',
   CONSOLE = 'CONSOLE',
