@@ -11,7 +11,7 @@ import styles from './siteDropdown.module.css';
 import cn from 'classnames';
 import { clearSearch } from 'Duck/search';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchListActive as fetchIntegrationVariables } from 'Duck/customField';
 import { withStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 import NewProjectButton from './NewProjectButton';

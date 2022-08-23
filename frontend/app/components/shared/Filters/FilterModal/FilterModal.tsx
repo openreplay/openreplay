@@ -34,7 +34,7 @@ interface Props {
   filters: any,
   onFilterClick?: (filter) => void,
   filterSearchList: any,
-  metaOptions: any,
+  // metaOptions: any,
   isMainSearch?: boolean,
   fetchingFilterSearchList: boolean,
   searchQuery?: string,
@@ -127,7 +127,7 @@ export default connect((state: any, props: any) => {
     filterSearchList: props.isLive ? state.getIn([ 'liveSearch', 'filterSearchList' ]) : state.getIn([ 'search', 'filterSearchList' ]),
     // filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
     // liveFilterSearchList: state.getIn([ 'liveSearch', 'filterSearchList' ]),
-    metaOptions: state.getIn([ 'customFields', 'list' ]),
+    // metaOptions: state.getIn([ 'customFields', 'list' ]),
     fetchingFilterSearchList: props.isLive
             ? state.getIn(['liveSearch', 'fetchFilterSearch', 'loading'])
             : state.getIn(['search', 'fetchFilterSearch', 'loading']),
