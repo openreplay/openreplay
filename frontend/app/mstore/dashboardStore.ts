@@ -48,7 +48,7 @@ export default class DashboardStore {
 
     // Pagination
     page: number = 1
-    pageSize: number = 15
+    pageSize: number = 10
     dashboardsSearch: string = ''
     sort: any = {}
 
