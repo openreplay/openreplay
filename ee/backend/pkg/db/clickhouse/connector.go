@@ -137,16 +137,16 @@ and base_referrer; I need these columns in the sessions table in clickhouse)
 var batches = map[string]string{
 	"sessions":      "INSERT INTO a_migration.sessions (session_id, project_id, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, pages_count, events_count, errors_count, user_browser, user_browser_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"metadata":      "INSERT INTO a_migration.sessions (session_id, user_id, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"resources":     "INSERT INTO a_migration.resources (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"pages":         "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"clicks":        "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"inputs":        "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"errors":        "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, source, name, message, error_id, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"performance":   "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"resources":     "INSERT INTO a_migration.resources (session_id, project_id, user_device, user_device_type, user_country, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"pages":         "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"clicks":        "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"inputs":        "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"errors":        "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, source, name, message, error_id, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"performance":   "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"autocompletes": "INSERT INTO a_migration.autocomplete (project_id, type, value) VALUES (?, ?, ?)",
-	"requests":      "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"custom":        "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, seq_index, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"graphql":       "INSERT INTO a_migration.events (session_id, project_id, user_browser, user_browser_version, user_device, user_device_type, user_country, datetime, message_id, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"requests":      "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"custom":        "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, seq_index, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"graphql":       "INSERT INTO a_migration.events (session_id, project_id, user_device, user_device_type, user_country, datetime, message_id, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 }
 
 func (c *connectorImpl) Prepare() error {
@@ -235,8 +235,6 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -261,8 +259,6 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -295,8 +291,6 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -318,8 +312,6 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 	if err := c.batches["inputs"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -337,8 +329,6 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *message
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -360,8 +350,6 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -409,8 +397,6 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -438,8 +424,6 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
@@ -459,8 +443,6 @@ func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.Grap
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		session.ProjectID,
-		session.UserBrowser,
-		nullableString(session.UserBrowserVersion),
 		nullableString(session.UserDevice),
 		session.UserDeviceType,
 		session.UserCountry,
