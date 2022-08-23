@@ -8,6 +8,7 @@ import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosi
 import useTimeout from 'App/hooks/useTimeout';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
+const PER_PAGE = 10;
 interface Props {
     loading: boolean;
     list: any;
@@ -114,12 +115,19 @@ function SessionList(props: Props) {
             </NoContent>
 
             {total > 0 && (
-                <div className="w-full flex items-center justify-center py-6 px-4">
+                // <div className="w-full flex items-center justify-center py-6 px-4">
+                <div className="flex items-center justify-between p-5">
+                    <div>
+                        {/* showing x to x of total sessions  */}
+                        Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
+                        <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.size}</span> of{' '}
+                        <span className="font-medium">{total}</span> sessions.
+                    </div>
                     <Pagination
                         page={currentPage}
-                        totalPages={Math.ceil(total / 10)}
+                        totalPages={Math.ceil(total / PER_PAGE)}
                         onPageChange={(page) => props.updateCurrentPage(page)}
-                        limit={10}
+                        limit={PER_PAGE}
                         debounceRequest={1000}
                     />
                 </div>
