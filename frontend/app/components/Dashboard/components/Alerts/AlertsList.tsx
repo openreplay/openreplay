@@ -8,7 +8,7 @@ import { fetchList as fetchWebhooks } from 'Duck/webhook';
 
 import AlertListItem from './AlertListItem'
 
-const pageSize = 20;
+const pageSize = 10;
 
 interface Props {
   fetchList: () => void;
