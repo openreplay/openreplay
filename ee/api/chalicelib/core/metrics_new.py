@@ -1849,8 +1849,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True,
                                                  data=args)
     ch_sub_query_chart.append("(events.event_type = 'REQUEST' OR events.event_type = 'ERROR')")
-    ch_sub_query_chart.append("(intDiv(events.status, 100) == 4 OR intDiv(events.status, 100) == 5 "
-                              "OR events.event_type = 'ERROR')")
+    ch_sub_query_chart.append("(events.status>200 OR events.event_type = 'ERROR')")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 

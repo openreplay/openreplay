@@ -1878,10 +1878,9 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
 
     pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
-    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
-    pg_sub_query_subset.append("resources.type != 'fetch'")
-    pg_sub_query_subset.append("resources.status > 200")
+    pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("requests.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("requests.status_code > 200")
 
     pg_sub_query_subset_e = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
                                               time_constraint=False)
@@ -1892,8 +1891,8 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     pg_sub_query_subset_e.append("timestamp<%(endTimestamp)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (SELECT status, timestamp
-                                       FROM events.resources
+        pg_query = f"""WITH requests AS (SELECT status_code AS status, timestamp
+                                       FROM events_common.requests
                                                 INNER JOIN public.sessions USING (session_id)
                                        WHERE {" AND ".join(pg_sub_query_subset)}
                             ),
@@ -1922,7 +1921,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
                                     ), 0)                                                 AS integrations
                     FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                              LEFT JOIN LATERAL (SELECT status
-                                                FROM resources
+                                                FROM requests
                                                 WHERE {" AND ".join(pg_sub_query_chart)}
                         ) AS errors_partition ON (TRUE)
                     GROUP BY timestamp
