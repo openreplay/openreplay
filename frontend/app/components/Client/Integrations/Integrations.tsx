@@ -28,6 +28,7 @@ import AxiosDoc from './AxiosDoc';
 import AssistDoc from './AssistDoc';
 import { PageTitle, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import withPageTitle from 'HOCs/withPageTitle';
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -119,7 +120,7 @@ export default connect(
         siteId: state.getIn(['integrations', 'siteId']),
     }),
     { fetch, init, fetchIntegrationList, setSiteId }
-)(Integrations);
+)(withPageTitle('Integrations - OpenReplay Preferences')(Integrations));
 
 const integrations = [
     {
