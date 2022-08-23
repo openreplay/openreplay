@@ -1625,8 +1625,8 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return result
 
 
-def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(), density=6, **args):
+def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                     endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
@@ -1655,7 +1655,7 @@ def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp,
                   "step_size": step_size,
-                  "status_code": 4, **__get_constraint_values(args)}
+                  "status_code": status, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         rows = __nested_array_to_dict_array(rows)
@@ -1663,46 +1663,18 @@ def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         rows = __merge_rows_with_neutral(rows, neutral)
 
         return rows
+
+
+def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                           endTimestamp=TimeUTC.now(), density=6, **args):
+    return __get_domains_errors_4xx_and_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
+                                            endTimestamp=endTimestamp, density=density, **args)
 
 
 def get_domains_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=6, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="resources", time_column="timestamp", project=False,
-                                           duration=False)
-    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (SELECT resources.url_host, timestamp 
-                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
-                                         WHERE {" AND ".join(pg_sub_query_subset)}
-                     )
-                        SELECT generated_timestamp AS timestamp,
-                                              COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
-                                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                        LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.url_host) AS count
-                                                             FROM resources
-                                                             WHERE {" AND ".join(pg_sub_query_chart)}
-                                                             GROUP BY url_host
-                                                             ORDER BY count DESC
-                                                             LIMIT 5
-                                             ) AS resources ON (TRUE)
-                                        GROUP BY generated_timestamp
-                                        ORDER BY generated_timestamp;"""
-        params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp,
-                  "step_size": step_size,
-                  "status_code": 5, **__get_constraint_values(args)}
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
-        rows = __nested_array_to_dict_array(rows)
-        neutral = __get_neutral(rows)
-        rows = __merge_rows_with_neutral(rows, neutral)
-
-        return rows
+    return __get_domains_errors_4xx_and_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+                                            endTimestamp=endTimestamp, density=density, **args)
 
 
 def __nested_array_to_dict_array(rows, key="url_host", value="count"):
