@@ -1866,8 +1866,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = helper.list_to_camel_case(ch.execute(query=ch_query, params=params))
-        for r in rows:
-            print(r)
+
     return __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                     end_time=endTimestamp,
                                     density=density,

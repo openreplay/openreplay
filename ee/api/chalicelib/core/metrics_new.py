@@ -1845,47 +1845,33 @@ def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                         platform=None, density=7, **args):
-    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query_chart_r = __get_basic_constraints(table_name="resources", round_start=True,
-                                                   data=args)
+    ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True,
+                                                 data=args)
+    ch_sub_query_chart.append("(events.event_type = 'REQUEST' OR events.event_type = 'ERROR')")
+    ch_sub_query_chart.append("(intDiv(events.status, 100) == 4 OR intDiv(events.status, 100) == 5 "
+                              "OR events.event_type = 'ERROR')")
     meta_condition = __get_meta_constraint(args)
-    ch_sub_query_chart_r += meta_condition
-    ch_sub_query_chart_e = __get_basic_constraints(table_name="errors", round_start=True, data=args)
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query_chart_e += meta_condition
+    ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
-                               SUM(count_4xx)                                                                      AS _4xx,
-                               SUM(count_5xx)                                                                      AS _5xx,
-                               SUM(count_js)                                                                       AS js,
-                               SUM(count_be)                                                                       AS integrations
-                        FROM ((SELECT resources.datetime, 1 AS count_4xx, 0 AS count_5xx, 0 AS count_js, 0 AS count_be
-                              FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                              WHERE {" AND ".join(ch_sub_query_chart_r)} AND resources.type = 'fetch' AND intDiv(resources.status, 100) == 4)
-                        UNION ALL
-                        (SELECT resources.datetime, 0 AS count_4xx, 1 AS count_5xx, 0 AS count_js, 0 AS count_be
-                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                         WHERE {" AND ".join(ch_sub_query_chart_r)} AND resources.type = 'fetch' AND intDiv(resources.status, 100) == 5)
-                        UNION ALL
-                        (SELECT errors.datetime, 0 AS count_4xx, 0 AS count_5xx, 1 AS count_js, 0 AS count_be
-                         FROM errors {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                         WHERE {" AND ".join(ch_sub_query_chart_e)} AND errors.source == 'js_exception')
-                        UNION ALL
-                        (SELECT errors.datetime, 0 AS count_4xx, 0 AS count_5xx, 0 AS count_js, 1 AS count_be
-                         FROM errors {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                         WHERE {" AND ".join(ch_sub_query_chart_e)} AND errors.source != 'js_exception')
-                        ) AS errors_partition
+                               SUM(events.event_type = 'REQUEST' AND intDiv(events.status, 100) == 4)     AS _4xx,
+                               SUM(events.event_type = 'REQUEST' AND intDiv(events.status, 100) == 5)     AS _5xx,
+                               SUM(events.event_type = 'ERROR' AND events.source == 'js_exception')       AS js,
+                               SUM(events.event_type = 'ERROR' AND events.source != 'js_exception')       AS integrations
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+                        WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
         params = {"step_size": step_size,
                   "project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        rows = helper.list_to_camel_case(ch.execute(query=ch_query, params=params))
-        for r in rows:
-            print(r)
+        # print(ch.format(query=ch_query, params=params))
+        rows = ch.execute(query=ch_query, params=params)
+        rows = helper.list_to_camel_case(rows)
+
     return __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                     end_time=endTimestamp,
                                     density=density,
