@@ -6,6 +6,7 @@ import { NoContent, Loader, Pagination, Button } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import useTimeout from 'App/hooks/useTimeout';
+import { numberWithCommas } from 'App/utils';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 const PER_PAGE = 10;
@@ -115,13 +116,11 @@ function SessionList(props: Props) {
             </NoContent>
 
             {total > 0 && (
-                // <div className="w-full flex items-center justify-center py-6 px-4">
                 <div className="flex items-center justify-between p-5">
                     <div>
-                        {/* showing x to x of total sessions  */}
                         Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
                         <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.size}</span> of{' '}
-                        <span className="font-medium">{total}</span> sessions.
+                        <span className="font-medium">{numberWithCommas(total)}</span> sessions.
                     </div>
                     <Pagination
                         page={currentPage}

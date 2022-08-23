@@ -89,7 +89,7 @@ function LiveSessionList(props: Props) {
                     <div className="flex items-baseline">
                         <h3 className="text-2xl capitalize">
                             <span>Live Sessions</span>
-                            <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span>
+                            {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
                         </h3>
 
                         <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
@@ -152,8 +152,12 @@ function LiveSessionList(props: Props) {
                                 </>
                             ))}
                         </div>
-
-                        <div className={cn('w-full flex items-center justify-center py-6', { disabled: loading })}>
+                        <div className={cn("flex items-center justify-between p-5", { disabled: loading })}>
+                            <div>
+                                Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
+                                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.size}</span> of{' '}
+                                <span className="font-medium">{numberWithCommas(total)}</span> sessions.
+                            </div>
                             <Pagination
                                 page={currentPage}
                                 totalPages={Math.ceil(total / PER_PAGE)}
