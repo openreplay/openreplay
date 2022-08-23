@@ -12,7 +12,6 @@ export interface IDashboard {
     widgets: IWidget[]
     metrics: any[]
     isValid: boolean
-    isPinned: boolean
     currentWidget: IWidget
     config: any
     createdAt: Date
@@ -43,7 +42,6 @@ export default class Dashboard implements IDashboard {
     widgets: IWidget[] = []
     metrics: any[] = []
     isValid: boolean = false
-    isPinned: boolean = false
     currentWidget: IWidget = new Widget()
     config: any = {}
     createdAt: Date = new Date()
@@ -78,7 +76,6 @@ export default class Dashboard implements IDashboard {
             this.name = json.name
             this.description = json.description
             this.isPublic = json.isPublic
-            this.isPinned = json.isPinned
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
             this.widgets = json.widgets ? json.widgets.map((w: Widget) => new Widget().fromJson(w)).sort((a: Widget, b: Widget) => a.position - b.position) : []
         })

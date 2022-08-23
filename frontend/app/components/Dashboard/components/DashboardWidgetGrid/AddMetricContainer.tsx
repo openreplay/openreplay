@@ -49,12 +49,7 @@ function AddMetricButton({ iconName, title, description, onClick, isPremade, isP
 
 function AddMetricContainer({ siteId, isPopup }: any) {
     const { showModal } = useModal();
-    const [categories, setCategories] = React.useState<Record<string, any>[]>([]);
     const { dashboardStore } = useStore();
-
-    React.useEffect(() => {
-        dashboardStore?.fetchTemplates(true).then((cats) => setCategories(cats));
-    }, []);
 
     const onAddCustomMetrics = () => {
         dashboardStore.initDashboard(dashboardStore.selectedDashboard);
@@ -63,7 +58,6 @@ function AddMetricContainer({ siteId, isPopup }: any) {
                 siteId={siteId}
                 title="Custom Metrics"
                 description="Metrics that are manually created by you or your team."
-                metrics={categories.find((category) => category.name === 'custom')?.widgets}
             />,
             { right: true }
         );
@@ -76,7 +70,6 @@ function AddMetricContainer({ siteId, isPopup }: any) {
                 siteId={siteId}
                 title="Ready-Made Metrics"
                 description="Curated metrics predfined by OpenReplay."
-                categories={categories.filter((category) => category.name !== 'custom')}
             />,
             { right: true }
         );

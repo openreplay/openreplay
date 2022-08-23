@@ -18,7 +18,6 @@ export interface IDashboardService {
     saveWidget(dashboardId: string, widget: IWidget): Promise<any>
     deleteWidget(dashboardId: string, widgetId: string): Promise<any>
     
-    updatePinned(dashboardId: string): Promise<any>
 }
 
 
@@ -150,15 +149,5 @@ export default class DashboardService implements IDashboardService {
         return this.client.post(`/dashboards/${dashboardId}/widgets`, widget.toWidget())
             .then(response => response.json())
             .then(response => response.data || {});
-    }
-
-    /**
-     * Update the pinned status of a dashboard.
-     * @param dashboardId 
-     * @returns 
-     */
-    updatePinned(dashboardId: string): Promise<any> {
-        return this.client.get(`/dashboards/${dashboardId}/pin`, {})
-            .then(response => response.json())
     }
 }

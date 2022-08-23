@@ -1,8 +1,6 @@
 import {
     makeAutoObservable,
     runInAction,
-    observable,
-    action,
 } from "mobx";
 import Dashboard, { IDashboard } from "./types/dashboard";
 import Widget, { IWidget } from "./types/widget";
@@ -39,6 +37,7 @@ export interface IDashboardStore {
     metricsSearch: string;
 
     isLoading: boolean;
+    loadingTemplates: boolean;
     isSaving: boolean;
     isDeleting: boolean;
     fetchingDashboard: boolean;
@@ -74,7 +73,6 @@ export interface IDashboardStore {
     selectDashboardById(dashboardId: string): void;
     getDashboardById(dashboardId: string): boolean;
     setSiteId(siteId: any): void;
-    selectDefaultDashboard(): Promise<IDashboard>;
 
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>;
     fetchTemplates(hardRefresh: boolean): Promise<any>;
@@ -82,7 +80,6 @@ export interface IDashboardStore {
     addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>;
     setDrillDownPeriod(period: any): void;
 
-    updatePinned(dashboardId: string): Promise<any>;
     fetchMetricChartData(
         metric: IWidget,
         data: any,
@@ -392,22 +389,6 @@ export default class DashboardStore implements IDashboardStore {
         this.siteId = siteId;
     };
 
-    selectDefaultDashboard = (): Promise<Dashboard> => {
-        return new Promise((resolve, reject) => {
-            if (this.dashboards.length > 0) {
-                const pinnedDashboard = this.dashboards.find((d) => d.isPinned);
-                if (pinnedDashboard) {
-                    this.selectedDashboard = pinnedDashboard;
-                } else {
-                    this.selectedDashboard = this.dashboards[0];
-                }
-
-                resolve(this.selectedDashboard);
-            }
-            reject(new Error("No dashboards found"));
-        });
-    };
-
     fetchTemplates(hardRefresh): Promise<any> {
         this.loadingTemplates = true
         return new Promise((resolve, reject) => {
@@ -470,28 +451,6 @@ export default class DashboardStore implements IDashboardStore {
             })
             .finally(() => {
                 this.isSaving = false;
-            });
-    }
-
-    updatePinned(dashboardId: string): Promise<any> {
-        // this.isSaving = true
-        return dashboardService
-            .updatePinned(dashboardId)
-            .then(() => {
-                toast.success("Dashboard pinned successfully");
-                this.dashboards.forEach((d) => {
-                    if (d.dashboardId === dashboardId) {
-                        d.isPinned = true;
-                    } else {
-                        d.isPinned = false;
-                    }
-                });
-            })
-            .catch(() => {
-                toast.error("Dashboard could not be pinned");
-            })
-            .finally(() => {
-                // this.isSaving = false
             });
     }
 
