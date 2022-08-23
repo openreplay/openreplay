@@ -1,4 +1,4 @@
-CREATE TABLE connector_user_sessions
+CREATE TABLE IF NOT EXISTS connector_user_sessions
 (
 -- SESSION METADATA
     sessionid                      bigint,
