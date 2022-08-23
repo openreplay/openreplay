@@ -48,13 +48,23 @@ export function renderType(r) {
 
 export function renderName(r) {
   return (
-    <div className="flex justify-between items-center grow-0 w-full">
+
       <Popup
         style={{ width: '100%' }}
         content={<div className={stl.popupNameContent}>{r.url}</div>}
       >
         <div className={stl.popupNameTrigger}>{r.name}</div>
       </Popup>
+
+  );
+}
+
+export function renderStart(r) {
+  return (
+    <div className="flex justify-between items-center grow-0 w-full">
+      <span>
+        {Duration.fromMillis(r.time).toFormat('mm:ss.SSS')}
+      </span>
       <Button
         variant="text"
         className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
@@ -64,13 +74,9 @@ export function renderName(r) {
         }}
       >
         Jump
-      </Button>
-    </div>
-  );
-}
-
-export function renderStart(r) {
-  return Duration.fromMillis(r.time).toFormat('mm:ss.SSS');
+    </Button>
+  </div>
+  )
 }
 
 const renderXHRText = () => (
@@ -291,7 +297,7 @@ export default class NetworkContent extends React.PureComponent {
                 {[
                   {
                     label: 'Start',
-                    width: 90,
+                    width: 120,
                     render: renderStart,
                   },
                   {
