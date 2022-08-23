@@ -1778,8 +1778,33 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY (_4xx + _5xx), all_requests DESC
+                        ORDER BY (_4xx + _5xx) DESC, all_requests DESC
                         LIMIT 50;"""
+        rows = ch.execute(query=ch_query,
+                          params={"project_id": project_id,
+                                  "startTimestamp": startTimestamp,
+                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
+    return helper.list_to_camel_case(rows)
+
+
+def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                  endTimestamp=TimeUTC.now(),
+                                  platform=None, **args):
+    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
+    ch_sub_query.append("resources.type = 'fetch'")
+    ch_sub_query.append(f"intDiv(resources.status, 100) == {status}")
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT  resources.method,
+                               resources.url_hostpath,
+                               COUNT(resources.session_id)                           AS all_requests
+                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        WHERE {" AND ".join(ch_sub_query)}
+                        GROUP BY resources.method, resources.url_hostpath
+                        ORDER BY all_requests DESC
+                        LIMIT 10;"""
         rows = ch.execute(query=ch_query,
                           params={"project_id": project_id,
                                   "startTimestamp": startTimestamp,
@@ -1789,50 +1814,16 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
 
 def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    ch_sub_query.append("resources.type = 'fetch'")
-    ch_sub_query.append("intDiv(resources.status, 100) == 4")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id)                           AS all_requests
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                        WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
-    return helper.list_to_camel_case(rows)
+    return __get_calls_errors_4xx_or_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    ch_sub_query.append("resources.type = 'fetch'")
-    ch_sub_query.append("intDiv(resources.status, 100) == 5")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id)                           AS all_requests
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                        WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
-    return helper.list_to_camel_case(rows)
+    return __get_calls_errors_4xx_or_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),

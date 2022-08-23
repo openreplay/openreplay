@@ -1823,7 +1823,7 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
                         FROM events.resources INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY (4 + 5), 3 DESC
+                        ORDER BY (4 + 5) DESC, 3 DESC
                         LIMIT 50;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                            "startTimestamp": startTimestamp,
@@ -1832,50 +1832,45 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
     return helper.list_to_camel_case(rows)
 
 
-def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
-                         platform=None, **args):
+def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                  endTimestamp=TimeUTC.now(),
+                                  platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("resources.type = 'fetch'")
-    pg_sub_query.append("resources.method IS NOT NULL")
-    pg_sub_query.append("resources.status/100 = 4")
+    pg_sub_query.append("requests.type = 'fetch'")
+    pg_sub_query.append("requests.method IS NOT NULL")
+    pg_sub_query.append(f"requests.status/100 = {status}")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id) AS all_requests
-                        FROM events.resources INNER JOIN sessions USING (session_id)
+        pg_query = f"""SELECT  requests.method,
+                               requests.host,
+                               requests.path,
+                               COUNT(requests.session_id) AS all_requests
+                        FROM events_common.requests INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
+                        GROUP BY requests.method, requests.host, requests.path
                         ORDER BY all_requests DESC
                         LIMIT 10;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                            "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
         rows = cur.fetchall()
+        for r in rows:
+            r["url_hostpath"] = r.pop("host") + r.pop("path")
     return helper.list_to_camel_case(rows)
+
+
+def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
+                         platform=None, **args):
+    return __get_calls_errors_4xx_or_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("resources.type = 'fetch'")
-    pg_sub_query.append("resources.method IS NOT NULL")
-    pg_sub_query.append("resources.status/100 = 5")
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id) AS all_requests
-                        FROM events.resources INNER JOIN sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
+    return __get_calls_errors_4xx_or_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),

@@ -802,11 +802,11 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT events.path AS key,
+        ch_query = f"""SELECT events.url_path AS key,
                               COUNT(events.session_id) AS doc_count
                         FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
                         WHERE {" AND ".join(ch_sub_query)}
-                      GROUP BY path
+                      GROUP BY url_path
                       ORDER BY doc_count DESC
                       LIMIT 10;"""
         print(ch.format(query=ch_query, params={"project_id": project_id, "startTimestamp": startTimestamp,
@@ -817,7 +817,7 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
         rows = [{"url": i["key"], "sessions": i["doc_count"]} for i in rows]
         if len(rows) == 0:
             return []
-        ch_sub_query.append("events.path = %(value)s")
+        ch_sub_query.append("events.url_path = %(value)s")
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
                               COUNT(events.session_id) AS doc_count,
                               toUnixTimestamp(MAX(events.datetime))*1000 AS max_datatime
@@ -1779,24 +1779,49 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
 
 def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                      platform=None, **args):
-    raise Exception("not supported widget")
-    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    ch_sub_query.append("resources.type = 'fetch'")
-    ch_sub_query.append("intDiv(resources.status, 100) != 2")
+    ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
+    ch_sub_query.append("requests.event_type = 'REQUEST'")
+    ch_sub_query.append("intDiv(requests.status, 100) != 2")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT  resources.method,
-                               resources.path,
-                               COUNT(resources.session_id)                           AS all_requests,
-                               SUM(if(intDiv(resources.status, 100) == 4, 1, 0)) AS _4xx,
-                               SUM(if(intDiv(resources.status, 100) == 5, 1, 0)) AS _5xx
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+        ch_query = f"""SELECT  requests.method,
+                               requests.url_hostpath,
+                               COUNT(requests.session_id)                           AS all_requests,
+                               SUM(if(intDiv(requests.status, 100) == 4, 1, 0)) AS _4xx,
+                               SUM(if(intDiv(requests.status, 100) == 5, 1, 0)) AS _5xx
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS requests
                         WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY resources.method, resources.path
-                        ORDER BY (_4xx + _5xx), all_requests DESC
+                        GROUP BY requests.method, requests.url_hostpath
+                        ORDER BY (_4xx + _5xx) DESC, all_requests DESC
                         LIMIT 50;"""
+        rows = ch.execute(query=ch_query,
+                          params={"project_id": project_id,
+                                  "startTimestamp": startTimestamp,
+                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
+    return helper.list_to_camel_case(rows)
+
+
+def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                  endTimestamp=TimeUTC.now(),
+                                  platform=None, **args):
+    ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
+    ch_sub_query.append("requests.event_type = 'REQUEST'")
+    ch_sub_query.append(f"intDiv(requests.status, 100) == {status}")
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT  requests.method,
+                               requests.url_hostpath,
+                               COUNT(requests.session_id)                           AS all_requests
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS requests
+                        WHERE {" AND ".join(ch_sub_query)}
+                        GROUP BY requests.method, requests.url_hostpath
+                        ORDER BY all_requests DESC
+                        LIMIT 10;"""
+
         rows = ch.execute(query=ch_query,
                           params={"project_id": project_id,
                                   "startTimestamp": startTimestamp,
@@ -1806,52 +1831,16 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
 
 def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    raise Exception("not supported widget")
-    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    ch_sub_query.append("resources.type = 'fetch'")
-    ch_sub_query.append("intDiv(resources.status, 100) == 4")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT  resources.method,
-                               resources.path,
-                               COUNT(resources.session_id)                           AS all_requests
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                        WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY resources.method, resources.path
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
-    return helper.list_to_camel_case(rows)
+    return __get_calls_errors_4xx_or_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    raise Exception("not supported widget")
-    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    ch_sub_query.append("resources.type = 'fetch'")
-    ch_sub_query.append("intDiv(resources.status, 100) == 5")
-    meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id)                           AS all_requests
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                        WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
-    return helper.list_to_camel_case(rows)
+    return __get_calls_errors_4xx_or_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
