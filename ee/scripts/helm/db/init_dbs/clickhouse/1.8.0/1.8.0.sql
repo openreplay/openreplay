@@ -30,14 +30,16 @@ CREATE TABLE IF NOT EXISTS resources
     url_host                            String MATERIALIZED lower(domain(url)),
     url_path                            String MATERIALIZED lower(path(url)),
     type Enum8('other'=-1, 'script'=0, 'stylesheet'=1, 'fetch'=2, 'img'=3, 'media'=4),
+    name Nullable(String)               MATERIALIZED if(type = 'fetch', null,
+                                                        coalesce(nullIf(splitByChar('/', url_path)[-1], ''),
+                                                                 nullIf(splitByChar('/', url_path)[-2], ''))),
     duration Nullable(UInt16),
     ttfb Nullable(UInt16),
     header_size Nullable(UInt16),
     encoded_body_size Nullable(UInt32),
     decoded_body_size Nullable(UInt32),
-    compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size)
--- ,
---     success                             UInt8,
+    compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size),
+    success Nullable(UInt8) COMMENT 'currently available for type=img only'
 --     method Nullable(Enum8('GET' = 0, 'HEAD' = 1, 'POST' = 2, 'PUT' = 3, 'DELETE' = 4, 'CONNECT' = 5, 'OPTIONS' = 6, 'TRACE' = 7, 'PATCH' = 8))
 ) ENGINE = MergeTree
       PARTITION BY toYYYYMM(datetime)

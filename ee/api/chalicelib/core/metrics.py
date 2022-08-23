@@ -957,6 +957,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), type="all", density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
+    ch_sub_query.append("isNotNull(resources.url_hostpath)")
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -2612,11 +2613,11 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
         rows = ch.execute(query=ch_query, params=params)
         results = rows[0]
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                                      COUNT(pages.response_time) AS value 
-                              FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                              WHERE {" AND ".join(ch_sub_query_chart)} AND isNotNull(pages.response_time) AND pages.response_time>0
-                              GROUP BY timestamp
-                              ORDER BY timestamp;"""
+                              COUNT(pages.response_time) AS value 
+                       FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                       WHERE {" AND ".join(ch_sub_query_chart)} AND isNotNull(pages.response_time) AND pages.response_time>0
+                       GROUP BY timestamp
+                       ORDER BY timestamp;"""
         rows = ch.execute(query=ch_query, params={**params, **__get_constraint_values(args)})
         rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                         end_time=endTimestamp,
