@@ -17,6 +17,10 @@ const getThreshold = (threshold: number) => {
 };
 
 const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
+  // @ts-ignore god damn you immutable
+  if (webhooks.size === 0) {
+    return 'OpenReplay';
+  }
   const getSlackChannels = () => {
     return (
       ' (' +
@@ -56,6 +60,10 @@ interface Props extends RouteComponentProps {
 
 function AlertListItem(props: Props) {
   const { alert, siteId, history, init, demo, webhooks } = props;
+
+  if (!alert) {
+    return null;
+  }
 
   const onItemClick = () => {
     if (demo) return;

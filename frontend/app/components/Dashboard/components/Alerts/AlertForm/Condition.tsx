@@ -75,7 +75,7 @@ function Condition({
             placeholder="Select Condition"
             options={conditions}
             name="operator"
-            defaultValue={instance.query.operator}
+            value={conditions.find(c => c.value === instance.query.operator)}
             onChange={({ value }) =>
               writeQueryOption(null, { name: 'operator', value: value.value })
             }
