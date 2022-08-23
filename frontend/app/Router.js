@@ -170,7 +170,7 @@ class Router extends React.Component {
         const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding, isEnterprise } = this.props;
         const siteIdList = sites.map(({ id }) => id).toJS();
         const hideHeader = (location.pathname && location.pathname.includes('/session/')) || location.pathname.includes('/assist/');
-        const isPlayer = isRoute(SESSION_PATH, location.pathname);
+        const isPlayer = isRoute(SESSION_PATH, location.pathname) || isRoute(LIVE_SESSION_PATH, location.pathname);
 
         return isLoggedIn ? (
             <ModalProvider>
