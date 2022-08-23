@@ -8,7 +8,6 @@ import { fetchUserInfo } from 'Duck/user';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
-import { fetchList as fetchMetadata } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
@@ -90,14 +89,13 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
         const jwt = state.get('jwt');
         const changePassword = state.getIn(['user', 'account', 'changePassword']);
         const userInfoLoading = state.getIn(['user', 'fetchUserInfoRequest', 'loading']);
-        const metaLoading = state.getIn(['customFields', 'fetchRequest', 'loading']);
         return {
             jwt,
             siteId,
             changePassword,
             sites: state.getIn(['site', 'list']),
             isLoggedIn: jwt !== null && !changePassword,
-            loading: siteId === null || userInfoLoading || metaLoading,
+            loading: siteId === null || userInfoLoading,
             email: state.getIn(['user', 'account', 'email']),
             account: state.getIn(['user', 'account']),
             organisation: state.getIn(['user', 'account', 'name']),
@@ -112,7 +110,6 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
         fetchUserInfo,
         fetchTenants,
         setSessionPath,
-        fetchMetadata,
         fetchSiteList,
         fetchAnnouncements,
         fetchAlerts,
@@ -133,7 +130,6 @@ class Router extends React.Component {
         await this.props.fetchSiteList()
         const { mstore } = this.props;
         mstore.initClient();
-        await this.props.fetchMetadata();
     };
 
     componentDidMount() {
