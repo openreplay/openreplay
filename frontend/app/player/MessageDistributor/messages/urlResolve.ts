@@ -29,7 +29,7 @@ function cssUrlsIndex(css: string): Array<[number, number]> {
   return idxs.reverse();
 }
 function unquote(str: string): [string, string] {
-  str = str.trim();
+  str = str ? str.trim() : '';
   if (str.length <= 2) {
     return [str, ""]
   }

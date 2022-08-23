@@ -82,7 +82,7 @@ class AutoComplete extends React.PureComponent {
   onInputChange = ({ target: { value } }) => {
     changed = true;
     this.setState({ query: value, updated: true })
-    const _value = value.trim();
+    const _value = value ? value.trim() : undefined;
     if (_value !== '' && _value !== ' ') {
       this.debouncedRequestValues(_value)
     }
@@ -95,7 +95,7 @@ class AutoComplete extends React.PureComponent {
     value = pasted ? this.hiddenInput.value : value;
     const { onSelect, name } = this.props;
     if (value !== this.props.value) {
-      const _value = value.trim();
+      const _value = value ? value.trim() : undefined;
       onSelect(null, {name, value: _value});
     }
 

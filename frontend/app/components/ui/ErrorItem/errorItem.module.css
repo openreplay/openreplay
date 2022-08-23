@@ -1,3 +1,11 @@
 .wrapper {
   border-bottom: solid thin $gray-light-shade;
 }
+
+.inactive {
+  opacity: 0.5;
+}
+
+.selected {
+  background-color: $teal-light;
+}

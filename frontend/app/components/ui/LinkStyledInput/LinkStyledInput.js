@@ -46,7 +46,7 @@ export default class LinkStyledInput extends React.PureComponent {
     document.removeEventListener('click', this.onEndChange, false);
     this.setState({ 
       changing: false,
-      value: this.state.value.trim(),
+      value: this.state.value ? this.state.value.trim() : undefined,
     });
   }
 
