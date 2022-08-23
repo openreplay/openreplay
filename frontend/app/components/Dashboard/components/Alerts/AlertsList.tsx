@@ -5,7 +5,7 @@ import { sliceListPerPage } from 'App/utils';
 import { fetchList } from 'Duck/alerts';
 import { connect } from 'react-redux';
 import { fetchList as fetchWebhooks } from 'Duck/webhook';
-
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import AlertListItem from './AlertListItem'
 
 const pageSize = 10;
@@ -35,7 +35,7 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, f
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="bell" size={80} color="figmaColors-accent-secondary" />
+          <AnimatedSVG name={ICONS.NO_ANNOUNCEMENTS} size={80} />
           <div className="text-center text-gray-600 my-4">
             {alertsSearch !== '' ? 'No matching results' : "You haven't created any alerts yet"}
           </div>
