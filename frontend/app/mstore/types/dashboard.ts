@@ -4,36 +4,7 @@ import { dashboardService  } from "App/services"
 import { toast } from 'react-toastify';
 import { DateTime } from 'luxon';
 
-export interface IDashboard {
-    dashboardId: any
-    name: string
-    description: string
-    isPublic: boolean
-    widgets: IWidget[]
-    metrics: any[]
-    isValid: boolean
-    currentWidget: IWidget
-    config: any
-    createdAt: Date
-
-    update(data: any): void
-    toJson(): any
-    fromJson(json: any): void
-    validate(): void
-    addWidget(widget: IWidget): void
-    removeWidget(widgetId: string): void
-    updateWidget(widget: IWidget): void
-    getWidget(widgetId: string): void
-    getWidgetIndex(widgetId: string): IWidget
-    getWidgetByIndex(index: number): void
-    getWidgetCount(): void
-    getWidgetIndexByWidgetId(widgetId: string): void
-    swapWidgetPosition(positionA: number, positionB: number): Promise<any>
-    sortWidgets(): void
-    exists(): boolean
-    toggleMetrics(metricId: string): void
-}
-export default class Dashboard implements IDashboard {
+export default class Dashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
     name: string = "Untitled Dashboard"
@@ -121,7 +92,7 @@ export default class Dashboard implements IDashboard {
         return this.widgets.findIndex(w => w.widgetId === widgetId)
     }
 
-    swapWidgetPosition(positionA, positionB): Promise<any> {
+    swapWidgetPosition(positionA: number, positionB: number): Promise<any> {
         const widgetA = this.widgets[positionA]
         const widgetB = this.widgets[positionB]
         this.widgets[positionA] = widgetB

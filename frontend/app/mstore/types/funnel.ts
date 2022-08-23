@@ -1,17 +1,6 @@
 import FunnelStage from './funnelStage'
 
-export interface IFunnel {
-    affectedUsers: number;
-    totalConversions: number;
-    totalConversionsPercentage: number;
-    conversionImpact: number
-    lostConversions: number
-    lostConversionsPercentage: number
-    isPublic: boolean
-    fromJSON: (json: any) => void
-}
-
-export default class Funnel implements IFunnel {
+export default class Funnel {
     affectedUsers: number = 0
     totalConversions: number = 0
     conversionImpact: number = 0

@@ -1,16 +1,7 @@
 import { makeAutoObservable, observable, runInAction } from "mobx";
 
-export interface IRole {
-    roleId: string;
-    name: string;
-    description: string;
-    isProtected: boolean;
 
-    fromJson(json: any);
-    toJson(): any;
-}
-
-export default class Role implements IRole {
+export default class Role {
     roleId: string = '';
     name: string = '';
     description: string = '';   

@@ -8,55 +8,7 @@ import { issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 
-export interface IWidget {
-    metricId: any
-    widgetId: any
-    name: string
-    metricType: string
-    metricOf: string
-    metricValue: string
-    metricFormat: string
-    viewType: string
-    series: FilterSeries[]
-    sessions: []
-    isPublic: boolean
-    owner: string
-    lastModified: Date
-    dashboards: any[]
-    dashboardIds: any[]
-    config: any
-
-    sessionsLoading: boolean
-
-    position: number
-    data: any
-    isLoading: boolean
-    isValid: boolean
-    dashboardId: any
-    colSpan: number
-    predefinedKey: string
-    
-    page: number
-    limit: number
-    params: any
-    period: any
-    hasChanged: boolean
-
-    updateKey(key: string, value: any): void
-    removeSeries(index: number): void
-    addSeries(): void
-    fromJson(json: any): void
-    toJsonDrilldown(): void
-    toJson(): any
-    validate(): void
-    update(data: any): void
-    exists(): boolean
-    toWidget(): any
-    setData(data: any): void
-    fetchSessions(metricId: any, filter: any): Promise<any>
-    setPeriod(period: any): void
-}
-export default class Widget implements IWidget {
+export default class Widget {
     public static get ID_KEY():string { return "metricId" }
     metricId: any = undefined
     widgetId: any = undefined
@@ -79,7 +31,7 @@ export default class Widget implements IWidget {
     limit: number = 5
     params: any = { density: 70 }
     
-    period: any = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
+    period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
     hasChanged: boolean = false
 
     sessionsLoading: boolean = false

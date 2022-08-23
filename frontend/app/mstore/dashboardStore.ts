@@ -2,8 +2,8 @@ import {
     makeAutoObservable,
     runInAction,
 } from "mobx";
-import Dashboard, { IDashboard } from "./types/dashboard";
-import Widget, { IWidget } from "./types/widget";
+import Dashboard from "./types/dashboard";
+import Widget from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from "react-toastify";
 import Period, {
@@ -11,96 +11,24 @@ import Period, {
     LAST_7_DAYS,
 } from "Types/app/period";
 import { getChartFormatter } from "Types/dashboard/helper";
-import Filter, { IFilter } from "./types/filter";
+import Filter from "./types/filter";
 import Funnel from "./types/funnel";
 import Session from "./types/session";
 import Error from "./types/error";
 import { FilterKey } from "Types/filter/filterType";
 
-export interface IDashboardStore {
-    dashboards: IDashboard[];
-    selectedDashboard: IDashboard | null;
-    dashboardInstance: IDashboard;
-    selectedWidgets: IWidget[];
-    startTimestamp: number;
-    endTimestamp: number;
-    period: Period;
-    drillDownFilter: IFilter;
-    drillDownPeriod: Period;
-
-    siteId: any;
-    currentWidget: Widget;
-    widgetCategories: any[];
-    widgets: Widget[];
-    metricsPage: number;
-    metricsPageSize: number;
-    metricsSearch: string;
-
-    isLoading: boolean;
-    loadingTemplates: boolean;
-    isSaving: boolean;
-    isDeleting: boolean;
-    fetchingDashboard: boolean;
-    sessionsLoading: boolean;
-
-    showAlertModal: boolean;
-
-    page: number
-    pageSize: number
-    dashboardsSearch: string
-    sort: any
-
-    selectWidgetsByCategory: (category: string) => void;
-    toggleAllSelectedWidgets: (isSelected: boolean) => void;
-    removeSelectedWidgetByCategory(category: Record<string, any>): void;
-    toggleWidgetSelection(widget: IWidget): void;
-
-    initDashboard(dashboard?: IDashboard): void;
-    updateKey(key: string, value: any): void;
-    resetCurrentWidget(): void;
-    editWidget(widget: any): void;
-    fetchList(): Promise<any>;
-    fetch(dashboardId: string): Promise<any>;
-    save(dashboard: IDashboard): Promise<any>;
-    deleteDashboard(dashboard: IDashboard): Promise<any>;
-    toJson(): void;
-    fromJson(json: any): void;
-    addDashboard(dashboard: IDashboard): void;
-    removeDashboard(dashboard: IDashboard): void;
-    getDashboard(dashboardId: string): IDashboard | null;
-    getDashboardCount(): void;
-    updateDashboard(dashboard: IDashboard): void;
-    selectDashboardById(dashboardId: string): void;
-    getDashboardById(dashboardId: string): boolean;
-    setSiteId(siteId: any): void;
-
-    saveMetric(metric: IWidget, dashboardId?: string): Promise<any>;
-    fetchTemplates(hardRefresh: boolean): Promise<any>;
-    deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>;
-    addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>;
-    setDrillDownPeriod(period: any): void;
-
-    fetchMetricChartData(
-        metric: IWidget,
-        data: any,
-        isWidget: boolean,
-        period: Period
-    ): Promise<any>;
-    setPeriod(period: any): void;
-}
-export default class DashboardStore implements IDashboardStore {
+export default class DashboardStore {
     siteId: any = null;
-    // Dashbaord / Widgets
     dashboards: Dashboard[] = [];
     selectedDashboard: Dashboard | null = null;
     dashboardInstance: Dashboard = new Dashboard();
-    selectedWidgets: IWidget[] = [];
+    selectedWidgets: Widget[] = [];
     currentWidget: Widget = new Widget();
     widgetCategories: any[] = [];
     widgets: Widget[] = [];
-    period: Period = Period({ rangeName: LAST_24_HOURS });
+    period: Record<string, any> = Period({ rangeName: LAST_24_HOURS });
     drillDownFilter: Filter = new Filter();
-    drillDownPeriod: Period = Period({ rangeName: LAST_7_DAYS });
+    drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
     startTimestamp: number = 0;
     endTimestamp: number = 0;
 
@@ -341,7 +269,7 @@ export default class DashboardStore implements IDashboardStore {
         );
     }
 
-    getDashboard(dashboardId: string): IDashboard | null {
+    getDashboard(dashboardId: string): Dashboard | null {
         return (
             this.dashboards.find((d) => d.dashboardId === dashboardId) || null
         );
@@ -389,7 +317,7 @@ export default class DashboardStore implements IDashboardStore {
         this.siteId = siteId;
     };
 
-    fetchTemplates(hardRefresh): Promise<any> {
+    fetchTemplates(hardRefresh: boolean): Promise<any> {
         this.loadingTemplates = true
         return new Promise((resolve, reject) => {
             if (this.widgetCategories.length > 0 && !hardRefresh) {
@@ -474,7 +402,7 @@ export default class DashboardStore implements IDashboardStore {
         metric: IWidget,
         data: any,
         isWidget: boolean = false,
-        period: Period
+        period: Record<string, any>
     ): Promise<any> {
         period = period.toTimestamps();
         const params = { ...period, ...data, key: metric.predefinedKey };

@@ -1,6 +1,6 @@
 import React from 'react';
-import DashboardStore, { IDashboardStore } from './dashboardStore';
-import MetricStore, { IMetricStore } from './metricStore';
+import DashboardStore from './dashboardStore';
+import MetricStore from './metricStore';
 import UserStore from './userStore';
 import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
@@ -13,8 +13,8 @@ import ErrorStore from './errorStore';
 import SessionStore from './sessionStore';
 
 export class RootStore {
-    dashboardStore: IDashboardStore;
-    metricStore: IMetricStore;
+    dashboardStore: DashboardStore;
+    metricStore: MetricStore;
     funnelStore: FunnelStore;
     settingsStore: SettingsStore;
     userStore: UserStore;

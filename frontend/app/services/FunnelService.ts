@@ -1,19 +1,7 @@
-import { IFunnel } from "App/mstore/types/funnel"
+import IFunnel from "App/mstore/types/funnel"
 import APIClient from 'App/api_client';
 
-export interface IFunnelService {
-    initClient(client?: APIClient)
-    all(): Promise<any[]>
-    one(funnelId: string): Promise<any>
-    save(funnel: IFunnel): Promise<any>
-    delete(funnelId: string): Promise<any>
-
-    fetchInsights(funnelId: string, payload: any): Promise<any>
-    fetchIssues(funnelId?: string, payload?: any): Promise<any>
-    fetchIssue(funnelId: string, issueId: string): Promise<any>
-}
-
-export default class FunnelService implements IFunnelService {
+export default class FunnelService {
     private client: APIClient;
 
     constructor(client?: APIClient) {

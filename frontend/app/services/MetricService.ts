@@ -1,23 +1,8 @@
-import Widget, { IWidget } from "App/mstore/types/widget";
+import Widget from "App/mstore/types/widget";
 import APIClient from 'App/api_client';
-import { IFilter } from "App/mstore/types/filter";
 import { fetchErrorCheck } from "App/utils";
 
-export interface IMetricService {
-    initClient(client?: APIClient): void;
-
-    getMetrics(): Promise<any>;
-    getMetric(metricId: string): Promise<any>;
-    saveMetric(metric: IWidget, dashboardId?: string): Promise<any>;
-    deleteMetric(metricId: string): Promise<any>;
-
-    getTemplates(): Promise<any>;
-    getMetricChartData(metric: IWidget, data: any, isWidget: boolean): Promise<any>;
-    fetchSessions(metricId: string, filter: any): Promise<any>
-    fetchIssues(filter: string): Promise<any>;
-}
-
-export default class MetricService implements IMetricService {
+export default class MetricService {
     private client: APIClient;
 
     constructor(client?: APIClient) {
@@ -54,7 +39,7 @@ export default class MetricService implements IMetricService {
      * @param metric 
      * @returns 
      */
-    saveMetric(metric: IWidget, dashboardId?: string): Promise<any> {
+    saveMetric(metric: Widget, dashboardId?: string): Promise<any> {
         const data = metric.toJson()
         const isCreating = !data[Widget.ID_KEY];
         const method = isCreating ? 'post' : 'put';
@@ -86,7 +71,7 @@ export default class MetricService implements IMetricService {
             .then((response: { data: any; }) => response.data || []);
     }
 
-    getMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
+    getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
         const path = isWidget ? `/metrics/${metric.metricId}/chart` : `/metrics/try`;
         return this.client.post(path, data)
             .then(fetchErrorCheck)
