@@ -1,6 +1,10 @@
 import clickhouse_driver
 from decouple import config
 
+settings = None
+if config('pg_timeout', cast=int, default=-1) <= 0:
+    settings = {"max_execution_time": config('pg_timeout', cast=int)}
+
 
 class ClickHouseClient:
     __client = None
@@ -8,7 +12,8 @@ class ClickHouseClient:
     def __init__(self):
         self.__client = clickhouse_driver.Client(host=config("ch_host"),
                                                  database="default",
-                                                 port=config("ch_port", cast=int)) \
+                                                 port=config("ch_port", cast=int),
+                                                 settings=settings) \
             if self.__client is None else self.__client
 
     def __enter__(self):

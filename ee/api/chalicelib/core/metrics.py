@@ -1870,10 +1870,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     return __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                     end_time=endTimestamp,
                                     density=density,
-                                    neutral={"4xx": 0,
-                                             "5xx": 0,
-                                             "js": 0,
-                                             "integrations": 0})
+                                    neutral={"4xx": 0, "5xx": 0, "js": 0, "integrations": 0})
 
 
 def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
