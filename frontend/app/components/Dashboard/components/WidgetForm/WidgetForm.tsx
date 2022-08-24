@@ -79,6 +79,8 @@ function WidgetForm(props: Props) {
                 if (wasCreating) {
                     if (parseInt(dashboardId) > 0) {
                         history.replace(withSiteId(dashboardMetricDetails(dashboardId, metric.metricId), siteId));
+                        const dashboard = dashboardStore.getDashboard(parseInt(dashboardId))
+                        dashboardStore.addWidgetToDashboard(dashboard, [metric.metricId])
                     } else {
                         history.replace(withSiteId(metricDetails(metric.metricId), siteId));
                     }
