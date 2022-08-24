@@ -98,7 +98,10 @@ func (i *iteratorImpl) Next() bool {
 		i.version = m.Version
 		isBatchMeta = true
 		log.Printf("new batch version: %d", i.version)
-
+		if i.version > 1 {
+			log.Printf("incorrect batch version, skip current batch")
+			return false
+		}
 	case MsgBatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
 		if i.index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
 			log.Printf("Batch Meta found at the end of the batch")
