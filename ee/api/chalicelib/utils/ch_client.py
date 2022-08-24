@@ -8,6 +8,7 @@ logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INF
 
 settings = None
 if config('pg_timeout', cast=int, default=-1) > 0:
+    logging.info(f"CH-max_execution_time set to {config('pg_timeout')}s")
     settings = {"max_execution_time": config('pg_timeout', cast=int)}
 
 

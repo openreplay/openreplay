@@ -11,3 +11,7 @@ def get_main_sessions_table(timestamp):
 
 def get_main_resources_table(timestamp):
     return "final.resources"
+
+
+def get_autocomplete_table(timestamp):
+    return "final.autocomplete"

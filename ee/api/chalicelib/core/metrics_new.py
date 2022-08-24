@@ -633,6 +633,8 @@ def __get_resource_db_type_from_type(resource_type):
 
 def search(text, resource_type, project_id, performance=False, pages_only=False, events_only=False,
            metadata=False, key=None, platform=None):
+    if text.startswith("^"):
+        text = text[1:]
     if not resource_type:
         data = []
         if metadata:
@@ -650,47 +652,43 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                            data={} if platform is None else {"platform": platform})
 
     if resource_type == "ALL" and not pages_only and not events_only:
-        ch_sub_query.append("positionUTF8(path,%(value)s)!=0")
+        ch_sub_query.append("positionUTF8(url_path,%(value)s)!=0")
         with ch_client.ClickHouseClient() as ch:
-            ch_query = f"""SELECT arrayJoin(arraySlice(arrayReverseSort(arrayDistinct(groupArray(url))), 1, 5)) AS value,
+            ch_query = f"""SELECT arrayJoin(arraySlice(arrayReverseSort(arrayDistinct(groupArray(url_path))), 1, 5)) AS value,
                                   type AS key
-                          FROM resources 
+                          FROM {sessions_helper.get_main_resources_table(0)} AS resources
                           WHERE {" AND ".join(ch_sub_query)} 
                           GROUP BY type
                           ORDER BY type ASC;"""
+            # print(ch.format(query=ch_query,
+            #                   params={"project_id": project_id,
+            #                           "value": text}))
             rows = ch.execute(query=ch_query,
                               params={"project_id": project_id,
                                       "value": text})
             rows = [{"value": i["value"], "type": __get_resource_type_from_db_type(i["key"])} for i in rows]
     elif resource_type == "ALL" and events_only:
         with ch_client.ClickHouseClient() as ch:
-            ch_query = f"""(SELECT DISTINCT label AS value, 'INPUT' AS key
-                             FROM inputs
-                             WHERE {" AND ".join(ch_sub_query)} AND positionUTF8(lowerUTF8(label), %(value)s) != 0
-                             LIMIT 10)
-                            UNION ALL
-                            (SELECT DISTINCT label AS value, 'CLICK' AS key
-                             FROM clicks
-                             WHERE {" AND ".join(ch_sub_query)} AND positionUTF8(lowerUTF8(label), %(value)s) != 0
-                             LIMIT 10)
-                            UNION ALL
-                            (SELECT DISTINCT url_path AS value, 'LOCATION'   AS key
-                             FROM pages
-                             WHERE {" AND ".join(ch_sub_query)} AND positionUTF8(url_path, %(value)s) != 0
-                             LIMIT 10);"""
+            ch_query = f"""SELECT DISTINCT value AS value, type AS key
+                           FROM {sessions_helper.get_autocomplete_table(0)} autocomplete
+                           WHERE {" AND ".join(ch_sub_query)} 
+                                AND positionUTF8(lowerUTF8(value), %(value)s) != 0
+                                AND type IN ('LOCATION','INPUT','CLICK')
+                           ORDER BY type, value
+                           LIMIT 10 BY type;"""
             rows = ch.execute(query=ch_query,
                               params={"project_id": project_id,
                                       "value": text.lower(),
                                       "platform_0": platform})
             rows = [{"value": i["value"], "type": i["key"]} for i in rows]
     elif resource_type in ['IMG', 'REQUEST', 'STYLESHEET', 'OTHER', 'SCRIPT'] and not pages_only:
-        ch_sub_query.append("positionUTF8(path,%(value)s)!=0")
+        ch_sub_query.append("positionUTF8(url_path,%(value)s)!=0")
         ch_sub_query.append(f"resources.type = '{__get_resource_db_type_from_type(resource_type)}'")
 
         with ch_client.ClickHouseClient() as ch:
-            ch_query = f"""SELECT DISTINCT path AS value,
+            ch_query = f"""SELECT DISTINCT url_path AS value,
                                   %(resource_type)s AS key
-                          FROM resources 
+                          FROM {sessions_helper.get_main_resources_table(0)} AS resources
                           WHERE {" AND ".join(ch_sub_query)} 
                           LIMIT 10;"""
             rows = ch.execute(query=ch_query,
@@ -701,11 +699,12 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
             rows = [{"value": i["value"], "type": i["key"]} for i in rows]
     elif resource_type == 'LOCATION':
         with ch_client.ClickHouseClient() as ch:
-            ch_sub_query.append("positionUTF8(url_path,%(value)s)!=0")
+            ch_sub_query.append("type='LOCATION'")
+            ch_sub_query.append("positionUTF8(value,%(value)s)!=0")
             ch_query = f"""SELECT 
-                             DISTINCT url_path AS value,
+                             DISTINCT value AS value,
                              'LOCATION' AS key
-                          FROM pages 
+                          FROM {sessions_helper.get_autocomplete_table(0)} AS autocomplete
                           WHERE {" AND ".join(ch_sub_query)} 
                           LIMIT 10;"""
             rows = ch.execute(query=ch_query,
@@ -715,9 +714,10 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
             rows = [{"value": i["value"], "type": i["key"]} for i in rows]
     elif resource_type == "INPUT":
         with ch_client.ClickHouseClient() as ch:
-            ch_sub_query.append("positionUTF8(lowerUTF8(label), %(value)s) != 0")
+            ch_sub_query.append("positionUTF8(lowerUTF8(value), %(value)s) != 0")
+            ch_sub_query.append("type='INPUT")
             ch_query = f"""SELECT DISTINCT label AS value, 'INPUT' AS key
-                             FROM inputs
+                             FROM {sessions_helper.get_autocomplete_table(0)} AS autocomplete
                              WHERE {" AND ".join(ch_sub_query)}
                              LIMIT 10;"""
         rows = ch.execute(query=ch_query,
@@ -727,9 +727,10 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
         rows = [{"value": i["value"], "type": i["key"]} for i in rows]
     elif resource_type == "CLICK":
         with ch_client.ClickHouseClient() as ch:
-            ch_sub_query.append("positionUTF8(lowerUTF8(label), %(value)s) != 0")
-            ch_query = f"""SELECT DISTINCT label AS value, 'CLICK' AS key
-                             FROM clicks
+            ch_sub_query.append("positionUTF8(lowerUTF8(value), %(value)s) != 0")
+            ch_sub_query.append("type='CLICK'")
+            ch_query = f"""SELECT DISTINCT value AS value, 'CLICK' AS key
+                             FROM {sessions_helper.get_autocomplete_table(0)} AS autocomplete
                              WHERE {" AND ".join(ch_sub_query)}
                              LIMIT 10;"""
         rows = ch.execute(query=ch_query,
@@ -741,12 +742,12 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
         if key and len(key) > 0 and key in {**METADATA_FIELDS, **SESSIONS_META_FIELDS}.keys():
             if key in METADATA_FIELDS.keys():
                 ch_sub_query.append(
-                    f"positionCaseInsensitiveUTF8(sessions_metadata.{METADATA_FIELDS[key]},%(value)s)>0")
+                    f"positionCaseInsensitiveUTF8(sessions.{METADATA_FIELDS[key]},%(value)s)!=0")
 
                 with ch_client.ClickHouseClient() as ch:
-                    ch_query = f"""SELECT  DISTINCT sessions_metadata.{METADATA_FIELDS[key]} AS value,
+                    ch_query = f"""SELECT  DISTINCT sessions.{METADATA_FIELDS[key]} AS value,
                                               %(key)s AS key
-                                          FROM sessions_metadata INNER JOIN sessions USING(session_id)
+                                          FROM {sessions_helper.get_main_sessions_table(0)} AS sessions
                                           WHERE {" AND ".join(ch_sub_query)} 
                                           LIMIT 10;"""
                     rows = ch.execute(query=ch_query,
@@ -758,30 +759,22 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                 with ch_client.ClickHouseClient() as ch:
                     ch_query = f"""SELECT DISTINCT sessions.{SESSIONS_META_FIELDS[key]} AS value,
                                           '{key}' AS key
-                                  FROM sessions
+                                  FROM {sessions_helper.get_main_sessions_table(0)} AS sessions
                                   WHERE {" AND ".join(ch_sub_query)} 
                                   LIMIT 10;"""
                     rows = ch.execute(query=ch_query, params={"project_id": project_id, "value": text, "key": key,
                                                               "platform_0": platform})
         else:
             with ch_client.ClickHouseClient() as ch:
-                ch_query = []
-                for k in METADATA_FIELDS.keys():
-                    ch_query.append(f"""(SELECT DISTINCT sessions_metadata.{METADATA_FIELDS[k]} AS value,
-                                          '{k}' AS key
-                                      FROM sessions_metadata INNER JOIN sessions USING(session_id)
-                                      WHERE {" AND ".join(ch_sub_query)} AND positionCaseInsensitiveUTF8(sessions_metadata.{METADATA_FIELDS[k]},%(value)s)>0 
-                                      LIMIT 10)""")
-                for k in SESSIONS_META_FIELDS.keys():
-                    if k in ["platform", "country"]:
-                        continue
-                    ch_query.append(f"""(SELECT DISTINCT sessions.{SESSIONS_META_FIELDS[k]} AS value,
-                                          '{k}' AS key
-                                      FROM sessions
-                                      WHERE {" AND ".join(ch_sub_query)} AND positionCaseInsensitiveUTF8(sessions.{SESSIONS_META_FIELDS[k]},%(value)s)>0 
-                                      LIMIT 10)""")
-                ch_query = " UNION ALL ".join(ch_query)
+                ch_query = """SELECT DISTINCT value AS value,
+                                            type  AS key
+                            FROM final.autocomplete
+                            WHERE project_id = toUInt16(2460)
+                              AND positionCaseInsensitiveUTF8(value, %(value)s) != 0
+                            LIMIT 10 BY type"""
 
+                print(ch.format(query=ch_query, params={"project_id": project_id, "value": text, "key": key,
+                                                        "platform_0": platform}))
                 rows = ch.execute(query=ch_query, params={"project_id": project_id, "value": text, "key": key,
                                                           "platform_0": platform})
     else:
@@ -2072,10 +2065,10 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
         print(ch.format(query=ch_query,
-                          params={"step_size": step_size,
-                                  "project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
+                        params={"step_size": step_size,
+                                "project_id": project_id,
+                                "startTimestamp": startTimestamp,
+                                "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
         rows = ch.execute(query=ch_query,
                           params={"step_size": step_size,
                                   "project_id": project_id,
