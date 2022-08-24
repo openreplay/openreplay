@@ -712,7 +712,9 @@ $$
             CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops);
             CREATE INDEX inputs_label_idx ON events.inputs (label);
             CREATE INDEX inputs_timestamp_idx ON events.inputs (timestamp);
+            CREATE INDEX inputs_value_idx ON events.inputs (value);
             CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label, session_id, timestamp);
+            CREATE INDEX inputs_value_session_id_timestamp_idx ON events.inputs (value, session_id, timestamp);
 
             CREATE TABLE events.errors
             (
