@@ -46,7 +46,6 @@
 }
 
 .endpoint {
-  font-weight: 300;
   font-size: 12px;
   color: $gray-medium;
   margin-top: 5px;
