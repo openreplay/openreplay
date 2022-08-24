@@ -70,10 +70,9 @@ function OverviewPanel(props: Props) {
                                 </div>}>
                                     <VerticalPointerLine />
                                     {selectedFeatures.map((feature: any, index: number) => (
-                                        <div className={cn('border-b last:border-none', { 'bg-white': index % 2 })}>
+                                        <div key={feature} className={cn('border-b last:border-none', { 'bg-white': index % 2 })}>
                                             <EventRow
                                                 isGraph={feature === 'PERFORMANCE'}
-                                                key={feature}
                                                 title={feature}
                                                 list={resources[feature]}
                                                 renderElement={(pointer: any) => <TimelinePointer pointer={pointer} type={feature} />}
