@@ -2030,6 +2030,7 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query.append("resources.success = 0")
+    ch_sub_query.append("resources.type IN ('fetch','script')")
     sch_sub_query = ["rs.project_id =toUInt32(%(project_id)s)", "rs.type IN ('fetch','script')"]
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -2037,8 +2038,8 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sub_resources.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                            SUM(if(first.url_host = sub_resources.url_host, 1, 0)) AS first_party,
-                            SUM(if(first.url_host = sub_resources.url_host, 0, 1)) AS third_party
+                            SUM(first.url_host = sub_resources.url_host) AS first_party,
+                            SUM(first.url_host != sub_resources.url_host) AS third_party
                         FROM 
                         (
                             SELECT resources.datetime, resources.url_host 

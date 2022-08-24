@@ -2135,44 +2135,44 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
-                                           chart=True, data=args, main_table="resources", time_column="timestamp",
+                                           chart=True, data=args, main_table="requests", time_column="timestamp",
                                            duration=False)
-    pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
-    pg_sub_query_subset.append("resources.timestamp < %(endTimestamp)s")
-    pg_sub_query_subset.append("resources.success = FALSE")
+    pg_sub_query_subset.append("requests.timestamp >= %(startTimestamp)s")
+    pg_sub_query_subset.append("requests.timestamp < %(endTimestamp)s")
+    # pg_sub_query_subset.append("resources.type IN ('fetch', 'script')")
+    pg_sub_query_subset.append("requests.success = FALSE")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (
-                            SELECT resources.url_host, timestamp
-                            FROM events.resources
+        pg_query = f"""WITH requests AS (
+                            SELECT requests.host, timestamp
+                            FROM events_common.requests
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE {" AND ".join(pg_sub_query_subset)}
                         )
                         SELECT generated_timestamp                                                       AS timestamp,
-                               SUM(CASE WHEN first.url_host = sub_resources.url_host THEN 1 ELSE 0 END)  AS first_party,
-                               SUM(CASE WHEN first.url_host != sub_resources.url_host THEN 1 ELSE 0 END) AS third_party
+                               SUM(CASE WHEN first.host = sub_requests.host THEN 1 ELSE 0 END)  AS first_party,
+                               SUM(CASE WHEN first.host != sub_requests.host THEN 1 ELSE 0 END) AS third_party
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                  LEFT JOIN (
-                            SELECT resources.url_host,
-                                   COUNT(resources.session_id) AS count
-                            FROM events.resources
+                            SELECT requests.host,
+                                   COUNT(requests.session_id) AS count
+                            FROM events_common.requests
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = '1'
-                              AND resources.type IN ('fetch', 'script')
                               AND sessions.start_ts > (EXTRACT(EPOCH FROM now() - INTERVAL '31 days') * 1000)::BIGINT
                               AND sessions.start_ts < (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT
-                              AND resources.timestamp > (EXTRACT(EPOCH FROM now() - INTERVAL '31 days') * 1000)::BIGINT
-                              AND resources.timestamp < (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT
+                              AND requests.timestamp > (EXTRACT(EPOCH FROM now() - INTERVAL '31 days') * 1000)::BIGINT
+                              AND requests.timestamp < (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT
                             AND sessions.duration>0
-                            GROUP BY resources.url_host
+                            GROUP BY requests.host
                             ORDER BY count DESC
                             LIMIT 1
                         ) AS first ON (TRUE)
                                  LEFT JOIN LATERAL (
-                            SELECT resources.url_host
-                            FROM resources
+                            SELECT requests.host
+                            FROM requests
                             WHERE {" AND ".join(pg_sub_query_chart)}
-                            ) AS sub_resources ON (TRUE)
+                            ) AS sub_requests ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         cur.execute(cur.mogrify(pg_query, {"step_size": step_size,

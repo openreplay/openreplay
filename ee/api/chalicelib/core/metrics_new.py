@@ -2041,31 +2041,31 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
 
 def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
-    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
-    ch_sub_query.append("resources.success = 0")
-    sch_sub_query = ["rs.project_id =toUInt16(%(project_id)s)", "rs.type IN ('fetch','script')"]
+    ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
+    ch_sub_query.append("requests.event_type='REQUEST'")
+    ch_sub_query.append("requests.success = 0")
+    sch_sub_query = ["rs.project_id =toUInt16(%(project_id)s)", "rs.event_type='REQUEST'"]
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     # sch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sub_resources.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                            SUM(if(first.url_host = sub_resources.url_host, 1, 0)) AS first_party,
-                            SUM(if(first.url_host = sub_resources.url_host, 0, 1)) AS third_party
+        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sub_requests.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                            SUM(first.url_host = sub_requests.url_host) AS first_party,
+                            SUM(first.url_host != sub_requests.url_host) AS third_party
                         FROM 
                         (
-                            SELECT resources.datetime, resources.url_host 
-                            FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                            SELECT requests.datetime, requests.url_host 
+                            FROM {sessions_helper.get_main_events_table(startTimestamp)} AS requests
                             WHERE {" AND ".join(ch_sub_query)}
-                        ) AS sub_resources
+                        ) AS sub_requests
                         CROSS JOIN 
                         (
                             SELECT
                                 rs.url_host,
                                 COUNT(rs.session_id) AS count
-                            FROM resources AS rs
+                            FROM {sessions_helper.get_main_events_table(startTimestamp)} AS rs
                             WHERE {" AND ".join(sch_sub_query)}
                             GROUP BY rs.url_host
                             ORDER BY count DESC
@@ -2073,6 +2073,11 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         ) AS first
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
+        print(ch.format(query=ch_query,
+                          params={"step_size": step_size,
+                                  "project_id": project_id,
+                                  "startTimestamp": startTimestamp,
+                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
         rows = ch.execute(query=ch_query,
                           params={"step_size": step_size,
                                   "project_id": project_id,

@@ -1,8 +1,13 @@
+import logging
+
 import clickhouse_driver
 from decouple import config
 
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
+
 settings = None
-if config('pg_timeout', cast=int, default=-1) <= 0:
+if config('pg_timeout', cast=int, default=-1) > 0:
     settings = {"max_execution_time": config('pg_timeout', cast=int)}
 
 
