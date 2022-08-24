@@ -237,7 +237,7 @@ export default class NetworkContent extends React.PureComponent {
             />
             <Input
               className="input-small"
-              placeholder="Filter by Name"
+              placeholder="Filter by name"
               icon="search"
               iconPosition="left"
               name="filter"

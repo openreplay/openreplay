@@ -25,7 +25,7 @@ function UserSearch(props) {
                 value={query}
                 name="searchQuery"
                 // className="bg-white p-2 border border-gray-light rounded w-full pl-10"
-                placeholder="Filter by Name, Role"
+                placeholder="Filter by name, role"
                 onChange={write}
                 icon="search"
             />

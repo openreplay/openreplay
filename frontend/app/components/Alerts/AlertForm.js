@@ -188,7 +188,7 @@ const AlertForm = (props) => {
                                             name="right"
                                             value={instance.query.right}
                                             onChange={writeQuery}
-                                            placeholder="Specify Value"
+                                            placeholder="Specify value"
                                         />
                                     )}
                                 </div>

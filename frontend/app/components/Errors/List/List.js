@@ -210,7 +210,7 @@ export default class List extends React.PureComponent {
 						<Input
 							style={{ width: '350px'}}
 							wrapperClassName="ml-3"
-							placeholder="Filter by Name or Message"
+							placeholder="Filter by name or message"
 							icon="search"
 							iconPosition="left"
 							name="filter"
