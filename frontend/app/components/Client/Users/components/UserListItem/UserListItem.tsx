@@ -24,7 +24,7 @@ interface Props {
 function UserListItem(props: Props) {
     const { user, editHandler = () => {}, generateInvite = () => {}, copyInviteCode = () => {}, isEnterprise = false, isOnboarding = false } = props;
     return (
-        <div className="grid grid-cols-12 p-3 py-4 border-b items-center select-none hover:bg-active-blue group cursor-pointer" onClick={editHandler}>
+        <div className="grid grid-cols-12 py-4 px-5 border-t items-center select-none hover:bg-active-blue group cursor-pointer" onClick={editHandler}>
             <div className="col-span-5">
                 <span className="mr-2">{user.name}</span>
                 {isEnterprise && <AdminPrivilegeLabel user={user} />}

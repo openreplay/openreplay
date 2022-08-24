@@ -19,7 +19,7 @@ export default class ProfileSettings extends React.PureComponent {
     render() {
         const { account, isEnterprise } = this.props;
         return (
-            <React.Fragment>
+            <div className="p-5">
                 <PageTitle title={<div>Account</div>} />
                 <div className="flex items-center">
                     <div className={styles.left}>
@@ -106,7 +106,7 @@ export default class ProfileSettings extends React.PureComponent {
                         </div>
                     </>
                 )}
-            </React.Fragment>
+            </div>
         );
     }
 }

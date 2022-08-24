@@ -37,7 +37,7 @@ function UsersView(props: Props) {
 
     return (
         <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-5 pt-5">
                 <PageTitle
                     title={
                         <div>

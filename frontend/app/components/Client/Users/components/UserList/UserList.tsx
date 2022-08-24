@@ -54,7 +54,7 @@ function UserList(props: Props) {
                 show={!loading && length === 0}
             >
                 <div className="mt-3 rounded bg-white">
-                    <div className="grid grid-cols-12 p-3 border-b font-medium">
+                    <div className="grid grid-cols-12 py-3 px-5 font-medium">
                         <div className="col-span-5">Name</div>
                         <div className="col-span-3">Role</div>
                         {!isOnboarding && <div className="col-span-2">Created On</div>}

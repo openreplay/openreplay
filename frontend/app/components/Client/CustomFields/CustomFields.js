@@ -66,14 +66,14 @@ function CustomFields(props) {
     const { fields, loading } = props;
     return (
         <div>
-            <div className={styles.tabHeader}>
+            <div className={cn(styles.tabHeader, 'px-5 pt-5')}>
                 <h3 className={cn(styles.tabTitle, 'text-2xl')}>{'Metadata'}</h3>
                 <div style={{ marginRight: '15px' }}>
                     <SiteDropdown value={currentSite && currentSite.id} onChange={onChangeSelect} />
                 </div>
                 <Button variant="primary" onClick={() => init()}>Add</Button>
             </div>
-            <div className="text-base text-disabled-text flex items-center mt-3">
+            <div className="text-base text-disabled-text flex px-5 items-center mt-3">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />
                 See additonal user information in sessions.
                 <a href="https://docs.openreplay.com/installation/metadata" className="link ml-1" target="_blank">Learn more</a>

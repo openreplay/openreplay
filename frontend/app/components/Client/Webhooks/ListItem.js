@@ -5,7 +5,7 @@ import { Button } from 'UI';
 
 const ListItem = ({ webhook, onEdit, onDelete }) => {
     return (
-        <div className="border-b group last:border-none hover:bg-active-blue flex items-center justify-between p-3 cursor-pointer" onClick={onEdit}>
+        <div className="border-t group hover:bg-active-blue flex items-center justify-between py-3 px-5 cursor-pointer" onClick={onEdit}>
             <div>
                 <span>{webhook.name}</span>
                 <div className={styles.endpoint}>{webhook.endpoint}</div>

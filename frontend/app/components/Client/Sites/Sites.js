@@ -14,6 +14,7 @@ import ProjectKey from './ProjectKey';
 import { useModal } from 'App/components/Modal';
 import { getInitials } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import cn from 'classnames'
 
 const STATUS_MESSAGE_MAP = {
     [RED]: ' There seems to be an issue (please verify your installation)',
@@ -67,7 +68,7 @@ class Sites extends React.PureComponent {
         return (
             <Loader loading={loading}>
                 <div className={stl.wrapper}>
-                    <div className={stl.tabHeader}>
+                    <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
                         <PageTitle title={<div className="mr-4">Projects</div>} actionButton={<AddProjectButton isAdmin={isAdmin} />} />
 
                         <div className="flex ml-auto items-center">
@@ -87,7 +88,7 @@ class Sites extends React.PureComponent {
                         size="small"
                         show={!loading && filteredSites.size === 0}
                     >
-                        <div className="grid grid-cols-12 gap-2 w-full items-center border-b px-2 py-3 font-medium">
+                        <div className="grid grid-cols-12 gap-2 w-full items-center px-5 py-3 font-medium">
                             <div className="col-span-4">Project Name</div>
                             <div className="col-span-4">Key</div>
                             <div className="col-span-4"></div>
@@ -95,7 +96,7 @@ class Sites extends React.PureComponent {
                         {filteredSites.map((_site) => (
                             <div
                                 key={_site.key}
-                                className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3 last:border-none"
+                                className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-t px-5 py-3"
                             >
                                 <div className="col-span-4">
                                     <div className="flex items-center">
