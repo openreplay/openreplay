@@ -17,12 +17,12 @@ interface Props {
 
 const metricIcons = {
     timeseries: 'graph-up',
-    table: 'table', 
+    table: 'table',
     funnel: 'funnel',
 }
 
 function WidgetForm(props: Props) {
-    
+
     const { history, match: { params: { siteId, dashboardId } } } = props;
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
@@ -101,7 +101,7 @@ function WidgetForm(props: Props) {
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <SegmentSelection 
+                    <SegmentSelection
                         icons
                         outline
                         name="metricType"
@@ -180,7 +180,7 @@ function WidgetForm(props: Props) {
                 </div>
 
                 {metric.series.length > 0 && metric.series.slice(0, (isTable || isFunnel) ? 1 : metric.series.length).map((series: any, index: number) => (
-                    <div className="mb-2">
+                    <div className="mb-2" key={series.name}>
                         <FilterSeries
                             observeChanges={() => metric.updateKey('hasChanged', true)}
                             hideHeader={ isTable }
