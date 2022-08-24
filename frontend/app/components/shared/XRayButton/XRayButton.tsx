@@ -10,7 +10,7 @@ interface Props {
 function XRayButton(props: Props) {
     const { isActive } = props;
     return (
-        <Popup content="Get a quick overview on the issues in this replay." delay={0} disabled={isActive}>
+        <Popup content="Get a quick overview on the issues in this session." delay={0} disabled={isActive}>
             <button className={cn(stl.wrapper, { [stl.default] : !isActive, [stl.active] : isActive})} onClick={props.onClick}>
                 X-RAY
             </button>

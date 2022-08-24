@@ -43,7 +43,7 @@ const EventRow = React.memo((props: Props) => {
                             </div>
                         );
                     }) : (
-                        <div className="ml-4 color-gray-medium text-sm pt-2">No records captured.</div>
+                        <div className="ml-4 color-gray-medium text-sm pt-2">None captured.</div>
                     )
                 )}
             </div>
