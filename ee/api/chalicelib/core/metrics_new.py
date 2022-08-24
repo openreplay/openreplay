@@ -1684,19 +1684,19 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
-    raise Exception("not supported widget")
-    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    ch_sub_query.append("resources.success = 0")
+    ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
+    ch_sub_query.append("requests.event_type = 'REQUEST'")
+    ch_sub_query.append("requests.success = 0")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT
-                            resources.url_host AS domain,
-                            COUNT(resources.session_id) AS errors_count
-                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                            requests.url_host AS domain,
+                            COUNT(requests.session_id) AS errors_count
+                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS requests
                         WHERE {" AND ".join(ch_sub_query)}
-                        GROUP BY resources.url_host
+                        GROUP BY requests.url_host
                         ORDER BY errors_count DESC
                         LIMIT 5;"""
         rows = ch.execute(query=ch_query,

@@ -1719,15 +1719,15 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("resources.success = FALSE")
+    pg_sub_query.append("requests.success = FALSE")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
-                            resources.url_host AS domain,
-                            COUNT(resources.session_id) AS errors_count
-                        FROM events.resources INNER JOIN sessions USING (session_id)
+                            requests.host AS domain,
+                            COUNT(requests.session_id) AS errors_count
+                        FROM events_common.requests INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY resources.url_host
+                        GROUP BY requests.host
                         ORDER BY errors_count DESC
                         LIMIT 5;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
