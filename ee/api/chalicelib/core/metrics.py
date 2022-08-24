@@ -783,7 +783,7 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
     ch_sub_query.append("resources.success = 0")
-    ch_sub_query.append("resources.type != 'fetch'")
+    ch_sub_query.append("resources.type = 'img'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 

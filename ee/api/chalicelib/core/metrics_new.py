@@ -792,19 +792,17 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
 def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(),
                                 density=7, **args):
-    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="events", data=args)
-    ch_sub_query.append("events.event_type='RESOURCE'")
-    ch_sub_query.append("events.success = 0")
-    ch_sub_query.append("events.type != 'fetch'")
+    ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
+    ch_sub_query.append("resources.success = 0")
+    ch_sub_query.append("resources.type = 'img'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT events.url_path AS key,
-                              COUNT(events.session_id) AS doc_count
-                        FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+        ch_query = f"""SELECT resources.url_path AS key,
+                              COUNT(resources.session_id) AS doc_count
+                        FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query)}
                       GROUP BY url_path
                       ORDER BY doc_count DESC
@@ -818,10 +816,10 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
         if len(rows) == 0:
             return []
         ch_sub_query.append("events.url_path = %(value)s")
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(events.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              COUNT(events.session_id) AS doc_count,
-                              toUnixTimestamp(MAX(events.datetime))*1000 AS max_datatime
-                      FROM {sessions_helper.get_main_events_table(startTimestamp)} AS events
+        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                              COUNT(resources.session_id) AS doc_count,
+                              toUnixTimestamp(MAX(resources.datetime))*1000 AS max_datatime
+                      FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
                       WHERE {" AND ".join(ch_sub_query)}
                       GROUP BY timestamp
                       ORDER BY timestamp;"""

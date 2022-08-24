@@ -765,8 +765,8 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True, chart=True, data=args)
     pg_sub_query.append("resources.success = FALSE")
     pg_sub_query_chart.append("resources.success = FALSE")
-    pg_sub_query.append("resources.type != 'fetch'")
-    pg_sub_query_chart.append("resources.type != 'fetch'")
+    pg_sub_query.append("resources.type = 'img'")
+    pg_sub_query_chart.append("resources.type = 'img'")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT 
