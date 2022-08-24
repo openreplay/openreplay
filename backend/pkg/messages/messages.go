@@ -1,6 +1,8 @@
 // Auto-generated, do not edit
 package messages
 
+import "encoding/binary"
+
 const (
 	MsgBatchMeta = 80
 

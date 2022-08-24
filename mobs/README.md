@@ -8,9 +8,8 @@ ruby run.rb
 
 ```
 
-In order generated .go file to fit the go formatting style:
+In order format generated files run:
 ```sh
-gofmt -w ../backend/pkg/messages/messages.go
-
+sh format.sh
 ```
 (Otherwise there will be changes in stage)
