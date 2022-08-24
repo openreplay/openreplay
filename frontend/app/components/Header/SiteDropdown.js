@@ -85,7 +85,7 @@ export default class SiteDropdown extends React.PureComponent {
                 <Icon className={styles.drodownIcon} color="gray-light" name="chevron-down" size="16" />
                 <div className={styles.menu}>
                     <ul data-can-disable={disabled}>
-                        {!showCurrent && <li>{'Does not require domain selection.'}</li>}
+                        {!showCurrent && <li>{'Project selection is not applicable.'}</li>}
                         {sites.map((site) => (
                             <li key={site.id} onClick={() => this.switchSite(site.id)}>
                                 <Icon name="circle" size="8" marginRight="10" color={STATUS_COLOR_MAP[site.status]} />
