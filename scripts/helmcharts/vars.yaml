@@ -67,6 +67,9 @@ ingress-nginx: &ingress-nginx
     ingressClass: openreplay
     service:
       externalTrafficPolicy: "Local"
+      ports:
+        http: 80
+        https: 443
     extraArgs:
       default-ssl-certificate: "app/openreplay-ssl"
     config:
