@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, Theme, Trigger, Position } from 'react-tippy';
+import { Tooltip, Theme, Trigger, Position, Animation } from 'react-tippy';
 
 interface Props {
     content?: any;
@@ -16,6 +16,7 @@ interface Props {
     theme?: Theme;
     interactive?: boolean;
     children?: any;
+    animation?: Animation;
     // [x:string]: any;
 }
 export default ({
@@ -32,10 +33,12 @@ export default ({
     style = {},
     interactive = false,
     children,
+    animation = 'fade',
 }: // ...props
 Props) => (
+    // @ts-ignore
     <Tooltip
-        animation="fade"
+        animation={animation}
         position={position}
         className={className}
         trigger={trigger}
