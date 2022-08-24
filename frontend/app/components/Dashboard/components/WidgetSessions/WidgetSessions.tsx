@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { numberWithCommas } from 'App/utils';
 
 interface Props {
     className?: string;
@@ -99,7 +100,12 @@ function WidgetSessions(props: Props) {
                             </React.Fragment>
                         ))}
 
-                        <div className="w-full flex items-center justify-center py-6">
+                        <div className="flex items-center justify-between p-5">
+                            <div>
+                                Showing <span className="font-medium">{(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize + 1}</span> to{' '}
+                                <span className="font-medium">{(metricStore.sessionsPage - 1) * metricStore.sessionsPageSize + filteredSessions.sessions.length}</span> of{' '}
+                                <span className="font-medium">{numberWithCommas(filteredSessions.total)}</span> sessions.
+                            </div>
                             <Pagination
                                 page={metricStore.sessionsPage}
                                 totalPages={Math.ceil(filteredSessions.total / metricStore.sessionsPageSize)}
