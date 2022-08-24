@@ -1560,7 +1560,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 WHERE {" AND ".join(ch_sub_query)} 
                                 GROUP BY timestamp,resources.url_host
                                 ORDER BY timestamp, count DESC 
-                                LIMIT 5) AS domain_stats
+                                LIMIT 5 BY timestamp) AS domain_stats
                         GROUP BY timestamp;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
@@ -1603,7 +1603,7 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
                                 WHERE {" AND ".join(ch_sub_query)} 
                                 GROUP BY timestamp,resources.url_host
                                 ORDER BY timestamp, count DESC 
-                                LIMIT 5) AS domain_stats
+                                LIMIT 5 BY timestamp) AS domain_stats
                         GROUP BY timestamp;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,

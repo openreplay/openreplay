@@ -1557,29 +1557,30 @@ def __merge_rows_with_neutral(rows, neutral):
 
 def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=6, **args):
-    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
-    ch_sub_query.append("intDiv(resources.status, 100) == %(status_code)s")
+    ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
+    ch_sub_query.append("requests.event_type='REQUEST'")
+    ch_sub_query.append("intDiv(requests.status, 100) == %(status_code)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT timestamp,
                                groupArray([domain, toString(count)]) AS keys
-                        FROM (SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                                        resources.url_host AS domain, COUNT(resources.session_id) AS count
-                                FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources
+                        FROM (SELECT toUnixTimestamp(toStartOfInterval(requests.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                                        requests.url_host AS domain, COUNT(requests.session_id) AS count
+                                FROM {sessions_helper.get_main_events_table(startTimestamp)} AS requests
                                 WHERE {" AND ".join(ch_sub_query)} 
-                                GROUP BY timestamp,resources.url_host
+                                GROUP BY timestamp,requests.url_host
                                 ORDER BY timestamp, count DESC 
-                                LIMIT 5) AS domain_stats
+                                LIMIT 5 BY timestamp) AS domain_stats
                         GROUP BY timestamp;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp,
                   "step_size": step_size,
                   "status_code": 4, **__get_constraint_values(args)}
+        # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
         rows = __nested_array_to_dict_array(rows)
         neutral = __get_domains_errors_neutral(rows)
@@ -1601,23 +1602,23 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                      endTimestamp=TimeUTC.now(), density=6, **args):
-    raise Exception("not supported widget")
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
-    ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
-    ch_sub_query.append("intDiv(resources.status, 100) == %(status_code)s")
+    ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
+    ch_sub_query.append("requests.event_type='REQUEST'")
+    ch_sub_query.append("intDiv(requests.status, 100) == %(status_code)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT timestamp,
                                groupArray([domain, toString(count)]) AS keys
-                        FROM (SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                                        resources.url_host AS domain, COUNT(resources.session_id) AS count
-                                FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        FROM (SELECT toUnixTimestamp(toStartOfInterval(requests.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
+                                        requests.url_host AS domain, COUNT(requests.session_id) AS count
+                                FROM {sessions_helper.get_main_events_table(startTimestamp)} AS requests
                                 WHERE {" AND ".join(ch_sub_query)} 
-                                GROUP BY timestamp,resources.url_host
+                                GROUP BY timestamp,requests.url_host
                                 ORDER BY timestamp, count DESC 
-                                LIMIT 5) AS domain_stats
+                                LIMIT 5 BY timestamp) AS domain_stats
                         GROUP BY timestamp;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,

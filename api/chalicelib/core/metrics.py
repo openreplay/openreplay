@@ -1580,27 +1580,27 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
-    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
-    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
-    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
+    pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("requests.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("requests.status/100 = %(status_code)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS(SELECT resources.url_host, timestamp 
-                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
+        pg_query = f"""WITH requests AS(SELECT requests.host, timestamp 
+                                         FROM events_common.requests INNER JOIN public.sessions USING (session_id)
                                          WHERE {" AND ".join(pg_sub_query_subset)}
                                         )
                         SELECT generated_timestamp AS timestamp,
-                              COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
+                              COALESCE(JSONB_AGG(requests) FILTER ( WHERE requests IS NOT NULL ), '[]'::JSONB) AS keys
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                        LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.*) AS count
-                                             FROM resources
+                        LEFT JOIN LATERAL ( SELECT requests.host, COUNT(*) AS count
+                                             FROM requests
                                              WHERE {" AND ".join(pg_sub_query_chart)}
-                                             GROUP BY url_host
+                                             GROUP BY host
                                              ORDER BY count DESC
                                              LIMIT 5
-                             ) AS resources ON (TRUE)
+                             ) AS requests ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         params = {"project_id": project_id,
@@ -1630,25 +1630,25 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
-    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
+    pg_sub_query_subset.append("requests.status/100 = %(status_code)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (SELECT resources.url_host, timestamp 
-                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
+        pg_query = f"""WITH requests AS (SELECT host, timestamp 
+                                         FROM events_common.requests INNER JOIN public.sessions USING (session_id)
                                          WHERE {" AND ".join(pg_sub_query_subset)}
                      )
                         SELECT generated_timestamp AS timestamp,
-                                      COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
+                                      COALESCE(JSONB_AGG(requests) FILTER ( WHERE requests IS NOT NULL ), '[]'::JSONB) AS keys
                                 FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.url_host) AS count
-                                                     FROM resources
+                                LEFT JOIN LATERAL ( SELECT requests.host, COUNT(*) AS count
+                                                     FROM requests
                                                      WHERE {" AND ".join(pg_sub_query_chart)}
-                                                     GROUP BY url_host
+                                                     GROUP BY host
                                                      ORDER BY count DESC
                                                      LIMIT 5
-                                     ) AS resources ON (TRUE)
+                                     ) AS requests ON (TRUE)
                                 GROUP BY generated_timestamp
                                 ORDER BY generated_timestamp;"""
         params = {"project_id": project_id,
