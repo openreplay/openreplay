@@ -58,6 +58,9 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
   };
 
   const applyFilterFromQuery = () => {
+    if (appliedFilter.filters.size > 0) {
+      return;
+    }
     const entires = getQueryObject(history.location.search);
     if (entires.length > 0) {
       entires.forEach(addFilter);
