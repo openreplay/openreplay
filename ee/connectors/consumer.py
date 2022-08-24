@@ -3,7 +3,7 @@ from kafka import KafkaConsumer
 from datetime import datetime
 from collections import defaultdict
 
-from msgcodec.codec import MessageCodec
+from msgcodec.msgcodec import MessageCodec
 from msgcodec.messages import SessionEnd
 from db.api import DBConnection
 from db.models import events_detailed_table_name, events_table_name, sessions_table_name
