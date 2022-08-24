@@ -49,7 +49,7 @@ function Webhooks(props) {
         <Button variant="primary" onClick={() => init()}>Add</Button>
       </div>
 
-      <div className="text-base text-disabled-text flex items-center mt-3 px-5">
+      <div className="text-base text-disabled-text flex items-center my-3 px-5">
           <Icon name="info-circle-fill" className="mr-2" size={16} />
           Leverage webhooks to push OpenReplay data to other systems.
       </div>
