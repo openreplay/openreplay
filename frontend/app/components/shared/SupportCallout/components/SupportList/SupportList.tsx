@@ -12,7 +12,7 @@ function SupportList() {
       </a>
       <a href="https://github.com/openreplay/openreplay/issues/new/choose" target="_blank">
         <div className="flex items-center px-4 py-3 cursor-pointer hover:bg-active-blue">
-          <Icon name="chat-right-text" size={15} />
+          <Icon name="github" size={15} />
           <div className="ml-2">Report Issues</div>
         </div>
       </a>
