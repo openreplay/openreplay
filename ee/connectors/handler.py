@@ -401,6 +401,16 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.batchmeta_timestamp = message.timestamp
         return n
 
+    if isinstance(message, BatchMetadata):
+        n.batchmeta_page_no = message.page_no
+        n.batchmeta_first_index = message.first_index
+        n.batchmeta_timestamp = message.timestamp
+        return n
+
+    if isinstance(message, PartitionedMessage):
+        n.part_no = message.part_no
+        n.part_total = message.part_total
+
     if isinstance(message, PerformanceTrack):
         n.performancetrack_frames = message.frames
         n.performancetrack_ticks = message.ticks
