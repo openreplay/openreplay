@@ -13,6 +13,9 @@ function XRayButton(props: Props) {
   const { isActive } = props;
   const [showGuide, setShowGuide] = useState(!localStorage.getItem('featureViewed'));
   useEffect(() => {
+    if (!showGuide) {
+      return;
+    }
     Player.pause();
   }, []);
 
@@ -25,6 +28,10 @@ function XRayButton(props: Props) {
     <>
       {showGuide && (
         <div
+          onClick={() => {
+            setShowGuide(false);
+            localStorage.setItem('featureViewed', 'true');
+          }}
           className="bg-gray-darkest fixed inset-0 z-10 w-full h-screen"
           style={{ zIndex: 9999, opacity: '0.7' }}
         ></div>
@@ -74,10 +81,7 @@ function GuidePopup({ children }: any) {
       html={
         <div>
           <div className="font-bold">
-            Introducing{' '}
-            <span className={stl.text}>
-              X-Ray
-            </span>
+            Introducing <span className={stl.text}>X-Ray</span>
           </div>
           <div className="color-gray-medium">
             Get a quick overview on the issues in this session.
