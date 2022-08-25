@@ -1,23 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 74 76" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 60.1 (88133) - https://sketch.com -->
-    <title>Jira Software-blue</title>
-    <desc>Created with Sketch.</desc>
-    <defs>
-        <linearGradient x1="67.6800148%" y1="40.3276956%" x2="40.820818%" y2="81.6596195%" id="linearGradient-1">
-            <stop stop-color="#777" offset="18%"></stop>
-            <stop stop-color="#999" offset="100%"></stop>
-        </linearGradient>
-        <linearGradient x1="32.6559851%" y1="59.1664468%" x2="59.3430302%" y2="17.9899763%" id="linearGradient-2">
-            <stop stop-color="#777" offset="18%"></stop>
-            <stop stop-color="#999" offset="100%"></stop>
-        </linearGradient>
-    </defs>
-    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="Jira-Software-blue" fill-rule="nonzero">
-            <path d="M72.4,35.76 L39.8,3.16 L36.64,0 L36.64,0 L12.1,24.54 L12.1,24.54 L0.88,35.76 C-0.289813512,36.9312702 -0.289813512,38.8287298 0.88,40 L23.3,62.42 L36.64,75.76 L61.18,51.22 L61.56,50.84 L72.4,40 C73.5698135,38.8287298 73.5698135,36.9312702 72.4,35.76 Z M36.64,49.08 L25.44,37.88 L36.64,26.68 L47.84,37.88 L36.64,49.08 Z" id="Shape" fill="#999"></path>
-            <path d="M36.64,26.68 C29.3070783,19.346212 29.2713402,7.46777926 36.56,0.09 L12.05,24.59 L25.39,37.93 L36.64,26.68 Z" id="Path" fill="url(#linearGradient-1)"></path>
-            <path d="M47.87,37.85 L36.64,49.08 C40.179363,52.6172581 42.1679334,57.4160731 42.1679334,62.42 C42.1679334,67.4239269 40.179363,72.2227419 36.64,75.76 L36.64,75.76 L61.21,51.19 L47.87,37.85 Z" id="Path" fill="url(#linearGradient-2)"></path>
-        </g>
-    </g>
+<svg viewBox="0 0 74 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_27_2021)">
+<path d="M72.4 35.76L39.8 3.16L36.64 0L12.1 24.54L0.879985 35.76C-0.289829 36.9313 -0.289829 38.8287 0.879985 40L23.3 62.42L36.64 75.76L61.18 51.22L61.56 50.84L72.4 40C73.5698 38.8287 73.5698 36.9313 72.4 35.76ZM36.64 49.08L25.44 37.88L36.64 26.68L47.84 37.88L36.64 49.08Z" fill="#394EFF"/>
+<path d="M36.64 26.68C29.3071 19.3462 29.2713 7.46775 36.56 0.0899658L12.05 24.59L25.39 37.93L36.64 26.68Z" fill="url(#paint0_linear_27_2021)"/>
+<path d="M47.87 37.85L36.64 49.08C40.1794 52.6172 42.1679 57.416 42.1679 62.42C42.1679 67.4239 40.1794 72.2227 36.64 75.76L61.21 51.19L47.87 37.85Z" fill="url(#paint1_linear_27_2021)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_27_2021" x1="28.6925" y1="15.35" x2="17.5702" y2="26.4723" gradientUnits="userSpaceOnUse">
+<stop offset="0.18" stop-color="#3F51B5"/>
+<stop offset="1" stop-color="#3F51B5"/>
+</linearGradient>
+<linearGradient id="paint1_linear_27_2021" x1="44.6636" y1="60.28" x2="55.7471" y2="49.1965" gradientUnits="userSpaceOnUse">
+<stop offset="0.18" stop-color="#3F51B5"/>
+<stop offset="1" stop-color="#3F51B5" stop-opacity="0.5"/>
+</linearGradient>
+<clipPath id="clip0_27_2021">
+<rect width="74" height="76" fill="white"/>
+</clipPath>
+</defs>
 </svg>
