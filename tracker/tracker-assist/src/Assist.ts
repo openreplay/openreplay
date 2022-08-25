@@ -60,11 +60,11 @@ export default class Assist {
   private agents: Record<string, Agent> = {}
   private readonly options: Options
   constructor(
-    private readonly app: App, 
-    options?: Partial<Options>, 
+    private readonly app: App,
+    options?: Partial<Options>,
     private readonly noSecureMode: boolean = false,
   ) {
-    this.options = Object.assign({ 
+    this.options = Object.assign({
         session_calling_peer_key: '__openreplay_calling_peer',
         session_control_peer_key: '__openreplay_control_peer',
         config: null,
@@ -91,12 +91,12 @@ export default class Assist {
     const observer = titleNode && new MutationObserver(() => {
       this.emit('UPDATE_SESSION', { pageTitle: document.title, })
     })
-    app.attachStartCallback(() => { 
+    app.attachStartCallback(() => {
       if (this.assistDemandedRestart) { return }
       this.onStart()
       observer && observer.observe(titleNode, { subtree: true, characterData: true, childList: true, })
     })
-    app.attachStopCallback(() => { 
+    app.attachStopCallback(() => {
       if (this.assistDemandedRestart) { return }
       this.clean()
       observer && observer.disconnect()
