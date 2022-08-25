@@ -199,7 +199,7 @@ def update(tenant_id, user_id, changes):
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
 
-        return helper.dict_to_camel_case(cur.fetchone())
+    return get(user_id=user_id, tenant_id=tenant_id)
 
 
 def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
