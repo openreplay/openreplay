@@ -765,8 +765,8 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True, chart=True, data=args)
     pg_sub_query.append("resources.success = FALSE")
     pg_sub_query_chart.append("resources.success = FALSE")
-    pg_sub_query.append("resources.type != 'fetch'")
-    pg_sub_query_chart.append("resources.type != 'fetch'")
+    pg_sub_query.append("resources.type = 'img'")
+    pg_sub_query_chart.append("resources.type = 'img'")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT 
@@ -1580,27 +1580,27 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
-    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
-    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
-    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
+    pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("requests.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("requests.status/100 = %(status_code)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS(SELECT resources.url_host, timestamp 
-                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
+        pg_query = f"""WITH requests AS(SELECT requests.host, timestamp 
+                                         FROM events_common.requests INNER JOIN public.sessions USING (session_id)
                                          WHERE {" AND ".join(pg_sub_query_subset)}
                                         )
                         SELECT generated_timestamp AS timestamp,
-                              COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
+                              COALESCE(JSONB_AGG(requests) FILTER ( WHERE requests IS NOT NULL ), '[]'::JSONB) AS keys
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                        LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.*) AS count
-                                             FROM resources
+                        LEFT JOIN LATERAL ( SELECT requests.host, COUNT(*) AS count
+                                             FROM requests
                                              WHERE {" AND ".join(pg_sub_query_chart)}
-                                             GROUP BY url_host
+                                             GROUP BY host
                                              ORDER BY count DESC
                                              LIMIT 5
-                             ) AS resources ON (TRUE)
+                             ) AS requests ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         params = {"project_id": project_id,
@@ -1625,37 +1625,37 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return result
 
 
-def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                           endTimestamp=TimeUTC.now(), density=6, **args):
+def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                     endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
-    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
+    pg_sub_query_subset.append("requests.status/100 = %(status_code)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (SELECT resources.url_host, timestamp 
-                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
+        pg_query = f"""WITH requests AS (SELECT host, timestamp 
+                                         FROM events_common.requests INNER JOIN public.sessions USING (session_id)
                                          WHERE {" AND ".join(pg_sub_query_subset)}
                      )
                         SELECT generated_timestamp AS timestamp,
-                                      COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
+                                      COALESCE(JSONB_AGG(requests) FILTER ( WHERE requests IS NOT NULL ), '[]'::JSONB) AS keys
                                 FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.url_host) AS count
-                                                     FROM resources
+                                LEFT JOIN LATERAL ( SELECT requests.host, COUNT(*) AS count
+                                                     FROM requests
                                                      WHERE {" AND ".join(pg_sub_query_chart)}
-                                                     GROUP BY url_host
+                                                     GROUP BY host
                                                      ORDER BY count DESC
                                                      LIMIT 5
-                                     ) AS resources ON (TRUE)
+                                     ) AS requests ON (TRUE)
                                 GROUP BY generated_timestamp
                                 ORDER BY generated_timestamp;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp,
                   "step_size": step_size,
-                  "status_code": 4, **__get_constraint_values(args)}
+                  "status_code": status, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         rows = __nested_array_to_dict_array(rows)
@@ -1663,46 +1663,18 @@ def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         rows = __merge_rows_with_neutral(rows, neutral)
 
         return rows
+
+
+def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                           endTimestamp=TimeUTC.now(), density=6, **args):
+    return __get_domains_errors_4xx_and_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
+                                            endTimestamp=endTimestamp, density=density, **args)
 
 
 def get_domains_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=6, **args):
-    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
-                                           data=args, main_table="resources", time_column="timestamp", project=False,
-                                           duration=False)
-    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (SELECT resources.url_host, timestamp 
-                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
-                                         WHERE {" AND ".join(pg_sub_query_subset)}
-                     )
-                        SELECT generated_timestamp AS timestamp,
-                                              COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
-                                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                        LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.url_host) AS count
-                                                             FROM resources
-                                                             WHERE {" AND ".join(pg_sub_query_chart)}
-                                                             GROUP BY url_host
-                                                             ORDER BY count DESC
-                                                             LIMIT 5
-                                             ) AS resources ON (TRUE)
-                                        GROUP BY generated_timestamp
-                                        ORDER BY generated_timestamp;"""
-        params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp,
-                  "step_size": step_size,
-                  "status_code": 5, **__get_constraint_values(args)}
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
-        rows = __nested_array_to_dict_array(rows)
-        neutral = __get_neutral(rows)
-        rows = __merge_rows_with_neutral(rows, neutral)
-
-        return rows
+    return __get_domains_errors_4xx_and_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+                                            endTimestamp=endTimestamp, density=density, **args)
 
 
 def __nested_array_to_dict_array(rows, key="url_host", value="count"):
@@ -1747,15 +1719,15 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("resources.success = FALSE")
+    pg_sub_query.append("requests.success = FALSE")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
-                            resources.url_host AS domain,
-                            COUNT(resources.session_id) AS errors_count
-                        FROM events.resources INNER JOIN sessions USING (session_id)
+                            requests.host AS domain,
+                            COUNT(requests.session_id) AS errors_count
+                        FROM events_common.requests INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY resources.url_host
+                        GROUP BY requests.host
                         ORDER BY errors_count DESC
                         LIMIT 5;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
@@ -1823,7 +1795,7 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
                         FROM events.resources INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY (4 + 5), 3 DESC
+                        ORDER BY (4 + 5) DESC, 3 DESC
                         LIMIT 50;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                            "startTimestamp": startTimestamp,
@@ -1832,50 +1804,45 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
     return helper.list_to_camel_case(rows)
 
 
-def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
-                         platform=None, **args):
+def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                  endTimestamp=TimeUTC.now(),
+                                  platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("resources.type = 'fetch'")
-    pg_sub_query.append("resources.method IS NOT NULL")
-    pg_sub_query.append("resources.status/100 = 4")
+    pg_sub_query.append("requests.type = 'fetch'")
+    pg_sub_query.append("requests.method IS NOT NULL")
+    pg_sub_query.append(f"requests.status/100 = {status}")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id) AS all_requests
-                        FROM events.resources INNER JOIN sessions USING (session_id)
+        pg_query = f"""SELECT  requests.method,
+                               requests.host,
+                               requests.path,
+                               COUNT(requests.session_id) AS all_requests
+                        FROM events_common.requests INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
+                        GROUP BY requests.method, requests.host, requests.path
                         ORDER BY all_requests DESC
                         LIMIT 10;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                            "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
         rows = cur.fetchall()
+        for r in rows:
+            r["url_hostpath"] = r.pop("host") + r.pop("path")
     return helper.list_to_camel_case(rows)
+
+
+def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
+                         platform=None, **args):
+    return __get_calls_errors_4xx_or_5xx(status=4, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query.append("resources.type = 'fetch'")
-    pg_sub_query.append("resources.method IS NOT NULL")
-    pg_sub_query.append("resources.status/100 = 5")
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  resources.method,
-                               resources.url_hostpath,
-                               COUNT(resources.session_id) AS all_requests
-                        FROM events.resources INNER JOIN sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)}
-                        GROUP BY resources.method, resources.url_hostpath
-                        ORDER BY all_requests DESC
-                        LIMIT 10;"""
-        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
+    return __get_calls_errors_4xx_or_5xx(status=5, project_id=project_id, startTimestamp=startTimestamp,
+                                         endTimestamp=endTimestamp,
+                                         platform=platform, **args)
 
 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
@@ -1883,10 +1850,9 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
 
     pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
-    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
-    pg_sub_query_subset.append("resources.type != 'fetch'")
-    pg_sub_query_subset.append("resources.status > 200")
+    pg_sub_query_subset.append("requests.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("requests.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("requests.status_code > 200")
 
     pg_sub_query_subset_e = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
                                               time_constraint=False)
@@ -1897,8 +1863,8 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     pg_sub_query_subset_e.append("timestamp<%(endTimestamp)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (SELECT status, timestamp
-                                       FROM events.resources
+        pg_query = f"""WITH requests AS (SELECT status_code AS status, timestamp
+                                       FROM events_common.requests
                                                 INNER JOIN public.sessions USING (session_id)
                                        WHERE {" AND ".join(pg_sub_query_subset)}
                             ),
@@ -1927,7 +1893,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
                                     ), 0)                                                 AS integrations
                     FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                              LEFT JOIN LATERAL (SELECT status
-                                                FROM resources
+                                                FROM requests
                                                 WHERE {" AND ".join(pg_sub_query_chart)}
                         ) AS errors_partition ON (TRUE)
                     GROUP BY timestamp
@@ -2169,44 +2135,44 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
-                                           chart=True, data=args, main_table="resources", time_column="timestamp",
+                                           chart=True, data=args, main_table="requests", time_column="timestamp",
                                            duration=False)
-    pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
-    pg_sub_query_subset.append("resources.timestamp < %(endTimestamp)s")
-    pg_sub_query_subset.append("resources.success = FALSE")
+    pg_sub_query_subset.append("requests.timestamp >= %(startTimestamp)s")
+    pg_sub_query_subset.append("requests.timestamp < %(endTimestamp)s")
+    # pg_sub_query_subset.append("resources.type IN ('fetch', 'script')")
+    pg_sub_query_subset.append("requests.success = FALSE")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH resources AS (
-                            SELECT resources.url_host, timestamp
-                            FROM events.resources
+        pg_query = f"""WITH requests AS (
+                            SELECT requests.host, timestamp
+                            FROM events_common.requests
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE {" AND ".join(pg_sub_query_subset)}
                         )
                         SELECT generated_timestamp                                                       AS timestamp,
-                               SUM(CASE WHEN first.url_host = sub_resources.url_host THEN 1 ELSE 0 END)  AS first_party,
-                               SUM(CASE WHEN first.url_host != sub_resources.url_host THEN 1 ELSE 0 END) AS third_party
+                               SUM(CASE WHEN first.host = sub_requests.host THEN 1 ELSE 0 END)  AS first_party,
+                               SUM(CASE WHEN first.host != sub_requests.host THEN 1 ELSE 0 END) AS third_party
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                  LEFT JOIN (
-                            SELECT resources.url_host,
-                                   COUNT(resources.session_id) AS count
-                            FROM events.resources
+                            SELECT requests.host,
+                                   COUNT(requests.session_id) AS count
+                            FROM events_common.requests
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = '1'
-                              AND resources.type IN ('fetch', 'script')
                               AND sessions.start_ts > (EXTRACT(EPOCH FROM now() - INTERVAL '31 days') * 1000)::BIGINT
                               AND sessions.start_ts < (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT
-                              AND resources.timestamp > (EXTRACT(EPOCH FROM now() - INTERVAL '31 days') * 1000)::BIGINT
-                              AND resources.timestamp < (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT
+                              AND requests.timestamp > (EXTRACT(EPOCH FROM now() - INTERVAL '31 days') * 1000)::BIGINT
+                              AND requests.timestamp < (EXTRACT(EPOCH FROM now()) * 1000)::BIGINT
                             AND sessions.duration>0
-                            GROUP BY resources.url_host
+                            GROUP BY requests.host
                             ORDER BY count DESC
                             LIMIT 1
                         ) AS first ON (TRUE)
                                  LEFT JOIN LATERAL (
-                            SELECT resources.url_host
-                            FROM resources
+                            SELECT requests.host
+                            FROM requests
                             WHERE {" AND ".join(pg_sub_query_chart)}
-                            ) AS sub_resources ON (TRUE)
+                            ) AS sub_requests ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         cur.execute(cur.mogrify(pg_query, {"step_size": step_size,

@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse
 import schemas
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
-from chalicelib.core import tenants, users, metadata, projects, license
+from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import helper

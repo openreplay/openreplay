@@ -554,13 +554,15 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             assert values.get("sourceOperator") is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
+                assert values["sourceOperator"] != MathOperator._equal.value, \
+                    f"{MathOperator._equal} is not allowed for duration of {PerformanceEventType.time_between_events}"
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
                 assert isinstance(values["value"][0], _SessionSearchEventRaw) \
                        and isinstance(values["value"][1], _SessionSearchEventRaw), \
                     f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
                 assert len(values["source"]) > 0 and isinstance(values["source"][0], int), \
-                    f"source of type int if required for {PerformanceEventType.time_between_events}"
+                    f"source of type int is required for {PerformanceEventType.time_between_events}"
             else:
                 assert "source" in values, f"source is required for {values.get('type')}"
                 assert isinstance(values["source"], list), f"source of type list is required for {values.get('type')}"
@@ -736,7 +738,7 @@ class ErrorSort(str, Enum):
     sessions_count = 'sessions'
 
 
-class SearchErrorsSchema(SessionsSearchPayloadSchema):
+class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     sort: ErrorSort = Field(default=ErrorSort.occurrence)
     density: Optional[int] = Field(7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
@@ -768,7 +770,7 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema, SearchErrorsSchema):
+class CustomMetricSeriesFilterSchema(SearchErrorsSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)

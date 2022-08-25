@@ -138,8 +138,8 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
 
                 get_start_end_time(filter_d=row["filter"], range_value=range_value, start_date=start_date,
                                    end_date=end_date)
-                counts = sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(row["filter"]),
-                                             project_id=project_id, user_id=None, count_only=True)
+                counts = sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.parse_obj(row["filter"]),
+                                                  project_id=project_id, user_id=None, count_only=True)
                 row["sessionsCount"] = counts["countSessions"]
                 row["usersCount"] = counts["countUsers"]
                 filter_clone = dict(row["filter"])
@@ -193,8 +193,8 @@ def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=No
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
-    return sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(f["filter"]), project_id=project_id,
-                               user_id=user_id)
+    return sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.parse_obj(f["filter"]), project_id=project_id,
+                                    user_id=user_id)
 
 
 def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
@@ -207,8 +207,8 @@ def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.Funnel
         get_start_end_time(filter_d=f["filter"], range_value=data.range_value,
                            start_date=data.startDate, end_date=data.endDate)
         data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
-    return sessions.search2_pg(data=data, project_id=project_id,
-                               user_id=user_id)
+    return sessions.search_sessions(data=data, project_id=project_id,
+                                    user_id=user_id)
 
 
 def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
@@ -365,8 +365,8 @@ def search_by_issue(user_id, project_id, funnel_id, issue_id, data: schemas.Funn
         if i.get("issueId", "") == issue_id:
             issue = i
             break
-    return {"sessions": sessions.search2_pg(user_id=user_id, project_id=project_id, issue=issue,
-                                            data=data) if issue is not None else {"total": 0, "sessions": []},
+    return {"sessions": sessions.search_sessions(user_id=user_id, project_id=project_id, issue=issue,
+                                                 data=data) if issue is not None else {"total": 0, "sessions": []},
             # "stages": helper.list_to_camel_case(insights),
             # "totalDropDueToIssues": total_drop_due_to_issues,
             "issue": issue}

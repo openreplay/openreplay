@@ -6,7 +6,6 @@ class Event:
 
 
 class SupportedFilter:
-    def __init__(self, get, query, change_by_length):
+    def __init__(self, get, query):
         self.get = get
         self.query = query
-        self.change_by_length = change_by_length

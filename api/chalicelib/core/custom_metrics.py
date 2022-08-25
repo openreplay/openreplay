@@ -91,7 +91,7 @@ def __get_sessions_list(project_id, user_id, data):
     data.series[0].filter.endDate = data.endTimestamp
     data.series[0].filter.page = data.page
     data.series[0].filter.limit = data.limit
-    return sessions.search2_pg(data=data.series[0].filter, project_id=project_id, user_id=user_id)
+    return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
 def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id=None):
@@ -166,7 +166,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
         s.filter.limit = data.limit
         s.filter.page = data.page
         results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
@@ -213,7 +213,7 @@ def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadS
         s.filter.limit = data.limit
         s.filter.page = data.page
         results.append({"seriesId": None, "seriesName": s.name,
-                        **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
+                        **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
@@ -532,7 +532,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                          "lostConversions": 0,
                          "unaffectedSessions": 0}
         return {"seriesId": s.series_id, "seriesName": s.name,
-                "sessions": sessions.search2_pg(user_id=user_id, project_id=project_id,
-                                                issue=issue, data=s.filter)
+                "sessions": sessions.search_sessions(user_id=user_id, project_id=project_id,
+                                                     issue=issue, data=s.filter)
                 if issue is not None else {"total": 0, "sessions": []},
                 "issue": issue}
