@@ -474,7 +474,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         FROM {sessions_helper.get_main_resources_table(startTimestamp)} AS resources 
                         WHERE {" AND ".join(ch_sub_query)} AND resources.duration>0
                         GROUP BY resources.url ORDER BY avg DESC LIMIT 10;"""
-        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
 
