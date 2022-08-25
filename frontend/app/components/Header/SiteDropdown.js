@@ -88,7 +88,7 @@ export default class SiteDropdown extends React.PureComponent {
                         {!showCurrent && <li>{'Project selection is not applicable.'}</li>}
                         {sites.map((site) => (
                             <li key={site.id} onClick={() => this.switchSite(site.id)}>
-                                <Icon name="circle" size="8" marginRight="10" color={STATUS_COLOR_MAP[site.status]} />
+                                <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: STATUS_COLOR_MAP[site.status] }} />
                                 {site.host}
                             </li>
                         ))}
