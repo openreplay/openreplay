@@ -6,6 +6,7 @@ import (
 	"os"
 	"sort"
 	"strconv"
+	"time"
 
 	_s3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -69,6 +70,17 @@ func (s3 *S3) Exists(key string) bool {
 		return true
 	}
 	return false
+}
+
+func (s3 *S3) GetCreationTime(key string) *time.Time {
+	ans, err := s3.svc.HeadObject(&_s3.HeadObjectInput{
+		Bucket: s3.bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return nil
+	}
+	return ans.LastModified
 }
 
 const MAX_RETURNING_COUNT = 40
