@@ -1,13 +1,28 @@
 from decouple import config
+import logging
 
-if config("LEGACY_SEARCH", cast=bool, default=False):
-    print(">>> Using legacy search")
-    from . import autocomplete as autocomplete
-    from . import sessions as sessions
-    from . import errors as errors
-    from . import metrics as metrics
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+
+if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
+    print(">>> Using experimental sessions search")
+    from . import sessions_exp as sessions
 else:
-    from . import autocomplete_ee as autocomplete
-    from . import sessions_ee as sessions
-    from . import errors_ee as errors
-    from . import metrics_new as metrics
+    from . import sessions as sessions
+
+if config("EXP_AUTOCOMPLETE", cast=bool, default=False):
+    print(">>> Using experimental autocomplete")
+    from . import autocomplete_exp as autocomplete
+else:
+    from . import autocomplete as autocomplete
+
+if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
+    print(">>> Using experimental error search")
+    from . import errors_exp as errors
+else:
+    from . import errors as errors
+
+if config("EXP_METRICS", cast=bool, default=False):
+    print(">>> Using experimental metrics")
+    from . import metrics_exp as metrics
+else:
+    from . import metrics as metrics

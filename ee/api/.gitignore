@@ -177,6 +177,8 @@ chalicelib/saas
 README/*
 Pipfile
 
+/.local/
+
 /chalicelib/core/alerts.py
 /chalicelib/core/alerts_processor.py
 /chalicelib/core/announcements.py

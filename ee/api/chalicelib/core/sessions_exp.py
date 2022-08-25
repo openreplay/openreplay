@@ -4,7 +4,7 @@ import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics
-from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, sessions_helper
+from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 SESSION_PROJECTION_COLS = """\
@@ -471,7 +471,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     extra_event = None
     if metric_of == schemas.TableMetricOfType.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.path
-                            FROM {sessions_helper.get_main_events_table(data.startDate)} AS ev
+                            FROM {exp_ch_helper.get_main_events_table(data.startDate)} AS ev
                             WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
                               AND ev.project_id = %(project_id)s
@@ -1242,8 +1242,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
 
-    MAIN_EVENTS_TABLE = sessions_helper.get_main_events_table(data.startDate)
-    MAIN_SESSIONS_TABLE = sessions_helper.get_main_sessions_table(data.startDate)
+    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startDate)
+    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startDate)
 
     full_args["MAIN_EVENTS_TABLE"] = MAIN_EVENTS_TABLE
     full_args["MAIN_SESSIONS_TABLE"] = MAIN_SESSIONS_TABLE

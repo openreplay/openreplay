@@ -4,7 +4,6 @@ import clickhouse_driver
 from decouple import config
 
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
-logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
 
 settings = {}
 if config('ch_timeout', cast=int, default=-1) > 0:
