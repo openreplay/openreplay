@@ -115,7 +115,7 @@ export default class Exceptions extends React.PureComponent {
                 onChange={this.onFilterChange}
               />
               <QuestionMarkHint
-                className={'ml-8'}
+                className={'mx-4'}
                 content={
                   <>
                     <a
@@ -128,7 +128,6 @@ export default class Exceptions extends React.PureComponent {
                     and see source code context obtained from stack traces in their original form.
                   </>
                 }
-                className="mr-8"
               />
             </div>
           </BottomBlock.Header>
