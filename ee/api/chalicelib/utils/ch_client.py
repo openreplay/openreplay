@@ -6,10 +6,14 @@ from decouple import config
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
 
-settings = None
-if config('pg_timeout', cast=int, default=-1) > 0:
-    logging.info(f"CH-max_execution_time set to {config('pg_timeout')}s")
-    settings = {"max_execution_time": config('pg_timeout', cast=int)}
+settings = {}
+if config('ch_timeout', cast=int, default=-1) > 0:
+    logging.info(f"CH-max_execution_time set to {config('ch_timeout')}s")
+    settings = {**settings, "max_execution_time": config('ch_timeout', cast=int)}
+
+if config('ch_receive_timeout', cast=int, default=-1) > 0:
+    logging.info(f"CH-receive_timeout set to {config('ch_receive_timeout')}s")
+    settings = {**settings, "receive_timeout": config('ch_receive_timeout', cast=int)}
 
 
 class ClickHouseClient:
