@@ -146,6 +146,16 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         n.batchmeta_timestamp = message.timestamp
         return n
 
+    if isinstance(message, BatchMetadata):
+        n.batchmeta_page_no = message.page_no
+        n.batchmeta_first_index = message.first_index
+        n.batchmeta_timestamp = message.timestamp
+        return n
+
+    if isinstance(message, PartitionedMessage):
+        n.part_no = message.part_no
+        n.part_total = message.part_total
+
     # if isinstance(message, IOSBatchMeta):
     #     n.iosbatchmeta_page_no = message.page_no
     #     n.iosbatchmeta_first_index = message.first_index
