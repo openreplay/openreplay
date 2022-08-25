@@ -372,10 +372,10 @@ export default class DashboardStore {
         return dashboardService
             .addWidget(dashboard, metricIds)
             .then((response) => {
-                toast.success("Widget added successfully");
+                toast.success("Metric added to dashboard.");
             })
             .catch(() => {
-                toast.error("Widget could not be added");
+                toast.error("Metric could not be added.");
             })
             .finally(() => {
                 this.isSaving = false;
