@@ -18,7 +18,36 @@ class MessageCodec(Codec):
 
     def decode(self, b: bytes) -> Message:
         reader = io.BytesIO(b)
+        return self.read_head_message(reader)
+
+    def decode_detailed(self, b: bytes):
+        reader = io.BytesIO(b)
+        messages_list = list()
+        messages_list.append(self.handler(reader, 0))
+        if isinstance(messages_list[0], BatchMeta):
+            mode = 0
+        elif isinstance(messages_list[0], BatchMetadata):
+            mode = 1
+        else:
+            return messages_list
+        while True:
+            try:
+                messages_list.append(self.handler(reader, mode))
+            except IndexError:
+                break
+        return messages_list
+
+    def handler(self, reader: io.BytesIO, mode=0):
         message_id = self.read_message_id(reader)
+        if mode == 1:
+            reader.read(3)
+            return self.read_head_message(reader, message_id)
+        elif mode == 0:
+            return self.read_head_message(reader, message_id)
+        else:
+            raise IOError()   
+
+    def read_head_message(self, reader: io.BytesIO, message_id: int):
 
         if message_id == 80:
             return BatchMeta(
