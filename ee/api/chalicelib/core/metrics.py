@@ -292,7 +292,7 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
 
-        print(f"got {len(rows)} rows")
+        # print(f"got {len(rows)} rows")
         if len(rows) == 0:
             return []
         error_ids = [r["error_id"] for r in rows]

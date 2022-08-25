@@ -297,7 +297,7 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
 
-        print(f"got {len(rows)} rows")
+        # print(f"got {len(rows)} rows")
         if len(rows) == 0:
             return []
         error_ids = [r["error_id"] for r in rows]
@@ -492,7 +492,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         GROUP BY url, timestamp
                         ORDER BY url, timestamp;"""
         params["url"] = urls
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         u_rows = ch.execute(query=ch_query, params=params)
         for url in urls:
             sub_rows = []
@@ -771,8 +771,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                               AND positionCaseInsensitiveUTF8(value, %(value)s) != 0
                             LIMIT 10 BY type"""
 
-                print(ch.format(query=ch_query, params={"project_id": project_id, "value": text, "key": key,
-                                                        "platform_0": platform}))
+                # print(ch.format(query=ch_query, params={"project_id": project_id, "value": text, "key": key,
+                #                                         "platform_0": platform}))
                 rows = ch.execute(query=ch_query, params={"project_id": project_id, "value": text, "key": key,
                                                           "platform_0": platform})
     else:
@@ -800,7 +800,7 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
                       LIMIT 10;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
 
         rows = [{"url": i["key"], "sessions": i["doc_count"]} for i in rows]
@@ -1061,7 +1061,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
         ch_query = f"""SELECT COALESCE(avgOrNull(pages.speed_index),0) AS avg
                     FROM {sessions_helper.get_main_events_table(startTimestamp)} AS pages
@@ -1775,7 +1775,7 @@ def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
     return helper.list_to_camel_case(rows)
 
@@ -1852,7 +1852,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
                         ORDER BY timestamp;"""
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         actions = ch.execute(query=ch_query, params=params)
         actions = __complete_missing_steps(rows=actions, start_time=startTimestamp,
                                            end_time=endTimestamp,
@@ -1947,9 +1947,9 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
                   "project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(">>>>>>>>>>>>>>")
-        print(ch.format(query=ch_query, params=params))
-        print(">>>>>>>>>>>>>>")
+        # print(">>>>>>>>>>>>>>")
+        # print(ch.format(query=ch_query, params=params))
+        # print(">>>>>>>>>>>>>>")
         rows = ch.execute(query=ch_query, params=params)
     for r in rows:
         types = {}
@@ -1996,7 +1996,7 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
                   "project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
         for r in rows:
             for t in r["types"]:
@@ -2046,7 +2046,7 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                   "project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch.format(query=ch_query, params=params))
+        # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
     return helper.list_to_camel_case(__complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                               end_time=endTimestamp,

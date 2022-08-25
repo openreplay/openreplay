@@ -30,9 +30,15 @@ class ClickHouseClient:
         return self
 
     def execute(self, query, params=None, **args):
-        results = self.__client.execute(query=query, params=params, with_column_types=True, **args)
-        keys = tuple(x for x, y in results[1])
-        return [dict(zip(keys, i)) for i in results[0]]
+        try:
+            results = self.__client.execute(query=query, params=params, with_column_types=True, **args)
+            keys = tuple(x for x, y in results[1])
+            return [dict(zip(keys, i)) for i in results[0]]
+        except Exception as err:
+            logging.error("--------- CH QUERY EXCEPTION -----------")
+            logging.error(self.format(query=query, params=params))
+            logging.error("--------------------")
+            raise err
 
     def insert(self, query, params=None, **args):
         return self.__client.execute(query=query, params=params, **args)
