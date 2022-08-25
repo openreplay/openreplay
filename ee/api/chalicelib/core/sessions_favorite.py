@@ -1,18 +1,19 @@
-from chalicelib.core import sessions
-from chalicelib.utils import pg_client, s3_extra
 from decouple import config
+
+from chalicelib.core import sessions, sessions_favorite_exp
+from chalicelib.utils import pg_client, s3_extra
 
 
 def add_favorite_session(project_id, user_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
-                INSERT INTO public.user_favorite_sessions 
-                    (user_id, session_id) 
-                VALUES 
-                    (%(userId)s,%(sessionId)s);""",
+                INSERT INTO public.user_favorite_sessions(user_id, session_id) 
+                VALUES (%(userId)s,%(sessionId)s);""",
                         {"userId": user_id, "sessionId": session_id})
         )
+
+    sessions_favorite_exp.add_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
     return sessions.get_by_id2_pg(project_id=project_id, session_id=session_id, user_id=user_id, full_data=False,
                                   include_fav_viewed=True)
 
@@ -22,11 +23,11 @@ def remove_favorite_session(project_id, user_id, session_id):
         cur.execute(
             cur.mogrify(f"""\
                         DELETE FROM public.user_favorite_sessions                          
-                        WHERE 
-                            user_id = %(userId)s
+                        WHERE user_id = %(userId)s
                             AND session_id = %(sessionId)s;""",
                         {"userId": user_id, "sessionId": session_id})
         )
+    sessions_favorite_exp.remove_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
     return sessions.get_by_id2_pg(project_id=project_id, session_id=session_id, user_id=user_id, full_data=False,
                                   include_fav_viewed=True)
 
@@ -65,8 +66,7 @@ def favorite_session_exists(user_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT 
-                        session_id                                                
+                """SELECT session_id                                                
                     FROM public.user_favorite_sessions 
                     WHERE
                      user_id = %(userId)s

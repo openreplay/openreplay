@@ -6,7 +6,7 @@ rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/autocomplete.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/errors.py
-rm -rf ./chalicelib/core/errors_favorite_viewed.py
+rm -rf ./chalicelib/core/errors_favorite.py
 rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_ios.py
 rm -rf ./chalicelib/core/dashboards.py
@@ -35,7 +35,6 @@ rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
-rm -rf ./chalicelib/core/sessions_viewed.py
 rm -rf ./chalicelib/core/significance.py
 rm -rf ./chalicelib/core/slack.py
 rm -rf ./chalicelib/core/socket_ios.py

@@ -26,5 +26,17 @@ def get_main_resources_table(timestamp):
            and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.resources"
 
 
-def get_autocomplete_table(timestamp):
+def get_autocomplete_table(timestamp=0):
     return "experimental.autocomplete"
+
+
+def get_user_favorite_sessions_table(timestamp=0):
+    return "experimental.user_favorite_sessions"
+
+
+def get_user_viewed_sessions_table(timestamp=0):
+    return "experimental.user_viewed_sessions"
+
+
+def get_user_viewed_errors_table(timestamp=0):
+    return "experimental.user_viewed_errors"

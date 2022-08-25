@@ -12,8 +12,8 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global, sessions_viewed
+    assist, heatmaps, mobile, signup, tenants, errors_viewed, boarding, notifications, webhook, users, \
+    custom_metrics, saved_search, integrations_global, sessions_viewed, errors_favorite
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper, helper, captcha
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -83,7 +83,7 @@ def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": sessions_favorite.favorite_session(project_id=projectId, user_id=context.user_id,
-                                                          session_id=sessionId)}
+                                                   session_id=sessionId)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
@@ -986,7 +986,7 @@ def errors_get_details(projectId: int, errorId: str, background_tasks: Backgroun
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
-        background_tasks.add_task(errors_favorite_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
+        background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
                                   error_id=errorId)
     return data
 
@@ -1015,7 +1015,7 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
 def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
                               endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
     if action == "favorite":
-        return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
+        return errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
     elif action == "sessions":
         start_date = startDate
         end_date = endDate
