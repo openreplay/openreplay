@@ -11,7 +11,6 @@ interface Props {
     hideDelay?: number;
     disabled?: boolean;
     arrow?: boolean;
-    open?: boolean;
     style?: any;
     theme?: Theme;
     interactive?: boolean;
