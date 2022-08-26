@@ -319,8 +319,8 @@ SUPPORTED_TYPES = {
                                               query=autocomplete.__generic_query(typename=event_type.CLICK.ui_type)),
     event_type.INPUT.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.INPUT),
                                               query=autocomplete.__generic_query(typename=event_type.INPUT.ui_type)),
-    event_type.INPUT_VALUE.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT_VALUE),
-                                                    query=__generic_query(typename=event_type.INPUT_VALUE.ui_type)),
+    event_type.INPUT_VALUE.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.INPUT_VALUE),
+                                                    query=autocomplete.__generic_query(typename=event_type.INPUT_VALUE.ui_type)),
     event_type.LOCATION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.LOCATION),
                                                  query=autocomplete.__generic_query(
                                                      typename=event_type.LOCATION.ui_type)),

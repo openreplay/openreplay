@@ -17,7 +17,8 @@ def __get_autocomplete_table(value, project_id):
                            schemas.EventType.custom,
                            schemas.FilterType.user_country,
                            schemas.EventType.location,
-                           schemas.EventType.input]
+                           schemas.EventType.input,
+                           schemas.EventType.input_value]
     autocomplete_events.sort()
     sub_queries = []
     c_list = []
