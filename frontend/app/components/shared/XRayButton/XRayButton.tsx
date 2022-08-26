@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { Popup } from 'UI';
 import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
 import { Controls as Player } from 'Player';
-import { INDEXES } from 'App/constants/zIndex';
+import { INDEXES } from 'App/constants/zindex';
 
 interface Props {
   onClick?: () => void;
