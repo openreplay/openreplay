@@ -1,0 +1,92 @@
+chalice:
+  env:
+    jwt_secret: SetARandomStringHere
+clickhouse:
+  enabled: false
+fromVersion: v1.6.0
+global:
+  domainName: openreplay.local
+  email:
+    emailFrom: OpenReplay<do-not-reply@openreplay.com>
+    emailHost: ""
+    emailPassword: ""
+    emailPort: "587"
+    emailSslCert: ""
+    emailSslKey: ""
+    emailUseSsl: "false"
+    emailUseTls: "true"
+    emailUser: ""
+  enterpriseEditionLicense: ""
+  ingress:
+    controller:
+      config:
+        enable-real-ip: true
+        force-ssl-redirect: false
+        max-worker-connections: 0
+        proxy-body-size: 10m
+        ssl-redirect: false
+      extraArgs:
+        default-ssl-certificate: app/openreplay-ssl
+      ingressClass: openreplay
+      ingressClassResource:
+        name: openreplay
+      service:
+        externalTrafficPolicy: Local
+  kafka:
+    kafkaHost: kafka.db.svc.cluster.local
+    kafkaPort: "9092"
+    kafkaUseSsl: "false"
+    zookeeperHost: databases-zookeeper.svc.cluster.local
+    zookeeperNonTLSPort: 2181
+  postgresql:
+    postgresqlDatabase: postgres
+    postgresqlHost: postgresql.db.svc.cluster.local
+    postgresqlPassword: changeMePassword
+    postgresqlPort: "5432"
+    postgresqlUser: postgres
+  redis:
+    redisHost: redis-master.db.svc.cluster.local
+    redisPort: "6379"
+  s3:
+    accessKey: changeMeMinioAccessKey
+    assetsBucket: sessions-assets
+    endpoint: http://minio.db.svc.cluster.local:9000
+    recordingsBucket: mobs
+    region: us-east-1
+    secretKey: changeMeMinioPassword
+    sourcemapsBucket: sourcemaps
+ingress-nginx:
+  controller:
+    config:
+      enable-real-ip: true
+      force-ssl-redirect: false
+      max-worker-connections: 0
+      proxy-body-size: 10m
+      ssl-redirect: false
+    extraArgs:
+      default-ssl-certificate: app/openreplay-ssl
+    ingressClass: openreplay
+    ingressClassResource:
+      name: openreplay
+    service:
+      externalTrafficPolicy: Local
+kafka:
+  kafkaHost: kafka.db.svc.cluster.local
+  kafkaPort: "9092"
+  kafkaUseSsl: "false"
+  zookeeperHost: databases-zookeeper.svc.cluster.local
+  zookeeperNonTLSPort: 2181
+minio:
+  global:
+    minio:
+      accessKey: changeMeMinioAccessKey
+      secretKey: changeMeMinioPassword
+postgresql:
+  postgresqlDatabase: postgres
+  postgresqlHost: postgresql.db.svc.cluster.local
+  postgresqlPassword: changeMePassword
+  postgresqlPort: "5432"
+  postgresqlUser: postgres
+redis:
+  redisHost: redis-master.db.svc.cluster.local
+  redisPort: "6379"

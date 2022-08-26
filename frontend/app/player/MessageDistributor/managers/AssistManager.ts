@@ -54,7 +54,7 @@ export function getStatusText(status: ConnectionStatus): string {
       return "Connected. Waiting for the data... (The tab might be inactive)"
   }
 }
- 
+
 export interface State {
   calling: CallingState;
   peerConnectionStatus: ConnectionStatus;
@@ -77,11 +77,11 @@ const MAX_RECONNECTION_COUNT = 4;
 export default class AssistManager {
   private timeTravelJump = false;
   private jumped = false;
-  
+
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
-    if (getState().peerConnectionStatus === ConnectionStatus.Disconnected && 
+    if (getState().peerConnectionStatus === ConnectionStatus.Disconnected &&
       status !== ConnectionStatus.Connected) {
       return
     }
@@ -109,7 +109,7 @@ export default class AssistManager {
     if (document.hidden) {
       this.socketCloseTimeout = setTimeout(() => {
         const state = getState()
-        if (document.hidden && 
+        if (document.hidden &&
           (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
           this.socket?.close()
         }
@@ -124,8 +124,16 @@ export default class AssistManager {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
-    let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let disconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+    function clearDisconnectTimeout() {
+      disconnectTimeout && clearTimeout(disconnectTimeout)
+      disconnectTimeout = undefined
+    }
+    function clearInactiveTimeout() {
+      inactiveTimeout && clearTimeout(inactiveTimeout)
+      inactiveTimeout = undefined
+    }
 
     const now = +new Date()
     update({ assistStart: now })
@@ -187,17 +195,17 @@ export default class AssistManager {
         id === socket.id && this.toggleRemoteControl(false)
       })
       socket.on('SESSION_RECONNECTED', () => {
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        inactiveTimeout && clearTimeout(inactiveTimeout)
+        clearDisconnectTimeout()
+        clearInactiveTimeout()
         this.setStatus(ConnectionStatus.Connected)
       })
 
-      socket.on('UPDATE_SESSION', (data) => {
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
+      socket.on('UPDATE_SESSION', ({ active }) => {
+        clearDisconnectTimeout()
         !inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
-        if (typeof data.active === "boolean") {
-          if (data.active) {
-            inactiveTimeout && clearTimeout(inactiveTimeout)
+        if (typeof active === "boolean") {
+          clearInactiveTimeout()
+          if (active) {
             this.setStatus(ConnectionStatus.Connected)
           } else {
             inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
@@ -206,8 +214,8 @@ export default class AssistManager {
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        showDisconnectTimeout = setTimeout(() => {
+        clearDisconnectTimeout()
+        disconnectTimeout = setTimeout(() => {
           if (this.cleaned) { return }
           this.setStatus(ConnectionStatus.Disconnected)
         }, 30000)
@@ -230,7 +238,7 @@ export default class AssistManager {
       })
       socket.on('call_end', this.onRemoteCallEnd)
 
-      document.addEventListener('visibilitychange', this.onVisChange)        
+      document.addEventListener('visibilitychange', this.onVisChange)
 
     })
   }
@@ -254,14 +262,14 @@ export default class AssistManager {
   private onMouseClick = (e: MouseEvent): void => {
     if (!this.socket) { return; }
     if (getState().annotating) { return; } // ignore clicks while annotating
-    
+
     const data = this.md.getInternalViewportCoordinates(e)
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
     if (el instanceof HTMLElement) {
       el.focus()
       el.oninput = e => {
-        if (el instanceof HTMLTextAreaElement 
+        if (el instanceof HTMLTextAreaElement
           || el instanceof HTMLInputElement
         ) {
           this.socket && this.socket.emit("input", el.value)
@@ -346,7 +354,7 @@ export default class AssistManager {
         console.log('getting call from', call.peer)
           call.answer(this.callArgs.localStream.stream)
           this.callConnection.push(call)
-    
+
           this.callArgs.localStream.onVideoTrack(vTrack => {
             const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
             if (!sender) {
@@ -355,12 +363,12 @@ export default class AssistManager {
             }
             sender.replaceTrack(vTrack)
           })
-    
+
           call.on('stream', stream => {
             this.callArgs && this.callArgs.onStream(stream)
           });
           // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
-    
+
           call.on("close", this.onRemoteCallEnd)
           call.on("error", (e) => {
             console.error("PeerJS error (on call):", e)
@@ -377,7 +385,7 @@ export default class AssistManager {
 
         //call-reconnection connected
  //       if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
-          // this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT 
+          // this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT
           //   ? ConnectionStatus.Connecting
           //   : ConnectionStatus.Disconnected);
           // Reconnect...
@@ -420,15 +428,15 @@ export default class AssistManager {
     localStream: LocalStream,
     onStream: (s: MediaStream)=>void,
     onCallEnd: () => void,
-    onReject: () => void, 
+    onReject: () => void,
     onError?: ()=> void,
   } | null = null
 
   public setCallArgs(
-    localStream: LocalStream, 
-    onStream: (s: MediaStream)=>void, 
-    onCallEnd: () => void, 
-    onReject: () => void, 
+    localStream: LocalStream,
+    onStream: (s: MediaStream)=>void,
+    onCallEnd: () => void,
+    onReject: () => void,
     onError?: ()=> void,
   ) {
     this.callArgs = {
@@ -451,7 +459,7 @@ export default class AssistManager {
     }
   }
 
-  /** Connecting to the other agents that are already 
+  /** Connecting to the other agents that are already
    *  in the call with the user
    */
   public addPeerCall(thirdPartyPeers: string[]) {

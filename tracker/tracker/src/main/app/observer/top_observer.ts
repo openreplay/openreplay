@@ -12,6 +12,18 @@ export interface Options {
   captureIFrames: boolean
 }
 
+type ContextCallback = (context: Window & typeof globalThis) => void
+
+// Le truc - for defining an absolute offset for (nested) iframe documents. (To track mouse movments)
+type Offset = { top: number; left: number }
+type PatchedDocument = Document & {
+  __openreplay__getOffset: () => Offset
+}
+function isPatchedDocument(doc: Document): doc is PatchedDocument {
+  // @ts-ignore
+  return typeof doc.__openreplay__getOffset === 'function'
+}
+
 const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : () => new ShadowRoot()
 
 export default class TopObserver extends Observer {
@@ -44,25 +56,53 @@ export default class TopObserver extends Observer {
     })
   }
 
+  private readonly contextCallbacks: Array<ContextCallback> = []
+
+  // Attached once per Tracker instance
+  attachContextCallback(cb: ContextCallback) {
+    this.contextCallbacks.push(cb)
+  }
+
+  // Le truc
+  getDocumentOffset(doc: Document): Offset {
+    if (isPatchedDocument(doc)) {
+      return doc.__openreplay__getOffset()
+    }
+    return { top: 0, left: 0 }
+  }
+
   private iframeObservers: IFrameObserver[] = []
   private handleIframe(iframe: HTMLIFrameElement): void {
     let doc: Document | null = null
+    let win: Window | null = null
     const handle = this.app.safe(() => {
       const id = this.app.nodes.getID(iframe)
       if (id === undefined) {
-        return
-      } //log
-      if (iframe.contentDocument === doc) {
-        return
-      } // How frequently can it happen?
-      doc = iframe.contentDocument
-      if (!doc || !iframe.contentWindow) {
+        //log
         return
       }
-      const observer = new IFrameObserver(this.app)
+      const currentWin = iframe.contentWindow
+      const currentDoc = iframe.contentDocument
+      if (currentDoc && currentDoc !== doc) {
+        const observer = new IFrameObserver(this.app)
+        this.iframeObservers.push(observer)
+        observer.observe(iframe)
+        doc = currentDoc
 
-      this.iframeObservers.push(observer)
-      observer.observe(iframe)
+        // Le truc
+        ;(doc as PatchedDocument).__openreplay__getOffset = () => {
+          const { top, left } = this.getDocumentOffset(iframe.ownerDocument)
+          return {
+            top: iframe.offsetTop + top,
+            left: iframe.offsetLeft + left,
+          }
+        }
+      }
+      if (currentWin && currentWin !== win) {
+        //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
+        this.contextCallbacks.forEach((cb) => cb(currentWin))
+        win = currentWin
+      }
     })
     iframe.addEventListener('load', handle) // why app.attachEventListener not working?
     handle()

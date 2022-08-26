@@ -19,6 +19,7 @@ import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
+import AdoptedStyleSheets from './modules/adoptedStyleSheets.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
 import type { Options as AppOptions } from './app/index.js'
@@ -69,10 +70,8 @@ function processOptions(obj: any): obj is Options {
       obj.projectKey = obj.projectKey.toString()
     }
   }
-  if (typeof obj.sessionToken !== 'string' && obj.sessionToken != null) {
-    console.warn(
-      `OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
-    )
+  if (obj.sessionToken != null) {
+    deprecationWarn('`sessionToken` option', '`sessionHash` start() option', '/')
   }
   return true
 }
@@ -113,6 +112,7 @@ export default class API {
     if (app !== null) {
       Viewport(app)
       CSSRules(app)
+      AdoptedStyleSheets(app)
       Connection(app)
       Console(app, options)
       Exception(app, options)
@@ -182,11 +182,14 @@ export default class API {
     // TODO: check argument type
     return this.app.start(startOpts)
   }
-  stop(): void {
+  stop(): string | undefined {
     if (this.app === null) {
       return
     }
-    this.app.stop(true)
+    this.app.stop()
+    const sessionHash = this.app.session.getSessionHash()
+    this.app.session.reset()
+    return sessionHash
   }
 
   getSessionToken(): string | null | undefined {

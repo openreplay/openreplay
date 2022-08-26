@@ -32,7 +32,24 @@ export default function (app: App): void {
     }
   }
 
-  const sendImgSrc = app.safe(function (this: HTMLImageElement): void {
+  const sendSrcset = function (id: number, img: HTMLImageElement): void {
+    const { srcset } = img
+    if (!srcset) {
+      return
+    }
+    const resolvedSrcset = srcset
+      .split(',')
+      .map((str) => resolveURL(str))
+      .join(',')
+    app.send(SetNodeAttribute(id, 'srcset', resolvedSrcset))
+  }
+
+  const sendSrc = function (id: number, img: HTMLImageElement): void {
+    const src = img.src
+    app.send(SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()))
+  }
+
+  const sendImgAttrs = app.safe(function (this: HTMLImageElement): void {
     const id = app.nodes.getID(this)
     if (id === undefined) {
       return
@@ -49,14 +66,8 @@ export default function (app: App): void {
     } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isMasked(id)) {
       sendPlaceholder(id, this)
     } else {
-      app.send(SetNodeAttribute(id, 'src', resolvedSrc))
-      if (srcset) {
-        const resolvedSrcset = srcset
-          .split(',')
-          .map((str) => resolveURL(str))
-          .join(',')
-        app.send(SetNodeAttribute(id, 'srcset', resolvedSrcset))
-      }
+      sendSrc(id, this)
+      sendSrcset(id, this)
     }
   })
 
@@ -69,24 +80,26 @@ export default function (app: App): void {
           return
         }
         if (mutation.attributeName === 'src') {
-          const src = target.src
-          app.send(SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()))
+          sendSrc(id, target)
         }
         if (mutation.attributeName === 'srcset') {
-          const srcset = target.srcset
-          app.send(SetNodeAttribute(id, 'srcset', srcset))
+          sendSrcset(id, target)
         }
       }
     }
+  })
+
+  app.attachStopCallback(() => {
+    observer.disconnect()
   })
 
   app.nodes.attachNodeCallback((node: Node): void => {
     if (!hasTag(node, 'IMG')) {
       return
     }
-    app.nodes.attachElementListener('error', node, sendImgSrc)
-    app.nodes.attachElementListener('load', node, sendImgSrc)
-    sendImgSrc.call(node)
+    app.nodes.attachElementListener('error', node, sendImgAttrs.bind(node))
+    app.nodes.attachElementListener('load', node, sendImgAttrs.bind(node))
+    sendImgAttrs.call(node)
     observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
   })
 }

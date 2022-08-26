@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID } from './messages.gen.js'
-import { timestamp, deprecationWarn } from '../utils.js'
+import { timestamp as now, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -13,6 +13,7 @@ import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
+import type { Options as SessOptions } from './session.js'
 import type { Options as WebworkerOptions, WorkerMessageData } from '../../common/interaction.js'
 
 // TODO: Unify and clearly describe options logic
@@ -20,6 +21,7 @@ export interface StartOptions {
   userID?: string
   metadata?: Record<string, string>
   forceNew?: boolean
+  sessionHash?: string
 }
 
 interface OnStartInfo {
@@ -49,9 +51,9 @@ enum ActivityState {
 type AppOptions = {
   revID: string
   node_id: string
+  session_reset_key: string
   session_token_key: string
   session_pageno_key: string
-  session_reset_key: string
   local_uuid_key: string
   ingestPoint: string
   resourceBaseHref: string | null // resourceHref?
@@ -60,12 +62,13 @@ type AppOptions = {
   __is_snippet: boolean
   __debug_report_edp: string | null
   __debug__?: LoggerOptions
-  localStorage: Storage
-  sessionStorage: Storage
+  localStorage: Storage | null
+  sessionStorage: Storage | null
 
   // @deprecated
   onStart?: StartCallback
-} & WebworkerOptions
+} & WebworkerOptions &
+  SessOptions
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
@@ -83,7 +86,7 @@ export default class App {
   readonly localStorage: Storage
   readonly sessionStorage: Storage
   private readonly messages: Array<Message> = []
-  private readonly observer: Observer
+  /* private */ readonly observer: Observer // non-privat for attachContextCallback
   private readonly startCallbacks: Array<StartCallback> = []
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
@@ -92,11 +95,7 @@ export default class App {
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: Worker
-  constructor(
-    projectKey: string,
-    sessionToken: string | null | undefined,
-    options: Partial<Options>,
-  ) {
+  constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
@@ -129,7 +128,9 @@ export default class App {
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
-    this.session = new Session()
+    this.localStorage = this.options.localStorage || window.localStorage
+    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
+    this.session = new Session(this, this.options)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -139,11 +140,10 @@ export default class App {
         Object.entries(metadata).forEach(([key, value]) => this.send(Metadata(key, value)))
       }
     })
-    this.localStorage = this.options.localStorage
-    this.sessionStorage = this.options.sessionStorage
 
+    // @depricated (use sessionHash on start instead)
     if (sessionToken != null) {
-      this.sessionStorage.setItem(this.options.session_token_key, sessionToken)
+      this.session.applySessionHash(sessionToken)
     }
 
     try {
@@ -206,7 +206,7 @@ export default class App {
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(Timestamp(timestamp()))
+      this.messages.unshift(Timestamp(now()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
@@ -220,7 +220,7 @@ export default class App {
         fn.apply(this, args)
       } catch (e) {
         app._debug('safe_fn_call', e)
-        // time: timestamp(),
+        // time: now(),
         // name: e.name,
         // message: e.message,
         // stack: e.stack
@@ -256,19 +256,24 @@ export default class App {
     const reqVer = version.split(/[.-]/)
     const ver = this.version.split(/[.-]/)
     for (let i = 0; i < 3; i++) {
-      if (Number(ver[i]) < Number(reqVer[i]) || isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
+      if (isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
+        return false
+      }
+      if (Number(ver[i]) > Number(reqVer[i])) {
+        return true
+      }
+      if (Number(ver[i]) < Number(reqVer[i])) {
         return false
       }
     }
     return true
   }
 
-  private getStartInfo() {
+  private getTrackerInfo() {
     return {
       userUUID: this.localStorage.getItem(this.options.local_uuid_key),
       projectKey: this.projectKey,
       revID: this.revID,
-      timestamp: timestamp(), // shouldn't it be set once?
       trackerVersion: this.version,
       isSnippet: this.options.__is_snippet,
     }
@@ -276,14 +281,11 @@ export default class App {
   getSessionInfo() {
     return {
       ...this.session.getInfo(),
-      ...this.getStartInfo(),
+      ...this.getTrackerInfo(),
     }
   }
   getSessionToken(): string | undefined {
-    const token = this.sessionStorage.getItem(this.options.session_token_key)
-    if (token !== null) {
-      return token
-    }
+    return this.session.getSessionToken()
   }
   getSessionID(): string | undefined {
     return this.session.getInfo().sessionID || undefined
@@ -298,7 +300,7 @@ export default class App {
     if (typeof this.options.resourceBaseHref === 'string') {
       return this.options.resourceBaseHref
     } else if (typeof this.options.resourceBaseHref === 'object') {
-      //switch between  types
+      //TODO: switch between types
     }
     if (document.baseURI) {
       return document.baseURI
@@ -343,21 +345,16 @@ export default class App {
       )
     }
     this.activityState = ActivityState.Starting
-
-    let pageNo = 0
-    const pageNoStr = this.sessionStorage.getItem(this.options.session_pageno_key)
-    if (pageNoStr != null) {
-      pageNo = parseInt(pageNoStr)
-      pageNo++
+    if (startOpts.sessionHash) {
+      this.session.applySessionHash(startOpts.sessionHash)
     }
-    this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString())
 
-    const startInfo = this.getStartInfo()
+    const timestamp = now()
     const startWorkerMsg: WorkerMessageData = {
       type: 'start',
-      pageNo,
+      pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
-      timestamp: startInfo.timestamp,
+      timestamp,
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
@@ -382,9 +379,10 @@ export default class App {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...startInfo,
+          ...this.getTrackerInfo(),
+          timestamp,
           userID: this.session.getInfo().userID,
-          token: this.sessionStorage.getItem(this.options.session_token_key),
+          token: this.session.getSessionToken(),
           deviceMemory,
           jsHeapSizeLimit,
           reset: startOpts.forceNew || sReset !== null,
@@ -407,17 +405,25 @@ export default class App {
         if (!this.worker) {
           return Promise.reject('no worker found after start request (this might not happen)')
         }
-        const { token, userUUID, sessionID, beaconSizeLimit } = r
+        const {
+          token,
+          userUUID,
+          sessionID,
+          beaconSizeLimit,
+          startTimestamp, // real startTS, derived from sessionID
+        } = r
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
+          //typeof startTimestamp !== 'number' ||
+          //typeof sessionID !== 'string' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
-        this.sessionStorage.setItem(this.options.session_token_key, token)
+        this.session.setSessionToken(token)
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
-        this.session.update({ sessionID }) // TODO: no no-explicit 'any'
+        this.session.update({ sessionID, timestamp: startTimestamp || timestamp }) // TODO: no no-explicit 'any'
         const startWorkerMsg: WorkerMessageData = {
           type: 'auth',
           token,
@@ -441,8 +447,8 @@ export default class App {
         return SuccessfulStart(onStartInfo)
       })
       .catch((reason) => {
-        this.sessionStorage.removeItem(this.options.session_token_key)
         this.stop()
+        this.session.reset()
         if (reason === CANCELED) {
           return UnsuccessfulStart(CANCELED)
         }
@@ -468,7 +474,7 @@ export default class App {
       })
     }
   }
-  stop(calledFromAPI = false, restarting = false): void {
+  stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
         this.sanitizer.clear()
@@ -476,11 +482,8 @@ export default class App {
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
-        if (calledFromAPI) {
-          this.session.reset()
-        }
         this.notify.log('OpenReplay tracking stopped.')
-        if (this.worker && !restarting) {
+        if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }
       } finally {
@@ -489,7 +492,7 @@ export default class App {
     }
   }
   restart() {
-    this.stop(false, true)
+    this.stop(false)
     this.start({ forceNew: false })
   }
 }

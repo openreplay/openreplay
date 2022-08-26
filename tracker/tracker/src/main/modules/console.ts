@@ -122,7 +122,7 @@ export default function (app: App, opts: Partial<Options>): void {
   const patchConsole = (console: Console) =>
     options.consoleMethods!.forEach((method) => {
       if (consoleMethods.indexOf(method) === -1) {
-        console.error(`OpenReplay: unsupported console method "${method}"`)
+        app.debug.error(`OpenReplay: unsupported console method "${method}"`)
         return
       }
       const fn = (console as any)[method]
@@ -134,23 +134,8 @@ export default function (app: App, opts: Partial<Options>): void {
         sendConsoleLog(method, args)
       }
     })
-  patchConsole(window.console)
+  const patchContext = app.safe((context: typeof globalThis) => patchConsole(context.console))
 
-  app.nodes.attachNodeCallback(
-    app.safe((node) => {
-      if (hasTag(node, 'IFRAME')) {
-        // TODO: newContextCallback
-        let context = node.contentWindow
-        if (context) {
-          patchConsole((context as Window & typeof globalThis).console)
-        }
-        app.attachEventListener(node, 'load', () => {
-          if (node.contentWindow !== context) {
-            context = node.contentWindow
-            patchConsole((context as Window & typeof globalThis).console)
-          }
-        })
-      }
-    }),
-  )
+  patchContext(window)
+  app.observer.attachContextCallback(patchContext)
 }

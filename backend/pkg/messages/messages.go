@@ -14,8 +14,6 @@ const (
 
 	MsgSessionStart = 1
 
-	MsgSessionDisconnect = 2
-
 	MsgSessionEnd = 3
 
 	MsgSetPageLocation = 4
@@ -143,6 +141,20 @@ const (
 	MsgMouseClick = 69
 
 	MsgCreateIFrameDocument = 70
+
+	MsgAdoptedSSReplaceURLBased = 71
+
+	MsgAdoptedSSReplace = 72
+
+	MsgAdoptedSSInsertRuleURLBased = 73
+
+	MsgAdoptedSSInsertRule = 74
+
+	MsgAdoptedSSDeleteRule = 75
+
+	MsgAdoptedSSAddOwner = 76
+
+	MsgAdoptedSSRemoveOwner = 77
 
 	MsgIOSBatchMeta = 107
 
@@ -385,38 +397,6 @@ func (msg *SessionStart) Decode() Message {
 
 func (msg *SessionStart) TypeID() int {
 	return 1
-}
-
-type SessionDisconnect struct {
-	message
-	Timestamp uint64
-}
-
-func (msg *SessionDisconnect) Encode() []byte {
-	buf := make([]byte, 11)
-	buf[0] = 2
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	return buf[:p]
-}
-
-func (msg *SessionDisconnect) EncodeWithIndex() []byte {
-	encoded := msg.Encode()
-	if IsIOSType(msg.TypeID()) {
-		return encoded
-	}
-	data := make([]byte, len(encoded)+8)
-	copy(data[8:], encoded[:])
-	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
-	return data
-}
-
-func (msg *SessionDisconnect) Decode() Message {
-	return msg
-}
-
-func (msg *SessionDisconnect) TypeID() int {
-	return 2
 }
 
 type SessionEnd struct {
@@ -2810,6 +2790,252 @@ func (msg *CreateIFrameDocument) Decode() Message {
 
 func (msg *CreateIFrameDocument) TypeID() int {
 	return 70
+}
+
+type AdoptedSSReplaceURLBased struct {
+	message
+	SheetID uint64
+	Text    string
+	BaseURL string
+}
+
+func (msg *AdoptedSSReplaceURLBased) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Text)+len(msg.BaseURL))
+	buf[0] = 71
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteString(msg.Text, buf, p)
+	p = WriteString(msg.BaseURL, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSReplaceURLBased) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSReplaceURLBased) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSReplaceURLBased) TypeID() int {
+	return 71
+}
+
+type AdoptedSSReplace struct {
+	message
+	SheetID uint64
+	Text    string
+}
+
+func (msg *AdoptedSSReplace) Encode() []byte {
+	buf := make([]byte, 21+len(msg.Text))
+	buf[0] = 72
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteString(msg.Text, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSReplace) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSReplace) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSReplace) TypeID() int {
+	return 72
+}
+
+type AdoptedSSInsertRuleURLBased struct {
+	message
+	SheetID uint64
+	Rule    string
+	Index   uint64
+	BaseURL string
+}
+
+func (msg *AdoptedSSInsertRuleURLBased) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Rule)+len(msg.BaseURL))
+	buf[0] = 73
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteString(msg.Rule, buf, p)
+	p = WriteUint(msg.Index, buf, p)
+	p = WriteString(msg.BaseURL, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSInsertRuleURLBased) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSInsertRuleURLBased) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSInsertRuleURLBased) TypeID() int {
+	return 73
+}
+
+type AdoptedSSInsertRule struct {
+	message
+	SheetID uint64
+	Rule    string
+	Index   uint64
+}
+
+func (msg *AdoptedSSInsertRule) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Rule))
+	buf[0] = 74
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteString(msg.Rule, buf, p)
+	p = WriteUint(msg.Index, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSInsertRule) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSInsertRule) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSInsertRule) TypeID() int {
+	return 74
+}
+
+type AdoptedSSDeleteRule struct {
+	message
+	SheetID uint64
+	Index   uint64
+}
+
+func (msg *AdoptedSSDeleteRule) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 75
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteUint(msg.Index, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSDeleteRule) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSDeleteRule) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSDeleteRule) TypeID() int {
+	return 75
+}
+
+type AdoptedSSAddOwner struct {
+	message
+	SheetID uint64
+	ID      uint64
+}
+
+func (msg *AdoptedSSAddOwner) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 76
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteUint(msg.ID, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSAddOwner) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSAddOwner) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSAddOwner) TypeID() int {
+	return 76
+}
+
+type AdoptedSSRemoveOwner struct {
+	message
+	SheetID uint64
+	ID      uint64
+}
+
+func (msg *AdoptedSSRemoveOwner) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 77
+	p := 1
+	p = WriteUint(msg.SheetID, buf, p)
+	p = WriteUint(msg.ID, buf, p)
+	return buf[:p]
+}
+
+func (msg *AdoptedSSRemoveOwner) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *AdoptedSSRemoveOwner) Decode() Message {
+	return msg
+}
+
+func (msg *AdoptedSSRemoveOwner) TypeID() int {
+	return 77
 }
 
 type IOSBatchMeta struct {

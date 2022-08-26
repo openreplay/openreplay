@@ -27,16 +27,20 @@ export default function (app: App | null) {
     } // else error?
   })
 
-  const { insertRule, deleteRule } = CSSStyleSheet.prototype
+  const patchContext = (context: typeof globalThis) => {
+    const { insertRule, deleteRule } = context.CSSStyleSheet.prototype
+    context.CSSStyleSheet.prototype.insertRule = function (rule: string, index = 0) {
+      processOperation(this, index, rule)
+      return insertRule.call(this, rule, index)
+    }
+    context.CSSStyleSheet.prototype.deleteRule = function (index: number) {
+      processOperation(this, index)
+      return deleteRule.call(this, index)
+    }
+  }
 
-  CSSStyleSheet.prototype.insertRule = function (rule: string, index = 0) {
-    processOperation(this, index, rule)
-    return insertRule.call(this, rule, index)
-  }
-  CSSStyleSheet.prototype.deleteRule = function (index: number) {
-    processOperation(this, index)
-    return deleteRule.call(this, index)
-  }
+  patchContext(window)
+  app.observer.attachContextCallback(patchContext)
 
   app.nodes.attachNodeCallback((node: Node): void => {
     if (!hasTag(node, 'STYLE') || !node.sheet) {

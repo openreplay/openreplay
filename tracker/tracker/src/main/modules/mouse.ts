@@ -1,10 +1,10 @@
 import type App from '../app/index.js'
-import { hasTag, isSVGElement } from '../app/guards.js'
+import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils.js'
 import { MouseMove, MouseClick } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
-function _getSelector(target: Element): string {
+function _getSelector(target: Element, document: Document): string {
   let el: Element | null = target
   let selector: string | null = null
   do {
@@ -37,18 +37,18 @@ function isClickable(element: Element): boolean {
     element.getAttribute('role') === 'button'
   )
   //|| element.className.includes("btn")
-  // MBTODO: intersect addEventListener
+  // MBTODO: intersept addEventListener
 }
 
-//TODO: fix (typescript doesn't allow work when the guard is inside the function)
-function getTarget(target: EventTarget | null): Element | null {
+//TODO: fix (typescript is not sure about target variable after assignation of svg)
+function getTarget(target: EventTarget | null, document: Document): Element | null {
   if (target instanceof Element) {
-    return _getTarget(target)
+    return _getTarget(target, document)
   }
   return null
 }
 
-function _getTarget(target: Element): Element | null {
+function _getTarget(target: Element, document: Document): Element | null {
   let element: Element | null = target
   while (element !== null && element !== document.documentElement) {
     if (hasOpenreplayAttribute(element, 'masked')) {
@@ -120,48 +120,58 @@ export default function (app: App): void {
     }
   }
 
-  const selectorMap: { [id: number]: string } = {}
-  function getSelector(id: number, target: Element): string {
-    return (selectorMap[id] = selectorMap[id] || _getSelector(target))
+  const patchDocument = (document: Document) => {
+    const selectorMap: { [id: number]: string } = {}
+    function getSelector(id: number, target: Element): string {
+      return (selectorMap[id] = selectorMap[id] || _getSelector(target, document))
+    }
+
+    app.attachEventListener(document.documentElement, 'mouseover', (e: MouseEvent): void => {
+      const target = getTarget(e.target, document)
+      if (target !== mouseTarget) {
+        mouseTarget = target
+        mouseTargetTime = performance.now()
+      }
+    })
+    app.attachEventListener(
+      document,
+      'mousemove',
+      (e: MouseEvent): void => {
+        const { top, left } = app.observer.getDocumentOffset(document)
+        mousePositionX = e.clientX + left
+        mousePositionY = e.clientY + top
+        mousePositionChanged = true
+      },
+      false,
+    )
+    app.attachEventListener(document, 'click', (e: MouseEvent): void => {
+      const target = getTarget(e.target, document)
+      if ((!e.clientX && !e.clientY) || target === null) {
+        return
+      }
+      const id = app.nodes.getID(target)
+      if (id !== undefined) {
+        sendMouseMove()
+        app.send(
+          MouseClick(
+            id,
+            mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
+            getTargetLabel(target),
+            getSelector(id, target),
+          ),
+          true,
+        )
+      }
+      mouseTarget = null
+    })
   }
 
-  app.attachEventListener(document.documentElement, 'mouseover', (e: MouseEvent): void => {
-    const target = getTarget(e.target)
-    if (target !== mouseTarget) {
-      mouseTarget = target
-      mouseTargetTime = performance.now()
+  app.nodes.attachNodeCallback((node) => {
+    if (isDocument(node)) {
+      patchDocument(node)
     }
   })
-  app.attachEventListener(
-    document,
-    'mousemove',
-    (e: MouseEvent): void => {
-      mousePositionX = e.clientX
-      mousePositionY = e.clientY
-      mousePositionChanged = true
-    },
-    false,
-  )
-  app.attachEventListener(document, 'click', (e: MouseEvent): void => {
-    const target = getTarget(e.target)
-    if ((!e.clientX && !e.clientY) || target === null) {
-      return
-    }
-    const id = app.nodes.getID(target)
-    if (id !== undefined) {
-      sendMouseMove()
-      app.send(
-        MouseClick(
-          id,
-          mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
-          getTargetLabel(target),
-          getSelector(id, target),
-        ),
-        true,
-      )
-    }
-    mouseTarget = null
-  })
+  patchDocument(document)
 
   app.ticker.attach(sendMouseMove, 10)
 }

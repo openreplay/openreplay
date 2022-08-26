@@ -37,6 +37,7 @@ export function getExceptionMessage(error: Error, fallbackStack: Array<StackFram
 
 export function getExceptionMessageFromEvent(
   e: ErrorEvent | PromiseRejectionEvent,
+  context: typeof globalThis = window,
 ): Message | null {
   if (e instanceof ErrorEvent) {
     if (e.error instanceof Error) {
@@ -49,7 +50,7 @@ export function getExceptionMessageFromEvent(
       }
       return JSException(name, message, JSON.stringify(getDefaultStack(e)))
     }
-  } else if ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent) {
+  } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
       return getExceptionMessage(e.reason, [])
     } else {
@@ -72,17 +73,18 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   )
-  if (options.captureExceptions) {
-    const handler = (e: ErrorEvent | PromiseRejectionEvent): void => {
-      const msg = getExceptionMessageFromEvent(e)
+  function patchContext(context: Window & typeof globalThis) {
+    function handler(e: ErrorEvent | PromiseRejectionEvent): void {
+      const msg = getExceptionMessageFromEvent(e, context)
       if (msg != null) {
         app.send(msg)
       }
     }
-
-    app.attachEventListener(window, 'unhandledrejection', (e: PromiseRejectionEvent): void =>
-      handler(e),
-    )
-    app.attachEventListener(window, 'error', (e: ErrorEvent): void => handler(e))
+    app.attachEventListener(context, 'unhandledrejection', handler)
+    app.attachEventListener(context, 'error', handler)
+  }
+  if (options.captureExceptions) {
+    app.observer.attachContextCallback(patchContext)
+    patchContext(window)
   }
 }
