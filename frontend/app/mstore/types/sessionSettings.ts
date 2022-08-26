@@ -19,10 +19,9 @@ export const generateGMTZones = (): Timezone[] => {
     for (let i = 0; i < combinedArray.length; i++) {
         let symbol = i < 11 ? '-' : '+';
         let isUTC = i === 11;
-        let prefix = isUTC ? 'UTC / GMT' : 'GMT';
         let value = String(combinedArray[i]).padStart(2, '0');
 
-        let tz = `${prefix} ${symbol}${String(combinedArray[i]).padStart(2, '0')}:00`;
+        let tz = `UTC ${symbol}${String(combinedArray[i]).padStart(2, '0')}:00`;
 
         let dropdownValue = `UTC${symbol}${value}`;
         timezones.push({ label: tz, value: isUTC ? 'UTC' : dropdownValue });

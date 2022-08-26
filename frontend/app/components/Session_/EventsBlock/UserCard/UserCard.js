@@ -5,11 +5,10 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { Avatar, TextEllipsis, SlideModal, Popup, CountryFlag, Icon } from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, Icon } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from '../../SessionInfoItem';
-import SessionList from '../Metadata/SessionList';
 import { Tooltip } from 'react-tippy';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
@@ -18,7 +17,6 @@ function UserCard({ className, request, session, width, height, similarSessions,
     const { settingsStore } = useStore();
     const { timezone } = settingsStore.sessionSettings;
 
-    const [showUserSessions, setShowUserSessions] = useState(false);
     const {
         userBrowser,
         userDevice,
@@ -36,10 +34,6 @@ function UserCard({ className, request, session, width, height, similarSessions,
     } = session;
 
     const hasUserDetails = !!userId || !!userAnonymousId;
-    const showSimilarSessions = () => {
-        setShowUserSessions(true);
-        request({ key: !userId ? 'USERANONYMOUSID' : 'USERID', value: userId || userAnonymousId });
-    };
 
     const getDimension = (width, height) => {
         return width && height ? (
@@ -66,7 +60,15 @@ function UserCard({ className, request, session, width, height, similarSessions,
                     </TextEllipsis>
 
                     <div className="text-sm color-gray-medium flex items-center">
-                        <span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt, timezone)}</span>
+                        <span style={{ whiteSpace: 'nowrap' }}>
+                        <Tooltip
+                            title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
+                            className="w-fit !block"
+                        >
+                            {formatTimeOrDate(startedAt, timezone)}
+                        </Tooltip>
+
+                        </span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
                         <span>{countries[userCountry]}</span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
