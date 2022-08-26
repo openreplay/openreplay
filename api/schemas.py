@@ -356,11 +356,6 @@ class AlertSchema(BaseModel):
     def alert_validator(cls, values):
         if values.get("query") is not None and values["query"].left == AlertColumn.custom:
             assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
-        if values.get("detectionMethod") is not None \
-                and values["detectionMethod"] == AlertDetectionMethod.change \
-                and values.get("options") is not None:
-            assert values["options"].change is not None, \
-                "options.change should not be null for detection method 'change'"
         return values
 
     class Config:
