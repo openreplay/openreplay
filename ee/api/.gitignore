@@ -184,6 +184,7 @@ Pipfile
 /chalicelib/core/announcements.py
 /chalicelib/core/autocomplete.py
 /chalicelib/core/collaboration_slack.py
+/chalicelib/core/countries.py
 /chalicelib/core/errors.py
 /chalicelib/core/errors_favorite.py
 /chalicelib/core/events.py

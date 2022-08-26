@@ -26,3 +26,9 @@ if config("EXP_METRICS", cast=bool, default=False):
     from . import metrics_exp as metrics
 else:
     from . import metrics as metrics
+
+if config("EXP_ALERTS", cast=bool, default=False):
+    print(">>> Using experimental alerts")
+    from . import alerts_processor_exp as alerts_processor
+else:
+    from . import alerts_processor as alerts_processor
