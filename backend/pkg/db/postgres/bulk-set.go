@@ -21,7 +21,7 @@ func NewBulkSet(c Pool) *BulkSet {
 		bulksToSend: make(chan Bulk, 12), // 2 full sets of bulks
 	}
 	bs.initBulks()
-	//go bs.worker()
+	go bs.worker()
 	return bs
 }
 
@@ -113,16 +113,16 @@ func (conn *BulkSet) Send() {
 	conn.initBulks()
 
 	// Sync bulks insert
-	for {
-		select {
-		case bulk := <-conn.bulksToSend:
-			if err := bulk.Send(); err != nil {
-				log.Printf("%s bulk send err: %s", bulk.Table(), err)
-			}
-		default:
-			return
-		}
-	}
+	//for {
+	//	select {
+	//	case bulk := <-conn.bulksToSend:
+	//		if err := bulk.Send(); err != nil {
+	//			log.Printf("%s bulk send err: %s", bulk.Table(), err)
+	//		}
+	//	default:
+	//		return
+	//	}
+	//}
 }
 
 func (conn *BulkSet) worker() {

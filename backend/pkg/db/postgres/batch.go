@@ -79,6 +79,7 @@ type BatchSet struct {
 	batchSizeLines    syncfloat64.Histogram
 	sqlRequestTime    syncfloat64.Histogram
 	sqlRequestCounter syncfloat64.Counter
+	updates           map[uint64]*sessionUpdates
 }
 
 func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *BatchSet {
@@ -88,6 +89,7 @@ func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
 		batchesToSend:   make(chan *SessionBatch, 10000), // TODO: move to config
+		updates:         make(map[uint64]*sessionUpdates),
 	}
 	bs.initMetrics(metrics)
 	go bs.worker()
@@ -148,6 +150,7 @@ func (conn *BatchSet) initMetrics(metrics *monitoring.Metrics) {
 }
 
 func (conn *BatchSet) getBatch(sessionID uint64) *SessionBatch {
+	sessionID = sessionID % 10
 	if _, ok := conn.batches[sessionID]; !ok {
 		conn.batches[sessionID] = NewSessionBatch(sessionID)
 	}
@@ -159,7 +162,13 @@ func (conn *BatchSet) batchQueue(sessionID uint64, sql string, args ...interface
 }
 
 func (conn *BatchSet) updateSessionEvents(sessionID uint64, events, pages int) {
-	conn.getBatch(sessionID).Update(pages, events)
+	//conn.getBatch(sessionID).Update(pages, events)
+	upd, ok := conn.updates[sessionID]
+	if !ok {
+		upd = NewSessionUpdates(sessionID)
+		conn.updates[sessionID] = upd
+	}
+	upd.add(pages, events)
 }
 
 func (conn *BatchSet) updateBatchSize(sessionID uint64, reqSize int) {
@@ -174,4 +183,15 @@ func (conn *BatchSet) Commit() {
 	}
 	// Reset current batches
 	conn.batches = make(map[uint64]*SessionBatch)
+
+	// test batch
+	batch := NewSessionBatch(0)
+	for _, upd := range conn.updates {
+		if str, args := upd.request(); str != "" {
+			batch.Queue(str, args)
+		}
+	}
+	log.Printf("size of updates batch: %d", batch.Len())
+	conn.batchesToSend <- batch
+	conn.updates = make(map[uint64]*sessionUpdates)
 }
