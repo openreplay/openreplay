@@ -188,7 +188,7 @@ func (conn *BatchSet) Commit() {
 	batch := NewSessionBatch(0)
 	for _, upd := range conn.updates {
 		if str, args := upd.request(); str != "" {
-			batch.Queue(str, args)
+			batch.Queue(str, args...)
 		}
 	}
 	log.Printf("size of updates batch: %d", batch.Len())
