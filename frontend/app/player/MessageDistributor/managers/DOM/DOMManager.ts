@@ -291,15 +291,12 @@ export default class DOMManager extends ListWalker<Message> {
         if (host instanceof HTMLIFrameElement) {
           const vDoc = new VDocument()
           this.vRoots.set(msg.id, vDoc)
-          //host.onload = () => {
-            const doc = host.contentDocument
-            if (!doc) {
-              logger.warn("No iframe doc onload", msg, host)
-              return
-            }
-            vDoc.setDocument(doc)
-            //vDoc.applyChanges()
-          //}    
+          const doc = host.contentDocument
+          if (!doc) {
+            logger.warn("No iframe doc onload", msg, host)
+            return
+          }
+          vDoc.setDocument(doc)
           return;
         } else if (host instanceof Element) { // shadow DOM
           try {

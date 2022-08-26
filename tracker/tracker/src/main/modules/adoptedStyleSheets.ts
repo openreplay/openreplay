@@ -15,7 +15,7 @@ function hasAdoptedSS(node: Node): node is StyleSheetOwner {
   return (
     isRootNode(node) &&
     // @ts-ignore
-    typeof node.adoptedStyleSheets !== 'undefined'
+    !!node.adoptedStyleSheets
   )
 }
 
