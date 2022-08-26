@@ -44,19 +44,18 @@ function AuditList(props: Props) {
                 size="small"
                 show={list.length === 0}
             >
-                <div className="px-2 grid grid-cols-12 gap-4 items-center py-3 font-medium">
+                <div className="grid grid-cols-12 py-3 px-5 font-medium">
                     <div className="col-span-5">Name</div>
                     <div className="col-span-4">Status</div>
                     <div className="col-span-3">Time</div>
                 </div>
 
                 {list.map((item, index) => (
-                    <div className="px-2 border-t hover:bg-active-blue" key={index}>
-                        <AuditListItem
-                            audit={item}
-                            onShowDetails={() => showModal(<AuditDetailModal audit={item} />, { right: true })}
-                        />
-                    </div>
+                    <AuditListItem
+                        key={index}
+                        audit={item}
+                        onShowDetails={() => showModal(<AuditDetailModal audit={item} />, { right: true })}
+                    />
                 ))}
                 
                 <div className="w-full flex items-center justify-center py-10">

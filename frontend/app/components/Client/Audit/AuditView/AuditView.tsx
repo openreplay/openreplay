@@ -23,7 +23,7 @@ function AuditView(props) {
 
     return useObserver(() => (
         <div>
-            <div className="flex items-center mb-4">
+            <div className="flex items-center mb-4 px-5 pt-5">
                 <PageTitle title={
                     <div className="flex items-center">
                         <span>Audit Trail</span>
