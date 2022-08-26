@@ -12,7 +12,8 @@ def get_all_alerts():
                            (EXTRACT(EPOCH FROM alerts.created_at) * 1000)::BIGINT AS created_at,
                            alerts.name,
                            alerts.series_id,
-                           filter
+                           filter,
+                           change
                     FROM public.alerts
                              LEFT JOIN metric_series USING (series_id)
                              INNER JOIN projects USING (project_id)

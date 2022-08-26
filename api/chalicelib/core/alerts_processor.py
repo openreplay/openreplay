@@ -138,7 +138,9 @@ def Build(a):
                           "timestamp_sub2": TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000}
             else:
                 sub1 = f"""{subQ} AND timestamp>=%(startDate)s 
-                                    {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}"""
+                                    AND datetime<=toDateTime(%(now)s/1000)
+                                    {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                    {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
                 sub2 = f"""{subQ} AND timestamp<%(startDate)s 
                                     AND timestamp>=%(timestamp_sub2)s
