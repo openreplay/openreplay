@@ -88,7 +88,12 @@ export default class Session {
   }
 
   applySessionHash(hash: string) {
-    const [pageNoStr, token] = decodeURI(hash).split('&')
+    const hashParts = decodeURI(hash).split('&')
+    let token = hash
+    let pageNoStr = '100500' // back-compat for sessionToken
+    if (hashParts.length == 2) {
+      ;[token, pageNoStr] = hashParts
+    }
     if (!pageNoStr || !token) {
       return
     }
