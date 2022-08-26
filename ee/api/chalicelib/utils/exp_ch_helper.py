@@ -21,7 +21,7 @@ def get_main_sessions_table(timestamp):
 
 
 def get_main_resources_table(timestamp):
-    return "experimental.resources_l7s_mv" \
+    return "experimental.resources_l7d_mv" \
         if config("EXP_7D_MV", cast=bool, default=True) \
            and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.resources"
 

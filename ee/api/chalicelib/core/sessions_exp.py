@@ -361,9 +361,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print("--------------------")
             main_query = cur.format(f"""SELECT DISTINCT er.error_id,
                                         COALESCE((SELECT TRUE
-                                                     FROM final.user_viewed_errors AS ve
-                                                     WHERE er.error_id = ve.error_id
-                                                       AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
+                                                 FROM {exp_ch_helper.get_user_viewed_errors_table()} AS ve
+                                                 WHERE er.error_id = ve.error_id
+                                                   AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
                                         {query_part};""", full_args)
 
         elif count_only:
@@ -1252,9 +1252,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
         "isNotNull(s.duration)"
     ]
     if favorite_only:
-        extra_constraints.append("""s.session_id IN (SELECT session_id
-                                                        FROM final.user_favorite_sessions
-                                                        WHERE user_id = %(userId)s)""")
+        extra_constraints.append(f"""s.session_id IN (SELECT session_id
+                                        FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions
+                                        WHERE user_id = %(userId)s)""")
     extra_from = ""
     events_query_part = ""
     __events_where_basic = ["project_id = %(projectId)s",
@@ -1526,7 +1526,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                            "main.datetime >= toDateTime(%(startDate)s/1000)",
                            "main.datetime <= toDateTime(%(endDate)s/1000)"]
             if favorite_only and not errors_only:
-                event_from += "INNER JOIN final.user_favorite_sessions AS fs USING(session_id)"
+                event_from += f"INNER JOIN {exp_ch_helper.get_user_favorite_sessions_table()} AS fs USING(session_id)"
                 event_where.append("fs.user_id = %(userId)s")
             # else:
             #     event_from = "%s"
@@ -1940,9 +1940,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             else:
                 events_extra_join = f"LEFT JOIN ({events_extra_join}) AS main1 USING(error_id)"
         if favorite_only and user_id is not None:
-            events_conditions_where.append("""main.session_id IN (SELECT session_id
-                                                        FROM final.user_favorite_sessions
-                                                        WHERE user_id = %(userId)s)""")
+            events_conditions_where.append(f"""main.session_id IN (SELECT session_id
+                                                FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions
+                                                WHERE user_id = %(userId)s)""")
 
         if data.events_order in [schemas.SearchEventOrder._then, schemas.SearchEventOrder._and]:
             sequence_pattern = [f'(?{i + 1}){c.get("time", "")}' for i, c in enumerate(events_conditions)]
@@ -2067,8 +2067,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
         extra_from += """INNER JOIN (SELECT 1 AS session_id) AS favorite_sessions
                                 ON (TRUE)"""
     elif not favorite_only and not errors_only and user_id is not None:
-        extra_from += """LEFT JOIN (SELECT session_id
-                                    FROM final.user_favorite_sessions
+        extra_from += f"""LEFT JOIN (SELECT session_id
+                                    FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions
                                     WHERE user_id = %(userId)s) AS favorite_sessions
                                     ON (s.session_id=favorite_sessions.session_id)"""
     extra_join = ""

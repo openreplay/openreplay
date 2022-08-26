@@ -1,11 +1,14 @@
-import decimal
 import logging
+
+from decouple import config
 
 import schemas
 from chalicelib.core import alerts_listener, alerts_processor
 from chalicelib.core import sessions, alerts
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 LeftToDb = {
     schemas.AlertColumn.performance__dom_content_loaded__average: {
@@ -120,7 +123,7 @@ def Build(a):
         a["filter"]["order"] = schemas.SortOrderType.desc
         a["filter"]["startDate"] = -1
         a["filter"]["endDate"] = TimeUTC.now()
-        full_args, query_part = sessions.search_query_parts(
+        full_args, query_part = sessions.search_query_parts_ch(
             data=schemas.SessionsSearchPayloadSchema.parse_obj(a["filter"]), error_status=None, errors_only=False,
             issue=None, project_id=a["projectId"], user_id=None, favorite_only=False)
         subQ = f"""SELECT COUNT(session_id) AS value 
@@ -130,7 +133,8 @@ def Build(a):
         params["event_type"] = LeftToDb[a["query"]["left"]].get("eventType")
         subQ = f"""SELECT {colDef["formula"]} AS value
                     FROM {colDef["table"](now)}
-                    WHERE project_id = %(project_id)s {"AND event_type=%(event_type)s" if params["event_type"] else ""} 
+                    WHERE project_id = %(project_id)s 
+                        {"AND event_type=%(event_type)s" if params["event_type"] else ""} 
                         {"AND " + colDef["condition"] if colDef.get("condition") is not None else ""}"""
 
     q = f"""SELECT coalesce(value,0) AS value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
@@ -144,7 +148,7 @@ def Build(a):
                             AND datetime<=toDateTime(%(now)s/1000) ) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
-        if a["options"]["change"] == schemas.AlertDetectionChangeType.change:
+        if a["change"] == schemas.AlertDetectionType.change:
             if a["seriesId"] is not None:
                 sub2 = subQ.replace("%(startDate)s", "%(timestamp_sub2)s").replace("%(endDate)s", "%(startDate)s")
                 sub1 = f"SELECT (({subQ})-({sub2})) AS value"
@@ -153,10 +157,11 @@ def Build(a):
                           "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000,
                           "timestamp_sub2": TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000}
             else:
-                sub1 = f"""{subQ} AND timestamp>=%(startDate)s"""
+                sub1 = f"""{subQ} AND datetime>=toDateTime(%(startDate)s/1000)
+                                    AND datetime<=toDateTime(%(now)s/1000)"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
-                sub2 = f"""{subQ} AND timestamp<%(startDate)s 
-                                    AND timestamp>=%(timestamp_sub2)s"""
+                sub2 = f"""{subQ} AND datetime<toDateTime(%(startDate)s/1000) 
+                                    AND datetime>=toDateTime(%(timestamp_sub2)s/1000)"""
                 params["timestamp_sub2"] = TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000
                 sub1 = f"SELECT (( {sub1} )-( {sub2} )) AS value"
                 q += f" FROM ( {sub1} ) AS stat"
@@ -172,11 +177,11 @@ def Build(a):
                                             - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) \
                                             * 60 * 1000}
             else:
-                sub1 = f"""{subQ} AND timestamp>=%(startDate)s
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}"""
+                sub1 = f"""{subQ} AND datetime>=toDateTime(%(startDate)s/1000)
+                                AND datetime<=toDateTime(%(now)s/1000)"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
-                sub2 = f"""{subQ} AND timestamp<%(startDate)s
-                                AND timestamp>=%(timestamp_sub2)s"""
+                sub2 = f"""{subQ} AND datetime<toDateTime(%(startDate)s/1000)
+                                AND datetime>=toDateTime(%(timestamp_sub2)s/1000)"""
                 params["timestamp_sub2"] = TimeUTC.now() \
                                            - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) * 60 * 1000
                 sub1 = f"SELECT (({sub1})/NULLIF(({sub2}),0)-1)*100 AS value"
@@ -188,55 +193,24 @@ def Build(a):
 def process():
     notifications = []
     all_alerts = alerts_listener.get_all_alerts()
-    with pg_client.PostgresClient() as cur, ch_client.ClickHouseClient() as curc:
+    with pg_client.PostgresClient() as cur, ch_client.ClickHouseClient() as ch_cur:
         for alert in all_alerts:
-            if alert["query"]["left"] == "CUSTOM":
+            if alert["query"]["left"] != "CUSTOM":
                 continue
-            if alert["query"]["left"] == schemas.AlertColumn.performance__dom_content_loaded__average:
-                alert["query"]["left"] = schemas.AlertColumn.errors__backend__count
             if True or alerts_processor.can_check(alert):
                 logging.info(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
-                query = curc.format(query, params)
+                query = ch_cur.format(query, params)
                 logging.debug(alert)
                 logging.debug(query)
                 try:
-                    print("------------------Alerts")
-                    print(params)
-                    print(alert)
-                    print(query)
-                    print("------------------")
-                    # continue
-                    result = curc.execute(query)
+                    result = ch_cur.execute(query)
                     if len(result) > 0:
                         result = result[0]
-                    continue
+
                     if result["valid"]:
                         logging.info("Valid alert, notifying users")
-                        notifications.append({
-                            "alertId": alert["alertId"],
-                            "tenantId": alert["tenantId"],
-                            "title": alert["name"],
-                            "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
-                            "buttonText": "Check metrics for more details",
-                            "buttonUrl": f"/{alert['projectId']}/metrics",
-                            "imageUrl": None,
-                            "options": {"source": "ALERT", "sourceId": alert["alertId"],
-                                        "sourceMeta": alert["detectionMethod"],
-                                        "message": alert["options"]["message"], "projectId": alert["projectId"],
-                                        "data": {"title": alert["name"],
-                                                 "limitValue": alert["query"]["right"],
-                                                 "actualValue": float(result["value"]) \
-                                                     if isinstance(result["value"], decimal.Decimal) \
-                                                     else result["value"],
-                                                 "operator": alert["query"]["operator"],
-                                                 "trigger": alert["query"]["left"],
-                                                 "alertId": alert["alertId"],
-                                                 "detectionMethod": alert["detectionMethod"],
-                                                 "currentPeriod": alert["options"]["currentPeriod"],
-                                                 "previousPeriod": alert["options"]["previousPeriod"],
-                                                 "createdAt": TimeUTC.now()}},
-                        })
+                        notifications.append(alerts_processor.generate_notification(alert, result))
                 except Exception as e:
                     logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
                     logging.error(str(e))

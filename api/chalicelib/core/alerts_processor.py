@@ -1,11 +1,15 @@
 import decimal
 import logging
 
+from decouple import config
+
 import schemas
 from chalicelib.core import alerts_listener
 from chalicelib.core import sessions, alerts
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 LeftToDb = {
     schemas.AlertColumn.performance__dom_content_loaded__average: {
@@ -191,30 +195,7 @@ def process():
                     result = cur.fetchone()
                     if result["valid"]:
                         logging.info("Valid alert, notifying users")
-                        notifications.append({
-                            "alertId": alert["alertId"],
-                            "tenantId": alert["tenantId"],
-                            "title": alert["name"],
-                            "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
-                            "buttonText": "Check metrics for more details",
-                            "buttonUrl": f"/{alert['projectId']}/metrics",
-                            "imageUrl": None,
-                            "options": {"source": "ALERT", "sourceId": alert["alertId"],
-                                        "sourceMeta": alert["detectionMethod"],
-                                        "message": alert["options"]["message"], "projectId": alert["projectId"],
-                                        "data": {"title": alert["name"],
-                                                 "limitValue": alert["query"]["right"],
-                                                 "actualValue": float(result["value"]) \
-                                                     if isinstance(result["value"], decimal.Decimal) \
-                                                     else result["value"],
-                                                 "operator": alert["query"]["operator"],
-                                                 "trigger": alert["query"]["left"],
-                                                 "alertId": alert["alertId"],
-                                                 "detectionMethod": alert["detectionMethod"],
-                                                 "currentPeriod": alert["options"]["currentPeriod"],
-                                                 "previousPeriod": alert["options"]["previousPeriod"],
-                                                 "createdAt": TimeUTC.now()}},
-                        })
+                        notifications.append(generate_notification(alert, result))
                 except Exception as e:
                     logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
                     logging.error(str(e))
@@ -226,3 +207,30 @@ def process():
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
     if len(notifications) > 0:
         alerts.process_notifications(notifications)
+
+
+def generate_notification(alert, result):
+    return {
+        "alertId": alert["alertId"],
+        "tenantId": alert["tenantId"],
+        "title": alert["name"],
+        "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
+        "buttonText": "Check metrics for more details",
+        "buttonUrl": f"/{alert['projectId']}/metrics",
+        "imageUrl": None,
+        "options": {"source": "ALERT", "sourceId": alert["alertId"],
+                    "sourceMeta": alert["detectionMethod"],
+                    "message": alert["options"]["message"], "projectId": alert["projectId"],
+                    "data": {"title": alert["name"],
+                             "limitValue": alert["query"]["right"],
+                             "actualValue": float(result["value"]) \
+                                 if isinstance(result["value"], decimal.Decimal) \
+                                 else result["value"],
+                             "operator": alert["query"]["operator"],
+                             "trigger": alert["query"]["left"],
+                             "alertId": alert["alertId"],
+                             "detectionMethod": alert["detectionMethod"],
+                             "currentPeriod": alert["options"]["currentPeriod"],
+                             "previousPeriod": alert["options"]["previousPeriod"],
+                             "createdAt": TimeUTC.now()}},
+    }
