@@ -24,7 +24,7 @@ export default class RemoteControl {
 
   constructor(
     private readonly options: AssistOptions,
-    private readonly onGrand: (sting?) => void, 
+    private readonly onGrand: (sting?) => void,
     private readonly onRelease: (sting?) => void) {}
 
   reconnect(ids: string[]) {
@@ -40,7 +40,7 @@ export default class RemoteControl {
   requestControl = (id: string) => {
     if (this.agentID !== null) {
       this.releaseControl(id)
-      return 
+      return
     }
     setTimeout(() =>{
       if (this.status === RCStatus.Requesting) {
@@ -56,7 +56,14 @@ export default class RemoteControl {
       } else {
         this.releaseControl(id)
       }
-    }).catch(e => console.error(e))
+    })
+    .then(() => {
+      this.confirm?.remove()
+    })
+    .catch(e => {
+        this.confirm?.remove()
+        console.error(e)
+      })
   }
   grantControl = (id: string) => {
     this.agentID = id
@@ -69,7 +76,6 @@ export default class RemoteControl {
 
   releaseControl = (id: string) => {
     if (this.agentID !== id) { return }
-    this.confirm?.remove()
     this.mouse?.remove()
     this.mouse = null
     this.status = RCStatus.Disabled
@@ -81,16 +87,16 @@ export default class RemoteControl {
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
   move = (id, xy) => { id === this.agentID && this.mouse?.move(xy) }
   private focused: HTMLElement | null = null
-  click = (id, xy) => { 
+  click = (id, xy) => {
     if (id !== this.agentID || !this.mouse) { return }
-    this.focused = this.mouse.click(xy) 
+    this.focused = this.mouse.click(xy)
   }
   focus = (id, el: HTMLElement) => {
     this.focused = el
   }
   input = (id, value: string) => {
     if (id !== this.agentID || !this.mouse || !this.focused) { return }
-    if (this.focused instanceof HTMLTextAreaElement 
+    if (this.focused instanceof HTMLTextAreaElement
       || this.focused instanceof HTMLInputElement) {
       setInputValue.call(this.focused, value)
       const ev = new Event('input', { bubbles: true,})

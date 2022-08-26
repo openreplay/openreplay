@@ -2,11 +2,10 @@ import type { Socket } from 'socket.io-client';
 import type Peer from 'peerjs';
 import type { MediaConnection } from 'peerjs';
 import type MessageDistributor from '../MessageDistributor';
-import type { Message } from '../messages'
 import store from 'App/store';
 import type { LocalStream } from './LocalStream';
 import { update, getState } from '../../store';
-import { iceServerConfigFromString } from 'App/utils'
+// import { iceServerConfigFromString } from 'App/utils'
 import AnnotationCanvas from './AnnotationCanvas';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Popup, Icon, Button, IconButton } from 'UI';
-import logger from 'App/logger';
+import { Popup, Button } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { toggleChatWindow } from 'Duck/sessions';
@@ -19,14 +18,13 @@ function onReject() {
     toast.info(`Call was rejected.`);
 }
 
-function onError(e) {
+function onError(e: any) {
     console.log(e)
     toast.error(typeof e === 'string' ? e : e.message);
 }
 
 interface Props {
     userId: string;
-    toggleChatWindow: (state) => void;
     calling: CallingState;
     annotating: boolean;
     peerConnectionStatus: ConnectionStatus;
@@ -38,7 +36,6 @@ interface Props {
 }
 
 function AssistActions({
-    toggleChatWindow,
     userId,
     calling,
     annotating,
@@ -77,7 +74,7 @@ function AssistActions({
         });
     }
 
-    function call(agentIds?: string[]) {
+    function call(additionalAgentIds?: string[]) {
         RequestLocalStream().then(lStream => {
             setLocalStream(lStream);
             setCallArgs(
@@ -88,8 +85,8 @@ function AssistActions({
                 onError
             )
             setCallObject(callPeer());
-            if (agentIds) {
-                callPeer(agentIds)
+            if (additionalAgentIds) {
+                callPeer(additionalAgentIds)
             }
         }).catch(onError)
     }
@@ -97,7 +94,7 @@ function AssistActions({
     React.useEffect(() => {
         if (!onCall && isCallActive && agentIds) {
             setPrestart(true);
-            call(agentIds)
+            // call(agentIds); do not autocall on prestart, can change later
         }
     }, [agentIds, isCallActive])
 
@@ -109,7 +106,7 @@ function AssistActions({
                 confirmation: `Are you sure you want to call ${userId ? userId : 'User'}?`,
             })
         ) {
-            call();
+            call(agentIds);
         }
     };
 
@@ -156,8 +153,8 @@ function AssistActions({
                     onClick={onCall ? callObject?.end : confirmCall}
                     role="button"
                 >
-                    <Button icon="headset" variant={onCall ? 'text-red' : 'primary'} style={{ height: '28px' }}>
-                        {onCall ? 'End' : 'Call'}
+                    <Button icon="headset" variant={onCall ? 'text-red' : isPrestart ? 'green' : 'primary'} style={{ height: '28px' }}>
+                        {onCall ? 'End' : isPrestart ? 'Join Call' : 'Call'}
                     </Button>
                     {/* <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" /> */}
                 </div>
