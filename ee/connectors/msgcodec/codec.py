@@ -21,6 +21,8 @@ class Codec:
         i = 0  # n of byte (max 9 for uint64)
         while True:
             b = reader.read(1)
+            if len(b) == 0:
+                raise IndexError('bytes out of range')
             num = int.from_bytes(b, "big", signed=False)
             # print(i, x)
 
