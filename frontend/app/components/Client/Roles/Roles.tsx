@@ -80,7 +80,7 @@ function Roles(props: Props) {
             <Loader loading={loading}>
                 <div className={stl.wrapper}>
                     <div className={cn(stl.tabHeader, 'flex items-center')}>
-                        <div className="flex items-center mr-auto">
+                        <div className="flex items-center mr-auto px-5 pt-5">
                             <h3 className={cn(stl.tabTitle, 'text-2xl')}>Roles and Access</h3>
                             <Popup content="You don’t have the permissions to perform this action." disabled={isAdmin}>
                                 <Button variant="primary" onClick={() => setShowmModal(true)}>Add</Button>
@@ -90,7 +90,7 @@ function Roles(props: Props) {
 
                     <NoContent title="No roles are available." size="small" show={false}>
                         <div className={''}>
-                            <div className={cn('flex items-start py-3 border-b px-3 pr-20 font-medium')}>
+                            <div className={cn('flex items-start py-3 border-b px-5 pr-20 font-medium')}>
                                 <div className="" style={{ width: '20%' }}>
                                     Title
                                 </div>
