@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { Popup } from 'UI';
 import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
 import { Controls as Player } from 'Player';
+import { INDEXES } from 'App/constants/zIndex';
 
 interface Props {
   onClick?: () => void;
@@ -45,7 +46,7 @@ function XRayButton(props: Props) {
             <button
               className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
               onClick={onClick}
-              style={{ zIndex: 99999, position: 'relative' }}
+              style={{ zIndex: INDEXES.POPUP_GUIDE_BTN, position: 'relative' }}
             >
               <span className="z-1">X-RAY</span>
             </button>
@@ -53,7 +54,7 @@ function XRayButton(props: Props) {
             <div
               className="absolute bg-white top-0 left-0 z-0"
               style={{
-                zIndex: 99998,
+                zIndex: INDEXES.POPUP_GUIDE_BG,
                 width: '100px',
                 height: '50px',
                 borderRadius: '30px',
