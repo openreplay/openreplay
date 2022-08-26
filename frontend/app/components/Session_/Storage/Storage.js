@@ -194,6 +194,7 @@ export default class Storage extends React.PureComponent {
 		return (
 			<BottomBlock>
 				<BottomBlock.Header>
+					<span className="font-semibold color-gray-medium mr-4">State</span>
 					{ list.length > 0 &&
 						<div className="flex w-full">
 							{ showStore &&
