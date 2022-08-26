@@ -279,7 +279,7 @@ class _AlertMessageSchema(BaseModel):
     value: str = Field(...)
 
 
-class AlertDetectionChangeType(str, Enum):
+class AlertDetectionType(str, Enum):
     percent = "percent"
     change = "change"
 
@@ -290,7 +290,6 @@ class _AlertOptionSchema(BaseModel):
     previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
     lastNotification: Optional[int] = Field(None)
     renotifyInterval: Optional[int] = Field(720)
-    change: Optional[AlertDetectionChangeType] = Field(None)
 
 
 class AlertColumn(str, Enum):
@@ -339,6 +338,7 @@ class AlertDetectionMethod(str, Enum):
 class AlertSchema(BaseModel):
     name: str = Field(...)
     detection_method: AlertDetectionMethod = Field(...)
+    change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
     description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
@@ -356,11 +356,6 @@ class AlertSchema(BaseModel):
     def alert_validator(cls, values):
         if values.get("query") is not None and values["query"].left == AlertColumn.custom:
             assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
-        if values.get("detectionMethod") is not None \
-                and values["detectionMethod"] == AlertDetectionMethod.change \
-                and values.get("options") is not None:
-            assert values["options"].change is not None, \
-                "options.change should not be null for detection method 'change'"
         return values
 
     class Config:

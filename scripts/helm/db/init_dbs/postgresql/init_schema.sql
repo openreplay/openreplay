@@ -967,6 +967,7 @@ $$
             CREATE INDEX searches_project_id_idx ON public.searches (project_id);
 
             CREATE TYPE alert_detection_method AS ENUM ('threshold', 'change');
+            CREATE TYPE alert_change_type AS ENUM ('percent', 'change');
 
             CREATE TABLE alerts
             (
@@ -977,6 +978,7 @@ $$
                 description      text                   NULL     DEFAULT NULL,
                 active           boolean                NOT NULL DEFAULT TRUE,
                 detection_method alert_detection_method NOT NULL,
+                change           alert_change_type      NOT NULL DEFAULT 'change',
                 query            jsonb                  NOT NULL,
                 deleted_at       timestamp              NULL     DEFAULT NULL,
                 created_at       timestamp              NOT NULL DEFAULT timezone('utc'::text, now()),

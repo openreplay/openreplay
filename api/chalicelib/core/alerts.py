@@ -52,8 +52,8 @@ def create(project_id, data: schemas.AlertSchema):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    INSERT INTO public.alerts(project_id, name, description, detection_method, query, options, series_id)
-                    VALUES (%(project_id)s, %(name)s, %(description)s, %(detection_method)s, %(query)s, %(options)s::jsonb, %(series_id)s)
+                    INSERT INTO public.alerts(project_id, name, description, detection_method, query, options, series_id, change)
+                    VALUES (%(project_id)s, %(name)s, %(description)s, %(detection_method)s, %(query)s, %(options)s::jsonb, %(series_id)s, %(change)s)
                     RETURNING *;""",
                         {"project_id": project_id, **data})
         )
@@ -75,7 +75,8 @@ def update(id, data: schemas.AlertSchema):
                         detection_method = %(detection_method)s,
                         query = %(query)s,
                         options = %(options)s,
-                        series_id = %(series_id)s
+                        series_id = %(series_id)s,
+                        change = %(change)s
                     WHERE alert_id =%(id)s AND deleted_at ISNULL
                     RETURNING *;""",
                             {"id": id, **data})
