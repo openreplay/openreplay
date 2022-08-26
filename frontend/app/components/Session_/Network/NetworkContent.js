@@ -228,13 +228,16 @@ export default class NetworkContent extends React.PureComponent {
       <React.Fragment>
         <BottomBlock style={{ height: 300 + additionalHeight + 'px' }} className="border">
           <BottomBlock.Header showClose={!isResult}>
-            <Tabs
-              className="uppercase"
-              tabs={tabs}
-              active={activeTab}
-              onClick={this.onTabClick}
-              border={false}
-            />
+            <div className="flex items-center">
+              <span className="font-semibold color-gray-medium mr-4">Network</span>
+              <Tabs
+                className="uppercase"
+                tabs={tabs}
+                active={activeTab}
+                onClick={this.onTabClick}
+                border={false}
+              />
+            </div>
             <Input
               className="input-small"
               placeholder="Filter by name"
