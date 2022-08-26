@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import stl from './xrayButton.module.css';
 import cn from 'classnames';
 import { Popup } from 'UI';
-import { Tooltip } from 'react-tippy';
+import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
 import { Controls as Player } from 'Player';
 
 interface Props {
@@ -11,7 +11,7 @@ interface Props {
 }
 function XRayButton(props: Props) {
   const { isActive } = props;
-  const [showGuide, setShowGuide] = useState(!localStorage.getItem('featureViewed'));
+  const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.XRAY));
   useEffect(() => {
     if (!showGuide) {
       return;
@@ -38,7 +38,10 @@ function XRayButton(props: Props) {
       )}
       <div className="relative">
         {showGuide ? (
-          <GuidePopup>
+          <GuidePopup
+            title={<>Introducing <span className={stl.text}>X-Ray</span></>}
+            description={"Get a quick overview on the issues in this session."}
+          >
             <button
               className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
               onClick={onClick}
@@ -74,26 +77,3 @@ function XRayButton(props: Props) {
 }
 
 export default XRayButton;
-
-function GuidePopup({ children }: any) {
-  return (
-    <Tooltip
-      html={
-        <div>
-          <div className="font-bold">
-            Introducing <span className={stl.text}>X-Ray</span>
-          </div>
-          <div className="color-gray-medium">
-            Get a quick overview on the issues in this session.
-          </div>
-        </div>
-      }
-      distance={30}
-      theme={'light'}
-      open={true}
-      arrow={true}
-    >
-      {children}
-    </Tooltip>
-  );
-}
