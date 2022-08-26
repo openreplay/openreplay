@@ -112,7 +112,9 @@ function PlayerControls(props: Props) {
             className="cursor-pointer select-none"
             distance={20}
             html={
-              <OutsideClickDetectingDiv onClickOutside={() => showTooltip ? toggleTooltip() : null}>
+              <OutsideClickDetectingDiv
+                onClickOutside={() => (showTooltip ? toggleTooltip() : null)}
+              >
                 <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
                   <div className="font-semibold py-2 px-4 w-full text-left">
                     Jump <span className="text-disabled-text">(Secs)</span>
@@ -162,7 +164,8 @@ function PlayerControls(props: Props) {
       </div>
 
       {!live && (
-        <div className="flex items-center ml-4">
+        <div className="flex items-center">
+          <div className="mx-2" />
           {/* @ts-ignore */}
           <Tooltip title="Control play back speed (↑↓)" delay={0} position="top">
             <button
@@ -174,12 +177,11 @@ function PlayerControls(props: Props) {
               <div>{speed + 'x'}</div>
             </button>
           </Tooltip>
-
+          <div className="mx-2" />
           <button
             className={cn(
               styles.skipIntervalButton,
               { [styles.withCheckIcon]: skip, [styles.active]: skip },
-              'ml-4'
             )}
             onClick={toggleSkip}
             data-disabled={disabled}

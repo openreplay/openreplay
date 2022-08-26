@@ -8,6 +8,7 @@ import { useModal } from 'App/components/Modal';
 import UserForm from './components/UserForm';
 import { connect } from 'react-redux';
 import AddUserButton from './components/AddUserButton';
+import withPageTitle from 'HOCs/withPageTitle';
 
 interface Props {
     isOnboarding?: boolean;
@@ -36,7 +37,7 @@ function UsersView(props: Props) {
 
     return (
         <div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-5 pt-5">
                 <PageTitle
                     title={
                         <div>
@@ -57,4 +58,4 @@ function UsersView(props: Props) {
 export default connect((state: any) => ({
     account: state.getIn(['user', 'account']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-}))(UsersView);
+}))(withPageTitle('Team - OpenReplay Preferences')(UsersView));

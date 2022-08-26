@@ -43,17 +43,10 @@ function isObservable(node: Node): boolean {
     - use document as a 0-node in the upper context (should be updated in player at first)
 */
 
-/* 
-  Nikita:
-    - rn we only send unbind event for parent (all child nodes will be cut in the live replay anyways) 
-      to prevent sending 1k+ unbinds for child nodes and making replay file bigger than it should be 
-*/
-
 enum RecentsType {
   New,
   Removed,
   Changed,
-  RemovedChild,
 }
 
 export default abstract class Observer {
@@ -76,7 +69,10 @@ export default abstract class Observer {
           }
           if (type === 'childList') {
             for (let i = 0; i < mutation.removedNodes.length; i++) {
-              this.bindTree(mutation.removedNodes[i], true)
+              // Should be the same as bindTree(mutation.removedNodes[i]), but logic needs to be be untied
+              if (isObservable(mutation.removedNodes[i])) {
+                this.bindNode(mutation.removedNodes[i])
+              }
             }
             for (let i = 0; i < mutation.addedNodes.length; i++) {
               this.bindTree(mutation.addedNodes[i])
@@ -183,16 +179,11 @@ export default abstract class Observer {
     if (isNew) {
       this.recents.set(id, RecentsType.New)
     } else if (this.recents.get(id) !== RecentsType.New) {
-      // can we do just `else` here?
       this.recents.set(id, RecentsType.Removed)
     }
   }
-  private unbindChildNode(node: Node): void {
-    const [id] = this.app.nodes.registerNode(node)
-    this.recents.set(id, RecentsType.RemovedChild)
-  }
 
-  private bindTree(node: Node, isChildUnbinding = false): void {
+  private bindTree(node: Node): void {
     if (!isObservable(node)) {
       return
     }
@@ -202,7 +193,7 @@ export default abstract class Observer {
       NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) =>
-          isIgnored(node) || (this.app.nodes.getID(node) !== undefined && !isChildUnbinding)
+          isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT,
       },
@@ -210,18 +201,33 @@ export default abstract class Observer {
       false,
     )
     while (walker.nextNode()) {
-      if (isChildUnbinding) {
-        this.unbindChildNode(walker.currentNode)
-      } else {
-        this.bindNode(walker.currentNode)
-      }
+      this.bindNode(walker.currentNode)
     }
   }
 
-  private unbindNode(node: Node) {
+  private unbindTree(node: Node) {
     const id = this.app.nodes.unregisterNode(node)
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
+      // Sending RemoveNode only for parent to maintain
       this.app.send(RemoveNode(id))
+
+      // Unregistering all the children in order to clear the memory
+      const walker = document.createTreeWalker(
+        node,
+        NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: (node) =>
+            isIgnored(node) || this.app.nodes.getID(node) === undefined
+              ? NodeFilter.FILTER_REJECT
+              : NodeFilter.FILTER_ACCEPT,
+        },
+        // @ts-ignore
+        false,
+      )
+      while (walker.nextNode()) {
+        this.app.nodes.unregisterNode(walker.currentNode)
+      }
+      // MBTODO: count and send RemovedNodesCount (for the page crash detection in heuristics)
     }
   }
 
@@ -239,17 +245,17 @@ export default abstract class Observer {
     if (!hasTag(node, 'HTML') || !this.isTopContext) {
       if (parent === null) {
         // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
-        // That shouldn't affect the visual rendering ( should it? )
-        this.unbindNode(node)
+        // That shouldn't affect the visual rendering ( should it? maybe when transition applied? )
+        this.unbindTree(node)
         return false
       }
       parentID = this.app.nodes.getID(parent)
       if (parentID === undefined) {
-        this.unbindNode(node)
+        this.unbindTree(node)
         return false
       }
       if (!this.commitNode(parentID)) {
-        this.unbindNode(node)
+        this.unbindTree(node)
         return false
       }
       this.app.sanitizer.handleNode(id, parentID, node)
@@ -345,7 +351,8 @@ export default abstract class Observer {
     this.clear()
   }
 
-  // ISSSUE
+  // ISSSUE (nodeToBinde should be the same as node. Look at the comment about 0-node at the beginning of the file.)
+  // TODO: use one observer instance for all iframes/shadowRoots (composition instiad of inheritance)
   protected observeRoot(
     node: Node,
     beforeCommit: (id?: number) => unknown,

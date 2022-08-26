@@ -17,22 +17,6 @@ export interface Props {
 
 function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: Props) {
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false)
-  const [remoteVideoEnabled, setRemoteVideoEnabled] = useState(false)
-
-  useEffect(() => {
-    if (!incomeStream || incomeStream.length === 0) { return }
-    const iid = setInterval(() => {
-      const settings = incomeStream.map(stream => stream.getVideoTracks()[0]?.getSettings()).filter(Boolean)
-      const isDummyVideoTrack = settings.length > 0 ? (settings.every(s => s.width === 2 || s.frameRate === 0 || s.frameRate === undefined)) : true
-      const shouldBeEnabled = !isDummyVideoTrack
-      if (shouldBeEnabled !== localVideoEnabled) {
-        setRemoteVideoEnabled(shouldBeEnabled)
-      }
-    }, 1000)
-    return () => clearInterval(iid)
-  }, [ incomeStream, localVideoEnabled ])
-
-  const minimize = !localVideoEnabled && !remoteVideoEnabled
 
   return (
     <Draggable handle=".handle" bounds="body">
@@ -43,15 +27,18 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
         <div className="handle flex items-center p-2 cursor-move select-none border-b">
           <div className={stl.headerTitle}>
             <b>Talking to </b> {userId ? userId : 'Anonymous User'}
+            <br />
             {incomeStream && incomeStream.length > 2 ? ' (+ other agents in the call)' : ''}
           </div>
           <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />
         </div>
-        <div className={cn(stl.videoWrapper, {'hidden' : minimize}, 'relative')}>
-          {!incomeStream && <div className={stl.noVideo}>Error obtaining incoming streams</div>}
-          {incomeStream && incomeStream.map(stream => <VideoContainer stream={ stream } />)}
-          <div className="absolute bottom-0 right-0 z-50">
-            <VideoContainer stream={ localStream ? localStream.stream : null } muted width={50} />
+        <div className={cn(stl.videoWrapper, 'relative')} style={{ minHeight: localVideoEnabled ? 52 : undefined}}>
+          {incomeStream
+            ? incomeStream.map(stream => <React.Fragment key={stream.id}><VideoContainer stream={ stream } /></React.Fragment>) : (
+            <div className={stl.noVideo}>Error obtaining incoming streams</div>
+          )}
+          <div className={cn("absolute bottom-0 right-0 z-50", localVideoEnabled ? "" : "!hidden")}>
+            <VideoContainer stream={ localStream ? localStream.stream : null } muted height={50} />
           </div>
         </div>
         <ChatControls videoEnabled={localVideoEnabled} setVideoEnabled={setLocalVideoEnabled} stream={localStream} endCall={endCall} isPrestart={isPrestart} />

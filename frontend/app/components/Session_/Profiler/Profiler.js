@@ -47,7 +47,7 @@ export default class Profiler extends React.PureComponent {
             </div>
             <Input
               // className="input-small"
-              placeholder="Filter by Name"
+              placeholder="Filter by name"
               icon="search"
               name="filter"
               onChange={ this.onFilterChange }

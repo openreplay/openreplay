@@ -11,18 +11,25 @@
 
 .line {
   font-family: 'Menlo', 'monaco', 'consolas', monospace;
-  padding: 7px 0 7px 15px;
   /* margin-top: -1px; ??? */
   display: flex;
   align-items: flex-start;
   border-bottom: solid thin $gray-light-shade;
 }
 
+.timestamp {
+  
+}
+
 .activeRow {
-  background-color: $teal !important;
-  color: white !important;
+  background-color: $teal-light !important;
 }
 
 .icon {
   padding-top: 4px;
+  margin-right: 7px;
+}
+
+.inactiveRow {
+  opacity: 0.5;
 }

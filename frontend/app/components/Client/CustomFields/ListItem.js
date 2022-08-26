@@ -7,7 +7,7 @@ const ListItem = ({ field, onEdit, disabled }) => {
     return (
         <div
             className={cn(
-                'border-b group last:border-none hover:bg-active-blue flex items-center justify-between p-3 cursor-pointer',
+                'border-t group hover:bg-active-blue flex items-center justify-between py-3 px-5 cursor-pointer',
                 field.index === 0 ? styles.preDefined : '',
                 {
                     [styles.disabled]: disabled,

@@ -57,6 +57,21 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 		}
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
+	case *messages.AdoptedSSReplaceURLBased:
+		newMsg := &messages.AdoptedSSReplace{
+			SheetID: m.SheetID,
+			Text:    e.handleCSS(sessID, m.BaseURL, m.Text),
+		}
+		newMsg.SetMeta(msg.Meta())
+		return newMsg
+	case *messages.AdoptedSSInsertRuleURLBased:
+		newMsg := &messages.AdoptedSSInsertRule{
+			SheetID: m.SheetID,
+			Index:   m.Index,
+			Rule:    e.handleCSS(sessID, m.BaseURL, m.Rule),
+		}
+		newMsg.SetMeta(msg.Meta())
+		return newMsg
 	}
 	return msg
 }

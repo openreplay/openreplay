@@ -646,3 +646,64 @@ export function CreateIFrameDocument(
   ]
 }
 
+export function AdoptedSSReplaceURLBased(
+  sheetID: number,
+  text: string,
+  baseURL: string,
+): Messages.AdoptedSSReplaceURLBased {
+  return [ 
+    Messages.Type.AdoptedSSReplaceURLBased,
+    sheetID,
+    text,
+    baseURL,
+  ]
+}
+
+export function AdoptedSSInsertRuleURLBased(
+  sheetID: number,
+  rule: string,
+  index: number,
+  baseURL: string,
+): Messages.AdoptedSSInsertRuleURLBased {
+  return [ 
+    Messages.Type.AdoptedSSInsertRuleURLBased,
+    sheetID,
+    rule,
+    index,
+    baseURL,
+  ]
+}
+
+export function AdoptedSSDeleteRule(
+  sheetID: number,
+  index: number,
+): Messages.AdoptedSSDeleteRule {
+  return [ 
+    Messages.Type.AdoptedSSDeleteRule,
+    sheetID,
+    index,
+  ]
+}
+
+export function AdoptedSSAddOwner(
+  sheetID: number,
+  id: number,
+): Messages.AdoptedSSAddOwner {
+  return [ 
+    Messages.Type.AdoptedSSAddOwner,
+    sheetID,
+    id,
+  ]
+}
+
+export function AdoptedSSRemoveOwner(
+  sheetID: number,
+  id: number,
+): Messages.AdoptedSSRemoveOwner {
+  return [ 
+    Messages.Type.AdoptedSSRemoveOwner,
+    sheetID,
+    id,
+  ]
+}
+

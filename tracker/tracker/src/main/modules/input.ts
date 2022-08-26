@@ -49,7 +49,7 @@ const labelElementFor: (element: TextEditableElement) => HTMLLabelElement | unde
         }
         const id = node.id
         if (id) {
-          const labels = document.querySelectorAll('label[for="' + id + '"]')
+          const labels = node.ownerDocument.querySelectorAll('label[for="' + id + '"]')
           if (labels !== null && labels.length === 1) {
             return labels[0] as HTMLLabelElement
           }

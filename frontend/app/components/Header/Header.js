@@ -23,7 +23,7 @@ import { init as initSite } from 'Duck/site';
 import ErrorGenPanel from 'App/dev/components';
 import Alerts from '../Alerts/Alerts';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
-import { fetchList as fetchMetadata } from 'Duck/customField';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
@@ -57,7 +57,7 @@ const Header = (props) => {
       Promise.all([
         userStore.fetchLimits(),
         notificationStore.fetchNotificationsCount(),
-        // props.fetchMetadata(),
+        props.fetchMetadata(),
       ]).then(() => {
         userStore.updateKey('initialDataFetched', true);
       });

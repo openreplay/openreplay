@@ -266,7 +266,7 @@ export default class Controls extends React.Component {
   controlIcon = (icon, size, action, isBackwards, additionalClasses) => (
     <div
       onClick={action}
-      className={cn('py-1 px-2 hover-main cursor-pointer', additionalClasses)}
+      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
       style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
     >
       <Icon name={icon} size={size} color="inherit" />
@@ -352,8 +352,7 @@ export default class Controls extends React.Component {
                     setSkipInterval={changeSkipInterval}
                     currentInterval={skipInterval}
                   />
-                  {/* <Button variant="text" onClick={() => toggleBottomTools(OVERVIEW)}>X-RAY</Button> */}
-                  <div className={cn('h-14 border-r bg-gray-light mx-6')} />
+                  <div className={cn('mx-2')} />
                   <XRayButton
                     isActive={bottomBlock === OVERVIEW && !inspectorMode}
                     onClick={() => toggleBottomTools(OVERVIEW)}
@@ -381,30 +380,6 @@ export default class Controls extends React.Component {
             </div>
 
             <div className="flex items-center h-full">
-              {/* { !live && <div className={cn(styles.divider, 'h-full')} /> } */}
-              {/* ! TEMP DISABLED !
-              {!live && (
-                <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  active={ inspectorMode }
-                  onClick={ () => toggleBottomTools(INSPECTOR) }
-                  noIcon
-                  labelClassName="!text-base font-semibold"
-                  label="INSPECT"
-                  containerClassName="mx-2"
-                />
-              )} */}
-              {/* <ControlButton
-                // disabled={ disabled && !inspectorMode }
-                onClick={ () => toggleBottomTools(OVERVIEW) }
-                active={ bottomBlock === OVERVIEW && !inspectorMode}
-                label="OVERVIEW"
-                noIcon
-                labelClassName="!text-base font-semibold"
-                // count={ logCount }
-                // hasErrors={ logRedCount > 0 }
-                containerClassName="mx-2"
-              /> */}
               <ControlButton
                 disabled={disabled && !inspectorMode}
                 onClick={() => toggleBottomTools(CONSOLE)}
@@ -514,12 +489,12 @@ export default class Controls extends React.Component {
                   containerClassName="mx-2"
                 />
               )}
-              {!live && <div className={cn('h-14 border-r bg-gray-light ml-6')} />}
+              {/* {!live && <div className={cn('h-14 border-r bg-gray-light ml-6')} />} */}
               {!live && (
                 <Tooltip title="Fullscreen" delay={0} position="top-end" className="mx-4">
                   {this.controlIcon(
                     'arrows-angle-extend',
-                    18,
+                    16,
                     this.props.fullscreenOn,
                     false,
                     'rounded hover:bg-gray-light-shade color-gray-medium'

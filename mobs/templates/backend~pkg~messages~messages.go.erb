@@ -1,6 +1,8 @@
 // Auto-generated, do not edit
 package messages
 
+import "encoding/binary"
+
 const (
 <% $messages.each do |msg| %>
     Msg<%= msg.name %> = <%= msg.id %>

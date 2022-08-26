@@ -1,10 +1,16 @@
 import type App from '../app/index.js'
 import { SetViewportScroll, SetNodeScroll } from '../app/messages.gen.js'
-import { isElementNode } from '../app/guards.js'
+import { isElementNode, isRootNode } from '../app/guards.js'
 
 export default function (app: App): void {
   let documentScroll = false
-  const nodeScroll: Map<Element, [number, number]> = new Map()
+  const nodeScroll: Map<Node, [number, number]> = new Map()
+
+  function setNodeScroll(target: EventTarget | null) {
+    if (target instanceof Element) {
+      nodeScroll.set(target, [target.scrollLeft, target.scrollTop])
+    }
+  }
 
   const sendSetViewportScroll = app.safe((): void =>
     app.send(
@@ -38,18 +44,21 @@ export default function (app: App): void {
   app.nodes.attachNodeCallback((node, isStart) => {
     if (isStart && isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
       nodeScroll.set(node, [node.scrollLeft, node.scrollTop])
+    } else if (isRootNode(node)) {
+      // scroll is not-composed event (https://javascript.info/shadow-dom-events)
+      app.attachEventListener(node, 'scroll', (e: Event): void => {
+        setNodeScroll(e.target)
+      })
     }
   })
 
-  app.attachEventListener(window, 'scroll', (e: Event): void => {
+  app.attachEventListener(document, 'scroll', (e: Event): void => {
     const target = e.target
     if (target === document) {
       documentScroll = true
       return
     }
-    if (target instanceof Element) {
-      nodeScroll.set(target, [target.scrollLeft, target.scrollTop])
-    }
+    setNodeScroll(target)
   })
 
   app.ticker.attach(

@@ -26,6 +26,21 @@ class MessageCodec(Codec):
                 timestamp=self.read_int(reader)
             )
 
+        if message_id == 81:
+            return BatchMetadata(
+                version=self.read_uint(reader),
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader),
+                location=self.read_string(reader)
+            )
+
+        if message_id == 82:
+            return PartitionedMessage(
+                part_no=self.read_uint(reader),
+                part_total=self.read_uint(reader)
+            )
+
         if message_id == 0:
             return Timestamp(
                 timestamp=self.read_uint(reader)
@@ -49,11 +64,6 @@ class MessageCodec(Codec):
                 user_device_heap_size=self.read_uint(reader),
                 user_country=self.read_string(reader),
                 user_id=self.read_string(reader)
-            )
-
-        if message_id == 2:
-            return SessionDisconnect(
-                timestamp=self.read_uint(reader)
             )
 
         if message_id == 3:
@@ -522,11 +532,6 @@ class MessageCodec(Codec):
                 payload=self.read_string(reader)
             )
 
-        if message_id == 65:
-            return PageClose(
-                
-            )
-
         if message_id == 66:
             return AssetCache(
                 url=self.read_string(reader)
@@ -551,6 +556,52 @@ class MessageCodec(Codec):
         if message_id == 70:
             return CreateIFrameDocument(
                 frame_id=self.read_uint(reader),
+                id=self.read_uint(reader)
+            )
+
+        if message_id == 71:
+            return AdoptedSSReplaceURLBased(
+                sheet_id=self.read_uint(reader),
+                text=self.read_string(reader),
+                base_url=self.read_string(reader)
+            )
+
+        if message_id == 72:
+            return AdoptedSSReplace(
+                sheet_id=self.read_uint(reader),
+                text=self.read_string(reader)
+            )
+
+        if message_id == 73:
+            return AdoptedSSInsertRuleURLBased(
+                sheet_id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader),
+                base_url=self.read_string(reader)
+            )
+
+        if message_id == 74:
+            return AdoptedSSInsertRule(
+                sheet_id=self.read_uint(reader),
+                rule=self.read_string(reader),
+                index=self.read_uint(reader)
+            )
+
+        if message_id == 75:
+            return AdoptedSSDeleteRule(
+                sheet_id=self.read_uint(reader),
+                index=self.read_uint(reader)
+            )
+
+        if message_id == 76:
+            return AdoptedSSAddOwner(
+                sheet_id=self.read_uint(reader),
+                id=self.read_uint(reader)
+            )
+
+        if message_id == 77:
+            return AdoptedSSRemoveOwner(
+                sheet_id=self.read_uint(reader),
                 id=self.read_uint(reader)
             )
 

@@ -158,11 +158,15 @@ export function percentOf(part: number, whole: number): number {
     return whole > 0 ? (part * 100) / whole : 0;
 }
 
-export function fileType(url) {
-    return url.split(/[#?]/)[0].split('.').pop().trim();
+export function fileType(url: string) {
+    const filename = url.split(/[#?]/)
+    if (!filename || filename.length == 0) return ''
+    const parts = filename[0].split('.')
+    if (!parts || parts.length == 0) return ''
+    return parts.pop().trim();
 }
 
-export function fileName(url) {
+export function fileName(url: string) {
     if (url) {
         var m = url.toString().match(/.*\/(.+?)\./);
         if (m && m.length > 1) {

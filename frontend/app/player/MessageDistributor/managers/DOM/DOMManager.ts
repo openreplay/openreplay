@@ -5,13 +5,13 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
 import ListWalker from '../ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
-import { VElement, VText, VFragment, VDocument, VNode, VStyleElement } from './VirtualDOM';
+import { VElement, VText, VShadowRoot, VDocument, VNode, VStyleElement } from './VirtualDOM';
 import type { StyleElement } from './VirtualDOM';
 
 
 type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
 
-const IGNORED_ATTRS = [ "autocomplete", "name" ];
+const IGNORED_ATTRS = [ "autocomplete" ];
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 
 
@@ -24,10 +24,32 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 //     .replace(/\-webkit\-/g, "")
 // }
 
+function insertRule(sheet: CSSStyleSheet, msg: { rule: string, index: number }) {
+  try {
+    sheet.insertRule(msg.rule, msg.index)
+  } catch (e) {
+    logger.warn(e, msg)
+    try {
+      sheet.insertRule(msg.rule)
+    } catch (e) {
+      logger.warn("Cannot insert rule.", e, msg)
+    }
+  }
+}
+
+function deleteRule(sheet: CSSStyleSheet, msg: { index: number }) {
+  try {
+    sheet.deleteRule(msg.index)
+  } catch (e) {
+    logger.warn(e, msg)
+  }
+}
+
 export default class DOMManager extends ListWalker<Message> {
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
-  private vRoots: Map<number, VFragment | VDocument> = new Map()
+  private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
+  private styleSheets: Map<number, CSSStyleSheet> = new Map()
   
 
   private upperBodyId: number = -1;
@@ -42,6 +64,7 @@ export default class DOMManager extends ListWalker<Message> {
   ) {
     super()
     this.stylesManager = new StylesManager(screen)
+    logger.log(this.vElements)
   }
 
   append(m: Message): void {
@@ -103,6 +126,7 @@ export default class DOMManager extends ListWalker<Message> {
         pNode.sheet && 
         pNode.sheet.cssRules &&
         pNode.sheet.cssRules.length > 0 &&
+        pNode.innerText &&
         pNode.innerText.trim().length === 0
     ) {
       logger.log("Trying to insert child to a style tag with virtual rules: ", parent, child);
@@ -116,6 +140,7 @@ export default class DOMManager extends ListWalker<Message> {
     let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
+    let styleSheet: CSSStyleSheet | undefined
     switch (msg.tp) {
       case "create_document":
         doc = this.screen.document;
@@ -133,7 +158,9 @@ export default class DOMManager extends ListWalker<Message> {
         this.vElements = new Map([[0, vn]])
         const vDoc = new VDocument(doc)
         vDoc.insertChildAt(vn, 0)
-        this.vRoots = new Map([[-1, vDoc]]) // todo: start from 0 (sync logic with tracker)
+        this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
+        // this is done for the AdoptedCSS logic
+        // todo: start from 0 (sync logic with tracker) 
         this.stylesManager.reset()
         return
       case "create_text_node":
@@ -174,6 +201,10 @@ export default class DOMManager extends ListWalker<Message> {
         let { name, value } = msg;
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
+        if (vn.node.tagName === "INPUT" && name === "name") {
+          // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
+          return
+        }
         if (name === "href" && vn.node.tagName === "LINK") {
           // @ts-ignore  ?global ENV type   // It've been done on backend (remove after testing in saas)
           // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
@@ -241,18 +272,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
-        vn.onStyleSheet(sheet => {
-          try {
-            sheet.insertRule(msg.rule, msg.index)
-          } catch (e) {
-            logger.warn(e, msg)
-            try {
-              sheet.insertRule(msg.rule)
-            } catch (e) {
-              logger.warn("Cannot insert rule.", e, msg)
-            }
-          }
-        })
+        vn.onStyleSheet(sheet => insertRule(sheet, msg))
         return
       case "css_delete_rule":
         vn = this.vElements.get(msg.id)
@@ -261,35 +281,27 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
-        vn.onStyleSheet(sheet => {
-          try {
-            sheet.deleteRule(msg.index)
-          } catch (e) {
-            logger.warn(e, msg)
-          }
-        })
+        vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
       case "create_i_frame_document":
         vn = this.vElements.get(msg.frameID)
         if (!vn) { logger.error("Node not found", msg); return }
+        vn.enforceInsertion()
         const host = vn.node
         if (host instanceof HTMLIFrameElement) {
           const vDoc = new VDocument()
           this.vRoots.set(msg.id, vDoc)
-          host.onload = () => {
-            const doc = host.contentDocument
-            if (!doc) {
-              logger.warn("No iframe doc onload", msg, host)
-              return
-            }
-            vDoc.setDocument(doc)
-            vDoc.applyChanges()
-          }    
+          const doc = host.contentDocument
+          if (!doc) {
+            logger.warn("No iframe doc onload", msg, host)
+            return
+          }
+          vDoc.setDocument(doc)
           return;
         } else if (host instanceof Element) { // shadow DOM
           try {
             const shadowRoot = host.attachShadow({ mode: 'open' })
-            vn = new VFragment(shadowRoot)
+            vn = new VShadowRoot(shadowRoot)
             this.vRoots.set(msg.id, vn)
           } catch(e) {
             logger.warn("Can not attach shadow dom", e, msg)
@@ -297,6 +309,60 @@ export default class DOMManager extends ListWalker<Message> {
         } else {
           logger.warn("Context message host is not Element", msg)
         }
+        return
+      case "adopted_ss_insert_rule":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        insertRule(styleSheet, msg)
+        return
+      case "adopted_ss_delete_rule":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        deleteRule(styleSheet, msg)
+        return
+      case "adopted_ss_replace":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        // @ts-ignore
+        styleSheet.replaceSync(msg.text)
+        return
+      case "adopted_ss_add_owner":
+        vn = this.vRoots.get(msg.id)
+        if (!vn) { logger.error("Node not found", msg); return }
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          let context: typeof globalThis
+          const rootNode = vn.node
+          if (rootNode.nodeType === Node.DOCUMENT_NODE) {
+            context = (rootNode as Document).defaultView
+          } else {
+            context = (rootNode as ShadowRoot).ownerDocument.defaultView
+          }
+          styleSheet = new context.CSSStyleSheet()
+          this.styleSheets.set(msg.sheetID, styleSheet)
+        }
+        //@ts-ignore
+        vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets, styleSheet]
+        return
+      case "adopted_ss_remove_owner":
+        styleSheet = this.styleSheets.get(msg.sheetID)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        vn = this.vRoots.get(msg.id)
+        if (!vn) { logger.error("Node not found", msg); return }
+        //@ts-ignore
+        vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
     } 
   }

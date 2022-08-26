@@ -79,11 +79,11 @@ export default class WindowNodeCounter {
 
 	moveNode(id: number, parentId: number) {
 		if (!this.nodes[ id ]) {
-			console.error(`Wrong! Node with id ${ id } not found.`)
+			console.warn(`Node Counter: Node with id ${ id } not found.`)
 			return
 		}
 		if (!this.nodes[ parentId ]) {
-			console.error(`Wrong! Node with id ${ parentId } (parentId) not found.`)
+			console.warn(`Node Counter: Node with id ${ parentId } (parentId) not found.`)
 			return
 		}
 		this.nodes[ id ].moveNode(this.nodes[ parentId ])

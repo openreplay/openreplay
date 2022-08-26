@@ -43,7 +43,7 @@ function WidgetView(props: Props) {
                     setMetricNotFound(true);
                 }
             });
-        } else if (metricId === 'create') {
+        } else {
             metricStore.init();
         }
     }, []);

@@ -25,7 +25,7 @@ function onError(e) {
 }
 
 interface Props {
-    userId: String;
+    userId: string;
     toggleChatWindow: (state) => void;
     calling: CallingState;
     annotating: boolean;
@@ -69,7 +69,12 @@ function AssistActions({
     }, [peerConnectionStatus]);
 
     const addIncomeStream = (stream: MediaStream) => {
-        setIncomeStream(oldState => [...oldState, stream]);
+        setIncomeStream(oldState => {
+            if (!oldState.find(existingStream => existingStream.id === stream.id)) {
+                return [...oldState, stream]
+            }
+            return oldState
+        });
     }
 
     function call(agentIds?: string[]) {

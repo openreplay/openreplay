@@ -45,7 +45,7 @@ def create_step1(data: schemas.UserSignupSchema):
 
     print("Verifying company's name validity")
     company_name = data.organizationName
-    if company_name is None or len(company_name) < 1 or not helper.is_alphanumeric_space(company_name):
+    if company_name is None or len(company_name) < 1:
         errors.append("invalid organization's name")
 
     print("Verifying project's name validity")

@@ -12,7 +12,7 @@ export default class MetricStore {
     instance: IWidget = new Widget()
 
     page: number = 1
-    pageSize: number = 15
+    pageSize: number = 10
     metricsSearch: string = ""
     sort: any = {}
 

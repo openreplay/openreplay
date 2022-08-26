@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks, HTTPException
@@ -7,13 +7,13 @@ from starlette import status
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
-    sessions_metas, alerts, funnels, issues, integrations_manager, metadata, \
+    alerts, funnels, issues, integrations_manager, metadata, \
     log_tool_elasticsearch, log_tool_datadog, \
-    log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
+    log_tool_stackdriver, reset_password, sessions_favorite, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
-    custom_metrics, saved_search, integrations_global
+    assist, heatmaps, mobile, signup, tenants, errors_viewed, boarding, notifications, webhook, users, \
+    custom_metrics, saved_search, integrations_global, sessions_viewed, errors_favorite
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper, helper, captcha
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -51,6 +51,14 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     }
 
 
+@app.post('/{projectId}/sessions/search', tags=["sessions"])
+@app.post('/{projectId}/sessions/search2', tags=["sessions"])
+def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+                    context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
+    return {'data': data}
+
+
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
@@ -62,7 +70,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: B
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
-        background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId, user_id=context.user_id,
+        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
                                   session_id=sessionId)
     return {
         'data': data
@@ -74,8 +82,8 @@ def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: B
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        "data": sessions_favorite_viewed.favorite_session(project_id=projectId, user_id=context.user_id,
-                                                          session_id=sessionId)}
+        "data": sessions_favorite.favorite_session(project_id=projectId, user_id=context.user_id,
+                                                   session_id=sessionId)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
@@ -162,23 +170,6 @@ def events_search(projectId: int, q: str,
 
     result = events.search(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
-
-
-@app.post('/{projectId}/sessions/search2', tags=["sessions"])
-def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions.search2_pg(data=data, project_id=projectId, user_id=context.user_id)
-    return {'data': data}
-
-
-@app.get('/{projectId}/sessions/filters', tags=["sessions"])
-def session_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {'data': sessions_metas.get_key_values(projectId)}
-
-
-@app.get('/{projectId}/sessions/filters/top', tags=["sessions"])
-def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {'data': sessions_metas.get_top_key_values(projectId)}
 
 
 @app.get('/{projectId}/integrations', tags=["integrations"])
@@ -909,7 +900,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
-            background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId,
+            background_tasks.add_task(sessions_viewed.view_session, project_id=projectId,
                                       user_id=context.user_id, session_id=sessionId)
     return {'data': data}
 
@@ -995,7 +986,7 @@ def errors_get_details(projectId: int, errorId: str, background_tasks: Backgroun
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
-        background_tasks.add_task(errors_favorite_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
+        background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
                                   error_id=errorId)
     return data
 
@@ -1024,7 +1015,7 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
 def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
                               endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
     if action == "favorite":
-        return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
+        return errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
     elif action == "sessions":
         start_date = startDate
         end_date = endDate

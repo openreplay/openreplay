@@ -19,3 +19,9 @@
         color: $gray-darkest;
     }
 }
+
+.text {
+    background: linear-gradient(90deg, rgba(57, 78, 255, 0.87) 0%, rgba(62, 170, 175, 0.87) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }

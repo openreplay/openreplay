@@ -2,7 +2,7 @@ import React from 'react';
 import cn from "classnames";
 import { Icon, Popup } from 'UI';
 
-export default function QuestionMarkHint({ onHover = false, content, className, ...props }) {
+export default function QuestionMarkHint({ onHover = false, content, ...props }) {
 	return (
 		<Popup
       trigger={ onHover ? 'mouseenter' : 'click'}
@@ -10,7 +10,7 @@ export default function QuestionMarkHint({ onHover = false, content, className, 
       interactive
       { ...props }
     >
-      <Icon name="question-circle"  size="18" className={ cn("cursor-pointer", className) }/>
+      <Icon name="question-circle"  size="18" className={ cn("cursor-pointer") }/>
     </Popup>
 	);
 }

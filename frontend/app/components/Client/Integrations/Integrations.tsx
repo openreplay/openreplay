@@ -28,6 +28,7 @@ import AxiosDoc from './AxiosDoc';
 import AssistDoc from './AssistDoc';
 import { PageTitle, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import withPageTitle from 'HOCs/withPageTitle';
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -72,7 +73,7 @@ function Integrations(props: Props) {
     };
 
     return (
-        <div className="mb-4">
+        <div className="mb-4 p-5">
             {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
             {integrations.map((cat: any) => (
                 <div className="mb-2 border-b last:border-none py-3">
@@ -119,7 +120,7 @@ export default connect(
         siteId: state.getIn(['integrations', 'siteId']),
     }),
     { fetch, init, fetchIntegrationList, setSiteId }
-)(Integrations);
+)(withPageTitle('Integrations - OpenReplay Preferences')(Integrations));
 
 const integrations = [
     {

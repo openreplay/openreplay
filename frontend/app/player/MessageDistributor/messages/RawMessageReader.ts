@@ -17,30 +17,10 @@ export default class RawMessageReader extends PrimitiveReader {
 
     switch (tp) {
     
-    case 80: {
-      const pageNo = this.readUint(); if (pageNo === null) { return resetPointer() }
-      const firstIndex = this.readUint(); if (firstIndex === null) { return resetPointer() }
-      const timestamp = this.readInt(); if (timestamp === null) { return resetPointer() }      
-      return {
-        tp: "batch_meta", 
-        pageNo,
-        firstIndex,
-        timestamp,      
-      };
-    }
-    
     case 0: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }      
       return {
         tp: "timestamp", 
-        timestamp,      
-      };
-    }
-    
-    case 2: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }      
-      return {
-        tp: "session_disconnect", 
         timestamp,      
       };
     }
@@ -187,16 +167,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
-    case 17: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const label = this.readString(); if (label === null) { return resetPointer() }      
-      return {
-        tp: "set_input_target", 
-        id,
-        label,      
-      };
-    }
-    
     case 18: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
@@ -235,90 +205,6 @@ export default class RawMessageReader extends PrimitiveReader {
       return {
         tp: "console_log", 
         level,
-        value,      
-      };
-    }
-    
-    case 23: {
-      const requestStart = this.readUint(); if (requestStart === null) { return resetPointer() }
-      const responseStart = this.readUint(); if (responseStart === null) { return resetPointer() }
-      const responseEnd = this.readUint(); if (responseEnd === null) { return resetPointer() }
-      const domContentLoadedEventStart = this.readUint(); if (domContentLoadedEventStart === null) { return resetPointer() }
-      const domContentLoadedEventEnd = this.readUint(); if (domContentLoadedEventEnd === null) { return resetPointer() }
-      const loadEventStart = this.readUint(); if (loadEventStart === null) { return resetPointer() }
-      const loadEventEnd = this.readUint(); if (loadEventEnd === null) { return resetPointer() }
-      const firstPaint = this.readUint(); if (firstPaint === null) { return resetPointer() }
-      const firstContentfulPaint = this.readUint(); if (firstContentfulPaint === null) { return resetPointer() }      
-      return {
-        tp: "page_load_timing", 
-        requestStart,
-        responseStart,
-        responseEnd,
-        domContentLoadedEventStart,
-        domContentLoadedEventEnd,
-        loadEventStart,
-        loadEventEnd,
-        firstPaint,
-        firstContentfulPaint,      
-      };
-    }
-    
-    case 24: {
-      const speedIndex = this.readUint(); if (speedIndex === null) { return resetPointer() }
-      const visuallyComplete = this.readUint(); if (visuallyComplete === null) { return resetPointer() }
-      const timeToInteractive = this.readUint(); if (timeToInteractive === null) { return resetPointer() }      
-      return {
-        tp: "page_render_timing", 
-        speedIndex,
-        visuallyComplete,
-        timeToInteractive,      
-      };
-    }
-    
-    case 25: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const message = this.readString(); if (message === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }      
-      return {
-        tp: "js_exception", 
-        name,
-        message,
-        payload,      
-      };
-    }
-    
-    case 27: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }      
-      return {
-        tp: "raw_custom_event", 
-        name,
-        payload,      
-      };
-    }
-    
-    case 28: {
-      const id = this.readString(); if (id === null) { return resetPointer() }      
-      return {
-        tp: "user_id", 
-        id,      
-      };
-    }
-    
-    case 29: {
-      const id = this.readString(); if (id === null) { return resetPointer() }      
-      return {
-        tp: "user_anonymous_id", 
-        id,      
-      };
-    }
-    
-    case 30: {
-      const key = this.readString(); if (key === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }      
-      return {
-        tp: "metadata", 
-        key,
         value,      
       };
     }
@@ -386,14 +272,6 @@ export default class RawMessageReader extends PrimitiveReader {
         tp: "o_table", 
         key,
         value,      
-      };
-    }
-    
-    case 42: {
-      const type = this.readString(); if (type === null) { return resetPointer() }      
-      return {
-        tp: "state_action", 
-        type,      
       };
     }
     
@@ -469,28 +347,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
-    case 53: {
-      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
-      const duration = this.readUint(); if (duration === null) { return resetPointer() }
-      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
-      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
-      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
-      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
-      const url = this.readString(); if (url === null) { return resetPointer() }
-      const initiator = this.readString(); if (initiator === null) { return resetPointer() }      
-      return {
-        tp: "resource_timing", 
-        timestamp,
-        duration,
-        ttfb,
-        headerSize,
-        encodedBodySize,
-        decodedBodySize,
-        url,
-        initiator,      
-      };
-    }
-    
     case 54: {
       const downlink = this.readUint(); if (downlink === null) { return resetPointer() }
       const type = this.readString(); if (type === null) { return resetPointer() }      
@@ -555,34 +411,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
-    case 63: {
-      const type = this.readString(); if (type === null) { return resetPointer() }
-      const value = this.readString(); if (value === null) { return resetPointer() }      
-      return {
-        tp: "technical_info", 
-        type,
-        value,      
-      };
-    }
-    
-    case 64: {
-      const name = this.readString(); if (name === null) { return resetPointer() }
-      const payload = this.readString(); if (payload === null) { return resetPointer() }      
-      return {
-        tp: "custom_issue", 
-        name,
-        payload,      
-      };
-    }
-    
-    case 65: {
-      
-      return {
-        tp: "page_close", 
-      
-      };
-    }
-    
     case 67: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const rule = this.readString(); if (rule === null) { return resetPointer() }
@@ -617,6 +445,84 @@ export default class RawMessageReader extends PrimitiveReader {
       return {
         tp: "create_i_frame_document", 
         frameID,
+        id,      
+      };
+    }
+    
+    case 71: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const text = this.readString(); if (text === null) { return resetPointer() }
+      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_replace_url_based", 
+        sheetID,
+        text,
+        baseURL,      
+      };
+    }
+    
+    case 72: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const text = this.readString(); if (text === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_replace", 
+        sheetID,
+        text,      
+      };
+    }
+    
+    case 73: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const rule = this.readString(); if (rule === null) { return resetPointer() }
+      const index = this.readUint(); if (index === null) { return resetPointer() }
+      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_insert_rule_url_based", 
+        sheetID,
+        rule,
+        index,
+        baseURL,      
+      };
+    }
+    
+    case 74: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const rule = this.readString(); if (rule === null) { return resetPointer() }
+      const index = this.readUint(); if (index === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_insert_rule", 
+        sheetID,
+        rule,
+        index,      
+      };
+    }
+    
+    case 75: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const index = this.readUint(); if (index === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_delete_rule", 
+        sheetID,
+        index,      
+      };
+    }
+    
+    case 76: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_add_owner", 
+        sheetID,
+        id,      
+      };
+    }
+    
+    case 77: {
+      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
+      const id = this.readUint(); if (id === null) { return resetPointer() }      
+      return {
+        tp: "adopted_ss_remove_owner", 
+        sheetID,
         id,      
       };
     }

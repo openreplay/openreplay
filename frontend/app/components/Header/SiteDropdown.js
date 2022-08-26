@@ -11,7 +11,7 @@ import styles from './siteDropdown.module.css';
 import cn from 'classnames';
 import { clearSearch } from 'Duck/search';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
-import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchListActive as fetchIntegrationVariables } from 'Duck/customField';
 import { withStore } from 'App/mstore';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 import NewProjectButton from './NewProjectButton';
@@ -85,10 +85,10 @@ export default class SiteDropdown extends React.PureComponent {
                 <Icon className={styles.drodownIcon} color="gray-light" name="chevron-down" size="16" />
                 <div className={styles.menu}>
                     <ul data-can-disable={disabled}>
-                        {!showCurrent && <li>{'Does not require domain selection.'}</li>}
+                        {!showCurrent && <li>{'Project selection is not applicable.'}</li>}
                         {sites.map((site) => (
                             <li key={site.id} onClick={() => this.switchSite(site.id)}>
-                                <Icon name="circle" size="8" marginRight="10" color={STATUS_COLOR_MAP[site.status]} />
+                                <div className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: STATUS_COLOR_MAP[site.status] }} />
                                 {site.host}
                             </li>
                         ))}
