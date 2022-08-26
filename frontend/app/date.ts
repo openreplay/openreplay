@@ -64,7 +64,7 @@ export const getDateFromMill = date =>
  * @return {Boolean}
  */
 export const isToday = (date: DateTime):boolean => date.hasSame(new Date(), 'day');
-
+export const isSameYear = (date: DateTime):boolean => date.hasSame(new Date(), 'year');
 
 export function formatDateTimeDefault(timestamp: number): string {
   const date = DateTime.fromMillis(timestamp);
@@ -83,8 +83,17 @@ export function formatTimeOrDate(timestamp: number, timezone: Timezone): string 
     if (timezone.value === 'UTC') date = date.toUTC();
     date = date.setZone(timezone.value)
   }
-
-  return isToday(date) ? date.toFormat('hh:mm a') : date.toFormat('LLL dd, yyyy, hh:mm a');
+  if (isToday(date)) {
+    return date.toFormat('hh:mma').toLowerCase()
+  }
+  if (isSameYear(date)) {
+    const strHead = date.toFormat('LLL dd, ')
+    const strTail = date.toFormat('hh:mma').toLowerCase()
+    return strHead + strTail;
+  }
+  const strHead = date.toFormat('LLL dd, yyyy, ')
+  const strTail = date.toFormat('hh:mma').toLowerCase()
+  return strHead + strTail;
 }
 
 /**
