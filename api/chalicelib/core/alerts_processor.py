@@ -94,7 +94,7 @@ def can_check(a) -> bool:
 
 
 def Build(a):
-    params = {"project_id": a["projectId"]}
+    params = {"project_id": a["projectId"], "now": TimeUTC.now()}
     full_args = {}
     j_s = True
     if a["seriesId"] is not None:
@@ -121,8 +121,8 @@ def Build(a):
         if a["seriesId"] is not None:
             q += f""" FROM ({subQ}) AS stat"""
         else:
-            q += f""" FROM ({subQ} AND timestamp>=%(startDate)s 
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}) AS stat"""
+            q += f""" FROM ({subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s 
+                                {"AND sessions.start_ts >= %(startDate)s AND sessions.start_ts <= %(now)s" if j_s else ""}) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
         if a["options"]["change"] == schemas.AlertDetectionChangeType.change:
