@@ -21,6 +21,7 @@ export interface StartOptions {
   userID?: string
   metadata?: Record<string, string>
   forceNew?: boolean
+  sessionHash?: string
 }
 
 interface OnStartInfo {
@@ -94,7 +95,7 @@ export default class App {
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: Worker
-  constructor(projectKey: string, sessionHash: string | undefined, options: Partial<Options>) {
+  constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
@@ -140,8 +141,9 @@ export default class App {
       }
     })
 
-    if (sessionHash != null) {
-      this.session.applySessionHash(sessionHash)
+    // @depricated (use sessionHash on start instead)
+    if (sessionToken != null) {
+      this.session.applySessionHash(sessionToken)
     }
 
     try {
@@ -343,6 +345,9 @@ export default class App {
       )
     }
     this.activityState = ActivityState.Starting
+    if (startOpts.sessionHash) {
+      this.session.applySessionHash(startOpts.sessionHash)
+    }
 
     const timestamp = now()
     const startWorkerMsg: WorkerMessageData = {

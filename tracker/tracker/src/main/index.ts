@@ -37,7 +37,7 @@ export type Options = Partial<
 > & {
   projectID?: number // For the back compatibility only (deprecated)
   projectKey: string
-  sessionHash?: string
+  sessionToken?: string
   respectDoNotTrack?: boolean
   autoResetOnWindowOpen?: boolean
   // dev only
@@ -70,10 +70,8 @@ function processOptions(obj: any): obj is Options {
       obj.projectKey = obj.projectKey.toString()
     }
   }
-  if (typeof obj.sessionHash !== 'string' && obj.sessionHash != null) {
-    console.warn(
-      `OpenReplay: invalid 'sessionHash' option type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`,
-    )
+  if (obj.sessionToken != null) {
+    deprecationWarn('`sessionToken` option', '`sessionHash` start() option', '/')
   }
   return true
 }
@@ -110,7 +108,7 @@ export default class API {
       !('Blob' in window) ||
       !('Worker' in window)
         ? null
-        : new App(options.projectKey, options.sessionHash, options))
+        : new App(options.projectKey, options.sessionToken, options))
     if (app !== null) {
       Viewport(app)
       CSSRules(app)
