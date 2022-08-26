@@ -151,8 +151,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
                             tabs={TABS}
                             active={activeTab}
                             onClick={(tab) => {
-                                setActiveTab(tab);
-                                !showEvents && toggleEvents(true);
+                                if (activeTab === tab) {
+                                    setActiveTab('');
+                                    toggleEvents();
+                                } else {
+                                    setActiveTab(tab);
+                                    !showEvents && toggleEvents(true);
+                                }
                             }}
                             border={false}
                         />
