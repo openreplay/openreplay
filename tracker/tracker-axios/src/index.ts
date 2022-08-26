@@ -61,7 +61,7 @@ export default function(opts: Partial<Options> = {}) {
       ? name => ihOpt.includes(name)
       : () => ihOpt
 
-    const sendFetchMessage = (res: AxiosResponse) => {
+    const sendFetchMessage = async (res: AxiosResponse) => {
       // ?? TODO: why config is undeined sometimes?
       if (!isAxiosResponse(res)) { return }
     	// @ts-ignore

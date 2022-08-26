@@ -87,82 +87,84 @@ export default function(opts: Partial<Options> = {}): (app: App | null) => Windo
       if (options.failuresOnly && response.status < 400) {
         return response
       }
-      const r = response.clone();
+      (async () => {
+        const r = response.clone();
 
-      r.text().then(text => {
-        // Headers prepearing
-        const reqHs: Record<string, string> = {}
-        const resHs: Record<string, string> = {}
-        if (ihOpt !== true) {
-          function writeReqHeader([n, v]) {
-            if (!isHIgnoring(n)) { reqHs[n] = v }
+        r.text().then(text => {
+          // Headers prepearing
+          const reqHs: Record<string, string> = {}
+          const resHs: Record<string, string> = {}
+          if (ihOpt !== true) {
+            function writeReqHeader([n, v]) {
+              if (!isHIgnoring(n)) { reqHs[n] = v }
+            }
+            if (init.headers instanceof Headers) {
+              init.headers.forEach((v, n) => writeReqHeader([n, v]))
+            } else if (Array.isArray(init.headers)) {
+              init.headers.forEach(writeReqHeader);
+            } else if (typeof init.headers === 'object') {
+              Object.entries(init.headers).forEach(writeReqHeader)
+            }
+
+            r.headers.forEach((v, n) => { if (!isHIgnoring(n)) resHs[n] = v })
           }
-          if (init.headers instanceof Headers) {
-            init.headers.forEach((v, n) => writeReqHeader([n, v]))
-          } else if (Array.isArray(init.headers)) {
-            init.headers.forEach(writeReqHeader);
-          } else if (typeof init.headers === 'object') {
-            Object.entries(init.headers).forEach(writeReqHeader)
+
+          const req: RequestData = {
+            headers: reqHs,
+            body: init.body,
           }
 
-          r.headers.forEach((v, n) => { if (!isHIgnoring(n)) resHs[n] = v })
-        }
-
-        const req: RequestData = {
-          headers: reqHs,
-          body: init.body,
-        }
-
-        // Response forming
-        const res: ResponseData = {
-          headers: resHs,
-          body: text,
-        }
-
-        const method = typeof init.method === 'string' 
-          ? init.method.toUpperCase() 
-          : 'GET'
-        let reqResInfo: RequestResponseData | null = {
-          url: input,
-          method,
-          status: r.status,
-          request: req,
-          response: res,
-        }
-        if (options.sanitiser) {
-          try {
-            reqResInfo.response.body = JSON.parse(text) as Object // Why the returning type is "any"?
-          } catch {}
-          reqResInfo = options.sanitiser(reqResInfo)
-          if (!reqResInfo) {
-            return
+          // Response forming
+          const res: ResponseData = {
+            headers: resHs,
+            body: text,
           }
-        }
 
-        const getStj = (r: RequestData | ResponseData): string => {
-          if (r && typeof r.body !== 'string') {
+          const method = typeof init.method === 'string' 
+            ? init.method.toUpperCase() 
+            : 'GET'
+          let reqResInfo: RequestResponseData | null = {
+            url: input,
+            method,
+            status: r.status,
+            request: req,
+            response: res,
+          }
+          if (options.sanitiser) {
             try {
-              r.body = JSON.stringify(r.body)
-            } catch {
-              r.body = "<unable to stringify>"
-              //app.log.warn("Openreplay fetch") // TODO: version check
+              reqResInfo.response.body = JSON.parse(text) as Object // Why the returning type is "any"?
+            } catch {}
+            reqResInfo = options.sanitiser(reqResInfo)
+            if (!reqResInfo) {
+              return
             }
           }
-          return JSON.stringify(r)
-        }
 
-        app.send(
-          Messages.Fetch(
-            method,
-            String(reqResInfo.url),
-            getStj(reqResInfo.request),
-            getStj(reqResInfo.response),
-            r.status,
-            startTime + performance.timing.navigationStart,
-            duration,
-          ),
-        ) 
-      });
+          const getStj = (r: RequestData | ResponseData): string => {
+            if (r && typeof r.body !== 'string') {
+              try {
+                r.body = JSON.stringify(r.body)
+              } catch {
+                r.body = "<unable to stringify>"
+                //app.log.warn("Openreplay fetch") // TODO: version check
+              }
+            }
+            return JSON.stringify(r)
+          }
+
+          app.send(
+            Messages.Fetch(
+              method,
+              String(reqResInfo.url),
+              getStj(reqResInfo.request),
+              getStj(reqResInfo.response),
+              r.status,
+              startTime + performance.timing.navigationStart,
+              duration,
+            ),
+          ) 
+        })
+      })()
       return response;
     }
 
