@@ -41,7 +41,7 @@ LeftToDb = {
         "formula": "AVG(NULLIF(resources.duration,0))"},
     schemas.AlertColumn.resources__missing__count: {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "COUNT(DISTINCT url_hostpath)", "condition": "success= FALSE"},
+        "formula": "COUNT(DISTINCT url_hostpath)", "condition": "success= FALSE AND type='img'"},
     schemas.AlertColumn.errors__4xx_5xx__count: {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)", "formula": "COUNT(session_id)",
         "condition": "status/100!=2"},
@@ -53,8 +53,9 @@ LeftToDb = {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)",
         "formula": "COUNT(DISTINCT session_id)", "condition": "success= FALSE AND type='script'"},
     schemas.AlertColumn.performance__crashes__count: {
-        "table": "(SELECT *, start_ts AS timestamp FROM public.sessions WHERE errors_count > 0) AS sessions",
-        "formula": "COUNT(DISTINCT session_id)", "condition": "errors_count > 0"},
+        "table": "public.sessions",
+        "formula": "COUNT(DISTINCT session_id)",
+        "condition": "errors_count > 0 AND duration>0"},
     schemas.AlertColumn.errors__javascript__count: {
         "table": "events.errors INNER JOIN public.errors AS m_errors USING (error_id)",
         "formula": "COUNT(DISTINCT session_id)", "condition": "source='js_exception'", "joinSessions": False},
@@ -94,7 +95,8 @@ def can_check(a) -> bool:
 
 
 def Build(a):
-    params = {"project_id": a["projectId"], "now": TimeUTC.now()}
+    now = TimeUTC.now()
+    params = {"project_id": a["projectId"], "now": now}
     full_args = {}
     j_s = True
     if a["seriesId"] is not None:
@@ -122,10 +124,11 @@ def Build(a):
             q += f""" FROM ({subQ}) AS stat"""
         else:
             q += f""" FROM ({subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s 
-                                {"AND sessions.start_ts >= %(startDate)s AND sessions.start_ts <= %(now)s" if j_s else ""}) AS stat"""
+                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
-        if a["options"]["change"] == schemas.AlertDetectionChangeType.change:
+        if a["change"] == schemas.AlertDetectionType.change:
             if a["seriesId"] is not None:
                 sub2 = subQ.replace("%(startDate)s", "%(timestamp_sub2)s").replace("%(endDate)s", "%(startDate)s")
                 sub1 = f"SELECT (({subQ})-({sub2})) AS value"
@@ -155,8 +158,9 @@ def Build(a):
                                             - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) \
                                             * 60 * 1000}
             else:
-                sub1 = f"""{subQ} AND timestamp>=%(startDate)s
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}"""
+                sub1 = f"""{subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s
+                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
                 sub2 = f"""{subQ} AND timestamp<%(startDate)s
                                 AND timestamp>=%(timestamp_sub2)s

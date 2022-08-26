@@ -279,7 +279,7 @@ class _AlertMessageSchema(BaseModel):
     value: str = Field(...)
 
 
-class AlertDetectionChangeType(str, Enum):
+class AlertDetectionType(str, Enum):
     percent = "percent"
     change = "change"
 
@@ -290,7 +290,6 @@ class _AlertOptionSchema(BaseModel):
     previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
     lastNotification: Optional[int] = Field(None)
     renotifyInterval: Optional[int] = Field(720)
-    change: Optional[AlertDetectionChangeType] = Field(None)
 
 
 class AlertColumn(str, Enum):
@@ -339,6 +338,7 @@ class AlertDetectionMethod(str, Enum):
 class AlertSchema(BaseModel):
     name: str = Field(...)
     detection_method: AlertDetectionMethod = Field(...)
+    change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
     description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
