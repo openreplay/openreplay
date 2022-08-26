@@ -13,6 +13,7 @@ import { deviceMemory, jsHeapSizeLimit } from '../modules/performance.js'
 import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
+import type { Options as SessOptions } from './session.js'
 import type { Options as WebworkerOptions, WorkerMessageData } from '../../common/interaction.js'
 
 // TODO: Unify and clearly describe options logic
@@ -49,9 +50,9 @@ enum ActivityState {
 type AppOptions = {
   revID: string
   node_id: string
+  session_reset_key: string
   session_token_key: string
   session_pageno_key: string
-  session_reset_key: string
   local_uuid_key: string
   ingestPoint: string
   resourceBaseHref: string | null // resourceHref?
@@ -65,7 +66,8 @@ type AppOptions = {
 
   // @deprecated
   onStart?: StartCallback
-} & WebworkerOptions
+} & WebworkerOptions &
+  SessOptions
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
@@ -92,11 +94,7 @@ export default class App {
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
   private readonly worker?: Worker
-  constructor(
-    projectKey: string,
-    sessionToken: string | null | undefined,
-    options: Partial<Options>,
-  ) {
+  constructor(projectKey: string, sessionHash: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
@@ -129,7 +127,9 @@ export default class App {
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
-    this.session = new Session()
+    this.localStorage = this.options.localStorage || window.localStorage
+    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
+    this.session = new Session(this, this.options)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
         // TODO: nullable userID
@@ -139,11 +139,9 @@ export default class App {
         Object.entries(metadata).forEach(([key, value]) => this.send(Metadata(key, value)))
       }
     })
-    this.localStorage = this.options.localStorage || window.localStorage
-    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
 
-    if (sessionToken != null) {
-      this.sessionStorage.setItem(this.options.session_token_key, sessionToken)
+    if (sessionHash != null) {
+      this.session.applySessionHash(sessionHash)
     }
 
     try {
@@ -269,7 +267,7 @@ export default class App {
     return true
   }
 
-  private getStartInfo() {
+  private getTrackerInfo() {
     return {
       userUUID: this.localStorage.getItem(this.options.local_uuid_key),
       projectKey: this.projectKey,
@@ -281,14 +279,11 @@ export default class App {
   getSessionInfo() {
     return {
       ...this.session.getInfo(),
-      ...this.getStartInfo(),
+      ...this.getTrackerInfo(),
     }
   }
   getSessionToken(): string | undefined {
-    const token = this.sessionStorage.getItem(this.options.session_token_key)
-    if (token !== null) {
-      return token
-    }
+    return this.session.getSessionToken()
   }
   getSessionID(): string | undefined {
     return this.session.getInfo().sessionID || undefined
@@ -349,18 +344,10 @@ export default class App {
     }
     this.activityState = ActivityState.Starting
 
-    let pageNo = 0
-    const pageNoStr = this.sessionStorage.getItem(this.options.session_pageno_key)
-    if (pageNoStr != null) {
-      pageNo = parseInt(pageNoStr)
-      pageNo++
-    }
-    this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString())
-
     const timestamp = now()
     const startWorkerMsg: WorkerMessageData = {
       type: 'start',
-      pageNo,
+      pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
       timestamp,
       url: document.URL,
@@ -387,10 +374,10 @@ export default class App {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...this.getStartInfo(),
+          ...this.getTrackerInfo(),
           timestamp,
           userID: this.session.getInfo().userID,
-          token: this.sessionStorage.getItem(this.options.session_token_key),
+          token: this.session.getSessionToken(),
           deviceMemory,
           jsHeapSizeLimit,
           reset: startOpts.forceNew || sReset !== null,
@@ -429,7 +416,7 @@ export default class App {
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
-        this.sessionStorage.setItem(this.options.session_token_key, token)
+        this.session.setSessionToken(token)
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
         this.session.update({ sessionID, timestamp: startTimestamp || timestamp }) // TODO: no no-explicit 'any'
         const startWorkerMsg: WorkerMessageData = {
@@ -455,8 +442,8 @@ export default class App {
         return SuccessfulStart(onStartInfo)
       })
       .catch((reason) => {
-        this.sessionStorage.removeItem(this.options.session_token_key)
         this.stop()
+        this.session.reset()
         if (reason === CANCELED) {
           return UnsuccessfulStart(CANCELED)
         }
@@ -482,7 +469,7 @@ export default class App {
       })
     }
   }
-  stop(calledFromAPI = false, restarting = false): void {
+  stop(stopWorker = true): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
         this.sanitizer.clear()
@@ -490,11 +477,8 @@ export default class App {
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
-        if (calledFromAPI) {
-          this.session.reset()
-        }
         this.notify.log('OpenReplay tracking stopped.')
-        if (this.worker && !restarting) {
+        if (this.worker && stopWorker) {
           this.worker.postMessage('stop')
         }
       } finally {
@@ -503,7 +487,7 @@ export default class App {
     }
   }
   restart() {
-    this.stop(false, true)
+    this.stop(false)
     this.start({ forceNew: false })
   }
 }

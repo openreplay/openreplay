@@ -1,17 +1,26 @@
+import type App from './index.js'
+
 interface SessionInfo {
-  sessionID: string | null
+  sessionID: string | undefined
   metadata: Record<string, string>
   userID: string | null
   timestamp: number
 }
 type OnUpdateCallback = (i: Partial<SessionInfo>) => void
 
+export type Options = {
+  session_token_key: string
+  session_pageno_key: string
+}
+
 export default class Session {
   private metadata: Record<string, string> = {}
   private userID: string | null = null
-  private sessionID: string | null = null
+  private sessionID: string | undefined
   private readonly callbacks: OnUpdateCallback[] = []
   private timestamp = 0
+
+  constructor(private readonly app: App, private options: Options) {}
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)
@@ -52,6 +61,50 @@ export default class Session {
     this.handleUpdate({ userID })
   }
 
+  private getPageNumber(): number | undefined {
+    const pageNoStr = this.app.sessionStorage.getItem(this.options.session_pageno_key)
+    if (pageNoStr == null) {
+      return undefined
+    }
+    return parseInt(pageNoStr)
+  }
+
+  incPageNo(): number {
+    let pageNo = this.getPageNumber()
+    if (pageNo === undefined) {
+      pageNo = 0
+    } else {
+      pageNo++
+    }
+    this.app.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString())
+    return pageNo
+  }
+
+  getSessionToken(): string | undefined {
+    return this.app.sessionStorage.getItem(this.options.session_token_key) || undefined
+  }
+  setSessionToken(token: string): void {
+    this.app.sessionStorage.setItem(this.options.session_token_key, token)
+  }
+
+  applySessionHash(hash: string) {
+    const [pageNoStr, token] = decodeURI(hash).split('&')
+    if (!pageNoStr || !token) {
+      return
+    }
+    this.app.sessionStorage.setItem(this.options.session_token_key, token)
+    this.app.sessionStorage.setItem(this.options.session_pageno_key, pageNoStr)
+  }
+
+  getSessionHash(): string | undefined {
+    const pageNo = this.getPageNumber()
+    const token = this.getSessionToken()
+    if (pageNo === undefined || token === undefined) {
+      return
+    }
+    return encodeURI(String(pageNo) + '&' + token)
+  }
+
   getInfo(): SessionInfo {
     return {
       sessionID: this.sessionID,
@@ -62,9 +115,10 @@ export default class Session {
   }
 
   reset(): void {
+    this.app.sessionStorage.removeItem(this.options.session_token_key)
     this.metadata = {}
     this.userID = null
-    this.sessionID = null
+    this.sessionID = undefined
     this.timestamp = 0
   }
 }
