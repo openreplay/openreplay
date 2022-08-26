@@ -1,4 +1,5 @@
 import schemas
+from chalicelib.core import countries
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.event_filter_definition import Event
@@ -19,7 +20,17 @@ def __get_autocomplete_table(value, project_id):
                            schemas.EventType.input]
     autocomplete_events.sort()
     sub_queries = []
+    c_list = []
     for e in autocomplete_events:
+        if e == schemas.FilterType.user_country:
+            c_list = countries.get_country_code_autocomplete(value)
+            if len(c_list) > 0:
+                sub_queries.append(f"""(SELECT DISTINCT ON(value) type, value
+                                        FROM {TABLE}
+                                        WHERE project_id = %(project_id)s
+                                            AND type= '{e}' 
+                                            AND value IN %(c_list)s)""")
+            continue
         sub_queries.append(f"""(SELECT type, value
                                 FROM {TABLE}
                                 WHERE project_id = %(project_id)s
@@ -35,9 +46,13 @@ def __get_autocomplete_table(value, project_id):
                                     LIMIT 5)""")
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(" UNION DISTINCT ".join(sub_queries) + ";",
-                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                             "svalue": helper.string_to_sql_like("^" + value)})
+                            {"project_id": project_id,
+                             "value": helper.string_to_sql_like(value),
+                             "svalue": helper.string_to_sql_like("^" + value),
+                             "c_list": tuple(c_list)
+                             })
         try:
+            print(query)
             cur.execute(query)
         except Exception as err:
             print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
@@ -51,6 +66,15 @@ def __get_autocomplete_table(value, project_id):
 
 
 def __generic_query(typename, value_length=None):
+    if typename == schemas.FilterType.user_country:
+        return f"""SELECT DISTINCT value, type
+                    FROM {TABLE}
+                    WHERE
+                      project_id = %(project_id)s
+                      AND type='{typename}'
+                      AND value IN %(value)s
+                      ORDER BY value"""
+
     if value_length is None or value_length > 2:
         return f"""(SELECT DISTINCT value, type
                     FROM {TABLE}
@@ -94,9 +118,13 @@ def __generic_autocomplete(event: Event):
 def __generic_autocomplete_metas(typename):
     def f(project_id, text):
         with pg_client.PostgresClient() as cur:
-            query = cur.mogrify(__generic_query(typename, value_length=len(text)),
-                                {"project_id": project_id, "value": helper.string_to_sql_like(text),
-                                 "svalue": helper.string_to_sql_like("^" + text)})
+            params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
+                      "svalue": helper.string_to_sql_like("^" + text)}
+
+            if typename == schemas.FilterType.user_country:
+                params["value"] = tuple(countries.get_country_code_autocomplete(text))
+
+            query = cur.mogrify(__generic_query(typename, value_length=len(text)), params)
             cur.execute(query)
             rows = cur.fetchall()
         return rows
