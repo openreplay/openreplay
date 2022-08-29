@@ -32,7 +32,7 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
-			if err := ch.InsertCustom(session, m); err != nil {
+			if err := mi.ch.InsertCustom(session, m); err != nil {
 				log.Printf("can't insert graphQL event into clickhouse: %s", err)
 			}
 		}
@@ -52,7 +52,7 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
-			if err := ch.InsertRequest(session, m); err != nil {
+			if err := mi.ch.InsertRequest(session, m); err != nil {
 				log.Printf("can't insert request event into clickhouse: %s", err)
 			}
 		}
@@ -62,7 +62,7 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
-			if err := ch.InsertGraphQL(session, m); err != nil {
+			if err := mi.ch.InsertGraphQL(session, m); err != nil {
 				log.Printf("can't insert graphQL event into clickhouse: %s", err)
 			}
 		}
