@@ -824,7 +824,7 @@ $$
 
             IF NOT EXISTS(SELECT *
                           FROM pg_type typ
-                          WHERE typ.typname = 'alert_detection_method') THEN
+                          WHERE typ.typname = 'alert_change_type') THEN
                 CREATE TYPE alert_change_type AS ENUM ('percent', 'change');
             END IF;
 
