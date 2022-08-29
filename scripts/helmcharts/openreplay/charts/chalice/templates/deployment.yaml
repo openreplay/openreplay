@@ -106,15 +106,32 @@ spec:
               containerPort: {{ $val }}
               protocol: TCP
             {{- end }}
-          {{- with .Values.persistence.mounts  }}
           volumeMounts:
+            - name: datadir
+              mountPath: /mnt/efs
+          {{- with .Values.persistence.mounts  }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.persistence.volumes  }}
+      {{- if eq .Values.pvc.name "hostPath" }}
       volumes:
+      - name: datadir
+        hostPath:
+          # Ensure the file directory is created.
+          path: {{ .Values.pvc.hostMountPath }}
+          type: DirectoryOrCreate
+      {{- with .Values.persistence.volumes  }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- else }}
+      volumes:
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: {{ .Values.pvc.name }}
+      {{- with .Values.persistence.volumes  }}
         {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
