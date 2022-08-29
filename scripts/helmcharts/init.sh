@@ -15,7 +15,7 @@ fatal()
     exit 1
 }
 
-version="v1.7.0"
+version="v1.8.0"
 usr=`whoami`
 
 # Installing k3s
@@ -82,10 +82,10 @@ fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.m
 }
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.7.0"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.7.0"
+# This wrapper will help to check the sed, and use the correct version="v1.8.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.8.0"
 function is_gnu_sed(){
-  sed --version >/dev/null 2>&1
+  sed --version="v1.8.0"
 }
 
 function sed_i_wrapper(){
