@@ -71,8 +71,12 @@ func main() {
 
 				msg := iter.Message()
 				// Process assets
-				if iter.Type() == MsgSetNodeAttributeURLBased || iter.Type() == MsgSetCSSDataURLBased || iter.Type() == MsgCSSInsertRuleURLBased {
-					msg = assetMessageHandler.ParseAssets(sessionID, msg.Decode())
+				if iter.Type() == MsgSetNodeAttributeURLBased ||
+					iter.Type() == MsgSetCSSDataURLBased ||
+					iter.Type() == MsgCSSInsertRuleURLBased ||
+					iter.Type() == AdoptedSSReplaceURLBased ||
+					iter.Type() == AdoptedSSInsertRuleURLBased {
+					msg = assetMessageHandler.ParseAssets(sessionID, msg.Decode()) // TODO: filter type only once (use iterator inide or bring ParseAssets out here).
 				}
 
 				// Filter message
