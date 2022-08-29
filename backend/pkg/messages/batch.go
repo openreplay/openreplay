@@ -97,6 +97,7 @@ func (i *iteratorImpl) Next() bool {
 		i.index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.timestamp = m.Timestamp
 		i.version = m.Version
+		i.url = m.Url
 		isBatchMeta = true
 		log.Printf("new batch version: %d", i.version)
 		if i.version > 1 {
