@@ -28,6 +28,15 @@ LANGUAGE plpgsql;
 ALTER TABLE IF EXISTS alerts
     ADD COLUMN IF NOT EXISTS change alert_change_type NOT NULL DEFAULT 'change';
 
+ALTER TABLE IF EXISTS sessions
+    ADD COLUMN IF NOT EXISTS referrer      text NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS base_referrer text NULL DEFAULT NULL;
+
+ALTER TABLE IF EXISTS events.performance
+    ADD COLUMN IF NOT EXISTS host  text NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS path  text NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS query text NULL DEFAULT NULL;
+
 COMMIT;
 
 CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_unique_project_id_md5value_type_idx ON autocomplete (project_id, md5(value), type);
