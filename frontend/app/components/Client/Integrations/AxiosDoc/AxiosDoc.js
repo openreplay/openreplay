@@ -29,7 +29,7 @@ const AxiosDoc = (props) => {
                     label="Server-Side-Rendered (SSR)?"
                     first={
                         <Highlight className="js">
-                            {`import tracker from '@openreplay/tracker';
+                            {`import OpenReplay from '@openreplay/tracker';
 import trackerAxios from '@openreplay/tracker-axios';
 const tracker = new OpenReplay({
   projectKey: '${projectKey}'

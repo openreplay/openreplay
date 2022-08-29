@@ -1,5 +1,4 @@
 import React from 'react';
-import stl from './LiveStatusText.module.css';
 import ovStl from './overlay.module.css';
 import { ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
 import { Loader } from 'UI';
@@ -64,7 +63,7 @@ export default function LiveStatusText({ text, concetionStatus }: Props) {
             <div className="text-sm">Something wrong just happened. Try refreshing the page.</div>
           </div>
         )
-    } 
+    }
   }
   return <div className={ovStl.overlay}>
     { renderView()}

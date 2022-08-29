@@ -26,7 +26,7 @@ const FetchDoc = (props) => {
                     label="Server-Side-Rendered (SSR)?"
                     first={
                         <Highlight className="js">
-                            {`import tracker from '@openreplay/tracker';
+                            {`import OpenReplay from '@openreplay/tracker';
 import trackerFetch from '@openreplay/tracker-fetch';
 //...
 const tracker = new OpenReplay({

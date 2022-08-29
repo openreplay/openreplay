@@ -25,7 +25,8 @@ interface Props {
 
   nextId: string,
   togglePlay: () => void,
-  closedLive?: boolean
+  closedLive?: boolean,
+  livePlay?: boolean,
 }
 
 function Overlay({
@@ -42,20 +43,21 @@ function Overlay({
   activeTargetIndex,
   nextId,
   togglePlay,
-  closedLive
+  closedLive,
+  livePlay,
 }: Props) {
   const showAutoplayTimer = !live && completed && autoplay && nextId
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
-  const showLiveStatusText = live && liveStatusText && !loading;
+  const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
   return (
     <>
       { showAutoplayTimer && <AutoplayTimer /> }
-      { showLiveStatusText && 
+      { showLiveStatusText &&
         <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
       }
       { messagesLoading && <Loader /> }
-      { showPlayIconLayer && 
+      { showPlayIconLayer &&
         <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       }
       { markedTargets && <ElementsMarker targets={ markedTargets } activeIndex={activeTargetIndex}/>
@@ -77,4 +79,5 @@ export default connectPlayer(state => ({
   concetionStatus: state.peerConnectionStatus,
   markedTargets: state.markedTargets,
   activeTargetIndex: state.activeTargetIndex,
+  livePlay: state.livePlay,
 }))(Overlay);

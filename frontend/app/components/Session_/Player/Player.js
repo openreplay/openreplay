@@ -84,7 +84,6 @@ export default class Player extends React.PureComponent {
       fullscreen,
       fullscreenOff,
       nextId,
-      live,
       closedLive,
       bottomBlock,
       activeTab
