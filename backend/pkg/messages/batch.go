@@ -22,6 +22,7 @@ type iteratorImpl struct {
 	msgSize   uint64
 	canSkip   bool
 	msg       Message
+	url       string
 }
 
 func NewIterator(data []byte) Iterator {
@@ -133,9 +134,13 @@ func (i *iteratorImpl) Next() bool {
 	case MsgSessionEnd:
 		m := i.msg.Decode().(*SessionEnd)
 		i.timestamp = int64(m.Timestamp)
+	case MsgSetPageLocation:
+		m := i.msg.Decode().(*SetPageLocation)
+		i.url = m.URL
 	}
 	i.msg.Meta().Index = i.index
 	i.msg.Meta().Timestamp = i.timestamp
+	i.msg.Meta().Url = i.url
 
 	if !isBatchMeta { // Without that indexes will be unique anyway, though shifted by 1 because BatchMeta is not counted in tracker
 		i.index++
