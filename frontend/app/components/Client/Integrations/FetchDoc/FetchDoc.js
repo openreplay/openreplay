@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
+import { connect } from 'react-redux';
 
 const FetchDoc = (props) => {
     const { projectKey } = props;
@@ -69,4 +70,4 @@ fetch('https://api.openreplay.com/').then(response => console.log(response.json(
 
 FetchDoc.displayName = 'FetchDoc';
 
-export default FetchDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(FetchDoc)

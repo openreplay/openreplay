@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import ToggleContent from '../../../shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
+import { connect } from 'react-redux';
 
 const VueDoc = (props) => {
     const { projectKey } = props;
@@ -75,4 +76,4 @@ const store = new Vuex.Store({
 
 VueDoc.displayName = 'VueDoc';
 
-export default VueDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(VueDoc)

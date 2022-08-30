@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
+import { connect } from 'react-redux';
 
 const AxiosDoc = (props) => {
     const { projectKey } = props;
@@ -65,4 +66,4 @@ function MyApp() {
 
 AxiosDoc.displayName = 'AxiosDoc';
 
-export default AxiosDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(AxiosDoc)

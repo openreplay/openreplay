@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
+import { connect } from 'react-redux';
 
 const MobxDoc = (props) => {
     const { projectKey } = props;
@@ -66,4 +67,4 @@ function SomeFunctionalComponent() {
 
 MobxDoc.displayName = 'MobxDoc';
 
-export default MobxDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(MobxDoc)

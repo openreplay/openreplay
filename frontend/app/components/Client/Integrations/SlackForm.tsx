@@ -7,14 +7,12 @@ import { useModal } from 'App/components/Modal';
 import { Button } from 'UI';
 
 interface Props {
-    onEdit: (integration: any) => void;
+    onEdit?: (integration: any) => void;
     istance: any;
     fetchList: any;
     init: any;
 }
 const SlackForm = (props: Props) => {
-    const { istance } = props;
-    const { hideModal } = useModal();
     const [active, setActive] = React.useState(false);
 
     const onEdit = () => {

@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import ToggleContent from 'Shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
+import { connect } from 'react-redux';
 
 const ProfilerDoc = (props) => {
     const { projectKey } = props;
@@ -73,4 +74,4 @@ const fn = profiler('call_name')(() => {
 
 ProfilerDoc.displayName = 'ProfilerDoc';
 
-export default ProfilerDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(ProfilerDoc)

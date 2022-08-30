@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
+import { connect } from 'react-redux';
 
 const GraphQLDoc = (props) => {
     const { projectKey } = props;
@@ -69,4 +70,4 @@ export const recordGraphQL = tracker.use(trackerGraphQL());`}
 
 GraphQLDoc.displayName = 'GraphQLDoc';
 
-export default GraphQLDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(GraphQLDoc)

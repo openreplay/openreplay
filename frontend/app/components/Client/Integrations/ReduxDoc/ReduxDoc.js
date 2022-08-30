@@ -2,6 +2,7 @@ import React from 'react';
 import Highlight from 'react-highlight';
 import ToggleContent from '../../../shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
+import { connect } from 'react-redux';
 
 const ReduxDoc = (props) => {
     const { projectKey } = props;
@@ -72,4 +73,4 @@ const store = createStore(
 
 ReduxDoc.displayName = 'ReduxDoc';
 
-export default ReduxDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(ReduxDoc)

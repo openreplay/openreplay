@@ -5,6 +5,7 @@ import AssistScript from './AssistScript';
 import AssistNpm from './AssistNpm';
 import { Tabs } from 'UI';
 import { useState } from 'react';
+import { connect } from 'react-redux';
 
 const NPM = 'NPM';
 const SCRIPT = 'SCRIPT';
@@ -53,4 +54,4 @@ const AssistDoc = (props) => {
 
 AssistDoc.displayName = 'AssistDoc';
 
-export default AssistDoc;
+export default connect((state) => ({ projectKey: state.getIn(['site', 'instance', 'projectKey'])}) )(AssistDoc)

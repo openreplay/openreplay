@@ -156,7 +156,7 @@ const integrations = [
     },
     {
         title: 'Plugins',
-        isProject: false,
+        isProject: true,
         description:
             "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
         integrations: [
