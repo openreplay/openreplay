@@ -15,6 +15,43 @@ export const INITIAL_STATE: State = {
 }
 
 
+function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[] {
+  // @ts-ignore (IE, Edge)
+  if (typeof doc.msElementsFromRect === 'function') {
+    // @ts-ignore
+    return Array.prototype.slice.call(doc.msElementsFromRect(x,y)) || []
+  }
+
+  if (typeof doc.elementsFromPoint === 'function') {
+    return doc.elementsFromPoint(x, y)     
+  }
+  const el = doc.elementFromPoint(x, y)
+  return el ? [ el ] : []
+}
+
+function getElementsFromInternalPointDeep(doc: Document, point: Point): Element[] {
+  const elements = getElementsFromInternalPoint(doc, point)
+  // is it performant though??
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i]
+    if (isIframe(el)){
+      const iDoc = el.contentDocument
+      if (iDoc) {
+        const iPoint: Point = {
+          x: point.x - el.clientLeft,
+          y: point.y - el.clientTop,
+        }
+        elements.push(...getElementsFromInternalPointDeep(iDoc, iPoint))
+      }
+    }
+  }
+  return elements
+}
+
+function isIframe(el: Element): el is HTMLIFrameElement {
+  return el.tagName === "IFRAME"
+}
+
 export default abstract class BaseScreen {
   public    readonly overlay: HTMLDivElement;
   private   readonly iframe: HTMLIFrameElement;
@@ -113,18 +150,10 @@ export default abstract class BaseScreen {
     return this.document?.elementFromPoint(x, y) || null;
   }
 
-  getElementsFromInternalPoint({ x, y }: Point): Element[] {
-    // @ts-ignore (IE, Edge)
-    if (typeof this.document?.msElementsFromRect === 'function') {
-      // @ts-ignore
-      return Array.prototype.slice.call(this.document?.msElementsFromRect(x,y)) || [];
-    }
-
-    if (typeof this.document?.elementsFromPoint === 'function') {
-      return this.document?.elementsFromPoint(x, y) || [];     
-    }
-    const el = this.document?.elementFromPoint(x, y);
-    return el ? [ el ] : [];
+  getElementsFromInternalPoint(point: Point): Element[] {
+    const doc = this.document
+    if (!doc) { return [] }
+    return getElementsFromInternalPointDeep(doc, point)
   }
 
   getElementFromPoint(point: Point): Element | null {

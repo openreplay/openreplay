@@ -12,7 +12,6 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
 	constructor(private screen: StatedScreen) {super()}
 
 	private updateHover(): void {
-    // @ts-ignore TODO
     const curHoverElements = this.screen.getCursorTargets();
     const diffAdd = curHoverElements.filter(elem => !this.hoverElements.includes(elem));
     const diffRemove = this.hoverElements.filter(elem => !curHoverElements.includes(elem));
@@ -39,6 +38,4 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
       this.updateHover();
     }
 	}
-
-
 }
