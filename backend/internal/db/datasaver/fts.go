@@ -44,6 +44,11 @@ type GraphQLEventFTS struct {
 }
 
 func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
+	// Skip, if FTS is disabled
+	if s.producer == nil {
+		return
+	}
+
 	var (
 		event []byte
 		err   error
