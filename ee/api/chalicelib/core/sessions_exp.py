@@ -5,33 +5,6 @@ import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
-from chalicelib.utils.TimeUTC import TimeUTC
-
-SESSION_PROJECTION_COLS = """\
-s.project_id,
-s.session_id::text AS session_id,
-s.user_uuid,
-s.user_id,
-s.user_os,
-s.user_browser,
-s.user_device,
-s.user_device_type,
-s.user_country,
-s.start_ts,
-s.duration,
-s.events_count,
-s.pages_count,
-s.errors_count,
-s.user_anonymous_id,
-s.platform,
-s.issue_score,
-to_jsonb(s.issue_types) AS issue_types,
-favorite_sessions.session_id NOTNULL            AS favorite,
-COALESCE((SELECT TRUE
- FROM public.user_viewed_sessions AS fs
- WHERE s.session_id = fs.session_id
-   AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed 
-   """
 
 SESSION_PROJECTION_COLS_CH = """\
 s.project_id,
