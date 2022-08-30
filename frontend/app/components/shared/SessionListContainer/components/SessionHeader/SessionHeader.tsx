@@ -20,11 +20,11 @@ interface Props {
 }
 function SessionHeader(props: Props) {
     const {
-        listCount,
         filter: { startDate, endDate, rangeValue },
         isBookmark,
         isEnterprise,
     } = props;
+
     const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
     const onDateChange = (e: any) => {

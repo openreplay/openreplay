@@ -80,8 +80,8 @@ export default Record(
             const offset = period.timezoneOffset || 0
             if (!period.rangeName || period.rangeName === CUSTOM_RANGE) {
                 const range = moment.range(
-                    moment(period.start || 0).utcOffset(offset),
-                    moment(period.end || 0).utcOffset(offset)
+                    moment(period.start || 0),
+                    moment(period.end || 0)
                 );
                 return {
                     ...period,
