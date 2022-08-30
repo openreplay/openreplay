@@ -21,6 +21,7 @@ type StartSessionResponse struct {
 	Token           string `json:"token"`
 	UserUUID        string `json:"userUUID"`
 	SessionID       string `json:"sessionID"`
+	ProjectID       string `json:"projectID"`
 	BeaconSizeLimit int64  `json:"beaconSizeLimit"`
 }
 

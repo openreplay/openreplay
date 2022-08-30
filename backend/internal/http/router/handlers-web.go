@@ -134,6 +134,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
+		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
 		StartTimestamp:  int64(flakeid.ExtractTimestamp(tokenData.ID)),
 	})
