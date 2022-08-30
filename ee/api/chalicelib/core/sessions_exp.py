@@ -24,16 +24,8 @@ s.errors_count AS errors_count,
 s.user_anonymous_id AS user_anonymous_id,
 s.platform AS platform,
 0 AS issue_score,
-s.issue_types AS issue_types,
--- ,
--- to_jsonb(s.issue_types) AS issue_types,
-isNotNull(favorite_sessions.session_id) AS favorite,
--- COALESCE((SELECT TRUE
---  FROM public.user_viewed_sessions AS fs
---  WHERE s.session_id = fs.session_id
---    AND fs.user_id = %(userId)s 
-      AND fs.project_id = %(project_id)s LIMIT 1), FALSE) AS viewed 
-   """
+s.issue_types AS issue_types 
+"""
 
 SESSION_PROJECTION_COLS_CH_MAP = """\
 'project_id',        toString(%(project_id)s),
@@ -52,8 +44,7 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'errors_count',      toString(s.errors_count),
 'user_anonymous_id', toString(s.user_anonymous_id),
 'platform',          toString(s.platform),
-'issue_score',       '0',
-'favorite',          toString(isNotNull(favorite_sessions.session_id))
+'issue_score',       '0'
 """
 
 
@@ -1926,13 +1917,14 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     #     extra_constraints.append("ufe.user_id = %(userId)s")
 
     if favorite_only and not errors_only and user_id is not None:
-        extra_from += """INNER JOIN (SELECT 1 AS session_id) AS favorite_sessions
-                                ON (TRUE)"""
-    elif not favorite_only and not errors_only and user_id is not None:
-        extra_from += f"""LEFT JOIN (SELECT session_id
-                                    FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions
-                                    WHERE user_id = %(userId)s) AS favorite_sessions
-                                    ON (s.session_id=favorite_sessions.session_id)"""
+        extra_from += f"""INNER JOIN (SELECT session_id 
+                                        FROM {exp_ch_helper.get_user_favorite_sessions_table()} 
+                                        WHERE user_id=%(userId)s) AS favorite_sessions USING (session_id)"""
+    # elif not favorite_only and not errors_only and user_id is not None:
+    #     extra_from += f"""LEFT JOIN (SELECT session_id
+    #                                 FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions
+    #                                 WHERE user_id = %(userId)s) AS favorite_sessions
+    #                                 ON (s.session_id=favorite_sessions.session_id)"""
     extra_join = ""
     if issue is not None:
         extra_join = """
