@@ -126,14 +126,6 @@ export default class Session {
     }
   }
 
-  buildURL(url: string): void {
-    this.sessionUrl = url
-  }
-
-  getSessionURL(): string {
-    return this.sessionUrl
-  }
-
   reset(): void {
     this.app.sessionStorage.removeItem(this.options.session_token_key)
     this.metadata = {}

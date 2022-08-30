@@ -292,7 +292,13 @@ export default class App {
   }
 
   getSessionURL(): string {
-    return this.session.getSessionURL()
+    const { projectID, sessionID } = this.session.getInfo()
+    if (!projectID || !sessionID) {
+      this.debug.error('OpenReplay error: Unable to build session URL')
+      return ''
+    }
+
+    return this.options.ingestPoint.replace(/\/ingest$/, `${projectID}/session/${sessionID}`)
   }
 
   getHost(): string {
@@ -430,11 +436,6 @@ export default class App {
         this.session.setSessionToken(token)
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
         this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
-        this.session.buildURL(
-          `${this.options.ingestPoint.replace(/\/ingest$/, '')}/${projectID as string}/session/${
-            sessionID as string
-          }`,
-        )
 
         const startWorkerMsg: WorkerMessageData = {
           type: 'auth',
