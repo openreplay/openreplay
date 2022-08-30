@@ -5,7 +5,6 @@ To generate all necessary files for the project:
 
 ```sh
 ruby run.rb
-
 ```
 
 In order format generated files run:
