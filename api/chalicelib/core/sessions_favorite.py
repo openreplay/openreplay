@@ -61,4 +61,4 @@ def get_start_end_timestamp(project_id, user_id):
                 {"userId": user_id, "project_id": project_id})
         )
         r = cur.fetchone()
-    return 0, 0 if r is None else r["max_start_ts"], r["min_start_ts"]
+    return (0, 0) if r is None else (r["max_start_ts"], r["min_start_ts"])
