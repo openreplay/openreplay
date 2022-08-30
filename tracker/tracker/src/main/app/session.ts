@@ -21,9 +21,8 @@ export default class Session {
   private readonly callbacks: OnUpdateCallback[] = []
   private timestamp = 0
   private projectID: string | undefined
-  private sessionUrl: string
 
-  constructor(private readonly app: App, private options: Options) {}
+  constructor(private readonly app: App, private readonly options: Options) {}
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)

@@ -291,11 +291,11 @@ export default class App {
     return this.session.getInfo().sessionID || undefined
   }
 
-  getSessionURL(): string {
+  getSessionURL(): string | undefined {
     const { projectID, sessionID } = this.session.getInfo()
     if (!projectID || !sessionID) {
       this.debug.error('OpenReplay error: Unable to build session URL')
-      return ''
+      return undefined
     }
 
     return this.options.ingestPoint.replace(/\/ingest$/, `${projectID}/session/${sessionID}`)

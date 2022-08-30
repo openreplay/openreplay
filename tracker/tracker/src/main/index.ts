@@ -209,9 +209,9 @@ export default class API {
     return this.getSessionID()
   }
 
-  getSessionURL(): string | null {
+  getSessionURL(): string | undefined {
     if (this.app === null) {
-      return null
+      return undefined
     }
     return this.app.getSessionURL()
   }
