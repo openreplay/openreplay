@@ -183,6 +183,7 @@ func (c *connectorImpl) checkError(name string, err error) {
 }
 
 func (c *connectorImpl) InsertWebSession(session *types.Session) error {
+	log.Printf("insert session: %+v", session)
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
 	}
