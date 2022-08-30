@@ -45,40 +45,40 @@ export function getDateRangeLabel(value) {
 export function getDateRangeFromValue(value) {
     const tz = JSON.parse(localStorage.getItem(TIMEZONE));
     const offset = tz ? tz.label.slice(-6) : 0;
-    
+
     switch (value) {
         case DATE_RANGE_VALUES.LAST_30_MINUTES:
             return moment.range(
-                moment().utcOffset(offset, true).startOf("hour").subtract(30, "minutes"),
-                moment().utcOffset(offset, true).startOf("hour")
+                moment().utcOffset(offset).startOf("hour").subtract(30, "minutes"),
+                moment().utcOffset(offset).startOf("hour")
             );
             case DATE_RANGE_VALUES.YESTERDAY:
                 return moment.range(
-                    moment().utcOffset(offset, true).subtract(1, "days").startOf("day"),
-                    moment().utcOffset(offset, true).subtract(1, "days").endOf("day")
+                    moment().utcOffset(offset).subtract(1, "days").startOf("day"),
+                    moment().utcOffset(offset).subtract(1, "days").endOf("day")
                     );
         case DATE_RANGE_VALUES.TODAY:
-            return moment.range(moment().utcOffset(offset, true).startOf("day"), moment().utcOffset(offset, true).endOf("day"));
+            return moment.range(moment().utcOffset(offset).startOf("day"), moment().utcOffset(offset).endOf("day"));
         case DATE_RANGE_VALUES.LAST_24_HOURS:
-            return moment.range(moment().utcOffset(offset, true).subtract(24, "hours"), moment().utcOffset(offset, true));
+            return moment.range(moment().utcOffset(offset).subtract(24, "hours"), moment().utcOffset(offset));
         case DATE_RANGE_VALUES.LAST_7_DAYS:
             return moment.range(
-                moment().utcOffset(offset, true).subtract(7, "days").startOf("day"),
-                moment().utcOffset(offset, true).endOf("day")
+                moment().utcOffset(offset).subtract(7, "days").startOf("day"),
+                moment().utcOffset(offset).endOf("day")
             );
         case DATE_RANGE_VALUES.LAST_30_DAYS:
             return moment.range(
-                moment().utcOffset(offset, true).subtract(30, "days").startOf("day"),
-                moment().utcOffset(offset, true).endOf("day")
+                moment().utcOffset(offset).subtract(30, "days").startOf("day"),
+                moment().utcOffset(offset).endOf("day")
             );
         case DATE_RANGE_VALUES.THIS_MONTH:
-            return moment().utcOffset(offset, true).range("month");
+            return moment().utcOffset(offset).range("month");
         case DATE_RANGE_VALUES.LAST_MONTH:
-            return moment().utcOffset(offset, true).subtract(1, "months").range("month");
+            return moment().utcOffset(offset).subtract(1, "months").range("month");
         case DATE_RANGE_VALUES.THIS_YEAR:
-            return moment().utcOffset(offset, true).range("year");
+            return moment().utcOffset(offset).range("year");
         case DATE_RANGE_VALUES.CUSTOM_RANGE:
-            return moment.range(moment().utcOffset(offset, true), moment().utcOffset(offset, true));
+            return moment.range(moment().utcOffset(offset), moment().utcOffset(offset));
     }
     return null;
 }

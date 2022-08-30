@@ -406,7 +406,7 @@ export default class DashboardStore {
     ): Promise<any> {
         period = period.toTimestamps();
         const params = { ...period, ...data, key: metric.predefinedKey };
-        
+
 
         if (metric.page && metric.limit) {
             params["page"] = metric.page;
