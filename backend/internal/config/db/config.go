@@ -17,6 +17,7 @@ type Config struct {
 	CommitBatchTimeout         time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=15s"`
 	BatchQueueLimit            int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
 	BatchSizeLimit             int           `env:"DB_BATCH_SIZE_LIMIT,required"`
+	UseQuickwit                bool          `env:"QUICKWIT_ENABLED,default=false"`
 }
 
 func New() *Config {
