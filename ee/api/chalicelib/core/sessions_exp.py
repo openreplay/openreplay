@@ -219,9 +219,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
     meta_keys = []
     with ch_client.ClickHouseClient() as cur:
         if errors_only:
-            print("--------------------QP")
-            print(cur.format(query_part, full_args))
-            print("--------------------")
+            # print("--------------------QP")
+            # print(cur.format(query_part, full_args))
+            # print("--------------------")
             main_query = cur.format(f"""SELECT DISTINCT er.error_id,
                                         COALESCE((SELECT TRUE
                                                  FROM {exp_ch_helper.get_user_viewed_errors_table()} AS ve
@@ -1963,7 +1963,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
         else:
             extra_join += f"""(SELECT * 
                                 FROM {MAIN_SESSIONS_TABLE} AS s {extra_event}
-                                WHERE {" AND ".join(extra_constraints)}) AS s"""
+                                WHERE {" AND ".join(extra_constraints)}
+                                ORDER BY _timestamp DESC
+                                LIMIT 1 BY session_id) AS s"""
         query_part = f"""\
                             FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else ""}
                             {extra_join}
