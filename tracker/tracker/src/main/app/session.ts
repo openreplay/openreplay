@@ -5,6 +5,7 @@ interface SessionInfo {
   metadata: Record<string, string>
   userID: string | null
   timestamp: number
+  projectID?: string
 }
 type OnUpdateCallback = (i: Partial<SessionInfo>) => void
 
@@ -19,8 +20,9 @@ export default class Session {
   private sessionID: string | undefined
   private readonly callbacks: OnUpdateCallback[] = []
   private timestamp = 0
+  private projectID: string | undefined
 
-  constructor(private readonly app: App, private options: Options) {}
+  constructor(private readonly app: App, private readonly options: Options) {}
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)
@@ -35,7 +37,7 @@ export default class Session {
     this.callbacks.forEach((cb) => cb(newInfo))
   }
 
-  update(newInfo: Partial<SessionInfo>) {
+  update(newInfo: Partial<SessionInfo>): void {
     if (newInfo.userID !== undefined) {
       // TODO clear nullable/undefinable types
       this.userID = newInfo.userID
@@ -48,6 +50,9 @@ export default class Session {
     }
     if (newInfo.timestamp !== undefined) {
       this.timestamp = newInfo.timestamp
+    }
+    if (newInfo.projectID !== undefined) {
+      this.projectID = newInfo.projectID
     }
     this.handleUpdate(newInfo)
   }
@@ -116,6 +121,7 @@ export default class Session {
       metadata: this.metadata,
       userID: this.userID,
       timestamp: this.timestamp,
+      projectID: this.projectID,
     }
   }
 

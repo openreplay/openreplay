@@ -290,6 +290,17 @@ export default class App {
   getSessionID(): string | undefined {
     return this.session.getInfo().sessionID || undefined
   }
+
+  getSessionURL(): string | undefined {
+    const { projectID, sessionID } = this.session.getInfo()
+    if (!projectID || !sessionID) {
+      this.debug.error('OpenReplay error: Unable to build session URL')
+      return undefined
+    }
+
+    return this.options.ingestPoint.replace(/\/ingest$/, `${projectID}/session/${sessionID}`)
+  }
+
   getHost(): string {
     return new URL(this.options.ingestPoint).hostname
   }
@@ -409,6 +420,7 @@ export default class App {
           token,
           userUUID,
           sessionID,
+          projectID,
           beaconSizeLimit,
           startTimestamp, // real startTS, derived from sessionID
         } = r
@@ -423,7 +435,8 @@ export default class App {
         }
         this.session.setSessionToken(token)
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
-        this.session.update({ sessionID, timestamp: startTimestamp || timestamp }) // TODO: no no-explicit 'any'
+        this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
+
         const startWorkerMsg: WorkerMessageData = {
           type: 'auth',
           token,

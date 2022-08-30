@@ -27,7 +27,7 @@ module.exports = {
     '@typescript-eslint/camelcase': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/unbound-method': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'warn',
+    '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/prefer-readonly': 'warn',
     '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -46,4 +46,4 @@ module.exports = {
     '@typescript-eslint/no-unused-expressions': 'warn',
     '@typescript-eslint/no-useless-constructor': 'warn',
   },
-}; 
+};
