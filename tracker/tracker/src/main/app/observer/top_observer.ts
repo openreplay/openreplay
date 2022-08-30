@@ -12,7 +12,9 @@ export interface Options {
   captureIFrames: boolean
 }
 
-type ContextCallback = (context: Window & typeof globalThis) => void
+type Context = Window & typeof globalThis
+
+type ContextCallback = (context: Context) => void
 
 // Le truc - for defining an absolute offset for (nested) iframe documents. (To track mouse movments)
 type Offset = { top: number; left: number }
@@ -59,6 +61,7 @@ export default class TopObserver extends Observer {
   private readonly contextCallbacks: Array<ContextCallback> = []
 
   // Attached once per Tracker instance
+  private readonly contextsSet: Set<Context> = new Set()
   attachContextCallback(cb: ContextCallback) {
     this.contextCallbacks.push(cb)
   }
@@ -98,9 +101,15 @@ export default class TopObserver extends Observer {
           }
         }
       }
-      if (currentWin && currentWin !== win) {
-        //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
-        this.contextCallbacks.forEach((cb) => cb(currentWin))
+      if (
+        currentWin &&
+        // Sometimes currentWin.window is null (not in specification). Such window object is not functional
+        currentWin === currentWin.window &&
+        !this.contextsSet.has(currentWin.window) // for each context callbacks called once per Tracker (TopObserver) instance
+      ) {
+        this.contextsSet.add(currentWin.window)
+        //+ https://github.com/microsoft/TypeScript/issues/41684
+        this.contextCallbacks.forEach((cb) => cb(currentWin.window))
         win = currentWin
       }
     })

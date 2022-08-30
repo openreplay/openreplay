@@ -229,6 +229,8 @@ export default class App {
   }
 
   attachCommitCallback(cb: CommitCallback): void {
+    // TODO!: what if start callback added when activityState === Active ?
+    // For example - attachEventListener() called during dynamic <iframe> appearance
     this.commitCallbacks.push(cb)
   }
   attachStartCallback(cb: StartCallback): void {
@@ -444,13 +446,12 @@ export default class App {
         }
         this.worker.postMessage(startWorkerMsg)
 
-        this.activityState = ActivityState.Active
-
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
         this.startCallbacks.forEach((cb) => cb(onStartInfo)) // TODO: start as early as possible (before receiving the token)
         this.observer.observe()
         this.ticker.start()
+        this.activityState = ActivityState.Active
 
         this.notify.log('OpenReplay tracking started.')
         // get rid of onStart ?
