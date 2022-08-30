@@ -209,6 +209,13 @@ export default class API {
     return this.getSessionID()
   }
 
+  getSessionURL(): string | null {
+    if (this.app === null) {
+      return null
+    }
+    return this.app.getSessionURL()
+  }
+
   setUserID(id: string): void {
     if (typeof id === 'string' && this.app !== null) {
       this.app.session.setUserID(id)
