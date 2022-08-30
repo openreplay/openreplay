@@ -135,8 +135,7 @@ and base_referrer; I need these columns in the sessions table in clickhouse)
 5. add issue_types to sessions (the same way it exists in PG) -> rewrite session end handler
 */
 var batches = map[string]string{
-	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, pages_count, events_count, errors_count, user_browser, user_browser_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"metadata":      "INSERT INTO experimental.sessions (session_id, user_id, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10, datetime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, pages_count, events_count, errors_count, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"resources":     "INSERT INTO experimental.resources (session_id, project_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"pages":         "INSERT INTO experimental.events (session_id, project_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"clicks":        "INSERT INTO experimental.events (session_id, project_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?)",
@@ -190,6 +189,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	if err := c.batches["sessions"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.UserID,
 		session.UserUUID,
 		session.UserOS,
 		nullableString(session.UserOSVersion),
@@ -204,13 +204,6 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		// Web unique columns
 		session.UserBrowser,
 		nullableString(session.UserBrowserVersion),
-	); err != nil {
-		c.checkError("sessions", err)
-		return fmt.Errorf("can't append to sessions batch: %s", err)
-	}
-	if err := c.batches["metadata"].Append(
-		session.SessionID,
-		session.UserID,
 		session.Metadata1,
 		session.Metadata2,
 		session.Metadata3,
@@ -221,10 +214,9 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		session.Metadata8,
 		session.Metadata9,
 		session.Metadata10,
-		datetime(session.Timestamp),
 	); err != nil {
-		c.checkError("metadata", err)
-		return fmt.Errorf("can't append to metadata batch: %s", err)
+		c.checkError("sessions", err)
+		return fmt.Errorf("can't append to sessions batch: %s", err)
 	}
 	return nil
 }
