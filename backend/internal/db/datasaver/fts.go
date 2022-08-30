@@ -54,16 +54,9 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 		err   error
 	)
 
-	tp := msg.TypeID()
-	shouldSendEvent := false
-	if tp == 39 || tp == 51 || tp == 31 || tp == 48 || tp == 50 {
-		shouldSendEvent = true
-		log.Println("message type:", tp)
-	}
 	switch m := msg.(type) {
 	// Common
 	case *messages.Fetch:
-		log.Printf("fetch message")
 		event, err = json.Marshal(FetchEventFTS{
 			Method:    m.Method,
 			URL:       m.URL,
@@ -74,7 +67,6 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 			Duration:  m.Duration,
 		})
 	case *messages.FetchEvent:
-		log.Printf("fetch message")
 		event, err = json.Marshal(FetchEventFTS{
 			Method:    m.Method,
 			URL:       m.URL,
@@ -85,7 +77,6 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 			Duration:  m.Duration,
 		})
 	case *messages.PageEvent:
-		log.Printf("page message")
 		event, err = json.Marshal(PageEventFTS{
 			MessageID:                  m.MessageID,
 			Timestamp:                  m.Timestamp,
@@ -106,7 +97,6 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 			TimeToInteractive:          m.TimeToInteractive,
 		})
 	case *messages.GraphQL:
-		log.Printf("graphQL message")
 		event, err = json.Marshal(GraphQLEventFTS{
 			OperationKind: m.OperationKind,
 			OperationName: m.OperationName,
@@ -114,7 +104,6 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 			Response:      m.Response,
 		})
 	case *messages.GraphQLEvent:
-		log.Printf("graphQL message")
 		event, err = json.Marshal(GraphQLEventFTS{
 			OperationKind: m.OperationKind,
 			OperationName: m.OperationName,
@@ -128,12 +117,6 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 		if len(event) > 0 {
 			if err := s.producer.Produce("quickwit", sessionID, event); err != nil {
 				log.Printf("can't send event to quickwit: %s", err)
-			} else {
-				log.Printf("successfully sent event to quickwit topic")
-			}
-		} else {
-			if shouldSendEvent {
-				log.Printf("event is empty")
 			}
 		}
 	}
