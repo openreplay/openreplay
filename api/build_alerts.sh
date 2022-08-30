@@ -17,6 +17,8 @@ check_prereq() {
 }
 
 function build_api(){
+    cp -R ../api ../_alerts
+    cd ../_alerts
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
@@ -24,15 +26,15 @@ function build_api(){
         envarg="default-ee"
         tag="ee-"
     }
-    cp -R ../api ../_alerts
-    docker build -f ../_alerts/Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
+    docker build -f ./Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
+    cd ../api
     rm -rf ../_alerts
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/alerts:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/alerts:${git_sha1} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/alerts:${tag}latest
     }
-echo "completed alerts build"
+    echo "completed alerts build"
 }
 
 check_prereq
