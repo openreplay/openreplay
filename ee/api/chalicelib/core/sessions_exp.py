@@ -274,7 +274,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
                                         FROM (SELECT COUNT() OVER () AS total,
-                                                    rowNumberInAllBlocks() AS rn,
+                                                    rowNumberInAllBlocks()+1 AS rn,
                                                     map({SESSION_PROJECTION_COLS_CH_MAP}) AS details
                                              {query_part}
 --                                              ORDER BY {sort} {data.order}
