@@ -5,7 +5,6 @@ export interface Options {
   filter: (mutation: any, state: any) => boolean;
   transformer: (state: any) => any;
   mutationTransformer: (mutation: any) => any;
-  storeName?: string;
 }
 
 function processMutationAndState(
@@ -38,7 +37,6 @@ export default function(opts: Partial<Options> = {}) {
       filter: () => true,
       transformer: state => state,
       mutationTransformer: mutation => mutation,
-      storeName: undefined,
     },
     opts
   );
@@ -48,12 +46,12 @@ export default function(opts: Partial<Options> = {}) {
     }
     const encoder = new Encoder(sha1, 50);
     const state = {};
-    return store => {
+    return (store, storeName) => {
       // Vuex
       if (store.subscribe) {
         const randomId = Math.random().toString(36).substring(2, 9)
         store.subscribe((mutation, storeState) => {
-          state[options.storeName || randomId] = state
+          state[storeName || randomId] = state
           processMutationAndState(app, options, encoder, mutation, storeState);
         });
       }
@@ -62,7 +60,7 @@ export default function(opts: Partial<Options> = {}) {
       if (store.$onAction) {
         store.$onAction(({ name, store, args }) => {
           try {
-            state[options.storeName || store.$id] = store.$state;
+            state[storeName || store.$id] = store.$state;
             const mutation = {
               type: name,
               payload: args
