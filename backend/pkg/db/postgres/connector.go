@@ -5,7 +5,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
-	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/monitoring"
 	"strings"
@@ -14,6 +13,10 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
+
+type CH interface {
+	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
+}
 
 type batchItem struct {
 	query     string
@@ -39,10 +42,10 @@ type Conn struct {
 	batchSizeLines    syncfloat64.Histogram
 	sqlRequestTime    syncfloat64.Histogram
 	sqlRequestCounter syncfloat64.Counter
-	chConn            clickhouse.Connector
+	chConn            CH
 }
 
-func (conn *Conn) SetClickHouse(ch clickhouse.Connector) {
+func (conn *Conn) SetClickHouse(ch CH) {
 	conn.chConn = ch
 }
 
