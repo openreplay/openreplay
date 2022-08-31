@@ -57,6 +57,13 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: configs
+            mountPath: /quickwit/
+      volumes:
+      - name: configs
+        configMap:
+          name: {{ include "quickwit.fullname" . }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
