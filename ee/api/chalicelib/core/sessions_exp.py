@@ -203,7 +203,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         full_args["sessions_limit_e"] = data.page * data.limit
         full_args["sessions_limit"] = data.limit
     else:
-        full_args["sessions_limit_s"] = 1
+        full_args["sessions_limit_s"] = 0
         full_args["sessions_limit_e"] = 200
         full_args["sessions_limit"] = 200
 
@@ -264,13 +264,14 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
-                                        FROM (SELECT COUNT() OVER () AS total,
-                                                    rowNumberInAllBlocks()+1 AS rn,
+                                        FROM (SELECT total, details
+                                              FROM (SELECT COUNT() OVER () AS total,
+                                                    {sort} AS sort_key,
                                                     map({SESSION_PROJECTION_COLS_CH_MAP}) AS details
-                                             {query_part}
---                                              ORDER BY {sort} {data.order}
+                                                {query_part}
                                              ) AS raw
-                                        WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s;""", full_args)
+                                        ORDER BY sort_key {data.order}
+                                        LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""", full_args)
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
@@ -324,7 +325,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                    density=density))
     extra_event = None
     if metric_of == schemas.TableMetricOfType.visited_url:
-        extra_event = f"""SELECT DISTINCT ev.session_id, ev.path
+        extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startDate)} AS ev
                             WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
@@ -392,8 +393,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             full_args[arg_name] = metric_value[i]
                         extra_where = f"WHERE ({' OR '.join(extra_where)})"
                 elif metric_of == schemas.TableMetricOfType.visited_url:
-                    main_col = "path"
-                    extra_col = "s.path"
+                    main_col = "url_path"
+                    extra_col = "s.rul_path"
                 main_query = cur.format(f"""{pre_query}
                                             SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                                  {main_col} AS name,
@@ -719,7 +720,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
                                              event.value, value_key=e_k))
             elif event_type == events.event_type.CUSTOM.ui_type:
                 event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
@@ -1379,9 +1380,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             event_where = ["main.project_id = %(projectId)s",
                            "main.datetime >= toDateTime(%(startDate)s/1000)",
                            "main.datetime <= toDateTime(%(endDate)s/1000)"]
-            if favorite_only and not errors_only:
-                event_from += f"INNER JOIN {exp_ch_helper.get_user_favorite_sessions_table()} AS fs USING(session_id)"
-                event_where.append("fs.user_id = %(userId)s")
+            # if favorite_only and not errors_only:
+            #     event_from += f"INNER JOIN {exp_ch_helper.get_user_favorite_sessions_table()} AS fs USING(session_id)"
+            #     event_where.append("fs.user_id = %(userId)s")
             # else:
             #     event_from = "%s"
             #     event_where = ["main.datetime >= toDateTime(%(startDate)s/1000)",
@@ -1435,7 +1436,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
 
             elif event_type == events.event_type.LOCATION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.event_type.LOCATION.column
+                _column = 'url_path'
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
@@ -1572,7 +1573,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 tname = "main"
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
                                              event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
@@ -1595,7 +1596,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 tname = "main"
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
                                              event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
@@ -1916,10 +1917,10 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     #     extra_from += " INNER JOIN final.user_favorite_errors AS ufe USING (error_id)"
     #     extra_constraints.append("ufe.user_id = %(userId)s")
 
-    if favorite_only and not errors_only and user_id is not None:
-        extra_from += f"""INNER JOIN (SELECT session_id 
-                                        FROM {exp_ch_helper.get_user_favorite_sessions_table()} 
-                                        WHERE user_id=%(userId)s) AS favorite_sessions USING (session_id)"""
+    # if favorite_only and not errors_only and user_id is not None:
+    #     extra_from += f"""INNER JOIN (SELECT session_id
+    #                                     FROM {exp_ch_helper.get_user_favorite_sessions_table()}
+    #                                     WHERE user_id=%(userId)s) AS favorite_sessions USING (session_id)"""
     # elif not favorite_only and not errors_only and user_id is not None:
     #     extra_from += f"""LEFT JOIN (SELECT session_id
     #                                 FROM {exp_ch_helper.get_user_favorite_sessions_table()} AS user_favorite_sessions

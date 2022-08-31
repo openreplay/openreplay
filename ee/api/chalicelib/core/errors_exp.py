@@ -3,7 +3,7 @@ import json
 import schemas
 from chalicelib.core import metrics, metadata
 from chalicelib.core import sourcemaps, sessions
-from chalicelib.utils import ch_client, metrics_helper
+from chalicelib.utils import ch_client, metrics_helper, exp_ch_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -511,11 +511,8 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
 
 
 def search(data: schemas.SearchErrorsSchema, project_id, user_id):
-    MAIN_EVENTS_TABLE = "final.events"
-    MAIN_SESSIONS_TABLE = "final.sessions"
-    if data.startDate >= TimeUTC.now(delta_days=-7):
-        MAIN_EVENTS_TABLE = "final.events_l7d_mv"
-        MAIN_SESSIONS_TABLE = "final.sessions_l7d_mv"
+    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(data.startDate)
+    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(data.startDate)
 
     platform = None
     for f in data.filters:
@@ -544,12 +541,11 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                 op = __get_sql_operator(e.operator)
                 e_k = f"e_value{i}"
                 params = {**params, **_multiple_values(e.value, value_key=e_k)}
-                if not is_any and e.value not in [None, "*", ""]:
+                if not is_any and len(e.value) > 0 and e.value[1] not in [None, "*", ""]:
                     ch_sub_query.append(
                         _multiple_conditions(f"(message {op} %({e_k})s OR name {op} %({e_k})s)",
                                              e.value, value_key=e_k))
         if len(data.events) > errors_condition_count:
-            print("----------Sessions conditions")
             subquery_part_args, subquery_part = sessions.search_query_parts_ch(data=data, error_status=data.status,
                                                                                errors_only=True,
                                                                                project_id=project_id, user_id=user_id,
@@ -771,7 +767,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                              any(isNotNull(viewed_error_id)) AS viewed
                       FROM {MAIN_EVENTS_TABLE} AS events
                             LEFT JOIN (SELECT error_id AS viewed_error_id
-                                        FROM final.user_viewed_errors
+                                        FROM {exp_ch_helper.get_user_viewed_errors_table()}
                                         WHERE project_id=%(project_id)s
                                             AND user_id=%(userId)s) AS viewed_errors ON(events.error_id=viewed_errors.viewed_error_id)
                             INNER JOIN (SELECT session_id, coalesce(user_id,toString(user_uuid)) AS user_id 
@@ -800,9 +796,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                             ORDER BY timestamp) AS sub_table
                             GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
-        print("------------")
-        print(ch.format(main_ch_query, params))
-        print("------------")
+        # print("------------")
+        # print(ch.format(main_ch_query, params))
+        # print("------------")
 
         rows = ch.execute(query=main_ch_query, params=params)
         total = rows[0]["total"] if len(rows) > 0 else 0
