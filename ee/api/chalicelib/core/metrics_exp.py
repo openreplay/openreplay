@@ -798,7 +798,7 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
                       GROUP BY url_path
                       ORDER BY doc_count DESC
                       LIMIT 10;"""
-        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         # print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
@@ -819,11 +819,6 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
             e["startTimestamp"] = startTimestamp
             e["endTimestamp"] = endTimestamp
             params["value"] = e["url"]
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-            print(params)
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-            print(ch_query)
-            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             r = ch.execute(query=ch_query, params=params)
 
             e["endedAt"] = r[-1]["max_datatime"]
