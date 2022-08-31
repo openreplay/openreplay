@@ -819,6 +819,11 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
             e["startTimestamp"] = startTimestamp
             e["endTimestamp"] = endTimestamp
             params["value"] = e["url"]
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            print(params)
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            print(ch_query)
+            print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
             r = ch.execute(query=ch_query, params=params)
 
             e["endedAt"] = r[-1]["max_datatime"]
