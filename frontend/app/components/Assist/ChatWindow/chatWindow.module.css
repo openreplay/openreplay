@@ -16,7 +16,8 @@
 }
 
 .videoWrapper {
-  max-height: 280px;
+  max-width: 300px;
   display: flex;
   background-color: #000;
+  flex-wrap: wrap;
 }
