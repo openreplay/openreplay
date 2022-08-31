@@ -14,7 +14,6 @@ interface Props {
   playing: boolean,
   completed: boolean,
   inspectorMode: boolean,
-  messagesLoading: boolean,
   loading: boolean,
   live: boolean,
   liveStatusText: string,
@@ -33,7 +32,6 @@ function Overlay({
   playing,
   completed,
   inspectorMode,
-  messagesLoading,
   loading,
   live,
   liveStatusText,
@@ -56,7 +54,7 @@ function Overlay({
       { showLiveStatusText &&
         <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
       }
-      { messagesLoading && <Loader /> }
+      { loading ? <Loader /> : null }
       { showPlayIconLayer &&
         <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       }
@@ -69,7 +67,6 @@ function Overlay({
 
 export default connectPlayer(state => ({
   playing: state.playing,
-  messagesLoading: state.messagesLoading,
   loading: state.messagesLoading || state.cssLoading,
   completed: state.completed,
   autoplay: state.autoplay,
