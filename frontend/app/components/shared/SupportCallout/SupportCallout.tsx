@@ -6,7 +6,7 @@ import SupportList from './components/SupportList';
 function SupportCallout() {
   return (
     <div className="group transition-all">
-      <div className="invisible absolute bottom-0 left-0 pb-20 ml-4 group-hover:visible">
+      <div className="invisible fixed bottom-0 left-0 pb-20 ml-4 group-hover:visible">
         <SupportList />
       </div>
       <div className="fixed z-50 left-0 bottom-0 m-4">
