@@ -33,6 +33,7 @@ interface Props {
     isEnterprise: boolean;
     isCallActive: boolean;
     agentIds: string[];
+    livePlay: boolean;
 }
 
 function AssistActions({
@@ -44,7 +45,8 @@ function AssistActions({
     hasPermission,
     isEnterprise,
     isCallActive,
-    agentIds
+    agentIds,
+    livePlay
 }: Props) {
     const [isPrestart, setPrestart] = useState(false);
     const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
@@ -115,7 +117,7 @@ function AssistActions({
             {(onCall || remoteActive) && (
                 <>
                     <div
-                        className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall })}
+                        className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall || !livePlay })}
                         onClick={() => toggleAnnotation(!annotating)}
                         role="button"
                     >
@@ -132,7 +134,7 @@ function AssistActions({
                 </>
             )}
             <div
-                className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall })}
+                className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall || !livePlay })}
                 onClick={requestReleaseRemoteControl}
                 role="button"
             >
@@ -186,5 +188,6 @@ export default con(
         annotating: state.annotating,
         remoteControlStatus: state.remoteControl,
         peerConnectionStatus: state.peerConnectionStatus,
+        livePlay: state.livePlay,
     }))(AssistActions)
 );
