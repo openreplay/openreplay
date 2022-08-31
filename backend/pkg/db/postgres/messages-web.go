@@ -188,6 +188,9 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, save
 
 func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error {
 	log.Printf("insert referrer, sessID: %d, referrer: %s", sessionID, referrer)
+	if referrer == "" {
+		return nil
+	}
 	return conn.c.Exec(`
 		UPDATE sessions 
 		SET referrer = $1 
