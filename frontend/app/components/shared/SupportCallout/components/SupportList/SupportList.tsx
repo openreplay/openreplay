@@ -16,7 +16,7 @@ function SupportList() {
           <div className="ml-2">Report Issues</div>
         </div>
       </a>
-      <a href="https://openreplay.slack.com" target="_blank">
+      <a href="https://slack.openreplay.com" target="_blank">
         <div className="flex items-center px-4 py-3 cursor-pointer hover:bg-active-blue">
           <Icon name="slack" size={15} />
           <div className="ml-2">Community Support</div>
