@@ -61,7 +61,7 @@ export default class TopObserver extends Observer {
   private readonly contextCallbacks: Array<ContextCallback> = []
 
   // Attached once per Tracker instance
-  private readonly contextsSet: Set<Context> = new Set()
+  private readonly contextsSet: Set<Window> = new Set()
   attachContextCallback(cb: ContextCallback) {
     this.contextCallbacks.push(cb)
   }
@@ -105,11 +105,11 @@ export default class TopObserver extends Observer {
         currentWin &&
         // Sometimes currentWin.window is null (not in specification). Such window object is not functional
         currentWin === currentWin.window &&
-        !this.contextsSet.has(currentWin.window) // for each context callbacks called once per Tracker (TopObserver) instance
+        !this.contextsSet.has(currentWin) // for each context callbacks called once per Tracker (TopObserver) instance
       ) {
-        this.contextsSet.add(currentWin.window)
-        //+ https://github.com/microsoft/TypeScript/issues/41684
-        this.contextCallbacks.forEach((cb) => cb(currentWin.window))
+        this.contextsSet.add(currentWin)
+        //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
+        this.contextCallbacks.forEach((cb) => cb(currentWin))
         win = currentWin
       }
     })

@@ -97,7 +97,7 @@ export default class BatchWriter {
     this.finaliseBatch()
     while (!this.writeWithSize(message)) {
       if (this.beaconSize === this.beaconSizeLimit) {
-        console.warn('OpenReplay: beacon size overflow. Skipping large message.', message)
+        console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
         this.encoder.reset()
         this.prepare()
         return

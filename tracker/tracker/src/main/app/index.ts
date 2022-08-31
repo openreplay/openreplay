@@ -233,10 +233,16 @@ export default class App {
     // For example - attachEventListener() called during dynamic <iframe> appearance
     this.commitCallbacks.push(cb)
   }
-  attachStartCallback(cb: StartCallback): void {
+  attachStartCallback(cb: StartCallback, useSafe = false): void {
+    if (useSafe) {
+      cb = this.safe(cb)
+    }
     this.startCallbacks.push(cb)
   }
-  attachStopCallback(cb: () => any): void {
+  attachStopCallback(cb: () => any, useSafe = false): void {
+    if (useSafe) {
+      cb = this.safe(cb)
+    }
     this.stopCallbacks.push(cb)
   }
   attachEventListener(
@@ -249,8 +255,8 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target.addEventListener(type, listener, useCapture))
-    this.attachStopCallback(() => target.removeEventListener(type, listener, useCapture))
+    this.attachStartCallback(() => target.addEventListener(type, listener, useCapture), useSafe)
+    this.attachStopCallback(() => target.removeEventListener(type, listener, useCapture), useSafe)
   }
 
   // TODO: full correct semantic
