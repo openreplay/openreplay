@@ -6,8 +6,8 @@ export enum Type {
 
 <% $messages.select { |msg| msg.tracker }.each do |msg| %>
 export type <%= msg.name %> = [
-  type: Type.<%= msg.name %>,
-  <%= msg.attributes.map { |attr| "#{attr.name.camel_case}: #{attr.type_js}," }.join "\n  " %>
+  /*type:*/ Type.<%= msg.name %>,
+  <%= msg.attributes.map { |attr| "/*#{attr.name.camel_case}:*/ #{attr.type_js}," }.join "\n  " %>
 ]
 <% end %>
 

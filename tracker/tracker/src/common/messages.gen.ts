@@ -60,382 +60,382 @@ export enum Type {
 
 
 export type BatchMetadata = [
-  type: Type.BatchMetadata,
-  version: number,
-  pageNo: number,
-  firstIndex: number,
-  timestamp: number,
-  location: string,
+  /*type:*/ Type.BatchMetadata,
+  /*version:*/ number,
+  /*pageNo:*/ number,
+  /*firstIndex:*/ number,
+  /*timestamp:*/ number,
+  /*location:*/ string,
 ]
 
 export type PartitionedMessage = [
-  type: Type.PartitionedMessage,
-  partNo: number,
-  partTotal: number,
+  /*type:*/ Type.PartitionedMessage,
+  /*partNo:*/ number,
+  /*partTotal:*/ number,
 ]
 
 export type Timestamp = [
-  type: Type.Timestamp,
-  timestamp: number,
+  /*type:*/ Type.Timestamp,
+  /*timestamp:*/ number,
 ]
 
 export type SetPageLocation = [
-  type: Type.SetPageLocation,
-  url: string,
-  referrer: string,
-  navigationStart: number,
+  /*type:*/ Type.SetPageLocation,
+  /*url:*/ string,
+  /*referrer:*/ string,
+  /*navigationStart:*/ number,
 ]
 
 export type SetViewportSize = [
-  type: Type.SetViewportSize,
-  width: number,
-  height: number,
+  /*type:*/ Type.SetViewportSize,
+  /*width:*/ number,
+  /*height:*/ number,
 ]
 
 export type SetViewportScroll = [
-  type: Type.SetViewportScroll,
-  x: number,
-  y: number,
+  /*type:*/ Type.SetViewportScroll,
+  /*x:*/ number,
+  /*y:*/ number,
 ]
 
 export type CreateDocument = [
-  type: Type.CreateDocument,
+  /*type:*/ Type.CreateDocument,
   
 ]
 
 export type CreateElementNode = [
-  type: Type.CreateElementNode,
-  id: number,
-  parentID: number,
-  index: number,
-  tag: string,
-  svg: boolean,
+  /*type:*/ Type.CreateElementNode,
+  /*id:*/ number,
+  /*parentID:*/ number,
+  /*index:*/ number,
+  /*tag:*/ string,
+  /*svg:*/ boolean,
 ]
 
 export type CreateTextNode = [
-  type: Type.CreateTextNode,
-  id: number,
-  parentID: number,
-  index: number,
+  /*type:*/ Type.CreateTextNode,
+  /*id:*/ number,
+  /*parentID:*/ number,
+  /*index:*/ number,
 ]
 
 export type MoveNode = [
-  type: Type.MoveNode,
-  id: number,
-  parentID: number,
-  index: number,
+  /*type:*/ Type.MoveNode,
+  /*id:*/ number,
+  /*parentID:*/ number,
+  /*index:*/ number,
 ]
 
 export type RemoveNode = [
-  type: Type.RemoveNode,
-  id: number,
+  /*type:*/ Type.RemoveNode,
+  /*id:*/ number,
 ]
 
 export type SetNodeAttribute = [
-  type: Type.SetNodeAttribute,
-  id: number,
-  name: string,
-  value: string,
+  /*type:*/ Type.SetNodeAttribute,
+  /*id:*/ number,
+  /*name:*/ string,
+  /*value:*/ string,
 ]
 
 export type RemoveNodeAttribute = [
-  type: Type.RemoveNodeAttribute,
-  id: number,
-  name: string,
+  /*type:*/ Type.RemoveNodeAttribute,
+  /*id:*/ number,
+  /*name:*/ string,
 ]
 
 export type SetNodeData = [
-  type: Type.SetNodeData,
-  id: number,
-  data: string,
+  /*type:*/ Type.SetNodeData,
+  /*id:*/ number,
+  /*data:*/ string,
 ]
 
 export type SetNodeScroll = [
-  type: Type.SetNodeScroll,
-  id: number,
-  x: number,
-  y: number,
+  /*type:*/ Type.SetNodeScroll,
+  /*id:*/ number,
+  /*x:*/ number,
+  /*y:*/ number,
 ]
 
 export type SetInputTarget = [
-  type: Type.SetInputTarget,
-  id: number,
-  label: string,
+  /*type:*/ Type.SetInputTarget,
+  /*id:*/ number,
+  /*label:*/ string,
 ]
 
 export type SetInputValue = [
-  type: Type.SetInputValue,
-  id: number,
-  value: string,
-  mask: number,
+  /*type:*/ Type.SetInputValue,
+  /*id:*/ number,
+  /*value:*/ string,
+  /*mask:*/ number,
 ]
 
 export type SetInputChecked = [
-  type: Type.SetInputChecked,
-  id: number,
-  checked: boolean,
+  /*type:*/ Type.SetInputChecked,
+  /*id:*/ number,
+  /*checked:*/ boolean,
 ]
 
 export type MouseMove = [
-  type: Type.MouseMove,
-  x: number,
-  y: number,
+  /*type:*/ Type.MouseMove,
+  /*x:*/ number,
+  /*y:*/ number,
 ]
 
 export type ConsoleLog = [
-  type: Type.ConsoleLog,
-  level: string,
-  value: string,
+  /*type:*/ Type.ConsoleLog,
+  /*level:*/ string,
+  /*value:*/ string,
 ]
 
 export type PageLoadTiming = [
-  type: Type.PageLoadTiming,
-  requestStart: number,
-  responseStart: number,
-  responseEnd: number,
-  domContentLoadedEventStart: number,
-  domContentLoadedEventEnd: number,
-  loadEventStart: number,
-  loadEventEnd: number,
-  firstPaint: number,
-  firstContentfulPaint: number,
+  /*type:*/ Type.PageLoadTiming,
+  /*requestStart:*/ number,
+  /*responseStart:*/ number,
+  /*responseEnd:*/ number,
+  /*domContentLoadedEventStart:*/ number,
+  /*domContentLoadedEventEnd:*/ number,
+  /*loadEventStart:*/ number,
+  /*loadEventEnd:*/ number,
+  /*firstPaint:*/ number,
+  /*firstContentfulPaint:*/ number,
 ]
 
 export type PageRenderTiming = [
-  type: Type.PageRenderTiming,
-  speedIndex: number,
-  visuallyComplete: number,
-  timeToInteractive: number,
+  /*type:*/ Type.PageRenderTiming,
+  /*speedIndex:*/ number,
+  /*visuallyComplete:*/ number,
+  /*timeToInteractive:*/ number,
 ]
 
 export type JSException = [
-  type: Type.JSException,
-  name: string,
-  message: string,
-  payload: string,
+  /*type:*/ Type.JSException,
+  /*name:*/ string,
+  /*message:*/ string,
+  /*payload:*/ string,
 ]
 
 export type RawCustomEvent = [
-  type: Type.RawCustomEvent,
-  name: string,
-  payload: string,
+  /*type:*/ Type.RawCustomEvent,
+  /*name:*/ string,
+  /*payload:*/ string,
 ]
 
 export type UserID = [
-  type: Type.UserID,
-  id: string,
+  /*type:*/ Type.UserID,
+  /*id:*/ string,
 ]
 
 export type UserAnonymousID = [
-  type: Type.UserAnonymousID,
-  id: string,
+  /*type:*/ Type.UserAnonymousID,
+  /*id:*/ string,
 ]
 
 export type Metadata = [
-  type: Type.Metadata,
-  key: string,
-  value: string,
+  /*type:*/ Type.Metadata,
+  /*key:*/ string,
+  /*value:*/ string,
 ]
 
 export type CSSInsertRule = [
-  type: Type.CSSInsertRule,
-  id: number,
-  rule: string,
-  index: number,
+  /*type:*/ Type.CSSInsertRule,
+  /*id:*/ number,
+  /*rule:*/ string,
+  /*index:*/ number,
 ]
 
 export type CSSDeleteRule = [
-  type: Type.CSSDeleteRule,
-  id: number,
-  index: number,
+  /*type:*/ Type.CSSDeleteRule,
+  /*id:*/ number,
+  /*index:*/ number,
 ]
 
 export type Fetch = [
-  type: Type.Fetch,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
+  /*type:*/ Type.Fetch,
+  /*method:*/ string,
+  /*url:*/ string,
+  /*request:*/ string,
+  /*response:*/ string,
+  /*status:*/ number,
+  /*timestamp:*/ number,
+  /*duration:*/ number,
 ]
 
 export type Profiler = [
-  type: Type.Profiler,
-  name: string,
-  duration: number,
-  args: string,
-  result: string,
+  /*type:*/ Type.Profiler,
+  /*name:*/ string,
+  /*duration:*/ number,
+  /*args:*/ string,
+  /*result:*/ string,
 ]
 
 export type OTable = [
-  type: Type.OTable,
-  key: string,
-  value: string,
+  /*type:*/ Type.OTable,
+  /*key:*/ string,
+  /*value:*/ string,
 ]
 
 export type StateAction = [
-  type: Type.StateAction,
-  type: string,
+  /*type:*/ Type.StateAction,
+  /*type:*/ string,
 ]
 
 export type Redux = [
-  type: Type.Redux,
-  action: string,
-  state: string,
-  duration: number,
+  /*type:*/ Type.Redux,
+  /*action:*/ string,
+  /*state:*/ string,
+  /*duration:*/ number,
 ]
 
 export type Vuex = [
-  type: Type.Vuex,
-  mutation: string,
-  state: string,
+  /*type:*/ Type.Vuex,
+  /*mutation:*/ string,
+  /*state:*/ string,
 ]
 
 export type MobX = [
-  type: Type.MobX,
-  type: string,
-  payload: string,
+  /*type:*/ Type.MobX,
+  /*type:*/ string,
+  /*payload:*/ string,
 ]
 
 export type NgRx = [
-  type: Type.NgRx,
-  action: string,
-  state: string,
-  duration: number,
+  /*type:*/ Type.NgRx,
+  /*action:*/ string,
+  /*state:*/ string,
+  /*duration:*/ number,
 ]
 
 export type GraphQL = [
-  type: Type.GraphQL,
-  operationKind: string,
-  operationName: string,
-  variables: string,
-  response: string,
+  /*type:*/ Type.GraphQL,
+  /*operationKind:*/ string,
+  /*operationName:*/ string,
+  /*variables:*/ string,
+  /*response:*/ string,
 ]
 
 export type PerformanceTrack = [
-  type: Type.PerformanceTrack,
-  frames: number,
-  ticks: number,
-  totalJSHeapSize: number,
-  usedJSHeapSize: number,
+  /*type:*/ Type.PerformanceTrack,
+  /*frames:*/ number,
+  /*ticks:*/ number,
+  /*totalJSHeapSize:*/ number,
+  /*usedJSHeapSize:*/ number,
 ]
 
 export type ResourceTiming = [
-  type: Type.ResourceTiming,
-  timestamp: number,
-  duration: number,
-  ttfb: number,
-  headerSize: number,
-  encodedBodySize: number,
-  decodedBodySize: number,
-  url: string,
-  initiator: string,
+  /*type:*/ Type.ResourceTiming,
+  /*timestamp:*/ number,
+  /*duration:*/ number,
+  /*ttfb:*/ number,
+  /*headerSize:*/ number,
+  /*encodedBodySize:*/ number,
+  /*decodedBodySize:*/ number,
+  /*url:*/ string,
+  /*initiator:*/ string,
 ]
 
 export type ConnectionInformation = [
-  type: Type.ConnectionInformation,
-  downlink: number,
-  type: string,
+  /*type:*/ Type.ConnectionInformation,
+  /*downlink:*/ number,
+  /*type:*/ string,
 ]
 
 export type SetPageVisibility = [
-  type: Type.SetPageVisibility,
-  hidden: boolean,
+  /*type:*/ Type.SetPageVisibility,
+  /*hidden:*/ boolean,
 ]
 
 export type LongTask = [
-  type: Type.LongTask,
-  timestamp: number,
-  duration: number,
-  context: number,
-  containerType: number,
-  containerSrc: string,
-  containerId: string,
-  containerName: string,
+  /*type:*/ Type.LongTask,
+  /*timestamp:*/ number,
+  /*duration:*/ number,
+  /*context:*/ number,
+  /*containerType:*/ number,
+  /*containerSrc:*/ string,
+  /*containerId:*/ string,
+  /*containerName:*/ string,
 ]
 
 export type SetNodeAttributeURLBased = [
-  type: Type.SetNodeAttributeURLBased,
-  id: number,
-  name: string,
-  value: string,
-  baseURL: string,
+  /*type:*/ Type.SetNodeAttributeURLBased,
+  /*id:*/ number,
+  /*name:*/ string,
+  /*value:*/ string,
+  /*baseURL:*/ string,
 ]
 
 export type SetCSSDataURLBased = [
-  type: Type.SetCSSDataURLBased,
-  id: number,
-  data: string,
-  baseURL: string,
+  /*type:*/ Type.SetCSSDataURLBased,
+  /*id:*/ number,
+  /*data:*/ string,
+  /*baseURL:*/ string,
 ]
 
 export type TechnicalInfo = [
-  type: Type.TechnicalInfo,
-  type: string,
-  value: string,
+  /*type:*/ Type.TechnicalInfo,
+  /*type:*/ string,
+  /*value:*/ string,
 ]
 
 export type CustomIssue = [
-  type: Type.CustomIssue,
-  name: string,
-  payload: string,
+  /*type:*/ Type.CustomIssue,
+  /*name:*/ string,
+  /*payload:*/ string,
 ]
 
 export type CSSInsertRuleURLBased = [
-  type: Type.CSSInsertRuleURLBased,
-  id: number,
-  rule: string,
-  index: number,
-  baseURL: string,
+  /*type:*/ Type.CSSInsertRuleURLBased,
+  /*id:*/ number,
+  /*rule:*/ string,
+  /*index:*/ number,
+  /*baseURL:*/ string,
 ]
 
 export type MouseClick = [
-  type: Type.MouseClick,
-  id: number,
-  hesitationTime: number,
-  label: string,
-  selector: string,
+  /*type:*/ Type.MouseClick,
+  /*id:*/ number,
+  /*hesitationTime:*/ number,
+  /*label:*/ string,
+  /*selector:*/ string,
 ]
 
 export type CreateIFrameDocument = [
-  type: Type.CreateIFrameDocument,
-  frameID: number,
-  id: number,
+  /*type:*/ Type.CreateIFrameDocument,
+  /*frameID:*/ number,
+  /*id:*/ number,
 ]
 
 export type AdoptedSSReplaceURLBased = [
-  type: Type.AdoptedSSReplaceURLBased,
-  sheetID: number,
-  text: string,
-  baseURL: string,
+  /*type:*/ Type.AdoptedSSReplaceURLBased,
+  /*sheetID:*/ number,
+  /*text:*/ string,
+  /*baseURL:*/ string,
 ]
 
 export type AdoptedSSInsertRuleURLBased = [
-  type: Type.AdoptedSSInsertRuleURLBased,
-  sheetID: number,
-  rule: string,
-  index: number,
-  baseURL: string,
+  /*type:*/ Type.AdoptedSSInsertRuleURLBased,
+  /*sheetID:*/ number,
+  /*rule:*/ string,
+  /*index:*/ number,
+  /*baseURL:*/ string,
 ]
 
 export type AdoptedSSDeleteRule = [
-  type: Type.AdoptedSSDeleteRule,
-  sheetID: number,
-  index: number,
+  /*type:*/ Type.AdoptedSSDeleteRule,
+  /*sheetID:*/ number,
+  /*index:*/ number,
 ]
 
 export type AdoptedSSAddOwner = [
-  type: Type.AdoptedSSAddOwner,
-  sheetID: number,
-  id: number,
+  /*type:*/ Type.AdoptedSSAddOwner,
+  /*sheetID:*/ number,
+  /*id:*/ number,
 ]
 
 export type AdoptedSSRemoveOwner = [
-  type: Type.AdoptedSSRemoveOwner,
-  sheetID: number,
-  id: number,
+  /*type:*/ Type.AdoptedSSRemoveOwner,
+  /*sheetID:*/ number,
+  /*id:*/ number,
 ]
 
 

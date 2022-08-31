@@ -28,7 +28,7 @@ export default class Nodes {
     listeners.push([type, elementListener])
   }
 
-  registerNode(node: Node): [id: number, isNew: boolean] {
+  registerNode(node: Node): [/*id:*/ number, /*isNew:*/ boolean] {
     let id: number = (node as any)[this.node_id]
     const isNew = id === undefined
     if (isNew) {
