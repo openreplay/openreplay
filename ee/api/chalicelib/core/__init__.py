@@ -5,6 +5,7 @@ logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     print(">>> Using experimental sessions search")
+    from . import sessions as sessions_legacy
     from . import sessions_exp as sessions
 else:
     from . import sessions as sessions
@@ -32,3 +33,6 @@ if config("EXP_ALERTS", cast=bool, default=False):
     from . import alerts_processor_exp as alerts_processor
 else:
     from . import alerts_processor as alerts_processor
+
+
+from . import significance_exp as significance
