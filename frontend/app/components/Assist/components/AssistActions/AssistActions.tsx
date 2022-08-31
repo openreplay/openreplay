@@ -112,6 +112,17 @@ function AssistActions({
         }
     };
 
+    React.useEffect(() => {
+        if (!livePlay) {
+            if (annotating) {
+                toggleAnnotation(false);
+            }
+            if (remoteActive) {
+                requestReleaseRemoteControl()
+            }
+        }
+    }, [livePlay])
+
     return (
         <div className="flex items-center">
             {(onCall || remoteActive) && (
