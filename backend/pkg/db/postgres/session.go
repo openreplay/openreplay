@@ -1,13 +1,15 @@
 package postgres
 
 import (
-	"github.com/lib/pq"
+	"github.com/jackc/pgtype"
+	"log"
 	. "openreplay/backend/pkg/db/types"
 )
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	s := &Session{SessionID: sessionID}
 	var revID, userOSVersion *string
+	var issueTypes pgtype.EnumArray
 	if err := conn.c.QueryRow(`
 		SELECT platform,
 			duration, project_id, start_ts,
@@ -28,7 +30,7 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 		&s.UserDevice, &s.UserDeviceType, &s.UserCountry,
 		&revID, &s.TrackerVersion,
 		&s.UserID, &s.UserAnonymousID, &s.Referrer,
-		&s.PagesCount, &s.EventsCount, &s.ErrorsCount, pq.Array(&s.IssueTypes),
+		&s.PagesCount, &s.EventsCount, &s.ErrorsCount, &issueTypes,
 		&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
 		&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
 		return nil, err
@@ -38,6 +40,9 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	}
 	if revID != nil {
 		s.RevID = *revID
+	}
+	if err := issueTypes.AssignTo(&s.IssueTypes); err != nil {
+		log.Printf("can't scan IssueTypes, err: %s", err)
 	}
 	return s, nil
 }
