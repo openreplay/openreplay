@@ -22,6 +22,7 @@ type iteratorImpl struct {
 	msgSize   uint64
 	canSkip   bool
 	msg       Message
+	url       string
 }
 
 func NewIterator(data []byte) Iterator {
@@ -96,6 +97,7 @@ func (i *iteratorImpl) Next() bool {
 		i.index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.timestamp = m.Timestamp
 		i.version = m.Version
+		i.url = m.Url
 		isBatchMeta = true
 		log.Printf("new batch version: %d", i.version)
 		if i.version > 1 {
@@ -133,9 +135,13 @@ func (i *iteratorImpl) Next() bool {
 	case MsgSessionEnd:
 		m := i.msg.Decode().(*SessionEnd)
 		i.timestamp = int64(m.Timestamp)
+	case MsgSetPageLocation:
+		m := i.msg.Decode().(*SetPageLocation)
+		i.url = m.URL
 	}
 	i.msg.Meta().Index = i.index
 	i.msg.Meta().Timestamp = i.timestamp
+	i.msg.Meta().Url = i.url
 
 	if !isBatchMeta { // Without that indexes will be unique anyway, though shifted by 1 because BatchMeta is not counted in tracker
 		i.index++

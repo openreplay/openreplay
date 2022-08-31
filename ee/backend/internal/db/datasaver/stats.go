@@ -5,44 +5,42 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/db/clickhouse"
-	. "openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
-	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/messages"
 )
 
-var ch clickhouse.Connector
 var finalizeTicker <-chan time.Time
 
 func (si *Saver) InitStats() {
-	ch = clickhouse.NewConnector(env.String("CLICKHOUSE_STRING"))
-	if err := ch.Prepare(); err != nil {
+	si.ch = clickhouse.NewConnector(env.String("CLICKHOUSE_STRING"))
+	if err := si.ch.Prepare(); err != nil {
 		log.Fatalf("Clickhouse prepare error: %v\n", err)
 	}
-
+	si.pg.Conn.SetClickHouse(si.ch)
 	finalizeTicker = time.Tick(20 * time.Minute)
-
 }
 
-func (si *Saver) InsertStats(session *Session, msg Message) error {
+func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error {
 	switch m := msg.(type) {
 	// Web
-	case *SessionEnd:
-		return ch.InsertWebSession(session)
-	case *PerformanceTrackAggr:
-		return ch.InsertWebPerformanceTrackAggr(session, m)
-	case *ClickEvent:
-		return ch.InsertWebClickEvent(session, m)
-	case *InputEvent:
-		return ch.InsertWebInputEvent(session, m)
-		// Unique for Web
-	case *PageEvent:
-		ch.InsertWebPageEvent(session, m)
-	case *ResourceEvent:
-		return ch.InsertWebResourceEvent(session, m)
-	case *ErrorEvent:
-		return ch.InsertWebErrorEvent(session, m)
-	case *LongTask:
-		return ch.InsertLongtask(session, m)
+	case *messages.SessionEnd:
+		// TODO: get issue_types and base_referrer before session end
+		return si.ch.InsertWebSession(session)
+	case *messages.PerformanceTrackAggr:
+		// TODO: page_path
+		return si.ch.InsertWebPerformanceTrackAggr(session, m)
+	case *messages.ClickEvent:
+		return si.ch.InsertWebClickEvent(session, m)
+	case *messages.InputEvent:
+		return si.ch.InsertWebInputEvent(session, m)
+	// Unique for Web
+	case *messages.PageEvent:
+		return si.ch.InsertWebPageEvent(session, m)
+	case *messages.ResourceEvent:
+		return si.ch.InsertWebResourceEvent(session, m)
+	case *messages.ErrorEvent:
+		return si.ch.InsertWebErrorEvent(session, m)
 	}
 	return nil
 }
@@ -50,15 +48,10 @@ func (si *Saver) InsertStats(session *Session, msg Message) error {
 func (si *Saver) CommitStats() error {
 	select {
 	case <-finalizeTicker:
-		if err := ch.FinaliseSessionsTable(); err != nil {
+		if err := si.ch.FinaliseSessionsTable(); err != nil {
 			log.Printf("Stats: FinaliseSessionsTable returned an error. %v", err)
 		}
 	default:
 	}
-	errCommit := ch.Commit()
-	errPrepare := ch.Prepare()
-	if errCommit != nil {
-		return errCommit
-	}
-	return errPrepare
+	return si.ch.Commit()
 }

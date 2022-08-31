@@ -5,6 +5,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
+	"openreplay/backend/pkg/db/clickhouse"
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/monitoring"
 	"strings"
 	"time"
@@ -37,6 +39,11 @@ type Conn struct {
 	batchSizeLines    syncfloat64.Histogram
 	sqlRequestTime    syncfloat64.Histogram
 	sqlRequestCounter syncfloat64.Counter
+	chConn            clickhouse.Connector
+}
+
+func (conn *Conn) SetClickHouse(ch clickhouse.Connector) {
+	conn.chConn = ch
 }
 
 func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *Conn {
@@ -151,6 +158,13 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp
 	}
 	if err := conn.autocompletes.Append(value, tp, projectID); err != nil {
 		log.Printf("autocomplete bulk err: %s", err)
+	}
+	if conn.chConn == nil {
+		return
+	}
+	// Send autocomplete data to clickhouse
+	if err := conn.chConn.InsertAutocomplete(&types.Session{SessionID: sessionID, ProjectID: projectID}, tp, value); err != nil {
+		log.Printf("click house autocomplete err: %s", err)
 	}
 }
 

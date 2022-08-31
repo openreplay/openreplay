@@ -11,11 +11,14 @@ type Session struct {
 	UserOSVersion  string
 	UserDevice     string
 	UserCountry    string
+	Referrer       *string
 
 	Duration    *uint64
 	PagesCount  int
 	EventsCount int
 	ErrorsCount int
+	IssueTypes  []string
+	IssueScore  int
 
 	UserID          *string // pointer??
 	UserAnonymousID *string
