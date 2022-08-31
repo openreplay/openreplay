@@ -46,7 +46,7 @@ export default function(opts: Partial<Options> = {}) {
     }
     const encoder = new Encoder(sha1, 50);
     const state = {};
-    return (store, storeName) => {
+    return (storeName: string) => (store) => {
       // Vuex
       if (store.subscribe) {
         const randomId = Math.random().toString(36).substring(2, 9)
