@@ -1,6 +1,9 @@
 package postgres
 
-import . "openreplay/backend/pkg/db/types"
+import (
+	"github.com/lib/pq"
+	. "openreplay/backend/pkg/db/types"
+)
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	s := &Session{SessionID: sessionID}
@@ -11,7 +14,8 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 			user_uuid, user_os, user_os_version, 
 			user_device, user_device_type, user_country,
 			rev_id, tracker_version,
-			user_id, user_anonymous_id,
+			user_id, user_anonymous_id, referrer,
+			pages_count, events_count, errors_count, issue_types,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
 		FROM sessions
@@ -23,7 +27,8 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 		&s.UserUUID, &s.UserOS, &userOSVersion,
 		&s.UserDevice, &s.UserDeviceType, &s.UserCountry,
 		&revID, &s.TrackerVersion,
-		&s.UserID, &s.UserAnonymousID,
+		&s.UserID, &s.UserAnonymousID, &s.Referrer,
+		&s.PagesCount, &s.EventsCount, &s.ErrorsCount, pq.Array(&s.IssueTypes),
 		&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
 		&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
 		return nil, err
