@@ -83,7 +83,6 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 }
 
 func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
-	// TODO: search acceleration?
 	sqlRequest := `
 	UPDATE sessions
 		SET issue_types=(SELECT 
@@ -96,11 +95,12 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
       INNER JOIN issues AS ps USING (issue_id)
                 WHERE session_id = $1)
 		WHERE session_id = $1`
-	conn.batchQueue(sessionID, sqlRequest, sessionID)
+	return conn.c.Exec(sqlRequest, sessionID)
+	//conn.batchQueue(sessionID, sqlRequest, sessionID)
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+8)
-	return nil
+	//conn.updateBatchSize(sessionID, len(sqlRequest)+8)
+	//return nil
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {
