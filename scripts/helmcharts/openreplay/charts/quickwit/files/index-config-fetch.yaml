@@ -1,0 +1,40 @@
+#
+# Index config file for gh-archive dataset.
+#
+
+version: 0
+
+index_id: fetchevent
+
+doc_mapping:
+  mode: strict
+  field_mappings:
+    - name: method
+      type: text
+      tokenizer: default
+      record: position
+    - name: url
+      type: text
+      tokenizer: default
+      record: position
+    - name: request
+      type: text
+      tokenizer: default
+      record: position
+    - name: response
+      type: text
+      tokenizer: default
+      record: position
+    - name: status
+      type: i64
+      indexed: true
+      fast: true
+    - name: timestamp
+      type: i64
+      fast: true
+    - name: duration
+      type: i64
+      fast: true
+
+search_settings:
+  default_search_fields: [url, request, response]
