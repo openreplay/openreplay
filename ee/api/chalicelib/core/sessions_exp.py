@@ -23,7 +23,7 @@ s.pages_count AS pages_count,
 s.errors_count AS errors_count,
 s.user_anonymous_id AS user_anonymous_id,
 s.platform AS platform,
-0 AS issue_score,
+coalesce(issue_score,0) AS issue_score,
 s.issue_types AS issue_types 
 """
 
@@ -44,7 +44,8 @@ SESSION_PROJECTION_COLS_CH_MAP = """\
 'errors_count',      toString(s.errors_count),
 'user_anonymous_id', toString(s.user_anonymous_id),
 'platform',          toString(s.platform),
-'issue_score',       '0'
+'issue_score',       toString(coalesce(issue_score,0)),
+'viewed',            toString(viewed_sessions.session_id > 0)
 """
 
 
@@ -269,6 +270,11 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                     {sort} AS sort_key,
                                                     map({SESSION_PROJECTION_COLS_CH_MAP}) AS details
                                                 {query_part}
+                                              LEFT JOIN (SELECT session_id
+                                                FROM experimental.user_viewed_sessions
+                                                WHERE user_id = %(userId)s AND project_id=%(project_id)s
+                                                  AND _timestamp >= toDateTime(%(startDate)s / 1000)) AS viewed_sessions
+                                               ON (viewed_sessions.session_id = s.session_id)
                                              ) AS raw
                                         ORDER BY sort_key {data.order}
                                         LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
