@@ -11,7 +11,7 @@ type Session struct {
 	UserOSVersion  string
 	UserDevice     string
 	UserCountry    string
-	Referrer       string
+	Referrer       *string
 
 	Duration    *uint64
 	PagesCount  int

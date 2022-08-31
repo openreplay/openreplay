@@ -201,7 +201,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		uint16(session.PagesCount),
 		uint16(session.EventsCount),
 		uint16(session.ErrorsCount),
-		nullableString(session.Referrer),
+		session.Referrer,
 		// Web unique columns
 		session.UserBrowser,
 		nullableString(session.UserBrowserVersion),
