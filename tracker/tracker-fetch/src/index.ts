@@ -44,7 +44,7 @@ export default function(opts: Partial<Options> = {}): (app: App | null) => Windo
       overrideGlobal: false,
       failuresOnly: false,
       ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
-      fetch: window.fetch,
+      fetch: window.fetch.bind(window),
     },
     opts,
   );

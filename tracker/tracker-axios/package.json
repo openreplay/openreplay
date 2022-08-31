@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-axios",
   "description": "Tracker plugin for axios requests recording",
-  "version": "3.5.1",
+  "version": "3.6.0",
   "keywords": [
     "axios",
     "logging",
@@ -20,11 +20,11 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^3.4.8",
+    "@openreplay/tracker": "^3.6.0",
     "axios": "0.x"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.4.9",
+    "@openreplay/tracker": "file:../tracker",
     "axios": "^0.26.0",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
