@@ -3,6 +3,7 @@ package cache
 import (
 	"errors"
 	"github.com/jackc/pgx/v4"
+	"log"
 
 	. "openreplay/backend/pkg/db/types"
 )
@@ -10,6 +11,7 @@ import (
 var NilSessionInCacheError = errors.New("nil session in error")
 
 func (c *PGCache) GetSession(sessionID uint64) (*Session, error) {
+	log.Printf("GetSession, sessID: %d", sessionID)
 	if s, inCache := c.sessions[sessionID]; inCache {
 		if s == nil {
 			return s, NilSessionInCacheError
@@ -28,5 +30,6 @@ func (c *PGCache) GetSession(sessionID uint64) (*Session, error) {
 }
 
 func (c *PGCache) DeleteSession(sessionID uint64) {
+	log.Printf("DeleteSession, sessID: %d", sessionID)
 	delete(c.sessions, sessionID)
 }

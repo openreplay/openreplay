@@ -187,9 +187,10 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, save
 }
 
 func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error {
+	log.Printf("insert referrer, sessID: %d, referrer: %s", sessionID, referrer)
 	return conn.c.Exec(`
 		UPDATE sessions 
 		SET referrer = $1 
-		WHERE session_id=$2 AND referrer IS NULL`,
+		WHERE session_id = $2 AND referrer IS NULL`,
 		referrer, sessionID)
 }
