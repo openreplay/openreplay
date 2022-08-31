@@ -271,7 +271,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 {query_part}
                                              ) AS raw
                                         ORDER BY sort_key {data.order}
-                                        LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""", full_args)
+                                        LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
+                                    full_args)
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
@@ -1821,7 +1822,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     sequence_conditions[-1] += " AND " + c["condition"]
 
             del _value_conditions
-            events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
+            if len(events_conditions) > 0:
+                events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
             del type_conditions
             if len(value_conditions) > 0:
                 events_conditions_where.append(f"({' OR '.join([c for c in value_conditions])})")
@@ -1867,8 +1869,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 if c.get('condition'):
                     has_values = True
                     sequence_conditions[-1] += " AND " + c["condition"]
-
-            events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
+            if len(events_conditions) > 0:
+                events_conditions_where.append(f"({' OR '.join([c for c in type_conditions])})")
 
             if len(events_conditions_not) > 0:
                 has_values = True
