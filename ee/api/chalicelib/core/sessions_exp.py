@@ -267,7 +267,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             main_query = cur.format(f"""SELECT any(total) AS count, groupArray(%(sessions_limit)s)(details) AS sessions
                                         FROM (SELECT total, details
                                               FROM (SELECT COUNT() OVER () AS total,
-                                                    {sort} AS sort_key,
+                                                    s.{sort} AS sort_key,
                                                     map({SESSION_PROJECTION_COLS_CH_MAP}) AS details
                                                 {query_part}
                                               LEFT JOIN (SELECT session_id
