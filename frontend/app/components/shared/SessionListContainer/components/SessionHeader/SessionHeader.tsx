@@ -55,14 +55,14 @@ function SessionHeader(props: Props) {
                 </div>
             </div>
 
-            <div className="flex items-center">
-                {!isBookmark && <SessionTags />}
+            {!isBookmark && <div className="flex items-center">
+                <SessionTags />
                 <div className="mx-4" />
                 <SelectDateRange period={period} onChange={onDateChange} right={true} />
                 <div className="mx-2" />
                 <SessionSort />
                 <SessionSettingButton />
-            </div>
+            </div>}
         </div>
     );
 }

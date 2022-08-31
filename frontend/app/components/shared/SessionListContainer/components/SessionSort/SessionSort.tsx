@@ -15,7 +15,7 @@ const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({ va
 
 interface Props {
     filter: any;
-    options: any;
+    options?: any;
     applyFilter: (filter: any) => void;
     sort: (sort: string, sign: number) => void;
 }
