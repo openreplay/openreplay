@@ -325,7 +325,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                    density=density))
     extra_event = None
     if metric_of == schemas.TableMetricOfType.visited_url:
-        extra_event = f"""SELECT DISTINCT ev.session_id, ev.path
+        extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startDate)} AS ev
                             WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
@@ -393,8 +393,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             full_args[arg_name] = metric_value[i]
                         extra_where = f"WHERE ({' OR '.join(extra_where)})"
                 elif metric_of == schemas.TableMetricOfType.visited_url:
-                    main_col = "path"
-                    extra_col = "s.path"
+                    main_col = "url_path"
+                    extra_col = "s.rul_path"
                 main_query = cur.format(f"""{pre_query}
                                             SELECT COUNT(DISTINCT {main_col}) OVER () AS main_count, 
                                                  {main_col} AS name,
@@ -720,7 +720,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
                                              event.value, value_key=e_k))
             elif event_type == events.event_type.CUSTOM.ui_type:
                 event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
@@ -1436,7 +1436,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
 
             elif event_type == events.event_type.LOCATION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.event_type.LOCATION.column
+                _column = 'url_path'
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
@@ -1573,7 +1573,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 tname = "main"
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
                                              event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
@@ -1596,7 +1596,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 tname = "main"
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        _multiple_conditions(f"main.url_path {op} %({e_k})s",
                                              event.value, value_key=e_k))
                     events_conditions[-1]["condition"].append(event_where[-1])
                 e_k += "_custom"
