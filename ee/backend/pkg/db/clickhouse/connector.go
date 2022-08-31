@@ -199,7 +199,7 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 		uint16(session.PagesCount),
 		uint16(session.EventsCount),
 		uint16(session.ErrorsCount),
-		uint16(session.IssueScore),
+		uint32(session.IssueScore),
 		session.Referrer,
 		session.IssueTypes,
 		session.TrackerVersion,
