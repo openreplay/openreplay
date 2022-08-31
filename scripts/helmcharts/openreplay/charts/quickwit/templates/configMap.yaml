@@ -1,9 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "quickwit.fullname" . }}-indexconfig
+  name: {{ include "quickwit.fullname" . }}
   labels:
     {{- include "quickwit.labels" . | nindent 4 }}
 data:
-  indexConfig.yaml: |-
-    {{ tpl .Values.indexConfig . | nindent 4 }}
+{{ (.Files.Glob "files/*").AsConfig | indent 2 }}
