@@ -304,7 +304,9 @@ def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetri
                                                   include_dashboard=False)
     if raw_metric is None:
         return None
-    metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
+    metric: schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
+    if metric.is_template and metric.predefined_key is None:
+        return None
     if metric.is_template:
         return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
     else:
