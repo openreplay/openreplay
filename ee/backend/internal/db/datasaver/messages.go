@@ -76,6 +76,8 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 			Message:   m.Message,
 			Payload:   m.Payload,
 		})
+	case *messages.SetPageLocation:
+		return mi.pg.InsertSessionReferrer(sessionID, m.Referrer)
 
 		// IOS
 	case *messages.IOSSessionStart:

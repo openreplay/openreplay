@@ -185,3 +185,11 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, save
 	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)
 	return nil
 }
+
+func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error {
+	return conn.c.Exec(`
+		UPDATE sessions 
+		SET referrer = $1 
+		WHERE session_id=$2 AND referrer IS NULL`,
+		referrer, sessionID)
+}
