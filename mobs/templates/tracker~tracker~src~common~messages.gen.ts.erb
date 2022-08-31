@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
 
-export enum Type {
+export declare const enum Type {
   <%= $messages.select { |msg| msg.tracker }.map { |msg| "#{ msg.name } = #{ msg.id }," }.join "\n  " %>
 }
 

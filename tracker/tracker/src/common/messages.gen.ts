@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
 
-export enum Type {
+export declare const enum Type {
   BatchMetadata = 81,
   PartitionedMessage = 82,
   Timestamp = 0,
