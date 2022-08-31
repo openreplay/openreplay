@@ -806,7 +806,7 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
         rows = [{"url": i["key"], "sessions": i["doc_count"]} for i in rows]
         if len(rows) == 0:
             return []
-        ch_sub_query.append("events.url_path = %(value)s")
+        ch_sub_query.append("resources.url_path = %(value)s")
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
                               COUNT(1) AS doc_count,
                               toUnixTimestamp(MAX(resources.datetime))*1000 AS max_datatime
