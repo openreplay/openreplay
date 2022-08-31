@@ -20,7 +20,7 @@ function VideoContainer({ stream, muted = false, height = 280 }: Props) {
     if (!stream) { return }
     const iid = setInterval(() => {
       const settings = stream.getVideoTracks()[0]?.getSettings()
-      const isDummyVideoTrack = settings ? (settings.width === 2 || settings.frameRate === 0) : true
+      const isDummyVideoTrack = settings ? (settings.width === 2 || settings.frameRate === 0 || !settings.frameRate && !settings.width) : true
       const shouldBeEnabled = !isDummyVideoTrack
       isEnabled !== shouldBeEnabled ? setEnabled(shouldBeEnabled) : null;
     }, 500)
