@@ -18,6 +18,7 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 			rev_id, tracker_version,
 			user_id, user_anonymous_id, referrer,
 			pages_count, events_count, errors_count, issue_types,
+			user_browser, user_browser_version,
 			metadata_1, metadata_2, metadata_3, metadata_4, metadata_5,
 			metadata_6, metadata_7, metadata_8, metadata_9, metadata_10
 		FROM sessions
@@ -31,6 +32,7 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 		&revID, &s.TrackerVersion,
 		&s.UserID, &s.UserAnonymousID, &s.Referrer,
 		&s.PagesCount, &s.EventsCount, &s.ErrorsCount, &issueTypes,
+		&s.UserBrowser, &s.UserBrowserVersion,
 		&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
 		&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
 		return nil, err
