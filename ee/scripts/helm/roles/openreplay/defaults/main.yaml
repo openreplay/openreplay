@@ -10,6 +10,9 @@ db_list:
   - "kafka"
 
 env:
+  alerts:
+    ch_host: "clickhouse.db.svc.cluster.local"
+    ch_port: "9000"
   chalice:
     ch_host: "clickhouse.db.svc.cluster.local"
     ch_port: "9000"
