@@ -106,7 +106,7 @@ export default class ConsoleContent extends React.PureComponent {
                       warn: l.isYellow(),
                       error: l.isRed(),
                       [stl.activeRow]: lastIndex === index,
-                      [stl.inactiveRow]: index > lastIndex,
+                      // [stl.inactiveRow]: index > lastIndex,
                       'cursor-pointer': !isResult,
                     })}
                     onClick={() => !isResult && jump(l.time)}
