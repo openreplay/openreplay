@@ -44,9 +44,9 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, f
     >
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
-          <div className="col-span-5">Title</div>
+          <div className="col-span-8">Title</div>
           <div className="col-span-2">Type</div>
-          <div className="col-span-5 text-right">Modified</div>
+          <div className="col-span-2 text-right">Modified</div>
         </div>
 
         {sliceListPerPage(list, page - 1, pageSize).map((alert: any) => (

@@ -40,9 +40,9 @@ function MetricsList({ siteId }: { siteId: string }) {
     >
       <div className="mt-3 border-b rounded bg-white">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
-          <div className="col-span-3">Title</div>
-          <div className="col-span-3">Owner</div>
-          <div className="col-span-4">Visibility</div>
+          <div className="col-span-4">Title</div>
+          <div className="col-span-4">Owner</div>
+          <div className="col-span-2">Visibility</div>
           <div className="col-span-2 text-right">Last Modified</div>
         </div>
 

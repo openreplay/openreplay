@@ -46,7 +46,7 @@ function MetricListItem(props: Props) {
     };
     return (
         <div className="grid grid-cols-12 py-4 border-t select-none hover:bg-active-blue cursor-pointer px-6" onClick={onItemClick}>
-            <div className="col-span-3 flex items-start">
+            <div className="col-span-4 flex items-start">
                 <div className="flex items-center">
                     <MetricTypeIcon type={metric.metricType} />
                     <div className="link capitalize-first">
@@ -54,8 +54,8 @@ function MetricListItem(props: Props) {
                     </div>
                 </div>
             </div>
-            <div className="col-span-3">{metric.owner}</div>
-            <div className="col-span-4">
+            <div className="col-span-4">{metric.owner}</div>
+            <div className="col-span-2">
                 <div className="flex items-center">
                     <Icon name={metric.isPublic ? "user-friends" : "person-fill"} className="mr-2" />
                     <span>{metric.isPublic ? 'Team' : 'Private'}</span>

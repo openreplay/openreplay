@@ -78,7 +78,7 @@ function AlertListItem(props: Props) {
       onClick={onItemClick}
     >
       <div className="grid grid-cols-12 py-4 select-none">
-        <div className="col-span-5 flex items-start">
+        <div className="col-span-8 flex items-start">
           <div className="flex items-center capitalize-first">
             <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
               <Icon name="bell" size="16" color="tealx" />
@@ -91,7 +91,7 @@ function AlertListItem(props: Props) {
             <span>{alert.detectionMethod}</span>
           </div>
         </div>
-        <div className="col-span-5 text-right">
+        <div className="col-span-2 text-right">
           {demo
             ? DateTime.fromMillis(+new Date()).toFormat('LLL dd, yyyy, hh:mm a')
             : checkForRecent(
