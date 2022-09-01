@@ -374,7 +374,7 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 		msg.URL,
 		nullableString(msg.Request),
 		nullableString(msg.Response),
-		msg.Status,
+		uint16(msg.Status),
 		url.EnsureMethod(msg.Method),
 		msg.Duration,
 		msg.Status < 400,
