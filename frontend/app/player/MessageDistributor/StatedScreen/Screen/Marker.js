@@ -1,5 +1,17 @@
 import styles from './marker.module.css';
 
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function escapeHtml(string) {
+  return string.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+
+function safeString(string) {
+  return (escapeHtml(escapeRegExp(string)))
+}
+
 export default class Marker {
   _target = null;
   _selector = null;
@@ -92,11 +104,11 @@ export default class Marker {
       let k = attrs[i];
       const attribute = k.name;
       if (attribute === 'class') {
-        str += `<span style="color:#F29766">${'.' + k.value.split(' ').join('.')}</span>`;
+        str += `<span style="color:#F29766">${'.' + safeString(k.value.split(' ').join('.'))}</span>`;
       }
 
       if (attribute === 'id') {
-        str += `<span style="color:#F29766">${'#' + k.value.split(' ').join('#')}</span>`;
+        str += `<span style="color:#F29766">${'#' + safeString(k.value.split(' ').join('#'))}</span>`;
       }
     }
 
