@@ -605,20 +605,16 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     ss_constraints.append("ms.duration <= %(maxDuration)s")
                     full_args["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.referrer:
-                # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
                 if is_any:
-                    referrer_constraint = 'isNotNull(r.base_referrer)'
+                    extra_constraints.append('isNotNull(s.base_referrer)')
+                    ss_constraints.append('isNotNull(ms.base_referrer)')
                 else:
-                    referrer_constraint = _multiple_conditions(f"r.base_referrer {op} %({f_k})s", f.value,
-                                                               is_not=is_not, value_key=f_k)
-                referrer_constraint = f"""(SELECT DISTINCT session_id
-                                                  FROM {MAIN_EVENTS_TABLE} AS r
-                                                  WHERE {" AND ".join([f"r.{b}" for b in __events_where_basic])}
-                                                    AND event_type='{__get_event_type(schemas.EventType.location)}'
-                                                    AND {referrer_constraint})"""
-                # events_conditions_where.append(f"""main.session_id IN {referrer_constraint}""")
-                # extra_constraints.append(f"""s.session_id IN {referrer_constraint}""")
-                extra_from += f"\nINNER JOIN {referrer_constraint} AS referred ON(referred.session_id=s.session_id)"
+                    extra_constraints.append(
+                        _multiple_conditions(f"s.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type == events.event_type.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
