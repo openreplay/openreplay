@@ -47,7 +47,6 @@ export default class StackEvents extends React.PureComponent {
   }
 
   renderPopupContent(userEvent) {
-    console.log('event', userEvent);
     const { source, payload, name } = userEvent;
     switch (source) {
       case SENTRY:
