@@ -52,8 +52,13 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
-			if err := mi.ch.InsertRequest(session, m); err != nil {
-				log.Printf("can't insert request event into clickhouse: %s", err)
+			project, err := mi.pg.GetProject(session.ProjectID)
+			if err != nil {
+				log.Printf("can't get project: %s", err)
+			} else {
+				if err := mi.ch.InsertRequest(session, m, project.SaveRequestPayloads); err != nil {
+					log.Printf("can't insert request event into clickhouse: %s", err)
+				}
 			}
 		}
 		return mi.pg.InsertWebFetchEvent(sessionID, m)

@@ -78,7 +78,7 @@ type Connector interface {
 	InsertWebErrorEvent(session *types.Session, msg *messages.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.FetchEvent) error
+	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
 	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
 	InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error
 }
@@ -239,7 +239,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 		nullableUint16(uint16(msg.HeaderSize)),
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
-		msg.Success,
+		uint8(msg.Success),
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -367,14 +367,19 @@ func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgV
 	return nil
 }
 
-func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent) error {
+func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error {
+	var request, response *string
+	if savePayload {
+		request = &msg.Request
+		response = &msg.Response
+	}
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		datetime(msg.Timestamp),
 		msg.URL,
-		nullableString(msg.Request),
-		nullableString(msg.Response),
+		nullableString(request),
+		nullableString(response),
 		uint16(msg.Status),
 		url.EnsureMethod(msg.Method),
 		uint16(msg.Duration),
