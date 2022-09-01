@@ -48,14 +48,12 @@ export function renderType(r) {
 
 export function renderName(r) {
   return (
-
       <Popup
         style={{ width: '100%' }}
         content={<div className={stl.popupNameContent}>{r.url}</div>}
       >
         <div className={stl.popupNameTrigger}>{r.name}</div>
       </Popup>
-
   );
 }
 

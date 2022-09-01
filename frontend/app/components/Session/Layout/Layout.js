@@ -14,14 +14,11 @@ function Layout({ children, player, toolbar }) {
       <div className="flex-1 flex">
         <div
           className="flex flex-col"
-        //   style={{ width: player.fullscreen.enabled ? '100vw' : 'calc(100vw - 270px)' }}
         >
           <div className="flex-1 flex flex-col relative bg-white border-gray-light">
             {player.fullscreen.enabled && <EscapeButton onClose={player.toggleFullscreen} />}
             <div className="flex-1 relative overflow-hidden">
-              {/* <Loader loading={ player.loading }> */}
               {children}
-              {/* </Loader>  */}
               <PlayOverlay player={player} />
             </div>
             <Controls player={player} toolbar={toolbar} />

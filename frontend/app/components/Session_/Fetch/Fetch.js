@@ -157,7 +157,7 @@ export default class Fetch extends React.PureComponent {
                 {[
                   {
                     label: 'Start',
-                    width: 90,
+                    width: 120,
                     render: renderStart,
                   },
                   {

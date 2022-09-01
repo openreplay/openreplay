@@ -35,16 +35,6 @@ export function renderName(r) {
       >
         <TextEllipsis>{r.name}</TextEllipsis>
       </Popup>
-      <Button
-        variant="text"
-        className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
-        onClick={(e) => {
-          e.stopPropagation();
-          jump(r.time);
-        }}
-      >
-        Jump
-      </Button>
     </div>
   );
 }
