@@ -99,7 +99,6 @@ func (i *iteratorImpl) Next() bool {
 		i.version = m.Version
 		i.url = m.Url
 		isBatchMeta = true
-		log.Printf("new batch version: %d", i.version)
 		if i.version > 1 {
 			log.Printf("incorrect batch version, skip current batch")
 			return false

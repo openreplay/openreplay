@@ -26,12 +26,11 @@ func (m *RawMessage) Encode() []byte {
 	m.data[0] = uint8(m.tp)
 	m.encoded = true
 	*m.skipped = false
-	n, err := io.ReadFull(m.reader, m.data[1:])
+	_, err := io.ReadFull(m.reader, m.data[1:])
 	if err != nil {
 		log.Printf("message encode err: %s", err)
 		return nil
 	}
-	log.Printf("encode: read %d of %d bytes", n, m.size)
 	return m.data
 }
 
