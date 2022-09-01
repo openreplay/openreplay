@@ -239,7 +239,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 		nullableUint16(uint16(msg.HeaderSize)),
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
-		uint8(msg.Success),
+		msg.Success,
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -378,8 +378,8 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 		uint16(session.ProjectID),
 		datetime(msg.Timestamp),
 		msg.URL,
-		nullableString(request),
-		nullableString(response),
+		request,
+		response,
 		uint16(msg.Status),
 		url.EnsureMethod(msg.Method),
 		uint16(msg.Duration),
