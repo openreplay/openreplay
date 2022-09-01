@@ -20,9 +20,11 @@ function AlertsView({ siteId, init }: IAlertsView) {
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Alerts" />
                 </div>
-                <Link to={withSiteId(alertCreate(), siteId)}><Button variant="primary" onClick={null}>Create</Button></Link>
-                <div className="ml-auto w-1/4" style={{ minWidth: 300 }}>
-                    <AlertsSearch />
+                <div className="ml-auto flex items-center">
+                    <Link to={withSiteId(alertCreate(), siteId)}><Button variant="primary" onClick={null}>Create</Button></Link>
+                    <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
+                        <AlertsSearch />
+                    </div>
                 </div>
             </div>
             <div className="text-base text-disabled-text flex items-center px-6">

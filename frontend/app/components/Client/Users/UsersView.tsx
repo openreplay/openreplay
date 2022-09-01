@@ -44,9 +44,10 @@ function UsersView(props: Props) {
                             Team <span className="color-gray-medium">{userCount}</span>
                         </div>
                     }
-                    actionButton={<AddUserButton isAdmin={isAdmin} onClick={() => editHandler(null)} />}
                 />
-                <div>
+                <div className="flex items-center">
+                    <AddUserButton isAdmin={isAdmin} onClick={() => editHandler(null)} />
+                    <div className="mx-2" />
                     <UserSearch />
                 </div>
             </div>

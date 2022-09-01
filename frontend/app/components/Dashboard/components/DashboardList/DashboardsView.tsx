@@ -26,9 +26,11 @@ function DashboardsView({ history, siteId }: { history: any, siteId: string }) {
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Dashboards" />
                 </div>
-                <Button variant="primary" onClick={onAddDashboardClick}>Create</Button>
-                <div className="ml-auto w-1/4" style={{ minWidth: 300 }}>
-                    <DashboardSearch />
+                <div className="ml-auto flex items-center">
+                    <Button variant="primary" onClick={onAddDashboardClick}>Create</Button>
+                    <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
+                        <DashboardSearch />
+                    </div>
                 </div>
             </div>
             <div className="text-base text-disabled-text flex items-center px-6">

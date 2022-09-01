@@ -21,9 +21,11 @@ function MetricsView({ siteId }: Props) {
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Metrics" className="" />
                 </div>
-                <Link to={'/metrics/create'}><Button variant="primary">Create</Button></Link>
-                <div className="ml-auto w-1/4" style={{ minWidth: 300 }}>
-                    <MetricsSearch />
+                <div className="ml-auto flex items-center">
+                    <Link to={'/metrics/create'}><Button variant="primary">Create</Button></Link>
+                    <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
+                        <MetricsSearch />
+                    </div>
                 </div>
             </div>
             <div className="text-base text-disabled-text flex items-center px-6">

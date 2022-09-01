@@ -69,14 +69,15 @@ class Sites extends React.PureComponent {
             <Loader loading={loading}>
                 <div className={stl.wrapper}>
                     <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
-                        <PageTitle title={<div className="mr-4">Projects</div>} actionButton={<AddProjectButton isAdmin={isAdmin} />} />
+                        <PageTitle title={<div className="mr-4">Projects</div>} actionButton={<TextLink icon="book" href="https://docs.openreplay.com/installation" label="Installation Docs" />} />
 
                         <div className="flex ml-auto items-center">
-                            <TextLink icon="book" className="mr-4" href="https://docs.openreplay.com/installation" label="Installation Docs" />
+                            <AddProjectButton isAdmin={isAdmin} />
+                            <div className="mx-2" />
                             <SiteSearch onChange={(value) => this.setState({ searchQuery: value })} />
                         </div>
                     </div>
-                    
+
                     <div className={stl.list}>
                     <NoContent
                         title={
