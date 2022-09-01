@@ -4,7 +4,7 @@ const {geoip} = require('./geoIP');
 let debug = process.env.debug === "1" || false;
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
-    listen: {UPDATE_EVENT: "UPDATE_SESSION"}
+    listen: {UPDATE_EVENT: "UPDATE_SESSION", CONNECT_ERROR: "connect_error", CONNECT_FAILED: "connect_failed"}
 };
 EVENTS_DEFINITION.emit = {
     NEW_AGENT: "NEW_AGENT",
@@ -93,6 +93,11 @@ function socketConnexionTimeout(io) {
     }
 }
 
+function errorHandler(listenerName, error) {
+    console.error(`Error detected from ${listenerName}`);
+    console.error(error);
+}
+
 module.exports = {
-    extractSessionInfo, EVENTS_DEFINITION, IDENTITIES, socketConnexionTimeout
+    extractSessionInfo, EVENTS_DEFINITION, IDENTITIES, socketConnexionTimeout, errorHandler
 };

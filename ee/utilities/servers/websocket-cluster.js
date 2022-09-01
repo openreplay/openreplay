@@ -12,7 +12,8 @@ const {
     IDENTITIES,
     EVENTS_DEFINITION,
     extractSessionInfo,
-    socketConnexionTimeout
+    socketConnexionTimeout,
+    errorHandler
 } = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
@@ -347,6 +348,9 @@ module.exports = {
                 socket.handshake.query.sessionInfo = {...socket.handshake.query.sessionInfo, ...args[0]};
                 socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
             });
+
+            socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
+            socket.on(EVENTS_DEFINITION.listen.CONNECT_FAILED, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_FAILED, err));
 
             socket.onAny(async (eventName, ...args) => {
                 if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
