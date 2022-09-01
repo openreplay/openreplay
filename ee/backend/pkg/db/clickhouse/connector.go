@@ -56,6 +56,7 @@ func (b *bulkImpl) Send() error {
 	for _, set := range b.values {
 		if err := batch.Append(set...); err != nil {
 			log.Printf("can't append value set to batch, err: %s", err)
+			log.Printf("failed query: %s", b.query)
 		}
 	}
 	b.values = make([][]interface{}, 0)
@@ -77,7 +78,7 @@ type Connector interface {
 	InsertWebErrorEvent(session *types.Session, msg *messages.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.FetchEvent) error
+	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
 	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
 	InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error
 }
@@ -180,7 +181,6 @@ func (c *connectorImpl) checkError(name string, err error) {
 }
 
 func (c *connectorImpl) InsertWebSession(session *types.Session) error {
-	log.Printf("insert session: %+v", session)
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
 	}
@@ -366,17 +366,22 @@ func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgV
 	return nil
 }
 
-func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent) error {
+func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error {
+	var request, response *string
+	if savePayload {
+		request = &msg.Request
+		response = &msg.Response
+	}
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
 		datetime(msg.Timestamp),
 		msg.URL,
-		nullableString(msg.Request),
-		nullableString(msg.Response),
+		request,
+		response,
 		uint16(msg.Status),
 		url.EnsureMethod(msg.Method),
-		msg.Duration,
+		uint16(msg.Duration),
 		msg.Status < 400,
 		"REQUEST",
 	); err != nil {

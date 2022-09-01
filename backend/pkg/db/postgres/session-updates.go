@@ -1,7 +1,7 @@
 package postgres
 
 // Mechanism of combination several session updates into one
-const sessionUpdateReq = `UPDATE sessions SET (pages_count, events_count) = (pages_count + $1, events_count + $2) WHERE session_id = $3`
+const sessionUpdateReq = `UPDATE sessions SET pages_count = pages_count + $1, events_count = events_count + $2 WHERE session_id = $3`
 
 type sessionUpdates struct {
 	sessionID uint64
