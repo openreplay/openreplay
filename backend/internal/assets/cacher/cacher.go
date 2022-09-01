@@ -73,7 +73,8 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 		return
 	}
 	c.timeoutMap.add(cachePath)
-	if c.s3.Exists(cachePath) {
+	crTime := c.s3.GetCreationTime(cachePath)
+	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) { // recently uploaded
 		return
 	}
 
