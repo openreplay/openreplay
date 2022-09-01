@@ -498,6 +498,8 @@ $$
             CREATE INDEX sessions_utm_source_gin_idx ON public.sessions USING GIN (utm_source gin_trgm_ops);
             CREATE INDEX sessions_utm_medium_gin_idx ON public.sessions USING GIN (utm_medium gin_trgm_ops);
             CREATE INDEX sessions_utm_campaign_gin_idx ON public.sessions USING GIN (utm_campaign gin_trgm_ops);
+            CREATE INDEX sessions_base_referrer_gin_idx ON public.sessions USING GIN (base_referrer gin_trgm_ops);
+
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_browser_constraint CHECK (
