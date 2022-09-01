@@ -148,6 +148,7 @@ CREATE TABLE IF NOT EXISTS experimental.sessions
     issue_types Array(LowCardinality(String)),
     referrer Nullable(String),
     base_referrer Nullable(String) MATERIALIZED lower(concat(domain(referrer), path(referrer))),
+    issue_score Nullable(UInt32),
     _timestamp                     DateTime     DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMMDD(datetime)
@@ -328,6 +329,7 @@ SELECT session_id,
        issue_types,
        referrer,
        base_referrer,
+       issue_score,
        _timestamp
 FROM experimental.sessions
 WHERE datetime >= now() - INTERVAL 7 DAY
