@@ -491,7 +491,8 @@ def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends
 def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
-                                                              user_id=context.user_id)
+                                                              user_id=context.user_id,
+                                                              for_delete=True)
     if error is not None:
         return error
     return {"data": integration.delete()}
@@ -501,7 +502,8 @@ def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
 def delete_github(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
-                                                              user_id=context.user_id)
+                                                              user_id=context.user_id,
+                                                              for_delete=True)
     if error is not None:
         return error
     return {"data": integration.delete()}

@@ -31,6 +31,7 @@ ALTER TABLE IF EXISTS alerts
 ALTER TABLE IF EXISTS sessions
     ADD COLUMN IF NOT EXISTS referrer      text NULL DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS base_referrer text NULL DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS sessions_base_referrer_gin_idx ON public.sessions USING GIN (base_referrer gin_trgm_ops);
 
 ALTER TABLE IF EXISTS events.performance
     ADD COLUMN IF NOT EXISTS host  text NULL DEFAULT NULL,

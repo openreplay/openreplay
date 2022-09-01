@@ -176,7 +176,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                     error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     if data.bookmarked:
-        data.startDate,data.endDate = sessions_favorite.get_start_end_timestamp(project_id,user_id)
+        data.startDate, data.endDate = sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
@@ -523,12 +523,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append("ms.duration <= %(maxDuration)s")
                     full_args["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.referrer:
-                extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+                # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
                 if is_any:
-                    extra_constraints.append('p.base_referrer IS NOT NULL')
+                    extra_constraints.append('s.base_referrer IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == events.event_type.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
