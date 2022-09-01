@@ -4,5 +4,14 @@ metadata:
   name: {{ include "quickwit.fullname" . }}
   labels:
     {{- include "quickwit.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook-weight": "-4" # Higher precidence, so the first the config map will get created.
 data:
-{{ (.Files.Glob "files/*").AsConfig | indent 2 }}
+{{/* https://helm.sh/docs/chart_template_guide/accessing_files/ */}}
+{{ $currentScope := .}}
+{{- range $path, $_ :=  .Files.Glob (printf "files/**.yaml") }}
+    {{- with $currentScope}}
+    {{- base $path | nindent 2}}: |-
+        {{- tpl (.Files.Get $path) . | nindent 4 }}
+    {{- end }}
+{{- end }}
