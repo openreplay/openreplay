@@ -25,10 +25,8 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 	switch m := msg.(type) {
 	// Web
 	case *messages.SessionEnd:
-		// TODO: get issue_types and base_referrer before session end
 		return si.ch.InsertWebSession(session)
 	case *messages.PerformanceTrackAggr:
-		// TODO: page_path
 		return si.ch.InsertWebPerformanceTrackAggr(session, m)
 	case *messages.ClickEvent:
 		return si.ch.InsertWebClickEvent(session, m)
