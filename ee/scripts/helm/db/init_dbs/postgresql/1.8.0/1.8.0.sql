@@ -44,5 +44,7 @@ CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_unique_project_id_md
 BEGIN;
 
 DROP INDEX IF EXISTS autocomplete_unique;
+DROP INDEX IF EXISTS events_common.requests_response_body_nn_idx;
+DROP INDEX IF EXISTS events_common.requests_request_body_nn_idx;
 
 COMMIT;
