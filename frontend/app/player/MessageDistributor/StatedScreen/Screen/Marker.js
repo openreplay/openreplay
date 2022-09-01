@@ -104,11 +104,11 @@ export default class Marker {
       let k = attrs[i];
       const attribute = k.name;
       if (attribute === 'class') {
-        str += `<span style="color:#F29766">${'.' + safeString(k.value.split(' ').join('.'))}</span>`;
+        str += `<span style="color:#F29766">${'.' + safeString(k.value).split(' ').join('.')}</span>`;
       }
 
       if (attribute === 'id') {
-        str += `<span style="color:#F29766">${'#' + safeString(k.value.split(' ').join('#'))}</span>`;
+        str += `<span style="color:#F29766">${'#' + safeString(k.value).split(' ').join('#')}</span>`;
       }
     }
 
