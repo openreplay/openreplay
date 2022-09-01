@@ -60,6 +60,7 @@ const mapFilters = (list) => {
   }, {});
 }
 
+const liveFilterSupportedOperators = ['is', 'contains'];
 const mapLiveFilters = (list) => {
   const obj = {};
   list.forEach(filter => {
@@ -71,8 +72,7 @@ const mapLiveFilters = (list) => {
       filter.key !== FilterKey.REFERRER
     ) {
       obj[filter.key] = {...filter};
-      obj[filter.key].operator = 'contains';
-      obj[filter.key].operatorDisabled = true;
+      obj[filter.key].operatorOptions = filter.operatorOptions.filter(operator => liveFilterSupportedOperators.includes(operator.value));
       if (filter.key === FilterKey.PLATFORM) {
         obj[filter.key].operator = 'is';
       }
