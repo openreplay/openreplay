@@ -56,6 +56,7 @@ func (b *bulkImpl) Send() error {
 	for _, set := range b.values {
 		if err := batch.Append(set...); err != nil {
 			log.Printf("can't append value set to batch, err: %s", err)
+			log.Printf("failed query: %s", b.query)
 		}
 	}
 	b.values = make([][]interface{}, 0)
