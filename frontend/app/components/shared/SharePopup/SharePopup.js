@@ -3,13 +3,14 @@ import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import { connectPlayer } from 'Player'
 import withRequest from 'HOCs/withRequest';
-import { Popup, Dropdown, Icon, Button } from 'UI';
+import { Icon, Button } from 'UI';
 import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
 import Select from 'Shared/Select';
 import { Tooltip } from 'react-tippy';
 import cn from 'classnames';
+import { fetchList, init } from 'Duck/integrations/slack';
 
 @connectPlayer(state => ({
   time: state.time,
@@ -17,7 +18,7 @@ import cn from 'classnames';
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
   tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
-}))
+}), { fetchList })
 @withRequest({
   endpoint: ({ id, entity }, integrationId) =>
     `/integrations/slack/notify/${ integrationId }/${entity}/${ id }`,
@@ -28,6 +29,12 @@ export default class SharePopup extends React.PureComponent {
     comment: '',
     isOpen: false,
     channelId: this.props.channels.getIn([ 0, 'webhookId' ]),
+  }
+
+  componentDidMount() {
+    if (this.props.channels.size === 0) {
+      this.props.fetchList();
+    }
   }
 
   editMessage = e => this.setState({ comment: e.target.value })
