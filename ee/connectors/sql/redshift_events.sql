@@ -1,4 +1,4 @@
-CREATE TABLE connector_events
+CREATE TABLE IF NOT EXISTS connector_events
 (
     sessionid                          BIGINT,
     connectioninformation_downlink     BIGINT,

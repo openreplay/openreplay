@@ -1,0 +1,1 @@
+docker run -v /etc/hosts:/etc/hosts:ro -v $(pwd)/s3-config-listen.yaml:/quickwit/s3-config-listen.yaml -e AWS_ACCESS_KEY_ID=$aws_access_key_id -e AWS_SECRET_ACCESS_KEY=$aws_secret_access_key -e AWS_DEFAULT_REGION=$aws_region -e AWS_REGION=$aws_region -p 127.0.0.1:7280:7280 quickwit/quickwit run --config s3-config-listen.yaml

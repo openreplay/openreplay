@@ -1,0 +1,12 @@
+#
+# Source config file.
+#
+
+source_id: fetch-kafka
+source_type: kafka
+params:
+  topic: quickwit
+  client_params:
+    bootstrap.servers: localhost:9092
+    group.id: fetch-consumer
+    security.protocol: SSL

@@ -1,17 +1,73 @@
-# Auto-generated, do not edit
-
-from msgcodec.codec import Codec
-from msgcodec.messages import *
 import io
+from typing import List
+from msgcodec.messages import *
+
+
+class Codec:
+    """
+    Implements encode/decode primitives
+    """
+
+    @staticmethod
+    def read_boolean(reader: io.BytesIO):
+        b = reader.read(1)
+        return b == 1
+
+    @staticmethod
+    def read_uint(reader: io.BytesIO):
+        """
+        The ending "big" doesn't play any role here,
+        since we're dealing with data per one byte
+        """
+        x = 0  # the result
+        s = 0  # the shift (our result is big-ending)
+        i = 0  # n of byte (max 9 for uint64)
+        while True:
+            b = reader.read(1)
+            if len(b) == 0:
+                raise IndexError('bytes out of range')
+            num = int.from_bytes(b, "big", signed=False)
+            # print(i, x)
+
+            if num < 0x80:
+                if i > 9 | i == 9 & num > 1:
+                    raise OverflowError()
+                return int(x | num << s)
+            x |= (num & 0x7f) << s
+            s += 7
+            i += 1
+
+    @staticmethod
+    def read_int(reader: io.BytesIO) -> int:
+        """
+        ux, err := ReadUint(reader)
+        x := int64(ux >> 1)
+        if err != nil {
+            return x, err
+        }
+        if ux&1 != 0 {
+            x = ^x
+        }
+        return x, err
+        """
+        ux = Codec.read_uint(reader)
+        x = int(ux >> 1)
+
+        if ux & 1 != 0:
+            x = - x - 1
+        return x
+
+    @staticmethod
+    def read_string(reader: io.BytesIO) -> str:
+        length = Codec.read_uint(reader)
+        s = reader.read(length)
+        try:
+            return s.decode("utf-8", errors="replace").replace("\x00", "\uFFFD")
+        except UnicodeDecodeError:
+            return None
+
 
 class MessageCodec(Codec):
-
-    def read_message_id(self, reader: io.BytesIO) -> int:
-        """
-        Read and return the first byte where the message id is encoded
-        """
-        id_ = self.read_uint(reader)
-        return id_
 
     def encode(self, m: Message) -> bytes:
         ...
@@ -20,87 +76,22 @@ class MessageCodec(Codec):
         reader = io.BytesIO(b)
         return self.read_head_message(reader)
 
-    @staticmethod
-    def check_message_id(b: bytes) -> int:
-        """
-        todo: make it static and without reader. It's just the first byte
-        Read and return the first byte where the message id is encoded
-        """
-        reader = io.BytesIO(b)
-        id_ = Codec.read_uint(reader)
-
-        return id_
-
-    @staticmethod
-    def decode_key(b) -> int:
-        """
-        Decode the message key (encoded with little endian)
-        """
-        try:
-            decoded = int.from_bytes(b, "little", signed=False)
-        except Exception as e:
-            raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
-        return decoded
-
-    def decode_detailed(self, b: bytes):
+    def decode_detailed(self, b: bytes) -> List[Message]:
         reader = io.BytesIO(b)
         messages_list = list()
-        messages_list.append(self.handler(reader, 0))
-        if isinstance(messages_list[0], BatchMeta):
-            # Old BatchMeta
-            mode = 0
-        elif isinstance(messages_list[0], BatchMetadata):
-            # New BatchMeta
-            mode = 1
-        else:
-            return messages_list
         while True:
             try:
-                messages_list.append(self.handler(reader, mode))
+                messages_list.append(self.read_head_message(reader))
             except IndexError:
                 break
         return messages_list
 
-    def handler(self, reader: io.BytesIO, mode=0):
+    def read_head_message(self, reader: io.BytesIO) -> Message:
         message_id = self.read_message_id(reader)
-        if mode == 1:
-            # We skip the three bytes representing the length of message. It can be used to skip unwanted messages
-            reader.read(3)
-            return self.read_head_message(reader, message_id)
-        elif mode == 0:
-            # Old format with no bytes for message length
-            return self.read_head_message(reader, message_id)
-        else:
-            raise IOError()   
-
-    def read_head_message(self, reader: io.BytesIO, message_id: int):
-        if message_id == 80:
-            return BatchMeta(
-                page_no=self.read_uint(reader),
-                first_index=self.read_uint(reader),
-                timestamp=self.read_int(reader)
-            )
-
-        if message_id == 81:
-            return BatchMetadata(
-                version=self.read_uint(reader),
-                page_no=self.read_uint(reader),
-                first_index=self.read_uint(reader),
-                timestamp=self.read_int(reader),
-                location=self.read_string(reader)
-            )
-
-        if message_id == 82:
-            return PartitionedMessage(
-                part_no=self.read_uint(reader),
-                part_total=self.read_uint(reader)
-            )
-
         if message_id == 0:
             return Timestamp(
                 timestamp=self.read_uint(reader)
             )
-
         if message_id == 1:
             return SessionStart(
                 timestamp=self.read_uint(reader),
@@ -117,8 +108,7 @@ class MessageCodec(Codec):
                 user_device_type=self.read_string(reader),
                 user_device_memory_size=self.read_uint(reader),
                 user_device_heap_size=self.read_uint(reader),
-                user_country=self.read_string(reader),
-                user_id=self.read_string(reader)
+                user_country=self.read_string(reader)
             )
 
         if message_id == 2:
@@ -151,9 +141,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 7:
-            return CreateDocument(
-                
-            )
+            return CreateDocument()
 
         if message_id == 8:
             return CreateElementNode(
@@ -161,7 +149,7 @@ class MessageCodec(Codec):
                 parent_id=self.read_uint(reader),
                 index=self.read_uint(reader),
                 tag=self.read_string(reader),
-                svg=self.read_boolean(reader)
+                svg=self.read_boolean(reader),
             )
 
         if message_id == 9:
@@ -212,7 +200,7 @@ class MessageCodec(Codec):
             return SetNodeScroll(
                 id=self.read_uint(reader),
                 x=self.read_int(reader),
-                y=self.read_int(reader)
+                y=self.read_int(reader),
             )
 
         if message_id == 17:
@@ -225,7 +213,7 @@ class MessageCodec(Codec):
             return SetInputValue(
                 id=self.read_uint(reader),
                 value=self.read_string(reader),
-                mask=self.read_int(reader)
+                mask=self.read_int(reader),
             )
 
         if message_id == 19:
@@ -270,7 +258,7 @@ class MessageCodec(Codec):
             return PageRenderTiming(
                 speed_index=self.read_uint(reader),
                 visually_complete=self.read_uint(reader),
-                time_to_interactive=self.read_uint(reader)
+                time_to_interactive=self.read_uint(reader),
             )
 
         if message_id == 25:
@@ -281,7 +269,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 26:
-            return IntegrationEvent(
+            return RawErrorEvent(
                 timestamp=self.read_uint(reader),
                 source=self.read_string(reader),
                 name=self.read_string(reader),
@@ -338,7 +326,7 @@ class MessageCodec(Codec):
                 timestamp=self.read_uint(reader),
                 value=self.read_string(reader),
                 value_masked=self.read_boolean(reader),
-                label=self.read_string(reader)
+                label=self.read_string(reader),
             )
 
         if message_id == 33:
@@ -346,8 +334,7 @@ class MessageCodec(Codec):
                 message_id=self.read_uint(reader),
                 timestamp=self.read_uint(reader),
                 hesitation_time=self.read_uint(reader),
-                label=self.read_string(reader),
-                selector=self.read_string(reader)
+                label=self.read_string(reader)
             )
 
         if message_id == 34:
@@ -361,9 +348,14 @@ class MessageCodec(Codec):
             )
 
         if message_id == 35:
+
+            message_id = self.read_uint(reader)
+            ts = self.read_uint(reader)
+            if ts > 9999999999999:
+                ts = None
             return ResourceEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
+                message_id=message_id,
+                timestamp=ts,
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
                 header_size=self.read_uint(reader),
@@ -444,13 +436,13 @@ class MessageCodec(Codec):
         if message_id == 45:
             return Vuex(
                 mutation=self.read_string(reader),
-                state=self.read_string(reader)
+                state=self.read_string(reader),
             )
 
         if message_id == 46:
             return MobX(
                 type=self.read_string(reader),
-                payload=self.read_string(reader)
+                payload=self.read_string(reader),
             )
 
         if message_id == 47:
@@ -480,10 +472,7 @@ class MessageCodec(Codec):
             return GraphQLEvent(
                 message_id=self.read_uint(reader),
                 timestamp=self.read_uint(reader),
-                operation_kind=self.read_string(reader),
-                operation_name=self.read_string(reader),
-                variables=self.read_string(reader),
-                response=self.read_string(reader)
+                name=self.read_string(reader)
             )
 
         if message_id == 51:
@@ -499,7 +488,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 52:
-            return DOMDrop(
+            return DomDrop(
                 timestamp=self.read_uint(reader)
             )
 
@@ -556,7 +545,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 60:
-            return SetNodeAttributeURLBased(
+            return SetNodeURLBasedAttribute(
                 id=self.read_uint(reader),
                 name=self.read_string(reader),
                 value=self.read_string(reader),
@@ -564,7 +553,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 61:
-            return SetCSSDataURLBased(
+            return SetStyleData(
                 id=self.read_uint(reader),
                 data=self.read_string(reader),
                 base_url=self.read_string(reader)
@@ -591,6 +580,9 @@ class MessageCodec(Codec):
                 name=self.read_string(reader),
                 payload=self.read_string(reader)
             )
+
+        if message_id == 65:
+            return PageClose()
 
         if message_id == 66:
             return AssetCache(
@@ -619,57 +611,11 @@ class MessageCodec(Codec):
                 id=self.read_uint(reader)
             )
 
-        if message_id == 71:
-            return AdoptedSSReplaceURLBased(
-                sheet_id=self.read_uint(reader),
-                text=self.read_string(reader),
-                base_url=self.read_string(reader)
-            )
-
-        if message_id == 72:
-            return AdoptedSSReplace(
-                sheet_id=self.read_uint(reader),
-                text=self.read_string(reader)
-            )
-
-        if message_id == 73:
-            return AdoptedSSInsertRuleURLBased(
-                sheet_id=self.read_uint(reader),
-                rule=self.read_string(reader),
-                index=self.read_uint(reader),
-                base_url=self.read_string(reader)
-            )
-
-        if message_id == 74:
-            return AdoptedSSInsertRule(
-                sheet_id=self.read_uint(reader),
-                rule=self.read_string(reader),
-                index=self.read_uint(reader)
-            )
-
-        if message_id == 75:
-            return AdoptedSSDeleteRule(
-                sheet_id=self.read_uint(reader),
-                index=self.read_uint(reader)
-            )
-
-        if message_id == 76:
-            return AdoptedSSAddOwner(
-                sheet_id=self.read_uint(reader),
-                id=self.read_uint(reader)
-            )
-
-        if message_id == 77:
-            return AdoptedSSRemoveOwner(
-                sheet_id=self.read_uint(reader),
-                id=self.read_uint(reader)
-            )
-
-        if message_id == 107:
-            return IOSBatchMeta(
-                timestamp=self.read_uint(reader),
-                length=self.read_uint(reader),
-                first_index=self.read_uint(reader)
+        if message_id == 80:
+            return BatchMeta(
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader)
             )
 
         if message_id == 90:
@@ -775,7 +721,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 102:
-            return IOSPerformanceEvent(
+            return IOSPreformanceEvent(
                 timestamp=self.read_uint(reader),
                 length=self.read_uint(reader),
                 name=self.read_string(reader),
@@ -810,6 +756,13 @@ class MessageCodec(Codec):
                 status=self.read_uint(reader)
             )
 
+        if message_id == 107:
+            return IOSBatchMeta(
+                timestamp=self.read_uint(reader),
+                length=self.read_uint(reader),
+                first_index=self.read_uint(reader)
+            )
+
         if message_id == 110:
             return IOSPerformanceAggregated(
                 timestamp_start=self.read_uint(reader),
@@ -827,7 +780,6 @@ class MessageCodec(Codec):
                 avg_battery=self.read_uint(reader),
                 max_battery=self.read_uint(reader)
             )
-
         if message_id == 111:
             return IOSIssueEvent(
                 timestamp=self.read_uint(reader),
@@ -837,3 +789,31 @@ class MessageCodec(Codec):
                 payload=self.read_string(reader)
             )
 
+    def read_message_id(self, reader: io.BytesIO) -> int:
+        """
+        Read and return the first byte where the message id is encoded
+        """
+        id_ = self.read_uint(reader)
+        return id_
+
+    @staticmethod
+    def check_message_id(b: bytes) -> int:
+        """
+        todo: make it static and without reader. It's just the first byte
+        Read and return the first byte where the message id is encoded
+        """
+        reader = io.BytesIO(b)
+        id_ = Codec.read_uint(reader)
+
+        return id_
+
+    @staticmethod
+    def decode_key(b) -> int:
+        """
+        Decode the message key (encoded with little endian)
+        """
+        try:
+            decoded = int.from_bytes(b, "little", signed=False)
+        except Exception as e:
+            raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
+        return decoded

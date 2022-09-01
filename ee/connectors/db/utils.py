@@ -264,7 +264,24 @@ dtypes_detailed_events = {
     "vuex_mutation": "object",
     "vuex_state": "string",
     "received_at": "Int64",
-    "batch_order_number": "Int64"
+    "batch_order_number": "Int64",
+
+    #NEW
+    'setnodeurlbasedattribute_id': 'Int64',
+    'setnodeurlbasedattribute_name': 'string',
+    'setnodeurlbasedattribute_value': 'string',
+    'setnodeurlbasedattribute_baseurl': 'string',
+    'setstyledata_id': 'Int64',
+    'setstyledata_data': 'string',
+    'setstyledata_baseurl': 'string',
+    'customissue_payload': 'string',
+    'customissue_name': 'string',
+    'technicalinfo_value': 'string',
+    'technicalinfo_type': 'string',
+    'issueevent_payload': 'string',
+    'issueevent_context': 'string',
+    'issueevent_contextstring': 'string',
+    'issueevent_type': 'string'
 }
 dtypes_sessions = {'sessionid': 'Int64',
                    'user_agent': 'string',

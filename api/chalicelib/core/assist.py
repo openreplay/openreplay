@@ -47,8 +47,8 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.post(config("assist") % config("S3_KEY") + f"/{project_key}", json=data,
-                                        timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.post(config("ASSIST_URL") + config("assist") % config("S3_KEY") + f"/{project_key}",
+                                        json=data, timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
@@ -78,8 +78,9 @@ def __get_live_sessions_ws(project_id, data):
 def get_live_session_by_id(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}/{session_id}",
-                                       timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.get(
+            config("ASSIST_URL") + config("assist") % config("S3_KEY") + f"/{project_key}/{session_id}",
+            timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
@@ -107,8 +108,9 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/{session_id}",
-                                       timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.get(
+            config("ASSIST_URL") + config("assistList") % config("S3_KEY") + f"/{project_key}/{session_id}",
+            timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
@@ -135,8 +137,9 @@ def autocomplete(project_id, q: str, key: str = None):
     if key:
         params["key"] = key
     try:
-        results = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/autocomplete",
-                               params=params, timeout=config("assistTimeout", cast=int, default=5))
+        results = requests.get(
+            config("ASSIST_URL") + config("assistList") % config("S3_KEY") + f"/{project_key}/autocomplete",
+            params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print("!! issue with the peer-server")
             print(results.text)

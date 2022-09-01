@@ -1,0 +1,12 @@
+#
+# Source config file.
+#
+
+source_id: pageevent-kafka
+source_type: kafka
+params:
+  topic: quickwit
+  client_params:
+    bootstrap.servers: localhost:9092
+    group.id: pageevent-consumer
+    security.protocol: SSL

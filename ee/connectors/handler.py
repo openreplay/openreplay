@@ -49,6 +49,14 @@ def handle_normal_message(message: Message) -> Optional[Event]:
         n.mouseclick_hesitationtime = message.hesitation_time
         n.mouseclick_id = message.id
         n.mouseclick_label = message.label
+        n.mouseclick_selector = message.selector
+        return n
+
+    if isinstance(message, MouseClickDepricated):
+        n.mouseclick_hesitationtime = message.hesitation_time
+        n.mouseclick_id = message.id
+        n.mouseclick_label = message.label
+        n.mouseclick_selector = ''
         return n
 
     if isinstance(message, PageEvent):
@@ -131,6 +139,28 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
         except TypeError:
             pass
         return n
+
+    if isinstance(message, BatchMeta):
+        n.batchmeta_page_no = message.page_no
+        n.batchmeta_first_index = message.first_index
+        n.batchmeta_timestamp = message.timestamp
+        return n
+
+    if isinstance(message, BatchMetadata):
+        n.batchmeta_page_no = message.page_no
+        n.batchmeta_first_index = message.first_index
+        n.batchmeta_timestamp = message.timestamp
+        return n
+
+    if isinstance(message, PartitionedMessage):
+        n.part_no = message.part_no
+        n.part_total = message.part_total
+
+    # if isinstance(message, IOSBatchMeta):
+    #     n.iosbatchmeta_page_no = message.page_no
+    #     n.iosbatchmeta_first_index = message.first_index
+    #     n.iosbatchmeta_timestamp = message.timestamp
+    #     return n
 
     if isinstance(message, ConnectionInformation):
         n.connection_effective_bandwidth = message.downlink
@@ -224,7 +254,7 @@ def handle_session(n: Session, message: Message) -> Optional[Session]:
             n.inputs_count = 1
         return n
 
-    if isinstance(message, MouseClick):
+    if isinstance(message, MouseClickDepricated):
         try:
             n.inputs_count += 1
         except TypeError:
@@ -276,6 +306,11 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.sessionstart_userdevicememorysize = message.user_device_memory_size
         n.sessionstart_userdeviceheapsize = message.user_device_heap_size
         n.sessionstart_usercountry = message.user_country
+        return n
+
+    if isinstance(message, CreateIFrameDocument):
+        n.create_iframedocument_frame_id = message.frame_id
+        n.create_iframedocument_id = message.id
         return n
 
     if isinstance(message, SetViewportSize):
@@ -359,6 +394,22 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.metadata_key = message.key
         n.metadata_value = message.value
         return n
+
+    if isinstance(message, BatchMeta):
+        n.batchmeta_page_no = message.page_no
+        n.batchmeta_first_index = message.first_index
+        n.batchmeta_timestamp = message.timestamp
+        return n
+
+    if isinstance(message, BatchMetadata):
+        n.batchmeta_page_no = message.page_no
+        n.batchmeta_first_index = message.first_index
+        n.batchmeta_timestamp = message.timestamp
+        return n
+
+    if isinstance(message, PartitionedMessage):
+        n.part_no = message.part_no
+        n.part_total = message.part_total
 
     if isinstance(message, PerformanceTrack):
         n.performancetrack_frames = message.frames
@@ -470,6 +521,12 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
     #     n.cssinsertrule_rule = message.rule
     #     n.cssinsertrule_index = message.index
     #     return n
+
+    # if isinstance(message, CSSInsertRuleURLBased):
+    #     n.cssinsertrule_urlbased_id = message.id
+    #     n.cssinsertrule_urlbased_rule = message.rule
+    #     n.cssinsertrule_urlbased_index = message.index
+    #     n.cssinsertrule_urlbased_base_url = message.base_url
     #
     # if isinstance(message, CSSDeleteRule):
     #     n.cssdeleterule_stylesheetid = message.id
@@ -483,6 +540,17 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.fetch_status = message.status
         n.fetch_timestamp = message.timestamp
         n.fetch_duration = message.duration
+        return n
+
+    if isinstance(message, FetchEvent):
+        n.fetch_event_message_id = message.message_id
+        n.fetch_event_timestamp = message.timestamp
+        n.fetch_event_method = message.method
+        n.fetch_event_url = message.url
+        n.fetch_event_request = message.request
+        n.fetch_event_response = message.response
+        n.fetch_event_status = message.status
+        n.fetch_event_duration = message.duration
         return n
 
     if isinstance(message, Profiler):
@@ -513,6 +581,14 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.mouseclick_id = message.id
         n.mouseclick_hesitationtime = message.hesitation_time
         n.mouseclick_label = message.label
+        n.mouseclick_selector = message.selector
+        return n
+
+    if isinstance(message, MouseClickDepricated):
+        n.mouseclick_id = message.id
+        n.mouseclick_hesitationtime = message.hesitation_time
+        n.mouseclick_label = message.label
+        n.mouseclick_selector = ''
         return n
 
     if isinstance(message, SetPageLocation):
@@ -572,6 +648,10 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.pageclose = True
         return n
 
+    if isinstance(message, AssetCache):
+        n.asset_cache_url = message.url
+        return n
+
     if isinstance(message, IOSSessionStart):
         n.iossessionstart_timestamp = message.timestamp
         n.iossessionstart_projectid = message.project_id
@@ -596,6 +676,12 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.iosmetadata_value = message.value
         return n
 
+    if isinstance(message, IOSBatchMeta):
+        n.iosbatchmeta_page_no = message.page_no
+        n.iosbatchmeta_first_index = message.first_index
+        n.iosbatchmeta_timestamp = message.timestamp
+        return n
+
     if isinstance(message, IOSUserID):
         n.iosuserid_timestamp = message.timestamp
         n.iosuserid_length = message.length
@@ -608,11 +694,42 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.iosuseranonymousid_value = message.value
         return n
 
+    if isinstance(message, IOSScreenEnter):
+        n.iosscreenenter_timestamp = message.timestamp
+        n.iosscreenenter_length = message.length
+        n.iosscreenenter_title = message.title
+        n.iosscreenenter_view_name = message.view_name
+        return n
+
     if isinstance(message, IOSScreenLeave):
         n.iosscreenleave_timestamp = message.timestamp
         n.iosscreenleave_length = message.length
         n.iosscreenleave_title = message.title
         n.iosscreenleave_viewname = message.view_name
+        return n
+
+    if isinstance(message, IOSScreenChanges):
+        n.iosscreenchanges_timestamp = message.timestamp
+        n.iosscreenchanges_length = message.length
+        n.iosscreenchanges_x = message.x
+        n.iosscreenchanges_y = message.y
+        n.iosscreenchanges_width = message.width
+        n.iosscreenchanges_height = message.height
+        return n
+
+    if isinstance(message, IOSClickEvent):
+        n.iosclickevent_timestamp = message.timestamp
+        n.iosclickevent_length = message.length
+        n.iosclickevent_label = message.label
+        n.iosclickevent_x = message.x
+        n.iosclickevent_y = message.y
+        return n
+
+    if isinstance(message, IOSInputEvent):
+        n.iosinputevent_timestamp = message.timestamp
+        n.iosinputevent_length = message.length
+        n.iosinputevent_value_masked = message.value_masked
+        n.iosinputevent_label = message.label
         return n
 
     if isinstance(message, IOSLog):
@@ -622,10 +739,52 @@ def handle_message(message: Message) -> Optional[DetailedEvent]:
         n.ioslog_content = message.content
         return n
 
+    if isinstance(message, IOSNetworkCall):
+        n.iosnetworkcall_timestamp = message.timestamp
+        n.iosnetworkcall_length = message.length
+        n.iosnetworkcall_duration = message.duration
+        n.iosnetworkcall_headers = message.headers
+        n.iosnetworkcall_body = message.body
+        n.iosnetworkcall_url = message.url
+        n.iosnetworkcall_success = message.success
+        n.iosnetworkcall_method = message.method
+        n.iosnetworkcall_status = message.status
+        return n
+
+    if isinstance(message, IOSIssueEvent):
+        n.iosissueevent_timestamp = message.timestamp
+        n.iosissueevent_type = message.type
+        n.iosissueevent_context_string = message.context_string
+        n.iosissueevent_context = message.context
+        n.iosissueevent_payload = message.payload
+        return n
+
+    if isinstance(message, IOSCustomEvent):
+        n.ioscustomevent_timestamp = message.timestamp
+        n.ioscustomevent_length = message.length
+        n.ioscustomevent_name = message.name
+        n.ioscustomevent_payload = message.payload
+        return n
+
     if isinstance(message, IOSInternalError):
         n.iosinternalerror_timestamp = message.timestamp
         n.iosinternalerror_length = message.length
         n.iosinternalerror_content = message.content
+        return n
+
+    if isinstance(message, IOSCrash):
+        n.ioscrash_timestamp = message.timestamp
+        n.ioscrash_length = message.length
+        n.ioscrash_name = message.name
+        n.ioscrash_reason = message.reason
+        n.ioscrash_stacktrace = message.stacktrace
+        return n
+
+    if isinstance(message, IOSPerformanceEvent):
+        n.iosperformanceevent_timestamp = message.timestamp
+        n.iosperformanceevent_length = message.length
+        n.iosperformanceevent_name = message.name
+        n.iosperformanceevent_value = message.value
         return n
 
     if isinstance(message, IOSPerformanceAggregated):

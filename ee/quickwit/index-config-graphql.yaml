@@ -1,0 +1,30 @@
+#
+# Index config file for gh-archive dataset.
+#
+
+version: 0
+
+index_id: graphql
+
+doc_mapping:
+  mode: strict
+  field_mappings:
+    - name: operation_kind
+      type: text
+      tokenizer: default
+      record: position
+    - name: operation_name
+      type: text
+      tokenizer: default
+      record: position
+    - name: variables
+      type: text
+      tokenizer: default
+      record: position
+    - name: response
+      type: text
+      tokenizer: default
+      record: position
+
+search_settings:
+  default_search_fields: [operation_kind, operation_name, variables]

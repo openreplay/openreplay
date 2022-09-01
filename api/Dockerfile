@@ -7,6 +7,7 @@ ARG envarg
 # Startup daemon
 ENV SOURCE_MAP_VERSION=0.7.4 \
     APP_NAME=chalice \
+    LISTEN_PORT=8000 \
     ENTERPRISE_BUILD=${envarg}
 
 ADD https://unpkg.com/source-map@${SOURCE_MAP_VERSION}/lib/mappings.wasm /mappings.wasm
