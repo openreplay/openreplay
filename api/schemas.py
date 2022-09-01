@@ -110,7 +110,7 @@ class JiraSchema(GithubSchema):
 
     @validator('url')
     def transform_url(cls, v: HttpUrl):
-        return HttpUrl.build(scheme=v.scheme, host=v.host)
+        return HttpUrl.build(scheme=v.scheme.lower(), host=v.host.lower())
 
 
 class CreateEditWebhookSchema(BaseModel):

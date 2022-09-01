@@ -17,20 +17,28 @@ class JIRAIntegration(integration_base.BaseIntegration):
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
         self._user_id = user_id
         self.integration = self.get()
+
         if self.integration is None:
             return
         self.integration["valid"] = True
-        try:
-            self.issue_handler = JIRACloudIntegrationIssue(token=self.integration["token"],
-                                                           username=self.integration["username"],
-                                                           url=self.integration["url"])
-        except Exception as e:
-            self.issue_handler = None
+        if not self.integration["url"].endswith('atlassian.net'):
             self.integration["valid"] = False
 
     @property
     def provider(self):
         return PROVIDER
+
+    @property
+    def issue_handler(self):
+        if self.integration["url"].endswith('atlassian.net') and self.__issue_handler is None:
+            try:
+                self.__issue_handler = JIRACloudIntegrationIssue(token=self.integration["token"],
+                                                                 username=self.integration["username"],
+                                                                 url=self.integration["url"])
+            except Exception as e:
+                self.__issue_handler = None
+                self.integration["valid"] = False
+        return self.__issue_handler
 
     # TODO: remove this once jira-oauth is done
     def get(self):
@@ -42,7 +50,14 @@ class JIRAIntegration(integration_base.BaseIntegration):
                         WHERE user_id=%(user_id)s;""",
                     {"user_id": self._user_id})
             )
-            return helper.dict_to_camel_case(cur.fetchone())
+            data = helper.dict_to_camel_case(cur.fetchone())
+
+        if data is None:
+            return
+        data["valid"] = True
+        if not data["url"].endswith('atlassian.net'):
+            data["valid"] = False
+        return data
 
     def get_obfuscated(self):
         if self.integration is None:
@@ -67,7 +82,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
             w = helper.dict_to_camel_case(cur.fetchone())
             if obfuscate:
                 w["token"] = obfuscate_string(w["token"])
-            return w
+        return self.get()
 
     # TODO: make this generic for all issue tracking integrations
     def _add(self, data):
@@ -85,7 +100,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
                              "token": token, "url": url})
             )
             w = helper.dict_to_camel_case(cur.fetchone())
-            return w
+        return self.get()
 
     def delete(self):
         with pg_client.PostgresClient() as cur:

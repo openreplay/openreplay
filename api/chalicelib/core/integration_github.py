@@ -16,6 +16,10 @@ class GitHubIntegration(integration_base.BaseIntegration):
     def provider(self):
         return PROVIDER
 
+    @property
+    def issue_handler(self):
+        return
+
     def get_obfuscated(self):
         integration = self.get()
         if integration is None:

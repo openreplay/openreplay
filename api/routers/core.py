@@ -456,6 +456,8 @@ def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_c
 @app.put('/integrations/jira', tags=["integrations"])
 def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
+    if not data.url.endswith('atlassian.net'):
+        return {"errors": ["url must be a valid JIRA URL (example.atlassian.net)"]}
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
