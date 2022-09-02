@@ -7,7 +7,7 @@ class BaseIntegration(ABC):
 
     def __init__(self, user_id, ISSUE_CLASS):
         self._user_id = user_id
-        self.__issue_handler = ISSUE_CLASS(self.integration_token)
+        self._issue_handler = ISSUE_CLASS(self.integration_token)
 
     @property
     @abstractmethod
