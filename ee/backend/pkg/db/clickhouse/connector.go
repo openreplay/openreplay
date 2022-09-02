@@ -217,6 +217,10 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	if method == "" {
 		method = nil
 	}
+	resourceType := url.EnsureType(msg.Type)
+	if resourceType == "" {
+		return fmt.Errorf("can't parse resource type, sess: %s, type: %s", session.SessionID, msg.Type)
+	}
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -363,6 +367,10 @@ func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgV
 }
 
 func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error {
+	urlMethod := url.EnsureMethod(msg.Method)
+	if urlMethod == "" {
+		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
+	}
 	var request, response *string
 	if savePayload {
 		request = &msg.Request
