@@ -58,10 +58,10 @@ spec:
               value: 'https://{{ .Values.global.domainName }}'
             - name: S3_HOST
               {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
-              value: 'https://{{ .Values.global.domainName }}'
-              {{- else }}
+              value: 'https://{{ .Values.global.domainName }}:{{ .Values.global.ingress.controller.service.ports.https}}'
+              {{- else}}
               value: '{{ .Values.global.s3.endpoint }}'
-              {{- end }}
+              {{- end}}
             - name: S3_KEY
               value: {{ .Values.global.s3.accessKey }}
             - name: S3_SECRET
