@@ -34,5 +34,11 @@ if config("EXP_ALERTS", cast=bool, default=False):
 else:
     from . import alerts_processor as alerts_processor
 
+if config("EXP_FUNNELS", cast=bool, default=False):
+    print(">>> Using experimental funnels")
+    if not config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
+        from . import sessions as sessions_legacy
 
-from . import significance_exp as significance
+    from . import significance_exp as significance
+else:
+    from . import significance as significance
