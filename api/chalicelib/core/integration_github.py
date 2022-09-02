@@ -18,7 +18,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
 
     @property
     def issue_handler(self):
-        return
+        return self.__issue_handler
 
     def get_obfuscated(self):
         integration = self.get()
