@@ -21,7 +21,7 @@ clickhouse:
   # For enterpriseEdition
   enabled: false
 
-quickwit:
+quickwit: &quickwit
   # For enterpriseEdition
   enabled: false
 
