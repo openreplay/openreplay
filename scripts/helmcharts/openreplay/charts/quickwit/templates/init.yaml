@@ -35,12 +35,12 @@ spec:
             set -x
 
             configs=""
-            configs="${configs} fetch"
+            configs="${configs} fetchevent"
             configs="${configs} graphql"
             configs="${configs} pageevent"
             for config in ${configs};do
               quickwit index create --index-config config/index-config-${config}.yaml --config config/s3-config.yaml || true
-              quickwit source create --index fetchevent --source-config config/source-${config}.yaml --config config/s3-config.yaml || true
+              quickwit source create --index ${config} --source-config config/source-${config}.yaml --config config/s3-config.yaml || true
             done
         volumeMounts:
         - name: dbmigrationscript
