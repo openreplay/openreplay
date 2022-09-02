@@ -8,7 +8,7 @@ import (
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	s := &Session{SessionID: sessionID}
-	var revID, userOSVersion *string
+	var revID, userOSVersion, userBrowserVersion *string
 	var issueTypes pgtype.EnumArray
 	if err := conn.c.QueryRow(`
 		SELECT platform,
@@ -32,13 +32,16 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 		&revID, &s.TrackerVersion,
 		&s.UserID, &s.UserAnonymousID, &s.Referrer,
 		&s.PagesCount, &s.EventsCount, &s.ErrorsCount, &issueTypes,
-		&s.UserBrowser, &s.UserBrowserVersion, &s.IssueScore,
+		&s.UserBrowser, &userBrowserVersion, &s.IssueScore,
 		&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
 		&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
 		return nil, err
 	}
-	if userOSVersion != nil { // TODO: choose format, make f
+	if userOSVersion != nil {
 		s.UserOSVersion = *userOSVersion
+	}
+	if userBrowserVersion != nil {
+		s.UserBrowserVersion = *userBrowserVersion
 	}
 	if revID != nil {
 		s.RevID = *revID
