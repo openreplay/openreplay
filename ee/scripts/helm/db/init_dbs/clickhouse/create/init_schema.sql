@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS experimental.events
 (
     session_id                                     UInt64,
     project_id                                     UInt16,
-    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'LONGTASK'=5,'ERROR'=6,'CUSTOM'=7, 'GRAPHQL'=8, 'STATEACTION'=9),
+    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'ERROR'=5,'CUSTOM'=6, 'GRAPHQL'=7, 'STATEACTION'=8),
     datetime                                       DateTime,
     label Nullable(String),
     hesitation_time Nullable(UInt32),
