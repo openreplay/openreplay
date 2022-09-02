@@ -13,8 +13,8 @@ spec:
     metadata:
       name: quickwitInitialization
     spec:
-      initContainers:
-      - name: git
+      containers:
+      - name: quickwit
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         env:
         - name: AWS_DEFAULT_REGION
@@ -32,16 +32,19 @@ spec:
           - -c
         args:
           - |
-            cd /quickwit/
+            set -x
 
-            configs=(fetch graphql pageevent)
-            for config in ${configs[*]};do
-              quickwit index create --index-config index-config-${config}.yaml --config s3-config.yaml
-              quickwit source create --index fetchevent --source-config source-${config}.yaml --config s3-config.yaml
+            configs=""
+            configs="${configs} fetch"
+            configs="${configs} graphql"
+            configs="${configs} pageevent"
+            for config in ${configs};do
+              quickwit index create --index-config config/index-config-${config}.yaml --config config/s3-config.yaml || true
+              quickwit source create --index fetchevent --source-config config/source-${config}.yaml --config config/s3-config.yaml || true
             done
         volumeMounts:
-        - name: shared
-          mountPath: /quickwit/
+        - name: dbmigrationscript
+          mountPath: /quickwit/config/
       restartPolicy: Never
       volumes:
       - name: dbmigrationscript

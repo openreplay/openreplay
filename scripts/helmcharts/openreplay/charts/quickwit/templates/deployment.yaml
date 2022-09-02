@@ -36,8 +36,14 @@ spec:
           {{- if .Values.healthCheck}}
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
+          command:
+            - /bin/sh
+            - -c
           args:
-            - run --config s3-config-listen.yaml
+            - |
+              set -x
+              ls -laR /quickwit/
+              quickwit run --config config/s3-config-listen.yaml
           env:
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
@@ -59,7 +65,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
           - name: configs
-            mountPath: /quickwit/
+            mountPath: /quickwit/config/
       volumes:
       - name: configs
         configMap:
