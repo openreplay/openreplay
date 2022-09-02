@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_errors
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.events_l7d_mv
             ENGINE = ReplacingMergeTree(_timestamp)
                 PARTITION BY toYYYYMM(datetime)
-                ORDER BY (project_id, datetime, event_type, session_id)
+                ORDER BY (project_id, datetime, event_type, session_id, message_id)
                 TTL datetime + INTERVAL 7 DAY
             POPULATE
 AS
@@ -264,7 +264,7 @@ WHERE datetime >= now() - INTERVAL 7 DAY;
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.resources_l7d_mv
             ENGINE = ReplacingMergeTree(_timestamp)
                 PARTITION BY toYYYYMM(datetime)
-                ORDER BY (project_id, datetime, type, session_id)
+                ORDER BY (project_id, datetime, type, session_id, message_id)
                 TTL datetime + INTERVAL 7 DAY
             POPULATE
 AS
