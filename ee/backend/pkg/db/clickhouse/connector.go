@@ -220,7 +220,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
 		msg.Type,
@@ -241,7 +241,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
 		nullableUint16(uint16(msg.RequestStart)),
@@ -271,7 +271,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),
@@ -290,7 +290,7 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 	if err := c.batches["inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		msg.Label,
 		"INPUT",
@@ -305,7 +305,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *message
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		msg.Source,
 		nullableString(msg.Name),
@@ -324,7 +324,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(timestamp),
 		nullableString(msg.Meta().Url),
 		uint8(msg.MinFPS),
@@ -371,7 +371,7 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		msg.URL,
 		request,
@@ -392,7 +392,7 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		msg.Name,
 		msg.Payload,
@@ -408,7 +408,7 @@ func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.Grap
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		session.MessageID,
+		msg.MessageID,
 		datetime(msg.Timestamp),
 		msg.OperationName,
 		nullableString(msg.Variables),
