@@ -15,6 +15,7 @@ class JIRAIntegration(integration_base.BaseIntegration):
         self.__tenant_id = tenant_id
         # TODO: enable super-constructor when OAuth is done
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
+        self._issue_handler = None
         self._user_id = user_id
         self.integration = self.get()
 
@@ -30,15 +31,15 @@ class JIRAIntegration(integration_base.BaseIntegration):
 
     @property
     def issue_handler(self):
-        if self.integration["url"].endswith('atlassian.net') and self.__issue_handler is None:
+        if self.integration["url"].endswith('atlassian.net') and self._issue_handler is None:
             try:
-                self.__issue_handler = JIRACloudIntegrationIssue(token=self.integration["token"],
-                                                                 username=self.integration["username"],
-                                                                 url=self.integration["url"])
+                self._issue_handler = JIRACloudIntegrationIssue(token=self.integration["token"],
+                                                                username=self.integration["username"],
+                                                                url=self.integration["url"])
             except Exception as e:
-                self.__issue_handler = None
+                self._issue_handler = None
                 self.integration["valid"] = False
-        return self.__issue_handler
+        return self._issue_handler
 
     # TODO: remove this once jira-oauth is done
     def get(self):
