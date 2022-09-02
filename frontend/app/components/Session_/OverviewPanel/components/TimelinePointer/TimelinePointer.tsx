@@ -32,7 +32,6 @@ const TimelinePointer = React.memo((props: Props) => {
     };
 
     const renderNetworkElement = (item: any) => {
-        console.log(item.name)
         return (
             <Popup
                 content={
