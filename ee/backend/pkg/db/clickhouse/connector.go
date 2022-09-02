@@ -125,28 +125,18 @@ func (c *connectorImpl) newBatch(name, query string) error {
 	return nil
 }
 
-/*
-TODO:
-+. add page_path to performance event (for the performance event, I need the page URL where that event happened
-if it is not present in the message, you can extract it from the last page before that performance event)
-2. add base_referrer to sessions table (if you check the code that adds page events to PG; it has columns called referrer
-and base_referrer; I need these columns in the sessions table in clickhouse)
-+. copy autocomplete to Clickhouse
-+. add following tables from pg: REQUEST, CUSTOM, GRAPHQL
-5. add issue_types to sessions (the same way it exists in PG) -> rewrite session end handler
-*/
 var batches = map[string]string{
 	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"resources":     "INSERT INTO experimental.resources (session_id, project_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, ?)",
-	"pages":         "INSERT INTO experimental.events (session_id, project_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"clicks":        "INSERT INTO experimental.events (session_id, project_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?)",
-	"inputs":        "INSERT INTO experimental.events (session_id, project_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?)",
-	"errors":        "INSERT INTO experimental.events (session_id, project_id, datetime, source, name, message, error_id, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-	"performance":   "INSERT INTO experimental.events (session_id, project_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"requests":      "INSERT INTO experimental.events (session_id, project_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"custom":        "INSERT INTO experimental.events (session_id, project_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?)",
-	"graphql":       "INSERT INTO experimental.events (session_id, project_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?)",
+	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 }
 
 func (c *connectorImpl) Prepare() error {
@@ -230,6 +220,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
 		msg.Type,
@@ -250,6 +241,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
 		nullableUint16(uint16(msg.RequestStart)),
@@ -279,6 +271,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),
@@ -297,6 +290,7 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 	if err := c.batches["inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		msg.Label,
 		"INPUT",
@@ -311,6 +305,7 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *message
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		msg.Source,
 		nullableString(msg.Name),
@@ -329,6 +324,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(timestamp),
 		nullableString(msg.Meta().Url),
 		uint8(msg.MinFPS),
@@ -375,6 +371,7 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		msg.URL,
 		request,
@@ -395,6 +392,7 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		msg.Name,
 		msg.Payload,
@@ -410,6 +408,7 @@ func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.Grap
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
+		session.MessageID,
 		datetime(msg.Timestamp),
 		msg.OperationName,
 		nullableString(msg.Variables),
