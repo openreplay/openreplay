@@ -11,14 +11,14 @@ echo $DOCKER_REPO
     exit 1
 } || {
     docker login $DOCKER_REPO
-    cd ../../api
-    PUSH_IMAGE=1 bash build.sh $@
-    cd ../backend
+    cd ../../backend
     PUSH_IMAGE=1 bash build.sh $@
     cd ../utilities
     PUSH_IMAGE=1 bash build.sh $@
     cd ../peers
     PUSH_IMAGE=1 bash build.sh $@
     cd ../frontend
+    PUSH_IMAGE=1 bash build.sh $@
+    cd ../api
     PUSH_IMAGE=1 bash build.sh $@
 }
