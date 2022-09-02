@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS experimental.events
 (
     session_id                                     UInt64,
     project_id                                     UInt16,
-    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'LONGTASK'=5,'ERROR'=6,'CUSTOM'=7, 'GRAPHQL'=8, 'STATEACTION'=9),
+    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'ERROR'=5,'CUSTOM'=6, 'GRAPHQL'=7, 'STATEACTION'=8),
     datetime                                       DateTime,
     label Nullable(String),
     hesitation_time Nullable(UInt32),
@@ -78,10 +78,11 @@ CREATE TABLE IF NOT EXISTS experimental.events
     success Nullable(UInt8),
     request_body Nullable(String),
     response_body Nullable(String),
+    message_id                                     UInt64   DEFAULT 0,
     _timestamp                                     DateTime DEFAULT now()
-) ENGINE = MergeTree
+) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(datetime)
-      ORDER BY (project_id, datetime, event_type, session_id)
+      ORDER BY (project_id, datetime, event_type, session_id, message_id)
       TTL datetime + INTERVAL 3 MONTH;
 
 CREATE TABLE IF NOT EXISTS experimental.resources
@@ -104,10 +105,11 @@ CREATE TABLE IF NOT EXISTS experimental.resources
     decoded_body_size Nullable(UInt32),
     compression_ratio Nullable(Float32) MATERIALIZED divide(decoded_body_size, encoded_body_size),
     success Nullable(UInt8) COMMENT 'currently available for type=img only',
+    message_id                          UInt64   DEFAULT 0,
     _timestamp                          DateTime DEFAULT now()
-) ENGINE = MergeTree
+) ENGINE = ReplacingMergeTree(_timestamp)
       PARTITION BY toYYYYMM(datetime)
-      ORDER BY (project_id, datetime, type, session_id)
+      ORDER BY (project_id, datetime, type, session_id, message_id)
       TTL datetime + INTERVAL 3 MONTH;
 
 CREATE TABLE IF NOT EXISTS experimental.sessions
@@ -191,9 +193,9 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_errors
       TTL _timestamp + INTERVAL 3 MONTH;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.events_l7d_mv
-            ENGINE = MergeTree
+            ENGINE = ReplacingMergeTree(_timestamp)
                 PARTITION BY toYYYYMM(datetime)
-                ORDER BY (project_id, datetime, event_type, session_id)
+                ORDER BY (project_id, datetime, event_type, session_id, message_id)
                 TTL datetime + INTERVAL 7 DAY
             POPULATE
 AS
@@ -254,14 +256,15 @@ SELECT session_id,
        success,
        request_body,
        response_body,
+       message_id,
        _timestamp
 FROM experimental.events
 WHERE datetime >= now() - INTERVAL 7 DAY;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.resources_l7d_mv
-            ENGINE = MergeTree
+            ENGINE = ReplacingMergeTree(_timestamp)
                 PARTITION BY toYYYYMM(datetime)
-                ORDER BY (project_id, datetime, type, session_id)
+                ORDER BY (project_id, datetime, type, session_id, message_id)
                 TTL datetime + INTERVAL 7 DAY
             POPULATE
 AS
@@ -281,6 +284,7 @@ SELECT session_id,
        decoded_body_size,
        compression_ratio,
        success,
+       message_id,
        _timestamp
 FROM experimental.resources
 WHERE datetime >= now() - INTERVAL 7 DAY;
