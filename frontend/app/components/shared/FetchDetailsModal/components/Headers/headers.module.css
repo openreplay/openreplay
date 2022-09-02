@@ -1,0 +1,14 @@
+.row {
+  /* display: flex; */
+  padding: 5px 0px;
+  font-size: 13px;
+  word-break: break-all;
+  /* padding-left: 20px; */
+  &:hover {
+    background-color: $active-blue;
+  }
+
+  & div:last-child  {
+    max-width: 80%;
+  }
+}

@@ -19,8 +19,9 @@ const EventRow = React.memo((props: Props) => {
         !isGraph &&
         React.useMemo(() => {
             return list.map((item: any, _index: number) => {
+                const spread = item.toJS ? { ...item.toJS() } : { ...item }
                 return {
-                    ...item.toJS(),
+                    ...spread,
                     left: getTimelinePosition(item.time, scale),
                 };
             });

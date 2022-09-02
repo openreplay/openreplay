@@ -29,7 +29,8 @@ function OverviewPanel(props: Props) {
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
     'ERRORS',
-    'EVENTS',
+    // 'EVENTS',
+    'NETWORK',
   ]);
 
   const resources: any = React.useMemo(() => {
@@ -131,7 +132,10 @@ export default connect(
   }
 )(
   connectPlayer((state: any) => ({
-    resourceList: state.resourceList.filter((r: any) => r.isRed() || r.isYellow()),
+    resourceList: state.resourceList
+      .filter((r: any) => r.isRed() || r.isYellow())
+      .concat(state.fetchList.filter((i: any) => parseInt(i.status) >= 400))
+      .concat(state.graphqlList.filter((i: any) => parseInt(i.status) >= 400)),
     exceptionsList: state.exceptionsList,
     eventsList: state.eventList,
     stackEventList: state.stackList,

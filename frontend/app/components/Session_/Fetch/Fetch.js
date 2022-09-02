@@ -87,7 +87,7 @@ export default class Fetch extends React.PureComponent {
   render() {
     const { listNow } = this.props;
     const { current, currentIndex, showFetchDetails, filteredList } = this.state;
-    const hasErrors = filteredList.some((r) => r.status >= 400);
+    // const hasErrors = filteredList.some((r) => r.status >= 400);
     return (
       <React.Fragment>
         <SlideModal
