@@ -46,39 +46,39 @@ function AnimatedSVG(props: Props) {
     const renderSvg = () => {
         switch (name) {
             case ICONS.LOADER:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={LoaderSVG} />;
+                return <img style={{ width: size + 'px' }} src={LoaderSVG} />;
             case ICONS.DASHBOARD_ICON:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={DashboardSvg} />;
+                return <img style={{ width: size + 'px' }} src={DashboardSvg} />;
             case ICONS.EMPTY_STATE:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={EmptyStateSvg} />;
+                return <img style={{ width: size + 'px' }} src={EmptyStateSvg} />;
             case ICONS.LOGO_SMALL:
                 return <img style={{ width: size + 'px' }} src={LogoSmall} />;
             case ICONS.NO_RESULTS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoResultsSVG} />;
+                return <img style={{ width: size + 'px' }} src={NoResultsSVG} />;
             case ICONS.SIGNAL_GREEN:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={SignalGreenSvg} />;
+                return <img style={{ width: size + 'px' }} src={SignalGreenSvg} />;
             case ICONS.SIGNAL_RED:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={SignalRedSvg} />;
+                return <img style={{ width: size + 'px' }} src={SignalRedSvg} />;
             case ICONS.NO_BOOKMARKS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoBookmarks} />;
+                return <img style={{ width: size + 'px' }} src={NoBookmarks} />;
             case ICONS.NO_LIVE_SESSIONS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoLiveSessions} />;
+                return <img style={{ width: size + 'px' }} src={NoLiveSessions} />;
             case ICONS.NO_SESSIONS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoSessions} />;
+                return <img style={{ width: size + 'px' }} src={NoSessions} />;
             case ICONS.NO_SESSIONS_IN_VAULT:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoSessionsInVault} />;
+                return <img style={{ width: size + 'px' }} src={NoSessionsInVault} />;
             case ICONS.NO_WEBHOOKS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoWebhooks} />;
+                return <img style={{ width: size + 'px' }} src={NoWebhooks} />;
             case ICONS.NO_METADATA:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoMetadata} />;
+                return <img style={{ width: size + 'px' }} src={NoMetadata} />;
             case ICONS.NO_ISSUES:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoIssues} />;
+                return <img style={{ width: size + 'px' }} src={NoIssues} />;
             case ICONS.NO_AUDIT_TRAIL:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoAuditTrail} />;
+                return <img style={{ width: size + 'px' }} src={NoAuditTrail} />;
             case ICONS.NO_ANNOUNCEMENTS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoAnnouncements} />;
+                return <img style={{ width: size + 'px' }} src={NoAnnouncements} />;
             case ICONS.NO_ALERTS:
-                return <object style={{ width: size + 'px' }} type="image/svg+xml" data={NoAlerts} />;
+                return <img style={{ width: size + 'px' }} src={NoAlerts} />;
             default:
                 return null;
         }
