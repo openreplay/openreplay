@@ -1,0 +1,14 @@
+#
+# Source config file.
+#
+
+source_id: graphql-kafka
+source_type: kafka
+params:
+  topic: quickwit
+  client_params:
+    group.id: graphql-consumer
+    bootstrap.servers: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+    {{- if eq .Values.global.kafka.kafkaUseSsl "true" }}
+    security.protocol: SSL
+    {{- end}}
