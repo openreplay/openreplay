@@ -52,6 +52,8 @@ spec:
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+            - name: QUICKWIT_ENABLED
+              value: '{{ .Values.global.quickwit.enabled }}'
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

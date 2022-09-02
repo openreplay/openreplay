@@ -97,6 +97,7 @@ global:
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
+  quickwit: *quickwit
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   s3:
     region: "us-east-1"
