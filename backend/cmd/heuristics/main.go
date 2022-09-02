@@ -34,10 +34,6 @@ func main() {
 			&web2.MemoryIssueDetector{},
 			&web2.NetworkIssueDetector{},
 			&web2.PerformanceAggregator{},
-			// iOS's handlers
-			//&ios2.AppNotResponding{},
-			//&ios2.ClickRageDetector{},
-			//&ios2.PerformanceAggregator{},
 			// Other handlers (you can add your custom handlers here)
 			//&custom.CustomHandler{},
 		}
