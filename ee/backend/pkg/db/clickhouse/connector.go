@@ -324,7 +324,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		0, // TODO: find messageID for performance events
 		datetime(timestamp),
 		nullableString(msg.Meta().Url),
 		uint8(msg.MinFPS),
