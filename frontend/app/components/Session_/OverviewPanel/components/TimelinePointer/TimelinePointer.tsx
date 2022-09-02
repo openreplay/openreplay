@@ -49,7 +49,7 @@ const TimelinePointer = React.memo((props: Props) => {
           <div className="">
             <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
             <br />
-            {name.length > 200 ? name.slice(0, 100) + ' ... ' + name.slice(-50) : name}
+            {name.length > 200 ? name.slice(0, 100) + ' ... ' + name.slice(-50) : name.length > 200 ? (item.name.slice(0, 100) + ' ... ' + item.name.slice(-50)) : item.name}
           </div>
         }
         delay={0}
