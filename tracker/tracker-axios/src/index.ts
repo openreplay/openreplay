@@ -61,7 +61,7 @@ export default function(opts: Partial<Options> = {}) {
       ? name => ihOpt.includes(name)
       : () => ihOpt
 
-    const sendFetchMessage = (res: AxiosResponse) => {
+    const sendFetchMessage = async (res: AxiosResponse) => {
       // ?? TODO: why config is undeined sometimes?
       if (!isAxiosResponse(res)) { return }
     	// @ts-ignore
@@ -105,7 +105,7 @@ export default function(opts: Partial<Options> = {}) {
 
         // TODO: type safe axios headers
         if (typeof res.headers === 'object') {
-          Object.entries(res.headers as Record<string, string>).forEach(([v, n]) => { if (!isHIgnoring(n)) resHs[n] = v })
+          Object.entries(res.headers as Record<string, string>).forEach(([n, v]) => { if (!isHIgnoring(n)) resHs[n] = v })
         }
       } 
 

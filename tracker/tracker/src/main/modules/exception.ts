@@ -1,67 +1,70 @@
-import type App from "../app/index.js";
-import type Message from "../../common/messages.js";
-import { JSException } from "../../common/messages.js";
-import ErrorStackParser from 'error-stack-parser';
+import type App from '../app/index.js'
+import type Message from '../app/messages.gen.js'
+import { JSException } from '../app/messages.gen.js'
+import ErrorStackParser from 'error-stack-parser'
 
 export interface Options {
-  captureExceptions: boolean;
+  captureExceptions: boolean
 }
 
 interface StackFrame {
-  columnNumber?: number,
-  lineNumber?: number,
-  fileName?: string,
-  functionName?: string,
-  source?: string,
+  columnNumber?: number
+  lineNumber?: number
+  fileName?: string
+  functionName?: string
+  source?: string
 }
 
 function getDefaultStack(e: ErrorEvent): Array<StackFrame> {
-  return [{
-    columnNumber: e.colno,
-    lineNumber: e.lineno,
-    fileName: e.filename,
-    functionName: "",
-    source: "",
-  }];
+  return [
+    {
+      columnNumber: e.colno,
+      lineNumber: e.lineno,
+      fileName: e.filename,
+      functionName: '',
+      source: '',
+    },
+  ]
 }
 
 export function getExceptionMessage(error: Error, fallbackStack: Array<StackFrame>): Message {
-  let stack = fallbackStack;
+  let stack = fallbackStack
   try {
-    stack = ErrorStackParser.parse(error);
-  } catch (e) {
-  }
-  return new JSException(error.name, error.message, JSON.stringify(stack));
+    stack = ErrorStackParser.parse(error)
+  } catch (e) {}
+  return JSException(error.name, error.message, JSON.stringify(stack))
 }
 
-export function getExceptionMessageFromEvent(e: ErrorEvent | PromiseRejectionEvent): Message | null {
+export function getExceptionMessageFromEvent(
+  e: ErrorEvent | PromiseRejectionEvent,
+  context: typeof globalThis = window,
+): Message | null {
   if (e instanceof ErrorEvent) {
     if (e.error instanceof Error) {
       return getExceptionMessage(e.error, getDefaultStack(e))
     } else {
-      let [name, message] = e.message.split(':');
+      let [name, message] = e.message.split(':')
       if (!message) {
-        name = 'Error';
+        name = 'Error'
         message = e.message
       }
-      return new JSException(name, message, JSON.stringify(getDefaultStack(e)));
+      return JSException(name, message, JSON.stringify(getDefaultStack(e)))
     }
-  } else if ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent) {
+  } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
       return getExceptionMessage(e.reason, [])
     } else {
-      let message: string;
+      let message: string
       try {
         message = JSON.stringify(e.reason)
-      } catch(_) {
+      } catch (_) {
         message = String(e.reason)
       }
-      return new JSException('Unhandled Promise Rejection', message, '[]');
+      return JSException('Unhandled Promise Rejection', message, '[]')
     }
   }
-  return null;
+  return null
 }
-
 
 export default function (app: App, opts: Partial<Options>): void {
   const options: Options = Object.assign(
@@ -69,24 +72,19 @@ export default function (app: App, opts: Partial<Options>): void {
       captureExceptions: true,
     },
     opts,
-  );
-  if (options.captureExceptions) {
-    const handler = (e: ErrorEvent | PromiseRejectionEvent): void => {
-      const msg = getExceptionMessageFromEvent(e);
+  )
+  function patchContext(context: Window & typeof globalThis) {
+    function handler(e: ErrorEvent | PromiseRejectionEvent): void {
+      const msg = getExceptionMessageFromEvent(e, context)
       if (msg != null) {
-        app.send(msg);
+        app.send(msg)
       }
     }
-
-    app.attachEventListener(
-      window,
-      'unhandledrejection',
-      (e: PromiseRejectionEvent): void => handler(e),
-    );
-    app.attachEventListener(
-      window,
-      'error',
-      (e: ErrorEvent): void => handler(e),
-    );
+    app.attachEventListener(context, 'unhandledrejection', handler)
+    app.attachEventListener(context, 'error', handler)
+  }
+  if (options.captureExceptions) {
+    app.observer.attachContextCallback(patchContext)
+    patchContext(window)
   }
 }

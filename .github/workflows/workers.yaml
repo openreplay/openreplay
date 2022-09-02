@@ -114,6 +114,7 @@ jobs:
         echo > /tmp/image_override.yaml
         mkdir /tmp/helmcharts
         mv openreplay/charts/ingress-nginx /tmp/helmcharts/
+        mv openreplay/charts/quickwit /tmp/helmcharts/
         ## Update images
         for image in $(cat /tmp/images_to_build.txt);
         do

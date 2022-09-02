@@ -9,6 +9,9 @@ location /api/ {
 
   rewrite ^/api/(.*) /$1 break;
 
+	proxy_ssl_server_name on;
+  proxy_ssl_session_reuse on;
+
   proxy_http_version 1.1;
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "Upgrade";
@@ -23,6 +26,9 @@ location / {
   rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
   proxy_intercept_errors on; # see frontend://nginx.org/en/docs/frontend/ngx_frontend_proxy_module.html#proxy_intercept_errors
   error_page 404 =200 /index.html;
+
+	proxy_ssl_server_name on;
+  proxy_ssl_session_reuse on;
 
   proxy_http_version 1.1;
   proxy_set_header Upgrade $http_upgrade;

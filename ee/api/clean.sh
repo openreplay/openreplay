@@ -3,8 +3,11 @@
 rm -rf ./chalicelib/core/alerts.py
 rm -rf ./chalicelib/core/alerts_processor.py
 rm -rf ./chalicelib/core/announcements.py
+rm -rf ./chalicelib/core/autocomplete.py
 rm -rf ./chalicelib/core/collaboration_slack.py
-rm -rf ./chalicelib/core/errors_favorite_viewed.py
+rm -rf ./chalicelib/core/countries.py
+rm -rf ./chalicelib/core/errors.py
+rm -rf ./chalicelib/core/errors_favorite.py
 rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_ios.py
 rm -rf ./chalicelib/core/dashboards.py

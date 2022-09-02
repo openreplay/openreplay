@@ -1,18 +1,20 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, SlideModal, Icon, Button, Popup, TextLink } from 'UI';
+import { Loader, Button, Popup, TextLink, NoContent } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
 import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
 import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
-import GDPRForm from './GDPRForm';
-import TrackingCodeModal from 'Shared/TrackingCodeModal';
-import BlockedIps from './BlockedIps';
 import { confirm, PageTitle } from 'UI';
 import SiteSearch from './SiteSearch';
 import AddProjectButton from './AddProjectButton';
+import InstallButton from './InstallButton';
+import ProjectKey from './ProjectKey';
+import { useModal } from 'App/components/Modal';
+import { getInitials } from 'App/utils';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import cn from 'classnames'
 
 const STATUS_MESSAGE_MAP = {
     [RED]: ' There seems to be an issue (please verify your installation)',
@@ -20,11 +22,7 @@ const STATUS_MESSAGE_MAP = {
     [GREEN]: 'All good!',
 };
 
-const BLOCKED_IPS = 'BLOCKED_IPS';
-const NONE = 'NONE';
-
 const NEW_SITE_FORM = 'NEW_SITE_FORM';
-const GDPR_FORM = 'GDPR_FORM';
 
 @connect(
     (state) => ({
@@ -43,19 +41,8 @@ const GDPR_FORM = 'GDPR_FORM';
 @withPageTitle('Projects - OpenReplay Preferences')
 class Sites extends React.PureComponent {
     state = {
-        showTrackingCode: false,
-        modalContent: NONE,
-        detailContent: NONE,
         searchQuery: '',
     };
-
-    toggleBlockedIp = () => {
-        this.setState({
-            detailContent: this.state.detailContent === BLOCKED_IPS ? NONE : BLOCKED_IPS,
-        });
-    };
-
-    closeModal = () => this.setState({ modalContent: NONE, detailContent: NONE });
 
     edit = (site) => {
         this.props.init(site);
@@ -73,132 +60,75 @@ class Sites extends React.PureComponent {
         }
     };
 
-    showGDPRForm = (site) => {
-        this.props.init(site);
-        this.setState({ modalContent: GDPR_FORM });
-    };
-
-    showNewSiteForm = () => {
-        this.props.init();
-        this.setState({ modalContent: NEW_SITE_FORM });
-    };
-
-    showTrackingCode = (site) => {
-        this.props.init(site);
-        this.setState({ showTrackingCode: true });
-    };
-
-    getModalTitle() {
-        switch (this.state.modalContent) {
-            case NEW_SITE_FORM:
-                return this.props.site.exists() ? 'Update Project' : 'New Project';
-            case GDPR_FORM:
-                return 'Project Settings';
-            default:
-                return '';
-        }
-    }
-
-    renderModalContent() {
-        switch (this.state.modalContent) {
-            case NEW_SITE_FORM:
-                return <NewSiteForm onClose={this.closeModal} />;
-            case GDPR_FORM:
-                return <GDPRForm onClose={this.closeModal} toggleBlockedIp={this.toggleBlockedIp} />;
-            default:
-                return null;
-        }
-    }
-
-    renderModalDetailContent() {
-        switch (this.state.detailContent) {
-            case BLOCKED_IPS:
-                return <BlockedIps />;
-            default:
-                return null;
-        }
-    }
-
     render() {
-        const { loading, sites, site, user, account } = this.props;
-        const { modalContent, showTrackingCode } = this.state;
+        const { loading, sites, user } = this.props;
         const isAdmin = user.admin || user.superAdmin;
         const filteredSites = sites.filter((site) => site.name.toLowerCase().includes(this.state.searchQuery.toLowerCase()));
 
         return (
             <Loader loading={loading}>
-                <TrackingCodeModal
-                    title="Tracking Code"
-                    subTitle={`(Unique to ${site.host})`}
-                    displayed={showTrackingCode}
-                    onClose={() => this.setState({ showTrackingCode: false })}
-                    site={site}
-                />
-                <SlideModal
-                    title={this.getModalTitle()}
-                    size="small"
-                    isDisplayed={modalContent !== NONE}
-                    content={this.renderModalContent()}
-                    onClose={this.closeModal}
-                    detailContent={this.renderModalDetailContent()}
-                />
                 <div className={stl.wrapper}>
-                    <div className={stl.tabHeader}>
-                        <PageTitle
-                            title={<div className="mr-4">Projects</div>}
-                            actionButton={<AddProjectButton isAdmin={isAdmin} onClick={this.showNewSiteForm} />}
-                        />
+                    <div className={cn(stl.tabHeader, 'px-5 pt-5')}>
+                        <PageTitle title={<div className="mr-4">Projects</div>} actionButton={<TextLink icon="book" href="https://docs.openreplay.com/installation" label="Installation Docs" />} />
 
                         <div className="flex ml-auto items-center">
-                            <TextLink icon="book" className="mr-4" href="https://docs.openreplay.com/installation" label="Documentation" />
+                            <AddProjectButton isAdmin={isAdmin} />
+                            <div className="mx-2" />
                             <SiteSearch onChange={(value) => this.setState({ searchQuery: value })} />
                         </div>
                     </div>
 
                     <div className={stl.list}>
-                        <div className="grid grid-cols-12 gap-2 w-full items-center border-b px-2 py-3 font-medium">
-                            <div className="col-span-4">Name</div>
+                    <NoContent
+                        title={
+                            <div className="flex flex-col items-center justify-center">
+                            <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
+                            <div className="text-center text-gray-600 my-4">No matching results.</div>
+                            </div>
+                        }
+                        size="small"
+                        show={!loading && filteredSites.size === 0}
+                    >
+                        <div className="grid grid-cols-12 gap-2 w-full items-center px-5 py-3 font-medium">
+                            <div className="col-span-4">Project Name</div>
                             <div className="col-span-4">Key</div>
                             <div className="col-span-4"></div>
                         </div>
                         {filteredSites.map((_site) => (
                             <div
                                 key={_site.key}
-                                className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3"
+                                className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-t px-5 py-3"
                             >
                                 <div className="col-span-4">
                                     <div className="flex items-center">
-                                        <Popup content={STATUS_MESSAGE_MAP[_site.status]} inverted position="top center">
-                                            <div style={{ width: '10px' }}>
-                                                <Icon name="circle" size="10" color={STATUS_COLOR_MAP[_site.status]} />
+                                        <Popup content={STATUS_MESSAGE_MAP[_site.status]} inverted>
+                                            <div className="relative flex items-center justify-center w-10 h-10">
+                                                <div
+                                                    className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-10"
+                                                    style={{ backgroundColor: STATUS_COLOR_MAP[_site.status] }}
+                                                />
+                                                <div className="text-lg uppercase" style={{ color: STATUS_COLOR_MAP[_site.status] }}>
+                                                    {getInitials(_site.name)}
+                                                </div>
                                             </div>
                                         </Popup>
                                         <span className="ml-2">{_site.host}</span>
                                     </div>
                                 </div>
                                 <div className="col-span-4">
-                                    <span className="px-2 py-1 bg-gray-lightest rounded border text-sm">{_site.projectKey}</span>
+                                    <ProjectKey value={_site.projectKey} tooltip="Project key copied to clipboard" />
                                 </div>
                                 <div className="col-span-4 justify-self-end flex items-center">
                                     <div className="mr-4">
-                                        <Button size="small" variant="primary" onClick={() => this.showTrackingCode(_site)}>
-                                            {'Installation Steps'}
-                                        </Button>
+                                        <InstallButton site={_site} />
                                     </div>
                                     <div className="invisible group-hover:visible">
-                                        <Button
-                                            variant="text"
-                                            className={cn('mx-3', { hidden: !isAdmin })}
-                                            disabled={!isAdmin}
-                                            onClick={() => isAdmin && this.edit(_site)}
-                                            data-clickable
-                                        >
-                                            <Icon name="edit" size="16" color="teal" />
-                                        </Button>
+                                        <EditButton isAdmin={isAdmin} onClick={() => this.props.init(_site)} />
                                     </div>
                                 </div>
                             </div>
                         ))}
+                        </NoContent>
                     </div>
                 </div>
             </Loader>
@@ -207,3 +137,12 @@ class Sites extends React.PureComponent {
 }
 
 export default Sites;
+
+function EditButton({ isAdmin, onClick }) {
+    const { showModal, hideModal } = useModal();
+    const _onClick = () => {
+        onClick();
+        showModal(<NewSiteForm onClose={hideModal} />);
+    };
+    return <Button icon="edit" variant="text-primary" disabled={!isAdmin} onClick={_onClick} />;
+}

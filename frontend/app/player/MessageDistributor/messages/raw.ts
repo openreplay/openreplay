@@ -1,82 +1,8 @@
 // Auto-generated, do not edit
 
-export const TP_MAP = {
-    80: "batch_meta",
-  0: "timestamp",
-  2: "session_disconnect",
-  4: "set_page_location",
-  5: "set_viewport_size",
-  6: "set_viewport_scroll",
-  7: "create_document",
-  8: "create_element_node",
-  9: "create_text_node",
-  10: "move_node",
-  11: "remove_node",
-  12: "set_node_attribute",
-  13: "remove_node_attribute",
-  14: "set_node_data",
-  15: "set_css_data",
-  16: "set_node_scroll",
-  17: "set_input_target",
-  18: "set_input_value",
-  19: "set_input_checked",
-  20: "mouse_move",
-  22: "console_log",
-  23: "page_load_timing",
-  24: "page_render_timing",
-  25: "js_exception",
-  27: "raw_custom_event",
-  28: "user_id",
-  29: "user_anonymous_id",
-  30: "metadata",
-  37: "css_insert_rule",
-  38: "css_delete_rule",
-  39: "fetch",
-  40: "profiler",
-  41: "o_table",
-  42: "state_action",
-  44: "redux",
-  45: "vuex",
-  46: "mob_x",
-  47: "ng_rx",
-  48: "graph_ql",
-  49: "performance_track",
-  53: "resource_timing",
-  54: "connection_information",
-  55: "set_page_visibility",
-  59: "long_task",
-  60: "set_node_attribute_url_based",
-  61: "set_css_data_url_based",
-  63: "technical_info",
-  64: "custom_issue",
-  65: "page_close",
-  67: "css_insert_rule_url_based",
-  69: "mouse_click",
-  70: "create_i_frame_document",
-  90: "ios_session_start",
-  93: "ios_custom_event",
-  96: "ios_screen_changes",
-  100: "ios_click_event",
-  102: "ios_performance_event",
-  103: "ios_log",
-  105: "ios_network_call",
-}
-
-
-export interface RawBatchMeta {
-  tp: "batch_meta",
-  pageNo: number,
-  firstIndex: number,
-  timestamp: number,
-}
 
 export interface RawTimestamp {
   tp: "timestamp",
-  timestamp: number,
-}
-
-export interface RawSessionDisconnect {
-  tp: "session_disconnect",
   timestamp: number,
 }
 
@@ -164,12 +90,6 @@ export interface RawSetNodeScroll {
   y: number,
 }
 
-export interface RawSetInputTarget {
-  tp: "set_input_target",
-  id: number,
-  label: string,
-}
-
 export interface RawSetInputValue {
   tp: "set_input_value",
   id: number,
@@ -192,55 +112,6 @@ export interface RawMouseMove {
 export interface RawConsoleLog {
   tp: "console_log",
   level: string,
-  value: string,
-}
-
-export interface RawPageLoadTiming {
-  tp: "page_load_timing",
-  requestStart: number,
-  responseStart: number,
-  responseEnd: number,
-  domContentLoadedEventStart: number,
-  domContentLoadedEventEnd: number,
-  loadEventStart: number,
-  loadEventEnd: number,
-  firstPaint: number,
-  firstContentfulPaint: number,
-}
-
-export interface RawPageRenderTiming {
-  tp: "page_render_timing",
-  speedIndex: number,
-  visuallyComplete: number,
-  timeToInteractive: number,
-}
-
-export interface RawJsException {
-  tp: "js_exception",
-  name: string,
-  message: string,
-  payload: string,
-}
-
-export interface RawRawCustomEvent {
-  tp: "raw_custom_event",
-  name: string,
-  payload: string,
-}
-
-export interface RawUserID {
-  tp: "user_id",
-  id: string,
-}
-
-export interface RawUserAnonymousID {
-  tp: "user_anonymous_id",
-  id: string,
-}
-
-export interface RawMetadata {
-  tp: "metadata",
-  key: string,
   value: string,
 }
 
@@ -280,11 +151,6 @@ export interface RawOTable {
   tp: "o_table",
   key: string,
   value: string,
-}
-
-export interface RawStateAction {
-  tp: "state_action",
-  type: string,
 }
 
 export interface RawRedux {
@@ -329,18 +195,6 @@ export interface RawPerformanceTrack {
   usedJSHeapSize: number,
 }
 
-export interface RawResourceTiming {
-  tp: "resource_timing",
-  timestamp: number,
-  duration: number,
-  ttfb: number,
-  headerSize: number,
-  encodedBodySize: number,
-  decodedBodySize: number,
-  url: string,
-  initiator: string,
-}
-
 export interface RawConnectionInformation {
   tp: "connection_information",
   downlink: number,
@@ -378,23 +232,6 @@ export interface RawSetCssDataURLBased {
   baseURL: string,
 }
 
-export interface RawTechnicalInfo {
-  tp: "technical_info",
-  type: string,
-  value: string,
-}
-
-export interface RawCustomIssue {
-  tp: "custom_issue",
-  name: string,
-  payload: string,
-}
-
-export interface RawPageClose {
-  tp: "page_close",
-
-}
-
 export interface RawCssInsertRuleURLBased {
   tp: "css_insert_rule_url_based",
   id: number,
@@ -414,6 +251,52 @@ export interface RawMouseClick {
 export interface RawCreateIFrameDocument {
   tp: "create_i_frame_document",
   frameID: number,
+  id: number,
+}
+
+export interface RawAdoptedSsReplaceURLBased {
+  tp: "adopted_ss_replace_url_based",
+  sheetID: number,
+  text: string,
+  baseURL: string,
+}
+
+export interface RawAdoptedSsReplace {
+  tp: "adopted_ss_replace",
+  sheetID: number,
+  text: string,
+}
+
+export interface RawAdoptedSsInsertRuleURLBased {
+  tp: "adopted_ss_insert_rule_url_based",
+  sheetID: number,
+  rule: string,
+  index: number,
+  baseURL: string,
+}
+
+export interface RawAdoptedSsInsertRule {
+  tp: "adopted_ss_insert_rule",
+  sheetID: number,
+  rule: string,
+  index: number,
+}
+
+export interface RawAdoptedSsDeleteRule {
+  tp: "adopted_ss_delete_rule",
+  sheetID: number,
+  index: number,
+}
+
+export interface RawAdoptedSsAddOwner {
+  tp: "adopted_ss_add_owner",
+  sheetID: number,
+  id: number,
+}
+
+export interface RawAdoptedSsRemoveOwner {
+  tp: "adopted_ss_remove_owner",
+  sheetID: number,
   id: number,
 }
 
@@ -488,4 +371,4 @@ export interface RawIosNetworkCall {
 }
 
 
-export type RawMessage = RawBatchMeta | RawTimestamp | RawSessionDisconnect | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputTarget | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawConsoleLog | RawPageLoadTiming | RawPageRenderTiming | RawJsException | RawRawCustomEvent | RawUserID | RawUserAnonymousID | RawMetadata | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawStateAction | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawResourceTiming | RawConnectionInformation | RawSetPageVisibility | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawTechnicalInfo | RawCustomIssue | RawPageClose | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawConnectionInformation | RawSetPageVisibility | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;

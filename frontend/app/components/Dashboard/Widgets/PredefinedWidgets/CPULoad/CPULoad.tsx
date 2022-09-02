@@ -19,6 +19,7 @@ function CPULoad(props: Props) {
     return (
         <NoContent
           size="small"
+          title="No data available"
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >
@@ -42,7 +43,7 @@ function CPULoad(props: Props) {
                   type="monotone"
                   unit="%"
                   dataKey="value"
-                  stroke={Styles.colors[0]}
+                  stroke={Styles.strokeColor}
                   fillOpacity={ 1 }
                   strokeWidth={ 2 }
                   strokeOpacity={ 0.8 }

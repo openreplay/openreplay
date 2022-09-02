@@ -168,7 +168,7 @@ def update(tenant_id, user_id, changes):
                             {"user_id": user_id, **changes})
             )
 
-        return helper.dict_to_camel_case(cur.fetchone())
+    return get(user_id=user_id, tenant_id=tenant_id)
 
 
 def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
@@ -181,7 +181,7 @@ def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
     if user:
         return {"errors": ["user already exists"]}
     name = data.get("name", None)
-    if name is not None and not helper.is_alphabet_latin_space(name):
+    if name is not None and len(name) == 0:
         return {"errors": ["invalid user name"]}
     if name is None:
         name = data["email"]

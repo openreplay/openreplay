@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-fetch",
   "description": "Tracker plugin for fetch requests recording ",
-  "version": "3.5.3",
+  "version": "3.6.0",
   "keywords": [
     "fetch",
     "logging",
@@ -23,10 +23,10 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^3.0.0"
+    "@openreplay/tracker": "^3.6.0"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.0.0",
+    "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^3.6.4"

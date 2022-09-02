@@ -4,12 +4,11 @@ import { Styles, AvgLabel } from '../../common';
 import { withRequest } from 'HOCs'
 import { 
     AreaChart, Area,
-    BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    CartesianGrid, Tooltip,
+    ResponsiveContainer, 
     XAxis, YAxis
-  } from 'recharts';
-import WidgetAutoComplete from 'Shared/WidgetAutoComplete';
-import { toUnderscore } from 'App/utils';
+  } from 'recharts';import { toUnderscore } from 'App/utils';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 const WIDGET_KEY = 'pagesResponseTime';
 
@@ -21,19 +20,13 @@ interface Props {
     metric?: any
 }
 function ResponseTime(props: Props) {
-    const { data, optionsLoading, metric } = props;
+    const { data, metric } = props;
     const gradientDef = Styles.gradientDef();
-
-
-    const onSelect = (params) => {
-      // const _params = { density: 70 }
-      // TODO reload the data with new params;
-      // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
-    }
 
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
         >
           <>
@@ -67,7 +60,7 @@ function ResponseTime(props: Props) {
                     type="monotone"
                     unit=" ms"
                     dataKey="value"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

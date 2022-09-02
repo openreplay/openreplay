@@ -98,18 +98,6 @@ def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = B
                                    changes={"name": data.name, "endpoint": data.url})}
 
 
-# this endpoint supports both jira & github based on `provider` attribute
-@app.post('/integrations/issues', tags=["integrations"])
-def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
-                               context: schemas.CurrentContext = Depends(OR_context)):
-    provider = data.provider.upper()
-    error, integration = integrations_manager.get_integration(tool=provider, tenant_id=context.tenant_id,
-                                                              user_id=context.user_id)
-    if error is not None:
-        return error
-    return {"data": integration.add_edit(data=data.dict())}
-
-
 @app.post('/client/members', tags=["client"])
 @app.put('/client/members', tags=["client"])
 def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberSchema = Body(...),

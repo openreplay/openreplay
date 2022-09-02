@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { NoContent, Loader, Pagination } from 'UI';
+import { NoContent, Loader, Pagination, Button } from 'UI';
 import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions';
@@ -13,6 +13,8 @@ import SortOrderButton from 'Shared/SortOrderButton';
 import { capitalize } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 import cn from 'classnames';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { numberWithCommas } from 'App/utils';
 
 const AUTOREFRESH_INTERVAL = 0.5 * 60 * 1000;
 const PER_PAGE = 10;
@@ -82,46 +84,57 @@ function LiveSessionList(props: Props) {
 
     return (
         <div>
-            <div className="flex mb-6 justify-between items-end">
-                <div className="flex items-baseline">
-                    <h3 className="text-2xl capitalize">
-                        <span>Live Sessions</span>
-                        <span className="ml-2 font-normal color-gray-medium">{total}</span>
-                    </h3>
+            <div className="bg-white p-3 rounded border">
+                <div className="flex mb-6 justify-between items-center">
+                    <div className="flex items-baseline">
+                        <h3 className="text-2xl capitalize mr-4">
+                            <span>Live Sessions</span>
+                            {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
+                        </h3>
 
-                    <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
-                </div>
-                <div className="flex items-center">
-                    <div className="flex items-center ml-6 mr-4">
-                        <span className="mr-2 color-gray-medium">Sort By</span>
-                        <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
-                            <Select
-                                plain
-                                right
-                                options={sortOptions}
-                                onChange={onSortChange}
-                                value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
-                            />
-                            <div className="mx-2" />
-                            <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                        <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
+                    </div>
+                    <div className="flex items-center">
+                        <div className="flex items-center ml-6">
+                            <span className="mr-2 color-gray-medium">Sort By</span>
+                            <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
+                                <Select
+                                    plain
+                                    right
+                                    options={sortOptions}
+                                    onChange={onSortChange}
+                                    value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                                />
+                                <div className="mx-2" />
+                                <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className="bg-white p-3 rounded border">
                 <Loader loading={loading}>
                     <NoContent
-                        title={'No live sessions.'}
-                        subtext={
-                            <span>
-                                See how to setup the{' '}
-                                <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
-                                    {'Assist'}
-                                </a>{' '}
-                                plugin, if you haven’t done that already.
-                            </span>
+                        title={
+                            <div className="flex items-center justify-center flex-col">
+                                <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />
+                                <div className="mt-2" />
+                                <div className="text-center text-gray-600">No live sessions found.</div>
+                            </div>
                         }
-                        image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
+                        subtext={
+                            <div className="text-center flex justify-center items-center flex-col">
+                                <span>
+                                    Assist allows you to support your users through live screen viewing and audio/video calls.{' '}
+                                    <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
+                                        {'Learn More'}
+                                    </a>
+                                </span>
+
+                                <Button variant="text-primary" className="mt-4" icon="sync-alt" onClick={() => props.applyFilter({ ...filter })}>
+                                    Refresh
+                                </Button>
+                            </div>
+                        }
+                        // image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
                         show={!loading && list.size === 0}
                     >
                         <div>
@@ -139,18 +152,22 @@ function LiveSessionList(props: Props) {
                                 </>
                             ))}
                         </div>
+                        <div className={cn("flex items-center justify-between p-5", { disabled: loading })}>
+                            <div>
+                                Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
+                                <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.size}</span> of{' '}
+                                <span className="font-medium">{numberWithCommas(total)}</span> sessions.
+                            </div>
+                            <Pagination
+                                page={currentPage}
+                                totalPages={Math.ceil(total / PER_PAGE)}
+                                onPageChange={(page: any) => props.updateCurrentPage(page)}
+                                limit={PER_PAGE}
+                                debounceRequest={500}
+                            />
+                        </div>
                     </NoContent>
                 </Loader>
-
-                <div className={cn('w-full flex items-center justify-center py-6', { disabled: loading })}>
-                    <Pagination
-                        page={currentPage}
-                        totalPages={Math.ceil(total / PER_PAGE)}
-                        onPageChange={(page: any) => props.updateCurrentPage(page)}
-                        limit={PER_PAGE}
-                        debounceRequest={500}
-                    />
-                </div>
             </div>
         </div>
     );

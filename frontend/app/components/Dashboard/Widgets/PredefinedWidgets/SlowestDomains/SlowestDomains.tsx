@@ -3,6 +3,7 @@ import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { numberWithCommas } from 'App/utils';
 import Bar from 'App/components/Dashboard/Widgets/SlowestDomains/Bar';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -15,7 +16,8 @@ function SlowestDomains(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
-          style={{ maxHeight: '240px' }}
+          style={{ minHeight: 220 }}
+          title={NO_METRIC_DATA}
         >
           <div className="w-full" style={{ height: '240px' }}>
             {metric.data.chart.map((item, i) => 

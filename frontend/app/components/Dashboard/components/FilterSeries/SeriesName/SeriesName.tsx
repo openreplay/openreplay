@@ -46,7 +46,7 @@ function SeriesName(props: Props) {
           onFocus={() => setEditing(true)}
         />
       ) : (
-        <div className="text-base h-8 flex items-center border-transparent">{name.trim() === '' ? 'Seriess ' + (seriesIndex + 1) : name }</div>
+        <div className="text-base h-8 flex items-center border-transparent">{name && name.trim() === '' ? 'Series ' + (seriesIndex + 1) : name }</div>
       )}
       
       <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div>

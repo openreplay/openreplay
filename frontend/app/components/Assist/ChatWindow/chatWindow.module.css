@@ -2,7 +2,7 @@
   background-color: white;
   border: solid thin $gray-light;
   border-radius: 3px;
-  position: fixed;  
+  position: fixed;
   width: 300px;
   box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
 }
@@ -16,7 +16,8 @@
 }
 
 .videoWrapper {
-  height: 180px;
-  overflow: hidden;
+  max-width: 300px;
+  display: flex;
   background-color: #000;
+  flex-wrap: wrap;
 }

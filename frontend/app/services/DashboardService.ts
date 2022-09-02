@@ -1,28 +1,8 @@
-import { IDashboard } from "App/mstore/types/dashboard";
+import Dashboard from "App/mstore/types/dashboard";
 import APIClient from 'App/api_client';
-import { IWidget } from "App/mstore/types/widget";
+import Widget from "App/mstore/types/widget";
 
-export interface IDashboardService {
-    initClient(client?: APIClient)
-    getWidgets(dashboardId: string): Promise<any>
-    
-    getDashboards(): Promise<any[]>
-    getDashboard(dashboardId: string): Promise<any>
-
-    saveDashboard(dashboard: IDashboard): Promise<any>
-    deleteDashboard(dashboardId: string): Promise<any>
-
-    saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
-
-    addWidget(dashboard: IDashboard, metricIds: []): Promise<any>
-    saveWidget(dashboardId: string, widget: IWidget): Promise<any>
-    deleteWidget(dashboardId: string, widgetId: string): Promise<any>
-    
-    updatePinned(dashboardId: string): Promise<any>
-}
-
-
-export default class DashboardService implements IDashboardService {
+export default class DashboardService {
     private client: APIClient;
 
     constructor(client?: APIClient) {
@@ -71,7 +51,7 @@ export default class DashboardService implements IDashboardService {
      * @param dashboard Required
      * @returns {Promise<any>}
      */
-    saveDashboard(dashboard: IDashboard): Promise<any> {
+    saveDashboard(dashboard: Dashboard): Promise<any> {
         const data = dashboard.toJson();
         if (dashboard.dashboardId) {
             return this.client.put(`/dashboards/${dashboard.dashboardId}`, data)
@@ -90,7 +70,7 @@ export default class DashboardService implements IDashboardService {
      * @param metricIds 
      * @returns 
      */
-    addWidget(dashboard: IDashboard, metricIds: any): Promise<any> {
+    addWidget(dashboard: Dashboard, metricIds: any): Promise<any> {
         const data = dashboard.toJson()
         data.metrics = metricIds
         return this.client.put(`/dashboards/${dashboard.dashboardId}`, data)
@@ -115,7 +95,7 @@ export default class DashboardService implements IDashboardService {
      * @param dashboardId Optional
      * @returns {Promise<any>}
      */
-    saveMetric(metric: IWidget, dashboardId?: string): Promise<any> {
+    saveMetric(metric: Widget, dashboardId?: string): Promise<any> {
         const data = metric.toJson();
         const path = dashboardId ? `/dashboards/${dashboardId}/metrics` : '/metrics';
         if (metric.widgetId) {
@@ -141,7 +121,7 @@ export default class DashboardService implements IDashboardService {
      * @param widget Required
      * @returns {Promise<any>}
      */
-    saveWidget(dashboardId: string, widget: IWidget): Promise<any> {
+    saveWidget(dashboardId: string, widget: Widget): Promise<any> {
         if (widget.widgetId) {
             return this.client.put(`/dashboards/${dashboardId}/widgets/${widget.widgetId}`, widget.toWidget())
                 .then(response => response.json())
@@ -150,15 +130,5 @@ export default class DashboardService implements IDashboardService {
         return this.client.post(`/dashboards/${dashboardId}/widgets`, widget.toWidget())
             .then(response => response.json())
             .then(response => response.data || {});
-    }
-
-    /**
-     * Update the pinned status of a dashboard.
-     * @param dashboardId 
-     * @returns 
-     */
-    updatePinned(dashboardId: string): Promise<any> {
-        return this.client.get(`/dashboards/${dashboardId}/pin`, {})
-            .then(response => response.json())
     }
 }

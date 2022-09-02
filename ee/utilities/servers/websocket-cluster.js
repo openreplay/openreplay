@@ -9,7 +9,11 @@ const {
     uniqueAutocomplete
 } = require('../utils/helper');
 const {
-    extractSessionInfo
+    IDENTITIES,
+    EVENTS_DEFINITION,
+    extractSessionInfo,
+    socketConnexionTimeout,
+    errorHandler
 } = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
@@ -19,15 +23,6 @@ const {
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 const wsRouter = express.Router();
-const UPDATE_EVENT = "UPDATE_SESSION";
-const IDENTITIES = {agent: 'agent', session: 'session'};
-const NEW_AGENT = "NEW_AGENT";
-const NO_AGENTS = "NO_AGENT";
-const AGENT_DISCONNECT = "AGENT_DISCONNECTED";
-const AGENTS_CONNECTED = "AGENTS_CONNECTED";
-const NO_SESSIONS = "SESSION_DISCONNECTED";
-const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
-const SESSION_RECONNECTED = "SESSION_RECONNECTED";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
@@ -289,26 +284,27 @@ module.exports = {
         createSocketIOServer(server, prefix);
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+            socket._connectedAt = new Date();
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 if (c_sessions > 0) {
                     debug && console.log(`session already connected, refusing new connexion`);
-                    io.to(socket.id).emit(SESSION_ALREADY_CONNECTED);
+                    io.to(socket.id).emit(EVENTS_DEFINITION.emit.SESSION_ALREADY_CONNECTED);
                     return socket.disconnect();
                 }
                 extractSessionInfo(socket);
                 if (c_agents > 0) {
                     debug && console.log(`notifying new session about agent-existence`);
                     let agents_ids = await get_all_agents_ids(io, socket);
-                    io.to(socket.id).emit(AGENTS_CONNECTED, agents_ids);
-                    socket.to(socket.peerId).emit(SESSION_RECONNECTED, socket.id);
+                    io.to(socket.id).emit(EVENTS_DEFINITION.emit.AGENTS_CONNECTED, agents_ids);
+                    socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.SESSION_RECONNECTED, socket.id);
                 }
 
             } else if (c_sessions <= 0) {
                 debug && console.log(`notifying new agent about no SESSIONS`);
-                io.to(socket.id).emit(NO_SESSIONS);
+                io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
             }
             await io.of('/').adapter.remoteJoin(socket.id, socket.peerId);
             let rooms = await io.of('/').adapter.allRooms();
@@ -320,13 +316,13 @@ module.exports = {
                 if (socket.handshake.query.agentInfo !== undefined) {
                     socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
                 }
-                socket.to(socket.peerId).emit(NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
+                socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
             }
 
             socket.on('disconnect', async () => {
                 debug && console.log(`${socket.id} disconnected from ${socket.peerId}`);
                 if (socket.identity === IDENTITIES.agent) {
-                    socket.to(socket.peerId).emit(AGENT_DISCONNECT, socket.id);
+                    socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.AGENT_DISCONNECT, socket.id);
                 }
                 debug && console.log("checking for number of connected agents and sessions");
                 let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
@@ -335,25 +331,32 @@ module.exports = {
                 }
                 if (c_sessions === 0) {
                     debug && console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
-                    socket.to(socket.peerId).emit(NO_SESSIONS);
+                    socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
                 }
                 if (c_agents === 0) {
                     debug && console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
-                    socket.to(socket.peerId).emit(NO_AGENTS);
+                    socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.NO_AGENTS);
                 }
             });
 
-            socket.on(UPDATE_EVENT, async (...args) => {
+            socket.on(EVENTS_DEFINITION.listen.UPDATE_EVENT, async (...args) => {
                 debug && console.log(`${socket.id} sent update event.`);
                 if (socket.identity !== IDENTITIES.session) {
                     debug && console.log('Ignoring update event.');
                     return
                 }
                 socket.handshake.query.sessionInfo = {...socket.handshake.query.sessionInfo, ...args[0]};
-                socket.to(socket.peerId).emit(UPDATE_EVENT, args[0]);
+                socket.to(socket.peerId).emit(EVENTS_DEFINITION.emit.UPDATE_EVENT, args[0]);
             });
 
+            socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
+            socket.on(EVENTS_DEFINITION.listen.CONNECT_FAILED, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_FAILED, err));
+
             socket.onAny(async (eventName, ...args) => {
+                if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
+                    debug && console.log(`received event:${eventName}, should be handled by another listener, stopping onAny.`);
+                    return
+                }
                 if (socket.identity === IDENTITIES.session) {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
@@ -362,7 +365,7 @@ module.exports = {
                     let socketId = await findSessionSocketId(io, socket.peerId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.peerId}`);
-                        io.to(socket.id).emit(NO_SESSIONS);
+                        io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
                     } else {
                         debug && console.log("message sent");
                         io.to(socketId).emit(eventName, socket.id, args[0]);
@@ -371,7 +374,7 @@ module.exports = {
             });
 
         });
-        console.log("WS server started")
+        console.log("WS server started");
         setInterval(async (io) => {
             try {
                 let rooms = await io.of('/').adapter.allRooms();
@@ -389,13 +392,16 @@ module.exports = {
                 if (debug) {
                     for (let item of validRooms) {
                         let connectedSockets = await io.in(item).fetchSockets();
-                        console.log(`Room: ${item} connected: ${connectedSockets.length}`)
+                        console.log(`Room: ${item} connected: ${connectedSockets.length}`);
                     }
                 }
             } catch (e) {
                 console.error(e);
             }
-        }, 20000, io);
+        }, 30000, io);
+
+        socketConnexionTimeout(io);
+
         Promise.all([pubClient.connect(), subClient.connect()])
             .then(() => {
                 io.adapter(createAdapter(pubClient, subClient));

@@ -1,4 +1,4 @@
-fromVersion: "v1.7.0"
+fromVersion: "v1.8.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -18,6 +18,10 @@ postgresql: &postgres
   #     cpu: 2
 
 clickhouse:
+  # For enterpriseEdition
+  enabled: false
+
+quickwit: &quickwit
   # For enterpriseEdition
   enabled: false
 
@@ -67,6 +71,9 @@ ingress-nginx: &ingress-nginx
     ingressClass: openreplay
     service:
       externalTrafficPolicy: "Local"
+      ports:
+        http: 80
+        https: 443
     extraArgs:
       default-ssl-certificate: "app/openreplay-ssl"
     config:
@@ -90,6 +97,7 @@ global:
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
+  quickwit: *quickwit
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   s3:
     region: "us-east-1"
@@ -97,6 +105,8 @@ global:
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"
+    # This is only for enterpriseEdition
+    quickwitBucket: "quickwit"
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey

@@ -1,8 +1,10 @@
 import requests
 from decouple import config
-
+from os.path import exists
 import schemas
 from chalicelib.core import projects
+from starlette.exceptions import HTTPException
+from os import access, R_OK
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -161,3 +163,23 @@ def autocomplete(project_id, q: str, key: str = None):
 def get_ice_servers():
     return config("iceServers") if config("iceServers", default=None) is not None \
                                    and len(config("iceServers")) > 0 else None
+
+
+def get_raw_mob_by_id(project_id, session_id):
+    efs_path = config("FS_DIR")
+    if not exists(efs_path):
+        raise HTTPException(400, f"EFS not found in path: {efs_path}")
+
+    if not access(efs_path, R_OK):
+        raise HTTPException(400, f"EFS found under: {efs_path}; but it is not readable, please check permissions")
+
+    path_to_file = efs_path + "/" + str(session_id)
+
+    if exists(path_to_file):
+        if not access(path_to_file, R_OK):
+            raise HTTPException(400, f"Replay file found under: {efs_path};"
+                                     f" but it is not readable, please check permissions")
+
+        return path_to_file
+
+    return None

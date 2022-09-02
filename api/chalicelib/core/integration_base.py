@@ -7,11 +7,16 @@ class BaseIntegration(ABC):
 
     def __init__(self, user_id, ISSUE_CLASS):
         self._user_id = user_id
-        self.issue_handler = ISSUE_CLASS(self.integration_token)
+        self.__issue_handler = ISSUE_CLASS(self.integration_token)
 
     @property
     @abstractmethod
     def provider(self):
+        pass
+
+    @property
+    @abstractmethod
+    def issue_handler(self):
         pass
 
     @property

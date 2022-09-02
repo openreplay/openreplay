@@ -8,6 +8,8 @@ import SessionItem from 'Shared/SessionItem';
 import SelectDateRange from 'Shared/SelectDateRange';
 import Period from 'Types/app/period';
 import { useObserver, observer } from 'mobx-react-lite';
+import { useModal } from 'App/components/Modal';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const PER_PAGE = 10;
 interface Props {
@@ -18,6 +20,7 @@ interface Props {
 function UserSessionsModal(props: Props) {
     const { userId, hash, name } = props;
     const { sessionStore } = useStore();
+    const { hideModal } = useModal();
     const [loading, setLoading] = React.useState(false);
     const [data, setData] = React.useState<any>({ sessions: [], total: 0 });
     const filter = useObserver(() => sessionStore.userFilter);
@@ -59,12 +62,18 @@ function UserSessionsModal(props: Props) {
                 </div>
             </div>
 
-            <NoContent show={data.sessions.length === 0} title={<div>No recordings found.</div>}>
+            <NoContent show={data.sessions.length === 0} title={
+                <div>
+                    <AnimatedSVG name={ICONS.NO_SESSIONS} size={170} />
+                    <div className="mt-2" />
+                    <div className="text-center text-gray-600">No recordings found.</div>
+                </div>
+            }>
                 <div className="border rounded m-5">
                     <Loader loading={loading}>
                         {data.sessions.map((session: any) => (
                             <div className="border-b last:border-none">
-                                <SessionItem key={session.sessionId} session={session} compact={true} />
+                                <SessionItem key={session.sessionId} session={session} compact={true} onClick={hideModal} />
                             </div>
                         ))}
                     </Loader>

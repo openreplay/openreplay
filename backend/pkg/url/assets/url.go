@@ -14,7 +14,7 @@ func getSessionKey(sessionID uint64) string {
 	return strconv.FormatUint(
 		uint64(time.UnixMilli(
 			int64(flakeid.ExtractTimestamp(sessionID)),
-		).Weekday()),
+		).Day()),
 		10,
 	)
 }

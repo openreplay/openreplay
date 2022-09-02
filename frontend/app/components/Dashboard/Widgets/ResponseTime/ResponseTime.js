@@ -60,6 +60,7 @@ export default class ResponseTime extends React.PureComponent {
           <NoContent
             size="small"
             show={ data.chart.size === 0 }
+            title="No recordings found"
           >
             <ResponsiveContainer height={ 207 } width="100%">
               <AreaChart

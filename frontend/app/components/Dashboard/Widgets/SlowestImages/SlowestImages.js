@@ -41,6 +41,7 @@ export default class SlowestImages extends React.PureComponent {
         <NoContent
           size="small"
           show={ images.size === 0 }
+          title="No recordings found"
         >
           <Table
             cols={ cols }

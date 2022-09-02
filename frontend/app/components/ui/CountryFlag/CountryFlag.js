@@ -4,7 +4,7 @@ import { countries } from 'App/constants';
 import { Icon } from 'UI';
 import stl from './countryFlag.module.css';
 
-const CountryFlag = React.memo(({ country, className, style = {}, label = false }) => {
+const CountryFlag = ({ country = '', className = '', style = {}, label = false }) => {
 	const knownCountry = !!country && country !== 'UN';
   	const countryFlag = knownCountry ? country.toLowerCase() : '';
   	const countryName = knownCountry ? countries[ country ] : 'Unknown Country';
@@ -22,8 +22,8 @@ const CountryFlag = React.memo(({ country, className, style = {}, label = false 
 			{ knownCountry && label && <div className={ cn(stl.label, 'ml-1') }>{ countryName }</div> }
 		</div>
 	);
-})
+}
 
 CountryFlag.displayName = "CountryFlag";
 
-export default CountryFlag;
+export default React.memo(CountryFlag);

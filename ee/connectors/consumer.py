@@ -45,6 +45,7 @@ def main():
         if messages is None:
             print('-')
             continue
+
         for message in messages:
             if LEVEL == 'detailed':
                 n = handle_message(message)
@@ -118,6 +119,15 @@ def attempt_batch_insert(batch):
     except Exception as e:
         print(repr(e))
 
+def decode_key(b) -> int:
+    """
+    Decode the message key (encoded with little endian)
+    """
+    try:
+        decoded = int.from_bytes(b, "little", signed=False)
+    except Exception as e:
+        raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
+    return decoded
 
 if __name__ == '__main__':
     main()

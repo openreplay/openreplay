@@ -12,6 +12,7 @@ import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from 'App/routes';
 import { capitalize } from 'App/utils';
+import { Tooltip } from 'react-tippy';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -41,6 +42,8 @@ interface Props {
         userSessionsCount: number;
         issueTypes: [];
         active: boolean;
+        isCallActive?: boolean;
+        agentIds?: string[];
     };
     onUserClick?: (userId: string, userAnonymousId: string) => void;
     hasUserFilter?: boolean;
@@ -56,7 +59,6 @@ interface Props {
 function SessionItem(props: RouteComponentProps & Props) {
     const { settingsStore } = useStore();
     const { timezone } = settingsStore.sessionSettings;
-    const [isIframe, setIsIframe] = React.useState(false);
 
     const {
         session,
@@ -106,7 +108,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         });
 
     return (
-        <div className={cn(stl.sessionItem, 'flex flex-col p-2')} id="session-item" onClick={(e) => e.stopPropagation()}>
+        <div className={cn(stl.sessionItem, 'flex flex-col py-2 px-4')} id="session-item" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start">
                 <div className={cn('flex items-center w-full')}>
                     {!compact && (
@@ -121,7 +123,7 @@ function SessionItem(props: RouteComponentProps & Props) {
                                         [stl.userName]: !disableUser && hasUserId,
                                         'color-gray-medium': disableUser || !hasUserId,
                                     })}
-                                    onClick={() => !disableUser && !hasUserFilter && onUserClick(userId, userAnonymousId)}
+                                    onClick={() => !disableUser && !hasUserFilter && hasUserId ? onUserClick(userId, userAnonymousId) : null}
                                 >
                                     <TextEllipsis text={userDisplayName} maxWidth="200px" popupProps={{ inverted: true, size: 'tiny' }} />
                                 </div>
@@ -130,7 +132,13 @@ function SessionItem(props: RouteComponentProps & Props) {
                     )}
                     <div style={{ width: compact ? '40%' : '20%' }} className="px-2 flex flex-col justify-between">
                         <div>
-                            <TextEllipsis text={formatTimeOrDate(startedAt, timezone)} popupProps={{ inverted: true, size: 'tiny' }} />
+                            {/* @ts-ignore */}
+                            <Tooltip
+                                title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
+                                className="w-fit !block"
+                            >
+                                <TextEllipsis text={formatTimeOrDate(startedAt, timezone)} popupProps={{ inverted: true, size: 'tiny' }} />
+                            </Tooltip>
                         </div>
                         <div className="flex items-center color-gray-medium py-1">
                             {!isAssist && (
@@ -172,6 +180,15 @@ function SessionItem(props: RouteComponentProps & Props) {
 
                 <div className="flex items-center">
                     <div className={stl.playLink} id="play-button" data-viewed={viewed}>
+                        {live && session.isCallActive && session.agentIds.length > 0 ? (
+                            <div className="mr-4">
+                                <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
+                                    <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>
+                                        CALL IN PROGRESS
+                                    </span>
+                                </Label>
+                            </div>
+                        ) : null}
                         {isSessions && (
                             <div className="mr-4 flex-shrink-0 w-24">
                                 {isLastPlayed && (
@@ -192,4 +209,4 @@ function SessionItem(props: RouteComponentProps & Props) {
     );
 }
 
-export default withRouter<Props>(observer<Props>(SessionItem));
+export default withRouter(observer(SessionItem));

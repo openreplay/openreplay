@@ -4,7 +4,6 @@
   width: 320px;
   & .info {
     color: $gray-medium;
-    font-weight: 300;
   }
 }
 

@@ -18,6 +18,8 @@ check_prereq() {
 }
 
 function build_api(){
+    cp -R ../api ../_api
+    cd ../_api
     cp -R ../utilities/utils ../sourcemap-reader/.
     cp -R ../sourcemap-reader .
     tag=""
@@ -28,6 +30,8 @@ function build_api(){
         tag="ee-"
     }
     docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/chalice:${git_sha1} .
+    cd ../api
+    rm -rf ../_api
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:${tag}latest
@@ -39,9 +43,9 @@ function build_api(){
 check_prereq
 build_api $1
 echo buil_complete
-source build_alerts.sh $1
+IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
 
 [[ $1 == "ee" ]] && {
+  cp ../ee/api/build_crons.sh .
   IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
 }
-echo "api done"

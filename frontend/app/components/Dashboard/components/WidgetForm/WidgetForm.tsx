@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
-import { Button, Icon } from 'UI'
+import { Button, Icon, SegmentSelection } from 'UI'
 import FilterSeries from '../FilterSeries';
 import { confirm, Popup } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
-import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
 interface Props {
     history: any;
@@ -16,9 +15,15 @@ interface Props {
     onDelete: () => void;
 }
 
+const metricIcons = {
+    timeseries: 'graph-up',
+    table: 'table',
+    funnel: 'funnel',
+}
+
 function WidgetForm(props: Props) {
-    const [showDashboardSelectionModal, setShowDashboardSelectionModal] = useState(false);
-    const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
+
+    const { history, match: { params: { siteId, dashboardId } } } = props;
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
     const isSaving = useObserver(() => metricStore.isSaving);
@@ -65,13 +70,17 @@ function WidgetForm(props: Props) {
         metricStore.merge(obj);
     };
 
+    const onSelect = (_: any, option: Record<string, any>) => writeOption({ value: { value: option.value }, name: option.name})
+
     const onSave = () => {
         const wasCreating = !metric.exists()
         metricStore.save(metric, dashboardId)
             .then((metric: any) => {
                 if (wasCreating) {
                     if (parseInt(dashboardId) > 0) {
-                        history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                        history.replace(withSiteId(dashboardMetricDetails(dashboardId, metric.metricId), siteId));
+                        const dashboard = dashboardStore.getDashboard(parseInt(dashboardId))
+                        dashboardStore.addWidgetToDashboard(dashboard, [metric.metricId])
                     } else {
                         history.replace(withSiteId(metricDetails(metric.metricId), siteId));
                     }
@@ -94,11 +103,15 @@ function WidgetForm(props: Props) {
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <Select
+                    <SegmentSelection
+                        icons
+                        outline
                         name="metricType"
-                        options={metricTypes}
-                        value={metricTypes.find((i: any) => i.value === metric.metricType) || metricTypes[0]}
-                        onChange={ writeOption }
+                        className="my-3"
+                        onSelect={ onSelect }
+                        value={metricTypes.find((i) => i.value === metric.metricType) || metricTypes[0]}
+                        // @ts-ignore
+                        list={metricTypes.map((i) => ({ value: i.value, name: i.label, icon: metricIcons[i.value] }))}
                     />
 
                     {metric.metricType === 'timeseries' && (
@@ -169,7 +182,7 @@ function WidgetForm(props: Props) {
                 </div>
 
                 {metric.series.length > 0 && metric.series.slice(0, (isTable || isFunnel) ? 1 : metric.series.length).map((series: any, index: number) => (
-                    <div className="mb-2">
+                    <div className="mb-2" key={series.name}>
                         <FilterSeries
                             observeChanges={() => metric.updateKey('hasChanged', true)}
                             hideHeader={ isTable }
@@ -201,31 +214,13 @@ function WidgetForm(props: Props) {
                 </Popup>
                 <div className="flex items-center">
                     {metric.exists() && (
-                        <>
-                            <Button variant="text-primary" onClick={onDelete}>
-                                <Icon name="trash" size="14" className="mr-2" color="teal"/>
-                                Delete
-                            </Button>
-                            <Button
-                                variant="text-primary"
-                                className="ml-2"
-                                onClick={() => setShowDashboardSelectionModal(true)}
-                                disabled={!canAddToDashboard}
-                            >
-                                <Icon name="columns-gap" size="14" className="mr-2" color="teal"/>
-                                Add to Dashboard
-                            </Button>
-                        </>
+                        <Button variant="text-primary" onClick={onDelete}>
+                            <Icon name="trash" size="14" className="mr-2" color="teal"/>
+                            Delete
+                        </Button>
                     )}
                 </div>
             </div>
-            { canAddToDashboard && (
-                <DashboardSelectionModal
-                    metricId={metric.metricId}
-                    show={showDashboardSelectionModal}
-                    closeHandler={() => setShowDashboardSelectionModal(false)}
-                />
-            )}
         </div>
     ));
 }

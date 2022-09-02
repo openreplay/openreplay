@@ -81,7 +81,7 @@ export default class StatedScreen extends Screen {
     const { markedTargets } = getState();
     if (markedTargets) {
       update({
-        markedTargets: markedTargets.map(mt => ({ 
+        markedTargets: markedTargets.map((mt: any) => ({ 
           ...mt, 
           boundingRect: this.calculateRelativeBoundingRect(mt.el),
         })),

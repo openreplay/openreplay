@@ -251,10 +251,7 @@ def get_details(project_id, error_id, user_id, **data):
                         parent_error_id,session_id, user_anonymous_id,
                         user_id, user_uuid, user_browser, user_browser_version,
                         user_os, user_os_version, user_device, payload,
-                                    COALESCE((SELECT TRUE
-                                     FROM public.user_favorite_errors AS fe
-                                     WHERE pe.error_id = fe.error_id
-                                       AND fe.user_id = %(user_id)s), FALSE) AS favorite,
+                                    FALSE AS favorite,
                                        True AS viewed
                                 FROM public.errors AS pe
                                          INNER JOIN events.errors AS ee USING (error_id)
@@ -424,10 +421,11 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
-    empty_response = {'total': 0,
-                      'errors': []
-                      }
+def search(data: schemas.SearchErrorsSchema, project_id, user_id):
+    empty_response = {
+        'total': 0,
+        'errors': []
+    }
 
     platform = None
     for f in data.filters:
@@ -449,17 +447,12 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         data.endDate = TimeUTC.now(1)
     if len(data.events) > 0 or len(data.filters) > 0:
         print("-- searching for sessions before errors")
-        # if favorite_only=True search for sessions associated with favorite_error
-        statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                       error_status=data.status)
+        statuses = sessions.search_sessions(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+                                            error_status=data.status)
         if len(statuses) == 0:
             return empty_response
         error_ids = [e["errorId"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        if data.startDate is None:
-            data.startDate = TimeUTC.now(-7)
-        if data.endDate is None:
-            data.endDate = TimeUTC.now()
         step_size = __get_step_size(data.startDate, data.endDate, data.density, factor=1)
         sort = __get_sort_key('datetime')
         if data.sort is not None:
@@ -488,9 +481,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)
             pg_sub_query.append("error_id IN %(error_ids)s")
-        if data.bookmarked:
-            pg_sub_query.append("ufe.user_id = %(userId)s")
-            extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
+        # if data.bookmarked:
+        #     pg_sub_query.append("ufe.user_id = %(userId)s")
+        #     extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
         if data.query is not None and len(data.query) > 0:
             pg_sub_query.append("(pe.name ILIKE %(error_query)s OR pe.message ILIKE %(error_query)s)")
             params["error_query"] = helper.values_for_operator(value=data.query,
@@ -509,7 +502,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                                     FROM (SELECT error_id,
                                              name,
                                              message,
-                                             COUNT(DISTINCT user_uuid)  AS users,
+                                             COUNT(DISTINCT COALESCE(user_id,user_uuid::text))  AS users,
                                              COUNT(DISTINCT session_id) AS sessions,
                                              MAX(timestamp)             AS max_datetime,
                                              MIN(timestamp)             AS min_datetime
@@ -544,19 +537,13 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         cur.execute(cur.mogrify(main_pg_query, params))
         rows = cur.fetchall()
         total = 0 if len(rows) == 0 else rows[0]["full_count"]
-        if flows:
-            return {"count": total}
 
         if total == 0:
             rows = []
         else:
             if len(statuses) == 0:
                 query = cur.mogrify(
-                    """SELECT error_id, status, parent_error_id, payload,
-                            COALESCE((SELECT TRUE
-                                         FROM public.user_favorite_errors AS fe
-                                         WHERE errors.error_id = fe.error_id
-                                           AND fe.user_id = %(user_id)s LIMIT 1), FALSE) AS favorite,
+                    """SELECT error_id,
                             COALESCE((SELECT TRUE
                                          FROM public.user_viewed_errors AS ve
                                          WHERE errors.error_id = ve.error_id
@@ -574,26 +561,12 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     for r in rows:
         r.pop("full_count")
         if r["error_id"] in statuses:
-            r["status"] = statuses[r["error_id"]]["status"]
-            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
-            r["favorite"] = statuses[r["error_id"]]["favorite"]
             r["viewed"] = statuses[r["error_id"]]["viewed"]
-            r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]
         else:
-            r["status"] = "untracked"
-            r["parent_error_id"] = None
-            r["favorite"] = False
             r["viewed"] = False
-            r["stack"] = None
 
-    offset = len(rows)
-    rows = [r for r in rows if r["stack"] is None
-            or (len(r["stack"]) == 0 or len(r["stack"]) > 1
-                or len(r["stack"]) > 0
-                and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
-    offset -= len(rows)
     return {
-        'total': total - offset,
+        'total': total,
         'errors': helper.list_to_camel_case(rows)
     }
 

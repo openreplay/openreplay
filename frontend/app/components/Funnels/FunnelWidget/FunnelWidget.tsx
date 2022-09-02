@@ -30,7 +30,7 @@ function FunnelWidget(props: Props) {
     }, []);
 
     return useObserver(() => (
-        <NoContent show={!stages || stages.length === 0}>
+        <NoContent show={!stages || stages.length === 0} title="No recordings found">
             <div className="w-full">
                 { !isWidget && (
                     stages.map((filter: any, index: any) => (

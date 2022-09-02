@@ -90,6 +90,8 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
+  ch_host: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  ch_port: 9000
   PYTHONUNBUFFERED: '0'
 
 

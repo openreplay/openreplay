@@ -29,6 +29,8 @@ function build_service() {
 }
 
 function build_api(){
+    cp -R ../backend ../_backend
+    cd ../_backend
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -r ../ee/backend/* ./
@@ -43,6 +45,8 @@ function build_api(){
         build_service $image
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${git_sha1}"
     done
+    cd ../backend
+    rm -rf ../_backend
     echo "backend build completed"
 }
 

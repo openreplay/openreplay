@@ -45,6 +45,7 @@ function Logs({ player }) {
 	      <NoContent
 	        size="small"
 	        show={ filtered.length === 0 }
+					title="No recordings found"
 	      >
 					<Autoscroll>
 						{	filtered.map(log => 

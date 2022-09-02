@@ -1,0 +1,68 @@
+#
+# Index config file for gh-archive dataset.
+#
+
+version: 0
+
+index_id: pageevent
+
+doc_mapping:
+  mode: strict
+  field_mappings:
+    - name: message_id
+      type: i64
+      indexed: true
+      fast: true
+    - name: timestamp
+      type: i64
+      fast: true
+    - name: url
+      type: text
+      tokenizer: default
+      record: position
+    - name: referrer
+      type: text
+      tokenizer: default
+      record: position
+    - name: loaded
+      type: bool
+      fast: true
+    - name: request_start
+      type: i64
+      fast: true
+    - name: response_start
+      type: i64
+      fast: true
+    - name: response_end
+      type: i64
+      fast: true
+    - name: dom_content_loaded_event_start
+      type: i64
+      fast: true
+    - name: dom_content_loaded_event_end
+      type: i64
+      fast: true
+    - name: load_event_start
+      type: i64
+      fast: true
+    - name: load_event_end
+      type: i64
+      fast: true
+    - name: first_paint
+      type: i64
+      fast: true
+    - name: first_contentful_paint
+      type: i64
+      fast: true
+    - name: speed_index
+      type: i64
+      fast: true
+    - name: visually_complete
+      type: i64
+      fast: true
+    - name: time_to_interactive
+      type: i64
+      fast: true
+
+search_settings:
+  default_search_fields: [url, referrer, visually_complete]

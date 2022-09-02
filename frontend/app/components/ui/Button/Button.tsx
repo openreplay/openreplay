@@ -8,6 +8,7 @@ interface Props {
     onClick?: () => void;
     disabled?: boolean;
     type?: 'button' | 'submit' | 'reset';
+    variant?: 'default' | 'primary' | 'text' | 'text-primary' | 'text-red' | 'outline' | 'green'
     loading?: boolean;
     icon?: string;
     rounded?: boolean;
@@ -30,17 +31,23 @@ export default (props: Props) => {
     } = props;
 
     let classes = ['relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap'];
+    let iconColor = variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
 
     if (variant === 'default') {
-        classes.push('bg-white hover:bg-gray-lightest border border-gray-light');
+        classes.push('bg-white hover:bg-gray-light border border-gray-light');
     }
 
     if (variant === 'primary') {
         classes.push('bg-teal color-white hover:bg-teal-dark');
     }
 
+    if (variant === 'green') {
+        classes.push('bg-green color-white hover:bg-green-dark');
+        iconColor = 'white';
+    }
+
     if (variant === 'text') {
-        classes.push('bg-transparent color-gray-dark hover:bg-gray-lightest hover:color-gray-dark');
+        classes.push('bg-transparent color-gray-dark hover:bg-gray-light hover:color-gray-dark');
     }
 
     if (variant === 'text-primary') {
@@ -59,7 +66,6 @@ export default (props: Props) => {
         classes.push('opacity-40 pointer-events-none');
     }
 
-    let iconColor = variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
     if (variant === 'primary') {
         iconColor = 'white';
     }

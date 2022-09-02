@@ -38,7 +38,7 @@ function Modal(props: Props) {
     return open ? (
         <div
             className="fixed inset-0 flex items-center justify-center box-shadow animate-fade-in"
-            style={{ zIndex: '999', backgroundColor: 'rgba(0, 0, 0, 0.2)'}}
+            style={{ zIndex: '9999', backgroundColor: 'rgba(0, 0, 0, 0.2)'}}
             onClick={handleClose}
         >
             <div className="absolute z-10 bg-white rounded border" style={style}>

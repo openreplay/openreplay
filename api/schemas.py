@@ -100,15 +100,17 @@ class NotificationsViewSchema(BaseModel):
     endTimestamp: Optional[int] = Field(default=None)
 
 
-class JiraGithubSchema(BaseModel):
-    provider: str = Field(...)
-    username: str = Field(...)
+class GithubSchema(BaseModel):
     token: str = Field(...)
+
+
+class JiraSchema(GithubSchema):
+    username: str = Field(...)
     url: HttpUrl = Field(...)
 
     @validator('url')
     def transform_url(cls, v: HttpUrl):
-        return HttpUrl.build(scheme=v.scheme, host=v.host)
+        return HttpUrl.build(scheme=v.scheme.lower(), host=v.host.lower())
 
 
 class CreateEditWebhookSchema(BaseModel):
@@ -277,7 +279,7 @@ class _AlertMessageSchema(BaseModel):
     value: str = Field(...)
 
 
-class AlertDetectionChangeType(str, Enum):
+class AlertDetectionType(str, Enum):
     percent = "percent"
     change = "change"
 
@@ -288,7 +290,6 @@ class _AlertOptionSchema(BaseModel):
     previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
     lastNotification: Optional[int] = Field(None)
     renotifyInterval: Optional[int] = Field(720)
-    change: Optional[AlertDetectionChangeType] = Field(None)
 
 
 class AlertColumn(str, Enum):
@@ -337,6 +338,7 @@ class AlertDetectionMethod(str, Enum):
 class AlertSchema(BaseModel):
     name: str = Field(...)
     detection_method: AlertDetectionMethod = Field(...)
+    change: Optional[AlertDetectionType] = Field(default=AlertDetectionType.change)
     description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
@@ -354,11 +356,6 @@ class AlertSchema(BaseModel):
     def alert_validator(cls, values):
         if values.get("query") is not None and values["query"].left == AlertColumn.custom:
             assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
-        if values.get("detectionMethod") is not None \
-                and values["detectionMethod"] == AlertDetectionMethod.change \
-                and values.get("options") is not None:
-            assert values["options"].change is not None, \
-                "options.change should not be null for detection method 'change'"
         return values
 
     class Config:
@@ -552,13 +549,15 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             assert values.get("sourceOperator") is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
+                assert values["sourceOperator"] != MathOperator._equal.value, \
+                    f"{MathOperator._equal} is not allowed for duration of {PerformanceEventType.time_between_events}"
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
                 assert isinstance(values["value"][0], _SessionSearchEventRaw) \
                        and isinstance(values["value"][1], _SessionSearchEventRaw), \
                     f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
                 assert len(values["source"]) > 0 and isinstance(values["source"][0], int), \
-                    f"source of type int if required for {PerformanceEventType.time_between_events}"
+                    f"source of type int is required for {PerformanceEventType.time_between_events}"
             else:
                 assert "source" in values, f"source is required for {values.get('type')}"
                 assert isinstance(values["source"], list), f"source of type list is required for {values.get('type')}"
@@ -734,7 +733,7 @@ class ErrorSort(str, Enum):
     sessions_count = 'sessions'
 
 
-class SearchErrorsSchema(SessionsSearchPayloadSchema):
+class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     sort: ErrorSort = Field(default=ErrorSort.occurrence)
     density: Optional[int] = Field(7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
@@ -766,7 +765,7 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema, SearchErrorsSchema):
+class CustomMetricSeriesFilterSchema(SearchErrorsSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
@@ -1026,7 +1025,7 @@ class LiveFilterType(str, Enum):
     user_UUID = "USERUUID"
     tracker_version = "TRACKERVERSION"
     user_browser_version = "USERBROWSERVERSION"
-    user_device_type = "USERDEVICETYPE",
+    user_device_type = "USERDEVICETYPE"
 
 
 class LiveSessionSearchFilterSchema(BaseModel):
@@ -1070,3 +1069,18 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class IntegrationType(str, Enum):
+    github = "GITHUB"
+    jira = "JIRA"
+    slack = "SLACK"
+    sentry = "SENTRY"
+    bugsnag = "BUGSNAG"
+    rollbar = "ROLLBAR"
+    elasticsearch = "ELASTICSEARCH"
+    datadog = "DATADOG"
+    sumologic = "SUMOLOGIC"
+    stackdriver = "STACKDRIVER"
+    cloudwatch = "CLOUDWATCH"
+    newrelic = "NEWRELIC"

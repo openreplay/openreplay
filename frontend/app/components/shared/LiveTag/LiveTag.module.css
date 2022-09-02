@@ -8,25 +8,25 @@
   cursor: pointer;
   user-select: none;
   height: 26px;
-  width: 56px;
+  padding: 4px 8px;
   border-radius: 3px;
-  background-color: $gray-light;
+  background-color: $main;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: $gray-dark;
+  color: white;
   text-transform: uppercase;
   font-size: 10px;
+  font-weight: 600;
   letter-spacing: 1px;
   margin-right: 10px;
   & svg {
-    fill: $gray-dark;
+    fill: white;
+    opacity: .5;
   }
   &[data-is-live=true] {
     background-color: #42AE5E;
-    color: white;
     & svg {
-      fill: white;
       animation: fade 1s infinite;
     }
   }

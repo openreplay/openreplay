@@ -14,7 +14,7 @@ import styles from '../Session_/session.module.css';
 import { countDaysFrom } from 'App/date';
 
 const TABS = {
-    EVENTS: 'Events',
+    EVENTS: 'User Actions',
     HEATMAPS: 'Click Map',
 };
 
@@ -44,7 +44,7 @@ function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, has
                 </div>
             ) : (
                 <div className={cn('flex', { 'pointer-events-none': hasError })}>
-                    <div className="w-full" style={activeTab ? { maxWidth: 'calc(100% - 270px)'} : undefined}>
+                    <div className="w-full" style={activeTab && !fullscreen ? { maxWidth: 'calc(100% - 270px)'} : undefined}>
                         <div className={cn(styles.session, 'relative')} data-fullscreen={fullscreen}>
                             <PlayerBlock activeTab={activeTab} />
                         </div>

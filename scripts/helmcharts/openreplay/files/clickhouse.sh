@@ -11,7 +11,7 @@ function migrate() {
         echo "Migrating clickhouse version $version"
         # For now, we can ignore the clickhouse db inject errors.
         # TODO: Better error handling in script
-        clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --port 9000 < ${clickhousedir}/${version}/${version}.sql || true
+        clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --port 9000 --multiquery < ${clickhousedir}/${version}/${version}.sql || true
     done
 }
 
@@ -19,7 +19,7 @@ function init() {
     echo "Initializing clickhouse"
     for file in `ls ${clickhousedir}/create/*.sql`; do
         echo "Injecting $file"
-        clickhouse-client  -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --port 9000 < $file || true
+        clickhouse-client -h clickhouse-openreplay-clickhouse.db.svc.cluster.local --port 9000 --multiquery < $file || true
     done
 }
 

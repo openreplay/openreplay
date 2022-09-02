@@ -7,6 +7,7 @@ import {
     Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {
     data: any
@@ -18,6 +19,7 @@ function ErrorsByOrigin(props: Props) {
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >

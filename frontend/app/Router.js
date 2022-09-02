@@ -8,7 +8,6 @@ import { fetchUserInfo } from 'Duck/user';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
-import { fetchList as fetchMetadata } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
@@ -16,12 +15,13 @@ import { withStore } from 'App/mstore';
 
 import APIClient from './api_client';
 import * as routes from './routes';
-import { OB_DEFAULT_TAB } from 'App/routes';
+import { OB_DEFAULT_TAB, isRoute } from 'App/routes';
 import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
 import { GLOBAL_DESTINATION_PATH } from 'App/constants/storageKeys';
+import SupportCallout from 'Shared/SupportCallout';
 
 const Login = lazy(() => import('Components/Login/Login'));
 const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
@@ -31,7 +31,7 @@ const LiveSessionPure = lazy(() => import('Components/Session/LiveSession'));
 const OnboardingPure = lazy(() => import('Components/Onboarding/Onboarding'));
 const ClientPure = lazy(() => import('Components/Client/Client'));
 const AssistPure = lazy(() => import('Components/Assist'));
-const BugFinderPure = lazy(() => import('Components/BugFinder/BugFinder'));
+const BugFinderPure = lazy(() => import('Components/Overview'));
 const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
 const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
 const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
@@ -54,6 +54,10 @@ const withSiteId = routes.withSiteId;
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
 const METRICS_DETAILS_SUB = routes.metricDetailsSub();
+
+const ALERTS_PATH = routes.alerts();
+const ALERT_CREATE_PATH = routes.alertCreate();
+const ALERT_EDIT_PATH = routes.alertEdit();
 
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
@@ -99,13 +103,13 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
             tenants: state.getIn(['user', 'tenants']),
             existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
             onboarding: state.getIn(['user', 'onboarding']),
+            isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee' || state.getIn(['user', 'authDetails', 'edition']) === 'ee',
         };
     },
     {
         fetchUserInfo,
         fetchTenants,
         setSessionPath,
-        fetchMetadata,
         fetchSiteList,
         fetchAnnouncements,
         fetchAlerts,
@@ -121,15 +125,11 @@ class Router extends React.Component {
         }
     }
 
-    fetchInitialData = () => {
-        Promise.all([
-            this.props.fetchUserInfo().then(() => {
-                this.props.fetchSiteList().then(() => {
-                    const { mstore } = this.props;
-                    mstore.initClient();
-                });
-            }),
-        ]);
+    fetchInitialData = async () => {
+        await this.props.fetchUserInfo(),
+        await this.props.fetchSiteList()
+        const { mstore } = this.props;
+        mstore.initClient();
     };
 
     componentDidMount() {
@@ -167,9 +167,10 @@ class Router extends React.Component {
     }
 
     render() {
-        const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding } = this.props;
+        const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding, isEnterprise } = this.props;
         const siteIdList = sites.map(({ id }) => id).toJS();
         const hideHeader = (location.pathname && location.pathname.includes('/session/')) || location.pathname.includes('/assist/');
+        const isPlayer = isRoute(SESSION_PATH, location.pathname) || isRoute(LIVE_SESSION_PATH, location.pathname);
 
         return isLoggedIn ? (
             <ModalProvider>
@@ -198,6 +199,9 @@ class Router extends React.Component {
                             {onboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
 
                             {/* DASHBOARD and Metrics */}
+                            <Route exact strict path={withSiteId(ALERTS_PATH, siteIdList)} component={Dashboard} />
+                            <Route exact strict path={withSiteId(ALERT_EDIT_PATH, siteIdList)} component={Dashboard} />
+                            <Route exact strict path={withSiteId(ALERT_CREATE_PATH, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(METRICS_PATH, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(METRICS_DETAILS, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(METRICS_DETAILS_SUB, siteIdList)} component={Dashboard} />
@@ -223,6 +227,7 @@ class Router extends React.Component {
                         </Switch>
                     </Suspense>
                 </Loader>
+                {!isEnterprise && !isPlayer && <SupportCallout /> }
             </ModalProvider>
         ) : (
             <Suspense fallback={<Loader loading={true} className="flex-1" />}>
@@ -232,6 +237,7 @@ class Router extends React.Component {
                     {!existingTenant && <Route exact strict path={SIGNUP_PATH} component={Signup} />}
                     <Redirect to={LOGIN_PATH} />
                 </Switch>
+                {!isEnterprise && <SupportCallout /> }
             </Suspense>
         );
     }

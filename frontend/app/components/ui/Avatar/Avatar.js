@@ -4,7 +4,7 @@ import { avatarIconName } from 'App/iconNames';
 import stl from './avatar.module.css';
 import { Icon, Popup } from 'UI';
 
-const Avatar = ({ isActive = false, isAssist = false, className, width = '38px', height = '38px', iconSize = 26, seed }) => {
+const Avatar = ({ isActive = false, isAssist = false, width = '38px', height = '38px', iconSize = 26, seed }) => {
     var iconName = avatarIconName(seed);
     return (
         <Popup content={isActive ? 'Active user' : 'User might be inactive'} disabled={!isAssist}>

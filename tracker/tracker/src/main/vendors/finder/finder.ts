@@ -29,11 +29,11 @@ let config: Options
 let rootDocument: Document | Element
 export function finder(input: Element, options?: Partial<Options>) {
   if (input.nodeType !== Node.ELEMENT_NODE) {
-    throw new Error(`Can't generate CSS selector for non-element node type.`)
+    throw new Error("Can't generate CSS selector for non-element node type.")
   }
 
-  if ("html" === input.tagName.toLowerCase()) {
-    return "html"
+  if ('html' === input.tagName.toLowerCase()) {
+    return 'html'
   }
 
   const defaults: Options = {
@@ -48,14 +48,13 @@ export function finder(input: Element, options?: Partial<Options>) {
     maxNumberOfTries: 10000,
   }
 
-  config = {...defaults, ...options}
+  config = { ...defaults, ...options }
 
   rootDocument = findRootDocument(config.root, defaults)
 
-  let path =
-    bottomUpSearch(input, Limit.All, () =>
-      bottomUpSearch(input, Limit.Two, () =>
-        bottomUpSearch(input, Limit.One)))
+  let path = bottomUpSearch(input, Limit.All, () =>
+    bottomUpSearch(input, Limit.Two, () => bottomUpSearch(input, Limit.One)),
+  )
 
   if (path) {
     const optimized = sort(optimize(path, input))
@@ -66,7 +65,7 @@ export function finder(input: Element, options?: Partial<Options>) {
 
     return selector(path)
   } else {
-    throw new Error(`Selector was not found.`)
+    throw new Error('Selector was not found.')
   }
 }
 
@@ -75,41 +74,44 @@ function findRootDocument(rootNode: Element | Document, defaults: Options) {
     return rootNode
   }
   if (rootNode === defaults.root) {
-    return rootNode.ownerDocument as Document
+    return rootNode.ownerDocument
   }
   return rootNode
 }
 
 function bottomUpSearch(input: Element, limit: Limit, fallback?: () => Path | null): Path | null {
   let path: Path | null = null
-  let stack: Node[][] = []
+  const stack: Node[][] = []
   let current: Element | null = input
   let i = 0
 
   while (current && current !== config.root.parentElement) {
-    let level: Node[] = maybe(id(current)) || maybe(...attr(current)) || maybe(...classNames(current)) || maybe(tagName(current)) || [any()]
+    let level: Node[] = maybe(id(current)) ||
+      maybe(...attr(current)) ||
+      maybe(...classNames(current)) ||
+      maybe(tagName(current)) || [any()]
 
     const nth = index(current)
 
     if (limit === Limit.All) {
       if (nth) {
-        level = level.concat(level.filter(dispensableNth).map(node => nthChild(node, nth)))
+        level = level.concat(level.filter(dispensableNth).map((node) => nthChild(node, nth)))
       }
     } else if (limit === Limit.Two) {
       level = level.slice(0, 1)
 
       if (nth) {
-        level = level.concat(level.filter(dispensableNth).map(node => nthChild(node, nth)))
+        level = level.concat(level.filter(dispensableNth).map((node) => nthChild(node, nth)))
       }
     } else if (limit === Limit.One) {
-      const [node] = level = level.slice(0, 1)
+      const [node] = (level = level.slice(0, 1))
 
       if (nth && dispensableNth(node)) {
         level = [nthChild(node, nth)]
       }
     }
 
-    for (let node of level) {
+    for (const node of level) {
       node.level = i
     }
 
@@ -140,7 +142,7 @@ function findUniquePath(stack: Node[][], fallback?: () => Path | null): Path | n
     return fallback ? fallback() : null
   }
 
-  for (let candidate of paths) {
+  for (const candidate of paths) {
     if (unique(candidate)) {
       return candidate
     }
@@ -167,7 +169,7 @@ function selector(path: Path): string {
 }
 
 function penalty(path: Path): number {
-  return path.map(node => node.penalty).reduce((acc, i) => acc + i, 0)
+  return path.map((node) => node.penalty).reduce((acc, i) => acc + i, 0)
 }
 
 function unique(path: Path) {
@@ -182,10 +184,10 @@ function unique(path: Path) {
 }
 
 function id(input: Element): Node | null {
-  const elementId = input.getAttribute("id")
+  const elementId = input.getAttribute('id')
   if (elementId && config.idName(elementId)) {
     return {
-      name: "#" + cssesc(elementId, {isIdentifier: true}),
+      name: '#' + cssesc(elementId, { isIdentifier: true }),
       penalty: 0,
     }
   }
@@ -195,20 +197,23 @@ function id(input: Element): Node | null {
 function attr(input: Element): Node[] {
   const attrs = Array.from(input.attributes).filter((attr) => config.attr(attr.name, attr.value))
 
-  return attrs.map((attr): Node => ({
-    name: "[" + cssesc(attr.name, {isIdentifier: true}) + "=\"" + cssesc(attr.value) + "\"]",
-    penalty: 0.5
-  }))
+  return attrs.map(
+    (attr): Node => ({
+      name: '[' + cssesc(attr.name, { isIdentifier: true }) + '="' + cssesc(attr.value) + '"]',
+      penalty: 0.5,
+    }),
+  )
 }
 
 function classNames(input: Element): Node[] {
-  const names = Array.from(input.classList)
-    .filter(config.className)
+  const names = Array.from(input.classList).filter(config.className)
 
-  return names.map((name): Node => ({
-    name: "." + cssesc(name, {isIdentifier: true}),
-    penalty: 1
-  }))
+  return names.map(
+    (name): Node => ({
+      name: '.' + cssesc(name, { isIdentifier: true }),
+      penalty: 1,
+    }),
+  )
 }
 
 function tagName(input: Element): Node | null {
@@ -216,7 +221,7 @@ function tagName(input: Element): Node | null {
   if (config.tagName(name)) {
     return {
       name,
-      penalty: 2
+      penalty: 2,
     }
   }
   return null
@@ -224,8 +229,8 @@ function tagName(input: Element): Node | null {
 
 function any(): Node {
   return {
-    name: "*",
-    penalty: 3
+    name: '*',
+    penalty: 3,
   }
 }
 
@@ -259,12 +264,12 @@ function index(input: Element): number | null {
 function nthChild(node: Node, i: number): Node {
   return {
     name: node.name + `:nth-child(${i})`,
-    penalty: node.penalty + 1
+    penalty: node.penalty + 1,
   }
 }
 
 function dispensableNth(node: Node) {
-  return node.name !== "html" && !node.name.startsWith("#")
+  return node.name !== 'html' && !node.name.startsWith('#')
 }
 
 function maybe(...level: (Node | null)[]): Node[] | null {
@@ -282,7 +287,7 @@ function notEmpty<T>(value: T | null | undefined): value is T {
 function combinations(stack: Node[][], path: Node[] = []): Node[][] {
   const paths: Node[][] = []
   if (stack.length > 0) {
-    for (let node of stack[0]) {
+    for (const node of stack[0]) {
       paths.push(...combinations(stack.slice(1, stack.length), path.concat(node)))
     }
   } else {
@@ -300,10 +305,14 @@ type Scope = {
   visited: Map<string, boolean>
 }
 
-function optimize(path: Path, input: Element, scope: Scope = {
-  counter: 0,
-  visited: new Map<string, boolean>()
-}): Node[][] {
+function optimize(
+  path: Path,
+  input: Element,
+  scope: Scope = {
+    counter: 0,
+    visited: new Map<string, boolean>(),
+  },
+): Node[][] {
   const paths: Node[][] = []
   if (path.length > 2 && path.length > config.optimizedMinLength) {
     for (let i = 1; i < path.length - 1; i++) {
@@ -336,22 +345,22 @@ const regexSingleEscape = /[ -,\.\/:-@\[\]\^`\{-~]/
 const regexExcessiveSpaces = /(^|\\+)?(\\[A-F0-9]{1,6})\x20(?![a-fA-F0-9\x20])/g
 
 const defaultOptions = {
-  "escapeEverything": false,
-  "isIdentifier": false,
-  "quotes": "single",
-  "wrap": false
+  escapeEverything: false,
+  isIdentifier: false,
+  quotes: 'single',
+  wrap: false,
 }
 
 function cssesc(string: string, opt: Partial<typeof defaultOptions> = {}) {
-  const options = {...defaultOptions, ...opt}
-  if (options.quotes != "single" && options.quotes != "double") {
-    options.quotes = "single"
+  const options = { ...defaultOptions, ...opt }
+  if (options.quotes != 'single' && options.quotes != 'double') {
+    options.quotes = 'single'
   }
-  const quote = options.quotes == "double" ? "\"" : "'"
+  const quote = options.quotes == 'double' ? '"' : "'"
   const isIdentifier = options.isIdentifier
 
   const firstChar = string.charAt(0)
-  let output = ""
+  let output = ''
   let counter = 0
   const length = string.length
   while (counter < length) {
@@ -359,31 +368,36 @@ function cssesc(string: string, opt: Partial<typeof defaultOptions> = {}) {
     let codePoint = character.charCodeAt(0)
     let value: string | undefined = void 0
     // If it’s not a printable ASCII character…
-    if (codePoint < 0x20 || codePoint > 0x7E) {
-      if (codePoint >= 0xD800 && codePoint <= 0xDBFF && counter < length) {
+    if (codePoint < 0x20 || codePoint > 0x7e) {
+      if (codePoint >= 0xd800 && codePoint <= 0xdbff && counter < length) {
         // It’s a high surrogate, and there is a next character.
         const extra = string.charCodeAt(counter++)
-        if ((extra & 0xFC00) == 0xDC00) {
+        if ((extra & 0xfc00) == 0xdc00) {
           // next character is low surrogate
-          codePoint = ((codePoint & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000
+          codePoint = ((codePoint & 0x3ff) << 10) + (extra & 0x3ff) + 0x10000
         } else {
           // It’s an unmatched surrogate; only append this code unit, in case
           // the next code unit is the high surrogate of a surrogate pair.
           counter--
         }
       }
-      value = "\\" + codePoint.toString(16).toUpperCase() + " "
+      value = '\\' + codePoint.toString(16).toUpperCase() + ' '
     } else {
       if (options.escapeEverything) {
         if (regexAnySingleEscape.test(character)) {
-          value = "\\" + character
+          value = '\\' + character
         } else {
-          value = "\\" + codePoint.toString(16).toUpperCase() + " "
+          value = '\\' + codePoint.toString(16).toUpperCase() + ' '
         }
       } else if (/[\t\n\f\r\x0B]/.test(character)) {
-        value = "\\" + codePoint.toString(16).toUpperCase() + " "
-      } else if (character == "\\" || !isIdentifier && (character == "\"" && quote == character || character == "'" && quote == character) || isIdentifier && regexSingleEscape.test(character)) {
-        value = "\\" + character
+        value = '\\' + codePoint.toString(16).toUpperCase() + ' '
+      } else if (
+        character == '\\' ||
+        (!isIdentifier &&
+          ((character == '"' && quote == character) || (character == "'" && quote == character))) ||
+        (isIdentifier && regexSingleEscape.test(character))
+      ) {
+        value = '\\' + character
       } else {
         value = character
       }
@@ -393,9 +407,9 @@ function cssesc(string: string, opt: Partial<typeof defaultOptions> = {}) {
 
   if (isIdentifier) {
     if (/^-[-\d]/.test(output)) {
-      output = "\\-" + output.slice(1)
+      output = '\\-' + output.slice(1)
     } else if (/\d/.test(firstChar)) {
-      output = "\\3" + firstChar + " " + output.slice(1)
+      output = '\\3' + firstChar + ' ' + output.slice(1)
     }
   }
 
@@ -408,7 +422,7 @@ function cssesc(string: string, opt: Partial<typeof defaultOptions> = {}) {
       return $0
     }
     // Strip the space.
-    return ($1 || "") + $2
+    return ($1 || '') + $2
   })
 
   if (!isIdentifier && options.wrap) {

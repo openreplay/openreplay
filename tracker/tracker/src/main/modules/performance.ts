@@ -1,26 +1,25 @@
-import type App from "../app/index.js";
-import { IN_BROWSER } from "../utils.js";
-import { PerformanceTrack } from "../../common/messages.js";
-
+import type App from '../app/index.js'
+import { IN_BROWSER } from '../utils.js'
+import { PerformanceTrack } from '../app/messages.gen.js'
 
 type Perf = {
-  memory: { 
-    totalJSHeapSize?: number,
-    usedJSHeapSize?: number,
-    jsHeapSizeLimit?: number,
+  memory: {
+    totalJSHeapSize?: number
+    usedJSHeapSize?: number
+    jsHeapSizeLimit?: number
   }
 }
 
-const perf: Perf = IN_BROWSER && 'performance' in window && 'memory' in performance // works in Chrome only
-  ? performance as any
-  : { memory: {} }
+const perf: Perf =
+  IN_BROWSER && 'performance' in window && 'memory' in performance // works in Chrome only
+    ? (performance as any)
+    : { memory: {} }
 
-
-export const deviceMemory = IN_BROWSER ? ((navigator as any).deviceMemory || 0) * 1024 : 0;
-export const jsHeapSizeLimit = perf.memory.jsHeapSizeLimit || 0;
+export const deviceMemory = IN_BROWSER ? ((navigator as any).deviceMemory || 0) * 1024 : 0
+export const jsHeapSizeLimit = perf.memory.jsHeapSizeLimit || 0
 
 export interface Options {
-  capturePerformance: boolean;
+  capturePerformance: boolean
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -29,57 +28,59 @@ export default function (app: App, opts: Partial<Options>): void {
       capturePerformance: true,
     },
     opts,
-  );
-  if (!options.capturePerformance) { return; }
+  )
+  if (!options.capturePerformance) {
+    return
+  }
 
-  let frames: number | undefined;
-  let ticks: number | undefined;
+  let frames: number | undefined
+  let ticks: number | undefined
 
   const nextFrame = (): void => {
     if (frames === undefined || frames === -1) {
-      return;
+      return
     }
-    frames++;
-    requestAnimationFrame(nextFrame);
-  };
+    frames++
+    requestAnimationFrame(nextFrame)
+  }
 
   app.ticker.attach(
     (): void => {
       if (ticks === undefined || ticks === -1) {
-        return;
+        return
       }
-      ticks++;
+      ticks++
     },
     0,
     false,
-  );
+  )
 
   const sendPerformanceTrack = (): void => {
     if (frames === undefined || ticks === undefined) {
-      return;
+      return
     }
-    app.send(new 
+    app.send(
       PerformanceTrack(
         frames,
         ticks,
         perf.memory.totalJSHeapSize || 0,
         perf.memory.usedJSHeapSize || 0,
       ),
-    );
-    ticks = frames = document.hidden ? -1 : 0;
-  };
+    )
+    ticks = frames = document.hidden ? -1 : 0
+  }
 
   app.attachStartCallback((): void => {
-    ticks = frames = -1;
-    sendPerformanceTrack();
-    nextFrame();
-  });
+    ticks = frames = -1
+    sendPerformanceTrack()
+    nextFrame()
+  })
 
   app.attachStopCallback((): void => {
-    ticks = frames = undefined;
-  });
+    ticks = frames = undefined
+  })
 
-  app.ticker.attach(sendPerformanceTrack, 40, false);
+  app.ticker.attach(sendPerformanceTrack, 40, false)
 
   if (document.hidden !== undefined) {
     app.attachEventListener(
@@ -88,6 +89,6 @@ export default function (app: App, opts: Partial<Options>): void {
       sendPerformanceTrack as EventListener,
       false,
       false,
-    );
+    )
   }
 }

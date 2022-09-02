@@ -12,9 +12,9 @@ function AssistNpm(props) {
         label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
-        {`import Tracker from '@openreplay/tracker';
+        {`import OpenReplay from '@openreplay/tracker';
 import trackerAssist from '@openreplay/tracker-assist';
-const tracker = new Tracker({
+const tracker = new OpenReplay({
   projectKey: '${props.projectKey}',
 });
 tracker.start();
@@ -24,7 +24,7 @@ tracker.use(trackerAssist(options)); // check the list of available options belo
         second={
           <Highlight className="js">
         {`import OpenReplay from '@openreplay/tracker/cjs';
-import trackerFetch from '@openreplay/tracker-assist/cjs';
+import trackerAssist from '@openreplay/tracker-assist/cjs';
 const tracker = new OpenReplay({
   projectKey: '${props.projectKey}'
 });

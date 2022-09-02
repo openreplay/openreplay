@@ -2,9 +2,6 @@
 .userEvent {
   border-radius: 3px;
   background-color: rgba(0, 118, 255, 0.05);
-  font-family: 'Menlo', 'monaco', 'consolas', monospace;
-  padding: 8px 10px;
-  margin: 3px 0;
 
   &.modalTrigger {
     cursor: pointer;
@@ -15,6 +12,7 @@
   overflow: hidden;
   display: flex;
   align-items: flex-start;
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
 }
 
 .title {
@@ -35,4 +33,12 @@
   &::-webkit-scrollbar {
     height: 1px;
   }
+}
+
+.inactive {
+  opacity: 0.5;
+}
+
+.selected {
+  background-color: $teal-light;
 }

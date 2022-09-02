@@ -40,7 +40,6 @@ func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, projectID uint32, u
 	return err
 }
 
-// TODO: fix column "dom_content_loaded_event_end" of relation "pages"
 func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *PageEvent) error {
 	host, path, query, err := url.GetURLParts(e.URL)
 	if err != nil {
@@ -79,6 +78,9 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 }
 
 func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *InputEvent) error {
+	if e.Label == "" {
+		return nil
+	}
 	value := &e.Value
 	if e.ValueMasked {
 		value = nil
@@ -184,4 +186,16 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, save
 	}
 	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)
 	return nil
+}
+
+func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error {
+	log.Printf("insert referrer, sessID: %d, referrer: %s", sessionID, referrer)
+	if referrer == "" {
+		return nil
+	}
+	return conn.c.Exec(`
+		UPDATE sessions 
+		SET referrer = $1, base_referrer = $2
+		WHERE session_id = $3 AND referrer IS NULL`,
+		referrer, url.DiscardURLQuery(referrer), sessionID)
 }

@@ -1,8 +1,9 @@
+import schemas
 from chalicelib.core import integration_base
 from chalicelib.core.integration_github_issue import GithubIntegrationIssue
 from chalicelib.utils import pg_client, helper
 
-PROVIDER = "GITHUB"
+PROVIDER = schemas.IntegrationType.github
 
 
 class GitHubIntegration(integration_base.BaseIntegration):
@@ -14,6 +15,10 @@ class GitHubIntegration(integration_base.BaseIntegration):
     @property
     def provider(self):
         return PROVIDER
+
+    @property
+    def issue_handler(self):
+        return
 
     def get_obfuscated(self):
         integration = self.get()

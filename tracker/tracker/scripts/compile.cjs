@@ -12,7 +12,7 @@ async function main() {
   await replaceInFiles({
     files: 'build/**/*',
     from: 'WEBWORKER_BODY',
-    to: webworker.replace(/'/g, "\\'"),
+    to: webworker.replace(/'/g, "\\'").replace(/\n/g, ""),
   });
   await fs.rename('build/main', 'lib');
   await fs.rename('build/common', 'lib/common');

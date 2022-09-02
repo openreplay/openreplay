@@ -14,13 +14,14 @@ const SelectedValue = ({ icon, text }) => {
     </div>
   )
 }
- 
-class IssueForm extends React.PureComponent {  
+
+class IssueForm extends React.PureComponent {
   componentDidMount() {
     const { projects, issueTypes } = this.props;
+
     this.props.init({
-      projectId: projects.first() ? projects.first().id : '',
-      issueType: issueTypes.first() ? issueTypes.first().id : ''
+      projectId: projects[0] ? projects[0].id : '',
+      issueType: issueTypes[0] ? issueTypes[0].id : ''
     });
   }
 
@@ -57,15 +58,15 @@ class IssueForm extends React.PureComponent {
     const { creating, projects, users, issueTypes, instance, closeHandler, metaLoading } = this.props;
     const projectOptions = projects.map(({name, id}) => ({label: name, value: id })).toArray();
     const userOptions = users.map(({name, id}) => ({label: name, value: id })).toArray();
-    
+
     const issueTypeOptions = issueTypes.map(({name, id, iconUrl, color }) => {
       return { label: name, value: id, iconUrl, color }
     });
 
     const selectedIssueType = issueTypes.filter(issue => issue.id == instance.issueType)[0];
-    
+
     return (
-      <Form onSubmit={ this.onSubmit }>
+      <Form onSubmit={ this.onSubmit } className="text-left">
         <Form.Field className="mb-15-imp">
           <label htmlFor="issueType">
             <span className="mr-2">Project</span>
@@ -120,7 +121,7 @@ class IssueForm extends React.PureComponent {
 
         <Form.Field className="mb-15-imp">
           <label htmlFor="description">
-            Description 
+            Description
             {/* <span className="text-sm text-gray-500">(Optional)</span> */}
           </label>
           <textarea

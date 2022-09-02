@@ -14,3 +14,4 @@ servers/sourcemaps-server.js
 /utils/HeapSnapshot.js
 /utils/helper.js
 /utils/assistHelper.js
+.local

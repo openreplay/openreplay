@@ -2,6 +2,12 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/queue/types"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/pkg/handlers"
 	web2 "openreplay/backend/pkg/handlers/web"
@@ -9,12 +15,7 @@ import (
 	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func main() {
@@ -33,10 +34,6 @@ func main() {
 			&web2.MemoryIssueDetector{},
 			&web2.NetworkIssueDetector{},
 			&web2.PerformanceAggregator{},
-			// iOS's handlers
-			//&ios2.AppNotResponding{},
-			//&ios2.ClickRageDetector{},
-			//&ios2.PerformanceAggregator{},
 			// Other handlers (you can add your custom handlers here)
 			//&custom.CustomHandler{},
 		}
@@ -55,9 +52,11 @@ func main() {
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			statsLogger.Collect(sessionID, meta)
-			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
+		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
+			for iter.Next() {
+				statsLogger.Collect(sessionID, meta)
+				builderMap.HandleMessage(sessionID, iter.Message().Decode(), iter.Message().Meta().Index)
+			}
 		},
 		false,
 		cfg.MessageSizeLimit,

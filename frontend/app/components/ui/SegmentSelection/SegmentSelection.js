@@ -9,7 +9,7 @@ class SegmentSelection extends React.Component {
   }
 
   render() {
-    const { className, list, small = false, extraSmall = false, primary = false, size = "normal", icons = false, disabled = false, disabledMessage = 'Not Allowed' } = this.props;
+    const { className, list, small = false, extraSmall = false, primary = false, size = "normal", icons = false, disabled = false, disabledMessage = 'Not Allowed', outline } = this.props;
 
     return (
       <Popup
@@ -22,6 +22,7 @@ class SegmentSelection extends React.Component {
             [styles.extraSmall]  : size === 'extraSmall' || extraSmall,
             [styles.icons]  : icons === true,
             [styles.disabled] : disabled,
+            [styles.outline]: outline,
           }, className) }
         >
           { list.map(item => (

@@ -15,6 +15,7 @@ require (
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
 	github.com/jackc/pgx/v4 v4.6.0
 	github.com/klauspost/pgzip v1.2.5
+	github.com/lib/pq v1.2.0
 	github.com/oschwald/maxminddb-golang v1.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/sethvargo/go-envconfig v0.7.0

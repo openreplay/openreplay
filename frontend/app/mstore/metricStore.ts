@@ -4,42 +4,7 @@ import { metricService, errorService } from "App/services";
 import { toast } from 'react-toastify';
 import Error from "./types/error";
 
-export interface IMetricStore {
-    paginatedList: any;
-
-    isLoading: boolean
-    isSaving: boolean
-
-    metrics: IWidget[]
-    instance: IWidget
-
-    page: number
-    pageSize: number
-    metricsSearch: string
-    sort: any
-
-    sessionsPage: number
-    sessionsPageSize: number
-    
-    // State Actions
-    init(metric?: IWidget|null): void
-    updateKey(key: string, value: any): void
-    merge(object: any): void
-    reset(meitricId: string): void
-    addToList(metric: IWidget): void
-    updateInList(metric: IWidget): void
-    findById(metricId: string): void
-    removeById(metricId: string): void
-    fetchError(errorId: string): Promise<any>
-
-    // API
-    save(metric: IWidget, dashboardId?: string): Promise<any>
-    fetchList(): void
-    fetch(metricId: string, period?: any): Promise<any>
-    delete(metric: IWidget): Promise<any>
-}
-
-export default class MetricStore implements IMetricStore {
+export default class MetricStore {
     isLoading: boolean = false
     isSaving: boolean = false
 
@@ -47,7 +12,7 @@ export default class MetricStore implements IMetricStore {
     instance: IWidget = new Widget()
 
     page: number = 1
-    pageSize: number = 15
+    pageSize: number = 10
     metricsSearch: string = ""
     sort: any = {}
 

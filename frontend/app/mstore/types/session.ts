@@ -14,23 +14,7 @@ function hashString(s: string): number {
   return hash;
 }
 
-export interface ISession {
-    sessionId: string
-    viewed: boolean
-    duration: number
-    metadata: any,
-    startedAt: number
-    userBrowser: string
-    userOs: string
-    userId: string
-    userDeviceType: string
-    userCountry: string
-    eventsCount: number
-    userNumericHash: number
-    userDisplayName: string
-}
-
-export default class Session implements ISession {
+export default class Session {
     sessionId: string = "";
     viewed: boolean = false
     duration: number = 0

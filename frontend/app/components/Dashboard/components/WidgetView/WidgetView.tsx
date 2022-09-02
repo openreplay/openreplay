@@ -43,7 +43,7 @@ function WidgetView(props: Props) {
                     setMetricNotFound(true);
                 }
             });
-        } else if (metricId === 'create') {
+        } else {
             metricStore.init();
         }
     }, []);
@@ -109,7 +109,7 @@ function WidgetView(props: Props) {
                         {expanded && <WidgetForm onDelete={onBackHandler} {...props} />}
                     </div>
 
-                    <WidgetPreview className="mt-8" />
+                    <WidgetPreview className="mt-8" name={widget.name} />
                     {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                         <>
                             {(widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" />}

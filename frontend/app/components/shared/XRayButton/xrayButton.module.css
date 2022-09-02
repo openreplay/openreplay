@@ -1,0 +1,27 @@
+.wrapper {
+    text-align: center;
+    padding: 4px 14px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+
+    &.default {
+        color: white;
+        background: linear-gradient(90deg, rgba(57, 78, 255, 0.87) 0%, rgba(62, 170, 175, 0.87) 100%);
+        &:hover {
+            /* color: $teal; */
+            background: linear-gradient(90deg, rgba(57, 78, 255, 0.87) 100%, rgba(62, 170, 175, 0.87) 100%);
+        }
+    }
+
+    &.active {
+        background: rgba(63, 81, 181, 0.08);
+        color: $gray-darkest;
+    }
+}
+
+.text {
+    background: linear-gradient(90deg, rgba(57, 78, 255, 0.87) 0%, rgba(62, 170, 175, 0.87) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }

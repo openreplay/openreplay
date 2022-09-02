@@ -42,10 +42,12 @@ export default class Profiler extends React.PureComponent {
         />
         <BottomBlock>
           <BottomBlock.Header>
-            <h4 className="text-lg">Profiler</h4>
+            <div className="flex items-center">
+                <span className="font-semibold color-gray-medium mr-4">Profiler</span>
+            </div>
             <Input
               // className="input-small"
-              placeholder="Filter by Name"
+              placeholder="Filter by name"
               icon="search"
               name="filter"
               onChange={ this.onFilterChange }

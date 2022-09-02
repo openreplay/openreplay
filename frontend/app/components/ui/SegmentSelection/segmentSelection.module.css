@@ -87,3 +87,30 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.outline {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  & .item {
+    padding: 10px!important;
+    font-size: 14px!important;
+    border: solid thin $gray-light!important;
+    
+    &:hover {
+      background: $teal-light!important;
+    }
+
+    &:first-child {
+      border-right: none!important;
+      border-radius: 3px 0 0 3px!important;
+    }
+    &:last-child {
+      border-left: none!important;
+      border-radius: 0 3px 3px 0!important;
+    }
+
+    &[data-active=true] {
+      border: solid thin $teal!important;
+    }
+  }
+}

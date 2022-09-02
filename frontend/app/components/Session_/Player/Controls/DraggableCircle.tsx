@@ -9,10 +9,12 @@ function getStyles(
     isDragging: boolean,
   ): CSSProperties {
     // const transform = `translate3d(${(left * 1161) / 100}px, -8px, 0)`
+    const leftPosition = left > 100 ? 100 : left
+
     return {
         position: 'absolute',
         top: '-3px',
-        left: `${left}%`,
+        left: `${leftPosition}%`,
         // transform,
         // WebkitTransform: transform,
         // IE fallback: hide the real node using CSS when dragging
@@ -35,7 +37,7 @@ interface Props {
 }
 
 const DraggableCircle: FC<Props> = memo(function DraggableCircle(props) {
-    const { left, top } = props
+    const { left, top, live } = props
     const [{ isDragging, item }, dragRef, preview] = useDrag(
         () => ({
             type: ItemTypes.BOX,
@@ -59,7 +61,7 @@ const DraggableCircle: FC<Props> = memo(function DraggableCircle(props) {
             style={getStyles(left, isDragging)}
             role="DraggableBox"
         >
-            <Circle />
+            <Circle isGreen={left > 99 && live} />
         </div>
     );
 })

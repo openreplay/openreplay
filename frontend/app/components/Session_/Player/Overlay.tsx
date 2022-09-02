@@ -14,7 +14,6 @@ interface Props {
   playing: boolean,
   completed: boolean,
   inspectorMode: boolean,
-  messagesLoading: boolean,
   loading: boolean,
   live: boolean,
   liveStatusText: string,
@@ -25,14 +24,14 @@ interface Props {
 
   nextId: string,
   togglePlay: () => void,
-  closedLive?: boolean
+  closedLive?: boolean,
+  livePlay?: boolean,
 }
 
 function Overlay({
   playing,
   completed,
   inspectorMode,
-  messagesLoading,
   loading,
   live,
   liveStatusText,
@@ -42,26 +41,21 @@ function Overlay({
   activeTargetIndex,
   nextId,
   togglePlay,
-  closedLive
+  closedLive,
+  livePlay,
 }: Props) {
-
-  // useEffect(() =>{
-  //   setTimeout(() => markTargets([{ selector: 'div', count:6}]), 5000)
-  //   setTimeout(() => markTargets(null), 8000)
-  // },[])
-  
   const showAutoplayTimer = !live && completed && autoplay && nextId
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
-  const showLiveStatusText = live && liveStatusText && !loading;
+  const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
   return (
     <>
       { showAutoplayTimer && <AutoplayTimer /> }
-      { showLiveStatusText && 
+      { showLiveStatusText &&
         <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
       }
-      { messagesLoading && <Loader/> }
-      { showPlayIconLayer && 
+      { loading ? <Loader /> : null }
+      { showPlayIconLayer &&
         <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       }
       { markedTargets && <ElementsMarker targets={ markedTargets } activeIndex={activeTargetIndex}/>
@@ -73,7 +67,6 @@ function Overlay({
 
 export default connectPlayer(state => ({
   playing: state.playing,
-  messagesLoading: state.messagesLoading,
   loading: state.messagesLoading || state.cssLoading,
   completed: state.completed,
   autoplay: state.autoplay,
@@ -83,4 +76,5 @@ export default connectPlayer(state => ({
   concetionStatus: state.peerConnectionStatus,
   markedTargets: state.markedTargets,
   activeTargetIndex: state.activeTargetIndex,
+  livePlay: state.livePlay,
 }))(Overlay);

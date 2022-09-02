@@ -18,6 +18,7 @@ import {
   EXCEPTIONS,
   LONGTASKS,
   INSPECTOR,
+  OVERVIEW,
 } from 'Duck/components/player';
 import Network from '../Network';
 import Console from '../Console/Console';
@@ -40,6 +41,7 @@ import Controls from './Controls';
 import Overlay from './Overlay';
 import stl from './player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
+import OverviewPanel from '../OverviewPanel';
 
 @connectPlayer(state => ({
   live: state.live,
@@ -82,7 +84,6 @@ export default class Player extends React.PureComponent {
       fullscreen,
       fullscreenOff,
       nextId,
-      live,
       closedLive,
       bottomBlock,
       activeTab
@@ -104,6 +105,9 @@ export default class Player extends React.PureComponent {
         </div>
         { !fullscreen && !!bottomBlock &&
           <div style={{ maxWidth, width: '100%' }}>
+            { bottomBlock === OVERVIEW &&
+               <OverviewPanel />
+            }
             { bottomBlock === CONSOLE &&
               <Console />
             }

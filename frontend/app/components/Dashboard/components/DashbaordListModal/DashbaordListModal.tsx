@@ -36,7 +36,6 @@ function DashbaordListModal(props: Props) {
                             leading = {(
                                 <div className="ml-2 flex items-center">
                                     {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
-                                    {item.isPinned && <div className="p-1"><Icon name="pin-fill" size="16" /></div>}
                                 </div>
                             )}
                         />

@@ -8,13 +8,16 @@ import {
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
+import { toggleTimetravel, jumpToLive } from 'Player';
 
-import { Icon } from 'UI';
+import { Icon, Button } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
   fullscreenOff,
   toggleBottomBlock,
+  changeSkipInterval,
+  OVERVIEW,
   CONSOLE,
   NETWORK,
   STACKEVENTS,
@@ -26,45 +29,56 @@ import {
   EXCEPTIONS,
   INSPECTOR,
 } from 'Duck/components/player';
-import { ReduxTime } from './Time';
+import { AssistDuration } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
+import PlayerControls from './components/PlayerControls';
 
 import styles from './controls.module.css';
 import { Tooltip } from 'react-tippy';
-
+import XRayButton from 'Shared/XRayButton';
 
 function getStorageIconName(type) {
-  switch(type) {
+  switch (type) {
     case STORAGE_TYPES.REDUX:
-      return "vendors/redux";
+      return 'vendors/redux';
     case STORAGE_TYPES.MOBX:
-      return "vendors/mobx"
+      return 'vendors/mobx';
     case STORAGE_TYPES.VUEX:
-      return "vendors/vuex";
+      return 'vendors/vuex';
     case STORAGE_TYPES.NGRX:
-      return "vendors/ngrx";
+      return 'vendors/ngrx';
     case STORAGE_TYPES.NONE:
-      return "store"
+      return 'store';
   }
 }
+
+const SKIP_INTERVALS = {
+  2: 2e3,
+  5: 5e3,
+  10: 1e4,
+  15: 15e3,
+  20: 2e4,
+  30: 3e4,
+  60: 6e4,
+};
 
 function getStorageName(type) {
-  switch(type) {
+  switch (type) {
     case STORAGE_TYPES.REDUX:
-      return "REDUX";
+      return 'REDUX';
     case STORAGE_TYPES.MOBX:
-      return "MOBX";
+      return 'MOBX';
     case STORAGE_TYPES.VUEX:
-      return "VUEX";
+      return 'VUEX';
     case STORAGE_TYPES.NGRX:
-      return "NGRX";
+      return 'NGRX';
     case STORAGE_TYPES.NONE:
-      return "STATE";
+      return 'STATE';
   }
 }
 
-@connectPlayer(state => ({
+@connectPlayer((state) => ({
   time: state.time,
   endTime: state.endTime,
   live: state.live,
@@ -79,7 +93,6 @@ function getStorageName(type) {
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
   logRedCount: state.logRedCountNow,
-  // resourceCount: state.resourceCountNow,
   resourceRedCount: state.resourceRedCountNow,
   fetchRedCount: state.fetchRedCountNow,
   showStack: state.stackList.length > 0,
@@ -97,25 +110,32 @@ function getStorageName(type) {
   exceptionsCount: state.exceptionsListNow.length,
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
+  liveTimeTravel: state.liveTimeTravel,
 }))
-@connect((state, props) => {
-  const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
-  const isEnterprise = state.getIn([ 'user', 'account', 'edition' ]) === 'ee';
-  return {
-    disabled: props.disabled || (isEnterprise && !permissions.includes('DEV_TOOLS')),
-    fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-    bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
-    showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
-    showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
-    closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
+@connect(
+  (state, props) => {
+    const permissions = state.getIn(['user', 'account', 'permissions']) || [];
+    const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
+    return {
+      disabled: props.disabled || (isEnterprise && !permissions.includes('DEV_TOOLS')),
+      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+      showStorage:
+        props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
+      showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
+      closedLive:
+        !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current', 'live']),
+      skipInterval: state.getIn(['components', 'player', 'skipInterval']),
+    };
+  },
+  {
+    fullscreenOn,
+    fullscreenOff,
+    toggleBottomBlock,
+    changeSkipInterval,
   }
-}, {
-  fullscreenOn,
-  fullscreenOff,
-  toggleBottomBlock,
-})
+)
 export default class Controls extends React.Component {
-
   componentDidMount() {
     document.addEventListener('keydown', this.onKeyDown);
   }
@@ -129,7 +149,6 @@ export default class Controls extends React.Component {
     if (
       nextProps.fullscreen !== this.props.fullscreen ||
       nextProps.bottomBlock !== this.props.bottomBlock ||
-      nextProps.endTime !== this.props.endTime ||
       nextProps.live !== this.props.live ||
       nextProps.livePlay !== this.props.livePlay ||
       nextProps.playing !== this.props.playing ||
@@ -158,8 +177,11 @@ export default class Controls extends React.Component {
       nextProps.graphqlCount !== this.props.graphqlCount ||
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
-      nextProps.showLongtasks !== this.props.showLongtasks
-    ) return true;
+      nextProps.showLongtasks !== this.props.showLongtasks ||
+      nextProps.liveTimeTravel !== this.props.liveTimeTravel ||
+      nextProps.skipInterval !== this.props.skipInterval
+    )
+      return true;
     return false;
   }
 
@@ -171,7 +193,7 @@ export default class Controls extends React.Component {
       if (e.key === 'Esc' || e.key === 'Escape') {
         toggleInspectorMode(false);
       }
-    };
+    }
     // if (e.key === ' ') {
     //   document.activeElement.blur();
     //   this.props.togglePlay();
@@ -179,46 +201,47 @@ export default class Controls extends React.Component {
     if (e.key === 'Esc' || e.key === 'Escape') {
       this.props.fullscreenOff();
     }
-    if (e.key === "ArrowRight") {
+    if (e.key === 'ArrowRight') {
       this.forthTenSeconds();
     }
-    if (e.key === "ArrowLeft") {
+    if (e.key === 'ArrowLeft') {
       this.backTenSeconds();
     }
-    if (e.key === "ArrowDown") {
+    if (e.key === 'ArrowDown') {
       this.props.speedDown();
     }
-    if (e.key === "ArrowUp") {
+    if (e.key === 'ArrowUp') {
       this.props.speedUp();
     }
-  }
+  };
 
   forthTenSeconds = () => {
-    const { time, endTime, jump } = this.props;
-    jump(Math.min(endTime, time + 1e4))
-  }
+    const { time, endTime, jump, skipInterval } = this.props;
+    jump(Math.min(endTime, time + SKIP_INTERVALS[skipInterval]));
+  };
 
-  backTenSeconds = () => {  //shouldComponentUpdate
-    const { time, jump } = this.props;
-    jump(Math.max(0, time - 1e4));
-  }
+  backTenSeconds = () => {
+    //shouldComponentUpdate
+    const { time, jump, skipInterval } = this.props;
+    jump(Math.max(0, time - SKIP_INTERVALS[skipInterval]));
+  };
 
-  goLive =() => this.props.jump(this.props.endTime)
+  goLive = () => this.props.jump(this.props.endTime);
 
   renderPlayBtn = () => {
-    const { completed, playing, disabled } = this.props;
+    const { completed, playing } = this.props;
     let label;
     let icon;
     if (completed) {
       icon = 'arrow-clockwise';
-      label = 'Replay this session'
+      label = 'Replay this session';
     } else if (playing) {
       icon = 'pause-fill';
       label = 'Pause';
     } else {
       icon = 'play-fill-new';
       label = 'Pause';
-      label = 'Play'
+      label = 'Play';
     }
 
     return (
@@ -234,20 +257,21 @@ export default class Controls extends React.Component {
           onClick={this.props.togglePlay}
           className="hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
         >
-            <Icon name={icon} size="36" color="inherit" />
+          <Icon name={icon} size="36" color="inherit" />
         </div>
       </Tooltip>
-    )
-  }
+    );
+  };
 
-  controlIcon = (icon, size, action, isBackwards, additionalClasses) =>
+  controlIcon = (icon, size, action, isBackwards, additionalClasses) => (
     <div
-        onClick={ action }
-        className={cn("py-1 px-2 hover-main cursor-pointer", additionalClasses)}
-        style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
-      >
-        <Icon name={icon} size={size} color="inherit" />
+      onClick={action}
+      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
+      style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
+    >
+      <Icon name={icon} size={size} color="inherit" />
     </div>
+  );
 
   render() {
     const {
@@ -279,6 +303,11 @@ export default class Controls extends React.Component {
       fullscreen,
       inspectorMode,
       closedLive,
+      toggleSpeed,
+      toggleSkip,
+      liveTimeTravel,
+      changeSkipInterval,
+      skipInterval,
     } = this.props;
 
     const toggleBottomTools = (blockName) => {
@@ -289,218 +318,192 @@ export default class Controls extends React.Component {
         toggleInspectorMode(false);
         toggleBottomBlock(blockName);
       }
-    }
+    };
+
     return (
-      <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
-        { !live && <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> }
-        { !fullscreen &&
-          <div className={ styles.buttons } data-is-live={ live }>
-            <div>
-              { !live && (
-                <div className="flex items-center">
-                  { this.renderPlayBtn() }
-                  { !live && (
-                    <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
-                      <ReduxTime isCustom name="time" format="mm:ss" />
-                      <span className="px-1">/</span>
-                      <ReduxTime isCustom name="endTime" format="mm:ss" />
-                    </div>
-                  )}
-
-                  <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-                    <Tooltip
-                        title='Rewind 10s'
-                        delay={0}
-                        position="top"
-                      >
-                        {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border color-main h-full flex items-center')}
-                      </Tooltip>
-                    <div className='p-1 border-l border-r bg-active-blue-border border-active-blue-border'>10s</div>
-                    <Tooltip
-                        title='Forward 10s'
-                        delay={0}
-                        position="top"
-                      >
-                        {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border color-main h-full flex items-center')}
-                    </Tooltip>
-                  </div>
-
-                  {!live &&
-                    <div className='flex items-center mx-4'>
-                      <Tooltip
-                        title='Playback speed'
-                        delay={0}
-                        position="top"
-                      >
-                        <button
-                          className={ styles.speedButton }
-                          onClick={ this.props.toggleSpeed }
-                          data-disabled={ disabled }
-                        >
-                          <div>{ speed + 'x' }</div>
-                        </button>
-                      </Tooltip>
-
-                      <button
-                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip, [styles.active]: skip }, 'ml-4') }
-                        onClick={ this.props.toggleSkip }
-                        data-disabled={ disabled }
-                      >
-                        {skip && <Icon name="check" size="24" className="mr-1" />}
-                        { 'Skip Inactivity' }
-                      </button>
-                    </div>
-                  }
-                </div>
+      <div className={styles.controls}>
+        {!live || liveTimeTravel ? (
+          <Timeline
+            live={live}
+            jump={this.props.jump}
+            liveTimeTravel={liveTimeTravel}
+            pause={this.props.pause}
+            togglePlay={this.props.togglePlay}
+          />
+        ) : null}
+        {!fullscreen && (
+          <div className={cn(styles.buttons, { '!px-5 !pt-0': live })} data-is-live={live}>
+            <div className="flex items-center">
+              {!live && (
+                <>
+                  <PlayerControls
+                    live={live}
+                    skip={skip}
+                    speed={speed}
+                    disabled={disabled}
+                    backTenSeconds={this.backTenSeconds}
+                    forthTenSeconds={this.forthTenSeconds}
+                    toggleSpeed={toggleSpeed}
+                    toggleSkip={toggleSkip}
+                    playButton={this.renderPlayBtn()}
+                    controlIcon={this.controlIcon}
+                    ref={this.speedRef}
+                    skipIntervals={SKIP_INTERVALS}
+                    setSkipInterval={changeSkipInterval}
+                    currentInterval={skipInterval}
+                  />
+                  <div className={cn('mx-2')} />
+                  <XRayButton
+                    isActive={bottomBlock === OVERVIEW && !inspectorMode}
+                    onClick={() => toggleBottomTools(OVERVIEW)}
+                  />
+                </>
               )}
 
-              { live && !closedLive && (
-                <div className={ styles.buttonsLeft }>
-                  <LiveTag isLive={livePlay} />
-                  {'Elapsed'}
-                  <ReduxTime name="time" />
+              {live && !closedLive && (
+                <div className={styles.buttonsLeft}>
+                  <LiveTag isLive={livePlay} onClick={() => (livePlay ? null : jumpToLive())} />
+                  <div className="font-semibold px-2">
+                    <AssistDuration isLivePlay={livePlay} />
+                  </div>
+
+                  {!liveTimeTravel && (
+                    <div
+                      onClick={toggleTimetravel}
+                      className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer"
+                    >
+                      See Past Activity
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             <div className="flex items-center h-full">
-              { !live && <div className={cn(styles.divider, 'h-full')} /> }
-              {/* ! TEMP DISABLED !
-              {!live && (
-                <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  active={ inspectorMode }
-                  onClick={ () => toggleBottomTools(INSPECTOR) }
-                  noIcon
-                  labelClassName="!text-base font-semibold"
-                  label="INSPECT"
-                  containerClassName="mx-2"
-                />
-              )} */}
               <ControlButton
-                disabled={ disabled && !inspectorMode }
-                onClick={ () => toggleBottomTools(CONSOLE) }
-                active={ bottomBlock === CONSOLE && !inspectorMode}
+                disabled={disabled && !inspectorMode}
+                onClick={() => toggleBottomTools(CONSOLE)}
+                active={bottomBlock === CONSOLE && !inspectorMode}
                 label="CONSOLE"
                 noIcon
                 labelClassName="!text-base font-semibold"
-                count={ logCount }
-                hasErrors={ logRedCount > 0 }
+                count={logCount}
+                hasErrors={logRedCount > 0}
                 containerClassName="mx-2"
               />
-              { !live &&
+              {!live && (
                 <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  onClick={ () => toggleBottomTools(NETWORK) }
-                  active={ bottomBlock === NETWORK && !inspectorMode }
+                  disabled={disabled && !inspectorMode}
+                  onClick={() => toggleBottomTools(NETWORK)}
+                  active={bottomBlock === NETWORK && !inspectorMode}
                   label="NETWORK"
-                  hasErrors={ resourceRedCount > 0 }
+                  hasErrors={resourceRedCount > 0}
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
-              }
-              {!live &&
+              )}
+              {!live && (
                 <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  onClick={ () => toggleBottomTools(PERFORMANCE) }
-                  active={ bottomBlock === PERFORMANCE && !inspectorMode }
+                  disabled={disabled && !inspectorMode}
+                  onClick={() => toggleBottomTools(PERFORMANCE)}
+                  active={bottomBlock === PERFORMANCE && !inspectorMode}
                   label="PERFORMANCE"
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
-              }
-              {showFetch &&
+              )}
+              {showFetch && (
                 <ControlButton
                   disabled={disabled && !inspectorMode}
-                  onClick={ ()=> toggleBottomTools(FETCH) }
-                  active={ bottomBlock === FETCH && !inspectorMode }
-                  hasErrors={ fetchRedCount > 0 }
-                  count={ fetchCount }
+                  onClick={() => toggleBottomTools(FETCH)}
+                  active={bottomBlock === FETCH && !inspectorMode}
+                  hasErrors={fetchRedCount > 0}
+                  count={fetchCount}
                   label="FETCH"
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
-              }
-              { !live && showGraphql &&
+              )}
+              {!live && showGraphql && (
                 <ControlButton
                   disabled={disabled && !inspectorMode}
-                  onClick={ ()=> toggleBottomTools(GRAPHQL) }
-                  active={ bottomBlock === GRAPHQL && !inspectorMode }
-                  count={ graphqlCount }
+                  onClick={() => toggleBottomTools(GRAPHQL)}
+                  active={bottomBlock === GRAPHQL && !inspectorMode}
+                  count={graphqlCount}
                   label="GRAPHQL"
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
-              }
-              { !live && showStorage &&
+              )}
+              {!live && showStorage && (
                 <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  onClick={ () => toggleBottomTools(STORAGE) }
-                  active={ bottomBlock === STORAGE && !inspectorMode }
-                  count={ storageCount }
-                  label={ getStorageName(storageType) }
+                  disabled={disabled && !inspectorMode}
+                  onClick={() => toggleBottomTools(STORAGE)}
+                  active={bottomBlock === STORAGE && !inspectorMode}
+                  count={storageCount}
+                  label={getStorageName(storageType)}
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
-              }
-              { showExceptions &&
+              )}
+              {showExceptions && (
                 <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  onClick={ () => toggleBottomTools(EXCEPTIONS) }
-                  active={ bottomBlock === EXCEPTIONS && !inspectorMode }
+                  disabled={disabled && !inspectorMode}
+                  onClick={() => toggleBottomTools(EXCEPTIONS)}
+                  active={bottomBlock === EXCEPTIONS && !inspectorMode}
                   label="EXCEPTIONS"
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
-                  count={ exceptionsCount }
-                  hasErrors={ exceptionsCount > 0 }
+                  count={exceptionsCount}
+                  hasErrors={exceptionsCount > 0}
                 />
-              }
-              { !live && showStack &&
+              )}
+              {!live && showStack && (
                 <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  onClick={ () => toggleBottomTools(STACKEVENTS) }
-                  active={ bottomBlock === STACKEVENTS && !inspectorMode }
+                  disabled={disabled && !inspectorMode}
+                  onClick={() => toggleBottomTools(STACKEVENTS)}
+                  active={bottomBlock === STACKEVENTS && !inspectorMode}
                   label="EVENTS"
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
-                  count={ stackCount }
-                  hasErrors={ stackRedCount > 0 }
+                  count={stackCount}
+                  hasErrors={stackRedCount > 0}
                 />
-              }
-              { !live && showProfiler &&
+              )}
+              {!live && showProfiler && (
                 <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  onClick={ () => toggleBottomTools(PROFILER) }
-                  active={ bottomBlock === PROFILER && !inspectorMode }
-                  count={ profilesCount }
+                  disabled={disabled && !inspectorMode}
+                  onClick={() => toggleBottomTools(PROFILER)}
+                  active={bottomBlock === PROFILER && !inspectorMode}
+                  count={profilesCount}
                   label="PROFILER"
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
-              }
-              { !live && <div className={cn(styles.divider, 'h-full')} /> }
-              { !live && (
-                <Tooltip
-                  title="Fullscreen"
-                  delay={0}
-                  position="top-end"
-                  className="mx-4"
-                >
-                  {this.controlIcon("arrows-angle-extend", 18, this.props.fullscreenOn, false, "rounded hover:bg-gray-light-shade color-gray-medium")}
+              )}
+              {/* {!live && <div className={cn('h-14 border-r bg-gray-light ml-6')} />} */}
+              {!live && (
+                <Tooltip title="Fullscreen" delay={0} position="top-end" className="mx-4">
+                  {this.controlIcon(
+                    'arrows-angle-extend',
+                    16,
+                    this.props.fullscreenOn,
+                    false,
+                    'rounded hover:bg-gray-light-shade color-gray-medium'
+                  )}
                 </Tooltip>
-              )
-              }
+              )}
             </div>
           </div>
-        }
+        )}
       </div>
     );
   }

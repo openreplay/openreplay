@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"log"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,8 +13,8 @@ import (
 	"openreplay/backend/internal/assets/cacher"
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/queue/types"
 )
 
 func main() {
@@ -34,22 +34,25 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
-		func(sessionID uint64, message messages.Message, e *types.Meta) {
-			switch msg := message.(type) {
-			case *messages.AssetCache:
-				cacher.CacheURL(sessionID, msg.URL)
-				totalAssets.Add(context.Background(), 1)
-			case *messages.ErrorEvent:
-				if msg.Source != "js_exception" {
-					return
-				}
-				sourceList, err := assets.ExtractJSExceptionSources(&msg.Payload)
-				if err != nil {
-					log.Printf("Error on source extraction: %v", err)
-					return
-				}
-				for _, source := range sourceList {
-					cacher.CacheJSFile(source)
+		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
+			for iter.Next() {
+				if iter.Type() == messages.MsgAssetCache {
+					msg := iter.Message().Decode().(*messages.AssetCache)
+					cacher.CacheURL(sessionID, msg.URL)
+					totalAssets.Add(context.Background(), 1)
+				} else if iter.Type() == messages.MsgErrorEvent {
+					msg := iter.Message().Decode().(*messages.ErrorEvent)
+					if msg.Source != "js_exception" {
+						continue
+					}
+					sourceList, err := assets.ExtractJSExceptionSources(&msg.Payload)
+					if err != nil {
+						log.Printf("Error on source extraction: %v", err)
+						continue
+					}
+					for _, source := range sourceList {
+						cacher.CacheJSFile(source)
+					}
 				}
 			}
 		},

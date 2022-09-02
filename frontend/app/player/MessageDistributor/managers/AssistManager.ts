@@ -2,11 +2,10 @@ import type { Socket } from 'socket.io-client';
 import type Peer from 'peerjs';
 import type { MediaConnection } from 'peerjs';
 import type MessageDistributor from '../MessageDistributor';
-import type { Message } from '../messages'
 import store from 'App/store';
 import type { LocalStream } from './LocalStream';
 import { update, getState } from '../../store';
-import { iceServerConfigFromString } from 'App/utils'
+// import { iceServerConfigFromString } from 'App/utils'
 import AnnotationCanvas from './AnnotationCanvas';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
@@ -54,12 +53,13 @@ export function getStatusText(status: ConnectionStatus): string {
       return "Connected. Waiting for the data... (The tab might be inactive)"
   }
 }
- 
+
 export interface State {
-  calling: CallingState,
-  peerConnectionStatus: ConnectionStatus,
-  remoteControl: RemoteControlStatus,
-  annotating: boolean,
+  calling: CallingState;
+  peerConnectionStatus: ConnectionStatus;
+  remoteControl: RemoteControlStatus;
+  annotating: boolean;
+  assistStart: number;
 }
 
 export const INITIAL_STATE: State = {
@@ -67,16 +67,20 @@ export const INITIAL_STATE: State = {
   peerConnectionStatus: ConnectionStatus.Connecting,
   remoteControl: RemoteControlStatus.Disabled,
   annotating: false,
+  assistStart: 0,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
 
 
 export default class AssistManager {
+  private timeTravelJump = false;
+  private jumped = false;
+
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
-    if (getState().peerConnectionStatus === ConnectionStatus.Disconnected && 
+    if (getState().peerConnectionStatus === ConnectionStatus.Disconnected &&
       status !== ConnectionStatus.Connected) {
       return
     }
@@ -104,7 +108,7 @@ export default class AssistManager {
     if (document.hidden) {
       this.socketCloseTimeout = setTimeout(() => {
         const state = getState()
-        if (document.hidden && 
+        if (document.hidden &&
           (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
           this.socket?.close()
         }
@@ -119,8 +123,20 @@ export default class AssistManager {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
-    let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let disconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+    function clearDisconnectTimeout() {
+      disconnectTimeout && clearTimeout(disconnectTimeout)
+      disconnectTimeout = undefined
+    }
+    function clearInactiveTimeout() {
+      inactiveTimeout && clearTimeout(inactiveTimeout)
+      inactiveTimeout = undefined
+    }
+
+    const now = +new Date()
+    update({ assistStart: now })
+
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
@@ -136,7 +152,6 @@ export default class AssistManager {
           //agentInfo: JSON.stringify({})
         }
       })
-      //socket.onAny((...args) => console.log(...args))
       socket.on("connect", () => {
         waitingForMessages = true
         this.setStatus(ConnectionStatus.WaitingMessages) // TODO: happens frequently on bad network
@@ -146,8 +161,7 @@ export default class AssistManager {
         update({ calling: CallingState.NoCall })
       })
       socket.on('messages', messages => {
-        //console.log(messages.filter(m => m._id === 41 || m._id === 44))
-        jmr.append(messages) // as RawMessage[]
+        !this.timeTravelJump && jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
@@ -155,12 +169,21 @@ export default class AssistManager {
 
           // Call State
           if (getState().calling === CallingState.Reconnecting) {
-            this._call()  // reconnecting call (todo improve code separation)
+            this._callSessionPeer() // reconnecting call (todo improve code separation)
           }
+        }
+
+        if (this.timeTravelJump) {
+          return;
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
           //@ts-ignore
+          if (this.jumped) {
+            // @ts-ignore
+            msg.time = this.md.getLastRecordedMessageTime() + msg.time
+          }
+          // @ts-ignore TODO: fix msg types in generator
           this.md.distributeMessage(msg, msg._index)
         }
       })
@@ -171,17 +194,17 @@ export default class AssistManager {
         id === socket.id && this.toggleRemoteControl(false)
       })
       socket.on('SESSION_RECONNECTED', () => {
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        inactiveTimeout && clearTimeout(inactiveTimeout)
+        clearDisconnectTimeout()
+        clearInactiveTimeout()
         this.setStatus(ConnectionStatus.Connected)
       })
 
       socket.on('UPDATE_SESSION', ({ active }) => {
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
+        clearDisconnectTimeout()
         !inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
         if (typeof active === "boolean") {
+          clearInactiveTimeout()
           if (active) {
-            inactiveTimeout && clearTimeout(inactiveTimeout)
             this.setStatus(ConnectionStatus.Connected)
           } else {
             inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
@@ -190,8 +213,8 @@ export default class AssistManager {
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        showDisconnectTimeout = setTimeout(() => {
+        clearDisconnectTimeout()
+        disconnectTimeout = setTimeout(() => {
           if (this.cleaned) { return }
           this.setStatus(ConnectionStatus.Disconnected)
         }, 30000)
@@ -214,7 +237,7 @@ export default class AssistManager {
       })
       socket.on('call_end', this.onRemoteCallEnd)
 
-      document.addEventListener('visibilitychange', this.onVisChange)        
+      document.addEventListener('visibilitychange', this.onVisChange)
 
     })
   }
@@ -238,14 +261,14 @@ export default class AssistManager {
   private onMouseClick = (e: MouseEvent): void => {
     if (!this.socket) { return; }
     if (getState().annotating) { return; } // ignore clicks while annotating
-    
+
     const data = this.md.getInternalViewportCoordinates(e)
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
     if (el instanceof HTMLElement) {
       el.focus()
       el.oninput = e => {
-        if (el instanceof HTMLTextAreaElement 
+        if (el instanceof HTMLTextAreaElement
           || el instanceof HTMLInputElement
         ) {
           this.socket && this.socket.emit("input", el.value)
@@ -305,7 +328,7 @@ export default class AssistManager {
 
   private _peer: Peer | null = null
   private connectionAttempts: number = 0
-  private callConnection: MediaConnection | null = null
+  private callConnection: MediaConnection[] = []
   private getPeer(): Promise<Peer> {
     if (this._peer && !this._peer.disconnected) { return Promise.resolve(this._peer) }
 
@@ -326,6 +349,32 @@ export default class AssistManager {
         };
       }
       const peer = this._peer = new Peer(peerOpts)
+      peer.on('call', call => {
+        console.log('getting call from', call.peer)
+          call.answer(this.callArgs.localStream.stream)
+          this.callConnection.push(call)
+
+          this.callArgs.localStream.onVideoTrack(vTrack => {
+            const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
+            if (!sender) {
+              console.warn("No video sender found")
+              return
+            }
+            sender.replaceTrack(vTrack)
+          })
+
+          call.on('stream', stream => {
+            this.callArgs && this.callArgs.onStream(stream)
+          });
+          // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
+
+          call.on("close", this.onRemoteCallEnd)
+          call.on("error", (e) => {
+            console.error("PeerJS error (on call):", e)
+            this.initiateCallEnd();
+            this.callArgs && this.callArgs.onError && this.callArgs.onError();
+          });
+      })
       peer.on('error', e => {
         if (e.type === 'disconnected') {
           return peer.reconnect()
@@ -335,7 +384,7 @@ export default class AssistManager {
 
         //call-reconnection connected
  //       if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
-          // this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT 
+          // this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT
           //   ? ConnectionStatus.Connecting
           //   : ConnectionStatus.Disconnected);
           // Reconnect...
@@ -351,21 +400,21 @@ export default class AssistManager {
 
   private handleCallEnd() {
     this.callArgs && this.callArgs.onCallEnd()
-    this.callConnection && this.callConnection.close()
+    this.callConnection[0] && this.callConnection[0].close()
     update({ calling: CallingState.NoCall })
     this.callArgs = null
     this.toggleAnnotation(false)
   }
 
-  private initiateCallEnd = () => {
-    this.socket?.emit("call_end")
+  private initiateCallEnd = async () => {
+    this.socket?.emit("call_end", store.getState().getIn([ 'user', 'account', 'name']))
     this.handleCallEnd()
   }
 
   private onRemoteCallEnd = () => {
     if (getState().calling === CallingState.Requesting) {
       this.callArgs && this.callArgs.onReject()
-      this.callConnection && this.callConnection.close()
+      this.callConnection[0] && this.callConnection[0].close()
       update({ calling: CallingState.NoCall })
       this.callArgs = null
       this.toggleAnnotation(false)
@@ -378,16 +427,17 @@ export default class AssistManager {
     localStream: LocalStream,
     onStream: (s: MediaStream)=>void,
     onCallEnd: () => void,
-    onReject: () => void, 
-    onError?: ()=> void
+    onReject: () => void,
+    onError?: ()=> void,
   } | null = null
 
-  call(
-    localStream: LocalStream, 
-    onStream: (s: MediaStream)=>void, 
-    onCallEnd: () => void, 
-    onReject: () => void, 
-    onError?: ()=> void): { end: Function } {
+  public setCallArgs(
+    localStream: LocalStream,
+    onStream: (s: MediaStream)=>void,
+    onCallEnd: () => void,
+    onReject: () => void,
+    onError?: ()=> void,
+  ) {
     this.callArgs = {
       localStream,
       onStream,
@@ -395,9 +445,63 @@ export default class AssistManager {
       onReject,
       onError,
     }
-    this._call()
+  }
+
+  public call(thirdPartyPeers?: string[]): { end: Function } {
+    if (thirdPartyPeers && thirdPartyPeers.length > 0) {
+      this.addPeerCall(thirdPartyPeers)
+    } else {
+      this._callSessionPeer()
+    }
     return {
       end: this.initiateCallEnd,
+    }
+  }
+
+  /** Connecting to the other agents that are already
+   *  in the call with the user
+   */
+  public addPeerCall(thirdPartyPeers: string[]) {
+    thirdPartyPeers.forEach(peer => this._peerConnection(peer))
+  }
+
+  /** Connecting to the app user */
+  private _callSessionPeer() {
+    if (![CallingState.NoCall, CallingState.Reconnecting].includes(getState().calling)) { return }
+    update({ calling: CallingState.Connecting })
+    this._peerConnection(this.peerID);
+    this.socket && this.socket.emit("_agent_name", store.getState().getIn([ 'user', 'account', 'name']))
+  }
+
+  private async _peerConnection(remotePeerId: string) {
+    try {
+      const peer = await this.getPeer();
+      const call = peer.call(remotePeerId, this.callArgs.localStream.stream)
+      this.callConnection.push(call)
+
+      this.callArgs.localStream.onVideoTrack(vTrack => {
+        const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
+        if (!sender) {
+          console.warn("No video sender found")
+          return
+        }
+        sender.replaceTrack(vTrack)
+      })
+
+      call.on('stream', stream => {
+        getState().calling !== CallingState.OnCall && update({ calling: CallingState.OnCall })
+        this.callArgs && this.callArgs.onStream(stream)
+      });
+      // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
+
+      call.on("close", this.onRemoteCallEnd)
+      call.on("error", (e) => {
+        console.error("PeerJS error (on call):", e)
+        this.initiateCallEnd();
+        this.callArgs && this.callArgs.onError && this.callArgs.onError();
+      });
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -442,43 +546,10 @@ export default class AssistManager {
 
   private annot: AnnotationCanvas | null = null
 
-  private _call() {
-    if (![CallingState.NoCall, CallingState.Reconnecting].includes(getState().calling)) { return }
-    update({ calling: CallingState.Connecting })
-    this.getPeer().then(peer => {
-      if (!this.callArgs) { return console.log("No call Args. Must not happen.") }
-      update({ calling: CallingState.Requesting })
-
-      // TODO: in a proper way
-      this.socket && this.socket.emit("_agent_name", store.getState().getIn([ 'user', 'account', 'name']))
-      
-      const call = this.callConnection = peer.call(this.peerID, this.callArgs.localStream.stream)
-      this.callArgs.localStream.onVideoTrack(vTrack => {
-        const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
-        if (!sender) {
-          console.warn("No video sender found")
-          return
-        }
-        //logger.log("sender found:", sender)
-        sender.replaceTrack(vTrack)
-      })
-
-      call.on('stream', stream => {
-        update({ calling: CallingState.OnCall })
-        this.callArgs && this.callArgs.onStream(stream)
-      });
-      //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
-
-      call.on("close", this.onRemoteCallEnd)
-      call.on("error", (e) => {
-        console.error("PeerJS error (on call):", e)
-        this.initiateCallEnd();
-        this.callArgs && this.callArgs.onError && this.callArgs.onError();
-      });
-
-    })
+  toggleTimeTravelJump() {
+    this.jumped = true;
+    this.timeTravelJump = !this.timeTravelJump;
   }
-
 
   /* ==== Cleaning ==== */
   private cleaned: boolean = false
@@ -502,5 +573,3 @@ export default class AssistManager {
     }
   }
 }
-
-

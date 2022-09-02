@@ -27,6 +27,8 @@ env:
   pg_dbname: postgres
   pg_user: postgres
   pg_password: asayerPostgres
+  ch_host: clickhouse.db.svc.cluster.local
+  ch_port: 9000
   EMAIL_HOST: ''
   EMAIL_PORT: '587'
   EMAIL_USER: ''

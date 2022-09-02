@@ -1,11 +1,15 @@
 import decimal
 import logging
 
+from decouple import config
+
 import schemas
 from chalicelib.core import alerts_listener
 from chalicelib.core import sessions, alerts
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
+
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
 LeftToDb = {
     schemas.AlertColumn.performance__dom_content_loaded__average: {
@@ -41,7 +45,7 @@ LeftToDb = {
         "formula": "AVG(NULLIF(resources.duration,0))"},
     schemas.AlertColumn.resources__missing__count: {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)",
-        "formula": "COUNT(DISTINCT url_hostpath)", "condition": "success= FALSE"},
+        "formula": "COUNT(DISTINCT url_hostpath)", "condition": "success= FALSE AND type='img'"},
     schemas.AlertColumn.errors__4xx_5xx__count: {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)", "formula": "COUNT(session_id)",
         "condition": "status/100!=2"},
@@ -53,8 +57,9 @@ LeftToDb = {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)",
         "formula": "COUNT(DISTINCT session_id)", "condition": "success= FALSE AND type='script'"},
     schemas.AlertColumn.performance__crashes__count: {
-        "table": "(SELECT *, start_ts AS timestamp FROM public.sessions WHERE errors_count > 0) AS sessions",
-        "formula": "COUNT(DISTINCT session_id)", "condition": "errors_count > 0"},
+        "table": "public.sessions",
+        "formula": "COUNT(DISTINCT session_id)",
+        "condition": "errors_count > 0 AND duration>0"},
     schemas.AlertColumn.errors__javascript__count: {
         "table": "events.errors INNER JOIN public.errors AS m_errors USING (error_id)",
         "formula": "COUNT(DISTINCT session_id)", "condition": "source='js_exception'", "joinSessions": False},
@@ -94,7 +99,8 @@ def can_check(a) -> bool:
 
 
 def Build(a):
-    params = {"project_id": a["projectId"]}
+    now = TimeUTC.now()
+    params = {"project_id": a["projectId"], "now": now}
     full_args = {}
     j_s = True
     if a["seriesId"] is not None:
@@ -121,11 +127,12 @@ def Build(a):
         if a["seriesId"] is not None:
             q += f""" FROM ({subQ}) AS stat"""
         else:
-            q += f""" FROM ({subQ} AND timestamp>=%(startDate)s 
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}) AS stat"""
+            q += f""" FROM ({subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s 
+                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
-        if a["options"]["change"] == schemas.AlertDetectionChangeType.change:
+        if a["change"] == schemas.AlertDetectionType.change:
             if a["seriesId"] is not None:
                 sub2 = subQ.replace("%(startDate)s", "%(timestamp_sub2)s").replace("%(endDate)s", "%(startDate)s")
                 sub1 = f"SELECT (({subQ})-({sub2})) AS value"
@@ -135,7 +142,9 @@ def Build(a):
                           "timestamp_sub2": TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000}
             else:
                 sub1 = f"""{subQ} AND timestamp>=%(startDate)s 
-                                    {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}"""
+                                    AND datetime<=toDateTime(%(now)s/1000)
+                                    {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                    {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
                 sub2 = f"""{subQ} AND timestamp<%(startDate)s 
                                     AND timestamp>=%(timestamp_sub2)s
@@ -155,8 +164,9 @@ def Build(a):
                                             - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) \
                                             * 60 * 1000}
             else:
-                sub1 = f"""{subQ} AND timestamp>=%(startDate)s
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}"""
+                sub1 = f"""{subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s
+                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
                 sub2 = f"""{subQ} AND timestamp<%(startDate)s
                                 AND timestamp>=%(timestamp_sub2)s
@@ -185,30 +195,7 @@ def process():
                     result = cur.fetchone()
                     if result["valid"]:
                         logging.info("Valid alert, notifying users")
-                        notifications.append({
-                            "alertId": alert["alertId"],
-                            "tenantId": alert["tenantId"],
-                            "title": alert["name"],
-                            "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
-                            "buttonText": "Check metrics for more details",
-                            "buttonUrl": f"/{alert['projectId']}/metrics",
-                            "imageUrl": None,
-                            "options": {"source": "ALERT", "sourceId": alert["alertId"],
-                                        "sourceMeta": alert["detectionMethod"],
-                                        "message": alert["options"]["message"], "projectId": alert["projectId"],
-                                        "data": {"title": alert["name"],
-                                                 "limitValue": alert["query"]["right"],
-                                                 "actualValue": float(result["value"]) \
-                                                     if isinstance(result["value"], decimal.Decimal) \
-                                                     else result["value"],
-                                                 "operator": alert["query"]["operator"],
-                                                 "trigger": alert["query"]["left"],
-                                                 "alertId": alert["alertId"],
-                                                 "detectionMethod": alert["detectionMethod"],
-                                                 "currentPeriod": alert["options"]["currentPeriod"],
-                                                 "previousPeriod": alert["options"]["previousPeriod"],
-                                                 "createdAt": TimeUTC.now()}},
-                        })
+                        notifications.append(generate_notification(alert, result))
                 except Exception as e:
                     logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
                     logging.error(str(e))
@@ -220,3 +207,30 @@ def process():
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
     if len(notifications) > 0:
         alerts.process_notifications(notifications)
+
+
+def generate_notification(alert, result):
+    return {
+        "alertId": alert["alertId"],
+        "tenantId": alert["tenantId"],
+        "title": alert["name"],
+        "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
+        "buttonText": "Check metrics for more details",
+        "buttonUrl": f"/{alert['projectId']}/metrics",
+        "imageUrl": None,
+        "options": {"source": "ALERT", "sourceId": alert["alertId"],
+                    "sourceMeta": alert["detectionMethod"],
+                    "message": alert["options"]["message"], "projectId": alert["projectId"],
+                    "data": {"title": alert["name"],
+                             "limitValue": alert["query"]["right"],
+                             "actualValue": float(result["value"]) \
+                                 if isinstance(result["value"], decimal.Decimal) \
+                                 else result["value"],
+                             "operator": alert["query"]["operator"],
+                             "trigger": alert["query"]["left"],
+                             "alertId": alert["alertId"],
+                             "detectionMethod": alert["detectionMethod"],
+                             "currentPeriod": alert["options"]["currentPeriod"],
+                             "previousPeriod": alert["options"]["previousPeriod"],
+                             "createdAt": TimeUTC.now()}},
+    }

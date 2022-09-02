@@ -26,10 +26,9 @@ function cssUrlsIndex(css: string): Array<[number, number]> {
     const e = s + m[1].length;
     idxs.push([s, e])
   }
-  return idxs;
+  return idxs.reverse()
 }
 function unquote(str: string): [string, string] {
-  str = str.trim();
   if (str.length <= 2) {
     return [str, ""]
   }

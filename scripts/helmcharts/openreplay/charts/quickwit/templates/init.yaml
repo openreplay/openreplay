@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "quickwit.fullname" . }}
+  labels:
+    {{- include "quickwit.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-3"
+spec:
+  backoffLimit: 0 # Don't restart failing containers
+  template:
+    metadata:
+      name: quickwitInitialization
+    spec:
+      containers:
+      - name: quickwit
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        env:
+        - name: AWS_DEFAULT_REGION
+          value: "{{ .Values.global.s3.region }}"
+          {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+        - name: QW_S3_ENDPOINT
+          value: 'http://minio.db.svc.cluster.local:9000'
+          {{- end}}
+        - name: AWS_ACCESS_KEY_ID
+          value: {{ .Values.global.s3.accessKey }}
+        - name: AWS_SECRET_ACCESS_KEY
+          value: {{ .Values.global.s3.secretKey }}
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            set -x
+
+            configs=""
+            configs="${configs} fetchevent"
+            configs="${configs} graphql"
+            configs="${configs} pageevent"
+            for config in ${configs};do
+              quickwit index create --index-config config/index-config-${config}.yaml --config config/s3-config.yaml || true
+              quickwit source create --index ${config} --source-config config/source-${config}.yaml --config config/s3-config.yaml || true
+            done
+        volumeMounts:
+        - name: dbmigrationscript
+          mountPath: /quickwit/config/
+      restartPolicy: Never
+      volumes:
+      - name: dbmigrationscript
+        configMap:
+          name: {{ include "quickwit.fullname" . }}

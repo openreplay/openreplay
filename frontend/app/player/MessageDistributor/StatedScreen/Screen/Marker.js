@@ -1,5 +1,17 @@
 import styles from './marker.module.css';
 
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function escapeHtml(string) {
+  return string.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+
+function safeString(string) {
+  return (escapeHtml(escapeRegExp(string)))
+}
+
 export default class Marker {
   _target = null;
   _selector = null;
@@ -7,15 +19,14 @@ export default class Marker {
 
   constructor(overlay, screen) {
     this.screen = screen;
-    
-    this._tooltip = document.createElement('div') 
-    this._tooltip.className = styles.tooltip;
-    this._tooltip.appendChild(document.createElement('div'))
-    
-    const htmlStr = document.createElement('div')
-    htmlStr.innerHTML = "<b>Right-click \> Inspect</b> for more details."
-    this._tooltip.appendChild(htmlStr)
 
+    this._tooltip = document.createElement('div');
+    this._tooltip.className = styles.tooltip;
+    this._tooltip.appendChild(document.createElement('div'));
+
+    const htmlStr = document.createElement('div');
+    htmlStr.innerHTML = '<b>Right-click > Inspect</b> for more details.';
+    this._tooltip.appendChild(htmlStr);
 
     const marker = document.createElement('div');
     marker.className = styles.marker;
@@ -31,8 +42,8 @@ export default class Marker {
     marker.appendChild(markerR);
     marker.appendChild(markerT);
     marker.appendChild(markerB);
-    
-    marker.appendChild(this._tooltip)
+
+    marker.appendChild(this._tooltip);
 
     overlay.appendChild(marker);
     this._marker = marker;
@@ -55,14 +66,15 @@ export default class Marker {
     this.mark(null);
   }
 
-  _autodefineTarget() { // TODO: put to Screen
+  _autodefineTarget() {
+    // TODO: put to Screen
     if (this._selector) {
       try {
         const fitTargets = this.screen.document.querySelectorAll(this._selector);
         if (fitTargets.length === 0) {
           this._target = null;
         } else {
-          this._target = fitTargets[ 0 ];
+          this._target = fitTargets[0];
           const cursorTarget = this.screen.getCursorTarget();
           fitTargets.forEach((target) => {
             if (target.contains(cursorTarget)) {
@@ -70,7 +82,7 @@ export default class Marker {
             }
           });
         }
-      } catch(e) {
+      } catch (e) {
         console.info(e);
       }
     } else {
@@ -85,18 +97,18 @@ export default class Marker {
   }
 
   getTagString(tag) {
-    const attrs = tag.attributes    
-    let str = `<span style="color:#9BBBDC">${tag.tagName.toLowerCase()}</span>`
+    const attrs = tag.attributes;
+    let str = `<span style="color:#9BBBDC">${tag.tagName.toLowerCase()}</span>`;
 
     for (let i = 0; i < attrs.length; i++) {
-      let k = attrs[i]
-      const attribute = k.name
+      let k = attrs[i];
+      const attribute = k.name;
       if (attribute === 'class') {
-        str += `<span style="color:#F29766">${'.' + k.value.split(' ').join('.')}</span>`
+        str += `<span style="color:#F29766">${'.' + safeString(k.value).split(' ').join('.')}</span>`;
       }
 
       if (attribute === 'id') {
-        str += `<span style="color:#F29766">${'#' + k.value.split(' ').join('#')}</span>`
+        str += `<span style="color:#F29766">${'#' + safeString(k.value).split(' ').join('#')}</span>`;
       }
     }
 
@@ -117,8 +129,7 @@ export default class Marker {
     this._marker.style.top = rect.top + 'px';
     this._marker.style.width = rect.width + 'px';
     this._marker.style.height = rect.height + 'px';
-    
+
     this._tooltip.firstChild.innerHTML = this.getTagString(this._target);
   }
-
-} 
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, Theme, Trigger, Position } from 'react-tippy';
+import { Tooltip, Theme, Trigger, Position, Animation } from 'react-tippy';
 
 interface Props {
     content?: any;
@@ -9,14 +9,13 @@ interface Props {
     className?: string;
     delay?: number;
     hideDelay?: number;
-    duration?: number;
     disabled?: boolean;
     arrow?: boolean;
-    open?: boolean;
     style?: any;
     theme?: Theme;
     interactive?: boolean;
     children?: any;
+    animation?: Animation;
     // [x:string]: any;
 }
 export default ({
@@ -24,19 +23,21 @@ export default ({
     title = '',
     className = '',
     trigger = 'mouseenter',
-    delay = 1000,
+    delay = 0,
     hideDelay = 0,
     content = '',
-    duration = 0,
     disabled = false,
-    arrow = true,
+    arrow = false,
     theme = 'dark',
     style = {},
     interactive = false,
     children,
+    animation = 'fade',
 }: // ...props
 Props) => (
+    // @ts-ignore
     <Tooltip
+        animation={animation}
         position={position}
         className={className}
         trigger={trigger}
@@ -49,7 +50,6 @@ Props) => (
         theme={theme}
         style={style}
         interactive={interactive}
-        duration={0}
         hideDelay={hideDelay}
     >
         {children}

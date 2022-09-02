@@ -4,12 +4,12 @@ import { Styles, AvgLabel } from '../../common';
 import { withRequest } from 'HOCs'
 import { 
     AreaChart, Area,
-    BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    CartesianGrid, Tooltip,
+    ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';
-import WidgetAutoComplete from 'Shared/WidgetAutoComplete';
 import { toUnderscore } from 'App/utils';
+import { NO_METRIC_DATA } from 'App/constants/messages'
 
 const WIDGET_KEY = 'pagesDomBuildtime';
 
@@ -21,29 +21,17 @@ interface Props {
     metric?: any
 }
 function DomBuildingTime(props: Props) {
-    const { data, optionsLoading, metric } = props;
+    const { data, metric } = props;
     const gradientDef = Styles.gradientDef();
-
-    const onSelect = (params) => {
-      // const _params = { density: 70 }
-      // TODO reload the data with new params;
-      // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
-    }
 
     return (
         <NoContent
           size="small"
+          title={NO_METRIC_DATA}
           show={ metric.data.chart.length === 0 }
         >
           <>
             <div className="flex items-center mb-3">
-              {/* <WidgetAutoComplete
-                loading={optionsLoading}
-                fetchOptions={props.fetchOptions}
-                options={props.options}
-                onSelect={onSelect}
-                placeholder="Search for Page"
-              /> */}
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(metric.data.value)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 207 } width="100%">
@@ -66,7 +54,7 @@ function DomBuildingTime(props: Props) {
                     type="monotone"
                     // unit="%"
                     dataKey="value"
-                    stroke={Styles.colors[0]}
+                    stroke={Styles.strokeColor}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
                     strokeOpacity={ 0.8 }

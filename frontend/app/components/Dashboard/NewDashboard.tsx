@@ -6,43 +6,44 @@ import DashboardSideMenu from './components/DashboardSideMenu';
 import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
 import cn from 'classnames';
-import { withSiteId } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 
-function NewDashboard(props: RouteComponentProps<{}>) {
-    const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
+interface RouterProps {
+    siteId: string;
+    dashboardId: string;
+    metricId: string;
+}
+
+function NewDashboard(props: RouteComponentProps<RouterProps>) {
+    const { history, match: { params: { siteId, dashboardId } } } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
     const isMetricDetails = history.location.pathname.includes('/metrics/') || history.location.pathname.includes('/metric/');
+    const isDashboardDetails = history.location.pathname.includes('/dashboard/')
+    const isAlertsDetails = history.location.pathname.includes('/alert/')
 
+    const shouldHideMenu = isMetricDetails || isDashboardDetails || isAlertsDetails;
     useEffect(() => {
         dashboardStore.fetchList().then((resp) => {
             if (parseInt(dashboardId) > 0) {
                 dashboardStore.selectDashboardById(dashboardId);
             }
         });
-        if (!dashboardId && location.pathname.includes('dashboard')) {
-            dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
-                props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
-            }, () => {
-                props.history.push(withSiteId('/dashboard', siteId));
-            })
-        }
     }, [siteId]);
 
     return useObserver(() => (
-        <Loader loading={loading}>
+        <Loader loading={loading} className="mt-12">
              <div className="page-margin container-90">
-                <div className={cn("side-menu", { 'hidden' : isMetricDetails })}>
+                <div className={cn("side-menu", { 'hidden' : shouldHideMenu })}>
                     <DashboardSideMenu siteId={siteId} />
                 </div>
                 <div
                     className={cn({
-                        "side-menu-margined" : !isMetricDetails,
-                        "container-70" : isMetricDetails
+                        "side-menu-margined" : !shouldHideMenu,
+                        "container-70" : shouldHideMenu
                     })}
                 >
-                    <DashboardRouter siteId={siteId} />
+                    <DashboardRouter />
                 </div>
             </div>
         </Loader>

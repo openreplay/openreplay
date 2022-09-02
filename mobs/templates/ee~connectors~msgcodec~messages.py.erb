@@ -1,0 +1,16 @@
+# Auto-generated, do not edit
+
+from abc import ABC
+
+class Message(ABC):
+    pass
+
+<% $messages.each do |msg| %>
+class <%= msg.name %>(Message):
+    __id__ = <%= msg.id %>
+
+    def __init__(self, <%= msg.attributes.map { |attr| "#{attr.name.snake_case}" }.join ", " %>):
+        <%= msg.attributes.map { |attr| "self.#{attr.name.snake_case} = #{attr.name.snake_case}" }.join "\n        "
+        %>
+
+<% end %>

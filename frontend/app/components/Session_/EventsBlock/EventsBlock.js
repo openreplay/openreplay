@@ -197,7 +197,7 @@ export default class EventsBlock extends React.PureComponent {
               setActiveTab={setActiveTab}
               value={query}
               header={
-                <div className="text-xl">User Events <span className="color-gray-medium">{ events.size }</span></div>
+                <div className="text-xl">User Actions <span className="color-gray-medium">{ events.size }</span></div>
               }
             />
           </div>

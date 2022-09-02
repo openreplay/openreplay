@@ -692,6 +692,66 @@ class CreateIFrameDocument(Message):
         self.id = id
 
 
+class AdoptedSSReplaceURLBased(Message):
+    __id__ = 71
+
+    def __init__(self, sheet_id, text, base_url):
+        self.sheet_id = sheet_id
+        self.text = text
+        self.base_url = base_url
+
+
+class AdoptedSSReplace(Message):
+    __id__ = 72
+
+    def __init__(self, sheet_id, text):
+        self.sheet_id = sheet_id
+        self.text = text
+
+
+class AdoptedSSInsertRuleURLBased(Message):
+    __id__ = 73
+
+    def __init__(self, sheet_id, rule, index, base_url):
+        self.sheet_id = sheet_id
+        self.rule = rule
+        self.index = index
+        self.base_url = base_url
+
+
+class AdoptedSSInsertRule(Message):
+    __id__ = 74
+
+    def __init__(self, sheet_id, rule, index):
+        self.sheet_id = sheet_id
+        self.rule = rule
+        self.index = index
+
+
+class AdoptedSSDeleteRule(Message):
+    __id__ = 75
+
+    def __init__(self, sheet_id, index):
+        self.sheet_id = sheet_id
+        self.index = index
+
+
+class AdoptedSSAddOwner(Message):
+    __id__ = 76
+
+    def __init__(self, sheet_id, id):
+        self.sheet_id = sheet_id
+        self.id = id
+
+
+class AdoptedSSRemoveOwner(Message):
+    __id__ = 77
+
+    def __init__(self, sheet_id, id):
+        self.sheet_id = sheet_id
+        self.id = id
+
+
 class IOSBatchMeta(Message):
     __id__ = 107
 

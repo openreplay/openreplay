@@ -4,6 +4,7 @@ import { NavLink, withRouter } from 'react-router-dom';
 import cn from 'classnames';
 import { 
   sessions,
+  metrics,
   assist,
   client,
   dashboard,
@@ -22,11 +23,12 @@ import { init as initSite } from 'Duck/site';
 import ErrorGenPanel from 'App/dev/components';
 import Alerts from '../Alerts/Alerts';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
-import { fetchList as fetchMetadata } from 'Duck/customField';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
 const DASHBOARD_PATH = dashboard();
+const METRICS_PATH = metrics();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
@@ -43,6 +45,10 @@ const Header = (props) => {
   const { userStore, notificationStore } = useStore();
   const initialDataFetched = useObserver(() => userStore.initialDataFetched);
   let activeSite = null;
+
+  const onAccountClick = () => {
+    props.history.push(CLIENT_PATH);
+  }
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
@@ -66,8 +72,8 @@ const Header = (props) => {
   return (
     <div className={ cn(styles.header) } style={{ height: '50px'}}>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
-        <div className="relative">
-          <div className="p-2">
+        <div className="relative select-none">
+          <div className="px-4 py-2">
             <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
           </div>
           <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>
@@ -94,6 +100,9 @@ const Header = (props) => {
         to={ withSiteId(DASHBOARD_PATH, siteId) }
         className={ styles.nav }
         activeClassName={ styles.active }
+        isActive={ (_, location) => {
+          return location.pathname.includes(DASHBOARD_PATH) || location.pathname.includes(METRICS_PATH);
+        }}
       >         
         <span>{ 'Dashboards' }</span>
       </NavLink>
@@ -122,6 +131,7 @@ const Header = (props) => {
           </div>
 
           <ul>
+            <li><button onClick={ onAccountClick }>{ 'Account' }</button></li>
             <li><button onClick={ onLogoutClick }>{ 'Logout' }</button></li>
           </ul>
         </div>

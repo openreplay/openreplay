@@ -1,0 +1,6 @@
+## In order to save data into S3
+# metastore also accepts s3://{bucket/path}#pooling_interval={seconds}s
+version: 0
+metastore_uri: s3://{{.Values.global.s3.quickwitBucket}}/quickwit-indexes
+default_index_root_uri: s3://{{.Values.global.s3.quickwitBucket}}/quickwit-indexes
+listen_address: 0.0.0.0

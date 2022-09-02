@@ -22,7 +22,7 @@ function WidgetName(props: Props) {
   const onBlur = (nameInput?: string) => {
     setEditing(false)
     const toUpdate = nameInput || name
-    props.onUpdate(toUpdate.trim() === '' ? 'New Widget' : toUpdate)
+    props.onUpdate(toUpdate && toUpdate.trim() === '' ? 'New Widget' : toUpdate)
   }
 
   useEffect(() => {
@@ -68,7 +68,12 @@ function WidgetName(props: Props) {
         <Tooltip delay={100} arrow title="Double click to rename" disabled={!canEdit}>
           <div 
             onDoubleClick={() => setEditing(true)} 
-            className={cn("text-2xl h-8 flex items-center border-transparent", canEdit && 'cursor-pointer select-none hover:border-dotted hover:border-b border-gray-medium')}
+            className={
+              cn(
+                "text-2xl h-8 flex items-center border-transparent", 
+                canEdit && 'cursor-pointer select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
+              )
+            }
           >
             { name }
           </div>

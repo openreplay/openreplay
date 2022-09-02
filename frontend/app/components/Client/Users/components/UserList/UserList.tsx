@@ -13,7 +13,7 @@ interface Props {
     isEnterprise?: boolean;
 }
 function UserList(props: Props) {
-    const { isEnterprise  = false, isOnboarding = false } = props;
+    const { isEnterprise = false, isOnboarding = false } = props;
     const { userStore } = useStore();
     const loading = useObserver(() => userStore.loading);
     const users = useObserver(() => userStore.list);
@@ -22,41 +22,42 @@ function UserList(props: Props) {
 
     const filterList = (list) => {
         const filterRE = getRE(searchQuery, 'i');
-        let _list = list.filter(w => {
+        let _list = list.filter((w) => {
             return filterRE.test(w.email) || filterRE.test(w.roleName);
         });
-        return _list
-    }
-    
+        return _list;
+    };
+
     const list: any = searchQuery !== '' ? filterList(users) : users;
     const length = list.length;
-    
+
     useEffect(() => {
         userStore.fetchUsers();
     }, []);
 
-    const editHandler = (user) => {
+    const editHandler = (user: any) => {
         userStore.initUser(user).then(() => {
-            showModal(<UserForm />, { });
+            showModal(<UserForm />, { right: true });
         });
-    }
+    };
 
     return useObserver(() => (
         <Loader loading={loading}>
             <NoContent
-                show={!loading && length === 0}
                 title={
                     <div className="flex flex-col items-center justify-center">
-                        <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
-                        <div className="mt-6 text-2xl">No data available.</div>
+                    <AnimatedSVG name={ICONS.NO_AUDIT_TRAIL} size={80} />
+                    <div className="text-center text-gray-600 my-4">No matching results.</div>
                     </div>
                 }
+                size="small"
+                show={!loading && length === 0}
             >
                 <div className="mt-3 rounded bg-white">
-                    <div className="grid grid-cols-12 p-3 border-b font-medium">
+                    <div className="grid grid-cols-12 py-3 px-5 font-medium">
                         <div className="col-span-5">Name</div>
                         <div className="col-span-3">Role</div>
-                        {!isOnboarding && <div className="col-span-2">Created On</div> }
+                        {!isOnboarding && <div className="col-span-2">Created On</div>}
                         <div className="col-span-2"></div>
                     </div>
 
@@ -65,8 +66,14 @@ function UserList(props: Props) {
                             <UserListItem
                                 user={user}
                                 editHandler={() => editHandler(user)}
-                                generateInvite={() => userStore.generateInviteCode(user.userId)}
-                                copyInviteCode={() => userStore.copyInviteCode(user.userId)}
+                                generateInvite={(e: any) => {
+                                    e.stopPropagation();
+                                    userStore.generateInviteCode(user.userId);
+                                }}
+                                copyInviteCode={(e) => {
+                                    e.stopPropagation();
+                                    userStore.copyInviteCode(user.userId);
+                                }}
                                 isEnterprise={isEnterprise}
                                 isOnboarding={isOnboarding}
                             />

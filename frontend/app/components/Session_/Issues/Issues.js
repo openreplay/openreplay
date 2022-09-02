@@ -61,8 +61,14 @@ class Issues extends React.Component {
           <div className={ stl.buttonWrapper} onClick={this.handleOpen}>
             <Popup
               open={this.state.showModal}
-              position="top right"
+              position="bottom"
               interactive
+              animation="shift"
+              trigger="click"
+              unmountHTMLWhenHide
+              // @ts-ignore
+              theme='light'
+              arrow
               content={
                 <OutsideClickDetectingDiv onClickOutside={this.closeModal}>
                   <IssuesModal
@@ -72,7 +78,6 @@ class Issues extends React.Component {
                   />
                 </OutsideClickDetectingDiv>
               }
-              theme="tippy-light"
             >
               <div className="flex items-center" onClick={this.handleOpen} disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}>
                     <Icon name={ `integrations/${ provider === 'jira' ? 'jira' : 'github'}` } size="16" />

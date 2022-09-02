@@ -2,7 +2,7 @@ from typing import List
 
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite
 from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -172,8 +172,12 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._is_undefined]
 
 
-def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-               error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+# This function executes the query and return result
+def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+    if data.bookmarked:
+        data.startDate, data.endDate = sessions_favorite.get_start_end_timestamp(project_id, user_id)
+
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)
@@ -187,16 +191,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
     meta_keys = []
     with pg_client.PostgresClient() as cur:
         if errors_only:
-            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
-                                        COALESCE((SELECT TRUE
-                                         FROM public.user_favorite_sessions AS fs
-                                         WHERE s.session_id = fs.session_id
-                                           AND fs.user_id = %(userId)s), FALSE)   AS favorite,
-                                        COALESCE((SELECT TRUE
+            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id,
+                                         COALESCE((SELECT TRUE
                                                      FROM public.user_viewed_errors AS ve
                                                      WHERE er.error_id = ve.error_id
                                                        AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                                {query_part};""", full_args)
+                                        {query_part};""", full_args)
 
         elif count_only:
             main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
@@ -401,6 +401,7 @@ def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
                         event.filters is None or len(event.filters) == 0))
 
 
+# this function generates the query and return the generated-query with the dict of query arguments
 def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
@@ -522,12 +523,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append("ms.duration <= %(maxDuration)s")
                     full_args["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.referrer:
-                extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+                # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
                 if is_any:
-                    extra_constraints.append('p.base_referrer IS NOT NULL')
+                    extra_constraints.append('s.base_referrer IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == events.event_type.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
@@ -717,7 +718,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     event_where.append(
                         _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                              event.value, value_key=e_k))
-                if event.source[0] not in [None, "*", ""]:
+                if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
                     event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
 
 
@@ -989,13 +990,13 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
         extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
         extra_constraints.append("ser.source = 'js_exception'")
         extra_constraints.append("ser.project_id = %(project_id)s")
-        if error_status != schemas.ErrorStatus.all:
-            extra_constraints.append("ser.status = %(error_status)s")
-            full_args["error_status"] = error_status
-        if favorite_only:
-            extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
-            extra_constraints.append("ufe.user_id = %(userId)s")
-    # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
+        # if error_status != schemas.ErrorStatus.all:
+        #     extra_constraints.append("ser.status = %(error_status)s")
+        #     full_args["error_status"] = error_status
+        # if favorite_only:
+        #     extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
+        #     extra_constraints.append("ufe.user_id = %(userId)s")
+
     if favorite_only and not errors_only and user_id is not None:
         extra_from += """INNER JOIN (SELECT user_id, session_id
                                     FROM public.user_favorite_sessions

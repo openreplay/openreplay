@@ -19,7 +19,6 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openrep
 
 
 FROM alpine AS entrypoint
-RUN apk upgrade busybox --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main
 RUN apk add --no-cache ca-certificates
 RUN adduser -u 1001 openreplay -D
 
@@ -51,14 +50,14 @@ ENV TZ=UTC \
     ASSETS_SIZE_LIMIT=6291456 \
     ASSETS_HEADERS="{ \"Cookie\": \"ABv=3;\" }" \
     FS_CLEAN_HRS=72 \
-    FILE_SPLIT_SIZE=500000 \
+    FILE_SPLIT_SIZE=1000000 \
     LOG_QUEUE_STATS_INTERVAL_SEC=60 \
     DB_BATCH_QUEUE_LIMIT=20 \
     DB_BATCH_SIZE_LIMIT=10000000 \
     PARTITIONS_NUMBER=16 \
     QUEUE_MESSAGE_SIZE_LIMIT=1048576 \
     BEACON_SIZE_LIMIT=1000000 \
-    USE_FAILOVER=false \
+    USE_FAILOVER=true \
     GROUP_STORAGE_FAILOVER=failover \
     TOPIC_STORAGE_FAILOVER=storage-failover
 

@@ -43,8 +43,7 @@
   }
 
   & .label {
-    /* padding-top: 5px; */
-    font-size: 10px;
+    font-size: 14px !important;
     height: 16px;
 
     &:hover {

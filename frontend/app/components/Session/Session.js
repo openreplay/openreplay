@@ -16,10 +16,10 @@ const SESSIONS_ROUTE = sessionsRoute();
 function Session({ 
 	sessionId,
 	loading,
-  	hasErrors,
+	hasErrors,
 	session, 
 	fetchSession,
-  	fetchSlackList,
+	fetchSlackList,
  }) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)

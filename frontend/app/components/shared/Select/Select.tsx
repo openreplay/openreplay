@@ -5,8 +5,8 @@ import colors from 'App/theme/colors';
 const { ValueContainer } = components;
 
 type ValueObject = {
-    value: string,
-    label: string
+    value: string | number,
+    label: string,
 }
 
 interface Props<Value extends ValueObject> {
@@ -104,7 +104,7 @@ export default function<Value extends ValueObject>({ placeholder='Select', name 
           const opacity = state.isDisabled ? 0.5 : 1;
           const transition = 'opacity 300ms';
       
-          return { ...provided, opacity, transition };
+          return { ...provided, opacity, transition, fontWeight: '500' };
         },
         input: (provided: any) => ({
             ...provided,

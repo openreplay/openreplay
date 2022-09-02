@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { hideHint } from 'Duck/components/player';
-import { 
+import {
 	connectPlayer,
 	selectStorageType,
 	STORAGE_TYPES,
@@ -21,14 +21,13 @@ import stl from './storage.module.css';
 // const DIFF = 'DIFF';
 // const TABS = [ DIFF, STATE ].map(tab => ({ text: tab, key: tab }));
 
-
 function getActionsName(type) {
 	switch(type) {
 		case STORAGE_TYPES.MOBX:
 			return "MUTATIONS";
 		case STORAGE_TYPES.VUEX:
 			return "MUTATIONS";
-		default: 
+		default:
 			return "ACTIONS";
 	}
 }
@@ -50,7 +49,7 @@ export default class Storage extends React.PureComponent {
 	focusNextButton() {
 		if (this.lastBtnRef.current) {
 			this.lastBtnRef.current.focus();
-		}	
+		}
 	}
 
 	componentDidMount() {
@@ -75,7 +74,7 @@ export default class Storage extends React.PureComponent {
 		// const yellowPaths = [];
 		// const greenPaths = [];
 		// lastRAction.diff.forEach(d => {
-		// 	try { 
+		// 	try {
 	 //  		let { path, kind, rhs: value } = d;
 		// 		if (kind === 'A') {
 		// 			path.slice().push(d.index);
@@ -86,11 +85,11 @@ export default class Storage extends React.PureComponent {
 		// 		if (kind === 'N') greenPaths.push(d.path.slice().reverse());
 		// 		if (kind === 'D') redPaths.push(d.path.slice().reverse());
 		// 		if (kind === 'E') yellowPaths.push(d.path.slice().reverse());
-	 //  	} catch (e) { 
+	 //  	} catch (e) {
 	 //  	}
 	 //  });
 		// return (
-		// 	<DiffTree 
+		// 	<DiffTree
 		// 		data={ df }
 		// 		redPaths={ redPaths }
 		// 		yellowPaths={ yellowPaths }
@@ -101,7 +100,7 @@ export default class Storage extends React.PureComponent {
 
 	ensureString(actionType) {
 		if (typeof actionType === 'string') return actionType;
-		return "UNKNOWN"; 
+		return "UNKNOWN";
 	}
 
 	goNext = () => {
@@ -111,17 +110,11 @@ export default class Storage extends React.PureComponent {
 
 
 	renderTab () {
-		// switch(this.props.activeTab) {
-		// 	case DIFF:
-		// 		return this.renderDiff();
-		// 	case STATE:
-				const { listNow } = this.props;
-				if (listNow.length === 0) {
-					return "Not initialized"; //?
-				}
-				return  <JSONTree src={ listNow[ listNow.length - 1 ].state  } />;
-		// }
-		// return null;
+		const { listNow } = this.props;
+		if (listNow.length === 0) {
+			return "Not initialized"; //?
+		}
+		return  <JSONTree src={ listNow[ listNow.length - 1 ].state  } />;
 	}
 
 	renderItem(item, i) {
@@ -146,7 +139,7 @@ export default class Storage extends React.PureComponent {
 
 		return (
 			<div className="flex justify-between items-start" key={ `store-${i}` }>
-				<JSONTree 
+				<JSONTree
 					name={ this.ensureString(name) }
 					src={ src }
 					collapsed
@@ -154,22 +147,22 @@ export default class Storage extends React.PureComponent {
 				/>
 				<div className="flex items-center">
 					{ i + 1 < listNow.length &&
-						<button 
+						<button
 							className={ stl.button }
-							onClick={ () => jump(item.time, item._index) } 
+							onClick={ () => jump(item.time, item._index) }
 						>
-							{"JUMP"} 
+							{"JUMP"}
 						</button>
 					}
 					{ i + 1 === listNow.length && i + 1 < list.length  &&
 						<button
 							className={ stl.button }
 							ref={ this.lastBtnRef }
-							onClick={ this.goNext } 
+							onClick={ this.goNext }
 						>
-							{"NEXT"} 
+							{"NEXT"}
 						</button>
-					} 
+					}
 					{ typeof item.duration === 'number' &&
 						<div className="font-size-12 color-gray-medium">
 							{ formatMs(item.duration) }
@@ -177,15 +170,13 @@ export default class Storage extends React.PureComponent {
 					}
 				</div>
 			</div>
-		);					
+		);
 	}
 
 	render() {
 		const {
-			type, 
+			type,
 			listNow,
-			activeTab,
-			setActiveTab,
 			list,
 			hintIsHidden,
 		} = this.props;
@@ -194,6 +185,7 @@ export default class Storage extends React.PureComponent {
 		return (
 			<BottomBlock>
 				<BottomBlock.Header>
+					<span className="font-semibold color-gray-medium mr-4">State</span>
 					{ list.length > 0 &&
 						<div className="flex w-full">
 							{ showStore &&
@@ -211,12 +203,12 @@ export default class Storage extends React.PureComponent {
 					<NoContent
             title="Nothing to display yet."
             subtext={ !hintIsHidden
-              ? 
+              ?
                 <>
                 	{'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '}
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/redux" target="_blank">Redux</a>{', '} 
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/vuex" target="_blank">VueX</a>{', '} 
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/mobx" target="_blank">MobX</a>{' and '} 
+                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/redux" target="_blank">Redux</a>{', '}
+                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/vuex" target="_blank">VueX</a>{', '}
+                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/mobx" target="_blank">MobX</a>{' and '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/ngrx" target="_blank">NgRx</a>.
                 	<br/><br/>
                   <button className="color-teal" onClick={() => this.props.hideHint("storage")}>Got It!</button>
@@ -228,8 +220,8 @@ export default class Storage extends React.PureComponent {
           >
 						{ showStore &&
 						  <div className="ph-10 scroll-y" style={{ width: "40%" }} >
-								{ listNow.length === 0  
-									? <div className="color-gray-light font-size-16 mt-20 text-center" >{ "Empty state." }</div> 
+								{ listNow.length === 0
+									? <div className="color-gray-light font-size-16 mt-20 text-center" >{ "Empty state." }</div>
 									: this.renderTab()
 								}
 							</div>

@@ -1,9 +1,13 @@
 import schemas
 from chalicelib.core import issues
-from chalicelib.core import sessions_metas, metadata
+from chalicelib.core import metadata
+from chalicelib.core import sessions_metas
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter, Event
+
+from chalicelib.core import autocomplete
 
 
 def get_customs_by_sessionId2_pg(session_id, project_id):
@@ -92,11 +96,6 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
     return rows
 
 
-def __get_data_for_extend(data):
-    if "errors" not in data:
-        return data["data"]
-
-
 def __pg_errors_query(source=None, value_length=None):
     if value_length is None or value_length > 2:
         return f"""((SELECT DISTINCT ON(lg.message)
@@ -110,7 +109,7 @@ def __pg_errors_query(source=None, value_length=None):
                       AND lg.project_id = %(project_id)s
                       {"AND source = %(source)s" if source is not None else ""}
                     LIMIT 5)
-                    UNION ALL
+                    UNION DISTINCT
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
                         source,
@@ -122,7 +121,7 @@ def __pg_errors_query(source=None, value_length=None):
                       AND lg.project_id = %(project_id)s
                       {"AND source = %(source)s" if source is not None else ""}
                     LIMIT 5)
-                    UNION
+                    UNION DISTINCT
                     (SELECT DISTINCT ON(lg.message)
                         lg.message AS value,
                         source,
@@ -134,7 +133,7 @@ def __pg_errors_query(source=None, value_length=None):
                       AND lg.project_id = %(project_id)s
                       {"AND source = %(source)s" if source is not None else ""}
                     LIMIT 5)
-                    UNION ALL
+                    UNION DISTINCT
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
                         source,
@@ -157,7 +156,7 @@ def __pg_errors_query(source=None, value_length=None):
                   AND lg.project_id = %(project_id)s
                   {"AND source = %(source)s" if source is not None else ""}
                 LIMIT 5)
-                UNION ALL
+                UNION DISTINCT
                 (SELECT DISTINCT ON(lg.name)
                     lg.name AS value,
                     source,
@@ -177,8 +176,7 @@ def __search_pg_errors(project_id, value, key=None, source=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(__pg_errors_query(source,
-                                          value_length=len(value) \
-                                              if SUPPORTED_TYPES[event_type.ERROR.ui_type].change_by_length else None),
+                                          value_length=len(value)),
                         {"project_id": project_id, "value": helper.string_to_sql_like(value),
                          "svalue": helper.string_to_sql_like("^" + value),
                          "source": source}))
@@ -189,7 +187,7 @@ def __search_pg_errors(project_id, value, key=None, source=None):
 
 def __search_pg_errors_ios(project_id, value, key=None, source=None):
     now = TimeUTC.now()
-    if SUPPORTED_TYPES[event_type.ERROR_IOS.ui_type].change_by_length is False or len(value) > 2:
+    if len(value) > 2:
         query = f"""(SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
                         '{event_type.ERROR_IOS.ui_type}' AS type
@@ -268,7 +266,7 @@ def __search_pg_metadata(project_id, value, key=None, source=None):
 
     for k in meta_keys.keys():
         colname = metadata.index_to_colname(meta_keys[k])
-        if SUPPORTED_TYPES[event_type.METADATA.ui_type].change_by_length is False or len(value) > 2:
+        if len(value) > 2:
             sub_from.append(f"""((SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
                                 FROM public.sessions 
                                 WHERE project_id = %(project_id)s 
@@ -294,48 +292,6 @@ def __search_pg_metadata(project_id, value, key=None, source=None):
     return results
 
 
-def __generic_query(typename, value_length=None):
-    if value_length is None or value_length > 2:
-        return f"""(SELECT DISTINCT value, type
-                    FROM public.autocomplete
-                    WHERE
-                      project_id = %(project_id)s
-                      AND type='{typename}'
-                      AND value ILIKE %(svalue)s
-                    LIMIT 5)
-                    UNION
-                    (SELECT DISTINCT value, type
-                    FROM public.autocomplete
-                    WHERE
-                      project_id = %(project_id)s
-                      AND type='{typename}'
-                      AND value ILIKE %(value)s
-                    LIMIT 5);"""
-    return f"""SELECT DISTINCT value, type
-                FROM public.autocomplete
-                WHERE
-                  project_id = %(project_id)s
-                  AND type='{typename}'
-                  AND value ILIKE %(svalue)s
-                LIMIT 10;"""
-
-
-def __generic_autocomplete(event: Event):
-    def f(project_id, value, key=None, source=None):
-        with pg_client.PostgresClient() as cur:
-            cur.execute(
-                cur.mogrify(
-                    __generic_query(event.ui_type,
-                                    value_length=len(value) \
-                                        if SUPPORTED_TYPES[event.ui_type].change_by_length \
-                                        else None),
-                    {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                     "svalue": helper.string_to_sql_like("^" + value)}))
-            return helper.list_to_camel_case(cur.fetchall())
-
-    return f
-
-
 class event_type:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
@@ -358,99 +314,65 @@ class event_type:
 
 
 SUPPORTED_TYPES = {
-    event_type.CLICK.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CLICK),
-                                              query=__generic_query(typename=event_type.CLICK.ui_type),
-                                              change_by_length=True),
-    event_type.INPUT.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT),
-                                              query=__generic_query(typename=event_type.INPUT.ui_type),
-                                              change_by_length=True),
-    event_type.LOCATION.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.LOCATION),
-                                                 query=__generic_query(typename=event_type.LOCATION.ui_type),
-                                                 change_by_length=True),
-    event_type.CUSTOM.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CUSTOM),
-                                               query=__generic_query(typename=event_type.CUSTOM.ui_type),
-                                               change_by_length=True),
-    event_type.REQUEST.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.REQUEST),
-                                                query=__generic_query(typename=event_type.REQUEST.ui_type),
-                                                change_by_length=True),
-    event_type.GRAPHQL.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.GRAPHQL),
-                                                query=__generic_query(typename=event_type.GRAPHQL.ui_type),
-                                                change_by_length=True),
-    event_type.STATEACTION.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.STATEACTION),
-                                                    query=__generic_query(typename=event_type.STATEACTION.ui_type),
-                                                    change_by_length=True),
+    event_type.CLICK.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CLICK),
+                                              query=autocomplete.__generic_query(typename=event_type.CLICK.ui_type)),
+    event_type.INPUT.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.INPUT),
+                                              query=autocomplete.__generic_query(typename=event_type.INPUT.ui_type)),
+    event_type.LOCATION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.LOCATION),
+                                                 query=autocomplete.__generic_query(
+                                                     typename=event_type.LOCATION.ui_type)),
+    event_type.CUSTOM.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CUSTOM),
+                                               query=autocomplete.__generic_query(typename=event_type.CUSTOM.ui_type)),
+    event_type.REQUEST.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.REQUEST),
+                                                query=autocomplete.__generic_query(
+                                                    typename=event_type.REQUEST.ui_type)),
+    event_type.GRAPHQL.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.GRAPHQL),
+                                                query=autocomplete.__generic_query(
+                                                    typename=event_type.GRAPHQL.ui_type)),
+    event_type.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.STATEACTION),
+                                                    query=autocomplete.__generic_query(
+                                                        typename=event_type.STATEACTION.ui_type)),
     event_type.ERROR.ui_type: SupportedFilter(get=__search_pg_errors,
-                                              query=None, change_by_length=True),
+                                              query=None),
     event_type.METADATA.ui_type: SupportedFilter(get=__search_pg_metadata,
-                                                 query=None, change_by_length=True),
+                                                 query=None),
     #     IOS
-    event_type.CLICK_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CLICK_IOS),
-                                                  query=__generic_query(typename=event_type.CLICK_IOS.ui_type),
-                                                  change_by_length=True),
-    event_type.INPUT_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT_IOS),
-                                                  query=__generic_query(typename=event_type.INPUT_IOS.ui_type),
-                                                  change_by_length=True),
-    event_type.VIEW_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.VIEW_IOS),
-                                                 query=__generic_query(typename=event_type.VIEW_IOS.ui_type),
-                                                 change_by_length=True),
-    event_type.CUSTOM_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CUSTOM_IOS),
-                                                   query=__generic_query(typename=event_type.CUSTOM_IOS.ui_type),
-                                                   change_by_length=True),
-    event_type.REQUEST_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.REQUEST_IOS),
-                                                    query=__generic_query(typename=event_type.REQUEST_IOS.ui_type),
-                                                    change_by_length=True),
+    event_type.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CLICK_IOS),
+                                                  query=autocomplete.__generic_query(
+                                                      typename=event_type.CLICK_IOS.ui_type)),
+    event_type.INPUT_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.INPUT_IOS),
+                                                  query=autocomplete.__generic_query(
+                                                      typename=event_type.INPUT_IOS.ui_type)),
+    event_type.VIEW_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.VIEW_IOS),
+                                                 query=autocomplete.__generic_query(
+                                                     typename=event_type.VIEW_IOS.ui_type)),
+    event_type.CUSTOM_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CUSTOM_IOS),
+                                                   query=autocomplete.__generic_query(
+                                                       typename=event_type.CUSTOM_IOS.ui_type)),
+    event_type.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.REQUEST_IOS),
+                                                    query=autocomplete.__generic_query(
+                                                        typename=event_type.REQUEST_IOS.ui_type)),
     event_type.ERROR_IOS.ui_type: SupportedFilter(get=__search_pg_errors_ios,
-                                                  query=None, change_by_length=True),
+                                                  query=None),
 }
 
 
-def __get_autocomplete_table(value, project_id):
-    autocomplete_events = [schemas.FilterType.rev_id,
-                           schemas.EventType.click,
-                           schemas.FilterType.user_device,
-                           schemas.FilterType.user_id,
-                           schemas.FilterType.user_browser,
-                           schemas.FilterType.user_os,
-                           schemas.EventType.custom,
-                           schemas.FilterType.user_country,
-                           schemas.EventType.location,
-                           schemas.EventType.input]
-    autocomplete_events.sort()
-    sub_queries = []
-    for e in autocomplete_events:
-        sub_queries.append(f"""(SELECT type, value
-                                FROM public.autocomplete
-                                WHERE project_id = %(project_id)s
-                                    AND type= '{e}' 
-                                    AND value ILIKE %(svalue)s
-                                LIMIT 5)""")
-        if len(value) > 2:
-            sub_queries.append(f"""(SELECT type, value
-                                    FROM public.autocomplete
-                                    WHERE project_id = %(project_id)s
-                                        AND type= '{e}' 
-                                        AND value ILIKE %(value)s
-                                    LIMIT 5)""")
+def get_errors_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(" UNION ".join(sub_queries) + ";",
-                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                             "svalue": helper.string_to_sql_like("^" + value)})
-        try:
-            cur.execute(query)
-        except Exception as err:
-            print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
-            print(query.decode('UTF-8'))
-            print("--------- VALUE -----------")
-            print(value)
-            print("--------------------")
-            raise err
-        results = helper.list_to_camel_case(cur.fetchall())
-        return results
+        cur.execute(cur.mogrify(f"""\
+                    SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
+                    FROM {event_type.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
+                    WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
+                    ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
+        errors = cur.fetchall()
+        for e in errors:
+            e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
+        return helper.list_to_camel_case(errors)
 
 
 def search(text, event_type, project_id, source, key):
     if not event_type:
-        return {"data": __get_autocomplete_table(text, project_id)}
+        return {"data": autocomplete.__get_autocomplete_table(text, project_id)}
 
     if event_type in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
@@ -470,16 +392,3 @@ def search(text, event_type, project_id, source, key):
         return {"errors": ["unsupported event"]}
 
     return {"data": rows}
-
-
-def get_errors_by_session_id(session_id, project_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""\
-                    SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
-                    FROM {event_type.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
-                    WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
-                    ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
-        errors = cur.fetchall()
-        for e in errors:
-            e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
-        return helper.list_to_camel_case(errors)

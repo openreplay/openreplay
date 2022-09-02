@@ -13,7 +13,7 @@ export const durationFormatted = (duration: Duration):string => {
     duration = duration.toFormat('h\'h\'m\'m');
   } else if (duration.as('months') < 1) { // show in days and hours
     duration = duration.toFormat('d\'d\'h\'h');
-  } else { //
+  } else {
     duration = duration.toFormat('m\'m\'s\'s\'');
   }
 
@@ -64,7 +64,7 @@ export const getDateFromMill = date =>
  * @return {Boolean}
  */
 export const isToday = (date: DateTime):boolean => date.hasSame(new Date(), 'day');
-
+export const isSameYear = (date: DateTime):boolean => date.hasSame(new Date(), 'year');
 
 export function formatDateTimeDefault(timestamp: number): string {
   const date = DateTime.fromMillis(timestamp);
@@ -77,14 +77,30 @@ export function formatDateTimeDefault(timestamp: number): string {
  * @param {Object} timezone fixed offset like UTC+6
  * @returns {String} formatted date (or time if its today)
  */
-export function formatTimeOrDate(timestamp: number, timezone: Timezone): string {
+export function formatTimeOrDate(timestamp: number, timezone: Timezone, isFull = false): string {
   var date = DateTime.fromMillis(timestamp)
   if (timezone) {
     if (timezone.value === 'UTC') date = date.toUTC();
     date = date.setZone(timezone.value)
   }
 
-  return isToday(date) ? date.toFormat('hh:mm a') : date.toFormat('LLL dd, yyyy, hh:mm a');
+  if (isFull) {
+    const strHead = date.toFormat('LLL dd, yyyy, ')
+    const strTail = date.toFormat('hh:mma').toLowerCase()
+    return strHead + strTail;
+  }
+
+  if (isToday(date)) {
+    return date.toFormat('hh:mma').toLowerCase()
+  }
+  if (isSameYear(date)) {
+    const strHead = date.toFormat('LLL dd, ')
+    const strTail = date.toFormat('hh:mma').toLowerCase()
+    return strHead + strTail;
+  }
+  const strHead = date.toFormat('LLL dd, yyyy, ')
+  const strTail = date.toFormat('hh:mma').toLowerCase()
+  return strHead + strTail;
 }
 
 /**

@@ -77,7 +77,8 @@ export default class FilterItem {
         this.options = _filter.options;
         this.isEvent = _filter.isEvent;
 
-        (this.value = json.value.length === 0 || !json.value ? [''] : json.value), (this.operator = json.operator);
+        (this.value = json.value.length === 0 || !json.value ? [''] : json.value);
+        (this.operator = json.operator);
         this.source = json.source;
         this.sourceOperator = json.sourceOperator;
 
@@ -100,6 +101,9 @@ export default class FilterItem {
             sourceOperator: this.sourceOperator,
             filters: Array.isArray(this.filters) ? this.filters.map((i) => i.toJson()) : [],
         };
+        if (this.type === FilterKey.DURATION) {
+            json.value = this.value.map((i: any) => !i ? 0 : i)
+        }
         return json;
     }
 }

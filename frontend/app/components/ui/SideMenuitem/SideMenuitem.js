@@ -7,13 +7,13 @@ function SideMenuitem({
     iconBg = false,
     iconColor = "gray-dark",
     iconSize = 18,
-    className, 
+    className = '', 
     iconName = null,
     title,
     active = false,
     disabled = false,
     onClick,
-    deleteHandler,
+    deleteHandler = null,
     leading = null,
     ...props
   }) {

@@ -6,7 +6,7 @@ export const YELLOW = 'yellow';
 export const GREEN = 'green';
 
 export const STATUS_COLOR_MAP = {
-  [ RED ]: 'red',
+  [ RED ]: '#CC0000',
   [ YELLOW ]: 'orange',
   [ GREEN ]: 'green',
 }

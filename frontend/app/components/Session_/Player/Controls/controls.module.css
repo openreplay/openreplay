@@ -16,11 +16,8 @@
   justify-content: space-between;
   align-items: center;
   height: 65px;
-  padding-left: 30px;
+  padding-left: 10px;
   padding-right: 0;
-  &[data-is-live=true] {
-    padding: 0;
-  }
 }
 
 .buttonsLeft {
@@ -41,9 +38,12 @@
   padding: 0 10px;
   height: 30px;
   border-radius: 3px;
+  background-color: $gray-lightest;
+
   
   &:hover {
-    background-color: $gray-lightest;
+    background-color: $active-blue;
+    color: $teal;
     transition: all 0.2s;
   }
 }
@@ -54,16 +54,17 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   color: $gray-darkest;
-  /* margin-right: 5px; */
+  background-color: $gray-lightest;
   padding: 0 10px;
   height: 30px;
   border-radius: 3px;
   /* margin: 0 5px; */
   &:hover {
-    background-color: $gray-lightest;
+    background-color: $active-blue;
     transition: all 0.2s;
+    color: $teal;
   }
   &.active {
     background: repeating-linear-gradient( 125deg, #efefef, #efefef 3px, #ddd 3px, #efefef 5px );

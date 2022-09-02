@@ -83,6 +83,14 @@ func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
 	return nil
 }
 
+func (c *PGCache) InsertSessionReferrer(sessionID uint64, referrer string) error {
+	_, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertSessionReferrer(sessionID, referrer)
+}
+
 func (c *PGCache) InsertWebFetchEvent(sessionID uint64, e *FetchEvent) error {
 	session, err := c.GetSession(sessionID)
 	if err != nil {
