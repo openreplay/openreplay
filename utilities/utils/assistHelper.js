@@ -4,7 +4,12 @@ const {geoip} = require('./geoIP');
 let debug = process.env.debug === "1" || false;
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
-    listen: {UPDATE_EVENT: "UPDATE_SESSION", CONNECT_ERROR: "connect_error", CONNECT_FAILED: "connect_failed"}
+    listen: {
+        UPDATE_EVENT: "UPDATE_SESSION",
+        CONNECT_ERROR: "connect_error",
+        CONNECT_FAILED: "connect_failed",
+        ERROR: "error"
+    }
 };
 EVENTS_DEFINITION.emit = {
     NEW_AGENT: "NEW_AGENT",

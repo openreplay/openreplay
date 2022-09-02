@@ -351,6 +351,7 @@ module.exports = {
 
             socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
             socket.on(EVENTS_DEFINITION.listen.CONNECT_FAILED, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_FAILED, err));
+            socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
 
             socket.onAny(async (eventName, ...args) => {
                 if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
