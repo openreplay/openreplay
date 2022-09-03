@@ -46,7 +46,7 @@ const reducer = (state = initialState, action = {}) => {
         addElementToFiltersMap(FilterCategory.METADATA, item.key);
         addElementToLiveFiltersMap(FilterCategory.METADATA, item.key);
       });
-      return state;
+      return state.set('list', List(action.data).map(CustomField))
 
     case FETCH_SOURCES_SUCCESS:
       return state.set(

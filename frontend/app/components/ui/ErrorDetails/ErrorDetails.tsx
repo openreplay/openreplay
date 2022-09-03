@@ -24,7 +24,9 @@ function ErrorDetails(props: Props) {
     };
 
     useEffect(() => {
-        props.fetchErrorStackList(sessionId, error.errorId);
+        if (sessionId) {
+            props.fetchErrorStackList(sessionId, error.errorId);
+        }
     }, []);
 
     return (
