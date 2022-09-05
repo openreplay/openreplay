@@ -712,14 +712,16 @@ export function ExceptionWithMeta(
   name: string,
   message: string,
   payload: string,
-  meta: string,
+  tags: string,
+  metadata: string,
 ): Messages.ExceptionWithMeta {
   return [
     Messages.Type.ExceptionWithMeta,
     name,
     message,
     payload,
-    meta,
+    tags,
+    metadata,
   ]
 }
 
