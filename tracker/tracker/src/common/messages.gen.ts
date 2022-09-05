@@ -57,6 +57,7 @@ export declare const enum Type {
   AdoptedSSDeleteRule = 75,
   AdoptedSSAddOwner = 76,
   AdoptedSSRemoveOwner = 77,
+  ExceptionWithMeta = 78,
   Zustand = 79,
 }
 
@@ -102,7 +103,7 @@ export type SetViewportScroll = [
 
 export type CreateDocument = [
   /*type:*/ Type.CreateDocument,
-  
+
 ]
 
 export type CreateElementNode = [
@@ -440,6 +441,14 @@ export type AdoptedSSRemoveOwner = [
   /*id:*/ number,
 ]
 
+export type ExceptionWithMeta = [
+  /*type:*/ Type.ExceptionWithMeta,
+  /*name:*/ string,
+  /*message:*/ string,
+  /*payload:*/ string,
+  /*meta:*/ string,
+]
+
 export type Zustand = [
   /*type:*/ Type.Zustand,
   /*mutation:*/ string,
@@ -447,5 +456,5 @@ export type Zustand = [
 ]
 
 
-type Message =  BatchMetadata | PartitionedMessage | Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | PageLoadTiming | PageRenderTiming | JSException | RawCustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | Zustand
+type Message =  BatchMetadata | PartitionedMessage | Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | PageLoadTiming | PageRenderTiming | JSException | RawCustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | ExceptionWithMeta | Zustand
 export default Message

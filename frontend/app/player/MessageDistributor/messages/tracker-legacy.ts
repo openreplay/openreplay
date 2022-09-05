@@ -61,6 +61,7 @@ export const TP_MAP = {
   75: "adopted_ss_delete_rule",
   76: "adopted_ss_add_owner",
   77: "adopted_ss_remove_owner",
+  78: "exception_with_meta",
   79: "zustand",
   90: "ios_session_start",
   93: "ios_custom_event",
