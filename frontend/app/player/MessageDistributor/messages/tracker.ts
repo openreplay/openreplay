@@ -388,7 +388,8 @@ type TrExceptionWithMeta = [
   name: string,
   message: string,
   payload: string,
-  meta: string,
+  tags: string,
+  metadata: string,
 ]
 
 type TrZustand = [
