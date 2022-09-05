@@ -306,7 +306,7 @@ export default class App {
       return undefined
     }
 
-    return this.options.ingestPoint.replace(/\/ingest$/, `${projectID}/session/${sessionID}`)
+    return this.options.ingestPoint.replace(/ingest$/, `${projectID}/session/${sessionID}`)
   }
 
   getHost(): string {
