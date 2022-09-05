@@ -15,11 +15,6 @@ interface StackFrame {
   source?: string
 }
 
-interface ErrorMeta {
-  tags: string[]
-  meta: Record<string, string | number>
-}
-
 function getDefaultStack(e: ErrorEvent): Array<StackFrame> {
   return [
     {
@@ -35,24 +30,32 @@ function getDefaultStack(e: ErrorEvent): Array<StackFrame> {
 export function getExceptionMessage(
   error: Error,
   fallbackStack: Array<StackFrame>,
-  metadata?: ErrorMeta,
+  tags?: string[],
+  metadata?: Record<string, any>,
 ): Message {
   let stack = fallbackStack
   try {
     stack = ErrorStackParser.parse(error)
   } catch (e) {}
   const method = metadata ? ExceptionWithMeta : JSException
-  return method(error.name, error.message, JSON.stringify(stack), JSON.stringify(metadata))
+  return method(
+    error.name,
+    error.message,
+    JSON.stringify(stack),
+    JSON.stringify(tags),
+    JSON.stringify(metadata),
+  )
 }
 
 export function getExceptionMessageFromEvent(
   e: ErrorEvent | PromiseRejectionEvent,
   context: typeof globalThis = window,
-  metadata?: ErrorMeta,
+  tags?: string[],
+  metadata?: Record<string, any>,
 ): Message | null {
   if (e instanceof ErrorEvent) {
     if (e.error instanceof Error) {
-      return getExceptionMessage(e.error, getDefaultStack(e), metadata)
+      return getExceptionMessage(e.error, getDefaultStack(e), tags, metadata)
     } else {
       let [name, message] = e.message.split(':')
       if (!message) {
@@ -63,7 +66,7 @@ export function getExceptionMessageFromEvent(
     }
   } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
-      return getExceptionMessage(e.reason, [], metadata)
+      return getExceptionMessage(e.reason, [], tags, metadata)
     } else {
       let message: string
       try {
@@ -72,7 +75,13 @@ export function getExceptionMessageFromEvent(
         message = String(e.reason)
       }
       const method = metadata ? ExceptionWithMeta : JSException
-      return method('Unhandled Promise Rejection', message, '[]', JSON.stringify(metadata))
+      return method(
+        'Unhandled Promise Rejection',
+        message,
+        '[]',
+        JSON.stringify(tags),
+        JSON.stringify(metadata),
+      )
     }
   }
   return null

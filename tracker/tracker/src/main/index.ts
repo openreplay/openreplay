@@ -276,17 +276,21 @@ export default class API {
     }
   }
 
-  handleError = (e: Error | ErrorEvent | PromiseRejectionEvent, metadata?: ErrorExtra) => {
+  handleError = (
+    e: Error | ErrorEvent | PromiseRejectionEvent,
+    tags?: string[],
+    metadata?: Record<string, any>,
+  ) => {
     if (this.app === null) {
       return
     }
     if (e instanceof Error) {
-      this.app.send(getExceptionMessage(e, [], metadata))
+      this.app.send(getExceptionMessage(e, [], tags, metadata))
     } else if (
       e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
-      const msg = getExceptionMessageFromEvent(e, undefined, metadata)
+      const msg = getExceptionMessageFromEvent(e, undefined, tags, metadata)
       if (msg != null) {
         this.app.send(msg)
       }
