@@ -285,7 +285,8 @@ export default class API {
       return
     }
     if (e instanceof Error) {
-      this.app.send(getExceptionMessage(e, [], tags, metadata))
+      const msg = getExceptionMessage(e, [], tags, metadata)
+      this.app.send(msg)
     } else if (
       e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)

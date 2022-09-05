@@ -37,7 +37,8 @@ export function getExceptionMessage(
   try {
     stack = ErrorStackParser.parse(error)
   } catch (e) {}
-  const method = metadata ? ExceptionWithMeta : JSException
+  const metaPresent = metadata || tags
+  const method = metaPresent ? ExceptionWithMeta : JSException
   return method(
     error.name,
     error.message,
@@ -62,7 +63,15 @@ export function getExceptionMessageFromEvent(
         name = 'Error'
         message = e.message
       }
-      return JSException(name, message, JSON.stringify(getDefaultStack(e)))
+      const metaPresent = metadata || tags
+      const method = metaPresent ? ExceptionWithMeta : JSException
+      return method(
+        name,
+        message,
+        JSON.stringify(getDefaultStack(e)),
+        JSON.stringify(tags),
+        JSON.stringify(metadata),
+      )
     }
   } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
@@ -74,7 +83,8 @@ export function getExceptionMessageFromEvent(
       } catch (_) {
         message = String(e.reason)
       }
-      const method = metadata ? ExceptionWithMeta : JSException
+      const metaPresent = metadata || tags
+      const method = metaPresent ? ExceptionWithMeta : JSException
       return method(
         'Unhandled Promise Rejection',
         message,
