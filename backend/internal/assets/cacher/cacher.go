@@ -33,6 +33,7 @@ type cacher struct {
 	sizeLimit        int
 	downloadedAssets syncfloat64.Counter
 	requestHeaders   map[string]string
+	cfg              *config.Config
 }
 
 func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
@@ -59,6 +60,7 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 		sizeLimit:        cfg.AssetsSizeLimit,
 		downloadedAssets: downloadedAssets,
 		requestHeaders:   cfg.AssetsRequestHeaders,
+		cfg: cfg,
 	}
 }
 
@@ -112,7 +114,7 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 
 	strData := string(data)
 	if isCSS {
-		strData = c.rewriter.RewriteCSS(sessionID, requestURL, strData) // TODO: one method for rewrite and return list
+		strData = c.rewriter.RewriteCSS(sessionID, requestURL, strData, c.cfg) // TODO: one method for rewrite and return list
 	}
 
 	// TODO: implement in streams
@@ -126,7 +128,7 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 	if isCSS {
 		if depth > 0 {
 			for _, extractedURL := range assets.ExtractURLsFromCSS(string(data)) {
-				if fullURL, cachable := assets.GetFullCachableURL(requestURL, extractedURL); cachable {
+				if fullURL, cachable := assets.GetFullCachableURL(requestURL, extractedURL, c.cfg); cachable {
 					go c.cacheURL(fullURL, sessionID, depth-1, urlContext+"\n  -> "+fullURL, false)
 				}
 			}

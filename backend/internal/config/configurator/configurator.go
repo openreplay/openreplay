@@ -96,6 +96,13 @@ func parseFile(a interface{}, path string) {
 					continue
 				}
 				val.Field(i).Set(reflect.ValueOf(stringMap))
+			case "[]string":
+				var stringArray []string
+				if err := json.Unmarshal([]byte(value), &stringArray); err != nil {
+					log.Printf("can't parse []string value: %s", err)
+					continue
+				}
+				val.Field(i).Set(reflect.ValueOf(stringArray))
 			default:
 				log.Println("unknown config type: ", val.Type().Field(i).Type.String())
 			}
