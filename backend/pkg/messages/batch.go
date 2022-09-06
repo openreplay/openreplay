@@ -90,7 +90,7 @@ func (i *iteratorImpl) Next() bool {
 	switch i.msgType {
 	case MsgBatchMetadata:
 		if i.index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
-			log.Printf("Batch Meta found at the end of the batch")
+			log.Printf("Batch Metadata found at the end of the batch")
 			return false
 		}
 		m := i.msg.Decode().(*BatchMetadata)
