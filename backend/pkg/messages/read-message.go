@@ -1303,9 +1303,6 @@ func DecodeExceptionWithMeta(reader io.Reader) (Message, error) {
 	if msg.Payload, err = ReadString(reader); err != nil {
 		return nil, err
 	}
-	if msg.Tags, err = ReadString(reader); err != nil {
-		return nil, err
-	}
 	if msg.Metadata, err = ReadString(reader); err != nil {
 		return nil, err
 	}

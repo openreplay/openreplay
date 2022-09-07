@@ -738,11 +738,10 @@ class AdoptedSSRemoveOwner(Message):
 class ExceptionWithMeta(Message):
     __id__ = 78
 
-    def __init__(self, name, message, payload, tags, metadata):
+    def __init__(self, name, message, payload, metadata):
         self.name = name
         self.message = message
         self.payload = payload
-        self.tags = tags
         self.metadata = metadata
 
 

@@ -231,7 +231,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.ExceptionWithMeta:
-      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.string(msg[5])
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4])
     break
 
     case Messages.Type.Zustand:
