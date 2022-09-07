@@ -14,8 +14,15 @@ def get_original_trace(key, positions):
         "S3_SECRET": config('S3_SECRET'),
         "region": config('sessions_region')
     }
-    r = requests.post(config("sourcemaps_reader"), json=payload)
-    if r.status_code != 200:
+    try:
+        r = requests.post(config("sourcemaps_reader"), json=payload,
+                          timeout=config("sourcemapTimeout", cast=int, default=5))
+        if r.status_code != 200:
+            return {}
+        return r.json()
+    except requests.exceptions.Timeout:
+        print("Timeout getting sourcemap")
         return {}
-
-    return r.json()
+    except Exception as e:
+        print("issue getting sourcemap")
+        return {}
