@@ -42,8 +42,8 @@ module.exports.sourcemapReader = async event => {
     return new Promise(function (resolve, reject) {
         s3.getObject(options, (err, data) => {
             if (err) {
-                console.log("Get S3 object failed");
-                console.log(err);
+                console.error("[SR] Get S3 object failed");
+                console.error(err);
                 return reject(err);
             }
             let sourcemap = data.Body.toString();
@@ -68,13 +68,13 @@ module.exports.sourcemapReader = async event => {
                                     preview = preview.slice(start, original.line + event.padding);
                                 }
                             } else {
-                                console.log("source not found, null preview for:");
+                                console.log("[SR] source not found, null preview for:");
                                 console.log(original.source);
                                 preview = []
                             }
                             url = URL.parse(original.source);
                         } else {
-                            console.log("couldn't find original position of:");
+                            console.log("[SR] couldn't find original position of:");
                             console.log({
                                 line: event.positions[i].line,
                                 column: event.positions[i].column
