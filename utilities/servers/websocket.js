@@ -242,6 +242,7 @@ module.exports = {
     start: (server, prefix) => {
         createSocketIOServer(server, prefix);
         io.on('connection', async (socket) => {
+            socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket._connectedAt = new Date();
             socket.peerId = socket.handshake.query.peerId;
@@ -308,7 +309,6 @@ module.exports = {
 
             socket.on(EVENTS_DEFINITION.listen.CONNECT_ERROR, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_ERROR, err));
             socket.on(EVENTS_DEFINITION.listen.CONNECT_FAILED, err => errorHandler(EVENTS_DEFINITION.listen.CONNECT_FAILED, err));
-            socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
 
             socket.onAny(async (eventName, ...args) => {
                 if (Object.values(EVENTS_DEFINITION.listen).indexOf(eventName) >= 0) {
