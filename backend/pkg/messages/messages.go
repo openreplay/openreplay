@@ -3011,18 +3011,16 @@ type ExceptionWithMeta struct {
 	Name     string
 	Message  string
 	Payload  string
-	Tags     string
 	Metadata string
 }
 
 func (msg *ExceptionWithMeta) Encode() []byte {
-	buf := make([]byte, 51+len(msg.Name)+len(msg.Message)+len(msg.Payload)+len(msg.Tags)+len(msg.Metadata))
+	buf := make([]byte, 41+len(msg.Name)+len(msg.Message)+len(msg.Payload)+len(msg.Metadata))
 	buf[0] = 78
 	p := 1
 	p = WriteString(msg.Name, buf, p)
 	p = WriteString(msg.Message, buf, p)
 	p = WriteString(msg.Payload, buf, p)
-	p = WriteString(msg.Tags, buf, p)
 	p = WriteString(msg.Metadata, buf, p)
 	return buf[:p]
 }

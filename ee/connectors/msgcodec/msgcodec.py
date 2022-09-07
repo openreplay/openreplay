@@ -660,7 +660,6 @@ class MessageCodec(Codec):
                 name=self.read_string(reader),
                 message=self.read_string(reader),
                 payload=self.read_string(reader),
-                tags=self.read_string(reader),
                 metadata=self.read_string(reader)
             )
 
