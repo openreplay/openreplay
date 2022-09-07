@@ -74,87 +74,33 @@ export default class MainSection extends React.PureComponent {
                         message={error.stack0InfoString}
                         lineThrough={error.status === RESOLVED}
                     />
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center color-gray-dark" style={{ wordBreak: 'break-all' }}>
+                    <div className="flex flex-col">
+                        <div className="flex items-center color-gray-dark font-semibold" style={{ wordBreak: 'break-all' }}>
                             {error.message}
                         </div>
-                        <div className="text-center">
+                        <div className="flex items-center mt-2">
                             <div className="flex">
-                                <Label topValue={error.sessions} topValueSize="text-lg" bottomValue="Sessions" />
-                                <Label topValue={error.users} topValueSize="text-lg" bottomValue="Users" />
+                                <Label topValue={error.sessions} horizontal topValueSize="text-lg" bottomValue="Sessions" />
+                                <Label topValue={error.users} horizontal topValueSize="text-lg" bottomValue="Users" />
                             </div>
                             <div className="text-xs color-gray-medium">Over the past 30 days</div>
                         </div>
                     </div>
                 </div>
 
-                {/* <Divider />
-				<div className="flex m-4">
-					{ error.status === UNRESOLVED 
-						? <IconButton
-								outline
-								className="mr-3"
-								label="Resolve"
-								size="small"
-								icon="check" 
-								loading={ resolveToggleLoading }
-								onClick={ this.resolve }
-							/>
-						: <IconButton
-								outline
-								className="mr-3"
-								label="Unresolve"
-								size="small"
-								icon="exclamation-circle" 
-								loading={ resolveToggleLoading }
-								onClick={ this.unresolve }
-							/>
-					}	
-					{ error.status !== IGNORED &&
-						<IconButton
-							outline
-							className="mr-3"
-							label="Ignore"
-							size="small"
-							icon="ban" 
-							loading={ ignoreLoading }
-							onClick={ this.ignore }
-						/>
-					}	
-					<IconButton						
-						primaryText
-						label="Bookmark"
-						size="small"
-						compact
-						icon={ error.favorite ? "star-solid" : "star" } 
-						loading={ toggleFavoriteLoading }
-						onClick={ this.bookmark }
-					/>
-					<SharePopup
-						entity="errors"
-						id={ error.errorId }
-						trigger={
-							<IconButton
-							primaryText
-							label="Share"
-							size="small"
-							icon="share-alt"
-							/>
-						}
-					/>
-				</div> */}
                 <Divider />
-                {!isPlayer && (
-                    <div className="m-4">
+                <div className="m-4">
+                    <div className="flex items-center">
                         <h3 className="text-xl inline-block mr-2">Last session with this error</h3>
                         <span className="font-thin text-sm">{resentOrDate(error.lastOccurrence)}</span>
-                        <SessionBar className="my-4" session={error.lastHydratedSession} />
-                        <Button variant="text-primary" onClick={this.findSessions}>
+                        <Button className="ml-auto" variant="text-primary" onClick={this.findSessions}>
                             Find all sessions with this error
                             <Icon className="ml-1" name="next1" color="teal" />
-                        </Button>    
+                        </Button>
                     </div>
-                )}
+                    <SessionBar className="my-4" session={error.lastHydratedSession} />
+                    {/* meta tags place */}
+                </div>
                 <Divider />
                 <div className="m-4">
                     <Loader loading={traceLoading}>
