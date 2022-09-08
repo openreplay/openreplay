@@ -69,6 +69,9 @@ func main() {
 				continue
 			}
 			msg := iter.Message().Decode()
+			if msg == nil {
+				return
+			}
 
 			// Just save session data into db without additional checks
 			if err := saver.InsertMessage(sessionID, msg); err != nil {

@@ -93,7 +93,11 @@ func (i *iteratorImpl) Next() bool {
 			log.Printf("Batch Metadata found at the end of the batch")
 			return false
 		}
-		m := i.msg.Decode().(*BatchMetadata)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*BatchMetadata)
 		i.index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.timestamp = m.Timestamp
 		i.version = m.Version
@@ -108,7 +112,11 @@ func (i *iteratorImpl) Next() bool {
 			log.Printf("Batch Meta found at the end of the batch")
 			return false
 		}
-		m := i.msg.Decode().(*BatchMeta)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*BatchMeta)
 		i.index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.timestamp = m.Timestamp
 		isBatchMeta = true
@@ -118,24 +126,44 @@ func (i *iteratorImpl) Next() bool {
 			log.Printf("Batch Meta found at the end of the batch")
 			return false
 		}
-		m := i.msg.Decode().(*IOSBatchMeta)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*IOSBatchMeta)
 		i.index = m.FirstIndex
 		i.timestamp = int64(m.Timestamp)
 		isBatchMeta = true
 		// continue readLoop
 	case MsgTimestamp:
-		m := i.msg.Decode().(*Timestamp)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*Timestamp)
 		i.timestamp = int64(m.Timestamp)
 		// No skipping here for making it easy to encode back the same sequence of message
 		// continue readLoop
 	case MsgSessionStart:
-		m := i.msg.Decode().(*SessionStart)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*SessionStart)
 		i.timestamp = int64(m.Timestamp)
 	case MsgSessionEnd:
-		m := i.msg.Decode().(*SessionEnd)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*SessionEnd)
 		i.timestamp = int64(m.Timestamp)
 	case MsgSetPageLocation:
-		m := i.msg.Decode().(*SetPageLocation)
+		msg := i.msg.Decode()
+		if msg == nil {
+			return false
+		}
+		m := msg.(*SetPageLocation)
 		i.url = m.URL
 	}
 	i.msg.Meta().Index = i.index
