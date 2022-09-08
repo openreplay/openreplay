@@ -1318,6 +1318,24 @@ func DecodeZustand(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
+func DecodeReplaceVCSS(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &ReplaceVCSS{}
+	if msg.ID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Styles, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.SheetID, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.BaseURL, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIOSBatchMeta(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &IOSBatchMeta{}
@@ -1953,6 +1971,9 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 79:
 		return DecodeZustand(reader)
+
+	case 83:
+		return DecodeReplaceVCSS(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)

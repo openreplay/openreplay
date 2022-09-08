@@ -158,6 +158,8 @@ const (
 
 	MsgZustand = 79
 
+	MsgReplaceVCSS = 83
+
 	MsgIOSBatchMeta = 107
 
 	MsgIOSSessionStart = 90
@@ -3066,12 +3068,50 @@ func (msg *Zustand) EncodeWithIndex() []byte {
 	return data
 }
 
+type ReplaceVCSS struct {
+	message
+	ID      uint64
+	Styles  string
+	SheetID string
+	BaseURL string
+}
+
+func (msg *ReplaceVCSS) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Styles)+len(msg.SheetID)+len(msg.BaseURL))
+	buf[0] = 83
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Styles, buf, p)
+	p = WriteString(msg.SheetID, buf, p)
+	p = WriteString(msg.BaseURL, buf, p)
+	return buf[:p]
+}
+
+func (msg *ReplaceVCSS) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
 func (msg *Zustand) Decode() Message {
 	return msg
 }
 
 func (msg *Zustand) TypeID() int {
 	return 79
+}
+
+func (msg *ReplaceVCSS) Decode() Message {
+	return msg
+}
+
+func (msg *ReplaceVCSS) TypeID() int {
+	return 83
 }
 
 type IOSBatchMeta struct {

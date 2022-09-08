@@ -99,7 +99,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        
+
 
 
 class CreateElementNode(Message):
@@ -752,6 +752,16 @@ class Zustand(Message):
         self.state = state
 
 
+class ReplaceVCSS(Message):
+    __id__ = 83
+
+    def __init__(self, id, styles, sheet_id, base_url):
+        self.id = id
+        self.styles = styles
+        self.sheet_id = sheet_id
+        self.base_url = base_url
+
+
 class IOSBatchMeta(Message):
     __id__ = 107
 
@@ -960,5 +970,3 @@ class IOSIssueEvent(Message):
         self.context_string = context_string
         self.context = context
         self.payload = payload
-
-

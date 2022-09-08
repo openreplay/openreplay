@@ -2,7 +2,7 @@
 
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
-import type { 
+import type {
   RawTimestamp,
   RawSetPageLocation,
   RawSetViewportSize,
@@ -48,6 +48,7 @@ import type {
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
   RawZustand,
+  RawReplaceVcss,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -149,6 +150,8 @@ export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
 export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type Zustand = RawZustand & Timed
+
+export type ReplaceVcss = RawReplaceVcss & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 

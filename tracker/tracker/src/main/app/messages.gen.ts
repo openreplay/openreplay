@@ -11,7 +11,7 @@ export function BatchMetadata(
   timestamp: number,
   location: string,
 ): Messages.BatchMetadata {
-  return [ 
+  return [
     Messages.Type.BatchMetadata,
     version,
     pageNo,
@@ -25,7 +25,7 @@ export function PartitionedMessage(
   partNo: number,
   partTotal: number,
 ): Messages.PartitionedMessage {
-  return [ 
+  return [
     Messages.Type.PartitionedMessage,
     partNo,
     partTotal,
@@ -35,7 +35,7 @@ export function PartitionedMessage(
 export function Timestamp(
   timestamp: number,
 ): Messages.Timestamp {
-  return [ 
+  return [
     Messages.Type.Timestamp,
     timestamp,
   ]
@@ -46,7 +46,7 @@ export function SetPageLocation(
   referrer: string,
   navigationStart: number,
 ): Messages.SetPageLocation {
-  return [ 
+  return [
     Messages.Type.SetPageLocation,
     url,
     referrer,
@@ -58,7 +58,7 @@ export function SetViewportSize(
   width: number,
   height: number,
 ): Messages.SetViewportSize {
-  return [ 
+  return [
     Messages.Type.SetViewportSize,
     width,
     height,
@@ -69,7 +69,7 @@ export function SetViewportScroll(
   x: number,
   y: number,
 ): Messages.SetViewportScroll {
-  return [ 
+  return [
     Messages.Type.SetViewportScroll,
     x,
     y,
@@ -77,11 +77,11 @@ export function SetViewportScroll(
 }
 
 export function CreateDocument(
-  
+
 ): Messages.CreateDocument {
-  return [ 
+  return [
     Messages.Type.CreateDocument,
-    
+
   ]
 }
 
@@ -92,7 +92,7 @@ export function CreateElementNode(
   tag: string,
   svg: boolean,
 ): Messages.CreateElementNode {
-  return [ 
+  return [
     Messages.Type.CreateElementNode,
     id,
     parentID,
@@ -107,7 +107,7 @@ export function CreateTextNode(
   parentID: number,
   index: number,
 ): Messages.CreateTextNode {
-  return [ 
+  return [
     Messages.Type.CreateTextNode,
     id,
     parentID,
@@ -120,7 +120,7 @@ export function MoveNode(
   parentID: number,
   index: number,
 ): Messages.MoveNode {
-  return [ 
+  return [
     Messages.Type.MoveNode,
     id,
     parentID,
@@ -131,7 +131,7 @@ export function MoveNode(
 export function RemoveNode(
   id: number,
 ): Messages.RemoveNode {
-  return [ 
+  return [
     Messages.Type.RemoveNode,
     id,
   ]
@@ -142,7 +142,7 @@ export function SetNodeAttribute(
   name: string,
   value: string,
 ): Messages.SetNodeAttribute {
-  return [ 
+  return [
     Messages.Type.SetNodeAttribute,
     id,
     name,
@@ -154,7 +154,7 @@ export function RemoveNodeAttribute(
   id: number,
   name: string,
 ): Messages.RemoveNodeAttribute {
-  return [ 
+  return [
     Messages.Type.RemoveNodeAttribute,
     id,
     name,
@@ -165,7 +165,7 @@ export function SetNodeData(
   id: number,
   data: string,
 ): Messages.SetNodeData {
-  return [ 
+  return [
     Messages.Type.SetNodeData,
     id,
     data,
@@ -177,7 +177,7 @@ export function SetNodeScroll(
   x: number,
   y: number,
 ): Messages.SetNodeScroll {
-  return [ 
+  return [
     Messages.Type.SetNodeScroll,
     id,
     x,
@@ -189,7 +189,7 @@ export function SetInputTarget(
   id: number,
   label: string,
 ): Messages.SetInputTarget {
-  return [ 
+  return [
     Messages.Type.SetInputTarget,
     id,
     label,
@@ -201,7 +201,7 @@ export function SetInputValue(
   value: string,
   mask: number,
 ): Messages.SetInputValue {
-  return [ 
+  return [
     Messages.Type.SetInputValue,
     id,
     value,
@@ -213,7 +213,7 @@ export function SetInputChecked(
   id: number,
   checked: boolean,
 ): Messages.SetInputChecked {
-  return [ 
+  return [
     Messages.Type.SetInputChecked,
     id,
     checked,
@@ -224,7 +224,7 @@ export function MouseMove(
   x: number,
   y: number,
 ): Messages.MouseMove {
-  return [ 
+  return [
     Messages.Type.MouseMove,
     x,
     y,
@@ -235,7 +235,7 @@ export function ConsoleLog(
   level: string,
   value: string,
 ): Messages.ConsoleLog {
-  return [ 
+  return [
     Messages.Type.ConsoleLog,
     level,
     value,
@@ -253,7 +253,7 @@ export function PageLoadTiming(
   firstPaint: number,
   firstContentfulPaint: number,
 ): Messages.PageLoadTiming {
-  return [ 
+  return [
     Messages.Type.PageLoadTiming,
     requestStart,
     responseStart,
@@ -272,7 +272,7 @@ export function PageRenderTiming(
   visuallyComplete: number,
   timeToInteractive: number,
 ): Messages.PageRenderTiming {
-  return [ 
+  return [
     Messages.Type.PageRenderTiming,
     speedIndex,
     visuallyComplete,
@@ -285,7 +285,7 @@ export function JSException(
   message: string,
   payload: string,
 ): Messages.JSException {
-  return [ 
+  return [
     Messages.Type.JSException,
     name,
     message,
@@ -297,7 +297,7 @@ export function RawCustomEvent(
   name: string,
   payload: string,
 ): Messages.RawCustomEvent {
-  return [ 
+  return [
     Messages.Type.RawCustomEvent,
     name,
     payload,
@@ -307,7 +307,7 @@ export function RawCustomEvent(
 export function UserID(
   id: string,
 ): Messages.UserID {
-  return [ 
+  return [
     Messages.Type.UserID,
     id,
   ]
@@ -316,7 +316,7 @@ export function UserID(
 export function UserAnonymousID(
   id: string,
 ): Messages.UserAnonymousID {
-  return [ 
+  return [
     Messages.Type.UserAnonymousID,
     id,
   ]
@@ -326,7 +326,7 @@ export function Metadata(
   key: string,
   value: string,
 ): Messages.Metadata {
-  return [ 
+  return [
     Messages.Type.Metadata,
     key,
     value,
@@ -338,7 +338,7 @@ export function CSSInsertRule(
   rule: string,
   index: number,
 ): Messages.CSSInsertRule {
-  return [ 
+  return [
     Messages.Type.CSSInsertRule,
     id,
     rule,
@@ -350,7 +350,7 @@ export function CSSDeleteRule(
   id: number,
   index: number,
 ): Messages.CSSDeleteRule {
-  return [ 
+  return [
     Messages.Type.CSSDeleteRule,
     id,
     index,
@@ -366,7 +366,7 @@ export function Fetch(
   timestamp: number,
   duration: number,
 ): Messages.Fetch {
-  return [ 
+  return [
     Messages.Type.Fetch,
     method,
     url,
@@ -384,7 +384,7 @@ export function Profiler(
   args: string,
   result: string,
 ): Messages.Profiler {
-  return [ 
+  return [
     Messages.Type.Profiler,
     name,
     duration,
@@ -397,7 +397,7 @@ export function OTable(
   key: string,
   value: string,
 ): Messages.OTable {
-  return [ 
+  return [
     Messages.Type.OTable,
     key,
     value,
@@ -407,7 +407,7 @@ export function OTable(
 export function StateAction(
   type: string,
 ): Messages.StateAction {
-  return [ 
+  return [
     Messages.Type.StateAction,
     type,
   ]
@@ -418,7 +418,7 @@ export function Redux(
   state: string,
   duration: number,
 ): Messages.Redux {
-  return [ 
+  return [
     Messages.Type.Redux,
     action,
     state,
@@ -430,7 +430,7 @@ export function Vuex(
   mutation: string,
   state: string,
 ): Messages.Vuex {
-  return [ 
+  return [
     Messages.Type.Vuex,
     mutation,
     state,
@@ -441,7 +441,7 @@ export function MobX(
   type: string,
   payload: string,
 ): Messages.MobX {
-  return [ 
+  return [
     Messages.Type.MobX,
     type,
     payload,
@@ -453,7 +453,7 @@ export function NgRx(
   state: string,
   duration: number,
 ): Messages.NgRx {
-  return [ 
+  return [
     Messages.Type.NgRx,
     action,
     state,
@@ -467,7 +467,7 @@ export function GraphQL(
   variables: string,
   response: string,
 ): Messages.GraphQL {
-  return [ 
+  return [
     Messages.Type.GraphQL,
     operationKind,
     operationName,
@@ -482,7 +482,7 @@ export function PerformanceTrack(
   totalJSHeapSize: number,
   usedJSHeapSize: number,
 ): Messages.PerformanceTrack {
-  return [ 
+  return [
     Messages.Type.PerformanceTrack,
     frames,
     ticks,
@@ -501,7 +501,7 @@ export function ResourceTiming(
   url: string,
   initiator: string,
 ): Messages.ResourceTiming {
-  return [ 
+  return [
     Messages.Type.ResourceTiming,
     timestamp,
     duration,
@@ -518,7 +518,7 @@ export function ConnectionInformation(
   downlink: number,
   type: string,
 ): Messages.ConnectionInformation {
-  return [ 
+  return [
     Messages.Type.ConnectionInformation,
     downlink,
     type,
@@ -528,7 +528,7 @@ export function ConnectionInformation(
 export function SetPageVisibility(
   hidden: boolean,
 ): Messages.SetPageVisibility {
-  return [ 
+  return [
     Messages.Type.SetPageVisibility,
     hidden,
   ]
@@ -543,7 +543,7 @@ export function LongTask(
   containerId: string,
   containerName: string,
 ): Messages.LongTask {
-  return [ 
+  return [
     Messages.Type.LongTask,
     timestamp,
     duration,
@@ -561,7 +561,7 @@ export function SetNodeAttributeURLBased(
   value: string,
   baseURL: string,
 ): Messages.SetNodeAttributeURLBased {
-  return [ 
+  return [
     Messages.Type.SetNodeAttributeURLBased,
     id,
     name,
@@ -575,7 +575,7 @@ export function SetCSSDataURLBased(
   data: string,
   baseURL: string,
 ): Messages.SetCSSDataURLBased {
-  return [ 
+  return [
     Messages.Type.SetCSSDataURLBased,
     id,
     data,
@@ -587,7 +587,7 @@ export function TechnicalInfo(
   type: string,
   value: string,
 ): Messages.TechnicalInfo {
-  return [ 
+  return [
     Messages.Type.TechnicalInfo,
     type,
     value,
@@ -598,7 +598,7 @@ export function CustomIssue(
   name: string,
   payload: string,
 ): Messages.CustomIssue {
-  return [ 
+  return [
     Messages.Type.CustomIssue,
     name,
     payload,
@@ -611,7 +611,7 @@ export function CSSInsertRuleURLBased(
   index: number,
   baseURL: string,
 ): Messages.CSSInsertRuleURLBased {
-  return [ 
+  return [
     Messages.Type.CSSInsertRuleURLBased,
     id,
     rule,
@@ -626,7 +626,7 @@ export function MouseClick(
   label: string,
   selector: string,
 ): Messages.MouseClick {
-  return [ 
+  return [
     Messages.Type.MouseClick,
     id,
     hesitationTime,
@@ -639,7 +639,7 @@ export function CreateIFrameDocument(
   frameID: number,
   id: number,
 ): Messages.CreateIFrameDocument {
-  return [ 
+  return [
     Messages.Type.CreateIFrameDocument,
     frameID,
     id,
@@ -651,7 +651,7 @@ export function AdoptedSSReplaceURLBased(
   text: string,
   baseURL: string,
 ): Messages.AdoptedSSReplaceURLBased {
-  return [ 
+  return [
     Messages.Type.AdoptedSSReplaceURLBased,
     sheetID,
     text,
@@ -665,7 +665,7 @@ export function AdoptedSSInsertRuleURLBased(
   index: number,
   baseURL: string,
 ): Messages.AdoptedSSInsertRuleURLBased {
-  return [ 
+  return [
     Messages.Type.AdoptedSSInsertRuleURLBased,
     sheetID,
     rule,
@@ -678,7 +678,7 @@ export function AdoptedSSDeleteRule(
   sheetID: number,
   index: number,
 ): Messages.AdoptedSSDeleteRule {
-  return [ 
+  return [
     Messages.Type.AdoptedSSDeleteRule,
     sheetID,
     index,
@@ -689,7 +689,7 @@ export function AdoptedSSAddOwner(
   sheetID: number,
   id: number,
 ): Messages.AdoptedSSAddOwner {
-  return [ 
+  return [
     Messages.Type.AdoptedSSAddOwner,
     sheetID,
     id,
@@ -700,7 +700,7 @@ export function AdoptedSSRemoveOwner(
   sheetID: number,
   id: number,
 ): Messages.AdoptedSSRemoveOwner {
-  return [ 
+  return [
     Messages.Type.AdoptedSSRemoveOwner,
     sheetID,
     id,
@@ -711,10 +711,24 @@ export function Zustand(
   mutation: string,
   state: string,
 ): Messages.Zustand {
-  return [ 
+  return [
     Messages.Type.Zustand,
     mutation,
     state,
   ]
 }
 
+export function ReplaceVCSS(
+  id: number,
+  styles: string,
+  sheetID: string,
+  baseURL: string,
+): Messages.ReplaceVCSS {
+  return [
+    Messages.Type.ReplaceVCSS,
+    id,
+    styles,
+    sheetID,
+    baseURL,
+  ]
+}

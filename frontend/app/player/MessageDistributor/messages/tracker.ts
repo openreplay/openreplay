@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
 
-import type { RawMessage } from './raw' 
+import type { RawMessage } from './raw'
 
 
 type TrBatchMetadata = [
@@ -44,7 +44,7 @@ type TrSetViewportScroll = [
 
 type TrCreateDocument = [
   type: 7,
-  
+
 ]
 
 type TrCreateElementNode = [
@@ -388,54 +388,61 @@ type TrZustand = [
   state: string,
 ]
 
+type TrReplaceVCSS = [
+  type: 83,
+  id: number,
+  styles: string,
+  sheetID: string,
+  baseURL: string,
+]
 
-export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSException | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand
+export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSException | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrReplaceVCSS
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
-    
+
     case 0: {
       return {
-        tp: "timestamp", 
+        tp: "timestamp",
         timestamp: tMsg[1],
       }
     }
-    
+
     case 4: {
       return {
-        tp: "set_page_location", 
+        tp: "set_page_location",
         url: tMsg[1],
         referrer: tMsg[2],
         navigationStart: tMsg[3],
       }
     }
-    
+
     case 5: {
       return {
-        tp: "set_viewport_size", 
+        tp: "set_viewport_size",
         width: tMsg[1],
         height: tMsg[2],
       }
     }
-    
+
     case 6: {
       return {
-        tp: "set_viewport_scroll", 
+        tp: "set_viewport_scroll",
         x: tMsg[1],
         y: tMsg[2],
       }
     }
-    
+
     case 7: {
       return {
-        tp: "create_document", 
-        
+        tp: "create_document",
+
       }
     }
-    
+
     case 8: {
       return {
-        tp: "create_element_node", 
+        tp: "create_element_node",
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
@@ -443,119 +450,119 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         svg: tMsg[5],
       }
     }
-    
+
     case 9: {
       return {
-        tp: "create_text_node", 
+        tp: "create_text_node",
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
       }
     }
-    
+
     case 10: {
       return {
-        tp: "move_node", 
+        tp: "move_node",
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
       }
     }
-    
+
     case 11: {
       return {
-        tp: "remove_node", 
+        tp: "remove_node",
         id: tMsg[1],
       }
     }
-    
+
     case 12: {
       return {
-        tp: "set_node_attribute", 
+        tp: "set_node_attribute",
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
       }
     }
-    
+
     case 13: {
       return {
-        tp: "remove_node_attribute", 
+        tp: "remove_node_attribute",
         id: tMsg[1],
         name: tMsg[2],
       }
     }
-    
+
     case 14: {
       return {
-        tp: "set_node_data", 
+        tp: "set_node_data",
         id: tMsg[1],
         data: tMsg[2],
       }
     }
-    
+
     case 16: {
       return {
-        tp: "set_node_scroll", 
+        tp: "set_node_scroll",
         id: tMsg[1],
         x: tMsg[2],
         y: tMsg[3],
       }
     }
-    
+
     case 18: {
       return {
-        tp: "set_input_value", 
+        tp: "set_input_value",
         id: tMsg[1],
         value: tMsg[2],
         mask: tMsg[3],
       }
     }
-    
+
     case 19: {
       return {
-        tp: "set_input_checked", 
+        tp: "set_input_checked",
         id: tMsg[1],
         checked: tMsg[2],
       }
     }
-    
+
     case 20: {
       return {
-        tp: "mouse_move", 
+        tp: "mouse_move",
         x: tMsg[1],
         y: tMsg[2],
       }
     }
-    
+
     case 22: {
       return {
-        tp: "console_log", 
+        tp: "console_log",
         level: tMsg[1],
         value: tMsg[2],
       }
     }
-    
+
     case 37: {
       return {
-        tp: "css_insert_rule", 
+        tp: "css_insert_rule",
         id: tMsg[1],
         rule: tMsg[2],
         index: tMsg[3],
       }
     }
-    
+
     case 38: {
       return {
-        tp: "css_delete_rule", 
+        tp: "css_delete_rule",
         id: tMsg[1],
         index: tMsg[2],
       }
     }
-    
+
     case 39: {
       return {
-        tp: "fetch", 
+        tp: "fetch",
         method: tMsg[1],
         url: tMsg[2],
         request: tMsg[3],
@@ -565,97 +572,97 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[7],
       }
     }
-    
+
     case 40: {
       return {
-        tp: "profiler", 
+        tp: "profiler",
         name: tMsg[1],
         duration: tMsg[2],
         args: tMsg[3],
         result: tMsg[4],
       }
     }
-    
+
     case 41: {
       return {
-        tp: "o_table", 
+        tp: "o_table",
         key: tMsg[1],
         value: tMsg[2],
       }
     }
-    
+
     case 44: {
       return {
-        tp: "redux", 
+        tp: "redux",
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
       }
     }
-    
+
     case 45: {
       return {
-        tp: "vuex", 
+        tp: "vuex",
         mutation: tMsg[1],
         state: tMsg[2],
       }
     }
-    
+
     case 46: {
       return {
-        tp: "mob_x", 
+        tp: "mob_x",
         type: tMsg[1],
         payload: tMsg[2],
       }
     }
-    
+
     case 47: {
       return {
-        tp: "ng_rx", 
+        tp: "ng_rx",
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
       }
     }
-    
+
     case 48: {
       return {
-        tp: "graph_ql", 
+        tp: "graph_ql",
         operationKind: tMsg[1],
         operationName: tMsg[2],
         variables: tMsg[3],
         response: tMsg[4],
       }
     }
-    
+
     case 49: {
       return {
-        tp: "performance_track", 
+        tp: "performance_track",
         frames: tMsg[1],
         ticks: tMsg[2],
         totalJSHeapSize: tMsg[3],
         usedJSHeapSize: tMsg[4],
       }
     }
-    
+
     case 54: {
       return {
-        tp: "connection_information", 
+        tp: "connection_information",
         downlink: tMsg[1],
         type: tMsg[2],
       }
     }
-    
+
     case 55: {
       return {
-        tp: "set_page_visibility", 
+        tp: "set_page_visibility",
         hidden: tMsg[1],
       }
     }
-    
+
     case 59: {
       return {
-        tp: "long_task", 
+        tp: "long_task",
         timestamp: tMsg[1],
         duration: tMsg[2],
         context: tMsg[3],
@@ -665,105 +672,115 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         containerName: tMsg[7],
       }
     }
-    
+
     case 60: {
       return {
-        tp: "set_node_attribute_url_based", 
+        tp: "set_node_attribute_url_based",
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
         baseURL: tMsg[4],
       }
     }
-    
+
     case 61: {
       return {
-        tp: "set_css_data_url_based", 
+        tp: "set_css_data_url_based",
         id: tMsg[1],
         data: tMsg[2],
         baseURL: tMsg[3],
       }
     }
-    
+
     case 67: {
       return {
-        tp: "css_insert_rule_url_based", 
+        tp: "css_insert_rule_url_based",
         id: tMsg[1],
         rule: tMsg[2],
         index: tMsg[3],
         baseURL: tMsg[4],
       }
     }
-    
+
     case 69: {
       return {
-        tp: "mouse_click", 
+        tp: "mouse_click",
         id: tMsg[1],
         hesitationTime: tMsg[2],
         label: tMsg[3],
         selector: tMsg[4],
       }
     }
-    
+
     case 70: {
       return {
-        tp: "create_i_frame_document", 
+        tp: "create_i_frame_document",
         frameID: tMsg[1],
         id: tMsg[2],
       }
     }
-    
+
     case 71: {
       return {
-        tp: "adopted_ss_replace_url_based", 
+        tp: "adopted_ss_replace_url_based",
         sheetID: tMsg[1],
         text: tMsg[2],
         baseURL: tMsg[3],
       }
     }
-    
+
     case 73: {
       return {
-        tp: "adopted_ss_insert_rule_url_based", 
+        tp: "adopted_ss_insert_rule_url_based",
         sheetID: tMsg[1],
         rule: tMsg[2],
         index: tMsg[3],
         baseURL: tMsg[4],
       }
     }
-    
+
     case 75: {
       return {
-        tp: "adopted_ss_delete_rule", 
+        tp: "adopted_ss_delete_rule",
         sheetID: tMsg[1],
         index: tMsg[2],
       }
     }
-    
+
     case 76: {
       return {
-        tp: "adopted_ss_add_owner", 
+        tp: "adopted_ss_add_owner",
         sheetID: tMsg[1],
         id: tMsg[2],
       }
     }
-    
+
     case 77: {
       return {
-        tp: "adopted_ss_remove_owner", 
+        tp: "adopted_ss_remove_owner",
         sheetID: tMsg[1],
         id: tMsg[2],
       }
     }
-    
+
     case 79: {
       return {
-        tp: "zustand", 
+        tp: "zustand",
         mutation: tMsg[1],
         state: tMsg[2],
       }
     }
-    
+
+    case 83: {
+      return {
+        tp: "replace_vcss",
+        id: tMsg[1],
+        styles: tMsg[2],
+        sheetID: tMsg[3],
+        baseURL: tMsg[4],
+      }
+    }
+
     default:
       return null
   }

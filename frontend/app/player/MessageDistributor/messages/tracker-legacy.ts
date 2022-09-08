@@ -61,6 +61,7 @@ export const TP_MAP = {
   76: "adopted_ss_add_owner",
   77: "adopted_ss_remove_owner",
   79: "zustand",
+  83: "replace_vcss",
   90: "ios_session_start",
   93: "ios_custom_event",
   96: "ios_screen_changes",
@@ -69,5 +70,3 @@ export const TP_MAP = {
   103: "ios_log",
   105: "ios_network_call",
 } as const
-
-

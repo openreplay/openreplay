@@ -460,3 +460,10 @@ message 79, 'Zustand' do
   string 'Mutation'
   string 'State'
 end
+
+message 83, 'ReplaceVCSS' do
+  uint 'ID'
+  string 'Styles'
+  string 'SheetID'
+  string 'BaseURL'
+end
