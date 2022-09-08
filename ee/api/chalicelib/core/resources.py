@@ -15,8 +15,8 @@ def get_by_session_id(session_id, project_id, start_ts, duration):
                                encoded_body_size,decoded_body_size,success,
                                if(success, 200, 400) AS status
                         FROM {exp_ch_helper.get_main_resources_table(start_ts)}
-                        WHERE session_id = toUInt16(%(session_id)s) 
-                            AND project_id=%(project_id)s
+                        WHERE session_id = toUInt64(%(session_id)s) 
+                            AND project_id = toUInt16(%(project_id)s)
                             AND datetime >= toDateTime(%(res_start_ts)s / 1000)
                             AND datetime <= toDateTime(%(res_end_ts)s / 1000);"""
         else:
@@ -26,7 +26,7 @@ def get_by_session_id(session_id, project_id, start_ts, duration):
                               coalesce(status,if(success, 200, status)) AS status
                         FROM resources
                         WHERE session_id = toUInt64(%(session_id)s) 
-                            AND project_id=%(project_id)s
+                            AND project_id = toUInt64(%(project_id)s)
                             AND datetime >= toDateTime(%(res_start_ts)s / 1000)
                             AND datetime <= toDateTime(%(res_end_ts)s / 1000);"""
         params = {"session_id": session_id, "project_id": project_id, "start_ts": start_ts, "duration": duration,
