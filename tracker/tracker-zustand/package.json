@@ -1,13 +1,14 @@
 {
-  "name": "@openreplay/tracker-vuex",
-  "description": "Tracker plugin for Vuex state recording",
-  "version": "4.0.1",
+  "name": "@openreplay/tracker-zustand",
+  "description": "Tracker plugin for Zustand state recording",
+  "version": "1.0.0",
   "keywords": [
-    "vuex",
+    "zustand",
+    "state",
     "logging",
     "replay"
   ],
-  "author": "Alex Tsokurov",
+  "author": "Nikita Melnikov <nikita@openreplay.com>",
   "contributors": [
     "Aleksandr K <alex@openreplay.com>"
   ],
@@ -23,10 +24,10 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^3.4.8"
+    "@openreplay/tracker": "^4.0.0"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.4.8",
+    "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^4.6.0-dev.20211126"
