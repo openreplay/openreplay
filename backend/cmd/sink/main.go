@@ -19,10 +19,8 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("sink")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
+	metrics := monitoring.New("sink")
 	cfg := sink.New()
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {

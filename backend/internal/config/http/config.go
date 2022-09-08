@@ -9,21 +9,24 @@ import (
 
 type Config struct {
 	common.Config
-	HTTPHost          string        `env:"HTTP_HOST,default="`
-	HTTPPort          string        `env:"HTTP_PORT,required"`
-	HTTPTimeout       time.Duration `env:"HTTP_TIMEOUT,default=60s"`
-	TopicRawWeb       string        `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS       string        `env:"TOPIC_RAW_IOS,required"`
-	BeaconSizeLimit   int64         `env:"BEACON_SIZE_LIMIT,required"`
-	JsonSizeLimit     int64         `env:"JSON_SIZE_LIMIT,default=1000"`
-	FileSizeLimit     int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
-	AWSRegion         string        `env:"AWS_REGION,required"`
-	S3BucketIOSImages string        `env:"S3_BUCKET_IOS_IMAGES,required"`
-	Postgres          string        `env:"POSTGRES_STRING,required"`
-	TokenSecret       string        `env:"TOKEN_SECRET,required"`
-	UAParserFile      string        `env:"UAPARSER_FILE,required"`
-	MaxMinDBFile      string        `env:"MAXMINDDB_FILE,required"`
-	WorkerID          uint16
+	HTTPHost                   string        `env:"HTTP_HOST,default="`
+	HTTPPort                   string        `env:"HTTP_PORT,required"`
+	HTTPTimeout                time.Duration `env:"HTTP_TIMEOUT,default=60s"`
+	TopicRawWeb                string        `env:"TOPIC_RAW_WEB,required"`
+	TopicRawIOS                string        `env:"TOPIC_RAW_IOS,required"`
+	BeaconSizeLimit            int64         `env:"BEACON_SIZE_LIMIT,required"`
+	JsonSizeLimit              int64         `env:"JSON_SIZE_LIMIT,default=1000"`
+	FileSizeLimit              int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
+	AWSRegion                  string        `env:"AWS_REGION,required"`
+	S3BucketIOSImages          string        `env:"S3_BUCKET_IOS_IMAGES,required"`
+	Postgres                   string        `env:"POSTGRES_STRING,required"`
+	BatchQueueLimit            int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
+	BatchSizeLimit             int           `env:"DB_BATCH_SIZE_LIMIT,required"`
+	ProjectExpirationTimeoutMs int64         `env:"PROJECT_EXPIRATION_TIMEOUT_MS,default=1200000"`
+	TokenSecret                string        `env:"TOKEN_SECRET,required"`
+	UAParserFile               string        `env:"UAPARSER_FILE,required"`
+	MaxMinDBFile               string        `env:"MAXMINDDB_FILE,required"`
+	WorkerID                   uint16
 }
 
 func New() *Config {

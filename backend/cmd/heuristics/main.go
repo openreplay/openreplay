@@ -14,13 +14,11 @@ import (
 	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/sessions"
+	"openreplay/backend/pkg/sessions-builder"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	// Load service configuration
 	cfg := heuristics.New()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
@@ -39,7 +37,7 @@ func main() {
 	}
 
 	// Create handler's aggregator
-	builderMap := sessions.NewBuilderMap(handlersFabric)
+	builderMap := sessions_builder.NewBuilderMap(handlersFabric)
 
 	// Init logger
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)

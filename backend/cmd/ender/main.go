@@ -1,15 +1,23 @@
 package main
 
 import (
+	"context"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
+
+	"openreplay/backend/pkg/db/autocomplete"
+	"openreplay/backend/pkg/db/batch"
+
+	"openreplay/backend/pkg/sessions/cache"
+	sessions "openreplay/backend/pkg/sessions/storage/postgres"
+
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"openreplay/backend/internal/config/ender"
-	"openreplay/backend/internal/sessionender"
-	"openreplay/backend/pkg/db/cache"
+	service "openreplay/backend/internal/ender"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
 	logger "openreplay/backend/pkg/log"
@@ -19,19 +27,39 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("ender")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	// Load service configuration
+	metrics := monitoring.New("ender")
 	cfg := ender.New()
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
-	defer pg.Close()
+	// Create pool of connections to DB (postgres)
+	conn, err := pgxpool.Connect(context.Background(), cfg.Postgres)
+	if err != nil {
+		log.Fatalf("pgxpool.Connect err: %s", err)
+	}
+	// Create pool wrapper
+	connWrapper, err := postgres.NewPool(conn, metrics)
+	if err != nil {
+		log.Fatalf("can't create new pool wrapper: %s", err)
+	}
+	// Create cache level for projects and sessions-builder
+	cacheService, err := cache.New(connWrapper, cfg.ProjectExpirationTimeoutMs)
+	if err != nil {
+		log.Fatalf("can't create cacher, err: %s", err)
+	}
+	batches := batch.New(connWrapper, cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics)
+	autocompletes, err := autocomplete.New(connWrapper)
+	if err != nil {
+		log.Fatalf("can't init autocompletes: %s", err)
+	}
+	// Sessions
+	sessionService, err := sessions.New(connWrapper, cacheService, batches, autocompletes)
+	if err != nil {
+		log.Fatalf("can't create session service: %s", err)
+	}
 
 	// Init all modules
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessions, err := service.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
@@ -76,22 +104,13 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			// Find ended sessions and send notification to other services
+			// Find ended sessions-builder and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
-				currDuration, err := pg.GetSessionDuration(sessionID)
-				if err != nil {
-					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
-				}
-				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
+				err := sessionService.InsertSessionEnd(sessionID, msg)
 				if err != nil {
 					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
 					return false
-				}
-				if currDuration == newDuration {
-					log.Printf("sessionEnd duplicate, sessID: %d, prevDur: %d, newDur: %d", sessionID,
-						currDuration, newDuration)
-					return true
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
 					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)

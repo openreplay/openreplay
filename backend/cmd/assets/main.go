@@ -17,10 +17,8 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("assets")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
+	metrics := monitoring.New("assets")
 	cfg := config.New()
 
 	cacher := cacher.NewCacher(cfg, metrics)

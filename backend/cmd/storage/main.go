@@ -18,10 +18,8 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("storage")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
+	metrics := monitoring.New("storage")
 	cfg := config.New()
 
 	s3 := s3storage.NewS3(cfg.S3Region, cfg.S3Bucket)

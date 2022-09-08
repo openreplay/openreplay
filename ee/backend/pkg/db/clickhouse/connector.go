@@ -1,16 +1,13 @@
 package clickhouse
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
-	"math"
-	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/url"
 	"strings"
 	"time"
@@ -18,73 +15,25 @@ import (
 	"openreplay/backend/pkg/license"
 )
 
-type Bulk interface {
-	Append(args ...interface{}) error
-	Send() error
-}
-
-type bulkImpl struct {
-	conn   driver.Conn
-	query  string
-	values [][]interface{}
-}
-
-func NewBulk(conn driver.Conn, query string) (Bulk, error) {
-	switch {
-	case conn == nil:
-		return nil, errors.New("clickhouse connection is empty")
-	case query == "":
-		return nil, errors.New("query is empty")
-	}
-	return &bulkImpl{
-		conn:   conn,
-		query:  query,
-		values: make([][]interface{}, 0),
-	}, nil
-}
-
-func (b *bulkImpl) Append(args ...interface{}) error {
-	b.values = append(b.values, args)
-	return nil
-}
-
-func (b *bulkImpl) Send() error {
-	batch, err := b.conn.PrepareBatch(context.Background(), b.query)
-	if err != nil {
-		return fmt.Errorf("can't create new batch: %s", err)
-	}
-	for _, set := range b.values {
-		if err := batch.Append(set...); err != nil {
-			log.Printf("can't append value set to batch, err: %s", err)
-			log.Printf("failed query: %s", b.query)
-		}
-	}
-	b.values = make([][]interface{}, 0)
-	return batch.Send()
-}
-
-var CONTEXT_MAP = map[uint64]string{0: "unknown", 1: "self", 2: "same-origin-ancestor", 3: "same-origin-descendant", 4: "same-origin", 5: "cross-origin-ancestor", 6: "cross-origin-descendant", 7: "cross-origin-unreachable", 8: "multiple-contexts"}
-var CONTAINER_TYPE_MAP = map[uint64]string{0: "window", 1: "iframe", 2: "embed", 3: "object"}
-
 type Connector interface {
+	InsertSession(session *sessions.Session) error
+	InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error
+	InsertPageEvent(session *sessions.Session, msg *messages.PageEvent) error
+	InsertClickEvent(session *sessions.Session, msg *messages.ClickEvent) error
+	InsertInputEvent(session *sessions.Session, msg *messages.InputEvent) error
+	InsertErrorEvent(session *sessions.Session, msg *messages.ErrorEvent) error
+	InsertResourceEvent(session *sessions.Session, msg *messages.ResourceEvent) error
+	InsertPerformanceEvent(session *sessions.Session, msg *messages.PerformanceTrackAggr) error
+	InsertRequestEvent(session *sessions.Session, msg *messages.FetchEvent, savePayload bool) error
+	InsertCustomEvent(session *sessions.Session, msg *messages.CustomEvent) error
+	InsertGraphQLEvent(session *sessions.Session, msg *messages.GraphQLEvent) error
 	Prepare() error
 	Commit() error
-	InsertWebSession(session *types.Session) error
-	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
-	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
-	InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error
-	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
-	InsertWebErrorEvent(session *types.Session, msg *messages.ErrorEvent) error
-	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
-	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
-	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
-	InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error
 }
 
 type connectorImpl struct {
 	conn    driver.Conn
-	batches map[string]Bulk //driver.Batch
+	batches map[string]Bulk
 }
 
 func NewConnector(url string) Connector {
@@ -102,7 +51,6 @@ func NewConnector(url string) Connector {
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
 		},
-		// Debug: true,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -138,31 +86,7 @@ var batches = map[string]string{
 	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 }
 
-func (c *connectorImpl) Prepare() error {
-	for table, query := range batches {
-		if err := c.newBatch(table, query); err != nil {
-			return fmt.Errorf("can't create %s batch: %s", table, err)
-		}
-	}
-	return nil
-}
-
-func (c *connectorImpl) Commit() error {
-	for _, b := range c.batches {
-		if err := b.Send(); err != nil {
-			return fmt.Errorf("can't send batch: %s", err)
-		}
-	}
-	return nil
-}
-
-func (c *connectorImpl) checkError(name string, err error) {
-	if err != clickhouse.ErrBatchAlreadySent {
-		log.Printf("can't create %s batch after failed append operation: %s", name, err)
-	}
-}
-
-func (c *connectorImpl) InsertWebSession(session *types.Session) error {
+func (c *connectorImpl) InsertSession(session *sessions.Session) error {
 	if session.Duration == nil {
 		return errors.New("trying to insert session with nil duration")
 	}
@@ -204,7 +128,22 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error {
+func (c *connectorImpl) InsertAutocomplete(session *sessions.Session, msgType, msgValue string) error {
+	if len(msgValue) == 0 {
+		return nil
+	}
+	if err := c.batches["autocompletes"].Append(
+		uint16(session.ProjectID),
+		msgType,
+		msgValue,
+	); err != nil {
+		c.checkError("autocompletes", err)
+		return fmt.Errorf("can't append to autocompletes batch: %s", err)
+	}
+	return nil
+}
+
+func (c *connectorImpl) InsertResourceEvent(session *sessions.Session, msg *messages.ResourceEvent) error {
 	var method interface{} = url.EnsureMethod(msg.Method)
 	if method == "" {
 		method = nil
@@ -233,7 +172,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	return nil
 }
 
-func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error {
+func (c *connectorImpl) InsertPageEvent(session *sessions.Session, msg *messages.PageEvent) error {
 	if err := c.batches["pages"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -260,7 +199,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	return nil
 }
 
-func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error {
+func (c *connectorImpl) InsertClickEvent(session *sessions.Session, msg *messages.ClickEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -279,7 +218,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	return nil
 }
 
-func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error {
+func (c *connectorImpl) InsertInputEvent(session *sessions.Session, msg *messages.InputEvent) error {
 	if msg.Label == "" {
 		return nil
 	}
@@ -297,7 +236,7 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 	return nil
 }
 
-func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *messages.ErrorEvent) error {
+func (c *connectorImpl) InsertErrorEvent(session *sessions.Session, msg *messages.ErrorEvent) error {
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -315,8 +254,8 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *message
 	return nil
 }
 
-func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error {
-	var timestamp uint64 = (msg.TimestampStart + msg.TimestampEnd) / 2
+func (c *connectorImpl) InsertPerformanceEvent(session *sessions.Session, msg *messages.PerformanceTrackAggr) error {
+	var timestamp = (msg.TimestampStart + msg.TimestampEnd) / 2
 	if err := c.batches["performance"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -343,22 +282,7 @@ func (c *connectorImpl) InsertWebPerformanceTrackAggr(session *types.Session, ms
 	return nil
 }
 
-func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgValue string) error {
-	if len(msgValue) == 0 {
-		return nil
-	}
-	if err := c.batches["autocompletes"].Append(
-		uint16(session.ProjectID),
-		msgType,
-		msgValue,
-	); err != nil {
-		c.checkError("autocompletes", err)
-		return fmt.Errorf("can't append to autocompletes batch: %s", err)
-	}
-	return nil
-}
-
-func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error {
+func (c *connectorImpl) InsertRequestEvent(session *sessions.Session, msg *messages.FetchEvent, savePayload bool) error {
 	urlMethod := url.EnsureMethod(msg.Method)
 	if urlMethod == "" {
 		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
@@ -388,7 +312,7 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 	return nil
 }
 
-func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.CustomEvent) error {
+func (c *connectorImpl) InsertCustomEvent(session *sessions.Session, msg *messages.CustomEvent) error {
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -404,7 +328,7 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	return nil
 }
 
-func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error {
+func (c *connectorImpl) InsertGraphQLEvent(session *sessions.Session, msg *messages.GraphQLEvent) error {
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -421,39 +345,26 @@ func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.Grap
 	return nil
 }
 
-func nullableUint16(v uint16) *uint16 {
-	var p *uint16 = nil
-	if v != 0 {
-		p = &v
+func (c *connectorImpl) Prepare() error {
+	for table, query := range batches {
+		if err := c.newBatch(table, query); err != nil {
+			return fmt.Errorf("can't create %s batch: %s", table, err)
+		}
 	}
-	return p
+	return nil
 }
 
-func nullableUint32(v uint32) *uint32 {
-	var p *uint32 = nil
-	if v != 0 {
-		p = &v
+func (c *connectorImpl) Commit() error {
+	for _, b := range c.batches {
+		if err := b.Send(); err != nil {
+			return fmt.Errorf("can't send batch: %s", err)
+		}
 	}
-	return p
+	return nil
 }
 
-func nullableString(v string) *string {
-	var p *string = nil
-	if v != "" {
-		p = &v
+func (c *connectorImpl) checkError(name string, err error) {
+	if err != clickhouse.ErrBatchAlreadySent {
+		log.Printf("can't create %s batch after failed append operation: %s", name, err)
 	}
-	return p
-}
-
-func datetime(timestamp uint64) time.Time {
-	t := time.Unix(int64(timestamp/1e3), 0)
-	// Temporal solution for not correct timestamps in performance messages
-	if t.Year() < 2022 || t.Year() > 2025 {
-		return time.Now()
-	}
-	return t
-}
-
-func getSqIdx(messageID uint64) uint {
-	return uint(messageID % math.MaxInt32)
 }

@@ -9,10 +9,10 @@ import (
 	"openreplay/backend/internal/http/ios"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/internal/http/uuid"
+	"openreplay/backend/pkg/db/events"
 	"strconv"
 	"time"
 
-	"openreplay/backend/pkg/db/postgres"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/token"
 )
@@ -40,7 +40,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 
 	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
-		if postgres.IsNoRowsErr(err) {
+		if events.IsNoRowsErr(err) {
 			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
 		} else {
 			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
@@ -67,7 +67,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			ResponseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
-		// TODO: if EXPIRED => send message for two sessions association
+		// TODO: if EXPIRED => send message for two sessions-builder association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
 

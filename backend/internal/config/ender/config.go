@@ -8,6 +8,8 @@ import (
 type Config struct {
 	common.Config
 	Postgres                   string `env:"POSTGRES_STRING,required"`
+	BatchQueueLimit            int    `env:"DB_BATCH_QUEUE_LIMIT,required"`
+	BatchSizeLimit             int    `env:"DB_BATCH_SIZE_LIMIT,required"`
 	ProjectExpirationTimeoutMs int64  `env:"PROJECT_EXPIRATION_TIMEOUT_MS,default=1200000"`
 	GroupEnder                 string `env:"GROUP_ENDER,required"`
 	LoggerTimeout              int    `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
