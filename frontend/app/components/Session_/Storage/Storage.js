@@ -138,16 +138,23 @@ export default class Storage extends React.PureComponent {
 				src = item.payload;
 				name = `@${item.type} ${src && src.type}`;
 			break;
+			case STORAGE_TYPES.ZUSTAND:
+				src = null;
+				name = item.mutation.join('')
 		}
 
 		return (
 			<div className="flex justify-between items-start" key={ `store-${i}` }>
-				<JSONTree
-					name={ this.ensureString(name) }
-					src={ src }
-					collapsed
-					collapseStringsAfterLength={ 7 }
-				/>
+				{src === null ? (
+					<div className="font-mono"> {name} </div>
+				) : (
+					<JSONTree
+						name={ this.ensureString(name) }
+						src={ src }
+						collapsed
+						collapseStringsAfterLength={ 7 }
+					/>
+				)}
 				<div className="flex items-center">
 					{ i + 1 < listNow.length &&
 						<button
