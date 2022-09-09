@@ -51,7 +51,7 @@ export default function(opts: Partial<Options> = {}) {
       if (store.subscribe) {
         const randomId = Math.random().toString(36).substring(2, 9)
         store.subscribe((mutation, storeState) => {
-          state[storeName || randomId] = state
+          state[storeName || randomId] = storeState
           processMutationAndState(app, options, encoder, mutation, state);
         });
       }
