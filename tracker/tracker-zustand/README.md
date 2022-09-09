@@ -1,4 +1,4 @@
-# OpenReplay Tracker Vuex plugin
+# OpenReplay Tracker Zustand plugin
 A Zustand plugin for OpenReplay Tracker. This plugin allows you to see the application state during session replay.
 
 ## Installation
