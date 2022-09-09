@@ -1,7 +1,7 @@
-# Special one for Batch Metadata. Message id could define the version 
+# Special one for Batch Metadata. Message id could define the version
 
 # Depricated since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :replayer => false, :tracker => false do 
+message 80, 'BatchMeta', :replayer => false, :tracker => false do
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
@@ -421,7 +421,7 @@ message 70, 'CreateIFrameDocument' do
   uint 'FrameID'
   uint 'ID'
 end
- 
+
 #Since 3.6.0 AdoptedStyleSheets
 message 71, 'AdoptedSSReplaceURLBased' do
   uint 'SheetID'
@@ -432,26 +432,31 @@ message 72, 'AdoptedSSReplace', :tracker => false do
   uint 'SheetID'
   string 'Text'
 end
-message 73, 'AdoptedSSInsertRuleURLBased' do 
+message 73, 'AdoptedSSInsertRuleURLBased' do
   uint 'SheetID'
   string 'Rule'
   uint 'Index'
   string 'BaseURL'
 end
-message 74, 'AdoptedSSInsertRule', :tracker => false do 
+message 74, 'AdoptedSSInsertRule', :tracker => false do
   uint 'SheetID'
   string 'Rule'
   uint 'Index'
 end
-message 75, 'AdoptedSSDeleteRule' do 
+message 75, 'AdoptedSSDeleteRule' do
   uint 'SheetID'
   uint 'Index'
 end
-message 76, 'AdoptedSSAddOwner' do 
+message 76, 'AdoptedSSAddOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-message 77, 'AdoptedSSRemoveOwner' do 
+message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
+end
+
+message 79, 'Zustand' do
+  string 'Mutation'
+  string 'State'
 end

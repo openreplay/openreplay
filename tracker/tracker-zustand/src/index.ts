@@ -11,22 +11,19 @@ function processMutationAndState(
   app: App,
   options: Options,
   encoder: Encoder,
-  mutation: any,
-  state: any
+  mutation: string[],
+  state: Record<string, any>
 ) {
   if (options.filter(mutation, state)) {
     try {
-      const { type } = mutation;
-      if (typeof type === "string" && type) {
-        app.send(Messages.StateAction(type));
-      }
       const _mutation = encoder.encode(options.mutationTransformer(mutation));
       const _state = encoder.encode(options.transformer(state));
       const _table = encoder.commit();
       for (let key in _table) app.send(Messages.OTable(key, _table[key]));
-      app.send(Messages.Vuex(_mutation, _state));
-    } catch {
+      app.send(Messages.Zustand(_mutation, _state));
+    } catch (e) {
       encoder.clear();
+      app.debug.error(e)
     }
   }
 }
@@ -46,31 +43,20 @@ export default function(opts: Partial<Options> = {}) {
     }
     const encoder = new Encoder(sha1, 50);
     const state = {};
-    return (storeName: string) => (store) => {
-      // Vuex
-      if (store.subscribe) {
-        const randomId = Math.random().toString(36).substring(2, 9)
-        store.subscribe((mutation, storeState) => {
-          state[storeName || randomId] = storeState
-          processMutationAndState(app, options, encoder, mutation, state);
-        });
-      }
+    return (storeName: string = Math.random().toString(36).substring(2, 9)) =>
+    (config: Function) =>
+      (set: (...args: any) => void, get: () => Record<string, any>, api: any) =>
+      config(
+        (...args) => {
+          set(...args)
+          const newState = get();
+          state[storeName] = newState
+          const triggeredActions = args.map(action => action.toString?.())
 
-      // Pinia
-      if (store.$onAction) {
-        store.$onAction(({ name, store, args }) => {
-          try {
-            state[storeName || store.$id] = store.$state;
-            const mutation = {
-              type: name,
-              payload: args
-            };
-            processMutationAndState(app, options, encoder, mutation, state);
-          } catch (e) {
-            app.debug.error(e)
-          }
-        });
-      }
-    };
+          processMutationAndState(app, options, encoder, triggeredActions, state)
+        },
+        get,
+        api
+      )
   };
 }

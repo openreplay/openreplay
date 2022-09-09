@@ -2,6 +2,7 @@ const REDUX = "redux";
 const MOBX = "mobx";
 const VUEX = "vuex";
 const NGRX = "ngrx";
+const ZUSTAND = 'zustand';
 const NONE = 0;
 
 
@@ -10,6 +11,7 @@ export const STORAGE_TYPES = {
 	MOBX,
 	VUEX,
 	NGRX,
+	ZUSTAND,
 	NONE,
 };
 
@@ -24,6 +26,8 @@ export function selectStorageType(state) {
 		return MOBX;
 	} else if (state.ngrxList.length > 0) {
 		return NGRX;
+	} else if (state.zustandList.length > 0) {
+		return ZUSTAND;
 	}
 	return NONE;
 }

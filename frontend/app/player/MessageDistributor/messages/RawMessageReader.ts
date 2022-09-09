@@ -527,6 +527,16 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
+    case 79: {
+      const mutation = this.readString(); if (mutation === null) { return resetPointer() }
+      const state = this.readString(); if (state === null) { return resetPointer() }      
+      return {
+        tp: "zustand", 
+        mutation,
+        state,      
+      };
+    }
+    
     case 90: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const projectID = this.readUint(); if (projectID === null) { return resetPointer() }
