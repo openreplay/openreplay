@@ -1,9 +1,9 @@
 # OpenReplay Tracker Vuex plugin
-A Vuex plugin for OpenReplay Tracker. This plugin allows you to see the application state during session replay.
+A Zustand plugin for OpenReplay Tracker. This plugin allows you to see the application state during session replay.
 
 ## Installation
 ```bash
-npm i @openreplay/tracker-vuex
+npm i @openreplay/tracker-zustand
 ```
 
 ## Usage
@@ -11,24 +11,33 @@ Initialize the `@openreplay/tracker` package as usual and load the plugin into i
 Then put the generated plugin into your `plugins` field of your store.
 
 ```js
-import Vuex from 'vuex'
+import create from "zustand";
 import Tracker from '@openreplay/tracker';
-import trackerVuex from '@openreplay/tracker-vuex';
+import trackerZustand from '@openreplay/tracker-zustand';
+
 
 const tracker = new Tracker({
   projectKey: YOUR_PROJECT_KEY,
 });
 
-const store = new Vuex.Store({
-  // ...
-  plugins: [tracker.plugin(trackerVuex())],
-});
+const zustandPlugin = tracker.use(trackerZustand())
+const bearStoreLogger = zustandPlugin('bear_store')
+
+
+const useBearStore = create(
+  bearStoreLogger((set: any) => ({
+    bears: 0,
+    increasePopulation: () => set((state: any) => ({ bears: state.bears + 1 })),
+    removeAllBears: () => set({ bears: 0 }),
+  }))
+)
+
 ```
 
 You can customize the plugin behavior with options to sanitize your data. They are similar to the ones from the standard `createLogger` plugin.
 
 ```js
-trackerVuex({
+trackerZustand({
   filter (mutation, state) {
     // returns `true` if a mutation should be logged
     // `mutation` is a `{ type, payload }`
