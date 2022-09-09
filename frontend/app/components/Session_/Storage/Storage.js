@@ -121,6 +121,9 @@ export default class Storage extends React.PureComponent {
 		const { type, listNow, list } = this.props;
 		let src;
 		let name;
+
+		// ZUSTAND TODO
+		console.log(item, type)
 		switch(type) {
 			case STORAGE_TYPES.REDUX:
 			case STORAGE_TYPES.NGRX:
@@ -208,6 +211,7 @@ export default class Storage extends React.PureComponent {
                 	{'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/redux" target="_blank">Redux</a>{', '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/vuex" target="_blank">VueX</a>{', '}
+									{/* ZUSTAND TODO */}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/mobx" target="_blank">MobX</a>{' and '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/ngrx" target="_blank">NgRx</a>.
                 	<br/><br/>

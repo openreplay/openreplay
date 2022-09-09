@@ -48,6 +48,8 @@ function getStorageIconName(type) {
       return 'vendors/vuex';
     case STORAGE_TYPES.NGRX:
       return 'vendors/ngrx';
+    case STORAGE_TYPES.ZUSTAND:
+      return 'vendors/zustand';
     case STORAGE_TYPES.NONE:
       return 'store';
   }
@@ -73,6 +75,8 @@ function getStorageName(type) {
       return 'VUEX';
     case STORAGE_TYPES.NGRX:
       return 'NGRX';
+    case STORAGE_TYPES.ZUSTAND:
+      return 'ZUSTAND';
     case STORAGE_TYPES.NONE:
       return 'STATE';
   }
