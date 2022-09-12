@@ -66,14 +66,6 @@ export function hasOpenreplayAttribute(e: Element, name: string): boolean {
     }
     return true
   }
-  const oldName = `data-asayer-${name}`
-  if (e.hasAttribute(oldName)) {
-    deprecationWarn(
-      `"${oldName}" attribute`,
-      `"${newName}" attribute`,
-      '/installation/sanitize-data',
-    )
-    return true
-  }
+
   return false
 }
