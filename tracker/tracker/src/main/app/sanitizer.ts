@@ -26,39 +26,36 @@ export default class Sanitizer {
         obscureTextEmails: true,
         obscureTextNumbers: false,
         customCallback: false,
-        domSanitizer: () => [false, false],
+        domSanitizer: () => SanitizeLevel.Plain,
       },
       options,
     )
   }
 
   handleNode(id: number, parentID: number, node: Node) {
-    if (this.options.customCallback) {
-      if (this.masked.has(parentID)) {
-        this.masked.add(id)
-      } else if (this.hiddenContainers.has(parentID)) {
-        this.hiddenContainers.add(id)
-      } else {
-        const sanitizeLevel = this.options.domSanitizer(node)
-        if (sanitizeLevel > 0) {
-          const addMasked =
-            sanitizeLevel === SanitizeLevel.Hidden ? this.hiddenContainers.add : this.masked.add
-          addMasked(id)
-        }
-      }
-    }
     if (
       this.masked.has(parentID) ||
-      (isElementNode(node) && hasOpenreplayAttribute(node, 'masked'))
+      (isElementNode(node) &&
+        (hasOpenreplayAttribute(node, 'masked') || hasOpenreplayAttribute(node, 'obscured')))
     ) {
       this.masked.add(id)
     }
     if (
       this.hiddenContainers.has(parentID) ||
       (isElementNode(node) &&
-        (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden')))
+        (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden-html')))
     ) {
       this.hiddenContainers.add(id)
+    }
+
+    if (this.options.customCallback) {
+      const sanitizeLevel = this.options.domSanitizer(node)
+      if (sanitizeLevel > 0) {
+        const maskedSet =
+          sanitizeLevel === SanitizeLevel.Hidden ? this.hiddenContainers : this.masked
+
+        maskedSet.add(id)
+      }
     }
   }
 

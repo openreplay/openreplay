@@ -52,9 +52,18 @@ export function getLabelAttribute(e: Element): string | null {
 }
 
 export function hasOpenreplayAttribute(e: Element, name: string): boolean {
-  const deprecatedNames = ['htmlmasked']
+  const deprecatedNames = { htmlmasked: 'hidden-html', masked: 'obscured' }
   const newName = `data-openreplay-${name}`
   if (e.hasAttribute(newName)) {
+    // @ts-ignore
+    if (deprecatedNames[name]) {
+      deprecationWarn(
+        `"${newName}" attribute`,
+        // @ts-ignore
+        `"${deprecatedNames[name] as string}" attribute`,
+        '/installation/sanitize-data',
+      )
+    }
     return true
   }
   const oldName = `data-asayer-${name}`
