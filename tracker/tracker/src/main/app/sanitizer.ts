@@ -11,12 +11,11 @@ export declare const enum SanitizeLevel {
 export interface Options {
   obscureTextEmails: boolean
   obscureTextNumbers: boolean
-  customCallback: boolean
-  domSanitizer: (node: Node) => SanitizeLevel
+  domSanitizer?: (node: Node) => SanitizeLevel
 }
 
 export default class Sanitizer {
-  private readonly masked: Set<number> = new Set()
+  private readonly obscured: Set<number> = new Set()
   private readonly hiddenContainers: Set<number> = new Set()
   private readonly options: Options
 
@@ -25,8 +24,6 @@ export default class Sanitizer {
       {
         obscureTextEmails: true,
         obscureTextNumbers: false,
-        customCallback: false,
-        domSanitizer: () => SanitizeLevel.Plain,
       },
       options,
     )
@@ -34,11 +31,11 @@ export default class Sanitizer {
 
   handleNode(id: number, parentID: number, node: Node) {
     if (
-      this.masked.has(parentID) ||
+      this.obscured.has(parentID) ||
       (isElementNode(node) &&
         (hasOpenreplayAttribute(node, 'masked') || hasOpenreplayAttribute(node, 'obscured')))
     ) {
-      this.masked.add(id)
+      this.obscured.add(id)
     }
     if (
       this.hiddenContainers.has(parentID) ||
@@ -48,11 +45,11 @@ export default class Sanitizer {
       this.hiddenContainers.add(id)
     }
 
-    if (this.options.customCallback) {
+    if (this.options.domSanitizer !== undefined) {
       const sanitizeLevel = this.options.domSanitizer(node)
       if (sanitizeLevel > 0) {
         const maskedSet =
-          sanitizeLevel === SanitizeLevel.Hidden ? this.hiddenContainers : this.masked
+          sanitizeLevel === SanitizeLevel.Hidden ? this.hiddenContainers : this.obscured
 
         maskedSet.add(id)
       }
@@ -60,7 +57,7 @@ export default class Sanitizer {
   }
 
   sanitize(id: number, data: string): string {
-    if (this.masked.has(id)) {
+    if (this.obscured.has(id)) {
       // TODO: is it the best place to put trim() ? Might trimmed spaces be considered in layout in certain cases?
       return data
         .trim()
@@ -79,7 +76,7 @@ export default class Sanitizer {
   }
 
   isMasked(id: number): boolean {
-    return this.masked.has(id)
+    return this.obscured.has(id)
   }
   isMaskedContainer(id: number) {
     return this.hiddenContainers.has(id)
@@ -94,7 +91,7 @@ export default class Sanitizer {
   }
 
   clear(): void {
-    this.masked.clear()
+    this.obscured.clear()
     this.hiddenContainers.clear()
   }
 }

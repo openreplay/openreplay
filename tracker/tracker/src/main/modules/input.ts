@@ -103,10 +103,11 @@ export default function (app: App, opts: Partial<Options>): void {
   function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
     let value = node.value
     let inputMode: InputMode = options.defaultInputMode
+
     if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
       inputMode = InputMode.Hidden
     } else if (
-      hasOpenreplayAttribute(node, 'obscured') ||
+      app.sanitizer.isMasked(id) ||
       (inputMode === InputMode.Plain &&
         ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
           (options.obscureInputDates && node.type === 'date') ||
