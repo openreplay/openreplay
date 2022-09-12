@@ -2,16 +2,22 @@ import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
 import { isElementNode } from './guards.js'
 
+export declare const enum SanitizeLevel {
+  Plain,
+  Obscured,
+  Hidden,
+}
+
 export interface Options {
   obscureTextEmails: boolean
   obscureTextNumbers: boolean
   customCallback: boolean
-  domSanitizer: (node: Node) => [isMasked: boolean, isHtmlContainer: boolean]
+  domSanitizer: (node: Node) => SanitizeLevel
 }
 
 export default class Sanitizer {
   private readonly masked: Set<number> = new Set()
-  private readonly maskedContainers: Set<number> = new Set()
+  private readonly hiddenContainers: Set<number> = new Set()
   private readonly options: Options
 
   constructor(private readonly app: App, options: Partial<Options>) {
@@ -30,12 +36,13 @@ export default class Sanitizer {
     if (this.options.customCallback) {
       if (this.masked.has(parentID)) {
         this.masked.add(id)
-      } else if (this.maskedContainers.has(parentID)) {
-        this.maskedContainers.add(id)
+      } else if (this.hiddenContainers.has(parentID)) {
+        this.hiddenContainers.add(id)
       } else {
-        const [shouldMask, isHtmlContainer] = this.options.domSanitizer(node)
-        if (shouldMask) {
-          const addMasked = isHtmlContainer ? this.maskedContainers.add : this.masked.add
+        const sanitizeLevel = this.options.domSanitizer(node)
+        if (sanitizeLevel > 0) {
+          const addMasked =
+            sanitizeLevel === SanitizeLevel.Hidden ? this.hiddenContainers.add : this.masked.add
           addMasked(id)
         }
       }
@@ -47,10 +54,11 @@ export default class Sanitizer {
       this.masked.add(id)
     }
     if (
-      this.maskedContainers.has(parentID) ||
-      (isElementNode(node) && hasOpenreplayAttribute(node, 'htmlmasked'))
+      this.hiddenContainers.has(parentID) ||
+      (isElementNode(node) &&
+        (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden')))
     ) {
-      this.maskedContainers.add(id)
+      this.hiddenContainers.add(id)
     }
   }
 
@@ -77,7 +85,7 @@ export default class Sanitizer {
     return this.masked.has(id)
   }
   isMaskedContainer(id: number) {
-    return this.maskedContainers.has(id)
+    return this.hiddenContainers.has(id)
   }
 
   getInnerTextSecure(el: HTMLElement): string {
@@ -90,6 +98,6 @@ export default class Sanitizer {
 
   clear(): void {
     this.masked.clear()
-    this.maskedContainers.clear()
+    this.hiddenContainers.clear()
   }
 }

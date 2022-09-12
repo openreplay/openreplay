@@ -52,6 +52,7 @@ export function getLabelAttribute(e: Element): string | null {
 }
 
 export function hasOpenreplayAttribute(e: Element, name: string): boolean {
+  const deprecatedNames = ['htmlmasked']
   const newName = `data-openreplay-${name}`
   if (e.hasAttribute(newName)) {
     return true
