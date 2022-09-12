@@ -213,9 +213,9 @@ export default class App {
     }
   }
 
-  safe<T extends (...args: any[]) => void>(fn: T): T {
+  safe<T extends (this: any, ...args: any[]) => void>(fn: T): T {
     const app = this
-    return function (this: any, ...args: any) {
+    return function (this: any, ...args: any[]) {
       try {
         fn.apply(this, args)
       } catch (e) {
@@ -225,12 +225,10 @@ export default class App {
         // message: e.message,
         // stack: e.stack
       }
-    } as any // TODO: correct typing
+    } as T // TODO: correct typing
   }
 
   attachCommitCallback(cb: CommitCallback): void {
-    // TODO!: what if start callback added when activityState === Active ?
-    // For example - attachEventListener() called during dynamic <iframe> appearance
     this.commitCallbacks.push(cb)
   }
   attachStartCallback(cb: StartCallback, useSafe = false): void {
@@ -245,6 +243,7 @@ export default class App {
     }
     this.stopCallbacks.push(cb)
   }
+  // Use  app.nodes.attachNodeListener for registered nodes instead
   attachEventListener(
     target: EventTarget,
     type: string,
@@ -423,6 +422,9 @@ export default class App {
       .then((r) => {
         if (!this.worker) {
           return Promise.reject('no worker found after start request (this might not happen)')
+        }
+        if (this.activityState === ActivityState.NotActive) {
+          return Promise.reject('Tracker stopped during authorisation')
         }
         const {
           token,
