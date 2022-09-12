@@ -75,10 +75,10 @@ export default class Sanitizer {
     return data
   }
 
-  isMasked(id: number): boolean {
+  isObscured(id: number): boolean {
     return this.obscured.has(id)
   }
-  isMaskedContainer(id: number) {
+  isHiddenContainer(id: number) {
     return this.hiddenContainers.has(id)
   }
 

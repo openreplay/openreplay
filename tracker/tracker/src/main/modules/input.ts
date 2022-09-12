@@ -107,7 +107,7 @@ export default function (app: App, opts: Partial<Options>): void {
     if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
       inputMode = InputMode.Hidden
     } else if (
-      app.sanitizer.isMasked(id) ||
+      app.sanitizer.isObscured(id) ||
       (inputMode === InputMode.Plain &&
         ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
           (options.obscureInputDates && node.type === 'date') ||
