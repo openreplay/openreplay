@@ -464,6 +464,6 @@ end
 message 83, 'ReplaceVCSS' do
   uint 'ID'
   string 'Styles'
-  string 'SheetID'
+  uint 'SheetID'
   string 'BaseURL'
 end

@@ -99,7 +99,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-
+        
 
 
 class CreateElementNode(Message):
@@ -970,3 +970,5 @@ class IOSIssueEvent(Message):
         self.context_string = context_string
         self.context = context
         self.payload = payload
+
+

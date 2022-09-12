@@ -50,7 +50,7 @@ export default function (app: App | null) {
         }
       }
       if (parentNodeID && id >= 0) {
-        app.send(ReplaceVCSS(parentNodeID, entireStyle, id.toString(), app.getBaseHref()))
+        app.send(ReplaceVCSS(parentNodeID, entireStyle, id, app.getBaseHref()))
       }
     } else {
       app.debug.error('Owner Node not found')

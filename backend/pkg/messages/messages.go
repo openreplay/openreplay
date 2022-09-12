@@ -3068,21 +3068,29 @@ func (msg *Zustand) EncodeWithIndex() []byte {
 	return data
 }
 
+func (msg *Zustand) Decode() Message {
+	return msg
+}
+
+func (msg *Zustand) TypeID() int {
+	return 79
+}
+
 type ReplaceVCSS struct {
 	message
 	ID      uint64
 	Styles  string
-	SheetID string
+	SheetID uint64
 	BaseURL string
 }
 
 func (msg *ReplaceVCSS) Encode() []byte {
-	buf := make([]byte, 41+len(msg.Styles)+len(msg.SheetID)+len(msg.BaseURL))
+	buf := make([]byte, 41+len(msg.Styles)+len(msg.BaseURL))
 	buf[0] = 83
 	p := 1
 	p = WriteUint(msg.ID, buf, p)
 	p = WriteString(msg.Styles, buf, p)
-	p = WriteString(msg.SheetID, buf, p)
+	p = WriteUint(msg.SheetID, buf, p)
 	p = WriteString(msg.BaseURL, buf, p)
 	return buf[:p]
 }
@@ -3096,14 +3104,6 @@ func (msg *ReplaceVCSS) EncodeWithIndex() []byte {
 	copy(data[8:], encoded[:])
 	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
 	return data
-}
-
-func (msg *Zustand) Decode() Message {
-	return msg
-}
-
-func (msg *Zustand) TypeID() int {
-	return 79
 }
 
 func (msg *ReplaceVCSS) Decode() Message {

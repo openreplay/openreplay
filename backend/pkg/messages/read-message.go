@@ -1327,7 +1327,7 @@ func DecodeReplaceVCSS(reader io.Reader) (Message, error) {
 	if msg.Styles, err = ReadString(reader); err != nil {
 		return nil, err
 	}
-	if msg.SheetID, err = ReadString(reader); err != nil {
+	if msg.SheetID, err = ReadUint(reader); err != nil {
 		return nil, err
 	}
 	if msg.BaseURL, err = ReadString(reader); err != nil {

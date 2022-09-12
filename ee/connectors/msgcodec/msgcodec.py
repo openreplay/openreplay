@@ -149,7 +149,7 @@ class MessageCodec(Codec):
 
         if message_id == 7:
             return CreateDocument(
-
+                
             )
 
         if message_id == 8:
@@ -672,7 +672,7 @@ class MessageCodec(Codec):
             return ReplaceVCSS(
                 id=self.read_uint(reader),
                 styles=self.read_string(reader),
-                sheet_id=self.read_string(reader),
+                sheet_id=self.read_uint(reader),
                 base_url=self.read_string(reader)
             )
 
@@ -847,3 +847,4 @@ class MessageCodec(Codec):
                 context=self.read_string(reader),
                 payload=self.read_string(reader)
             )
+

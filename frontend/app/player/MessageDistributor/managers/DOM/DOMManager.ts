@@ -50,7 +50,7 @@ export default class DOMManager extends ListWalker<Message> {
   private vElements: Map<number, VElement> = new Map()
   private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
-  
+
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
@@ -81,7 +81,7 @@ export default class DOMManager extends ListWalker<Message> {
       if(m.tag === "BODY" && this.upperBodyId === -1) {
         this.upperBodyId = m.id
       }
-    } else if (m.tp === "set_node_attribute" && 
+    } else if (m.tp === "set_node_attribute" &&
       (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))) {
       logger.log("Ignorring message: ", m)
       return; // Ignoring
@@ -95,7 +95,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
-  // May be make it as a message on message add? 
+  // May be make it as a message on message add?
   private removeAutocomplete(node: Element): boolean {
     const tag = node.tagName
     if ([ "FORM", "TEXTAREA", "SELECT" ].includes(tag)) {
@@ -123,7 +123,7 @@ export default class DOMManager extends ListWalker<Message> {
 
     const pNode = parent.node
     if ((pNode instanceof HTMLStyleElement) &&  // TODO: correct ordering OR filter in tracker
-        pNode.sheet && 
+        pNode.sheet &&
         pNode.sheet.cssRules &&
         pNode.sheet.cssRules.length > 0 &&
         pNode.innerText &&
@@ -160,7 +160,7 @@ export default class DOMManager extends ListWalker<Message> {
         vDoc.insertChildAt(vn, 0)
         this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
-        // todo: start from 0 (sync logic with tracker) 
+        // todo: start from 0 (sync logic with tracker)
         this.stylesManager.reset()
         return
       case "create_text_node":
@@ -326,6 +326,18 @@ export default class DOMManager extends ListWalker<Message> {
         }
         deleteRule(styleSheet, msg)
         return
+      case "replace_vcss":
+        styleSheet = this.styleSheets.get(msg.id)
+        if (!styleSheet) {
+          logger.warn("No stylesheet was created for ", msg)
+          return
+        }
+        const toRemove = styleSheet.cssRules.length
+        for (let i = 0; i < toRemove; i++) {
+          styleSheet.deleteRule(i)
+        }
+        styleSheet.insertRule(msg.styles)
+        return
       case "adopted_ss_replace":
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
@@ -364,11 +376,11 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
-    } 
+    }
   }
 
   moveReady(t: number): Promise<void> {
-    // MBTODO (back jump optimisation): 
+    // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)

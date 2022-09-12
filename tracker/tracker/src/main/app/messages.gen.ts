@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import * as Messages from '../../common/messages.gen.js'
 export { default } from '../../common/messages.gen.js'
@@ -77,11 +78,11 @@ export function SetViewportScroll(
 }
 
 export function CreateDocument(
-
+  
 ): Messages.CreateDocument {
   return [
     Messages.Type.CreateDocument,
-
+    
   ]
 }
 
@@ -721,7 +722,7 @@ export function Zustand(
 export function ReplaceVCSS(
   id: number,
   styles: string,
-  sheetID: string,
+  sheetID: number,
   baseURL: string,
 ): Messages.ReplaceVCSS {
   return [
@@ -732,3 +733,4 @@ export function ReplaceVCSS(
     baseURL,
   ]
 }
+

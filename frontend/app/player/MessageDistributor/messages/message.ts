@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
@@ -166,3 +167,4 @@ export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
 export type IosLog = RawIosLog & Timed
 
 export type IosNetworkCall = RawIosNetworkCall & Timed
+

@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 
 export interface RawTimestamp {
@@ -310,7 +311,7 @@ export interface RawReplaceVcss {
   tp: "replace_vcss",
   id: number,
   styles: string,
-  sheetID: string,
+  sheetID: number,
   baseURL: string,
 }
 
