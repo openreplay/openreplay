@@ -78,41 +78,45 @@ export default class TopObserver extends Observer {
   private handleIframe(iframe: HTMLIFrameElement): void {
     let doc: Document | null = null
     let win: Window | null = null
-    const handle = this.app.safe(() => {
-      const id = this.app.nodes.getID(iframe)
-      if (id === undefined) {
-        //log
-        return
-      }
-      const currentWin = iframe.contentWindow
-      const currentDoc = iframe.contentDocument
-      if (currentDoc && currentDoc !== doc) {
-        const observer = new IFrameObserver(this.app)
-        this.iframeObservers.push(observer)
-        observer.observe(iframe)
-        doc = currentDoc
+    // setTimeout is required. Otherwise some event listeners (scroll, mousemove) applied in modules
+    //     do not work on the iframe document when it 've been loaded dynamically ((why?))
+    const handle = this.app.safe(() =>
+      setTimeout(() => {
+        const id = this.app.nodes.getID(iframe)
+        if (id === undefined) {
+          //log
+          return
+        }
+        const currentWin = iframe.contentWindow
+        const currentDoc = iframe.contentDocument
+        if (currentDoc && currentDoc !== doc) {
+          const observer = new IFrameObserver(this.app)
+          this.iframeObservers.push(observer)
+          observer.observe(iframe) // TODO: call unregisterNode for the previous doc if present (incapsulate: one iframe - one observer)
+          doc = currentDoc
 
-        // Le truc
-        ;(doc as PatchedDocument).__openreplay__getOffset = () => {
-          const { top, left } = this.getDocumentOffset(iframe.ownerDocument)
-          return {
-            top: iframe.offsetTop + top,
-            left: iframe.offsetLeft + left,
+          // Le truc
+          ;(doc as PatchedDocument).__openreplay__getOffset = () => {
+            const { top, left } = this.getDocumentOffset(iframe.ownerDocument)
+            return {
+              top: iframe.offsetTop + top,
+              left: iframe.offsetLeft + left,
+            }
           }
         }
-      }
-      if (
-        currentWin &&
-        // Sometimes currentWin.window is null (not in specification). Such window object is not functional
-        currentWin === currentWin.window &&
-        !this.contextsSet.has(currentWin) // for each context callbacks called once per Tracker (TopObserver) instance
-      ) {
-        this.contextsSet.add(currentWin)
-        //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
-        this.contextCallbacks.forEach((cb) => cb(currentWin))
-        win = currentWin
-      }
-    })
+        if (
+          currentWin &&
+          // Sometimes currentWin.window is null (not in specification). Such window object is not functional
+          currentWin === currentWin.window &&
+          !this.contextsSet.has(currentWin) // for each context callbacks called once per Tracker (TopObserver) instance
+        ) {
+          this.contextsSet.add(currentWin)
+          //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
+          this.contextCallbacks.forEach((cb) => cb(currentWin))
+          win = currentWin
+        }
+      }, 0),
+    )
     iframe.addEventListener('load', handle) // why app.attachEventListener not working?
     handle()
   }

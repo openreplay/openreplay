@@ -97,8 +97,8 @@ export default function (app: App): void {
     if (!hasTag(node, 'IMG')) {
       return
     }
-    app.nodes.attachElementListener('error', node, sendImgAttrs.bind(node))
-    app.nodes.attachElementListener('load', node, sendImgAttrs.bind(node))
+    app.nodes.attachNodeListener('error', node, sendImgAttrs.bind(node))
+    app.nodes.attachNodeListener('load', node, sendImgAttrs.bind(node))
     sendImgAttrs.call(node)
     observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
   })
