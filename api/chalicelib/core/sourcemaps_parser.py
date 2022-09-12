@@ -9,13 +9,21 @@ def get_original_trace(key, positions):
         "positions": positions,
         "padding": 5,
         "bucket": config('sourcemaps_bucket'),
-        "S3_HOST": config('S3_HOST'),
-        "S3_KEY": config('S3_KEY'),
-        "S3_SECRET": config('S3_SECRET'),
-        "region": config('sessions_region')
+        "S3_KEY": config('S3_KEY', default=config('AWS_ACCESS_KEY_ID')),
+        "S3_SECRET": config('S3_SECRET', default=config('AWS_SECRET_ACCESS_KEY')),
+        "region": config('sessions_region', default=config('AWS_DEFAULT_REGION'))
     }
-    r = requests.post(config("sourcemaps_reader"), json=payload)
-    if r.status_code != 200:
+    if len(config('S3_HOST', default="")) > 0:
+        payload["S3_HOST"] = config('S3_HOST')
+    try:
+        r = requests.post(config("sourcemaps_reader"), json=payload,
+                          timeout=config("sourcemapTimeout", cast=int, default=5))
+        if r.status_code != 200:
+            return {}
+        return r.json()
+    except requests.exceptions.Timeout:
+        print("Timeout getting sourcemap")
         return {}
-
-    return r.json()
+    except Exception as e:
+        print("issue getting sourcemap")
+        return {}

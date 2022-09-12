@@ -3,7 +3,8 @@ const express = require('express');
 const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
 
-const HOST = '0.0.0.0';
+const debug = process.env.debug === "1" || false;
+const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
 
 const wsapp = express();
