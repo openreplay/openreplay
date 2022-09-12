@@ -5,6 +5,8 @@ import { isElementNode } from './guards.js'
 export interface Options {
   obscureTextEmails: boolean
   obscureTextNumbers: boolean
+  customCallback: boolean
+  domSanitizer: (node: Node) => [isMasked: boolean, isHtmlContainer: boolean]
 }
 
 export default class Sanitizer {
@@ -17,12 +19,27 @@ export default class Sanitizer {
       {
         obscureTextEmails: true,
         obscureTextNumbers: false,
+        customCallback: false,
+        domSanitizer: () => [false, false],
       },
       options,
     )
   }
 
   handleNode(id: number, parentID: number, node: Node) {
+    if (this.options.customCallback) {
+      if (this.masked.has(parentID)) {
+        this.masked.add(id)
+      } else if (this.maskedContainers.has(parentID)) {
+        this.maskedContainers.add(id)
+      } else {
+        const [shouldMask, isHtmlContainer] = this.options.domSanitizer(node)
+        if (shouldMask) {
+          const addMasked = isHtmlContainer ? this.maskedContainers.add : this.masked.add
+          addMasked(id)
+        }
+      }
+    }
     if (
       this.masked.has(parentID) ||
       (isElementNode(node) && hasOpenreplayAttribute(node, 'masked'))
