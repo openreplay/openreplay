@@ -63,7 +63,7 @@ export default function (app: App): void {
       if (isURL(resolvedSrc)) {
         app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
       }
-    } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isMasked(id)) {
+    } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isObscured(id)) {
       sendPlaceholder(id, this)
     } else {
       sendSrc(id, this)
