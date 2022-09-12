@@ -54,10 +54,7 @@ abstract class VParent {
 }
 
 export class VDocument extends VParent {
-	constructor(public node: Document | null = null) { super() }
-	setDocument(doc: Document) {
-		this.node = doc
-	}
+	constructor(public readonly node: Document) { super() }
 	applyChanges() {
 		if (this.children.length > 1) {
 			// log err
