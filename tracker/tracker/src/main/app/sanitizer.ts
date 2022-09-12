@@ -11,7 +11,7 @@ export declare const enum SanitizeLevel {
 export interface Options {
   obscureTextEmails: boolean
   obscureTextNumbers: boolean
-  domSanitizer?: (node: Node) => SanitizeLevel
+  domSanitizer?: (node: Element) => SanitizeLevel
 }
 
 export default class Sanitizer {
@@ -45,7 +45,7 @@ export default class Sanitizer {
       this.hiddenContainers.add(id)
     }
 
-    if (this.options.domSanitizer !== undefined) {
+    if (this.options.domSanitizer !== undefined && isElementNode(node)) {
       const sanitizeLevel = this.options.domSanitizer(node)
       if (sanitizeLevel > 0) {
         const maskedSet =
