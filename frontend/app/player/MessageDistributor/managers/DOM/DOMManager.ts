@@ -327,7 +327,7 @@ export default class DOMManager extends ListWalker<Message> {
         deleteRule(styleSheet, msg)
         return
       case "replace_vcss":
-        styleSheet = this.styleSheets.get(msg.id)
+        styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
