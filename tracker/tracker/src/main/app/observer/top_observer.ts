@@ -3,6 +3,7 @@ import { isElementNode, hasTag } from '../guards.js'
 
 import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
+import IFrameOffsets, { Offset } from './iframe_offsets.js'
 
 import { CreateDocument } from '../messages.gen.js'
 import App from '../index.js'
@@ -13,23 +14,14 @@ export interface Options {
 }
 
 type Context = Window & typeof globalThis
-
 type ContextCallback = (context: Context) => void
-
-// Le truc - for defining an absolute offset for (nested) iframe documents. (To track mouse movments)
-type Offset = { top: number; left: number }
-type PatchedDocument = Document & {
-  __openreplay__getOffset: () => Offset
-}
-function isPatchedDocument(doc: Document): doc is PatchedDocument {
-  // @ts-ignore
-  return typeof doc.__openreplay__getOffset === 'function'
-}
 
 const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : () => new ShadowRoot()
 
 export default class TopObserver extends Observer {
   private readonly options: Options
+  private readonly iframeOffsets: IFrameOffsets = new IFrameOffsets()
+
   constructor(app: App, options: Partial<Options>) {
     super(app, true)
     this.options = Object.assign(
@@ -66,18 +58,13 @@ export default class TopObserver extends Observer {
     this.contextCallbacks.push(cb)
   }
 
-  // Le truc
   getDocumentOffset(doc: Document): Offset {
-    if (isPatchedDocument(doc)) {
-      return doc.__openreplay__getOffset()
-    }
-    return { top: 0, left: 0 }
+    return this.iframeOffsets.getDocumentOffset(doc)
   }
 
   private iframeObservers: IFrameObserver[] = []
   private handleIframe(iframe: HTMLIFrameElement): void {
     let doc: Document | null = null
-    let win: Window | null = null
     // setTimeout is required. Otherwise some event listeners (scroll, mousemove) applied in modules
     //     do not work on the iframe document when it 've been loaded dynamically ((why?))
     const handle = this.app.safe(() =>
@@ -95,25 +82,18 @@ export default class TopObserver extends Observer {
           observer.observe(iframe) // TODO: call unregisterNode for the previous doc if present (incapsulate: one iframe - one observer)
           doc = currentDoc
 
-          // Le truc
-          ;(doc as PatchedDocument).__openreplay__getOffset = () => {
-            const { top, left } = this.getDocumentOffset(iframe.ownerDocument)
-            return {
-              top: iframe.offsetTop + top,
-              left: iframe.offsetLeft + left,
-            }
-          }
+          this.iframeOffsets.observe(iframe)
         }
         if (
           currentWin &&
           // Sometimes currentWin.window is null (not in specification). Such window object is not functional
           currentWin === currentWin.window &&
           !this.contextsSet.has(currentWin) // for each context callbacks called once per Tracker (TopObserver) instance
+          //TODO: more explicit logic
         ) {
           this.contextsSet.add(currentWin)
           //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
           this.contextCallbacks.forEach((cb) => cb(currentWin))
-          win = currentWin
         }
       }, 0),
     )
@@ -155,6 +135,7 @@ export default class TopObserver extends Observer {
   }
 
   disconnect() {
+    this.iframeOffsets.clear()
     Element.prototype.attachShadow = attachShadowNativeFn
     this.iframeObservers.forEach((o) => o.disconnect())
     this.iframeObservers = []

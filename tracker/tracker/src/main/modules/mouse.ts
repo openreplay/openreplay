@@ -105,12 +105,14 @@ export default function (app: App): void {
   let mousePositionChanged = false
   let mouseTarget: Element | null = null
   let mouseTargetTime = 0
+  let selectorMap: { [id: number]: string } = {}
 
   app.attachStopCallback(() => {
     mousePositionX = -1
     mousePositionY = -1
     mousePositionChanged = false
     mouseTarget = null
+    selectorMap = {}
   })
 
   const sendMouseMove = (): void => {
@@ -120,31 +122,34 @@ export default function (app: App): void {
     }
   }
 
-  const patchDocument = (document: Document) => {
-    const selectorMap: { [id: number]: string } = {}
+  const patchDocument = (document: Document, topframe = false) => {
     function getSelector(id: number, target: Element): string {
       return (selectorMap[id] = selectorMap[id] || _getSelector(target, document))
     }
 
-    app.attachEventListener(document.documentElement, 'mouseover', (e: MouseEvent): void => {
+    const attachListener = topframe
+      ? app.attachEventListener.bind(app) // attached/removed on start/stop
+      : app.nodes.attachNodeListener.bind(app.nodes) // attached/removed on node register/unregister
+
+    attachListener(document.documentElement, 'mouseover', (e: MouseEvent): void => {
       const target = getTarget(e.target, document)
       if (target !== mouseTarget) {
         mouseTarget = target
         mouseTargetTime = performance.now()
       }
     })
-    app.attachEventListener(
+    attachListener(
       document,
       'mousemove',
       (e: MouseEvent): void => {
-        const { top, left } = app.observer.getDocumentOffset(document)
+        const [left, top] = app.observer.getDocumentOffset(document) // MBTODO?: document-id related message
         mousePositionX = e.clientX + left
         mousePositionY = e.clientY + top
         mousePositionChanged = true
       },
       false,
     )
-    app.attachEventListener(document, 'click', (e: MouseEvent): void => {
+    attachListener(document, 'click', (e: MouseEvent): void => {
       const target = getTarget(e.target, document)
       if ((!e.clientX && !e.clientY) || target === null) {
         return
@@ -171,7 +176,7 @@ export default function (app: App): void {
       patchDocument(node)
     }
   })
-  patchDocument(document)
+  patchDocument(document, true)
 
   app.ticker.attach(sendMouseMove, 10)
 }
