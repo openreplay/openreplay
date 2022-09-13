@@ -1,3 +1,5 @@
+const DEPRECATED_ATTRS = { htmlmasked: 'hidden-html', masked: 'obscured' }
+
 export const IN_BROWSER = !(typeof window === 'undefined')
 
 const navigationStart: number | false =
@@ -51,16 +53,15 @@ export function getLabelAttribute(e: Element): string | null {
   return value
 }
 
-export function hasOpenreplayAttribute(e: Element, name: string): boolean {
-  const deprecatedNames = { htmlmasked: 'hidden-html', masked: 'obscured' }
-  const newName = `data-openreplay-${name}`
+export function hasOpenreplayAttribute(e: Element, attr: string): boolean {
+  const newName = `data-openreplay-${attr}`
   if (e.hasAttribute(newName)) {
     // @ts-ignore
-    if (deprecatedNames[name]) {
+    if (DEPRECATED_ATTRS[attr]) {
       deprecationWarn(
         `"${newName}" attribute`,
         // @ts-ignore
-        `"${deprecatedNames[name] as string}" attribute`,
+        `"${DEPRECATED_ATTRS[attr] as string}" attribute`,
         '/installation/sanitize-data',
       )
     }
