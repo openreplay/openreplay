@@ -54,7 +54,7 @@ export default function (app: App): void {
     if (id === undefined) {
       return
     }
-    const { src, complete, naturalWidth, naturalHeight, srcset } = this
+    const { src, complete, naturalWidth, naturalHeight } = this
     if (!complete) {
       return
     }
@@ -63,7 +63,7 @@ export default function (app: App): void {
       if (isURL(resolvedSrc)) {
         app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
       }
-    } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isObscured(id)) {
+    } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isMasked(id)) {
       sendPlaceholder(id, this)
     } else {
       sendSrc(id, this)

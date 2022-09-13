@@ -78,8 +78,13 @@ export default class Sanitizer {
   isObscured(id: number): boolean {
     return this.obscured.has(id)
   }
+
   isHiddenContainer(id: number) {
     return this.hiddenContainers.has(id)
+  }
+
+  isMasked(id: number): boolean {
+    return this.isObscured(id) || this.isHiddenContainer(id)
   }
 
   getInnerTextSecure(el: HTMLElement): string {

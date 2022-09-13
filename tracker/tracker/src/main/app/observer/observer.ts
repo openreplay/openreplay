@@ -293,12 +293,6 @@ export default abstract class Observer {
             const width = el.clientWidth
             const height = el.clientHeight
             el = node.cloneNode() as Element
-            const attrs = el.getAttributeNames()
-            attrs.forEach((attr) => {
-              if (!attr.startsWith('data-openreplay') && !BASE_ATTRS.includes(attr)) {
-                el.removeAttribute(attr)
-              }
-            })
             ;(el as HTMLElement | SVGElement).style.width = `${width}px`
             ;(el as HTMLElement | SVGElement).style.height = `${height}px`
           }
