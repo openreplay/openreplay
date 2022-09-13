@@ -37,8 +37,6 @@ function isObservable(node: Node): boolean {
   return !isIgnored(node)
 }
 
-const BASE_ATTRS = ['style', 'class']
-
 /*
   TODO:
     - fix unbinding logic + send all removals first (ensure sequence is correct)
