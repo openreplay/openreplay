@@ -52,9 +52,16 @@ export default function (app: App): void {
 
   app.nodes.attachNodeCallback((node, isStart) => {
     // MBTODO: iterate over all the nodes on start instead of using isStart hack
-    if (isStart && isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
-      nodeScroll.set(node, [node.scrollLeft, node.scrollTop])
-    } else if (isRootNode(node)) {
+    if (isStart) {
+      if (isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
+        nodeScroll.set(node, [node.scrollLeft, node.scrollTop])
+      } else if (isDocument(node)) {
+        // DRY somehow?
+        nodeScroll.set(node, getDocumentScroll(node))
+      }
+    }
+
+    if (isRootNode(node)) {
       // scroll is not-composed event (https://javascript.info/shadow-dom-events)
       app.nodes.attachNodeListener(node, 'scroll', (e: Event): void => {
         setNodeScroll(e.target)
