@@ -74,8 +74,8 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             title="Roles & Access"
             iconName="diagram-3"
             onClick={() => setTab(CLIENT_TABS.MANAGE_ROLES)}
+            leading={<AdminOnlyBadge />}
           />
-          <AdminOnlyBadge />
         </div>
       )}
 
@@ -86,8 +86,8 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             title="Audit"
             iconName="list-ul"
             onClick={() => setTab(CLIENT_TABS.AUDIT)}
+            leading={<AdminOnlyBadge />}
           />
-          <AdminOnlyBadge />
         </div>
       )}
 
@@ -98,8 +98,8 @@ function PreferencesMenu({ account, activeTab, history, isEnterprise }) {
             title="Team"
             iconName="users"
             onClick={() => setTab(CLIENT_TABS.MANAGE_USERS)}
+            leading={<AdminOnlyBadge />}
           />
-          <AdminOnlyBadge />
         </div>
       )}
 
@@ -123,8 +123,8 @@ export default connect((state) => ({
 function AdminOnlyBadge() {
   return (
     <div
-      className="absolute right-0 top-0 bottom-0 m-auto rounded-full bg-gray-light text-xs flex items-center px-2 color-gray-medium"
-      style={{ marginTop: '8px', height: '24px' }}
+      className="ml-1 rounded-full bg-gray-light text-xs flex items-center px-2 color-gray-medium"
+      style={{ marginTop: '', height: '20px', whiteSpace: 'nowrap' }}
     >
       Admin Only
     </div>
