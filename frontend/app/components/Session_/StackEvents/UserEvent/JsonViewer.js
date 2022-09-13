@@ -11,9 +11,14 @@ export default class JsonViewer extends React.PureComponent {
           <Icon name={icon} size="24" />
           <h4 className="my-5 mx-2 font-semibold text-xl"> {title}</h4>
         </div>
-        {isObjectData ? (
-          <JSONTree src={data} collapsed={false} />
-        ) : (
+        {isObjectData && <JSONTree src={data} collapsed={false} />}
+        {!isObjectData && Array.isArray(data) && (
+          <div>
+            <div className="text-lg">{data[0]}</div>
+            <JSONTree src={data[1]} collapsed={false} />
+          </div>
+        )}
+        {typeof data === 'string' && (
           <>
             <div className="-ml-2 text-disabled-text">Payload: </div>
             <div className="mx-2">{data}</div>
