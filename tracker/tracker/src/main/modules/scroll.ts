@@ -56,7 +56,7 @@ export default function (app: App): void {
       nodeScroll.set(node, [node.scrollLeft, node.scrollTop])
     } else if (isRootNode(node)) {
       // scroll is not-composed event (https://javascript.info/shadow-dom-events)
-      app.nodes.attachNodeListener('scroll', node, (e: Event): void => {
+      app.nodes.attachNodeListener(node, 'scroll', (e: Event): void => {
         setNodeScroll(e.target)
       })
     }

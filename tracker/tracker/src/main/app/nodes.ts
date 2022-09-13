@@ -12,7 +12,7 @@ export default class Nodes {
   attachNodeCallback(nodeCallback: NodeCallback): void {
     this.nodeCallbacks.push(nodeCallback)
   }
-  attachNodeListener(type: string, node: Node, listener: EventListener): void {
+  attachNodeListener(node: Node, type: string, listener: EventListener): void {
     const id = this.getID(node)
     if (id === undefined) {
       return
