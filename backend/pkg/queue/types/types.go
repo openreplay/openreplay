@@ -9,6 +9,7 @@ type Consumer interface {
 	Commit() error
 	CommitBack(gap int64) error
 	Close()
+	HasFirstPartition() bool
 }
 
 type Producer interface {
