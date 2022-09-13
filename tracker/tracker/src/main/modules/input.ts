@@ -104,7 +104,7 @@ export default function (app: App, opts: Partial<Options>): void {
     let value = node.value
     let inputMode: InputMode = options.defaultInputMode
 
-    if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
+    if (node.type === 'password' || app.sanitizer.isHidden(id)) {
       inputMode = InputMode.Hidden
     } else if (
       app.sanitizer.isObscured(id) ||

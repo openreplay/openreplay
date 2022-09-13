@@ -1,4 +1,4 @@
-const DEPRECATED_ATTRS = { htmlmasked: 'hidden-html', masked: 'obscured' }
+const DEPRECATED_ATTRS = { htmlmasked: 'hidden', masked: 'obscured' }
 
 export const IN_BROWSER = !(typeof window === 'undefined')
 
