@@ -187,9 +187,7 @@ export default class API {
       return
     }
     this.app.stop()
-    const sessionHash = this.app.session.getSessionHash()
-    this.app.session.reset()
-    return sessionHash
+    return this.app.session.getSessionHash()
   }
 
   getSessionToken(): string | null | undefined {

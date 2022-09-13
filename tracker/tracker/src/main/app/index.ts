@@ -389,6 +389,7 @@ export default class App {
 
     const sReset = this.sessionStorage.getItem(this.options.session_reset_key)
     this.sessionStorage.removeItem(this.options.session_reset_key)
+    const shouldReset = startOpts.forceNew || sReset !== null
 
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
@@ -400,10 +401,9 @@ export default class App {
           ...this.getTrackerInfo(),
           timestamp,
           userID: this.session.getInfo().userID,
-          token: this.session.getSessionToken(),
+          token: shouldReset ? undefined : this.session.getSessionToken(),
           deviceMemory,
           jsHeapSizeLimit,
-          reset: startOpts.forceNew || sReset !== null,
         }),
       })
       .then((r) => {
@@ -443,9 +443,12 @@ export default class App {
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
+        if (sessionID !== this.session.getInfo().sessionID) {
+          this.session.reset()
+        }
         this.session.setSessionToken(token)
-        this.localStorage.setItem(this.options.local_uuid_key, userUUID)
         this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
+        this.localStorage.setItem(this.options.local_uuid_key, userUUID)
 
         const startWorkerMsg: WorkerMessageData = {
           type: 'auth',

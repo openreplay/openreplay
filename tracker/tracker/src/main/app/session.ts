@@ -97,7 +97,7 @@ export default class Session {
     let token = hash
     let pageNoStr = '100500' // back-compat for sessionToken
     if (hashParts.length == 2) {
-      ;[token, pageNoStr] = hashParts
+      ;[pageNoStr, token] = hashParts
     }
     if (!pageNoStr || !token) {
       return
