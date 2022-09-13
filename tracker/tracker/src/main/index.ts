@@ -4,6 +4,8 @@ export { default as App } from './app/index.js'
 import { UserID, UserAnonymousID, RawCustomEvent, CustomIssue } from './app/messages.gen.js'
 import * as _Messages from './app/messages.gen.js'
 export const Messages = _Messages
+import { SanitizeLevel as SanitizeEnum } from './app/sanitizer.js'
+export const SanitizeLevel = SanitizeEnum
 
 import Connection from './modules/connection.js'
 import Console from './modules/console.js'
