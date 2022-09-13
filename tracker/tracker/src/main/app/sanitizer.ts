@@ -2,7 +2,7 @@ import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
 import { isElementNode } from './guards.js'
 
-export declare const enum SanitizeLevel {
+export enum SanitizeLevel {
   Plain,
   Obscured,
   Hidden,

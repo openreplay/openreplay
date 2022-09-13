@@ -37,6 +37,8 @@ function isObservable(node: Node): boolean {
   return !isIgnored(node)
 }
 
+const BASE_ATTRS = ['style', 'class']
+
 /*
   TODO:
     - fix unbinding logic + send all removals first (ensure sequence is correct)
@@ -291,8 +293,14 @@ export default abstract class Observer {
             const width = el.clientWidth
             const height = el.clientHeight
             el = node.cloneNode() as Element
-            ;(el as HTMLElement | SVGElement).style.width = width + 'px'
-            ;(el as HTMLElement | SVGElement).style.height = height + 'px'
+            const attrs = el.getAttributeNames()
+            attrs.forEach((attr) => {
+              if (!attr.startsWith('data-openreplay') && !BASE_ATTRS.includes(attr)) {
+                el.removeAttribute(attr)
+              }
+            })
+            ;(el as HTMLElement | SVGElement).style.width = `${width}px`
+            ;(el as HTMLElement | SVGElement).style.height = `${height}px`
           }
 
           this.app.send(CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)))
