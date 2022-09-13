@@ -11,6 +11,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 @connect(
     (state) => ({
         errorIdInStore: state.getIn(['errors', 'instance']).errorId,
+        list: state.getIn(['errors', 'instanceTrace']),
         loading: state.getIn(['errors', 'fetch', 'loading']) || state.getIn(['errors', 'fetchTrace', 'loading']),
         errorOnFetch: state.getIn(['errors', 'fetch', 'errors']) || state.getIn(['errors', 'fetchTrace', 'errors']),
     }),

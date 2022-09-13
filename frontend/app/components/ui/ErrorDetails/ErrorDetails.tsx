@@ -18,6 +18,7 @@ function ErrorDetails(props: Props) {
     const { error, sessionId, message = '', errorStack = [], sourcemapUploaded = false } = props;
     const [showRaw, setShowRaw] = useState(false);
     const firstFunc = errorStack.first() && errorStack.first().function;
+    
 
     const openDocs = () => {
         window.open(docLink, '_blank');
@@ -77,7 +78,8 @@ function ErrorDetails(props: Props) {
 ErrorDetails.displayName = 'ErrorDetails';
 export default connect(
     (state: any) => ({
-        errorStack: state.getIn(['sessions', 'errorStack']),
+        // errorStack: state.getIn(['sessions', 'errorStack']),
+        errorStack: state.getIn(['errors', 'instanceTrace']),
         sessionId: state.getIn(['sessions', 'current', 'sessionId']),
     }),
     { fetchErrorStackList }
