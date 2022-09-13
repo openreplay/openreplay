@@ -16,7 +16,7 @@ export interface Options {
 
 export default class Sanitizer {
   private readonly obscured: Set<number> = new Set()
-  private readonly hiddenContainers: Set<number> = new Set()
+  private readonly hidden: Set<number> = new Set()
   private readonly options: Options
 
   constructor(private readonly app: App, options: Partial<Options>) {
@@ -38,11 +38,11 @@ export default class Sanitizer {
       this.obscured.add(id)
     }
     if (
-      this.hiddenContainers.has(parentID) ||
+      this.hidden.has(parentID) ||
       (isElementNode(node) &&
-        (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden-html')))
+        (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden')))
     ) {
-      this.hiddenContainers.add(id)
+      this.hidden.add(id)
     }
 
     if (this.options.domSanitizer !== undefined && isElementNode(node)) {
@@ -51,7 +51,7 @@ export default class Sanitizer {
         this.obscured.add(id)
       }
       if (sanitizeLevel === SanitizeLevel.Hidden) {
-        this.hiddenContainers.add(id)
+        this.hidden.add(id)
       }
     }
   }
@@ -79,12 +79,12 @@ export default class Sanitizer {
     return this.obscured.has(id)
   }
 
-  isHiddenContainer(id: number) {
-    return this.hiddenContainers.has(id)
+  isHidden(id: number) {
+    return this.hidden.has(id)
   }
 
   isMasked(id: number): boolean {
-    return this.isObscured(id) || this.isHiddenContainer(id)
+    return this.isObscured(id) || this.isHidden(id)
   }
 
   getInnerTextSecure(el: HTMLElement): string {
@@ -97,6 +97,6 @@ export default class Sanitizer {
 
   clear(): void {
     this.obscured.clear()
-    this.hiddenContainers.clear()
+    this.hidden.clear()
   }
 }
