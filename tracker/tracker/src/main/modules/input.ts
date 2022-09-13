@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from '../utils.js'
+import { normSpaces, IN_BROWSER, getLabelAttribute } from '../utils.js'
 import { hasTag } from '../app/guards.js'
 import { SetInputTarget, SetInputValue, SetInputChecked } from '../app/messages.gen.js'
 
