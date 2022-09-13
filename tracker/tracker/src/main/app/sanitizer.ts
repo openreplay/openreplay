@@ -83,10 +83,6 @@ export default class Sanitizer {
     return this.hidden.has(id)
   }
 
-  isMasked(id: number): boolean {
-    return this.isObscured(id) || this.isHidden(id)
-  }
-
   getInnerTextSecure(el: HTMLElement): string {
     const id = this.app.nodes.getID(el)
     if (!id) {
