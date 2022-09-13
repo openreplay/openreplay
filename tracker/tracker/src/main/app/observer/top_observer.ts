@@ -77,6 +77,7 @@ export default class TopObserver extends Observer {
   private iframeObservers: IFrameObserver[] = []
   private handleIframe(iframe: HTMLIFrameElement): void {
     let doc: Document | null = null
+    let win: Window | null = null
     // setTimeout is required. Otherwise some event listeners (scroll, mousemove) applied in modules
     //     do not work on the iframe document when it 've been loaded dynamically ((why?))
     const handle = this.app.safe(() =>
