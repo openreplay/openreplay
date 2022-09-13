@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Input, Form, Button, Checkbox, Loader } from 'UI';
 import SiteDropdown from 'Shared/SiteDropdown';
-import { save, init, edit, remove, fetchList } from 'Duck/integrations/actions';
+import { save, init, edit, remove } from 'Duck/integrations/actions';
 import { fetchIntegrationList } from 'Duck/integrations/integrations';
 
 @connect(
@@ -21,7 +21,7 @@ import { fetchIntegrationList } from 'Duck/integrations/integrations';
         init,
         edit,
         remove,
-        fetchList,
+        // fetchList,
         fetchIntegrationList,
     }
 )
@@ -31,6 +31,16 @@ export default class IntegrationForm extends React.PureComponent {
         // const currentSiteId = this.props.initialSiteId;
         // this.state = { currentSiteId };
         // this.init(currentSiteId);
+    }
+
+    fetchList = () => {
+        alert('calling...');
+        const { siteId, initialSiteId } = this.props;
+        if (!siteId) {
+            this.props.fetchIntegrationList(initialSiteId);
+        } else {
+            this.props.fetchIntegrationList(siteId);
+        }
     }
 
     write = ({ target: { value, name: key, type, checked } }) => {
@@ -57,6 +67,7 @@ export default class IntegrationForm extends React.PureComponent {
         // const { currentSiteId } = this.state;
         this.props.save(customPath || name, !ignoreProject ? this.props.siteId : null, config).then(() => {
             // this.props.fetchList(name);
+            this.fetchList();
             this.props.onClose();
             if (isExists) return;
         });
@@ -67,7 +78,7 @@ export default class IntegrationForm extends React.PureComponent {
         this.props.remove(name, !ignoreProject ? config.projectId : null).then(
             function () {
                 this.props.onClose();
-                this.props.fetchList(name);
+                this.fetchList();
             }.bind(this)
         );
     };
