@@ -719,18 +719,3 @@ export function Zustand(
   ]
 }
 
-export function ReplaceVCSS(
-  id: number,
-  styles: string,
-  sheetID: number,
-  baseURL: string,
-): Messages.ReplaceVCSS {
-  return [
-    Messages.Type.ReplaceVCSS,
-    id,
-    styles,
-    sheetID,
-    baseURL,
-  ]
-}
-

@@ -668,14 +668,6 @@ class MessageCodec(Codec):
                 state=self.read_string(reader)
             )
 
-        if message_id == 83:
-            return ReplaceVCSS(
-                id=self.read_uint(reader),
-                styles=self.read_string(reader),
-                sheet_id=self.read_uint(reader),
-                base_url=self.read_string(reader)
-            )
-
         if message_id == 107:
             return IOSBatchMeta(
                 timestamp=self.read_uint(reader),

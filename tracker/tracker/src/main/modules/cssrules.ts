@@ -1,10 +1,5 @@
 import type App from '../app/index.js'
-import {
-  CSSInsertRuleURLBased,
-  CSSDeleteRule,
-  TechnicalInfo,
-  ReplaceVCSS,
-} from '../app/messages.gen.js'
+import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
 export default function (app: App | null) {
@@ -32,28 +27,25 @@ export default function (app: App | null) {
     } // else error?
   })
 
-  const replaceVirtualCss = app.safe((ctx: CSSGroupingRule) => {
-    let uppermostRuleset = ctx.parentRule
-    while (uppermostRuleset?.parentRule) {
-      uppermostRuleset = uppermostRuleset.parentRule
+  const replaceGroupingRule = app.safe((ctx: CSSGroupingRule) => {
+    let topmostRule: CSSRule = ctx
+    while (topmostRule.parentRule) {
+      topmostRule = topmostRule.parentRule
     }
-    if (uppermostRuleset?.parentStyleSheet?.ownerNode) {
-      const entireStyle = uppermostRuleset.cssText
-      const parentNodeID = app.nodes.getID(uppermostRuleset.parentStyleSheet.ownerNode)
-      const ruleList = uppermostRuleset.parentStyleSheet.cssRules
-      let id = -1
-      for (let i = 0; i < ruleList.length; i++) {
-        const rule = ruleList.item(i)
-        if (rule === uppermostRuleset) {
-          id = i
-          break
-        }
+    if (topmostRule.parentStyleSheet?.ownerNode) {
+      const entireStyle = topmostRule.cssText
+      const nodeID = app.nodes.getID(topmostRule.parentStyleSheet.ownerNode)
+      if (nodeID === undefined) {
+        return
       }
-      if (parentNodeID && id >= 0) {
-        app.send(ReplaceVCSS(parentNodeID, entireStyle, id, app.getBaseHref()))
+      const ruleList = topmostRule.parentStyleSheet.cssRules
+      const idx = Array.from(ruleList).indexOf(topmostRule)
+      if (idx >= 0) {
+        app.send(CSSDeleteRule(nodeID, idx))
+        app.send(CSSInsertRuleURLBased(nodeID, entireStyle, idx, app.getBaseHref()))
       }
     } else {
-      app.debug.error('Owner Node not found')
+      app.debug.error('Owner Node not found for the rule', topmostRule)
     }
   })
 
@@ -73,21 +65,17 @@ export default function (app: App | null) {
 
     context.CSSGroupingRule.prototype.insertRule = function (rule: string, index = 0) {
       const result = groupInsertRule.call(this, rule, index) as number
-
-      replaceVirtualCss(this)
-
+      replaceGroupingRule(this)
       return result
     }
     context.CSSGroupingRule.prototype.deleteRule = function (index = 0) {
       const result = groupDeleteRule.call(this, index) as number
-
-      replaceVirtualCss(this)
-
+      replaceGroupingRule(this)
       return result
     }
   }
 
-  sheet.patchContext(window)
+  patchContext(window)
   app.observer.attachContextCallback(patchContext)
 
   app.nodes.attachNodeCallback((node: Node): void => {

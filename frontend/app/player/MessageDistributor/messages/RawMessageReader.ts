@@ -538,20 +538,6 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
     
-    case 83: {
-      const id = this.readUint(); if (id === null) { return resetPointer() }
-      const styles = this.readString(); if (styles === null) { return resetPointer() }
-      const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
-      const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
-      return {
-        tp: "replace_vcss",
-        id,
-        styles,
-        sheetID,
-        baseURL,
-      };
-    }
-    
     case 90: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const projectID = this.readUint(); if (projectID === null) { return resetPointer() }

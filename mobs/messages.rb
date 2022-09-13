@@ -44,7 +44,7 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
   string 'UserCountry'
   string 'UserID'
 end
-# message 2, 'CreateDocument', do
+## message 2, 'CreateDocument', do
 # end
 message 3, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
@@ -62,7 +62,7 @@ message 6, 'SetViewportScroll' do
   int 'X'
   int 'Y'
 end
-# Depricated sinse tracker 3.6.0 in favor of  CreateDocument(id=2)
+# (should be) Depricated sinse tracker ?.?.? in favor of  CreateDocument(id=2)
 # in order to use Document as a default root node instead of the documentElement
 message 7, 'CreateDocument' do
 end
@@ -238,8 +238,6 @@ message 36, 'CustomEvent', :tracker => false, :replayer => false do
   string 'Name'
   string 'Payload'
 end
-
-
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
@@ -249,7 +247,6 @@ message 38, 'CSSDeleteRule' do
   uint 'ID'
   uint 'Index'
 end
-
 message 39, 'Fetch' do
   string 'Method'
   string 'URL'
@@ -265,7 +262,6 @@ message 40, 'Profiler' do
   string 'Args'
   string 'Result'
 end
-
 message 41, 'OTable' do
   string 'Key'
   string 'Value'
@@ -278,7 +274,6 @@ message 43, 'StateActionEvent', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'Type'
 end
-
 message 44, 'Redux' do
   string 'Action'
   string 'State'
@@ -363,6 +358,7 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
+## 57 58
 message 59, 'LongTask' do
   uint 'Timestamp'
   uint 'Duration'
@@ -400,6 +396,7 @@ message 64, 'CustomIssue', :replayer => false do
   string 'Name'
   string 'Payload'
 end
+## 65
 message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
@@ -409,6 +406,7 @@ message 67, 'CSSInsertRuleURLBased' do
   uint 'Index'
   string 'BaseURL'
 end
+## 68
 message 69, 'MouseClick' do
   uint 'ID'
   uint 'HesitationTime'
@@ -416,13 +414,13 @@ message 69, 'MouseClick' do
   string 'Selector'
 end
 
-# Since 3.4.0
+# Since 3.4.0 //also used for ShadowDom. TODO:remane to CreateRoot
 message 70, 'CreateIFrameDocument' do
   uint 'FrameID'
   uint 'ID'
 end
 
-#Since 3.6.0 AdoptedStyleSheets
+#Since 4.0.0 AdoptedStyleSheets etc
 message 71, 'AdoptedSSReplaceURLBased' do
   uint 'SheetID'
   string 'Text'
@@ -455,15 +453,16 @@ message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-
+#Since 4.0.1
+# message 78, 'ReplaceVCSSURLBased' do
+#   uint 'SheetID'
+#   uint 'Index'
+#   string 'Styles'
+#   string 'BaseURL'
+# end
 message 79, 'Zustand' do
   string 'Mutation'
   string 'State'
 end
 
-message 83, 'ReplaceVCSS' do
-  uint 'ID'
-  string 'Styles'
-  uint 'SheetID'
-  string 'BaseURL'
-end
+# 80 -- 90 reserved

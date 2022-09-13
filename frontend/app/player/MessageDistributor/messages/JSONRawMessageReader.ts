@@ -10,7 +10,6 @@ import type {
   RawAdoptedSsInsertRule,
   RawAdoptedSsReplaceURLBased,
   RawAdoptedSsReplace,
-  RawReplaceVcss,
 } from './raw'
 import type { TrackerMessage } from './tracker'
 import  translate from './tracker'
@@ -66,12 +65,6 @@ const resolvers = {
     text: resolveCSS(msg.baseURL, msg.text),
     tp: "adopted_ss_replace"
   }),
-  "replace_vcss_url_based": (msg: RawReplaceVcss): RawReplaceVcss =>
-  ({
-    ...msg,
-    styles: resolveCSS(msg.baseURL, msg.styles),
-    tp: "replace_vcss",
-  })
 } as const
 
 type ResolvableType = keyof typeof resolvers
