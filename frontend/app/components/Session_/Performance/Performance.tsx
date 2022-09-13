@@ -147,7 +147,7 @@ const VERY_LOW_FPS = 20;
 const LOW_FPS_MARKER_VALUE = 5;
 const HIDDEN_SCREEN_MARKER_VALUE = 20;
 function addFpsMetadata(data) {
-  return data.map((point, i) => {
+  return [...data].map((point, i) => {
     let fpsVeryLowMarker = null;
     let fpsLowMarker = null;
     let hiddenScreenMarker = 0;
