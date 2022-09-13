@@ -47,11 +47,11 @@ export default class Sanitizer {
 
     if (this.options.domSanitizer !== undefined && isElementNode(node)) {
       const sanitizeLevel = this.options.domSanitizer(node)
-      if (sanitizeLevel > 0) {
-        const maskedSet =
-          sanitizeLevel === SanitizeLevel.Hidden ? this.hiddenContainers : this.obscured
-
-        maskedSet.add(id)
+      if (sanitizeLevel === SanitizeLevel.Obscured) {
+        this.obscured.add(id)
+      }
+      if (sanitizeLevel === SanitizeLevel.Hidden) {
+        this.hiddenContainers.add(id)
       }
     }
   }
