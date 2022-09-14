@@ -1,4 +1,5 @@
 // @ts-nocheck
+/* eslint-disable */
 // Auto-generated, do not edit
 
 export const TP_MAP = {
@@ -69,5 +70,3 @@ export const TP_MAP = {
   103: "ios_log",
   105: "ios_network_call",
 } as const
-
-

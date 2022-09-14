@@ -1,8 +1,9 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
-import type { 
+import type {
 <%= $messages.select { |msg| msg.replayer }.map { |msg| "  Raw#{msg.name.snake_case.pascal_case}," }.join "\n" %>
 } from './raw'
 

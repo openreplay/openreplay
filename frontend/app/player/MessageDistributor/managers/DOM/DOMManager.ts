@@ -51,7 +51,7 @@ export default class DOMManager extends ListWalker<Message> {
   private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
   private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
-  
+
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
@@ -82,7 +82,7 @@ export default class DOMManager extends ListWalker<Message> {
       if(m.tag === "BODY" && this.upperBodyId === -1) {
         this.upperBodyId = m.id
       }
-    } else if (m.tp === "set_node_attribute" && 
+    } else if (m.tp === "set_node_attribute" &&
       (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))) {
       logger.log("Ignorring message: ", m)
       return; // Ignoring
@@ -96,7 +96,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
-  // May be make it as a message on message add? 
+  // May be make it as a message on message add?
   private removeAutocomplete(node: Element): boolean {
     const tag = node.tagName
     if ([ "FORM", "TEXTAREA", "SELECT" ].includes(tag)) {
@@ -124,7 +124,7 @@ export default class DOMManager extends ListWalker<Message> {
 
     const pNode = parent.node
     if ((pNode instanceof HTMLStyleElement) &&  // TODO: correct ordering OR filter in tracker
-        pNode.sheet && 
+        pNode.sheet &&
         pNode.sheet.cssRules &&
         pNode.sheet.cssRules.length > 0 &&
         pNode.innerText &&
@@ -161,7 +161,7 @@ export default class DOMManager extends ListWalker<Message> {
         vDoc.insertChildAt(vn, 0)
         this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
-        // todo: start from 0 (sync logic with tracker) 
+        // todo: start from 0 (sync logic with tracker)
         this.stylesManager.reset()
         this.activeIframeRoots.clear()
         return
@@ -267,6 +267,8 @@ export default class DOMManager extends ListWalker<Message> {
           vn.applyChanges()
         }
         return
+
+      // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
       case "css_insert_rule":
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -285,6 +287,8 @@ export default class DOMManager extends ListWalker<Message> {
         }
         vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
+      // end @depricated
+
       case "create_i_frame_document":
         vn = this.vElements.get(msg.frameID)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -332,6 +336,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         deleteRule(styleSheet, msg)
         return
+
       case "adopted_ss_replace":
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
@@ -343,7 +348,14 @@ export default class DOMManager extends ListWalker<Message> {
         return
       case "adopted_ss_add_owner":
         vn = this.vRoots.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) {
+          // non-constructed case
+          vn = this.vElements.get(msg.id)
+          if (!vn) { logger.error("Node not found", msg); return } 
+          if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
+          this.styleSheets.set(msg.sheetID, vn.node.sheet)
+          return
+        }
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
           let context: typeof globalThis
@@ -370,11 +382,11 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
-    } 
+    }
   }
 
   moveReady(t: number): Promise<void> {
-    // MBTODO (back jump optimisation): 
+    // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)

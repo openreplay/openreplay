@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import * as Messages from '../common/messages.gen.js'
 import Message from '../common/messages.gen.js'
@@ -235,6 +236,5 @@ export default class MessageEncoder extends PrimitiveEncoder {
     
     }
   }
-  
-}
 
+}

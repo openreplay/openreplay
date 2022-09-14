@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 export declare const enum Type {
   BatchMetadata = 81,
