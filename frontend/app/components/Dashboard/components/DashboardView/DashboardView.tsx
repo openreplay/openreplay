@@ -18,7 +18,6 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
 import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
-import AddPredefinedMetric from '../DashboardWidgetGrid/AddPredefinedMetric';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 interface IProps {
@@ -98,18 +97,6 @@ function DashboardView(props: Props) {
                 props.history.push(withSiteId(`/dashboard`, siteId));
             });
         }
-    };
-
-    const onAddPredefinedMetrics = () => {
-        dashboardStore.initDashboard(dashboardStore.selectedDashboard);
-        showModal(
-            <AddPredefinedMetric
-                siteId={siteId}
-                title="Ready-Made Metrics"
-                description="Curated metrics predfined by OpenReplay."
-            />,
-            { right: true }
-        );
     };
 
     if (!dashboard) return null;

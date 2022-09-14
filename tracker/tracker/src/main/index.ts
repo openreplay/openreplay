@@ -288,5 +288,3 @@ export default class API {
     }
   }
 }
-// @ts-ignore
-window.__OPENREPLAY_API__ = API
