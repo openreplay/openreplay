@@ -8,7 +8,7 @@ import AddPredefinedMetric from './AddPredefinedMetric';
 import cn from 'classnames';
 
 interface AddMetricButtonProps {
-    iconName: string;
+    iconName: "bar-pencil" | "grid-check";
     title: string;
     description: string;
     isPremade?: boolean;
@@ -49,8 +49,8 @@ function AddMetricButton({ iconName, title, description, onClick, isPremade, isP
 
 interface Props {
     siteId: string
-    isPopup: boolean
-    onAction: () => void
+    isPopup?: boolean
+    onAction?: () => void
 }
 
 function AddMetricContainer({ siteId, isPopup, onAction }: Props) {
@@ -58,7 +58,7 @@ function AddMetricContainer({ siteId, isPopup, onAction }: Props) {
     const { dashboardStore } = useStore();
 
     const onAddCustomMetrics = () => {
-        onAction()
+        onAction?.()
         dashboardStore.initDashboard(dashboardStore.selectedDashboard);
         showModal(
             <AddMetric
@@ -71,7 +71,7 @@ function AddMetricContainer({ siteId, isPopup, onAction }: Props) {
     };
 
     const onAddPredefinedMetrics = () => {
-        onAction()
+        onAction?.()
         dashboardStore.initDashboard(dashboardStore.selectedDashboard);
         showModal(
             <AddPredefinedMetric
