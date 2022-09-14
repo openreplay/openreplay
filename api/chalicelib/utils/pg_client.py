@@ -38,8 +38,15 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
             raise e
 
     def putconn(self, *args, **kwargs):
-        super().putconn(*args, **kwargs)
-        self._semaphore.release()
+        try:
+            super().putconn(*args, **kwargs)
+            self._semaphore.release()
+        except psycopg2.pool.PoolError as e:
+            if str(e) == "trying to put unkeyed connection":
+                print("!!! trying to put unkeyed connection")
+                print(f"env-PG_POOL:{config('PG_POOL', cast=bool, default=None)}")
+                return
+            raise e
 
 
 postgreSQL_pool: ORThreadedConnectionPool = None
