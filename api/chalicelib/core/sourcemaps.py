@@ -99,6 +99,9 @@ def get_traces_group(project_id, payload):
         if payloads[key] is None:
             continue
         key_results = sourcemaps_parser.get_original_trace(key=key, positions=[o["position"] for o in payloads[key]])
+        if key_results is None:
+            all_exists = False
+            continue
         for i, r in enumerate(key_results):
             res_index = payloads[key][i]["resultIndex"]
             # function name search  by frontend lib is better than sourcemaps' one in most cases
