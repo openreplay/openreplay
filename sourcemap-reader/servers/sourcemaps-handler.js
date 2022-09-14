@@ -40,11 +40,20 @@ module.exports.sourcemapReader = async event => {
         Key: event.key
     };
     return new Promise(function (resolve, reject) {
+        const getObjectStart = Date.now();
         s3.getObject(options, (err, data) => {
             if (err) {
                 console.error("[SR] Get S3 object failed");
                 console.error(err);
                 return reject(err);
+            }
+            const getObjectEnd = Date.now();
+            const fileSize = (data.ContentLength / 1024) / 1024;
+            options.fileSize = `${fileSize} Mb`;
+            const downloadTime = (getObjectEnd - getObjectStart) / 1000;
+            options.downloadTime = `${downloadTime} s`;
+            if (fileSize >= 3) {
+                console.log("[SR] large file:" + JSON.stringify(options));
             }
             let sourcemap = data.Body.toString();
 
@@ -68,17 +77,15 @@ module.exports.sourcemapReader = async event => {
                                     preview = preview.slice(start, original.line + event.padding);
                                 }
                             } else {
-                                console.log("[SR] source not found, null preview for:");
-                                console.log(original.source);
+                                console.log(`[SR] source not found, null preview for: ${original.source}`);
                                 preview = []
                             }
                             url = URL.parse(original.source);
                         } else {
-                            console.log("[SR] couldn't find original position of:");
-                            console.log({
+                            console.log("[SR] couldn't find original position of: " + JSON.stringify({
                                 line: event.positions[i].line,
                                 column: event.positions[i].column
-                            });
+                            }));
                         }
                         let result = {
                             "absPath": url.href,
@@ -92,6 +99,12 @@ module.exports.sourcemapReader = async event => {
                         results.push(result);
                     }
                     consumer = undefined;
+
+                    const sourcemapProcessingTime = (Date.now() - getObjectEnd) / 1000;
+                    options.sourcemapProcessingTime = `${sourcemapProcessingTime} s`
+                    if (fileSize >= 3 || sourcemapProcessingTime > 2) {
+                        console.log("[SR] " + JSON.stringify(options));
+                    }
                     // Use this code if you don't use the http event with the LAMBDA-PROXY integration
                     return resolve(results);
                 })
