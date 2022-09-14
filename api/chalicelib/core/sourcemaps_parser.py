@@ -27,4 +27,5 @@ def get_original_trace(key, positions):
         return None
     except Exception as e:
         print("Issue getting sourcemap")
+        print(e)
         return None
