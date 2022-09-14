@@ -21,6 +21,8 @@ const tracker = new Tracker({
 });
 
 const zustandPlugin = tracker.use(trackerZustand())
+// store name, optional
+// randomly generated if undefined
 const bearStoreLogger = zustandPlugin('bear_store')
 
 

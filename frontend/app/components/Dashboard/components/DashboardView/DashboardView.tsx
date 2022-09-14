@@ -18,6 +18,7 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
 import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 interface IProps {
     siteId: string;
@@ -32,6 +33,7 @@ function DashboardView(props: Props) {
     const { dashboardStore } = useStore();
     const { showModal } = useModal();
 
+    const [showTooltip, setShowTooltip] = React.useState(false);
     const [focusTitle, setFocusedInput] = React.useState(true);
     const [showEditModal, setShowEditModal] = React.useState(false);
 
@@ -125,7 +127,8 @@ function DashboardView(props: Props) {
                             className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
                             actionButton={
                                     /* @ts-ignore */
-                                    <Tooltip 
+                                    <Tooltip
+                                        open={showTooltip}
                                         interactive
                                         useContext
                                         // @ts-ignore
@@ -134,9 +137,15 @@ function DashboardView(props: Props) {
                                         hideDelay={200}
                                         duration={0}
                                         distance={20}
-                                        html={<div style={{ padding: 0 }}><AddMetricContainer isPopup siteId={siteId} /></div>}
+                                        html={
+                                            <div style={{ padding: 0 }}>
+                                                <OutsideClickDetectingDiv onClickOutside={() => setShowTooltip(false)}>
+                                                    <AddMetricContainer onAction={() => setShowTooltip(false)} isPopup siteId={siteId} />
+                                                </OutsideClickDetectingDiv>
+                                            </div>
+                                        }
                                     >
-                                        <Button variant="primary">
+                                        <Button variant="primary" onClick={() => setShowTooltip(true)}>
                                             Add Metric
                                         </Button>
                                     </Tooltip>

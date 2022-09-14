@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-zustand",
   "description": "Tracker plugin for Zustand state recording",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "keywords": [
     "zustand",
     "state",

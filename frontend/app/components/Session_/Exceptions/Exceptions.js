@@ -140,7 +140,7 @@ export default class Exceptions extends React.PureComponent {
                     error={e}
                     key={e.key}
                     selected={lastIndex === index}
-                    inactive={index > lastIndex}
+                    // inactive={index > lastIndex}
                     onErrorClick={(jsEvent) => {
                       jsEvent.stopPropagation();
                       jsEvent.preventDefault();

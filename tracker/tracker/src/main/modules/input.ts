@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from '../utils.js'
+import { normSpaces, IN_BROWSER, getLabelAttribute } from '../utils.js'
 import { hasTag } from '../app/guards.js'
 import { SetInputTarget, SetInputValue, SetInputChecked } from '../app/messages.gen.js'
 
@@ -103,10 +103,11 @@ export default function (app: App, opts: Partial<Options>): void {
   function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
     let value = node.value
     let inputMode: InputMode = options.defaultInputMode
-    if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
+
+    if (node.type === 'password' || app.sanitizer.isHidden(id)) {
       inputMode = InputMode.Hidden
     } else if (
-      hasOpenreplayAttribute(node, 'obscured') ||
+      app.sanitizer.isObscured(id) ||
       (inputMode === InputMode.Plain &&
         ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
           (options.obscureInputDates && node.type === 'date') ||

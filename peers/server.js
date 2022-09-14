@@ -4,8 +4,9 @@ const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./serve
 const express = require('express');
 const {ExpressPeerServer} = require('peer');
 
-const HOST = '0.0.0.0';
-const PORT = 9000;
+const debug = process.env.debug === "1" || false;
+const HOST = process.env.LISTEN_HOST || '0.0.0.0';
+const PORT = process.env.LISTEN_PORT || 9000;
 
 const app = express();
 
@@ -31,3 +32,9 @@ peerServer.on('error', peerError);
 app.use('/', peerServer);
 app.enable('trust proxy');
 module.exports = {server};
+
+process.on('uncaughtException', err => {
+    console.log(`Uncaught Exception: ${err.message}`);
+    debug && console.log(err.stack);
+    // process.exit(1);
+});

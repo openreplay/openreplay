@@ -40,7 +40,7 @@ export default class BatchWriter {
       return
     }
 
-    // MBTODO: move service-messages creation to webworker
+    // MBTODO: move service-messages creation methods to webworker
     const batchMetadata: Messages.BatchMetadata = [
       Messages.Type.BatchMetadata,
       1,

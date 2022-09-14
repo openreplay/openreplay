@@ -25,7 +25,7 @@ class TrackingCodeModal extends React.PureComponent {
         const { site } = this.props;
         switch (this.state.activeTab) {
             case PROJECT:
-                return <ProjectCodeSnippet />;
+                return <ProjectCodeSnippet site={site} />;
             case DOCUMENTATION:
                 return <InstallDocs site={site} />;
         }
@@ -46,32 +46,14 @@ class TrackingCodeModal extends React.PureComponent {
                     <div className="p-5">{this.renderActiveTab()}</div>
                 </div>
             </div>
-            // displayed &&
-            // <Modal size="large" onClose={ onClose } open={ displayed } style={{ top: "85px" }} >
-            //   <Modal.Header className={ styles.modalHeader }>
-            //     <div>{ title } { subTitle && <span className="text-sm color-gray-dark">{subTitle}</span>}</div>
-            //     <div className={ cn(styles.closeButton, { 'hidden' : !onClose }) } role="button" tabIndex="-1" onClick={ onClose }>
-            //       <Icon name="close" size="14" />
-            //     </div>
-            //   </Modal.Header>
-            //   <Modal.Content className={ cn(styles.content, 'overflow-y-auto') }>
-            //     <Tabs
-            //       className="px-5"
-            //       tabs={ TABS }
-            //       active={ activeTab } onClick={ this.setActiveTab } />
-            //     <div className="p-5">
-            //         { this.renderActiveTab() }
-            //     </div>
-            //   </Modal.Content>
-            // </Modal>
         );
     }
 }
 
 export default connect(
     (state) => ({
-        site: state.getIn(['site', 'instance']),
-        gdpr: state.getIn(['site', 'instance', 'gdpr']),
+        // site: state.getIn(['site', 'instance']),
+        // gdpr: state.getIn(['site', 'instance', 'gdpr']),
         saving: state.getIn(['site', 'saveGDPR', 'loading']),
     }),
     {

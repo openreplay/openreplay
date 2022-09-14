@@ -259,7 +259,7 @@ export default abstract class Observer {
         return false
       }
       this.app.sanitizer.handleNode(id, parentID, node)
-      if (this.app.sanitizer.isMaskedContainer(parentID)) {
+      if (this.app.sanitizer.isHidden(parentID)) {
         return false
       }
     }
@@ -287,13 +287,13 @@ export default abstract class Observer {
       if (isElementNode(node)) {
         let el: Element = node
         if (parentID !== undefined) {
-          if (this.app.sanitizer.isMaskedContainer(id)) {
+          if (this.app.sanitizer.isHidden(id)) {
             const width = el.clientWidth
             const height = el.clientHeight
             el = node.cloneNode() as Element
             // TODO: use ResizeObserver
-            ;(el as HTMLElement | SVGElement).style.width = width + 'px'
-            ;(el as HTMLElement | SVGElement).style.height = height + 'px'
+            ;(el as HTMLElement | SVGElement).style.width = `${width}px`
+            ;(el as HTMLElement | SVGElement).style.height = `${height}px`
           }
 
           this.app.send(CreateElementNode(id, parentID, index, el.tagName, isSVGElement(node)))

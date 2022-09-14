@@ -27,11 +27,15 @@ function UserListItem(props: Props) {
         <div className="grid grid-cols-12 py-4 px-5 border-t items-center select-none hover:bg-active-blue group cursor-pointer" onClick={editHandler}>
             <div className="col-span-5">
                 <span className="mr-2">{user.name}</span>
-                {isEnterprise && <AdminPrivilegeLabel user={user} />}
+                {/* {isEnterprise && <AdminPrivilegeLabel user={user} />} */}
             </div>
             <div className="col-span-3">
                 {!isEnterprise && <AdminPrivilegeLabel user={user} />}
-                {isEnterprise && <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">{user.roleName}</span>}
+                {isEnterprise && (
+                    <>
+                    <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">{user.roleName}</span>
+                    { user.isSuperAdmin || user.isAdmin && <><span className="ml-2" /><AdminPrivilegeLabel user={user} /></> }
+                </>)}
             </div>
             {!isOnboarding && (
                 <div className="col-span-2">

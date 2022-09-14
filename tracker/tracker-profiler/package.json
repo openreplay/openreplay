@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-profiler",
   "description": "Tracker plugin for profiling JS function calls",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "keywords": [
     "debugging",
     "logging",
@@ -22,10 +22,10 @@
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
-    "@openreplay/tracker": "^3.0.0"
+    "@openreplay/tracker": ">=3.0.0"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.0.0",
+    "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^3.6.4"

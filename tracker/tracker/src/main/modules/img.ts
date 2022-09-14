@@ -54,7 +54,7 @@ export default function (app: App): void {
     if (id === undefined) {
       return
     }
-    const { src, complete, naturalWidth, naturalHeight, srcset } = this
+    const { src, complete, naturalWidth, naturalHeight } = this
     if (!complete) {
       return
     }
@@ -63,7 +63,11 @@ export default function (app: App): void {
       if (isURL(resolvedSrc)) {
         app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
       }
-    } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isMasked(id)) {
+    } else if (
+      resolvedSrc.length >= 1e5 ||
+      app.sanitizer.isHidden(id) ||
+      app.sanitizer.isObscured(id)
+    ) {
       sendPlaceholder(id, this)
     } else {
       sendSrc(id, this)
@@ -97,8 +101,8 @@ export default function (app: App): void {
     if (!hasTag(node, 'IMG')) {
       return
     }
-    app.nodes.attachElementListener('error', node, sendImgAttrs.bind(node))
-    app.nodes.attachElementListener('load', node, sendImgAttrs.bind(node))
+    app.nodes.attachNodeListener(node, 'error', sendImgAttrs.bind(node))
+    app.nodes.attachNodeListener(node, 'load', sendImgAttrs.bind(node))
     sendImgAttrs.call(node)
     observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
   })

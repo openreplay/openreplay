@@ -10,7 +10,7 @@ function ErrorDetailsModal(props: Props) {
             style={{ width: '85vw', maxWidth: '1200px' }}
             className="bg-white h-screen p-4 overflow-y-auto"
         >
-            <ErrorInfo errorId={props.errorId} list={[]} />
+            <ErrorInfo errorId={props.errorId} />
         </div>
     );
 }

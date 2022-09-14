@@ -43,7 +43,10 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 	return nil
 }
 
-func (si *Saver) CommitStats() error {
+func (si *Saver) CommitStats(optimize bool) error {
+	if !optimize {
+		return si.ch.Commit()
+	}
 	select {
 	case <-finalizeTicker:
 		if err := si.ch.FinaliseSessionsTable(); err != nil {

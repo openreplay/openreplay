@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-ngrx",
   "description": "Tracker plugin for NgRx state recording",
-  "version": "3.4.8",
+  "version": "3.4.9",
   "keywords": [
     "ngrx",
     "logging",
@@ -23,11 +23,11 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^3.4.8",
+    "@openreplay/tracker": ">=3.4.8",
     "@ngrx/store": ">=4"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.4.8",
+    "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^4.6.0-dev.20211126"

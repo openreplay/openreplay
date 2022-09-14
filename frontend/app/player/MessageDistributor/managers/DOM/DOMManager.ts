@@ -49,6 +49,7 @@ export default class DOMManager extends ListWalker<Message> {
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
   private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
+  private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
 
 
@@ -145,7 +146,7 @@ export default class DOMManager extends ListWalker<Message> {
       case "create_document":
         doc = this.screen.document;
         if (!doc) {
-          logger.error("No iframe document found", msg)
+          logger.error("No root iframe document found", msg)
           return;
         }
         doc.open();
@@ -162,6 +163,7 @@ export default class DOMManager extends ListWalker<Message> {
         // this is done for the AdoptedCSS logic
         // todo: start from 0 (sync logic with tracker)
         this.stylesManager.reset()
+        this.activeIframeRoots.clear()
         return
       case "create_text_node":
         vn = new VText()
@@ -293,14 +295,18 @@ export default class DOMManager extends ListWalker<Message> {
         vn.enforceInsertion()
         const host = vn.node
         if (host instanceof HTMLIFrameElement) {
-          const vDoc = new VDocument()
-          this.vRoots.set(msg.id, vDoc)
           const doc = host.contentDocument
           if (!doc) {
-            logger.warn("No iframe doc onload", msg, host)
+            logger.warn("No default iframe doc", msg, host)
             return
           }
-          vDoc.setDocument(doc)
+          // remove old root of the same iframe if present
+          const oldRootId = this.activeIframeRoots.get(msg.frameID)
+          oldRootId != null && this.vRoots.delete(oldRootId)
+
+          const vDoc = new VDocument(doc)
+          this.activeIframeRoots.set(msg.frameID, msg.id)
+          this.vRoots.set(msg.id, vDoc)
           return;
         } else if (host instanceof Element) { // shadow DOM
           try {
@@ -394,10 +400,12 @@ export default class DOMManager extends ListWalker<Message> {
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)
         if (msg) {
-          const vElm = this.vElements.get(msg.id)
-          if (vElm) {
-            vElm.node.scrollLeft = msg.x
-            vElm.node.scrollTop = msg.y
+          let vNode: VNode
+          if (vNode = this.vElements.get(msg.id)) {
+            vNode.node.scrollLeft = msg.x
+            vNode.node.scrollTop = msg.y
+          } else if ((vNode = this.vRoots.get(msg.id)) && vNode instanceof VDocument){
+            vNode.node.defaultView?.scrollTo(msg.x, msg.y)
           }
         }
       })
