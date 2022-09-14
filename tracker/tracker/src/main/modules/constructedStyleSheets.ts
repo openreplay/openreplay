@@ -105,6 +105,7 @@ export default function (app: App | null) {
     if (context.__openreplay_adpss_patched__) {
       return
     } else {
+      // @ts-ignore
       context.__openreplay_adpss_patched__ = true
     }
     patchAdoptedStyleSheets(context.Document.prototype)
