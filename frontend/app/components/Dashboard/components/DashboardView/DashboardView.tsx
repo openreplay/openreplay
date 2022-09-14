@@ -18,6 +18,7 @@ import SelectDateRange from 'Shared/SelectDateRange';
 import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
 import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
+import AddPredefinedMetric from '../DashboardWidgetGrid/AddPredefinedMetric';
 
 interface IProps {
     siteId: string;
@@ -97,6 +98,18 @@ function DashboardView(props: Props) {
         }
     };
 
+    const onAddPredefinedMetrics = () => {
+        dashboardStore.initDashboard(dashboardStore.selectedDashboard);
+        showModal(
+            <AddPredefinedMetric
+                siteId={siteId}
+                title="Ready-Made Metrics"
+                description="Curated metrics predfined by OpenReplay."
+            />,
+            { right: true }
+        );
+    };
+
     if (!dashboard) return null;
 
     return (
@@ -136,7 +149,7 @@ function DashboardView(props: Props) {
                                         distance={20}
                                         html={<div style={{ padding: 0 }}><AddMetricContainer isPopup siteId={siteId} /></div>}
                                     >
-                                        <Button variant="primary">
+                                        <Button variant="primary" onClick={onAddPredefinedMetrics}>
                                             Add Metric
                                         </Button>
                                     </Tooltip>
