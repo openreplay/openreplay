@@ -4,3 +4,4 @@ npm-debug.log
 .cache
 test.html
 /utils/
+mappings.wasm

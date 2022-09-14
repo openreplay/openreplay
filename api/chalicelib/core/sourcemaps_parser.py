@@ -19,11 +19,12 @@ def get_original_trace(key, positions):
         r = requests.post(config("sourcemaps_reader"), json=payload,
                           timeout=config("sourcemapTimeout", cast=int, default=5))
         if r.status_code != 200:
-            return {}
+            print(f"Issue getting sourcemap status_code:{r.status_code}")
+            return None
         return r.json()
     except requests.exceptions.Timeout:
         print("Timeout getting sourcemap")
-        return {}
+        return None
     except Exception as e:
-        print("issue getting sourcemap")
-        return {}
+        print("Issue getting sourcemap")
+        return None
