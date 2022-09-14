@@ -238,15 +238,18 @@ message 36, 'CustomEvent', :tracker => false, :replayer => false do
   string 'Name'
   string 'Payload'
 end
+# depricated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner 
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
   uint 'Index'
 end
+# depricated since 4.0.2
 message 38, 'CSSDeleteRule' do
   uint 'ID'
   uint 'Index'
 end
+
 message 39, 'Fetch' do
   string 'Method'
   string 'URL'
@@ -421,6 +424,7 @@ message 70, 'CreateIFrameDocument' do
 end
 
 #Since 4.0.0 AdoptedStyleSheets etc
+# TODO: rename to StyleSheets...
 message 71, 'AdoptedSSReplaceURLBased' do
   uint 'SheetID'
   string 'Text'

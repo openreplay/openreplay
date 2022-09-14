@@ -19,6 +19,13 @@ function hasAdoptedSS(node: Node): node is StyleSheetOwner {
   )
 }
 
+// TODO: incapsulate to be init-ed on-start and join with cssrules.ts under one folder
+let _id = 0xf
+export function nextID(): number {
+  return _id++
+}
+export const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
+
 export default function (app: App | null) {
   if (app === null) {
     return
@@ -31,7 +38,6 @@ export default function (app: App | null) {
     return
   }
 
-  let nextID = 0xf
   const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
 
@@ -53,7 +59,7 @@ export default function (app: App | null) {
       let sheetID = styleSheetIDMap.get(s)
       const init = !sheetID
       if (!sheetID) {
-        sheetID = ++nextID
+        sheetID = nextID()
       }
       nowOwning.push(sheetID)
       if (!pastOwning.includes(sheetID)) {

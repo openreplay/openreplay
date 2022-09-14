@@ -291,6 +291,7 @@ export default abstract class Observer {
             const width = el.clientWidth
             const height = el.clientHeight
             el = node.cloneNode() as Element
+            // TODO: use ResizeObserver
             ;(el as HTMLElement | SVGElement).style.width = width + 'px'
             ;(el as HTMLElement | SVGElement).style.height = height + 'px'
           }

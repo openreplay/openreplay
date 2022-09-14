@@ -265,6 +265,8 @@ export default class DOMManager extends ListWalker<Message> {
           vn.applyChanges()
         }
         return
+
+      // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
       case "css_insert_rule":
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -283,6 +285,8 @@ export default class DOMManager extends ListWalker<Message> {
         }
         vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
+      // end @depricated
+
       case "create_i_frame_document":
         vn = this.vElements.get(msg.frameID)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -326,18 +330,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         deleteRule(styleSheet, msg)
         return
-      case "replace_vcss":
-        styleSheet = this.styleSheets.get(msg.sheetID)
-        if (!styleSheet) {
-          logger.warn("No stylesheet was created for ", msg)
-          return
-        }
-        const toRemove = styleSheet.cssRules.length
-        for (let i = 0; i < toRemove; i++) {
-          styleSheet.deleteRule(i)
-        }
-        styleSheet.insertRule(msg.styles)
-        return
+
       case "adopted_ss_replace":
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
@@ -349,7 +342,14 @@ export default class DOMManager extends ListWalker<Message> {
         return
       case "adopted_ss_add_owner":
         vn = this.vRoots.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) {
+          // non-constructed case
+          vn = this.vElements.get(msg.id)
+          if (!vn) { logger.error("Node not found", msg); return } 
+          if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
+          this.styleSheets.set(msg.sheetID, vn.node.sheet)
+          return
+        }
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
           let context: typeof globalThis
