@@ -36,7 +36,7 @@
   scrollbar-width: thin;
   &::-webkit-scrollbar {
     width: 4px;
-  } 
+  }
 }
 
 .grecaptcha-badge{
@@ -190,7 +190,7 @@
   /* font-family: 'FontAwesome'; */
   top: 10px;
   left: 0;
-  
+
   content: "\201C";
   font-size: 140px;
   color: rgba(0,0,0,0.1);
@@ -201,7 +201,7 @@
   /* font-family: 'FontAwesome'; */
   bottom: 10px;
   right: 0;
-  
+
   content: "\201E";
   font-size: 140px;
   color: rgba(0,0,0,0.1);
@@ -226,7 +226,7 @@
 .blink-border {
   /* border: 1px #ff0000 solid; */
   border-color: #CC0000;
-  
+
   animation: blink 1s;
   animation-iteration-count: 3;
 }
@@ -282,8 +282,18 @@ p {
   padding: 0!important;
   transition: none!important;
 }
-.tippy-notransition {
+
+.tippy-tooltip[data-theme~='nopadding'] > .enter {
+  background-color: transparent!important;
+}
+
+.tippy-notransition, .tippy-notransition > * {
   transition: none!important;
+  background-color: transparent!important;
+  will-change: unset!important;
+}
+.tippy-notransition > *[x-circle] {
+  display: none
 }
 
 @media print {
