@@ -1,7 +1,6 @@
 from chalicelib.core import roles, traces
 from chalicelib.core import unlock
 from chalicelib.utils import assist_helper
-from chalicelib.utils.TimeUTC import TimeUTC
 
 unlock.check()
 
