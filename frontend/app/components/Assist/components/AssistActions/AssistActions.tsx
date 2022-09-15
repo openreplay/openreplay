@@ -54,8 +54,10 @@ function AssistActions({
     const [callObject, setCallObject] = useState<{ end: () => void } | null>(null);
 
     const onCall = calling === CallingState.OnCall || calling === CallingState.Reconnecting;
+    const callRequesting = calling === CallingState.Connecting
     const cannotCall = peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
     const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled;
+
 
     useEffect(() => {
         return callObject?.end()
@@ -101,6 +103,8 @@ function AssistActions({
     }, [agentIds, isCallActive])
 
     const confirmCall = async () => {
+        if (callRequesting) return;
+
         if (
             await confirm({
                 header: 'Start Call',
@@ -111,6 +115,11 @@ function AssistActions({
             call(agentIds);
         }
     };
+
+    const requestControl = () => {
+        if (callRequesting) return;
+        requestReleaseRemoteControl()
+    }
 
     React.useEffect(() => {
         if (!livePlay) {
@@ -145,8 +154,8 @@ function AssistActions({
                 </>
             )}
             <div
-                className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall || !livePlay })}
-                onClick={requestReleaseRemoteControl}
+                className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall || !livePlay || callRequesting })}
+                onClick={requestControl}
                 role="button"
             >
                 <Button
@@ -162,7 +171,7 @@ function AssistActions({
 
             <Popup content={cannotCall ? `You don't have the permissions to perform this action.` : `Call ${userId ? userId : 'User'}`}>
                 <div
-                    className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall })}
+                    className={cn('cursor-pointer p-2 flex items-center', { [stl.disabled]: cannotCall || callRequesting })}
                     onClick={onCall ? callObject?.end : confirmCall}
                     role="button"
                 >

@@ -40,7 +40,7 @@ export function init(session, config, live = false) {
     endTime, // : 0, //TODO: through initialState
     session,
   });
-  
+
   if (!document.hidden) {
     instance.play();
   }
@@ -73,6 +73,8 @@ export const toggleInspectorMode = initCheck((...args) => instance.toggleInspect
 export const callPeer = initCheck((...args) => instance.assistManager.call(...args))
 /** @type {Player.assistManager.setCallArgs} */
 export const setCallArgs = initCheck((...args) => instance.assistManager.setCallArgs(...args))
+/** @type {Player.assistManager.initiateCallEnd} */
+export const initiateCallEnd = initCheck((...args) => instance.assistManager.initiateCallEnd(...args))
 export const requestReleaseRemoteControl = initCheck((...args) => instance.assistManager.requestReleaseRemoteControl(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))

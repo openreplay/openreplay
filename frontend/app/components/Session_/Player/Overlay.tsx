@@ -2,13 +2,14 @@ import React, {useEffect} from 'react';
 import { connectPlayer, markTargets } from 'Player';
 import { getStatusText } from 'Player/MessageDistributor/managers/AssistManager';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
-import { ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import { CallingState, ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
 
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import PlayIconLayer from './Overlay/PlayIconLayer';
 import LiveStatusText from './Overlay/LiveStatusText';
 import Loader from './Overlay/Loader';
 import ElementsMarker from './Overlay/ElementsMarker';
+import RequestingWindow from 'App/components/Assist/RequestingWindow';
 
 interface Props {
   playing: boolean,
@@ -21,6 +22,7 @@ interface Props {
   autoplay: boolean,
   markedTargets: MarkedTarget[] | null,
   activeTargetIndex: number,
+  calling: CallingState,
 
   nextId: string,
   togglePlay: () => void,
@@ -43,13 +45,16 @@ function Overlay({
   togglePlay,
   closedLive,
   livePlay,
+  calling,
 }: Props) {
   const showAutoplayTimer = !live && completed && autoplay && nextId
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
   const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
+  console.log(calling, live)
   return (
     <>
+      {live && calling === CallingState.Connecting ? <RequestingWindow /> : null}
       { showAutoplayTimer && <AutoplayTimer /> }
       { showLiveStatusText &&
         <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
@@ -77,4 +82,5 @@ export default connectPlayer(state => ({
   markedTargets: state.markedTargets,
   activeTargetIndex: state.activeTargetIndex,
   livePlay: state.livePlay,
+  calling: state.calling,
 }))(Overlay);
