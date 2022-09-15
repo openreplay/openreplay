@@ -8,6 +8,8 @@ sourceMap.SourceMapConsumer.initialize({
     "lib/mappings.wasm": wasm
 });
 
+console.log(`>sourceMap initialised using ${process.env.MAPPING_WASM || '/mappings.wasm'}`);
+
 module.exports.sourcemapReader = async event => {
     let s3;
     if (event.S3_HOST) {
