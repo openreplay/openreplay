@@ -8,7 +8,11 @@ const PORT = process.env.SR_PORT || 9000;
 
 const app = express();
 app.use(request_logger("[SR]"));
-
+app.get(['/'], (req, res) => {
+        res.statusCode = 200;
+        res.end("ok!");
+    }
+);
 app.use('/sourcemaps', sourcemapsReaderServer);
 app.use('/heapdump', dumps.router);
 
