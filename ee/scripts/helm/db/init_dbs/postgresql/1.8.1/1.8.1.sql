@@ -2,7 +2,7 @@ BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.8.1'
+SELECT 'v1.8.1-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 COMMIT;
