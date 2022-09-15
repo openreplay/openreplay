@@ -3,7 +3,7 @@ const fs = require('fs');
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
 const URL = require('url');
-const wasm = fs.readFileSync('/mappings.wasm');
+const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
 sourceMap.SourceMapConsumer.initialize({
     "lib/mappings.wasm": wasm
 });
