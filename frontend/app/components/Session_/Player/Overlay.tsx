@@ -51,7 +51,6 @@ function Overlay({
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
   const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
-  console.log(calling, live)
   return (
     <>
       {live && calling === CallingState.Connecting ? <RequestingWindow /> : null}

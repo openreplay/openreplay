@@ -26,7 +26,7 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
       >
         <div className="handle flex items-center p-2 cursor-move select-none border-b">
           <div className={stl.headerTitle}>
-            <b>Talking to </b> {userId ? userId : 'Anonymous User'}
+            <b>Call with </b> {userId ? userId : 'Anonymous User'}
             <br />
             {incomeStream && incomeStream.length > 2 ? ' (+ other agents in the call)' : ''}
           </div>

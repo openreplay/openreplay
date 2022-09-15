@@ -10,7 +10,7 @@ import {
 import LiveTag from 'Shared/LiveTag';
 import { toggleTimetravel, jumpToLive } from 'Player';
 
-import { Icon, Button } from 'UI';
+import { Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
@@ -326,15 +326,13 @@ export default class Controls extends React.Component {
 
     return (
       <div className={styles.controls}>
-        {!live || liveTimeTravel ? (
-          <Timeline
-            live={live}
-            jump={this.props.jump}
-            liveTimeTravel={liveTimeTravel}
-            pause={this.props.pause}
-            togglePlay={this.props.togglePlay}
-          />
-        ) : null}
+        <Timeline
+          live={live}
+          jump={this.props.jump}
+          liveTimeTravel={liveTimeTravel}
+          pause={this.props.pause}
+          togglePlay={this.props.togglePlay}
+        />
         {!fullscreen && (
           <div className={cn(styles.buttons, { '!px-5 !pt-0': live })} data-is-live={live}>
             <div className="flex items-center">
@@ -370,15 +368,6 @@ export default class Controls extends React.Component {
                   <div className="font-semibold px-2">
                     <AssistDuration isLivePlay={livePlay} />
                   </div>
-
-                  {!liveTimeTravel && (
-                    <div
-                      onClick={toggleTimetravel}
-                      className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer"
-                    >
-                      See Past Activity
-                    </div>
-                  )}
                 </div>
               )}
             </div>
