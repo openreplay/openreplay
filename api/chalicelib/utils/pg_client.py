@@ -20,7 +20,7 @@ PG_CONFIG = dict(_PG_CONFIG)
 if config("pg_timeout", cast=int, default=0) > 0:
     PG_CONFIG["options"] = f"-c statement_timeout={config('pg_timeout', cast=int) * 1000}"
 
-logging.info(f">PG_POOL:{config('PG_POOL', cast=bool, default=None)}")
+logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
 
 
 class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
@@ -44,7 +44,7 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
         except psycopg2.pool.PoolError as e:
             if str(e) == "trying to put unkeyed connection":
                 print("!!! trying to put unkeyed connection")
-                print(f"env-PG_POOL:{config('PG_POOL', cast=bool, default=None)}")
+                print(f"env-PG_POOL:{config('PG_POOL', default=None)}")
                 return
             raise e
 
