@@ -113,6 +113,13 @@ storage:
     fsGroup: 0
     fsGroupChangePolicy: "OnRootMismatch"
 
+chalice:
+  podSecurityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+    fsGroupChangePolicy: "OnRootMismatch"
+
 ingress-nginx:
   enabled: true
   controller:
