@@ -28,13 +28,9 @@ import { fetchIntegrationList } from 'Duck/integrations/integrations';
 export default class IntegrationForm extends React.PureComponent {
     constructor(props) {
         super(props);
-        // const currentSiteId = this.props.initialSiteId;
-        // this.state = { currentSiteId };
-        // this.init(currentSiteId);
     }
 
     fetchList = () => {
-        alert('calling...');
         const { siteId, initialSiteId } = this.props;
         if (!siteId) {
             this.props.fetchIntegrationList(initialSiteId);
