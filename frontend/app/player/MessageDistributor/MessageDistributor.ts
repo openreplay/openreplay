@@ -6,7 +6,7 @@ import Resource, { TYPES } from 'Types/session/resource'; // MBTODO: player type
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import Log from 'Types/session/log';
 
-import { update, getState } from '../store';
+import { update } from '../store';
 import { toast } from 'react-toastify';
 
 import {
@@ -248,7 +248,6 @@ export default class MessageDistributor extends StatedScreen {
     const onData = (byteArray: Uint8Array) => {
       const onReadCallback = () => this.setLastRecordedMessageTime(this.lastMessageTime)
       const msgs = this.readAndDistributeMessages(byteArray, onReadCallback)
-      this.sessionStart = msgs[0].time
       this.processStateUpdates(msgs)
     }
 
@@ -275,6 +274,8 @@ export default class MessageDistributor extends StatedScreen {
       this.waitingForFiles = false
       this.setMessagesLoading(false)
     }
+
+
   }
 
   private reloadMessageManagers() {

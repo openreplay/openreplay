@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Duration } from 'luxon';
-import { durationFormatted, convertTimestampToUtcTimestamp } from 'App/date';
+import { convertTimestampToUtcTimestamp } from 'App/date';
 
 interface Props {
   startTime: any,
@@ -10,7 +9,11 @@ interface Props {
 function Counter({ startTime, className }: Props) {
   let intervalId: NodeJS.Timer;
   const [duration, setDuration] = useState(convertTimestampToUtcTimestamp(new Date().getTime()) - convertTimestampToUtcTimestamp(startTime));
-  const formattedDuration = durationFormatted(Duration.fromMillis(duration));
+
+  const secsFull = ~~(duration / 1000)
+  const mins = ~~(secsFull / 60)
+  const secs = secsFull - mins * 60
+  const formattedDuration = `${mins}:${secs < 10 ? 0 : ''}${secs}`
 
   useEffect(() => {
     if (!intervalId) {

@@ -79,6 +79,7 @@ export const requestReleaseRemoteControl = initCheck((...args) => instance.assis
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
 export const toggleAnnotation = initCheck((...args) => instance.assistManager.toggleAnnotation(...args))
+/** @type {Player.toggleTimetravel} */
 export const toggleTimetravel = initCheck((...args) => instance.toggleTimetravel(...args))
 export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
 
