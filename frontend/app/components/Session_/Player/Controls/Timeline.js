@@ -220,7 +220,7 @@ export default class Timeline extends React.PureComponent {
         const scale = 100 / endTime;
 
         return (
-            <div className="flex items-center absolute w-full" style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: '100%' }}>
+            <div className="flex items-center absolute w-full" style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`, maxWidth: 'calc(100% - 1rem)', left: '0.5rem' }}>
                 <div
                     className={stl.progress}
                     onClick={disabled ? null : this.jumpToTime}
