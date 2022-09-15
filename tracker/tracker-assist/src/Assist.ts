@@ -156,6 +156,7 @@ export default class Assist {
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
         annot.mount()
+        return callingAgents.get(id)
       },
       id => {
         const cb = this.agents[id].onControlReleased
@@ -211,7 +212,7 @@ export default class Assist {
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
-      remoteControl.releaseControl(id)
+      remoteControl.releaseControl()
 
       this.agents[id]?.onDisconnect?.()
       delete this.agents[id]
@@ -298,7 +299,9 @@ export default class Assist {
     const handleCallEnd = () => { // Completle stop and clear all calls
       // Streams
       Object.values(calls).forEach(call => call.close())
-      Object.keys(calls).forEach(peerId => delete calls[peerId])
+      Object.keys(calls).forEach(peerId => {
+        delete calls[peerId]
+      })
       Object.values(lStreams).forEach((stream) => { stream.stop() })
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
 
@@ -312,6 +315,9 @@ export default class Assist {
       this.emit('UPDATE_SESSION', { agentIds: [], isCallActive: false, })
       this.setCallingState(CallingState.False)
       sessionStorage.removeItem(this.options.session_calling_peer_key)
+
+      remoteControl.releaseControl()
+
       callEndCallback?.()
     }
     const initiateCallEnd = () => {

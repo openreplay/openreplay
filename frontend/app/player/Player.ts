@@ -263,7 +263,11 @@ export default class Player extends MessageDistributor {
     this._setTime(getState().endTime);
     this._startAnimation();
     update({ livePlay: true });
-}
+  }
+
+  toggleUserName(name?: string) {
+    this.cursor.toggleUserName(name)
+  }
 
   clean() {
     this.pause();
