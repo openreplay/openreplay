@@ -13,7 +13,7 @@ export default class AnnotationCanvas {
     })
   }
 
-  private resizeCanvas = () => {
+  private readonly resizeCanvas = () => {
     this.canvas.width = window.innerWidth
     this.canvas.height = window.innerHeight
   }

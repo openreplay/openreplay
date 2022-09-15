@@ -24,8 +24,8 @@ export default class RemoteControl {
 
   constructor(
     private readonly options: AssistOptions,
-    private readonly onGrand: (sting?) => void,
-    private readonly onRelease: (sting?) => void) {}
+    private readonly onGrand: (string?) => string | undefined,
+    private readonly onRelease: (string?) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -39,12 +39,12 @@ export default class RemoteControl {
   private confirm: ConfirmWindow | null = null
   requestControl = (id: string) => {
     if (this.agentID !== null) {
-      this.releaseControl(id)
+      this.releaseControl()
       return
     }
     setTimeout(() =>{
       if (this.status === RCStatus.Requesting) {
-        this.releaseControl(id)
+        this.releaseControl()
       }
     }, 30000)
     this.agentID = id
@@ -54,7 +54,7 @@ export default class RemoteControl {
       if (allowed) {
         this.grantControl(id)
       } else {
-        this.releaseControl(id)
+        this.releaseControl()
       }
     })
     .then(() => {
@@ -65,23 +65,24 @@ export default class RemoteControl {
         console.error(e)
       })
   }
+
   grantControl = (id: string) => {
     this.agentID = id
     this.status = RCStatus.Enabled
-    this.mouse = new Mouse()
-    this.mouse.mount()
     sessionStorage.setItem(this.options.session_control_peer_key, id)
-    this.onGrand(id)
+    const agentName = this.onGrand(id)
+    this.mouse = new Mouse(agentName)
+    this.mouse.mount()
   }
 
-  releaseControl = (id: string) => {
-    if (this.agentID !== id) { return }
+  releaseControl = () => {
+    if (!this.agentID) { return }
     this.mouse?.remove()
     this.mouse = null
     this.status = RCStatus.Disabled
-    this.agentID = null
     sessionStorage.removeItem(this.options.session_control_peer_key)
-    this.onRelease(id)
+    this.onRelease(this.agentID)
+    this.agentID = null
   }
 
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }
