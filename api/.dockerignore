@@ -4,3 +4,4 @@
 **/build.sh
 **/build_*.sh
 **/*deploy.sh
+Dockerfile*
