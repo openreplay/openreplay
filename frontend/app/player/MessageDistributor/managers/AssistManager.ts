@@ -323,6 +323,12 @@ export default class AssistManager {
     }
   }
 
+  releaseRemoteControl = () => {
+    if (!this.socket) { return }
+    this.socket.emit("release_control")
+    this.toggleRemoteControl(false)
+  }
+
 
   /* ==== PeerJS Call ==== */
 

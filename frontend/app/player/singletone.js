@@ -76,6 +76,7 @@ export const setCallArgs = initCheck((...args) => instance.assistManager.setCall
 /** @type {Player.assistManager.initiateCallEnd} */
 export const initiateCallEnd = initCheck((...args) => instance.assistManager.initiateCallEnd(...args))
 export const requestReleaseRemoteControl = initCheck((...args) => instance.assistManager.requestReleaseRemoteControl(...args))
+export const releaseRemoteControl = initCheck((...args) => instance.assistManager.releaseRemoteControl(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
 export const toggleAnnotation = initCheck((...args) => instance.assistManager.toggleAnnotation(...args))
