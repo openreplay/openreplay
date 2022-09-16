@@ -1130,7 +1130,7 @@ VALUES ('Captured sessions', 'web vitals', '{
          "position": 0
        }', true, true, true, 'errors_per_domains', 'predefined', 'table'),
        ('Fetch Calls with Errors', 'errors', '{
-         "col": 2,
+         "col": 4,
          "row": 2,
          "position": 0
        }', true, true, true, 'calls_errors', 'predefined', 'table'),
