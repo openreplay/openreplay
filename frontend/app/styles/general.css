@@ -289,11 +289,7 @@ p {
 
 .tippy-notransition, .tippy-notransition > * {
   transition: none!important;
-  background-color: transparent!important;
   will-change: unset!important;
-}
-.tippy-notransition > *[x-circle] {
-  display: none
 }
 
 @media print {

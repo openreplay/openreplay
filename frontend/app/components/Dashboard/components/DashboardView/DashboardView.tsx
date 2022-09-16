@@ -133,8 +133,7 @@ function DashboardView(props: Props) {
                                         useContext
                                         // @ts-ignore
                                         theme="nopadding"
-                                        animation="none"
-                                        hideDelay={200}
+                                        hideDelay={0}
                                         duration={0}
                                         distance={20}
                                         html={
