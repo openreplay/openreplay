@@ -158,8 +158,9 @@ export default class Assist {
           annot = null
         }
         callUI?.hideRemoteControl()
-        if (!CallingState.True) {
+        if (this.callingState !== CallingState.True) {
           callUI?.remove()
+          callUI = null
         }
     }
 
@@ -169,13 +170,18 @@ export default class Assist {
         if (!callUI) {
           callUI = new CallWindow(app.debug.error)
         }
-        callUI.showRemoteControl()
-        callUI.setRemoteControlEnd(() => releaseControlCb(id))
+        setTimeout(() => {
+          if (this.callingState === CallingState.False) {
+            callUI?.showRemoteOnly()
+          } else {
+            callUI?.showRemoteControl()
+          }
+        }, 150)
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
         annot.mount()
-        return callingAgents.get(id)
+        return { agentName: callingAgents.get(id), callUI, }
       },
       releaseControlCb,
     )
@@ -317,6 +323,7 @@ export default class Assist {
 
       // UI
       closeCallConfirmWindow()
+      remoteControl.releaseControl()
       callUI?.remove()
       annot?.remove()
       callUI = null
@@ -377,6 +384,8 @@ export default class Assist {
           callUI = new CallWindow(app.debug.error)
         }
         callUI.setCallEndAction(initiateCallEnd)
+        callUI.showControls()
+
         if (!annot) {
           annot = new AnnotationCanvas()
           annot.mount()
