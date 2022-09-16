@@ -147,23 +147,6 @@ export default class Assist {
     })
     socket.onAny((...args) => app.debug.log('Socket:', ...args))
 
-
-    const releaseControlCb = (id) => {
-      const cb = this.agents[id].onControlReleased
-        delete this.agents[id].onControlReleased
-        typeof cb === 'function' && cb()
-        this.emit('control_rejected', id)
-        if (annot != null) {
-          annot.remove()
-          annot = null
-        }
-        callUI?.hideRemoteControl()
-        if (this.callingState !== CallingState.True) {
-          callUI?.remove()
-          callUI = null
-        }
-    }
-
     const remoteControl = new RemoteControl(
       this.options,
       id => {
@@ -177,7 +160,21 @@ export default class Assist {
         annot.mount()
         return callingAgents.get(id)
       },
-      releaseControlCb,
+      id => {
+        const cb = this.agents[id].onControlReleased
+        delete this.agents[id].onControlReleased
+        typeof cb === 'function' && cb()
+        this.emit('control_rejected', id)
+        if (annot != null) {
+          annot.remove()
+          annot = null
+        }
+        callUI?.hideRemoteControl()
+        if (this.callingState !== CallingState.True) {
+          callUI?.remove()
+          callUI = null
+        }
+      },
     )
 
     // TODO: check incoming args
