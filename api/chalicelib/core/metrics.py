@@ -1632,7 +1632,7 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
                                            data=args, main_table="requests", time_column="timestamp", project=False,
                                            duration=False)
-    pg_sub_query_subset.append("requests.status/100 = %(status_code)s")
+    pg_sub_query_subset.append("requests.status_code/100 = %(status_code)s")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH requests AS (SELECT host, timestamp 
@@ -1810,7 +1810,7 @@ def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("requests.type = 'fetch'")
     pg_sub_query.append("requests.method IS NOT NULL")
-    pg_sub_query.append(f"requests.status/100 = {status}")
+    pg_sub_query.append(f"requests.status_code/100 = {status}")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT  requests.method,
