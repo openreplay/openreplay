@@ -148,18 +148,8 @@ export default class Assist {
     socket.onAny((...args) => app.debug.log('Socket:', ...args))
 
 
-
-    const remoteControl = new RemoteControl(
-      this.options,
-      id => {
-        this.agents[id].onControlReleased = this.options.onRemoteControlStart()
-        this.emit('control_granted', id)
-        annot = new AnnotationCanvas()
-        annot.mount()
-        return callingAgents.get(id)
-      },
-      id => {
-        const cb = this.agents[id].onControlReleased
+    const releaseControlCb = (id) => {
+      const cb = this.agents[id].onControlReleased
         delete this.agents[id].onControlReleased
         typeof cb === 'function' && cb()
         this.emit('control_rejected', id)
@@ -167,7 +157,27 @@ export default class Assist {
           annot.remove()
           annot = null
         }
+        callUI?.hideRemoteControl()
+        if (!CallingState.True) {
+          callUI?.remove()
+        }
+    }
+
+    const remoteControl = new RemoteControl(
+      this.options,
+      id => {
+        if (!callUI) {
+          callUI = new CallWindow(app.debug.error)
+        }
+        callUI.showRemoteControl()
+        callUI.setRemoteControlEnd(() => releaseControlCb(id))
+        this.agents[id].onControlReleased = this.options.onRemoteControlStart()
+        this.emit('control_granted', id)
+        annot = new AnnotationCanvas()
+        annot.mount()
+        return callingAgents.get(id)
       },
+      releaseControlCb,
     )
 
     // TODO: check incoming args
@@ -365,9 +375,8 @@ export default class Assist {
         // UI
         if (!callUI) {
           callUI = new CallWindow(app.debug.error)
-          // TODO: as constructor options
-          callUI.setCallEndAction(initiateCallEnd)
         }
+        callUI.setCallEndAction(initiateCallEnd)
         if (!annot) {
           annot = new AnnotationCanvas()
           annot.mount()

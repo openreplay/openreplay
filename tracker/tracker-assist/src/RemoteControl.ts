@@ -54,6 +54,7 @@ export default class RemoteControl {
       if (allowed) {
         this.grantControl(id)
       } else {
+        this.confirm?.remove()
         this.releaseControl()
       }
     })
