@@ -208,7 +208,7 @@ export default class Timeline extends React.PureComponent {
           />
           <TimeTracker scale={scale} />
 
-          {skip &&
+          {!live && skip ?
             skipIntervals.map((interval) => (
               <div
                 key={interval.start}
@@ -218,7 +218,7 @@ export default class Timeline extends React.PureComponent {
                   width: `${(interval.end - interval.start) * scale}%`,
                 }}
               />
-            ))}
+            )) : null}
           <div className={stl.timeline} ref={this.timelineRef} />
 
           {events.map((e) => (
