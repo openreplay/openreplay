@@ -93,7 +93,7 @@ export default class Player extends MessageDistributor {
 
       let time = prevTime + diffTime;
 
-      const skipInterval = skip && skipIntervals.find((si: Node) => si.contains(time));  // TODO: good skip by messages
+      const skipInterval = !live && skip && skipIntervals.find((si: Node) => si.contains(time));  // TODO: good skip by messages
       if (skipInterval) time = skipInterval.end;
 
       const fmt = super.getFirstMessageTime();
