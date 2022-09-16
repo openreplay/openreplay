@@ -281,9 +281,7 @@ export default class CallWindow {
 	}
 
 	public showRemoteOnly() {
-		if (this.controlsContainer) {
-			this.controlsContainer.style.display = 'none'
-		}
+		this.hideControls()
 		this.showRemoteControl()
 	}
 
