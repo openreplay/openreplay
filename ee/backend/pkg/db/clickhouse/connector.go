@@ -157,13 +157,6 @@ func (c *connectorImpl) Commit() error {
 	return nil
 }
 
-func (c *connectorImpl) FinaliseSessionsTable() error {
-	if err := c.conn.Exec(context.Background(), "OPTIMIZE TABLE sessions FINAL"); err != nil {
-		return fmt.Errorf("can't finalise sessions table: %s", err)
-	}
-	return nil
-}
-
 func (c *connectorImpl) checkError(name string, err error) {
 	if err != clickhouse.ErrBatchAlreadySent {
 		log.Printf("can't create %s batch after failed append operation: %s", name, err)

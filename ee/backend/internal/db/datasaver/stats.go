@@ -2,15 +2,11 @@ package datasaver
 
 import (
 	"log"
-	"time"
-
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/messages"
 )
-
-var finalizeTicker <-chan time.Time
 
 func (si *Saver) InitStats() {
 	si.ch = clickhouse.NewConnector(env.String("CLICKHOUSE_STRING"))
@@ -18,7 +14,6 @@ func (si *Saver) InitStats() {
 		log.Fatalf("Clickhouse prepare error: %v\n", err)
 	}
 	si.pg.Conn.SetClickHouse(si.ch)
-	finalizeTicker = time.Tick(20 * time.Minute)
 }
 
 func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error {
@@ -44,15 +39,5 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 }
 
 func (si *Saver) CommitStats(optimize bool) error {
-	if !optimize {
-		return si.ch.Commit()
-	}
-	select {
-	case <-finalizeTicker:
-		if err := si.ch.FinaliseSessionsTable(); err != nil {
-			log.Printf("Stats: FinaliseSessionsTable returned an error. %v", err)
-		}
-	default:
-	}
 	return si.ch.Commit()
 }
