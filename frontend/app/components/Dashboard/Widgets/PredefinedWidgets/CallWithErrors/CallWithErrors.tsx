@@ -7,6 +7,7 @@ import MethodType from './MethodType';
 import cn from 'classnames';
 import stl from './callWithErrors.module.css';
 import { NO_METRIC_DATA } from 'App/constants/messages'
++import { List } from 'immutable';
 
 const cols = [
   {
@@ -51,10 +52,10 @@ interface Props {
 function CallWithErrors(props: Props) {
     const { data, metric } = props;
     const [search, setSearch] = React.useState('')
-    const test = (value = '', serach) => getRE(serach, 'i').test(value);
-    const _data = search ? metric.data.chart.filter(i => test(i.urlHostpath, search)) : metric.data.chart.images;
+    const test = (value = '', serach: any) => getRE(serach, 'i').test(value);
+    const _data = search ? metric.data.chart.filter((i: any) => test(i.urlHostpath, search)) : metric.data.chart;
 
-    const write = ({ target: { name, value } }) => {
+    const write = ({ target: { name, value } }: any) => {
       setSearch(value)
     };
 
@@ -71,8 +72,9 @@ function CallWithErrors(props: Props) {
               <input disabled={metric.data.chart.length === 0} className={stl.searchField} name="search" placeholder="Filter by Path" onChange={write} />
             </div>
             <Table
+              small
               cols={ cols }
-              rows={ _data }
+              rows={ List(_data) }
               isTemplate={props.isTemplate}
             />
           </div>
