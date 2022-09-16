@@ -122,16 +122,6 @@ export default class CallWindow {
 		this.iframe.style.width = `${doc.body.scrollWidth}px`
 	}
 
-	setCallEndAction(endCall: () => void) {
-		this.load
-			.then(() => {
-				if (this.endCallBtn) {
-					this.endCallBtn.onclick = endCall
-				}
-			})
-			.catch((e) => this.logError(e))
-	}
-
 	private checkRemoteVideoInterval: ReturnType<typeof setInterval>
 	private audioContainer: HTMLDivElement | null = null
 	addRemoteStream(rStream: MediaStream) {
@@ -280,11 +270,14 @@ export default class CallWindow {
 			.catch((e) => this.logError(e))
 	}
 
-	public showControls() {
+	public showControls(endCall: () => void) {
 		this.load
 			.then(() => {
 				if (this.controlsContainer) {
 					this.controlsContainer.style.display = 'unset'
+				}
+				if (this.endCallBtn) {
+					this.endCallBtn.onclick = endCall
 				}
 				this.adjustIframeSize()
 			})

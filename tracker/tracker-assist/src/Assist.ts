@@ -377,8 +377,7 @@ export default class Assist {
         if (!callUI) {
           callUI = new CallWindow(app.debug.error)
         }
-        callUI.setCallEndAction(initiateCallEnd)
-        callUI.showControls()
+        callUI.showControls(initiateCallEnd)
 
         if (!annot) {
           annot = new AnnotationCanvas()
