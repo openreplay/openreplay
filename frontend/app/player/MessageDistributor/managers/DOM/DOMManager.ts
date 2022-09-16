@@ -5,7 +5,15 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
 import ListWalker from '../ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
-import { VElement, VText, VShadowRoot, VDocument, VNode, VStyleElement } from './VirtualDOM';
+import {
+  VElement,
+  VText,
+  VShadowRoot,
+  VDocument,
+  VNode,
+  VStyleElement,
+  PostponedStyleSheet,
+} from './VirtualDOM';
 import type { StyleElement } from './VirtualDOM';
 
 
@@ -24,20 +32,21 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 //     .replace(/\-webkit\-/g, "")
 // }
 
-function insertRule(sheet: CSSStyleSheet, msg: { rule: string, index: number }) {
+function insertRule(sheet: CSSStyleSheet | PostponedStyleSheet, msg: { rule: string, index: number }) {
   try {
     sheet.insertRule(msg.rule, msg.index)
   } catch (e) {
     logger.warn(e, msg)
     try {
-      sheet.insertRule(msg.rule)
+      sheet.insertRule(msg.rule, 0)
+      logger.warn("Inserting rule into 0-index", e, msg)
     } catch (e) {
       logger.warn("Cannot insert rule.", e, msg)
     }
   }
 }
 
-function deleteRule(sheet: CSSStyleSheet, msg: { index: number }) {
+function deleteRule(sheet: CSSStyleSheet | PostponedStyleSheet, msg: { index: number }) {
   try {
     sheet.deleteRule(msg.index)
   } catch (e) {
@@ -51,6 +60,7 @@ export default class DOMManager extends ListWalker<Message> {
   private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
   private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
+  private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
 
 
   private upperBodyId: number = -1;
@@ -141,7 +151,7 @@ export default class DOMManager extends ListWalker<Message> {
     let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
-    let styleSheet: CSSStyleSheet | undefined
+    let styleSheet: CSSStyleSheet | PostponedStyleSheet | undefined
     switch (msg.tp) {
       case "create_document":
         doc = this.screen.document;
@@ -321,7 +331,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
       case "adopted_ss_insert_rule":
-        styleSheet = this.styleSheets.get(msg.sheetID)
+        styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
@@ -329,7 +339,7 @@ export default class DOMManager extends ListWalker<Message> {
         insertRule(styleSheet, msg)
         return
       case "adopted_ss_delete_rule":
-        styleSheet = this.styleSheets.get(msg.sheetID)
+        styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
@@ -353,7 +363,7 @@ export default class DOMManager extends ListWalker<Message> {
           vn = this.vElements.get(msg.id)
           if (!vn) { logger.error("Node not found", msg); return } 
           if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
-          this.styleSheets.set(msg.sheetID, vn.node.sheet)
+          this.ppStyleSheets.set(msg.sheetID, new PostponedStyleSheet(vn.node))
           return
         }
         styleSheet = this.styleSheets.get(msg.sheetID)

@@ -119,6 +119,8 @@ export class VElement extends VParent {
 
 type StyleSheetCallback = (s: CSSStyleSheet) => void
 export type StyleElement = HTMLStyleElement | SVGStyleElement
+
+// @Depricated TODO: remove in favor of PostponedStyleSheet
 export class VStyleElement extends VElement {
 	private loaded = false
 	private stylesheetCallbacks: StyleSheetCallback[] = []
@@ -146,6 +148,45 @@ export class VStyleElement extends VElement {
 		} else {
 		  this.stylesheetCallbacks.push(cb)
 		}
+	}
+}
+
+
+export class PostponedStyleSheet {
+	private loaded = false
+	private stylesheetCallbacks: StyleSheetCallback[] = []
+
+	constructor(private readonly node: StyleElement) {
+		node.onload = () => {
+		  const sheet = node.sheet
+		  if (sheet) {
+		    this.stylesheetCallbacks.forEach(cb => cb(sheet))
+		    this.stylesheetCallbacks = []
+		  } else {
+		    console.warn("Style node onload: sheet is null")
+		  }
+		  this.loaded = true
+		}
+	}
+
+	private applyCallback(cb: StyleSheetCallback) {
+		if (this.loaded) {
+			if (!this.node.sheet) {
+				console.warn("Style tag is loaded, but sheet is null")
+				return
+			}
+			cb(this.node.sheet)
+		} else {
+		  this.stylesheetCallbacks.push(cb)
+		}
+	}
+
+	insertRule(rule: string, index: number) {
+		this.applyCallback(s => s.insertRule(rule, index))
+	}
+
+	deleteRule(index: number) {
+		this.applyCallback(s => s.deleteRule(index))
 	}
 }
 

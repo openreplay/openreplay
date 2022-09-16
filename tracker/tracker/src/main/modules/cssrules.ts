@@ -20,8 +20,7 @@ export default function (app: App | null) {
   const sendInserDeleteRule = app.safe((sheet: CSSStyleSheet, index: number, rule?: string) => {
     const sheetID = styleSheetIDMap.get(sheet)
     if (!sheetID) {
-      app.debug.log('StyleSheet not registered ', sheet, sheet.ownerNode)
-      // Sheet haven't been registered yet. Rules will be sent on registration.
+      // OK-case. Sheet haven't been registered yet. Rules will be sent on registration.
       return
     }
     if (typeof rule === 'string') {
@@ -53,6 +52,8 @@ export default function (app: App | null) {
     if (idx >= 0) {
       app.send(AdoptedSSInsertRuleURLBased(sheetID, cssText, idx, app.getBaseHref()))
       app.send(AdoptedSSDeleteRule(sheetID, idx + 1)) // Remove previous clone
+    } else {
+      app.debug.warn('Rule index not found in', sheet, topmostRule)
     }
   })
 
@@ -86,7 +87,7 @@ export default function (app: App | null) {
   app.observer.attachContextCallback(patchContext)
 
   app.nodes.attachNodeCallback((node: Node): void => {
-    if (!hasTag(node, 'STYLE') || !node.sheet) {
+    if (!(hasTag(node, 'STYLE') || hasTag(node, 'style')) || !node.sheet) {
       return
     }
     if (node.textContent !== null && node.textContent.trim().length > 0) {
@@ -101,7 +102,6 @@ export default function (app: App | null) {
     const sheetID = nextID()
     styleSheetIDMap.set(sheet, sheetID)
     app.send(AdoptedSSAddOwner(sheetID, nodeID))
-    app.debug.log('StyleSheet registered ', sheet, node)
 
     const rules = sheet.cssRules
     for (let i = 0; i < rules.length; i++) {
