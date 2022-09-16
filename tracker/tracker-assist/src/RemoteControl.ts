@@ -24,8 +24,8 @@ export default class RemoteControl {
 
   constructor(
     private readonly options: AssistOptions,
-    private readonly onGrand: (string?) => { agentName: string | undefined, callUI: any },
-    private readonly onRelease: (string?) => void) {}
+    private readonly onGrand: (id: string) => string | undefined,
+    private readonly onRelease: (id: string) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -71,10 +71,7 @@ export default class RemoteControl {
     this.agentID = id
     this.status = RCStatus.Enabled
     sessionStorage.setItem(this.options.session_control_peer_key, id)
-    const { agentName, callUI, } = this.onGrand(id)
-    if (callUI) {
-      callUI?.setRemoteControlEnd(this.releaseControl)
-    }
+    const agentName = this.onGrand(id)
     if (this.mouse) {
       this.resetMouse()
     }
