@@ -13,6 +13,8 @@ export default class CallWindow {
   private agentNameElem: HTMLElement | null = null
   private videoContainer: HTMLElement | null = null
   private vPlaceholder: HTMLElement | null = null
+  private remoteControlContainer: HTMLElement | null = null
+  private remoteControlEndBtn: HTMLElement | null = null
 
   private tsInterval: ReturnType<typeof setInterval>
 
@@ -38,12 +40,12 @@ export default class CallWindow {
     const doc = iframe.contentDocument
     if (!doc) {
       console.error('OpenReplay: CallWindow iframe document is not reachable.')
-      return 
+      return
     }
 
 
     //const baseHref = "https://static.openreplay.com/tracker-assist/test"
-    const baseHref = 'https://static.openreplay.com/tracker-assist/3.4.4'
+    const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
     this.load = fetch(baseHref + '/index.html')
     .then(r => r.text())
     .then((text) => {
@@ -62,11 +64,11 @@ export default class CallWindow {
       doc.write(text)
       doc.close()
 
-      
+
       this.vLocal = doc.getElementById('video-local') as (HTMLVideoElement | null)
       this.vRemote = doc.getElementById('video-remote') as (HTMLVideoElement | null)
       this.videoContainer = doc.getElementById('video-container')
-      
+
       this.audioBtn = doc.getElementById('audio-btn')
       if (this.audioBtn) {
         this.audioBtn.onclick = () => this.toggleAudio()
@@ -79,6 +81,9 @@ export default class CallWindow {
 
       this.agentNameElem = doc.getElementById('agent-name')
       this.vPlaceholder = doc.querySelector('#remote-stream p')
+
+      this.remoteControlContainer = doc.getElementById('remote-control-row')
+      this.remoteControlEndBtn = doc.getElementById('end-control-btn')
 
       const tsElem = doc.getElementById('duration')
       if (tsElem) {
@@ -119,6 +124,14 @@ export default class CallWindow {
     }).catch(e => this.logError(e))
   }
 
+  setRemoteControlEnd(endControl: () => void) {
+    this.load.then(() => {
+      if (this.remoteControlEndBtn) {
+        this.remoteControlEndBtn.onclick = endControl
+      }
+    }).catch(e => this.logError(e))
+  }
+
   private checkRemoteVideoInterval: ReturnType<typeof setInterval>
   private audioContainer: HTMLDivElement | null = null
   addRemoteStream(rStream: MediaStream) {
@@ -129,7 +142,7 @@ export default class CallWindow {
         if (this.vPlaceholder) {
           this.vPlaceholder.innerText = 'Video has been paused. Click anywhere to resume.'
         }
-        // Hack to determine if the remote video is enabled 
+        // Hack to determine if the remote video is enabled
         // TODO: pass this info through socket
         if (this.checkRemoteVideoInterval) { clearInterval(this.checkRemoteVideoInterval) } // just in case
         let enabled = false
@@ -143,12 +156,12 @@ export default class CallWindow {
         }, 1000)
       }
 
-      // Audio 
+      // Audio
       if (!this.audioContainer) {
         this.audioContainer = document.createElement('div')
         document.body.appendChild(this.audioContainer)
       }
-      // Hack for audio. Doesen't work inside the iframe 
+      // Hack for audio. Doesen't work inside the iframe
       // because of some magical reasons (check if it is connected to autoplay?)
       const audioEl = document.createElement('audio')
       audioEl.autoplay = true
@@ -193,7 +206,7 @@ export default class CallWindow {
 
 
   private toggleAudioUI(enabled: boolean) {
-    if (!this.audioBtn) { return } 
+    if (!this.audioBtn) { return }
     if (enabled) {
       this.audioBtn.classList.remove('muted')
     } else {
@@ -233,6 +246,18 @@ export default class CallWindow {
         }).catch(e => this.logError(e))
       }).catch(e => this.logError(e))
     })
+  }
+
+  public showRemoteControl() {
+    if (this.remoteControlContainer) {
+      this.remoteControlContainer.style.display = 'flex'
+    }
+  }
+
+  public hideRemoteControl() {
+    if (this.remoteControlContainer) {
+      this.remoteControlContainer.style.display = 'none'
+    }
   }
 
   remove() {
