@@ -84,6 +84,9 @@ export default class CallWindow {
 				this.remoteControlContainer = doc.getElementById('remote-control-row')
 				this.remoteControlEndBtn = doc.getElementById('end-control-btn')
 				this.controlsContainer = doc.getElementById('controls')
+				if (this.controlsContainer) {
+					this.controlsContainer.style.display = 'none'
+				}
 
 				const tsElem = doc.getElementById('duration')
 				if (tsElem) {
@@ -124,16 +127,6 @@ export default class CallWindow {
 			.then(() => {
 				if (this.endCallBtn) {
 					this.endCallBtn.onclick = endCall
-				}
-			})
-			.catch((e) => this.logError(e))
-	}
-
-	setRemoteControlEnd(endControl: () => void) {
-		this.load
-			.then(() => {
-				if (this.remoteControlEndBtn) {
-					this.remoteControlEndBtn.onclick = endControl
 				}
 			})
 			.catch((e) => this.logError(e))
@@ -273,23 +266,29 @@ export default class CallWindow {
 		})
 	}
 
-	public showRemoteControl() {
-		if (this.remoteControlContainer) {
-			this.remoteControlContainer.style.display = 'flex'
-		}
-		this.adjustIframeSize()
-	}
-
-	public showRemoteOnly() {
-		this.hideControls()
-		this.showRemoteControl()
+	public showRemoteControl(endControl: () => void) {
+		this.load
+			.then(() => {
+				if (this.remoteControlContainer) {
+					this.remoteControlContainer.style.display = 'flex'
+				}
+				if (this.remoteControlEndBtn) {
+					this.remoteControlEndBtn.onclick = endControl
+				}
+				this.adjustIframeSize()
+			})
+			.catch((e) => this.logError(e))
 	}
 
 	public showControls() {
-		if (this.controlsContainer) {
-			this.controlsContainer.style.display = 'unset'
-		}
-		this.adjustIframeSize()
+		this.load
+			.then(() => {
+				if (this.controlsContainer) {
+					this.controlsContainer.style.display = 'unset'
+				}
+				this.adjustIframeSize()
+			})
+			.catch((e) => this.logError(e))
 	}
 
 	public hideControls() {
