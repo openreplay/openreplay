@@ -170,9 +170,7 @@ export default class Assist {
         if (!callUI) {
           callUI = new CallWindow(app.debug.error)
         }
-        setTimeout(() => {
-            callUI?.showRemoteControl(remoteControl.releaseControl)
-        }, 150)
+        callUI?.showRemoteControl(remoteControl.releaseControl)
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
