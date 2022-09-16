@@ -30,13 +30,12 @@ const WIN_VARIANTS = {
 function RequestingWindow({ userDisplayName, type }: Props) {
   return (
     <div className="w-full h-full absolute top-0 left-0 flex items-center justify-center" style={{ background: "rgba(0,0,0, 0.30)", zIndex: INDEXES.PLAYER_REQUEST_WINDOW}}>
-      <div className="rounded bg-white py-4 px-8 flex flex-col text-lg items-center max-w-md text-center">
-          <Icon size={40} name={WIN_VARIANTS[type].icon} className='mb-4'/>
-          <span>Waiting for</span>
-          <span className="font-semibold">{userDisplayName}</span>
+      <div className="rounded bg-white py-4 px-8 flex flex-col text-lg items-center max-w-lg text-center">
+          <Icon size={40} color="teal" name={WIN_VARIANTS[type].icon} className='mb-4'/>
+          <div>Waiting for <span className="font-semibold">{userDisplayName}</span></div>
           <span>{WIN_VARIANTS[type].text}</span>
           <Loader size={30} style={{ minHeight: 60 }} />
-        <Button variant="text-primary" onClick={WIN_VARIANTS[type].action}>cancel</Button>
+        <Button variant="text-primary" onClick={WIN_VARIANTS[type].action}>Cancel</Button>
       </div>
     </div>
   )
