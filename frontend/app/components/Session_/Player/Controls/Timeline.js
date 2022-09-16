@@ -206,7 +206,7 @@ export default class Timeline extends React.PureComponent {
             minX={BOUNDRY}
             maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY}
           />
-          <TimeTracker scale={scale} />
+          <TimeTracker scale={scale} live={this.props.live} left={this.props.time * scale} />
 
           {!live && skip ?
             skipIntervals.map((interval) => (
