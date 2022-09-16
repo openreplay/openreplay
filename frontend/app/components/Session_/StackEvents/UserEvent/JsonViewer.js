@@ -5,6 +5,10 @@ export default class JsonViewer extends React.PureComponent {
   render() {
     const { data, title, icon } = this.props;
     const isObjectData = typeof data === 'object' && !Array.isArray(data) && data !== null;
+    // TODO this has to be fixed in the data @Mehdi
+    if (Array.isArray(data) && data.length === 1) {
+      data[0] = '';
+    }
     return (
       <div>
         <div className="flex items-center">
