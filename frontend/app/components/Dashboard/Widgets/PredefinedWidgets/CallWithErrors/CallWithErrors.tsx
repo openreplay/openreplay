@@ -7,7 +7,7 @@ import MethodType from './MethodType';
 import cn from 'classnames';
 import stl from './callWithErrors.module.css';
 import { NO_METRIC_DATA } from 'App/constants/messages'
-+import { List } from 'immutable';
+import { List } from 'immutable';
 
 const cols = [
   {
