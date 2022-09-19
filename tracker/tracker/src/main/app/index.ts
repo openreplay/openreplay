@@ -155,10 +155,10 @@ export default class App {
       }
       this.worker.onmessage = ({ data }: MessageEvent) => {
         if (data === 'failed') {
-          this.stop()
+          this.stop(false)
           this._debug('worker_failed', {}) // add context (from worker)
         } else if (data === 'restart') {
-          this.stop()
+          this.stop(false)
           this.start({ forceNew: true })
         }
       }
