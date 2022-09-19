@@ -11,10 +11,6 @@ function Counter({ startTime, className }: Props) {
   let intervalId: NodeJS.Timer;
   const [duration, setDuration] = useState(convertTimestampToUtcTimestamp(new Date().getTime()) - convertTimestampToUtcTimestamp(startTime));
 
-  // const secsFull = ~~(duration / 1000)
-  // const mins = ~~(secsFull / 60)
-  // const secs = secsFull - mins * 60
-  // const formattedDuration = `${mins}:${secs < 10 ? 0 : ''}${secs}`
   const formattedDuration = durationFormatted(Duration.fromMillis(duration));
 
   useEffect(() => {
