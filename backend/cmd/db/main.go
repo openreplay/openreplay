@@ -146,7 +146,7 @@ func main() {
 			pgDur := time.Now().Sub(start).Milliseconds()
 
 			start = time.Now()
-			if err := saver.CommitStats(consumer.HasFirstPartition()); err != nil {
+			if err := saver.CommitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}
 			chDur := time.Now().Sub(start).Milliseconds()

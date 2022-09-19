@@ -194,16 +194,3 @@ func (consumer *Consumer) Close() {
 		log.Printf("Kafka consumer close error: %v", err)
 	}
 }
-
-func (consumer *Consumer) HasFirstPartition() bool {
-	assigned, err := consumer.c.Assignment()
-	if err != nil {
-		return false
-	}
-	for _, p := range assigned {
-		if p.Partition == 1 {
-			return true
-		}
-	}
-	return false
-}

@@ -161,7 +161,3 @@ func (c *Consumer) CommitBack(gap int64) error {
 func (c *Consumer) Close() {
 	// noop
 }
-
-func (c *Consumer) HasFirstPartition() bool {
-	return false
-}
