@@ -11,7 +11,7 @@ const heapdump = process.env.heapdump === "1";
 
 const app = express();
 app.use(request_logger("[SR]"));
-app.get([PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
+app.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
         res.statusCode = 200;
         res.end("ok!");
     }
