@@ -6,6 +6,7 @@ from chalicelib.core import projects
 from starlette.exceptions import HTTPException
 from os import access, R_OK
 
+ASSIST_KEY = config("ASSIST_KEY", default=config("S3_KEY"))
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
                            s.user_uuid,
@@ -47,7 +48,7 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.post(config("ASSIST_URL") + config("assist") % config("S3_KEY") + f"/{project_key}",
+        connected_peers = requests.post(config("ASSIST_URL") + config("assist") % ASSIST_KEY + f"/{project_key}",
                                         json=data, timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
@@ -79,7 +80,7 @@ def get_live_session_by_id(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
         connected_peers = requests.get(
-            config("ASSIST_URL") + config("assist") % config("S3_KEY") + f"/{project_key}/{session_id}",
+            config("ASSIST_URL") + config("assist") % ASSIST_KEY + f"/{project_key}/{session_id}",
             timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
@@ -109,7 +110,7 @@ def is_live(project_id, session_id, project_key=None):
         project_key = projects.get_project_key(project_id)
     try:
         connected_peers = requests.get(
-            config("ASSIST_URL") + config("assistList") % config("S3_KEY") + f"/{project_key}/{session_id}",
+            config("ASSIST_URL") + config("assistList") % ASSIST_KEY + f"/{project_key}/{session_id}",
             timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
@@ -138,7 +139,7 @@ def autocomplete(project_id, q: str, key: str = None):
         params["key"] = key
     try:
         results = requests.get(
-            config("ASSIST_URL") + config("assistList") % config("S3_KEY") + f"/{project_key}/autocomplete",
+            config("ASSIST_URL") + config("assistList") % ASSIST_KEY + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print("!! issue with the peer-server")
