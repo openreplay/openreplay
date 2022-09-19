@@ -23,7 +23,7 @@ wsapp.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/
     }
 );
 wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
-heapdump && wsapp.use(`/heapdump/${P_KEY}`, dumps.router);
+heapdump && wsapp.use(`${PREFIX}/heapdump/${P_KEY}`, dumps.router);
 
 const wsserver = wsapp.listen(PORT, HOST, () => {
     console.log(`WS App listening on http://${HOST}:${PORT}`);
