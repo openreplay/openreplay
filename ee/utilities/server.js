@@ -29,7 +29,7 @@ if (process.env.uws !== "true") {
             res.end("ok!");
         }
     );
-    heapdump && wsapp.use(`${PREFIX}/heapdump/${P_KEY}`, dumps.router);
+    heapdump && wsapp.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
     wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
     wsapp.enable('trust proxy');
     const wsserver = wsapp.listen(PORT, HOST, () => {
