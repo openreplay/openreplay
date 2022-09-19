@@ -45,8 +45,8 @@ export default class CallWindow {
 		}
 
 		//const baseHref = "https://static.openreplay.com/tracker-assist/test"
-		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0/index.html'
-		this.load = fetch(this.callUITemplate || baseHref)
+		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
+		this.load = fetch(this.callUITemplate || baseHref + '/index.html')
 			.then((r) => r.text())
 			.then((text) => {
 				iframe.onload = () => {
