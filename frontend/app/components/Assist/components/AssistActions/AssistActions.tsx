@@ -19,7 +19,7 @@ import {
 } from 'Player/MessageDistributor/managers/AssistManager';
 import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
-
+import { Tooltip } from 'react-tippy';
 import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
@@ -69,6 +69,8 @@ function AssistActions({
   const callRequesting = calling === CallingState.Connecting;
   const cannotCall =
     peerConnectionStatus !== ConnectionStatus.Connected || (isEnterprise && !hasPermission);
+
+  const remoteRequesting = remoteControlStatus === RemoteControlStatus.Requesting;
   const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled;
 
   useEffect(() => {
@@ -130,7 +132,7 @@ function AssistActions({
   }
 
   const confirmCall = async () => {
-    if (callRequesting) return;
+    if (callRequesting || remoteRequesting) return;
 
     if (
       await confirm({
@@ -144,7 +146,7 @@ function AssistActions({
   };
 
   const requestControl = () => {
-    if (callRequesting) return;
+    if (callRequesting || remoteRequesting) return;
     requestReleaseRemoteControl();
   };
 
@@ -171,22 +173,25 @@ function AssistActions({
           <div className={stl.divider} />
         </>
       )}
-      <div
-        className={cn('cursor-pointer p-2 flex items-center', {
-          [stl.disabled]: cannotCall || !livePlay || callRequesting,
-        })}
-        onClick={requestControl}
-        role="button"
-      >
-        <Button
-          icon={remoteActive ? 'window-x' : 'remote-control'}
-          variant={remoteActive ? 'text-red' : 'text-primary'}
-          style={{ height: '28px' }}
+
+      {/* @ts-ignore */}
+      <Tooltip title="Go live to initiate remote control" disabled={livePlay}>
+        <div
+          className={cn('cursor-pointer p-2 flex items-center', {
+            [stl.disabled]: cannotCall || !livePlay || callRequesting || remoteRequesting,
+          })}
+          onClick={requestControl}
+          role="button"
         >
-          Remote Control
-        </Button>
-        {/* <IconButton label={`Remote Control`} icon={remoteActive ? 'window-x' : 'remote-control'} primaryText redText={remoteActive} /> */}
-      </div>
+          <Button
+            icon={remoteActive ? 'window-x' : 'remote-control'}
+            variant={remoteActive ? 'text-red' : 'text-primary'}
+            style={{ height: '28px' }}
+          >
+            Remote Control
+          </Button>
+        </div>
+      </Tooltip>
       <div className={stl.divider} />
 
       <Popup
@@ -198,7 +203,7 @@ function AssistActions({
       >
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
-            [stl.disabled]: cannotCall || callRequesting,
+            [stl.disabled]: cannotCall || callRequesting || remoteRequesting,
           })}
           onClick={onCall ? callObject?.end : confirmCall}
           role="button"
