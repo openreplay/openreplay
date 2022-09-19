@@ -69,7 +69,6 @@ var CONTAINER_TYPE_MAP = map[uint64]string{0: "window", 1: "iframe", 2: "embed",
 type Connector interface {
 	Prepare() error
 	Commit() error
-	FinaliseSessionsTable() error
 	InsertWebSession(session *types.Session) error
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
