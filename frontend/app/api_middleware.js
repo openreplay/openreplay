@@ -12,9 +12,13 @@ export default store => next => (action) => {
   const client = new APIClient();
 
   return call(client)
-    .then(response => {
+    .then(async response => {
       if (response.status === 403) {
         next({ type: DELETE });
+      }
+      if (!response.ok) {
+        const text = await response.text()
+        return Promise.reject(text);
       }
       return response.json()
     })
@@ -31,7 +35,7 @@ export default store => next => (action) => {
     })
     .catch((e) => {
       logger.error("Error during API request. ", e)
-      return next({ type: FAILURE, errors: [ "Connection error", String(e) ] });
+      return next({ type: FAILURE, errors: JSON.parse(e).errors || [] });
     });
 };
 
