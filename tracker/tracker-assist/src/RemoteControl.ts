@@ -3,7 +3,7 @@ import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { controlConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as AssistOptions, } from './Assist'
 
-enum RCStatus {
+export enum RCStatus {
   Disabled,
   Requesting,
   Enabled,
@@ -19,7 +19,7 @@ if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
 
 export default class RemoteControl {
   private mouse: Mouse | null
-  private status: RCStatus = RCStatus.Disabled
+  status: RCStatus = RCStatus.Disabled
   private agentID: string | null = null
 
   constructor(

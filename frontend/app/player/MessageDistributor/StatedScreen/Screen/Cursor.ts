@@ -27,11 +27,11 @@ export default class Cursor {
         position: 'absolute',
         padding: '4px 6px',
         borderRadius: '8px',
-        backgroundColor: 'rgb(57, 78, 255)',
+        backgroundColor: '#3EAAAF',
         color: 'white',
-        bottom: '-30px',
-        left: '100%',
-        fontSize: '16px',
+        bottom: '-25px',
+        left: '80%',
+        fontSize: '12px',
         whiteSpace: 'nowrap',
       })
       this.cursor.appendChild(this.nameElement)

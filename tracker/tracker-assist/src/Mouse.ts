@@ -15,11 +15,11 @@ export default class Mouse {
       position: 'absolute',
       padding: '4px 6px',
       borderRadius: '8px',
-      backgroundColor: 'green',
+      backgroundColor: '#394EFF',
       color: 'white',
-      bottom: '-18px',
-      left: '50%',
-      fontSize: '16px',
+      bottom: '-14px',
+      left: '55%',
+      fontSize: '12px',
       whiteSpace: 'nowrap',
     })
 

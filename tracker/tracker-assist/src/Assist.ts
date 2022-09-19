@@ -6,7 +6,7 @@ import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
 import RequestLocalStream, { LocalStream, } from './LocalStream.js'
-import RemoteControl from './RemoteControl.js'
+import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
 import AnnotationCanvas from './AnnotationCanvas.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
@@ -314,17 +314,18 @@ export default class Assist {
 
       // UI
       closeCallConfirmWindow()
-      remoteControl.releaseControl()
-      callUI?.remove()
-      annot?.remove()
-      callUI = null
-      annot = null
+      if (remoteControl.status === RCStatus.Disabled) {
+        callUI?.remove()
+        annot?.remove()
+        callUI = null
+        annot = null
+      } else {
+        callUI?.hideControls()
+      }
 
       this.emit('UPDATE_SESSION', { agentIds: [], isCallActive: false, })
       this.setCallingState(CallingState.False)
       sessionStorage.removeItem(this.options.session_calling_peer_key)
-
-      remoteControl.releaseControl()
 
       callEndCallback?.()
     }
