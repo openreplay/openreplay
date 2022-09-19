@@ -17,7 +17,7 @@ app.get([PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (re
     }
 );
 app.use(`${PREFIX}/${P_KEY}/sourcemaps`, sourcemapsReaderServer);
-heapdump && app.use(`${PREFIX}/heapdump/${P_KEY}`, dumps.router);
+heapdump && app.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`SR App listening on http://${HOST}:${PORT}`);
