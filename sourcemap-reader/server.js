@@ -3,8 +3,8 @@ const sourcemapsReaderServer = require('./servers/sourcemaps-server');
 const express = require('express');
 const {request_logger} = require("./utils/helper");
 
-const HOST = process.env.SR_HOST || '127.0.0.1';
-const PORT = process.env.SR_PORT || 9000;
+const HOST = process.env.SMR_HOST || '127.0.0.1';
+const PORT = process.env.SMR_PORT || 9000;
 const PREFIX = process.env.PREFIX || process.env.prefix || `/sourcemaps`
 const P_KEY = process.env.SMR_KEY || process.env.S3_KEY || 'smr';
 
