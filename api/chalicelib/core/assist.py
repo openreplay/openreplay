@@ -6,7 +6,7 @@ from chalicelib.core import projects
 from starlette.exceptions import HTTPException
 from os import access, R_OK
 
-ASSIST_KEY = config("ASSIST_KEY", default=config("S3_KEY"))
+ASSIST_KEY = config("ASSIST_KEY")
 ASSIST_URL = config("ASSIST_URL") % ASSIST_KEY
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
