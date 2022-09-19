@@ -3,6 +3,7 @@ const v8 = require('v8');
 const express = require('express');
 const router = express.Router();
 
+const heapdump = process.env.heapdump === "1";
 const location = '/tmp/';
 let creationStatus = null;
 let fileName = null;
@@ -60,9 +61,11 @@ function createNewHeapSnapshot(req, res) {
     res.end(JSON.stringify({path: location + fileName, 'done': creationStatus}));
 }
 
-router.get(`/status`, getHeapSnapshotStatus);
-router.get(`/new`, createNewHeapSnapshot);
-router.get(`/download`, downloadHeapSnapshot);
+if (heapdump) {
+    router.get(`/status`, getHeapSnapshotStatus);
+    router.get(`/new`, createNewHeapSnapshot);
+    router.get(`/download`, downloadHeapSnapshot);
+}
 module.exports = {router}
 
-console.log(`HeapSnapshot enabled. Send a request to "/heapdump/new" to generate a heapdump.`);
+heapdump && console.log(`HeapSnapshot enabled. Send a request to "/heapdump/new" to generate a heapdump.`);
