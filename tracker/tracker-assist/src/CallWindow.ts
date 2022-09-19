@@ -21,7 +21,7 @@ export default class CallWindow {
 
 	private readonly load: Promise<void>
 
-	constructor(private readonly logError: (...args: any[]) => void) {
+	constructor(private readonly logError: (...args: any[]) => void, private readonly callUITemplate?: string) {
 		const iframe = (this.iframe = document.createElement('iframe'))
 		Object.assign(iframe.style, {
 			position: 'fixed',
@@ -45,8 +45,8 @@ export default class CallWindow {
 		}
 
 		//const baseHref = "https://static.openreplay.com/tracker-assist/test"
-		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
-		this.load = fetch(baseHref + '/index.html')
+		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0/index.html'
+		this.load = fetch(this.callUITemplate || baseHref)
 			.then((r) => r.text())
 			.then((text) => {
 				iframe.onload = () => {

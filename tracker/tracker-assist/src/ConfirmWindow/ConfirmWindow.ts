@@ -109,6 +109,7 @@ export default class ConfirmWindow {
     wrapper.appendChild(popup)
 
     wrapper.setAttribute('data-openreplay-hidden', '')
+
     this.wrapper = wrapper
 
     confirmBtn.onclick = () => {

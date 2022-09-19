@@ -26,10 +26,13 @@ export interface Options {
   callConfirm: ConfirmOptions,
   controlConfirm: ConfirmOptions,
 
-  confirmText?: string, // @depricated
-  confirmStyle?: Properties, // @depricated
+  // @depricated
+  confirmText?: string,
+  // @depricated
+  confirmStyle?: Properties,
 
   config: RTCConfiguration,
+  callUITemplate?: string,
 }
 
 
@@ -151,7 +154,7 @@ export default class Assist {
       this.options,
       id => {
         if (!callUI) {
-          callUI = new CallWindow(app.debug.error)
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
         }
         callUI?.showRemoteControl(remoteControl.releaseControl)
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
@@ -161,10 +164,12 @@ export default class Assist {
         return callingAgents.get(id)
       },
       id => {
-        const cb = this.agents[id].onControlReleased
-        delete this.agents[id].onControlReleased
-        typeof cb === 'function' && cb()
-        this.emit('control_rejected', id)
+        if (id) {
+          const cb = this.agents[id].onControlReleased
+          delete this.agents[id].onControlReleased
+          typeof cb === 'function' && cb()
+          this.emit('control_rejected', id)
+        }
         if (annot != null) {
           annot.remove()
           annot = null
@@ -373,7 +378,7 @@ export default class Assist {
 
         // UI
         if (!callUI) {
-          callUI = new CallWindow(app.debug.error)
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
         }
         callUI.showControls(initiateCallEnd)
 

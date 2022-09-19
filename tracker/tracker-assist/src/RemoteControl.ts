@@ -25,7 +25,7 @@ export default class RemoteControl {
   constructor(
     private readonly options: AssistOptions,
     private readonly onGrand: (id: string) => string | undefined,
-    private readonly onRelease: (id: string) => void) {}
+    private readonly onRelease: (id?: string | null) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -67,6 +67,18 @@ export default class RemoteControl {
       })
   }
 
+  releaseControl = () => {
+    if (this.confirm) {
+      this.confirm.remove()
+      this.confirm = null
+    }
+    this.resetMouse()
+    this.status = RCStatus.Disabled
+    sessionStorage.removeItem(this.options.session_control_peer_key)
+    this.onRelease(this.agentID)
+    this.agentID = null
+  }
+
   grantControl = (id: string) => {
     this.agentID = id
     this.status = RCStatus.Enabled
@@ -77,15 +89,6 @@ export default class RemoteControl {
     }
     this.mouse = new Mouse(agentName)
     this.mouse.mount()
-  }
-
-  releaseControl = () => {
-    if (!this.agentID) { return }
-    this.resetMouse()
-    this.status = RCStatus.Disabled
-    sessionStorage.removeItem(this.options.session_control_peer_key)
-    this.onRelease(this.agentID)
-    this.agentID = null
   }
 
   resetMouse = () => {
