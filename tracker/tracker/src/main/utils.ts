@@ -2,6 +2,10 @@ const DEPRECATED_ATTRS = { htmlmasked: 'hidden', masked: 'obscured' }
 
 export const IN_BROWSER = !(typeof window === 'undefined')
 
+export const IS_FIREFOX = IN_BROWSER && navigator.userAgent.match(/firefox|fxios/i)
+
+export const MAX_STR_LEN = 1e5
+
 const navigationStart: number | false =
   (IN_BROWSER && performance.timing.navigationStart) || performance.timeOrigin
 // performance.now() is buggy in some browsers

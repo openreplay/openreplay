@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { timestamp, isURL } from '../utils.js'
+import { timestamp, isURL, IS_FIREFOX, MAX_STR_LEN } from '../utils.js'
 import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
@@ -10,12 +10,17 @@ function resolveURL(url: string, location: Location = document.location) {
   } else if (
     url.startsWith('http://') ||
     url.startsWith('https://') ||
-    url.startsWith('data:') // any other possible value here?
+    url.startsWith('data:') // any other possible value here? https://bugzilla.mozilla.org/show_bug.cgi?id=1758035
   ) {
     return url
   } else {
     return location.origin + location.pathname + url
   }
+}
+
+// https://bugzilla.mozilla.org/show_bug.cgi?id=1607081
+function isSVGInFireFox(url: string) {
+  return IS_FIREFOX && (url.startsWith('data:image/svg+xml') || url.match(/.svg$|/i))
 }
 
 const PLACEHOLDER_SRC = 'https://static.openreplay.com/tracker/placeholder.jpeg'
@@ -45,33 +50,34 @@ export default function (app: App): void {
   }
 
   const sendSrc = function (id: number, img: HTMLImageElement): void {
-    const src = img.src
-    app.send(SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()))
+    if (img.src.length > MAX_STR_LEN) {
+      sendPlaceholder(id, img)
+    }
+    app.send(SetNodeAttributeURLBased(id, 'src', img.src, app.getBaseHref()))
   }
 
-  const sendImgAttrs = app.safe(function (this: HTMLImageElement): void {
-    const id = app.nodes.getID(this)
+  const sendImgError = app.safe(function (img: HTMLImageElement): void {
+    const resolvedSrc = resolveURL(img.src || '') // Src type is null sometimes. - is it true?
+    if (isURL(resolvedSrc)) {
+      app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
+    }
+  })
+
+  const sendImgAttrs = app.safe(function (img: HTMLImageElement): void {
+    const id = app.nodes.getID(img)
     if (id === undefined) {
       return
     }
-    const { src, complete, naturalWidth, naturalHeight } = this
-    if (!complete) {
+    if (!img.complete) {
       return
     }
-    const resolvedSrc = resolveURL(src || '') // Src type is null sometimes. - is it true?
-    if (naturalWidth === 0 && naturalHeight === 0) {
-      if (isURL(resolvedSrc)) {
-        app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
-      }
-    } else if (
-      resolvedSrc.length >= 1e5 ||
-      app.sanitizer.isHidden(id) ||
-      app.sanitizer.isObscured(id)
-    ) {
-      sendPlaceholder(id, this)
+    if (img.naturalHeight === 0 && img.naturalWidth === 0 && !isSVGInFireFox(img.src)) {
+      sendImgError(img)
+    } else if (app.sanitizer.isHidden(id) || app.sanitizer.isObscured(id)) {
+      sendPlaceholder(id, img)
     } else {
-      sendSrc(id, this)
-      sendSrcset(id, this)
+      sendSrc(id, img)
+      sendSrcset(id, img)
     }
   })
 
@@ -101,9 +107,9 @@ export default function (app: App): void {
     if (!hasTag(node, 'IMG')) {
       return
     }
-    app.nodes.attachNodeListener(node, 'error', sendImgAttrs.bind(node))
-    app.nodes.attachNodeListener(node, 'load', sendImgAttrs.bind(node))
-    sendImgAttrs.call(node)
+    app.nodes.attachNodeListener(node, 'error', () => sendImgError(node))
+    app.nodes.attachNodeListener(node, 'load', () => sendImgAttrs(node))
+    sendImgAttrs(node)
     observer.observe(node, { attributes: true, attributeFilter: ['src', 'srcset'] })
   })
 }
