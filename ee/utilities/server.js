@@ -20,7 +20,7 @@ if (process.env.uws !== "true") {
     wsapp.use(express.json());
     wsapp.use(express.urlencoded({extended: true}));
     wsapp.use(request_logger("[wsapp]"));
-    wsapp.get([PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
+    wsapp.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
             res.statusCode = 200;
             res.end("ok!");
         }
@@ -45,6 +45,7 @@ if (process.env.uws !== "true") {
     const healthFn = (res, req) => {
         res.writeStatus('200 OK').end('ok!');
     }
+    uapp.get('/', healthFn);
     uapp.get(PREFIX, healthFn);
     uapp.get(`${PREFIX}/`, healthFn);
     uapp.get(`${PREFIX}/${P_KEY}`, healthFn);

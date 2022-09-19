@@ -14,7 +14,7 @@ wsapp.use(express.json());
 wsapp.use(express.urlencoded({extended: true}));
 wsapp.use(request_logger("[wsapp]"));
 
-wsapp.get([PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
+wsapp.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
         res.statusCode = 200;
         res.end("ok!");
     }
