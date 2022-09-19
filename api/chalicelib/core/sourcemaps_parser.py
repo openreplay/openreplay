@@ -2,6 +2,14 @@ import requests
 
 from decouple import config
 
+SMR_URL = config("sourcemaps_reader")
+
+if '%s' in SMR_URL:
+    if config("SMR_KEY", default=None) is not None:
+        SMR_URL = SMR_URL % config("SMR_KEY")
+    else:
+        SMR_URL = SMR_URL % "smr"
+
 
 def get_original_trace(key, positions):
     payload = {
@@ -16,8 +24,7 @@ def get_original_trace(key, positions):
     if len(config('S3_HOST', default="")) > 0:
         payload["S3_HOST"] = config('S3_HOST')
     try:
-        r = requests.post(config("sourcemaps_reader"), json=payload,
-                          timeout=config("sourcemapTimeout", cast=int, default=5))
+        r = requests.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
         if r.status_code != 200:
             print(f"Issue getting sourcemap status_code:{r.status_code}")
             return None

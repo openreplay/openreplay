@@ -3,17 +3,24 @@ const express = require('express');
 const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
 
-const debug = process.env.debug === "1" || false;
+const debug = process.env.debug === "1";
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
+const P_KEY = process.env.ASSIST_KEY || process.env.S3_KEY;
+const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
 
 const wsapp = express();
 wsapp.use(express.json());
 wsapp.use(express.urlencoded({extended: true}));
 wsapp.use(request_logger("[wsapp]"));
 
-wsapp.use(`/assist/${process.env.S3_KEY}`, socket.wsRouter);
-wsapp.use(`/heapdump/${process.env.S3_KEY}`, dumps.router);
+wsapp.get([PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
+        res.statusCode = 200;
+        res.end("ok!");
+    }
+);
+wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
+wsapp.use(`/heapdump/${P_KEY}`, dumps.router);
 
 const wsserver = wsapp.listen(PORT, HOST, () => {
     console.log(`WS App listening on http://${HOST}:${PORT}`);
