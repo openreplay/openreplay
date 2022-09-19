@@ -2,11 +2,13 @@ const dumps = require('./utils/HeapSnapshot');
 const express = require('express');
 const socket = require("./servers/websocket");
 const {request_logger} = require("./utils/helper");
+const assert = require('assert').strict;
 
 const debug = process.env.debug === "1";
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
-const P_KEY = process.env.ASSIST_KEY || process.env.S3_KEY;
+assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
+const P_KEY = process.env.ASSIST_KEY;
 const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
 
 const wsapp = express();

@@ -1,6 +1,8 @@
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
 const express = require('express');
+const assert = require('assert').strict;
+
 let socket;
 if (process.env.redis === "true") {
     socket = require("./servers/websocket-cluster");
@@ -10,7 +12,8 @@ if (process.env.redis === "true") {
 
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
-const P_KEY = process.env.ASSIST_KEY || process.env.S3_KEY;
+assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
+const P_KEY = process.env.ASSIST_KEY;
 
 let debug = process.env.debug === "1";
 const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
