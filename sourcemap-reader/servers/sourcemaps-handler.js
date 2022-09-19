@@ -12,16 +12,8 @@ console.log(`>sourceMap initialised using ${process.env.MAPPING_WASM || '/mappin
 
 module.exports.sourcemapReader = async event => {
     let s3;
-    if (event.S3_HOST) {
-        s3 = new AWS.S3({
-            endpoint: event.S3_HOST,
-            accessKeyId: event.S3_KEY,
-            secretAccessKey: event.S3_SECRET,
-            region: event.region,
-            s3ForcePathStyle: true, // needed with minio?
-            signatureVersion: 'v4'
-        });
-    } else if (process.env.S3_HOST) {
+
+    if (process.env.S3_HOST) {
         s3 = new AWS.S3({
             endpoint: process.env.S3_HOST,
             accessKeyId: process.env.S3_KEY,

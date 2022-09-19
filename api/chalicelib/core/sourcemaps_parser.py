@@ -16,13 +16,9 @@ def get_original_trace(key, positions):
         "key": key,
         "positions": positions,
         "padding": 5,
-        "bucket": config('sourcemaps_bucket'),
-        "S3_KEY": config('S3_KEY', default=config('AWS_ACCESS_KEY_ID')),
-        "S3_SECRET": config('S3_SECRET', default=config('AWS_SECRET_ACCESS_KEY')),
-        "region": config('sessions_region', default=config('AWS_DEFAULT_REGION'))
+        "bucket": config('sourcemaps_bucket')
     }
-    if len(config('S3_HOST', default="")) > 0:
-        payload["S3_HOST"] = config('S3_HOST')
+
     try:
         r = requests.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
         if r.status_code != 200:

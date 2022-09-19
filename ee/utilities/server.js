@@ -14,9 +14,10 @@ const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
 assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
 const P_KEY = process.env.ASSIST_KEY;
+const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
 
 let debug = process.env.debug === "1";
-const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
+const heapdump = process.env.heapdump === "1";
 
 if (process.env.uws !== "true") {
     let wsapp = express();
@@ -28,7 +29,7 @@ if (process.env.uws !== "true") {
             res.end("ok!");
         }
     );
-    wsapp.use(`/heapdump/${P_KEY}`, dumps.router);
+    heapdump && wsapp.use(`/heapdump/${P_KEY}`, dumps.router);
     wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
     wsapp.enable('trust proxy');
     const wsserver = wsapp.listen(PORT, HOST, () => {
