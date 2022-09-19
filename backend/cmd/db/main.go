@@ -112,6 +112,7 @@ func main() {
 				}
 			})
 		}
+		iter.Close()
 	}
 
 	// Init consumer

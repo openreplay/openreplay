@@ -11,6 +11,7 @@ type Iterator interface {
 	Next() bool       // Return true if we have next message
 	Type() int        // Return type of the next message
 	Message() Message // Return raw or decoded message
+	Close()
 }
 
 type iteratorImpl struct {
@@ -182,6 +183,13 @@ func (i *iteratorImpl) Type() int {
 
 func (i *iteratorImpl) Message() Message {
 	return i.msg
+}
+
+func (i *iteratorImpl) Close() {
+	_, err := i.data.Seek(0, io.SeekEnd)
+	if err != nil {
+		log.Printf("can't set seek pointer at the end: %s", err)
+	}
 }
 
 func messageHasSize(msgType uint64) bool {

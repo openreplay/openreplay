@@ -107,6 +107,7 @@ func main() {
 				messageSize.Record(context.Background(), float64(len(data)))
 				savedMessages.Add(context.Background(), 1)
 			}
+			iter.Close()
 		},
 		false,
 		cfg.MessageSizeLimit,

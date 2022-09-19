@@ -54,6 +54,7 @@ func main() {
 				statsLogger.Collect(sessionID, meta)
 				sessions.UpdateSession(sessionID, meta.Timestamp, iter.Message().Meta().Timestamp)
 			}
+			iter.Close()
 		},
 		false,
 		cfg.MessageSizeLimit,

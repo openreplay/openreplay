@@ -64,6 +64,7 @@ func main() {
 				lastMessageID = msg.Meta().Index
 				builderMap.HandleMessage(sessionID, msg, iter.Message().Meta().Index)
 			}
+			iter.Close()
 		},
 		false,
 		cfg.MessageSizeLimit,

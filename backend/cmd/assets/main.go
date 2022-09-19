@@ -63,6 +63,7 @@ func main() {
 					}
 				}
 			}
+			iter.Close()
 		},
 		true,
 		cfg.MessageSizeLimit,
