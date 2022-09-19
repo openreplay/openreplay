@@ -30,6 +30,7 @@ import { PageTitle, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import withPageTitle from 'HOCs/withPageTitle';
 import PiniaDoc from './PiniaDoc'
+import ZustandDoc from './ZustandDoc'
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -171,6 +172,7 @@ const integrations = [
             { title: 'Profiler', slug: '', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
             { title: 'Axios', slug: '', icon: 'integrations/openreplay', component: <AxiosDoc /> },
             { title: 'Assist', slug: '', icon: 'integrations/openreplay', component: <AssistDoc /> },
+            { title: 'Zustand', slug: '', icon: '', header: '🐻', component: <ZustandDoc /> }
         ],
     },
 ];
