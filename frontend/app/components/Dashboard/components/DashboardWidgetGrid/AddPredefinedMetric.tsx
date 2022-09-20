@@ -82,7 +82,7 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
             <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
               + Create Custom Metric
             </Button>
-            <div className="text-disabled-text">Showing the data from past 7 days.</div>
+            <div className="text-disabled-text">Past 7 Days</div>
           </div>
         </div>
 
