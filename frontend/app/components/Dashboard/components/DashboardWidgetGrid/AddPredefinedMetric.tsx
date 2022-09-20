@@ -83,31 +83,32 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
           </Button>
         </div>
 
-        <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)' }}>
-          <div style={{ flex: 3 }}>
-            <div
-              className="grid grid-cols-1 gap-4 py-1 pr-2"
-              style={{
-                maxHeight: 'calc(100vh - 160px)',
-                overflowY: 'auto',
-                gridAutoRows: 'max-content',
-              }}
-            >
-              {activeCategory &&
-                categories.map((category) => (
-                  <React.Fragment key={category.name}>
-                    <WidgetCategoryItem
-                      key={category.name}
-                      onClick={handleWidgetCategoryClick}
-                      category={category}
-                      isSelected={activeCategory.name === category.name}
-                      selectedWidgetIds={selectedWidgetIds}
-                    />
-                  </React.Fragment>
-                ))}
+        <Loader loading={dashboardStore.loadingTemplates}>
+          <div className="flex px-8 h-full" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+            <div style={{ flex: 3 }}>
+              <div
+                className="grid grid-cols-1 gap-4 py-1 pr-2"
+                style={{
+                  maxHeight: 'calc(100vh - 160px)',
+                  overflowY: 'auto',
+                  gridAutoRows: 'max-content',
+                }}
+              >
+                {activeCategory &&
+                  categories.map((category) => (
+                    <React.Fragment key={category.name}>
+                      <WidgetCategoryItem
+                        key={category.name}
+                        onClick={handleWidgetCategoryClick}
+                        category={category}
+                        isSelected={activeCategory.name === category.name}
+                        selectedWidgetIds={selectedWidgetIds}
+                      />
+                    </React.Fragment>
+                  ))}
+              </div>
             </div>
-          </div>
-          <Loader loading={dashboardStore.loadingTemplates}>
+
             <div
               className="grid h-full grid-cols-4 gap-4 p-1 items-start"
               style={{
@@ -131,8 +132,8 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
                   </React.Fragment>
                 ))}
             </div>
-          </Loader>
-        </div>
+          </div>
+        </Loader>
 
         <div className="py-4 border-t px-8 bg-white w-full flex items-center justify-between">
           <div>
