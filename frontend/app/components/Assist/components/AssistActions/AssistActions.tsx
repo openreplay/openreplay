@@ -168,7 +168,6 @@ function AssistActions({
             >
               Annotate
             </Button>
-            {/* <IconButton label={`Annotate`} icon={annotating ? 'pencil-stop' : 'pencil'} primaryText redText={annotating} /> */}
           </div>
           <div className={stl.divider} />
         </>
@@ -200,6 +199,7 @@ function AssistActions({
             ? `You don't have the permissions to perform this action.`
             : `Call ${userId ? userId : 'User'}`
         }
+        disabled={onCall}
       >
         <div
           className={cn('cursor-pointer p-2 flex items-center', {
@@ -215,7 +215,6 @@ function AssistActions({
           >
             {onCall ? 'End' : isPrestart ? 'Join Call' : 'Call'}
           </Button>
-          {/* <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" /> */}
         </div>
       </Popup>
 
