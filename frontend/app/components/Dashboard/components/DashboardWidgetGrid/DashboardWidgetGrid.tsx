@@ -43,7 +43,7 @@ function DashboardWidgetGrid(props: Props) {
                     <div className="w-4/5 m-auto mt-4"><AddMetricContainer siteId={siteId} /></div>
                 }
             >
-                {smallWidgets.length && (
+                {smallWidgets.length > 0 ? (
                     <>
                         <div className="font-semibold text-xl py-4 flex items-center gap-2">
                             <Icon name="grid-horizontal" size={26} />
@@ -65,7 +65,7 @@ function DashboardWidgetGrid(props: Props) {
                             ))}
                         </div>
                     </>
-                )}
+                ) : null}
 
                 <div className="font-semibold text-xl py-4 flex items-center gap-2">
                     <Icon name="grid-horizontal" size={26} />
