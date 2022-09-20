@@ -9,7 +9,7 @@ export default class ResourceInfo extends React.PureComponent {
     const { data } = this.props;
     return (
       <div className="flex flex-col" >
-        <TextEllipsis className={ styles.name } text={ data.name } hintText={ data.url } />
+        <TextEllipsis className={ styles.name } text={ data.url } hintText={ data.url } />
         <div className={ styles.timings }>
           { data.endedAt && data.startedAt && `${ diffFromNowString(data.endedAt) } ago - ${ diffFromNowString(data.startedAt) } old` }
         </div>
