@@ -1,5 +1,5 @@
 import { makeAutoObservable, observable, action, runInAction } from "mobx"
-import Widget, { IWidget } from "./widget"
+import Widget from "./widget"
 import { dashboardService  } from "App/services"
 import { toast } from 'react-toastify';
 import { DateTime } from 'luxon';
@@ -10,10 +10,10 @@ export default class Dashboard {
     name: string = "Untitled Dashboard"
     description: string = ""
     isPublic: boolean = true
-    widgets: IWidget[] = []
+    widgets: Widget[] = []
     metrics: any[] = []
     isValid: boolean = false
-    currentWidget: IWidget = new Widget()
+    currentWidget: Widget = new Widget()
     config: any = {}
     createdAt: Date = new Date()
 
@@ -48,7 +48,24 @@ export default class Dashboard {
             this.description = json.description
             this.isPublic = json.isPublic
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
-            this.widgets = json.widgets ? json.widgets.map((w: Widget) => new Widget().fromJson(w)).sort((a: Widget, b: Widget) => a.position - b.position) : []
+            if (json.widgets) {
+                // legacy
+                const dashboardFix = '__openreplay__dashboard__fix' + json.dashboardId
+                const isFixed = localStorage.getItem(dashboardFix)
+                const sortedWidgets: any[] = !isFixed ? json.widgets.sort((a: any, b: any) => a.config.col - b.config.col) : json.widgets
+                if (!isFixed) {
+                    sortedWidgets.forEach((widget, index) => {
+                        widget.config.position = index
+                    })
+
+                    console.log('widget positions fixed', sortedWidgets)
+
+                    localStorage.setItem(dashboardFix, '1')
+                }
+                this.widgets = sortedWidgets.map((w: Widget) => new Widget().fromJson(w)).sort((a: Widget, b: Widget) => a.position - b.position)
+            } else {
+                this.widgets = []
+            }
         })
         return this
     }
@@ -57,7 +74,7 @@ export default class Dashboard {
         return this.isValid = this.name.length > 0
     }
 
-    addWidget(widget: IWidget) {
+    addWidget(widget: Widget) {
         this.widgets.push(widget)
     }
 
@@ -65,7 +82,7 @@ export default class Dashboard {
         this.widgets = this.widgets.filter(w => w.widgetId !== widgetId)
     }
 
-    updateWidget(widget: IWidget) {
+    updateWidget(widget: Widget) {
         const index = this.widgets.findIndex(w => w.widgetId === widget.widgetId)
         if (index >= 0) {
             this.widgets[index] = widget
