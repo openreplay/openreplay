@@ -10,17 +10,17 @@ import (
 	"net/http"
 	"crypto/tls"
 	"openreplay/backend/pkg/flakeid"
-	"openreplay/backend/internal/config/assets"
+	externalConfig "openreplay/backend/internal/config/external"
 )
 
 var supportedMimeTypes = map[string][]string{
-	".css" : []string{"text/css"},
-	".woff" : []string{"font/woff", "application/font-woff"},
-	".woff2" : []string{"font/woff2", "application/font-woff2"},
-	".ttf" : []string{"font/ttf"},
-	".otf" : []string{"font/otf"},
-	".svg"  : []string{"image/svg+xml"},
-	".eot"  : []string{"application/vnd.ms-fontobject"},
+	".css" 		: []string{"text/css"},
+	".woff" 	: []string{"font/woff", "application/font-woff"},
+	".woff2" 	: []string{"font/woff2", "application/font-woff2"},
+	".ttf" 		: []string{"font/ttf"},
+	".otf" 		: []string{"font/otf"},
+	".svg"  	: []string{"image/svg+xml"},
+	".eot"  	: []string{"application/vnd.ms-fontobject"},
 }
   
 
@@ -53,7 +53,7 @@ func isRelativeCachable(relativeURL string) bool {
 	return true
 }
 
-func isCachable(rawurl string, cfg *assets.Config) bool {
+func isCachable(rawurl string, cfg *externalConfig.Config) bool {
 	u, _ := url.Parse(rawurl)
 	if u == nil || u.User != nil {
 		return false
@@ -90,7 +90,7 @@ func isCachable(rawurl string, cfg *assets.Config) bool {
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
 
 		
-		for k, v := range cfg.AssetsRequestHeaders {
+		for k, v := range cfg.RequestHeaders {
 			req.Header.Set(k, v)
 		}
 
@@ -121,7 +121,7 @@ func isCachable(rawurl string, cfg *assets.Config) bool {
 	return false
 }
 
-func GetFullCachableURL(baseURL string, relativeURL string, cfg *assets.Config) (string, bool) {
+func GetFullCachableURL(baseURL string, relativeURL string, cfg *externalConfig.Config) (string, bool) {
 	if !isRelativeCachable(relativeURL) {
 		return relativeURL, false
 	}
@@ -148,7 +148,7 @@ func GetCachePathForAssets(sessionID uint64, rawurl string) string {
 	return getCachePathWithKey(sessionID, rawurl)
 }
 
-func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string, cfg *assets.Config) string {
+func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string, cfg *externalConfig.Config) string {
 	fullURL, cachable := GetFullCachableURL(baseURL, relativeURL, cfg)
 	if !cachable {
 		return fullURL

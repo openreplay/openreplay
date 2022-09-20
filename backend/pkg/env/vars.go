@@ -79,7 +79,7 @@ func StringArrayOptional(key string) []string {
 	var stringArray []string
 
 	if err := json.Unmarshal([]byte(v), &stringArray); err != nil {
-		log.Fatalln(key + ": wrong json format. Expected string map")
+		log.Fatalln(key + ": wrong json format. Expected string array")
 	}
 	return stringArray
 }
