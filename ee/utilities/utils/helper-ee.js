@@ -1,5 +1,5 @@
 const helper = require('./helper');
-let debug = process.env.debug === "1" || false;
+let debug = process.env.debug === "1";
 const getBodyFromUWSResponse = async function (res) {
     return new Promise(((resolve, reject) => {
         let buffer;

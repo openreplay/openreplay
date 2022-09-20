@@ -35,7 +35,9 @@ async def or_middleware(request: Request, call_next):
             now = int(time.time() * 1000)
         response: StreamingResponse = await call_next(request)
         if helper.TRACK_TIME:
-            print(f"Execution time: {int(time.time() * 1000) - now} ms")
+            now = int(time.time() * 1000) - now
+            if now > 500:
+                print(f"Execution time: {now} ms")
     except Exception as e:
         pg_client.close()
         raise e

@@ -21,7 +21,7 @@ const {
 const wsRouter = express.Router();
 
 let io;
-const debug = process.env.debug === "1" || false;
+const debug = process.env.debug === "1";
 
 const createSocketIOServer = function (server, prefix) {
     io = _io(server, {

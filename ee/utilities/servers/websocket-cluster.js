@@ -28,7 +28,7 @@ const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
 console.log(`Using Redis: ${REDIS_URL}`);
 let io;
-const debug = process.env.debug === "1" || false;
+const debug = process.env.debug === "1";
 
 const createSocketIOServer = function (server, prefix) {
     if (process.env.uws !== "true") {

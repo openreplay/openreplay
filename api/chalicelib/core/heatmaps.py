@@ -1,6 +1,5 @@
-from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import helper, pg_client
-from chalicelib.utils import dev
+from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get_by_url(project_id, data):
@@ -22,8 +21,14 @@ def get_by_url(project_id, data):
                                 GROUP BY selector;""",
                             args)
 
-        cur.execute(
-            query
-        )
+        try:
+            cur.execute(query)
+        except Exception as err:
+            print("--------- HEATMAP SEARCH QUERY EXCEPTION -----------")
+            print(query.decode('UTF-8'))
+            print("--------- PAYLOAD -----------")
+            print(data)
+            print("--------------------")
+            raise err
         rows = cur.fetchall()
-        return helper.dict_to_camel_case(rows)
+    return helper.dict_to_camel_case(rows)

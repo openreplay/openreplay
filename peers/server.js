@@ -4,16 +4,19 @@ const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./serve
 const express = require('express');
 const {ExpressPeerServer} = require('peer');
 
-const debug = process.env.debug === "1" || false;
+const debug = process.env.debug === "1";
+const heapdump = process.env.heapdump === "1";
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9000;
+assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
+const P_KEY = process.env.ASSIST_KEY;
 
 const app = express();
 
 app.use(request_logger("[app]"));
 
-app.use(`/${process.env.S3_KEY}/assist`, peerRouter);
-app.use(`/${process.env.S3_KEY}/heapdump`, dumps.router);
+app.use(`/${P_KEY}/assist`, peerRouter);
+heapdump && app.use(`/${P_KEY}/heapdump`, dumps.router);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);
