@@ -1,7 +1,7 @@
-# Special one for Batch Metadata. Message id could define the version 
+# Special one for Batch Metadata. Message id could define the version
 
 # Depricated since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :replayer => false, :tracker => false do 
+message 80, 'BatchMeta', :replayer => false, :tracker => false do
   uint 'PageNo'
   uint 'FirstIndex'
   int 'Timestamp'
@@ -44,7 +44,7 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
   string 'UserCountry'
   string 'UserID'
 end
-# message 2, 'CreateDocument', do
+## message 2, 'CreateDocument', do
 # end
 message 3, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
@@ -62,7 +62,7 @@ message 6, 'SetViewportScroll' do
   int 'X'
   int 'Y'
 end
-# Depricated sinse tracker 3.6.0 in favor of  CreateDocument(id=2)
+# (should be) Depricated sinse tracker ?.?.? in favor of  CreateDocument(id=2)
 # in order to use Document as a default root node instead of the documentElement
 message 7, 'CreateDocument' do
 end
@@ -238,13 +238,13 @@ message 36, 'CustomEvent', :tracker => false, :replayer => false do
   string 'Name'
   string 'Payload'
 end
-
-
+# depricated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner 
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
   uint 'Index'
 end
+# depricated since 4.0.2
 message 38, 'CSSDeleteRule' do
   uint 'ID'
   uint 'Index'
@@ -265,7 +265,6 @@ message 40, 'Profiler' do
   string 'Args'
   string 'Result'
 end
-
 message 41, 'OTable' do
   string 'Key'
   string 'Value'
@@ -278,7 +277,6 @@ message 43, 'StateActionEvent', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'Type'
 end
-
 message 44, 'Redux' do
   string 'Action'
   string 'State'
@@ -363,6 +361,7 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
+## 57 58
 message 59, 'LongTask' do
   uint 'Timestamp'
   uint 'Duration'
@@ -400,6 +399,7 @@ message 64, 'CustomIssue', :replayer => false do
   string 'Name'
   string 'Payload'
 end
+## 65
 message 66, 'AssetCache', :replayer => false, :tracker => false do
   string 'URL'
 end
@@ -409,6 +409,7 @@ message 67, 'CSSInsertRuleURLBased' do
   uint 'Index'
   string 'BaseURL'
 end
+## 68
 message 69, 'MouseClick' do
   uint 'ID'
   uint 'HesitationTime'
@@ -416,13 +417,14 @@ message 69, 'MouseClick' do
   string 'Selector'
 end
 
-# Since 3.4.0
+# Since 3.4.0 //also used for ShadowDom. TODO:remane to CreateRoot
 message 70, 'CreateIFrameDocument' do
   uint 'FrameID'
   uint 'ID'
 end
- 
-#Since 3.6.0 AdoptedStyleSheets
+
+#Since 4.0.0 AdoptedStyleSheets etc
+# TODO: rename to StyleSheets...
 message 71, 'AdoptedSSReplaceURLBased' do
   uint 'SheetID'
   string 'Text'
@@ -432,26 +434,39 @@ message 72, 'AdoptedSSReplace', :tracker => false do
   uint 'SheetID'
   string 'Text'
 end
-message 73, 'AdoptedSSInsertRuleURLBased' do 
+message 73, 'AdoptedSSInsertRuleURLBased' do
   uint 'SheetID'
   string 'Rule'
   uint 'Index'
   string 'BaseURL'
 end
-message 74, 'AdoptedSSInsertRule', :tracker => false do 
+message 74, 'AdoptedSSInsertRule', :tracker => false do
   uint 'SheetID'
   string 'Rule'
   uint 'Index'
 end
-message 75, 'AdoptedSSDeleteRule' do 
+message 75, 'AdoptedSSDeleteRule' do
   uint 'SheetID'
   uint 'Index'
 end
-message 76, 'AdoptedSSAddOwner' do 
+message 76, 'AdoptedSSAddOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-message 77, 'AdoptedSSRemoveOwner' do 
+message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
 end
+#Since 4.0.1
+# message 78, 'ReplaceVCSSURLBased' do
+#   uint 'SheetID'
+#   uint 'Index'
+#   string 'Styles'
+#   string 'BaseURL'
+# end
+message 79, 'Zustand' do
+  string 'Mutation'
+  string 'State'
+end
+
+# 80 -- 90 reserved

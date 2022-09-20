@@ -37,11 +37,19 @@ func main() {
 		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
 			for iter.Next() {
 				if iter.Type() == messages.MsgAssetCache {
-					msg := iter.Message().Decode().(*messages.AssetCache)
+					m := iter.Message().Decode()
+					if m == nil {
+						return
+					}
+					msg := m.(*messages.AssetCache)
 					cacher.CacheURL(sessionID, msg.URL)
 					totalAssets.Add(context.Background(), 1)
 				} else if iter.Type() == messages.MsgErrorEvent {
-					msg := iter.Message().Decode().(*messages.ErrorEvent)
+					m := iter.Message().Decode()
+					if m == nil {
+						return
+					}
+					msg := m.(*messages.ErrorEvent)
 					if msg.Source != "js_exception" {
 						continue
 					}
@@ -55,6 +63,7 @@ func main() {
 					}
 				}
 			}
+			iter.Close()
 		},
 		true,
 		cfg.MessageSizeLimit,

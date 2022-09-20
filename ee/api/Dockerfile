@@ -6,6 +6,7 @@ ARG envarg
 ENV SOURCE_MAP_VERSION=0.7.4 \
     APP_NAME=chalice \
     LISTEN_PORT=8000 \
+    MAPPING_WASM=/work/sourcemap-reader/mappings.wasm \
     ENTERPRISE_BUILD=${envarg}
 
 ADD https://unpkg.com/source-map@${SOURCE_MAP_VERSION}/lib/mappings.wasm /mappings.wasm
@@ -18,7 +19,8 @@ RUN cd /work_tmp && npm install
 
 WORKDIR /work
 COPY . .
-RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/. && chmod 644 /mappings.wasm
+RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/. \
+    && mv /mappings.wasm ${MAPPING_WASM} && chmod 644 ${MAPPING_WASM}
 
 RUN adduser -u 1001 openreplay -D
 USER 1001

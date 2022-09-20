@@ -5,7 +5,15 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
 import ListWalker from '../ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
-import { VElement, VText, VShadowRoot, VDocument, VNode, VStyleElement } from './VirtualDOM';
+import {
+  VElement,
+  VText,
+  VShadowRoot,
+  VDocument,
+  VNode,
+  VStyleElement,
+  PostponedStyleSheet,
+} from './VirtualDOM';
 import type { StyleElement } from './VirtualDOM';
 
 
@@ -24,20 +32,21 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 //     .replace(/\-webkit\-/g, "")
 // }
 
-function insertRule(sheet: CSSStyleSheet, msg: { rule: string, index: number }) {
+function insertRule(sheet: CSSStyleSheet | PostponedStyleSheet, msg: { rule: string, index: number }) {
   try {
     sheet.insertRule(msg.rule, msg.index)
   } catch (e) {
     logger.warn(e, msg)
     try {
-      sheet.insertRule(msg.rule)
+      sheet.insertRule(msg.rule, 0)
+      logger.warn("Inserting rule into 0-index", e, msg)
     } catch (e) {
       logger.warn("Cannot insert rule.", e, msg)
     }
   }
 }
 
-function deleteRule(sheet: CSSStyleSheet, msg: { index: number }) {
+function deleteRule(sheet: CSSStyleSheet | PostponedStyleSheet, msg: { index: number }) {
   try {
     sheet.deleteRule(msg.index)
   } catch (e) {
@@ -49,8 +58,10 @@ export default class DOMManager extends ListWalker<Message> {
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
   private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
+  private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
-  
+  private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
+
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
@@ -81,7 +92,7 @@ export default class DOMManager extends ListWalker<Message> {
       if(m.tag === "BODY" && this.upperBodyId === -1) {
         this.upperBodyId = m.id
       }
-    } else if (m.tp === "set_node_attribute" && 
+    } else if (m.tp === "set_node_attribute" &&
       (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))) {
       logger.log("Ignorring message: ", m)
       return; // Ignoring
@@ -95,7 +106,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
-  // May be make it as a message on message add? 
+  // May be make it as a message on message add?
   private removeAutocomplete(node: Element): boolean {
     const tag = node.tagName
     if ([ "FORM", "TEXTAREA", "SELECT" ].includes(tag)) {
@@ -123,7 +134,7 @@ export default class DOMManager extends ListWalker<Message> {
 
     const pNode = parent.node
     if ((pNode instanceof HTMLStyleElement) &&  // TODO: correct ordering OR filter in tracker
-        pNode.sheet && 
+        pNode.sheet &&
         pNode.sheet.cssRules &&
         pNode.sheet.cssRules.length > 0 &&
         pNode.innerText &&
@@ -140,12 +151,12 @@ export default class DOMManager extends ListWalker<Message> {
     let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
-    let styleSheet: CSSStyleSheet | undefined
+    let styleSheet: CSSStyleSheet | PostponedStyleSheet | undefined
     switch (msg.tp) {
       case "create_document":
         doc = this.screen.document;
         if (!doc) {
-          logger.error("No iframe document found", msg)
+          logger.error("No root iframe document found", msg)
           return;
         }
         doc.open();
@@ -160,8 +171,9 @@ export default class DOMManager extends ListWalker<Message> {
         vDoc.insertChildAt(vn, 0)
         this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
-        // todo: start from 0 (sync logic with tracker) 
+        // todo: start from 0 (sync logic with tracker)
         this.stylesManager.reset()
+        this.activeIframeRoots.clear()
         return
       case "create_text_node":
         vn = new VText()
@@ -265,6 +277,8 @@ export default class DOMManager extends ListWalker<Message> {
           vn.applyChanges()
         }
         return
+
+      // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
       case "css_insert_rule":
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -283,20 +297,26 @@ export default class DOMManager extends ListWalker<Message> {
         }
         vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
+      // end @depricated
+
       case "create_i_frame_document":
         vn = this.vElements.get(msg.frameID)
         if (!vn) { logger.error("Node not found", msg); return }
         vn.enforceInsertion()
         const host = vn.node
         if (host instanceof HTMLIFrameElement) {
-          const vDoc = new VDocument()
-          this.vRoots.set(msg.id, vDoc)
           const doc = host.contentDocument
           if (!doc) {
-            logger.warn("No iframe doc onload", msg, host)
+            logger.warn("No default iframe doc", msg, host)
             return
           }
-          vDoc.setDocument(doc)
+          // remove old root of the same iframe if present
+          const oldRootId = this.activeIframeRoots.get(msg.frameID)
+          oldRootId != null && this.vRoots.delete(oldRootId)
+
+          const vDoc = new VDocument(doc)
+          this.activeIframeRoots.set(msg.frameID, msg.id)
+          this.vRoots.set(msg.id, vDoc)
           return;
         } else if (host instanceof Element) { // shadow DOM
           try {
@@ -311,7 +331,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
       case "adopted_ss_insert_rule":
-        styleSheet = this.styleSheets.get(msg.sheetID)
+        styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
@@ -319,13 +339,14 @@ export default class DOMManager extends ListWalker<Message> {
         insertRule(styleSheet, msg)
         return
       case "adopted_ss_delete_rule":
-        styleSheet = this.styleSheets.get(msg.sheetID)
+        styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
         }
         deleteRule(styleSheet, msg)
         return
+
       case "adopted_ss_replace":
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
@@ -337,7 +358,14 @@ export default class DOMManager extends ListWalker<Message> {
         return
       case "adopted_ss_add_owner":
         vn = this.vRoots.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) {
+          // non-constructed case
+          vn = this.vElements.get(msg.id)
+          if (!vn) { logger.error("Node not found", msg); return } 
+          if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
+          this.ppStyleSheets.set(msg.sheetID, new PostponedStyleSheet(vn.node))
+          return
+        }
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
           let context: typeof globalThis
@@ -364,11 +392,11 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
-    } 
+    }
   }
 
   moveReady(t: number): Promise<void> {
-    // MBTODO (back jump optimisation): 
+    // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)
@@ -382,10 +410,12 @@ export default class DOMManager extends ListWalker<Message> {
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)
         if (msg) {
-          const vElm = this.vElements.get(msg.id)
-          if (vElm) {
-            vElm.node.scrollLeft = msg.x
-            vElm.node.scrollTop = msg.y
+          let vNode: VNode
+          if (vNode = this.vElements.get(msg.id)) {
+            vNode.node.scrollLeft = msg.x
+            vNode.node.scrollTop = msg.y
+          } else if ((vNode = this.vRoots.get(msg.id)) && vNode instanceof VDocument){
+            vNode.node.defaultView?.scrollTo(msg.x, msg.y)
           }
         }
       })

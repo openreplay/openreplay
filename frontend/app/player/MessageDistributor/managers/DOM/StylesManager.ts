@@ -1,9 +1,8 @@
 import type StatedScreen from '../../StatedScreen';
-import type { CssInsertRule, CssDeleteRule } from '../../messages';
+import type { CssInsertRule, CssDeleteRule, ReplaceVcss } from '../../messages';
 
-type CSSRuleMessage = CssInsertRule | CssDeleteRule;
+type CSSRuleMessage = CssInsertRule | CssDeleteRule | ReplaceVcss;
 
-import logger from 'App/logger';
 import ListWalker from '../ListWalker';
 
 
@@ -72,7 +71,7 @@ export default class StylesManager extends ListWalker<CSSRuleMessage> {
   private manageRule = (msg: CSSRuleMessage):void => {
     // if (msg.tp === "css_insert_rule") {
     //   let styleSheet = this.#screen.document.styleSheets[ msg.stylesheetID ];
-    //   if (!styleSheet) { 
+    //   if (!styleSheet) {
     //     logger.log("No stylesheet with corresponding ID found: ", msg)
     //     styleSheet = this.#screen.document.styleSheets[0];
     //     if (!styleSheet) {
@@ -91,9 +90,9 @@ export default class StylesManager extends ListWalker<CSSRuleMessage> {
     // if (msg.tp === "css_delete_rule") {
     //   // console.warn('Warning: STYLESHEET_DELETE_RULE msg')
     //   const styleSheet = this.#screen.document.styleSheets[msg.stylesheetID];
-    //   if (!styleSheet) { 
+    //   if (!styleSheet) {
     //     logger.log("No stylesheet with corresponding ID found: ", msg)
-    //     return; 
+    //     return;
     //   }
     //   styleSheet.deleteRule(msg.index);
     // }

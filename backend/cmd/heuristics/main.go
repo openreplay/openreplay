@@ -53,10 +53,18 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
+			var lastMessageID uint64
 			for iter.Next() {
 				statsLogger.Collect(sessionID, meta)
-				builderMap.HandleMessage(sessionID, iter.Message().Decode(), iter.Message().Meta().Index)
+				msg := iter.Message().Decode()
+				if msg == nil {
+					log.Printf("failed batch, sess: %d, lastIndex: %d", sessionID, lastMessageID)
+					continue
+				}
+				lastMessageID = msg.Meta().Index
+				builderMap.HandleMessage(sessionID, msg, iter.Message().Meta().Index)
 			}
+			iter.Close()
 		},
 		false,
 		cfg.MessageSizeLimit,

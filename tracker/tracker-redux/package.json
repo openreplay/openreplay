@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-redux",
   "description": "Tracker plugin for Redux state recording",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "keywords": [
     "redux",
     "logging",
@@ -23,11 +23,11 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^3.5.0",
+    "@openreplay/tracker": ">=3.5.0",
     "redux": "^4.0.0"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.5.0",
+    "@openreplay/tracker": "file:../tracker",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",
     "typescript": "^4.6.0-dev.20211126"

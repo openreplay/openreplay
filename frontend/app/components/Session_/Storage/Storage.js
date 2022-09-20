@@ -121,6 +121,9 @@ export default class Storage extends React.PureComponent {
 		const { type, listNow, list } = this.props;
 		let src;
 		let name;
+
+		// ZUSTAND TODO
+		console.log(item, type)
 		switch(type) {
 			case STORAGE_TYPES.REDUX:
 			case STORAGE_TYPES.NGRX:
@@ -135,16 +138,23 @@ export default class Storage extends React.PureComponent {
 				src = item.payload;
 				name = `@${item.type} ${src && src.type}`;
 			break;
+			case STORAGE_TYPES.ZUSTAND:
+				src = null;
+				name = item.mutation.join('')
 		}
 
 		return (
 			<div className="flex justify-between items-start" key={ `store-${i}` }>
-				<JSONTree
-					name={ this.ensureString(name) }
-					src={ src }
-					collapsed
-					collapseStringsAfterLength={ 7 }
-				/>
+				{src === null ? (
+					<div className="font-mono"> {name} </div>
+				) : (
+					<JSONTree
+						name={ this.ensureString(name) }
+						src={ src }
+						collapsed
+						collapseStringsAfterLength={ 7 }
+					/>
+				)}
 				<div className="flex items-center">
 					{ i + 1 < listNow.length &&
 						<button
@@ -208,6 +218,7 @@ export default class Storage extends React.PureComponent {
                 	{'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/redux" target="_blank">Redux</a>{', '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/vuex" target="_blank">VueX</a>{', '}
+									{/* ZUSTAND TODO */}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/mobx" target="_blank">MobX</a>{' and '}
                 	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/ngrx" target="_blank">NgRx</a>.
                 	<br/><br/>

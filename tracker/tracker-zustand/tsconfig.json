@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "target": "es6",
+    "module": "es6",
+    "moduleResolution": "nodenext",
+    "declaration": true,
+    "outDir": "./lib"
+  }
+}

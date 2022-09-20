@@ -6,7 +6,7 @@ import type { Properties, } from 'csstype'
 import { App, } from '@openreplay/tracker'
 
 import RequestLocalStream, { LocalStream, } from './LocalStream.js'
-import RemoteControl from './RemoteControl.js'
+import RemoteControl, { RCStatus, } from './RemoteControl.js'
 import CallWindow from './CallWindow.js'
 import AnnotationCanvas from './AnnotationCanvas.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
@@ -26,10 +26,13 @@ export interface Options {
   callConfirm: ConfirmOptions,
   controlConfirm: ConfirmOptions,
 
-  confirmText?: string, // @depricated
-  confirmStyle?: Properties, // @depricated
+  // @depricated
+  confirmText?: string,
+  // @depricated
+  confirmStyle?: Properties,
 
   config: RTCConfiguration,
+  callUITemplate?: string,
 }
 
 
@@ -147,24 +150,34 @@ export default class Assist {
     })
     socket.onAny((...args) => app.debug.log('Socket:', ...args))
 
-
-
     const remoteControl = new RemoteControl(
       this.options,
       id => {
+        if (!callUI) {
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+        }
+        callUI?.showRemoteControl(remoteControl.releaseControl)
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
         annot.mount()
+        return callingAgents.get(id)
       },
       id => {
-        const cb = this.agents[id].onControlReleased
-        delete this.agents[id].onControlReleased
-        typeof cb === 'function' && cb()
-        this.emit('control_rejected', id)
+        if (id) {
+          const cb = this.agents[id].onControlReleased
+          delete this.agents[id].onControlReleased
+          typeof cb === 'function' && cb()
+          this.emit('control_rejected', id)
+        }
         if (annot != null) {
           annot.remove()
           annot = null
+        }
+        callUI?.hideRemoteControl()
+        if (this.callingState !== CallingState.True) {
+          callUI?.remove()
+          callUI = null
         }
       },
     )
@@ -211,7 +224,7 @@ export default class Assist {
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
-      remoteControl.releaseControl(id)
+      remoteControl.releaseControl()
 
       this.agents[id]?.onDisconnect?.()
       delete this.agents[id]
@@ -298,20 +311,27 @@ export default class Assist {
     const handleCallEnd = () => { // Completle stop and clear all calls
       // Streams
       Object.values(calls).forEach(call => call.close())
-      Object.keys(calls).forEach(peerId => delete calls[peerId])
+      Object.keys(calls).forEach(peerId => {
+        delete calls[peerId]
+      })
       Object.values(lStreams).forEach((stream) => { stream.stop() })
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
 
       // UI
       closeCallConfirmWindow()
-      callUI?.remove()
-      annot?.remove()
-      callUI = null
-      annot = null
+      if (remoteControl.status === RCStatus.Disabled) {
+        callUI?.remove()
+        annot?.remove()
+        callUI = null
+        annot = null
+      } else {
+        callUI?.hideControls()
+      }
 
       this.emit('UPDATE_SESSION', { agentIds: [], isCallActive: false, })
       this.setCallingState(CallingState.False)
       sessionStorage.removeItem(this.options.session_calling_peer_key)
+
       callEndCallback?.()
     }
     const initiateCallEnd = () => {
@@ -358,10 +378,10 @@ export default class Assist {
 
         // UI
         if (!callUI) {
-          callUI = new CallWindow(app.debug.error)
-          // TODO: as constructor options
-          callUI.setCallEndAction(initiateCallEnd)
+          callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
         }
+        callUI.showControls(initiateCallEnd)
+
         if (!annot) {
           annot = new AnnotationCanvas()
           annot.mount()

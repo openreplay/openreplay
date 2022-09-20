@@ -4,8 +4,7 @@ from chalicelib.utils import email_helper, captcha, helper
 
 
 def reset(data: schemas.ForgetPasswordPayloadSchema):
-    print("====================== reset password ===============")
-    print(data)
+    print(f"====================== reset password {data.email}")
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         print("error: Invalid captcha.")
         return {"errors": ["Invalid captcha."]}

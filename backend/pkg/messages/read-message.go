@@ -1306,6 +1306,18 @@ func DecodeAdoptedSSRemoveOwner(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
+func DecodeZustand(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &Zustand{}
+	if msg.Mutation, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.State, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIOSBatchMeta(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &IOSBatchMeta{}
@@ -1938,6 +1950,9 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 77:
 		return DecodeAdoptedSSRemoveOwner(reader)
+
+	case 79:
+		return DecodeZustand(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)

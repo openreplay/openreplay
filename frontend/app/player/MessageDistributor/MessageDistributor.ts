@@ -6,7 +6,7 @@ import Resource, { TYPES } from 'Types/session/resource'; // MBTODO: player type
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import Log from 'Types/session/log';
 
-import { update, getState } from '../store';
+import { update } from '../store';
 import { toast } from 'react-toastify';
 
 import {
@@ -123,7 +123,7 @@ export default class MessageDistributor extends StatedScreen {
       // TODO: fix types for events, remove immutable js
       eventList.forEach((e: Record<string, string>) => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
-          this.locationEventManager.append(e); 
+          this.locationEventManager.append(e);
         }
       });
       this.session.errors.forEach((e: Record<string, string>) => {
@@ -233,7 +233,7 @@ export default class MessageDistributor extends StatedScreen {
          this.waitingForFiles = false
          this.setMessagesLoading(false)
         })
-      
+
     })
   }
 
@@ -248,7 +248,6 @@ export default class MessageDistributor extends StatedScreen {
     const onData = (byteArray: Uint8Array) => {
       const onReadCallback = () => this.setLastRecordedMessageTime(this.lastMessageTime)
       const msgs = this.readAndDistributeMessages(byteArray, onReadCallback)
-      this.sessionStart = msgs[0].time
       this.processStateUpdates(msgs)
     }
 
@@ -275,6 +274,8 @@ export default class MessageDistributor extends StatedScreen {
       this.waitingForFiles = false
       this.setMessagesLoading(false)
     }
+
+
   }
 
   private reloadMessageManagers() {
@@ -479,6 +480,12 @@ export default class MessageDistributor extends StatedScreen {
           this.lists.vuex.append(decoded);
         }
         break;
+      case "zustand":
+        decoded = this.decodeMessage(msg, ["state", "mutation"])
+        logger.log(decoded)
+        if (decoded != null) {
+          this.lists.zustand.append(decoded)
+        }
       case "mob_x":
         decoded = this.decodeMessage(msg, ["payload"]);
         logger.log(decoded)
@@ -519,6 +526,7 @@ export default class MessageDistributor extends StatedScreen {
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
         }
+        this.performanceTrackManager.addNodeCountPointIfNeed(msg.time)
         this.pagesManager.appendMessage(msg);
         break;
     }

@@ -44,7 +44,7 @@ function makeButton(options: ButtonOptions, defaultStyle?: Properties): HTMLButt
 }
 
 export default class ConfirmWindow {
-  private wrapper: HTMLDivElement;
+  private readonly wrapper: HTMLDivElement;
 
   constructor(options: ConfirmWindowOptions) {
     const wrapper = document.createElement('div')
@@ -107,6 +107,9 @@ export default class ConfirmWindow {
     })
 
     wrapper.appendChild(popup)
+
+    wrapper.setAttribute('data-openreplay-hidden', '')
+
     this.wrapper = wrapper
 
     confirmBtn.onclick = () => {

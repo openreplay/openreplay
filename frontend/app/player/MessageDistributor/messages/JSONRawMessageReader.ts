@@ -64,7 +64,7 @@ const resolvers = {
     ...msg,
     text: resolveCSS(msg.baseURL, msg.text),
     tp: "adopted_ss_replace"
-  })
+  }),
 } as const
 
 type ResolvableType = keyof typeof resolvers
@@ -84,7 +84,7 @@ export default class JSONRawMessageReader {
   readMessage(): RawMessage | null {
     let msg = this.messages.shift()
     if (!msg) { return null }
-    const rawMsg = Array.isArray(msg) 
+    const rawMsg = Array.isArray(msg)
       ? translate(msg)
       : legacyTranslate(msg)
     if (!rawMsg) {

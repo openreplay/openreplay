@@ -21,3 +21,8 @@
   height: 10px;
   z-index: 1;
 }
+
+
+.liveTime {
+  background-color: rgba(66, 174, 94, 0.3)!important;
+}

@@ -2,6 +2,7 @@
 
 from msgcodec.codec import Codec
 from msgcodec.messages import *
+from typing import List
 import io
 
 class MessageCodec(Codec):
@@ -42,7 +43,7 @@ class MessageCodec(Codec):
             raise UnicodeDecodeError(f"Error while decoding message key (SessionID) from {b}\n{e}")
         return decoded
 
-    def decode_detailed(self, b: bytes):
+    def decode_detailed(self, b: bytes) -> List[Message]:
         reader = io.BytesIO(b)
         messages_list = list()
         messages_list.append(self.handler(reader, 0))
@@ -61,7 +62,7 @@ class MessageCodec(Codec):
                 break
         return messages_list
 
-    def handler(self, reader: io.BytesIO, mode=0):
+    def handler(self, reader: io.BytesIO, mode=0) -> Message:
         message_id = self.read_message_id(reader)
         if mode == 1:
             # We skip the three bytes representing the length of message. It can be used to skip unwanted messages
@@ -71,9 +72,10 @@ class MessageCodec(Codec):
             # Old format with no bytes for message length
             return self.read_head_message(reader, message_id)
         else:
-            raise IOError()   
+            raise IOError()
 
-    def read_head_message(self, reader: io.BytesIO, message_id: int):
+    def read_head_message(self, reader: io.BytesIO, message_id) -> Message:
+
         if message_id == 80:
             return BatchMeta(
                 page_no=self.read_uint(reader),
@@ -119,11 +121,6 @@ class MessageCodec(Codec):
                 user_device_heap_size=self.read_uint(reader),
                 user_country=self.read_string(reader),
                 user_id=self.read_string(reader)
-            )
-
-        if message_id == 2:
-            return SessionDisconnect(
-                timestamp=self.read_uint(reader)
             )
 
         if message_id == 3:
@@ -663,6 +660,12 @@ class MessageCodec(Codec):
             return AdoptedSSRemoveOwner(
                 sheet_id=self.read_uint(reader),
                 id=self.read_uint(reader)
+            )
+
+        if message_id == 79:
+            return Zustand(
+                mutation=self.read_string(reader),
+                state=self.read_string(reader)
             )
 
         if message_id == 107:

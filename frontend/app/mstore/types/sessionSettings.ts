@@ -7,6 +7,12 @@ export type Timezone = {
     value: string;
 };
 
+const defaultDurationFilter = {
+    operator: '<',
+    count: '0',
+    countType: 'sec'
+}
+
 export const generateGMTZones = (): Timezone[] => {
     const timezones: Timezone[] = [];
 
@@ -35,7 +41,7 @@ export default class SessionSettings {
     defaultTimezones = [...generateGMTZones()]
     skipToIssue: boolean = localStorage.getItem(SKIP_TO_ISSUE) === 'true';
     timezone: Timezone;
-    durationFilter: any = JSON.parse(localStorage.getItem(DURATION_FILTER) || '{}');
+    durationFilter: any = JSON.parse(localStorage.getItem(DURATION_FILTER) || JSON.stringify(defaultDurationFilter));
     captureRate: string = '0';
     captureAll: boolean = false;
 

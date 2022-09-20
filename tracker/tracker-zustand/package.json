@@ -1,0 +1,35 @@
+{
+  "name": "@openreplay/tracker-zustand",
+  "description": "Tracker plugin for Zustand state recording",
+  "version": "1.0.2",
+  "keywords": [
+    "zustand",
+    "state",
+    "logging",
+    "replay"
+  ],
+  "author": "Nikita Melnikov <nikita@openreplay.com>",
+  "contributors": [
+    "Aleksandr K <alex@openreplay.com>"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "scripts": {
+    "lint": "prettier --write 'src/**/*.ts' && tsc --noEmit",
+    "build": "npm run build-es && npm run build-cjs",
+    "build-es": "rm -Rf lib && tsc",
+    "build-cjs": "rm -Rf cjs && tsc --project tsconfig-cjs.json && echo '{ \"type\": \"commonjs\" }' > cjs/package.json && replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs'",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@openreplay/tracker": "^4.0.1"
+  },
+  "devDependencies": {
+    "@openreplay/tracker": "^4.0.1",
+    "prettier": "^1.18.2",
+    "replace-in-files-cli": "^1.0.0",
+    "typescript": "^4.6.0-dev.20211126"
+  }
+}

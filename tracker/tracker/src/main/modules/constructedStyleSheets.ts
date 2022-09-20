@@ -19,6 +19,13 @@ function hasAdoptedSS(node: Node): node is StyleSheetOwner {
   )
 }
 
+// TODO: incapsulate to be init-ed on-start and join with cssrules.ts under one folder
+let _id = 0xf
+export function nextID(): number {
+  return _id++
+}
+export const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
+
 export default function (app: App | null) {
   if (app === null) {
     return
@@ -31,11 +38,10 @@ export default function (app: App | null) {
     return
   }
 
-  let nextID = 0xf
   const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
 
-  const updateAdoptedStyleSheets = (root: StyleSheetOwner) => {
+  const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) => {
     let nodeID = app.nodes.getID(root)
     if (root === document) {
       nodeID = 0 // main document doesn't have nodeID. ID count starts from the documentElement
@@ -53,7 +59,7 @@ export default function (app: App | null) {
       let sheetID = styleSheetIDMap.get(s)
       const init = !sheetID
       if (!sheetID) {
-        sheetID = ++nextID
+        sheetID = nextID()
       }
       nowOwning.push(sheetID)
       if (!pastOwning.includes(sheetID)) {
@@ -87,7 +93,7 @@ export default function (app: App | null) {
         set: function (this: StyleSheetOwner, value) {
           // @ts-ignore
           const retVal = nativeAdoptedStyleSheetsDescriptor.set.call(this, value)
-          updateAdoptedStyleSheets(this)
+          sendAdoptedStyleSheetsUpdate(this)
           return retVal
         },
       })
@@ -95,6 +101,13 @@ export default function (app: App | null) {
   }
 
   const patchContext = (context: typeof globalThis): void => {
+    // @ts-ignore
+    if (context.__openreplay_adpss_patched__) {
+      return
+    } else {
+      // @ts-ignore
+      context.__openreplay_adpss_patched__ = true
+    }
     patchAdoptedStyleSheets(context.Document.prototype)
     patchAdoptedStyleSheets(context.ShadowRoot.prototype)
 
@@ -119,20 +132,6 @@ export default function (app: App | null) {
       }
       return replaceSync.call(this, text)
     }
-    context.CSSStyleSheet.prototype.insertRule = function (rule: string, index = 0) {
-      const sheetID = styleSheetIDMap.get(this)
-      if (sheetID) {
-        app.send(AdoptedSSInsertRuleURLBased(sheetID, rule, index, app.getBaseHref()))
-      }
-      return insertRule.call(this, rule, index)
-    }
-    context.CSSStyleSheet.prototype.deleteRule = function (index: number) {
-      const sheetID = styleSheetIDMap.get(this)
-      if (sheetID) {
-        app.send(AdoptedSSDeleteRule(sheetID, index))
-      }
-      return deleteRule.call(this, index)
-    }
   }
 
   patchContext(window)
@@ -145,11 +144,11 @@ export default function (app: App | null) {
 
   // So far main Document is not triggered with nodeCallbacks
   app.attachStartCallback(() => {
-    updateAdoptedStyleSheets(document as StyleSheetOwner)
+    sendAdoptedStyleSheetsUpdate(document as StyleSheetOwner)
   })
   app.nodes.attachNodeCallback((node: Node): void => {
     if (hasAdoptedSS(node)) {
-      updateAdoptedStyleSheets(node)
+      sendAdoptedStyleSheetsUpdate(node)
     }
   })
 }

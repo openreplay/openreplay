@@ -126,7 +126,7 @@ class Router extends React.Component {
     }
 
     fetchInitialData = async () => {
-        await this.props.fetchUserInfo(),
+        await this.props.fetchUserInfo()
         await this.props.fetchSiteList()
         const { mstore } = this.props;
         mstore.initClient();

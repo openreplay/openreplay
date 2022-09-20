@@ -29,7 +29,7 @@ function SideMenuitem({
           className={ cn(
             className,
             stl.menuItem,
-            "flex items-center py-2 justify-between",
+            "flex items-center py-2 justify-between shrink-0",
             { [stl.active] : active }
           )}
           onClick={disabled ? null : onClick}

@@ -22,6 +22,6 @@ func (si *Saver) InsertStats(session *Session, msg Message) error {
 	return nil
 }
 
-func (si *Saver) CommitStats() error {
+func (si *Saver) CommitStats(optimize bool) error {
 	return nil
 }

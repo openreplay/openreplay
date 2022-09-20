@@ -137,19 +137,26 @@ export default class FetchDetailsModal extends React.PureComponent {
     } = this.props;
     const { activeTab, tabs } = this.state;
 
+    const _duration = parseInt(duration)
+    console.log('_duration', _duration);
+
     return (
       <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
         <h5 className="mb-2">{'URL'}</h5>
         <div className={cn(stl.url, 'color-gray-darkest')}>{url}</div>
-        <div className="flex items-center mt-4">
-          <div className="w-4/12">
-            <div className="font-medium mb-2">Method</div>
-            <div>{method}</div>
-          </div>
-          <div className="w-4/12">
-            <div className="font-medium mb-2">Duration</div>
-            <div>{parseInt(duration)} ms</div>
-          </div>
+        <div className="flex items-start mt-4">
+          {method && (
+            <div className="w-4/12">
+              <div className="font-medium mb-2">Method</div>
+              <div>{method}</div>
+            </div>
+          )}
+          {!!_duration && (
+            <div className="w-4/12">
+              <div className="font-medium mb-2">Duration</div>
+              <div>{_duration } ms</div>
+            </div>
+          )}
         </div>
 
         <div className="mt-6">

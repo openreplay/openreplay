@@ -29,6 +29,8 @@ import AssistDoc from './AssistDoc';
 import { PageTitle, Loader } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import withPageTitle from 'HOCs/withPageTitle';
+import PiniaDoc from './PiniaDoc'
+import ZustandDoc from './ZustandDoc'
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -162,6 +164,7 @@ const integrations = [
         integrations: [
             { title: 'Redux', slug: '', icon: 'integrations/redux', component: <ReduxDoc /> },
             { title: 'VueX', slug: '', icon: 'integrations/vuejs', component: <VueDoc /> },
+            { title: 'Pinia', slug: '', icon: 'integrations/pinia', component: <PiniaDoc /> },
             { title: 'GraphQL', slug: '', icon: 'integrations/graphql', component: <GraphQLDoc /> },
             { title: 'NgRx', slug: '', icon: 'integrations/ngrx', component: <NgRxDoc /> },
             { title: 'MobX', slug: '', icon: 'integrations/mobx', component: <MobxDoc /> },
@@ -169,6 +172,7 @@ const integrations = [
             { title: 'Profiler', slug: '', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
             { title: 'Axios', slug: '', icon: 'integrations/openreplay', component: <AxiosDoc /> },
             { title: 'Assist', slug: '', icon: 'integrations/openreplay', component: <AssistDoc /> },
+            { title: 'Zustand', slug: '', icon: '', header: '🐻', component: <ZustandDoc /> }
         ],
     },
 ];

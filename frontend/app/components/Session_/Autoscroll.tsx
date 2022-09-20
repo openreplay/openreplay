@@ -113,7 +113,7 @@ export default class Autoscroll extends React.PureComponent<Props, {
         </div>
 
         <div className={stl.navButtons}>
-          <label><input type={'checkbox'} checked={this.state.autoScroll} onChange={(e) => this.setState({ autoScroll: !this.state.autoScroll })} /> Autoscroll</label>
+          {/* <label><input type={'checkbox'} checked={this.state.autoScroll} onChange={(e) => this.setState({ autoScroll: !this.state.autoScroll })} /> Autoscroll</label> */}
           {navigation && (
             <>
               <IconButton size="small" icon="chevron-up" onClick={this.onPrevClick} />

@@ -37,7 +37,11 @@ const peerDisconnect = (client) => {
 }
 
 const peerError = (error) => {
-    console.error('error fired');
+    //https://peerjs.com/docs/#peeron-error
+    console.error('Error detected in Peers');
+    console.error('Error type:');
+    console.error(error.type);
+    console.error('Error message:');
     console.error(error);
 }
 

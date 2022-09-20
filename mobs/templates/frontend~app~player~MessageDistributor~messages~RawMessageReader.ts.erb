@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import PrimitiveReader from './PrimitiveReader'
 import type { RawMessage } from './raw'
@@ -18,12 +19,12 @@ export default class RawMessageReader extends PrimitiveReader {
     switch (tp) {
     <% $messages.select { |msg| msg.replayer }.each do |msg| %>
     case <%= msg.id %>: {
-<%= msg.attributes.map { |attr| 
-"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>      
+<%= msg.attributes.map { |attr|
+"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>
       return {
-        tp: "<%= msg.name.snake_case %>", 
-<%= msg.attributes.map { |attr| 
-"        #{attr.name.camel_case}," }.join "\n" %>      
+        tp: "<%= msg.name.snake_case %>",
+<%= msg.attributes.map { |attr|
+"        #{attr.name.camel_case}," }.join "\n" %>
       };
     }
     <% end %>

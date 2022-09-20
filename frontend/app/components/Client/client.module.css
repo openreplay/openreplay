@@ -10,7 +10,7 @@
   /* min-height: calc(100vh - 81px); */
 
   & .tabMenu {
-    width: 240px;
+    width: 250px;
     margin: 0;
     background-color: $gray-lightest;    
   }

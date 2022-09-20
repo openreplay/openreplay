@@ -76,7 +76,11 @@ func main() {
 					iter.Type() == MsgCSSInsertRuleURLBased ||
 					iter.Type() == MsgAdoptedSSReplaceURLBased ||
 					iter.Type() == MsgAdoptedSSInsertRuleURLBased {
-					msg = assetMessageHandler.ParseAssets(sessionID, msg.Decode()) // TODO: filter type only once (use iterator inide or bring ParseAssets out here).
+					m := msg.Decode()
+					if m == nil {
+						return
+					}
+					msg = assetMessageHandler.ParseAssets(sessionID, m) // TODO: filter type only once (use iterator inide or bring ParseAssets out here).
 				}
 
 				// Filter message
@@ -103,6 +107,7 @@ func main() {
 				messageSize.Record(context.Background(), float64(len(data)))
 				savedMessages.Add(context.Background(), 1)
 			}
+			iter.Close()
 		},
 		false,
 		cfg.MessageSizeLimit,

@@ -69,6 +69,9 @@ func main() {
 				continue
 			}
 			msg := iter.Message().Decode()
+			if msg == nil {
+				return
+			}
 
 			// Just save session data into db without additional checks
 			if err := saver.InsertMessage(sessionID, msg); err != nil {
@@ -109,6 +112,7 @@ func main() {
 				}
 			})
 		}
+		iter.Close()
 	}
 
 	// Init consumer
@@ -142,7 +146,7 @@ func main() {
 			pgDur := time.Now().Sub(start).Milliseconds()
 
 			start = time.Now()
-			if err := saver.CommitStats(); err != nil {
+			if err := saver.CommitStats(consumer.HasFirstPartition()); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}
 			chDur := time.Now().Sub(start).Milliseconds()

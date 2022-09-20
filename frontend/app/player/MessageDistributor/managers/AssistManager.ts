@@ -323,6 +323,12 @@ export default class AssistManager {
     }
   }
 
+  releaseRemoteControl = () => {
+    if (!this.socket) { return }
+    this.socket.emit("release_control")
+    this.toggleRemoteControl(false)
+  }
+
 
   /* ==== PeerJS Call ==== */
 
@@ -406,9 +412,14 @@ export default class AssistManager {
     this.toggleAnnotation(false)
   }
 
-  private initiateCallEnd = async () => {
+  public initiateCallEnd = async () => {
     this.socket?.emit("call_end", store.getState().getIn([ 'user', 'account', 'name']))
     this.handleCallEnd()
+    const remoteControl = getState().remoteControl
+    if (remoteControl === RemoteControlStatus.Enabled) {
+      this.socket.emit("release_control")
+      this.toggleRemoteControl(false)
+    }
   }
 
   private onRemoteCallEnd = () => {

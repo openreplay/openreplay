@@ -3,23 +3,17 @@ const fs = require('fs');
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
 const URL = require('url');
-const wasm = fs.readFileSync('/mappings.wasm');
+const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
 sourceMap.SourceMapConsumer.initialize({
     "lib/mappings.wasm": wasm
 });
 
+console.log(`>sourceMap initialised using ${process.env.MAPPING_WASM || '/mappings.wasm'}`);
+
 module.exports.sourcemapReader = async event => {
     let s3;
-    if (event.S3_HOST) {
-        s3 = new AWS.S3({
-            endpoint: event.S3_HOST,
-            accessKeyId: event.S3_KEY,
-            secretAccessKey: event.S3_SECRET,
-            region: event.region,
-            s3ForcePathStyle: true, // needed with minio?
-            signatureVersion: 'v4'
-        });
-    } else if (process.env.S3_HOST) {
+
+    if (process.env.S3_HOST) {
         s3 = new AWS.S3({
             endpoint: process.env.S3_HOST,
             accessKeyId: process.env.S3_KEY,
@@ -40,11 +34,20 @@ module.exports.sourcemapReader = async event => {
         Key: event.key
     };
     return new Promise(function (resolve, reject) {
+        const getObjectStart = Date.now();
         s3.getObject(options, (err, data) => {
             if (err) {
-                console.log("Get S3 object failed");
-                console.log(err);
+                console.error("[SR] Get S3 object failed");
+                console.error(err);
                 return reject(err);
+            }
+            const getObjectEnd = Date.now();
+            const fileSize = (data.ContentLength / 1024) / 1024;
+            options.fileSize = `${fileSize} Mb`;
+            const downloadTime = (getObjectEnd - getObjectStart) / 1000;
+            options.downloadTime = `${downloadTime} s`;
+            if (fileSize >= 3) {
+                console.log("[SR] large file:" + JSON.stringify(options));
             }
             let sourcemap = data.Body.toString();
 
@@ -68,17 +71,15 @@ module.exports.sourcemapReader = async event => {
                                     preview = preview.slice(start, original.line + event.padding);
                                 }
                             } else {
-                                console.log("source not found, null preview for:");
-                                console.log(original.source);
+                                console.log(`[SR] source not found, null preview for: ${original.source}`);
                                 preview = []
                             }
                             url = URL.parse(original.source);
                         } else {
-                            console.log("couldn't find original position of:");
-                            console.log({
+                            console.log("[SR] couldn't find original position of: " + JSON.stringify({
                                 line: event.positions[i].line,
                                 column: event.positions[i].column
-                            });
+                            }));
                         }
                         let result = {
                             "absPath": url.href,
@@ -92,6 +93,12 @@ module.exports.sourcemapReader = async event => {
                         results.push(result);
                     }
                     consumer = undefined;
+
+                    const sourcemapProcessingTime = (Date.now() - getObjectEnd) / 1000;
+                    options.sourcemapProcessingTime = `${sourcemapProcessingTime} s`
+                    if (fileSize >= 3 || sourcemapProcessingTime > 2) {
+                        console.log("[SR] " + JSON.stringify(options));
+                    }
                     // Use this code if you don't use the http event with the LAMBDA-PROXY integration
                     return resolve(results);
                 })

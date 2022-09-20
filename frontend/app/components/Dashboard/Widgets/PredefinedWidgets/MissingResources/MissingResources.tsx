@@ -47,6 +47,8 @@ function MissingResources(props: Props) {
     if (!isTemplate) {
       cols.push(copyPathCol);
     }
+
+    console.log('metric.data.chart', metric.data.chart);
     
     return (
         <NoContent

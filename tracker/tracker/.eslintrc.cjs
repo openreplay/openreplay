@@ -34,7 +34,7 @@ module.exports = {
     '@typescript-eslint/no-unsafe-member-access': 'off',
     '@typescript-eslint/no-unsafe-call': 'off',
     '@typescript-eslint/restrict-plus-operands': 'warn',
-    '@typescript-eslint/no-unsafe-return': 'warn',
+    '@typescript-eslint/no-unsafe-return': 'off',
     'no-useless-escape': 'warn',
     'no-control-regex': 'warn',
     '@typescript-eslint/restrict-template-expressions': 'warn',

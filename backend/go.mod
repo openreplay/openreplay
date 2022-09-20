@@ -5,7 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go/logging v1.4.2
 	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
-	github.com/aws/aws-sdk-go v1.35.23
+	github.com/aws/aws-sdk-go v1.44.98
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/go-redis/redis v6.15.9+incompatible
@@ -13,9 +13,9 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgconn v1.6.0
 	github.com/jackc/pgerrcode v0.0.0-20201024163028-a0d42d470451
+	github.com/jackc/pgtype v1.3.0
 	github.com/jackc/pgx/v4 v4.6.0
 	github.com/klauspost/pgzip v1.2.5
-	github.com/lib/pq v1.2.0
 	github.com/oschwald/maxminddb-golang v1.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/sethvargo/go-envconfig v0.7.0
@@ -49,7 +49,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.0.2 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200307190119-3430c5407db8 // indirect
-	github.com/jackc/pgtype v1.3.0 // indirect
 	github.com/jackc/puddle v1.2.2-0.20220404125616-4e959849469a // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.7 // indirect

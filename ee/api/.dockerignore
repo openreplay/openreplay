@@ -4,6 +4,7 @@
 **/build.sh
 **/build_*.sh
 **/*deploy.sh
+Dockerfile*
 
 app_crons.py
 app_alerts.py

@@ -3,7 +3,7 @@ import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { controlConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as AssistOptions, } from './Assist'
 
-enum RCStatus {
+export enum RCStatus {
   Disabled,
   Requesting,
   Enabled,
@@ -19,13 +19,13 @@ if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
 
 export default class RemoteControl {
   private mouse: Mouse | null
-  private status: RCStatus = RCStatus.Disabled
+  status: RCStatus = RCStatus.Disabled
   private agentID: string | null = null
 
   constructor(
     private readonly options: AssistOptions,
-    private readonly onGrand: (sting?) => void,
-    private readonly onRelease: (sting?) => void) {}
+    private readonly onGrand: (id: string) => string | undefined,
+    private readonly onRelease: (id?: string | null) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -39,12 +39,12 @@ export default class RemoteControl {
   private confirm: ConfirmWindow | null = null
   requestControl = (id: string) => {
     if (this.agentID !== null) {
-      this.releaseControl(id)
+      this.releaseControl()
       return
     }
     setTimeout(() =>{
       if (this.status === RCStatus.Requesting) {
-        this.releaseControl(id)
+        this.releaseControl()
       }
     }, 30000)
     this.agentID = id
@@ -54,7 +54,8 @@ export default class RemoteControl {
       if (allowed) {
         this.grantControl(id)
       } else {
-        this.releaseControl(id)
+        this.confirm?.remove()
+        this.releaseControl()
       }
     })
     .then(() => {
@@ -65,23 +66,34 @@ export default class RemoteControl {
         console.error(e)
       })
   }
+
+  releaseControl = () => {
+    if (this.confirm) {
+      this.confirm.remove()
+      this.confirm = null
+    }
+    this.resetMouse()
+    this.status = RCStatus.Disabled
+    sessionStorage.removeItem(this.options.session_control_peer_key)
+    this.onRelease(this.agentID)
+    this.agentID = null
+  }
+
   grantControl = (id: string) => {
     this.agentID = id
     this.status = RCStatus.Enabled
-    this.mouse = new Mouse()
-    this.mouse.mount()
     sessionStorage.setItem(this.options.session_control_peer_key, id)
-    this.onGrand(id)
+    const agentName = this.onGrand(id)
+    if (this.mouse) {
+      this.resetMouse()
+    }
+    this.mouse = new Mouse(agentName)
+    this.mouse.mount()
   }
 
-  releaseControl = (id: string) => {
-    if (this.agentID !== id) { return }
+  resetMouse = () => {
     this.mouse?.remove()
     this.mouse = null
-    this.status = RCStatus.Disabled
-    this.agentID = null
-    sessionStorage.removeItem(this.options.session_control_peer_key)
-    this.onRelease(id)
   }
 
   scroll = (id, d) => { id === this.agentID && this.mouse?.scroll(d) }

@@ -63,13 +63,6 @@ class SessionStart(Message):
         self.user_id = user_id
 
 
-class SessionDisconnect(Message):
-    __id__ = 2
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-
 class SessionEnd(Message):
     __id__ = 3
 
@@ -106,7 +99,6 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-        pass
         
 
 
@@ -750,6 +742,14 @@ class AdoptedSSRemoveOwner(Message):
     def __init__(self, sheet_id, id):
         self.sheet_id = sheet_id
         self.id = id
+
+
+class Zustand(Message):
+    __id__ = 79
+
+    def __init__(self, mutation, state):
+        self.mutation = mutation
+        self.state = state
 
 
 class IOSBatchMeta(Message):

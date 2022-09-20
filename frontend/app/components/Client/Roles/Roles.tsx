@@ -38,7 +38,7 @@ function Roles(props: Props) {
 
     useEffect(() => {
         if (removeErrors && removeErrors.size > 0) {
-            removeErrors.forEach((e) => {
+            removeErrors.forEach((e: any) => {
                 toast.error(e);
             });
         }
@@ -47,21 +47,20 @@ function Roles(props: Props) {
         };
     }, [removeErrors]);
 
-    const closeModal = (showToastMessage) => {
-        if (showToastMessage) {
-            toast.success(showToastMessage);
-            props.fetchList();
-        }
-        setShowmModal(false);
-        setTimeout(() => {
-            init();
-        }, 100);
-    };
+    // const closeModal = (showToastMessage: boolean) => {
+    //     if (showToastMessage) {
+    //         toast.success(showToastMessage);
+    //         props.fetchList();
+    //     }
+    //     // setShowmModal(false);
+    //     setTimeout(() => {
+    //         init();
+    //     }, 100);
+    // };
 
     const editHandler = (role: any) => {
         init(role);
         showModal(<RoleForm closeModal={hideModal} permissionsMap={permissionsMap} deleteHandler={deleteHandler} />, { right: true });
-        // setShowmModal(true);
     };
 
     const deleteHandler = async (role: any) => {
@@ -71,7 +70,7 @@ function Roles(props: Props) {
                 confirmation: `Are you sure you want to remove this role?`,
             })
         ) {
-            deleteRole(role.roleId);
+            deleteRole(role.roleId).then(hideModal);
         }
     };
 
@@ -83,7 +82,7 @@ function Roles(props: Props) {
                         <div className="flex items-center mr-auto px-5 pt-5">
                             <h3 className={cn(stl.tabTitle, 'text-2xl')}>Roles and Access</h3>
                             <Popup content="You don’t have the permissions to perform this action." disabled={isAdmin}>
-                                <Button variant="primary" onClick={() => setShowmModal(true)}>Add</Button>
+                                <Button variant="primary" onClick={() => editHandler({})}>Add</Button>
                             </Popup>
                         </div>
                     </div>
@@ -123,7 +122,7 @@ function Roles(props: Props) {
 export default connect(
     (state: any) => {
         const permissions = state.getIn(['roles', 'permissions']);
-        const permissionsMap = {};
+        const permissionsMap: any = {};
         permissions.forEach((p: any) => {
             permissionsMap[p.value] = p.text;
         });

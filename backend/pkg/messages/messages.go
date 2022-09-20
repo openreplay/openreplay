@@ -156,6 +156,8 @@ const (
 
 	MsgAdoptedSSRemoveOwner = 77
 
+	MsgZustand = 79
+
 	MsgIOSBatchMeta = 107
 
 	MsgIOSSessionStart = 90
@@ -3036,6 +3038,40 @@ func (msg *AdoptedSSRemoveOwner) Decode() Message {
 
 func (msg *AdoptedSSRemoveOwner) TypeID() int {
 	return 77
+}
+
+type Zustand struct {
+	message
+	Mutation string
+	State    string
+}
+
+func (msg *Zustand) Encode() []byte {
+	buf := make([]byte, 21+len(msg.Mutation)+len(msg.State))
+	buf[0] = 79
+	p := 1
+	p = WriteString(msg.Mutation, buf, p)
+	p = WriteString(msg.State, buf, p)
+	return buf[:p]
+}
+
+func (msg *Zustand) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *Zustand) Decode() Message {
+	return msg
+}
+
+func (msg *Zustand) TypeID() int {
+	return 79
 }
 
 type IOSBatchMeta struct {
