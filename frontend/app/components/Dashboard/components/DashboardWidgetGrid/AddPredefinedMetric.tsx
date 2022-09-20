@@ -74,13 +74,16 @@ function AddPredefinedMetric({ history, siteId, title, description }: IProps) {
       >
         <div className="mb-6 pt-8 px-8 flex items-start justify-between">
           <div className="flex flex-col">
-            <h1 className="text-2xl">{title}</h1>
+            <h1 className="text-2xl" style={{ marginBottom: '7px' }}>{title}</h1>
             <div className="text-disabled-text">{description}</div>
           </div>
 
-          <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
-            + Create Custom Metric
-          </Button>
+          <div className="flex flex-col items-end">
+            <Button variant="text-primary" className="font-medium ml-2" onClick={onCreateNew}>
+              + Create Custom Metric
+            </Button>
+            <div className="text-disabled-text">Showing the data from past 7 days.</div>
+          </div>
         </div>
 
         <Loader loading={dashboardStore.loadingTemplates}>
