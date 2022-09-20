@@ -185,7 +185,7 @@ export default class DashboardStore {
                                 new Dashboard().fromJson(_dashboard)
                             );
                         } else {
-                            toast.success("Dashboard updated successfully");
+                            toast.success("Dashboard successfully updated ");
                             this.updateDashboard(
                                 new Dashboard().fromJson(_dashboard)
                             );

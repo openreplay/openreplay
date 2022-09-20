@@ -123,7 +123,7 @@ export default class Dashboard {
                 dashboardService.saveWidget(this.dashboardId, widgetA),
                 dashboardService.saveWidget(this.dashboardId, widgetB)
             ]).then(() => {
-                toast.success("Dashboard updated successfully")
+                toast.success("Dashboard successfully updated")
                 resolve()
             }).catch(() => {
                 toast.error("Error updating widget position")
