@@ -23,5 +23,16 @@ ON CONFLICT (predefined_key) DO UPDATE
         metric_type=excluded.metric_type,
         view_type=excluded.view_type;
 
+ALTER TABLE IF EXISTS oauth_authentication
+    DROP CONSTRAINT IF EXISTS oauth_authentication_user_id_provider_provider_user_id_key;
+
+DROP INDEX IF EXISTS oauth_authentication_user_id_provider_provider_user_id_key;
+
+ALTER TABLE IF EXISTS oauth_authentication
+    DROP CONSTRAINT IF EXISTS oauth_authentication_user_id_provider_key;
+
+DROP INDEX IF EXISTS oauth_authentication_user_id_provider_key;
+
+CREATE UNIQUE INDEX IF NOT EXISTS oauth_authentication_unique_user_id_provider_idx ON oauth_authentication (user_id, provider);
 
 COMMIT;

@@ -52,7 +52,6 @@ def __get_autocomplete_table(value, project_id):
                              "c_list": tuple(c_list)
                              })
         try:
-            print(query)
             cur.execute(query)
         except Exception as err:
             print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")

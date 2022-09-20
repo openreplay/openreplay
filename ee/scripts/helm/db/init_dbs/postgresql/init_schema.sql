@@ -221,10 +221,9 @@ $$
                 user_id          integer        NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
                 provider         oauth_provider NOT NULL,
                 provider_user_id text           NOT NULL,
-                token            text           NOT NULL,
-                UNIQUE (user_id, provider)
+                token            text           NOT NULL
             );
-
+            CREATE UNIQUE INDEX IF NOT EXISTS oauth_authentication_unique_user_id_provider_idx ON oauth_authentication(user_id,provider);
 
             CREATE TABLE IF NOT EXISTS projects
             (

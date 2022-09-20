@@ -502,7 +502,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
                                                                                                all_issues_with_context,
                                                                                                first_stage, last_stage)
 
-    print("len(transitions) =", len(transitions))
+    # print("len(transitions) =", len(transitions))
 
     if any(all_errors):
         total_drop_corr, conf, is_sign = pearson_corr(transitions, all_errors)
