@@ -32,11 +32,6 @@ function DashboardWidgetGrid(props: Props) {
 
     const smallWidgetsLen = smallWidgets.length
 
-    // legacy
-    // smallWidgets.forEach((i, index) => {
-
-    // })
-
     return useObserver(() => (
         // @ts-ignore
         <Loader loading={loading}>
@@ -48,25 +43,29 @@ function DashboardWidgetGrid(props: Props) {
                     <div className="w-4/5 m-auto mt-4"><AddMetricContainer siteId={siteId} /></div>
                 }
             >
-                <div className="font-semibold text-xl py-4 flex items-center gap-2">
-                    <Icon name="grid-horizontal" size={26} />
-                    Web Vitals
-                </div>
-                <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
-                    {smallWidgets && smallWidgets.map((item: any, index: any) => (
-                        <React.Fragment key={item.widgetId}>
-                        <WidgetWrapper
-                            index={index}
-                            widget={item}
-                            moveListItem={(dragIndex: any, hoverIndex: any) => dashboard.swapWidgetPosition(dragIndex, hoverIndex)}
-                            dashboardId={dashboardId}
-                            siteId={siteId}
-                            isWidget={true}
-                            grid="vitals"
-                        />
-                        </React.Fragment>
-                    ))}
-                </div>
+                {smallWidgets.length && (
+                    <>
+                        <div className="font-semibold text-xl py-4 flex items-center gap-2">
+                            <Icon name="grid-horizontal" size={26} />
+                            Web Vitals
+                        </div>
+                        <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
+                            {smallWidgets && smallWidgets.map((item: any, index: any) => (
+                                <React.Fragment key={item.widgetId}>
+                                <WidgetWrapper
+                                    index={index}
+                                    widget={item}
+                                    moveListItem={(dragIndex: any, hoverIndex: any) => dashboard.swapWidgetPosition(dragIndex, hoverIndex)}
+                                    dashboardId={dashboardId}
+                                    siteId={siteId}
+                                    isWidget={true}
+                                    grid="vitals"
+                                />
+                                </React.Fragment>
+                            ))}
+                        </div>
+                    </>
+                )}
 
                 <div className="font-semibold text-xl py-4 flex items-center gap-2">
                     <Icon name="grid-horizontal" size={26} />
