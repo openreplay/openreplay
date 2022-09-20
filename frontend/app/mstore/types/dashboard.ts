@@ -49,12 +49,12 @@ export default class Dashboard {
             this.isPublic = json.isPublic
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
             const haveSmallWidgets = (json.widgets as any[]).includes((i: any) => i.config.col === 1)
-            if (json.widgets && haveSmallWidgets) {
+            if (json.widgets) {
                 // legacy
                 const dashboardFix = '__openreplay__dashboard__fix' + json.dashboardId
                 const isFixed = localStorage.getItem(dashboardFix)
                 const sortedWidgets: any[] = !isFixed ? json.widgets.sort((a: any, b: any) => a.config.col - b.config.col) : json.widgets
-                if (!isFixed) {
+                if (!isFixed && haveSmallWidgets) {
                     sortedWidgets.forEach((widget, index) => {
                         widget.config.position = index
                     })
