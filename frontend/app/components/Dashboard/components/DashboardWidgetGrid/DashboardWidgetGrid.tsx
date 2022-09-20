@@ -67,10 +67,12 @@ function DashboardWidgetGrid(props: Props) {
                     </>
                 ) : null}
 
-                <div className="font-semibold text-xl py-4 flex items-center gap-2">
-                    <Icon name="grid-horizontal" size={26} />
-                    All Metrics
-                </div>
+                {smallWidgets.length > 0 && regularWidgets.length > 0 ? (
+                    <div className="font-semibold text-xl py-4 flex items-center gap-2">
+                        <Icon name="grid-horizontal" size={26} />
+                        All Metrics
+                    </div>
+                ) : null}
                 <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
                     {regularWidgets && regularWidgets.map((item: any, index: any) => (
                         <React.Fragment key={item.widgetId}>
