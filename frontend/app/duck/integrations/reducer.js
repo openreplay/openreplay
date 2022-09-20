@@ -27,7 +27,7 @@ export const createIntegrationReducer = (name, Config) => {
                     .set('list', Array.isArray(action.data) ? List(action.data).map(Config) : List([new Config(action.data)]))
                     .set(action.name + 'Fetched', true);
             case FETCH.success:
-                return state.set('instance', Config(action.data));
+                return state.set('instance', Config(action.data || {}));
             case SAVE.success:
                 const config = Config(action.data);
                 return state.update('list', itemInListUpdater(config)).set('instance', config);
