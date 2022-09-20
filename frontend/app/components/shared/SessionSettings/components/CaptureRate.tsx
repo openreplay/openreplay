@@ -41,7 +41,7 @@ function CaptureRate({ isAdmin = false }) {
 
     return (
         <Loader loading={loading}>
-            <h3 className="text-lg">Recordings</h3>
+            <h3 className="text-lg">Capture Rate</h3>
             <div className="my-1">The percentage of session you want to capture</div>
             <Popup content="You don't have permission to change." disabled={isAdmin} delay={0}>
                 <div className={cn('mt-2 mb-4 mr-1 flex items-center', { disabled: !isAdmin })}>
