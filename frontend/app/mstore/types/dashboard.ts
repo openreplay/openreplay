@@ -48,22 +48,16 @@ export default class Dashboard {
             this.description = json.description
             this.isPublic = json.isPublic
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
-            const haveSmallWidgets = (json.widgets as any[]).includes((i: any) => i.config.col === 1)
             if (json.widgets) {
-                // legacy
-                const dashboardFix = '__openreplay__dashboard__fix' + json.dashboardId
-                const isFixed = localStorage.getItem(dashboardFix)
-                const sortedWidgets: any[] = !isFixed ? json.widgets.sort((a: any, b: any) => a.config.col - b.config.col) : json.widgets
-                if (!isFixed && haveSmallWidgets) {
-                    sortedWidgets.forEach((widget, index) => {
-                        widget.config.position = index
-                    })
+                const smallWidgets: any[] = json.widgets.filter(wi => wi.config.col === 1)
+                const otherWidgets: any[] = json.widgets.filter(wi => wi.config.col !== 1)
+                const widgets = [...smallWidgets.sort((a,b) => a.config.position - b.config.position), ...otherWidgets.sort((a,b) => a.config.position - b.config.position)]
 
-                    console.log('widget positions fixed', sortedWidgets)
+                widgets.forEach((widget, index) => {
+                    widget.config.position = index
+                })
 
-                    localStorage.setItem(dashboardFix, '1')
-                }
-                this.widgets = sortedWidgets.map((w: Widget) => new Widget().fromJson(w)).sort((a: Widget, b: Widget) => a.position - b.position)
+                this.widgets = widgets.map((w: Widget) => new Widget().fromJson(w))
             } else {
                 this.widgets = []
             }
