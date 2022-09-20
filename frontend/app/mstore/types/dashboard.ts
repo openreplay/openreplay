@@ -48,7 +48,8 @@ export default class Dashboard {
             this.description = json.description
             this.isPublic = json.isPublic
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
-            if (json.widgets) {
+            const haveSmallWidgets = (json.widgets as any[]).includes((i: any) => i.config.col === 1)
+            if (json.widgets && haveSmallWidgets) {
                 // legacy
                 const dashboardFix = '__openreplay__dashboard__fix' + json.dashboardId
                 const isFixed = localStorage.getItem(dashboardFix)
