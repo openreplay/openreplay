@@ -99,8 +99,14 @@ func main() {
 
 				// Write encoded message with index to session file
 				data := msg.EncodeWithIndex()
-				if err := writer.Write(sessionID, data); err != nil {
-					log.Printf("Writer error: %v\n", err)
+				if IsDOMType(iter.Type()) {
+					if err := writer.WriteDOM(sessionID, data); err != nil {
+						log.Printf("Writer error: %v\n", err)
+					}
+				} else {
+					if err := writer.WriteDEV(sessionID, data); err != nil {
+						log.Printf("Writer error: %v\n", err)
+					}
 				}
 
 				// [METRICS] Increase the number of written to the files messages and the message size

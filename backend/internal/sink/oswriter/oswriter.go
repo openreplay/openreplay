@@ -10,26 +10,26 @@ import (
 type Writer struct {
 	ulimit int
 	dir    string
-	files  map[uint64]*os.File
-	atimes map[uint64]int64
+	files  map[string]*os.File
+	atimes map[string]int64
 }
 
 func NewWriter(ulimit uint16, dir string) *Writer {
 	return &Writer{
 		ulimit: int(ulimit),
 		dir:    dir + "/",
-		files:  make(map[uint64]*os.File),
-		atimes: make(map[uint64]int64),
+		files:  make(map[string]*os.File),
+		atimes: make(map[string]int64),
 	}
 }
 
-func (w *Writer) open(key uint64) (*os.File, error) {
-	file, ok := w.files[key]
+func (w *Writer) open(fname string) (*os.File, error) {
+	file, ok := w.files[fname]
 	if ok {
 		return file, nil
 	}
 	if len(w.atimes) == w.ulimit {
-		var m_k uint64
+		var m_k string
 		var m_t int64 = math.MaxInt64
 		for k, t := range w.atimes {
 			if t < m_t {
@@ -37,21 +37,21 @@ func (w *Writer) open(key uint64) (*os.File, error) {
 				m_t = t
 			}
 		}
-		if err := w.Close(m_k); err != nil {
+		if err := w.close(m_k); err != nil {
 			return nil, err
 		}
 	}
-	file, err := os.OpenFile(w.dir+strconv.FormatUint(key, 10), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
 	}
-	w.files[key] = file
-	w.atimes[key] = time.Now().Unix()
+	w.files[fname] = file
+	w.atimes[fname] = time.Now().Unix()
 	return file, nil
 }
 
-func (w *Writer) Close(key uint64) error {
-	file := w.files[key]
+func (w *Writer) close(fname string) error {
+	file := w.files[fname]
 	if file == nil {
 		return nil
 	}
@@ -61,13 +61,21 @@ func (w *Writer) Close(key uint64) error {
 	if err := file.Close(); err != nil {
 		return err
 	}
-	delete(w.files, key)
-	delete(w.atimes, key)
+	delete(w.files, fname)
+	delete(w.atimes, fname)
 	return nil
 }
 
-func (w *Writer) Write(key uint64, data []byte) error {
-	file, err := w.open(key)
+func (w *Writer) WriteDOM(sid uint64, data []byte) error {
+	return w.Write(strconv.FormatUint(sid, 10)+"/dom.mob", data)
+}
+
+func (w *Writer) WriteDEV(sid uint64, data []byte) error {
+	return w.Write(strconv.FormatUint(sid, 10)+"/devtools.mob", data)
+}
+
+func (w *Writer) Write(fname string, data []byte) error {
+	file, err := w.open(fname)
 	if err != nil {
 		return err
 	}

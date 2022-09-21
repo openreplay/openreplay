@@ -5,7 +5,6 @@ import (
 	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -47,7 +46,7 @@ func main() {
 			for iter.Next() {
 				if iter.Type() == messages.MsgSessionEnd {
 					msg := iter.Message().Decode().(*messages.SessionEnd)
-					if err := srv.UploadKey(strconv.FormatUint(sessionID, 10), 5); err != nil {
+					if err := srv.UploadSessionFiles(sessionID); err != nil {
 						log.Printf("can't find session: %d", sessionID)
 						sessionFinder.Find(sessionID, msg.Timestamp)
 					}

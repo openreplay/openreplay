@@ -60,7 +60,18 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	}, nil
 }
 
-func (s *Storage) UploadKey(key string, retryCount int) error {
+func (s *Storage) UploadSessionFiles(sessID uint64) error {
+	sidStr := strconv.FormatUint(sessID, 10)
+	if err := s.uploadKey(sessID, sidStr+"/dom.mob", 5); err != nil {
+		return err
+	}
+	if err := s.uploadKey(sessID, sidStr+"/devtools.mob", 5); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) uploadKey(sessID uint64, key string, retryCount int) error {
 	if retryCount <= 0 {
 		return nil
 	}
@@ -68,7 +79,6 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 	start := time.Now()
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
-		sessID, _ := strconv.ParseUint(key, 10, 64)
 		return fmt.Errorf("File open error: %v; sessID: %s, part: %d, sessStart: %s\n",
 			err, key, sessID%16,
 			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
@@ -78,7 +88,6 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 
 	nRead, err := file.Read(s.startBytes)
 	if err != nil {
-		sessID, _ := strconv.ParseUint(key, 10, 64)
 		log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
 			err,
 			key,
@@ -86,7 +95,7 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
 		)
 		time.AfterFunc(s.cfg.RetryTimeout, func() {
-			s.UploadKey(key, retryCount-1)
+			s.uploadKey(sessID, key, retryCount-1)
 		})
 		return nil
 	}
@@ -94,7 +103,7 @@ func (s *Storage) UploadKey(key string, retryCount int) error {
 
 	start = time.Now()
 	startReader := bytes.NewBuffer(s.startBytes[:nRead])
-	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
+	if err := s.s3.Upload(s.gzipFile(startReader), key+"s", "application/octet-stream", true); err != nil {
 		log.Fatalf("Storage: start upload failed.  %v\n", err)
 	}
 	if nRead == s.cfg.FileSplitSize {
