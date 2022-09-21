@@ -1247,5 +1247,5 @@ def session_exists(project_id, session_id):
                                 AND project_id=%(project_id)s""",
                             {"project_id": project_id, "session_id": session_id})
         cur.execute(query)
-        row = cur.fetchone(query)
+        row = cur.fetchone()
     return row is not None
