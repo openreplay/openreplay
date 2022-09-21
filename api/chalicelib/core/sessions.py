@@ -1237,3 +1237,15 @@ def count_all():
     with pg_client.PostgresClient(unlimited_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)
+
+
+def session_exists(project_id, session_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT 1 
+                             FROM public.sessions 
+                             WHERE session_id=%(session_id)s 
+                                AND project_id=%(project_id)s""",
+                            {"project_id": project_id, "session_id": session_id})
+        cur.execute(query)
+        row = cur.fetchone(query)
+    return row is not None
