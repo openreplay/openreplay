@@ -74,11 +74,13 @@ function DashboardRouter(props: Props) {
           <Alerts siteId={siteId} />
         </Route>
 
-        <Route exact strict path={withSiteId(alertCreate(), siteId)}>
-          <CreateAlert siteId={siteId} />
+        <Route exact path={withSiteId(alertCreate(), siteId)}>
+          {/* @ts-ignore */}
+          <CreateAlert siteId={siteId as string} />
         </Route>
 
-        <Route exact strict path={withSiteId(alertEdit(), siteId)}>
+        <Route exact path={withSiteId(alertEdit(), siteId)}>
+          {/* @ts-ignore */}
           <CreateAlert siteId={siteId} {...props} />
         </Route>
       </Switch>

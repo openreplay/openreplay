@@ -295,11 +295,13 @@ export default class AssistManager {
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
       this.md.overlay.addEventListener("click", this.onMouseClick)
       this.md.overlay.addEventListener("wheel", this.onWheel)
+      this.md.toggleRemoteControlStatus(true)
       update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
       this.md.overlay.removeEventListener("mousemove", this.onMouseMove)
       this.md.overlay.removeEventListener("click", this.onMouseClick)
       this.md.overlay.removeEventListener("wheel", this.onWheel)
+      this.md.toggleRemoteControlStatus(false)
       update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
     }

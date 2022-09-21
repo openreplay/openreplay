@@ -1,6 +1,7 @@
 import {
     makeAutoObservable,
     runInAction,
+    computed,
 } from "mobx";
 import Dashboard from "./types/dashboard";
 import Widget from "./types/widget";
@@ -64,6 +65,11 @@ export default class DashboardStore {
         this.drillDownFilter.updateKey("endTimestamp", timeStamps.endTimestamp);
     }
 
+    @computed
+    get sortedDashboards() {
+        return [...this.dashboards].sort((a, b) => b.createdAt - a.createdAt)
+    }
+
     toggleAllSelectedWidgets(isSelected: boolean) {
         if (isSelected) {
             const allWidgets = this.widgetCategories.reduce((acc, cat) => {
@@ -89,7 +95,7 @@ export default class DashboardStore {
     }
 
     removeSelectedWidgetByCategory = (category: any) => {
-        const categoryWidgetIds = category.widgets.map((w) => w.metricId);
+        const categoryWidgetIds = category.widgets.map((w: Widget) => w.metricId);
         this.selectedWidgets = this.selectedWidgets.filter(
             (widget: any) => !categoryWidgetIds.includes(widget.metricId)
         );
@@ -119,7 +125,8 @@ export default class DashboardStore {
         this.selectedWidgets = [];
     }
 
-    updateKey(key: any, value: any) {
+    updateKey(key: string, value: any) {
+        // @ts-ignore
         this[key] = value;
     }
 
@@ -138,7 +145,7 @@ export default class DashboardStore {
             .getDashboards()
             .then((list: any) => {
                 runInAction(() => {
-                    this.dashboards = list.map((d) =>
+                    this.dashboards = list.map((d: Record<string, any>) =>
                         new Dashboard().fromJson(d)
                     );
                 });
@@ -168,7 +175,7 @@ export default class DashboardStore {
         this.fetchingDashboard = value;
     }
 
-    save(dashboard: IDashboard): Promise<any> {
+    save(dashboard: Dashboard): Promise<any> {
         this.isSaving = true;
         const isCreating = !dashboard.dashboardId;
 
@@ -205,7 +212,7 @@ export default class DashboardStore {
         });
     }
 
-    saveMetric(metric: IWidget, dashboardId: string): Promise<any> {
+    saveMetric(metric: Widget, dashboardId: string): Promise<any> {
         const isCreating = !metric.widgetId;
         return dashboardService
             .saveMetric(metric, dashboardId)
@@ -252,7 +259,7 @@ export default class DashboardStore {
 
     fromJson(json: any) {
         runInAction(() => {
-            this.dashboards = json.dashboards.map((d) =>
+            this.dashboards = json.dashboards.map((d: Record<string, any>) =>
                 new Dashboard().fromJson(d)
             );
         });
@@ -367,7 +374,7 @@ export default class DashboardStore {
             });
     }
 
-    addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any> {
+    addWidgetToDashboard(dashboard: Dashboard, metricIds: any): Promise<any> {
         this.isSaving = true;
         return dashboardService
             .addWidget(dashboard, metricIds)
@@ -399,7 +406,7 @@ export default class DashboardStore {
     }
 
     fetchMetricChartData(
-        metric: IWidget,
+        metric: Widget,
         data: any,
         isWidget: boolean = false,
         period: Record<string, any>
