@@ -65,7 +65,6 @@ rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./auth/auth_apikey.py
-rm -rf ./auth/auth_jwt.py
 rm -rf ./build.sh
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py

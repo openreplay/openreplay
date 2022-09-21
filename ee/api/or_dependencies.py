@@ -8,10 +8,11 @@ from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 import schemas
+import schemas_ee
 from chalicelib.core import traces
 
 
-async def OR_context(request: Request) -> schemas.CurrentContext:
+async def OR_context(request: Request) -> schemas_ee.CurrentContext:
     if hasattr(request.state, "currentContext"):
         return request.state.currentContext
     else:

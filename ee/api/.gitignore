@@ -243,7 +243,6 @@ Pipfile
 /routers/__init__.py
 /chalicelib/core/assist.py
 /auth/auth_apikey.py
-/auth/auth_jwt.py
 /build.sh
 /routers/base.py
 /routers/core.py
