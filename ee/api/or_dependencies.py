@@ -1,13 +1,15 @@
 import json
 from typing import Callable
 
+from fastapi import HTTPException, Depends
+from fastapi import Security
 from fastapi.routing import APIRoute
+from fastapi.security import SecurityScopes
 from starlette import status
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-import schemas
 import schemas_ee
 from chalicelib.core import traces
 
@@ -44,3 +46,14 @@ class ORRoute(APIRoute):
             return response
 
         return custom_route_handler
+
+
+def check_permissions(security_scopes: SecurityScopes, context: schemas_ee.CurrentContext = Depends(OR_context)):
+    for scope in security_scopes.scopes:
+        if scope not in context.permissions:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Not enough permissions")
+
+
+def OR_scope(*scopes):
+    return Security(check_permissions, scopes=list(scopes))
