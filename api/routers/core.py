@@ -911,9 +911,14 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 
 @app.get('/{projectId}/unprocessed/{sessionId}', tags=["assist"])
 @app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
-def get_live_session_replay_file(projectId: int, sessionId: str,
+def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str) or not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        if isinstance(sessionId, str):
+            print(f"{sessionId} not a valid number.")
+        else:
+            print(f"{projectId}/{sessionId} not found in DB.")
+
         return {"errors": ["Replay file not found"]}
     path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
     if path is None:
