@@ -213,15 +213,6 @@ class MouseMove(Message):
         self.y = y
 
 
-class MouseClickDepricated(Message):
-    __id__ = 21
-
-    def __init__(self, id, hesitation_time, label):
-        self.id = id
-        self.hesitation_time = hesitation_time
-        self.label = label
-
-
 class ConsoleLog(Message):
     __id__ = 22
 

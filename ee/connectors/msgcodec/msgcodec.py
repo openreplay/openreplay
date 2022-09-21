@@ -237,13 +237,6 @@ class MessageCodec(Codec):
                 y=self.read_uint(reader)
             )
 
-        if message_id == 21:
-            return MouseClickDepricated(
-                id=self.read_uint(reader),
-                hesitation_time=self.read_uint(reader),
-                label=self.read_string(reader)
-            )
-
         if message_id == 22:
             return ConsoleLog(
                 level=self.read_string(reader),

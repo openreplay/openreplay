@@ -50,8 +50,6 @@ const (
 
 	MsgMouseMove = 20
 
-	MsgMouseClickDepricated = 21
-
 	MsgConsoleLog = 22
 
 	MsgPageLoadTiming = 23
@@ -1022,42 +1020,6 @@ func (msg *MouseMove) Decode() Message {
 
 func (msg *MouseMove) TypeID() int {
 	return 20
-}
-
-type MouseClickDepricated struct {
-	message
-	ID             uint64
-	HesitationTime uint64
-	Label          string
-}
-
-func (msg *MouseClickDepricated) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Label))
-	buf[0] = 21
-	p := 1
-	p = WriteUint(msg.ID, buf, p)
-	p = WriteUint(msg.HesitationTime, buf, p)
-	p = WriteString(msg.Label, buf, p)
-	return buf[:p]
-}
-
-func (msg *MouseClickDepricated) EncodeWithIndex() []byte {
-	encoded := msg.Encode()
-	if IsIOSType(msg.TypeID()) {
-		return encoded
-	}
-	data := make([]byte, len(encoded)+8)
-	copy(data[8:], encoded[:])
-	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
-	return data
-}
-
-func (msg *MouseClickDepricated) Decode() Message {
-	return msg
-}
-
-func (msg *MouseClickDepricated) TypeID() int {
-	return 21
 }
 
 type ConsoleLog struct {

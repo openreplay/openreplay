@@ -349,21 +349,6 @@ func DecodeMouseMove(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMouseClickDepricated(reader io.Reader) (Message, error) {
-	var err error = nil
-	msg := &MouseClickDepricated{}
-	if msg.ID, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.HesitationTime, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.Label, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeConsoleLog(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &ConsoleLog{}
@@ -1791,9 +1776,6 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 20:
 		return DecodeMouseMove(reader)
-
-	case 21:
-		return DecodeMouseClickDepricated(reader)
 
 	case 22:
 		return DecodeConsoleLog(reader)

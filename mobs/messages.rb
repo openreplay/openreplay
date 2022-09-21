@@ -125,13 +125,8 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
-# Depricated since OpenReplay 1.2.0 (tracker version?)
-message 21, 'MouseClickDepricated', :tracker => false, :replayer => false do
-  uint 'ID'
-  uint 'HesitationTime'
-  string 'Label'
-end
-message 22, 'ConsoleLog' do
+# 21
+message 22, 'ConsoleLog', :replayer => :devtools do
   string 'Level'
   string 'Value'
 end
@@ -250,7 +245,7 @@ message 38, 'CSSDeleteRule' do
   uint 'Index'
 end
 
-message 39, 'Fetch' do
+message 39, 'Fetch', :replayer => :devtools do
   string 'Method'
   string 'URL'
   string 'Request'
@@ -259,16 +254,17 @@ message 39, 'Fetch' do
   uint 'Timestamp'
   uint 'Duration'
 end
-message 40, 'Profiler' do
+message 40, 'Profiler', :replayer => :devtools do
   string 'Name'
   uint   'Duration'
   string 'Args'
   string 'Result'
 end
-message 41, 'OTable' do
+message 41, 'OTable', :replayer => :devtools do
   string 'Key'
   string 'Value'
 end
+# Do we use that?
 message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
@@ -277,36 +273,37 @@ message 43, 'StateActionEvent', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'Type'
 end
-message 44, 'Redux' do
+message 44, 'Redux', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'
 end
-message 45, 'Vuex' do
+message 45, 'Vuex', :replayer => :devtools do
   string 'Mutation'
   string 'State'
 end
-message 46, 'MobX' do
+message 46, 'MobX', :replayer => :devtools do
   string 'Type'
   string 'Payload'
 end
-message 47, 'NgRx' do
+message 47, 'NgRx', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'
 end
-message 48, 'GraphQL' do
+message 48, 'GraphQL', :replayer => :devtools do
   string 'OperationKind'
   string 'OperationName'
   string 'Variables'
   string 'Response'
 end
-message 49, 'PerformanceTrack' do
+message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player performance refactoring (now is tied with nodes counter)
   int 'Frames'
   int 'Ticks'
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
+# next 2 should be removed after refactoring backend/pkg/handlers/custom/eventMapper.go (move "wrapping" logic to pg connector insertion)
 message 50, 'GraphQLEvent',  :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -362,6 +359,7 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'MaxUsedJSHeapSize'
 end
 ## 57 58
+#Depricated (since 3.0.?)
 message 59, 'LongTask' do
   uint 'Timestamp'
   uint 'Duration'
@@ -464,7 +462,7 @@ end
 #   string 'Styles'
 #   string 'BaseURL'
 # end
-message 79, 'Zustand' do
+message 79, 'Zustand', :replayer => :devtools do
   string 'Mutation'
   string 'State'
 end
