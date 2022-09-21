@@ -45,10 +45,6 @@ func main() {
 	// Create handler's aggregator
 	builderMap := sessions.NewBuilderMap(handlersFabric)
 
-	keepMessage := func(tp int) bool {
-		return tp == messages.MsgMetadata || tp == messages.MsgIssueEvent || tp == messages.MsgSessionStart || tp == messages.MsgSessionEnd || tp == messages.MsgUserID || tp == messages.MsgUserAnonymousID || tp == messages.MsgCustomEvent || tp == messages.MsgClickEvent || tp == messages.MsgInputEvent || tp == messages.MsgPageEvent || tp == messages.MsgErrorEvent || tp == messages.MsgFetchEvent || tp == messages.MsgGraphQLEvent || tp == messages.MsgIntegrationEvent || tp == messages.MsgPerformanceTrackAggr || tp == messages.MsgResourceEvent || tp == messages.MsgLongTask || tp == messages.MsgJSException || tp == messages.MsgResourceTiming || tp == messages.MsgRawCustomEvent || tp == messages.MsgCustomIssue || tp == messages.MsgFetch || tp == messages.MsgGraphQL || tp == messages.MsgStateAction || tp == messages.MsgSetInputTarget || tp == messages.MsgSetInputValue || tp == messages.MsgCreateDocument || tp == messages.MsgMouseClick || tp == messages.MsgSetPageLocation || tp == messages.MsgPageLoadTiming || tp == messages.MsgPageRenderTiming
-	}
-
 	var producer types.Producer = nil
 	if cfg.UseQuickwit {
 		producer = queue.NewProducer(cfg.MessageSizeLimit, true)
@@ -60,69 +56,70 @@ func main() {
 	saver.InitStats()
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
+	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
+		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgCustomEvent, messages.MsgClickEvent,
+		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgErrorEvent, messages.MsgFetchEvent,
+		messages.MsgGraphQLEvent, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
+		messages.MsgResourceEvent, messages.MsgLongTask, messages.MsgJSException, messages.MsgResourceTiming,
+		messages.MsgRawCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgGraphQL,
+		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
+		messages.MsgMouseClick, messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming}
+
 	// Handler logic
-	handler := func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-		statsLogger.Collect(sessionID, meta)
+	msgHandler := func(msg messages.Message) {
+		statsLogger.Collect(msg) // TODO: carefully check message meta and batch meta confusion situation
 
-		for iter.Next() {
-			if !keepMessage(iter.Type()) {
-				continue
+		// Just save session data into db without additional checks
+		if err := saver.InsertMessage(msg); err != nil {
+			if !postgres.IsPkeyViolation(err) {
+				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 			}
-			msg := iter.Message().Decode()
-			if msg == nil {
-				return
-			}
-
-			// Just save session data into db without additional checks
-			if err := saver.InsertMessage(sessionID, msg); err != nil {
-				if !postgres.IsPkeyViolation(err) {
-					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			session, err := pg.GetSession(sessionID)
-			if session == nil {
-				if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
-					log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			// Save statistics to db
-			err = saver.InsertStats(session, msg)
-			if err != nil {
-				log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
-			}
-
-			// Handle heuristics and save to temporary queue in memory
-			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
-
-			// Process saved heuristics messages as usual messages above in the code
-			builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
-				if err := saver.InsertMessage(sessionID, msg); err != nil {
-					if !postgres.IsPkeyViolation(err) {
-						log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-					}
-					return
-				}
-
-				if err := saver.InsertStats(session, msg); err != nil {
-					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-				}
-			})
+			return
 		}
-		iter.Close()
+
+		session, err := pg.GetSession(msg.SessionID())
+		if session == nil {
+			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
+				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+			}
+			return
+		}
+
+		// Save statistics to db
+		err = saver.InsertStats(session, msg)
+		if err != nil {
+			log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
+		}
+
+		// Handle heuristics and save to temporary queue in memory
+		builderMap.HandleMessage(msg)
+
+		// Process saved heuristics messages as usual messages above in the code
+		builderMap.IterateSessionReadyMessages(msg.SessionID(), func(msg messages.Message) {
+			if err := saver.InsertMessage(msg); err != nil {
+				if !postgres.IsPkeyViolation(err) {
+					log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+				}
+				return
+			}
+
+			if err := saver.InsertStats(session, msg); err != nil {
+				log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+			}
+		})
 	}
 
 	// Init consumer
-	consumer := queue.NewMessageConsumer(
+	consumer := queue.NewConsumer(
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicAnalytics,
 		},
-		handler,
+		messages.NewMessageIterator(
+			msgFilter,
+			msgHandler,
+		),
 		false,
 		cfg.MessageSizeLimit,
 	)

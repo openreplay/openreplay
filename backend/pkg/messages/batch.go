@@ -26,7 +26,7 @@ type iteratorImpl struct {
 	url       string
 }
 
-func NewIterator(data []byte) Iterator {
+func NewIterator(data []byte, types []int) Iterator {
 	return &iteratorImpl{
 		data: bytes.NewReader(data),
 	}

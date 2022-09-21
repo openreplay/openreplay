@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -38,24 +37,27 @@ func main() {
 		return
 	}
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-	consumer := queue.NewMessageConsumer(
+
+	msgHandler := func(msg messages.Message) {
+		if msg.TypeID() == messages.MsgSessionStart || msg.TypeID() == messages.MsgSessionEnd {
+			return
+		}
+		if msg.Meta().Timestamp == 0 {
+			log.Printf("ZERO TS, sessID: %d, msgType: %d", msg.Meta().SessionID(), msg.TypeID())
+		}
+		statsLogger.Collect(msg)
+		sessions.UpdateSession(msg) //TODO: recheck timestamps(sessionID, meta.Timestamp, iter.Message().Meta().Timestamp)
+	}
+
+	consumer := queue.NewConsumer(
 		cfg.GroupEnder,
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-			for iter.Next() {
-				if iter.Type() == messages.MsgSessionStart || iter.Type() == messages.MsgSessionEnd {
-					continue
-				}
-				if iter.Message().Meta().Timestamp == 0 {
-					log.Printf("ZERO TS, sessID: %d, msgType: %d", sessionID, iter.Type())
-				}
-				statsLogger.Collect(sessionID, meta)
-				sessions.UpdateSession(sessionID, meta.Timestamp, iter.Message().Meta().Timestamp)
-			}
-			iter.Close()
-		},
+		messages.NewMessageIterator(
+			nil,
+			msgHandler,
+		),
 		false,
 		cfg.MessageSizeLimit,
 	)

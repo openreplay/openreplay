@@ -30,7 +30,9 @@ func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 	return b
 }
 
-func (m *builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint64) {
+func (m *builderMap) HandleMessage(msg Message) {
+	sessionID := msg.SessionID()
+	messageID := msg.Meta().Index
 	b := m.GetBuilder(sessionID)
 	b.handleMessage(msg, messageID)
 }

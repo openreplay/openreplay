@@ -67,3 +67,10 @@ func (m *RawMessage) TypeID() int {
 func (m *RawMessage) Meta() *message {
 	return m.meta
 }
+
+func (m *RawMessage) SessionID() uint64 {
+	if m.meta != nil {
+		return m.meta.sessionID
+	}
+	return 0
+}
