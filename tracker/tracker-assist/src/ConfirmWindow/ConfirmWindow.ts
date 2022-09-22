@@ -5,9 +5,9 @@ export type ButtonOptions =
   | HTMLButtonElement
   | string
   | {
-      innerHTML: string;
-      style?: Properties;
-    };
+    innerHTML: string;
+    style?: Properties;
+  };
 
 // TODO: common strategy for InputOptions/defaultOptions merging
 export interface ConfirmWindowOptions {
@@ -50,8 +50,12 @@ export default class ConfirmWindow {
     const wrapper = document.createElement('div')
     const popup = document.createElement('div')
     const p = document.createElement('p')
+    wrapper.id = 'openreplay-confirm-window-wrapper'
+    popup.id = 'openreplay-confirm-window-popup'
+    p.id = 'openreplay-confirm-window-p'
     p.innerText = options.text
     const buttons = document.createElement('div')
+    buttons.id = 'openreplay-confirm-window-buttons'
     const confirmBtn = makeButton(options.confirmBtn, {
       background: 'rgba(0, 167, 47, 1)',
       color: 'white',
@@ -120,8 +124,8 @@ export default class ConfirmWindow {
     }
   }
 
-  private resolve: (result: boolean) => void = () => {};
-  private reject: (reason: string) => void = () => {};
+  private resolve: (result: boolean) => void = () => { };
+  private reject: (reason: string) => void = () => { };
 
   mount(): Promise<boolean> {
     document.body.appendChild(this.wrapper)
