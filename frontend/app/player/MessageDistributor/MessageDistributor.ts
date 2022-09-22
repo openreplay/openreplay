@@ -114,6 +114,7 @@ export default class MessageDistributor extends StatedScreen {
       this.activityManager = new ActivityManager(this.session.duration.milliseconds);
       /* == REFACTOR_ME == */
       const eventList = this.session.events.toJSON();
+
       initListsDepr({
         event: eventList,
         stack: this.session.stackEvents.toJSON(),

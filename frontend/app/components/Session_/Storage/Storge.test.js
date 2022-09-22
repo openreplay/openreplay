@@ -11,6 +11,8 @@ import {
 import { JSONTree, NoContent } from 'UI';
 import { formatMs } from 'App/date';
 import { diff } from 'deep-diff';
+import DiffTree from './DiffTree'
+import { setIn } from 'immutable';
 import { jump } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
@@ -64,57 +66,66 @@ export default class Storage extends React.PureComponent {
 
 	renderDiff(item, prevItem) {
 		if (!prevItem) {
-			// we don't have state before first action
+			return <div  style={{ flex: 1}} />
+		}
+		const stateDiff = diff(prevItem.state, item.state)
+		console.log(item.state, prevItem.state, stateDiff)
+		const greenPaths = []
+		const redPaths = []
+		const yellowPaths = []
+		if (!stateDiff) {
+			return <span> No diff </span>
+		}
+		// stateDiff.forEach(d => {
+		// 	try {
+	  // 		let { path, kind, rhs: value } = d;
+		// 		if (kind === 'A') {
+		// 			path.slice().push(d.index);
+		// 			kind = d.item.kind;
+		// 			value = d.item.rhs;
+		// 		}
+
+		// 		if (kind === 'N') greenPaths.push(d.path.slice().reverse());
+		// 		if (kind === 'D') redPaths.push(d.path.slice().reverse());
+		// 		if (kind === 'E') yellowPaths.push(d.path.slice().reverse());
+	  // 	} catch (e) {
+		// 		console.error(e)
+	  // 	}
+	  // });
+		function renderDiffs(diff, i) {
+			const oldValue = diff.item ? JSON.stringify(diff.item.lhs) : JSON.stringify(diff.lhs)
+			const newValue = diff.item ? JSON.stringify(diff.item.rhs) : JSON.stringify(diff.rhs)
+
+			const createPath = () => {
+					let path = [];
+
+					if (diff.path) {
+						path = path.concat(diff.path);
+					}
+					if (typeof(diff.index) !== 'undefined') {
+						path.push(diff.index);
+					}
+					return path.length ? path.join('.') : '';
+			}
+
 			return (
-				<div style={{ flex: 1}} className="p-1" />
+				<div key={i}>
+					{ createPath() }: <span className="line-through">{ oldValue || 'undefined' }</span>{' -> '}<span className="font-semibold"> { newValue || 'undefined'} </span>
+				</div>
 			)
 		}
-
-		const stateDiff = diff(prevItem.state, item.state)
-
-		if (!stateDiff) {
-			console.log(prevItem.state, item.state)
-			return <div style={{ flex: 1}} className='flex flex-col p-1 font-mono text-disabled-text'> No diff </div>
-		}
-
 		return (
-			<div style={{ flex: 1}} className='flex flex-col p-1 font-mono'>
-				 {stateDiff.map((d, i) => this.renderDiffs(d, i))}
-			</div>
-		);
-	}
-
-	renderDiffs(diff, i) {
-		const oldValue = diff.item ? JSON.stringify(diff.item.lhs) : JSON.stringify(diff.lhs)
-		const newValue = diff.item ? JSON.stringify(diff.item.rhs) : JSON.stringify(diff.rhs)
-
-		const createPath = () => {
-				let path = [];
-
-				if (diff.path) {
-					path = path.concat(diff.path);
-				}
-				if (typeof(diff.index) !== 'undefined') {
-					path.push(diff.index);
-				}
-				return path.length ? path.join('.') : '';
-		}
-
-		return (
-			<div key={i}>
-				<span className="font-semibold">
-					{createPath()}
-					{': '}
-				</span>
-				<span className="line-through">
-					{ oldValue || 'undefined' }
-				</span>
-				{' -> '}
-				<span className={`font-semibold ${!newValue ? 'text-red' : 'text-green'}`}>
-					{ newValue || 'undefined'}
-				</span>
+			<div style={{ flex: 1}} className='flex flex-col p-1 border bg-light-blue-bg font-mono'>
+				 {stateDiff.map((d, i) => renderDiffs(d, i))}
 			</div>
 		)
+			// <DiffTree
+			// 	data={ prevItem.state }
+			// 	redPaths={ redPaths }
+			// 	yellowPaths={ yellowPaths }
+			// 	greenPaths={ greenPaths }
+			// />
+		;
 	}
 
 	ensureString(actionType) {
@@ -161,19 +172,19 @@ export default class Storage extends React.PureComponent {
 		}
 
 		return (
-			<div className="flex justify-between items-start border-b" key={ `store-${i}` }>
+			<div className="flex justify-between items-start" key={ `store-${i}` }>
 				{src === null ? (
 					<div className="font-mono"> {name} </div>
 				) : (
 					<>
 					{this.renderDiff(item, prevItem)}
 					<div style={{ flex: 2 }} className="flex pl-10">
-						<JSONTree
-							name={ this.ensureString(name) }
-							src={ src }
-							collapsed
-							collapseStringsAfterLength={ 7 }
-						/>
+					<JSONTree
+						name={ this.ensureString(name) }
+						src={ src }
+						collapsed
+						collapseStringsAfterLength={ 7 }
+					/>
 					</div>
 					</>
 				)}
