@@ -247,18 +247,15 @@ Pipfile
 /routers/base.py
 /routers/core.py
 /routers/crons/core_crons.py
-/routers/subs/dashboard.py
 /db_changes.sql
 /Dockerfile.bundle
 /entrypoint.bundle.sh
 /chalicelib/core/heatmaps.py
-/routers/subs/insights.py
 /schemas.py
 #exp /chalicelib/core/custom_metrics.py
 /chalicelib/core/performance_event.py
 /chalicelib/core/saved_search.py
 /app_alerts.py
 /build_alerts.sh
-/routers/subs/metrics.py
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py
