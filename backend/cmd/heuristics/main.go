@@ -81,7 +81,7 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			builderMap.IterateReadyMessages(func(sessionID uint64, readyMsg messages.Message) {
-				producer.Produce(cfg.TopicAnalytics, sessionID, messages.Encode(readyMsg))
+				producer.Produce(cfg.TopicAnalytics, sessionID, readyMsg.Encode())
 			})
 			producer.Flush(cfg.ProducerTimeout)
 			consumer.Commit()

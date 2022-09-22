@@ -96,7 +96,7 @@ func main() {
 						currDuration, newDuration)
 					return true
 				}
-				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
+				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
 					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
 					return false
 				}

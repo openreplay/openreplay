@@ -70,7 +70,7 @@ func (m *RawMessage) Meta() *message {
 
 func (m *RawMessage) SessionID() uint64 {
 	if m.meta != nil {
-		return m.meta.sessionID
+		return m.meta.SessionID()
 	}
 	return 0
 }

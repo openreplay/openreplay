@@ -68,7 +68,7 @@ func main() {
 			msg.TypeID() == messages.MsgCSSInsertRuleURLBased ||
 			msg.TypeID() == messages.MsgAdoptedSSReplaceURLBased ||
 			msg.TypeID() == messages.MsgAdoptedSSInsertRuleURLBased {
-			msg = assetMessageHandler.ParseAssets(msg.SessionID(), msg) // TODO: filter type only once (use iterator inide or bring ParseAssets out here).
+			msg = assetMessageHandler.ParseAssets(msg) // TODO: filter type only once (use iterator inide or bring ParseAssets out here).
 		}
 
 		// Filter message

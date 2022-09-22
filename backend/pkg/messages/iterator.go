@@ -5,26 +5,25 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"strings"
 )
 
 // MessageHandler processes one message using service logic
 type MessageHandler func(Message)
 
+// MessageIterator iterates by all messages in batch
 type MessageIterator interface {
-	Iterate(sessionID uint64, data []byte, meta *BatchInfo)
+	Iterate(batchData []byte, batchInfo *BatchInfo)
 }
 
 type messageIteratorImpl struct {
-	filter    map[int]struct{}
-	handler   MessageHandler
-	index     uint64
-	version   uint64
-	size      uint64
-	canSkip   bool
-	url       string
-	timestamp int64
-	currBatch *BatchInfo
+	filter      map[int]struct{}
+	preFilter   map[int]struct{}
+	handler     MessageHandler
+	version     uint64
+	size        uint64
+	canSkip     bool
+	messageInfo *message
+	batchInfo   *BatchInfo
 }
 
 func NewMessageIterator(messageFilter []int, messageHandler MessageHandler) MessageIterator {
@@ -36,23 +35,32 @@ func NewMessageIterator(messageFilter []int, messageHandler MessageHandler) Mess
 		}
 		iter.filter = filter
 	}
+	iter.preFilter = map[int]struct{}{
+		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
+		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {}}
 	return iter
 }
 
-func (i *messageIteratorImpl) clearVars() {
-	i.index = 0
+func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
+	i.batchInfo = batchInfo
+	i.messageInfo = &message{batch: batchInfo}
 	i.version = 0
 	i.canSkip = false
-	i.url = ""
-	i.timestamp = 0
 	i.size = 0
 }
 
-func (i *messageIteratorImpl) Iterate(sessionID uint64, data []byte, meta *BatchInfo) {
-	i.clearVars()
-	i.currBatch = meta
-	reader := bytes.NewReader(data)
+func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
+	// Prepare iterator before processing messages in batch
+	i.prepareVars(batchInfo)
+
+	// Initialize batch reader
+	reader := bytes.NewReader(batchData)
+
+	// Process until end of batch or parsing error
 	for {
+		// Increase message index (can be overwritten by batch info message)
+		i.messageInfo.Index++
+
 		if i.canSkip {
 			if _, err := reader.Seek(int64(i.size), io.SeekCurrent); err != nil {
 				log.Printf("seek err: %s", err)
@@ -69,6 +77,7 @@ func (i *messageIteratorImpl) Iterate(sessionID uint64, data []byte, meta *Batch
 			}
 			return
 		}
+
 		var msg Message
 		// Read message body (and decode if protocol version less than 1)
 		if i.version > 0 && messageHasSize(msgType) {
@@ -81,132 +90,85 @@ func (i *messageIteratorImpl) Iterate(sessionID uint64, data []byte, meta *Batch
 			msg = &RawMessage{
 				tp:      msgType,
 				size:    i.size,
-				meta:    &message{},
 				reader:  reader,
 				skipped: &i.canSkip,
 			}
 			i.canSkip = true
 		} else {
 			msg, err = ReadMessage(msgType, reader)
-			if err == io.EOF {
-				return
-			} else if err != nil {
-				if strings.HasPrefix(err.Error(), "Unknown message code:") {
-					code := strings.TrimPrefix(err.Error(), "Unknown message code: ")
-					msg, err = DecodeExtraMessage(code, reader)
-					if err != nil {
-						log.Printf("can't decode msg: %s", err)
-						return
-					}
-				} else {
-					log.Printf("Batch Message decoding error on message with index %v, err: %s", i.index, err)
-					return
+			if err != nil {
+				if err != io.EOF {
+					log.Printf("Batch Message decoding error on message with index %v, err: %s", i.messageInfo.Index, err)
 				}
+				return
 			}
 			msg = transformDeprecated(msg)
 		}
-		if err := i.preprocessing(msg); err != nil {
-			log.Printf("message preprocessing err: %s", err)
-			return
+
+		// Preprocess "system" messages
+		if _, ok := i.preFilter[msg.TypeID()]; ok {
+			msg = msg.Decode()
+			if msg == nil {
+				log.Printf("can't decode message")
+				return
+			}
+			if err := i.preprocessing(msg); err != nil {
+				log.Printf("message preprocessing err: %s", err)
+				return
+			}
 		}
+
+		// Skip messages we don't have in filter
+		if i.filter != nil {
+			if _, ok := i.filter[msg.TypeID()]; ok {
+				continue
+			}
+		}
+
+		// Set meta information for message
+		msg.Meta().SetMeta(i.messageInfo)
+
+		// Process message
+		i.handler(msg)
 	}
 }
 
 func (i *messageIteratorImpl) preprocessing(msg Message) error {
-	// Process meta information
-	isBatchMeta := false
-	switch msg.TypeID() {
-	case MsgBatchMetadata:
-		if i.index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
+	switch m := msg.(type) {
+	case *BatchMetadata:
+		if i.messageInfo.Index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMetadata found at the end of the batch")
 		}
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*BatchMetadata)
-		i.index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.timestamp = m.Timestamp
-		i.version = m.Version
-		i.url = m.Url
-		isBatchMeta = true
-		if i.version > 1 {
+		if m.Version > 1 {
 			return fmt.Errorf("incorrect batch version: %d, skip current batch", i.version)
 		}
-	case MsgBatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
-		if i.index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
+		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
+		i.messageInfo.Timestamp = m.Timestamp
+		i.messageInfo.Url = m.Url
+		i.version = m.Version
+
+	case *BatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
+		if i.messageInfo.Index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch")
 		}
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*BatchMeta)
-		i.index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.timestamp = m.Timestamp
-		isBatchMeta = true
-		// continue readLoop
-	case MsgIOSBatchMeta:
-		if i.index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
-			return fmt.Errorf("iOS batchMeta found at the end of the batch")
-		}
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*IOSBatchMeta)
-		i.index = m.FirstIndex
-		i.timestamp = int64(m.Timestamp)
-		isBatchMeta = true
-		// continue readLoop
-	case MsgTimestamp:
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*Timestamp)
-		i.timestamp = int64(m.Timestamp)
-		// No skipping here for making it easy to encode back the same sequence of message
-		// continue readLoop
-	case MsgSessionStart:
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*SessionStart)
-		i.timestamp = int64(m.Timestamp)
-	case MsgSessionEnd:
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*SessionEnd)
-		i.timestamp = int64(m.Timestamp)
-	case MsgSetPageLocation:
-		msg := msg.Decode()
-		if msg == nil {
-			return fmt.Errorf("can't decode message")
-		}
-		m := msg.(*SetPageLocation)
-		i.url = m.URL
-	}
-	msg.Meta().Index = i.index
-	msg.Meta().Timestamp = i.timestamp
-	msg.Meta().Url = i.url
-	msg.Meta().batch = i.currBatch
+		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
+		i.messageInfo.Timestamp = m.Timestamp
 
-	if !isBatchMeta { // Without that indexes will be unique anyway, though shifted by 1 because BatchMeta is not counted in tracker
-		i.index++
-	}
+	case *Timestamp:
+		i.messageInfo.Timestamp = int64(m.Timestamp)
 
-	// Filter message
-	if i.filter != nil {
-		if _, ok := i.filter[msg.TypeID()]; ok {
-			return nil
-		}
-	}
+	case *SessionStart:
+		i.messageInfo.Timestamp = int64(m.Timestamp)
 
-	// Process message
-	i.handler(msg)
+	case *SessionEnd:
+		i.messageInfo.Timestamp = int64(m.Timestamp)
+
+	case *SetPageLocation:
+		i.messageInfo.Url = m.URL
+	}
 	return nil
+}
+
+func messageHasSize(msgType uint64) bool {
+	return !(msgType == 80 || msgType == 81 || msgType == 82)
 }

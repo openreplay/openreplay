@@ -102,7 +102,7 @@ func (c *Consumer) ConsumeNext() error {
 				return errors.New("Too many messages per ms in redis")
 			}
 			bID := ts<<13 | (idx & 0x1FFF) // Max: 4096 messages/ms for 69 years
-			c.messageIterator.Iterate(sessionID, []byte(valueString), messages.NewBatchMeta(r.Stream, bID, int64(ts)))
+			c.messageIterator.Iterate([]byte(valueString), messages.NewBatchInfo(sessionID, r.Stream, bID, int64(ts)))
 			if c.autoCommit {
 				if err = c.redis.XAck(r.Stream, c.group, m.ID).Err(); err != nil {
 					return errors.Wrapf(err, "Acknoledgment error for messageID %v", m.ID)

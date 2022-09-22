@@ -74,7 +74,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
 
 		// The difference with web is mostly here:
-		e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, Encode(&IOSSessionStart{
+		sessStart := &IOSSessionStart{
 			Timestamp:      req.Timestamp,
 			ProjectID:      uint64(p.ProjectID),
 			TrackerVersion: req.TrackerVersion,
@@ -85,7 +85,8 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			UserDevice:     ios.MapIOSDevice(req.UserDevice),
 			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
 			UserCountry:    country,
-		}))
+		}
+		e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode())
 	}
 
 	ResponseWithJSON(w, &StartIOSSessionResponse{
