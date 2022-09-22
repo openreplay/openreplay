@@ -210,7 +210,6 @@ Pipfile
 /chalicelib/core/log_tool_sumologic.py
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
-/chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py

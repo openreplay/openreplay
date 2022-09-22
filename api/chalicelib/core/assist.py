@@ -1,10 +1,12 @@
+from os import access, R_OK
+from os.path import exists
+
 import requests
 from decouple import config
-from os.path import exists
+from starlette.exceptions import HTTPException
+
 import schemas
 from chalicelib.core import projects
-from starlette.exceptions import HTTPException
-from os import access, R_OK
 
 ASSIST_KEY = config("ASSIST_KEY")
 ASSIST_URL = config("ASSIST_URL") % ASSIST_KEY
@@ -165,19 +167,45 @@ def get_ice_servers():
                                    and len(config("iceServers")) > 0 else None
 
 
-def get_raw_mob_by_id(project_id, session_id):
+def __get_efs_path():
     efs_path = config("FS_DIR")
     if not exists(efs_path):
         raise HTTPException(400, f"EFS not found in path: {efs_path}")
 
     if not access(efs_path, R_OK):
         raise HTTPException(400, f"EFS found under: {efs_path}; but it is not readable, please check permissions")
+    return efs_path
 
-    path_to_file = efs_path + "/" + str(session_id)
 
+def __get_mob_path(project_id, session_id):
+    params = {"projectId": project_id, "sessionId": session_id}
+    return config("EFS_SESSION_MOB_PATTERN", default="%(sessionId)s") % params
+
+
+def get_raw_mob_by_id(project_id, session_id):
+    efs_path = __get_efs_path()
+    path_to_file = efs_path + "/" + __get_mob_path(project_id=project_id, session_id=session_id)
     if exists(path_to_file):
         if not access(path_to_file, R_OK):
             raise HTTPException(400, f"Replay file found under: {efs_path};"
+                                     f" but it is not readable, please check permissions")
+
+        return path_to_file
+
+    return None
+
+
+def __get_devtools_path(project_id, session_id):
+    params = {"projectId": project_id, "sessionId": session_id}
+    return config("EFS_DEVTOOLS_MOB_PATTERN", default="%(sessionId)s") % params
+
+
+def get_raw_devtools_by_id(project_id, session_id):
+    efs_path = __get_efs_path()
+    path_to_file = efs_path + "/" + __get_devtools_path(project_id=project_id, session_id=session_id)
+    if exists(path_to_file):
+        if not access(path_to_file, R_OK):
+            raise HTTPException(400, f"Devtools file found under: {efs_path};"
                                      f" but it is not readable, please check permissions")
 
         return path_to_file

@@ -1,12 +1,13 @@
-from typing import Optional
+from typing import Optional, Union
 
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
-from chalicelib.core import integrations_manager
-from chalicelib.core import sessions
+from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
+    sessions_favorite, assist
+from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
@@ -288,6 +289,24 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
     path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
     if path is None:
         return {"errors": ["Replay file not found"]}
+
+    return FileResponse(path=path, media_type="application/octet-stream")
+
+
+@app.get('/{projectId}/unprocessed/{sessionId}/devtools', tags=["assist"])
+@app.get('/{projectId}/assist/sessions/{sessionId}/devtools', tags=["assist"])
+def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    if isinstance(sessionId, str) or not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        if isinstance(sessionId, str):
+            print(f"{sessionId} not a valid number.")
+        else:
+            print(f"{projectId}/{sessionId} not found in DB.")
+
+        return {"errors": ["Devtools file not found"]}
+    path = assist.get_raw_devtools_by_id(project_id=projectId, session_id=sessionId)
+    if path is None:
+        return {"errors": ["Devtools file not found"]}
 
     return FileResponse(path=path, media_type="application/octet-stream")
 

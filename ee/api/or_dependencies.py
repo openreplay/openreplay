@@ -12,6 +12,7 @@ from starlette.responses import Response, JSONResponse
 
 import schemas_ee
 from chalicelib.core import traces
+from chalicelib.core import permissions
 
 
 async def OR_context(request: Request) -> schemas_ee.CurrentContext:
@@ -48,7 +49,7 @@ class ORRoute(APIRoute):
         return custom_route_handler
 
 
-def check_permissions(security_scopes: SecurityScopes, context: schemas_ee.CurrentContext = Depends(OR_context)):
+def __check(security_scopes: SecurityScopes, context: schemas_ee.CurrentContext = Depends(OR_context)):
     for scope in security_scopes.scopes:
         if scope not in context.permissions:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,4 +57,4 @@ def check_permissions(security_scopes: SecurityScopes, context: schemas_ee.Curre
 
 
 def OR_scope(*scopes):
-    return Security(check_permissions, scopes=list(scopes))
+    return Security(__check, scopes=list(scopes))

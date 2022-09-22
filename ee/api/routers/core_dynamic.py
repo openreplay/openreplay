@@ -2,11 +2,12 @@ from typing import Optional, Union
 
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
 import schemas_ee
-from chalicelib.core import sessions
+from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
+    errors_favorite
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -183,7 +184,7 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
     if isinstance(sessionId, str):
         return {"errors": ["session not found"]}
     data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context.user_id,
-                                  include_fav_viewed=True, group_metadata=True)
+                                  include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
@@ -270,11 +271,12 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
 
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"], dependencies=[OR_scope(Permissions.assist_live)])
 def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
-                     context: schemas.CurrentContext = Depends(OR_context)):
+                     context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
         data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
-                                      user_id=context.user_id, include_fav_viewed=True, group_metadata=True, live=False)
+                                      user_id=context.user_id, include_fav_viewed=True, group_metadata=True, live=False,
+                                      context=context)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
@@ -303,6 +305,26 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
     return FileResponse(path=path, media_type="application/octet-stream")
 
 
+@app.get('/{projectId}/unprocessed/{sessionId}/devtools', tags=["assist"],
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools)])
+@app.get('/{projectId}/assist/sessions/{sessionId}/devtools', tags=["assist"],
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools)])
+def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    if isinstance(sessionId, str) or not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        if isinstance(sessionId, str):
+            print(f"{sessionId} not a valid number.")
+        else:
+            print(f"{projectId}/{sessionId} not found in DB.")
+
+        return {"errors": ["Devtools file not found"]}
+    path = assist.get_raw_devtools_by_id(project_id=projectId, session_id=sessionId)
+    if path is None:
+        return {"errors": ["Devtools file not found"]}
+
+    return FileResponse(path=path, media_type="application/octet-stream")
+
+
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"], dependencies=[OR_scope(Permissions.session_replay)])
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
@@ -313,10 +335,11 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
          dependencies=[OR_scope(Permissions.session_replay)])
 @app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"],
          dependencies=[OR_scope(Permissions.session_replay)])
-def add_remove_favorite_session2(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def add_remove_favorite_session2(projectId: int, sessionId: int,
+                                 context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {
         "data": sessions_favorite.favorite_session(project_id=projectId, user_id=context.user_id,
-                                                   session_id=sessionId)}
+                                                   session_id=sessionId, context=context)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"],
