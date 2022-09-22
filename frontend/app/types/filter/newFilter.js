@@ -27,7 +27,7 @@ export const filters = [
       { key: FilterKey.GRAPHQL_RESPONSE_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with response body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     ]},
   { key: FilterKey.STATEACTION, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'State Action', placeholder: 'E.g. 12', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/state-action', isEvent: true },
-  { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Error Message', placeholder: 'E.g. ', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/error', isEvent: true },
+  { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Error Message', placeholder: 'E.g. Uncaught SyntaxError', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/error', isEvent: true },
   // { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
   
     // FILTERS
