@@ -7,7 +7,7 @@ def start_replay(project_id, session_id, device, os_version, mob_url):
     r = requests.post(config("IOS_MIDDLEWARE") + "/replay", json={
         "projectId": project_id,
         "projectKey": projects.get_project_key(project_id),
-        "sessionId": session_id,
+        "session_id": session_id,
         "device": device,
         "osVersion": os_version,
         "mobUrl": mob_url
