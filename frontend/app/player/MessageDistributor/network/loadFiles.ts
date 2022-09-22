@@ -9,7 +9,7 @@ type onDataCb = (data: Uint8Array) => void
 
 export const loadFiles = (
   urls: string[],
-  onData: onDataCb, 
+  onData: onDataCb,
 ): Promise<void> => {
   const firstFileURL = urls[0]
   urls = urls.slice(1)
@@ -42,27 +42,22 @@ export const loadFiles = (
 }
 
 export const checkUnprocessedMobs = async (sessionId: string) => {
-  try {
-    const api = new APIClient()
-    const res = await api.fetch(getUnprocessedFileLink(sessionId))
-    if (res.status >= 400) {
-      throw NO_UNPROCESSED_FILES
-    }
-    const byteArray = await processAPIStreamResponse(res, false)
-    return byteArray
-  } catch (e) {
-    throw e
+  const api = new APIClient()
+  const res = await api.fetch(getUnprocessedFileLink(sessionId))
+  if (res.status >= 400) {
+    throw NO_UNPROCESSED_FILES
   }
+  return await processAPIStreamResponse(res, false)
 }
 
-const processAPIStreamResponse = (response: Response, isFirstFile: boolean) => {
+const processAPIStreamResponse = (response: Response, isMainFile: boolean) => {
   return new Promise<ArrayBuffer>((res, rej) => {
-    if (response.status === 404 && !isFirstFile) {
+    if (response.status === 404 && !isMainFile) {
       return rej(NO_NTH_FILE)
     }
     if (response.status >= 400) {
       return rej(
-        isFirstFile ? `no start file. status code ${ response.status }` 
+        isMainFile ? `no start file. status code ${ response.status }` 
         : `Bad endfile status code ${response.status}`
       )
     }
