@@ -116,10 +116,7 @@ func main() {
 			cfg.TopicRawWeb,
 			cfg.TopicAnalytics,
 		},
-		messages.NewMessageIterator(
-			msgFilter,
-			msgHandler,
-		),
+		messages.NewMessageIterator(msgHandler, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
 	)

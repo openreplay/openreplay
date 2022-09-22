@@ -19,6 +19,7 @@ type messageIteratorImpl struct {
 	filter      map[int]struct{}
 	preFilter   map[int]struct{}
 	handler     MessageHandler
+	autoDecode  bool
 	version     uint64
 	size        uint64
 	canSkip     bool
@@ -26,8 +27,8 @@ type messageIteratorImpl struct {
 	batchInfo   *BatchInfo
 }
 
-func NewMessageIterator(messageFilter []int, messageHandler MessageHandler) MessageIterator {
-	iter := &messageIteratorImpl{handler: messageHandler}
+func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
+	iter := &messageIteratorImpl{handler: messageHandler, autoDecode: autoDecode}
 	if len(messageFilter) != 0 {
 		filter := make(map[int]struct{}, len(messageFilter))
 		for _, msgType := range messageFilter {
@@ -122,6 +123,14 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if i.filter != nil {
 			if _, ok := i.filter[msg.TypeID()]; ok {
 				continue
+			}
+		}
+
+		if i.autoDecode {
+			msg = msg.Decode()
+			if msg == nil {
+				log.Printf("can't decode message")
+				return
 			}
 		}
 

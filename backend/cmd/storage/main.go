@@ -43,7 +43,6 @@ func main() {
 			cfg.TopicTrigger,
 		},
 		messages.NewMessageIterator(
-			[]int{messages.MsgSessionEnd},
 			func(msg messages.Message) {
 				m := msg.(*messages.SessionEnd)
 				if err := srv.UploadKey(strconv.FormatUint(msg.SessionID(), 10), 5); err != nil {
@@ -53,6 +52,8 @@ func main() {
 				// Log timestamp of last processed session
 				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))
 			},
+			[]int{messages.MsgSessionEnd},
+			true,
 		),
 		true,
 		cfg.MessageSizeLimit,

@@ -53,10 +53,7 @@ func main() {
 	msgConsumer := queue.NewConsumer(
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
-		messages.NewMessageIterator(
-			[]int{messages.MsgAssetCache, messages.MsgErrorEvent},
-			msgHandler,
-		),
+		messages.NewMessageIterator(msgHandler, []int{messages.MsgAssetCache, messages.MsgErrorEvent}, true),
 		true,
 		cfg.MessageSizeLimit,
 	)

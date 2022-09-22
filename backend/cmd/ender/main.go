@@ -54,10 +54,7 @@ func main() {
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		messages.NewMessageIterator(
-			nil,
-			msgHandler,
-		),
+		messages.NewMessageIterator(msgHandler, nil, false),
 		false,
 		cfg.MessageSizeLimit,
 	)
