@@ -3,8 +3,6 @@ import APIClient from 'App/api_client';
 const NO_NTH_FILE = "nnf"
 const NO_UNPROCESSED_FILES = "nuf"
 
-const getUnprocessedFileLink = (sessionId: string) => '/unprocessed/' + sessionId
-
 type onDataCb = (data: Uint8Array) => void
 
 export const loadFiles = (
@@ -41,9 +39,18 @@ export const loadFiles = (
   })
 }
 
-export const checkUnprocessedMobs = async (sessionId: string) => {
+
+export async function requestEFSDom(sessionId: string) {
+  return await requestEFSMobFile(sessionId, "dom.mob")
+}
+
+export async function requestEFSDevtools(sessionId: string) {
+  return await requestEFSMobFile(sessionId, "devtools.mob")
+}
+
+async function requestEFSMobFile(sessionId: string, filename: string) {
   const api = new APIClient()
-  const res = await api.fetch(getUnprocessedFileLink(sessionId))
+  const res = await api.fetch('/unprocessed/' + sessionId + '/' + filename)
   if (res.status >= 400) {
     throw NO_UNPROCESSED_FILES
   }

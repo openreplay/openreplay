@@ -27,7 +27,7 @@ import ActivityManager from './managers/ActivityManager';
 import AssistManager from './managers/AssistManager';
 
 import MFileReader from './messages/MFileReader';
-import { loadFiles, checkUnprocessedMobs } from './network/loadFiles';
+import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
@@ -213,7 +213,7 @@ export default class MessageDistributor extends StatedScreen {
 
     loadFiles(this.session.mobsUrl, createNewParser())
     .catch(() => 
-      checkUnprocessedMobs(this.session.sessionId)
+      requestEFSDom(this.session.sessionId)
         .then(createNewParser())
     )
     .then(this.onFileReadSuccess)
@@ -239,7 +239,7 @@ export default class MessageDistributor extends StatedScreen {
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    return checkUnprocessedMobs(this.session.sessionId)
+    return requestEFSDom(this.session.sessionId)
       .then(onData)
       .then(updateState)
       .then(this.onFileReadSuccess)
