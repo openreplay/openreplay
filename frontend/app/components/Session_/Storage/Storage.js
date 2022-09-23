@@ -32,6 +32,10 @@ function getActionsName(type) {
 	}
 }
 
+const PATH_BGS = ['255, 173, 173', '202, 255, 191', '155, 246, 255','255, 198, 255','160, 196, 255', '251, 248, 204', '253, 228, 207', '255, 207, 210', '241, 192, 232', '207, 186, 240', '163, 196, 243', '144, 219, 244', '142, 236, 245', '152, 245, 225', '185, 251, 192']
+
+const buildBg = (shade) => `rgba(${shade}, 0.15)`
+
 @connectPlayer(state => ({
 	type: selectStorageType(state),
 	list: selectStorageList(state),
@@ -44,6 +48,8 @@ function getActionsName(type) {
 })
 //@withEnumToggle('activeTab', 'setActiveTab', DIFF)
 export default class Storage extends React.PureComponent {
+	pathShades = {}
+
 	lastBtnRef = React.createRef()
 
 	focusNextButton() {
@@ -73,12 +79,11 @@ export default class Storage extends React.PureComponent {
 		const stateDiff = diff(prevItem.state, item.state)
 
 		if (!stateDiff) {
-			console.log(prevItem.state, item.state)
 			return <div style={{ flex: 1}} className='flex flex-col p-1 font-mono text-disabled-text'> No diff </div>
 		}
 
 		return (
-			<div style={{ flex: 1}} className='flex flex-col p-1 font-mono'>
+			<div style={{ flex: 1}} className='flex flex-col p-1 font-semibold font-mono'>
 				 {stateDiff.map((d, i) => this.renderDiffs(d, i))}
 			</div>
 		);
@@ -87,35 +92,45 @@ export default class Storage extends React.PureComponent {
 	renderDiffs(diff, i) {
 		const oldValue = diff.item ? JSON.stringify(diff.item.lhs) : JSON.stringify(diff.lhs)
 		const newValue = diff.item ? JSON.stringify(diff.item.rhs) : JSON.stringify(diff.rhs)
+		const [path, pathRoot] = this.createPathAndBg(diff)
 
-		const createPath = () => {
-				let path = [];
-
-				if (diff.path) {
-					path = path.concat(diff.path);
-				}
-				if (typeof(diff.index) !== 'undefined') {
-					path.push(diff.index);
-				}
-				return path.length ? path.join('.') : '';
-		}
-
+		console.log(this.pathShades[pathRoot])
 		return (
-			<div key={i}>
-				<span className="font-semibold">
-					{createPath()}
+			<div key={i} className="p-1 rounded" style={{ background: this.pathShades[pathRoot] }}>
+				<span>
+					{path}
 					{': '}
 				</span>
-				<span className="line-through">
+				<span className="line-through text-disabled-text">
 					{ oldValue || 'undefined' }
 				</span>
 				{' -> '}
-				<span className={`font-semibold ${!newValue ? 'text-red' : 'text-green'}`}>
+				<span className={`${!newValue ? 'text-red' : 'text-green'}`}>
 					{ newValue || 'undefined'}
 				</span>
 			</div>
 		)
 	}
+
+	createPathAndBg = (diff) => {
+		let path = [];
+		let pathRoot;
+
+		if (diff.path) {
+			path = path.concat(diff.path);
+			pathRoot = diff.path[0]
+			if (!this.pathShades[pathRoot]) {
+				const randomShade = PATH_BGS[Math.floor(Math.random() * PATH_BGS.length)];
+				this.pathShades[pathRoot] = buildBg(randomShade)
+			}
+		}
+		if (typeof(diff.index) !== 'undefined') {
+			path.push(diff.index);
+		}
+
+		const pathStr =  path.length ? path.join('.') : '';
+		return [pathStr, pathRoot]
+}
 
 	ensureString(actionType) {
 		if (typeof actionType === 'string') return actionType;
@@ -133,7 +148,7 @@ export default class Storage extends React.PureComponent {
 		if (listNow.length === 0) {
 			return "Not initialized"; //?
 		}
-		return  <JSONTree src={ listNow[ listNow.length - 1 ].state  } />;
+		return  <JSONTree  collapsed={2} src={ listNow[ listNow.length - 1 ].state  } />;
 	}
 
 	renderItem(item, i, prevItem) {
@@ -217,15 +232,14 @@ export default class Storage extends React.PureComponent {
 		return (
 			<BottomBlock>
 				<BottomBlock.Header>
-					<span className="font-semibold color-gray-medium mr-4">State</span>
 					{ list.length > 0 &&
 						<div className="flex w-full">
 							{ showStore &&
-								<h3 style={{ width: "40%" }}>
+								<h3 style={{ width: "46%" }}>
 									{"STORE"}
 								</h3>
 							}
-							<h3 style={{ width: "40%" }}>
+							<h3 style={{ width: "50%" }}>
 								{getActionsName(type)}
 							</h3>
 						</div>
@@ -253,14 +267,14 @@ export default class Storage extends React.PureComponent {
             show={ listNow.length === 0 }
           >
 						{ showStore &&
-						  <div className="ph-10 scroll-y" style={{ width: "40%" }} >
+						  <div className="ph-10 scroll-y" style={{ width: "25%" }} >
 								{ listNow.length === 0
 									? <div className="color-gray-light font-size-16 mt-20 text-center" >{ "Empty state." }</div>
 									: this.renderTab()
 								}
 							</div>
 						}
-						<div className="flex" style={{ width: showStore ? "60%" : "100%" }} >
+						<div className="flex" style={{ width: showStore ? "75%" : "100%" }} >
 							<Autoscroll className="ph-10" >
 								{ listNow.map((item, i) => this.renderItem(item, i, i > 0 ? listNow[i - 1] : undefined)) }
 							</Autoscroll>
