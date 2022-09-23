@@ -145,7 +145,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	switch m := msg.(type) {
 	case *BatchMetadata:
-		if i.messageInfo.Index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
+		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMetadata found at the end of the batch")
 		}
 		if m.Version > 1 {
@@ -157,7 +157,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.version = m.Version
 
 	case *BatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
-		if i.messageInfo.Index != 0 { // Might be several 0-0 BatchMeta in a row without an error though
+		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
 			return fmt.Errorf("batchMeta found at the end of the batch")
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
