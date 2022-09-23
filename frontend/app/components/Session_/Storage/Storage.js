@@ -50,7 +50,7 @@ const PATH_BGS = [
   '185, 251, 192',
 ];
 
-const buildBg = (shade) => `rgba(${shade}, 0.15)`;
+const buildBg = (shade) => `rgba(${shade}, 0.2)`;
 
 @connectPlayer((state) => ({
   type: selectStorageType(state),
