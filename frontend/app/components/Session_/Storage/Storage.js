@@ -97,9 +97,8 @@ export default class Storage extends React.PureComponent {
 
     if (!stateDiff) {
       return (
-        <div style={{ flex: 1 }} className="flex flex-col p-1 font-mono text-disabled-text">
-          {' '}
-          No diff{' '}
+        <div style={{ flex: 1 }} className="flex flex-col p-2 pr-0 font-mono text-disabled-text">
+          No diff
         </div>
       );
     }
