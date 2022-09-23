@@ -309,7 +309,7 @@ export default class App {
   }
 
   getHost(): string {
-    return new URL(this.options.ingestPoint).hostname
+    return new URL(this.options.ingestPoint).host
   }
   getProjectKey(): string {
     return this.projectKey
