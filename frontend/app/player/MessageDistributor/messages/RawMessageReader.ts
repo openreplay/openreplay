@@ -532,7 +532,6 @@ export default class RawMessageReader extends PrimitiveReader {
       console.log('here')
       const mutation = this.readString(); if (mutation === null) { return resetPointer() }
       const state = this.readString(); if (state === null) { return resetPointer() }
-      console.log(mutation, state)
       return {
         tp: "zustand",
         mutation,
