@@ -279,16 +279,19 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
 @app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(sessionId, str) or not sessions.session_exists(project_id=projectId, session_id=sessionId):
-        if isinstance(sessionId, str):
-            print(f"{sessionId} not a valid number.")
-        else:
-            print(f"{projectId}/{sessionId} not found in DB.")
+    not_found = {"errors": ["Replay file not found"]}
+    if isinstance(sessionId, str):
+        print(f"{sessionId} not a valid number.")
+        return not_found
+    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        print(f"{projectId}/{sessionId} not found in DB.")
+        if not assist.session_exists(project_id=projectId, session_id=sessionId):
+            print(f"{projectId}/{sessionId} not found in Assist.")
+            return not_found
 
-        return {"errors": ["Replay file not found"]}
     path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
     if path is None:
-        return {"errors": ["Replay file not found"]}
+        return not_found
 
     return FileResponse(path=path, media_type="application/octet-stream")
 
@@ -297,13 +300,16 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
 @app.get('/{projectId}/assist/sessions/{sessionId}/devtools', tags=["assist"])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(sessionId, str) or not sessions.session_exists(project_id=projectId, session_id=sessionId):
-        if isinstance(sessionId, str):
-            print(f"{sessionId} not a valid number.")
-        else:
-            print(f"{projectId}/{sessionId} not found in DB.")
+    not_found = {"errors": ["Devtools file not found"]}
+    if isinstance(sessionId, str):
+        print(f"{sessionId} not a valid number.")
+        return not_found
+    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        print(f"{projectId}/{sessionId} not found in DB.")
+        if not assist.session_exists(project_id=projectId, session_id=sessionId):
+            print(f"{projectId}/{sessionId} not found in Assist.")
+            return not_found
 
-        return {"errors": ["Devtools file not found"]}
     path = assist.get_raw_devtools_by_id(project_id=projectId, session_id=sessionId)
     if path is None:
         return {"errors": ["Devtools file not found"]}

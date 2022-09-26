@@ -4,8 +4,8 @@ LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base tini
 ARG envarg
 ENV APP_NAME=crons \
-    pg_minconn=2 \
-    pg_maxconn=10 \
+    PG_MINCONN=2 \
+    PG_MAXCONN=10 \
     ENTERPRISE_BUILD=${envarg} \
     ACTION="" \
     PG_POOL=false

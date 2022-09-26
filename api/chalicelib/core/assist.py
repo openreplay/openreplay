@@ -1,12 +1,14 @@
 from os import access, R_OK
-from os.path import exists
+from os.path import exists as path_exists
 
+import jwt
 import requests
 from decouple import config
 from starlette.exceptions import HTTPException
 
 import schemas
 from chalicelib.core import projects
+from chalicelib.utils.TimeUTC import TimeUTC
 
 ASSIST_KEY = config("ASSIST_KEY")
 ASSIST_URL = config("ASSIST_URL") % ASSIST_KEY
@@ -51,13 +53,13 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
-                                        json=data, timeout=config("assistTimeout", cast=int, default=5))
-        if connected_peers.status_code != 200:
-            print("!! issue with the peer-server")
-            print(connected_peers.text)
+        results = requests.post(ASSIST_URL + config("assist") + f"/{project_key}",
+                                json=data, timeout=config("assistTimeout", cast=int, default=5))
+        if results.status_code != 200:
+            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(results.text)
             return {"total": 0, "sessions": []}
-        live_peers = connected_peers.json().get("data", [])
+        live_peers = results.json().get("data", [])
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
         live_peers = {"total": 0, "sessions": []}
@@ -66,7 +68,7 @@ def __get_live_sessions_ws(project_id, data):
         print(str(e))
         print("expected JSON, received:")
         try:
-            print(connected_peers.text)
+            print(results.text)
         except:
             print("couldn't get response")
         live_peers = {"total": 0, "sessions": []}
@@ -79,45 +81,63 @@ def __get_live_sessions_ws(project_id, data):
     return live_peers
 
 
+def __get_agent_token(project_id, project_key, session_id):
+    iat = TimeUTC.now()
+    return jwt.encode(
+        payload={
+            "projectKey": project_key,
+            "projectId": project_id,
+            "sessionId": session_id,
+            "iat": iat // 1000,
+            "exp": iat // 1000 + config("JWT_EXP_DELTA_SECONDS", cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "iss": config("JWT_ISSUER"),
+            "aud": f"openreplay:agent"
+        },
+        key=config("jwt_secret"),
+        algorithm=config("jwt_algorithm")
+    )
+
+
 def get_live_session_by_id(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
-                                       timeout=config("assistTimeout", cast=int, default=5))
-        if connected_peers.status_code != 200:
-            print("!! issue with the peer-server")
-            print(connected_peers.text)
-            return False
-        connected_peers = connected_peers.json().get("data")
-        if connected_peers is None:
+        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
+                               timeout=config("assistTimeout", cast=int, default=5))
+        if results.status_code != 200:
+            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(results.text)
             return None
-        connected_peers["live"] = True
+        results = results.json().get("data")
+        if results is None:
+            return None
+        results["live"] = True
+        results["agentToken"] = __get_agent_token(project_id=project_id, project_key=project_key, session_id=session_id)
     except requests.exceptions.Timeout:
-        print("Timeout getting Assist response")
+        print("!! Timeout getting Assist response")
         return None
     except Exception as e:
         print("issue getting Assist response")
         print(str(e))
         print("expected JSON, received:")
         try:
-            print(connected_peers.text)
+            print(results.text)
         except:
             print("couldn't get response")
         return None
-    return connected_peers
+    return results
 
 
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
-                                       timeout=config("assistTimeout", cast=int, default=5))
-        if connected_peers.status_code != 200:
-            print("!! issue with the peer-server")
-            print(connected_peers.text)
+        results = requests.get(ASSIST_URL + config("assistList") + f"/{project_key}/{session_id}",
+                               timeout=config("assistTimeout", cast=int, default=5))
+        if results.status_code != 200:
+            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(results.text)
             return False
-        connected_peers = connected_peers.json().get("data")
+        results = results.json().get("data")
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
         return False
@@ -126,11 +146,11 @@ def is_live(project_id, session_id, project_key=None):
         print(str(e))
         print("expected JSON, received:")
         try:
-            print(connected_peers.text)
+            print(results.text)
         except:
             print("couldn't get response")
         return False
-    return str(session_id) == connected_peers
+    return str(session_id) == results
 
 
 def autocomplete(project_id, q: str, key: str = None):
@@ -143,7 +163,7 @@ def autocomplete(project_id, q: str, key: str = None):
             ASSIST_URL + config("assistList") + f"/{project_key}/autocomplete",
             params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
-            print("!! issue with the peer-server")
+            print(f"!! issue with the peer-server code:{results.status_code}")
             print(results.text)
             return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
         results = results.json().get("data", [])
@@ -169,7 +189,7 @@ def get_ice_servers():
 
 def __get_efs_path():
     efs_path = config("FS_DIR")
-    if not exists(efs_path):
+    if not path_exists(efs_path):
         raise HTTPException(400, f"EFS not found in path: {efs_path}")
 
     if not access(efs_path, R_OK):
@@ -185,7 +205,7 @@ def __get_mob_path(project_id, session_id):
 def get_raw_mob_by_id(project_id, session_id):
     efs_path = __get_efs_path()
     path_to_file = efs_path + "/" + __get_mob_path(project_id=project_id, session_id=session_id)
-    if exists(path_to_file):
+    if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
             raise HTTPException(400, f"Replay file found under: {efs_path};"
                                      f" but it is not readable, please check permissions")
@@ -203,7 +223,7 @@ def __get_devtools_path(project_id, session_id):
 def get_raw_devtools_by_id(project_id, session_id):
     efs_path = __get_efs_path()
     path_to_file = efs_path + "/" + __get_devtools_path(project_id=project_id, session_id=session_id)
-    if exists(path_to_file):
+    if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
             raise HTTPException(400, f"Devtools file found under: {efs_path};"
                                      f" but it is not readable, please check permissions")
@@ -211,3 +231,30 @@ def get_raw_devtools_by_id(project_id, session_id):
         return path_to_file
 
     return None
+
+
+def session_exists(project_id, session_id):
+    project_key = projects.get_project_key(project_id)
+    try:
+        results = requests.get(ASSIST_URL + config("assist") + f"/{project_key}/{session_id}",
+                               timeout=config("assistTimeout", cast=int, default=5))
+        if results.status_code != 200:
+            print(f"!! issue with the peer-server code:{results.status_code}")
+            print(results.text)
+            return None
+        results = results.json().get("data")
+        if results is None:
+            return False
+        return True
+    except requests.exceptions.Timeout:
+        print("!! Timeout getting Assist response")
+        return False
+    except Exception as e:
+        print("issue getting Assist response")
+        print(str(e))
+        print("expected JSON, received:")
+        try:
+            print(results.text)
+        except:
+            print("couldn't get response")
+        return False
