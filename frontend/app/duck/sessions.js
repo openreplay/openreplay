@@ -63,7 +63,8 @@ const initialState = Map({
     timelinePointer: null,
     sessionPath: {},
     lastPlayedSessionId: null,
-    timeLineTooltip: { time: 0, offset: 0, isVisible: false }
+    timeLineTooltip: { time: 0, offset: 0, isVisible: false },
+    noteTooltip: { time: 100, offset: 100, isVisible: true },
 });
 
 const reducer = (state = initialState, action = {}) => {
