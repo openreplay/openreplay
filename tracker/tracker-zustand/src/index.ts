@@ -54,7 +54,6 @@ export default function(opts: Partial<Options> = {}) {
 		) =>
 			config(
 				(...args) => {
-          console.log('hi', args)
 					set(...args)
 					const newState = get()
 					state[storeName] = newState
