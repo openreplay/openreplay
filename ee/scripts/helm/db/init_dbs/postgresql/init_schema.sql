@@ -153,7 +153,8 @@ $$
                 t_projects     integer                     NOT NULL DEFAULT 1,
                 t_sessions     bigint                      NOT NULL DEFAULT 0,
                 t_users        integer                     NOT NULL DEFAULT 1,
-                t_integrations integer                     NOT NULL DEFAULT 0
+                t_integrations integer                     NOT NULL DEFAULT 0,
+                last_telemetry bigint                      NOT NULL DEFAULT CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT)
             );
 
 
@@ -223,7 +224,7 @@ $$
                 provider_user_id text           NOT NULL,
                 token            text           NOT NULL
             );
-            CREATE UNIQUE INDEX IF NOT EXISTS oauth_authentication_unique_user_id_provider_idx ON oauth_authentication(user_id,provider);
+            CREATE UNIQUE INDEX IF NOT EXISTS oauth_authentication_unique_user_id_provider_idx ON oauth_authentication (user_id, provider);
 
             CREATE TABLE IF NOT EXISTS projects
             (

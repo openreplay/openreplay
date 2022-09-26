@@ -20,7 +20,7 @@ def process_data(data):
 
 
 def compute():
-    with pg_client.PostgresClient() as cur:
+    with pg_client.PostgresClient(long_query=True) as cur:
         cur.execute(
             f"""UPDATE public.tenants
                 SET t_integrations = COALESCE((SELECT COUNT(DISTINCT provider)
@@ -39,17 +39,18 @@ def compute():
                                          FROM public.projects
                                          WHERE deleted_at ISNULL
                                            AND projects.tenant_id = all_tenants.tenant_id), 0),
-                    t_sessions=COALESCE((SELECT COUNT(*)
-                                         FROM public.sessions
-                                                  INNER JOIN public.projects USING (project_id)
-                                         WHERE projects.tenant_id = all_tenants.tenant_id), 0),
+                    t_sessions=t_sessions + COALESCE((SELECT COUNT(*)
+                                                      FROM public.sessions INNER JOIN public.projects USING (project_id)
+                                                      WHERE projects.tenant_id = all_tenants.tenant_id
+                                                        AND start_ts >= (SELECT last_telemetry FROM tenants)
+                                                        AND start_ts <=CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT)), 0),
                     t_users=COALESCE((SELECT COUNT(*)
                                       FROM public.users
                                       WHERE deleted_at ISNULL
-                                        AND users.tenant_id = all_tenants.tenant_id), 0)
-                FROM (
-                         SELECT tenant_id
-                         FROM public.tenants
+                                        AND users.tenant_id = all_tenants.tenant_id), 0),
+                    last_telemetry=CAST(EXTRACT(epoch FROM date_trunc('day', now())) * 1000 AS BIGINT)
+                FROM (SELECT tenant_id
+                      FROM public.tenants
                      ) AS all_tenants
                 WHERE tenants.tenant_id = all_tenants.tenant_id
                 RETURNING name,t_integrations,t_projects,t_sessions,t_users,tenant_key,opt_out,
