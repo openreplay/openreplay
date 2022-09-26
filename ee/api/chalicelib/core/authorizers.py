@@ -43,9 +43,9 @@ def generate_jwt(id, tenant_id, iat, aud, exp=None):
         payload={
             "userId": id,
             "tenantId": tenant_id,
-            "exp": iat // 1000 + int(config("jwt_exp_delta_seconds")) + TimeUTC.get_utc_offset() // 1000 \
+            "exp": iat // 1000 + int(config("JWT_EXP_DELTA_SECONDS")) + TimeUTC.get_utc_offset() // 1000 \
                 if exp is None else exp+ TimeUTC.get_utc_offset() // 1000,
-            "iss": config("jwt_issuer"),
+            "iss": config("JWT_ISSUER"),
             "iat": iat // 1000,
             "aud": aud
         },
