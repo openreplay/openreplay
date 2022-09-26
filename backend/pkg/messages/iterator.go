@@ -122,7 +122,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 		// Skip messages we don't have in filter
 		if i.filter != nil {
-			if _, ok := i.filter[msg.TypeID()]; ok {
+			if _, ok := i.filter[msg.TypeID()]; !ok {
 				continue
 			}
 		}

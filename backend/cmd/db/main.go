@@ -74,7 +74,6 @@ func main() {
 			if !postgres.IsPkeyViolation(err) {
 				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 			}
-			log.Printf("insert message error: %s", err)
 			return
 		}
 
