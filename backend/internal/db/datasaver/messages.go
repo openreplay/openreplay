@@ -6,7 +6,6 @@ import (
 )
 
 func (mi *Saver) InsertMessage(msg Message) error {
-	// TODO: rewrite methods signature and remove sessionID
 	sessionID := msg.SessionID()
 	switch m := msg.(type) {
 	// Common
