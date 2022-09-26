@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 
 interface Props {
-    classNam?: string;
+    className?: string;
     label?: string;
     [x: string]: any;
 }
