@@ -14,7 +14,8 @@ import { diff } from 'deep-diff';
 import { jump } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
-
+import DiffRow from './DiffRow'
+import cn from 'classnames'
 import stl from './storage.module.css';
 
 // const STATE = 'STATE';
@@ -111,23 +112,11 @@ export default class Storage extends React.PureComponent {
   }
 
   renderDiffs(diff, i) {
-    const oldValue = diff.item ? JSON.stringify(diff.item.lhs) : JSON.stringify(diff.lhs);
-    const newValue = diff.item ? JSON.stringify(diff.item.rhs) : JSON.stringify(diff.rhs);
-    const [path, pathRoot] = this.createPathAndBg(diff);
-
-    console.log(this.pathShades[pathRoot]);
+    const [path, pathRoot] = this.createPathAndBg(diff)
     return (
-      <div key={i} className="p-1 rounded" style={{ background: this.pathShades[pathRoot] }}>
-        <span>
-          {path}
-          {': '}
-        </span>
-        <span className="line-through text-disabled-text">{oldValue || 'undefined'}</span>
-        {' -> '}
-        <span className={`${!newValue ? 'text-red' : 'text-green'}`}>
-          {newValue || 'undefined'}
-        </span>
-      </div>
+      <React.Fragment key={i}>
+        <DiffRow shades={this.pathShades} path={path} diff={diff} pathRoot={pathRoot} />
+      </React.Fragment>
     );
   }
 
@@ -194,9 +183,9 @@ export default class Storage extends React.PureComponent {
     }
 
     return (
-      <div className="flex justify-between items-start border-b" key={`store-${i}`}>
+      <div className={cn("flex justify-between items-start", src !== null ? 'border-b' : '')} key={`store-${i}`}>
         {src === null ? (
-          <div className="font-mono" style={{ flex: 2, marginLeft: '27%' }}> {name} </div>
+          <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}> {name} </div>
         ) : (
           <>
             {this.renderDiff(item, prevItem)}
