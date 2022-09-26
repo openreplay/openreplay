@@ -41,6 +41,7 @@ func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, i
 	if b.ended || b.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(time.Now()) {
 		for _, p := range b.processors {
 			if rm := p.Build(); rm != nil {
+				rm.Meta().SetSessionID(sessionID)
 				b.readyMsgs = append(b.readyMsgs, rm)
 			}
 		}

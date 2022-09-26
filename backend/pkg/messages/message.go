@@ -63,3 +63,7 @@ func (m *message) SetMeta(origin *message) {
 func (m *message) SessionID() uint64 {
 	return m.batch.sessionID
 }
+
+func (m *message) SetSessionID(sessID uint64) {
+	m.batch.sessionID = sessID
+}
