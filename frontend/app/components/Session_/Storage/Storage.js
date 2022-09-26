@@ -14,8 +14,8 @@ import { diff } from 'deep-diff';
 import { jump } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
-import DiffRow from './DiffRow'
-import cn from 'classnames'
+import DiffRow from './DiffRow';
+import cn from 'classnames';
 import stl from './storage.module.css';
 
 // const STATE = 'STATE';
@@ -112,7 +112,7 @@ export default class Storage extends React.PureComponent {
   }
 
   renderDiffs(diff, i) {
-    const [path, pathRoot] = this.createPathAndBg(diff)
+    const [path, pathRoot] = this.createPathAndBg(diff);
     return (
       <React.Fragment key={i}>
         <DiffRow shades={this.pathShades} path={path} diff={diff} pathRoot={pathRoot} />
@@ -183,9 +183,15 @@ export default class Storage extends React.PureComponent {
     }
 
     return (
-      <div className={cn("flex justify-between items-start", src !== null ? 'border-b' : '')} key={`store-${i}`}>
+      <div
+        className={cn('flex justify-between items-start', src !== null ? 'border-b' : '')}
+        key={`store-${i}`}
+      >
         {src === null ? (
-          <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}> {name} </div>
+          <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}>
+            {' '}
+            {name}{' '}
+          </div>
         ) : (
           <>
             {this.renderDiff(item, prevItem)}
