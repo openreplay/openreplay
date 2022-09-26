@@ -65,5 +65,8 @@ func (m *message) SessionID() uint64 {
 }
 
 func (m *message) SetSessionID(sessID uint64) {
+	if m.batch == nil {
+		m.batch = &BatchInfo{}
+	}
 	m.batch.sessionID = sessID
 }
