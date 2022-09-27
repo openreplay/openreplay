@@ -29,6 +29,9 @@ import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import UserMenu from './UserMenu';
+import SettingsMenu from './SettingsMenu';
+import DefaultMenuView from './DefaultMenuView';
+import PreferencesView from './PreferencesView';
 
 const DASHBOARD_PATH = dashboard();
 const ALERTS_PATH = alerts();
@@ -48,11 +51,12 @@ const Header = (props) => {
     showAlerts = false,
   } = props;
 
-  const name = account.get('name').split(' ')[0];
+  const name = account.get('name');
   const [hideDiscover, setHideDiscover] = useState(false);
   const { userStore, notificationStore } = useStore();
   const initialDataFetched = useObserver(() => userStore.initialDataFetched);
   let activeSite = null;
+  const isPreferences = window.location.pathname.includes('/client/');
 
   const onAccountClick = () => {
     props.history.push(CLIENT_PATH);
@@ -78,50 +82,13 @@ const Header = (props) => {
   }, [siteId]);
 
   return (
-    <div className={cn(styles.header)} style={{ height: '50px' }}>
-      <NavLink to={withSiteId(SESSIONS_PATH, siteId)}>
-        <div className="relative select-none">
-          <div className="px-4 py-2">
-            <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
-          </div>
-          <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>
-            v{window.env.VERSION}
-          </div>
-        </div>
-      </NavLink>
-      <SiteDropdown />
-      {/* <div className={ styles.divider } /> */}
-
-      <NavLink
-        to={withSiteId(SESSIONS_PATH, siteId)}
-        className={styles.nav}
-        activeClassName={styles.active}
-      >
-        {'Sessions'}
-      </NavLink>
-      <NavLink
-        to={withSiteId(ASSIST_PATH, siteId)}
-        className={styles.nav}
-        activeClassName={styles.active}
-      >
-        {'Assist'}
-      </NavLink>
-      <NavLink
-        to={ withSiteId(DASHBOARD_PATH, siteId) }
-        className={ styles.nav }
-        activeClassName={ styles.active }
-        isActive={ (_, location) => {
-          return location.pathname.includes(DASHBOARD_PATH)
-          || location.pathname.includes(METRICS_PATH)
-          || location.pathname.includes(ALERTS_PATH)
-        }}
-      >
-        <span>{'Dashboards'}</span>
-      </NavLink>
+    <div
+      className={cn(styles.header, 'fixed w-full bg-white flex justify-between')}
+      style={{ height: '50px' }}
+    >
+      {!isPreferences && <DefaultMenuView siteId={siteId} />}
+      {isPreferences && <PreferencesView />}
       <div className={styles.right}>
-        {/* <Announcements /> */}
-        {/* <div className={ styles.divider } /> */}
-
         {boardingCompletion < 100 && !hideDiscover && (
           <React.Fragment>
             <OnboardingExplore onComplete={() => setHideDiscover(true)} />
@@ -129,10 +96,14 @@ const Header = (props) => {
         )}
 
         <Notifications />
-        <Popup content={`Preferences`}>
-          <NavLink to={CLIENT_PATH} className={styles.headerIcon}>
-            <Icon name="gear-fill" size="20" />
-          </NavLink>
+        <Popup content={`Preferences`} disabled>
+          <div className="group relative">
+            <NavLink to={CLIENT_PATH} className={styles.headerIcon}>
+              <Icon name="gear-fill" size="20" />
+            </NavLink>
+
+            <SettingsMenu className="invisible group-hover:visible" account={account} />
+          </div>
         </Popup>
 
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>
@@ -144,8 +115,10 @@ const Header = (props) => {
 
           <UserMenu className="invisible group-hover:visible" />
         </div>
+
+        {<ErrorGenPanel />}
       </div>
-      {<ErrorGenPanel />}
+
       {showAlerts && <Alerts />}
     </div>
   );

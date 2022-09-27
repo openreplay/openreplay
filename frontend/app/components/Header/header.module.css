@@ -4,13 +4,13 @@
 $height: 50px;
 
 .header {
-  position: fixed;
-  width: 100%;  
-  display: flex;
-  justify-content: space-between;  
+  /* position: fixed; */
+  /* width: 100%;   */
+  /* display: flex; */
+  /* justify-content: space-between;   */
   border-bottom: solid thin $gray-light;
   /* padding: 0 15px; */
-  background: $white;
+  /* background: $white; */
   z-index: $header;
 }
 
@@ -45,7 +45,7 @@ $height: 50px;
 }
 
 .right {
-  margin-left: auto;
+  /* margin-left: auto; */
   position: relative;
   cursor: default;
   display: flex;
@@ -101,7 +101,7 @@ $height: 50px;
       border-top: 1px solid $gray-light;
     }
   }
-  & a, & button {
+  /* & a, & button {
     color: $gray-darkest;
     display: block;
     cursor: pointer;
@@ -112,7 +112,7 @@ $height: 50px;
     &:hover {
       background-color: $gray-lightest;
     }
-  }
+  } */
 }
 
 .userIcon {
