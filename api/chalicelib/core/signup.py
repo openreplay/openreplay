@@ -21,7 +21,7 @@ def create_step1(data: schemas.UserSignupSchema):
     password = data.password
 
     print("Verifying email validity")
-    if email is None or len(email) < 5 or not helper.is_valid_email(email):
+    if email is None or len(email) < 5:
         errors.append("Invalid email address.")
     else:
         print("Verifying email existance")

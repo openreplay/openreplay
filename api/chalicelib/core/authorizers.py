@@ -15,7 +15,7 @@ def jwt_authorizer(token):
             token[1],
             config("jwt_secret"),
             algorithms=config("jwt_algorithm"),
-            audience=[f"plugin:{helper.get_stage_name()}", f"front:{helper.get_stage_name()}"]
+            audience=[ f"front:{helper.get_stage_name()}"]
         )
     except jwt.ExpiredSignatureError:
         print("! JWT Expired signature")
