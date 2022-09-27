@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, FileResponse
 import schemas
 import schemas_ee
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
-    errors_favorite
+    errors_favorite, sessions_notes
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -392,6 +392,65 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
                                         session_id=sessionId, assignment_id=issueId,
                                         user_id=context.user_id, message=data.message)
     if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+@app.put('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.session_replay)])
+def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
+                context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.create(tenant_id=context.tenant_id, project_id=projectId,
+                                 session_id=sessionId, user_id=context.user_id, data=data)
+    if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.session_replay)])
+def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
+                                            session_id=sessionId, user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+@app.put('/{projectId}/notes/{noteId}', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
+def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
+              context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                               note_id=noteId, data=data)
+    if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
+            dependencies=[OR_scope(Permissions.session_replay)])
+def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                 note_id=noteId)
+    return data
+
+
+@app.get('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
+def get_all_notes(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_all_notes(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id)
+    if "errors" in data:
         return data
     return {
         'data': data
