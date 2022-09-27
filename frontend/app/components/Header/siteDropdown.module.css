@@ -1,7 +1,7 @@
 .wrapper {
   display: flex;
   align-items: center;
-  border-left: solid thin $gray-light !important;
+  /* border-left: solid thin $gray-light !important; */
   padding: 10px 10px;
   min-width: 180px;
   justify-content: flex-start;

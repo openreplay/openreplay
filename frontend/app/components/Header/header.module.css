@@ -72,11 +72,10 @@ $height: 50px;
 .userDetails {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   position: relative;
-  padding: 0 5px 0 15px;
+  padding: 0 10px;
   transition: all 0.2s;
-  min-width: 100px;
 
   &:hover {
     background-color: $gray-lightest;
