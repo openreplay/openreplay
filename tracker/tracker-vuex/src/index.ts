@@ -25,7 +25,8 @@ function processMutationAndState(
       const _table = encoder.commit();
       for (let key in _table) app.send(Messages.OTable(key, _table[key]));
       app.send(Messages.Vuex(_mutation, _state));
-    } catch {
+    } catch (e) {
+      console.error(e)
       encoder.clear();
     }
   }

@@ -304,8 +304,12 @@ export default class App {
       this.debug.error('OpenReplay error: Unable to build session URL')
       return undefined
     }
+    const ingest = this.options.ingestPoint
+    const isSaas = ingest === DEFAULT_INGEST_POINT
 
-    return this.options.ingestPoint.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+    const projectPath = isSaas ? ingest.replace('api', 'app') : ingest
+
+    return projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
   }
 
   getHost(): string {
