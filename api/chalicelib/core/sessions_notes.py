@@ -20,6 +20,7 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
                             {"project_id": project_id, "user_id": user_id,
                              "tenant_id": tenant_id, "session_id": session_id})
 
+        cur.execute(query=query)
         rows = cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         for row in rows:
