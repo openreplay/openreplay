@@ -43,6 +43,7 @@ export default Record({
   filterId: '',
   messagesUrl: '',
   domURL: [],
+  mobsURL: [],
   userBrowser: '',
   userBrowserVersion: '?',
   userCountry: '',
@@ -93,6 +94,7 @@ export default Record({
     issues = [],
     sessionId, sessionID,
     domURL = [],
+    mobsURL = [],
     ...session
   }) => {
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -149,7 +151,8 @@ export default Record({
       issues: issuesList,
       sessionId: sessionId || sessionID,
       userId: session.userId || session.userID,
-      domURL: Array.isArray(domURL) ? domURL : [ domURL ]
+      domURL: Array.isArray(domURL) ? domURL : [ domURL ],
+      mobsURL: Array.isArray(mobsURL) ? mobsURL : [ mobsURL ],
     };
   },
   idKey: "sessionId",
