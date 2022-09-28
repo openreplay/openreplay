@@ -15,7 +15,7 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
                                   AND sessions_notes.deleted_at IS NULL
                                   AND sessions_notes.session_id = %(session_id)s
                                   AND (sessions_notes.user_id = %(user_id)s 
-                                        OR sessions_notes.is_public)
+                                        OR sessions_notes.is_public AND users.tenant_id = %(tenant_id)s)
                                 ORDER BY created_at DESC;""",
                             {"project_id": project_id, "user_id": user_id,
                              "tenant_id": tenant_id, "session_id": session_id})
@@ -36,7 +36,7 @@ def get_all_notes(tenant_id, project_id, user_id):
                                 WHERE sessions_notes.project_id = %(project_id)s
                                   AND sessions_notes.deleted_at IS NULL
                                   AND (sessions_notes.user_id = %(user_id)s 
-                                        OR sessions_notes.is_public)
+                                        OR sessions_notes.is_public AND users.tenant_id = %(tenant_id)s)
                                 ORDER BY created_at DESC;""",
                             {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id})
 

@@ -213,7 +213,6 @@ Pipfile
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
-/chalicelib/core/sessions_notes.py
 #exp /chalicelib/core/significance.py
 /chalicelib/core/slack.py
 /chalicelib/core/socket_ios.py
