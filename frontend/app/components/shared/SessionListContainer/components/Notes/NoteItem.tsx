@@ -11,8 +11,8 @@ enum Tags {
 
 interface Props {
   author: string
-  date: string
-  tag: Tags
+  timestamp: number
+  tags: string[]
   isPrivate: boolean
   description: string
   sessionId: string
@@ -25,10 +25,10 @@ function NoteItem(props: Props) {
         <div className="flex flex-col">
           <div>{props.description}</div>
           <div className="flex items-center gap-2">
-            <div>{props.tag}</div>
+            <div>{props.tags}</div>
             <div className='text-disabled-text flex items-center'>
             <span className="text-figmaColors-text-primary mr-1">By </span>
-              {props.author}, {props.date}
+              {props.author}, {props.timestamp}
               {props.isPrivate ? null : (
               <>
                 <Icon name="user-friends" className="ml-4 mr-1" color="gray-dark" /> Team
