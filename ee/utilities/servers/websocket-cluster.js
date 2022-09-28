@@ -9,7 +9,8 @@ const {
     uniqueAutocomplete
 } = require('../utils/helper');
 const {
-    extractSessionInfo
+    extractSessionInfo,
+    authorizer
 } = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
@@ -33,7 +34,7 @@ const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
 console.log(`Using Redis: ${REDIS_URL}`);
 let io;
-const debug = process.env.debug === "1" || false;
+const debug = process.env.debug === "1";
 
 const createSocketIOServer = function (server, prefix) {
     if (process.env.uws !== "true") {
@@ -287,6 +288,7 @@ module.exports = {
     wsRouter,
     start: (server, prefix) => {
         createSocketIOServer(server, prefix);
+        io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
@@ -371,7 +373,7 @@ module.exports = {
             });
 
         });
-        console.log("WS server started")
+        console.log("WS server started");
         setInterval(async (io) => {
             try {
                 let rooms = await io.of('/').adapter.allRooms();
@@ -395,7 +397,7 @@ module.exports = {
             } catch (e) {
                 console.error(e);
             }
-        }, 20000, io);
+        }, 30000, io);
         Promise.all([pubClient.connect(), subClient.connect()])
             .then(() => {
                 io.adapter(createAdapter(pubClient, subClient));

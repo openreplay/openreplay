@@ -9,7 +9,8 @@ const {
     uniqueAutocomplete
 } = require('../utils/helper');
 const {
-    extractSessionInfo
+    extractSessionInfo,
+    authorizer
 } = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
@@ -28,7 +29,7 @@ const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
 const SESSION_RECONNECTED = "SESSION_RECONNECTED";
 
 let io;
-const debug = process.env.debug === "1" || false;
+const debug = process.env.debug === "1";
 
 const createSocketIOServer = function (server, prefix) {
     if (process.env.uws !== "true") {
@@ -265,6 +266,7 @@ module.exports = {
     wsRouter,
     start: (server, prefix) => {
         createSocketIOServer(server, prefix);
+        io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
@@ -347,13 +349,13 @@ module.exports = {
             });
 
         });
-        console.log("WS server started")
+        console.log("WS server started");
         setInterval(async (io) => {
             try {
                 let count = 0;
                 console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
-                const arr = Array.from(io.sockets.adapter.rooms)
-                const filtered = arr.filter(room => !room[1].has(room[0]))
+                const arr = Array.from(io.sockets.adapter.rooms);
+                const filtered = arr.filter(room => !room[1].has(room[0]));
                 for (let i of filtered) {
                     let {projectKey, sessionId} = extractPeerId(i[0]);
                     if (projectKey !== null && sessionId !== null) {
@@ -363,13 +365,13 @@ module.exports = {
                 console.log(` ====== Valid Rooms: ${count} ====== `);
                 if (debug) {
                     for (let item of filtered) {
-                        console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                        console.log(`Room: ${item[0]} connected: ${item[1].size}`);
                     }
                 }
             } catch (e) {
                 console.error(e);
             }
-        }, 20000, io);
+        }, 30000, io);
     },
     handlers: {
         socketsList,
