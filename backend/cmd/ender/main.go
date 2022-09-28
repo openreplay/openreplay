@@ -46,7 +46,7 @@ func main() {
 			log.Printf("ZERO TS, sessID: %d, msgType: %d", msg.Meta().SessionID(), msg.TypeID())
 		}
 		statsLogger.Collect(msg)
-		sessions.UpdateSession(msg) //TODO: recheck timestamps(sessionID, meta.Timestamp, iter.Message().Meta().Timestamp)
+		sessions.UpdateSession(msg)
 	}
 
 	consumer := queue.NewConsumer(

@@ -49,7 +49,7 @@ func main() {
 
 	msgHandler := func(msg messages.Message) {
 		statsLogger.Collect(msg)
-		builderMap.HandleMessage(msg) //(sessionID, msg, iter.Message().Meta().Index)
+		builderMap.HandleMessage(msg)
 	}
 
 	consumer := queue.NewConsumer(

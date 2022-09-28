@@ -115,6 +115,9 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
+			if err := writer.SyncAll(); err != nil {
+				log.Printf("sync error: %v\n", err)
+			}
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
@@ -122,7 +125,7 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			if err := writer.SyncAll(); err != nil {
-				log.Fatalf("Sync error: %v\n", err)
+				log.Fatalf("sync error: %v\n", err)
 			}
 			counter.Print()
 			if err := consumer.Commit(); err != nil {

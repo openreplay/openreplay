@@ -67,7 +67,7 @@ func main() {
 
 	// Handler logic
 	msgHandler := func(msg messages.Message) {
-		statsLogger.Collect(msg) // TODO: carefully check message meta and batch meta confusion situation
+		statsLogger.Collect(msg)
 
 		// Just save session data into db without additional checks
 		if err := saver.InsertMessage(msg); err != nil {
@@ -127,33 +127,36 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	commitTick := time.Tick(cfg.CommitBatchTimeout)
+
+	// Send collected batches to db
+	commitDBUpdates := func() {
+		start := time.Now()
+		pg.CommitBatches()
+		pgDur := time.Now().Sub(start).Milliseconds()
+
+		start = time.Now()
+		if err := saver.CommitStats(); err != nil {
+			log.Printf("Error on stats commit: %v", err)
+		}
+		chDur := time.Now().Sub(start).Milliseconds()
+		log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
+
+		if err := consumer.Commit(); err != nil {
+			log.Printf("Error on consumer commit: %v", err)
+		}
+	}
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Printf("Caught signal %s: terminating\n", sig.String())
+			commitDBUpdates()
 			consumer.Close()
 			os.Exit(0)
 		case <-commitTick:
-			// Send collected batches to db
-			start := time.Now()
-			pg.CommitBatches()
-			pgDur := time.Now().Sub(start).Milliseconds()
-
-			start = time.Now()
-			if err := saver.CommitStats(); err != nil {
-				log.Printf("Error on stats commit: %v", err)
-			}
-			chDur := time.Now().Sub(start).Milliseconds()
-			log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
-
-			// TODO: use commit worker to save time each tick
-			if err := consumer.Commit(); err != nil {
-				log.Printf("Error on consumer commit: %v", err)
-			}
+			commitDBUpdates()
 		default:
 			// Handle new message from queue
-			err := consumer.ConsumeNext()
-			if err != nil {
+			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consumption: %v", err)
 			}
 		}
