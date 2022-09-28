@@ -102,7 +102,7 @@ export default class MessageDistributor extends StatedScreen {
 
     if (live) {
       initListsDepr({})
-      this.assistManager.connect();
+      this.assistManager.connect(this.session.agentToken);
     } else {
       this.activirtManager = new ActivityManager(this.session.duration.milliseconds);
       /* == REFACTOR_ME == */

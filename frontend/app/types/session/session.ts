@@ -79,8 +79,9 @@ export default Record({
   isIOS: false,
   revId: '',
   userSessionsCount: 0,
+  agentToken: '',
 }, {
-  fromJS:({ 
+  fromJS:({
     startTs=0,
     timestamp = 0,
     backendErrors=0,
@@ -115,7 +116,7 @@ export default Record({
     const missedResources = resources.filter(({ success }) => !success);
     const logs = List(session.logs).map(Log);
 
-    const stackEventsList = List(stackEvents)   
+    const stackEventsList = List(stackEvents)
       .concat(List(session.userEvents))
       .sortBy(se => se.timestamp)
       .map(se => StackEvent({ ...se, time: se.timestamp - startedAt }));
