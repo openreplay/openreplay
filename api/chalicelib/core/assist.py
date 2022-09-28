@@ -1,8 +1,12 @@
+import jwt
 import requests
 from decouple import config
 
 import schemas
 from chalicelib.core import projects
+from chalicelib.utils.TimeUTC import TimeUTC
+
+ASSIST_KEY = config("ASSIST_KEY", default=config("S3_KEY"))
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -44,7 +48,7 @@ def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSche
 def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.post(config("assist") % config("S3_KEY") + f"/{project_key}", json=data,
+        connected_peers = requests.post(config("assist") % ASSIST_KEY + f"/{project_key}", json=data,
                                         timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
@@ -72,10 +76,27 @@ def __get_live_sessions_ws(project_id, data):
     return live_peers
 
 
+def __get_agent_token(project_id, project_key, session_id):
+    iat = TimeUTC.now()
+    return jwt.encode(
+        payload={
+            "projectKey": project_key,
+            "projectId": project_id,
+            "sessionId": session_id,
+            "iat": iat // 1000,
+            "exp": iat // 1000 + config("jwt_exp_delta_seconds", cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "iss": config("jwt_issuer"),
+            "aud": f"openreplay:agent"
+        },
+        key=config("ASSIST_JWT_SECRET"),
+        algorithm=config("jwt_algorithm")
+    )
+
+
 def get_live_session_by_id(project_id, session_id):
     project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}/{session_id}",
+        connected_peers = requests.get(config("assist") % ASSIST_KEY + f"/{project_key}/{session_id}",
                                        timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
@@ -85,6 +106,8 @@ def get_live_session_by_id(project_id, session_id):
         if connected_peers is None:
             return None
         connected_peers["live"] = True
+        connected_peers["agentToken"] = __get_agent_token(project_id=project_id, project_key=project_key,
+                                                          session_id=session_id)
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
         return None
@@ -104,7 +127,7 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/{session_id}",
+        connected_peers = requests.get(config("assistList") % ASSIST_KEY + f"/{project_key}/{session_id}",
                                        timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
@@ -132,12 +155,12 @@ def autocomplete(project_id, q: str, key: str = None):
     if key:
         params["key"] = key
     try:
-        results = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/autocomplete",
+        results = requests.get(config("assistList") % ASSIST_KEY + f"/{project_key}/autocomplete",
                                params=params, timeout=config("assistTimeout", cast=int, default=5))
         if results.status_code != 200:
             print("!! issue with the peer-server")
             print(results.text)
-            return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
+            return {"errors": [f"Something went wrong while calling assist:{results.text}"]}
         results = results.json().get("data", [])
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
@@ -150,7 +173,7 @@ def autocomplete(project_id, q: str, key: str = None):
             print(results.text)
         except:
             print("couldn't get response")
-        return {"errors": ["Something went wrong wile calling assist"]}
+        return {"errors": ["Something went wrong while calling assist"]}
     return {"data": results}
 
 
