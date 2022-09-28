@@ -119,7 +119,7 @@ export default class AssistManager {
   }
 
   private socket: Socket | null = null
-  connect() {
+  connect(agentToken: string) {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
@@ -146,6 +146,9 @@ export default class AssistManager {
       // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {
         path: '/ws-assist/socket',
+        auth: {
+          token: agentToken
+        },
         query: {
           peerId: this.peerID,
           identity: "agent",

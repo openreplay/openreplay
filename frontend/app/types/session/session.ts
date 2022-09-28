@@ -81,7 +81,8 @@ export default Record({
   revId: '',
   userSessionsCount: 0,
   agentIds: [],
-  isCallActive: false
+  isCallActive: false,
+  agentToken: ''
 }, {
   fromJS:({
     startTs=0,
