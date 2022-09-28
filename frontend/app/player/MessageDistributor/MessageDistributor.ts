@@ -217,7 +217,7 @@ export default class MessageDistributor extends StatedScreen {
       this.processStateUpdates(msgs)
     }
 
-    loadFiles(this.session.mobsURL,
+    loadFiles(this.session.mobsUrl,
       onData
     )
     .then(() => this.onFileSuccessRead())
