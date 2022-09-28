@@ -61,7 +61,6 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 }
 
 func (s *Storage) UploadKey(key string, retryCount int) error {
-	log.Printf("saving session: %s", key)
 	if retryCount <= 0 {
 		return nil
 	}
