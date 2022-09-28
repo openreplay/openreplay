@@ -3,7 +3,7 @@ from typing import List
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite, \
-    sessions_devtool
+    sessions_devtool, sessions_notes
 from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -40,8 +40,8 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False,
-                  live=True):
+def get_by_id2_pg(tenant_id, project_id, session_id, user_id, full_data=False, include_fav_viewed=False,
+                  group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
@@ -100,6 +100,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                     start_ts=data["startTs"], duration=data["duration"])
 
+                data['notes'] = sessions_notes.get_session_notes(tenant_id=tenant_id, project_id=project_id,
+                                                                 session_id=session_id, user_id=user_id)
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
                 data['live'] = live and assist.is_live(project_id=project_id,

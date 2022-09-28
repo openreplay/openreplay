@@ -175,8 +175,8 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
                 context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
         return {"errors": ["session not found"]}
-    data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context.user_id,
-                                  include_fav_viewed=True, group_metadata=True)
+    data = sessions.get_by_id2_pg(tenant_id=context.tenant_id, project_id=projectId, session_id=sessionId,
+                                  full_data=True, user_id=context.user_id, include_fav_viewed=True, group_metadata=True)
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
@@ -265,8 +265,9 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
-                                      user_id=context.user_id, include_fav_viewed=True, group_metadata=True, live=False)
+        data = sessions.get_by_id2_pg(tenant_id=context.tenant_id, project_id=projectId, session_id=sessionId,
+                                      full_data=True, user_id=context.user_id, include_fav_viewed=True,
+                                      group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
@@ -328,8 +329,8 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        "data": sessions_favorite.favorite_session(project_id=projectId, user_id=context.user_id,
-                                                   session_id=sessionId)}
+        "data": sessions_favorite.favorite_session(tenant_id=context.tenant_id, project_id=projectId,
+                                                   user_id=context.user_id, session_id=sessionId)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
