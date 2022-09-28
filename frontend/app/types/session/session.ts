@@ -42,7 +42,7 @@ export default Record({
   favorite: false,
   filterId: '',
   messagesUrl: '',
-  mobsUrl: [],
+  domURL: [],
   userBrowser: '',
   userBrowserVersion: '?',
   userCountry: '',
@@ -82,7 +82,7 @@ export default Record({
   agentIds: [],
   isCallActive: false
 }, {
-  fromJS:({ 
+  fromJS:({
     startTs=0,
     timestamp = 0,
     backendErrors=0,
@@ -92,7 +92,7 @@ export default Record({
     stackEvents = [],
     issues = [],
     sessionId, sessionID,
-    mobsUrl = [],
+    domURL = [],
     ...session
   }) => {
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -117,7 +117,7 @@ export default Record({
     const missedResources = resources.filter(({ success }) => !success);
     const logs = List(session.logs).map(Log);
 
-    const stackEventsList = List(stackEvents)   
+    const stackEventsList = List(stackEvents)
       .concat(List(session.userEvents))
       .sortBy(se => se.timestamp)
       .map(se => StackEvent({ ...se, time: se.timestamp - startedAt }));
@@ -149,7 +149,7 @@ export default Record({
       issues: issuesList,
       sessionId: sessionId || sessionID,
       userId: session.userId || session.userID,
-      mobsUrl: Array.isArray(mobsUrl) ? mobsUrl : [ mobsUrl ]
+      domURL: Array.isArray(domURL) ? domURL : [ domURL ]
     };
   },
   idKey: "sessionId",
