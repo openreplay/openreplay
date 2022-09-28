@@ -2,37 +2,20 @@ import React from 'react';
 import { NoContent, Pagination, Icon } from 'UI';
 import { sliceListPerPage } from 'App/utils';
 import NoteItem from './NoteItem';
+import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
-//{ siteId }: { siteId: string }
 function NotesList() {
-  const list = [
-    {
-      author: 'nikita@openreplay.com',
-      date: 'Today, 12.00PM',
-      tag: 1,
-      isPrivate: true,
-      description: 'Testing private note stuff bla bla bla',
-      sessionId: '123123123',
-      id: 2,
-    },
-    {
-      author: 'sasha@openreplay.com',
-      date: 'Tomorrow, 12.00PM',
-      tag: 0,
-      isPrivate: false,
-      description: 'Not Testing team note stuff bla bla bla',
-      sessionId: '123123123',
-      id: 1,
-    },
-  ];
+  const { notesStore } = useStore()
 
-  const store = {
-    page: 1,
-    pageSize: 10,
-    // @ts-ignore
-    updateKey: (a, b) => 1,
-  };
+  React.useEffect(() => {
+    if (!notesStore.notes.length) {
+      notesStore.fetchNotes()
+    }
+  }, [])
 
+  const list = notesStore.notes
+  console.log(list)
   return (
     <NoContent
       show={list.length === 0}
@@ -44,15 +27,15 @@ function NotesList() {
       }
     >
       <div className="mt-3 border-b rounded bg-white">
-        {sliceListPerPage(list, store.page - 1, store.pageSize).map((note) => (
-          <React.Fragment key={note.id}>
+        {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map(note => (
+          <React.Fragment key={note.noteId}>
             <NoteItem
               author={note.author}
-              tag={note.tag}
-              date={note.date}
-              isPrivate={note.isPrivate}
-              description={note.description}
-              sessionId={note.sessionId}
+              tags={note.tags}
+              timestamp={note.timestamp}
+              isPrivate={note.isPublic}
+              description={note.message}
+              sessionId={'123123'} // note.sessionId
             />
           </React.Fragment>
         ))}
@@ -60,14 +43,14 @@ function NotesList() {
 
       <div className="w-full flex items-center justify-between pt-4 px-6">
         <div className="text-disabled-text">
-          Showing <span className="font-semibold">{Math.min(list.length, store.pageSize)}</span> out
+          Showing <span className="font-semibold">{Math.min(list.length, notesStore.pageSize)}</span> out
           of <span className="font-semibold">{list.length}</span> notes
         </div>
         <Pagination
-          page={store.page}
-          totalPages={Math.ceil(list.length / store.pageSize)}
-          onPageChange={(page) => store.updateKey('page', page)}
-          limit={store.pageSize}
+          page={notesStore.page}
+          totalPages={Math.ceil(list.length / notesStore.pageSize)}
+          onPageChange={(page) => notesStore.changePage(page)}
+          limit={notesStore.pageSize}
           debounceRequest={100}
         />
       </div>
@@ -75,4 +58,4 @@ function NotesList() {
   );
 }
 
-export default NotesList;
+export default observer(NotesList);
