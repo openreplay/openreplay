@@ -1,14 +1,37 @@
-
-
 import APIClient from 'App/api_client';
 
-export interface Note {
+
+export const tagProps = {
+  'QUERY': '#3EAAAF',
+  'ISSUE': '#CC0000',
+  'TASK': '#7986CB',
+  'OTHER': 'rgba(0, 0, 0, 0.26)',
+}
+
+export type iTag = keyof typeof tagProps
+
+export const TAGS = Object.keys(tagProps) as unknown as (keyof typeof tagProps)[]
+
+export interface WriteNote {
   message: string
   tags: string[]
   isPublic: boolean
   timestamp: number
   noteId?: string
   author?: string
+}
+
+export interface Note {
+  createdAt: string
+  deletedAt: string | null
+  isPublic: boolean
+  message: string
+  noteId: number
+  projectId: number
+  sessionId: string
+  tags: iTag[]
+  timestamp: number
+  userId: number
 }
 
 export default class NotesService {
@@ -25,7 +48,7 @@ export default class NotesService {
     getNotes(): Promise<Note[]> {
       return this.client.get('/notes').then(r => {
         if (r.ok) {
-          return r.json()
+          return r.json().then(r => r.data)
         } else {
           throw new Error('Error getting notes: ' + r.status)
         }
@@ -34,21 +57,45 @@ export default class NotesService {
 
     getNotesBySessionId(sessionID: string): Promise<Note[]> {
       return this.client.get(`/sessions/${sessionID}/notes`)
-        .then(r => r.json())
+      .then(r => {
+        if (r.ok) {
+          return r.json().then(r => r.data)
+        } else {
+          throw new Error('Error getting notes for ' +sessionID + ' cuz: ' + r.status)
+        }
+      })
     }
 
-    addNote(sessionID: string, note: Note): Promise<Note> {
+    addNote(sessionID: string, note: WriteNote): Promise<Note> {
       return this.client.post(`/sessions/${sessionID}/notes`, note)
-        .then(r => r.json())
+      .then(r => {
+        if (r.ok) {
+          return r.json().then(r => r.data)
+        } else {
+          throw new Error('Error adding note: ' + r.status)
+        }
+      })
     }
 
     updateNote(noteID: string, note: Note): Promise<Note> {
       return this.client.post(`/notes/${noteID}`, note)
-        .then(r => r.json())
+      .then(r => {
+        if (r.ok) {
+          return r.json().then(r => r.data)
+        } else {
+          throw new Error('Error updating note: ' + r.status)
+        }
+      })
     }
 
-    deleteNote(noteID: string) {
+    deleteNote(noteID: number) {
       return this.client.delete(`/notes/${noteID}`)
-        .then(r => r.json())
+      .then(r => {
+        if (r.ok) {
+          return r.json().then(r => r.data)
+        } else {
+          throw new Error('Error deleting note: ' + r.status)
+        }
+      })
     }
 }

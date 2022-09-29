@@ -1,18 +1,17 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { connectPlayer } from 'Player';
 import cls from './timeTracker.module.css';
 
 
 function TimeTracker({ player, scale }) {
-  return (	
+  return (
     <>
   		<div
         className={ cls.positionTracker }
         style={ { left: `${ player.state.time * scale }%` } }
       />
       <div
-      	className={ cls.playedTimeline } 
+      	className={ cls.playedTimeline }
       	style={ { width: `${ player.state.time * scale }%` } }
       />
   	</>

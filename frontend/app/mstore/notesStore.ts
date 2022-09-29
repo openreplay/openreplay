@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx"
 import { notesService } from "App/services"
-import { Note } from 'App/services/NotesService'
+import { Note, WriteNote } from 'App/services/NotesService'
 
 interface SessionNotes {
   [sessionId: string]: Note[]
@@ -8,7 +8,7 @@ interface SessionNotes {
 
 export default class NotesStore {
   notes: Note[] = []
-  sessionNotes: SessionNotes
+  sessionNotes: SessionNotes = {}
   loading: boolean
   page = 1
   pageSize = 15
@@ -35,6 +35,7 @@ export default class NotesStore {
     try {
       const notes = await notesService.getNotesBySessionId(sessionId)
       this.sessionNotes[sessionId] = notes
+      return notes;
     } catch (e) {
       console.error(e)
     } finally {
@@ -42,7 +43,7 @@ export default class NotesStore {
     }
   }
 
-  async addNote(sessionId: string, note: Note) {
+  async addNote(sessionId: string, note: WriteNote) {
     this.loading = true
     try {
       const addedNote = await notesService.addNote(sessionId, note)
@@ -54,7 +55,7 @@ export default class NotesStore {
     }
   }
 
-  async deleteNote(noteId: string) {
+  async deleteNote(noteId: number) {
     this.loading = true
     try {
       const deleted = await notesService.deleteNote(noteId)
