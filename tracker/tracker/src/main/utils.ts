@@ -7,7 +7,7 @@ export const IS_FIREFOX = IN_BROWSER && navigator.userAgent.match(/firefox|fxios
 export const MAX_STR_LEN = 1e5
 
 const navigationStart: number | false =
-  (IN_BROWSER && performance.timing.navigationStart) || performance.timeOrigin
+  IN_BROWSER && (performance.timing.navigationStart || performance.timeOrigin)
 // performance.now() is buggy in some browsers
 export const timestamp: () => number =
   IN_BROWSER && performance.now() && navigationStart
