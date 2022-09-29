@@ -139,6 +139,8 @@ export const reduceThenFetchResource =
         const filter = getState().getIn(['search', 'instance']).toData();
 
         const activeTab = getState().getIn(['search', 'activeTab']);
+
+        if (activeTab.type === 'notes') return;
         if (activeTab.type !== 'all' && activeTab.type !== 'bookmark' && activeTab.type !== 'vault') {
             const tmpFilter = filtersMap[FilterKey.ISSUE];
             tmpFilter.value = [activeTab.type];

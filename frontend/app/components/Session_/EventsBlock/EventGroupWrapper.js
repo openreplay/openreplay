@@ -6,10 +6,11 @@ import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import Event from './Event'
 import stl from './eventGroupWrapper.module.css';
+import NoteEvent from './NoteEvent';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle("showLoadInfo", "toggleLoadInfo")
-class EventGroupWrapper extends React.PureComponent {
+class EventGroupWrapper extends React.Component {
 
   toggleLoadInfo = (e) => {
     e.stopPropagation();
@@ -42,6 +43,8 @@ class EventGroupWrapper extends React.PureComponent {
       showLoadInfo,
       isFirst,
       presentInSearch,
+      isNote,
+      filterOutNote,
     } = this.props;
     const isLocation = event.type === TYPES.LOCATION;
 
@@ -64,7 +67,19 @@ class EventGroupWrapper extends React.PureComponent {
             </TextEllipsis>
           </div>
         }
-        { isLocation
+        {isNote ? (
+          <NoteEvent
+            userId={event.userId}
+            timestamp={event.timestamp}
+            tags={event.tags}
+            isPublic={event.isPublic}
+            message={event.message}
+            sessionId={event.sessionId}
+            date={event.createdAt}
+            noteId={event.noteId}
+            filterOutNote={filterOutNote}
+          />
+        ) : isLocation
           ? <Event
               extended={isFirst}
               key={ event.key }
@@ -90,8 +105,7 @@ class EventGroupWrapper extends React.PureComponent {
               presentInSearch={presentInSearch}
               isLastInGroup={isLastInGroup}
               whiteBg={whiteBg}
-            />
-        }
+            />}
       </div>
     )
   }

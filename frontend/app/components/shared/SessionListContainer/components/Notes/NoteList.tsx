@@ -5,7 +5,7 @@ import NoteItem from './NoteItem';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-function NotesList() {
+function NotesList({ members }: {members: Array<Record<string, any>>}) {
   const { notesStore } = useStore()
 
   React.useEffect(() => {
@@ -15,7 +15,6 @@ function NotesList() {
   }, [])
 
   const list = notesStore.notes
-  console.log(list)
   return (
     <NoContent
       show={list.length === 0}
@@ -30,18 +29,21 @@ function NotesList() {
         {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map(note => (
           <React.Fragment key={note.noteId}>
             <NoteItem
-              author={note.author}
+              userId={note.userId}
               tags={note.tags}
               timestamp={note.timestamp}
-              isPrivate={note.isPublic}
+              isPublic={note.isPublic}
               description={note.message}
-              sessionId={'123123'} // note.sessionId
+              date={note.createdAt}
+              noteId={note.noteId}
+              sessionId={note.sessionId}
+              userEmail={members.find(m => m.id === note.userId).email || note.userId}
             />
           </React.Fragment>
         ))}
       </div>
 
-      <div className="w-full flex items-center justify-between pt-4 px-6">
+      <div className="w-full flex items-center justify-between py-4 px-6">
         <div className="text-disabled-text">
           Showing <span className="font-semibold">{Math.min(list.length, notesStore.pageSize)}</span> out
           of <span className="font-semibold">{list.length}</span> notes

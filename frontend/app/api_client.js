@@ -26,6 +26,7 @@ const siteIdRequiredPaths = [
   '/dashboards',
   '/metrics',
   '/unprocessed',
+  '/notes',
   // '/custom_metrics/sessions',
 ];
 
@@ -37,7 +38,7 @@ const noStoringFetchPathStarts = [
 
 // null?
 export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
-  const keys = Array.isArray(obj) 
+  const keys = Array.isArray(obj)
     ? new Array(obj.length).fill().map((_, i) => i)
     : Object.keys(obj);
   const retObj = Array.isArray(obj) ? [] : {};
@@ -49,7 +50,7 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
       retObj[key] = value;
     }
   });
- 
+
   return retObj;
 }
 
@@ -70,7 +71,7 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
-  fetch(path, params, options = { clean: true }) {    
+  fetch(path, params, options = { clean: true }) {
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
       this.init.body = JSON.stringify(cleanedParams);

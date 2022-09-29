@@ -26,6 +26,9 @@ const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
 const SET_TIMELINE_HOVER_POINTER = 'sessions/SET_TIMELINE_HOVER_POINTER';
+const SET_NOTE_TOOLTIP = 'sessions/SET_NOTE_TOOLTIP'
+const FILTER_OUT_NOTE = 'sessions/FILTER_OUT_NOTE'
+const ADD_NOTE = 'sessions/ADD_NOTE'
 
 const SET_SESSION_PATH = 'sessions/SET_SESSION_PATH';
 const LAST_PLAYED_SESSION_ID = `${name}/LAST_PLAYED_SESSION_ID`;
@@ -64,7 +67,7 @@ const initialState = Map({
     sessionPath: {},
     lastPlayedSessionId: null,
     timeLineTooltip: { time: 0, offset: 0, isVisible: false },
-    noteTooltip: { time: 100, offset: 100, isVisible: true },
+    noteTooltip: { time: 0, isVisible: false },
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -193,6 +196,22 @@ const reducer = (state = initialState, action = {}) => {
             return state.set('timelinePointer', action.pointer);
         case SET_TIMELINE_HOVER_POINTER:
             return state.set('timeLineTooltip', action.timeLineTooltip);
+        case SET_NOTE_TOOLTIP:
+            return state.set('noteTooltip', action.noteTooltip);
+        case FILTER_OUT_NOTE:
+            return state.updateIn(['current', 'notesWithEvents'], (list) =>
+                list.filter(evt => !evt.noteId || evt.noteId !== action.noteId)
+            )
+        case ADD_NOTE:
+            console.log(action.note)
+            return state.updateIn(['current', 'notesWithEvents'], (list) =>
+                list.push(action.note).sort((a, b) => {
+                    const aTs = a.time || a.timestamp
+                    const bTs = b.time || b.timestamp
+
+                    return aTs - bTs
+                  })
+            )
         case SET_SESSION_PATH:
             return state.set('sessionPath', action.path);
         case LAST_PLAYED_SESSION_ID:
@@ -361,6 +380,27 @@ export function setTimelineHoverTime(timeLineTooltip) {
         type: SET_TIMELINE_HOVER_POINTER,
         timeLineTooltip
     };
+}
+
+export function setNoteTooltip(noteTooltip) {
+    return {
+        type: SET_NOTE_TOOLTIP,
+        noteTooltip
+    }
+}
+
+export function filterOutNote(noteId) {
+    return {
+        type: FILTER_OUT_NOTE,
+        noteId
+    }
+}
+
+export function addNote(note) {
+    return {
+        type: ADD_NOTE,
+        note
+    }
 }
 
 export function setSessionPath(path) {

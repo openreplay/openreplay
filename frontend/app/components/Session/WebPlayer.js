@@ -3,11 +3,11 @@ import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
-import { PlayerProvider, connectPlayer, init as initPlayer, clean as cleanPlayer, Controls } from 'Player';
+import { PlayerProvider, injectNotes, connectPlayer, init as initPlayer, clean as cleanPlayer, Controls } from 'Player';
 import cn from 'classnames';
 import RightBlock from './RightBlock';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
-
+import { useStore } from 'App/mstore'
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
@@ -62,12 +62,17 @@ function RightMenu({ live, tabs, activeTab, setActiveTab, fullscreen }) {
 
 function WebPlayer(props) {
     const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, fetchList } = props;
+    const { notesStore } = useStore()
 
     const [activeTab, setActiveTab] = useState('');
 
     useEffect(() => {
         fetchList('issues');
         initPlayer(session, jwt);
+
+        notesStore.fetchSessionNotes(session.sessionId).then(r => {
+            injectNotes(r)
+        })
 
         const jumptTime = props.query.get('jumpto');
         if (jumptTime) {

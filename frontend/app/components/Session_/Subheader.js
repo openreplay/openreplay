@@ -3,10 +3,11 @@ import { Icon } from 'UI';
 import Autoplay from './Autoplay';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
-import { connectPlayer, pause } from 'Player';
 import copy from 'copy-to-clipboard';
 import { Tooltip } from 'react-tippy';
 import Issues from './Issues/Issues';
+import NotePopup from './components/NotePopup';
+import { connectPlayer } from 'Player';
 
 function SubHeader(props) {
   const [isCopied, setCopied] = React.useState(false);
@@ -18,9 +19,6 @@ function SubHeader(props) {
       ? `${props.currentLocation.slice(0, 60)}...`
       : props.currentLocation;
 
-  const toggleNotePopup = () => {
-    pause();
-  };
   return (
     <div className="w-full px-4 py-2 flex items-center border-b">
       {location && (
@@ -50,13 +48,7 @@ function SubHeader(props) {
           className="ml-auto text-sm flex items-center color-gray-medium"
           style={{ width: 'max-content' }}
         >
-          <div
-            onClick={toggleNotePopup}
-            className="cursor-pointer mr-4 hover:bg-gray-light-shade rounded-md p-1 flex items-center"
-          >
-            <Icon name="quotes" size="16" className="mr-2" />
-            Add note
-          </div>
+          <NotePopup />
           <div className="cursor-pointer mr-4 hover:bg-gray-light-shade rounded-md p-1">
             {props.jiraConfig && props.jiraConfig.token && <Issues sessionId={props.sessionId} />}
           </div>
@@ -86,6 +78,8 @@ function SubHeader(props) {
   );
 }
 
-const SubH = connectPlayer((state) => ({ currentLocation: state.location }))(SubHeader);
+const SubH = connectPlayer(
+  (state) => ({ currentLocation: state.location })
+)(SubHeader);
 
 export default React.memo(SubH);
