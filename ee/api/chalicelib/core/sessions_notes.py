@@ -55,8 +55,10 @@ def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNote
                             RETURNING *;""",
                             {"user_id": user_id, "project_id": project_id, "session_id": session_id, **data.dict()})
         cur.execute(query)
-        result = cur.fetchone()
-    return helper.dict_to_camel_case(result)
+        result = helper.dict_to_camel_case(cur.fetchone())
+        if result:
+            result["createdAt"] = TimeUTC.datetime_to_timestamp(result["createdAt"])
+    return result
 
 
 def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNoteSchema):

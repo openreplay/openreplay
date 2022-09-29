@@ -175,8 +175,8 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
                 context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
         return {"errors": ["session not found"]}
-    data = sessions.get_by_id2_pg(tenant_id=context.tenant_id, project_id=projectId, session_id=sessionId,
-                                  full_data=True, user_id=context.user_id, include_fav_viewed=True, group_metadata=True)
+    data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
+                                  include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
