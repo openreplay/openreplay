@@ -716,36 +716,6 @@ def __status_rank(status):
     }.get(status)
 
 
-def merge(error_ids):
-    error_ids = list(set(error_ids))
-    errors = get_batch(error_ids)
-    if len(error_ids) <= 1 or len(error_ids) > len(errors):
-        return {"errors": ["invalid list of ids"]}
-    error_ids = [e["errorId"] for e in errors]
-    parent_error_id = error_ids[0]
-    status = "unresolved"
-    for e in errors:
-        if __status_rank(status) < __status_rank(e["status"]):
-            status = e["status"]
-            if __status_rank(status) == MAX_RANK:
-                break
-    params = {
-        "error_ids": tuple(error_ids),
-        "parent_error_id": parent_error_id,
-        "status": status
-    }
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(
-            """UPDATE public.errors
-                SET parent_error_id = %(parent_error_id)s, status = %(status)s
-                WHERE error_id IN %(error_ids)s OR parent_error_id IN %(error_ids)s;""",
-            params)
-        cur.execute(query=query)
-        # row = cur.fetchone()
-
-    return {"data": "success"}
-
-
 def format_first_stack_frame(error):
     error["stack"] = sourcemaps.format_payload(error.pop("payload"), truncate_to_first=True)
     for s in error["stack"]:

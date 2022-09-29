@@ -467,4 +467,9 @@ message 79, 'Zustand', :replayer => :devtools do
   string 'State'
 end
 
+message 127, 'SessionSearch', :tracker => false, :replayer => false  do
+  uint 'Timestamp'
+  uint 'Partition'
+end
+
 # 80 -- 90 reserved

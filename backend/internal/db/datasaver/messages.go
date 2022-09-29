@@ -5,7 +5,8 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
+func (mi *Saver) InsertMessage(msg Message) error {
+	sessionID := msg.SessionID()
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:

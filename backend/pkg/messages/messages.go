@@ -156,6 +156,8 @@ const (
 
 	MsgZustand = 79
 
+	MsgSessionSearch = 127
+
 	MsgIOSBatchMeta = 107
 
 	MsgIOSSessionStart = 90
@@ -3034,6 +3036,40 @@ func (msg *Zustand) Decode() Message {
 
 func (msg *Zustand) TypeID() int {
 	return 79
+}
+
+type SessionSearch struct {
+	message
+	Timestamp uint64
+	Partition uint64
+}
+
+func (msg *SessionSearch) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 127
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Partition, buf, p)
+	return buf[:p]
+}
+
+func (msg *SessionSearch) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *SessionSearch) Decode() Message {
+	return msg
+}
+
+func (msg *SessionSearch) TypeID() int {
+	return 127
 }
 
 type IOSBatchMeta struct {

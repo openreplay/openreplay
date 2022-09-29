@@ -1,6 +1,5 @@
 import ListReader from './ListReader';
 import ListReaderWithRed from './ListReaderWithRed';
-import ReduxListReader from './ReduxListReader';
 import { update as updateStore } from '../store';
 
 const l = n => `${ n }List`;
@@ -43,7 +42,7 @@ export function init(lists) {
 	readers = {};
 	entityNamesSimple.forEach(n => readers[ n ] = new ListReader(createCallback(n)));
 	entityNamesWithRed.forEach(n => readers[ n ] = new ListReaderWithRed(createCallback(n)));
-	//readers.redux = new ReduxListReader(createCallback("redux"));
+
 	entityNames.forEach(n => readers[ n ].list = lists[ n ] || []);
 }
 export function append(name, item) {

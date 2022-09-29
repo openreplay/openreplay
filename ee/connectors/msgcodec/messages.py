@@ -743,6 +743,14 @@ class Zustand(Message):
         self.state = state
 
 
+class SessionSearch(Message):
+    __id__ = 127
+
+    def __init__(self, timestamp, partition):
+        self.timestamp = timestamp
+        self.partition = partition
+
+
 class IOSBatchMeta(Message):
     __id__ = 107
 

@@ -17,7 +17,9 @@ export interface Props {
 
 function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: Props) {
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false)
+  const [anyRemoteEnabled, setRemoteEnabled] = useState(false)
 
+  const onlyLocalEnabled = localVideoEnabled && !anyRemoteEnabled
   return (
     <Draggable handle=".handle" bounds="body">
       <div
@@ -32,13 +34,13 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
           </div>
           <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />
         </div>
-        <div className={cn(stl.videoWrapper, 'relative')} style={{ minHeight: localVideoEnabled ? 52 : undefined}}>
+        <div className={cn(stl.videoWrapper, 'relative')} style={{ minHeight: onlyLocalEnabled ? 52 : undefined}}>
           {incomeStream
-            ? incomeStream.map(stream => <React.Fragment key={stream.id}><VideoContainer stream={ stream } /></React.Fragment>) : (
+            ? incomeStream.map(stream => <React.Fragment key={stream.id}><VideoContainer stream={ stream } setRemoteEnabled={setRemoteEnabled} /></React.Fragment>) : (
             <div className={stl.noVideo}>Error obtaining incoming streams</div>
           )}
           <div className={cn("absolute bottom-0 right-0 z-50", localVideoEnabled ? "" : "!hidden")}>
-            <VideoContainer stream={ localStream ? localStream.stream : null } muted height={50} />
+            <VideoContainer stream={ localStream ? localStream.stream : null } muted height={anyRemoteEnabled ? 50 : 280} />
           </div>
         </div>
         <ChatControls videoEnabled={localVideoEnabled} setVideoEnabled={setLocalVideoEnabled} stream={localStream} endCall={endCall} isPrestart={isPrestart} />

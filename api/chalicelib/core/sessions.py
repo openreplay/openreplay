@@ -2,7 +2,8 @@ from typing import List
 
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite, \
+    sessions_devtool
 from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -81,7 +82,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)
@@ -89,14 +90,14 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors if
-                                      e['source'] == "js_exception"][
-                                     :500]  # limit the number of errors to reduce the response-body size
+                                      # limit the number of errors to reduce the response-body size
+                                      e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
+                    data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
+                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
-                                                                    start_ts=data["startTs"],
-                                                                    duration=data["duration"])
+                                                                    start_ts=data["startTs"], duration=data["duration"])
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
@@ -1237,3 +1238,15 @@ def count_all():
     with pg_client.PostgresClient(unlimited_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)
+
+
+def session_exists(project_id, session_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT 1 
+                             FROM public.sessions 
+                             WHERE session_id=%(session_id)s 
+                                AND project_id=%(project_id)s""",
+                            {"project_id": project_id, "session_id": session_id})
+        cur.execute(query)
+        row = cur.fetchone()
+    return row is not None

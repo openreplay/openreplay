@@ -661,6 +661,12 @@ class MessageCodec(Codec):
                 state=self.read_string(reader)
             )
 
+        if message_id == 127:
+            return SessionSearch(
+                timestamp=self.read_uint(reader),
+                partition=self.read_uint(reader)
+            )
+
         if message_id == 107:
             return IOSBatchMeta(
                 timestamp=self.read_uint(reader),

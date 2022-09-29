@@ -3,10 +3,11 @@ import React, { useEffect, useRef } from 'react'
 interface Props {
   stream: MediaStream | null
   muted?: boolean,
-  height?: number
+  height?: number,
+  setRemoteEnabled?: (isEnabled: boolean) => void
 }
 
-function VideoContainer({ stream, muted = false, height = 280 }: Props) {
+function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled }: Props) {
   const ref = useRef<HTMLVideoElement>(null);
   const [isEnabled, setEnabled] = React.useState(false);
 
@@ -22,7 +23,10 @@ function VideoContainer({ stream, muted = false, height = 280 }: Props) {
       const settings = stream.getVideoTracks()[0]?.getSettings()
       const isDummyVideoTrack = settings ? (settings.width === 2 || settings.frameRate === 0 || !settings.frameRate && !settings.width) : true
       const shouldBeEnabled = !isDummyVideoTrack
-      isEnabled !== shouldBeEnabled ? setEnabled(shouldBeEnabled) : null;
+      if (isEnabled !== shouldBeEnabled) {
+        setEnabled(shouldBeEnabled)
+        setRemoteEnabled?.(shouldBeEnabled)
+      }
     }, 500)
     return () => clearInterval(iid)
   }, [ stream, isEnabled ])

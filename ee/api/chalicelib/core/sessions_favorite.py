@@ -1,10 +1,11 @@
 from decouple import config
 
+import schemas_ee
 from chalicelib.core import sessions, sessions_favorite_exp
 from chalicelib.utils import pg_client, s3_extra
 
 
-def add_favorite_session(project_id, user_id, session_id):
+def add_favorite_session(project_id, user_id, session_id, context: schemas_ee.CurrentContext):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -15,10 +16,10 @@ def add_favorite_session(project_id, user_id, session_id):
 
     sessions_favorite_exp.add_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
     return sessions.get_by_id2_pg(project_id=project_id, session_id=session_id, user_id=user_id, full_data=False,
-                                  include_fav_viewed=True)
+                                  include_fav_viewed=True, context=context)
 
 
-def remove_favorite_session(project_id, user_id, session_id):
+def remove_favorite_session(project_id, user_id, session_id, context: schemas_ee.CurrentContext):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -29,10 +30,10 @@ def remove_favorite_session(project_id, user_id, session_id):
         )
     sessions_favorite_exp.remove_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
     return sessions.get_by_id2_pg(project_id=project_id, session_id=session_id, user_id=user_id, full_data=False,
-                                  include_fav_viewed=True)
+                                  include_fav_viewed=True, context=context)
 
 
-def favorite_session(project_id, user_id, session_id):
+def favorite_session(project_id, user_id, session_id, context: schemas_ee.CurrentContext):
     if favorite_session_exists(user_id=user_id, session_id=session_id):
         key = str(session_id)
         try:
@@ -59,7 +60,7 @@ def favorite_session(project_id, user_id, session_id):
     except Exception as e:
         print(f"!!!Error while tagging: {key} to vault")
         print(str(e))
-    return add_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
+    return add_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id, context=context)
 
 
 def favorite_session_exists(user_id, session_id):

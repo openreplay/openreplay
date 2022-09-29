@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
+	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"time"
 )
@@ -52,9 +53,11 @@ func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, 
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
-func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp, msgTimestamp int64) {
+func (se *SessionEnder) UpdateSession(msg messages.Message) {
+	sessionID := msg.Meta().SessionID()
+	currTS := msg.Meta().Batch().Timestamp()
+	msgTimestamp := msg.Meta().Timestamp
 	localTS := time.Now().UnixMilli()
-	currTS := timestamp
 	if currTS == 0 {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
