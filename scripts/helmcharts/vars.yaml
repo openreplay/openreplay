@@ -138,6 +138,9 @@ global:
 # storage:
 #   pvc:
 #     name: mysharedpersistence
+# chalice:
+#   pvc:
+#     name: mysharedpersistence
 
 chalice:
   env:
