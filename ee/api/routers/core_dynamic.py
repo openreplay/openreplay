@@ -446,9 +446,11 @@ def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = D
     return data
 
 
-@app.get('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
-def get_all_notes(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_all_notes(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id)
+@app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
+def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
+                  context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
+                                                      user_id=context.user_id)
     if "errors" in data:
         return data
     return {

@@ -28,7 +28,7 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
     return rows
 
 
-def get_all_notes(tenant_id, project_id, user_id):
+def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*
                                 FROM sessions_notes
@@ -37,7 +37,8 @@ def get_all_notes(tenant_id, project_id, user_id):
                                   AND sessions_notes.deleted_at IS NULL
                                   AND (sessions_notes.user_id = %(user_id)s 
                                         OR sessions_notes.is_public)
-                                ORDER BY created_at DESC;""",
+                                ORDER BY created_at {data.order}
+                                LIMIT {data.limit} OFFSET {data.limit * (data.page - 1)};""",
                             {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id})
 
         cur.execute(query=query)

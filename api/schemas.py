@@ -1086,6 +1086,14 @@ class IntegrationType(str, Enum):
     newrelic = "NEWRELIC"
 
 
+class SearchNoteSchema(_PaginatedSchema):
+    sort: str = Field(default="createdAt")
+    order: SortOrderType = Field(default=SortOrderType.desc)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
 class SessionNoteSchema(BaseModel):
     message: str = Field(..., min_length=2)
     tags: List[str] = Field(default=[])
