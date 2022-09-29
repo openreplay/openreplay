@@ -42,6 +42,8 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: ASSIST_JWT_SECRET
+              value: {{ .Values.global.assistJWTSecret }}
             - name: ASSIST_KEY
               value: {{ .Values.global.assistKey }}
             - name: LICENSE_KEY
