@@ -49,6 +49,7 @@ export interface State extends SuperState, AssistState {
   domBuildingTime?: any,
   loadTime?: any,
   error: boolean,
+  devtoolsLoading: boolean
 }
 export const INITIAL_STATE: State = {
   ...SUPER_INITIAL_STATE,
@@ -56,7 +57,8 @@ export const INITIAL_STATE: State = {
   ...ASSIST_INITIAL_STATE,
   performanceChartData: [],
   skipIntervals: [],
-  error: false
+  error: false,
+  devtoolsLoading: false,
 };
 
 
@@ -226,12 +228,14 @@ export default class MessageDistributor extends StatedScreen {
     .finally(this.onFileReadFinally)
 
     // load devtools
+    update({ devtoolsLoading: true })
     loadFiles(this.session.devtoolsURL, createNewParser())
     .catch(() =>
       requestEFSDevtools(this.session.sessionId)
         .then(createNewParser())
     )
-    //.then() // setState({ devtoolsLoading: true })
+    //.catch() // not able to download the devtools file
+    .finally(() => update({ devtoolsLoading: false }))
   }
 
   reloadWithUnprocessedFile() {
