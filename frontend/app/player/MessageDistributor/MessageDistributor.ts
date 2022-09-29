@@ -212,14 +212,22 @@ export default class MessageDistributor extends StatedScreen {
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    loadFiles(this.session.mobsUrl, createNewParser())
-    .catch(() => 
+    loadFiles(this.session.domURL, createNewParser())
+    .catch(() => // do if  only the first file missing (404) (?)
       requestEFSDom(this.session.sessionId)
         .then(createNewParser())
     )
     .then(this.onFileReadSuccess)
     .catch(this.onFileReadFailed)   
     .finally(this.onFileReadFinally)
+
+    // load devtools
+    loadFiles(this.session.devtoolsURL, createNewParser())
+    .catch(() =>
+      requestEFSDevtools(this.session.sessionId)
+        .then(createNewParser())
+    )
+    //.then() // setState({ devtoolsLoading: true })
   }
 
   reloadWithUnprocessedFile() {
