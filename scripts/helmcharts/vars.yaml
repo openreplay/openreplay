@@ -20,6 +20,10 @@ postgresql: &postgres
 clickhouse:
   # For enterpriseEdition
   enabled: false
+  global:
+    clickhouse:
+      clickhouseHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+      clickhousePort: 9000
 
 quickwit: &quickwit
   # For enterpriseEdition
@@ -60,6 +64,8 @@ minio:
       # `openssl rand -hex 20`
       accessKey: "changeMeMinioAccessKey"
       secretKey: "changeMeMinioPassword"
+      minioHost: minio.db.svc.cluster.local
+      minioPort: 9000
 
 ingress-nginx: &ingress-nginx
   controller:

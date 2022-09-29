@@ -16,7 +16,11 @@ postgresql: &postgres
   #     memory: 3000Mi
   #     cpu: 2
 
-clickhouse: {}
+clickhouse:
+  global:
+    clickhouse:
+      clickhouseHost: "{{ clickhouse_host }}"
+      clickhousePort: "{{ clickhouse_port }}"
   # For enterpriseEdition
   # enabled: true
 
@@ -41,6 +45,8 @@ minio:
       # `openssl rand -hex 20`
       accessKey: "{{ minio_access_key }}"
       secretKey: "{{ minio_secret_key }}"
+      minioHost: "{{ minio_host }}"
+      minioPort: "{{ minio_port }}"
 
 # Application specific variables
 global:
