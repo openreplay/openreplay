@@ -216,6 +216,10 @@ export default class MessageDistributor extends StatedScreen {
     .catch(() => // do if  only the first file missing (404) (?)
       requestEFSDom(this.session.sessionId)
         .then(createNewParser())
+        // Fallback to back Compatability with mobsUrl
+        .catch(e =>
+          loadFiles(this.session.mobsUrl, createNewParser())
+        )
     )
     .then(this.onFileReadSuccess)
     .catch(this.onFileReadFailed)   
