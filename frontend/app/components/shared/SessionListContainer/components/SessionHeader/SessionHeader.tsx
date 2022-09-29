@@ -4,6 +4,7 @@ import { applyFilter } from 'Duck/search';
 import Period from 'Types/app/period';
 import SelectDateRange from 'Shared/SelectDateRange';
 import SessionTags from '../SessionTags';
+import NoteTags from '../Notes/NoteTags';
 import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
 import cn from 'classnames';
@@ -69,14 +70,21 @@ function SessionHeader(props: Props) {
                 </div>
             </div>
 
-            {activeTab === 'all' && <div className="flex items-center">
-                <SessionTags />
-                <div className="mx-4" />
-                <SelectDateRange period={period} onChange={onDateChange} right={true} />
-                <div className="mx-2" />
-                <SessionSort />
-                <SessionSettingButton />
-            </div>}
+            {activeTab === 'all' && (
+                <div className="flex items-center">
+                    <SessionTags />
+                    <div className="mx-4" />
+                    <SelectDateRange period={period} onChange={onDateChange} right={true} />
+                    <div className="mx-2" />
+                    <SessionSort />
+                    <SessionSettingButton />
+                </div>
+            )}
+            {activeTab === 'notes' && (
+                <div className="flex items-center">
+                    <NoteTags />
+                </div>
+            )}
         </div>
     );
 }

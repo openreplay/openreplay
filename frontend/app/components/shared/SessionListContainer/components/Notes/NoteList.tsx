@@ -4,17 +4,37 @@ import { sliceListPerPage } from 'App/utils';
 import NoteItem from './NoteItem';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { Note } from 'App/services/NotesService';
 
 function NotesList({ members }: {members: Array<Record<string, any>>}) {
   const { notesStore } = useStore()
+  const [list, setList] = React.useState<Note[]>([])
 
   React.useEffect(() => {
     if (!notesStore.notes.length) {
-      notesStore.fetchNotes()
+      notesStore.fetchNotes().then(notes => setList(notes))
     }
   }, [])
 
-  const list = notesStore.notes
+  React.useEffect(() => {
+    if (notesStore.notes.length) {
+      if (notesStore.activeTags.length) {
+        const tagsLen = notesStore.activeTags.length
+        const filteredList: Note[] = notesStore.notes.filter(note => {
+          for (let i = 0; i < tagsLen; i++) {
+            const tag = notesStore.activeTags[i]
+            if (note.tags.includes(tag)) {
+              return note
+            }
+          }
+        })
+        setList(filteredList)
+      } else {
+        setList(notesStore.notes)
+      }
+    }
+  }, [notesStore.activeTags])
+
   return (
     <NoContent
       show={list.length === 0}

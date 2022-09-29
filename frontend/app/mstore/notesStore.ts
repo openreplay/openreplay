@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx"
 import { notesService } from "App/services"
-import { Note, WriteNote } from 'App/services/NotesService'
+import { Note, WriteNote, iTag } from 'App/services/NotesService'
 
 interface SessionNotes {
   [sessionId: string]: Note[]
@@ -12,7 +12,7 @@ export default class NotesStore {
   loading: boolean
   page = 1
   pageSize = 15
-
+  activeTags: iTag[] = []
 
   constructor() {
     makeAutoObservable(this)
@@ -23,6 +23,7 @@ export default class NotesStore {
     try {
       const notes = await notesService.getNotes()
       this.notes = notes;
+      return notes;
     } catch (e) {
       console.error(e)
     } finally {
@@ -69,5 +70,13 @@ export default class NotesStore {
 
   changePage(page: number) {
     this.page = page
+  }
+
+  toggleTag(tag: iTag) {
+    if (this.activeTags.includes(tag)) {
+      this.activeTags = this.activeTags.filter(exTag => tag !== exTag)
+    } else {
+      this.activeTags = [...this.activeTags, tag]
+    }
   }
 }

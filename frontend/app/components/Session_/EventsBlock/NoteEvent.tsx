@@ -30,7 +30,7 @@ function NoteEvent(props: Props) {
   const onEdit = () => {};
 
   const onCopy = () => {
-    copy(`${session(props.sessionId)}${props.timestamp > 0 ? '?jumpto=' + props.timestamp : ''}`);
+    copy(`${window.location.origin}${session(props.sessionId)}${props.timestamp > 0 ? '?jumpto=' + props.timestamp : ''}`);
     toast.success('Note URL copied to clipboard');
   };
 
@@ -70,7 +70,7 @@ function NoteEvent(props: Props) {
           </div>
         </div>
         <div className="cursor-pointer ml-auto">
-          <ItemMenu bolt items={menuItems} />
+          <ItemMenu bold items={menuItems} />
         </div>
       </div>
       <div>{props.message}</div>
