@@ -6,47 +6,46 @@ import (
 )
 
 func (mi *Saver) InsertMessage(msg Message) error {
-	sessionID := msg.SessionID()
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:
-		if err := mi.sessions.InsertMetadata(sessionID, m); err != nil {
+		if err := mi.sessions.InsertMetadata(m); err != nil {
 			return fmt.Errorf("insert metadata err: %s", err)
 		}
 		return nil
 	case *IssueEvent:
-		return mi.events.InsertIssueEvent(sessionID, m)
+		return mi.events.InsertIssueEvent(m)
 
 	// Web
 	case *SessionStart:
-		return mi.sessions.HandleSessionStart(sessionID, m)
+		return mi.sessions.HandleSessionStart(m)
 	case *SessionEnd:
-		return mi.sessions.HandleSessionEnd(sessionID, m)
+		return mi.sessions.HandleSessionEnd(m)
 	case *UserID:
-		return mi.sessions.InsertUserID(sessionID, m)
+		return mi.sessions.InsertUserID(m)
 	case *UserAnonymousID:
-		return mi.sessions.InsertAnonymousUserID(sessionID, m)
+		return mi.sessions.InsertAnonymousUserID(m)
 	case *CustomEvent:
-		return mi.events.InsertCustomEvent(sessionID, m)
+		return mi.events.InsertCustomEvent(m)
 	case *ClickEvent:
-		return mi.events.InsertClickEvent(sessionID, m)
+		return mi.events.InsertClickEvent(m)
 	case *InputEvent:
-		return mi.events.InsertInputEvent(sessionID, m)
+		return mi.events.InsertInputEvent(m)
 
 	// Unique Web messages
 	case *PageEvent:
-		mi.sendToFTS(msg, sessionID)
-		return mi.events.InsertPageEvent(sessionID, m)
+		mi.sendToFTS(msg)
+		return mi.events.InsertPageEvent(m)
 	case *ErrorEvent:
-		return mi.events.InsertErrorEvent(sessionID, m)
+		return mi.events.InsertErrorEvent(m)
 	case *FetchEvent:
-		mi.sendToFTS(msg, sessionID)
-		return mi.events.InsertFetchEvent(sessionID, m)
+		mi.sendToFTS(msg)
+		return mi.events.InsertFetchEvent(m)
 	case *GraphQLEvent:
-		mi.sendToFTS(msg, sessionID)
-		return mi.events.InsertGraphQLEvent(sessionID, m)
+		mi.sendToFTS(msg)
+		return mi.events.InsertGraphQLEvent(m)
 	case *IntegrationEvent:
-		return mi.events.InsertErrorEvent(sessionID, &ErrorEvent{
+		return mi.events.InsertErrorEvent(&ErrorEvent{
 			MessageID: m.Meta().Index,
 			Timestamp: m.Timestamp,
 			Source:    m.Source,
@@ -55,5 +54,5 @@ func (mi *Saver) InsertMessage(msg Message) error {
 			Payload:   m.Payload,
 		})
 	}
-	return nil // "Not implemented"
+	return nil
 }

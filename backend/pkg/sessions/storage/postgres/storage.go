@@ -42,7 +42,7 @@ func New(db postgres.Pool, cache cache.Sessions, batches batch.Batches, ac autoc
 	}, nil
 }
 
-func (s *sessionsImpl) InsertSession(sessionID uint64, msg *messages.SessionStart) error {
+func (s *sessionsImpl) InsertSession(msg *messages.SessionStart) error {
 	return s.db.Exec(`
 		INSERT INTO sessions (
 			session_id, project_id, start_ts,
@@ -63,7 +63,7 @@ func (s *sessionsImpl) InsertSession(sessionID uint64, msg *messages.SessionStar
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
 			NULLIF($19, '')
 		)`,
-		sessionID, uint32(msg.ProjectID), msg.Timestamp,
+		msg.SessionID(), uint32(msg.ProjectID), msg.Timestamp,
 		msg.UserUUID, msg.UserDevice, msg.UserDeviceType, msg.UserCountry,
 		msg.UserOS, msg.UserOSVersion,
 		msg.RevID,
@@ -74,7 +74,8 @@ func (s *sessionsImpl) InsertSession(sessionID uint64, msg *messages.SessionStar
 	)
 }
 
-func (s *sessionsImpl) HandleSessionStart(sessionID uint64, sess *messages.SessionStart) error {
+func (s *sessionsImpl) HandleSessionStart(sess *messages.SessionStart) error {
+	sessionID := sess.SessionID()
 	session, err := s.handleSessionStart(sessionID, sess)
 	if err != nil {
 		return err
@@ -115,7 +116,8 @@ func (s *sessionsImpl) handleSessionStart(sessionID uint64, msg *messages.Sessio
 	return newSession, nil
 }
 
-func (s *sessionsImpl) InsertSessionEnd(sessionID uint64, e *messages.SessionEnd) error {
+func (s *sessionsImpl) InsertSessionEnd(e *messages.SessionEnd) error {
+	sessionID := e.SessionID()
 	currDuration, err := s.getSessionDuration(sessionID)
 	if err != nil {
 		log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)
@@ -145,7 +147,7 @@ func (s *sessionsImpl) getSessionDuration(sessionID uint64) (uint64, error) {
 	return dur, nil
 }
 
-func (s *sessionsImpl) HandleSessionEnd(sessionID uint64, e *messages.SessionEnd) error {
+func (s *sessionsImpl) HandleSessionEnd(e *messages.SessionEnd) error {
 	sqlRequest := `
 	UPDATE sessions
 		SET issue_types=(SELECT 
@@ -158,7 +160,7 @@ func (s *sessionsImpl) HandleSessionEnd(sessionID uint64, e *messages.SessionEnd
       INNER JOIN issues AS ps USING (issue_id)
                 WHERE session_id = $1)
 		WHERE session_id = $1`
-	return s.db.Exec(sqlRequest, sessionID)
+	return s.db.Exec(sqlRequest, e.SessionID())
 }
 
 func (s *sessionsImpl) InsertUnStartedSession(sess *sessions.UnstartedSession) error {
@@ -205,7 +207,8 @@ func (s *sessionsImpl) InsertReferrer(sessionID uint64, referrer string) error {
 		referrer, url.DiscardURLQuery(referrer), sessionID)
 }
 
-func (s *sessionsImpl) InsertUserID(sessionID uint64, userID *messages.UserID) error {
+func (s *sessionsImpl) InsertUserID(userID *messages.UserID) error {
+	sessionID := userID.SessionID()
 	session, err := s.cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -228,7 +231,8 @@ func (s *sessionsImpl) insertUserID(sessionID uint64, userID string) error {
 	return nil
 }
 
-func (s *sessionsImpl) InsertAnonymousUserID(sessionID uint64, userAnonymousID *messages.UserAnonymousID) error {
+func (s *sessionsImpl) InsertAnonymousUserID(userAnonymousID *messages.UserAnonymousID) error {
+	sessionID := userAnonymousID.SessionID()
 	session, err := s.cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -251,7 +255,8 @@ func (s *sessionsImpl) InsertUserAnonymousID(sessionID uint64, userAnonymousID s
 	return nil
 }
 
-func (s *sessionsImpl) InsertMetadata(sessionID uint64, metadata *messages.Metadata) error {
+func (s *sessionsImpl) InsertMetadata(metadata *messages.Metadata) error {
+	sessionID := metadata.SessionID()
 	session, err := s.cache.GetSession(sessionID)
 	if err != nil {
 		return err

@@ -13,14 +13,14 @@ import (
 )
 
 type Events interface {
-	InsertPageEvent(sessionID uint64, event *messages.PageEvent) error
-	InsertClickEvent(sessionID uint64, event *messages.ClickEvent) error
-	InsertInputEvent(sessionID uint64, event *messages.InputEvent) error
-	InsertIssueEvent(sessionID uint64, event *messages.IssueEvent) error
-	InsertErrorEvent(sessionID uint64, event *messages.ErrorEvent) error
-	InsertFetchEvent(sessionID uint64, event *messages.FetchEvent) error
-	InsertGraphQLEvent(sessionID uint64, event *messages.GraphQLEvent) error
-	InsertCustomEvent(sessionID uint64, event *messages.CustomEvent) error
+	InsertPageEvent(event *messages.PageEvent) error
+	InsertClickEvent(event *messages.ClickEvent) error
+	InsertInputEvent(event *messages.InputEvent) error
+	InsertIssueEvent(event *messages.IssueEvent) error
+	InsertErrorEvent(event *messages.ErrorEvent) error
+	InsertFetchEvent(event *messages.FetchEvent) error
+	InsertGraphQLEvent(event *messages.GraphQLEvent) error
+	InsertCustomEvent(event *messages.CustomEvent) error
 	Commit()
 	Close() error
 }

@@ -43,7 +43,8 @@ type GraphQLEventFTS struct {
 	Response      string `json:"response"`
 }
 
-func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
+func (s *Saver) sendToFTS(msg messages.Message) {
+	sessionID := msg.SessionID()
 	// Skip, if FTS is disabled
 	if s.producer == nil {
 		return

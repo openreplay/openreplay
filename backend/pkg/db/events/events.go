@@ -8,7 +8,8 @@ import (
 	"openreplay/backend/pkg/url"
 )
 
-func (e *eventsImpl) InsertPageEvent(sessionID uint64, evt *messages.PageEvent) error {
+func (e *eventsImpl) InsertPageEvent(evt *messages.PageEvent) error {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -31,7 +32,8 @@ func (e *eventsImpl) InsertPageEvent(sessionID uint64, evt *messages.PageEvent) 
 	return nil
 }
 
-func (e *eventsImpl) InsertClickEvent(sessionID uint64, evt *messages.ClickEvent) error {
+func (e *eventsImpl) InsertClickEvent(evt *messages.ClickEvent) error {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -53,7 +55,8 @@ func (e *eventsImpl) InsertClickEvent(sessionID uint64, evt *messages.ClickEvent
 	return nil
 }
 
-func (e *eventsImpl) InsertInputEvent(sessionID uint64, evt *messages.InputEvent) error {
+func (e *eventsImpl) InsertInputEvent(evt *messages.InputEvent) error {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -73,7 +76,8 @@ func (e *eventsImpl) InsertInputEvent(sessionID uint64, evt *messages.InputEvent
 	return nil
 }
 
-func (e *eventsImpl) InsertIssueEvent(sessionID uint64, evt *messages.IssueEvent) (err error) {
+func (e *eventsImpl) InsertIssueEvent(evt *messages.IssueEvent) (err error) {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -149,7 +153,8 @@ func (e *eventsImpl) InsertIssueEvent(sessionID uint64, evt *messages.IssueEvent
 	return
 }
 
-func (e *eventsImpl) InsertErrorEvent(sessionID uint64, evt *messages.ErrorEvent) (err error) {
+func (e *eventsImpl) InsertErrorEvent(evt *messages.ErrorEvent) (err error) {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -199,7 +204,8 @@ func (e *eventsImpl) InsertErrorEvent(sessionID uint64, evt *messages.ErrorEvent
 	return
 }
 
-func (e *eventsImpl) InsertFetchEvent(sessionID uint64, evt *messages.FetchEvent) error {
+func (e *eventsImpl) InsertFetchEvent(evt *messages.FetchEvent) error {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -240,7 +246,8 @@ func (e *eventsImpl) InsertFetchEvent(sessionID uint64, evt *messages.FetchEvent
 	return nil
 }
 
-func (e *eventsImpl) InsertGraphQLEvent(sessionID uint64, evt *messages.GraphQLEvent) error {
+func (e *eventsImpl) InsertGraphQLEvent(evt *messages.GraphQLEvent) error {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -258,7 +265,8 @@ func (e *eventsImpl) InsertGraphQLEvent(sessionID uint64, evt *messages.GraphQLE
 	return nil
 }
 
-func (e *eventsImpl) InsertCustomEvent(sessionID uint64, evt *messages.CustomEvent) error {
+func (e *eventsImpl) InsertCustomEvent(evt *messages.CustomEvent) error {
+	sessionID := evt.SessionID()
 	session, err := e.sessions.GetSession(sessionID)
 	if err != nil {
 		return err
