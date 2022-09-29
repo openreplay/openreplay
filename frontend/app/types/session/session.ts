@@ -43,7 +43,8 @@ export default Record({
   filterId: '',
   messagesUrl: '',
   domURL: [],
-  mobsUrl: [],
+  devtoolsURL: [],
+  mobsUrl: [], // @depricated
   userBrowser: '',
   userBrowserVersion: '?',
   userCountry: '',
@@ -95,6 +96,7 @@ export default Record({
     issues = [],
     sessionId, sessionID,
     domURL = [],
+    devtoolsURL= [],
     mobsUrl = [],
     ...session
   }) => {
