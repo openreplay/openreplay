@@ -3,6 +3,7 @@ package oswriter
 import (
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -41,6 +42,13 @@ func (w *Writer) open(fname string) (*os.File, error) {
 			return nil, err
 		}
 	}
+
+	// mkdir if not exist
+	pathTo := w.dir + filepath.Dir(fname)
+	if _, err := os.Stat(pathTo); os.IsNotExist(err) {
+		os.MkdirAll(pathTo, 0700)
+	}
+
 	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
@@ -67,19 +75,18 @@ func (w *Writer) close(fname string) error {
 }
 
 func (w *Writer) WriteDOM(sid uint64, data []byte) error {
-	return w.Write(strconv.FormatUint(sid, 10)+"/dom.mob", data)
+	return w.write(strconv.FormatUint(sid, 10)+"/dom.mob", data)
 }
 
 func (w *Writer) WriteDEV(sid uint64, data []byte) error {
-	return w.Write(strconv.FormatUint(sid, 10)+"/devtools.mob", data)
+	return w.write(strconv.FormatUint(sid, 10)+"/devtools.mob", data)
 }
 
-func (w *Writer) Write(fname string, data []byte) error {
+func (w *Writer) write(fname string, data []byte) error {
 	file, err := w.open(fname)
 	if err != nil {
 		return err
 	}
-	// TODO: add check for the number of recorded bytes to file
 	_, err = file.Write(data)
 	return err
 }
