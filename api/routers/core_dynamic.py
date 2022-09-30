@@ -140,7 +140,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 @app.post('/client/members/{memberId}', tags=["client"])
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
+    return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
                       user_id_to_update=memberId)
 
 
