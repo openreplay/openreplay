@@ -16,9 +16,10 @@ import (
 )
 
 type Storage struct {
-	cfg           *config.Config
-	s3            *storage.S3
-	startBytes    []byte
+	cfg        *config.Config
+	s3         *storage.S3
+	startBytes []byte
+
 	totalSessions syncfloat64.Counter
 	sessionSize   syncfloat64.Histogram
 	readingTime   syncfloat64.Histogram
@@ -62,16 +63,16 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 
 func (s *Storage) UploadSessionFiles(sessID uint64) error {
 	sidStr := strconv.FormatUint(sessID, 10)
-	if err := s.uploadKey(sessID, sidStr+"/dom.mob", 5); err != nil {
+	if err := s.uploadKey(sessID, sidStr+"/dom.mob", true, 5); err != nil {
 		return err
 	}
-	if err := s.uploadKey(sessID, sidStr+"/devtools.mob", 5); err != nil {
+	if err := s.uploadKey(sessID, sidStr+"/devtools.mob", false, 5); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Storage) uploadKey(sessID uint64, key string, retryCount int) error {
+func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCount int) error {
 	if retryCount <= 0 {
 		return nil
 	}
@@ -86,32 +87,40 @@ func (s *Storage) uploadKey(sessID uint64, key string, retryCount int) error {
 	}
 	defer file.Close()
 
-	nRead, err := file.Read(s.startBytes)
-	if err != nil {
-		log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
-			err,
-			key,
-			sessID%16,
-			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
-		)
-		time.AfterFunc(s.cfg.RetryTimeout, func() {
-			s.uploadKey(sessID, key, retryCount-1)
-		})
-		return nil
-	}
-	s.readingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
+	if shouldSplit {
+		nRead, err := file.Read(s.startBytes)
+		if err != nil {
+			log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
+				err,
+				key,
+				sessID%16,
+				time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+			)
+			time.AfterFunc(s.cfg.RetryTimeout, func() {
+				s.uploadKey(sessID, key, shouldSplit, retryCount-1)
+			})
+			return nil
+		}
+		s.readingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 
-	start = time.Now()
-	startReader := bytes.NewBuffer(s.startBytes[:nRead])
-	if err := s.s3.Upload(s.gzipFile(startReader), key+"s", "application/octet-stream", true); err != nil {
-		log.Fatalf("Storage: start upload failed.  %v\n", err)
-	}
-	if nRead == s.cfg.FileSplitSize {
-		if err := s.s3.Upload(s.gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
+		start = time.Now()
+		startReader := bytes.NewBuffer(s.startBytes[:nRead])
+		if err := s.s3.Upload(s.gzipFile(startReader), key+"s", "application/octet-stream", true); err != nil {
+			log.Fatalf("Storage: start upload failed.  %v\n", err)
+		}
+		if nRead == s.cfg.FileSplitSize {
+			if err := s.s3.Upload(s.gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
+				log.Fatalf("Storage: end upload failed. %v\n", err)
+			}
+		}
+		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
+	} else {
+		if err := s.s3.Upload(s.gzipFile(file), key+"s", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
 	}
-	s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
+
+	//TODO: fix metrics for devtools file case
 
 	// Save metrics
 	var fileSize float64 = 0
