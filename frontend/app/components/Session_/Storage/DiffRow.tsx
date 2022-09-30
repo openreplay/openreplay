@@ -7,14 +7,14 @@ interface Props {
   diff: Record<string, any>;
 }
 
-function DiffRow({ diff, path, pathRoot, shades }: Props) {
+function DiffRow({ diff, path }: Props) {
   const [shorten, setShorten] = React.useState(true);
   const oldValue = diff.item ? JSON.stringify(diff.item.lhs) : JSON.stringify(diff.lhs);
   const newValue = diff.item ? JSON.stringify(diff.item.rhs) : JSON.stringify(diff.rhs);
 
   const pathStr = path.length > 15 && shorten ? path.slice(0, 5) + '...' + path.slice(10) : path;
   return (
-    <div className="p-1 rounded" style={{ background: shades[pathRoot] }}>
+    <div className="p-1 rounded">
       <span className={path.length > 15 ? 'cursor-pointer' : ''} onClick={() => setShorten(false)}>
         {pathStr}
         {': '}

@@ -17,6 +17,7 @@ import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
+import { Tooltip } from 'react-tippy'
 
 // const STATE = 'STATE';
 // const DIFF = 'DIFF';
@@ -25,33 +26,12 @@ import stl from './storage.module.css';
 function getActionsName(type) {
   switch (type) {
     case STORAGE_TYPES.MOBX:
-      return 'MUTATIONS';
     case STORAGE_TYPES.VUEX:
       return 'MUTATIONS';
     default:
       return 'ACTIONS';
   }
 }
-
-const PATH_BGS = [
-  '255, 173, 173',
-  '202, 255, 191',
-  '155, 246, 255',
-  '255, 198, 255',
-  '160, 196, 255',
-  '251, 248, 204',
-  '253, 228, 207',
-  '255, 207, 210',
-  '241, 192, 232',
-  '207, 186, 240',
-  '163, 196, 243',
-  '144, 219, 244',
-  '142, 236, 245',
-  '152, 245, 225',
-  '185, 251, 192',
-];
-
-const buildBg = (shade) => `rgba(${shade}, 0.2)`;
 
 @connectPlayer((state) => ({
   type: selectStorageType(state),
@@ -68,9 +48,8 @@ const buildBg = (shade) => `rgba(${shade}, 0.2)`;
 )
 //@withEnumToggle('activeTab', 'setActiveTab', DIFF)
 export default class Storage extends React.PureComponent {
-  pathShades = {};
-
   lastBtnRef = React.createRef();
+  state = { showDiffs: false };
 
   focusNextButton() {
     if (this.lastBtnRef.current) {
@@ -105,39 +84,33 @@ export default class Storage extends React.PureComponent {
     }
 
     return (
-      <div style={{ flex: 1 }} className="flex flex-col p-1 font-semibold font-mono">
+      <div style={{ flex: 1 }} className="flex flex-col p-1 font-mono">
         {stateDiff.map((d, i) => this.renderDiffs(d, i))}
       </div>
     );
   }
 
   renderDiffs(diff, i) {
-    const [path, pathRoot] = this.createPathAndBg(diff);
+    const path = this.createPath(diff);
     return (
       <React.Fragment key={i}>
-        <DiffRow shades={this.pathShades} path={path} diff={diff} pathRoot={pathRoot} />
+        <DiffRow shades={this.pathShades} path={path} diff={diff} />
       </React.Fragment>
     );
   }
 
-  createPathAndBg = (diff) => {
+  createPath = (diff) => {
     let path = [];
-    let pathRoot;
 
     if (diff.path) {
       path = path.concat(diff.path);
-      pathRoot = diff.path[0];
-      if (!this.pathShades[pathRoot]) {
-        const randomShade = PATH_BGS[Math.floor(Math.random() * PATH_BGS.length)];
-        this.pathShades[pathRoot] = buildBg(randomShade);
-      }
     }
     if (typeof diff.index !== 'undefined') {
       path.push(diff.index);
     }
 
     const pathStr = path.length ? path.join('.') : '';
-    return [pathStr, pathRoot];
+    return pathStr;
   };
 
   ensureString(actionType) {
@@ -182,6 +155,10 @@ export default class Storage extends React.PureComponent {
         name = item.mutation.join('');
     }
 
+    if (src !== null && !this.state.showDiffs) {
+      this.setState({ showDiffs: true })
+    }
+
     return (
       <div
         className={cn('flex justify-between items-start', src !== null ? 'border-b' : '')}
@@ -205,20 +182,22 @@ export default class Storage extends React.PureComponent {
             </div>
           </>
         )}
-        <div style={{ flex: 1 }} className="flex-1 flex items-center justify-end">
-          {i + 1 < listNow.length && (
-            <button className={stl.button} onClick={() => jump(item.time, item._index)}>
-              {'JUMP'}
-            </button>
-          )}
-          {i + 1 === listNow.length && i + 1 < list.length && (
-            <button className={stl.button} ref={this.lastBtnRef} onClick={this.goNext}>
-              {'NEXT'}
-            </button>
-          )}
+        <div style={{ flex: 1 }} className="flex-1 flex gap-2 items-center justify-end self-center">
           {typeof item.duration === 'number' && (
             <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
           )}
+          <div className="w-12">
+            {i + 1 < listNow.length && (
+              <button className={stl.button} onClick={() => jump(item.time, item._index)}>
+                {'JUMP'}
+              </button>
+            )}
+            {i + 1 === listNow.length && i + 1 < list.length && (
+              <button className={stl.button} ref={this.lastBtnRef} onClick={this.goNext}>
+                {'NEXT'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -233,8 +212,18 @@ export default class Storage extends React.PureComponent {
         <BottomBlock.Header>
           {list.length > 0 && (
             <div className="flex w-full">
-              {showStore && <h3 style={{ width: '46%' }}>{'STORE'}</h3>}
-              <h3 style={{ width: '50%' }}>{getActionsName(type)}</h3>
+              {showStore && <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">{'STATE'}</h3>}
+              {this.state.showDiffs ? (
+                <h3 style={{ width: '20%'}}  className="font-semibold">
+                  DIFFS
+                </h3>
+              ) : null}
+              <h3 style={{ width: '50%' }}  className="font-semibold">{getActionsName(type)}</h3>
+              <h3 style={{ paddingRight: 30, marginLeft: 'auto' }}  className="font-semibold">
+                <Tooltip title="Time to execute">
+                  TTE
+                </Tooltip>
+              </h3>
             </div>
           )}
         </BottomBlock.Header>
