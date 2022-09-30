@@ -46,7 +46,7 @@ func (w *Writer) open(fname string) (*os.File, error) {
 	// mkdir if not exist
 	pathTo := w.dir + filepath.Dir(fname)
 	if _, err := os.Stat(pathTo); os.IsNotExist(err) {
-		os.MkdirAll(pathTo, 0700)
+		os.MkdirAll(pathTo, 0644)
 	}
 
 	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
