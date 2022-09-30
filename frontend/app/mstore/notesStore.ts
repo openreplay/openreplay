@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx"
 import { notesService } from "App/services"
-import { Note, WriteNote, iTag } from 'App/services/NotesService'
+import { Note, WriteNote, iTag, NotesFilter } from 'App/services/NotesService'
 
 interface SessionNotes {
   [sessionId: string]: Note[]
@@ -13,15 +13,25 @@ export default class NotesStore {
   page = 1
   pageSize = 15
   activeTags: iTag[] = []
+  sort = ''
+  order: 'DESC' | 'ASC' = 'DESC'
 
   constructor() {
     makeAutoObservable(this)
   }
 
   async fetchNotes() {
+    const filter: NotesFilter = {
+      page: this.page,
+      limit: 15,
+      sort: this.sort,
+      order: this.order,
+      tags: this.activeTags,
+    }
+
     this.loading = true
     try {
-      const notes = await notesService.getNotes()
+      const notes = await notesService.fetchNotes(filter)
       this.notes = notes;
       return notes;
     } catch (e) {
