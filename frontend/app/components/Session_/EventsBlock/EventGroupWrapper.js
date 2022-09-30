@@ -1,15 +1,17 @@
 import React from 'react';
 import cn from 'classnames';
-
+import { connect } from 'react-redux'
 import { TextEllipsis } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import Event from './Event'
 import stl from './eventGroupWrapper.module.css';
 import NoteEvent from './NoteEvent';
+import { setEditNoteTooltip } from 'Duck/sessions';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle("showLoadInfo", "toggleLoadInfo")
+@connect(state => ({members: state.getIn(['members', 'list'])}), { setEditNoteTooltip })
 class EventGroupWrapper extends React.Component {
 
   toggleLoadInfo = (e) => {
@@ -69,7 +71,7 @@ class EventGroupWrapper extends React.Component {
         }
         {isNote ? (
           <NoteEvent
-            userId={event.userId}
+            userEmail={this.props.members.find(m => m.id === event.userId)?.email || event.userId}
             timestamp={event.timestamp}
             tags={event.tags}
             isPublic={event.isPublic}
@@ -78,6 +80,7 @@ class EventGroupWrapper extends React.Component {
             date={event.createdAt}
             noteId={event.noteId}
             filterOutNote={filterOutNote}
+            onEdit={this.props.setEditNoteTooltip}
           />
         ) : isLocation
           ? <Event
