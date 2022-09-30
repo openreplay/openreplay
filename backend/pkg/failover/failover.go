@@ -55,19 +55,19 @@ func NewSessionFinder(cfg *config.Config, stg *storage.Storage) (SessionFinder, 
 		done:             make(chan struct{}, 1),
 	}
 	finder.producer = queue.NewProducer(cfg.MessageSizeLimit, false)
-	finder.consumer = queue.NewMessageConsumer(
+	finder.consumer = queue.NewConsumer(
 		cfg.GroupFailover,
 		[]string{
 			cfg.TopicFailover,
 		},
-		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-			for iter.Next() {
-				if iter.Type() == 127 {
-					m := iter.Message().Decode().(*messages.SessionSearch)
-					finder.findSession(sessionID, m.Timestamp, m.Partition)
-				}
-			}
-		},
+		messages.NewMessageIterator(
+			func(msg messages.Message) {
+				m := msg.(*messages.SessionSearch)
+				finder.findSession(m.SessionID(), m.Timestamp, m.Partition)
+			},
+			[]int{messages.MsgSessionSearch},
+			true,
+		),
 		true,
 		cfg.MessageSizeLimit,
 	)
@@ -128,7 +128,7 @@ func (s *sessionFinderImpl) nextPartition(partition uint64) uint64 {
 // Create sessionSearch message and send it to queue
 func (s *sessionFinderImpl) sendSearchMessage(sessionID, timestamp, partition uint64) {
 	msg := &messages.SessionSearch{Timestamp: timestamp, Partition: partition}
-	if err := s.producer.ProduceToPartition(s.topicName, partition, sessionID, messages.Encode(msg)); err != nil {
+	if err := s.producer.ProduceToPartition(s.topicName, partition, sessionID, msg.Encode()); err != nil {
 		log.Printf("can't send SessionSearch to failover topic: %s; sessID: %d", err, sessionID)
 	}
 }
