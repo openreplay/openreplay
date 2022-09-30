@@ -34,6 +34,14 @@ export interface Note {
   userId: number
 }
 
+export interface NotesFilter {
+  page: number
+  limit: number
+  sort: string
+  order: 'DESC' | 'ASC'
+  tags: iTag[]
+}
+
 export default class NotesService {
     private client: APIClient;
 
@@ -45,8 +53,8 @@ export default class NotesService {
         this.client = client || new APIClient();
     }
 
-    getNotes(): Promise<Note[]> {
-      return this.client.get('/notes').then(r => {
+    fetchNotes(filter: NotesFilter): Promise<Note[]> {
+      return this.client.post('/notes', filter).then(r => {
         if (r.ok) {
           return r.json().then(r => r.data)
         } else {
