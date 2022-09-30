@@ -209,6 +209,7 @@ export default class MessageDistributor extends StatedScreen {
       return (b: Uint8Array) => {
         fileReader.append(b)
         this.parseAndDistributeMessages(fileReader)
+        this.setMessagesLoading(false)
       }
     }
     this.setMessagesLoading(true)
