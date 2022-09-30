@@ -89,7 +89,7 @@ def __get_agent_token(project_id, project_key, session_id):
             "projectId": project_id,
             "sessionId": session_id,
             "iat": iat // 1000,
-            "exp": iat // 1000 + config("JWT_EXP_DELTA_SECONDS", cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "exp": iat // 1000 + config("ASSIST_JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000,
             "iss": config("JWT_ISSUER"),
             "aud": f"openreplay:agent"
         },
