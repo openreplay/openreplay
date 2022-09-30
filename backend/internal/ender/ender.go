@@ -104,5 +104,5 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 			}
 		}
 	}
-	log.Printf("Removed %d of %d sessions-builder", removedSessions, allSessions)
+	log.Printf("Removed %d of %d sessions", removedSessions, allSessions)
 }

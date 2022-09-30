@@ -107,6 +107,7 @@ func main() {
 			// Find ended sessions-builder and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
+				msg.SetSessionID(sessionID)
 				err := sessionService.InsertSessionEnd(msg)
 				if err != nil {
 					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
