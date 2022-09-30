@@ -154,8 +154,9 @@ export default Record({
       issues: issuesList,
       sessionId: sessionId || sessionID,
       userId: session.userId || session.userID,
-      domURL: Array.isArray(domURL) ? domURL : [ domURL ],
       mobsUrl: Array.isArray(mobsUrl) ? mobsUrl : [ mobsUrl ],
+      domURL,
+      devtoolsURL,
     };
   },
   idKey: "sessionId",
