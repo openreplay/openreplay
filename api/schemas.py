@@ -1089,6 +1089,7 @@ class IntegrationType(str, Enum):
 class SearchNoteSchema(_PaginatedSchema):
     sort: str = Field(default="createdAt")
     order: SortOrderType = Field(default=SortOrderType.desc)
+    tags: Optional[List[str]] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case

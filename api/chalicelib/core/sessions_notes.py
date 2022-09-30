@@ -2,6 +2,7 @@ import json
 
 import schemas
 from chalicelib.core import users
+from chalicelib.core.sessions import _multiple_conditions, _multiple_values
 from chalicelib.utils import pg_client, helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -10,7 +11,6 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*
                                 FROM sessions_notes
-                                         INNER JOIN users USING (user_id)
                                 WHERE sessions_notes.project_id = %(project_id)s
                                   AND sessions_notes.deleted_at IS NULL
                                   AND sessions_notes.session_id = %(session_id)s
@@ -30,16 +30,19 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
 
 def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
     with pg_client.PostgresClient() as cur:
+        conditions = ["sessions_notes.project_id = %(project_id)s", "sessions_notes.deleted_at IS NULL",
+                      "(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public)"]
+        extra_params = {}
+        if data.tags and len(data.tags) > 0:
+            k = "tag"
+            conditions.append(_multiple_conditions(f"%({k})s = ANY (s.issue_types)", data.tags, value_key=k))
+            extra_params = _multiple_values(data.tags, value_key=k)
         query = cur.mogrify(f"""SELECT sessions_notes.*
                                 FROM sessions_notes
-                                         INNER JOIN users USING (user_id)
-                                WHERE sessions_notes.project_id = %(project_id)s
-                                  AND sessions_notes.deleted_at IS NULL
-                                  AND (sessions_notes.user_id = %(user_id)s 
-                                        OR sessions_notes.is_public)
+                                WHERE {" AND ".join(conditions)}
                                 ORDER BY created_at {data.order}
                                 LIMIT {data.limit} OFFSET {data.limit * (data.page - 1)};""",
-                            {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id})
+                            {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id, **extra_params})
 
         cur.execute(query=query)
         rows = cur.fetchall()
