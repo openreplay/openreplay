@@ -119,9 +119,10 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
 			UserID:               req.UserID,
 		}
+		sessionStart.SetSessionID(sessionID)
 
 		// Save sessionStart to db
-		if err := e.services.Database.InsertSession(sessionID, sessionStart); err != nil {
+		if err := e.services.Database.InsertSession(sessionStart); err != nil {
 			log.Printf("can't insert session start: %s", err)
 		}
 
