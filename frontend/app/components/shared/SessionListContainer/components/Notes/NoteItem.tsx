@@ -76,7 +76,7 @@ function NoteItem(props: Props) {
         <PlayLink
           isAssist={false}
           viewed={false}
-          sessionId={props.sessionId + (props.timestamp > 0 ? '?jumpto=' +  props.timestamp : '')}
+          sessionId={props.sessionId + (props.timestamp > 0 ? `?jumpto=${props.timestamp}&note=${props.noteId}` : '')}
         />
       </div>
       <div className="ml-2 cursor-pointer">

@@ -12,7 +12,7 @@ import { confirm } from 'UI';
 import { filterOutNote as filterOutTimelineNote } from 'Player';
 
 interface Props {
-  userId: number;
+  userEmail: number;
   timestamp: number;
   tags: iTag[];
   isPublic: boolean;
@@ -21,16 +21,35 @@ interface Props {
   date: string;
   noteId: number;
   filterOutNote: (id: number) => void;
+  onEdit: (noteTooltipObj: Record<string, any>) => void;
 }
 
 function NoteEvent(props: Props) {
   const { settingsStore, notesStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
-  const onEdit = () => {};
+  const onEdit = () => {
+    props.onEdit({
+      isVisible: true,
+      isEdit: true,
+      time: props.timestamp,
+      note: {
+        timestamp: props.timestamp,
+        tags: props.tags,
+        isPublic: props.isPublic,
+        message: props.message,
+        sessionId: props.sessionId,
+        noteId: props.noteId
+      },
+    });
+  };
 
   const onCopy = () => {
-    copy(`${window.location.origin}${session(props.sessionId)}${props.timestamp > 0 ? '?jumpto=' + props.timestamp : ''}`);
+    copy(
+      `${window.location.origin}${session(props.sessionId)}${
+        props.timestamp > 0 ? '?jumpto=' + props.timestamp : ''
+      }`
+    );
     toast.success('Note URL copied to clipboard');
   };
 
@@ -44,7 +63,7 @@ function NoteEvent(props: Props) {
     ) {
       notesStore.deleteNote(props.noteId).then((r) => {
         props.filterOutNote(props.noteId);
-        filterOutTimelineNote(props.noteId)
+        filterOutTimelineNote(props.noteId);
         toast.success('Note deleted');
       });
     }
@@ -64,7 +83,7 @@ function NoteEvent(props: Props) {
           <Icon name="quotes" color="main" />
         </div>
         <div className="ml-2">
-          <div>{props.userId}</div>
+          <div>{props.userEmail}</div>
           <div className="text-disabled-text">
             {formatTimeOrDate(props.date as unknown as number, timezone)}
           </div>
@@ -80,6 +99,7 @@ function NoteEvent(props: Props) {
             <div className="flex items-center gap-1">
               {props.tags.map((tag) => (
                 <div
+                  key={tag}
                   style={{ background: tagProps[tag], userSelect: 'none' }}
                   className="rounded-xl text-sm px-2 py-1 text-white"
                 >

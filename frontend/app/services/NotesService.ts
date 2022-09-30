@@ -85,7 +85,7 @@ export default class NotesService {
       })
     }
 
-    updateNote(noteID: string, note: Note): Promise<Note> {
+    updateNote(noteID: string, note: WriteNote): Promise<Note> {
       return this.client.post(`/notes/${noteID}`, note)
       .then(r => {
         if (r.ok) {

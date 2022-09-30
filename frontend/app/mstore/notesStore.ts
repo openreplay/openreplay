@@ -13,7 +13,7 @@ export default class NotesStore {
   page = 1
   pageSize = 15
   activeTags: iTag[] = []
-  sort = ''
+  sort = 'createdAt'
   order: 'DESC' | 'ASC' = 'DESC'
 
   constructor() {
@@ -23,7 +23,7 @@ export default class NotesStore {
   async fetchNotes() {
     const filter: NotesFilter = {
       page: this.page,
-      limit: 15,
+      limit: this.pageSize,
       sort: this.sort,
       order: this.order,
       tags: this.activeTags,
@@ -78,6 +78,24 @@ export default class NotesStore {
     }
   }
 
+  async updateNote(noteId: string, note: WriteNote) {
+    this.loading = true
+    try {
+      const updated = await notesService.updateNote(noteId, note)
+      return updated
+    } catch (e) {
+      console.error(e)
+    } finally {
+      this.loading = false
+    }
+  }
+
+  getNoteById(noteId: number, notes?: Note[]) {
+    const notesSource = notes ? notes : this.notes
+
+    return notesSource.find(note => note.noteId === noteId)
+  }
+
   changePage(page: number) {
     this.page = page
   }
@@ -85,8 +103,18 @@ export default class NotesStore {
   toggleTag(tag: iTag) {
     if (this.activeTags.includes(tag)) {
       this.activeTags = this.activeTags.filter(exTag => tag !== exTag)
+      this.fetchNotes()
     } else {
       this.activeTags = [...this.activeTags, tag]
+      this.fetchNotes()
     }
+  }
+
+  toggleSort(sort: string) {
+    const sortOrder = sort.split('-')[1]
+    // @ts-ignore
+    this.order = sortOrder
+
+    this.fetchNotes()
   }
 }

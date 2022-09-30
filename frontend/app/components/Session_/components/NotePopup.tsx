@@ -2,12 +2,12 @@ import React from 'react'
 import { Icon } from 'UI'
 import { connectPlayer, pause } from 'Player';
 import { connect } from 'react-redux'
-import { setNoteTooltip } from 'Duck/sessions';
+import { setCreateNoteTooltip } from 'Duck/sessions';
 
-function NotePopup({ setNoteTooltip, time }: { setNoteTooltip: (args: any) => void,  time: number }) {
+function NotePopup({ setCreateNoteTooltip, time }: { setCreateNoteTooltip: (args: any) => void,  time: number }) {
   const toggleNotePopup = () => {
     pause();
-    setNoteTooltip({ time: time, isVisible: true })
+    setCreateNoteTooltip({ time: time, isVisible: true })
   };
 
   return (
@@ -28,7 +28,7 @@ const NotePopupPl = connectPlayer(
 )(React.memo(NotePopup));
 
 const NotePopupComp = connect(
-  null, { setNoteTooltip }
+  null, { setCreateNoteTooltip }
 )(NotePopupPl)
 
 export default React.memo(NotePopupComp)
