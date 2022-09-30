@@ -1,7 +1,7 @@
 # openreplay-ui
 OpenReplay prototype UI
 
-On new icon addition: 
+On new icon addition:
 `yarn gen:icons`
 
 ## Documentation
