@@ -41,7 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't create new pool wrapper: %s", err)
 	}
-	// Create cache level for projects and sessions-builder
+	// Create cache level for projects and sessions
 	cacheService, err := cache.New(connWrapper, cfg.ProjectExpirationTimeoutMs)
 	if err != nil {
 		log.Fatalf("can't create cacher, err: %s", err)
@@ -104,7 +104,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			// Find ended sessions-builder and send notification to other services
+			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
 				msg.SetSessionID(sessionID)

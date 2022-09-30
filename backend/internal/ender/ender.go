@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// EndedSessionHandler handler for ended sessions-builder
+// EndedSessionHandler handler for ended sessions
 type EndedSessionHandler func(sessionID uint64, timestamp int64) bool
 
 // session holds information about user's session live status

@@ -25,7 +25,7 @@ type Events interface {
 	Close() error
 }
 
-// Conn contains batches, bulks and cache for all sessions-builder
+// Conn contains batches, bulks and cache for all sessions
 type eventsImpl struct {
 	db       postgres.Pool
 	sessions cache.Sessions

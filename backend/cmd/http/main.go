@@ -40,7 +40,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("can't create new pool wrapper: %s", err)
 	}
-	// Create cache level for projects and sessions-builder
+	// Create cache level for projects and sessions
 	cacheService, err := cache.New(connWrapper, cfg.ProjectExpirationTimeoutMs)
 	if err != nil {
 		log.Fatalf("can't create cacher, err: %s", err)

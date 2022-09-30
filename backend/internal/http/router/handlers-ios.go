@@ -67,7 +67,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			ResponseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
-		// TODO: if EXPIRED => send message for two sessions-builder association
+		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
 

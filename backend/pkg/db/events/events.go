@@ -110,7 +110,7 @@ func (e *eventsImpl) InsertIssueEvent(evt *messages.IssueEvent) (err error) {
 			project_id, issue_id, type, context_string, context
 		) (SELECT
 			project_id, $2, $3, $4, CAST($5 AS jsonb)
-			FROM sessions-builder
+			FROM sessions
 			WHERE session_id = $1
 		)ON CONFLICT DO NOTHING`,
 		sessionID, issueID, evt.Type, evt.ContextString, context,
@@ -130,7 +130,7 @@ func (e *eventsImpl) InsertIssueEvent(evt *messages.IssueEvent) (err error) {
 		return err
 	}
 	if err = tx.Exec(`
-		UPDATE sessions-builder SET issue_score = issue_score + $2
+		UPDATE sessions SET issue_score = issue_score + $2
 		WHERE session_id = $1`,
 		sessionID, getIssueScore(evt),
 	); err != nil {
@@ -193,7 +193,7 @@ func (e *eventsImpl) InsertErrorEvent(evt *messages.ErrorEvent) (err error) {
 		return err
 	}
 	if err = tx.Exec(`
-		UPDATE sessions-builder SET errors_count = errors_count + 1, issue_score = issue_score + 1000
+		UPDATE sessions SET errors_count = errors_count + 1, issue_score = issue_score + 1000
 		WHERE session_id = $1`,
 		sessionID,
 	); err != nil {
