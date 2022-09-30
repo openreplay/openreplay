@@ -32,7 +32,7 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
         extra_params = {}
         if data.tags and len(data.tags) > 0:
             k = "tag"
-            conditions.append(sessions._multiple_conditions(f"%({k})s = ANY (s.issue_types)", data.tags, value_key=k))
+            conditions.append(sessions._multiple_conditions(f"%({k})s = ANY (s.tags)", data.tags, value_key=k))
             extra_params = sessions._multiple_values(data.tags, value_key=k)
         query = cur.mogrify(f"""SELECT sessions_notes.*
                                 FROM sessions_notes
