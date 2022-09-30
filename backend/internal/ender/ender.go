@@ -57,6 +57,7 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 	sessionID := msg.Meta().SessionID()
 	currTS := msg.Meta().Batch().Timestamp()
 	msgTimestamp := msg.Meta().Timestamp
+	log.Printf("new session, sessID: %d, batchTS: %d, msgTS: %d", sessionID, currTS, msgTimestamp)
 	localTS := time.Now().UnixMilli()
 	if currTS == 0 {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
@@ -92,6 +93,7 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	currTime := time.Now().UnixMilli()
 	allSessions, removedSessions := len(se.sessions), 0
 	for sessID, sess := range se.sessions {
+		log.Printf("chech session, ID: %d, sess: %+v", sessID, sess)
 		if sess.isEnded || (se.timeCtrl.LastTimestamp(sessID)-sess.lastTimestamp > se.timeout) ||
 			(currTime-sess.lastUpdate > se.timeout) {
 			sess.isEnded = true
