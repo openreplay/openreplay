@@ -241,7 +241,7 @@ export const fetchList =
         setSessionFilter(cleanSessionFilters(params));
         return dispatch({
             types: FETCH_LIST.toArray(),
-            call: (client) => client.post('/sessions/search2', params),
+            call: (client) => client.post('/sessions/search', params),
             params: cleanParams(params),
         });
     };
@@ -249,7 +249,7 @@ export const fetchList =
 export function fetchErrorStackList(sessionId, errorId) {
     return {
         types: FETCH_ERROR_STACK.toArray(),
-        call: (client) => client.get(`/sessions2/${sessionId}/errors/${errorId}/sourcemaps`),
+        call: (client) => client.get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`),
     };
 }
 
@@ -258,7 +258,7 @@ export const fetch =
     (dispatch, getState) => {
         dispatch({
             types: FETCH.toArray(),
-            call: (client) => client.get(isLive ? `/assist/sessions/${sessionId}` : `/sessions2/${sessionId}`),
+            call: (client) => client.get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}`),
             filter: getState().getIn(['filters', 'appliedFilter']),
         });
     };
@@ -266,7 +266,7 @@ export const fetch =
 export function toggleFavorite(sessionId) {
     return {
         types: TOGGLE_FAVORITE.toArray(),
-        call: (client) => client.get(`/sessions2/${sessionId}/favorite`),
+        call: (client) => client.get(`/sessions/${sessionId}/favorite`),
         sessionId,
     };
 }
@@ -274,7 +274,7 @@ export function toggleFavorite(sessionId) {
 export function fetchFavoriteList() {
     return {
         types: FETCH_FAVORITE_LIST.toArray(),
-        call: (client) => client.get('/sessions2/favorite'),
+        call: (client) => client.get('/sessions/favorite'),
     };
 }
 
