@@ -136,7 +136,7 @@ export default class Assist {
 
     // SocketIO
     const socket = this.socket = connect(app.getHost(), {
-      path: '/ws-assist/socket',
+      path: app.getBase()+'/ws-assist/socket',
       query: {
         'peerId': peerID,
         'identity': 'session',
@@ -266,7 +266,7 @@ export default class Assist {
     // PeerJS call (todo: use native WebRTC)
     const peerOptions = {
       host: app.getHost(),
-      path: '/assist',
+      path: app.getBase()+'/assist',
       port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
       //debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
     }
