@@ -228,13 +228,6 @@ def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name, role_id=role_id)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-    # helper.async_post(config('email_basic') % 'member_invitation',
-    #                   {
-    #                       "email": data["email"],
-    #                       "invitationLink": new_member["invitationLink"],
-    #                       "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
-    #                       "senderName": admin["name"]
-    #                   })
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data["email"],
         "invitation_link": new_member["invitationLink"],
@@ -628,7 +621,7 @@ def change_jwt_iat(user_id):
         return cur.fetchone().get("jwt_iat")
 
 
-def authenticate(email, password, for_change_password=False, for_plugin=False):
+def authenticate(email, password, for_change_password=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -675,7 +668,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
         return {
             "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
                                             TimeUTC.datetime_to_timestamp(jwt_iat),
-                                            aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
+                                            aud=f"front:{helper.get_stage_name()}"),
             "email": email,
             **r
         }

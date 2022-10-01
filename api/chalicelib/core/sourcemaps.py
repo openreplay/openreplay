@@ -80,12 +80,7 @@ def get_traces_group(project_id, payload):
     payloads = {}
     all_exists = True
     for i, u in enumerate(frames):
-        print("===============================")
-        print(u["absPath"])
-        print("converted to:")
         key = __get_key(project_id, u["absPath"])  # use filename instead?
-        print(key)
-        print("===============================")
         if key not in payloads:
             file_exists = s3.exists(config('sourcemaps_bucket'), key)
             all_exists = all_exists and file_exists
@@ -104,6 +99,9 @@ def get_traces_group(project_id, payload):
         if payloads[key] is None:
             continue
         key_results = sourcemaps_parser.get_original_trace(key=key, positions=[o["position"] for o in payloads[key]])
+        if key_results is None:
+            all_exists = False
+            continue
         for i, r in enumerate(key_results):
             res_index = payloads[key][i]["resultIndex"]
             # function name search  by frontend lib is better than sourcemaps' one in most cases

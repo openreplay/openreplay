@@ -1,5 +1,5 @@
 import { makeAutoObservable, observable, action, runInAction } from "mobx"
-import Widget, { IWidget } from "./widget"
+import Widget from "./widget"
 import { dashboardService  } from "App/services"
 import { toast } from 'react-toastify';
 import { DateTime } from 'luxon';
@@ -10,12 +10,12 @@ export default class Dashboard {
     name: string = "Untitled Dashboard"
     description: string = ""
     isPublic: boolean = true
-    widgets: IWidget[] = []
+    widgets: Widget[] = []
     metrics: any[] = []
     isValid: boolean = false
-    currentWidget: IWidget = new Widget()
+    currentWidget: Widget = new Widget()
     config: any = {}
-    createdAt: Date = new Date()
+    createdAt: number = new Date().getTime()
 
     constructor() {
         makeAutoObservable(this)
@@ -48,7 +48,19 @@ export default class Dashboard {
             this.description = json.description
             this.isPublic = json.isPublic
             this.createdAt = DateTime.fromMillis(new Date(json.createdAt).getTime())
-            this.widgets = json.widgets ? json.widgets.map((w: Widget) => new Widget().fromJson(w)).sort((a: Widget, b: Widget) => a.position - b.position) : []
+            if (json.widgets) {
+                const smallWidgets: any[] = json.widgets.filter(wi => wi.config.col === 1)
+                const otherWidgets: any[] = json.widgets.filter(wi => wi.config.col !== 1)
+                const widgets = [...smallWidgets.sort((a,b) => a.config.position - b.config.position), ...otherWidgets.sort((a,b) => a.config.position - b.config.position)]
+
+                widgets.forEach((widget, index) => {
+                    widget.config.position = index
+                })
+
+                this.widgets = widgets.map((w: Widget) => new Widget().fromJson(w))
+            } else {
+                this.widgets = []
+            }
         })
         return this
     }
@@ -57,7 +69,7 @@ export default class Dashboard {
         return this.isValid = this.name.length > 0
     }
 
-    addWidget(widget: IWidget) {
+    addWidget(widget: Widget) {
         this.widgets.push(widget)
     }
 
@@ -65,7 +77,7 @@ export default class Dashboard {
         this.widgets = this.widgets.filter(w => w.widgetId !== widgetId)
     }
 
-    updateWidget(widget: IWidget) {
+    updateWidget(widget: Widget) {
         const index = this.widgets.findIndex(w => w.widgetId === widget.widgetId)
         if (index >= 0) {
             this.widgets[index] = widget
@@ -106,7 +118,7 @@ export default class Dashboard {
                 dashboardService.saveWidget(this.dashboardId, widgetA),
                 dashboardService.saveWidget(this.dashboardId, widgetB)
             ]).then(() => {
-                toast.success("Dashboard updated successfully")
+                toast.success("Dashboard successfully updated")
                 resolve()
             }).catch(() => {
                 toast.error("Error updating widget position")

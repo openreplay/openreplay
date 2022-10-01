@@ -1,7 +1,7 @@
 import type { Message } from './messages'
 import ListWalker from './managers/ListWalker';
 
-export const LIST_NAMES = ["redux", "mobx", "vuex", "ngrx", "graphql", "exceptions", "profiles", "longtasks"] as const;
+export const LIST_NAMES = ["redux", "mobx", "vuex", "zustand", "ngrx", "graphql", "exceptions", "profiles", "longtasks"] as const;
 
 export const INITIAL_STATE = {}
 LIST_NAMES.forEach(name => {

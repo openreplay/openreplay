@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -47,17 +46,18 @@ func main() {
 
 	// Init producer and consumer for data bus
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-	consumer := queue.NewMessageConsumer(
+
+	msgHandler := func(msg messages.Message) {
+		statsLogger.Collect(msg)
+		builderMap.HandleMessage(msg)
+	}
+
+	consumer := queue.NewConsumer(
 		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-			for iter.Next() {
-				statsLogger.Collect(sessionID, meta)
-				builderMap.HandleMessage(sessionID, iter.Message().Decode(), iter.Message().Meta().Index)
-			}
-		},
+		messages.NewMessageIterator(msgHandler, nil, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -78,7 +78,7 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			builderMap.IterateReadyMessages(func(sessionID uint64, readyMsg messages.Message) {
-				producer.Produce(cfg.TopicAnalytics, sessionID, messages.Encode(readyMsg))
+				producer.Produce(cfg.TopicAnalytics, sessionID, readyMsg.Encode())
 			})
 			producer.Flush(cfg.ProducerTimeout)
 			consumer.Commit()

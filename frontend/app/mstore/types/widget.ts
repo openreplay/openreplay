@@ -12,6 +12,7 @@ export default class Widget {
     public static get ID_KEY():string { return "metricId" }
     metricId: any = undefined
     widgetId: any = undefined
+    category?: string = undefined
     name: string = "Untitled Metric"
     // metricType: string = "timeseries"
     metricType: string = "timeseries"
@@ -23,14 +24,14 @@ export default class Widget {
     sessions: [] = []
     isPublic: boolean = true
     owner: string = ""
-    lastModified: Date = new Date()
+    lastModified: number = new Date().getTime()
     dashboards: any[] = []
     dashboardIds: any[] = []
     config: any = {}
     page: number = 1
     limit: number = 5
     params: any = { density: 70 }
-    
+
     period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
     hasChanged: boolean = false
 
@@ -50,7 +51,7 @@ export default class Widget {
     dashboardId: any = undefined
     colSpan: number = 2
     predefinedKey: string = ''
-    
+
     constructor() {
         makeAutoObservable(this)
 
@@ -90,6 +91,7 @@ export default class Widget {
             this.config = json.config
             this.position = json.config.position
             this.predefinedKey = json.predefinedKey
+            this.category = json.category
 
             if (period) {
                 this.period = period

@@ -63,6 +63,7 @@ export default class MainSection extends React.PureComponent {
 
     render() {
         const { error, trace, sourcemapUploaded, ignoreLoading, resolveToggleLoading, toggleFavoriteLoading, className, traceLoading } = this.props;
+        const isPlayer = window.location.pathname.includes('/session/')
 
         return (
             <div className={cn(className, 'bg-white border-radius-3 thin-gray-border mb-6')}>
@@ -143,15 +144,17 @@ export default class MainSection extends React.PureComponent {
 					/>
 				</div> */}
                 <Divider />
-                <div className="m-4">
-                    <h3 className="text-xl inline-block mr-2">Last session with this error</h3>
-                    <span className="font-thin text-sm">{resentOrDate(error.lastOccurrence)}</span>
-                    <SessionBar className="my-4" session={error.lastHydratedSession} />
-                    <Button variant="text-primary" onClick={this.findSessions}>
-                        Find all sessions with this error
-                        <Icon className="ml-1" name="next1" color="teal" />
-                    </Button>
-                </div>
+                {!isPlayer && (
+                    <div className="m-4">
+                        <h3 className="text-xl inline-block mr-2">Last session with this error</h3>
+                        <span className="font-thin text-sm">{resentOrDate(error.lastOccurrence)}</span>
+                        <SessionBar className="my-4" session={error.lastHydratedSession} />
+                        <Button variant="text-primary" onClick={this.findSessions}>
+                            Find all sessions with this error
+                            <Icon className="ml-1" name="next1" color="teal" />
+                        </Button>    
+                    </div>
+                )}
                 <Divider />
                 <div className="m-4">
                     <Loader loading={traceLoading}>

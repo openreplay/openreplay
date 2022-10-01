@@ -90,7 +90,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                 r.pop("first_recorded_session_at")
                 r.pop("first_recorded")
 
-        if recording_state:
+        if recording_state and len(rows) > 0:
             project_ids = [f'({r["project_id"]})' for r in rows]
             query = cur.mogrify(f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
                                     FROM (VALUES {",".join(project_ids)}) AS projects(project_id)

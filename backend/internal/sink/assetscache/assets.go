@@ -25,14 +25,14 @@ func New(sinkCfg *sink.Config, externalCfg *externalConfig.Config, rewriter *ass
 	}
 }
 
-func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.Message {
+func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 	switch m := msg.(type) {
 	case *messages.SetNodeAttributeURLBased:
 		if m.Name == "src" || m.Name == "href" {
 			newMsg := &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,
-				Value: e.handleURL(sessID, m.BaseURL, m.Value),
+				Value: e.handleURL(m.SessionID(), m.BaseURL, m.Value),
 			}
 			newMsg.SetMeta(msg.Meta())
 			return newMsg
@@ -40,7 +40,7 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 			newMsg := &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,
-				Value: e.handleCSS(sessID, m.BaseURL, m.Value),
+				Value: e.handleCSS(m.SessionID(), m.BaseURL, m.Value),
 			}
 			newMsg.SetMeta(msg.Meta())
 			return newMsg
@@ -48,7 +48,7 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 	case *messages.SetCSSDataURLBased:
 		newMsg := &messages.SetCSSData{
 			ID:   m.ID,
-			Data: e.handleCSS(sessID, m.BaseURL, m.Data),
+			Data: e.handleCSS(m.SessionID(), m.BaseURL, m.Data),
 		}
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
@@ -56,14 +56,14 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 		newMsg := &messages.CSSInsertRule{
 			ID:    m.ID,
 			Index: m.Index,
-			Rule:  e.handleCSS(sessID, m.BaseURL, m.Rule),
+			Rule:  e.handleCSS(m.SessionID(), m.BaseURL, m.Rule),
 		}
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.AdoptedSSReplaceURLBased:
 		newMsg := &messages.AdoptedSSReplace{
 			SheetID: m.SheetID,
-			Text:    e.handleCSS(sessID, m.BaseURL, m.Text),
+			Text:    e.handleCSS(m.SessionID(), m.BaseURL, m.Text),
 		}
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
@@ -71,7 +71,7 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 		newMsg := &messages.AdoptedSSInsertRule{
 			SheetID: m.SheetID,
 			Index:   m.Index,
-			Rule:    e.handleCSS(sessID, m.BaseURL, m.Rule),
+			Rule:    e.handleCSS(m.SessionID(), m.BaseURL, m.Rule),
 		}
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
@@ -81,10 +81,11 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 
 func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
 	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL, e.externalCfg); cacheable {
+		assetMessage := &messages.AssetCache{URL: fullURL}
 		if err := e.producer.Produce(
 			e.sinkCfg.TopicCache,
 			sessionID,
-			messages.Encode(&messages.AssetCache{URL: fullURL}),
+			assetMessage.Encode(),
 		); err != nil {
 			log.Printf("can't send asset to cache topic, sessID: %d, err: %s", sessionID, err)
 		}

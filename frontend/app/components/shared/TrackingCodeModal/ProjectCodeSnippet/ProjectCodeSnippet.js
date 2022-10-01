@@ -156,7 +156,7 @@ const ProjectCodeSnippet = props  => {
 
 export default connect(state => ({
   // siteId: state.getIn([ 'site', 'siteId' ]),
-  site: state.getIn([ 'site', 'instance' ]),
+  // site: state.getIn([ 'site', 'instance' ]),
   gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
   saving: state.getIn([ 'site', 'saveGDPR', 'loading' ])
 }), { editGDPR, saveGDPR })(ProjectCodeSnippet)

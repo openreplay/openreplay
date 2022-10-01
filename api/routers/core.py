@@ -31,7 +31,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
             detail="Invalid captcha."
         )
 
-    r = users.authenticate(data.email, data.password, for_plugin=False)
+    r = users.authenticate(data.email, data.password)
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,87 +57,6 @@ def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchem
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
     return {'data': data}
-
-
-@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
-@app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
-def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(sessionId, str):
-        return {"errors": ["session not found"]}
-    data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context.user_id,
-                                  include_fav_viewed=True, group_metadata=True)
-    if data is None:
-        return {"errors": ["session not found"]}
-    if data.get("inDB"):
-        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
-                                  session_id=sessionId)
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
-@app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"])
-def add_remove_favorite_session2(projectId: int, sessionId: int,
-                                 context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": sessions_favorite.favorite_session(project_id=projectId, user_id=context.user_id,
-                                                   session_id=sessionId)}
-
-
-@app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
-@app.get('/{projectId}/sessions2/{sessionId}/assign', tags=["sessions"])
-def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
-                                               tenant_id=context.tenant_id,
-                                               user_id=context.user_id)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
-@app.get('/{projectId}/sessions2/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
-def get_error_trace(projectId: int, sessionId: int, errorId: str,
-                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_trace(project_id=projectId, error_id=errorId)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
-@app.get('/{projectId}/sessions2/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
-def assign_session(projectId: int, sessionId: int, issueId: str,
-                   context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
-                                    tenant_id=context.tenant_id, user_id=context.user_id)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-@app.put('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-@app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-@app.put('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
-                                        session_id=sessionId, assignment_id=issueId,
-                                        user_id=context.user_id, message=data.message)
-    if "errors" in data.keys():
-        return data
-    return {
-        'data': data
-    }
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
@@ -627,21 +546,6 @@ def search_integrations(projectId: int, context: schemas.CurrentContext = Depend
     return log_tools.search(project_id=projectId)
 
 
-@public_app.post('/async/email_assignment', tags=["async mail"])
-def async_send_signup_emails(data: schemas.EmailPayloadSchema = Body(...)):
-    if data.auth != config("async_Token"):
-        return {}
-    email_helper.send_assign_session(recipient=data.email, link=data.link, message=data.message)
-
-
-# @public_app.post('/async/basic/member_invitation', tags=["async mail"])
-# def async_basic_emails(data: schemas.MemberInvitationPayloadSchema = Body(...)):
-#     if data.auth != config("async_Token"):
-#         return {}
-#     email_helper.send_team_invitation(recipient=data.email, invitation_link=data.invitation_link,
-#                                       client_id=data.client_id, sender_name=data.sender_name)
-
-
 @app.get('/{projectId}/sample_rate', tags=["projects"])
 def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_capture_status(project_id=projectId)}
@@ -662,13 +566,6 @@ def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context))
 @app.get('/announcements/view', tags=["announcements"])
 def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.view(user_id=context.user_id)}
-
-
-@app.post('/{projectId}/errors/merge', tags=["errors"])
-def errors_merge(projectId: int, data: schemas.ErrorIdsPayloadSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.merge(error_ids=data.errors)
-    return data
 
 
 @app.get('/show_banner', tags=["banner"])
@@ -894,38 +791,6 @@ def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema 
     return {'data': data}
 
 
-@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])
-def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
-    if data is None:
-        data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
-                                      user_id=context.user_id, include_fav_viewed=True, group_metadata=True, live=False)
-        if data is None:
-            return {"errors": ["session not found"]}
-        if data.get("inDB"):
-            background_tasks.add_task(sessions_viewed.view_session, project_id=projectId,
-                                      user_id=context.user_id, session_id=sessionId)
-    return {'data': data}
-
-
-@app.get('/{projectId}/unprocessed/{sessionId}', tags=["assist"])
-@app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
-def get_live_session_replay_file(projectId: int, sessionId: str,
-                                 context: schemas.CurrentContext = Depends(OR_context)):
-    path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
-    if path is None:
-        return {"errors": ["Replay file not found"]}
-
-    return FileResponse(path=path, media_type="application/octet-stream")
-
-
-@app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
-def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": heatmaps.get_by_url(project_id=projectId, data=data.dict())}
-
-
 @app.post('/{projectId}/mobile/{sessionId}/urls', tags=['mobile'])
 def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayloadSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
@@ -971,67 +836,6 @@ def edit_client(data: schemas.UpdateTenantSchema = Body(...),
     return tenants.update(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
-@app.post('/{projectId}/errors/search', tags=['errors'])
-def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
-                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": errors.search(data, projectId, user_id=context.user_id)}
-
-
-@app.get('/{projectId}/errors/stats', tags=['errors'])
-def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return errors.stats(projectId, user_id=context.user_id, startTimestamp=startTimestamp, endTimestamp=endTimestamp)
-
-
-@app.get('/{projectId}/errors/{errorId}', tags=['errors'])
-def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
-                       density30: int = 30,
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                              **{"density24": density24, "density30": density30})
-    if data.get("data") is not None:
-        background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
-                                  error_id=errorId)
-    return data
-
-
-@app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
-def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
-                                    endDate: int = TimeUTC.now(), density: int = 7,
-                                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                    **{"startDate": startDate, "endDate": endDate, "density": density})
-    return data
-
-
-@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'])
-def errors_get_details_sourcemaps(projectId: int, errorId: str,
-                                  context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_trace(project_id=projectId, error_id=errorId)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
-def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
-                              endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
-    if action == "favorite":
-        return errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
-    elif action == "sessions":
-        start_date = startDate
-        end_date = endDate
-        return {
-            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                        start_date=start_date, end_date=end_date)}
-    elif action in list(errors.ACTION_STATE.keys()):
-        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
-    else:
-        return {"errors": ["undefined action"]}
-
-
 @app.get('/notifications', tags=['notifications'])
 def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
@@ -1056,14 +860,6 @@ def batch_view_notifications(data: schemas.NotificationsViewSchema,
                                                     endTimestamp=data.endTimestamp,
                                                     user_id=context.user_id,
                                                     tenant_id=context.tenant_id)}
-
-
-@public_app.post('/notifications', tags=['notifications'])
-@public_app.put('/notifications', tags=['notifications'])
-def create_notifications(data: schemas.CreateNotificationSchema):
-    if data.token != config("async_Token"):
-        return {"errors": ["missing token"]}
-    return notifications.create(data.notifications)
 
 
 @app.get('/boarding', tags=['boarding'])

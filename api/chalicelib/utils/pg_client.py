@@ -17,8 +17,10 @@ _PG_CONFIG = {"host": config("pg_host"),
               "port": config("pg_port", cast=int),
               "application_name": config("APP_NAME", default="PY")}
 PG_CONFIG = dict(_PG_CONFIG)
-if config("pg_timeout", cast=int, default=0) > 0:
-    PG_CONFIG["options"] = f"-c statement_timeout={config('pg_timeout', cast=int) * 1000}"
+if config("PG_TIMEOUT", cast=int, default=0) > 0:
+    PG_CONFIG["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int) * 1000}"
+
+logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
 
 
 class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
@@ -36,8 +38,15 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
             raise e
 
     def putconn(self, *args, **kwargs):
-        super().putconn(*args, **kwargs)
-        self._semaphore.release()
+        try:
+            super().putconn(*args, **kwargs)
+            self._semaphore.release()
+        except psycopg2.pool.PoolError as e:
+            if str(e) == "trying to put unkeyed connection":
+                print("!!! trying to put unkeyed connection")
+                print(f"env-PG_POOL:{config('PG_POOL', default=None)}")
+                return
+            raise e
 
 
 postgreSQL_pool: ORThreadedConnectionPool = None
@@ -58,8 +67,8 @@ def make_pool():
         except (Exception, psycopg2.DatabaseError) as error:
             logging.error("Error while closing all connexions to PostgreSQL", error)
     try:
-        postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20),
-                                                   config("pg_maxconn", cast=int, default=80),
+        postgreSQL_pool = ORThreadedConnectionPool(config("PG_MINCONN", cast=int, default=20),
+                                                   config("PG_MAXCONN", cast=int, default=80),
                                                    **PG_CONFIG)
         if (postgreSQL_pool):
             logging.info("Connection pool created successfully")
@@ -100,7 +109,7 @@ class PostgresClient:
         elif not config('PG_POOL', cast=bool, default=True):
             single_config = dict(_PG_CONFIG)
             single_config["application_name"] += "-NOPOOL"
-            single_config["options"] = f"-c statement_timeout={config('pg_timeout', cast=int, default=3 * 60) * 1000}"
+            single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=3 * 60) * 1000}"
             self.connection = psycopg2.connect(**single_config)
         else:
             self.connection = postgreSQL_pool.getconn()

@@ -10,7 +10,7 @@ import {
 import LiveTag from 'Shared/LiveTag';
 import { toggleTimetravel, jumpToLive } from 'Player';
 
-import { Icon, Button } from 'UI';
+import { Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
@@ -48,6 +48,8 @@ function getStorageIconName(type) {
       return 'vendors/vuex';
     case STORAGE_TYPES.NGRX:
       return 'vendors/ngrx';
+    case STORAGE_TYPES.ZUSTAND:
+      return 'vendors/zustand';
     case STORAGE_TYPES.NONE:
       return 'store';
   }
@@ -73,6 +75,8 @@ function getStorageName(type) {
       return 'VUEX';
     case STORAGE_TYPES.NGRX:
       return 'NGRX';
+    case STORAGE_TYPES.ZUSTAND:
+      return 'ZUSTAND';
     case STORAGE_TYPES.NONE:
       return 'STATE';
   }
@@ -322,15 +326,13 @@ export default class Controls extends React.Component {
 
     return (
       <div className={styles.controls}>
-        {!live || liveTimeTravel ? (
-          <Timeline
-            live={live}
-            jump={this.props.jump}
-            liveTimeTravel={liveTimeTravel}
-            pause={this.props.pause}
-            togglePlay={this.props.togglePlay}
-          />
-        ) : null}
+        <Timeline
+          live={live}
+          jump={this.props.jump}
+          liveTimeTravel={liveTimeTravel}
+          pause={this.props.pause}
+          togglePlay={this.props.togglePlay}
+        />
         {!fullscreen && (
           <div className={cn(styles.buttons, { '!px-5 !pt-0': live })} data-is-live={live}>
             <div className="flex items-center">
@@ -366,15 +368,6 @@ export default class Controls extends React.Component {
                   <div className="font-semibold px-2">
                     <AssistDuration isLivePlay={livePlay} />
                   </div>
-
-                  {!liveTimeTravel && (
-                    <div
-                      onClick={toggleTimetravel}
-                      className="p-2 ml-2 rounded hover:bg-teal-light bg-gray-lightest cursor-pointer"
-                    >
-                      See Past Activity
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -489,7 +482,6 @@ export default class Controls extends React.Component {
                   containerClassName="mx-2"
                 />
               )}
-              {/* {!live && <div className={cn('h-14 border-r bg-gray-light ml-6')} />} */}
               {!live && (
                 <Tooltip title="Fullscreen" delay={0} position="top-end" className="mx-4">
                   {this.controlIcon(

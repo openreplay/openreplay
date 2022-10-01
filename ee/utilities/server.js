@@ -1,6 +1,8 @@
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
 const express = require('express');
+const assert = require('assert').strict;
+
 let socket;
 if (process.env.redis === "true") {
     socket = require("./servers/websocket-cluster");
@@ -8,24 +10,27 @@ if (process.env.redis === "true") {
     socket = require("./servers/websocket");
 }
 
-const HOST = '0.0.0.0';
+const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
+assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
+const P_KEY = process.env.ASSIST_KEY;
+const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
 
-let debug = process.env.debug === "1" || false;
-const PREFIX = process.env.prefix || `/assist`
+let debug = process.env.debug === "1";
+const heapdump = process.env.heapdump === "1";
 
 if (process.env.uws !== "true") {
     let wsapp = express();
     wsapp.use(express.json());
     wsapp.use(express.urlencoded({extended: true}));
     wsapp.use(request_logger("[wsapp]"));
-    wsapp.get([PREFIX, `${PREFIX}/`], (req, res) => {
+    wsapp.get(['/', PREFIX, `${PREFIX}/`, `${PREFIX}/${P_KEY}`, `${PREFIX}/${P_KEY}/`], (req, res) => {
             res.statusCode = 200;
             res.end("ok!");
         }
     );
-    wsapp.use(`/heapdump/${process.env.S3_KEY}`, dumps.router);
-    wsapp.use(`${PREFIX}/${process.env.S3_KEY}`, socket.wsRouter);
+    heapdump && wsapp.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
+    wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
     wsapp.enable('trust proxy');
     const wsserver = wsapp.listen(PORT, HOST, () => {
         console.log(`WS App listening on http://${HOST}:${PORT}`);
@@ -44,9 +49,11 @@ if (process.env.uws !== "true") {
     const healthFn = (res, req) => {
         res.writeStatus('200 OK').end('ok!');
     }
+    uapp.get('/', healthFn);
     uapp.get(PREFIX, healthFn);
     uapp.get(`${PREFIX}/`, healthFn);
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}`, healthFn);
+    uapp.get(`${PREFIX}/${P_KEY}`, healthFn);
+    uapp.get(`${PREFIX}/${P_KEY}/`, healthFn);
 
 
     /* Either onAborted or simply finished request */
@@ -73,19 +80,19 @@ if (process.env.uws !== "true") {
             return fn(req, res);
         }
     }
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
-    uapp.post(`${PREFIX}/${process.env.S3_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
-    uapp.post(`${PREFIX}/${process.env.S3_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsListByProject));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
+    uapp.post(`${PREFIX}/${P_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
+    uapp.post(`${PREFIX}/${P_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-list/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsListByProject));
 
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live`, uWrapper(socket.handlers.socketsLive));
-    uapp.post(`${PREFIX}/${process.env.S3_KEY}/sockets-live`, uWrapper(socket.handlers.socketsLive));
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
-    uapp.post(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
-    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveByProject));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-live`, uWrapper(socket.handlers.socketsLive));
+    uapp.post(`${PREFIX}/${P_KEY}/sockets-live`, uWrapper(socket.handlers.socketsLive));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
+    uapp.post(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
+    uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveByProject));
 
 
     socket.start(uapp);

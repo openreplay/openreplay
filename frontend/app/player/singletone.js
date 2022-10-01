@@ -40,7 +40,7 @@ export function init(session, config, live = false) {
     endTime, // : 0, //TODO: through initialState
     session,
   });
-  
+
   if (!document.hidden) {
     instance.play();
   }
@@ -73,12 +73,17 @@ export const toggleInspectorMode = initCheck((...args) => instance.toggleInspect
 export const callPeer = initCheck((...args) => instance.assistManager.call(...args))
 /** @type {Player.assistManager.setCallArgs} */
 export const setCallArgs = initCheck((...args) => instance.assistManager.setCallArgs(...args))
+/** @type {Player.assistManager.initiateCallEnd} */
+export const initiateCallEnd = initCheck((...args) => instance.assistManager.initiateCallEnd(...args))
 export const requestReleaseRemoteControl = initCheck((...args) => instance.assistManager.requestReleaseRemoteControl(...args))
+export const releaseRemoteControl = initCheck((...args) => instance.assistManager.releaseRemoteControl(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
 export const toggleAnnotation = initCheck((...args) => instance.assistManager.toggleAnnotation(...args))
+/** @type {Player.toggleTimetravel} */
 export const toggleTimetravel = initCheck((...args) => instance.toggleTimetravel(...args))
 export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
+export const toggleUserName = initCheck((...args) => instance.toggleUserName(...args))
 
 export const Controls = {
   jump,

@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 
 export interface RawTimestamp {
@@ -300,6 +301,12 @@ export interface RawAdoptedSsRemoveOwner {
   id: number,
 }
 
+export interface RawZustand {
+  tp: "zustand",
+  mutation: string,
+  state: string,
+}
+
 export interface RawIosSessionStart {
   tp: "ios_session_start",
   timestamp: number,
@@ -371,4 +378,4 @@ export interface RawIosNetworkCall {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawConnectionInformation | RawSetPageVisibility | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawConnectionInformation | RawSetPageVisibility | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;

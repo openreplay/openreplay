@@ -201,6 +201,6 @@ def get_available_actions(tenant_id):
 
 
 cron_jobs = [
-    {"func": process_traces_queue, "trigger": "interval", "seconds": config("traces_period", cast=int, default=60),
+    {"func": process_traces_queue, "trigger": "interval", "seconds": config("TRACE_PERIOD", cast=int, default=60),
      "misfire_grace_time": 20}
 ]

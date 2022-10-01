@@ -1,6 +1,18 @@
-export function timestamp(): number {
-  return Math.round(performance.now()) + performance.timing.navigationStart
-}
+const DEPRECATED_ATTRS = { htmlmasked: 'hidden', masked: 'obscured' }
+
+export const IN_BROWSER = !(typeof window === 'undefined')
+
+export const IS_FIREFOX = IN_BROWSER && navigator.userAgent.match(/firefox|fxios/i)
+
+export const MAX_STR_LEN = 1e5
+
+const navigationStart: number | false =
+  IN_BROWSER && (performance.timing.navigationStart || performance.timeOrigin)
+// performance.now() is buggy in some browsers
+export const timestamp: () => number =
+  IN_BROWSER && performance.now() && navigationStart
+    ? () => Math.round(performance.now() + navigationStart)
+    : () => Date.now()
 
 export const stars: (str: string) => string =
   'repeat' in String.prototype
@@ -15,8 +27,6 @@ export function normSpaces(str: string): string {
 export function isURL(s: string): boolean {
   return s.startsWith('https://') || s.startsWith('http://')
 }
-
-export const IN_BROWSER = !(typeof window === 'undefined')
 
 // TODO: JOIN IT WITH LOGGER somehow (use logging decorators?); Don't forget about index.js loggin when there is no logger instance.
 
@@ -47,19 +57,20 @@ export function getLabelAttribute(e: Element): string | null {
   return value
 }
 
-export function hasOpenreplayAttribute(e: Element, name: string): boolean {
-  const newName = `data-openreplay-${name}`
+export function hasOpenreplayAttribute(e: Element, attr: string): boolean {
+  const newName = `data-openreplay-${attr}`
   if (e.hasAttribute(newName)) {
+    // @ts-ignore
+    if (DEPRECATED_ATTRS[attr]) {
+      deprecationWarn(
+        `"${newName}" attribute`,
+        // @ts-ignore
+        `"${DEPRECATED_ATTRS[attr] as string}" attribute`,
+        '/installation/sanitize-data',
+      )
+    }
     return true
   }
-  const oldName = `data-asayer-${name}`
-  if (e.hasAttribute(oldName)) {
-    deprecationWarn(
-      `"${oldName}" attribute`,
-      `"${newName}" attribute`,
-      '/installation/sanitize-data',
-    )
-    return true
-  }
+
   return false
 }

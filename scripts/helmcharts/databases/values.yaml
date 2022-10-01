@@ -103,7 +103,7 @@ postgresql:
   # postgresqlPassword: asayerPostgres
   fullnameOverride: postgresql
   image:
-    tag: 13.5.0-debian-10-r62
+    tag: 14.5.0
   resources:
     limits:
       cpu: 1
@@ -128,6 +128,8 @@ minio:
       memory: 128Mi
 
 kafka:
+  image:
+    tag: 2.8.1
   fullnameOverride: kafka
   enabled: false
 

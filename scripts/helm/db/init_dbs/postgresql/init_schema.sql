@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.8.0'
+SELECT 'v1.8.1'
 $$ LANGUAGE sql IMMUTABLE;
 
 -- --- accounts.sql ---
@@ -165,9 +165,9 @@ $$
                 user_id          integer        NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
                 provider         oauth_provider NOT NULL,
                 provider_user_id text           NOT NULL,
-                token            text           NOT NULL,
-                UNIQUE (user_id, provider)
+                token            text           NOT NULL
             );
+            CREATE UNIQUE INDEX oauth_authentication_unique_user_id_provider_idx ON oauth_authentication(user_id,provider);
 
 -- --- projects.sql ---
 
@@ -1130,7 +1130,7 @@ VALUES ('Captured sessions', 'web vitals', '{
          "position": 0
        }', true, true, true, 'errors_per_domains', 'predefined', 'table'),
        ('Fetch Calls with Errors', 'errors', '{
-         "col": 2,
+         "col": 4,
          "row": 2,
          "position": 0
        }', true, true, true, 'calls_errors', 'predefined', 'table'),

@@ -180,16 +180,16 @@ Pipfile
 .local/*
 
 /chalicelib/core/alerts.py
-/chalicelib/core/alerts_processor.py
+#exp /chalicelib/core/alerts_processor.py
 /chalicelib/core/announcements.py
 /chalicelib/core/autocomplete.py
 /chalicelib/core/collaboration_slack.py
 /chalicelib/core/countries.py
-/chalicelib/core/errors.py
+#exp /chalicelib/core/errors.py
 /chalicelib/core/errors_favorite.py
-/chalicelib/core/events.py
+#exp /chalicelib/core/events.py
 /chalicelib/core/events_ios.py
-/chalicelib/core/funnels.py
+#exp /chalicelib/core/funnels.py
 /chalicelib/core/integration_base.py
 /chalicelib/core/integration_base_issue.py
 /chalicelib/core/integration_github.py
@@ -210,11 +210,10 @@ Pipfile
 /chalicelib/core/log_tool_sumologic.py
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
-/chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
-/chalicelib/core/significance.py
+#exp /chalicelib/core/significance.py
 /chalicelib/core/slack.py
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
@@ -243,23 +242,19 @@ Pipfile
 /routers/__init__.py
 /chalicelib/core/assist.py
 /auth/auth_apikey.py
-/auth/auth_jwt.py
 /build.sh
 /routers/base.py
 /routers/core.py
 /routers/crons/core_crons.py
-/routers/subs/dashboard.py
 /db_changes.sql
 /Dockerfile.bundle
 /entrypoint.bundle.sh
 /chalicelib/core/heatmaps.py
-/routers/subs/insights.py
 /schemas.py
-/chalicelib/core/custom_metrics.py
+#exp /chalicelib/core/custom_metrics.py
 /chalicelib/core/performance_event.py
 /chalicelib/core/saved_search.py
 /app_alerts.py
 /build_alerts.sh
-/routers/subs/metrics.py
 /routers/subs/v1_api.py
-/chalicelib/core/dashboards.py
+#exp /chalicelib/core/dashboards.py

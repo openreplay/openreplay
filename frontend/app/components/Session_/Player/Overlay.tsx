@@ -1,14 +1,15 @@
-import React, {useEffect} from 'react';
-import { connectPlayer, markTargets } from 'Player';
+import React from 'react';
+import { connectPlayer } from 'Player';
 import { getStatusText } from 'Player/MessageDistributor/managers/AssistManager';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
-import { ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import { CallingState, ConnectionStatus, RemoteControlStatus } from 'Player/MessageDistributor/managers/AssistManager';
 
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import PlayIconLayer from './Overlay/PlayIconLayer';
 import LiveStatusText from './Overlay/LiveStatusText';
 import Loader from './Overlay/Loader';
 import ElementsMarker from './Overlay/ElementsMarker';
+import RequestingWindow, { WindowType } from 'App/components/Assist/RequestingWindow';
 
 interface Props {
   playing: boolean,
@@ -21,6 +22,8 @@ interface Props {
   autoplay: boolean,
   markedTargets: MarkedTarget[] | null,
   activeTargetIndex: number,
+  calling: CallingState,
+  remoteControl: RemoteControlStatus
 
   nextId: string,
   togglePlay: () => void,
@@ -43,13 +46,19 @@ function Overlay({
   togglePlay,
   closedLive,
   livePlay,
+  calling,
+  remoteControl,
 }: Props) {
   const showAutoplayTimer = !live && completed && autoplay && nextId
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
   const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
+  const showRequestWindow = live && (calling === CallingState.Connecting || remoteControl === RemoteControlStatus.Requesting)
+  const requestWindowType = calling === CallingState.Connecting ? WindowType.Call : remoteControl === RemoteControlStatus.Requesting ? WindowType.Control : null
+
   return (
     <>
+      {showRequestWindow ? <RequestingWindow type={requestWindowType} /> : null}
       { showAutoplayTimer && <AutoplayTimer /> }
       { showLiveStatusText &&
         <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
@@ -77,4 +86,6 @@ export default connectPlayer(state => ({
   markedTargets: state.markedTargets,
   activeTargetIndex: state.activeTargetIndex,
   livePlay: state.livePlay,
+  calling: state.calling,
+  remoteControl: state.remoteControl,
 }))(Overlay);

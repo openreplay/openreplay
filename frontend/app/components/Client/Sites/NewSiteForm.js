@@ -7,6 +7,9 @@ import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import styles from './siteForm.module.css';
 import { confirm } from 'UI';
+import { clearSearch } from 'Duck/search';
+import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
+import { withStore } from 'App/mstore';
 
 @connect(
     (state) => ({
@@ -23,13 +26,17 @@ import { confirm } from 'UI';
         pushNewSite,
         fetchList,
         setSiteId,
+        clearSearch,
+        clearSearchLive,
     }
 )
 @withRouter
+@withStore
 export default class NewSiteForm extends React.PureComponent {
     state = {
         existsError: false,
     };
+    
 
     componentDidMount() {
         const {
@@ -60,16 +67,10 @@ export default class NewSiteForm extends React.PureComponent {
             });
         } else {
             this.props.save(this.props.site).then(() => {
-                this.props.fetchList().then(() => {
-                    const { sites } = this.props;
-                    const site = sites.last();
-                    if (!pathname.includes('/client')) {
-                        this.props.setSiteId(site.get('id'));
-                    }
-                    this.props.onClose(null, site);
-                });
-
-                // this.props.pushNewSite(site)
+                this.props.onClose(null);
+                this.props.clearSearch();
+                this.props.clearSearchLive();
+                this.props.mstore.initClient();
             });
         }
     };

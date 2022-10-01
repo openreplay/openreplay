@@ -2,14 +2,21 @@ import type App from './index.js'
 import { stars, hasOpenreplayAttribute } from '../utils.js'
 import { isElementNode } from './guards.js'
 
+export enum SanitizeLevel {
+  Plain,
+  Obscured,
+  Hidden,
+}
+
 export interface Options {
   obscureTextEmails: boolean
   obscureTextNumbers: boolean
+  domSanitizer?: (node: Element) => SanitizeLevel
 }
 
 export default class Sanitizer {
-  private readonly masked: Set<number> = new Set()
-  private readonly maskedContainers: Set<number> = new Set()
+  private readonly obscured: Set<number> = new Set()
+  private readonly hidden: Set<number> = new Set()
   private readonly options: Options
 
   constructor(private readonly app: App, options: Partial<Options>) {
@@ -24,21 +31,33 @@ export default class Sanitizer {
 
   handleNode(id: number, parentID: number, node: Node) {
     if (
-      this.masked.has(parentID) ||
-      (isElementNode(node) && hasOpenreplayAttribute(node, 'masked'))
+      this.obscured.has(parentID) ||
+      (isElementNode(node) &&
+        (hasOpenreplayAttribute(node, 'masked') || hasOpenreplayAttribute(node, 'obscured')))
     ) {
-      this.masked.add(id)
+      this.obscured.add(id)
     }
     if (
-      this.maskedContainers.has(parentID) ||
-      (isElementNode(node) && hasOpenreplayAttribute(node, 'htmlmasked'))
+      this.hidden.has(parentID) ||
+      (isElementNode(node) &&
+        (hasOpenreplayAttribute(node, 'htmlmasked') || hasOpenreplayAttribute(node, 'hidden')))
     ) {
-      this.maskedContainers.add(id)
+      this.hidden.add(id)
+    }
+
+    if (this.options.domSanitizer !== undefined && isElementNode(node)) {
+      const sanitizeLevel = this.options.domSanitizer(node)
+      if (sanitizeLevel === SanitizeLevel.Obscured) {
+        this.obscured.add(id)
+      }
+      if (sanitizeLevel === SanitizeLevel.Hidden) {
+        this.hidden.add(id)
+      }
     }
   }
 
   sanitize(id: number, data: string): string {
-    if (this.masked.has(id)) {
+    if (this.obscured.has(id)) {
       // TODO: is it the best place to put trim() ? Might trimmed spaces be considered in layout in certain cases?
       return data
         .trim()
@@ -56,11 +75,12 @@ export default class Sanitizer {
     return data
   }
 
-  isMasked(id: number): boolean {
-    return this.masked.has(id)
+  isObscured(id: number): boolean {
+    return this.obscured.has(id)
   }
-  isMaskedContainer(id: number) {
-    return this.maskedContainers.has(id)
+
+  isHidden(id: number) {
+    return this.hidden.has(id)
   }
 
   getInnerTextSecure(el: HTMLElement): string {
@@ -72,7 +92,7 @@ export default class Sanitizer {
   }
 
   clear(): void {
-    this.masked.clear()
-    this.maskedContainers.clear()
+    this.obscured.clear()
+    this.hidden.clear()
   }
 }

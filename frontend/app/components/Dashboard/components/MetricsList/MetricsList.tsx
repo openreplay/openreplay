@@ -1,18 +1,18 @@
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { NoContent, Pagination, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
-import { IWidget } from 'App/mstore/types/widget';
+import Widget from 'App/mstore/types/widget';
 
 function MetricsList({ siteId }: { siteId: string }) {
   const { metricStore } = useStore();
-  const metrics = useObserver(() => metricStore.metrics);
-  const metricsSearch = useObserver(() => metricStore.metricsSearch);
+  const metrics = metricStore.sortedWidgets;
+  const metricsSearch = metricStore.metricsSearch;
 
-  const filterByDashboard = (item: IWidget, searchRE: RegExp) => {
+  const filterByDashboard = (item: Widget, searchRE: RegExp) => {
     const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ');
     return searchRE.test(dashboardsStr);
   };
@@ -26,7 +26,7 @@ function MetricsList({ siteId }: { siteId: string }) {
     metricStore.updateKey('sessionsPage', 1);
   }, []);
 
-  return useObserver(() => (
+  return (
     <NoContent
       show={lenth === 0}
       title={
@@ -68,7 +68,7 @@ function MetricsList({ siteId }: { siteId: string }) {
         />
       </div>
     </NoContent>
-  ));
+  );
 }
 
-export default MetricsList;
+export default observer(MetricsList);

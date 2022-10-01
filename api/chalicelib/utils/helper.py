@@ -18,7 +18,7 @@ def get_version_number():
 
 
 def get_stage_name():
-    stage = config("stage")
+    stage = config("STAGE")
     return stage[len(local_prefix):] if stage.startswith(local_prefix) else stage
 
 
@@ -35,7 +35,7 @@ def is_onprem():
 
 
 def is_local():
-    return config("stage").startswith(local_prefix)
+    return config("STAGE").startswith(local_prefix)
 
 
 def generate_salt():
@@ -139,18 +139,6 @@ def __sbool_to_bool(value):
 def allow_captcha():
     return config("captcha_server", default=None) is not None and config("captcha_key", default=None) is not None \
            and len(config("captcha_server")) > 0 and len(config("captcha_key")) > 0
-
-
-def allow_sentry():
-    return config("sentryURL", default=None) is not None and len(config("sentryURL")) > 0
-
-
-def async_post(endpoint, data):
-    data["auth"] = config("async_Token")
-    try:
-        requests.post(endpoint, timeout=1, json=data)
-    except requests.exceptions.ReadTimeout:
-        pass
 
 
 def string_to_sql_like(value):

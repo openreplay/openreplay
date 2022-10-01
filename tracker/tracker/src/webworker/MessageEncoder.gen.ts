@@ -1,4 +1,5 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import * as Messages from '../common/messages.gen.js'
 import Message from '../common/messages.gen.js'
@@ -229,8 +230,11 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) 
     break
     
+    case Messages.Type.Zustand:
+      return  this.string(msg[1]) && this.string(msg[2]) 
+    break
+    
     }
   }
-  
-}
 
+}

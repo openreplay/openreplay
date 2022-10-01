@@ -10,6 +10,7 @@ interface Props {
 function Counter({ startTime, className }: Props) {
   let intervalId: NodeJS.Timer;
   const [duration, setDuration] = useState(convertTimestampToUtcTimestamp(new Date().getTime()) - convertTimestampToUtcTimestamp(startTime));
+
   const formattedDuration = durationFormatted(Duration.fromMillis(duration));
 
   useEffect(() => {

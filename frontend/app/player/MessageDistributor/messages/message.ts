@@ -1,8 +1,9 @@
 // Auto-generated, do not edit
+/* eslint-disable */
 
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
-import type { 
+import type {
   RawTimestamp,
   RawSetPageLocation,
   RawSetViewportSize,
@@ -47,6 +48,7 @@ import type {
   RawAdoptedSsDeleteRule,
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
+  RawZustand,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -147,6 +149,8 @@ export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
 
 export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
+export type Zustand = RawZustand & Timed
+
 export type IosSessionStart = RawIosSessionStart & Timed
 
 export type IosCustomEvent = RawIosCustomEvent & Timed
@@ -160,3 +164,4 @@ export type IosPerformanceEvent = RawIosPerformanceEvent & Timed
 export type IosLog = RawIosLog & Timed
 
 export type IosNetworkCall = RawIosNetworkCall & Timed
+

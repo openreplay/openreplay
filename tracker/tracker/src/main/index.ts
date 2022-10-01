@@ -1,9 +1,10 @@
 import App, { DEFAULT_INGEST_POINT } from './app/index.js'
 export { default as App } from './app/index.js'
 
-import { UserID, UserAnonymousID, RawCustomEvent, CustomIssue } from './app/messages.gen.js'
+import { UserAnonymousID, RawCustomEvent, CustomIssue } from './app/messages.gen.js'
 import * as _Messages from './app/messages.gen.js'
 export const Messages = _Messages
+export { SanitizeLevel } from './app/sanitizer.js'
 
 import Connection from './modules/connection.js'
 import Console from './modules/console.js'
@@ -19,7 +20,7 @@ import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
-import AdoptedStyleSheets from './modules/adoptedStyleSheets.js'
+import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
 import type { Options as AppOptions } from './app/index.js'
@@ -112,7 +113,7 @@ export default class API {
     if (app !== null) {
       Viewport(app)
       CSSRules(app)
-      AdoptedStyleSheets(app)
+      ConstructedStyleSheets(app)
       Connection(app)
       Console(app, options)
       Exception(app, options)
@@ -187,9 +188,7 @@ export default class API {
       return
     }
     this.app.stop()
-    const sessionHash = this.app.session.getSessionHash()
-    this.app.session.reset()
-    return sessionHash
+    return this.app.session.getSessionHash()
   }
 
   getSessionToken(): string | null | undefined {

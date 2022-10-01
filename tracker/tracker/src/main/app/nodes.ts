@@ -12,20 +12,18 @@ export default class Nodes {
   attachNodeCallback(nodeCallback: NodeCallback): void {
     this.nodeCallbacks.push(nodeCallback)
   }
-  // TODO: what is the difference with app.attachEventListener. can we use only one of those?
-  attachElementListener(type: string, node: Element, elementListener: EventListener): void {
+  attachNodeListener(node: Node, type: string, listener: EventListener): void {
     const id = this.getID(node)
     if (id === undefined) {
       return
     }
-    node.addEventListener(type, elementListener)
+    node.addEventListener(type, listener)
     let listeners = this.elementListeners.get(id)
     if (listeners === undefined) {
       listeners = []
       this.elementListeners.set(id, listeners)
-      return
     }
-    listeners.push([type, elementListener])
+    listeners.push([type, listener])
   }
 
   registerNode(node: Node): [/*id:*/ number, /*isNew:*/ boolean] {

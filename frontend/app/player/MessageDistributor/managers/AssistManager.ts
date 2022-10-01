@@ -119,7 +119,7 @@ export default class AssistManager {
   }
 
   private socket: Socket | null = null
-  connect() {
+  connect(agentToken: string) {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
@@ -146,6 +146,9 @@ export default class AssistManager {
       // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {
         path: '/ws-assist/socket',
+        auth: {
+          token: agentToken
+        },
         query: {
           peerId: this.peerID,
           identity: "agent",
@@ -295,11 +298,13 @@ export default class AssistManager {
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
       this.md.overlay.addEventListener("click", this.onMouseClick)
       this.md.overlay.addEventListener("wheel", this.onWheel)
+      this.md.toggleRemoteControlStatus(true)
       update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
       this.md.overlay.removeEventListener("mousemove", this.onMouseMove)
       this.md.overlay.removeEventListener("click", this.onMouseClick)
       this.md.overlay.removeEventListener("wheel", this.onWheel)
+      this.md.toggleRemoteControlStatus(false)
       update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
     }
@@ -321,6 +326,12 @@ export default class AssistManager {
       this.socket.emit("release_control")
       this.toggleRemoteControl(false)
     }
+  }
+
+  releaseRemoteControl = () => {
+    if (!this.socket) { return }
+    this.socket.emit("release_control")
+    this.toggleRemoteControl(false)
   }
 
 
@@ -406,9 +417,14 @@ export default class AssistManager {
     this.toggleAnnotation(false)
   }
 
-  private initiateCallEnd = async () => {
+  public initiateCallEnd = async () => {
     this.socket?.emit("call_end", store.getState().getIn([ 'user', 'account', 'name']))
     this.handleCallEnd()
+    const remoteControl = getState().remoteControl
+    if (remoteControl === RemoteControlStatus.Enabled) {
+      this.socket.emit("release_control")
+      this.toggleRemoteControl(false)
+    }
   }
 
   private onRemoteCallEnd = () => {

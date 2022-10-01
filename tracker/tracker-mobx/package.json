@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-mobx",
   "description": "Tracker plugin for MobX events recording",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "keywords": [
     "mobx",
     "logging",
@@ -23,11 +23,11 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^3.0.0",
+    "@openreplay/tracker": ">=3.0.0",
     "mobx": "^4.15.7"
   },
   "devDependencies": {
-    "@openreplay/tracker": "^3.0.3",
+    "@openreplay/tracker": "file:../tracker",
     "mobx": "^4.15.7",
     "prettier": "^1.18.2",
     "replace-in-files-cli": "^1.0.0",

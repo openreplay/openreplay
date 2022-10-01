@@ -141,7 +141,6 @@ export default connect(
     stackEventList: state.stackList,
     performanceChartData: state.performanceChartData,
     endTime: state.endTime,
-    // endTime: 30000000,
   }))(OverviewPanel)
 );
 

@@ -1,3 +1,8 @@
+//@ts-ignore
+export function isNode(sth: any): sth is Node {
+  return !!sth && sth.nodeType != null
+}
+
 export function isSVGElement(node: Element): node is SVGElement {
   return node.namespaceURI === 'http://www.w3.org/2000/svg'
 }

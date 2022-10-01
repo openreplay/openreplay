@@ -9,6 +9,7 @@ efsCleaner:
     repository: "{{ .Values.global.openReplayContainerRegistry }}/alpine"
     pullPolicy: Always
     tag: 3.16.1
+  retention: 2
   pvc:
     # This can be either persistentVolumeClaim or hostPath.
     # In case of pvc, you'll have to provide the pvc name.
@@ -81,5 +82,5 @@ fullnameOverride: "utilities-openreplay"
 
 # 5 3 * * 1 “At 03:05 on Monday.”
 # refer: https://crontab.guru/#5_3_*_*_1
-cron: "5 3 * * 1"
+cron: "5 3 */3 * *"
 

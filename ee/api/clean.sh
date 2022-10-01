@@ -1,17 +1,17 @@
 #!/bin/bash
 
 rm -rf ./chalicelib/core/alerts.py
-rm -rf ./chalicelib/core/alerts_processor.py
+#exp rm -rf ./chalicelib/core/alerts_processor.py
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/autocomplete.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
-rm -rf ./chalicelib/core/errors.py
+#exp rm -rf ./chalicelib/core/errors.py
 rm -rf ./chalicelib/core/errors_favorite.py
-rm -rf ./chalicelib/core/events.py
+#exp rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_ios.py
-rm -rf ./chalicelib/core/dashboards.py
-rm -rf ./chalicelib/core/funnels.py
+#exp rm -rf ./chalicelib/core/dashboards.py
+#exp rm -rf ./chalicelib/core/funnels.py
 rm -rf ./chalicelib/core/integration_base.py
 rm -rf ./chalicelib/core/integration_base_issue.py
 rm -rf ./chalicelib/core/integration_github.py
@@ -32,11 +32,10 @@ rm -rf ./chalicelib/core/log_tool_stackdriver.py
 rm -rf ./chalicelib/core/log_tool_sumologic.py
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
-rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
-rm -rf ./chalicelib/core/significance.py
+#exp rm -rf ./chalicelib/core/significance.py
 rm -rf ./chalicelib/core/slack.py
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
@@ -65,20 +64,17 @@ rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
 rm -rf ./auth/auth_apikey.py
-rm -rf ./auth/auth_jwt.py
 rm -rf ./build.sh
+rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py
-rm -rf ./routers/subs/dashboard.py
 rm -rf ./db_changes.sql
 rm -rf ./Dockerfile.bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
-rm -rf ./routers/subs/insights.py
 rm -rf ./schemas.py
 rm -rf ./routers/subs/v1_api.py
-rm -rf ./routers/subs/metrics.py
-rm -rf ./chalicelib/core/custom_metrics.py
+#exp rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/performance_event.py
 rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./app_alerts.py

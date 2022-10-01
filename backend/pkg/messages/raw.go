@@ -54,6 +54,7 @@ func (m *RawMessage) Decode() Message {
 	msg, err := ReadMessage(m.tp, bytes.NewReader(m.data[1:]))
 	if err != nil {
 		log.Printf("decode err: %s", err)
+		return nil
 	}
 	msg.Meta().SetMeta(m.meta)
 	return msg
@@ -65,4 +66,11 @@ func (m *RawMessage) TypeID() int {
 
 func (m *RawMessage) Meta() *message {
 	return m.meta
+}
+
+func (m *RawMessage) SessionID() uint64 {
+	if m.meta != nil {
+		return m.meta.SessionID()
+	}
+	return 0
 }

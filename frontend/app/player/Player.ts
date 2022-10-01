@@ -72,15 +72,15 @@ export default class Player extends MessageDistributor {
   private _startAnimation() {
     let prevTime = getState().time;
     let animationPrevTime = performance.now();
-    
+
     const nextFrame = (animationCurrentTime: number) => {
-      const { 
-        speed, 
+      const {
+        speed,
         skip,
-        autoplay, 
-        skipIntervals, 
-        endTime, 
-        live, 
+        autoplay,
+        skipIntervals,
+        endTime,
+        live,
         livePlay,
         disconnected,
         messagesLoading,
@@ -93,7 +93,7 @@ export default class Player extends MessageDistributor {
 
       let time = prevTime + diffTime;
 
-      const skipInterval = skip && skipIntervals.find((si: Node) => si.contains(time));  // TODO: good skip by messages
+      const skipInterval = !live && skip && skipIntervals.find((si: Node) => si.contains(time));  // TODO: good skip by messages
       if (skipInterval) time = skipInterval.end;
 
       const fmt = super.getFirstMessageTime();
@@ -159,7 +159,7 @@ export default class Player extends MessageDistributor {
   jump(time = getState().time, index: number) {
     const { live, liveTimeTravel, endTime } = getState();
     if (live && !liveTimeTravel) return;
-    
+
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
       // this._animationFrameRequestId = requestAnimationFrame(() => {
@@ -188,7 +188,7 @@ export default class Player extends MessageDistributor {
       const { inspectorMode } = getState();
       flag = !inspectorMode;
     }
-    
+
     if (flag) {
       this.pause();
       update({ inspectorMode: true });
@@ -199,7 +199,7 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  markTargets(targets: { selector: string, count: number }[] | null) {    
+  markTargets(targets: { selector: string, count: number }[] | null) {
     this.pause();
     this.setMarkedTargets(targets);
   }
@@ -207,7 +207,7 @@ export default class Player extends MessageDistributor {
   activeTarget(index: number) {
     this.setActiveTarget(index);
   }
-  
+
   toggleSkipToIssue() {
     const skipToIssue = !getState().skipToIssue;
     localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
@@ -219,13 +219,13 @@ export default class Player extends MessageDistributor {
     update({ skipToIssue });
     return skipToIssue;
   }
-  
+
   toggleAutoplay() {
     const autoplay = !getState().autoplay;
     localStorage.setItem(AUTOPLAY_STORAGE_KEY, `${autoplay}`);
     update({ autoplay });
   }
-  
+
   toggleEvents(shouldShow?: boolean) {
     const showEvents = shouldShow || !getState().showEvents;
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
@@ -252,19 +252,22 @@ export default class Player extends MessageDistributor {
     this._updateSpeed(Math.max(1, speed/2));
   }
 
-  toggleTimetravel() {
+  async toggleTimetravel() {
     if (!getState().liveTimeTravel) {
-      this.reloadWithUnprocessedFile()
-      this.play()
+      return await this.reloadWithUnprocessedFile()
     }
   }
-  
+
   jumpToLive() {
     cancelAnimationFrame(this._animationFrameRequestId);
     this._setTime(getState().endTime);
     this._startAnimation();
     update({ livePlay: true });
-}
+  }
+
+  toggleUserName(name?: string) {
+    this.cursor.toggleUserName(name)
+  }
 
   clean() {
     this.pause();

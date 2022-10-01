@@ -3,8 +3,15 @@ import cn from 'classnames';
 import { IconButton } from 'UI';
 import stl from './errorItem.module.css';
 import { Duration } from 'luxon';
+import { useModal } from 'App/components/Modal';
+import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 
-function ErrorItem({ error = {}, onErrorClick, onJump, inactive, selected }) {
+function ErrorItem({ error = {}, onJump, inactive, selected }) {
+  const { showModal } = useModal();
+
+  const onErrorClick = () => {
+    showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true });
+  }
   return (
     <div
       className={cn(stl.wrapper, 'py-2 px-4 flex cursor-pointer', {

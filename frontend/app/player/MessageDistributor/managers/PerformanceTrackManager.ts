@@ -65,11 +65,34 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 		super.append(msg);
 	}
 
+
+	// TODO: refactor me
+	private prevNCTime = 0
+	addNodeCountPointIfNeed(time: number) {
+		if ((this.prevTime && time - this.prevTime < 200) || (time - this.prevNCTime < 200)) {
+			return
+		}
+		const lastPoint = this.chart[this.chart.length - 1]
+		if (lastPoint && lastPoint.nodesCount === this.prevNodesCount) {
+			return
+		}
+		const newPoint = Object.assign({
+			usedHeap:0,
+			totalHeap: 0,
+			fps: null,
+			cpu: null,
+		}, lastPoint)
+		newPoint.time = time
+		newPoint.nodesCount = this.prevNodesCount
+		this.chart.push(newPoint)
+		this.prevNCTime = time
+	}
+
 	setCurrentNodesCount(count: number) {
 		this.prevNodesCount = count;
-		if (this.chart.length > 0) {
-			this.chart[ this.chart.length - 1 ].nodesCount = count;
-		}
+		// if (this.chart.length > 0) {
+		// 	this.chart[ this.chart.length - 1 ].nodesCount = count;
+		// }
 	} 
 
 	handleVisibility(msg: SetPageVisibility):void {

@@ -69,7 +69,6 @@ var CONTAINER_TYPE_MAP = map[uint64]string{0: "window", 1: "iframe", 2: "embed",
 type Connector interface {
 	Prepare() error
 	Commit() error
-	FinaliseSessionsTable() error
 	InsertWebSession(session *types.Session) error
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
@@ -153,13 +152,6 @@ func (c *connectorImpl) Commit() error {
 		if err := b.Send(); err != nil {
 			return fmt.Errorf("can't send batch: %s", err)
 		}
-	}
-	return nil
-}
-
-func (c *connectorImpl) FinaliseSessionsTable() error {
-	if err := c.conn.Exec(context.Background(), "OPTIMIZE TABLE sessions FINAL"); err != nil {
-		return fmt.Errorf("can't finalise sessions table: %s", err)
 	}
 	return nil
 }
