@@ -70,3 +70,16 @@ func StringMapOptional(key string) map[string]string {
 	}
 	return stringMap
 }
+
+func StringArrayOptional(key string) []string {
+	v := StringOptional(key)
+	if v == "" {
+		return nil
+	}
+	var stringArray []string
+
+	if err := json.Unmarshal([]byte(v), &stringArray); err != nil {
+		log.Fatalln(key + ": wrong json format. Expected string array")
+	}
+	return stringArray
+}

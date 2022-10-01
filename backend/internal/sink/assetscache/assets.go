@@ -2,6 +2,7 @@ package assetscache
 
 import (
 	"log"
+	externalConfig "openreplay/backend/internal/config/external"
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
@@ -9,16 +10,18 @@ import (
 )
 
 type AssetsCache struct {
-	cfg      *sink.Config
-	rewriter *assets.Rewriter
-	producer types.Producer
+	sinkCfg      *sink.Config
+	externalCfg    *externalConfig.Config
+	rewriter     *assets.Rewriter
+	producer     types.Producer
 }
 
-func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
+func New(sinkCfg *sink.Config, externalCfg *externalConfig.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
 	return &AssetsCache{
-		cfg:      cfg,
-		rewriter: rewriter,
-		producer: producer,
+		sinkCfg:   sinkCfg,
+		externalCfg: externalCfg,
+		rewriter:  rewriter,
+		producer:  producer,
 	}
 }
 
@@ -77,10 +80,10 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 }
 
 func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
-	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL); cacheable {
+	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL, e.externalCfg); cacheable {
 		assetMessage := &messages.AssetCache{URL: fullURL}
 		if err := e.producer.Produce(
-			e.cfg.TopicCache,
+			e.sinkCfg.TopicCache,
 			sessionID,
 			assetMessage.Encode(),
 		); err != nil {
@@ -96,17 +99,17 @@ func (e *AssetsCache) sendAssetsForCacheFromCSS(sessionID uint64, baseURL string
 }
 
 func (e *AssetsCache) handleURL(sessionID uint64, baseURL string, url string) string {
-	if e.cfg.CacheAssets {
+	if e.sinkCfg.CacheAssets {
 		e.sendAssetForCache(sessionID, baseURL, url)
-		return e.rewriter.RewriteURL(sessionID, baseURL, url)
+		return e.rewriter.RewriteURL(sessionID, baseURL, url, e.externalCfg)
 	}
 	return assets.ResolveURL(baseURL, url)
 }
 
 func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) string {
-	if e.cfg.CacheAssets {
+	if e.sinkCfg.CacheAssets {
 		e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
-		return e.rewriter.RewriteCSS(sessionID, baseURL, css)
+		return e.rewriter.RewriteCSS(sessionID, baseURL, css, e.externalCfg)
 	}
 	return assets.ResolveCSS(baseURL, css)
 }

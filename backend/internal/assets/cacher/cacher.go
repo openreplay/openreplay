@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	config "openreplay/backend/internal/config/assets"
+	externalConfig "openreplay/backend/internal/config/external"
 	"openreplay/backend/pkg/storage"
 	"openreplay/backend/pkg/url/assets"
 )
@@ -33,9 +34,11 @@ type cacher struct {
 	sizeLimit        int
 	downloadedAssets syncfloat64.Counter
 	requestHeaders   map[string]string
+	cfg              *config.Config
+	externalCfg		 *externalConfig.Config
 }
 
-func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
+func NewCacher(cfg *config.Config, externalCfg *externalConfig.Config, metrics *monitoring.Metrics) *cacher {
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	if metrics == nil {
 		log.Fatalf("metrics are empty")
@@ -58,7 +61,9 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 		Errors:           make(chan error),
 		sizeLimit:        cfg.AssetsSizeLimit,
 		downloadedAssets: downloadedAssets,
-		requestHeaders:   cfg.AssetsRequestHeaders,
+		requestHeaders:   externalCfg.RequestHeaders,
+		cfg: cfg,
+		externalCfg: externalCfg,
 	}
 }
 
@@ -112,7 +117,7 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 
 	strData := string(data)
 	if isCSS {
-		strData = c.rewriter.RewriteCSS(sessionID, requestURL, strData) // TODO: one method for rewrite and return list
+		strData = c.rewriter.RewriteCSS(sessionID, requestURL, strData, c.externalCfg) // TODO: one method for rewrite and return list
 	}
 
 	// TODO: implement in streams
@@ -126,7 +131,7 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 	if isCSS {
 		if depth > 0 {
 			for _, extractedURL := range assets.ExtractURLsFromCSS(string(data)) {
-				if fullURL, cachable := assets.GetFullCachableURL(requestURL, extractedURL); cachable {
+				if fullURL, cachable := assets.GetFullCachableURL(requestURL, extractedURL, c.externalCfg); cachable {
 					go c.cacheURL(fullURL, sessionID, depth-1, urlContext+"\n  -> "+fullURL, false)
 				}
 			}

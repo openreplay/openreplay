@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	externalConfig "openreplay/backend/internal/config/external"
 )
 
 // TODO: ignore  data: , escaped quotes , spaces between brackets?
@@ -69,9 +70,9 @@ func ResolveCSS(baseURL string, css string) string {
 	return strings.Replace(css, ":hover", ".-openreplay-hover", -1)
 }
 
-func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) string {
+func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string, externalCfg *externalConfig.Config) string {
 	css = rewriteLinks(css, func(rawurl string) string {
-		return r.RewriteURL(sessionID, baseurl, rawurl)
+		return r.RewriteURL(sessionID, baseurl, rawurl, externalCfg)
 	})
 	return strings.Replace(css, ":hover", ".-openreplay-hover", -1)
 }

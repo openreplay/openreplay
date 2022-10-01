@@ -11,6 +11,7 @@ import (
 	"openreplay/backend/internal/assets"
 	"openreplay/backend/internal/assets/cacher"
 	config "openreplay/backend/internal/config/assets"
+	externalConfig "openreplay/backend/internal/config/external"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
@@ -22,8 +23,9 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
+	externalCfg := externalConfig.New()
 
-	cacher := cacher.NewCacher(cfg, metrics)
+	cacher := cacher.NewCacher(cfg, externalCfg, metrics)
 
 	totalAssets, err := metrics.RegisterCounter("assets_total")
 	if err != nil {

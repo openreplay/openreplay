@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"openreplay/backend/internal/config/sink"
+	externalConfig "openreplay/backend/internal/config/external"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/oswriter"
 	"openreplay/backend/internal/storage"
@@ -24,6 +25,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
+	externalCfg := externalConfig.New()
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
@@ -34,7 +36,7 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
-	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
+	assetMessageHandler := assetscache.New(cfg, externalCfg, rewriter, producer)
 
 	counter := storage.NewLogCounter()
 	totalMessages, err := metrics.RegisterCounter("messages_total")
