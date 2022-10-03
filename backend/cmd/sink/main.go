@@ -89,11 +89,13 @@ func main() {
 		data := msg.EncodeWithIndex()
 		if messages.IsDOMType(msg.TypeID()) {
 			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				log.Printf("Writer error: %v\n", err)
+				log.Printf("DOM Writer error: %v\n", err)
 			}
-		} else {
+		}
+		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
+			// TODO: write only necessary timestamps
 			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				log.Printf("Writer error: %v\n", err)
+				log.Printf("Devtools Writer error: %v\n", err)
 			}
 		}
 
