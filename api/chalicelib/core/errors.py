@@ -122,7 +122,7 @@ def get_details(project_id, error_id, user_id, **data):
                country_partition,
                chart24,
                chart30,
-               tags AS custom_tags
+               COALESCE(tags,'{{}}')::jsonb AS custom_tags
         FROM (SELECT error_id,
                      name,
                      message,
