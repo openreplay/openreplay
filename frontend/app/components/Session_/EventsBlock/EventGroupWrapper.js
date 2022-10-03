@@ -11,7 +11,7 @@ import { setEditNoteTooltip } from 'Duck/sessions';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle("showLoadInfo", "toggleLoadInfo")
-@connect(state => ({members: state.getIn(['members', 'list'])}), { setEditNoteTooltip })
+@connect(state => ({members: state.getIn(['members', 'list']), currentUserId: state.getIn(['account', 'id']) }), { setEditNoteTooltip })
 class EventGroupWrapper extends React.Component {
 
   toggleLoadInfo = (e) => {
@@ -81,6 +81,7 @@ class EventGroupWrapper extends React.Component {
             noteId={event.noteId}
             filterOutNote={filterOutNote}
             onEdit={this.props.setEditNoteTooltip}
+            noEdit={this.props.currentUserId !== event.userId}
           />
         ) : isLocation
           ? <Event

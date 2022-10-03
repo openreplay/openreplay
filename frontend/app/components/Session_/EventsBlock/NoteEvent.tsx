@@ -20,6 +20,7 @@ interface Props {
   sessionId: string;
   date: string;
   noteId: number;
+  noEdit: boolean;
   filterOutNote: (id: number) => void;
   onEdit: (noteTooltipObj: Record<string, any>) => void;
 }
@@ -69,7 +70,7 @@ function NoteEvent(props: Props) {
     }
   };
   const menuItems = [
-    { icon: 'pencil', text: 'Edit', onClick: onEdit },
+    { icon: 'pencil', text: 'Edit', onClick: onEdit, disabled: props.onEdit },
     { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
