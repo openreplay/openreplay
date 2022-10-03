@@ -141,7 +141,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
-                      user_id_to_update=memberId)
+                             user_id_to_update=memberId)
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
@@ -276,8 +276,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
     return {'data': data}
 
 
-@app.get('/{projectId}/unprocessed/{sessionId}', tags=["assist"])
-@app.get('/{projectId}/assist/sessions/{sessionId}/replay', tags=["assist"])
+@app.get('/{projectId}/assist/sessions/{sessionId}/dom.mob', tags=["assist"])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
@@ -297,8 +296,7 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
     return FileResponse(path=path, media_type="application/octet-stream")
 
 
-@app.get('/{projectId}/unprocessed/{sessionId}/devtools', tags=["assist"])
-@app.get('/{projectId}/assist/sessions/{sessionId}/devtools', tags=["assist"])
+@app.get('/{projectId}/assist/sessions/{sessionId}/devtools.mob', tags=["assist"])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}
@@ -422,7 +420,8 @@ def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = D
 @app.post('/{projectId}/notes', tags=["sessions", "notes"])
 def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,data=data)
+    data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
+                                                      user_id=context.user_id, data=data)
     if "errors" in data:
         return data
     return {
