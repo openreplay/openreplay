@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { NavLink, withRouter } from 'react-router-dom';
 import cn from 'classnames';
-import { 
+import {
   sessions,
   metrics,
   assist,
   client,
   dashboard,
+  alerts,
   withSiteId,
   CLIENT_DEFAULT_TAB,
 } from 'App/routes';
@@ -28,18 +29,19 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
 const DASHBOARD_PATH = dashboard();
+const ALERTS_PATH = alerts();
 const METRICS_PATH = metrics();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
 const Header = (props) => {
-  const { 
-    sites, location, account, 
+  const {
+    sites, location, account,
     onLogoutClick, siteId,
     boardingCompletion = 100, showAlerts = false,
   } = props;
-  
+
   const name = account.get('name').split(" ")[0];
   const [hideDiscover, setHideDiscover] = useState(false)
   const { userStore, notificationStore } = useStore();
@@ -52,7 +54,7 @@ const Header = (props) => {
 
   useEffect(() => {
     if (!account.id || initialDataFetched) return;
-    
+
     setTimeout(() => {
       Promise.all([
         userStore.fetchLimits(),
@@ -101,9 +103,11 @@ const Header = (props) => {
         className={ styles.nav }
         activeClassName={ styles.active }
         isActive={ (_, location) => {
-          return location.pathname.includes(DASHBOARD_PATH) || location.pathname.includes(METRICS_PATH);
+          return location.pathname.includes(DASHBOARD_PATH)
+          || location.pathname.includes(METRICS_PATH)
+          || location.pathname.includes(ALERTS_PATH)
         }}
-      >         
+      >
         <span>{ 'Dashboards' }</span>
       </NavLink>
       <div className={ styles.right }>
@@ -111,18 +115,18 @@ const Header = (props) => {
         <div className={ styles.divider } />
 
         { (boardingCompletion < 100 && !hideDiscover) && (
-          <React.Fragment>            
+          <React.Fragment>
             <OnboardingExplore onComplete={() => setHideDiscover(true)} />
             <div className={ styles.divider } />
           </React.Fragment>
         )}
-      
+
         <Notifications />
         <div className={ styles.divider } />
         <Popup content={ `Preferences` } >
           <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
         </Popup>
-        
+
         <div className={ styles.divider } />
         <div className={ styles.userDetails }>
           <div className="flex items-center">

@@ -24,7 +24,7 @@ export default class Widget {
     sessions: [] = []
     isPublic: boolean = true
     owner: string = ""
-    lastModified: Date = new Date()
+    lastModified: number = new Date().getTime()
     dashboards: any[] = []
     dashboardIds: any[] = []
     config: any = {}

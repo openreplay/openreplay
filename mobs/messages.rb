@@ -469,4 +469,9 @@ message 79, 'Zustand' do
   string 'State'
 end
 
+message 127, 'SessionSearch' do
+  uint 'Timestamp'
+  uint 'Partition'
+end
+
 # 80 -- 90 reserved

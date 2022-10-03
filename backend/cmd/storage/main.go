@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"strconv"
@@ -38,24 +37,24 @@ func main() {
 		log.Fatalf("can't init sessionFinder module: %s", err)
 	}
 
-	consumer := queue.NewMessageConsumer(
+	consumer := queue.NewConsumer(
 		cfg.GroupStorage,
 		[]string{
 			cfg.TopicTrigger,
 		},
-		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-			for iter.Next() {
-				if iter.Type() == messages.MsgSessionEnd {
-					msg := iter.Message().Decode().(*messages.SessionEnd)
-					if err := srv.UploadKey(strconv.FormatUint(sessionID, 10), 5); err != nil {
-						log.Printf("can't find session: %d", sessionID)
-						sessionFinder.Find(sessionID, msg.Timestamp)
-					}
-					// Log timestamp of last processed session
-					counter.Update(sessionID, time.UnixMilli(meta.Timestamp))
+		messages.NewMessageIterator(
+			func(msg messages.Message) {
+				m := msg.(*messages.SessionEnd)
+				if err := srv.UploadKey(strconv.FormatUint(msg.SessionID(), 10), 5); err != nil {
+					log.Printf("can't find session: %d", msg.SessionID())
+					sessionFinder.Find(msg.SessionID(), m.Timestamp)
 				}
-			}
-		},
+				// Log timestamp of last processed session
+				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))
+			},
+			[]int{messages.MsgSessionEnd},
+			true,
+		),
 		true,
 		cfg.MessageSizeLimit,
 	)

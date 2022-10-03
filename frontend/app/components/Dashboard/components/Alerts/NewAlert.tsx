@@ -146,7 +146,7 @@ const NewAlert = (props: IProps) => {
     // @ts-ignore
     .toJS();
 
-  
+
 
   const writeQueryOption = (
     e: React.ChangeEvent,
@@ -196,7 +196,7 @@ const NewAlert = (props: IProps) => {
           >
           </div>
         </div>
-        
+
             <div className="px-6 pb-3 flex flex-col">
               <Section
                 index="1"
@@ -244,7 +244,7 @@ const NewAlert = (props: IProps) => {
                 title="Notify Through"
                 description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
                 content={
-                  <NotifyHooks 
+                  <NotifyHooks
                     instance={instance}
                     onChangeCheck={onChangeCheck}
                     slackChannels={slackChannels}
@@ -257,14 +257,14 @@ const NewAlert = (props: IProps) => {
             </div>
 
             <div className="flex items-center justify-between p-6 border-t">
-              <BottomButtons 
+              <BottomButtons
                 loading={loading}
                 instance={instance}
                 deleting={deleting}
                 onDelete={onDelete}
               />
             </div>
-         
+
       </Form>
 
       <div className="bg-white mt-4 border rounded mb-10">

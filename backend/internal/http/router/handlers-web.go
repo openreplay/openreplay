@@ -125,7 +125,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Send sessionStart message to kafka
-		if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(sessionStart)); err != nil {
+		if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
 			log.Printf("can't send session start: %s", err)
 		}
 	}

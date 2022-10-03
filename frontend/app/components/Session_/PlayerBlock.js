@@ -1,9 +1,8 @@
 import React from 'react';
 import cn from "classnames";
 import { connect } from 'react-redux';
-import {  } from 'Player';
 import {
-  NONE, OVERVIEW,
+  NONE,
 } from 'Duck/components/player';
 import Player from './Player';
 import SubHeader from './Subheader';

@@ -38,6 +38,6 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 	return nil
 }
 
-func (si *Saver) CommitStats(optimize bool) error {
+func (si *Saver) CommitStats() error {
 	return si.ch.Commit()
 }

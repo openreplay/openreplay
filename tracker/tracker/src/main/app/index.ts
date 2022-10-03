@@ -159,7 +159,7 @@ export default class App {
           this._debug('worker_failed', {}) // add context (from worker)
         } else if (data === 'restart') {
           this.stop(false)
-          this.start({ forceNew: true })
+          this.start({ forceNew: true }) // TODO: keep userID & metadata (draw scenarios)
         }
       }
       const alertWorker = () => {
@@ -304,8 +304,12 @@ export default class App {
       this.debug.error('OpenReplay error: Unable to build session URL')
       return undefined
     }
+    const ingest = this.options.ingestPoint
+    const isSaas = ingest === DEFAULT_INGEST_POINT
 
-    return this.options.ingestPoint.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+    const projectPath = isSaas ? ingest.replace('api', 'app') : ingest
+
+    return projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
   }
 
   getHost(): string {
@@ -446,7 +450,8 @@ export default class App {
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
-        if (sessionID !== this.session.getInfo().sessionID) {
+        const prevSessionID = this.session.getInfo().sessionID
+        if (prevSessionID && prevSessionID !== sessionID) {
           this.session.reset()
         }
         this.session.setSessionToken(token)

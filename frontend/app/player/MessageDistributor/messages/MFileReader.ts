@@ -4,7 +4,7 @@ import logger from 'App/logger';
 import RawMessageReader from './RawMessageReader';
 
 // TODO: composition instead of inheritance
-// needSkipMessage() and next() methods here use buf and p protected properties, 
+// needSkipMessage() and next() methods here use buf and p protected properties,
 // which should be probably somehow incapsulated
 export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
@@ -49,7 +49,7 @@ export default class MFileReader extends RawMessageReader {
       if (!skippedMessage) {
         return null
       }
-      logger.log("Skipping message: ", skippedMessage)
+      logger.group("Skipping message: ", skippedMessage)
     }
 
     this.pLastMessageID = this.p
@@ -65,7 +65,7 @@ export default class MFileReader extends RawMessageReader {
       }
       this.currentTime = rMsg.timestamp - this.startTime
       return this.next()
-    } 
+    }
 
     const msg = Object.assign(rMsg, {
       time: this.currentTime,
