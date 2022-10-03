@@ -67,6 +67,7 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 }
 
 func (c *cacher) CacheFile(task *Task) {
+	log.Printf("new task: %+v", task)
 	c.cacheURL(task.requestURL, task.sessionID, task.depth, task.urlContext, task.isJS)
 }
 
