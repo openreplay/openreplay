@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/pkg/monitoring"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,6 +34,7 @@ type cacher struct {
 	sizeLimit        int
 	downloadedAssets syncfloat64.Counter
 	requestHeaders   map[string]string
+	workers          *WorkerPool
 }
 
 func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
@@ -44,7 +46,7 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 	if err != nil {
 		log.Printf("can't create downloaded_assets metric: %s", err)
 	}
-	return &cacher{
+	c := &cacher{
 		timeoutMap: newTimeoutMap(),
 		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets),
 		httpClient: &http.Client{
@@ -60,6 +62,12 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 		downloadedAssets: downloadedAssets,
 		requestHeaders:   cfg.AssetsRequestHeaders,
 	}
+	c.workers = NewPool(32, c.CacheFile)
+	return c
+}
+
+func (c *cacher) CacheFile(task *Task) {
+	c.cacheURL(task.requestURL, task.sessionID, task.depth, task.urlContext, task.isJS)
 }
 
 func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlContext string, isJS bool) {
@@ -143,13 +151,94 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 }
 
 func (c *cacher) CacheJSFile(sourceURL string) {
-	go c.cacheURL(sourceURL, 0, 0, sourceURL, true)
+	c.workers.AddTask(&Task{
+		requestURL: sourceURL,
+		sessionID:  0,
+		depth:      0,
+		urlContext: sourceURL,
+		isJS:       true,
+	})
+	//go c.cacheURL(sourceURL, 0, 0, sourceURL, true)
 }
 
 func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
-	go c.cacheURL(fullURL, sessionID, MAX_CACHE_DEPTH, fullURL, false)
+	c.workers.AddTask(&Task{
+		requestURL: fullURL,
+		sessionID:  sessionID,
+		depth:      MAX_CACHE_DEPTH,
+		urlContext: fullURL,
+		isJS:       false,
+	})
+	//go c.cacheURL(fullURL, sessionID, MAX_CACHE_DEPTH, fullURL, false)
 }
 
 func (c *cacher) UpdateTimeouts() {
 	c.timeoutMap.deleteOutdated()
+}
+
+func (c *cacher) Stop() {
+	c.workers.Stop()
+}
+
+type Task struct {
+	requestURL string
+	sessionID  uint64
+	depth      byte
+	urlContext string
+	isJS       bool
+}
+
+type WorkerPool struct {
+	tasks chan *Task
+	wg    sync.WaitGroup
+	done  chan struct{}
+	term  sync.Once
+	size  int
+	job   Job
+}
+
+type Job func(task *Task)
+
+func NewPool(size int, job Job) *WorkerPool {
+	newPool := &WorkerPool{
+		tasks: make(chan *Task, 64),
+		done:  make(chan struct{}),
+		size:  size,
+		job:   job,
+	}
+	newPool.init()
+	return newPool
+}
+
+func (p *WorkerPool) init() {
+	p.wg.Add(p.size)
+	for i := 0; i < p.size; i++ {
+		go p.worker()
+	}
+}
+
+func (p *WorkerPool) worker() {
+	for {
+		select {
+		case newTask := <-p.tasks:
+			log.Printf("handle new task: %+v", newTask)
+			p.job(newTask)
+		case <-p.done:
+			p.wg.Done()
+			return
+		}
+	}
+}
+
+func (p *WorkerPool) AddTask(newTask *Task) {
+	p.tasks <- newTask
+}
+
+func (p *WorkerPool) Stop() {
+	log.Printf("stopping workers")
+	p.term.Do(func() {
+		close(p.done)
+	})
+	p.wg.Wait()
+	log.Printf("all workers have been stopped")
 }
