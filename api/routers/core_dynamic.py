@@ -276,7 +276,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
     return {'data': data}
 
 
-@app.get('/{projectId}/assist/sessions/{sessionId}/dom.mob', tags=["assist"])
+@app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Replay file not found"]}
@@ -296,7 +296,7 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
     return FileResponse(path=path, media_type="application/octet-stream")
 
 
-@app.get('/{projectId}/assist/sessions/{sessionId}/devtools.mob', tags=["assist"])
+@app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
     not_found = {"errors": ["Devtools file not found"]}

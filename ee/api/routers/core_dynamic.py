@@ -284,7 +284,7 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
     return {'data': data}
 
 
-@app.get('/{projectId}/assist/sessions/{sessionId}/dom.mob', tags=["assist"],
+@app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"],
          dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay)])
 def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
                                  context: schemas.CurrentContext = Depends(OR_context)):
@@ -305,7 +305,7 @@ def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
     return FileResponse(path=path, media_type="application/octet-stream")
 
 
-@app.get('/{projectId}/assist/sessions/{sessionId}/devtools.mob', tags=["assist"],
+@app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"],
          dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools)])
 def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
                                    context: schemas.CurrentContext = Depends(OR_context)):
