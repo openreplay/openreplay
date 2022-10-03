@@ -66,25 +66,10 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 }
 
 func (c *cacher) CacheFile(task *Task) {
-	c.cacheURL(task.requestURL, task.sessionID, task.depth, task.urlContext, task.isJS)
+	c.cacheURL(task.requestURL, task.sessionID, task.depth, task.urlContext, task.cachePath)
 }
 
-func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlContext string, isJS bool) {
-	var cachePath string
-	if isJS {
-		cachePath = assets.GetCachePathForJS(requestURL)
-	} else {
-		cachePath = assets.GetCachePathForAssets(sessionID, requestURL)
-	}
-	if c.timeoutMap.contains(cachePath) {
-		return
-	}
-	c.timeoutMap.add(cachePath)
-	crTime := c.s3.GetCreationTime(cachePath)
-	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) { // recently uploaded
-		return
-	}
-
+func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlContext, cachePath string) {
 	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
 	for k, v := range c.requestHeaders {
@@ -134,7 +119,13 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 		if depth > 0 {
 			for _, extractedURL := range assets.ExtractURLsFromCSS(string(data)) {
 				if fullURL, cachable := assets.GetFullCachableURL(requestURL, extractedURL); cachable {
-					go c.cacheURL(fullURL, sessionID, depth-1, urlContext+"\n  -> "+fullURL, false)
+					c.checkTask(&Task{
+						requestURL: fullURL,
+						sessionID:  sessionID,
+						depth:      depth - 1,
+						urlContext: urlContext + "\n  -> " + fullURL,
+						isJS:       false,
+					})
 				}
 			}
 			if err != nil {
@@ -149,8 +140,29 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 	return
 }
 
+func (c *cacher) checkTask(newTask *Task) {
+	// check if file was recently uploaded
+	var cachePath string
+	if newTask.isJS {
+		cachePath = assets.GetCachePathForJS(newTask.requestURL)
+	} else {
+		cachePath = assets.GetCachePathForAssets(newTask.sessionID, newTask.requestURL)
+	}
+	if c.timeoutMap.contains(cachePath) {
+		return
+	}
+	c.timeoutMap.add(cachePath)
+	crTime := c.s3.GetCreationTime(cachePath)
+	if crTime != nil && crTime.After(time.Now().Add(-MAX_STORAGE_TIME)) {
+		return
+	}
+	// add new file in queue to download
+	newTask.cachePath = cachePath
+	c.workers.AddTask(newTask)
+}
+
 func (c *cacher) CacheJSFile(sourceURL string) {
-	c.workers.AddTask(&Task{
+	c.checkTask(&Task{
 		requestURL: sourceURL,
 		sessionID:  0,
 		depth:      0,
@@ -160,7 +172,7 @@ func (c *cacher) CacheJSFile(sourceURL string) {
 }
 
 func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
-	c.workers.AddTask(&Task{
+	c.checkTask(&Task{
 		requestURL: fullURL,
 		sessionID:  sessionID,
 		depth:      MAX_CACHE_DEPTH,

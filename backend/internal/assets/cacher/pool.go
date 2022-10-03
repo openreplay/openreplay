@@ -11,6 +11,7 @@ type Task struct {
 	depth      byte
 	urlContext string
 	isJS       bool
+	cachePath  string
 }
 
 type WorkerPool struct {
