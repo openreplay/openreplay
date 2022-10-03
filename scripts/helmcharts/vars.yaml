@@ -25,6 +25,9 @@ clickhouse:
       clickhouseHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
       clickhousePort: 9000
 
+alerts:
+  enabled: false
+
 quickwit: &quickwit
   # For enterpriseEdition
   enabled: false
