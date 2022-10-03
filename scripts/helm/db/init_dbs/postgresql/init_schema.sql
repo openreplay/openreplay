@@ -404,6 +404,15 @@ $$
             CREATE INDEX user_viewed_errors_user_id_idx ON public.user_viewed_errors (user_id);
             CREATE INDEX user_viewed_errors_error_id_idx ON public.user_viewed_errors (error_id);
 
+            CREATE TABLE errors_tags
+            (
+                key        text                        NOT NULL,
+                value      text                        NOT NULL,
+                created_at timestamp without time zone NOT NULL default (now() at time zone 'utc'),
+                error_id   text                        NOT NULL REFERENCES errors (error_id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX errors_tags_error_id_idx ON errors_tags (error_id);
 
 -- --- sessions.sql ---
             CREATE TYPE device_type AS ENUM ('desktop', 'tablet', 'mobile', 'other');

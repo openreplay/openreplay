@@ -22,4 +22,14 @@ CREATE TABLE IF NOT EXISTS sessions_notes
     is_public  boolean                     NOT NULL DEFAULT FALSE
 );
 
+CREATE TABLE IF NOT EXISTS errors_tags
+(
+    key        text                        NOT NULL,
+    value      text                        NOT NULL,
+    created_at timestamp without time zone NOT NULL default (now() at time zone 'utc'),
+    error_id   text                        NOT NULL REFERENCES errors (error_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS errors_tags_error_id_idx ON errors_tags (error_id);
+
 COMMIT;
