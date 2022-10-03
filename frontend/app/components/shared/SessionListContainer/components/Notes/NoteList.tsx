@@ -39,7 +39,7 @@ function NotesList({ members }: {members: Array<Record<string, any>>}) {
                 date={note.createdAt}
                 noteId={note.noteId}
                 sessionId={note.sessionId}
-                userEmail={members.toJS().find(m => m.id === note.userId)?.email || note.userId}
+                userEmail={members.find(m => m.id === note.userId)?.email || note.userId}
               />
             </React.Fragment>
           ))}
