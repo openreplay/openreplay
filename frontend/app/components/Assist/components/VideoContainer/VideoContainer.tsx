@@ -23,6 +23,7 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
       const settings = stream.getVideoTracks()[0]?.getSettings()
       const isDummyVideoTrack = settings ? (settings.width === 2 || settings.frameRate === 0 || !settings.frameRate && !settings.width) : true
       const shouldBeEnabled = !isDummyVideoTrack
+      console.log(stream.getVideoTracks())
       if (isEnabled !== shouldBeEnabled) {
         setEnabled(shouldBeEnabled)
         setRemoteEnabled?.(shouldBeEnabled)

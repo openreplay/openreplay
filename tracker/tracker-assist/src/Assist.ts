@@ -338,6 +338,7 @@ export default class Assist {
       this.emit('call_end')
       handleCallEnd()
     }
+    const updateVideoFeed = ({ streamId, enabled, }) => this.emit('videofeed', { streamId, enabled, })
 
     peer.on('call', (call) => {
       app.debug.log('Incoming call: ', call)
@@ -379,6 +380,7 @@ export default class Assist {
         // UI
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+          callUI.setVideoCallback(updateVideoFeed)
         }
         callUI.showControls(initiateCallEnd)
 
