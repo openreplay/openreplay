@@ -66,7 +66,6 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 }
 
 func (c *cacher) CacheFile(task *Task) {
-	log.Printf("new task: %+v", task)
 	c.cacheURL(task.requestURL, task.sessionID, task.depth, task.urlContext, task.isJS)
 }
 
@@ -158,7 +157,6 @@ func (c *cacher) CacheJSFile(sourceURL string) {
 		urlContext: sourceURL,
 		isJS:       true,
 	})
-	//go c.cacheURL(sourceURL, 0, 0, sourceURL, true)
 }
 
 func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
@@ -169,7 +167,6 @@ func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
 		urlContext: fullURL,
 		isJS:       false,
 	})
-	//go c.cacheURL(fullURL, sessionID, MAX_CACHE_DEPTH, fullURL, false)
 }
 
 func (c *cacher) UpdateTimeouts() {
