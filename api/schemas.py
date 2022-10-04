@@ -1091,6 +1091,7 @@ class SearchNoteSchema(_PaginatedSchema):
     order: SortOrderType = Field(default=SortOrderType.desc)
     tags: Optional[List[str]] = Field(default=[])
     shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case

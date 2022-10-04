@@ -36,6 +36,8 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
             extra_params = sessions._multiple_values(data.tags, value_key=k)
         if data.shared_only:
             conditions.append("sessions_notes.is_public")
+        elif data.mine_only:
+            conditions.append("sessions_notes.user_id = %(user_id)s")
         else:
             conditions.append("(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public)")
         query = cur.mogrify(f"""SELECT sessions_notes.*
