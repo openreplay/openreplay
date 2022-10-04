@@ -54,7 +54,6 @@ class EventGroupWrapper extends React.Component {
     const whiteBg = isLastInGroup && event.type !== TYPES.LOCATION || (!isLastEvent && event.type !== TYPES.LOCATION)
     const safeRef = String(event.referrer || '');
 
-    console.log(this.props.currentUserId, event.userId)
     return (
       <div
         className={

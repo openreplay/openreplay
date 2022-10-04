@@ -186,15 +186,13 @@ export default class EventsBlock extends React.PureComponent {
   render() {
     const { query } = this.state;
     const {
-      testsAvaliable,
       session: {
         events,
       },
-      filteredEvents,
       setActiveTab,
     } = this.props;
 
-    const _events = filteredEvents || events;
+    const _events = this.eventsList
 
     const isEmptySearch = query && (_events.size === 0 || !_events)
     return (
