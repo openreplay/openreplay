@@ -41,44 +41,52 @@ export default function (app: App | null) {
   const styleSheetIDMap: Map<CSSStyleSheet, number> = new Map()
   const adoptedStyleSheetsOwnings: Map<number, number[]> = new Map()
 
-  const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) => {
-    let nodeID = app.nodes.getID(root)
-    if (root === document) {
-      nodeID = 0 // main document doesn't have nodeID. ID count starts from the documentElement
-    }
-    if (!nodeID) {
-      return
-    }
-    let pastOwning = adoptedStyleSheetsOwnings.get(nodeID)
-    if (!pastOwning) {
-      pastOwning = []
-    }
-    const nowOwning: number[] = []
-    const styleSheets = root.adoptedStyleSheets
-    for (const s of styleSheets) {
-      let sheetID = styleSheetIDMap.get(s)
-      const init = !sheetID
-      if (!sheetID) {
-        sheetID = nextID()
+  const sendAdoptedStyleSheetsUpdate = (root: StyleSheetOwner) =>
+    setTimeout(() => {
+      let nodeID = app.nodes.getID(root)
+      if (root === document) {
+        nodeID = 0 // main document doesn't have nodeID. ID count starts from the documentElement
       }
-      nowOwning.push(sheetID)
-      if (!pastOwning.includes(sheetID)) {
-        app.send(AdoptedSSAddOwner(sheetID, nodeID))
+      if (nodeID === undefined) {
+        return
       }
-      if (init) {
-        const rules = s.cssRules
-        for (let i = 0; i < rules.length; i++) {
-          app.send(AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()))
+      let pastOwning = adoptedStyleSheetsOwnings.get(nodeID)
+      if (!pastOwning) {
+        pastOwning = []
+      }
+      const nowOwning: number[] = []
+      const styleSheets = root.adoptedStyleSheets
+      for (const s of styleSheets) {
+        let sheetID = styleSheetIDMap.get(s)
+        const init = !sheetID
+        if (!sheetID) {
+          sheetID = nextID()
+          styleSheetIDMap.set(s, sheetID)
+        }
+        if (!pastOwning.includes(sheetID)) {
+          app.send(AdoptedSSAddOwner(sheetID, nodeID))
+        }
+        if (init) {
+          const rules = s.cssRules
+          for (let i = 0; i < rules.length; i++) {
+            app.send(AdoptedSSInsertRuleURLBased(sheetID, rules[i].cssText, i, app.getBaseHref()))
+          }
+        }
+        nowOwning.push(sheetID)
+      }
+      for (const sheetID of pastOwning) {
+        if (!nowOwning.includes(sheetID)) {
+          app.send(AdoptedSSRemoveOwner(sheetID, nodeID))
         }
       }
-    }
-    for (const sheetID of pastOwning) {
-      if (!nowOwning.includes(sheetID)) {
-        app.send(AdoptedSSRemoveOwner(sheetID, nodeID))
-      }
-    }
-    adoptedStyleSheetsOwnings.set(nodeID, nowOwning)
-  }
+      adoptedStyleSheetsOwnings.set(nodeID, nowOwning)
+    }, 20) // Misterious bug:
+  /* On the page https://explore.fast.design/components/fast-accordion 
+    the only rule inside the only adoptedStyleSheet of the iframe-s document
+    gets changed during first milliseconds after the load. 
+    Howerer, none of the documented methods (replace, insertRule) is triggered.
+    The rule is not substituted (remains the same object), however the text gets changed.
+  */
 
   function patchAdoptedStyleSheets(
     prototype: typeof Document.prototype | typeof ShadowRoot.prototype,
@@ -111,8 +119,8 @@ export default function (app: App | null) {
     patchAdoptedStyleSheets(context.Document.prototype)
     patchAdoptedStyleSheets(context.ShadowRoot.prototype)
 
-    //@ts-ignore TODO: configure ts (use necessary lib)
-    const { insertRule, deleteRule, replace, replaceSync } = context.CSSStyleSheet.prototype
+    //@ts-ignore TODO: upgrade ts to 4.8+
+    const { replace, replaceSync } = context.CSSStyleSheet.prototype
 
     //@ts-ignore
     context.CSSStyleSheet.prototype.replace = function (text: string) {
@@ -135,7 +143,7 @@ export default function (app: App | null) {
   }
 
   patchContext(window)
-  app.observer.attachContextCallback(patchContext)
+  app.observer.attachContextCallback(app.safe(patchContext))
 
   app.attachStopCallback(() => {
     styleSheetIDMap.clear()
