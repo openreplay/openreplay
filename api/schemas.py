@@ -1090,6 +1090,7 @@ class SearchNoteSchema(_PaginatedSchema):
     sort: str = Field(default="createdAt")
     order: SortOrderType = Field(default=SortOrderType.desc)
     tags: Optional[List[str]] = Field(default=[])
+    shared_only: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -1097,7 +1098,7 @@ class SearchNoteSchema(_PaginatedSchema):
 
 class SessionNoteSchema(BaseModel):
     message: str = Field(..., min_length=2)
-    tags: List[str] = Field(default=[])
+    tag: Optional[str] = Field(default=None)
     timestamp: int = Field(default=-1)
     is_public: bool = Field(default=False)
 
@@ -1107,7 +1108,6 @@ class SessionNoteSchema(BaseModel):
 
 class SessionUpdateNoteSchema(SessionNoteSchema):
     message: Optional[str] = Field(default=None, min_length=2)
-    tags: Optional[List[str]] = Field(default=None)
     timestamp: Optional[int] = Field(default=None, ge=-1)
     is_public: Optional[bool] = Field(default=None)
 

@@ -28,13 +28,18 @@ def get_session_notes(tenant_id, project_id, session_id, user_id):
 
 def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.SearchNoteSchema):
     with pg_client.PostgresClient() as cur:
-        conditions = ["sessions_notes.project_id = %(project_id)s", "sessions_notes.deleted_at IS NULL",
-                      "(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public AND users.tenant_id = %(tenant_id)s)"]
+        conditions = ["sessions_notes.project_id = %(project_id)s", "sessions_notes.deleted_at IS NULL"]
         extra_params = {}
         if data.tags and len(data.tags) > 0:
             k = "tag_value"
-            conditions.append(sessions._multiple_conditions(f"%({k})s = ANY (sessions_notes.tags)", data.tags, value_key=k))
+            conditions.append(
+                sessions._multiple_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
             extra_params = sessions._multiple_values(data.tags, value_key=k)
+        if data.shared_only:
+            conditions.append("sessions_notes.is_public AND users.tenant_id = %(tenant_id)s")
+        else:
+            conditions.append(
+                "(sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public AND users.tenant_id = %(tenant_id)s)")
         query = cur.mogrify(f"""SELECT sessions_notes.*
                                 FROM sessions_notes
                                          INNER JOIN users USING (user_id)
@@ -53,8 +58,8 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
 
 def create(tenant_id, user_id, project_id, session_id, data: schemas.SessionNoteSchema):
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tags, session_id, project_id, timestamp, is_public)
-                            VALUES (%(message)s, %(user_id)s, %(tags)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
+        query = cur.mogrify(f"""INSERT INTO public.sessions_notes (message, user_id, tag, session_id, project_id, timestamp, is_public)
+                            VALUES (%(message)s, %(user_id)s, %(tag)s, %(session_id)s, %(project_id)s, %(timestamp)s, %(is_public)s)
                             RETURNING *;""",
                             {"user_id": user_id, "project_id": project_id, "session_id": session_id, **data.dict()})
         cur.execute(query)
@@ -68,8 +73,8 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
     sub_query = []
     if data.message is not None:
         sub_query.append("message = %(message)s")
-    if data.tags is not None:
-        sub_query.append("tags = %(tags)s")
+    if data.tag is not None and len(data.tag) > 0:
+        sub_query.append("tag = %(tag)s")
     if data.is_public is not None:
         sub_query.append("is_public = %(is_public)s")
     if data.timestamp is not None:
@@ -99,8 +104,7 @@ def delete(tenant_id, user_id, project_id, note_id):
         cur.execute(
             cur.mogrify("""\
                             UPDATE public.sessions_notes 
-                            SET 
-                              deleted_at = timezone('utc'::text, now())
+                            SET deleted_at = timezone('utc'::text, now())
                             WHERE 
                                 note_id = %(note_id)s
                                 AND project_id = %(project_id)s\

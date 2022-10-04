@@ -1016,7 +1016,7 @@ $$
                 created_at timestamp without time zone NOT NULL default (now() at time zone 'utc'),
                 user_id    integer                     NULL REFERENCES users (user_id) ON DELETE SET NULL,
                 deleted_at timestamp without time zone NULL     DEFAULT NULL,
-                tags       text[]                      NOT NULL DEFAULT '{}',
+                tag        text                        NULL,
                 session_id bigint                      NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
                 project_id integer                     NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
                 timestamp  integer                     NOT NULL DEFAULT -1,
