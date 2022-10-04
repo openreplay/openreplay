@@ -5,16 +5,16 @@ import NoteItem from './NoteItem';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 
-function NotesList({ members }: {members: Array<Record<string, any>>}) {
-  const { notesStore } = useStore()
+function NotesList({ members }: { members: Array<Record<string, any>> }) {
+  const { notesStore } = useStore();
 
   React.useEffect(() => {
     if (!notesStore.notes.length) {
-      notesStore.fetchNotes()
+      notesStore.fetchNotes();
     }
-  }, [])
+  }, []);
 
-  const list = notesStore.notes
+  const list = notesStore.notes;
 
   return (
     <Loader loading={notesStore.loading}>
@@ -28,18 +28,11 @@ function NotesList({ members }: {members: Array<Record<string, any>>}) {
         }
       >
         <div className="border-b rounded bg-white">
-          {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map(note => (
+          {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map((note) => (
             <React.Fragment key={note.noteId}>
               <NoteItem
-                userId={note.userId}
-                tags={note.tags}
-                timestamp={note.timestamp}
-                isPublic={note.isPublic}
-                description={note.message}
-                date={note.createdAt}
-                noteId={note.noteId}
-                sessionId={note.sessionId}
-                userEmail={members.find(m => m.id === note.userId)?.email || note.userId}
+                note={note}
+                userEmail={members.find((m) => m.id === note.userId)?.email || note.userId}
               />
             </React.Fragment>
           ))}
@@ -47,7 +40,8 @@ function NotesList({ members }: {members: Array<Record<string, any>>}) {
 
         <div className="w-full flex items-center justify-between py-4 px-6">
           <div className="text-disabled-text">
-            Showing <span className="font-semibold">{Math.min(list.length, notesStore.pageSize)}</span> out
+            Showing{' '}
+            <span className="font-semibold">{Math.min(list.length, notesStore.pageSize)}</span> out
             of <span className="font-semibold">{list.length}</span> notes
           </div>
           <Pagination

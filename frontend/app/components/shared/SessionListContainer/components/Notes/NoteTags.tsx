@@ -10,10 +10,10 @@ const sortOptionsMap = {
   'createdAt-ASC': 'Oldest',
 };
 const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({ value, label }));
-
+const notesOwner = [{ value: '0', label: 'All Notes'},{ value: '1', label: 'My Notes'}]
 function NoteTags() {
   const { notesStore } = useStore()
-  const defaultOption = sortOptions[0].value;
+
 
   return (
     <div className="flex items-center">
@@ -34,7 +34,9 @@ function NoteTags() {
         </div>
       ))}
       <div className="ml-2" />
-      <Select name="sortSessions" plain right options={sortOptions} onChange={({ value }) => notesStore.toggleSort(value.value)} defaultValue={defaultOption} />
+      <Select name="sortNotes" plain right options={sortOptions} onChange={({ value }) => notesStore.toggleSort(value.value)} defaultValue={sortOptions[0].value} />
+      <div className="ml-2" />
+      <Select name="notesOwner" plain right options={notesOwner} onChange={({ value }) => notesStore.toggleShared(value.value === '1')} defaultValue={notesOwner[0].value} />
     </div>
   );
 }

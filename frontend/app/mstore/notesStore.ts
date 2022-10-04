@@ -15,6 +15,7 @@ export default class NotesStore {
   activeTags: iTag[] = []
   sort = 'createdAt'
   order: 'DESC' | 'ASC' = 'DESC'
+  ownOnly = false
 
   constructor() {
     makeAutoObservable(this)
@@ -27,6 +28,8 @@ export default class NotesStore {
       sort: this.sort,
       order: this.order,
       tags: this.activeTags,
+      mineOnly: this.ownOnly,
+      sharedOnly: false
     }
 
     this.loading = true
@@ -108,6 +111,11 @@ export default class NotesStore {
       this.activeTags = [tag]
       this.fetchNotes()
     }
+  }
+
+  toggleShared(ownOnly: boolean) {
+    this.ownOnly = ownOnly
+    this.fetchNotes()
   }
 
   toggleSort(sort: string) {

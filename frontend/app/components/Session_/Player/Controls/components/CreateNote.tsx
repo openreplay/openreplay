@@ -32,14 +32,14 @@ function CreateNote({
 }: Props) {
   const [text, setText] = React.useState('');
   const [isPublic, setPublic] = React.useState(false);
-  const [tags, setTags] = React.useState([]);
+  const [tag, setTag] = React.useState<iTag>();
   const [useTimestamp, setUseTs] = React.useState(true);
 
   const { notesStore } = useStore();
 
   React.useEffect(() => {
     if (isEdit) {
-      setTags(editNote.tags);
+      setTag(editNote.tag);
       setText(editNote.message);
       setPublic(editNote.isPublic);
       if (editNote.timestamp > 0) {
@@ -56,7 +56,7 @@ function CreateNote({
   const onSubmit = () => {
     const note: WriteNote = {
       message: text,
-      tags,
+      tag,
       timestamp: useTimestamp ? (isEdit ? editNote.timestamp : time) : -1,
       isPublic,
     };
@@ -76,7 +76,7 @@ function CreateNote({
       .finally(() => {
         setCreateNoteTooltip({ isVisible: false, time: 0 });
         setText('');
-        setTags([]);
+        setTag(undefined);
       });
     }
 
@@ -96,7 +96,7 @@ function CreateNote({
       .finally(() => {
         setCreateNoteTooltip({ isVisible: false, time: 0 });
         setText('');
-        setTags([]);
+        setTag(undefined);
       });
   };
 
@@ -104,10 +104,10 @@ function CreateNote({
     setCreateNoteTooltip({ isVisible: false, time: 0 });
   };
 
-  const tagActive = (tag: iTag) => tags.includes(tag);
+  const tagActive = (noteTag: iTag) => tag === noteTag;
 
   const addTag = (tag: iTag) => {
-    setTags([tag]);
+    setTag(tag);
   };
 
   return (

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Link } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
-import { tagProps, iTag } from 'App/services/NotesService';
+import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -11,14 +11,7 @@ import { toast } from 'react-toastify';
 import { session } from 'App/routes';
 
 interface Props {
-  userId: number;
-  timestamp: number;
-  tags: iTag[];
-  isPublic: boolean;
-  description: string;
-  sessionId: string;
-  date: string;
-  noteId: number;
+  note: Note;
   userEmail: string;
 }
 
@@ -29,13 +22,13 @@ function NoteItem(props: Props) {
   const onCopy = () => {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
-        props.sessionId
-      )}${props.timestamp > 0 ? '?jumpto=' + props.timestamp : ''}`
+        props.note.sessionId
+      )}${props.note.timestamp > 0 ? '?jumpto=' + props.note.timestamp : ''}`
     );
     toast.success('Note URL copied to clipboard');
   };
   const onDelete = () => {
-    notesStore.deleteNote(props.noteId).then((r) => {
+    notesStore.deleteNote(props.note.noteId).then((r) => {
       notesStore.fetchNotes();
       toast.success('Note deleted');
     });
@@ -49,32 +42,36 @@ function NoteItem(props: Props) {
       className="flex items-center p-4 border-b"
       style={{ background: 'rgba(253, 243, 155, 0.1)' }}
     >
-      <Link style={{ width: '90%' }} to={session(props.sessionId)+(props.timestamp > 0 ? `?jumpto=${props.timestamp}&note=${props.noteId}` : '')}>
+      <Link
+        style={{ width: '90%' }}
+        to={
+          session(props.note.sessionId) +
+          (props.note.timestamp > 0
+            ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
+            : '')
+        }
+      >
         <div className="flex flex-col gap-1 cursor-pointer">
-          <div>{props.description}</div>
+          <div>{props.note.message}</div>
           <div className="flex items-center gap-2">
-            {props.tags.length ? (
-              <div className="flex items-center gap-1">
-                {props.tags.map((tag) => (
-                  <div
-                    key={tag}
-                    style={{
-                      background: tagProps[tag],
-                      userSelect: 'none',
-                      minWidth: 60,
-                      textAlign: 'center',
-                    }}
-                    className="rounded-full px-2 py-1 mr-2 text-white"
-                  >
-                    {tag}
-                  </div>
-                ))}
+            {props.note.tag ? (
+              <div
+                style={{
+                  background: tagProps[props.note.tag],
+                  userSelect: 'none',
+                  minWidth: 60,
+                  textAlign: 'center',
+                }}
+                className="rounded-full px-2 py-1 mr-2 text-white"
+              >
+                {props.note.tag}
               </div>
             ) : null}
             <div className="text-disabled-text flex items-center">
               <span className="text-figmaColors-text-primary mr-1">By </span>
-              {props.userEmail}, {formatTimeOrDate(props.date as unknown as number, timezone)}
-              {!props.isPublic ? null : (
+              {props.userEmail},{' '}
+              {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
+              {!props.note.isPublic ? null : (
                 <>
                   <Icon name="user-friends" className="ml-4 mr-1" color="gray-dark" /> Team
                 </>
@@ -84,13 +81,7 @@ function NoteItem(props: Props) {
         </div>
       </Link>
       <div className="ml-auto">
-        <PlayLink
-          isAssist={false}
-          viewed={false}
-          sessionId={
-            props.sessionId
-          }
-        />
+        <PlayLink isAssist={false} viewed={false} sessionId={props.note.sessionId} />
       </div>
       <div className="ml-2 cursor-pointer">
         <ItemMenu bold items={menuItems} />

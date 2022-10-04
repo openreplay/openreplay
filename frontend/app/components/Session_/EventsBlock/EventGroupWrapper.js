@@ -8,6 +8,7 @@ import Event from './Event'
 import stl from './eventGroupWrapper.module.css';
 import NoteEvent from './NoteEvent';
 import { setEditNoteTooltip } from 'Duck/sessions';
+import { Note } from 'App/services/NotesService';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle("showLoadInfo", "toggleLoadInfo")
@@ -74,13 +75,7 @@ class EventGroupWrapper extends React.Component {
         {isNote ? (
           <NoteEvent
             userEmail={this.props.members.find(m => m.id === event.userId)?.email || event.userId}
-            timestamp={event.timestamp}
-            tags={event.tags}
-            isPublic={event.isPublic}
-            message={event.message}
-            sessionId={event.sessionId}
-            date={event.createdAt}
-            noteId={event.noteId}
+            note={event}
             filterOutNote={filterOutNote}
             onEdit={this.props.setEditNoteTooltip}
             noEdit={this.props.currentUserId !== event.userId}

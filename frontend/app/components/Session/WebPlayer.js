@@ -111,13 +111,7 @@ function WebPlayer(props) {
                 {showNoteModal ? (
                     <ReadNote
                         userEmail={props.members.find(m => m.id === noteItem?.userId)?.email || ''}
-                        timestamp={noteItem?.timestamp}
-                        tags={noteItem?.tags}
-                        isPublic={noteItem?.isPublic}
-                        message={noteItem?.message}
-                        sessionId={noteItem?.sessionId}
-                        date={noteItem?.createdAt}
-                        noteId={noteItem?.noteId}
+                        note={noteItem}
                         onClose={onNoteClose}
                         notFound={!noteItem}
                     />

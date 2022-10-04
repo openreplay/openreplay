@@ -1,21 +1,15 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { tagProps, iTag } from 'App/services/NotesService';
+import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
-  userEmail: number;
-  timestamp: number;
-  tags: iTag[];
-  isPublic: boolean;
-  message: string;
-  sessionId: string;
-  date: string;
-  noteId: number;
-  onClose: () => void;
+  userEmail: string;
+  note: Note;
   notFound?: boolean;
+  onClose: () => void;
 }
 
 function ReadNote(props: Props) {
@@ -60,29 +54,25 @@ function ReadNote(props: Props) {
           <div className="ml-2">
             <div>{props.userEmail}</div>
             <div className="text-disabled-text">
-              {formatTimeOrDate(props.date as unknown as number, timezone)}
+              {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
             </div>
           </div>
           <div className="ml-auto cursor-pointer self-start" onClick={props.onClose}>
             <Icon name="close" size={18} />
           </div>
         </div>
-        <div>{props.message}</div>
+        <div>{props.note.message}</div>
         <div className="w-full">
           <div className="flex items-center gap-2 flex-wrap w-full">
-            {props.tags.length ? (
-              <div className="flex items-center gap-1">
-                {props.tags.map((tag) => (
+            {props.note.tag ? (
                   <div
-                    style={{ background: tagProps[tag], userSelect: 'none' }}
+                    style={{ background: tagProps[props.note.tag], userSelect: 'none' }}
                     className="rounded-xl text-sm px-2 py-1 text-white"
                   >
-                    {tag}
+                    {props.note.tag}
                   </div>
-                ))}
-              </div>
             ) : null}
-            {!props.isPublic ? null : (
+            {!props.note.isPublic ? null : (
               <>
                 <Icon name="user-friends" className="ml-2 mr-1" color="gray-dark" /> Team
               </>

@@ -6,7 +6,6 @@ export const tagProps = {
   'ISSUE': '#CC0000',
   'TASK': '#7986CB',
   'OTHER': 'rgba(0, 0, 0, 0.26)',
-  'ALL': ''
 }
 
 export type iTag = keyof typeof tagProps | "ALL"
@@ -15,7 +14,7 @@ export const TAGS = Object.keys(tagProps) as unknown as (keyof typeof tagProps)[
 
 export interface WriteNote {
   message: string
-  tags: string[]
+  tag: iTag
   isPublic: boolean
   timestamp: number
   noteId?: string
@@ -30,7 +29,7 @@ export interface Note {
   noteId: number
   projectId: number
   sessionId: string
-  tags: iTag[]
+  tag: iTag
   timestamp: number
   userId: number
 }
@@ -41,6 +40,8 @@ export interface NotesFilter {
   sort: string
   order: 'DESC' | 'ASC'
   tags: iTag[]
+  sharedOnly: boolean
+  mineOnly: boolean
 }
 
 export default class NotesService {
