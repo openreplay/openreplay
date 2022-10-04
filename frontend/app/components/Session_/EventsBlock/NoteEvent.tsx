@@ -29,6 +29,7 @@ function NoteEvent(props: Props) {
   const { settingsStore, notesStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
+  console.log(props.noEdit)
   const onEdit = () => {
     props.onEdit({
       isVisible: true,
@@ -40,14 +41,14 @@ function NoteEvent(props: Props) {
         isPublic: props.isPublic,
         message: props.message,
         sessionId: props.sessionId,
-        noteId: props.noteId
+        noteId: props.noteId,
       },
     });
   };
 
   const onCopy = () => {
     copy(
-      `${window.location.origin}${session(props.sessionId)}${
+      `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(props.sessionId)}${
         props.timestamp > 0 ? '?jumpto=' + props.timestamp : ''
       }`
     );
@@ -70,7 +71,7 @@ function NoteEvent(props: Props) {
     }
   };
   const menuItems = [
-    { icon: 'pencil', text: 'Edit', onClick: onEdit, disabled: props.onEdit },
+    { icon: 'pencil', text: 'Edit', onClick: onEdit, disabled: props.noEdit },
     { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
@@ -101,8 +102,13 @@ function NoteEvent(props: Props) {
               {props.tags.map((tag) => (
                 <div
                   key={tag}
-                  style={{ background: tagProps[tag], userSelect: 'none' }}
-                  className="rounded-xl text-sm px-2 py-1 text-white"
+                  style={{
+                    background: tagProps[tag],
+                    userSelect: 'none',
+                    minWidth: 60,
+                    textAlign: 'center',
+                  }}
+                  className="rounded-full text-sm px-2 py-1 text-white"
                 >
                   {tag}
                 </div>

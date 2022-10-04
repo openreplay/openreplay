@@ -26,7 +26,7 @@ function ReadNote(props: Props) {
     return (
       <div style={{ position: 'absolute', top: '45%', left: 'calc(50% - 200px)' }}>
         <div
-          className="flex items-start flex-col p-4 border gap-2"
+          className="flex items-start flex-col p-4 border gap-2 rounded"
           style={{ background: '#FFFEF5', width: 400 }}
         >
           <div className="flex items-start font-semibold w-full text-xl">
@@ -50,8 +50,8 @@ function ReadNote(props: Props) {
   return (
     <div style={{ position: 'absolute', top: '45%', left: 'calc(50% - 300px)' }}>
       <div
-        className="flex items-start flex-col p-4 border gap-2"
-        style={{ background: '#FFFEF5', width: 600 }}
+        className="flex items-start !text-lg flex-col p-4 border gap-2 rounded"
+        style={{ background: '#FFFEF5', width: 500 }}
       >
         <div className="flex items-center w-full">
           <div className="p-2 bg-gray-light rounded-full">
@@ -63,7 +63,7 @@ function ReadNote(props: Props) {
               {formatTimeOrDate(props.date as unknown as number, timezone)}
             </div>
           </div>
-          <div className="ml-auto cursor-pointer" onClick={props.onClose}>
+          <div className="ml-auto cursor-pointer self-start" onClick={props.onClose}>
             <Icon name="close" size={18} />
           </div>
         </div>

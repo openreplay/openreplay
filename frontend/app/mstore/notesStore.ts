@@ -100,12 +100,12 @@ export default class NotesStore {
     this.page = page
   }
 
-  toggleTag(tag: iTag) {
-    if (this.activeTags.includes(tag)) {
-      this.activeTags = this.activeTags.filter(exTag => tag !== exTag)
+  toggleTag(tag?: iTag) {
+    if (!tag) {
+      this.activeTags = []
       this.fetchNotes()
     } else {
-      this.activeTags = [...this.activeTags, tag]
+      this.activeTags = [tag]
       this.fetchNotes()
     }
   }

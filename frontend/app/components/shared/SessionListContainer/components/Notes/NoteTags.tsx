@@ -17,6 +17,13 @@ function NoteTags() {
 
   return (
     <div className="flex items-center">
+        <div>
+          <TagItem
+            onClick={() => notesStore.toggleTag()}
+            label="ALL"
+            isActive={notesStore.activeTags.length === 0}
+          />
+        </div>
       {TAGS.map((tag: iTag) => (
         <div key={tag}>
           <TagItem
@@ -26,7 +33,7 @@ function NoteTags() {
           />
         </div>
       ))}
-
+      <div className="ml-2" />
       <Select name="sortSessions" plain right options={sortOptions} onChange={({ value }) => notesStore.toggleSort(value.value)} defaultValue={defaultOption} />
     </div>
   );

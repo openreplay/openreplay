@@ -11,7 +11,7 @@ import { setEditNoteTooltip } from 'Duck/sessions';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle("showLoadInfo", "toggleLoadInfo")
-@connect(state => ({members: state.getIn(['members', 'list']), currentUserId: state.getIn(['account', 'id']) }), { setEditNoteTooltip })
+@connect(state => ({members: state.getIn(['members', 'list']), currentUserId: state.getIn(['user', 'account', 'id']) }), { setEditNoteTooltip })
 class EventGroupWrapper extends React.Component {
 
   toggleLoadInfo = (e) => {
@@ -52,6 +52,8 @@ class EventGroupWrapper extends React.Component {
 
     const whiteBg = isLastInGroup && event.type !== TYPES.LOCATION || (!isLastEvent && event.type !== TYPES.LOCATION)
     const safeRef = String(event.referrer || '');
+
+    console.log(this.props.currentUserId, event.userId)
     return (
       <div
         className={

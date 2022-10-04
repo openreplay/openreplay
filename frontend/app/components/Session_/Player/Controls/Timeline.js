@@ -227,10 +227,12 @@ export default class Timeline extends React.PureComponent {
                 background: 'white',
                 zIndex: 3,
                 pointerEvents: 'none',
+                height: 10,
+                width: 16,
                 left: `${getTimelinePosition(note.timestamp, scale)}%`,
               }}
             >
-              <Icon name="quotes" size={16} color="main" />
+              <Icon name="quotes" style={{ width: 16, height: 10 }} color="main" />
             </div>
           ) : null)}
         </div>

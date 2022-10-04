@@ -27,13 +27,13 @@
 .noteTooltip {
   position: absolute;
   padding: 1rem;
+  border-radius: 0.25rem;
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
   background: #F5F5F5;
   top: -35px;
   color: black;
-  border-radius: 12px;
   cursor: default;
   box-shadow: 0 4px 20px 4px rgb(0 20 60 / 10%), 0 4px 80px -8px rgb(0 20 60 / 20%);
 }

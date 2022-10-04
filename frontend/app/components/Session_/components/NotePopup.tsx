@@ -10,6 +10,9 @@ function NotePopup({ setCreateNoteTooltip, time }: { setCreateNoteTooltip: (args
     setCreateNoteTooltip({ time: time, isVisible: true })
   };
 
+  React.useEffect(() => {
+    return () => setCreateNoteTooltip({ time: -1, isVisible: false })
+  })
   return (
     <div
       onClick={toggleNotePopup}

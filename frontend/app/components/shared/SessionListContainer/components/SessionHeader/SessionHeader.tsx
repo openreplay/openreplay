@@ -48,7 +48,7 @@ function SessionHeader(props: Props) {
     return (
         <div className="flex items-center px-4 justify-between">
             <div className="flex items-center justify-between">
-                <div className="mr-3 text-lg flex items-center gap-2">
+                <div className="mr-3 text-lg flex items-center gap-4">
                     <Tab
                         onClick={() => props.setActiveTab({ type: 'all' })}
                         addBorder={activeTab === 'all'}

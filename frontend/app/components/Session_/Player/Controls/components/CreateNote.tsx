@@ -33,7 +33,7 @@ function CreateNote({
   const [text, setText] = React.useState('');
   const [isPublic, setPublic] = React.useState(false);
   const [tags, setTags] = React.useState([]);
-  const [useTimestamp, setUseTs] = React.useState(false);
+  const [useTimestamp, setUseTs] = React.useState(true);
 
   const { notesStore } = useStore();
 
@@ -105,11 +105,9 @@ function CreateNote({
   };
 
   const tagActive = (tag: iTag) => tags.includes(tag);
-  const removeTag = (tag: iTag) => {
-    setTags(tags.filter((t) => t !== tag));
-  };
+
   const addTag = (tag: iTag) => {
-    setTags([...tags, tag]);
+    setTags([tag]);
   };
 
   return (
@@ -145,6 +143,7 @@ function CreateNote({
           placeholder="Note..."
           rows={3}
           value={text}
+          autoFocus
           onChange={(e) => setText(e.target.value)}
           style={{
             border: 'solid thin #ddd',
@@ -162,9 +161,11 @@ function CreateNote({
             style={{
               background: tagActive(tag) ? tagProps[tag] : 'rgba(0,0,0, 0.38)',
               userSelect: 'none',
+              minWidth: 60,
+              textAlign: 'center'
             }}
-            className="cursor-pointer rounded-xl px-2 py-1 mr-2 text-white"
-            onClick={() => (tagActive(tag) ? removeTag(tag) : addTag(tag))}
+            className="cursor-pointer rounded-full px-2 py-1 mr-2 text-white"
+            onClick={() => addTag(tag)}
           >
             {tag}
           </div>

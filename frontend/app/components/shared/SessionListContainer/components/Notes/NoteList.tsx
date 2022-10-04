@@ -27,7 +27,7 @@ function NotesList({ members }: {members: Array<Record<string, any>>}) {
           </div>
         }
       >
-        <div className="mt-3 border-b rounded bg-white">
+        <div className="border-b rounded bg-white">
           {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map(note => (
             <React.Fragment key={note.noteId}>
               <NoteItem
