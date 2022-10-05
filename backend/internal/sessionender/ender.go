@@ -54,21 +54,24 @@ func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, 
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
 func (se *SessionEnder) UpdateSession(msg messages.Message) {
-	sessionID := msg.Meta().SessionID()
-	currTS := msg.Meta().Batch().Timestamp()
-	msgTimestamp := msg.Meta().Timestamp
-	localTS := time.Now().UnixMilli()
-	if currTS == 0 {
+	var (
+		sessionID      = msg.Meta().SessionID()
+		batchTimestamp = msg.Meta().Batch().Timestamp()
+		msgTimestamp   = msg.Meta().Timestamp
+		localTimestamp = time.Now().UnixMilli()
+	)
+	if batchTimestamp == 0 {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
 	}
-	se.timeCtrl.UpdateTime(sessionID, currTS)
+	se.timeCtrl.UpdateTime(sessionID, batchTimestamp)
 	sess, ok := se.sessions[sessionID]
 	if !ok {
+		// Register new session
 		se.sessions[sessionID] = &session{
-			lastTimestamp: currTS,       // timestamp from message broker
-			lastUpdate:    localTS,      // local timestamp
-			lastUserTime:  msgTimestamp, // last timestamp from user's machine
+			lastTimestamp: batchTimestamp, // timestamp from message broker
+			lastUpdate:    localTimestamp, // local timestamp
+			lastUserTime:  msgTimestamp,   // last timestamp from user's machine
 			isEnded:       false,
 		}
 		se.activeSessions.Add(context.Background(), 1)
@@ -80,9 +83,9 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 		sess.lastUserTime = msgTimestamp
 	}
 	// Keep information about the latest message for generating sessionEnd trigger
-	if currTS > sess.lastTimestamp {
-		sess.lastTimestamp = currTS
-		sess.lastUpdate = localTS
+	if batchTimestamp > sess.lastTimestamp {
+		sess.lastTimestamp = batchTimestamp
+		sess.lastUpdate = localTimestamp
 		sess.isEnded = false
 	}
 }

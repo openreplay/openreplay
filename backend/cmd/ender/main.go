@@ -39,24 +39,14 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 
 	msgHandler := func(msg messages.Message) {
-		if msg.TypeID() == messages.MsgSessionStart || msg.TypeID() == messages.MsgSessionEnd {
-			return
-		}
-		if msg.Meta().Timestamp == 0 {
-			log.Printf("ZERO TS, sessID: %d, msgType: %d", msg.Meta().SessionID(), msg.TypeID())
-		}
 		statsLogger.Collect(msg)
 		sessions.UpdateSession(msg)
 	}
 
 	consumer := queue.NewConsumer(
-		cfg.GroupEnder,
-		[]string{
-			cfg.TopicRawWeb,
-		},
-		messages.NewMessageIterator(msgHandler, nil, false),
-		false,
-		cfg.MessageSizeLimit,
+		cfg.GroupEnder, []string{cfg.TopicRawWeb},
+		messages.NewMessageIterator(msgHandler, []int{messages.MsgTimestamp}, false),
+		false, cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Ender service started\n")
