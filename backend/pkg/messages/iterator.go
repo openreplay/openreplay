@@ -143,6 +143,10 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 	}
 }
 
+func (i *messageIteratorImpl) zeroTsLog(msgType string) {
+	log.Printf("zero timestamp in %s, sess: %d", msgType, i.batchInfo.SessionID())
+}
+
 func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	switch m := msg.(type) {
 	case *BatchMetadata:
@@ -154,6 +158,9 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.messageInfo.Timestamp = m.Timestamp
+		if m.Timestamp == 0 {
+			i.zeroTsLog("BatchMetadata")
+		}
 		i.messageInfo.Url = m.Url
 		i.version = m.Version
 
@@ -163,15 +170,27 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.messageInfo.Timestamp = m.Timestamp
+		if m.Timestamp == 0 {
+			i.zeroTsLog("BatchMeta")
+		}
 
 	case *Timestamp:
 		i.messageInfo.Timestamp = int64(m.Timestamp)
+		if m.Timestamp == 0 {
+			i.zeroTsLog("Timestamp")
+		}
 
 	case *SessionStart:
 		i.messageInfo.Timestamp = int64(m.Timestamp)
+		if m.Timestamp == 0 {
+			i.zeroTsLog("SessionStart")
+		}
 
 	case *SessionEnd:
 		i.messageInfo.Timestamp = int64(m.Timestamp)
+		if m.Timestamp == 0 {
+			i.zeroTsLog("SessionEnd")
+		}
 
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
