@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
+	log2 "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"time"
@@ -28,9 +29,10 @@ type SessionEnder struct {
 	timeCtrl       *timeController
 	activeSessions syncfloat64.UpDownCounter
 	totalSessions  syncfloat64.Counter
+	stats          log2.QueueStats
 }
 
-func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, error) {
+func New(metrics *monitoring.Metrics, timeout int64, parts int, stats log2.QueueStats) (*SessionEnder, error) {
 	if metrics == nil {
 		return nil, fmt.Errorf("metrics module is empty")
 	}
@@ -49,11 +51,13 @@ func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, 
 		timeCtrl:       NewTimeController(parts),
 		activeSessions: activeSessions,
 		totalSessions:  totalSessions,
+		stats:          stats,
 	}, nil
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
 func (se *SessionEnder) UpdateSession(msg messages.Message) {
+	se.stats.Collect(msg)
 	var (
 		sessionID      = msg.Meta().SessionID()
 		batchTimestamp = msg.Meta().Batch().Timestamp()

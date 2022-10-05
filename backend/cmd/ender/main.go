@@ -19,34 +19,29 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("ender")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	// Load service configuration
+	metrics := monitoring.New("ender")
 	cfg := ender.New()
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
-	// Init all modules
-	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber, logger.NewQueueStats(cfg.LoggerTimeout))
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
 	}
+
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-
-	msgHandler := func(msg messages.Message) {
-		statsLogger.Collect(msg)
-		sessions.UpdateSession(msg)
-	}
-
 	consumer := queue.NewConsumer(
-		cfg.GroupEnder, []string{cfg.TopicRawWeb},
-		messages.NewMessageIterator(msgHandler, []int{messages.MsgTimestamp}, false),
-		false, cfg.MessageSizeLimit,
+		cfg.GroupEnder,
+		[]string{cfg.TopicRawWeb},
+		messages.NewMessageIterator(
+			func(msg messages.Message) { sessions.UpdateSession(msg) },
+			[]int{messages.MsgTimestamp},
+			false),
+		false,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Ender service started\n")
