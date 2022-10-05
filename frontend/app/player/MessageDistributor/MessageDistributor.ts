@@ -69,7 +69,15 @@ import type {
   MouseClick,
 } from './messages';
 
-import type { Timed } from './messages/timed';
+const visualChanges = [
+  "mouse_move",
+  "mouse_click",
+  "create_element_node",
+  "set_input_value",
+  "set_input_checked",
+  "set_viewport_size",
+  "set_viewport_scroll",
+]
 
 export default class MessageDistributor extends StatedScreen {
   // TODO: consistent with the other data-lists
@@ -391,15 +399,7 @@ export default class MessageDistributor extends StatedScreen {
   distributeMessage(msg: Message, index: number): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
-    if ([
-      "mouse_move",
-      "mouse_click",
-      "create_element_node", // not a user activity, though visual change
-      "set_input_value",
-      "set_input_checked",
-      "set_viewport_size",
-      "set_viewport_scroll",
-    ].includes(msg.tp)) {
+    if (visualChanges.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
     //const index = i + index; //?
