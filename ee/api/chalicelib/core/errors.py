@@ -128,7 +128,8 @@ def get_details(project_id, error_id, user_id, **data):
                device_partition,
                country_partition,
                chart24,
-               chart30
+               chart30,
+               COALESCE(tags,'{{}}')::jsonb AS custom_tags
         FROM (SELECT error_id,
                      name,
                      message,
@@ -241,7 +242,10 @@ def get_details(project_id, error_id, user_id, **data):
                                                                WHERE {" AND ".join(pg_sub_query30)}) AS chart_details
                                                       ON (TRUE)
                                    GROUP BY timestamp
-                                   ORDER BY timestamp) AS chart_details) AS chart_details30 ON (TRUE);
+                                   ORDER BY timestamp) AS chart_details) AS chart_details30 ON (TRUE)
+                                   LEFT JOIN (SELECT jsonb_agg(jsonb_build_object(errors_tags.key, errors_tags.value))
+                                                FROM errors_tags INNER JOIN errors USING(error_id)
+                                                WHERE {" AND ".join(pg_basic_query)}) AS raw_tags(tags) ON (TRUE);
         """
 
         # print("--------------------")
