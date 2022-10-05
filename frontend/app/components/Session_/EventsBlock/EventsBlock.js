@@ -24,7 +24,7 @@ import EventSearch from './EventSearch/EventSearch';
   setEventFilter,
   filterOutNote
 })
-export default class EventsBlock extends React.PureComponent {
+export default class EventsBlock extends React.Component {
   state = {
     editingEvent: null,
     mouseOver: false,
@@ -177,8 +177,8 @@ export default class EventsBlock extends React.PureComponent {
               isNote={isNote}
               filterOutNote={filterOutNote}
             />
-          </div>
-        )}
+           </div>
+         )}
       </CellMeasurer>
     );
   }
