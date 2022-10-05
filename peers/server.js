@@ -1,6 +1,5 @@
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
-const assert = require('assert').strict;
 const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 const express = require('express');
 const {ExpressPeerServer} = require('peer');
