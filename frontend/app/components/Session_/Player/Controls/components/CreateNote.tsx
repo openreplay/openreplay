@@ -32,9 +32,9 @@ function CreateNote({
 }: Props) {
   const [text, setText] = React.useState('');
   const [isPublic, setPublic] = React.useState(false);
-  const [tag, setTag] = React.useState<iTag>();
+  const [tag, setTag] = React.useState<iTag>(TAGS[0]);
   const [useTimestamp, setUseTs] = React.useState(true);
-
+  const inputRef = React.createRef<HTMLTextAreaElement>()
   const { notesStore } = useStore();
 
   React.useEffect(() => {
@@ -47,6 +47,12 @@ function CreateNote({
       }
     }
   }, [isEdit]);
+
+  React.useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isVisible])
 
   const duration = Duration.fromMillis(time).toFormat('mm:ss');
   const stopEvents = (e: any) => {
@@ -138,6 +144,7 @@ function CreateNote({
 
       <div className="">
         <textarea
+          ref={inputRef}
           name="message"
           id="message"
           placeholder="Note..."
@@ -162,12 +169,14 @@ function CreateNote({
               background: tagActive(tag) ? tagProps[tag] : 'rgba(0,0,0, 0.38)',
               userSelect: 'none',
               minWidth: 60,
-              textAlign: 'center'
             }}
-            className="cursor-pointer rounded-full px-2 py-1 mr-2 text-white"
+            className="cursor-pointer rounded-full justify-center px-2 py-1 mr-2 text-white flex items-center gap-2"
             onClick={() => addTag(tag)}
           >
-            {tag}
+            {tagActive(tag) ? <Icon name="check-circle-fill" color="white" size={16} /> : null}
+            <span>
+              {tag}
+            </span>
           </div>
         ))}
       </div>

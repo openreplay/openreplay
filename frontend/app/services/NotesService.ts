@@ -2,8 +2,8 @@ import APIClient from 'App/api_client';
 
 
 export const tagProps = {
-  'QUERY': '#3EAAAF',
   'ISSUE': '#CC0000',
+  'QUERY': '#3EAAAF',
   'TASK': '#7986CB',
   'OTHER': 'rgba(0, 0, 0, 0.26)',
 }
