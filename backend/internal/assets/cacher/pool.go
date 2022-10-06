@@ -23,6 +23,13 @@ type WorkerPool struct {
 	job   Job
 }
 
+func (p *WorkerPool) CanAddTask() bool {
+	if len(p.tasks) < cap(p.tasks) {
+		return true
+	}
+	return false
+}
+
 type Job func(task *Task)
 
 func NewPool(size int, job Job) *WorkerPool {

@@ -36,6 +36,10 @@ type cacher struct {
 	workers          *WorkerPool
 }
 
+func (c *cacher) CanCache() bool {
+	return c.workers.CanAddTask()
+}
+
 func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	if metrics == nil {

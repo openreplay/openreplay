@@ -76,6 +76,9 @@ func main() {
 		case <-tick:
 			cacher.UpdateTimeouts()
 		default:
+			if !cacher.CanCache() {
+				continue
+			}
 			if err := msgConsumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consumption: %v", err)
 			}
