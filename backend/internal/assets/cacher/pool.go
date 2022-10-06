@@ -54,7 +54,6 @@ func (p *WorkerPool) worker() {
 	for {
 		select {
 		case newTask := <-p.tasks:
-			log.Printf("new task: %+v", newTask)
 			p.job(newTask)
 		case <-p.done:
 			p.wg.Done()
