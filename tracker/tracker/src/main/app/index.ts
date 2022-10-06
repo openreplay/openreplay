@@ -315,9 +315,6 @@ export default class App {
   getHost(): string {
     return new URL(this.options.ingestPoint).host
   }
-  getBase(): string {
-    return new URL(this.options.ingestPoint).pathname.replace(/\/ingest$/, '')
-  }
   getProjectKey(): string {
     return this.projectKey
   }
