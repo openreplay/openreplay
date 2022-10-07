@@ -60,6 +60,8 @@ function CreateNote({
   };
 
   const onSubmit = () => {
+    if (text === '') return;
+
     const note: WriteNote = {
       message: text,
       tag,
@@ -183,7 +185,7 @@ function CreateNote({
       </div>
 
       <div className="flex">
-        <Button variant="primary" className="mr-4" onClick={onSubmit}>
+        <Button variant="primary" className="mr-4" disabled={text === ''} onClick={onSubmit}>
           Add Note
         </Button>
         <div className="flex items-center cursor-pointer" onClick={() => setPublic(!isPublic)}>
