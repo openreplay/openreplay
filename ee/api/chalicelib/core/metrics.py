@@ -15,7 +15,7 @@ def __get_basic_constraints(table_name=None, time_constraint=True, round_start=F
         table_name += "."
     else:
         table_name = ""
-    ch_sub_query = [f"{table_name}{identifier} =toUInt32(%({identifier})s)"]
+    ch_sub_query = [f"{table_name}{identifier} =toUInt16(%({identifier})s)"]
     if time_constraint:
         if round_start:
             ch_sub_query.append(
@@ -2012,7 +2012,7 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     ch_sub_query = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query.append("resources.success = 0")
     ch_sub_query.append("resources.type IN ('fetch','script')")
-    sch_sub_query = ["rs.project_id =toUInt32(%(project_id)s)", "rs.type IN ('fetch','script')"]
+    sch_sub_query = ["rs.project_id =toUInt16(%(project_id)s)", "rs.type IN ('fetch','script')"]
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     # sch_sub_query += meta_condition
