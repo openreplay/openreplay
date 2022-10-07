@@ -1,7 +1,32 @@
+from urllib.parse import urljoin
+
+from decouple import config
+
 import schemas
 from chalicelib.core import sessions
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+
+
+def get_note(tenant_id, project_id, user_id, note_id, share=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS creator_name
+                                {",(SELECT name FROM users WHERE user_id=%(share)s AND deleted_at ISNULL) AS share_name" if share else ""}
+                                FROM sessions_notes INNER JOIN users USING (user_id)
+                                WHERE sessions_notes.project_id = %(project_id)s
+                                  AND sessions_notes.note_id = %(note_id)s
+                                  AND sessions_notes.deleted_at IS NULL
+                                  AND (sessions_notes.user_id = %(user_id)s OR sessions_notes.is_public);""",
+                            {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id,
+                             "note_id": note_id, "share": share})
+
+        cur.execute(query=query)
+        row = cur.fetchone()
+        row = helper.dict_to_camel_case(row)
+        if row:
+            row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+    return row
 
 
 def get_session_notes(tenant_id, project_id, session_id, user_id):
@@ -80,8 +105,7 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
         sub_query.append("timestamp = %(timestamp)s")
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""\
-                            UPDATE public.sessions_notes
+            cur.mogrify(f"""UPDATE public.sessions_notes
                             SET 
                               {" ,".join(sub_query)} 
                             WHERE 
@@ -101,14 +125,42 @@ def edit(tenant_id, user_id, project_id, note_id, data: schemas.SessionUpdateNot
 def delete(tenant_id, user_id, project_id, note_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                            UPDATE public.sessions_notes 
+            cur.mogrify(""" UPDATE public.sessions_notes 
                             SET deleted_at = timezone('utc'::text, now())
-                            WHERE 
-                                note_id = %(note_id)s
-                                AND project_id = %(project_id)s\
+                            WHERE note_id = %(note_id)s
+                                AND project_id = %(project_id)s
                                 AND user_id = %(user_id)s
                                 AND deleted_at ISNULL;""",
                         {"project_id": project_id, "user_id": user_id, "note_id": note_id})
         )
         return {"data": {"state": "success"}}
+
+
+def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
+    note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
+    if note is None:
+        return {"errors": ["Note not found"]}
+    session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/sessions/{note['sessionId']}")
+    title = f"<{session_url}|Note for session {note['sessionId']}>"
+
+    blocks = [{"type": "section",
+               "fields": [{"type": "mrkdwn",
+                           "text": title}]},
+              {"type": "section",
+               "fields": [{"type": "plain_text",
+                           "text": note["message"]}]}]
+    if note["tag"]:
+        blocks.append({"type": "context",
+                       "elements": [{"type": "plain_text",
+                                     "text": f"Tag: *{note['tag']}*"}]})
+    bottom = f"Created by {note['creatorName'].capitalize()}"
+    if user_id != note["userId"]:
+        bottom += f"\nSent by {note['shareName']}: "
+    blocks.append({"type": "context",
+                   "elements": [{"type": "plain_text",
+                                 "text": bottom}]})
+    return Slack.send_raw(
+        tenant_id=tenant_id,
+        webhook_id=webhook_id,
+        body={"blocks": blocks}
+    )

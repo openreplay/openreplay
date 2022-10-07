@@ -50,7 +50,6 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.post('/account', tags=["account"])
-@app.put('/account', tags=["account"])
 def edit_account(data: schemas_ee.EditUserSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
@@ -74,8 +73,8 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_con
     return {"data": data}
 
 
-@app.put('/integrations/slack', tags=['integrations'])
 @app.post('/integrations/slack', tags=['integrations'])
+@app.put('/integrations/slack', tags=['integrations'])
 def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
     n = Slack.add_channel(tenant_id=context.tenant_id, url=data.url, name=data.name)
     if n is None:
@@ -85,7 +84,6 @@ def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentConte
     return {"data": n}
 
 
-@app.put('/integrations/slack/{integrationId}', tags=['integrations'])
 @app.post('/integrations/slack/{integrationId}', tags=['integrations'])
 def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
@@ -102,7 +100,6 @@ def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = B
 
 
 @app.post('/client/members', tags=["client"])
-@app.put('/client/members', tags=["client"])
 def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
@@ -127,7 +124,6 @@ def process_invitation_link(token: str):
 
 
 @public_app.post('/password/reset', tags=["users"])
-@public_app.put('/password/reset', tags=["users"])
 def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
@@ -140,7 +136,6 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
     return users.set_password_invitation(new_password=data.password, user_id=user["userId"], tenant_id=user["tenantId"])
 
 
-@app.put('/client/members/{memberId}', tags=["client"])
 @app.post('/client/members/{memberId}', tags=["client"])
 def edit_member(memberId: int, data: schemas_ee.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
@@ -375,12 +370,8 @@ def assign_session(projectId: int, sessionId: int, issueId: str,
 
 @app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"],
           dependencies=[OR_scope(Permissions.session_replay)])
-@app.put('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"],
-         dependencies=[OR_scope(Permissions.session_replay)])
 @app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"],
           dependencies=[OR_scope(Permissions.session_replay)])
-@app.put('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"],
-         dependencies=[OR_scope(Permissions.session_replay)])
 def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
@@ -395,10 +386,10 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 
 @app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
           dependencies=[OR_scope(Permissions.session_replay)])
-@app.put('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
-         dependencies=[OR_scope(Permissions.session_replay)])
 def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
+    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        return {"errors": ["Session not found"]}
     data = sessions_notes.create(tenant_id=context.tenant_id, project_id=projectId,
                                  session_id=sessionId, user_id=context.user_id, data=data)
     if "errors" in data.keys():
@@ -422,7 +413,6 @@ def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentCo
 
 @app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
           dependencies=[OR_scope(Permissions.session_replay)])
-@app.put('/{projectId}/notes/{noteId}', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
 def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
@@ -442,6 +432,13 @@ def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = D
     return data
 
 
+@app.post('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
+def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                         note_id=noteId, webhook_id=webhookId)
+
+
 @app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
 def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
@@ -449,6 +446,4 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                                                       user_id=context.user_id)
     if "errors" in data:
         return data
-    return {
-        'data': data
-    }
+    return {'data': data}
