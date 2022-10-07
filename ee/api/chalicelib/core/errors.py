@@ -90,6 +90,13 @@ def __process_tags(row):
 def get_details(project_id, error_id, user_id, **data):
     pg_sub_query24 = __get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size24")
     pg_sub_query24.append("error_id = %(error_id)s")
+    pg_sub_query30_err = __get_basic_constraints(time_constraint=True, chart=False, startTime_arg_name="startDate30",
+                                                 endTime_arg_name="endDate30",project_key="errors.project_id")
+    pg_sub_query30_err.append("sessions.project_id = %(project_id)s")
+    pg_sub_query30_err.append("sessions.start_ts >= %(startDate30)s")
+    pg_sub_query30_err.append("sessions.start_ts <= %(endDate30)s")
+    pg_sub_query30_err.append("error_id = %(error_id)s")
+    pg_sub_query30_err.append("source ='js_exception'")
     pg_sub_query30 = __get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size30")
     pg_sub_query30.append("error_id = %(error_id)s")
     pg_basic_query = __get_basic_constraints(time_constraint=False)
@@ -138,7 +145,7 @@ def get_details(project_id, error_id, user_id, **data):
               FROM public.errors
                        INNER JOIN events.errors AS s_errors USING (error_id)
                        INNER JOIN public.sessions USING (session_id)
-              WHERE error_id = %(error_id)s
+              WHERE {" AND ".join(pg_sub_query30_err)}
               GROUP BY error_id, name, message) AS details
                  INNER JOIN (SELECT error_id,
                                     MAX(timestamp) AS last_occurrence,
@@ -248,9 +255,9 @@ def get_details(project_id, error_id, user_id, **data):
                                                 WHERE {" AND ".join(pg_basic_query)}) AS raw_tags(tags) ON (TRUE);
         """
 
-        # print("--------------------")
-        # print(cur.mogrify(main_pg_query, params))
-        # print("--------------------")
+        print("--------------------")
+        print(cur.mogrify(main_pg_query, params))
+        print("--------------------")
         cur.execute(cur.mogrify(main_pg_query, params))
         row = cur.fetchone()
         if row is None:
