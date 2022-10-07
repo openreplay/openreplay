@@ -8,6 +8,8 @@ import stl from './styles.module.css';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 import { injectNotes } from 'Player';
+import { fetchList as fetchSlack } from 'Duck/integrations/slack';
+import Select from 'Shared/Select';
 
 interface Props {
   isVisible: boolean;
@@ -18,6 +20,8 @@ interface Props {
   sessionId: string;
   isEdit: string;
   editNote: WriteNote;
+  slackChannels: Record<string, string>[];
+  fetchSlack: () => void;
 }
 
 function CreateNote({
@@ -29,12 +33,15 @@ function CreateNote({
   isEdit,
   editNote,
   updateNote,
+  slackChannels,
+  fetchSlack,
 }: Props) {
   const [text, setText] = React.useState('');
+  const [channel, setChannel] = React.useState('');
   const [isPublic, setPublic] = React.useState(false);
   const [tag, setTag] = React.useState<iTag>(TAGS[0]);
   const [useTimestamp, setUseTs] = React.useState(true);
-  const inputRef = React.createRef<HTMLTextAreaElement>()
+  const inputRef = React.createRef<HTMLTextAreaElement>();
   const { notesStore } = useStore();
 
   React.useEffect(() => {
@@ -50,14 +57,12 @@ function CreateNote({
 
   React.useEffect(() => {
     if (inputRef.current) {
-      inputRef.current.focus()
+      fetchSlack();
+      inputRef.current.focus();
     }
-  }, [isVisible])
+  }, [isVisible]);
 
   const duration = Duration.fromMillis(time).toFormat('mm:ss');
-  const stopEvents = (e: any) => {
-    e.stopPropagation();
-  };
 
   const onSubmit = () => {
     if (text === '') return;
@@ -68,29 +73,37 @@ function CreateNote({
       timestamp: useTimestamp ? (isEdit ? editNote.timestamp : time) : -1,
       isPublic,
     };
-
+    const onSuccess = (noteId: string) => {
+      if (channel) {
+        notesStore.sendSlackNotification(noteId, channel)
+      }
+    }
     if (isEdit) {
-      return notesStore.updateNote(editNote.noteId, note).then((r) => {
-        toast.success('Note updated');
-        notesStore.fetchSessionNotes(sessionId).then((notes) => {
-          injectNotes(notes);
-          updateNote(r);
+      return notesStore
+        .updateNote(editNote.noteId, note)
+        .then((r) => {
+          toast.success('Note updated');
+          notesStore.fetchSessionNotes(sessionId).then((notes) => {
+            injectNotes(notes);
+            onSuccess(editNote.noteId)
+            updateNote(r);
+          });
+        })
+        .catch((e) => {
+          toast.error('Error updating note');
+          console.error(e);
+        })
+        .finally(() => {
+          setCreateNoteTooltip({ isVisible: false, time: 0 });
+          setText('');
+          setTag(undefined);
         });
-      })
-      .catch((e) => {
-        toast.error('Error updating note');
-        console.error(e);
-      })
-      .finally(() => {
-        setCreateNoteTooltip({ isVisible: false, time: 0 });
-        setText('');
-        setTag(undefined);
-      });
     }
 
     return notesStore
       .addNote(sessionId, note)
       .then((r) => {
+        onSuccess(r.noteId as unknown as string)
         toast.success('Note added');
         notesStore.fetchSessionNotes(sessionId).then((notes) => {
           injectNotes(notes);
@@ -109,7 +122,7 @@ function CreateNote({
   };
 
   const closeTooltip = () => {
-    setCreateNoteTooltip({ isVisible: false, time: 0 });
+    setCreateNoteTooltip({ isVisible: false, time: 100 });
   };
 
   const tagActive = (noteTag: iTag) => tag === noteTag;
@@ -118,17 +131,27 @@ function CreateNote({
     setTag(tag);
   };
 
+  const slackChannelsOptions = slackChannels.map(({ webhookId, name }) => ({
+    value: webhookId,
+    label: name,
+  }));
+
+  const changeChannel = ({ value, name }: { value: string; name: string }) => {
+    setChannel(value);
+  };
+
   return (
     <div
       className={stl.noteTooltip}
       style={{
-        top: -260,
+        top: -320,
         width: 350,
         left: 'calc(50% - 175px)',
         display: isVisible ? 'flex' : 'none',
         flexDirection: 'column',
         gap: '1rem',
       }}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center bg-gray-lightest">
         <Icon name="quotes" size={20} />
@@ -176,12 +199,22 @@ function CreateNote({
             onClick={() => addTag(tag)}
           >
             {tagActive(tag) ? <Icon name="check-circle-fill" color="white" size={13} /> : null}
-            <div>
-              {tag}
-            </div>
+            <div>{tag}</div>
           </div>
         ))}
       </div>
+
+      {slackChannelsOptions.length > 0 ? (
+        <div>
+          <Select
+            options={slackChannelsOptions}
+            defaultValue={"Share to Slack"}
+            // @ts-ignore
+            onChange={changeChannel}
+            className="mr-4"
+          />
+        </div>
+      ) : null}
 
       <div className="flex">
         <Button variant="primary" className="mr-4" disabled={text === ''} onClick={onSubmit}>
@@ -204,11 +237,13 @@ export default connect(
       time = 0,
       isEdit,
       note: editNote,
-    // @ts-ignore
+      // @ts-ignore
     } = state.getIn(['sessions', 'createNoteTooltip']);
     // @ts-ignore
+    const slackChannels = state.getIn(['slack', 'list']);
+    // @ts-ignore
     const sessionId = state.getIn(['sessions', 'current', 'sessionId']);
-    return { isVisible, time, sessionId, isEdit, editNote };
+    return { isVisible, time, sessionId, isEdit, editNote, slackChannels };
   },
-  { setCreateNoteTooltip, addNote, updateNote }
+  { setCreateNoteTooltip, addNote, updateNote, fetchSlack }
 )(CreateNote);

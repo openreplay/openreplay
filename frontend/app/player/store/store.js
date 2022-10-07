@@ -1,7 +1,7 @@
 import { createStore } from 'redux';
-import reducer, { 
-	update as updateAction, 
-	clean as cleanAction, 
+import reducer, {
+	update as updateAction,
+	clean as cleanAction,
 } from './duck';
 
 const store = createStore(reducer);

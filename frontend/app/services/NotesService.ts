@@ -108,4 +108,15 @@ export default class NotesService {
         }
       })
     }
+
+    sendSlackNotification(noteId: number, webhook: string) {
+      return this.client.get(`/notes/${noteId}/slack/${webhook}`)
+      .then(r => {
+        if (r.ok) {
+          return r.json().then(r => r.data)
+        } else {
+          throw new Error('Error sending slack notif: ' + r.status)
+        }
+      })
+    }
 }

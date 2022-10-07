@@ -125,4 +125,13 @@ export default class NotesStore {
 
     this.fetchNotes()
   }
+
+  async sendSlackNotification(noteId: string, webhook: string) {
+    try {
+      const resp = await notesService.sendSlackNotification(noteId, webhook)
+      return resp
+    } catch (e) {
+      console.error(e)
+    }
+  }
 }

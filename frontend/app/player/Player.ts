@@ -158,10 +158,10 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  jump(time = getState().time, index: number) {
+  jump(setTime: number, index: number) {
     const { live, liveTimeTravel, endTime } = getState();
     if (live && !liveTimeTravel) return;
-
+    const time = setTime ? setTime : getState().time
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
       // this._animationFrameRequestId = requestAnimationFrame(() => {
