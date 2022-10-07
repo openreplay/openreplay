@@ -37,6 +37,8 @@ function NoteItem(props: Props) {
     { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
+
+  const safeStrMessage = props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message
   return (
     <div
       className="flex items-center p-4 border-b"
@@ -52,7 +54,7 @@ function NoteItem(props: Props) {
         }
       >
         <div className="flex flex-col gap-1 cursor-pointer">
-          <div className="text-xl py-3">{props.note.message}</div>
+          <div className="text-xl py-3">{safeStrMessage}</div>
           <div className="flex items-center gap-2">
             {props.note.tag ? (
               <div
