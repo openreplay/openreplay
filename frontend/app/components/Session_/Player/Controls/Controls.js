@@ -113,7 +113,6 @@ function getStorageName(type) {
   graphqlCount: state.graphqlListNow.length,
   exceptionsCount: state.exceptionsListNow.length,
   showExceptions: state.exceptionsList.length > 0,
-  showLongtasks: state.longtasksList.length > 0,
   liveTimeTravel: state.liveTimeTravel,
 }))
 @connect(
@@ -181,7 +180,6 @@ export default class Controls extends React.Component {
       nextProps.graphqlCount !== this.props.graphqlCount ||
       nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.exceptionsCount !== this.props.exceptionsCount ||
-      nextProps.showLongtasks !== this.props.showLongtasks ||
       nextProps.liveTimeTravel !== this.props.liveTimeTravel ||
       nextProps.skipInterval !== this.props.skipInterval
     )

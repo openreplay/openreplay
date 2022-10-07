@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -44,10 +43,10 @@ func main() {
 		},
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
-				m := msg.(*messages.SessionEnd)
-				if err := srv.UploadKey(strconv.FormatUint(msg.SessionID(), 10), 5); err != nil {
+				sesEnd := msg.(*messages.SessionEnd)
+				if err := srv.UploadSessionFiles(msg.SessionID()); err != nil {
 					log.Printf("can't find session: %d", msg.SessionID())
-					sessionFinder.Find(msg.SessionID(), m.Timestamp)
+					sessionFinder.Find(msg.SessionID(), sesEnd.Timestamp)
 				}
 				// Log timestamp of last processed session
 				counter.Update(msg.SessionID(), time.UnixMilli(msg.Meta().Batch().Timestamp()))

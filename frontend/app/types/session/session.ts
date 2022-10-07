@@ -40,7 +40,8 @@ export default Record({
   filterId: '',
   messagesUrl: '',
   domURL: [],
-  mobsUrl: [],
+  devtoolsURL: [],
+  mobsUrl: [], // @depricated
   userBrowser: '',
   userBrowserVersion: '?',
   userCountry: '',
@@ -95,6 +96,7 @@ export default Record({
     sessionId,
     sessionID,
     domURL = [],
+    devtoolsURL= [],
     mobsUrl = [],
     notes = [],
     ...session
@@ -166,8 +168,9 @@ export default Record({
       issues: issuesList,
       sessionId: sessionId || sessionID,
       userId: session.userId || session.userID,
-      domURL: Array.isArray(domURL) ? domURL : [ domURL ],
       mobsUrl: Array.isArray(mobsUrl) ? mobsUrl : [ mobsUrl ],
+      domURL,
+      devtoolsURL,
       notes,
       notesWithEvents: List(notesWithEvents),
     };
