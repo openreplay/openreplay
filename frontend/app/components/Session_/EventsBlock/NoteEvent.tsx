@@ -75,12 +75,12 @@ function NoteEvent(props: Props) {
       style={{ background: 'rgba(253, 243, 155, 0.1)' }}
     >
       <div className="flex items-center w-full">
-        <div className="p-2 bg-gray-light rounded-full">
+        <div className="p-3 bg-gray-light rounded-full">
           <Icon name="quotes" color="main" />
         </div>
         <div className="ml-2">
-          <div>{props.userEmail}</div>
-          <div className="text-disabled-text">
+          <div className="text-base">{props.userEmail}</div>
+          <div className="text-disabled-text text-sm">
             {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
           </div>
         </div>
@@ -88,26 +88,28 @@ function NoteEvent(props: Props) {
           <ItemMenu bold items={menuItems} />
         </div>
       </div>
-      <div>{props.note.message}</div>
+      <div className="text-xl my-3 overflow-y-scroll overflow-x-hidden" style={{ maxHeight: 200, maxWidth: 220 }}>{props.note.message}</div>
       <div>
         <div className="flex items-center gap-2 flex-wrap w-full">
           {props.note.tag ? (
             <div
               key={props.note.tag}
               style={{
+                // @ts-ignore
                 background: tagProps[props.note.tag],
                 userSelect: 'none',
-                minWidth: 60,
+                width: 50,
                 textAlign: 'center',
+                fontSize: 11,
               }}
-              className="rounded-full text-sm px-2 py-1 text-white"
+              className="rounded-full px-2 py-1 text-white text-sm"
             >
               {props.note.tag}
             </div>
           ) : null}
           {!props.note.isPublic ? null : (
             <>
-              <Icon name="user-friends" className="ml-2 mr-1" color="gray-dark" /> Team
+              <Icon name="user-friends" className="ml-2 mr-1" color="gray-dark" /> <span className="text-disabled-text">Team</span>
             </>
           )}
         </div>

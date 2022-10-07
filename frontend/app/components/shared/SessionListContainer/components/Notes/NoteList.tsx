@@ -9,9 +9,7 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
   const { notesStore } = useStore();
 
   React.useEffect(() => {
-    if (!notesStore.notes.length) {
       notesStore.fetchNotes();
-    }
   }, []);
 
   const list = notesStore.notes;

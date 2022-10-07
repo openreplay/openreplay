@@ -161,22 +161,23 @@ function CreateNote({
         />
       </div>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-2" style={{ lineHeight: '15px' }}>
         {TAGS.map((tag) => (
           <div
             key={tag}
             style={{
               background: tagActive(tag) ? tagProps[tag] : 'rgba(0,0,0, 0.38)',
               userSelect: 'none',
-              minWidth: 60,
+              minWidth: 50,
+              fontSize: 11,
             }}
-            className="cursor-pointer rounded-full justify-center px-2 py-1 mr-2 text-white flex items-center gap-2"
+            className="cursor-pointer rounded-full justify-center px-2 py-1 text-white flex items-center gap-2"
             onClick={() => addTag(tag)}
           >
-            {tagActive(tag) ? <Icon name="check-circle-fill" color="white" size={16} /> : null}
-            <span>
+            {tagActive(tag) ? <Icon name="check-circle-fill" color="white" size={13} /> : null}
+            <div>
               {tag}
-            </span>
+            </div>
           </div>
         ))}
       </div>

@@ -52,17 +52,18 @@ function NoteItem(props: Props) {
         }
       >
         <div className="flex flex-col gap-1 cursor-pointer">
-          <div>{props.note.message}</div>
+          <div className="text-xl py-3">{props.note.message}</div>
           <div className="flex items-center gap-2">
             {props.note.tag ? (
               <div
                 style={{
+                  // @ts-ignore
                   background: tagProps[props.note.tag],
                   userSelect: 'none',
-                  minWidth: 60,
-                  textAlign: 'center',
+                  width: 50,
+                  fontSize: 11,
                 }}
-                className="rounded-full px-2 py-1 mr-2 text-white"
+                className="rounded-full px-2 py-1 mr-2 text-white flex items-center justify-center"
               >
                 {props.note.tag}
               </div>
