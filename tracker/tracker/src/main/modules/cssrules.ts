@@ -17,7 +17,7 @@ export default function (app: App | null) {
     return
   }
 
-  const sendInserDeleteRule = app.safe((sheet: CSSStyleSheet, index: number, rule?: string) => {
+  const sendInsertDeleteRule = app.safe((sheet: CSSStyleSheet, index: number, rule?: string) => {
     const sheetID = styleSheetIDMap.get(sheet)
     if (!sheetID) {
       // OK-case. Sheet haven't been registered yet. Rules will be sent on registration.
@@ -57,17 +57,17 @@ export default function (app: App | null) {
     }
   })
 
-  const patchContext = (context: typeof globalThis) => {
+  const patchContext = app.safe((context: typeof globalThis) => {
     const { insertRule, deleteRule } = context.CSSStyleSheet.prototype
     const { insertRule: groupInsertRule, deleteRule: groupDeleteRule } =
       context.CSSGroupingRule.prototype
 
     context.CSSStyleSheet.prototype.insertRule = function (rule: string, index = 0): number {
-      sendInserDeleteRule(this, index, rule)
+      sendInsertDeleteRule(this, index, rule)
       return insertRule.call(this, rule, index)
     }
     context.CSSStyleSheet.prototype.deleteRule = function (index: number): void {
-      sendInserDeleteRule(this, index)
+      sendInsertDeleteRule(this, index)
       return deleteRule.call(this, index)
     }
 
@@ -81,7 +81,7 @@ export default function (app: App | null) {
       sendReplaceGroupingRule(this)
       return result
     }
-  }
+  })
 
   patchContext(window)
   app.observer.attachContextCallback(patchContext)
@@ -105,7 +105,7 @@ export default function (app: App | null) {
 
     const rules = sheet.cssRules
     for (let i = 0; i < rules.length; i++) {
-      sendInserDeleteRule(sheet, i, rules[i].cssText)
+      sendInsertDeleteRule(sheet, i, rules[i].cssText)
     }
   })
 }

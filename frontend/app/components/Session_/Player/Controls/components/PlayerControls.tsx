@@ -121,6 +121,7 @@ function PlayerControls(props: Props) {
                   </div>
                   {Object.keys(skipIntervals).map((interval) => (
                     <div
+                      key={interval}
                       onClick={() => {
                         toggleTooltip();
                         setSkipInterval(parseInt(interval, 10));

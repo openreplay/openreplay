@@ -15,7 +15,7 @@ interface Props {
     viewed: boolean;
     sessionId: string;
     onClick?: () => void;
-    queryParams: any;
+    queryParams?: any;
 }
 export default function PlayLink(props: Props) {
     const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;

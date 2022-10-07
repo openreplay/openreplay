@@ -84,7 +84,7 @@ export default function (app: App, opts: Partial<Options>): void {
     app.attachEventListener(context, 'error', handler)
   }
   if (options.captureExceptions) {
-    app.observer.attachContextCallback(patchContext)
+    app.observer.attachContextCallback(patchContext) // TODO: attach once-per-iframe (?)
     patchContext(window)
   }
 }

@@ -68,7 +68,7 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			// TODO: wait assets workers here
+			cacher.Stop()
 			msgConsumer.Close()
 			os.Exit(0)
 		case err := <-cacher.Errors:
@@ -76,6 +76,9 @@ func main() {
 		case <-tick:
 			cacher.UpdateTimeouts()
 		default:
+			if !cacher.CanCache() {
+				continue
+			}
 			if err := msgConsumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consumption: %v", err)
 			}

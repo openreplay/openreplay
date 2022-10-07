@@ -159,7 +159,7 @@ export default class App {
           this._debug('worker_failed', {}) // add context (from worker)
         } else if (data === 'restart') {
           this.stop(false)
-          this.start({ forceNew: true })
+          this.start({ forceNew: true }) // TODO: keep userID & metadata (draw scenarios)
         }
       }
       const alertWorker = () => {
@@ -447,7 +447,8 @@ export default class App {
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
-        if (sessionID !== this.session.getInfo().sessionID) {
+        const prevSessionID = this.session.getInfo().sessionID
+        if (prevSessionID && prevSessionID !== sessionID) {
           this.session.reset()
         }
         this.session.setSessionToken(token)

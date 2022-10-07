@@ -1,15 +1,12 @@
 import Record from 'Types/Record';
 import { List, Map } from 'immutable';
-import { DateTime, Duration } from 'luxon';
+import { Duration } from 'luxon';
 import SessionEvent, { TYPES } from './event';
 import Log from './log';
 import StackEvent from './stackEvent';
 import Resource from './resource';
-import CustomField from './customField';
 import SessionError from './error';
 import Issue from './issue';
-
-const SOURCE_JS = 'js_exception';
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
@@ -83,7 +80,9 @@ export default Record({
   userSessionsCount: 0,
   agentIds: [],
   isCallActive: false,
-  agentToken: ''
+  agentToken: '',
+  notes: [],
+  notesWithEvents: [],
 }, {
   fromJS:({
     startTs=0,
@@ -94,10 +93,12 @@ export default Record({
     errors,
     stackEvents = [],
     issues = [],
-    sessionId, sessionID,
+    sessionId,
+    sessionID,
     domURL = [],
     devtoolsURL= [],
     mobsUrl = [],
+    notes = [],
     ...session
   }) => {
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -132,6 +133,19 @@ export default Record({
     const issuesList = List(issues)
       .map(e => Issue({ ...e, time: e.timestamp - startedAt }))
 
+
+    const rawEvents = !session.events
+      ? []
+      // @ts-ignore
+      : session.events.map(evt => ({ ...evt, time: evt.timestamp - startedAt })).filter(({ type, time }) => type !== TYPES.CONSOLE && time <= durationSeconds) || []
+    const rawNotes = notes
+    const notesWithEvents = [...rawEvents, ...rawNotes].sort((a, b) => {
+      const aTs = a.time || a.timestamp
+      const bTs = b.time || b.timestamp
+
+      return aTs - bTs
+    })
+
     return {
       ...session,
       isIOS: session.platform === "ios",
@@ -157,6 +171,8 @@ export default Record({
       mobsUrl: Array.isArray(mobsUrl) ? mobsUrl : [ mobsUrl ],
       domURL,
       devtoolsURL,
+      notes,
+      notesWithEvents: List(notesWithEvents),
     };
   },
   idKey: "sessionId",

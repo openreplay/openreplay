@@ -84,6 +84,8 @@ export const toggleAnnotation = initCheck((...args) => instance.assistManager.to
 export const toggleTimetravel = initCheck((...args) => instance.toggleTimetravel(...args))
 export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
 export const toggleUserName = initCheck((...args) => instance.toggleUserName(...args))
+export const injectNotes = initCheck((...args) => instance.injectNotes(...args))
+export const filterOutNote = initCheck((...args) => instance.filterOutNote(...args))
 
 export const Controls = {
   jump,

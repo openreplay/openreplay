@@ -34,6 +34,10 @@ type queueStats struct {
 	tick <-chan time.Time
 }
 
+type QueueStats interface {
+	Collect(msg messages.Message)
+}
+
 func NewQueueStats(sec int) *queueStats {
 	return &queueStats{
 		prts: make(map[int32]*partitionStats),
