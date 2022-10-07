@@ -129,7 +129,6 @@ function CreateNote({
         flexDirection: 'column',
         gap: '1rem',
       }}
-      onClick={stopEvents}
     >
       <div className="flex items-center bg-gray-lightest">
         <Icon name="quotes" size={20} />
