@@ -83,6 +83,12 @@ def __process_tags(row):
 def get_details(project_id, error_id, user_id, **data):
     pg_sub_query24 = __get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size24")
     pg_sub_query24.append("error_id = %(error_id)s")
+    pg_sub_query30_session = __get_basic_constraints(time_constraint=True, chart=False,
+                                                     startTime_arg_name="startDate30",
+                                                     endTime_arg_name="endDate30", project_key="sessions.project_id")
+    pg_sub_query30_session.append("sessions.start_ts >= %(startDate30)s")
+    pg_sub_query30_session.append("sessions.start_ts <= %(endDate30)s")
+    pg_sub_query30_session.append("error_id = %(error_id)s")
     pg_sub_query30_err = __get_basic_constraints(time_constraint=True, chart=False, startTime_arg_name="startDate30",
                                                  endTime_arg_name="endDate30", project_key="errors.project_id")
     pg_sub_query30_err.append("sessions.project_id = %(project_id)s")
@@ -165,14 +171,14 @@ def get_details(project_id, error_id, user_id, **data):
                                                 COUNT(session_id) AS count
                                          FROM events.errors
                                                   INNER JOIN sessions USING (session_id)
-                                         WHERE {" AND ".join(pg_basic_query)}
+                                         WHERE {" AND ".join(pg_sub_query30_session)}
                                          GROUP BY user_browser
                                          ORDER BY count DESC) AS count_per_browser_query
                                             INNER JOIN LATERAL (SELECT JSONB_AGG(version_details) AS partition
                                                                 FROM (SELECT user_browser_version AS version,
                                                                              COUNT(session_id) AS count
                                                                       FROM events.errors INNER JOIN public.sessions USING (session_id)
-                                                                      WHERE {" AND ".join(pg_basic_query)}
+                                                                      WHERE {" AND ".join(pg_sub_query30_session)}
                                                                         AND sessions.user_browser = count_per_browser_query.name
                                                                       GROUP BY user_browser_version
                                                                       ORDER BY count DESC) AS version_details
@@ -182,13 +188,13 @@ def get_details(project_id, error_id, user_id, **data):
                                    FROM (SELECT user_os AS name,
                                                 COUNT(session_id) AS count
                                          FROM events.errors INNER JOIN public.sessions USING (session_id)
-                                         WHERE {" AND ".join(pg_basic_query)}
+                                         WHERE {" AND ".join(pg_sub_query30_session)}
                                          GROUP BY user_os
                                          ORDER BY count DESC) AS count_per_os_details
                                             INNER JOIN LATERAL (SELECT jsonb_agg(count_per_version_details) AS partition
                                                                 FROM (SELECT COALESCE(user_os_version,'unknown') AS version, COUNT(session_id) AS count
                                                                       FROM events.errors INNER JOIN public.sessions USING (session_id)
-                                                                      WHERE {" AND ".join(pg_basic_query)}
+                                                                      WHERE {" AND ".join(pg_sub_query30_session)}
                                                                         AND sessions.user_os = count_per_os_details.name
                                                                       GROUP BY user_os_version
                                                                       ORDER BY count DESC) AS count_per_version_details
@@ -199,7 +205,7 @@ def get_details(project_id, error_id, user_id, **data):
                                    FROM (SELECT user_device_type AS name,
                                                 COUNT(session_id) AS count
                                          FROM events.errors INNER JOIN public.sessions USING (session_id)
-                                         WHERE {" AND ".join(pg_basic_query)}
+                                         WHERE {" AND ".join(pg_sub_query30_session)}
                                          GROUP BY user_device_type
                                          ORDER BY count DESC) AS count_per_device_details
                                             INNER JOIN LATERAL (SELECT jsonb_agg(count_per_device_v_details) AS partition
@@ -209,7 +215,7 @@ def get_details(project_id, error_id, user_id, **data):
                                                                                  ELSE user_device END AS version,
                                                                              COUNT(session_id)        AS count
                                                                       FROM events.errors INNER JOIN public.sessions USING (session_id)
-                                                                      WHERE {" AND ".join(pg_basic_query)}
+                                                                      WHERE {" AND ".join(pg_sub_query30_session)}
                                                                         AND sessions.user_device_type = count_per_device_details.name
                                                                       GROUP BY user_device
                                                                       ORDER BY count DESC) AS count_per_device_v_details
@@ -219,7 +225,7 @@ def get_details(project_id, error_id, user_id, **data):
                              FROM (SELECT user_country AS name,
                                           COUNT(session_id) AS count
                                    FROM events.errors INNER JOIN public.sessions USING (session_id)
-                                   WHERE {" AND ".join(pg_basic_query)}
+                                   WHERE {" AND ".join(pg_sub_query30_session)}
                                    GROUP BY user_country
                                    ORDER BY count DESC) AS count_per_country_details) AS country_details ON (TRUE)
                  INNER JOIN (SELECT jsonb_agg(chart_details) AS chart24
