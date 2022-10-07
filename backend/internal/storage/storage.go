@@ -20,10 +20,12 @@ type Storage struct {
 	s3         *storage.S3
 	startBytes []byte
 
-	totalSessions syncfloat64.Counter
-	sessionSize   syncfloat64.Histogram
-	readingTime   syncfloat64.Histogram
-	archivingTime syncfloat64.Histogram
+	totalSessions       syncfloat64.Counter
+	sessionDOMSize      syncfloat64.Histogram
+	sessionDevtoolsSize syncfloat64.Histogram
+	readingDOMTime      syncfloat64.Histogram
+	readingTime         syncfloat64.Histogram
+	archivingTime       syncfloat64.Histogram
 }
 
 func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Storage, error) {
@@ -38,9 +40,13 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	if err != nil {
 		log.Printf("can't create sessions_total metric: %s", err)
 	}
-	sessionSize, err := metrics.RegisterHistogram("sessions_size")
+	sessionDOMSize, err := metrics.RegisterHistogram("sessions_size")
 	if err != nil {
 		log.Printf("can't create session_size metric: %s", err)
+	}
+	sessionDevtoolsSize, err := metrics.RegisterHistogram("sessions_dt_size")
+	if err != nil {
+		log.Printf("can't create sessions_dt_size metric: %s", err)
 	}
 	readingTime, err := metrics.RegisterHistogram("reading_duration")
 	if err != nil {
@@ -51,27 +57,29 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 		log.Printf("can't create archiving_duration metric: %s", err)
 	}
 	return &Storage{
-		cfg:           cfg,
-		s3:            s3,
-		startBytes:    make([]byte, cfg.FileSplitSize),
-		totalSessions: totalSessions,
-		sessionSize:   sessionSize,
-		readingTime:   readingTime,
-		archivingTime: archivingTime,
+		cfg:                 cfg,
+		s3:                  s3,
+		startBytes:          make([]byte, cfg.FileSplitSize),
+		totalSessions:       totalSessions,
+		sessionDOMSize:      sessionDOMSize,
+		sessionDevtoolsSize: sessionDevtoolsSize,
+		readingTime:         readingTime,
+		archivingTime:       archivingTime,
 	}, nil
 }
 
 func (s *Storage) UploadSessionFiles(sessID uint64) error {
-	sidStr := strconv.FormatUint(sessID, 10)
-	if err := s.uploadKey(sessID, sidStr+"/dom.mob", true, 5); err != nil {
+	sessionDir := strconv.FormatUint(sessID, 10)
+	if err := s.uploadKey(sessID, sessionDir+"/dom.mob", true, 5); err != nil {
 		return err
 	}
-	if err := s.uploadKey(sessID, sidStr+"/devtools.mob", false, 5); err != nil {
+	if err := s.uploadKey(sessID, sessionDir+"/devtools.mob", false, 4); err != nil {
 		return err
 	}
 	return nil
 }
 
+// TODO: make a bit cleaner
 func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCount int) error {
 	if retryCount <= 0 {
 		return nil
@@ -115,12 +123,12 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		}
 		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 	} else {
+		start = time.Now()
 		if err := s.s3.Upload(s.gzipFile(file), key+"s", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
+		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 	}
-
-	//TODO: fix metrics for devtools file case
 
 	// Save metrics
 	var fileSize float64 = 0
@@ -131,8 +139,12 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		fileSize = float64(fileInfo.Size())
 	}
 	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
+	if shouldSplit {
+		s.totalSessions.Add(ctx, 1)
+		s.sessionDOMSize.Record(ctx, fileSize)
+	} else {
+		s.sessionDevtoolsSize.Record(ctx, fileSize)
+	}
 
-	s.sessionSize.Record(ctx, fileSize)
-	s.totalSessions.Add(ctx, 1)
 	return nil
 }
