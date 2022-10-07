@@ -432,7 +432,7 @@ def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = D
     return data
 
 
-@app.post('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
+@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
 def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                         context: schemas.CurrentContext = Depends(OR_context)):
     return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
