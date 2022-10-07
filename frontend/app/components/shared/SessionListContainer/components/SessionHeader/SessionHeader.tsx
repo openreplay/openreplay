@@ -70,7 +70,7 @@ function SessionHeader(props: Props) {
                 </div>
             </div>
 
-            {activeTab === 'all' && (
+            {activeTab !== 'notes' && activeTab !== 'bookmark' ? (
                 <div className="flex items-center">
                     <SessionTags />
                     <div className="mx-4" />
@@ -79,7 +79,7 @@ function SessionHeader(props: Props) {
                     <SessionSort />
                     <SessionSettingButton />
                 </div>
-            )}
+            ) : null}
             {activeTab === 'notes' && (
                 <div className="flex items-center">
                     <NoteTags />

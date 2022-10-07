@@ -5,7 +5,7 @@ export const tagProps = {
   'ISSUE': '#CC0000',
   'QUERY': '#3EAAAF',
   'TASK': '#7986CB',
-  'OTHER': 'rgba(0, 0, 0, 0.26)',
+  'OTHER': 'rgba(0, 0, 0, 0.6)',
 }
 
 export type iTag = keyof typeof tagProps | "ALL"
