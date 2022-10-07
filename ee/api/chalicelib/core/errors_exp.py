@@ -2,10 +2,12 @@ import json
 
 import schemas
 from chalicelib.core import metrics, metadata
+from chalicelib.core import errors_legacy
 from chalicelib.core import sourcemaps, sessions
 from chalicelib.utils import ch_client, metrics_helper, exp_ch_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from decouple import config
 
 
 def _multiple_values(values, value_key="value"):
@@ -147,20 +149,42 @@ def __process_tags(row):
         {"name": "country", "partitions": __flatten_sort_key_count(data=row.pop("country_partition"))}
     ]
 
-
+# TODO: solve memory issue
 def get_details(project_id, error_id, user_id, **data):
-    # now=TimeUTC.now()
+    if not config("EXP_ERRORS_GET", cast=bool, default=False):
+        return errors_legacy.get_details(project_id, error_id, user_id, **data)
+
+    MAIN_SESSIONS_TABLE = exp_ch_helper.get_main_sessions_table(0)
+    MAIN_EVENTS_TABLE = exp_ch_helper.get_main_events_table(0)
+    MAIN_EVENTS_TABLE_24 = exp_ch_helper.get_main_events_table(TimeUTC.now())
+
     ch_sub_query24 = __get_basic_constraints(startTime_arg_name="startDate24", endTime_arg_name="endDate24")
     ch_sub_query24.append("error_id = %(error_id)s")
-    ch_sub_query30 = __get_basic_constraints(startTime_arg_name="startDate30", endTime_arg_name="endDate30")
+    pg_sub_query30_err = __get_basic_constraints(time_constraint=True, startTime_arg_name="startDate30",
+                                                 endTime_arg_name="endDate30", project_key="errors.project_id",
+                                                 table_name="errors")
+    pg_sub_query30_err.append("sessions.project_id = toUInt16(%(project_id)s)")
+    pg_sub_query30_err.append("sessions.datetime >= toDateTime(%(startDate30)s/1000)")
+    pg_sub_query30_err.append("sessions.datetime <= toDateTime(%(endDate30)s/1000)")
+    pg_sub_query30_err.append("error_id = %(error_id)s")
+    pg_sub_query30_err.append("source ='js_exception'")
+    ch_sub_query30 = __get_basic_constraints(startTime_arg_name="startDate30", endTime_arg_name="endDate30",
+                                             project_key="errors.project_id")
     ch_sub_query30.append("error_id = %(error_id)s")
     ch_basic_query = __get_basic_constraints(time_constraint=False)
     ch_basic_query.append("error_id = %(error_id)s")
+    ch_basic_query_session = ch_basic_query[:]
+    ch_basic_query_session.append("sessions.project_id = toUInt16(%(project_id)s)")
     with ch_client.ClickHouseClient() as ch:
         data["startDate24"] = TimeUTC.now(-1)
         data["endDate24"] = TimeUTC.now()
         data["startDate30"] = TimeUTC.now(-30)
         data["endDate30"] = TimeUTC.now()
+        # # TODO: remove time limits
+        # data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
+        # data["endDate24"] = 1650470729000
+        # data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
+        # data["endDate30"] = 1650470729000
         density24 = int(data.get("density24", 24))
         step_size24 = __get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
@@ -196,28 +220,27 @@ def get_details(project_id, error_id, user_id, **data):
                      message,
                      COUNT(DISTINCT user_uuid)  AS users,
                      COUNT(DISTINCT session_id) AS sessions
-              FROM errors
-              WHERE error_id = %(error_id)s
+              FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+              WHERE {" AND ".join(pg_sub_query30_err)}
               GROUP BY error_id, name, message) AS details
                  INNER JOIN (SELECT error_id,
-                                    toUnixTimestamp(MAX(datetime)) * 1000 AS last_occurrence,
-                                    toUnixTimestamp(MIN(datetime)) * 1000 AS first_occurrence
-                             FROM errors
-                             WHERE error_id = %(error_id)s
+                                    toUnixTimestamp(max(datetime)) * 1000 AS last_occurrence,
+                                    toUnixTimestamp(min(datetime)) * 1000 AS first_occurrence
+                             FROM {MAIN_EVENTS_TABLE} AS errors
+                             WHERE {" AND ".join(ch_basic_query)}
                              GROUP BY error_id) AS time_details
                             ON details.error_id = time_details.error_id
                  INNER JOIN (SELECT error_id, session_id AS last_session_id, user_os, user_os_version, user_browser, user_browser_version, user_device, user_device_type, user_uuid
-                             FROM errors
-                             WHERE error_id = %(error_id)s
-                             ORDER BY datetime DESC
+                             FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                             WHERE {" AND ".join(ch_basic_query_session)}
+                             ORDER BY errors.datetime DESC
                              LIMIT 1) AS last_session_details ON last_session_details.error_id = details.error_id
-                 INNER JOIN (SELECT %(error_id)s                                             AS error_id,
-                                    groupArray(
-                                            [[[user_browser]], [[toString(count_per_browser)]],versions_partition]) AS browsers_partition
+                 INNER JOIN (SELECT %(error_id)s AS error_id,
+                                    groupArray([[[user_browser]], [[toString(count_per_browser)]],versions_partition]) AS browsers_partition
                              FROM (SELECT user_browser,
                                           COUNT(session_id) AS count_per_browser
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_basic_query)}
+                                   FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                   WHERE {" AND ".join(pg_sub_query30_err)}
                                    GROUP BY user_browser
                                    ORDER BY count_per_browser DESC) AS count_per_browser_query
                                       INNER JOIN (SELECT user_browser,
@@ -225,36 +248,35 @@ def get_details(project_id, error_id, user_id, **data):
                                                   FROM (SELECT user_browser,
                                                                user_browser_version,
                                                                COUNT(session_id) AS count_per_version
-                                                        FROM errors
-                                                        WHERE {" AND ".join(ch_basic_query)}
+                                                        FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                                        WHERE {" AND ".join(pg_sub_query30_err)}
                                                         GROUP BY user_browser, user_browser_version
                                                         ORDER BY count_per_version DESC) AS version_details
                                                   GROUP BY user_browser ) AS browser_version_details USING (user_browser)) AS browser_details
                             ON browser_details.error_id = details.error_id
-                 INNER JOIN (SELECT %(error_id)s                                      AS error_id,
+                 INNER JOIN (SELECT %(error_id)s AS error_id,
                                     groupArray([[[user_os]], [[toString(count_per_os)]],versions_partition]) AS os_partition
                              FROM (SELECT user_os,
                                           COUNT(session_id) AS count_per_os
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_basic_query)}
+                                   FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                   WHERE {" AND ".join(pg_sub_query30_err)}
                                    GROUP BY user_os
                                    ORDER BY count_per_os DESC) AS count_per_os_details
                                       INNER JOIN (SELECT user_os,
                                                          groupArray([user_os_version, toString(count_per_version)]) AS versions_partition
                                                   FROM (SELECT user_os, user_os_version, COUNT(session_id) AS count_per_version
-                                                        FROM errors
-                                                        WHERE {" AND ".join(ch_basic_query)}
+                                                        FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                                        WHERE {" AND ".join(pg_sub_query30_err)}
                                                         GROUP BY user_os, user_os_version
                                                         ORDER BY count_per_version DESC) AS count_per_version_details
                                                   GROUP BY user_os ) AS os_version_details USING (user_os)) AS os_details
                             ON os_details.error_id = details.error_id
-                 INNER JOIN (SELECT %(error_id)s                                                          AS error_id,
-                                    groupArray(
-                                            [[[toString(user_device_type)]], [[toString(count_per_device)]],versions_partition]) AS device_partition
+                 INNER JOIN (SELECT %(error_id)s AS error_id,
+                                    groupArray([[[toString(user_device_type)]], [[toString(count_per_device)]],versions_partition]) AS device_partition
                              FROM (SELECT user_device_type,
                                           COUNT(session_id) AS count_per_device
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_basic_query)}
+                                   FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                   WHERE {" AND ".join(pg_sub_query30_err)}
                                    GROUP BY user_device_type
                                    ORDER BY count_per_device DESC) AS count_per_device_details
                                       INNER JOIN (SELECT user_device_type,
@@ -262,26 +284,25 @@ def get_details(project_id, error_id, user_id, **data):
                                                   FROM (SELECT user_device_type,
                                                                COALESCE(user_device,'unknown') AS user_device,
                                                                COUNT(session_id) AS count_per_device
-                                                        FROM errors
-                                                        WHERE {" AND ".join(ch_basic_query)}
+                                                        FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                                        WHERE {" AND ".join(pg_sub_query30_err)}
                                                         GROUP BY user_device_type, user_device
                                                         ORDER BY count_per_device DESC) AS count_per_device_details
                                                   GROUP BY user_device_type ) AS device_version_details USING (user_device_type)) AS device_details
                             ON device_details.error_id = details.error_id
-                 INNER JOIN (SELECT %(error_id)s                                    AS error_id,
-                                    groupArray(
-                                            [[[toString(user_country)]], [[toString(count_per_country)]]]) AS country_partition
+                 INNER JOIN (SELECT %(error_id)s AS error_id,
+                                    groupArray([[[toString(user_country)]], [[toString(count_per_country)]]]) AS country_partition
                              FROM (SELECT user_country,
                                           COUNT(session_id) AS count_per_country
-                                   FROM errors
-                                   WHERE {" AND ".join(ch_basic_query)}
+                                   FROM {MAIN_EVENTS_TABLE} AS errors INNER JOIN {MAIN_SESSIONS_TABLE} AS sessions USING (session_id)
+                                   WHERE {" AND ".join(pg_sub_query30_err)}
                                    GROUP BY user_country
                                    ORDER BY count_per_country DESC) AS count_per_country_details) AS country_details
                             ON country_details.error_id = details.error_id
                  INNER JOIN (SELECT %(error_id)s AS error_id, groupArray([timestamp, count]) AS chart24
                              FROM (SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size24)s second)) * 1000 AS timestamp,
                                           COUNT(DISTINCT session_id) AS count
-                                   FROM errors
+                                   FROM {MAIN_EVENTS_TABLE_24} AS errors
                                    WHERE {" AND ".join(ch_sub_query24)}
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details) AS chart_details24
@@ -289,15 +310,15 @@ def get_details(project_id, error_id, user_id, **data):
                  INNER JOIN (SELECT %(error_id)s AS error_id, groupArray([timestamp, count]) AS chart30
                              FROM (SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size30)s second)) * 1000 AS timestamp,
                                           COUNT(DISTINCT session_id) AS count
-                                   FROM errors
+                                   FROM {MAIN_EVENTS_TABLE} AS errors
                                    WHERE {" AND ".join(ch_sub_query30)}
                                    GROUP BY timestamp
                                    ORDER BY timestamp) AS chart_details) AS chart_details30
                             ON details.error_id = chart_details30.error_id;"""
 
-        # print("--------------------")
-        # print(main_ch_query % params)
-        # print("--------------------")
+        print("--------------------")
+        print(ch.format(main_ch_query, params))
+        print("--------------------")
         row = ch.execute(query=main_ch_query, params=params)
     if len(row) == 0:
         return {"errors": ["error not found"]}
@@ -463,13 +484,17 @@ def get_details_chart(project_id, error_id, user_id, **data):
 
 
 def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_name="startDate",
-                            endTime_arg_name="endDate", type_condition=True):
-    ch_sub_query = ["project_id =toUInt32(%(project_id)s)"]
+                            endTime_arg_name="endDate", type_condition=True, project_key="project_id", table_name=None):
+    ch_sub_query = [f"{project_key} =toUInt16(%(project_id)s)"]
+    if table_name is not None:
+        table_name = table_name + "."
+    else:
+        table_name = ""
     if type_condition:
-        ch_sub_query.append("event_type='ERROR'")
+        ch_sub_query.append(f"{table_name}event_type='ERROR'")
     if time_constraint:
-        ch_sub_query += [f"datetime >= toDateTime(%({startTime_arg_name})s/1000)",
-                         f"datetime < toDateTime(%({endTime_arg_name})s/1000)"]
+        ch_sub_query += [f"{table_name}datetime >= toDateTime(%({startTime_arg_name})s/1000)",
+                         f"{table_name}datetime < toDateTime(%({endTime_arg_name})s/1000)"]
     if platform == schemas.PlatformType.mobile:
         ch_sub_query.append("user_device_type = 'mobile'")
     elif platform == schemas.PlatformType.desktop:
