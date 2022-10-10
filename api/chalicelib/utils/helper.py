@@ -4,25 +4,18 @@ import re
 import string
 from typing import Union
 
-import requests
+from decouple import config
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
-
-local_prefix = 'local-'
-from decouple import config
-
-
-def get_version_number():
-    return config("version")
 
 
 def get_stage_name():
     return "OpenReplay"
 
 
-def generate_salt():
-    return "".join(random.choices(string.hexdigits, k=36))
+def random_string(length=36):
+    return "".join(random.choices(string.hexdigits, k=length))
 
 
 def list_to_camel_case(items, flatten=False):

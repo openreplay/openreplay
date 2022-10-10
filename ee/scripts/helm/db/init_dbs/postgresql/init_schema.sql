@@ -148,7 +148,6 @@ $$
                 api_key        text UNIQUE                          default generate_api_key(20) not null,
                 created_at     timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
                 deleted_at     timestamp without time zone NULL     DEFAULT NULL,
-                version_number text                        NOT NULL,
                 license        text                        NULL,
                 opt_out        bool                        NOT NULL DEFAULT FALSE,
                 t_projects     integer                     NOT NULL DEFAULT 1,

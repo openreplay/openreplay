@@ -13,7 +13,7 @@ def get_by_tenant_key(tenant_key):
                        t.api_key,
                        t.created_at,
                         '{license.EDITION}' AS edition,
-                        t.version_number,
+                        openreplay_version() AS version_number,
                         t.opt_out
                     FROM public.tenants AS t
                     WHERE t.tenant_key = %(tenant_key)s AND t.deleted_at ISNULL
@@ -33,7 +33,7 @@ def get_by_tenant_id(tenant_id):
                        t.api_key,
                        t.created_at,
                         '{license.EDITION}' AS edition,
-                        t.version_number,
+                        openreplay_version() AS version_number,
                         t.opt_out,
                         t.tenant_key
                     FROM public.tenants AS t

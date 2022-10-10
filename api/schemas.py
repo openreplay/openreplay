@@ -28,7 +28,6 @@ class UserLoginSchema(_Grecaptcha):
 class UserSignupSchema(UserLoginSchema):
     fullname: str = Field(...)
     organizationName: str = Field(...)
-    projectName: str = Field(default="my first project")
 
     class Config:
         alias_generator = attribute_to_camel_case

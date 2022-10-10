@@ -121,7 +121,6 @@ $$
                 name           text                        NOT NULL,
                 api_key        text                        NOT NULL DEFAULT generate_api_key(20),
                 created_at     timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
-                version_number text                        NOT NULL,
                 license        text                        NULL,
                 opt_out        bool                        NOT NULL DEFAULT FALSE,
                 t_projects     integer                     NOT NULL DEFAULT 1,
