@@ -62,7 +62,7 @@ export default class SharePopup extends React.PureComponent {
     toast.success('Sent to Slack.');
   };
 
-  changeChannel = ({ value }) => this.setState({ channelId: value });
+  changeChannel = ({ value }) => this.setState({ channelId: value.value });
 
   onClickHandler = () => {
     this.setState({ isOpen: true });
