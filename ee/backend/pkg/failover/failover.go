@@ -8,7 +8,6 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
-	"strconv"
 )
 
 const numberOfPartitions = 16
@@ -90,7 +89,7 @@ func (s *sessionFinderImpl) worker() {
 }
 
 func (s *sessionFinderImpl) findSession(sessionID, timestamp, partition uint64) {
-	err := s.storage.UploadKey(strconv.FormatUint(sessionID, 10), 5)
+	err := s.storage.UploadSessionFiles(sessionID)
 	if err == nil {
 		log.Printf("found session: %d in partition: %d, original: %d",
 			sessionID, partition, sessionID%numberOfPartitions)
