@@ -12,7 +12,6 @@ import AnnotationCanvas from './AnnotationCanvas.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
-import { makeObservable, } from './util'
 
 // TODO: fully specified strict check with no-any (everywhere)
 
@@ -53,18 +52,12 @@ type Agent = {
   //
 }
 
-interface VideoFeeds {
-	[key: string]: boolean
-}
-export const videoFeeds = makeObservable<VideoFeeds>({})
-
 
 export default class Assist {
   readonly version = 'PACKAGE_VERSION'
 
   private socket: Socket | null = null
   private peer: Peer | null = null
-  private videoTracks: MediaStreamTrack[] = []
   private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
 
@@ -142,12 +135,6 @@ export default class Assist {
     }
     const peerID = `${app.getProjectKey()}-${sessionId}`
 
-    videoFeeds.observe((key: string, value: boolean) => {
-      const track = this.videoTracks.find(track => track.id === key)
-      if (track) {
-        track.enabled = value
-      }
-    })
     // SocketIO
     const socket = this.socket = connect(app.getHost(), {
       path: '/ws-assist/socket',
@@ -262,7 +249,7 @@ export default class Assist {
       updateCallerNames()
     })
     socket.on('videofeed', ({ streamId, enabled, }) => {
-      videoFeeds[streamId] = enabled
+      callUI?.changeVideoFeed({ streamId, enabled, })
     })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
@@ -333,7 +320,6 @@ export default class Assist {
       })
       Object.values(lStreams).forEach((stream) => { stream.stop() })
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
-      this.videoTracks = []
       // UI
       closeCallConfirmWindow()
       if (remoteControl.status === RCStatus.Disabled) {
@@ -413,11 +399,6 @@ export default class Assist {
           initiateCallEnd()
         })
         call.on('stream', (rStream) => {
-          rStream.getVideoTracks().forEach(track => {
-            videoFeeds[track.id] = track.enabled
-            this.videoTracks.push(track)
-          })
-
           callUI?.addRemoteStream(rStream)
           const onInteraction = () => { // do only if document.hidden ?
             callUI?.playRemote()
@@ -435,7 +416,6 @@ export default class Assist {
           }
           app.debug.log('sender found:', sender)
           void sender.replaceTrack(vTrack)
-          this.videoTracks.push(vTrack)
         })
 
         call.answer(lStreams[call.peer].stream)

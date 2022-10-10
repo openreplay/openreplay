@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { videoFeeds } from 'Player/MessageDistributor/managers/AssistManager';
 
 interface Props {
   stream: MediaStream | null;
@@ -23,13 +22,14 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
       return;
     }
     const iid = setInterval(() => {
-      const settings = stream.getVideoTracks()[0]?.getSettings();
+      const track = stream.getVideoTracks()[0]
+      const settings = track?.getSettings();
       const isDummyVideoTrack = settings
         ? settings.width === 2 ||
           settings.frameRate === 0 ||
           (!settings.frameRate && !settings.width)
         : true;
-      const shouldBeEnabled = !isDummyVideoTrack;
+      const shouldBeEnabled = track.enabled && !isDummyVideoTrack;
 
       if (isEnabled !== shouldBeEnabled) {
         setEnabled(shouldBeEnabled);
@@ -38,19 +38,6 @@ function VideoContainer({ stream, muted = false, height = 280, setRemoteEnabled 
     }, 500);
     return () => clearInterval(iid);
   }, [stream, isEnabled]);
-
-  useEffect(() => {
-    if (!stream) return;
-    // @ts-ignore
-    videoFeeds.observe((key, value) => {
-      const track = stream.getVideoTracks()[0];
-      if (key === track.id) {
-        track.enabled = value;
-        setEnabled(value);
-        setRemoteEnabled?.(value);
-      }
-    });
-  }, [stream]);
 
   return (
     <div
