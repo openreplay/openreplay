@@ -81,6 +81,7 @@ type Connector interface {
 	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
 	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
 	InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error
+	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
 }
 
 type connectorImpl struct {
