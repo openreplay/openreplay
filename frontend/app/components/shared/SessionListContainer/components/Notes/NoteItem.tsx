@@ -66,7 +66,7 @@ function NoteItem(props: Props) {
                   width: 50,
                   fontSize: 11,
                 }}
-                className="rounded-full px-2 py-1 mr-2 text-white flex items-center justify-center"
+                className="rounded-full px-2 py-1 text-white flex items-center justify-center"
               >
                 {props.note.tag}
               </div>

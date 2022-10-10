@@ -138,8 +138,10 @@ function CreateNote({
     label: name,
   })).toJS() as unknown as { value: string, label: string }[]
 
-  const changeChannel = ({ value, name }: { value: string; name: string }) => {
-    setChannel(value);
+  slackChannelsOptions.unshift({ value: null, label: 'Share to slack?' })
+
+  const changeChannel = ({ value, name }: { value: Record<string, string>; name: string }) => {
+    setChannel(value.value);
   };
 
   return (
@@ -210,7 +212,8 @@ function CreateNote({
         <div>
           <Select
             options={slackChannelsOptions}
-            defaultValue={"Share to Slack"}
+            // @ts-ignore
+            defaultValue
             // @ts-ignore
             onChange={changeChannel}
             className="mr-4"
