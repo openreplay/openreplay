@@ -147,7 +147,7 @@ export default class CallWindow {
 					this.checkRemoteVideoInterval = setInterval(() => {
 						const settings = this.remoteVideo?.getSettings()
 						const isDummyVideoTrack =
-							!!settings && (settings.width === 2 || settings.frameRate === 0)
+							!!settings && !this.remoteVideo.enabled && (settings.width === 2 || settings.frameRate === 0)
 						const shouldBeEnabled = !isDummyVideoTrack
 						if (enabled !== shouldBeEnabled) {
 							this.toggleRemoteVideoUI((enabled = shouldBeEnabled))
