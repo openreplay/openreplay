@@ -10,6 +10,8 @@ import { toast } from 'react-toastify';
 import { injectNotes } from 'Player';
 import { fetchList as fetchSlack } from 'Duck/integrations/slack';
 import Select from 'Shared/Select';
+import { TeamBadge } from 'Shared/SessionListContainer/components/Notes'
+import { List } from 'immutable';
 
 interface Props {
   isVisible: boolean;
@@ -20,7 +22,7 @@ interface Props {
   sessionId: string;
   isEdit: string;
   editNote: WriteNote;
-  slackChannels: Record<string, string>[];
+  slackChannels: List<Record<string, any>>;
   fetchSlack: () => void;
 }
 
@@ -56,7 +58,7 @@ function CreateNote({
   }, [isEdit]);
 
   React.useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && isVisible) {
       fetchSlack();
       inputRef.current.focus();
     }
@@ -134,7 +136,7 @@ function CreateNote({
   const slackChannelsOptions = slackChannels.map(({ webhookId, name }) => ({
     value: webhookId,
     label: name,
-  }));
+  })).toJS() as unknown as { value: string, label: string }[]
 
   const changeChannel = ({ value, name }: { value: string; name: string }) => {
     setChannel(value);
@@ -144,7 +146,7 @@ function CreateNote({
     <div
       className={stl.noteTooltip}
       style={{
-        top: -320,
+        top: slackChannelsOptions.length > 0 ? -310 : 255,
         width: 350,
         left: 'calc(50% - 175px)',
         display: isVisible ? 'flex' : 'none',
@@ -222,8 +224,7 @@ function CreateNote({
         </Button>
         <div className="flex items-center cursor-pointer" onClick={() => setPublic(!isPublic)}>
           <Checkbox checked={isPublic} />
-          <Icon name="user-friends" size={16} className="mx-1" />
-          Visible to the team
+          <TeamBadge />
         </div>
       </div>
     </div>

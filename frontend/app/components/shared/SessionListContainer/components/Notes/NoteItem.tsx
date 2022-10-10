@@ -9,6 +9,7 @@ import { ItemMenu } from 'UI';
 import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
+import TeamBadge from './TeamBadge'
 
 interface Props {
   note: Note;
@@ -75,9 +76,7 @@ function NoteItem(props: Props) {
               {props.userEmail},{' '}
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
               {!props.note.isPublic ? null : (
-                <>
-                  <Icon name="user-friends" className="ml-4 mr-1" color="gray-dark" /> Team
-                </>
+                <TeamBadge />
               )}
             </div>
           </div>

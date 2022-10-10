@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import { session } from 'App/routes';
 import { confirm } from 'UI';
 import { filterOutNote as filterOutTimelineNote } from 'Player';
+import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 
 interface Props {
   note: Note;
@@ -74,21 +75,36 @@ function NoteEvent(props: Props) {
       className="flex items-start flex-col p-2 border rounded"
       style={{ background: 'rgba(253, 243, 155, 0.1)' }}
     >
-      <div className="flex items-center w-full">
+      <div className="flex items-center w-full relative">
         <div className="p-3 bg-gray-light rounded-full">
           <Icon name="quotes" color="main" />
         </div>
         <div className="ml-2">
-          <div className="text-base">{props.userEmail}</div>
+          <div
+            className="text-base"
+            style={{
+              maxWidth: 160,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {props.userEmail}, {props.userEmail}
+          </div>
           <div className="text-disabled-text text-sm">
             {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
           </div>
         </div>
-        <div className="cursor-pointer ml-auto">
+        <div className="cursor-pointer absolute" style={{ right: -10 }}>
           <ItemMenu bold items={menuItems} />
         </div>
       </div>
-      <div className="text-xl my-3 overflow-y-scroll overflow-x-hidden" style={{ maxHeight: 200, maxWidth: 220 }}>{props.note.message}</div>
+      <div
+        className="text-xl my-3 overflow-y-scroll overflow-x-hidden"
+        style={{ maxHeight: 200, maxWidth: 220 }}
+      >
+        {props.note.message}
+      </div>
       <div>
         <div className="flex items-center gap-2 flex-wrap w-full">
           {props.note.tag ? (
@@ -107,11 +123,7 @@ function NoteEvent(props: Props) {
               {props.note.tag}
             </div>
           ) : null}
-          {!props.note.isPublic ? null : (
-            <>
-              <Icon name="user-friends" className="ml-2 mr-1" color="gray-dark" /> <span className="text-disabled-text">Team</span>
-            </>
-          )}
+          {!props.note.isPublic ? null : <TeamBadge />}
         </div>
       </div>
     </div>

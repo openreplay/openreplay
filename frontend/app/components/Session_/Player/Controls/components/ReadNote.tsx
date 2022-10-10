@@ -4,6 +4,7 @@ import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
+import { TeamBadge } from 'Shared/SessionListContainer/components/Notes'
 
 interface Props {
   userEmail: string;
@@ -42,7 +43,7 @@ function ReadNote(props: Props) {
   }
 
   return (
-    <div onClick={props.onClose} style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }} className="flex items-center justify-center">
+    <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '100%' }} className="flex items-center justify-center">
         <div
           className="flex items-start !text-lg flex-col p-4 border gap-2 rounded"
           style={{ background: '#FFFEF5', width: 500 }}
@@ -74,9 +75,7 @@ function ReadNote(props: Props) {
                     </div>
               ) : null}
               {!props.note.isPublic ? null : (
-                <>
-                  <Icon name="user-friends" className="ml-2 mr-1" color="gray-dark" /> <span className="text-disabled-text">Team</span>
-                </>
+                <TeamBadge />
               )}
 
               <div
