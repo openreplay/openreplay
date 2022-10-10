@@ -1,6 +1,7 @@
 import json
 
 import schemas
+import schemas_ee
 from chalicelib.core import users, telemetry, tenants
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
@@ -61,7 +62,8 @@ def create_step1(data: schemas.UserSignupSchema):
     params = {"email": email, "password": password,
               "fullname": fullname, "companyName": company_name,
               "projectName": project_name,
-              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})}
+              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+              "permissions": [p.value for p in schemas_ee.Permissions]}
     query = """\
             WITH t AS (
                 INSERT INTO public.tenants (name, version_number)
@@ -70,8 +72,8 @@ def create_step1(data: schemas.UserSignupSchema):
             ),
                  r AS (
                      INSERT INTO public.roles(tenant_id, name, description, permissions, protected)
-                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', '{"SESSION_REPLAY", "DEV_TOOLS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], TRUE),
-                               ((SELECT tenant_id FROM t), 'Member', 'Member', '{"SESSION_REPLAY", "DEV_TOOLS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], FALSE)
+                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', %(permissions)s::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Member', 'Member', %(permissions)s::text[], FALSE)
                         RETURNING *
                  ),
                  u AS (
