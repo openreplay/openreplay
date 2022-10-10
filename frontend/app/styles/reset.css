@@ -30,9 +30,30 @@ input:focus {
   border: solid thin $teal !important;
 }
 
-body ::-webkit-scrollbar {
+/* body ::-webkit-scrollbar {
   width: 2px;
   height: 2px;
+} */
+
+* {
+  &::-webkit-scrollbar {
+    width: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background: #f3f3f3;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $gray-medium;
+    }
+  }
 }
 
 h1, h2, h3, h4, h5 {
