@@ -181,7 +181,6 @@ export default class AssistManager {
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
-          //@ts-ignore
           if (this.jumped) {
             // @ts-ignore
             msg.time = this.md.getLastRecordedMessageTime() + msg.time

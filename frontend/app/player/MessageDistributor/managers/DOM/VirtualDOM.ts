@@ -2,6 +2,8 @@ type VChild = VElement | VText
 
 export type VNode = VDocument | VShadowRoot | VElement | VText
 
+import { insertRule, deleteRule } from './safeCSSRules';
+
 abstract class VParent {
 	abstract node: Node | null
 	protected children: VChild[] = []
@@ -182,11 +184,11 @@ export class PostponedStyleSheet {
 	}
 
 	insertRule(rule: string, index: number) {
-		this.applyCallback(s => s.insertRule(rule, index))
+		this.applyCallback(s => insertRule(s, { rule, index }))
 	}
 
 	deleteRule(index: number) {
-		this.applyCallback(s => s.deleteRule(index))
+		this.applyCallback(s => deleteRule(s, { index }))
 	}
 }
 
