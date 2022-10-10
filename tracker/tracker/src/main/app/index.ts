@@ -14,7 +14,15 @@ import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
-import type { Options as WebworkerOptions, WorkerMessageData } from '../../common/interaction.js'
+import type {
+  Options as WebworkerOptions,
+  ToWorkerData,
+  FromWorkerData,
+} from '../../common/interaction.js'
+
+interface TypedWorker extends Omit<Worker, 'postMessage'> {
+  postMessage(data: ToWorkerData): void
+}
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -94,7 +102,7 @@ export default class App {
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
-  private readonly worker?: Worker
+  private readonly worker?: TypedWorker
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
@@ -153,13 +161,13 @@ export default class App {
       this.worker.onerror = (e) => {
         this._debug('webworker_error', e)
       }
-      this.worker.onmessage = ({ data }: MessageEvent) => {
-        if (data === 'failed') {
-          this.stop(false)
-          this._debug('worker_failed', {}) // add context (from worker)
-        } else if (data === 'restart') {
+      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
+        if (data === 'restart') {
           this.stop(false)
           this.start({ forceNew: true }) // TODO: keep userID & metadata (draw scenarios)
+        } else if (data.type === 'failure') {
+          this.stop(false)
+          this._debug('worker_failed', data.reason)
         }
       }
       const alertWorker = () => {
@@ -372,7 +380,7 @@ export default class App {
     }
 
     const timestamp = now()
-    const startWorkerMsg: WorkerMessageData = {
+    this.worker.postMessage({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -380,8 +388,7 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
-    }
-    this.worker.postMessage(startWorkerMsg)
+    })
 
     this.session.update({
       // TODO: transparent "session" module logic AND explicit internal api for plugins.
@@ -455,12 +462,11 @@ export default class App {
         this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
 
-        const startWorkerMsg: WorkerMessageData = {
+        this.worker.postMessage({
           type: 'auth',
           token,
           beaconSizeLimit,
-        }
-        this.worker.postMessage(startWorkerMsg)
+        })
 
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
