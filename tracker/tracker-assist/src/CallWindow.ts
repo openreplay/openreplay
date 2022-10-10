@@ -20,6 +20,7 @@ export default class CallWindow {
 	private localVideoOn = false
 	private onToggleVideo: (args: any) => void
 	private tsInterval: ReturnType<typeof setInterval>
+	private remoteVideo: MediaStreamTrack
 
 	private readonly load: Promise<void>
 
@@ -132,6 +133,7 @@ export default class CallWindow {
 				// Video
 				if (this.vRemote && !this.vRemote.srcObject) {
 					this.vRemote.srcObject = rStream
+					this.remoteVideo = rStream.getVideoTracks()[0]
 					if (this.vPlaceholder) {
 						this.vPlaceholder.innerText =
 							'Video has been paused. Click anywhere to resume.'
@@ -143,7 +145,7 @@ export default class CallWindow {
 					} // just in case
 					let enabled = false
 					this.checkRemoteVideoInterval = setInterval(() => {
-						const settings = rStream.getVideoTracks()[0]?.getSettings()
+						const settings = this.remoteVideo?.getSettings()
 						const isDummyVideoTrack =
 							!!settings && (settings.width === 2 || settings.frameRate === 0)
 						const shouldBeEnabled = !isDummyVideoTrack
@@ -317,5 +319,11 @@ export default class CallWindow {
 		}
 		sessionStorage.removeItem(SS_START_TS_KEY)
 		this.localStreams = []
+	}
+
+	changeVideoFeed({ streamId, enabled, }: { streamId: string, enabled: boolean}) {
+		if (this.remoteVideo.id === streamId) {
+			this.remoteVideo.enabled = enabled
+		}
 	}
 }
