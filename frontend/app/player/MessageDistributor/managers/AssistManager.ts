@@ -205,7 +205,9 @@ export default class AssistManager {
         }
       })
       socket.on('videofeed', ({ streamId, enabled }) => {
-        this.videoStreams[streamId].enabled = enabled
+        if (this.videoStreams[streamId]) {
+          this.videoStreams[streamId].enabled = enabled
+        }
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
