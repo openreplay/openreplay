@@ -249,7 +249,7 @@ export default class Assist {
       updateCallerNames()
     })
     socket.on('videofeed', ({ streamId, enabled, }) => {
-      callUI?.changeVideoFeed({ streamId, enabled, })
+      callUI?.toggleVideoStream({ streamId, enabled, })
     })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
@@ -383,7 +383,7 @@ export default class Assist {
         // UI
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
-          callUI.setVideoCallback(updateVideoFeed)
+          callUI.setVideoToggleCallback(updateVideoFeed)
         }
         callUI.showControls(initiateCallEnd)
 
