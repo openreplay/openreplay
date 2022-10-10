@@ -16,6 +16,7 @@ func (mi *Saver) InsertMessage(msg messages.Message) error {
 		}
 		return nil
 	case *messages.IssueEvent:
+		log.Printf("new issue event: %+v", m)
 		session, err := mi.pg.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
