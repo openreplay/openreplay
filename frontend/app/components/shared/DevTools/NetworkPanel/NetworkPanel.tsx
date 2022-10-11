@@ -3,7 +3,7 @@ import cn from 'classnames';
 // import { connectPlayer } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
 import { getRE } from 'App/utils';
-import { TYPES } from 'Types/session/resource';
+import Resource, { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
 import { formatMs } from 'App/date';
 
@@ -202,7 +202,8 @@ function NetworkPanel(props: Props) {
   const filterRE = getRE(filter, 'i');
   let filtered = resources;
   fetchList.forEach(
-    (fetchCall: any) => filtered = filtered.filter((networkCall: any) => networkCall.url !== fetchCall.url)
+    (fetchCall: any) =>
+      (filtered = filtered.filter((networkCall: any) => networkCall.url !== fetchCall.url))
   );
   filtered = filtered.concat(fetchList);
   filtered = filtered.sort((a: any, b: any) => {
@@ -232,7 +233,9 @@ function NetworkPanel(props: Props) {
   }
 
   const onRowClick = (row: any) => {
-    showModal(<FetchDetailsModal resource={row} fetchPresented={fetchPresented} />, { right: true });
+    showModal(<FetchDetailsModal resource={row} fetchPresented={fetchPresented} />, {
+      right: true,
+    });
   };
 
   return (
@@ -315,9 +318,9 @@ function NetworkPanel(props: Props) {
               rows={filtered}
               referenceLines={referenceLines}
               renderPopup
-              // navigation
               onRowClick={onRowClick}
               additionalHeight={additionalHeight}
+              onJump={jump}
               // activeIndex={lastIndex}
             >
               {[
@@ -344,7 +347,7 @@ function NetworkPanel(props: Props) {
                 },
                 {
                   label: 'Size',
-                  width: 60,
+                  width: 80,
                   render: renderSize,
                 },
                 {
@@ -364,7 +367,7 @@ function NetworkPanel(props: Props) {
 export default connectPlayer((state: any) => ({
   location: state.location,
   resources: state.resourceList,
-  fetchList: state.fetchList,
+  fetchList: state.fetchList.map((i: any) => Resource({ ...i.toJS(), type: TYPES.XHR })),
   domContentLoadedTime: state.domContentLoadedTime,
   loadTime: state.loadTime,
   // time: state.time,

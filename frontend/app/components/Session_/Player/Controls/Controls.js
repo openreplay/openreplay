@@ -407,19 +407,6 @@ export default class Controls extends React.Component {
                   containerClassName="mx-2"
                 />
               )}
-              {showFetch && (
-                <ControlButton
-                  disabled={disabled && !inspectorMode}
-                  onClick={() => toggleBottomTools(FETCH)}
-                  active={bottomBlock === FETCH && !inspectorMode}
-                  hasErrors={fetchRedCount > 0}
-                  count={fetchCount}
-                  label="FETCH"
-                  noIcon
-                  labelClassName="!text-base font-semibold"
-                  containerClassName="mx-2"
-                />
-              )}
               {!live && showGraphql && (
                 <ControlButton
                   disabled={disabled && !inspectorMode}

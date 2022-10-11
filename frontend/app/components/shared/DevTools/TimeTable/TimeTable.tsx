@@ -2,7 +2,7 @@ import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
 import { Duration } from "luxon";
-import { NoContent, IconButton, Button } from 'UI';
+import { NoContent, Icon, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';
@@ -68,6 +68,7 @@ type Props = {
   additionalHeight?: number
   hoverable?: boolean
   onRowClick?: (row: any, index: number) => void
+  onJump?: (time: any) => void
 };
 
 type TimeLineInfo = {
@@ -160,6 +161,13 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     }
   };
 
+  onJump = (e: any, index: any) => {
+    e.stopPropagation();
+    if (this.props.onJump) {
+      this.props.onJump(this.props.rows[index].time)
+    }
+  }
+
   renderRow = ({ index, key, style: rowStyle }: any) => {
     const { activeIndex } = this.props;
     const { children: columns, rows, renderPopup, hoverable, onRowClick } = this.props;
@@ -169,7 +177,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       <div
         style={rowStyle}
         key={key}
-        className={cn('border-b border-color-gray-light-shade', stl.row, {
+        className={cn('border-b border-color-gray-light-shade group items-center', stl.row, {
           [stl.hoverable]: hoverable,
           'error color-red': !!row.isRed && row.isRed(),
           'cursor-pointer': typeof onRowClick === 'function',
@@ -186,6 +194,10 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         ))}
         <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
           <BarRow resource={row} timestart={timestart} timewidth={timewidth} popup={renderPopup} />
+        </div>
+        <div className="invisible group-hover:visible rounded-lg bg-active-blue text-xs flex items-center px-2 py-1 color-teal" onClick={(e) => this.onJump(e, index)}>
+          <Icon name="caret-right-fill" size="12" color="teal" />
+          <span>JUMP</span>
         </div>
       </div>
     );

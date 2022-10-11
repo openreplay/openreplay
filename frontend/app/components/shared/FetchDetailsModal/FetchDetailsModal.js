@@ -5,6 +5,7 @@ import stl from './fetchDetails.module.css';
 import Headers from './components/Headers';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { TYPES } from 'Types/session/resource';
+import { formatBytes } from 'App/utils';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -129,7 +130,14 @@ export default class FetchDetailsModal extends React.PureComponent {
   }
 
   render() {
-    const { resource, fetchPresented, nextClick, prevClick, first = false, last = false } = this.props;
+    const {
+      resource,
+      fetchPresented,
+      nextClick,
+      prevClick,
+      first = false,
+      last = false,
+    } = this.props;
     const { method, url, duration } = resource;
     const { activeTab, tabs } = this.state;
     const _duration = parseInt(duration);
@@ -150,6 +158,15 @@ export default class FetchDetailsModal extends React.PureComponent {
             {resource.type}
           </div>
         </div>
+
+        {!!resource.decodedBodySize && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Size</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+              {formatBytes(resource.decodedBodySize)}
+            </div>
+          </div>
+        )}
 
         {method && (
           <div className="flex items-center py-1">
@@ -181,7 +198,7 @@ export default class FetchDetailsModal extends React.PureComponent {
           </div>
         )}
 
-        {resource.type === TYPES.XHR && (
+        {resource.type === TYPES.XHR && !fetchPresented && (
           <div className="bg-active-blue rounded p-3 mt-4">
             <div className="mb-2 flex items-center">
               <Icon name="lightbulb" size="18" />
@@ -207,7 +224,7 @@ export default class FetchDetailsModal extends React.PureComponent {
         )}
 
         <div className="mt-6">
-          {resource.type === TYPES.FETCH && (
+          {resource.type === TYPES.XHR && fetchPresented && (
             <div>
               <Tabs tabs={tabs} active={activeTab} onClick={this.onTabClick} border={true} />
               <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
