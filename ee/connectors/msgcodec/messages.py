@@ -752,6 +752,16 @@ class SessionSearch(Message):
         self.partition = partition
 
 
+class ExceptionWithMeta(Message):
+    __id__ = 78
+
+    def __init__(self, name, message, payload, metadata):
+        self.name = name
+        self.message = message
+        self.payload = payload
+        self.metadata = metadata
+
+
 class IOSBatchMeta(Message):
     __id__ = 107
 

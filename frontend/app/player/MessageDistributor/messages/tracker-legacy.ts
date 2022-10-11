@@ -62,6 +62,7 @@ export const TP_MAP = {
   76: "adopted_ss_add_owner",
   77: "adopted_ss_remove_owner",
   79: "zustand",
+  78: "exception_with_meta",
   90: "ios_session_start",
   93: "ios_custom_event",
   96: "ios_screen_changes",

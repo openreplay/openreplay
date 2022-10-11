@@ -719,3 +719,18 @@ export function Zustand(
   ]
 }
 
+export function ExceptionWithMeta(
+  name: string,
+  message: string,
+  payload: string,
+  metadata: string,
+): Messages.ExceptionWithMeta {
+  return [
+    Messages.Type.ExceptionWithMeta,
+    name,
+    message,
+    payload,
+    metadata,
+  ]
+}
+

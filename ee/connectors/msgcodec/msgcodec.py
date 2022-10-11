@@ -668,6 +668,14 @@ class MessageCodec(Codec):
                 partition=self.read_uint(reader)
             )
 
+        if message_id == 78:
+            return ExceptionWithMeta(
+                name=self.read_string(reader),
+                message=self.read_string(reader),
+                payload=self.read_string(reader),
+                metadata=self.read_string(reader)
+            )
+
         if message_id == 107:
             return IOSBatchMeta(
                 timestamp=self.read_uint(reader),

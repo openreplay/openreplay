@@ -234,7 +234,7 @@ message 36, 'CustomEvent', :tracker => false, :replayer => false do
   string 'Name'
   string 'Payload'
 end
-# depricated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner 
+# depricated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
@@ -471,6 +471,13 @@ end
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
+end
+
+message 78, 'ExceptionWithMeta', :replayer => false do
+  string 'Name'
+  string 'Message'
+  string 'Payload'
+  string 'Metadata'
 end
 
 # 80 -- 90 reserved

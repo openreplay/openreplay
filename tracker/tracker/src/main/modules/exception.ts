@@ -1,6 +1,6 @@
 import type App from '../app/index.js'
 import type Message from '../app/messages.gen.js'
-import { JSException } from '../app/messages.gen.js'
+import { JSException, ExceptionWithMeta } from '../app/messages.gen.js'
 import ErrorStackParser from 'error-stack-parser'
 
 export interface Options {
@@ -27,32 +27,41 @@ function getDefaultStack(e: ErrorEvent): Array<StackFrame> {
   ]
 }
 
-export function getExceptionMessage(error: Error, fallbackStack: Array<StackFrame>): Message {
+export function getExceptionMessage(
+  error: Error,
+  fallbackStack: Array<StackFrame>,
+  metadata?: Record<string, any>,
+): Message {
   let stack = fallbackStack
   try {
     stack = ErrorStackParser.parse(error)
   } catch (e) {}
-  return JSException(error.name, error.message, JSON.stringify(stack))
+  const metaPresent = !!metadata
+  const method = metaPresent ? ExceptionWithMeta : JSException
+  return method(error.name, error.message, JSON.stringify(stack), JSON.stringify(metadata))
 }
 
 export function getExceptionMessageFromEvent(
   e: ErrorEvent | PromiseRejectionEvent,
   context: typeof globalThis = window,
+  metadata?: Record<string, any>,
 ): Message | null {
   if (e instanceof ErrorEvent) {
     if (e.error instanceof Error) {
-      return getExceptionMessage(e.error, getDefaultStack(e))
+      return getExceptionMessage(e.error, getDefaultStack(e), metadata)
     } else {
       let [name, message] = e.message.split(':')
       if (!message) {
         name = 'Error'
         message = e.message
       }
-      return JSException(name, message, JSON.stringify(getDefaultStack(e)))
+      const metaPresent = !!metadata
+      const method = metaPresent ? ExceptionWithMeta : JSException
+      return method(name, message, JSON.stringify(getDefaultStack(e)), JSON.stringify(metadata))
     }
   } else if ('PromiseRejectionEvent' in context && e instanceof context.PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
-      return getExceptionMessage(e.reason, [])
+      return getExceptionMessage(e.reason, [], metadata)
     } else {
       let message: string
       try {
@@ -60,7 +69,9 @@ export function getExceptionMessageFromEvent(
       } catch (_) {
         message = String(e.reason)
       }
-      return JSException('Unhandled Promise Rejection', message, '[]')
+      const metaPresent = !!metadata
+      const method = metaPresent ? ExceptionWithMeta : JSException
+      return method('Unhandled Promise Rejection', message, '[]', JSON.stringify(metadata))
     }
   }
   return null

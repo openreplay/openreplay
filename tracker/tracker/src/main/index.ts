@@ -45,6 +45,11 @@ export type Options = Partial<
   __DISABLE_SECURE_MODE?: boolean
 }
 
+interface ErrorExtra {
+  tags: string[]
+  meta: Record<string, string | number>
+}
+
 const DOCS_SETUP = '/installation/setup-or'
 
 function processOptions(obj: any): obj is Options {
@@ -271,17 +276,22 @@ export default class API {
     }
   }
 
-  handleError = (e: Error | ErrorEvent | PromiseRejectionEvent) => {
+  handleError = (
+    e: Error | ErrorEvent | PromiseRejectionEvent,
+    tags?: string[],
+    metadata?: Record<string, any>,
+  ) => {
     if (this.app === null) {
       return
     }
     if (e instanceof Error) {
-      this.app.send(getExceptionMessage(e, []))
+      const msg = getExceptionMessage(e, [], metadata)
+      this.app.send(msg)
     } else if (
       e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
-      const msg = getExceptionMessageFromEvent(e)
+      const msg = getExceptionMessageFromEvent(e, undefined, metadata)
       if (msg != null) {
         this.app.send(msg)
       }
