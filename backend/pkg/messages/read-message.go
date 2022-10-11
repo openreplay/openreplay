@@ -1291,24 +1291,6 @@ func DecodeAdoptedSSRemoveOwner(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeExceptionWithMeta(reader io.Reader) (Message, error) {
-	var err error = nil
-	msg := &ExceptionWithMeta{}
-	if msg.Name, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Message, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Payload, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Metadata, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeZustand(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &Zustand{}
@@ -1328,6 +1310,24 @@ func DecodeSessionSearch(reader io.Reader) (Message, error) {
 		return nil, err
 	}
 	if msg.Partition, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeExceptionWithMeta(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &ExceptionWithMeta{}
+	if msg.Name, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Message, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Payload, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Metadata, err = ReadString(reader); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1963,14 +1963,14 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 	case 77:
 		return DecodeAdoptedSSRemoveOwner(reader)
 
-	case 78:
-		return DecodeExceptionWithMeta(reader)
-
 	case 79:
 		return DecodeZustand(reader)
 
 	case 127:
 		return DecodeSessionSearch(reader)
+
+	case 78:
+		return DecodeExceptionWithMeta(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)

@@ -149,7 +149,7 @@ class MessageCodec(Codec):
 
         if message_id == 7:
             return CreateDocument(
-
+                
             )
 
         if message_id == 8:
@@ -655,14 +655,6 @@ class MessageCodec(Codec):
                 id=self.read_uint(reader)
             )
 
-        if message_id == 78:
-            return ExceptionWithMeta(
-                name=self.read_string(reader),
-                message=self.read_string(reader),
-                payload=self.read_string(reader),
-                metadata=self.read_string(reader)
-            )
-
         if message_id == 79:
             return Zustand(
                 mutation=self.read_string(reader),
@@ -673,6 +665,14 @@ class MessageCodec(Codec):
             return SessionSearch(
                 timestamp=self.read_uint(reader),
                 partition=self.read_uint(reader)
+            )
+
+        if message_id == 78:
+            return ExceptionWithMeta(
+                name=self.read_string(reader),
+                message=self.read_string(reader),
+                payload=self.read_string(reader),
+                metadata=self.read_string(reader)
             )
 
         if message_id == 107:
@@ -846,3 +846,4 @@ class MessageCodec(Codec):
                 context=self.read_string(reader),
                 payload=self.read_string(reader)
             )
+
