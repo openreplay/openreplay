@@ -31,7 +31,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
                 <input
                     ref={ref}
                     type={type}
-                    style={{ height: `${height}px`, width: width? `${width}px` : 'unset' }}
+                    style={{ height: `${height}px`, width: width? `${width}px` : '' }}
                     className={cn('p-2 border border-gray-light bg-white w-full rounded', className, { 'pl-10': icon })}
                     {...rest}
                 />
