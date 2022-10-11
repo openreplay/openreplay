@@ -10,10 +10,11 @@ interface Props {
     type?: string;
     rows?: number;
     height?: number;
+    width?: number;
     [x: string]: any;
 }
 const Input = React.forwardRef((props: Props, ref: any) => {
-    const { height = 36, className = '', leadingButton = '', wrapperClassName = '', icon = '', type = 'text', rows = 4, ...rest } = props;
+    const { height = 36, width = 0, className = '', leadingButton = '', wrapperClassName = '', icon = '', type = 'text', rows = 4, ...rest } = props;
     return (
         <div className={cn({ relative: icon || leadingButton }, wrapperClassName)}>
             {icon && <Icon name={icon} className="absolute top-0 bottom-0 my-auto ml-4" size="14" />}
@@ -30,7 +31,7 @@ const Input = React.forwardRef((props: Props, ref: any) => {
                 <input
                     ref={ref}
                     type={type}
-                    style={{ height: `${height}px` }}
+                    style={{ height: `${height}px`, width: width? `${width}px` : 'unset' }}
                     className={cn('p-2 border border-gray-light bg-white w-full rounded', className, { 'pl-10': icon })}
                     {...rest}
                 />

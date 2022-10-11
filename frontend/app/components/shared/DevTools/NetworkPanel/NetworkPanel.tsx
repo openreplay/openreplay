@@ -40,6 +40,12 @@ const TABS: any = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER].map((tab) => ({
 const DOM_LOADED_TIME_COLOR = 'teal';
 const LOAD_TIME_COLOR = 'red';
 
+function compare(a: any, b: any, key: string) {
+  if (a[key] > b[key]) return 1;
+  if (a[key] < b[key]) return -1;
+  return 0;
+}
+
 export function renderType(r) {
   return (
     <Popup style={{ width: '100%' }} content={<div>{r.type}</div>}>
@@ -153,13 +159,11 @@ export function renderDuration(r: any) {
 interface Props {
   location: any;
   resources: any;
+  fetchList: any;
   domContentLoadedTime: any;
   loadTime: any;
   playing: boolean;
   domBuildingTime: any;
-  fetchPresented: boolean;
-  listNow: any;
-
   currentIndex: any;
   time: any;
 }
@@ -172,16 +176,17 @@ function NetworkPanel(props: Props) {
     loadTime,
     playing,
     domBuildingTime,
-    fetchPresented,
-    listNow,
+    fetchList,
   } = props;
   const { showModal, hideModal } = useModal();
   const [activeTab, setActiveTab] = useState(ALL);
+  const [sortBy, setSortBy] = useState('time');
   const [filter, setFilter] = useState('');
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const onTabClick = (activeTab: any) => setActiveTab(activeTab);
   const onFilterChange = ({ target: { value } }: any) => setFilter(value);
   const additionalHeight = 0;
+  const fetchPresented = fetchList.length > 0;
 
   const resourcesSize = resources.reduce(
     (sum: any, { decodedBodySize }: any) => sum + (decodedBodySize || 0),
@@ -195,11 +200,23 @@ function NetworkPanel(props: Props) {
   );
 
   const filterRE = getRE(filter, 'i');
-  let filtered = resources.filter(
-    ({ type, name }: any) =>
-      filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab])
+  let filtered = resources;
+  fetchList.forEach(
+    (fetchCall: any) => filtered = filtered.filter((networkCall: any) => networkCall.url !== fetchCall.url)
   );
-  const lastIndex = currentIndex || filtered.filter((item: any) => item.time <= time).length - 1;
+  filtered = filtered.concat(fetchList);
+  filtered = filtered.sort((a: any, b: any) => {
+    return compare(a, b, sortBy);
+  });
+
+  filtered = filtered.filter(
+    ({ type, name, status }: any) =>
+      (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
+      (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
+      (showOnlyErrors ? parseInt(status) >= 400 : true)
+  );
+
+  // const lastIndex = currentIndex || filtered.filter((item: any) => item.time <= time).length - 1;
   const referenceLines = [];
   if (domContentLoadedTime != null) {
     referenceLines.push({
@@ -215,8 +232,8 @@ function NetworkPanel(props: Props) {
   }
 
   const onRowClick = (row: any) => {
-    showModal(<FetchDetailsModal resource={row}  />, { right: true })
-  }
+    showModal(<FetchDetailsModal resource={row} fetchPresented={fetchPresented} />, { right: true });
+  };
 
   return (
     <React.Fragment>
@@ -234,18 +251,24 @@ function NetworkPanel(props: Props) {
           </div>
           <Input
             className="input-small"
-            placeholder="Filter by name"
+            placeholder="Filter by name, type or value"
             icon="search"
             iconPosition="left"
             name="filter"
             onChange={onFilterChange}
             height={28}
+            width={230}
           />
         </BottomBlock.Header>
         <BottomBlock.Content>
           <div className="flex items-center justify-between px-4">
             <div>
-              <Toggler checked={showOnlyErrors} name="test" onChange={() => setShowOnlyErrors(!showOnlyErrors)} label="4xx-5xx Only" />
+              <Toggler
+                checked={showOnlyErrors}
+                name="test"
+                onChange={() => setShowOnlyErrors(!showOnlyErrors)}
+                label="4xx-5xx Only"
+              />
             </div>
             <InfoLine>
               <InfoLine.Point label={filtered.length} value=" requests" />
@@ -295,7 +318,7 @@ function NetworkPanel(props: Props) {
               // navigation
               onRowClick={onRowClick}
               additionalHeight={additionalHeight}
-              activeIndex={lastIndex}
+              // activeIndex={lastIndex}
             >
               {[
                 // {
@@ -341,11 +364,10 @@ function NetworkPanel(props: Props) {
 export default connectPlayer((state: any) => ({
   location: state.location,
   resources: state.resourceList,
+  fetchList: state.fetchList,
   domContentLoadedTime: state.domContentLoadedTime,
   loadTime: state.loadTime,
   // time: state.time,
   playing: state.playing,
   domBuildingTime: state.domBuildingTime,
-  fetchPresented: state.fetchList.length > 0,
-  listNow: state.resourceListNow,
 }))(NetworkPanel);

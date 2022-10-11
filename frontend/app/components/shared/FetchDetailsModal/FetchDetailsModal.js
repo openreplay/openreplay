@@ -1,9 +1,10 @@
 import React from 'react';
-import { JSONTree, NoContent, Button, Tabs } from 'UI';
+import { JSONTree, NoContent, Button, Tabs, Icon } from 'UI';
 import cn from 'classnames';
 import stl from './fetchDetails.module.css';
 import Headers from './components/Headers';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { TYPES } from 'Types/session/resource';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -128,11 +129,10 @@ export default class FetchDetailsModal extends React.PureComponent {
   }
 
   render() {
-    const { resource, nextClick, prevClick, first = false, last = false } = this.props;
+    const { resource, fetchPresented, nextClick, prevClick, first = false, last = false } = this.props;
     const { method, url, duration } = resource;
     const { activeTab, tabs } = this.state;
     const _duration = parseInt(duration);
-    console.log('_duration', resource);
 
     return (
       <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
@@ -164,7 +164,9 @@ export default class FetchDetailsModal extends React.PureComponent {
           <div className="flex items-center py-1">
             <div className="font-medium">Status</div>
             <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center">
-              {resource.status === '200' && <div className="w-4 h-4 bg-green rounded-full mr-2"></div>}
+              {resource.status === '200' && (
+                <div className="w-4 h-4 bg-green rounded-full mr-2"></div>
+              )}
               {resource.status}
             </div>
           </div>
@@ -179,29 +181,40 @@ export default class FetchDetailsModal extends React.PureComponent {
           </div>
         )}
 
-        {/* <div className={cn(stl.url, 'color-gray-darkest')}>{url}</div> */}
-        <div className="flex items-start mt-4">
-          {/* {method && (
-            <div className="w-4/12">
-              <div className="font-medium mb-2">Method</div>
-              <div>{method}</div>
+        {resource.type === TYPES.XHR && (
+          <div className="bg-active-blue rounded p-3 mt-4">
+            <div className="mb-2 flex items-center">
+              <Icon name="lightbulb" size="18" />
+              <span className="ml-2 font-medium">Get more out of network requests</span>
             </div>
-          )}
-          {!!_duration && (
-            <div className="w-4/12">
-              <div className="font-medium mb-2">Duration</div>
-              <div>{_duration } ms</div>
-            </div>
-          )} */}
-        </div>
+            <ul className="list-disc ml-5">
+              <li>
+                Integrate{' '}
+                <a href="" className="link">
+                  Fetch plugin
+                </a>{' '}
+                to capture fetch payloads.
+              </li>
+              <li>
+                Find a detailed{' '}
+                <a href="" className="link">
+                  video tutorial
+                </a>{' '}
+                to understand practical example of how to use fetch plugin.
+              </li>
+            </ul>
+          </div>
+        )}
 
         <div className="mt-6">
-          <div>
-            <Tabs tabs={tabs} active={activeTab} onClick={this.onTabClick} border={true} />
-            <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
-              {this.renderActiveTab(activeTab)}
+          {resource.type === TYPES.FETCH && (
+            <div>
+              <Tabs tabs={tabs} active={activeTab} onClick={this.onTabClick} border={true} />
+              <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
+                {this.renderActiveTab(activeTab)}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
             <Button variant="outline" onClick={prevClick} disabled={first}>
