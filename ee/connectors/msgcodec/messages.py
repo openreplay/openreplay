@@ -99,7 +99,7 @@ class CreateDocument(Message):
     __id__ = 7
 
     def __init__(self, ):
-
+        
 
 
 class CreateElementNode(Message):
@@ -735,16 +735,6 @@ class AdoptedSSRemoveOwner(Message):
         self.id = id
 
 
-class ExceptionWithMeta(Message):
-    __id__ = 78
-
-    def __init__(self, name, message, payload, metadata):
-        self.name = name
-        self.message = message
-        self.payload = payload
-        self.metadata = metadata
-
-
 class Zustand(Message):
     __id__ = 79
 
@@ -759,6 +749,16 @@ class SessionSearch(Message):
     def __init__(self, timestamp, partition):
         self.timestamp = timestamp
         self.partition = partition
+
+
+class ExceptionWithMeta(Message):
+    __id__ = 78
+
+    def __init__(self, name, message, payload, metadata):
+        self.name = name
+        self.message = message
+        self.payload = payload
+        self.metadata = metadata
 
 
 class IOSBatchMeta(Message):
@@ -969,3 +969,5 @@ class IOSIssueEvent(Message):
         self.context_string = context_string
         self.context = context
         self.payload = payload
+
+

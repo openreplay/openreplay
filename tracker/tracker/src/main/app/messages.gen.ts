@@ -78,11 +78,11 @@ export function SetViewportScroll(
 }
 
 export function CreateDocument(
-
+  
 ): Messages.CreateDocument {
   return [
     Messages.Type.CreateDocument,
-
+    
   ]
 }
 
@@ -708,6 +708,17 @@ export function AdoptedSSRemoveOwner(
   ]
 }
 
+export function Zustand(
+  mutation: string,
+  state: string,
+): Messages.Zustand {
+  return [
+    Messages.Type.Zustand,
+    mutation,
+    state,
+  ]
+}
+
 export function ExceptionWithMeta(
   name: string,
   message: string,
@@ -723,13 +734,3 @@ export function ExceptionWithMeta(
   ]
 }
 
-export function Zustand(
-  mutation: string,
-  state: string,
-): Messages.Zustand {
-  return [
-    Messages.Type.Zustand,
-    mutation,
-    state,
-  ]
-}

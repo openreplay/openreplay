@@ -45,7 +45,7 @@ type TrSetViewportScroll = [
 
 type TrCreateDocument = [
   type: 7,
-
+  
 ]
 
 type TrCreateElementNode = [
@@ -383,6 +383,12 @@ type TrAdoptedSSRemoveOwner = [
   id: number,
 ]
 
+type TrZustand = [
+  type: 79,
+  mutation: string,
+  state: string,
+]
+
 type TrExceptionWithMeta = [
   type: 78,
   name: string,
@@ -391,25 +397,19 @@ type TrExceptionWithMeta = [
   metadata: string,
 ]
 
-type TrZustand = [
-  type: 79,
-  mutation: string,
-  state: string,
-]
 
-
-export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSException | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrExceptionWithMeta | TrZustand
+export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSException | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrExceptionWithMeta
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
-
+    
     case 0: {
       return {
         tp: "timestamp",
         timestamp: tMsg[1],
       }
     }
-
+    
     case 4: {
       return {
         tp: "set_page_location",
@@ -418,7 +418,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         navigationStart: tMsg[3],
       }
     }
-
+    
     case 5: {
       return {
         tp: "set_viewport_size",
@@ -426,7 +426,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         height: tMsg[2],
       }
     }
-
+    
     case 6: {
       return {
         tp: "set_viewport_scroll",
@@ -434,14 +434,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         y: tMsg[2],
       }
     }
-
+    
     case 7: {
       return {
         tp: "create_document",
-
+        
       }
     }
-
+    
     case 8: {
       return {
         tp: "create_element_node",
@@ -452,7 +452,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         svg: tMsg[5],
       }
     }
-
+    
     case 9: {
       return {
         tp: "create_text_node",
@@ -461,7 +461,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
       }
     }
-
+    
     case 10: {
       return {
         tp: "move_node",
@@ -470,14 +470,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
       }
     }
-
+    
     case 11: {
       return {
         tp: "remove_node",
         id: tMsg[1],
       }
     }
-
+    
     case 12: {
       return {
         tp: "set_node_attribute",
@@ -486,7 +486,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[3],
       }
     }
-
+    
     case 13: {
       return {
         tp: "remove_node_attribute",
@@ -494,7 +494,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         name: tMsg[2],
       }
     }
-
+    
     case 14: {
       return {
         tp: "set_node_data",
@@ -502,7 +502,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         data: tMsg[2],
       }
     }
-
+    
     case 16: {
       return {
         tp: "set_node_scroll",
@@ -511,7 +511,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         y: tMsg[3],
       }
     }
-
+    
     case 18: {
       return {
         tp: "set_input_value",
@@ -520,7 +520,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         mask: tMsg[3],
       }
     }
-
+    
     case 19: {
       return {
         tp: "set_input_checked",
@@ -528,7 +528,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         checked: tMsg[2],
       }
     }
-
+    
     case 20: {
       return {
         tp: "mouse_move",
@@ -536,7 +536,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         y: tMsg[2],
       }
     }
-
+    
     case 22: {
       return {
         tp: "console_log",
@@ -544,7 +544,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 37: {
       return {
         tp: "css_insert_rule",
@@ -553,7 +553,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[3],
       }
     }
-
+    
     case 38: {
       return {
         tp: "css_delete_rule",
@@ -561,7 +561,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[2],
       }
     }
-
+    
     case 39: {
       return {
         tp: "fetch",
@@ -574,7 +574,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[7],
       }
     }
-
+    
     case 40: {
       return {
         tp: "profiler",
@@ -584,7 +584,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         result: tMsg[4],
       }
     }
-
+    
     case 41: {
       return {
         tp: "o_table",
@@ -592,7 +592,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         value: tMsg[2],
       }
     }
-
+    
     case 44: {
       return {
         tp: "redux",
@@ -601,7 +601,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[3],
       }
     }
-
+    
     case 45: {
       return {
         tp: "vuex",
@@ -609,7 +609,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         state: tMsg[2],
       }
     }
-
+    
     case 46: {
       return {
         tp: "mob_x",
@@ -617,7 +617,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         payload: tMsg[2],
       }
     }
-
+    
     case 47: {
       return {
         tp: "ng_rx",
@@ -626,7 +626,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         duration: tMsg[3],
       }
     }
-
+    
     case 48: {
       return {
         tp: "graph_ql",
@@ -636,7 +636,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         response: tMsg[4],
       }
     }
-
+    
     case 49: {
       return {
         tp: "performance_track",
@@ -646,7 +646,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         usedJSHeapSize: tMsg[4],
       }
     }
-
+    
     case 54: {
       return {
         tp: "connection_information",
@@ -654,14 +654,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         type: tMsg[2],
       }
     }
-
+    
     case 55: {
       return {
         tp: "set_page_visibility",
         hidden: tMsg[1],
       }
     }
-
+    
     case 59: {
       return {
         tp: "long_task",
@@ -674,7 +674,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         containerName: tMsg[7],
       }
     }
-
+    
     case 60: {
       return {
         tp: "set_node_attribute_url_based",
@@ -684,7 +684,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[4],
       }
     }
-
+    
     case 61: {
       return {
         tp: "set_css_data_url_based",
@@ -693,7 +693,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[3],
       }
     }
-
+    
     case 67: {
       return {
         tp: "css_insert_rule_url_based",
@@ -703,7 +703,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[4],
       }
     }
-
+    
     case 69: {
       return {
         tp: "mouse_click",
@@ -713,7 +713,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         selector: tMsg[4],
       }
     }
-
+    
     case 70: {
       return {
         tp: "create_i_frame_document",
@@ -721,7 +721,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         id: tMsg[2],
       }
     }
-
+    
     case 71: {
       return {
         tp: "adopted_ss_replace_url_based",
@@ -730,7 +730,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[3],
       }
     }
-
+    
     case 73: {
       return {
         tp: "adopted_ss_insert_rule_url_based",
@@ -740,7 +740,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         baseURL: tMsg[4],
       }
     }
-
+    
     case 75: {
       return {
         tp: "adopted_ss_delete_rule",
@@ -748,7 +748,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         index: tMsg[2],
       }
     }
-
+    
     case 76: {
       return {
         tp: "adopted_ss_add_owner",
@@ -756,7 +756,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         id: tMsg[2],
       }
     }
-
+    
     case 77: {
       return {
         tp: "adopted_ss_remove_owner",
@@ -764,7 +764,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         id: tMsg[2],
       }
     }
-
+    
     case 79: {
       return {
         tp: "zustand",
@@ -772,7 +772,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         state: tMsg[2],
       }
     }
-
+    
     default:
       return null
   }
