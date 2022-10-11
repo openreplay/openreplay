@@ -15,6 +15,7 @@ import { Duration } from 'luxon';
 import { connectPlayer, jump, pause } from 'Player';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
+import { sort } from 'App/duck/sessions';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -33,7 +34,7 @@ const TAB_TO_TYPE_MAP: any = {
   [OTHER]: TYPES.OTHER,
 };
 const TABS: any = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER].map((tab) => ({
-  text: tab,
+  text: tab === 'xhr' ? 'XHR (Fetch)' : tab,
   key: tab,
 }));
 
@@ -46,7 +47,7 @@ function compare(a: any, b: any, key: string) {
   return 0;
 }
 
-export function renderType(r) {
+export function renderType(r: any) {
   return (
     <Popup style={{ width: '100%' }} content={<div>{r.type}</div>}>
       <div>{r.type}</div>
@@ -181,6 +182,7 @@ function NetworkPanel(props: Props) {
   const { showModal, hideModal } = useModal();
   const [activeTab, setActiveTab] = useState(ALL);
   const [sortBy, setSortBy] = useState('time');
+  const [sortAscending, setSortAscending] = useState(true);
   const [filter, setFilter] = useState('');
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const onTabClick = (activeTab: any) => setActiveTab(activeTab);
@@ -200,22 +202,29 @@ function NetworkPanel(props: Props) {
   );
 
   const filterRE = getRE(filter, 'i');
-  let filtered = resources;
-  fetchList.forEach(
-    (fetchCall: any) =>
-      (filtered = filtered.filter((networkCall: any) => networkCall.url !== fetchCall.url))
-  );
-  filtered = filtered.concat(fetchList);
-  filtered = filtered.sort((a: any, b: any) => {
-    return compare(a, b, sortBy);
-  });
+  let filtered = React.useMemo(() => {
+    let list = resources;
+    fetchList.forEach(
+      (fetchCall: any) =>
+        (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
+    );
+    list = list.concat(fetchList);
+    list = list.sort((a: any, b: any) => {
+      return compare(a, b, sortBy);
+    });
 
-  filtered = filtered.filter(
-    ({ type, name, status }: any) =>
-      (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
-      (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
-      (showOnlyErrors ? parseInt(status) >= 400 : true)
-  );
+    if (!sortAscending) {
+      list = list.reverse();
+    }
+
+    list = list.filter(
+      ({ type, name, status }: any) =>
+        (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
+        (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
+        (showOnlyErrors ? parseInt(status) >= 400 : true)
+    );
+    return list;
+  }, [filter, sortBy, sortAscending, showOnlyErrors, activeTab]);
 
   // const lastIndex = currentIndex || filtered.filter((item: any) => item.time <= time).length - 1;
   const referenceLines = [];
@@ -240,10 +249,10 @@ function NetworkPanel(props: Props) {
 
   const handleSort = (sortKey: string) => {
     if (sortKey === sortBy) {
-      setSortBy('time');
-    } else {
-      setSortBy(sortKey);
+      setSortAscending(!sortAscending);
+      // setSortBy('time');
     }
+    setSortBy(sortKey);
   };
 
   return (
@@ -330,6 +339,7 @@ function NetworkPanel(props: Props) {
               additionalHeight={additionalHeight}
               onJump={jump}
               sortBy={sortBy}
+              sortAscending={sortAscending}
               // activeIndex={lastIndex}
             >
               {[

@@ -71,7 +71,8 @@ type Props = {
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
   onJump?: (time: any) => void;
-  sortBy?: string
+  sortBy?: string;
+  sortAscending?: boolean;
 };
 
 type TimeLineInfo = {
@@ -262,10 +263,10 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   onColumnClick = (dataKey: string, onClick: any) => {
     if (typeof onClick === 'function') {
       // this.scroller.current.scrollToRow(0);
-      onClick(dataKey)
+      onClick(dataKey);
       this.scroller.current.forceUpdateGrid();
     }
-  }
+  };
 
   render() {
     const {
@@ -277,6 +278,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       additionalHeight = 0,
       activeIndex,
       sortBy = '',
+      sortAscending = true,
     } = this.props;
     const { timewidth, timestart } = this.state;
 
@@ -324,14 +326,14 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width, dataKey, onClick = null }) => (
               <div
-                className={cn(stl.headerCell, 'flex items-center',  { 'cursor-pointer': typeof onClick === 'function' })}
+                className={cn(stl.headerCell, 'flex items-center select-none', {
+                  'cursor-pointer': typeof onClick === 'function',
+                })}
                 style={{ width: `${width}px` }}
                 onClick={() => this.onColumnClick(dataKey, onClick)}
               >
                 <span>{label}</span>
-                {!!sortBy && sortBy === dataKey && (
-                  <Icon name="caret-down-fill" className="ml-1" />
-                )}
+                {!!sortBy && sortBy === dataKey && <Icon name={ sortAscending ? "caret-down-fill" : "caret-up-fill" } className="ml-1" />}
               </div>
             ))}
           </div>
