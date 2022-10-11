@@ -67,6 +67,7 @@ $offset: 10px;
   align-items: center;
   overflow: hidden;
   padding: 0 2px;
+  white-space: nowrap;
 }
 .hoverable {
   transition: all 0.3s;

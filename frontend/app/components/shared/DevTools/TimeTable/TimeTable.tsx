@@ -9,6 +9,7 @@ import BarRow from './BarRow';
 import stl from './timeTable.module.css';
 
 import autoscrollStl from '../autoscroll.module.css'; //aaa
+import JumpButton from '../JumpButton';
 
 type Timed = {
   time: number;
@@ -187,8 +188,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     }
   };
 
-  onJump = (e: any, index: any) => {
-    e.stopPropagation();
+  onJump = (index: any) => {
     if (this.props.onJump) {
       this.props.onJump(this.props.rows[index].time);
     }
@@ -223,13 +223,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
           <BarRow resource={row} timestart={timestart} timewidth={timewidth} popup={renderPopup} />
         </div>
-        <div
-          className="invisible group-hover:visible rounded-lg bg-active-blue text-xs flex items-center px-2 py-1 color-teal"
-          onClick={(e) => this.onJump(e, index)}
-        >
-          <Icon name="caret-right-fill" size="12" color="teal" />
-          <span>JUMP</span>
-        </div>
+        <JumpButton onClick={() => this.onJump(index)} />
       </div>
     );
   };

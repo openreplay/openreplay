@@ -69,20 +69,20 @@ export default class StackEvents extends React.PureComponent {
       ({ key }) => key === ALL || stackEvents.some(({ source }) => key === source)
     );
 
-    const filteredStackEvents = stackEvents
-      //      .filter(({ data }) => data.includes(filter))
-      .filter(({ source }) => activeTab === ALL || activeTab === source);
+    const filteredStackEvents = stackEvents.filter(
+      ({ source }) => activeTab === ALL || activeTab === source
+    );
 
-    let lastIndex = -1;
-    // TODO: Need to do filtering in store, or preferably in a selector
-    filteredStackEvents.forEach((item, index) => {
-      if (
-        this.props.stackEventsNow.length > 0 &&
-        item.time <= this.props.stackEventsNow[this.props.stackEventsNow.length - 1].time
-      ) {
-        lastIndex = index;
-      }
-    });
+    // let lastIndex = -1;
+    // // TODO: Need to do filtering in store, or preferably in a selector
+    // filteredStackEvents.forEach((item, index) => {
+    //   if (
+    //     this.props.stackEventsNow.length > 0 &&
+    //     item.time <= this.props.stackEventsNow[this.props.stackEventsNow.length - 1].time
+    //   ) {
+    //     lastIndex = index;
+    //   }
+    // });
 
     return (
       <>
@@ -154,13 +154,13 @@ export default class StackEvents extends React.PureComponent {
               size="small"
               show={filteredStackEvents.length === 0}
             >
-              <Autoscroll autoScrollTo={Math.max(lastIndex, 0)}>
+              <Autoscroll>
                 {filteredStackEvents.map((userEvent, index) => (
                   <UserEvent
                     key={userEvent.key}
                     onDetailsClick={this.onDetailsClick.bind(this)}
-                    inactive={index > lastIndex}
-                    selected={lastIndex === index}
+                    // inactive={index > lastIndex}
+                    // selected={lastIndex === index}
                     userEvent={userEvent}
                     onJump={() => jump(userEvent.time)}
                   />

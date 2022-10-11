@@ -11,7 +11,7 @@ function ErrorItem({ error = {}, onJump, inactive, selected }) {
 
   const onErrorClick = () => {
     showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true });
-  }
+  };
   return (
     <div
       className={cn(stl.wrapper, 'py-2 px-4 flex cursor-pointer', {
