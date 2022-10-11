@@ -1,7 +1,7 @@
 import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
-import { Duration } from "luxon";
+import { Duration } from 'luxon';
 import { NoContent, Icon, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
@@ -24,7 +24,8 @@ type CanBeRed = {
 };
 
 interface Row extends Timed, Durationed, CanBeRed {
-  [key: string]: any, key: string
+  [key: string]: any;
+  key: string;
 }
 
 type Line = {
@@ -37,9 +38,10 @@ type Column = {
   label: string;
   width: number;
   dataKey?: string;
-  render?: (row: any) => void
+  render?: (row: any) => void;
   referenceLines?: Array<Line>;
   style?: React.CSSProperties;
+  onClick?: void;
 } & RenderOrKey;
 
 // type RenderOrKey = { // Disjoint?
@@ -49,26 +51,27 @@ type Column = {
 // }
 type RenderOrKey =
   | {
-    render?: (row: Row) => React.ReactNode;
-    key?: string;
-  }
+      render?: (row: Row) => React.ReactNode;
+      key?: string;
+    }
   | {
-    dataKey: string;
-  };
+      dataKey: string;
+    };
 
 type Props = {
   className?: string;
   rows: Array<Row>;
   children: Array<Column>;
-  tableHeight?: number
-  activeIndex?: number
-  renderPopup?: boolean
-  navigation?: boolean
-  referenceLines?: any[]
-  additionalHeight?: number
-  hoverable?: boolean
-  onRowClick?: (row: any, index: number) => void
-  onJump?: (time: any) => void
+  tableHeight?: number;
+  activeIndex?: number;
+  renderPopup?: boolean;
+  navigation?: boolean;
+  referenceLines?: any[];
+  additionalHeight?: number;
+  hoverable?: boolean;
+  onRowClick?: (row: any, index: number) => void;
+  onJump?: (time: any) => void;
+  sortBy?: string
 };
 
 type TimeLineInfo = {
@@ -87,15 +90,23 @@ const TIME_SECTIONS_COUNT = 8;
 const ZERO_TIMEWIDTH = 1000;
 function formatTime(ms: number) {
   if (ms < 0) return '';
-  if (ms < 1000) return Duration.fromMillis(ms).toFormat('0.SSS')
+  if (ms < 1000) return Duration.fromMillis(ms).toFormat('0.SSS');
   return Duration.fromMillis(ms).toFormat('mm:ss');
 }
 
-function computeTimeLine(rows: Array<Row>, firstVisibleRowIndex: number, visibleCount: number): TimeLineInfo {
-  const visibleRows = rows.slice(firstVisibleRowIndex, firstVisibleRowIndex + visibleCount + _additionalHeight);
+function computeTimeLine(
+  rows: Array<Row>,
+  firstVisibleRowIndex: number,
+  visibleCount: number
+): TimeLineInfo {
+  const visibleRows = rows.slice(
+    firstVisibleRowIndex,
+    firstVisibleRowIndex + visibleCount + _additionalHeight
+  );
   let timestart = visibleRows.length > 0 ? Math.min(...visibleRows.map((r) => r.time)) : 0;
   // TODO: GraphQL requests do not have a duration, so their timeline is borked. Assume a duration of 0.2s for every GraphQL request
-  const timeend = visibleRows.length > 0 ? Math.max(...visibleRows.map((r) => r.time + (r.duration ?? 200))) : 0;
+  const timeend =
+    visibleRows.length > 0 ? Math.max(...visibleRows.map((r) => r.time + (r.duration ?? 200))) : 0;
   let timewidth = timeend - timestart;
   const offset = timewidth / 70;
   if (timestart >= offset) {
@@ -141,18 +152,32 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   componentDidUpdate(prevProps: any, prevState: any) {
     if (
       prevState.firstVisibleRowIndex !== this.state.firstVisibleRowIndex ||
-      (this.props.rows.length <= this.visibleCount + _additionalHeight && prevProps.rows.length !== this.props.rows.length)
+      (this.props.rows.length <= this.visibleCount + _additionalHeight &&
+        prevProps.rows.length !== this.props.rows.length)
     ) {
       this.setState({
         ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
       });
     }
-    if (this.props.activeIndex && this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current) {
+    if (
+      this.props.activeIndex &&
+      this.props.activeIndex >= 0 &&
+      prevProps.activeIndex !== this.props.activeIndex &&
+      this.scroller.current
+    ) {
       this.scroller.current.scrollToRow(this.props.activeIndex);
     }
   }
 
-  onScroll = ({ scrollTop, scrollHeight, clientHeight }: { scrollTop: number; scrollHeight: number; clientHeight: number }): void => {
+  onScroll = ({
+    scrollTop,
+    scrollHeight,
+    clientHeight,
+  }: {
+    scrollTop: number;
+    scrollHeight: number;
+    clientHeight: number;
+  }): void => {
     const firstVisibleRowIndex = Math.floor(scrollTop / ROW_HEIGHT + 0.33);
 
     if (this.state.firstVisibleRowIndex !== firstVisibleRowIndex) {
@@ -164,9 +189,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   onJump = (e: any, index: any) => {
     e.stopPropagation();
     if (this.props.onJump) {
-      this.props.onJump(this.props.rows[index].time)
+      this.props.onJump(this.props.rows[index].time);
     }
-  }
+  };
 
   renderRow = ({ index, key, style: rowStyle }: any) => {
     const { activeIndex } = this.props;
@@ -189,13 +214,18 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       >
         {columns.map(({ dataKey, render, width }) => (
           <div className={stl.cell} style={{ width: `${width}px` }}>
-            {render ? render(row) : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
+            {render
+              ? render(row)
+              : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
           </div>
         ))}
         <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
           <BarRow resource={row} timestart={timestart} timewidth={timewidth} popup={renderPopup} />
         </div>
-        <div className="invisible group-hover:visible rounded-lg bg-active-blue text-xs flex items-center px-2 py-1 color-teal" onClick={(e) => this.onJump(e, index)}>
+        <div
+          className="invisible group-hover:visible rounded-lg bg-active-blue text-xs flex items-center px-2 py-1 color-teal"
+          onClick={(e) => this.onJump(e, index)}
+        >
           <Icon name="caret-right-fill" size="12" color="teal" />
           <span>JUMP</span>
         </div>
@@ -229,8 +259,25 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     }
   };
 
+  onColumnClick = (dataKey: string, onClick: any) => {
+    if (typeof onClick === 'function') {
+      // this.scroller.current.scrollToRow(0);
+      onClick(dataKey)
+      this.scroller.current.forceUpdateGrid();
+    }
+  }
+
   render() {
-    const { className, rows, children: columns, navigation = false, referenceLines = [], additionalHeight = 0, activeIndex } = this.props;
+    const {
+      className,
+      rows,
+      children: columns,
+      navigation = false,
+      referenceLines = [],
+      additionalHeight = 0,
+      activeIndex,
+      sortBy = '',
+    } = this.props;
     const { timewidth, timestart } = this.state;
 
     _additionalHeight = additionalHeight;
@@ -243,7 +290,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       }
     }
 
-    const visibleRefLines = referenceLines.filter(({ time }) => time > timestart && time < timestart + timewidth);
+    const visibleRefLines = referenceLines.filter(
+      ({ time }) => time > timestart && time < timestart + timewidth
+    );
 
     const columnsSumWidth = columns.reduce((sum, { width }) => sum + width, 0);
 
@@ -273,9 +322,16 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         )}
         <div className={stl.headers}>
           <div className={stl.infoHeaders}>
-            {columns.map(({ label, width }) => (
-              <div className={stl.headerCell} style={{ width: `${width}px` }}>
-                {label}
+            {columns.map(({ label, width, dataKey, onClick = null }) => (
+              <div
+                className={cn(stl.headerCell, 'flex items-center',  { 'cursor-pointer': typeof onClick === 'function' })}
+                style={{ width: `${width}px` }}
+                onClick={() => this.onColumnClick(dataKey, onClick)}
+              >
+                <span>{label}</span>
+                {!!sortBy && sortBy === dataKey && (
+                  <Icon name="caret-down-fill" className="ml-1" />
+                )}
               </div>
             ))}
           </div>

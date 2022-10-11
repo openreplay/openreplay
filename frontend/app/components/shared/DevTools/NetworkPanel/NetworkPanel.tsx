@@ -238,6 +238,14 @@ function NetworkPanel(props: Props) {
     });
   };
 
+  const handleSort = (sortKey: string) => {
+    if (sortKey === sortBy) {
+      setSortBy('time');
+    } else {
+      setSortBy(sortKey);
+    }
+  };
+
   return (
     <React.Fragment>
       <BottomBlock style={{ height: 300 + additionalHeight + 'px' }} className="border">
@@ -321,6 +329,7 @@ function NetworkPanel(props: Props) {
               onRowClick={onRowClick}
               additionalHeight={additionalHeight}
               onJump={jump}
+              sortBy={sortBy}
               // activeIndex={lastIndex}
             >
               {[
@@ -333,27 +342,35 @@ function NetworkPanel(props: Props) {
                   label: 'Status',
                   dataKey: 'status',
                   width: 70,
+                  onClick: handleSort,
                 },
                 {
                   label: 'Type',
                   dataKey: 'type',
                   width: 90,
                   render: renderType,
+                  onClick: handleSort,
                 },
                 {
                   label: 'Name',
                   width: 240,
+                  dataKey: 'name',
                   render: renderName,
+                  onClick: handleSort,
                 },
                 {
                   label: 'Size',
                   width: 80,
+                  dataKey: 'decodedBodySize',
                   render: renderSize,
+                  onClick: handleSort,
                 },
                 {
                   label: 'Time',
                   width: 80,
+                  dataKey: 'duration',
                   render: renderDuration,
+                  onClick: handleSort,
                 },
               ]}
             </TimeTable>
