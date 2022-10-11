@@ -128,24 +128,60 @@ export default class FetchDetailsModal extends React.PureComponent {
   }
 
   render() {
-    const {
-      resource: { method, url, duration },
-      nextClick,
-      prevClick,
-      first = false,
-      last = false,
-    } = this.props;
+    const { resource, nextClick, prevClick, first = false, last = false } = this.props;
+    const { method, url, duration } = resource;
     const { activeTab, tabs } = this.state;
-
-    const _duration = parseInt(duration)
-    console.log('_duration', _duration);
+    const _duration = parseInt(duration);
+    console.log('_duration', resource);
 
     return (
       <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
-        <h5 className="mb-2">{'URL'}</h5>
-        <div className={cn(stl.url, 'color-gray-darkest')}>{url}</div>
+        <h5 className="mb-2 text-2xl">Network Request</h5>
+        <div className="flex items-center py-1">
+          <div className="font-medium">Name</div>
+          <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+            {resource.name}
+          </div>
+        </div>
+
+        <div className="flex items-center py-1">
+          <div className="font-medium">Type</div>
+          <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+            {resource.type}
+          </div>
+        </div>
+
+        {method && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Request Method</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+              {resource.method}
+            </div>
+          </div>
+        )}
+
+        {resource.status && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Status</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center">
+              {resource.status === '200' && <div className="w-4 h-4 bg-green rounded-full mr-2"></div>}
+              {resource.status}
+            </div>
+          </div>
+        )}
+
+        {!!_duration && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Time</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+              {_duration} ms
+            </div>
+          </div>
+        )}
+
+        {/* <div className={cn(stl.url, 'color-gray-darkest')}>{url}</div> */}
         <div className="flex items-start mt-4">
-          {method && (
+          {/* {method && (
             <div className="w-4/12">
               <div className="font-medium mb-2">Method</div>
               <div>{method}</div>
@@ -156,7 +192,7 @@ export default class FetchDetailsModal extends React.PureComponent {
               <div className="font-medium mb-2">Duration</div>
               <div>{_duration } ms</div>
             </div>
-          )}
+          )} */}
         </div>
 
         <div className="mt-6">

@@ -83,11 +83,12 @@ export default class ConsoleContent extends React.PureComponent {
               <Tabs tabs={TABS} active={activeTab} onClick={this.onTabClick} border={false} />
             </div>
             <Input
-              className="input-small"
+              className="input-small h-8"
               placeholder="Filter by keyword"
               icon="search"
               iconPosition="left"
               name="filter"
+              height={28}
               onChange={this.onFilterChange}
             />
           </BottomBlock.Header>
@@ -101,7 +102,7 @@ export default class ConsoleContent extends React.PureComponent {
               <Autoscroll autoScrollTo={Math.max(lastIndex, 0)}>
                 {filtered.map((l, index) => (
                   <div
-                    className={cn('flex py-2 px-4', {
+                    className={cn(stl.line, 'flex py-2 px-4', {
                       info: !l.isYellow() && !l.isRed(),
                       warn: l.isYellow(),
                       error: l.isRed(),
@@ -114,10 +115,10 @@ export default class ConsoleContent extends React.PureComponent {
                     <div className={cn(stl.timestamp)}>
                       <Icon size="14" className={stl.icon} {...getIconProps(l.level)} />
                     </div>
-                    <div className={cn(stl.timestamp, {})}>
+                    {/* <div className={cn(stl.timestamp, {})}>
                       {Duration.fromMillis(l.time).toFormat('mm:ss.SSS')}
-                    </div>
-                    <div key={l.key} className={cn(stl.line)} data-scroll-item={l.isRed()}>
+                    </div> */}
+                    <div key={l.key} className={cn('')} data-scroll-item={l.isRed()}>
                       <div className={stl.message}>{renderWithNL(l.value)}</div>
                     </div>
                   </div>

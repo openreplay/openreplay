@@ -42,6 +42,7 @@ import Overlay from './Overlay';
 import stl from './player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
+import NetworkPanel from 'Shared/DevTools/NetworkPanel/NetworkPanel';
 
 @connectPlayer(state => ({
   live: state.live,
@@ -112,7 +113,8 @@ export default class Player extends React.PureComponent {
               <Console />
             }
             { bottomBlock === NETWORK &&
-              <Network />
+              // <Network />
+              <NetworkPanel />
             }
             { bottomBlock === STACKEVENTS &&
               <StackEvents />
