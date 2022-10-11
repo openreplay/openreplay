@@ -196,6 +196,9 @@ func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueE
 }
 
 func contextParser(context string) ([]string, []*string) {
+	if context == "" || strings.TrimSpace(context) == "" {
+		return []string{}, []*string{}
+	}
 	contextMap := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(context), &contextMap); err != nil {
 		log.Printf("can't parse context, err: %s", err)
