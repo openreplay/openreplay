@@ -16,6 +16,14 @@ func (mi *Saver) InsertMessage(msg messages.Message) error {
 		}
 		return nil
 	case *messages.IssueEvent:
+		session, err := mi.pg.GetSession(sessionID)
+		if err != nil {
+			log.Printf("can't get session info for CH: %s", err)
+		} else {
+			if err := mi.ch.InsertIssue(session, m); err != nil {
+				log.Printf("can't insert issue event into clickhouse: %s", err)
+			}
+		}
 		return mi.pg.InsertIssueEvent(sessionID, m)
 	//TODO: message adapter (transformer) (at the level of pkg/message) for types: *IOSMetadata, *IOSIssueEvent and others
 
