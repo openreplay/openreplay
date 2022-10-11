@@ -180,7 +180,7 @@ func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueE
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	keys, values := contextParser(msg.ContextString)
+	keys, values := contextParser(msg.Context)
 	if err := c.batches["issues"].Append(
 		uint16(session.ProjectID),
 		issueID,
