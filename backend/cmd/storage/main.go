@@ -44,7 +44,7 @@ func main() {
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
-				if err := srv.UploadSessionFiles(msg.SessionID()); err != nil {
+				if err := srv.UploadSessionFiles(sesEnd); err != nil {
 					log.Printf("can't find session: %d", msg.SessionID())
 					sessionFinder.Find(msg.SessionID(), sesEnd.Timestamp)
 				}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/internal/storage"
 	"os"
 	"os/signal"
 	"syscall"
@@ -77,6 +78,14 @@ func main() {
 					log.Printf("sessionEnd duplicate, sessID: %d, prevDur: %d, newDur: %d", sessionID,
 						currDuration, newDuration)
 					return true
+				}
+				if cfg.UseEncryption {
+					key := storage.GenerateEncryptionKey()
+					if err := pg.InsertSessionEncryptionKey(sessionID, key); err != nil {
+						log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
+					} else {
+						msg.EncryptionKey = string(key)
+					}
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
 					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)

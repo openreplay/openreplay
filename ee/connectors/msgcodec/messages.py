@@ -66,8 +66,9 @@ class SessionStart(Message):
 class SessionEnd(Message):
     __id__ = 3
 
-    def __init__(self, timestamp):
+    def __init__(self, timestamp, encryption_key):
         self.timestamp = timestamp
+        self.encryption_key = encryption_key
 
 
 class SetPageLocation(Message):

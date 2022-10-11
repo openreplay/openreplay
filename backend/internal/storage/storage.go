@@ -8,6 +8,7 @@ import (
 	"log"
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/flakeid"
+	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/storage"
 	"os"
@@ -68,19 +69,19 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	}, nil
 }
 
-func (s *Storage) UploadSessionFiles(sessID uint64) error {
-	sessionDir := strconv.FormatUint(sessID, 10)
-	if err := s.uploadKey(sessID, sessionDir+"/dom.mob", true, 5); err != nil {
+func (s *Storage) UploadSessionFiles(msg *messages.SessionEnd) error {
+	sessionDir := strconv.FormatUint(msg.SessionID(), 10)
+	if err := s.uploadKey(msg.SessionID(), sessionDir+"/dom.mob", true, 5, msg.EncryptionKey); err != nil {
 		return err
 	}
-	if err := s.uploadKey(sessID, sessionDir+"/devtools.mob", false, 4); err != nil {
+	if err := s.uploadKey(msg.SessionID(), sessionDir+"/devtools.mob", false, 4, msg.EncryptionKey); err != nil {
 		return err
 	}
 	return nil
 }
 
 // TODO: make a bit cleaner
-func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCount int) error {
+func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCount int, encryptionKey string) error {
 	if retryCount <= 0 {
 		return nil
 	}
@@ -95,6 +96,14 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 	}
 	defer file.Close()
 
+	var fileSize int64 = 0
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Printf("can't get file info: %s", err)
+	} else {
+		fileSize = fileInfo.Size()
+	}
+	var encryptedData []byte
 	if shouldSplit {
 		nRead, err := file.Read(s.startBytes)
 		if err != nil {
@@ -105,45 +114,104 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 				time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
 			)
 			time.AfterFunc(s.cfg.RetryTimeout, func() {
-				s.uploadKey(sessID, key, shouldSplit, retryCount-1)
+				s.uploadKey(sessID, key, shouldSplit, retryCount-1, encryptionKey)
 			})
 			return nil
 		}
 		s.readingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 
 		start = time.Now()
-		startReader := bytes.NewBuffer(s.startBytes[:nRead])
+		// Encrypt session file if we have encryption key
+		if encryptionKey != "" {
+			encryptedData, err = encryptData(s.startBytes[:nRead], []byte(encryptionKey))
+			if err != nil {
+				log.Printf("can't encrypt data: %s", err)
+				encryptedData = s.startBytes[:nRead]
+			}
+		} else {
+			encryptedData = s.startBytes[:nRead]
+		}
+		// Compress and save to s3
+		startReader := bytes.NewBuffer(encryptedData)
 		if err := s.s3.Upload(s.gzipFile(startReader), key+"s", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: start upload failed.  %v\n", err)
 		}
+		// TODO: fix possible error (if we read less then FileSplitSize)
 		if nRead == s.cfg.FileSplitSize {
-			if err := s.s3.Upload(s.gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
+			restPartSize := fileSize - int64(nRead)
+			fileData := make([]byte, restPartSize)
+			nRead, err = file.Read(fileData)
+			if err != nil {
+				log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
+					err,
+					key,
+					sessID%16,
+					time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+				)
+				return nil
+			}
+			if int64(nRead) != restPartSize {
+				log.Printf("can't read the rest part of file")
+			}
+
+			// Encrypt session file if we have encryption key
+			if encryptionKey != "" {
+				encryptedData, err = encryptData(fileData, []byte(encryptionKey))
+				if err != nil {
+					log.Printf("can't encrypt data: %s", err)
+					encryptedData = fileData
+				}
+			} else {
+				encryptedData = fileData
+			}
+			// Compress and save to s3
+			endReader := bytes.NewBuffer(encryptedData)
+			if err := s.s3.Upload(s.gzipFile(endReader), key+"e", "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage: end upload failed. %v\n", err)
 			}
 		}
 		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 	} else {
 		start = time.Now()
-		if err := s.s3.Upload(s.gzipFile(file), key+"s", "application/octet-stream", true); err != nil {
+		fileData := make([]byte, fileSize)
+		nRead, err := file.Read(fileData)
+		if err != nil {
+			log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
+				err,
+				key,
+				sessID%16,
+				time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+			)
+			return nil
+		}
+		if int64(nRead) != fileSize {
+			log.Printf("can't read the rest part of file")
+		}
+
+		// Encrypt session file if we have encryption key
+		if encryptionKey != "" {
+			encryptedData, err = encryptData(fileData, []byte(encryptionKey))
+			if err != nil {
+				log.Printf("can't encrypt data: %s", err)
+				encryptedData = fileData
+			}
+		} else {
+			encryptedData = fileData
+		}
+		endReader := bytes.NewBuffer(encryptedData)
+		if err := s.s3.Upload(s.gzipFile(endReader), key+"s", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
 		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 	}
 
 	// Save metrics
-	var fileSize float64 = 0
-	fileInfo, err := file.Stat()
-	if err != nil {
-		log.Printf("can't get file info: %s", err)
-	} else {
-		fileSize = float64(fileInfo.Size())
-	}
 	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
 	if shouldSplit {
 		s.totalSessions.Add(ctx, 1)
-		s.sessionDOMSize.Record(ctx, fileSize)
+		s.sessionDOMSize.Record(ctx, float64(fileSize))
 	} else {
-		s.sessionDevtoolsSize.Record(ctx, fileSize)
+		s.sessionDevtoolsSize.Record(ctx, float64(fileSize))
 	}
 
 	return nil

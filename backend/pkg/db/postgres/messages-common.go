@@ -82,6 +82,10 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 	return dur, nil
 }
 
+func (conn *Conn) InsertSessionEncryptionKey(sessionID uint64, key []byte) error {
+	return conn.c.Exec(`UPDATE sessions SET file_key = $2 WHERE session_id = $1`, sessionID, string(key))
+}
+
 func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 	sqlRequest := `
 	UPDATE sessions

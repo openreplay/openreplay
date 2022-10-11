@@ -48,6 +48,7 @@ end
 # end
 message 3, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
+  string 'EncryptionKey'
 end
 message 4, 'SetPageLocation' do
   string 'URL'
