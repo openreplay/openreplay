@@ -146,7 +146,8 @@ message 24, 'PageRenderTiming', :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-message 25, 'JSException', :replayer => false do
+# depricated since 4.1.6 / 1.8.2
+message 25, 'JSExceptionDeprecated', :replayer => false do
   string 'Name'
   string 'Message'
   string 'Payload'
@@ -472,7 +473,7 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-message 78, 'ExceptionWithMeta', :replayer => false do
+message 78, 'JSException', :replayer => false do
   string 'Name'
   string 'Message'
   string 'Payload'

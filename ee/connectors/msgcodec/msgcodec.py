@@ -264,7 +264,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 25:
-            return JSException(
+            return JSExceptionDeprecated(
                 name=self.read_string(reader),
                 message=self.read_string(reader),
                 payload=self.read_string(reader)
@@ -668,7 +668,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 78:
-            return ExceptionWithMeta(
+            return JSException(
                 name=self.read_string(reader),
                 message=self.read_string(reader),
                 payload=self.read_string(reader),

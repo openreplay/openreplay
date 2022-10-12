@@ -56,7 +56,7 @@ const (
 
 	MsgPageRenderTiming = 24
 
-	MsgJSException = 25
+	MsgJSExceptionDeprecated = 25
 
 	MsgIntegrationEvent = 26
 
@@ -158,7 +158,7 @@ const (
 
 	MsgSessionSearch = 127
 
-	MsgExceptionWithMeta = 78
+	MsgJSException = 78
 
 	MsgIOSBatchMeta = 107
 
@@ -1144,14 +1144,14 @@ func (msg *PageRenderTiming) TypeID() int {
 	return 24
 }
 
-type JSException struct {
+type JSExceptionDeprecated struct {
 	message
 	Name    string
 	Message string
 	Payload string
 }
 
-func (msg *JSException) Encode() []byte {
+func (msg *JSExceptionDeprecated) Encode() []byte {
 	buf := make([]byte, 31+len(msg.Name)+len(msg.Message)+len(msg.Payload))
 	buf[0] = 25
 	p := 1
@@ -1161,7 +1161,7 @@ func (msg *JSException) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *JSException) EncodeWithIndex() []byte {
+func (msg *JSExceptionDeprecated) EncodeWithIndex() []byte {
 	encoded := msg.Encode()
 	if IsIOSType(msg.TypeID()) {
 		return encoded
@@ -1172,11 +1172,11 @@ func (msg *JSException) EncodeWithIndex() []byte {
 	return data
 }
 
-func (msg *JSException) Decode() Message {
+func (msg *JSExceptionDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *JSException) TypeID() int {
+func (msg *JSExceptionDeprecated) TypeID() int {
 	return 25
 }
 
@@ -3074,7 +3074,7 @@ func (msg *SessionSearch) TypeID() int {
 	return 127
 }
 
-type ExceptionWithMeta struct {
+type JSException struct {
 	message
 	Name     string
 	Message  string
@@ -3082,7 +3082,7 @@ type ExceptionWithMeta struct {
 	Metadata string
 }
 
-func (msg *ExceptionWithMeta) Encode() []byte {
+func (msg *JSException) Encode() []byte {
 	buf := make([]byte, 41+len(msg.Name)+len(msg.Message)+len(msg.Payload)+len(msg.Metadata))
 	buf[0] = 78
 	p := 1
@@ -3093,7 +3093,7 @@ func (msg *ExceptionWithMeta) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ExceptionWithMeta) EncodeWithIndex() []byte {
+func (msg *JSException) EncodeWithIndex() []byte {
 	encoded := msg.Encode()
 	if IsIOSType(msg.TypeID()) {
 		return encoded
@@ -3104,11 +3104,11 @@ func (msg *ExceptionWithMeta) EncodeWithIndex() []byte {
 	return data
 }
 
-func (msg *ExceptionWithMeta) Decode() Message {
+func (msg *JSException) Decode() Message {
 	return msg
 }
 
-func (msg *ExceptionWithMeta) TypeID() int {
+func (msg *JSException) TypeID() int {
 	return 78
 }
 

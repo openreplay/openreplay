@@ -409,9 +409,9 @@ func DecodePageRenderTiming(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeJSException(reader io.Reader) (Message, error) {
+func DecodeJSExceptionDeprecated(reader io.Reader) (Message, error) {
 	var err error = nil
-	msg := &JSException{}
+	msg := &JSExceptionDeprecated{}
 	if msg.Name, err = ReadString(reader); err != nil {
 		return nil, err
 	}
@@ -1315,9 +1315,9 @@ func DecodeSessionSearch(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeExceptionWithMeta(reader io.Reader) (Message, error) {
+func DecodeJSException(reader io.Reader) (Message, error) {
 	var err error = nil
-	msg := &ExceptionWithMeta{}
+	msg := &JSException{}
 	if msg.Name, err = ReadString(reader); err != nil {
 		return nil, err
 	}
@@ -1817,7 +1817,7 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 		return DecodePageRenderTiming(reader)
 
 	case 25:
-		return DecodeJSException(reader)
+		return DecodeJSExceptionDeprecated(reader)
 
 	case 26:
 		return DecodeIntegrationEvent(reader)
@@ -1970,7 +1970,7 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 		return DecodeSessionSearch(reader)
 
 	case 78:
-		return DecodeExceptionWithMeta(reader)
+		return DecodeJSException(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)

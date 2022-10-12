@@ -271,7 +271,10 @@ export default class API {
     }
   }
 
-  handleError = (e: Error | ErrorEvent | PromiseRejectionEvent, metadata?: Record<string, any>) => {
+  handleError = (
+    e: Error | ErrorEvent | PromiseRejectionEvent,
+    metadata: Record<string, any> = {},
+  ) => {
     if (this.app === null) {
       return
     }

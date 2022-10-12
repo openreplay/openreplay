@@ -245,7 +245,7 @@ class PageRenderTiming(Message):
         self.time_to_interactive = time_to_interactive
 
 
-class JSException(Message):
+class JSExceptionDeprecated(Message):
     __id__ = 25
 
     def __init__(self, name, message, payload):
@@ -751,7 +751,7 @@ class SessionSearch(Message):
         self.partition = partition
 
 
-class ExceptionWithMeta(Message):
+class JSException(Message):
     __id__ = 78
 
     def __init__(self, name, message, payload, metadata):
