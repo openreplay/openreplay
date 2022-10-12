@@ -26,7 +26,7 @@ func generateRandomBytes(size int) []byte {
 
 func fillLastBlock(rawText []byte, blockSize int) []byte {
 	// Add {1,0} right after the end of text
-	rawText = append(rawText, []byte{byte(1), byte(0)}...)
+	rawText = append(rawText, byte(1))
 	// Calculate the number of bytes we need to add to fill the last block of data
 	paddingSize := blockSize - len(rawText)%blockSize
 	// Generating zeros for last block
