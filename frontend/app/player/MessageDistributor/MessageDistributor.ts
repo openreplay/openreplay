@@ -206,6 +206,10 @@ export default class MessageDistributor extends StatedScreen {
     toast.error('Error requesting a session file')
   }
   private onFileReadFinally = () => {
+    this.incomingMessages
+      .filter(msg => msg.time >= this.lastMessageInFileTime)
+      .forEach(msg => this.distributeMessage(msg, 0))
+
     this.waitingForFiles = false
     this.setMessagesLoading(false)
   }
@@ -258,7 +262,6 @@ export default class MessageDistributor extends StatedScreen {
       });
 
     // assist will pause and skip messages to prevent timestamp related errors
-    this.assistManager.toggleTimeTravelJump()
     this.reloadMessageManagers()
     this.windowNodeCounter.reset()
 
@@ -271,9 +274,6 @@ export default class MessageDistributor extends StatedScreen {
       .then(this.onFileReadSuccess)
       .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally)
-      .then(() => {
-        this.assistManager.toggleTimeTravelJump()
-      })
   }
 
   private reloadMessageManagers() {
@@ -384,14 +384,23 @@ export default class MessageDistributor extends StatedScreen {
     return { ...msg, ...decoded };
   }
 
-  /* Binded */
-  distributeMessage(msg: Message, index: number): void {
+  private readonly incomingMessages: Message[] = []
+  appendMessage(msg: Message, index: number) {
+    // @ts-ignore
+     //       msg.time = this.md.getLastRecordedMessageTime() + msg.time\
+     //TODO: put index in message type
+    this.incomingMessages.push(msg)
+    if (!this.waitingForFiles) {
+      this.distributeMessage(msg, index)
+    }
+  }
+
+  private distributeMessage(msg: Message, index: number): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     if (visualChanges.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
-    //const index = i + index; //?
     let decoded;
     const time = msg.time;
     switch (msg.tp) {
@@ -529,9 +538,7 @@ export default class MessageDistributor extends StatedScreen {
     super.clean();
     update(INITIAL_STATE);
     this.assistManager.clear();
+    this.incomingMessages.length = 0
   }
 
-  getLastRecordedMessageTime(): number {
-    return this.lastMessageInFileTime;
-  }
 }

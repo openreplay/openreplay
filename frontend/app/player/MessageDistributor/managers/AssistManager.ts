@@ -74,9 +74,8 @@ const MAX_RECONNECTION_COUNT = 4;
 
 
 export default class AssistManager {
-  private timeTravelJump = false;
-  private jumped = false;
 
+  // TODO: Session type
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
@@ -121,7 +120,7 @@ export default class AssistManager {
   private socket: Socket | null = null
   connect(agentToken: string) {
     const jmr = new JSONRawMessageReader()
-    const reader = new MStreamReader(jmr)
+    const reader = new MStreamReader(jmr, this.session.startedAt)
     let waitingForMessages = true
     let disconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
@@ -164,7 +163,7 @@ export default class AssistManager {
         update({ calling: CallingState.NoCall })
       })
       socket.on('messages', messages => {
-        !this.timeTravelJump && jmr.append(messages) // as RawMessage[]
+        jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
@@ -176,17 +175,9 @@ export default class AssistManager {
           }
         }
 
-        if (this.timeTravelJump) {
-          return;
-        }
-
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
-          if (this.jumped) {
-            // @ts-ignore
-            msg.time = this.md.getLastRecordedMessageTime() + msg.time
-          }
           // @ts-ignore TODO: fix msg types in generator
-          this.md.distributeMessage(msg, msg._index)
+          this.md.appendMessage(msg, msg._index)
         }
       })
       socket.on("control_granted", id => {
@@ -560,11 +551,6 @@ export default class AssistManager {
   }
 
   private annot: AnnotationCanvas | null = null
-
-  toggleTimeTravelJump() {
-    this.jumped = true;
-    this.timeTravelJump = !this.timeTravelJump;
-  }
 
   /* ==== Cleaning ==== */
   private cleaned: boolean = false
