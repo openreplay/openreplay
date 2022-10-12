@@ -100,7 +100,7 @@ export default class CallWindow {
 						const secsFull = ~~(ellapsed / 1000)
 						const mins = ~~(secsFull / 60)
 						const secs = secsFull - mins * 60
-						tsElem.innerText = `${mins}:${secs < 10 ? 0 : ''}${secs}`
+						tsElem.innerText = `${mins}m${secs < 10 ? 0 : ''}${secs}s`
 					}, 500)
 				}
 
