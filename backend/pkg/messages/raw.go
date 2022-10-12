@@ -56,6 +56,7 @@ func (m *RawMessage) Decode() Message {
 		log.Printf("decode err: %s", err)
 		return nil
 	}
+	msg = transformDeprecated(msg)
 	msg.Meta().SetMeta(m.meta)
 	return msg
 }

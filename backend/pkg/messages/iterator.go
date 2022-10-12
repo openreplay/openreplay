@@ -104,7 +104,6 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 				}
 				return
 			}
-			msg = transformDeprecated(msg)
 		}
 
 		// Preprocess "system" messages
