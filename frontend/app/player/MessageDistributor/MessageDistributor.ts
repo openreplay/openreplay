@@ -28,6 +28,7 @@ import AssistManager from './managers/AssistManager';
 
 import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
+import { decryptSessionBytes } from './network/crypto';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
@@ -215,14 +216,17 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   private loadMessages() { 
-    const createNewParser = () => {
+    const createNewParser = (shouldDecrypt=true) => {
+      const decrypt = shouldDecrypt && this.session.fileKey
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
+        : (b: Uint8Array) => Promise.resolve(b)
       // Each time called - new fileReader created
       const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
-      return (b: Uint8Array) => {
+      return (b: Uint8Array) => decrypt(b).then(b => {
         fileReader.append(b)
         this.parseAndDistributeMessages(fileReader)
         this.setMessagesLoading(false)
-      }
+      })
     }
     this.setMessagesLoading(true)
     this.waitingForFiles = true
@@ -230,7 +234,7 @@ export default class MessageDistributor extends StatedScreen {
     loadFiles(this.session.domURL, createNewParser())
     .catch(() => // do if  only the first file missing (404) (?)
       requestEFSDom(this.session.sessionId)
-        .then(createNewParser())
+        .then(createNewParser(false))
         // Fallback to back Compatability with mobsUrl
         .catch(e =>
           loadFiles(this.session.mobsUrl, createNewParser())
@@ -245,7 +249,7 @@ export default class MessageDistributor extends StatedScreen {
     loadFiles(this.session.devtoolsURL, createNewParser())
     .catch(() =>
       requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser())
+        .then(createNewParser(false))
     )
     //.catch() // not able to download the devtools file
     .finally(() => update({ devtoolsLoading: false }))
