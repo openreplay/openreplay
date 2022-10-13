@@ -113,6 +113,7 @@ export default class Exceptions extends React.PureComponent {
                 iconPosition="left"
                 name="filter"
                 onChange={this.onFilterChange}
+                height={28}
               />
               <QuestionMarkHint
                 className={'mx-4'}

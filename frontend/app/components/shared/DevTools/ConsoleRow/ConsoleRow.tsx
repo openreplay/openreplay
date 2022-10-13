@@ -3,6 +3,8 @@ import cn from 'classnames';
 // import stl from '../console.module.css';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
+import { useModal } from 'App/components/Modal';
+import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 
 interface Props {
   log: any;
@@ -12,18 +14,30 @@ interface Props {
 }
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL } = props;
+  const { showModal } = useModal();
   const [expanded, setExpanded] = useState(false);
   const lines = log.value.split('\n').filter((l: any) => !!l);
   const canExpand = lines.length > 1;
+
+  const clickable = canExpand || !!log.errorId;
+
+  const onErrorClick = () => {
+    showModal(<ErrorDetailsModal errorId={log.errorId} />, { right: true });
+  };
   return (
     <div
-      className={cn('border-b flex items-center py-2 px-4 overflow-hidden group relative select-none', {
-        info: !log.isYellow() && !log.isRed(),
-        warn: log.isYellow(),
-        error: log.isRed(),
-        'cursor-pointer': canExpand,
-      })}
-      onClick={() => setExpanded(!expanded)}
+      className={cn(
+        'border-b flex items-center py-2 px-4 overflow-hidden group relative select-none',
+        {
+          info: !log.isYellow() && !log.isRed(),
+          warn: log.isYellow(),
+          error: log.isRed(),
+          'cursor-pointer': clickable,
+        }
+      )}
+      onClick={
+        clickable ? () => (!!log.errorId ? onErrorClick() : setExpanded(!expanded)) : () => {}
+      }
     >
       <div className="mr-2">
         <Icon size="14" {...iconProps} />

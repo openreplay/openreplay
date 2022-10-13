@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connectPlayer, jump } from 'Player';
-// import Log from 'Types/session/log';
+import Log from 'Types/session/log';
 import BottomBlock from '../BottomBlock';
 import { LEVEL } from 'Types/session/log';
 import { Tabs, Input, Icon, NoContent } from 'UI';
@@ -124,8 +124,16 @@ function ConsolePanel(props: Props) {
 
 export default connectPlayer((state: any) => {
   const logs = state.logList;
-  //   const exceptions = state.exceptionsList; // TODO merge
+  const exceptions = state.exceptionsList; // TODO merge
+  const logExceptions = exceptions.map(({ time, errorId, name, projectId }: any) =>
+    Log({
+      level: LEVEL.ERROR,
+      value: name,
+      time,
+      errorId,
+    })
+  );
   return {
-    logs,
+    logs: logs.concat(logExceptions),
   };
 })(ConsolePanel);

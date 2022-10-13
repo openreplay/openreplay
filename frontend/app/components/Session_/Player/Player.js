@@ -41,6 +41,7 @@ import stl from './player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
+import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 
 @connectPlayer((state) => ({
   live: state.live,
@@ -116,7 +117,7 @@ export default class Player extends React.PureComponent {
             )}
             {bottomBlock === STACKEVENTS && <StackEvents />}
             {bottomBlock === STORAGE && <Storage />}
-            {bottomBlock === PROFILER && <Profiler />}
+            {bottomBlock === PROFILER && <ProfilerPanel />}
             {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
             {bottomBlock === GRAPHQL && <GraphQL />}
             {bottomBlock === EXCEPTIONS && <Exceptions />}
