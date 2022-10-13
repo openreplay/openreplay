@@ -92,7 +92,6 @@ function getStorageName(type) {
   showFetch: state.fetchCount > 0,
   fetchCount: state.fetchCount,
   graphqlCount: state.graphqlList.length,
-  showLongtasks: state.longtasksList.length > 0,
   liveTimeTravel: state.liveTimeTravel,
 }))
 @connect(
@@ -158,7 +157,6 @@ export default class Controls extends React.Component {
       nextProps.showFetch !== this.props.showFetch ||
       nextProps.fetchCount !== this.props.fetchCount ||
       nextProps.graphqlCount !== this.props.graphqlCount ||
-      nextProps.showLongtasks !== this.props.showLongtasks ||
       nextProps.liveTimeTravel !== this.props.liveTimeTravel ||
       nextProps.skipInterval !== this.props.skipInterval
     )
