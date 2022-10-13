@@ -34,7 +34,7 @@ function Notifications(props: Props) {
           <div className={ stl.counter } data-hidden={ count === 0 }>
             { count }
           </div>
-          <Icon name="bell" size="18" />
+          <Icon name="bell-fill" size="18" />
         </div>
       </Popup>
   ));

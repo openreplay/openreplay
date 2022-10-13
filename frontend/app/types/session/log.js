@@ -24,6 +24,7 @@ export default Record({
   value: '',
   time: undefined,
   index: undefined,
+  errorId: undefined,
 }, {
 	methods: {
 		isRed() {
