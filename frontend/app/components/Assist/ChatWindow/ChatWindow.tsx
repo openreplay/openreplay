@@ -21,7 +21,7 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
 
   const onlyLocalEnabled = localVideoEnabled && !anyRemoteEnabled
   return (
-    <Draggable handle=".handle" bounds="body">
+    <Draggable handle=".handle" bounds="body" defaultPosition={{ x: 50, y: 200 }}>
       <div
         className={cn(stl.wrapper, "fixed radius bg-white shadow-xl mt-16")}
         style={{ width: '280px' }}
@@ -39,8 +39,8 @@ function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: 
             ? incomeStream.map(stream => <React.Fragment key={stream.id}><VideoContainer stream={ stream } setRemoteEnabled={setRemoteEnabled} /></React.Fragment>) : (
             <div className={stl.noVideo}>Error obtaining incoming streams</div>
           )}
-          <div className={cn("absolute bottom-0 right-0 z-50", localVideoEnabled ? "" : "!hidden")}>
-            <VideoContainer stream={ localStream ? localStream.stream : null } muted height={anyRemoteEnabled ? 50 : 280} />
+          <div className={cn("absolute bottom-0 right-0 z-50", !localVideoEnabled ? "" : "!hidden")}>
+            <VideoContainer stream={ localStream ? localStream.stream : null } muted height={!anyRemoteEnabled ? 50 : 280} />
           </div>
         </div>
         <ChatControls videoEnabled={localVideoEnabled} setVideoEnabled={setLocalVideoEnabled} stream={localStream} endCall={endCall} isPrestart={isPrestart} />
