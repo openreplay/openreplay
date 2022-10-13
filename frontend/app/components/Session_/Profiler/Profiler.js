@@ -51,6 +51,7 @@ export default class Profiler extends React.PureComponent {
               icon="search"
               name="filter"
               onChange={ this.onFilterChange }
+              height={28}
             />
           </BottomBlock.Header>
           <BottomBlock.Content>

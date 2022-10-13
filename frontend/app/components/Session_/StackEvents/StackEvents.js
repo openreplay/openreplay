@@ -6,6 +6,7 @@ import withEnumToggle from 'HOCs/withEnumToggle';
 import { connectPlayer, jump } from 'Player';
 import React from 'react';
 import { connect } from 'react-redux';
+import StackEventRow from 'Shared/DevTools/StackEventRow';
 import { DATADOG, SENTRY, STACKDRIVER, typeList } from 'Types/session/stackEvent';
 import { NoContent, SlideModal, Tabs, Link } from 'UI';
 import Autoscroll from '../Autoscroll';
@@ -19,7 +20,7 @@ const TABS = [ALL, ...typeList].map((tab) => ({ text: tab, key: tab }));
 @withEnumToggle('activeTab', 'setActiveTab', ALL)
 @connectPlayer((state) => ({
   stackEvents: state.stackList,
-  stackEventsNow: state.stackListNow,
+  // stackEventsNow: state.stackListNow,
 }))
 @connect(
   (state) => ({
@@ -69,20 +70,20 @@ export default class StackEvents extends React.PureComponent {
       ({ key }) => key === ALL || stackEvents.some(({ source }) => key === source)
     );
 
-    const filteredStackEvents = stackEvents
-      //      .filter(({ data }) => data.includes(filter))
-      .filter(({ source }) => activeTab === ALL || activeTab === source);
+    const filteredStackEvents = stackEvents.filter(
+      ({ source }) => activeTab === ALL || activeTab === source
+    );
 
-    let lastIndex = -1;
-    // TODO: Need to do filtering in store, or preferably in a selector
-    filteredStackEvents.forEach((item, index) => {
-      if (
-        this.props.stackEventsNow.length > 0 &&
-        item.time <= this.props.stackEventsNow[this.props.stackEventsNow.length - 1].time
-      ) {
-        lastIndex = index;
-      }
-    });
+    // let lastIndex = -1;
+    // // TODO: Need to do filtering in store, or preferably in a selector
+    // filteredStackEvents.forEach((item, index) => {
+    //   if (
+    //     this.props.stackEventsNow.length > 0 &&
+    //     item.time <= this.props.stackEventsNow[this.props.stackEventsNow.length - 1].time
+    //   ) {
+    //     lastIndex = index;
+    //   }
+    // });
 
     return (
       <>
@@ -154,16 +155,21 @@ export default class StackEvents extends React.PureComponent {
               size="small"
               show={filteredStackEvents.length === 0}
             >
-              <Autoscroll autoScrollTo={Math.max(lastIndex, 0)}>
+              <Autoscroll>
                 {filteredStackEvents.map((userEvent, index) => (
-                  <UserEvent
+                  <StackEventRow
                     key={userEvent.key}
-                    onDetailsClick={this.onDetailsClick.bind(this)}
-                    inactive={index > lastIndex}
-                    selected={lastIndex === index}
-                    userEvent={userEvent}
+                    event={userEvent}
                     onJump={() => jump(userEvent.time)}
                   />
+                  // <UserEvent
+                  //   key={userEvent.key}
+                  //   onDetailsClick={this.onDetailsClick.bind(this)}
+                  //   // inactive={index > lastIndex}
+                  //   // selected={lastIndex === index}
+                  //   userEvent={userEvent}
+                  //   onJump={() => jump(userEvent.time)}
+                  // />
                 ))}
               </Autoscroll>
             </NoContent>
