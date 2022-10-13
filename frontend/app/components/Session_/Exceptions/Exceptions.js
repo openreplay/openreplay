@@ -22,7 +22,7 @@ import BottomBlock from '../BottomBlock';
 @connectPlayer((state) => ({
   logs: state.logListNow,
   exceptions: state.exceptionsList,
-  exceptionsNow: state.exceptionsListNow,
+  // exceptionsNow: state.exceptionsListNow,
 }))
 @connect(
   (state) => ({

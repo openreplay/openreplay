@@ -95,23 +95,23 @@ function getStorageName(type) {
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode || state.markedTargets,
   inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
-  logCount: state.logListNow.length,
-  logRedCount: state.logRedCountNow,
-  resourceRedCount: state.resourceRedCountNow,
-  fetchRedCount: state.fetchRedCountNow,
+  logCount: state.logList.length,
+  logRedCount: state.logRedCount,
+  resourceRedCount: state.resourceRedCount,
+  fetchRedCount: state.fetchRedCount,
   showStack: state.stackList.length > 0,
-  stackCount: state.stackListNow.length,
-  stackRedCount: state.stackRedCountNow,
-  profilesCount: state.profilesListNow.length,
+  stackCount: state.stackList.length,
+  stackRedCount: state.stackRedCount,
+  profilesCount: state.profilesList.length,
   storageCount: selectStorageListNow(state).length,
   storageType: selectStorageType(state),
   showStorage: selectStorageType(state) !== STORAGE_TYPES.NONE,
   showProfiler: state.profilesList.length > 0,
   showGraphql: state.graphqlList.length > 0,
   showFetch: state.fetchCount > 0,
-  fetchCount: state.fetchCountNow,
-  graphqlCount: state.graphqlListNow.length,
-  exceptionsCount: state.exceptionsListNow.length,
+  fetchCount: state.fetchCount,
+  graphqlCount: state.graphqlList.length,
+  exceptionsCount: state.exceptionsList.length,
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
   liveTimeTravel: state.liveTimeTravel,
@@ -380,7 +380,7 @@ export default class Controls extends React.Component {
                 label="CONSOLE"
                 noIcon
                 labelClassName="!text-base font-semibold"
-                count={logCount}
+                // count={logCount}
                 hasErrors={logRedCount > 0}
                 containerClassName="mx-2"
               />
@@ -412,7 +412,7 @@ export default class Controls extends React.Component {
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(GRAPHQL)}
                   active={bottomBlock === GRAPHQL && !inspectorMode}
-                  count={graphqlCount}
+                  // count={graphqlCount}
                   label="GRAPHQL"
                   noIcon
                   labelClassName="!text-base font-semibold"
@@ -424,7 +424,7 @@ export default class Controls extends React.Component {
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(STORAGE)}
                   active={bottomBlock === STORAGE && !inspectorMode}
-                  count={storageCount}
+                  // count={storageCount}
                   label={getStorageName(storageType)}
                   noIcon
                   labelClassName="!text-base font-semibold"
@@ -440,7 +440,7 @@ export default class Controls extends React.Component {
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
-                  count={exceptionsCount}
+                  // count={exceptionsCount}
                   hasErrors={exceptionsCount > 0}
                 />
               )}
@@ -453,7 +453,7 @@ export default class Controls extends React.Component {
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
-                  count={stackCount}
+                  // count={stackCount}
                   hasErrors={stackRedCount > 0}
                 />
               )}
@@ -462,7 +462,7 @@ export default class Controls extends React.Component {
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(PROFILER)}
                   active={bottomBlock === PROFILER && !inspectorMode}
-                  count={profilesCount}
+                  // count={profilesCount}
                   label="PROFILER"
                   noIcon
                   labelClassName="!text-base font-semibold"

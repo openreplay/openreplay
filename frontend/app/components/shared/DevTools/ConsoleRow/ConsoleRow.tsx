@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import stl from '../console.module.css';
+// import stl from '../console.module.css';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 
@@ -17,7 +17,7 @@ function ConsoleRow(props: Props) {
   const canExpand = lines.length > 1;
   return (
     <div
-      className={cn(stl.line, 'flex py-2 px-4 overflow-hidden group relative select-none', {
+      className={cn('border-b flex items-center py-2 px-4 overflow-hidden group relative select-none', {
         info: !log.isYellow() && !log.isRed(),
         warn: log.isYellow(),
         error: log.isRed(),
@@ -25,14 +25,11 @@ function ConsoleRow(props: Props) {
       })}
       onClick={() => setExpanded(!expanded)}
     >
-      <div className={cn(stl.timestamp)}>
-        <Icon size="14" className={stl.icon} {...iconProps} />
+      <div className="mr-2">
+        <Icon size="14" {...iconProps} />
       </div>
-      {/* <div className={cn(stl.timestamp, {})}>
-        {Duration.fromMillis(log.time).toFormat('mm:ss.SSS')}
-      </div> */}
-      <div key={log.key} className={cn('')} data-scroll-item={log.isRed()}>
-        <div className={cn(stl.message, 'flex items-center')}>
+      <div key={log.key} data-scroll-item={log.isRed()}>
+        <div className={cn('flex items-center')}>
           {canExpand && (
             <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
           )}

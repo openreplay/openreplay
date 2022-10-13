@@ -19,7 +19,7 @@ import {
   INSPECTOR,
   OVERVIEW,
 } from 'Duck/components/player';
-import NetworkPanel from 'Shared/DevTools/NetworkPanel/NetworkPanel';
+import NetworkPanel from 'Shared/DevTools/NetworkPanel';
 import Console from '../Console/Console';
 import StackEvents from '../StackEvents/StackEvents';
 import Storage from '../Storage';
@@ -40,6 +40,7 @@ import Overlay from './Overlay';
 import stl from './player.module.css';
 import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
+import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 
 @connectPlayer((state) => ({
   live: state.live,
@@ -108,7 +109,7 @@ export default class Player extends React.PureComponent {
         {!fullscreen && !!bottomBlock && (
           <div style={{ maxWidth, width: '100%' }}>
             {bottomBlock === OVERVIEW && <OverviewPanel />}
-            {bottomBlock === CONSOLE && <Console />}
+            {bottomBlock === CONSOLE && <ConsolePanel />}
             {bottomBlock === NETWORK && (
               // <Network />
               <NetworkPanel />

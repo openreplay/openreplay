@@ -35,12 +35,14 @@ export default class UserEvent extends React.PureComponent {
 
   render() {
     const { userEvent, inactive, selected } = this.props;
+    let message = userEvent.payload[0] || '';
+    message = typeof message === 'string' ? message : JSON.stringify(message);
     return (
       <div
         data-scroll-item={userEvent.isRed()}
         onClick={this.onClickDetails}
         className={cn(
-          'group flex items-center py-2 px-4 border-b cursor-pointer',
+          'group flex items-center py-2 px-4 border-b cursor-pointer relative',
           // stl.userEvent,
           // this.getLevelClassname(),
           // {
@@ -52,10 +54,11 @@ export default class UserEvent extends React.PureComponent {
         {/* <div className={'self-start pr-4'}>
           {Duration.fromMillis(userEvent.time).toFormat('mm:ss.SSS')}
         </div> */}
-        <div className={cn('mr-auto', stl.infoWrapper)}>
-          <div className={stl.title}>
-            <Icon {...this.getIconProps()} />
-            <span className="capitalize">{userEvent.name}</span>
+        <div className={cn('mr-auto flex items-start')}>
+          <Icon {...this.getIconProps()} />
+          <div>
+            <div className="capitalize font-medium mb-1">{userEvent.name}</div>
+            <div className="code-font text-xs">{message}</div>
           </div>
         </div>
         <JumpButton onClick={this.props.onJump} />
