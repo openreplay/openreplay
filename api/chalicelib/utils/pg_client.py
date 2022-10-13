@@ -109,7 +109,7 @@ class PostgresClient:
         elif not config('PG_POOL', cast=bool, default=True):
             single_config = dict(_PG_CONFIG)
             single_config["application_name"] += "-NOPOOL"
-            single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=3 * 60) * 1000}"
+            single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=30) * 1000}"
             self.connection = psycopg2.connect(**single_config)
         else:
             self.connection = postgreSQL_pool.getconn()
