@@ -248,8 +248,8 @@ export default class Assist {
       callingAgents.set(id, name)
       updateCallerNames()
     })
-    socket.on('videofeed', ({ streamId, enabled, }) => {
-      callUI?.toggleVideoStream({ streamId, enabled, })
+    socket.on('videofeed', (id, feedState) => {
+      callUI?.toggleVideoStream(feedState)
     })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
@@ -341,7 +341,7 @@ export default class Assist {
       this.emit('call_end')
       handleCallEnd()
     }
-    const updateVideoFeed = ({ streamId, enabled, }) => this.emit('videofeed', { streamId, enabled, })
+    const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
     peer.on('call', (call) => {
       app.debug.log('Incoming call: ', call)
@@ -399,7 +399,7 @@ export default class Assist {
           initiateCallEnd()
         })
         call.on('stream', (rStream) => {
-          callUI?.addRemoteStream(rStream)
+          callUI?.addRemoteStream(rStream, call.peer)
           const onInteraction = () => { // do only if document.hidden ?
             callUI?.playRemote()
             document.removeEventListener('click', onInteraction)

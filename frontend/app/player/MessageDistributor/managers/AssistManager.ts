@@ -205,9 +205,12 @@ export default class AssistManager {
         }
       })
       socket.on('videofeed', ({ streamId, enabled }) => {
+        console.log(streamId, enabled)
+        console.log(this.videoStreams)
         if (this.videoStreams[streamId]) {
           this.videoStreams[streamId].enabled = enabled
         }
+        console.log(this.videoStreams)
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
@@ -370,10 +373,8 @@ export default class AssistManager {
           })
 
           call.on('stream', stream => {
+            this.videoStreams[call.peer] = stream.getVideoTracks()[0]
             this.callArgs && this.callArgs.onStream(stream)
-            stream.getVideoTracks().forEach(track => {
-              this.videoStreams[track.id] = track
-            })
           });
           // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
@@ -505,9 +506,8 @@ export default class AssistManager {
       call.on('stream', stream => {
         getState().calling !== CallingState.OnCall && update({ calling: CallingState.OnCall })
 
-        stream.getVideoTracks().forEach(track => {
-          this.videoStreams[track.id] = track
-        })
+        this.videoStreams[call.peer] = stream.getVideoTracks()[0]
+
         this.callArgs && this.callArgs.onStream(stream)
       });
       // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
@@ -560,6 +560,12 @@ export default class AssistManager {
       this.annot = null
       update({ annotating: false })
     }
+  }
+
+  toggleVideoLocalStream(enabled: boolean) {
+    this.getPeer().then((peer) => {
+      this.socket.emit('videofeed', { streamId: peer.id, enabled })
+    })
   }
 
   private annot: AnnotationCanvas | null = null
