@@ -86,6 +86,8 @@ export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
 export const toggleUserName = initCheck((...args) => instance.toggleUserName(...args))
 export const injectNotes = initCheck((...args) => instance.injectNotes(...args))
 export const filterOutNote = initCheck((...args) => instance.filterOutNote(...args))
+/** @type {Player.assistManager.toggleVideoLocalStream} */
+export const toggleVideoLocalStream = initCheck((...args) => instance.assistManager.toggleVideoLocalStream(...args))
 
 export const Controls = {
   jump,

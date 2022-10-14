@@ -4,6 +4,7 @@ import attachDND from './dnd.js'
 const SS_START_TS_KEY = '__openreplay_assist_call_start_ts'
 
 export default class CallWindow {
+	private remoteVideoId: string
 	private readonly iframe: HTMLIFrameElement
 	private vRemote: HTMLVideoElement | null = null
 	private vLocal: HTMLVideoElement | null = null
@@ -30,7 +31,7 @@ export default class CallWindow {
 			position: 'fixed',
 			zIndex: 2147483647 - 1,
 			border: 'none',
-			bottom: '10px',
+			bottom: '50px',
 			right: '10px',
 			height: '200px',
 			width: '200px',
@@ -127,13 +128,14 @@ export default class CallWindow {
 
 	private checkRemoteVideoInterval: ReturnType<typeof setInterval>
 	private audioContainer: HTMLDivElement | null = null
-	addRemoteStream(rStream: MediaStream) {
+	addRemoteStream(rStream: MediaStream, peerId: string) {
 		this.load
 			.then(() => {
 				// Video
 				if (this.vRemote && !this.vRemote.srcObject) {
 					this.vRemote.srcObject = rStream
 					this.remoteVideo = rStream.getVideoTracks()[0]
+					this.remoteVideoId = peerId
 					if (this.vPlaceholder) {
 						this.vPlaceholder.innerText =
 							'Video has been paused. Click anywhere to resume.'
@@ -177,6 +179,8 @@ export default class CallWindow {
 					this.remoteVideoOn = enable
 					if (enable) {
 						this.videoContainer.classList.add('remote')
+					} else {
+						this.videoContainer.classList.remove('remote')
 					}
 					this.adjustIframeSize()
 				}
@@ -320,9 +324,10 @@ export default class CallWindow {
 		this.localStreams = []
 	}
 
-	toggleVideoStream({ streamId, enabled, }: { streamId: string, enabled: boolean}) {
-		if (this.remoteVideo.id === streamId) {
+	toggleVideoStream({ streamId, enabled, }: { streamId: string, enabled: boolean }) {
+		if (this.remoteVideoId === streamId) {
 			this.remoteVideo.enabled = enabled
+			this.toggleRemoteVideoUI(enabled)
 		}
 	}
 }
