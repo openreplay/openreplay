@@ -93,7 +93,30 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) (err error) {
+func (conn *Conn) InsertWebJSException(projectID uint32, m *JSException) (err error) {
+	return conn.insertWebErrorEvent(m.SessionID(), projectID, &ErrorEvent{ // TODO: get rid of ErrorEvent message
+		MessageID: m.Meta().Index,
+		Timestamp: uint64(m.Meta().Timestamp),
+		Source:    "js_exception",
+		Name:      m.Name,
+		Message:   m.Message,
+		Payload:   m.Payload,
+	})
+
+}
+
+func (conn *Conn) InsertWebIntegrationEvent(projectID uint32, m *IntegrationEvent) (err error) {
+	return conn.insertWebErrorEvent(m.SessionID(), projectID, &ErrorEvent{
+		MessageID: m.Meta().Index, // This will be always 0 here since it's coming from backend TODO: find another way to index
+		Timestamp: m.Timestamp,
+		Source:    m.Source,
+		Name:      m.Name,
+		Message:   m.Message,
+		Payload:   m.Payload,
+	})
+}
+
+func (conn *Conn) insertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) (err error) {
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
