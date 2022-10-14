@@ -14,7 +14,7 @@ function truncPadding(padded: Uint8Array): Uint8Array {
 }
 
 export function decryptSessionBytes(cypher: Uint8Array, keyString: string): Promise<Uint8Array> {
-	if (keyString.length !== 16) {
+	if (keyString.length !== 64) {
 		return Promise.reject("Wrong key string format")
 	}
 	const [hexKey, hexIV] = keyString.match(/.{8}/g)
