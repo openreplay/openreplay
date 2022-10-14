@@ -24,11 +24,20 @@ func IOSCrashID(projectID uint32, crash *messages.IOSCrash) string {
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
 
-func WebErrorID(projectID uint32, errorEvent *messages.ErrorEvent) string {
+func WebIntegrationEventErrorID(projectID uint32, m *messages.IntegrationEvent) string {
 	hash := fnv.New128a()
-	hash.Write([]byte(errorEvent.Source))
-	hash.Write([]byte(errorEvent.Name))
-	hash.Write([]byte(errorEvent.Message))
-	hash.Write([]byte(errorEvent.Payload))
+	hash.Write([]byte(m.Source))
+	hash.Write([]byte(m.Name))
+	hash.Write([]byte(m.Message))
+	hash.Write([]byte(m.Payload))
+	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
+}
+
+func WebJSExceptionErrorID(projectID uint32, m *messages.JSException) string {
+	hash := fnv.New128a()
+	hash.Write([]byte("js_exsception"))
+	hash.Write([]byte(m.Name))
+	hash.Write([]byte(m.Message))
+	hash.Write([]byte(m.Payload))
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }

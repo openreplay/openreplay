@@ -35,7 +35,7 @@ func main() {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
 			totalAssets.Add(context.Background(), 1)
-		case *messages.ErrorEvent:
+		case *messages.ErrorEvent: // TODO: use JSException event from "raw" topic instead
 			if m.Source != "js_exception" {
 				return
 			}
