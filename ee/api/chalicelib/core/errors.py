@@ -145,7 +145,7 @@ def get_details(project_id, error_id, user_id, **data):
         FROM (SELECT error_id,
                      name,
                      message,
-                     COUNT(DISTINCT user_uuid)  AS users,
+                     COUNT(DISTINCT user_id)  AS users,
                      COUNT(DISTINCT session_id) AS sessions
               FROM public.errors
                        INNER JOIN events.errors AS s_errors USING (error_id)
