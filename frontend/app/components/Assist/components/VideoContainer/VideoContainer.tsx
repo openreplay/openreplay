@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react'
 interface Props {
   stream: MediaStream | null
   muted?: boolean,
-  height?: number,
+  height?: number | string,
   setRemoteEnabled?: (isEnabled: boolean) => void
 }
 

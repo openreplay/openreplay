@@ -176,20 +176,6 @@ export default class CallWindow {
 					this.remoteVideoOn = enable
 					if (enable) {
 						this.videoContainer.classList.add('remote')
-						if (this.localVideoOn) {
-							this.vLocal && Object.assign(this.vLocal.style, {
-								width: '35%',
-								height: 'unset',
-							})
-						}
-					} else {
-						this.videoContainer.classList.remove('remote')
-						if (this.localVideoOn) {
-							this.vLocal && Object.assign(this.vLocal.style, {
-								width: 'unset',
-								height: '100%',
-							})
-						}
 					}
 					this.adjustIframeSize()
 				}
@@ -247,19 +233,6 @@ export default class CallWindow {
 		if (enabled) {
 			this.videoContainer.classList.add('local')
 			this.videoBtn.classList.remove('off')
-			if (this.remoteVideoOn) {
-				this.vLocal && Object.assign(this.vLocal.style, {
-					width: '35%',
-					height: 'unset',
-				})
-			} else {
-				if (this.remoteVideoOn) {
-					this.vLocal && Object.assign(this.vLocal.style, {
-						width: 'unset',
-						height: '100%',
-					})
-				}
-			}
 		} else {
 			this.videoContainer.classList.remove('local')
 			this.videoBtn.classList.add('off')
