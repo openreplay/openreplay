@@ -20,16 +20,14 @@ postgresql: &postgres
 clickhouse:
   # For enterpriseEdition
   enabled: false
-  global:
-    clickhouse:
-      clickhouseHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
-      clickhousePort: 9000
+  clickhouseHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  clickhousePort: 9000
 
 alerts:
   enabled: false
 
-quickwit: &quickwit
-  # For enterpriseEdition
+# For enterpriseEdition
+quickwit: &quickwit 
   enabled: false
 
 kafka: &kafka
@@ -51,8 +49,7 @@ kafka: &kafka
     # - name: KAFKA_CFG_MESSAGE_MAX_BYTES
     #   value: "3000000"
 
-
-redis: &redis
+redis: &redis 
   # enabled: false
   redisHost: "redis-master.db.svc.cluster.local"
   redisPort: "6379"
@@ -67,16 +64,14 @@ minio:
       # `openssl rand -hex 20`
       accessKey: "changeMeMinioAccessKey"
       secretKey: "changeMeMinioPassword"
-      minioHost: minio.db.svc.cluster.local
-      minioPort: 9000
 
 ingress-nginx: &ingress-nginx
   controller:
     ingressClassResource:
       # -- Name of the ingressClass
       name: openreplay
-  # -- For backwards compatibility with ingress.class annotation, use ingressClass.
-  # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+    # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+    # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
     ingressClass: openreplay
     service:
       externalTrafficPolicy: "Local"
@@ -124,15 +119,15 @@ global:
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
-    emailHost: ''
-    emailPort: '587'
-    emailUser: ''
-    emailPassword: ''
-    emailUseTls: 'true'
-    emailUseSsl: 'false'
-    emailSslKey: ''
-    emailSslCert: ''
-    emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
+    emailHost: ""
+    emailPort: "587"
+    emailUser: ""
+    emailPassword: ""
+    emailUseTls: "true"
+    emailUseSsl: "false"
+    emailSslKey: ""
+    emailSslCert: ""
+    emailFrom: "OpenReplay<do-not-reply@openreplay.com>"
 
   enterpriseEditionLicense: ""
   domainName: ""
@@ -160,7 +155,6 @@ chalice:
     # idp_sls_url: ''
     # idp_name: ''
     # idp_tenantKey: ''
-
 # If you want to override something
 # chartname:
 #   filedFrom chart/Values.yaml:
