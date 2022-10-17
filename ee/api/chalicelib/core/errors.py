@@ -141,7 +141,7 @@ def get_details(project_id, error_id, user_id, **data):
                country_partition,
                chart24,
                chart30,
-               COALESCE(tags,'{{}}')::jsonb AS custom_tags
+               custom_tags
         FROM (SELECT error_id,
                      name,
                      message,
@@ -152,25 +152,22 @@ def get_details(project_id, error_id, user_id, **data):
                        INNER JOIN public.sessions USING (session_id)
               WHERE {" AND ".join(pg_sub_query30_err)}
               GROUP BY error_id, name, message) AS details
-                 INNER JOIN (SELECT error_id,
-                                    MAX(timestamp) AS last_occurrence,
+                 INNER JOIN (SELECT MAX(timestamp) AS last_occurrence,
                                     MIN(timestamp) AS first_occurrence
                              FROM events.errors
                              WHERE error_id = %(error_id)s
-                             GROUP BY error_id) AS time_details USING (error_id)
-                 INNER JOIN (SELECT error_id,
-                                    session_id AS last_session_id,
-                                    user_os,
-                                    user_os_version,
-                                    user_browser,
-                                    user_browser_version,
-                                    user_device,
-                                    user_device_type,
-                                    user_uuid
-                             FROM events.errors INNER JOIN public.sessions USING (session_id)
+                             GROUP BY error_id) AS time_details ON (TRUE)
+                 INNER JOIN (SELECT session_id AS last_session_id,
+                                    coalesce(custom_tags, '[]')::jsonb AS custom_tags
+                             FROM events.errors
+                             LEFT JOIN LATERAL (
+                                    SELECT jsonb_agg(jsonb_build_object(errors_tags.key, errors_tags.value)) AS custom_tags
+                                    FROM errors_tags
+                                    WHERE errors_tags.error_id = %(error_id)s
+                                      AND errors_tags.session_id = errors.session_id) AS errors_tags ON (TRUE)
                              WHERE error_id = %(error_id)s
                              ORDER BY errors.timestamp DESC
-                             LIMIT 1) AS last_session_details USING (error_id)
+                             LIMIT 1) AS last_session_details ON (TRUE)
                  INNER JOIN (SELECT jsonb_agg(browser_details) AS browsers_partition
                              FROM (SELECT *
                                    FROM (SELECT user_browser AS name,
@@ -254,15 +251,12 @@ def get_details(project_id, error_id, user_id, **data):
                                                                WHERE {" AND ".join(pg_sub_query30)}) AS chart_details
                                                       ON (TRUE)
                                    GROUP BY timestamp
-                                   ORDER BY timestamp) AS chart_details) AS chart_details30 ON (TRUE)
-                                   LEFT JOIN (SELECT jsonb_agg(jsonb_build_object(errors_tags.key, errors_tags.value))
-                                                FROM errors_tags INNER JOIN errors USING(error_id)
-                                                WHERE {" AND ".join(pg_basic_query)}) AS raw_tags(tags) ON (TRUE);
+                                   ORDER BY timestamp) AS chart_details) AS chart_details30 ON (TRUE);
         """
 
-        print("--------------------")
-        print(cur.mogrify(main_pg_query, params))
-        print("--------------------")
+        # print("--------------------")
+        # print(cur.mogrify(main_pg_query, params))
+        # print("--------------------")
         cur.execute(cur.mogrify(main_pg_query, params))
         row = cur.fetchone()
         if row is None:
