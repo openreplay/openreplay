@@ -48,8 +48,9 @@ export default class CallWindow {
 			return
 		}
 
-		//const baseHref = "https://static.openreplay.com/tracker-assist/test"
+		// const baseHref = "https://static.openreplay.com/tracker-assist/test"
 		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
+		// this.load = fetch(this.callUITemplate || baseHref + '/index2.html')
 		this.load = fetch(this.callUITemplate || baseHref + '/index.html')
 			.then((r) => r.text())
 			.then((text) => {
@@ -102,7 +103,7 @@ export default class CallWindow {
 						const secsFull = ~~(ellapsed / 1000)
 						const mins = ~~(secsFull / 60)
 						const secs = secsFull - mins * 60
-						tsElem.innerText = `${mins}m${secs < 10 ? 0 : ''}${secs}s`
+						tsElem.innerText = `${mins > 0 ? `${mins}m` : ''}${secs < 10 ? 0 : ''}${secs}s`
 					}, 500)
 				}
 
