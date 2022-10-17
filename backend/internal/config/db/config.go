@@ -9,6 +9,7 @@ import (
 type Config struct {
 	common.Config
 	Postgres                   string        `env:"POSTGRES_STRING,required"`
+	ApplicationName            string        `env:"SERVICE_NAME,default='worker'"`
 	ProjectExpirationTimeoutMs int64         `env:"PROJECT_EXPIRATION_TIMEOUT_MS,default=1200000"`
 	LoggerTimeout              int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
 	GroupDB                    string        `env:"GROUP_DB,required"`
@@ -23,5 +24,6 @@ type Config struct {
 func New() *Config {
 	cfg := &Config{}
 	configurator.Process(cfg)
+	cfg.Postgres += "?application_name=" + cfg.ApplicationName
 	return cfg
 }
