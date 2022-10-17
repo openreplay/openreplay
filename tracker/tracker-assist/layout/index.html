@@ -70,9 +70,17 @@
       display: none;
     }
 
+    #audio-btn, #video-btn {
+      color: #cc0000;
+    }
+
     #audio-btn:after {
       text-transform: capitalize;
       content: 'Mute'
+    }
+
+    #audio-btn.muted, #video-btn.off {
+      color: #888;
     }
 
     #audio-btn.muted .bi-mic-mute {
@@ -117,6 +125,10 @@
       padding: 8px 16px;
     }
 
+    #title-span {
+      font-weight: 500;
+    }
+
   </style>
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -130,7 +142,7 @@
     <div id="controls">
       <div class="card-header d-flex justify-content-between">
         <div class="user-info">
-          <span>Call with</span>
+          <span id="title-span">Call with</span>
           <!-- User Name -->
           <span id="agent-name" class="person-name fw-light">Support Agent</span>
         </div>

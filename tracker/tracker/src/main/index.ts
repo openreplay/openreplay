@@ -245,7 +245,7 @@ export default class API {
     this.setMetadata(key, value)
   }
 
-  event(key: string, payload: any, issue = false): void {
+  event(key: string, payload: any = null, issue = false): void {
     if (typeof key === 'string' && this.app !== null) {
       if (issue) {
         return this.issue(key, payload)
@@ -260,7 +260,7 @@ export default class API {
     }
   }
 
-  issue(key: string, payload: any): void {
+  issue(key: string, payload: any = null): void {
     if (typeof key === 'string' && this.app !== null) {
       try {
         payload = JSON.stringify(payload)

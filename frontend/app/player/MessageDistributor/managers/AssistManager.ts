@@ -72,8 +72,8 @@ export const INITIAL_STATE: State = {
 
 const MAX_RECONNECTION_COUNT = 4;
 
-
 export default class AssistManager {
+  private videoStreams: Record<string, MediaStreamTrack> = {}
 
   // TODO: Session type
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
@@ -203,6 +203,14 @@ export default class AssistManager {
             inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
           }
         }
+      })
+      socket.on('videofeed', ({ streamId, enabled }) => {
+        console.log(streamId, enabled)
+        console.log(this.videoStreams)
+        if (this.videoStreams[streamId]) {
+          this.videoStreams[streamId].enabled = enabled
+        }
+        console.log(this.videoStreams)
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
@@ -365,6 +373,7 @@ export default class AssistManager {
           })
 
           call.on('stream', stream => {
+            this.videoStreams[call.peer] = stream.getVideoTracks()[0]
             this.callArgs && this.callArgs.onStream(stream)
           });
           // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
@@ -496,6 +505,9 @@ export default class AssistManager {
 
       call.on('stream', stream => {
         getState().calling !== CallingState.OnCall && update({ calling: CallingState.OnCall })
+
+        this.videoStreams[call.peer] = stream.getVideoTracks()[0]
+
         this.callArgs && this.callArgs.onStream(stream)
       });
       // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
@@ -548,6 +560,12 @@ export default class AssistManager {
       this.annot = null
       update({ annotating: false })
     }
+  }
+
+  toggleVideoLocalStream(enabled: boolean) {
+    this.getPeer().then((peer) => {
+      this.socket.emit('videofeed', { streamId: peer.id, enabled })
+    })
   }
 
   private annot: AnnotationCanvas | null = null

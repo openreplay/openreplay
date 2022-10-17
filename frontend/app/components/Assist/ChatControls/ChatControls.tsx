@@ -19,11 +19,11 @@ function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled, isPresta
     if (!stream) { return; }
     setAudioEnabled(stream.toggleAudio());
   }
-  
+
   const toggleVideo = () => {
     if (!stream) { return; }
     stream.toggleVideo()
-    .then(setVideoEnabled)
+    .then((v) => setVideoEnabled(v))
   }
 
   /** muting user if he is auto connected to the call */

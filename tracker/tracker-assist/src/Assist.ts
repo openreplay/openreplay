@@ -52,6 +52,7 @@ type Agent = {
   //
 }
 
+
 export default class Assist {
   readonly version = 'PACKAGE_VERSION'
 
@@ -247,6 +248,9 @@ export default class Assist {
       callingAgents.set(id, name)
       updateCallerNames()
     })
+    socket.on('videofeed', (id, feedState) => {
+      callUI?.toggleVideoStream(feedState)
+    })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
@@ -316,7 +320,6 @@ export default class Assist {
       })
       Object.values(lStreams).forEach((stream) => { stream.stop() })
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
-
       // UI
       closeCallConfirmWindow()
       if (remoteControl.status === RCStatus.Disabled) {
@@ -338,6 +341,7 @@ export default class Assist {
       this.emit('call_end')
       handleCallEnd()
     }
+    const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
     peer.on('call', (call) => {
       app.debug.log('Incoming call: ', call)
@@ -379,6 +383,7 @@ export default class Assist {
         // UI
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+          callUI.setVideoToggleCallback(updateVideoFeed)
         }
         callUI.showControls(initiateCallEnd)
 
@@ -394,7 +399,7 @@ export default class Assist {
           initiateCallEnd()
         })
         call.on('stream', (rStream) => {
-          callUI?.addRemoteStream(rStream)
+          callUI?.addRemoteStream(rStream, call.peer)
           const onInteraction = () => { // do only if document.hidden ?
             callUI?.playRemote()
             document.removeEventListener('click', onInteraction)

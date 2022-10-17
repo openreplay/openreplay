@@ -661,18 +661,18 @@ class MessageCodec(Codec):
                 state=self.read_string(reader)
             )
 
-        if message_id == 127:
-            return SessionSearch(
-                timestamp=self.read_uint(reader),
-                partition=self.read_uint(reader)
-            )
-
         if message_id == 78:
             return JSException(
                 name=self.read_string(reader),
                 message=self.read_string(reader),
                 payload=self.read_string(reader),
                 metadata=self.read_string(reader)
+            )
+
+        if message_id == 127:
+            return SessionSearch(
+                timestamp=self.read_uint(reader),
+                partition=self.read_uint(reader)
             )
 
         if message_id == 107:
