@@ -8,7 +8,7 @@
   position: relative;
   user-select: none;
   border: solid thin transparent;
-  height: 30px;
+  height: 100%;
   border-radius: 3px;
   margin: 10px;
 
@@ -32,7 +32,7 @@
 
   & [data-can-disable=true] {
     & > li {
-      &:first-child {        
+      &:first-child {
         pointer-events: none;
       }
       &:not(:first-child) {
@@ -44,7 +44,7 @@
   & .menu {
     display: none;
     position: absolute;
-    top: 28px;
+    top: 48px;
     left: -1px;
     background-color: white;
     min-width: 200px;
@@ -59,14 +59,14 @@
     overflow-y: auto;
 
     &::-webkit-scrollbar {
-      width: 2px;      
+      width: 2px;
     }
 
     & li {
       display: flex;
       align-items: center;
       cursor: pointer;
-      list-style-type: none;      
+      list-style-type: none;
       border-bottom: 1px solid $gray-light;
       border-top: none;
       padding: 10px 15px;
@@ -90,7 +90,7 @@
   border: none !important;
   display: flex !important;
   align-items: center;
-  border-radius: 0 !important;  
+  border-radius: 0 !important;
 }
 
 .currentSite {
