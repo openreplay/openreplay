@@ -743,14 +743,6 @@ class Zustand(Message):
         self.state = state
 
 
-class SessionSearch(Message):
-    __id__ = 127
-
-    def __init__(self, timestamp, partition):
-        self.timestamp = timestamp
-        self.partition = partition
-
-
 class JSException(Message):
     __id__ = 78
 
@@ -759,6 +751,14 @@ class JSException(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class SessionSearch(Message):
+    __id__ = 127
+
+    def __init__(self, timestamp, partition):
+        self.timestamp = timestamp
+        self.partition = partition
 
 
 class IOSBatchMeta(Message):
