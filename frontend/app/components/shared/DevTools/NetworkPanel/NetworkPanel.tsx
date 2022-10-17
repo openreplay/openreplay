@@ -218,10 +218,10 @@ function NetworkPanel(props: Props) {
     }
 
     list = list.filter(
-      ({ type, name, status }: any) =>
+      ({ type, name, status, success }: any) =>
         (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
         (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
-        (showOnlyErrors ? parseInt(status) >= 400 : true)
+        (showOnlyErrors ? (parseInt(status) >= 400 || !success) : true)
     );
     return list;
   }, [filter, sortBy, sortAscending, showOnlyErrors, activeTab]);
