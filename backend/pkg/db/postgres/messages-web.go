@@ -10,11 +10,6 @@ import (
 	"openreplay/backend/pkg/url"
 )
 
-// TODO: change messages and replace everywhere to e.Index
-func getSqIdx(messageID uint64) uint {
-	return uint(messageID % math.MaxInt32)
-}
-
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
 	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
 		e.MessageID,
@@ -206,7 +201,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 			$12, $13
 		) ON CONFLICT DO NOTHING`
 	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, getSqIdx(e.MessageID),
+		sessionID, e.Timestamp, e.MessageID,
 		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
 		e.Duration, e.Status < 400,
