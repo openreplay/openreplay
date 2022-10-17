@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
@@ -11,6 +11,7 @@ import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 const PER_PAGE = 10;
+let sessionTimeOut: any = null;
 interface Props {
     loading: boolean;
     list: any;
@@ -53,9 +54,10 @@ function SessionList(props: Props) {
     }, [isBookmark, isVault, activeTab]);
 
     useTimeout(() => {
-        props.fetchSessions(null, true);
+        if (!document.hidden) {
+            props.fetchSessions(null, true);
+        }
     }, AUTOREFRESH_INTERVAL);
-
 
     useEffect(() => {
         // handle scroll position
@@ -70,6 +72,26 @@ function SessionList(props: Props) {
             props.setScrollPosition(window.scrollY);
         };
     }, []);
+
+    const refreshOnActive = () => {
+        if (document.hidden && !!sessionTimeOut) {
+            clearTimeout(sessionTimeOut);
+            return;
+        }
+       
+        sessionTimeOut = setTimeout(function() {
+            if (!document.hidden) {
+                props.fetchSessions(null, true);
+            }
+        }, 5000)
+    }
+
+    useEffect(() => {
+        document.addEventListener("visibilitychange", refreshOnActive);
+        return () => {
+            document.removeEventListener("visibilitychange", refreshOnActive);
+        }
+    }, [])
 
     const onUserClick = (userId: any) => {
         if (userId) {
