@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 )
 
@@ -26,17 +25,8 @@ func generateRandomBytes(size int) []byte {
 
 func fillLastBlock(rawText []byte, blockSize int) []byte {
 	padding := blockSize - len(rawText)%blockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(rawText, padtext...)
-	// Add {1,0} right after the end of text
-	//rawText = append(rawText, byte(1))
-	//log.Println(rawText)
-	//// Calculate the number of bytes we need to add to fill the last block of data
-	//paddingSize := blockSize - len(rawText)%blockSize
-	//// Generating zeros for last block
-	//paddingText := bytes.Repeat([]byte{byte(0)}, paddingSize)
-	//log.Println(paddingText)
-	//return append(rawText, paddingText...)
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(rawText, padText...)
 }
 
 func encryptData(data, fullKey []byte) ([]byte, error) {
@@ -46,7 +36,6 @@ func encryptData(data, fullKey []byte) ([]byte, error) {
 	key, iv := fullKey[:16], fullKey[16:]
 	// Fill the last block of data by zeros
 	paddedData := fillLastBlock(data, aes.BlockSize)
-	log.Println(paddedData)
 	// Create new AES cipher with CBC encryptor
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -57,7 +46,7 @@ func encryptData(data, fullKey []byte) ([]byte, error) {
 	ciphertext := make([]byte, len(paddedData))
 	mode.CryptBlocks(ciphertext, paddedData)
 	// Return encrypted data
-	return ciphertext, nil //[]byte(hex.EncodeToString(ciphertext)), nil
+	return ciphertext, nil
 }
 
 func decryptData(data, fullKey []byte) ([]byte, error) {
