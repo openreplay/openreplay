@@ -232,15 +232,15 @@ def get_details_deprecated(project_id, error_id, user_id, **data):
     ch_basic_query_session = ch_basic_query[:]
     ch_basic_query_session.append("sessions.project_id = toUInt16(%(project_id)s)")
     with ch_client.ClickHouseClient() as ch:
-        # data["startDate24"] = TimeUTC.now(-1)
-        # data["endDate24"] = TimeUTC.now()
-        # data["startDate30"] = TimeUTC.now(-30)
-        # data["endDate30"] = TimeUTC.now()
-        # TODO: remove time limits
-        data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
-        data["endDate24"] = 1650470729000
-        data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
-        data["endDate30"] = 1650470729000
+        data["startDate24"] = TimeUTC.now(-1)
+        data["endDate24"] = TimeUTC.now()
+        data["startDate30"] = TimeUTC.now(-30)
+        data["endDate30"] = TimeUTC.now()
+        # # TODO: remove time limits
+        # data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
+        # data["endDate24"] = 1650470729000
+        # data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
+        # data["endDate30"] = 1650470729000
         density24 = int(data.get("density24", 24))
         step_size24 = __get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
@@ -448,15 +448,15 @@ def get_details(project_id, error_id, user_id, **data):
     # ch_basic_query_session = ch_basic_query[:]
     # ch_basic_query_session.append("sessions.project_id = toUInt16(%(project_id)s)")
     with ch_client.ClickHouseClient() as ch:
-        # data["startDate24"] = TimeUTC.now(-1)
-        # data["endDate24"] = TimeUTC.now()
-        # data["startDate30"] = TimeUTC.now(-30)
-        # data["endDate30"] = TimeUTC.now()
-        # TODO: remove time limits
-        data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
-        data["endDate24"] = 1650470729000
-        data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
-        data["endDate30"] = 1650470729000
+        data["startDate24"] = TimeUTC.now(-1)
+        data["endDate24"] = TimeUTC.now()
+        data["startDate30"] = TimeUTC.now(-30)
+        data["endDate30"] = TimeUTC.now()
+        # # TODO: remove time limits
+        # data["startDate24"] = 1650470729000 - 24 * 60 * 60 * 1000
+        # data["endDate24"] = 1650470729000
+        # data["startDate30"] = 1650470729000 - 30 * 60 * 60 * 1000
+        # data["endDate30"] = 1650470729000
         density24 = int(data.get("density24", 24))
         step_size24 = __get_step_size(data["startDate24"], data["endDate24"], density24)
         density30 = int(data.get("density30", 30))
@@ -485,27 +485,32 @@ def get_details(project_id, error_id, user_id, **data):
                                       user_os_version,
                                       user_device_type,
                                       user_device,
-                                      user_country
+                                      user_country,
+                                      error_tags_keys, 
+                                      error_tags_values
                                FROM {MAIN_ERR_SESS_TABLE} AS errors
                                WHERE {" AND ".join(ch_basic_query)}
                                )
         SELECT %(error_id)s AS error_id, name, message,users,
                 first_occurrence,last_occurrence,last_session_id,
                 sessions,browsers_partition,os_partition,device_partition,
-                country_partition,chart24,chart30
+                country_partition,chart24,chart30,custom_tags
         FROM (SELECT error_id,
                      name,
-                     message,
-                     COUNT(DISTINCT user_id)    AS users,
-                     COUNT(DISTINCT session_id) AS sessions
+                     message
               FROM pre_processed
-              WHERE datetime >= toDateTime(%(startDate30)s / 1000)
-                AND datetime <= toDateTime(%(endDate30)s / 1000)
-              GROUP BY error_id, name, message) AS details
+              LIMIT 1) AS details
+                  INNER JOIN (SELECT COUNT(DISTINCT user_id)    AS users,
+                                     COUNT(DISTINCT session_id) AS sessions
+                              FROM pre_processed
+                              WHERE datetime >= toDateTime(%(startDate30)s / 1000)
+                                AND datetime <= toDateTime(%(endDate30)s / 1000)
+                              ) AS last_month_stats ON TRUE
                   INNER JOIN (SELECT toUnixTimestamp(max(datetime)) * 1000 AS last_occurrence,
                                      toUnixTimestamp(min(datetime)) * 1000 AS first_occurrence
                               FROM pre_processed) AS time_details ON TRUE
-                  INNER JOIN (SELECT session_id AS last_session_id
+                  INNER JOIN (SELECT session_id AS last_session_id,
+                                    arrayMap((key, value)->(map(key, value)), error_tags_keys, error_tags_values) AS custom_tags
                               FROM pre_processed
                               ORDER BY datetime DESC
                               LIMIT 1) AS last_session_details ON TRUE
