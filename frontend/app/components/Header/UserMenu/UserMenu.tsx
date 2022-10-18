@@ -27,12 +27,12 @@ function UserMenu(props: RouteComponentProps<Props>) {
       className={cn(className, 'absolute right-0 top-0 bg-white border mt-14')}
     >
       <div className="flex items-center p-3">
-        <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white">
+        <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white shrink-0">
           {getInitials(account.name)}
         </div>
-        <div>
+        <div className="overflow-hidden">
           <div className="color-teal font-medium leading-none">{account.name}</div>
-          <div className="color-gray-medium">{account.superAdmin ? 'Super Admin' : (account.admin ? 'Admin' : 'Member') } - {account.email}</div>
+          <div className="overflow-hidden whitespace-nowrap color-gray-medium text-ellipsis">{account.superAdmin ? 'Super Admin' : (account.admin ? 'Admin' : 'Member') } - {account.email}</div>
         </div>
       </div>
       <div className="border-t flex items-center hover:bg-active-blue p-3" onClick={onAccountClick}>
