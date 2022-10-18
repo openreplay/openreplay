@@ -43,7 +43,7 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
         ENVIRONMENT: staging
       run: |
         cd api
