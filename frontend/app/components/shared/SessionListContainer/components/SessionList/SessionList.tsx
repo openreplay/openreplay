@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
-import { NoContent, Loader, Pagination, Button } from 'UI';
+import { NoContent, Loader, Pagination, Button, Icon } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import useTimeout from 'App/hooks/useTimeout';
@@ -78,7 +78,7 @@ function SessionList(props: Props) {
             clearTimeout(sessionTimeOut);
             return;
         }
-       
+
         sessionTimeOut = setTimeout(function() {
             if (!document.hidden) {
                 props.fetchSessions(null, true);
@@ -108,7 +108,12 @@ function SessionList(props: Props) {
                     <div className="flex items-center justify-center flex-col">
                         <AnimatedSVG name={NO_CONTENT.icon} size={170} />
                         <div className="mt-2" />
-                        <div className="text-center text-gray-600">{NO_CONTENT.message}</div>
+                        <div className="text-center text-gray-600 relative">
+                            {NO_CONTENT.message}
+                            <div style={{ position: 'absolute', right: -140, top: -115 }}>
+                                <Icon name="list-arrow" size={130} />
+                            </div>
+                        </div>
                     </div>
                 }
                 subtext={
