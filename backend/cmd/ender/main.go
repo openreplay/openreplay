@@ -80,11 +80,12 @@ func main() {
 					return true
 				}
 				if cfg.UseEncryption {
-					key := storage.GenerateEncryptionKey()
-					if err := pg.InsertSessionEncryptionKey(sessionID, key); err != nil {
-						log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
-					} else {
-						msg.EncryptionKey = string(key)
+					if key := storage.GenerateEncryptionKey(); key != nil {
+						if err := pg.InsertSessionEncryptionKey(sessionID, key); err != nil {
+							log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
+						} else {
+							msg.EncryptionKey = string(key)
+						}
 					}
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {

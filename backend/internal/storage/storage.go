@@ -123,7 +123,7 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		start = time.Now()
 		// Encrypt session file if we have encryption key
 		if encryptionKey != "" {
-			encryptedData, err = encryptData(s.startBytes[:nRead], []byte(encryptionKey))
+			encryptedData, err = EncryptData(s.startBytes[:nRead], []byte(encryptionKey))
 			if err != nil {
 				log.Printf("can't encrypt data: %s", err)
 				encryptedData = s.startBytes[:nRead]
@@ -156,7 +156,7 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 
 			// Encrypt session file if we have encryption key
 			if encryptionKey != "" {
-				encryptedData, err = encryptData(fileData, []byte(encryptionKey))
+				encryptedData, err = EncryptData(fileData, []byte(encryptionKey))
 				if err != nil {
 					log.Printf("can't encrypt data: %s", err)
 					encryptedData = fileData
@@ -190,7 +190,7 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 
 		// Encrypt session file if we have encryption key
 		if encryptionKey != "" {
-			encryptedData, err = encryptData(fileData, []byte(encryptionKey))
+			encryptedData, err = EncryptData(fileData, []byte(encryptionKey))
 			if err != nil {
 				log.Printf("can't encrypt data: %s", err)
 				encryptedData = fileData
