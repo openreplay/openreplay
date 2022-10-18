@@ -49,7 +49,7 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{env.GITHUB_REF_NAME}}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
         #
@@ -95,7 +95,7 @@ jobs:
 
     - name: Deploying to kuberntes
       env:
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{env.GITHUB_REF_NAME}}_${{ github.sha }}
       run: |
         #
         # Deploying image to environment.

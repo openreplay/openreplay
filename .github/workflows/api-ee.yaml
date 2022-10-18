@@ -43,7 +43,7 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.sha }}-ee
+        IMAGE_TAG: ${{env.GITHUB_REF_NAME}}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
         cd api
@@ -91,7 +91,7 @@ jobs:
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         # We're not passing -ee flag, because helm will add that.
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{env.GITHUB_REF_NAME}}_${{ github.sha }}
         ENVIRONMENT: staging
 
     # - name: Debug Job
