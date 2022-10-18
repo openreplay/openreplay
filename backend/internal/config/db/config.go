@@ -3,6 +3,7 @@ package db
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"strings"
 	"time"
 )
 
@@ -24,6 +25,13 @@ type Config struct {
 func New() *Config {
 	cfg := &Config{}
 	configurator.Process(cfg)
-	cfg.Postgres += "?application_name=" + cfg.ApplicationName
+	if !strings.Contains(cfg.Postgres, "application_name") {
+		if strings.Contains(cfg.Postgres, "?") {
+			cfg.Postgres += "&"
+		} else {
+			cfg.Postgres += "?"
+		}
+		cfg.Postgres += "application_name=" + cfg.ApplicationName
+	}
 	return cfg
 }
