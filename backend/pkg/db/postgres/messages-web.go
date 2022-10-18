@@ -1,10 +1,9 @@
 package postgres
 
 import (
-	"encoding/json"
 	"log"
 
-	"openreplay/backend/pkg/hashid"
+	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
@@ -88,83 +87,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebJSException(projectID uint32, m *JSException) error {
-	messageID := m.Meta().Index
-	if err := conn.insertWebErrorEvent(m.SessionID(), projectID, &ErrorEvent{ // TODO: get rid of ErrorEvent message
-		MessageID: messageID,
-		Timestamp: uint64(m.Meta().Timestamp),
-		Source:    "js_exception",
-		Name:      m.Name,
-		Message:   m.Message,
-		Payload:   m.Payload,
-	}); err != nil {
-		return err
-	}
-	return conn.insertWebErrorMetadata(m.SessionID(), messageID, m.Metadata)
-}
-
-func (conn *Conn) InsertWebIntegrationEvent(projectID uint32, m *IntegrationEvent) error {
-	return conn.insertWebErrorEvent(m.SessionID(), projectID, &ErrorEvent{
-		MessageID: m.Meta().Index, // This will be always 0 here since it's coming from backend TODO: find another way to index
-		Timestamp: m.Timestamp,
-		Source:    m.Source,
-		Name:      m.Name,
-		Message:   m.Message,
-		Payload:   m.Payload,
-	})
-}
-
-func unquote(s string) string {
-	if s[0] == '"' {
-		return s[1 : len(s)-1]
-	}
-	return s
-}
-func parseTags(tagsJSON string) (tags map[string]*string, err error) {
-	if tagsJSON[0] == '[' {
-		var tagsArr []json.RawMessage
-		if err = json.Unmarshal([]byte(tagsJSON), &tagsArr); err != nil {
-			return
-		}
-
-		tags = make(map[string]*string)
-		for _, keyBts := range tagsArr {
-			tags[unquote(string(keyBts))] = nil
-		}
-	} else if tagsJSON[0] == '{' {
-		var tagsObj map[string]json.RawMessage
-		if err = json.Unmarshal([]byte(tagsJSON), &tagsObj); err != nil {
-			return
-		}
-
-		tags = make(map[string]*string)
-		for key, valBts := range tagsObj {
-			val := unquote(string(valBts))
-			tags[key] = &val
-		}
-	}
-	return
-}
-
-func (conn *Conn) insertWebErrorMetadata(sessionID uint64, messageID uint64, mdJSON string) error {
-	tags, err := parseTags(mdJSON)
-	if err != nil {
-		return err
-	}
-
-	sqlRequest := `
-		INSERT INTO public.errors_tags (
-			session_id, message_id, key, value
-		) VALUES (
-			$1, $2, $3,
-		) ON CONFLICT DO NOTHING`
-	for key, value := range tags {
-		conn.batchQueue(sessionID, sqlRequest, sessionID, messageID, key, value)
-	}
-	return nil
-}
-
-func (conn *Conn) insertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) (err error) {
+func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) (err error) {
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
@@ -176,7 +99,7 @@ func (conn *Conn) insertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 			}
 		}
 	}()
-	errorID := hashid.ErrorID(projectID, e)
+	errorID := e.ID(projectID)
 
 	if err = tx.exec(`
 		INSERT INTO errors
@@ -206,6 +129,18 @@ func (conn *Conn) insertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		return err
 	}
 	err = tx.commit()
+
+	// Insert tags
+	sqlRequest := `
+		INSERT INTO public.errors_tags (
+			session_id, message_id, error_id, key, value
+		) VALUES (
+			$1, $2, $3,
+		) ON CONFLICT DO NOTHING`
+	for key, value := range e.Tags {
+		conn.batchQueue(sessionID, sqlRequest, sessionID, e.MessageID, errorID, key, value)
+	}
+
 	return
 }
 

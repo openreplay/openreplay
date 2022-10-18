@@ -206,14 +206,14 @@ message 33, 'ClickEvent', :tracker => false, :replayer => false do
   string 'Label'
   string 'Selector'
 end
-message 34, 'ErrorEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Source'
-  string 'Name'
-  string 'Message'
-  string 'Payload'
-end
+# message 34, 'ErrorEvent', :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'Source'
+#   string 'Name'
+#   string 'Message'
+#   string 'Payload'
+# end
 message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'

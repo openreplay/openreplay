@@ -74,8 +74,6 @@ const (
 
 	MsgClickEvent = 33
 
-	MsgErrorEvent = 34
-
 	MsgResourceEvent = 35
 
 	MsgCustomEvent = 36
@@ -1494,48 +1492,6 @@ func (msg *ClickEvent) Decode() Message {
 
 func (msg *ClickEvent) TypeID() int {
 	return 33
-}
-
-type ErrorEvent struct {
-	message
-	MessageID uint64
-	Timestamp uint64
-	Source    string
-	Name      string
-	Message   string
-	Payload   string
-}
-
-func (msg *ErrorEvent) Encode() []byte {
-	buf := make([]byte, 61+len(msg.Source)+len(msg.Name)+len(msg.Message)+len(msg.Payload))
-	buf[0] = 34
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteString(msg.Source, buf, p)
-	p = WriteString(msg.Name, buf, p)
-	p = WriteString(msg.Message, buf, p)
-	p = WriteString(msg.Payload, buf, p)
-	return buf[:p]
-}
-
-func (msg *ErrorEvent) EncodeWithIndex() []byte {
-	encoded := msg.Encode()
-	if IsIOSType(msg.TypeID()) {
-		return encoded
-	}
-	data := make([]byte, len(encoded)+8)
-	copy(data[8:], encoded[:])
-	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
-	return data
-}
-
-func (msg *ErrorEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ErrorEvent) TypeID() int {
-	return 34
 }
 
 type ResourceEvent struct {

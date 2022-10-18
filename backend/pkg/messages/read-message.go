@@ -586,30 +586,6 @@ func DecodeClickEvent(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeErrorEvent(reader io.Reader) (Message, error) {
-	var err error = nil
-	msg := &ErrorEvent{}
-	if msg.MessageID, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.Source, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Name, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Message, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Payload, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeResourceEvent(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &ResourceEvent{}
@@ -1842,9 +1818,6 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 33:
 		return DecodeClickEvent(reader)
-
-	case 34:
-		return DecodeErrorEvent(reader)
 
 	case 35:
 		return DecodeResourceEvent(reader)

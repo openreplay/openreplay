@@ -23,12 +23,3 @@ func IOSCrashID(projectID uint32, crash *messages.IOSCrash) string {
 	hash.Write([]byte(crash.Stacktrace))
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
-
-func ErrorID(projectID uint32, m *messages.ErrorEvent) string {
-	hash := fnv.New128a()
-	hash.Write([]byte(m.Source))
-	hash.Write([]byte(m.Name))
-	hash.Write([]byte(m.Message))
-	hash.Write([]byte(m.Payload))
-	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
-}
