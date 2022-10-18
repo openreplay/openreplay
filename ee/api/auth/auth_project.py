@@ -12,7 +12,6 @@ class ProjectAuthorizer:
         self.project_identifier: str = project_identifier
 
     async def __call__(self, request: Request) -> None:
-        return
         if len(request.path_params.keys()) == 0 or request.path_params.get(self.project_identifier) is None:
             return
         current_user: schemas.CurrentContext = await OR_context(request)
