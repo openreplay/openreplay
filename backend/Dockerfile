@@ -22,6 +22,7 @@ FROM alpine AS entrypoint
 RUN apk add --no-cache ca-certificates
 RUN adduser -u 1001 openreplay -D
 
+ARG SERVICE_NAME
 ENV TZ=UTC \
     FS_ULIMIT=1000 \
     FS_DIR=/mnt/efs \
@@ -59,11 +60,11 @@ ENV TZ=UTC \
     BEACON_SIZE_LIMIT=1000000 \
     USE_FAILOVER=true \
     GROUP_STORAGE_FAILOVER=failover \
-    TOPIC_STORAGE_FAILOVER=storage-failover
+    TOPIC_STORAGE_FAILOVER=storage-failover \
+    SERVICE_NAME=$SERVICE_NAME
 
 
 
-ARG SERVICE_NAME
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
   wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi
