@@ -2,7 +2,6 @@ package clickhouse
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -12,7 +11,6 @@ import (
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -139,7 +137,7 @@ var batches = map[string]string{
 	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
-	"issues":        "INSERT INTO experimental.issues (project_id, issue_id, type, context_string, context_keys, context_values) VALUES (?, ?, ?, ?, ?, ?)",
+	"issues":        "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 }
 
 func (c *connectorImpl) Prepare() error {
@@ -180,52 +178,16 @@ func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueE
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
 	}
-	keys, values := contextParser(msg.Context)
 	if err := c.batches["issues"].Append(
 		uint16(session.ProjectID),
 		issueID,
 		msg.Type,
 		msg.ContextString,
-		keys,
-		values,
 	); err != nil {
 		c.checkError("issues", err)
 		return fmt.Errorf("can't append to issues batch: %s", err)
 	}
 	return nil
-}
-
-func contextParser(context string) ([]string, []*string) {
-	if context == "" || strings.TrimSpace(context) == "" {
-		return []string{}, []*string{}
-	}
-	contextMap := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(context), &contextMap); err != nil {
-		log.Printf("can't parse context, err: %s", err)
-		return []string{}, []*string{}
-	}
-	keys, values := make([]string, 0, len(contextMap)), make([]*string, 0, len(contextMap))
-	for k, v := range contextMap {
-		keys = append(keys, k)
-		var value string
-		switch val := v.(type) {
-		case nil:
-			value = ""
-		case int:
-			value = strconv.Itoa(val)
-		case string:
-			value = val
-		default:
-			raw, err := json.Marshal(v)
-			if err != nil {
-				log.Println("can't marshal context value:", err)
-				continue
-			}
-			value = string(raw)
-		}
-		values = append(values, nullableString(value))
-	}
-	return keys, values
 }
 
 func (c *connectorImpl) InsertWebSession(session *types.Session) error {
