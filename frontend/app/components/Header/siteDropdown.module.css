@@ -1,15 +1,20 @@
 .wrapper {
   display: flex;
   align-items: center;
-  border-left: solid thin $gray-light !important;
+  /* border-left: solid thin $gray-light !important; */
   padding: 10px 10px;
   min-width: 180px;
   justify-content: flex-start;
   position: relative;
   user-select: none;
-  
+  border: solid thin transparent;
+  height: 100%;
+  border-radius: 3px;
+  margin: 10px;
+
   &:hover {
-    background-color: $gray-lightest;
+    background-color: $active-blue;
+    /* border: solid thin $active-blue-border; */
     & .drodownIcon {
       transform: rotate(180deg);
       transition: all 0.2s;
@@ -27,7 +32,7 @@
 
   & [data-can-disable=true] {
     & > li {
-      &:first-child {        
+      &:first-child {
         pointer-events: none;
       }
       &:not(:first-child) {
@@ -39,11 +44,12 @@
   & .menu {
     display: none;
     position: absolute;
-    top: 50px;
+    top: 48px;
     left: -1px;
     background-color: white;
     min-width: 200px;
     z-index: 2;
+    border-radius: 3px;
     border: 1px solid $gray-light;
   }
 
@@ -53,14 +59,14 @@
     overflow-y: auto;
 
     &::-webkit-scrollbar {
-      width: 2px;      
+      width: 2px;
     }
 
     & li {
       display: flex;
       align-items: center;
       cursor: pointer;
-      list-style-type: none;      
+      list-style-type: none;
       border-bottom: 1px solid $gray-light;
       border-top: none;
       padding: 10px 15px;
@@ -68,9 +74,13 @@
       &:hover {
         background-color: $gray-lightest;
         transition: all 0.2s;
+        color: $teal;
+        svg {
+          fill: $teal;
+        }
       }
       &:first-child {
-        border-top: 1px solid $gray-light;
+        /* border-top: 1px solid $gray-light; */
       }
     }
   }
@@ -80,7 +90,7 @@
   border: none !important;
   display: flex !important;
   align-items: center;
-  border-radius: 0 !important;  
+  border-radius: 0 !important;
 }
 
 .currentSite {

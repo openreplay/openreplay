@@ -45,11 +45,6 @@ export type Options = Partial<
   __DISABLE_SECURE_MODE?: boolean
 }
 
-interface ErrorExtra {
-  tags: string[]
-  meta: Record<string, string | number>
-}
-
 const DOCS_SETUP = '/installation/setup-or'
 
 function processOptions(obj: any): obj is Options {
@@ -250,7 +245,7 @@ export default class API {
     this.setMetadata(key, value)
   }
 
-  event(key: string, payload: any, issue = false): void {
+  event(key: string, payload: any = null, issue = false): void {
     if (typeof key === 'string' && this.app !== null) {
       if (issue) {
         return this.issue(key, payload)
@@ -265,7 +260,7 @@ export default class API {
     }
   }
 
-  issue(key: string, payload: any): void {
+  issue(key: string, payload: any = null): void {
     if (typeof key === 'string' && this.app !== null) {
       try {
         payload = JSON.stringify(payload)
@@ -278,8 +273,7 @@ export default class API {
 
   handleError = (
     e: Error | ErrorEvent | PromiseRejectionEvent,
-    tags?: string[],
-    metadata?: Record<string, any>,
+    metadata: Record<string, any> = {},
   ) => {
     if (this.app === null) {
       return

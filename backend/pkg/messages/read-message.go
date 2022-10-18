@@ -438,20 +438,19 @@ func DecodePageRenderTiming(reader io.Reader) (Message, error) {
     		return msg, err
 }
 
-
-func DecodeJSException(reader io.Reader) (Message, error) {
-    var err error = nil
-    msg := &JSException{}
-    		if msg.Name, err = ReadString(reader); err != nil {
-    			return nil, err
-    		}
-		if msg.Message, err = ReadString(reader); err != nil {
-    			return nil, err
-    		}
-		if msg.Payload, err = ReadString(reader); err != nil {
-    			return nil, err
-    		}
-    		return msg, err
+func DecodeJSExceptionDeprecated(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &JSExceptionDeprecated{}
+	if msg.Name, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Message, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Payload, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
 }
 
 
@@ -1382,22 +1381,9 @@ func DecodeZustand(reader io.Reader) (Message, error) {
     		return msg, err
 }
 
-
-func DecodeSessionSearch(reader io.Reader) (Message, error) {
-    var err error = nil
-    msg := &SessionSearch{}
-    		if msg.Timestamp, err = ReadUint(reader); err != nil {
-    			return nil, err
-    		}
-		if msg.Partition, err = ReadUint(reader); err != nil {
-    			return nil, err
-    		}
-    		return msg, err
-}
-
-func DecodeExceptionWithMeta(reader io.Reader) (Message, error) {
+func DecodeJSException(reader io.Reader) (Message, error) {
 	var err error = nil
-	msg := &ExceptionWithMeta{}
+	msg := &JSException{}
 	if msg.Name, err = ReadString(reader); err != nil {
 		return nil, err
 	}
@@ -1408,6 +1394,18 @@ func DecodeExceptionWithMeta(reader io.Reader) (Message, error) {
 		return nil, err
 	}
 	if msg.Metadata, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSessionSearch(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &SessionSearch{}
+	if msg.Timestamp, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Partition, err = ReadUint(reader); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1917,7 +1915,7 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 		return DecodePageRenderTiming(reader)
 
 	case 25:
-		return DecodeJSException(reader)
+		return DecodeJSExceptionDeprecated(reader)
 
 	case 26:
 		return DecodeIntegrationEvent(reader)
@@ -2066,11 +2064,11 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 	case 79:
 		return DecodeZustand(reader)
 
+	case 78:
+		return DecodeJSException(reader)
+
 	case 127:
 		return DecodeSessionSearch(reader)
-
-	case 78:
-		return DecodeExceptionWithMeta(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)

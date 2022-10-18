@@ -93,7 +93,8 @@ function FilterValue(props: Props) {
                     <FilterValueDropdown
                         // search={true}
                         value={value}
-                        filter={filter}
+                        placeholder={filter.placeholder}
+                        // filter={filter}
                         options={filter.options}
                         onChange={({ value }) => onChange(null, { value }, valueIndex)}
                     />
@@ -106,6 +107,7 @@ function FilterValue(props: Props) {
                         // multiple={true}
                         value={value}
                         // filter={filter}
+                        placeholder={filter.placeholder}
                         options={filter.options}
                         onChange={({ value }) => onChange(null, value, valueIndex)}
                         onAddValue={onAddValue}
@@ -164,7 +166,7 @@ function FilterValue(props: Props) {
                         endpoint="/events/search"
                         params={getParms(filter.key)}
                         headerText={''}
-                        // placeholder={''}
+                        placeholder={filter.placeholder}
                         onSelect={(e, item) => onChange(e, item, valueIndex)}
                         icon={filter.icon}
                     />

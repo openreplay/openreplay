@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
@@ -7,9 +7,11 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import useTimeout from 'App/hooks/useTimeout';
 import { numberWithCommas } from 'App/utils';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 const PER_PAGE = 10;
+let sessionTimeOut: any = null;
 interface Props {
     loading: boolean;
     list: any;
@@ -23,6 +25,7 @@ interface Props {
     updateCurrentPage: (page: number) => void;
     setScrollPosition: (scrollPosition: number) => void;
     fetchSessions: (filters: any, force: boolean) => void;
+    fetchMetadata: () => void;
     activeTab: any;
     isEnterprise?: boolean;
 }
@@ -51,10 +54,11 @@ function SessionList(props: Props) {
     }, [isBookmark, isVault, activeTab]);
 
     useTimeout(() => {
-        props.fetchSessions(null, true);
+        if (!document.hidden) {
+            props.fetchSessions(null, true);
+        }
     }, AUTOREFRESH_INTERVAL);
-    
-    
+
     useEffect(() => {
         // handle scroll position
         const { scrollY } = props;
@@ -62,11 +66,32 @@ function SessionList(props: Props) {
         if (total === 0) {
             props.fetchSessions(null, true);
         }
-        
+        props.fetchMetadata()
+
         return () => {
             props.setScrollPosition(window.scrollY);
         };
     }, []);
+
+    const refreshOnActive = () => {
+        if (document.hidden && !!sessionTimeOut) {
+            clearTimeout(sessionTimeOut);
+            return;
+        }
+       
+        sessionTimeOut = setTimeout(function() {
+            if (!document.hidden) {
+                props.fetchSessions(null, true);
+            }
+        }, 5000)
+    }
+
+    useEffect(() => {
+        document.addEventListener("visibilitychange", refreshOnActive);
+        return () => {
+            document.removeEventListener("visibilitychange", refreshOnActive);
+        }
+    }, [])
 
     const onUserClick = (userId: any) => {
         if (userId) {
@@ -148,5 +173,5 @@ export default connect(
         activeTab: state.getIn(['search', 'activeTab']),
         isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     }),
-    { updateCurrentPage, addFilterByKeyAndValue, setScrollPosition, fetchSessions }
+    { updateCurrentPage, addFilterByKeyAndValue, setScrollPosition, fetchSessions, fetchMetadata }
 )(SessionList);

@@ -28,6 +28,7 @@ import AssistManager from './managers/AssistManager';
 
 import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
+import { decryptSessionBytes } from './network/crypto';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
@@ -206,19 +207,27 @@ export default class MessageDistributor extends StatedScreen {
     toast.error('Error requesting a session file')
   }
   private onFileReadFinally = () => {
+    this.incomingMessages
+      .filter(msg => msg.time >= this.lastMessageInFileTime)
+      .forEach(msg => this.distributeMessage(msg, 0))
+
     this.waitingForFiles = false
     this.setMessagesLoading(false)
   }
 
   private loadMessages() { 
-    const createNewParser = () => {
+    // TODO: reuseable decryptor instance
+    const createNewParser = (shouldDecrypt=true) => {
+      const decrypt = shouldDecrypt && this.session.fileKey
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
+        : (b: Uint8Array) => Promise.resolve(b)
       // Each time called - new fileReader created
       const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
-      return (b: Uint8Array) => {
+      return (b: Uint8Array) => decrypt(b).then(b => {
         fileReader.append(b)
         this.parseAndDistributeMessages(fileReader)
         this.setMessagesLoading(false)
-      }
+      })
     }
     this.setMessagesLoading(true)
     this.waitingForFiles = true
@@ -226,10 +235,10 @@ export default class MessageDistributor extends StatedScreen {
     loadFiles(this.session.domURL, createNewParser())
     .catch(() => // do if  only the first file missing (404) (?)
       requestEFSDom(this.session.sessionId)
-        .then(createNewParser())
+        .then(createNewParser(false))
         // Fallback to back Compatability with mobsUrl
         .catch(e =>
-          loadFiles(this.session.mobsUrl, createNewParser())
+          loadFiles(this.session.mobsUrl, createNewParser(false))
         )
     )
     .then(this.onFileReadSuccess)
@@ -241,7 +250,7 @@ export default class MessageDistributor extends StatedScreen {
     loadFiles(this.session.devtoolsURL, createNewParser())
     .catch(() =>
       requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser())
+        .then(createNewParser(false))
     )
     //.catch() // not able to download the devtools file
     .finally(() => update({ devtoolsLoading: false }))
@@ -258,7 +267,6 @@ export default class MessageDistributor extends StatedScreen {
       });
 
     // assist will pause and skip messages to prevent timestamp related errors
-    this.assistManager.toggleTimeTravelJump()
     this.reloadMessageManagers()
     this.windowNodeCounter.reset()
 
@@ -271,9 +279,6 @@ export default class MessageDistributor extends StatedScreen {
       .then(this.onFileReadSuccess)
       .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally)
-      .then(() => {
-        this.assistManager.toggleTimeTravelJump()
-      })
   }
 
   private reloadMessageManagers() {
@@ -384,14 +389,23 @@ export default class MessageDistributor extends StatedScreen {
     return { ...msg, ...decoded };
   }
 
-  /* Binded */
-  distributeMessage(msg: Message, index: number): void {
+  private readonly incomingMessages: Message[] = []
+  appendMessage(msg: Message, index: number) {
+    // @ts-ignore
+     //       msg.time = this.md.getLastRecordedMessageTime() + msg.time\
+     //TODO: put index in message type
+    this.incomingMessages.push(msg)
+    if (!this.waitingForFiles) {
+      this.distributeMessage(msg, index)
+    }
+  }
+
+  private distributeMessage(msg: Message, index: number): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     if (visualChanges.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
-    //const index = i + index; //?
     let decoded;
     const time = msg.time;
     switch (msg.tp) {
@@ -529,9 +543,7 @@ export default class MessageDistributor extends StatedScreen {
     super.clean();
     update(INITIAL_STATE);
     this.assistManager.clear();
+    this.incomingMessages.length = 0
   }
 
-  getLastRecordedMessageTime(): number {
-    return this.lastMessageInFileTime;
-  }
 }

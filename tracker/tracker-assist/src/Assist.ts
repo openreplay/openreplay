@@ -18,21 +18,22 @@ import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 type StartEndCallback = () => ((()=>Record<string, unknown>) | void)
 
 export interface Options {
-  onAgentConnect: StartEndCallback,
-  onCallStart: StartEndCallback,
-  onRemoteControlStart: StartEndCallback,
-  session_calling_peer_key: string,
-  session_control_peer_key: string,
-  callConfirm: ConfirmOptions,
-  controlConfirm: ConfirmOptions,
+  onAgentConnect: StartEndCallback;
+  onCallStart: StartEndCallback;
+  onRemoteControlStart: StartEndCallback;
+  session_calling_peer_key: string;
+  session_control_peer_key: string;
+  callConfirm: ConfirmOptions;
+  controlConfirm: ConfirmOptions;
 
   // @depricated
-  confirmText?: string,
+  confirmText?: string;
   // @depricated
-  confirmStyle?: Properties,
+  confirmStyle?: Properties;
 
-  config: RTCConfiguration,
-  callUITemplate?: string,
+  config: RTCConfiguration;
+  serverURL: string
+  callUITemplate?: string;
 }
 
 
@@ -51,6 +52,7 @@ type Agent = {
   //name?: string
   //
 }
+
 
 export default class Assist {
   readonly version = 'PACKAGE_VERSION'
@@ -71,6 +73,7 @@ export default class Assist {
         session_calling_peer_key: '__openreplay_calling_peer',
         session_control_peer_key: '__openreplay_control_peer',
         config: null,
+        serverURL: null,
         onCallStart: ()=>{},
         onAgentConnect: ()=>{},
         onRemoteControlStart: ()=>{},
@@ -125,7 +128,18 @@ export default class Assist {
   private readonly setCallingState = (newState: CallingState): void => {
     this.callingState = newState
   }
-
+  private getHost():string{
+    if (this.options.serverURL){
+      return new URL(this.options.serverURL).host
+    }
+    return this.app.getHost()
+  }
+  private getBasePrefixUrl(): string{
+    if (this.options.serverURL){
+      return new URL(this.options.serverURL).pathname
+    }
+    return ''
+  }
   private onStart() {
     const app = this.app
     const sessionId = app.getSessionID()
@@ -135,8 +149,8 @@ export default class Assist {
     const peerID = `${app.getProjectKey()}-${sessionId}`
 
     // SocketIO
-    const socket = this.socket = connect(app.getHost(), {
-      path: '/ws-assist/socket',
+    const socket = this.socket = connect(this.getHost(), {
+      path: this.getBasePrefixUrl()+'/ws-assist/socket',
       query: {
         'peerId': peerID,
         'identity': 'session',
@@ -247,6 +261,9 @@ export default class Assist {
       callingAgents.set(id, name)
       updateCallerNames()
     })
+    socket.on('videofeed', (id, feedState) => {
+      callUI?.toggleVideoStream(feedState)
+    })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
     // TODO: merge peerId & socket.io id  (simplest way - send peerId with the name)
@@ -265,8 +282,8 @@ export default class Assist {
 
     // PeerJS call (todo: use native WebRTC)
     const peerOptions = {
-      host: app.getHost(),
-      path: '/assist',
+      host: this.getHost(),
+      path: this.getBasePrefixUrl()+'/assist',
       port: location.protocol === 'http:' && this.noSecureMode ? 80 : 443,
       //debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
     }
@@ -316,7 +333,6 @@ export default class Assist {
       })
       Object.values(lStreams).forEach((stream) => { stream.stop() })
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
-
       // UI
       closeCallConfirmWindow()
       if (remoteControl.status === RCStatus.Disabled) {
@@ -338,6 +354,7 @@ export default class Assist {
       this.emit('call_end')
       handleCallEnd()
     }
+    const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
     peer.on('call', (call) => {
       app.debug.log('Incoming call: ', call)
@@ -379,6 +396,7 @@ export default class Assist {
         // UI
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
+          callUI.setVideoToggleCallback(updateVideoFeed)
         }
         callUI.showControls(initiateCallEnd)
 
@@ -394,7 +412,7 @@ export default class Assist {
           initiateCallEnd()
         })
         call.on('stream', (rStream) => {
-          callUI?.addRemoteStream(rStream)
+          callUI?.addRemoteStream(rStream, call.peer)
           const onInteraction = () => { // do only if document.hidden ?
             callUI?.playRemote()
             document.removeEventListener('click', onInteraction)

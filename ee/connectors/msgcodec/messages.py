@@ -246,7 +246,7 @@ class PageRenderTiming(Message):
         self.time_to_interactive = time_to_interactive
 
 
-class JSException(Message):
+class JSExceptionDeprecated(Message):
     __id__ = 25
 
     def __init__(self, name, message, payload):
@@ -744,15 +744,7 @@ class Zustand(Message):
         self.state = state
 
 
-class SessionSearch(Message):
-    __id__ = 127
-
-    def __init__(self, timestamp, partition):
-        self.timestamp = timestamp
-        self.partition = partition
-
-
-class ExceptionWithMeta(Message):
+class JSException(Message):
     __id__ = 78
 
     def __init__(self, name, message, payload, metadata):
@@ -760,6 +752,14 @@ class ExceptionWithMeta(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class SessionSearch(Message):
+    __id__ = 127
+
+    def __init__(self, timestamp, partition):
+        self.timestamp = timestamp
+        self.partition = partition
 
 
 class IOSBatchMeta(Message):

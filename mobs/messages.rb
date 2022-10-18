@@ -147,7 +147,8 @@ message 24, 'PageRenderTiming', :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-message 25, 'JSException', :replayer => false do
+# deprecated since 4.1.6 / 1.8.2 in favor of #78
+message 25, 'JSExceptionDeprecated', :replayer => false do
   string 'Name'
   string 'Message'
   string 'Payload'
@@ -234,13 +235,13 @@ message 36, 'CustomEvent', :tracker => false, :replayer => false do
   string 'Name'
   string 'Payload'
 end
-# depricated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
+# deprecated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
   uint 'Index'
 end
-# depricated since 4.0.2
+# deprecated since 4.0.2
 message 38, 'CSSDeleteRule' do
   uint 'ID'
   uint 'Index'
@@ -456,16 +457,15 @@ message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-#Since 4.0.1
-# message 78, 'ReplaceVCSSURLBased' do
-#   uint 'SheetID'
-#   uint 'Index'
-#   string 'Styles'
-#   string 'BaseURL'
-# end
 message 79, 'Zustand', :replayer => :devtools do
   string 'Mutation'
   string 'State'
+end
+message 78, 'JSException', :replayer => false do
+  string 'Name'
+  string 'Message'
+  string 'Payload'
+  string 'Metadata'
 end
 
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
@@ -473,11 +473,5 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Partition'
 end
 
-message 78, 'ExceptionWithMeta', :replayer => false do
-  string 'Name'
-  string 'Message'
-  string 'Payload'
-  string 'Metadata'
-end
 
 # 80 -- 90 reserved

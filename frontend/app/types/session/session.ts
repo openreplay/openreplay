@@ -83,6 +83,7 @@ export default Record({
   agentToken: '',
   notes: [],
   notesWithEvents: [],
+  fileKey: '',
 }, {
   fromJS:({
     startTs=0,

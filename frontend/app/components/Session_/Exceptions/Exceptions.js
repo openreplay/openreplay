@@ -22,7 +22,7 @@ import BottomBlock from '../BottomBlock';
 @connectPlayer((state) => ({
   logs: state.logListNow,
   exceptions: state.exceptionsList,
-  exceptionsNow: state.exceptionsListNow,
+  // exceptionsNow: state.exceptionsListNow,
 }))
 @connect(
   (state) => ({
@@ -55,15 +55,15 @@ export default class Exceptions extends React.PureComponent {
 
     const filtered = exceptions.filter((e) => filterRE.test(e.name) || filterRE.test(e.message));
 
-    let lastIndex = -1;
-    filtered.forEach((item, index) => {
-      if (
-        this.props.exceptionsNow.length > 0 &&
-        item.time <= this.props.exceptionsNow[this.props.exceptionsNow.length - 1].time
-      ) {
-        lastIndex = index;
-      }
-    });
+    // let lastIndex = -1;
+    // filtered.forEach((item, index) => {
+    //   if (
+    //     this.props.exceptionsNow.length > 0 &&
+    //     item.time <= this.props.exceptionsNow[this.props.exceptionsNow.length - 1].time
+    //   ) {
+    //     lastIndex = index;
+    //   }
+    // });
 
     return (
       <>
@@ -113,6 +113,7 @@ export default class Exceptions extends React.PureComponent {
                 iconPosition="left"
                 name="filter"
                 onChange={this.onFilterChange}
+                height={28}
               />
               <QuestionMarkHint
                 className={'mx-4'}
@@ -133,13 +134,13 @@ export default class Exceptions extends React.PureComponent {
           </BottomBlock.Header>
           <BottomBlock.Content>
             <NoContent size="small" show={filtered.length === 0} title="No recordings found">
-              <Autoscroll autoScrollTo={Math.max(lastIndex, 0)}>
+              <Autoscroll>
                 {filtered.map((e, index) => (
                   <ErrorItem
                     onJump={() => jump(e.time)}
                     error={e}
                     key={e.key}
-                    selected={lastIndex === index}
+                    // selected={lastIndex === index}
                     // inactive={index > lastIndex}
                     onErrorClick={(jsEvent) => {
                       jsEvent.stopPropagation();

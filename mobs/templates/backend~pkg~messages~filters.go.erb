@@ -2,7 +2,7 @@
 package messages
 
 func IsReplayerType(id int) bool {
-	return <%= $messages.select { |msg| msg.replayer != false }.map{ |msg| "#{msg.id} == id" }.join(' || ') %>
+	return <%= $messages.select { |msg| msg.replayer == false }.map{ |msg| "#{msg.id} != id" }.join(' && ') %>
 }
 
 func IsIOSType(id int) bool {

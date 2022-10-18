@@ -1,5 +1,5 @@
 type NodeCallback = (node: Node, isStart: boolean) => void
-type ElementListener = [string, EventListener]
+type ElementListener = [string, EventListener, boolean]
 
 export default class Nodes {
   private nodes: Array<Node | void> = []
@@ -12,18 +12,18 @@ export default class Nodes {
   attachNodeCallback(nodeCallback: NodeCallback): void {
     this.nodeCallbacks.push(nodeCallback)
   }
-  attachNodeListener(node: Node, type: string, listener: EventListener): void {
+  attachNodeListener(node: Node, type: string, listener: EventListener, useCapture = true): void {
     const id = this.getID(node)
     if (id === undefined) {
       return
     }
-    node.addEventListener(type, listener)
+    node.addEventListener(type, listener, useCapture)
     let listeners = this.elementListeners.get(id)
     if (listeners === undefined) {
       listeners = []
       this.elementListeners.set(id, listeners)
     }
-    listeners.push([type, listener])
+    listeners.push([type, listener, useCapture])
   }
 
   registerNode(node: Node): [/*id:*/ number, /*isNew:*/ boolean] {
@@ -44,7 +44,9 @@ export default class Nodes {
       const listeners = this.elementListeners.get(id)
       if (listeners !== undefined) {
         this.elementListeners.delete(id)
-        listeners.forEach((listener) => node.removeEventListener(listener[0], listener[1]))
+        listeners.forEach((listener) =>
+          node.removeEventListener(listener[0], listener[1], listener[2]),
+        )
       }
     }
     return id
