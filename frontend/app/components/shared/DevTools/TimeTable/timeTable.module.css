@@ -66,8 +66,15 @@ $offset: 10px;
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding: 0 2px;
+  padding: 0 6px;
   white-space: nowrap;
+  
+  & > div > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
 }
 .hoverable {
   transition: all 0.3s;
