@@ -14,6 +14,12 @@ import useTimeout from 'App/hooks/useTimeout';
 import { numberWithCommas } from 'App/utils';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
+enum NoContentType {
+    Bookmarked,
+    Vaulted,
+    ToDate,
+}
+
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 const PER_PAGE = 10;
 let sessionTimeOut: any = null;
@@ -35,6 +41,7 @@ interface Props {
   isEnterprise?: boolean;
 }
 function SessionList(props: Props) {
+  const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate)
   const {
     loading,
     list,
@@ -53,16 +60,19 @@ function SessionList(props: Props) {
   const isVault = isBookmark && isEnterprise;
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
+      setNoContentType(NoContentType.Bookmarked)
       return {
         icon: ICONS.NO_BOOKMARKS,
         message: 'No sessions bookmarked.',
       };
     } else if (isVault) {
+      setNoContentType(NoContentType.Vaulted)
       return {
         icon: ICONS.NO_SESSIONS_IN_VAULT,
         message: 'No sessions found in vault.',
       };
     }
+    setNoContentType(NoContentType.ToDate)
     return {
       icon: ICONS.NO_SESSIONS,
       message: 'No relevant sessions found for the selected time period.',
@@ -126,7 +136,7 @@ function SessionList(props: Props) {
             <div className="mt-2" />
             <div className="text-center text-gray-600 relative">
               {NO_CONTENT.message}
-              {NO_CONTENT.message.endsWith('selected time period.') ? (
+              {noContentType === NoContentType.ToDate ? (
                 <div style={{ position: 'absolute', right: -140, top: -115 }}>
                   <Icon name="list-arrow" size={130} />
                 </div>
