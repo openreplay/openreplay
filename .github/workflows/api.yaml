@@ -42,7 +42,7 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{env.GITHUB_REF_NAME}}_${{ github.sha }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
         cd api
@@ -90,7 +90,7 @@ jobs:
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{env.GITHUB_REF_NAME}}_${{ github.sha }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
     # - name: Debug Job
