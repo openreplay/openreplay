@@ -34,7 +34,7 @@ const TAB_TO_TYPE_MAP: any = {
   [OTHER]: TYPES.OTHER,
 };
 const TABS: any = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER].map((tab) => ({
-  text: tab === 'xhr' ? 'XHR (Fetch)' : tab,
+  text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
 }));
 
