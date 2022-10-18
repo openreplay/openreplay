@@ -35,10 +35,8 @@ func main() {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
 			totalAssets.Add(context.Background(), 1)
-		case *messages.ErrorEvent: // TODO: use JSException event from "raw" topic instead
-			if m.Source != "js_exception" {
-				return
-			}
+		// TODO: connect to "raw" topic in order to listen for JSException
+		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)
 			if err != nil {
 				log.Printf("Error on source extraction: %v", err)
@@ -53,7 +51,7 @@ func main() {
 	msgConsumer := queue.NewConsumer(
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
-		messages.NewMessageIterator(msgHandler, []int{messages.MsgAssetCache, messages.MsgErrorEvent}, true),
+		messages.NewMessageIterator(msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
 		true,
 		cfg.MessageSizeLimit,
 	)
