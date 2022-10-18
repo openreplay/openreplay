@@ -131,6 +131,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *typ
 	err = tx.commit()
 
 	// Insert tags
+	log.Printf("Inserting error tags: %v", e.Tags)
 	sqlRequest := `
 		INSERT INTO public.errors_tags (
 			session_id, message_id, error_id, key, value
