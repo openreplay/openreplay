@@ -14,7 +14,7 @@ function SessionSettingButton(props: any) {
     return (
         <div className="cursor-pointer ml-4" onClick={handleClick}>
             {/* @ts-ignore */}
-            <Tooltip title="Session Settings">
+            <Tooltip title="Session Settings" unmountHTMLWhenHide>
                 <Button icon="sliders" variant="text" />
             </Tooltip>
         </div>
