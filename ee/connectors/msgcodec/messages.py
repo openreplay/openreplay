@@ -340,18 +340,6 @@ class ClickEvent(Message):
         self.selector = selector
 
 
-class ErrorEvent(Message):
-    __id__ = 34
-
-    def __init__(self, message_id, timestamp, source, name, message, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.source = source
-        self.name = name
-        self.message = message
-        self.payload = payload
-
-
 class ResourceEvent(Message):
     __id__ = 35
 
