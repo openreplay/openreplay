@@ -164,7 +164,8 @@ def get_details(project_id, error_id, user_id, **data):
                                     SELECT jsonb_agg(jsonb_build_object(errors_tags.key, errors_tags.value)) AS custom_tags
                                     FROM errors_tags
                                     WHERE errors_tags.error_id = %(error_id)s
-                                      AND errors_tags.session_id = errors.session_id) AS errors_tags ON (TRUE)
+                                      AND errors_tags.session_id = errors.session_id
+                                      AND errors_tags.message_id = errors.message_id) AS errors_tags ON (TRUE)
                              WHERE error_id = %(error_id)s
                              ORDER BY errors.timestamp DESC
                              LIMIT 1) AS last_session_details ON (TRUE)
