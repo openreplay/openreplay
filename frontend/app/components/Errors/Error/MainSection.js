@@ -126,7 +126,7 @@ export default class MainSection extends React.PureComponent {
           {error.customTags ? (
             <div className="flex items-start flex-col">
               <div>
-                <span className="font-semibold">More Info</span> (most recent call)
+                <span className="font-semibold">More Info</span> <span className="text-disabled-text">(most recent call)</span>
               </div>
               <div className="mt-4 flex items-center gap-3 w-full flex-wrap">
               {error.customTags.map((tag) => (
