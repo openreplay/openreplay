@@ -131,12 +131,11 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *typ
 	err = tx.commit()
 
 	// Insert tags
-	log.Printf("Inserting error tags: %v", e.Tags)
 	sqlRequest := `
 		INSERT INTO public.errors_tags (
 			session_id, message_id, error_id, key, value
 		) VALUES (
-			$1, $2, $3,
+			$1, $2, $3, $4, $5
 		) ON CONFLICT DO NOTHING`
 	for key, value := range e.Tags {
 		conn.batchQueue(sessionID, sqlRequest, sessionID, e.MessageID, errorID, key, value)
