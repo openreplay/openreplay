@@ -316,3 +316,13 @@ p {
 .recharts-legend-item-text {
   white-space: nowrap !important;
 }
+
+.stripes {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 2px,
+    #ccc 2px,
+    #ccc 4px
+  );
+}
