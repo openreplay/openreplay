@@ -57,10 +57,9 @@ func main() {
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
-		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgCustomEvent, messages.MsgClickEvent,
-		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgErrorEvent, messages.MsgFetchEvent,
-		messages.MsgGraphQLEvent, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
-		messages.MsgResourceEvent, messages.MsgLongTask, messages.MsgJSException, messages.MsgResourceTiming,
+		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
+		messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
+		messages.MsgJSException, messages.MsgResourceTiming,
 		messages.MsgRawCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgGraphQL,
 		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
 		messages.MsgMouseClick, messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming}
