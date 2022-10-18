@@ -125,7 +125,8 @@ class MessageCodec(Codec):
 
         if message_id == 3:
             return SessionEnd(
-                timestamp=self.read_uint(reader)
+                timestamp=self.read_uint(reader),
+                encryption_key=self.read_string(reader)
             )
 
         if message_id == 4:
