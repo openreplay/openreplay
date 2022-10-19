@@ -123,6 +123,9 @@ func DecodeSessionEnd(reader io.Reader) (Message, error) {
 	if msg.Timestamp, err = ReadUint(reader); err != nil {
 		return nil, err
 	}
+	if msg.EncryptionKey, err = ReadString(reader); err != nil {
+		return nil, err
+	}
 	return msg, err
 }
 

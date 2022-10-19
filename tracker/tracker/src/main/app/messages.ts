@@ -140,8 +140,13 @@ export function PageRenderTiming(
   return [Messages.Type.PageRenderTiming, speedIndex, visuallyComplete, timeToInteractive]
 }
 
-export function JSException(name: string, message: string, payload: string): Messages.JSException {
-  return [Messages.Type.JSException, name, message, payload]
+export function JSException(
+  name: string,
+  message: string,
+  payload: string,
+  metadata: string,
+): Messages.JSException {
+  return [Messages.Type.JSException, name, message, payload, metadata]
 }
 
 export function RawCustomEvent(name: string, payload: string): Messages.RawCustomEvent {

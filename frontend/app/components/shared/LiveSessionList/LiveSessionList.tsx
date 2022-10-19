@@ -139,9 +139,8 @@ function LiveSessionList(props: Props) {
                     >
                         <div>
                             {list.map((session) => (
-                                <>
+                                <React.Fragment key={session.sessionId}>
                                     <SessionItem
-                                        key={session.sessionId}
                                         session={session}
                                         live
                                         hasUserFilter={hasUserFilter}
@@ -149,7 +148,7 @@ function LiveSessionList(props: Props) {
                                         metaList={metaList}
                                     />
                                     <div className="border-b" />
-                                </>
+                                </React.Fragment>
                             ))}
                         </div>
                         <div className={cn("flex items-center justify-between p-5", { disabled: loading })}>

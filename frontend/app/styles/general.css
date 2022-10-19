@@ -9,7 +9,7 @@
 }
 
 .warn.warn.warn.warn {
-  background-color: #fefaf4;
+  background-color: rgb(244 208 154 / 15%);
 }
 
 .error.error.error.error {
@@ -315,4 +315,14 @@ p {
 
 .recharts-legend-item-text {
   white-space: nowrap !important;
+}
+
+.stripes {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 2px,
+    #ccc 2px,
+    #ccc 4px
+  );
 }

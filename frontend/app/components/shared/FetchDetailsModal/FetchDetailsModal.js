@@ -207,14 +207,14 @@ export default class FetchDetailsModal extends React.PureComponent {
             <ul className="list-disc ml-5">
               <li>
                 Integrate{' '}
-                <a href="" className="link">
+                <a href="https://docs.openreplay.com/plugins/fetch" className="link" target="_blank">
                   Fetch plugin
                 </a>{' '}
                 to capture fetch payloads.
               </li>
               <li>
                 Find a detailed{' '}
-                <a href="" className="link">
+                <a href="https://www.youtube.com/watch?v=YFCKstPZzZg" className="link" target="_blank">
                   video tutorial
                 </a>{' '}
                 to understand practical example of how to use fetch plugin.

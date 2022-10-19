@@ -403,14 +403,16 @@ func (msg *SessionStart) TypeID() int {
 
 type SessionEnd struct {
 	message
-	Timestamp uint64
+	Timestamp     uint64
+	EncryptionKey string
 }
 
 func (msg *SessionEnd) Encode() []byte {
-	buf := make([]byte, 11)
+	buf := make([]byte, 21+len(msg.EncryptionKey))
 	buf[0] = 3
 	p := 1
 	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteString(msg.EncryptionKey, buf, p)
 	return buf[:p]
 }
 

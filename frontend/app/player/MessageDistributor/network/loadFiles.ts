@@ -3,11 +3,9 @@ import APIClient from 'App/api_client';
 const NO_NTH_FILE = "nnf"
 const NO_UNPROCESSED_FILES = "nuf"
 
-type onDataCb = (data: Uint8Array) => void
-
 export const loadFiles = (
   urls: string[],
-  onData: onDataCb,
+  onData: (data: Uint8Array) => void,
 ): Promise<void> => {
   const firstFileURL = urls[0]
   urls = urls.slice(1)

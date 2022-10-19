@@ -216,6 +216,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   private loadMessages() { 
+    // TODO: reuseable decryptor instance
     const createNewParser = (shouldDecrypt=true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
@@ -237,7 +238,7 @@ export default class MessageDistributor extends StatedScreen {
         .then(createNewParser(false))
         // Fallback to back Compatability with mobsUrl
         .catch(e =>
-          loadFiles(this.session.mobsUrl, createNewParser())
+          loadFiles(this.session.mobsUrl, createNewParser(false))
         )
     )
     .then(this.onFileReadSuccess)

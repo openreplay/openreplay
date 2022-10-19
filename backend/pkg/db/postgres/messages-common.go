@@ -82,6 +82,10 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 	return dur, nil
 }
 
+func (conn *Conn) InsertSessionEncryptionKey(sessionID uint64, key []byte) error {
+	return conn.c.Exec(`UPDATE sessions SET file_key = $2 WHERE session_id = $1`, sessionID, string(key))
+}
+
 func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 	sqlRequest := `
 	UPDATE sessions
@@ -160,20 +164,16 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	if *payload == "" || *payload == "{}" {
 		payload = nil
 	}
-	context := &e.Context
-	if *context == "" || *context == "{}" {
-		context = nil
-	}
 
 	if err = tx.exec(`
 		INSERT INTO issues (
-			project_id, issue_id, type, context_string, context
+			project_id, issue_id, type, context_string
 		) (SELECT
-			project_id, $2, $3, $4, CAST($5 AS jsonb)
+			project_id, $2, $3, $4
 			FROM sessions
 			WHERE session_id = $1
 		)ON CONFLICT DO NOTHING`,
-		sessionID, issueID, e.Type, e.ContextString, context,
+		sessionID, issueID, e.Type, e.ContextString,
 	); err != nil {
 		return err
 	}
