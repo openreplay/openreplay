@@ -136,7 +136,7 @@ export default class StackEvents extends React.PureComponent {
                     {' and '}
                     <a
                       className="underline color-teal"
-                      href="https://docs.openreplay.com/api#event"
+                      href="https://docs.openreplay.com/installation/custom-events"
                       target="_blank"
                     >
                       Events
