@@ -1,6 +1,6 @@
 image:
   repository: clickhouse/clickhouse-server
-  tag: "22.3"
+  tag: "22.2.2.1"
 
 storage:
   size: 200Gi
