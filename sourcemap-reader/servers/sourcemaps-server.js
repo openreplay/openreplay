@@ -20,8 +20,8 @@ router.post('/', (req, res) => {
             .catch((e) => {
                 console.error("[SR] Something went wrong");
                 console.error(e);
-                res.statusCode(500);
-                res.end(e);
+                res.statusCode = 500;
+                res.end(e.toString());
             });
     })
 

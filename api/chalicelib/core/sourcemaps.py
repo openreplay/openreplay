@@ -1,11 +1,11 @@
-from decouple import config
-from chalicelib.utils import helper
-
-from chalicelib.utils import s3
 import hashlib
 from urllib.parse import urlparse
 
+import requests
+from decouple import config
+
 from chalicelib.core import sourcemaps_parser
+from chalicelib.utils import s3
 
 
 def __get_key(project_id, url):
@@ -73,6 +73,11 @@ def format_payload(p, truncate_to_first=False):
     return []
 
 
+def url_exists(url):
+    r = requests.head(url, allow_redirects=False)
+    return r.status_code == 200  # and r.get("Content-Type")=="application/json"
+
+
 def get_traces_group(project_id, payload):
     frames = format_payload(payload)
 
@@ -80,25 +85,35 @@ def get_traces_group(project_id, payload):
     payloads = {}
     all_exists = True
     for i, u in enumerate(frames):
-        key = __get_key(project_id, u["absPath"])  # use filename instead?
+        file_url_exists = False
+        file_url = u["absPath"]
+        key = __get_key(project_id, file_url)  # use filename instead?
         if key not in payloads:
             file_exists = s3.exists(config('sourcemaps_bucket'), key)
-            all_exists = all_exists and file_exists
             if not file_exists:
-                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3")
+                if not file_url.endswith(".map"):
+                    file_url += '.map'
+                file_url_exists = url_exists(file_url)
+                file_exists = file_url_exists
+            all_exists = all_exists and file_exists
+            if not file_exists and not file_url_exists:
+                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 nor server")
                 payloads[key] = None
             else:
                 payloads[key] = []
         results[i] = dict(u)
         results[i]["frame"] = dict(u)
         if payloads[key] is not None:
-            payloads[key].append({"resultIndex": i,
+            payloads[key].append({"resultIndex": i, "frame": dict(u), "URL": file_url,
                                   "position": {"line": u["lineNo"], "column": u["colNo"]},
-                                  "frame": dict(u)})
+                                  "isURL": not file_exists and file_url_exists})
+
     for key in payloads.keys():
         if payloads[key] is None:
             continue
-        key_results = sourcemaps_parser.get_original_trace(key=key, positions=[o["position"] for o in payloads[key]])
+        key_results = sourcemaps_parser.get_original_trace(
+            key=payloads[key][0]["URL"] if payloads[key][0]["isURL"] else key,
+            positions=[o["position"] for o in payloads[key]])
         if key_results is None:
             all_exists = False
             continue
