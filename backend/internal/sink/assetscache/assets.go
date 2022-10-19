@@ -1,17 +1,26 @@
 package assetscache
 
 import (
+	"crypto/md5"
+	"io"
 	"log"
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
+	"time"
 )
+
+type CachedAsset struct {
+	msg string
+	ts  time.Time
+}
 
 type AssetsCache struct {
 	cfg      *sink.Config
 	rewriter *assets.Rewriter
 	producer types.Producer
+	cache    map[string]*CachedAsset
 }
 
 func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
@@ -19,6 +28,7 @@ func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *
 		cfg:      cfg,
 		rewriter: rewriter,
 		producer: producer,
+		cache:    make(map[string]*CachedAsset),
 	}
 }
 
@@ -96,17 +106,57 @@ func (e *AssetsCache) sendAssetsForCacheFromCSS(sessionID uint64, baseURL string
 }
 
 func (e *AssetsCache) handleURL(sessionID uint64, baseURL string, url string) string {
+	// Try to find asset in cache
+	h := md5.New()
+	io.WriteString(h, baseURL)
+	io.WriteString(h, url)
+	hash := string(h.Sum(nil))
+	if cachedAsset, ok := e.cache[hash]; ok {
+		if time.Now().Sub(cachedAsset.ts).Minutes() < 60 {
+			log.Printf("got asset from cache")
+			return cachedAsset.msg
+		}
+	}
+	// Parse fresh cache asset and save to in-memory cache
+	var res string
 	if e.cfg.CacheAssets {
 		e.sendAssetForCache(sessionID, baseURL, url)
-		return e.rewriter.RewriteURL(sessionID, baseURL, url)
+		res = e.rewriter.RewriteURL(sessionID, baseURL, url)
+	} else {
+		res = assets.ResolveURL(baseURL, url)
 	}
-	return assets.ResolveURL(baseURL, url)
+	e.cache[hash] = &CachedAsset{
+		msg: res,
+		ts:  time.Now(),
+	}
+	log.Printf("save asset to cache")
+	return res
 }
 
 func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) string {
+	// Try to find asset in cache
+	h := md5.New()
+	io.WriteString(h, baseURL)
+	io.WriteString(h, css)
+	hash := string(h.Sum(nil))
+	if cachedAsset, ok := e.cache[hash]; ok {
+		if time.Now().Sub(cachedAsset.ts).Minutes() < 60 {
+			log.Printf("got asset from cache")
+			return cachedAsset.msg
+		}
+	}
+	// Parse fresh cache asset and save to in-memory cache
+	var res string
 	if e.cfg.CacheAssets {
 		e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
-		return e.rewriter.RewriteCSS(sessionID, baseURL, css)
+		res = e.rewriter.RewriteCSS(sessionID, baseURL, css)
+	} else {
+		res = assets.ResolveCSS(baseURL, css)
 	}
-	return assets.ResolveCSS(baseURL, css)
+	e.cache[hash] = &CachedAsset{
+		msg: res,
+		ts:  time.Now(),
+	}
+	log.Printf("save asset to cache")
+	return res
 }
