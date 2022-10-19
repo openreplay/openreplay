@@ -65,7 +65,7 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 		downloadedAssets: downloadedAssets,
 		requestHeaders:   cfg.AssetsRequestHeaders,
 	}
-	c.workers = NewPool(32, c.CacheFile)
+	c.workers = NewPool(64, c.CacheFile)
 	return c
 }
 
@@ -75,9 +75,10 @@ func (c *cacher) CacheFile(task *Task) {
 
 func (c *cacher) cacheURL(t *Task) {
 	t.retries--
-	//requestURL sessionID uint64, depth byte, urlContext, cachePath string) {
 	req, _ := http.NewRequest("GET", t.requestURL, nil)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
+	if t.retries%2 == 0 {
+		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
+	}
 	for k, v := range c.requestHeaders {
 		req.Header.Set(k, v)
 	}
@@ -138,7 +139,7 @@ func (c *cacher) cacheURL(t *Task) {
 						depth:      t.depth - 1,
 						urlContext: t.urlContext + "\n  -> " + fullURL,
 						isJS:       false,
-						retries:    5,
+						retries:    setRetries(),
 					})
 				}
 			}
@@ -182,7 +183,7 @@ func (c *cacher) CacheJSFile(sourceURL string) {
 		depth:      0,
 		urlContext: sourceURL,
 		isJS:       true,
-		retries:    5,
+		retries:    setRetries(),
 	})
 }
 
@@ -193,7 +194,7 @@ func (c *cacher) CacheURL(sessionID uint64, fullURL string) {
 		depth:      MAX_CACHE_DEPTH,
 		urlContext: fullURL,
 		isJS:       false,
-		retries:    5,
+		retries:    setRetries(),
 	})
 }
 
@@ -203,4 +204,8 @@ func (c *cacher) UpdateTimeouts() {
 
 func (c *cacher) Stop() {
 	c.workers.Stop()
+}
+
+func setRetries() int {
+	return 10
 }
