@@ -341,16 +341,6 @@ class MessageCodec(Codec):
                 selector=self.read_string(reader)
             )
 
-        if message_id == 34:
-            return ErrorEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                source=self.read_string(reader),
-                name=self.read_string(reader),
-                message=self.read_string(reader),
-                payload=self.read_string(reader)
-            )
-
         if message_id == 35:
             return ResourceEvent(
                 message_id=self.read_uint(reader),

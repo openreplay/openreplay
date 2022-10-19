@@ -2,17 +2,11 @@ package postgres
 
 import (
 	"log"
-	"math"
 
-	"openreplay/backend/pkg/hashid"
+	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
-
-// TODO: change messages and replace everywhere to e.Index
-func getSqIdx(messageID uint64) uint {
-	return uint(messageID % math.MaxInt32)
-}
 
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
 	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
@@ -93,7 +87,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) (err error) {
+func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) (err error) {
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
@@ -105,7 +99,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 			}
 		}
 	}()
-	errorID := hashid.WebErrorID(projectID, e)
+	errorID := e.ID(projectID)
 
 	if err = tx.exec(`
 		INSERT INTO errors
@@ -135,6 +129,18 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		return err
 	}
 	err = tx.commit()
+
+	// Insert tags
+	sqlRequest := `
+		INSERT INTO public.errors_tags (
+			session_id, message_id, error_id, key, value
+		) VALUES (
+			$1, $2, $3, $4, $5
+		) ON CONFLICT DO NOTHING`
+	for key, value := range e.Tags {
+		conn.batchQueue(sessionID, sqlRequest, sessionID, e.MessageID, errorID, key, value)
+	}
+
 	return
 }
 
@@ -163,7 +169,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 			$12, $13
 		) ON CONFLICT DO NOTHING`
 	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, getSqIdx(e.MessageID),
+		sessionID, e.Timestamp, e.MessageID,
 		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
 		e.Duration, e.Status < 400,

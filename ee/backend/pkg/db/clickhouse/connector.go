@@ -1,7 +1,6 @@
 package clickhouse
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/ClickHouse/clickhouse-go/v2"
@@ -17,54 +16,6 @@ import (
 	"openreplay/backend/pkg/license"
 )
 
-type Bulk interface {
-	Append(args ...interface{}) error
-	Send() error
-}
-
-type bulkImpl struct {
-	conn   driver.Conn
-	query  string
-	values [][]interface{}
-}
-
-func NewBulk(conn driver.Conn, query string) (Bulk, error) {
-	switch {
-	case conn == nil:
-		return nil, errors.New("clickhouse connection is empty")
-	case query == "":
-		return nil, errors.New("query is empty")
-	}
-	return &bulkImpl{
-		conn:   conn,
-		query:  query,
-		values: make([][]interface{}, 0),
-	}, nil
-}
-
-func (b *bulkImpl) Append(args ...interface{}) error {
-	b.values = append(b.values, args)
-	return nil
-}
-
-func (b *bulkImpl) Send() error {
-	batch, err := b.conn.PrepareBatch(context.Background(), b.query)
-	if err != nil {
-		return fmt.Errorf("can't create new batch: %s", err)
-	}
-	for _, set := range b.values {
-		if err := batch.Append(set...); err != nil {
-			log.Printf("can't append value set to batch, err: %s", err)
-			log.Printf("failed query: %s", b.query)
-		}
-	}
-	b.values = make([][]interface{}, 0)
-	return batch.Send()
-}
-
-var CONTEXT_MAP = map[uint64]string{0: "unknown", 1: "self", 2: "same-origin-ancestor", 3: "same-origin-descendant", 4: "same-origin", 5: "cross-origin-ancestor", 6: "cross-origin-descendant", 7: "cross-origin-unreachable", 8: "multiple-contexts"}
-var CONTAINER_TYPE_MAP = map[uint64]string{0: "window", 1: "iframe", 2: "embed", 3: "object"}
-
 type Connector interface {
 	Prepare() error
 	Commit() error
@@ -73,7 +24,7 @@ type Connector interface {
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
 	InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error
 	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
-	InsertWebErrorEvent(session *types.Session, msg *messages.ErrorEvent) error
+	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
 	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
@@ -131,7 +82,7 @@ var batches = map[string]string{
 	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?)",
-	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -325,7 +276,13 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 	return nil
 }
 
-func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *messages.ErrorEvent) error {
+func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error {
+	keys, values := make([]string, 0, len(msg.Tags)), make([]*string, 0, len(msg.Tags))
+	for k, v := range msg.Tags {
+		keys = append(keys, k)
+		values = append(values, v)
+	}
+
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -334,8 +291,10 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *message
 		msg.Source,
 		nullableString(msg.Name),
 		msg.Message,
-		hashid.WebErrorID(session.ProjectID, msg),
+		msg.ID(session.ProjectID),
 		"ERROR",
+		keys,
+		values,
 	); err != nil {
 		c.checkError("errors", err)
 		return fmt.Errorf("can't append to errors batch: %s", err)
@@ -447,37 +406,4 @@ func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.Grap
 		return fmt.Errorf("can't append to graphql batch: %s", err)
 	}
 	return nil
-}
-
-func nullableUint16(v uint16) *uint16 {
-	var p *uint16 = nil
-	if v != 0 {
-		p = &v
-	}
-	return p
-}
-
-func nullableUint32(v uint32) *uint32 {
-	var p *uint32 = nil
-	if v != 0 {
-		p = &v
-	}
-	return p
-}
-
-func nullableString(v string) *string {
-	var p *string = nil
-	if v != "" {
-		p = &v
-	}
-	return p
-}
-
-func datetime(timestamp uint64) time.Time {
-	t := time.Unix(int64(timestamp/1e3), 0)
-	// Temporal solution for not correct timestamps in performance messages
-	if t.Year() < 2022 || t.Year() > 2025 {
-		return time.Now()
-	}
-	return t
 }

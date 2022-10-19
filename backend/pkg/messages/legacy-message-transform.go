@@ -1,6 +1,14 @@
 package messages
 
 func transformDeprecated(msg Message) Message {
-	// transform legacy message here if needed
+	switch m := msg.(type) {
+	case *JSExceptionDeprecated:
+		return &JSException{
+			Name:     m.Name,
+			Message:  m.Message,
+			Payload:  m.Payload,
+			Metadata: "{}",
+		}
+	}
 	return msg
 }

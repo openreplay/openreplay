@@ -38,6 +38,8 @@ function build_api(){
     }
     [[ $2 != "" ]] && {
         build_service $2
+        cd ../backend
+        rm -rf ../_backend
         return
     }
     for image in $(ls cmd);
