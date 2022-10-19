@@ -9,7 +9,7 @@ export const MAX_STR_LEN = 1e5
 const navigationStart: number | false =
   IN_BROWSER && (performance.timing.navigationStart || performance.timeOrigin)
 // performance.now() is buggy in some browsers
-export const timestamp: () => number =
+export const now: () => number =
   IN_BROWSER && performance.now() && navigationStart
     ? () => Math.round(performance.now() + navigationStart)
     : () => Date.now()

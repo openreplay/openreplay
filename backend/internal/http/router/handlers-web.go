@@ -40,7 +40,7 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 
 func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint64) {
 	ts = uint64(req.Timestamp)
-	c, err := semver.NewConstraint(">=4.2.0") // )
+	c, err := semver.NewConstraint(">=4.1.6")
 	if err != nil {
 		return
 	}

@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID } from './messages.gen.js'
-import { timestamp as now, deprecationWarn } from '../utils.js'
+import { now, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -205,20 +205,26 @@ export default class App {
     }
     this.messages.push(message)
     // TODO: commit on start if there were `urgent` sends;
-    // Clearify where urgent can be used for;
-    // Clearify workflow for each type of message in case it was sent before start
+    // Clarify where urgent can be used for;
+    // Clarify workflow for each type of message in case it was sent before start
     //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
+    // Careful: `this.delay` is equal to zero before start hense all Timestamp-s will have to be updated on start
     if (this.activityState === ActivityState.Active && urgent) {
       this.commit()
     }
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(Timestamp(now()))
+      this.messages.unshift(Timestamp(this.timestamp()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
     }
+  }
+
+  private delay = 0
+  timestamp(): number {
+    return now() + this.delay
   }
 
   safe<T extends (this: any, ...args: any[]) => void>(fn: T): T {
@@ -228,7 +234,7 @@ export default class App {
         fn.apply(this, args)
       } catch (e) {
         app._debug('safe_fn_call', e)
-        // time: now(),
+        // time: this.timestamp(),
         // name: e.name,
         // message: e.message,
         // stack: e.stack
@@ -444,16 +450,19 @@ export default class App {
           projectID,
           beaconSizeLimit,
           startTimestamp, // real startTS, derived from sessionID
+          delay,
         } = r
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
           //typeof startTimestamp !== 'number' ||
           //typeof sessionID !== 'string' ||
+          typeof delay !== 'number' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
+        this.delay = delay
         const prevSessionID = this.session.getInfo().sessionID
         if (prevSessionID && prevSessionID !== sessionID) {
           this.session.reset()
