@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	cloud.google.com/go/logging v1.4.2
-	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
+	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.44.98
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
@@ -27,7 +27,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.30.0
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 	google.golang.org/api v0.81.0
-	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.8.2
 )
 
 require (
@@ -37,7 +36,6 @@ require (
 	cloud.google.com/go/storage v1.14.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/confluentinc/confluent-kafka-go v1.9.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
@@ -54,8 +52,6 @@ require (
 	github.com/klauspost/compress v1.15.7 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/paulmach/orb v0.7.1 // indirect
-	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect

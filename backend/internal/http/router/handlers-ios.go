@@ -69,7 +69,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
+		tokenData = &token.TokenData{sessionID, 0, expTime.UnixMilli()}
 
 		country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
 
