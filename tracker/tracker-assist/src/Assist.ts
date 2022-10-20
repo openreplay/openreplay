@@ -1,3 +1,4 @@
+import { remoteControl } from './icons';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import type { Socket, } from 'socket.io-client'
 import { connect, } from 'socket.io-client'
@@ -61,6 +62,7 @@ export default class Assist {
   private peer: Peer | null = null
   private assistDemandedRestart = false
   private callingState: CallingState = CallingState.False
+  private remoteControl: RemoteControl | null = null;
 
   private agents: Record<string, Agent> = {}
   private readonly options: Options
@@ -164,13 +166,15 @@ export default class Assist {
     })
     socket.onAny((...args) => app.debug.log('Socket:', ...args))
 
-    const remoteControl = new RemoteControl(
+    this.remoteControl = new RemoteControl(
       this.options,
       id => {
         if (!callUI) {
           callUI = new CallWindow(app.debug.error, this.options.callUITemplate)
         }
-        callUI?.showRemoteControl(remoteControl.releaseControl)
+        if (this.remoteControl){
+          callUI?.showRemoteControl(this.remoteControl.releaseControl)
+        }
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
@@ -197,18 +201,18 @@ export default class Assist {
     )
 
     // TODO: check incoming args
-    socket.on('request_control', remoteControl.requestControl)
-    socket.on('release_control', remoteControl.releaseControl)
-    socket.on('scroll', remoteControl.scroll)
-    socket.on('click', remoteControl.click)
-    socket.on('move', remoteControl.move)
+    socket.on('request_control', this.remoteControl.requestControl)
+    socket.on('release_control', this.remoteControl.releaseControl)
+    socket.on('scroll', this.remoteControl.scroll)
+    socket.on('click', this.remoteControl.click)
+    socket.on('move', this.remoteControl.move)
     socket.on('focus', (clientID, nodeID) => {
       const el = app.nodes.getNode(nodeID)
-      if (el instanceof HTMLElement) {
-        remoteControl.focus(clientID, el)
+      if (el instanceof HTMLElement && this.remoteControl) {
+        this.remoteControl.focus(clientID, el)
       }
     })
-    socket.on('input', remoteControl.input)
+    socket.on('input', this.remoteControl.input)
 
     let annot: AnnotationCanvas | null = null
     socket.on('moveAnnotation', (_, p) => annot && annot.move(p)) // TODO: restrict by id
@@ -234,11 +238,11 @@ export default class Assist {
       this.app.stop()
       this.app.start().then(() => { this.assistDemandedRestart = false }).catch(e => app.debug.error(e))
 
-      remoteControl.reconnect(ids)
+     this.remoteControl?.reconnect(ids)
     })
 
     socket.on('AGENT_DISCONNECTED', (id) => {
-      remoteControl.releaseControl()
+      this.remoteControl?.releaseControl()
 
       this.agents[id]?.onDisconnect?.()
       delete this.agents[id]
@@ -335,7 +339,7 @@ export default class Assist {
       Object.keys(lStreams).forEach((peerId: string) => { delete lStreams[peerId] })
       // UI
       closeCallConfirmWindow()
-      if (remoteControl.status === RCStatus.Disabled) {
+      if (this.remoteControl?.status === RCStatus.Disabled) {
         callUI?.remove()
         annot?.remove()
         callUI = null
@@ -455,6 +459,7 @@ export default class Assist {
   }
 
   private clean() {
+    this.remoteControl?.releaseControl
     if (this.peer) {
       this.peer.destroy()
       this.app.debug.log('Peer destroyed')
