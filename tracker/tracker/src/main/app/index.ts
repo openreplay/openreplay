@@ -122,13 +122,15 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        localStorage: window?.localStorage,
-        sessionStorage: window?.sessionStorage,
+        localStorage: null,
+        sessionStorage: null,
       },
       options,
     )
 
     this.revID = this.options.revID
+    this.localStorage = this.options.localStorage || window.localStorage
+    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
     this.nodes = new Nodes(this.options.node_id)
     this.observer = new Observer(this, options)
@@ -136,8 +138,6 @@ export default class App {
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
-    this.localStorage = this.options.localStorage || window.localStorage
-    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
     this.session = new Session(this, this.options)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
