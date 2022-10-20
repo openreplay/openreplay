@@ -16,7 +16,7 @@ export default function MetaInfo({ envObject, metadata }: { envObject: EnvObj, m
       <div className="flex flex-col gap-2">
         <SectionTitle>Environment</SectionTitle>
         {Object.keys(envObject).map((envTag) => (
-          <div className="flex items-center">
+          <div key={envTag} className="flex items-center">
             <div className="py-1 px-2">{envTag}</div>
             <div className="py-1 px-2 text-gray-medium bg-light-blue-bg rounded">
               {/* @ts-ignore */}
@@ -29,7 +29,7 @@ export default function MetaInfo({ envObject, metadata }: { envObject: EnvObj, m
       <div className="flex flex-col gap-2">
         <SectionTitle>Metadata</SectionTitle>
         {Object.keys(metadata).map((meta) => (
-          <div className="flex items-center rounded overflow-hidden bg-gray-lightest">
+          <div key={meta} className="flex items-center rounded overflow-hidden bg-gray-lightest">
             <div className="bg-gray-light-shade py-1 px-2">{meta}</div>
             <div className="py-1 px-2 text-gray-medium">{metadata[meta]}</div>
           </div>
