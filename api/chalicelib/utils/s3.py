@@ -70,7 +70,7 @@ def get_file(source_bucket, source_key):
         )
     except ClientError as ex:
         if ex.response['Error']['Code'] == 'NoSuchKey':
-            print(f'======> No object found - returning None for \nbucket:{source_bucket}\nkey:{source_key}')
+            print(f'======> No object found - returning None for bucket:{source_bucket} key:{source_key}')
             return None
         else:
             raise ex
