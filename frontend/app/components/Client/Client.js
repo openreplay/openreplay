@@ -52,7 +52,7 @@ export default class Client extends React.PureComponent {
           <div className={ styles.tabMenu }>
             <PreferencesMenu activeTab={activeTab} />
           </div>
-          <div className="bg-white w-full rounded-lg mx-4 my-6 border">
+          <div className="bg-white w-full rounded-lg mx-4 my-8 border">
             { activeTab && this.renderActiveTab() }
           </div>
         </div>

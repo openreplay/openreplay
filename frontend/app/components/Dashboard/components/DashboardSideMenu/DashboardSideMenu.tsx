@@ -33,7 +33,7 @@ function DashboardSideMenu(props: Props) {
           onClick={() => redirect(withSiteId(dashboard(), siteId))}
         />
       </div>
-      <div className="border-t w-full my-2" />
+      <div className="w-full my-2" />
       <div className="w-full">
         <SideMenuitem
           active={isMetric}
@@ -43,7 +43,7 @@ function DashboardSideMenu(props: Props) {
           onClick={() => redirect(withSiteId(metrics(), siteId))}
         />
       </div>
-      <div className="border-t w-full my-2" />
+      <div className="w-full my-2" />
       <div className="w-full">
         <SideMenuitem
           active={isAlerts}
