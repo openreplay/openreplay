@@ -1,3 +1,3 @@
 #!/bin/zsh
 
-MAPPING_WASM=./mappings.wasm npm start
+MAPPING_WASM=./mappings.wasm PREFIX=/abc npm start
