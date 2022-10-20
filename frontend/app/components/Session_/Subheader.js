@@ -80,7 +80,7 @@ function SubHeader(props) {
                     id={props.sessionId}
                     showCopyLink={true}
                     trigger={
-                      <div className="flex items-center">
+                      <div className="flex items-center h-full w-full">
                         <Icon
                           className="mr-2"
                           disabled={props.disabled}

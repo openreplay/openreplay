@@ -92,7 +92,8 @@ export default class SharePopup extends React.PureComponent {
           arrow
           trigger="click"
           shown={this.handleOpen}
-          // beforeHidden={this.handleClose}
+          className="h-full w-full p-3"
+        // beforeHidden={this.handleClose}
           html={
             <div className={styles.wrapper}>
               <div className={styles.header}>

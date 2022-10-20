@@ -28,6 +28,7 @@ function NotePopup({
     <div
       onClick={toggleNotePopup}
       className={cn(
+        'h-full w-full p-3',
         'mr-4 hover:bg-gray-light-shade rounded-md flex items-center',
         tooltipActive ? 'cursor-not-allowed' : 'cursor-pointer'
       )}
