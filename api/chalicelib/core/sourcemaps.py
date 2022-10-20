@@ -75,7 +75,7 @@ def format_payload(p, truncate_to_first=False):
 
 def url_exists(url):
     r = requests.head(url, allow_redirects=False)
-    return r.status_code == 200  # and r.get("Content-Type")=="application/json"
+    return r.status_code == 200 and r.headers.get("Content-Type") != "text/html"
 
 
 def get_traces_group(project_id, payload):
@@ -89,6 +89,11 @@ def get_traces_group(project_id, payload):
         file_exists_in_server = False
         file_url = u["absPath"]
         key = __get_key(project_id, file_url)  # use filename instead?
+        if file_url and len(file_url) > 0 and not file_url[:file_url.index("?")].endswith(".js"):
+            print(f"{u['absPath']} sourcemap is not a JS file")
+            payloads[key] = None
+            continue
+
         if key not in payloads:
             file_exists_in_bucket = s3.exists(config('sourcemaps_bucket'), key)
             if not file_exists_in_bucket:
