@@ -1,4 +1,3 @@
-import { remoteControl } from './icons';
 /* eslint-disable @typescript-eslint/no-empty-function */
 import type { Socket, } from 'socket.io-client'
 import { connect, } from 'socket.io-client'
