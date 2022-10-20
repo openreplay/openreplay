@@ -5,7 +5,7 @@ from chalicelib.core import sessions, sessions_favorite_exp
 from chalicelib.utils import pg_client, s3_extra
 
 
-def add_favorite_session(project_id, session_id, context: schemas_ee.CurrentContext):
+def add_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -19,7 +19,7 @@ def add_favorite_session(project_id, session_id, context: schemas_ee.CurrentCont
                                   full_data=False, include_fav_viewed=True, context=context)
 
 
-def remove_favorite_session(project_id, session_id, context: schemas_ee.CurrentContext):
+def remove_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -33,8 +33,8 @@ def remove_favorite_session(project_id, session_id, context: schemas_ee.CurrentC
                                   full_data=False, include_fav_viewed=True, context=context)
 
 
-def favorite_session(tenant_id, project_id, user_id, session_id, context: schemas_ee.CurrentContext):
-    if favorite_session_exists(user_id=user_id, session_id=session_id):
+def favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
+    if favorite_session_exists(user_id=context.user_id, session_id=session_id):
         key = str(session_id)
         try:
             s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_D_VALUE', default='default'))
@@ -47,7 +47,7 @@ def favorite_session(tenant_id, project_id, user_id, session_id, context: schema
         except Exception as e:
             print(f"!!!Error while tagging: {key} to default")
             print(str(e))
-        return remove_favorite_session(project_id=project_id, session_id=session_id, context=context)
+        return remove_favorite_session(context=context, project_id=project_id, session_id=session_id)
     key = str(session_id)
     try:
         s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_L_VALUE', default='vault'))
@@ -60,7 +60,7 @@ def favorite_session(tenant_id, project_id, user_id, session_id, context: schema
     except Exception as e:
         print(f"!!!Error while tagging: {key} to vault")
         print(str(e))
-    return add_favorite_session(project_id=project_id, session_id=session_id, context=context)
+    return add_favorite_session(context=context, project_id=project_id, session_id=session_id)
 
 
 def favorite_session_exists(user_id, session_id):

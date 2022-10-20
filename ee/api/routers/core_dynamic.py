@@ -269,8 +269,8 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
                      context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
-                                      include_fav_viewed=True, group_metadata=True, live=False, context=context)
+        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId, full_data=True,
+                                      include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
@@ -329,13 +329,10 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
 
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"],
          dependencies=[OR_scope(Permissions.session_replay)])
-@app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"],
-         dependencies=[OR_scope(Permissions.session_replay)])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {
-        "data": sessions_favorite.favorite_session(tenant_id=context.tenant_id, project_id=projectId,
-                                                   user_id=context.user_id, session_id=sessionId, context=context)}
+        "data": sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"],
@@ -443,7 +440,7 @@ def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
 def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
-                                                      user_id=context.user_id)
+                                                      user_id=context.user_id, data=data)
     if "errors" in data:
         return data
     return {'data': data}

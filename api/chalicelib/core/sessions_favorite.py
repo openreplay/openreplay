@@ -1,38 +1,39 @@
+import schemas
 from chalicelib.core import sessions
 from chalicelib.utils import pg_client
 
 
-def add_favorite_session(tenant_id, project_id, user_id, session_id):
+def add_favorite_session(context: schemas.CurrentContext, project_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                 INSERT INTO public.user_favorite_sessions(user_id, session_id) 
                 VALUES (%(userId)s,%(session_id)s);""",
-                        {"userId": user_id, "session_id": session_id})
+                        {"userId": context.user_id, "session_id": session_id})
         )
-    return sessions.get_by_id2_pg(tenant_id=tenant_id, project_id=project_id, session_id=session_id, user_id=user_id,
+    return sessions.get_by_id2_pg(context=context, project_id=project_id, session_id=session_id,
                                   full_data=False, include_fav_viewed=True)
 
 
-def remove_favorite_session(tenant_id, project_id, user_id, session_id):
+def remove_favorite_session(context: schemas.CurrentContext, project_id, session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                         DELETE FROM public.user_favorite_sessions                          
                         WHERE user_id = %(userId)s
                             AND session_id = %(session_id)s;""",
-                        {"userId": user_id, "session_id": session_id})
+                        {"userId": context.user_id, "session_id": session_id})
         )
-    return sessions.get_by_id2_pg(tenant_id=tenant_id, project_id=project_id, session_id=session_id, user_id=user_id,
+    return sessions.get_by_id2_pg(context=context, project_id=project_id, session_id=session_id,
                                   full_data=False, include_fav_viewed=True)
 
 
-def favorite_session(tenant_id, project_id, user_id, session_id):
-    if favorite_session_exists(user_id=user_id, session_id=session_id):
-        return remove_favorite_session(tenant_id=tenant_id, project_id=project_id, user_id=user_id,
+def favorite_session(context: schemas.CurrentContext, project_id, session_id):
+    if favorite_session_exists(user_id=context.user_id, session_id=session_id):
+        return remove_favorite_session(context=context, project_id=project_id,
                                        session_id=session_id)
 
-    return add_favorite_session(tenant_id=tenant_id, project_id=project_id, user_id=user_id, session_id=session_id)
+    return add_favorite_session(context=context, project_id=project_id, session_id=session_id)
 
 
 def favorite_session_exists(user_id, session_id):

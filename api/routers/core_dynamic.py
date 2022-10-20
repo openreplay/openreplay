@@ -208,8 +208,7 @@ def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
 
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
 def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
-                       density30: int = 30,
-                       context: schemas.CurrentContext = Depends(OR_context)):
+                       density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
@@ -260,9 +259,8 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(tenant_id=context.tenant_id, project_id=projectId, session_id=sessionId,
-                                      full_data=True, user_id=context.user_id, include_fav_viewed=True,
-                                      group_metadata=True, live=False)
+        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId,
+                                      full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
@@ -318,12 +316,10 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
 
 
 @app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
-@app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {
-        "data": sessions_favorite.favorite_session(tenant_id=context.tenant_id, project_id=projectId,
-                                                   user_id=context.user_id, session_id=sessionId)}
+        "data": sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)}
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
