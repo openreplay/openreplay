@@ -23,7 +23,7 @@ function DashboardSideMenu(props: Props) {
 
   return (
     <div>
-      <SideMenuHeader className="mb-4 flex items-center" text="Preferences" />
+      {/* <SideMenuHeader className="mb-4 flex items-center" text="Dashboard" /> */}
       <div className="w-full">
         <SideMenuitem
           active={isDashboards}
