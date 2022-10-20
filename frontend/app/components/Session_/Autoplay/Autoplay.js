@@ -17,7 +17,7 @@ function Autoplay(props) {
 
   return (
     <div className="flex items-center">
-      <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-1">
+      <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2">
         <Toggler
           name="sessionsLive"
           onChange={ props.toggleAutoplay }
