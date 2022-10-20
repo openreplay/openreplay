@@ -115,7 +115,7 @@ def get_traces_group(project_id, payload):
         if payloads[key] is not None:
             payloads[key].append({"resultIndex": i, "frame": dict(u), "URL": file_url,
                                   "position": {"line": u["lineNo"], "column": u["colNo"]},
-                                  "isURL": not file_exists_in_bucket and file_exists_in_server})
+                                  "isURL": file_exists_in_server})
 
     for key in payloads.keys():
         if payloads[key] is None:
@@ -148,16 +148,17 @@ MAX_COLUMN_OFFSET = 60
 def fetch_missed_contexts(frames):
     source_cache = {}
     for i in range(len(frames)):
-        if len(frames[i]["context"]) != 0:
+        if len(frames[i]["context"]) > 0:
             continue
-        if frames[i]["frame"]["absPath"] in source_cache:
-            file = source_cache[frames[i]["frame"]["absPath"]]
+        file_abs_path = frames[i]["frame"]["absPath"]
+        if file_abs_path in source_cache:
+            file = source_cache[file_abs_path]
         else:
-            file_path = get_js_cache_path(frames[i]["frame"]["absPath"])
+            file_path = get_js_cache_path(file_abs_path)
             file = s3.get_file(config('js_cache_bucket'), file_path)
             if file is None:
-                print(f"File {file_path} not found in {config('js_cache_bucket')}")
-            source_cache[frames[i]["frame"]["absPath"]] = file
+                print(f"Missing abs_path: {file_abs_path}, file {file_path} not found in {config('js_cache_bucket')}")
+            source_cache[file_abs_path] = file
         if file is None:
             continue
         lines = file.split("\n")
