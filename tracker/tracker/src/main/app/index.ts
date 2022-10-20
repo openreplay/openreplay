@@ -129,8 +129,8 @@ export default class App {
     )
 
     this.revID = this.options.revID
-    this.localStorage = this.options.localStorage || window.localStorage
-    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
+    this.localStorage = this.options.localStorage ?? window.localStorage
+    this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
     this.nodes = new Nodes(this.options.node_id)
     this.observer = new Observer(this, options)
