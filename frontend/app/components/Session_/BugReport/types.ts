@@ -1,4 +1,18 @@
-export interface BugReportPdf {
+import { SeverityLevels } from 'App/mstore/bugReportStore';
+
+export interface BugReportPdf extends ReportDefaults {
+  title: string;
+  comment?: string;
+  severity: SeverityLevels;
+  steps: Step[];
+  activity: {
+    network: NetworkError[];
+    console: ConsoleError[];
+    clickRage: ClickRage[];
+  };
+}
+
+export interface ReportDefaults {
   author: string;
   env: EnvData;
   meta: {
@@ -9,21 +23,14 @@ export interface BugReportPdf {
     url: string;
     id: string;
   };
-  comment?: string;
-  steps: Step[];
-  activity: {
-    network: NetworkError[];
-    console: ConsoleError[];
-    clickRage: ClickRage[];
-  };
 }
 
 export interface EnvData {
-  browser: string;
-  os: string;
-  country: string;
-  device: string;
-  resolution: string;
+  Browser: string;
+  OS: string;
+  Country: string;
+  Device: string;
+  Resolution: string;
 }
 
 export interface NetworkError {
@@ -38,14 +45,16 @@ export interface ClickRage {
   time: number;
 }
 
-export interface Step {
-  type: string;
-  icon: string;
-  details: string;
-  substeps?: SubStep[];
-}
-
 export type SubStep = Note | Error | Request;
+
+export interface Step {
+  key: string;
+  type: string;
+  time: number;
+  details: string;
+  icon: string;
+  substeps?: SubStep[]
+}
 
 export interface Note {
   author: string;
