@@ -458,7 +458,7 @@ export default class Assist {
   }
 
   private clean() {
-    this.remoteControl?.releaseControl
+    this.remoteControl?.releaseControl()
     if (this.peer) {
       this.peer.destroy()
       this.app.debug.log('Peer destroyed')
