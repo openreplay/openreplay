@@ -69,7 +69,7 @@ class Issues extends React.Component {
     const provider = issuesIntegration.provider;
 
     return (
-      <div className="relative">
+      <div className="relative h-full w-full p-3">
         <div className={stl.buttonWrapper}>
           <OutsideClickDetectingDiv onClickOutside={this.closeModal}>
             <Tooltip
@@ -91,16 +91,10 @@ class Issues extends React.Component {
                 </div>
               }
             >
-              <div
-                className="flex items-center"
-                onClick={this.handleOpen}
-                disabled={
-                  !isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)
-                }
-              >
-                <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} size="16" />
-                <span className="ml-2">Create Issue</span>
-              </div>
+              <div className="flex items-center" onClick={this.handleOpen} disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}>
+                    <Icon name={ `integrations/${ provider === 'jira' ? 'jira' : 'github'}` } size="16" />
+                    <span className="ml-2">Create Issue</span>
+                </div>
             </Tooltip>
           </OutsideClickDetectingDiv>
         </div>

@@ -43,7 +43,7 @@ function Bookmark(props : Props ) {
       distance={20}
     >
       {noMargin ? (
-        <div onClick={ toggleFavorite } className="flex items-center cursor-pointer">
+        <div onClick={ toggleFavorite } className="flex items-center cursor-pointer h-full w-full p-3">
           <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
           <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
         </div>
