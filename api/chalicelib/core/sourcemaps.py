@@ -85,18 +85,20 @@ def get_traces_group(project_id, payload):
     payloads = {}
     all_exists = True
     for i, u in enumerate(frames):
-        file_url_exists = False
+        file_exists_in_bucket = False
+        file_exists_in_server = False
         file_url = u["absPath"]
         key = __get_key(project_id, file_url)  # use filename instead?
         if key not in payloads:
-            file_exists = s3.exists(config('sourcemaps_bucket'), key)
-            if not file_exists:
+            file_exists_in_bucket = s3.exists(config('sourcemaps_bucket'), key)
+            if not file_exists_in_bucket:
+                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 looking in server")
                 if not file_url.endswith(".map"):
                     file_url += '.map'
-                file_url_exists = url_exists(file_url)
-                file_exists = file_url_exists
-            all_exists = all_exists and file_exists
-            if not file_exists and not file_url_exists:
+                file_exists_in_server = url_exists(file_url)
+                file_exists_in_bucket = file_exists_in_server
+            all_exists = all_exists and file_exists_in_bucket
+            if not file_exists_in_bucket and not file_exists_in_server:
                 print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 nor server")
                 payloads[key] = None
             else:
@@ -106,14 +108,15 @@ def get_traces_group(project_id, payload):
         if payloads[key] is not None:
             payloads[key].append({"resultIndex": i, "frame": dict(u), "URL": file_url,
                                   "position": {"line": u["lineNo"], "column": u["colNo"]},
-                                  "isURL": not file_exists and file_url_exists})
+                                  "isURL": not file_exists_in_bucket and file_exists_in_server})
 
     for key in payloads.keys():
         if payloads[key] is None:
             continue
         key_results = sourcemaps_parser.get_original_trace(
             key=payloads[key][0]["URL"] if payloads[key][0]["isURL"] else key,
-            positions=[o["position"] for o in payloads[key]])
+            positions=[o["position"] for o in payloads[key]],
+            is_url=payloads[key][0]["isURL"])
         if key_results is None:
             all_exists = False
             continue
@@ -143,10 +146,10 @@ def fetch_missed_contexts(frames):
         if frames[i]["frame"]["absPath"] in source_cache:
             file = source_cache[frames[i]["frame"]["absPath"]]
         else:
-            file = s3.get_file(config('js_cache_bucket'), get_js_cache_path(frames[i]["frame"]["absPath"]))
+            file_path = get_js_cache_path(frames[i]["frame"]["absPath"])
+            file = s3.get_file(config('js_cache_bucket'), file_path)
             if file is None:
-                print(
-                    f"File {get_js_cache_path(frames[i]['frame']['absPath'])} not found in {config('js_cache_bucket')}")
+                print(f"File {file_path} not found in {config('js_cache_bucket')}")
             source_cache[frames[i]["frame"]["absPath"]] = file
         if file is None:
             continue
