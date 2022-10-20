@@ -110,13 +110,6 @@ function UserCard({ className, request, session, width, height, similarSessions,
                     </div>
                 </div>
             </div>
-
-            {/* <SlideModal
-        title={ <div>User Sessions</div> }
-        isDisplayed={ showUserSessions }
-        content={ showUserSessions && <SessionList similarSessions={ similarSessions } loading={ loading } /> }
-        onClose={ () => showUserSessions ? setShowUserSessions(false) : null }
-      /> */}
         </div>
     );
 }
