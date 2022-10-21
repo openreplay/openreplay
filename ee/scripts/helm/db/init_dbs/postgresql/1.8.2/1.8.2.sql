@@ -38,4 +38,12 @@ CREATE INDEX IF NOT EXISTS errors_tags_error_id_idx ON errors_tags (error_id);
 CREATE INDEX IF NOT EXISTS errors_tags_session_id_idx ON errors_tags (session_id);
 CREATE INDEX IF NOT EXISTS errors_tags_message_id_idx ON errors_tags (message_id);
 
+UPDATE metrics
+SET default_config=default_config || '{"col":4}'
+WHERE metric_type = 'funnel';
+
+UPDATE dashboard_widgets
+SET config=config || '{"col":4}'
+WHERE metric_id IN (SELECT metric_id FROM metrics WHERE metric_type = 'funnel');
+
 COMMIT;
