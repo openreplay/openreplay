@@ -141,6 +141,13 @@ class PostgresClient:
                     and not self.unlimited_query:
                 postgreSQL_pool.putconn(self.connection)
 
+    def recreate_cursor(self):
+        try:
+            self.cursor.close()
+        except Exception as error:
+            logging.error("Error while closing cursor for recreation", error)
+        self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
 
 def close():
     pass
