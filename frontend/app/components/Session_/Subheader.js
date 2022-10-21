@@ -78,8 +78,6 @@ function SubHeader(props) {
   );
 }
 
-const SubH = connectPlayer(
-  (state) => ({ currentLocation: state.location })
-)(SubHeader);
+const SubH = connectPlayer((state) => ({ currentLocation: state.location }))(SubHeader);
 
 export default React.memo(SubH);
