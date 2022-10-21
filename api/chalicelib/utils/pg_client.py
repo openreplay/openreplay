@@ -147,7 +147,8 @@ class PostgresClient:
             self.cursor.close()
         except Exception as error:
             logging.error("Error while closing cursor for recreation", error)
-        self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        self.cursor = None
+        self.__enter__()
 
 
 def close():
