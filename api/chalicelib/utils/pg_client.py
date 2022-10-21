@@ -117,6 +117,7 @@ class PostgresClient:
     def __enter__(self):
         if self.cursor is None:
             self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            self.cursor.recreate = self.recreate_cursor
         return self.cursor
 
     def __exit__(self, *args):
