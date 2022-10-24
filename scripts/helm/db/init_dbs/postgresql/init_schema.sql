@@ -60,7 +60,9 @@ CREATE OR REPLACE FUNCTION notify_integration() RETURNS trigger AS
 $$
 BEGIN
     IF NEW IS NULL THEN
-        PERFORM pg_notify('integration', (row_to_json(OLD)::text || '{"options": null, "request_data": null}'::text));
+        PERFORM pg_notify('integration',
+                          jsonb_build_object('project_id', OLD.project_id, 'provider', OLD.provider, 'options',
+                                             null)::text);
     ELSIF (OLD IS NULL) OR (OLD.options <> NEW.options) THEN
         PERFORM pg_notify('integration', row_to_json(NEW)::text);
     END IF;
