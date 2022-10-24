@@ -70,6 +70,10 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
 
   bugReportStore.updateReportDefaults(defaults)
   bugReportStore.setDefaultSteps(mapEvents(events))
+
+  React.useEffect(() => {
+    return () => bugReportStore.clearStore()
+  }, [])
   return (
     <div
       className="flex flex-col p-4 gap-4 bg-white overflow-y-scroll"

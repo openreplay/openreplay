@@ -55,7 +55,6 @@ export default class DOMManager extends ListWalker<Message> {
   ) {
     super()
     this.stylesManager = new StylesManager(screen)
-    logger.log(this.vElements)
   }
 
   append(m: Message): void {
@@ -341,7 +340,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (!vn) {
           // non-constructed case
           vn = this.vElements.get(msg.id)
-          if (!vn) { logger.error("Node not found", msg); return } 
+          if (!vn) { logger.error("Node not found", msg); return }
           if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
           this.ppStyleSheets.set(msg.sheetID, new PostponedStyleSheet(vn.node))
           return

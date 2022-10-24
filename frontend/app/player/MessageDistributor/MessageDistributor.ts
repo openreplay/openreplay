@@ -467,34 +467,34 @@ export default class MessageDistributor extends StatedScreen {
         break;
       case "redux":
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log(decoded)
+        logger.log('redux', decoded)
         if (decoded != null) {
           this.lists.redux.append(decoded);
         }
         break;
       case "ng_rx":
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log(decoded)
+        logger.log('ngrx', decoded)
         if (decoded != null) {
           this.lists.ngrx.append(decoded);
         }
         break;
       case "vuex":
         decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
-        logger.log(decoded)
+        logger.log('vuex', decoded)
         if (decoded != null) {
           this.lists.vuex.append(decoded);
         }
         break;
       case "zustand":
         decoded = this.decodeStateMessage(msg, ["state", "mutation"])
-        logger.log(decoded)
+        logger.log('zustand', decoded)
         if (decoded != null) {
           this.lists.zustand.append(decoded)
         }
       case "mob_x":
         decoded = this.decodeStateMessage(msg, ["payload"]);
-        logger.log(decoded)
+        logger.log('mobx', decoded)
 
         if (decoded != null) {
           this.lists.mobx.append(decoded);
