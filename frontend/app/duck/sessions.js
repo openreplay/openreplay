@@ -159,11 +159,11 @@ const reducer = (state = initialState, action = {}) => {
             const wasInFavorite = state.get('favoriteList').findIndex(({ sessionId }) => sessionId === id) > -1;
 
             return state
-                .update('list', (list) => list.map((session) => (session.sessionId === id ? session.set('favorite', !wasInFavorite) : session)))
-                .update('favoriteList', (list) =>
-                    wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session.set('favorite', true))
-                )
-                .update('current', (session) => (session.sessionId === id ? session.set('favorite', !wasInFavorite) : session));
+                .update('current', (currentSession) => (currentSession.sessionId === id ? currentSession.set('favorite', !wasInFavorite) : currentSession))
+                .update('list', (list) => list.map((listSession) => (listSession.sessionId === id ? listSession.set('favorite', !wasInFavorite) : listSession)))
+                .update('favoriteList', (list) => session ?
+                    wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session.set('favorite', true)) : list
+                );
         }
         case SORT: {
             const comparator = (s1, s2) => {

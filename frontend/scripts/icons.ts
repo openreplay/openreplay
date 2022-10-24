@@ -90,9 +90,11 @@ ${icons.map(icon => {
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
     .replace(/clip-path/g, 'clipPath')
     .replace(/clip-rule/g, 'clipRule')
+    .replace(/fill-opacity/g, 'fillOpacity')
     .replace(/stop-color/g, 'stopColor')
-    .replace(/xml:space="preserve"/g, '')};`
-}).join('\n')}
+    .replace(/xml:space="preserve"/g, '')};`;
+  })
+  .join('\n')}
 default:
         return <svg width={ width } height={ height } />;
             // if (window.ENV.PRODUCTION) return null;
