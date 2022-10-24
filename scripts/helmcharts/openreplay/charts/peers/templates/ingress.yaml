@@ -28,6 +28,13 @@ spec:
           - pathType: Prefix
             backend:
               service:
+                name: never-to-return
+                port:
+                  number: {{ $svcPort }}
+            path: /assist/private/(.*)
+          - pathType: Prefix
+            backend:
+              service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $peerjsSvcPort }}
