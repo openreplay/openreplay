@@ -23,7 +23,7 @@ function ReportTitle() {
       {bugReportStore.isTitleEdit ? (
         <input
           ref={inputRef}
-          name="name"
+          name="reportTitle"
           className="rounded fluid border-0 -mx-2 px-2 h-8 text-2xl"
           value={bugReportStore.reportTitle}
           onChange={(e) => bugReportStore.setTitle(e.target.value)}

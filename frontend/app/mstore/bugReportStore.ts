@@ -17,6 +17,7 @@ export default class BugReportStore {
 
   bugReport: Partial<BugReportPdf>
   sessionEventSteps: Step[] = []
+  chosenEventSteps: Step[] = []
 
   constructor() {
     makeAutoObservable(this)
@@ -52,7 +53,19 @@ export default class BugReportStore {
     this.bugReport = Object.assign(this.bugReport || {}, defaults)
   }
 
-  setSteps(steps: Step[]) {
+  setDefaultSteps(steps: Step[]) {
     this.sessionEventSteps = steps
+  }
+
+  setSteps(steps: Step[]) {
+    this.chosenEventSteps = steps
+  }
+
+  removeStep(step: Step) {
+    this.chosenEventSteps = this.chosenEventSteps.filter(chosenStep => chosenStep.key !== step.key)
+  }
+
+  resetSteps() {
+    this.chosenEventSteps = []
   }
 }
