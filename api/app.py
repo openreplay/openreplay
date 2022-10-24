@@ -81,7 +81,8 @@ async def shutdown():
     await pg_client.terminate()
 
 
-@app.get('/private/suicide', tags=["private"])
+@app.get('/private/shutdown', tags=["private"])
 async def stop_server():
+    await shutdown()
     import os, signal
     os.kill(1, signal.SIGTERM)
