@@ -63,6 +63,7 @@ app.schedule = AsyncIOScheduler()
 
 @app.on_event("startup")
 async def startup():
+    logging.info(">>>>> starting up <<<<<")
     await pg_client.init()
     app.schedule.start()
 
@@ -76,13 +77,14 @@ async def startup():
 
 @app.on_event("shutdown")
 async def shutdown():
-    print(">>>>> shutting down")
+    logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
     await pg_client.terminate()
 
 
 @app.get('/private/shutdown', tags=["private"])
 async def stop_server():
+    logging.info("Requested shutdown")
     await shutdown()
     import os, signal
     os.kill(1, signal.SIGTERM)
