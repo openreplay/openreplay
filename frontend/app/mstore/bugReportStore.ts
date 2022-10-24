@@ -23,6 +23,19 @@ export default class BugReportStore {
     makeAutoObservable(this)
   }
 
+  clearStore() {
+    this.reportTitle = 'Untitled Report'
+    this.comment = ''
+    this.severity = SeverityLevels.High
+
+    this.isCommentEdit = false
+    this.isTitleEdit = false
+
+    this.bugReport = undefined
+    this.sessionEventSteps = []
+    this.chosenEventSteps = []
+  }
+
   toggleTitleEdit(isEdit: boolean) {
     this.isTitleEdit = isEdit
   }
