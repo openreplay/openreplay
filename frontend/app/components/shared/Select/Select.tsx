@@ -6,7 +6,7 @@ const { ValueContainer } = components;
 
 type ValueObject = {
     value: string | number,
-    label: string,
+    label: React.ReactNode,
 }
 
 interface Props<Value extends ValueObject> {

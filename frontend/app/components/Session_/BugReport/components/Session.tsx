@@ -14,7 +14,7 @@ export default function Session({ user, sessionId, sessionUrl }: { user: string,
             {sessionUrl}
           </div>
         </div>
-        <PlayLink isAssist={false} viewed={false} sessionId={sessionId} />
+        <PlayLink newTab isAssist={false} viewed={false} sessionId={sessionId} />
       </div>
     </div>
   );

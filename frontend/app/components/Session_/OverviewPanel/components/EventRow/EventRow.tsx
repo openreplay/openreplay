@@ -11,6 +11,8 @@ interface Props {
     endTime?: number;
     renderElement?: (item: any) => React.ReactNode;
     isGraph?: boolean;
+    zIndex?: number;
+
 }
 const EventRow = React.memo((props: Props) => {
     const { title, className, list = [], endTime = 0, isGraph = false, message = '' } = props;
@@ -28,10 +30,10 @@ const EventRow = React.memo((props: Props) => {
         }, [list]);
 
     return (
-        <div className={cn('w-full flex flex-col py-2', className)} style={{ height: '60px' }}>
+        <div className={cn('w-full flex flex-col py-2', className)} style={{ height: isGraph ? 60 : 50 }}>
             <div className="uppercase color-gray-medium ml-4 text-sm flex items-center py-1">
-                <div className="mr-2 leading-none">{title}</div>
-                <RowInfo message={message} />
+                <div style={{ zIndex: props.zIndex ? props.zIndex : undefined }} className="mr-2 leading-none">{title}</div>
+                {message ? <RowInfo zIndex={props.zIndex} message={message} /> : null}
             </div>
             <div className="relative w-full">
                 {isGraph ? (
@@ -39,7 +41,7 @@ const EventRow = React.memo((props: Props) => {
                 ) : (
                     _list.length > 0 ? _list.map((item: any, index: number) => {
                         return (
-                            <div key={index} className="absolute" style={{ left: item.left + '%' }}>
+                            <div key={index} className="absolute" style={{ left: item.left + '%', zIndex: props.zIndex ? props.zIndex : undefined }}>
                                 {props.renderElement ? props.renderElement(item) : null}
                             </div>
                         );
@@ -54,10 +56,10 @@ const EventRow = React.memo((props: Props) => {
 
 export default EventRow;
 
-function RowInfo({ message} : any) {
+function RowInfo({ message, zIndex } : any) {
     return (
-     <Popup content={message} delay={0}>
+     <Popup content={message} delay={0} style={{ zIndex: zIndex ? zIndex : undefined }}>
         <Icon name="info-circle" color="gray-medium"/>
-     </Popup>   
+     </Popup>
     )
 }

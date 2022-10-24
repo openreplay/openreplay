@@ -3,12 +3,13 @@ import { connect } from 'react-redux';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { session as sessionRoute } from 'App/routes';
-import { ReportDefaults, EnvData, Step } from './types'
+import { ReportDefaults, EnvData } from './types'
 import Session from './components/Session'
 import MetaInfo from './components/MetaInfo'
 import Title from './components/Title'
 import Comments from './components/Comments'
 import Steps from './components/Steps'
+import { mapEvents } from './utils'
 
 interface Props {
   hideModal: () => void;
@@ -16,49 +17,16 @@ interface Props {
   account: Record<string, any>;
   width: number;
   height: number;
+  xrayProps: {
+    currentLocation: Record<string, any>[];
+    resourceList: Record<string, any>[];
+    exceptionsList: Record<string, any>[];
+    eventsList: Record<string, any>[];
+    endTime: number;
+  }
 }
 
-const TYPES = { CLICKRAGE: 'CLICKRAGE', CLICK: 'CLICK', LOCATION: 'LOCATION' }
-
-function mapEvents(events: Record<string,any>[]): Step[] {
-  const steps: Step[] = []
-  events.forEach(event => {
-    if (event.type === TYPES.LOCATION) {
-      const step = {
-        key: event.key,
-        type: TYPES.LOCATION,
-        icon: 'pointer',
-        details: event.url,
-        time: event.time,
-      }
-      steps.push(step)
-    }
-    if (event.type === TYPES.CLICK) {
-      const step = {
-        key: event.key,
-        type: TYPES.CLICK,
-        icon: 'finger',
-        details: event.label,
-        time: event.time,
-      }
-      steps.push(step)
-    }
-    if (event.type === TYPES.CLICKRAGE) {
-      const step = {
-        key: event.key,
-        type: TYPES.CLICKRAGE,
-        icon: 'smile',
-        details: event.label,
-        time: event.time,
-      }
-      steps.push(step)
-    }
-  })
-
-  return steps
-}
-
-function BugReportModal({ hideModal, session, width, height, account }: Props) {
+function BugReportModal({ hideModal, session, width, height, account, xrayProps }: Props) {
   const { bugReportStore } = useStore()
   const {
     userBrowser,
@@ -109,7 +77,7 @@ function BugReportModal({ hideModal, session, width, height, account }: Props) {
     >
       <Title userName={account.name} />
       <MetaInfo envObject={envObject} metadata={metadata} />
-      <Steps />
+      <Steps xrayProps={xrayProps} />
       <Session user={userDisplayName} sessionId={sessionId} sessionUrl={sessionUrl} />
       <Comments />
     </div>

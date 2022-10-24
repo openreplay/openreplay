@@ -1,11 +1,15 @@
-import React from 'react'
+import React from 'react';
 import Select from 'Shared/Select';
 import ReportTitle from './ReportTitle';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { SeverityLevels } from 'App/mstore/bugReportStore'
+import { SeverityLevels } from 'App/mstore/bugReportStore';
 
-const selectOptions = [{ label: 'HIGH', value: SeverityLevels.High }, { label: 'MEDIUM', value: SeverityLevels.Medium }, { label: 'LOW', value: SeverityLevels.Low}]
+const selectOptions = [
+  { label: <div className="flex items-center gap-2 cursor-pointer w-full"> <div className="p-1 bg-red rounded-full" /> HIGH</div>, value: SeverityLevels.High },
+  { label: <div className="flex items-center gap-2 cursor-pointer w-full"> <div className="p-1 bg-yellow2 rounded-full" /> MEDIUM</div>, value: SeverityLevels.Medium },
+  { label:<div className="flex items-center gap-2 cursor-pointer w-full"> <div className="p-1 bg-blue rounded-full" /> LOW</div>, value: SeverityLevels.Low },
+];
 
 function Title({ userName }: { userName: string }) {
   const { bugReportStore } = useStore();
@@ -18,10 +22,16 @@ function Title({ userName }: { userName: string }) {
       </div>
       <div className="flex items-center gap-2">
         <div className="font-semibold">Severity</div>
-        <Select plain controlStyle={{ minWidth: 100 }} defaultValue={SeverityLevels.High} options={selectOptions} onChange={({ value }) => bugReportStore.setSeverity(value.value) } />
+        <Select
+          plain
+          controlStyle={{ minWidth: 115 }}
+          defaultValue={SeverityLevels.High}
+          options={selectOptions}
+          onChange={({ value }) => bugReportStore.setSeverity(value.value)}
+        />
       </div>
     </div>
   );
 }
 
-export default observer(Title)
+export default observer(Title);

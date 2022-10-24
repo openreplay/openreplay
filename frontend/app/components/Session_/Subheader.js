@@ -24,7 +24,14 @@ function SubHeader(props) {
 
   const showReportModal = () => {
     pause();
-    showModal(<BugReportModal width={props.width} height={props.height} hideModal={hideModal} />, { right: true });
+    const xrayProps = {
+      currentLocation: props.currentLocation,
+      resourceList: props.resourceList,
+      exceptionsList: props.exceptionsList,
+      eventsList: props.eventsList,
+      endTime: props.endTime,
+    }
+    showModal(<BugReportModal width={props.width} height={props.height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
   };
 
   return (
@@ -109,6 +116,20 @@ function SubHeader(props) {
   );
 }
 
-const SubH = connectPlayer((state) => ({ width: state.width, height: state.height, currentLocation: state.location }))(SubHeader);
+const SubH = connectPlayer(
+  (state) => ({
+    width: state.width,
+    height: state.height,
+    currentLocation: state.location,
+    resourceList: state.resourceList
+      .filter((r) => r.isRed() || r.isYellow())
+      .concat(state.fetchList.filter((i) => parseInt(i.status) >= 400))
+      .concat(state.graphqlList.filter((i) => parseInt(i.status) >= 400)),
+    exceptionsList: state.exceptionsList,
+    eventsList: state.eventList,
+    endTime: state.endTime,
+  })
+
+  )(SubHeader);
 
 export default React.memo(SubH);
