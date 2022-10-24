@@ -7,7 +7,7 @@ cd /tmp
 
 buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit")
 
-mc alias set minio "http://$MINIO_HOST:$MINIO_PORT" $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
+mc alias set minio "http://$MINIO_HOST" $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
 function init() {
 echo "Initializing minio"

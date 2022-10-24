@@ -103,7 +103,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-      {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+      {{- if contains "svc.cluster.local" .Values.global.s3.endpoint }}
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
@@ -120,9 +120,7 @@ spec:
           - name: MINIO_SECRET_KEY
             value: "{{ .Values.minio.global.minio.secretKey }}"
           - name: MINIO_HOST
-            value: "{{ .Values.minio.global.minio.minioHost }}"
-          - name: MINIO_POST
-            value: "{{ .Values.minio.global.minio.minioPort }}"
+            value: "{{ .Values.global.s3.endpoint }}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
