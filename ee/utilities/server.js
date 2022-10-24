@@ -113,3 +113,20 @@ if (process.env.uws !== "true") {
     });
     module.exports = {uapp};
 }
+
+if (process.env.uws !== "true") {
+    wsapp.get('/private/shutdown', (req, res) => {
+            console.log("Requested shutdown");
+            res.statusCode = 200;
+            res.end("ok!");
+            process.kill(1, "SIGTERM");
+        }
+    );
+} else {
+    uapp.get('/private/shutdown', (res, req) => {
+            console.log("Requested shutdown");
+            res.writeStatus('200 OK').end("ok!");
+            process.kill(1, "SIGTERM");
+        }
+    );
+}
