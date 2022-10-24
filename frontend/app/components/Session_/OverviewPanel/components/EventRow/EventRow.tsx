@@ -12,6 +12,7 @@ interface Props {
     renderElement?: (item: any) => React.ReactNode;
     isGraph?: boolean;
     zIndex?: number;
+    noMargin?: boolean;
 
 }
 const EventRow = React.memo((props: Props) => {
@@ -31,22 +32,22 @@ const EventRow = React.memo((props: Props) => {
 
     return (
         <div className={cn('w-full flex flex-col py-2', className)} style={{ height: isGraph ? 60 : 50 }}>
-            <div className="uppercase color-gray-medium ml-4 text-sm flex items-center py-1">
+            <div className={cn("uppercase color-gray-medium text-sm flex items-center py-1", props.noMargin ? '' : 'ml-4' )}>
                 <div style={{ zIndex: props.zIndex ? props.zIndex : undefined }} className="mr-2 leading-none">{title}</div>
                 {message ? <RowInfo zIndex={props.zIndex} message={message} /> : null}
             </div>
-            <div className="relative w-full">
+            <div className="relative w-full" style={{ zIndex: props.zIndex ? props.zIndex : undefined }}>
                 {isGraph ? (
                     <PerformanceGraph list={list} />
                 ) : (
                     _list.length > 0 ? _list.map((item: any, index: number) => {
                         return (
-                            <div key={index} className="absolute" style={{ left: item.left + '%', zIndex: props.zIndex ? props.zIndex : undefined }}>
+                            <div key={index} className="absolute" style={{ left: `clamp(0%, calc(${item.left}% - 7px), calc(100% - 14px))`, zIndex: props.zIndex ? props.zIndex : undefined }}>
                                 {props.renderElement ? props.renderElement(item) : null}
                             </div>
                         );
                     }) : (
-                        <div className="ml-4 color-gray-medium text-sm pt-2">None captured.</div>
+                        <div className={cn("color-gray-medium text-sm pt-2", props.noMargin ? '' : 'ml-4')}>None captured.</div>
                     )
                 )}
             </div>

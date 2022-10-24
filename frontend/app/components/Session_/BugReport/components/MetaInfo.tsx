@@ -1,5 +1,5 @@
-import React from 'react'
-import SectionTitle from './SectionTitle'
+import React from 'react';
+import SectionTitle from './SectionTitle';
 
 interface EnvObj {
   Device: string;
@@ -10,7 +10,13 @@ interface EnvObj {
   Rev?: string;
 }
 
-export default function MetaInfo({ envObject, metadata }: { envObject: EnvObj, metadata: Record<string, any> }) {
+export default function MetaInfo({
+  envObject,
+  metadata,
+}: {
+  envObject: EnvObj;
+  metadata: Record<string, any>;
+}) {
   return (
     <div className="flex gap-8">
       <div className="flex flex-col gap-2">
@@ -26,15 +32,17 @@ export default function MetaInfo({ envObject, metadata }: { envObject: EnvObj, m
         ))}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <SectionTitle>Metadata</SectionTitle>
-        {Object.keys(metadata).map((meta) => (
-          <div key={meta} className="flex items-center rounded overflow-hidden bg-gray-lightest">
-            <div className="bg-gray-light-shade py-1 px-2">{meta}</div>
-            <div className="py-1 px-2 text-gray-medium">{metadata[meta]}</div>
-          </div>
-        ))}
-      </div>
+      {Object.keys(metadata).length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <SectionTitle>Metadata</SectionTitle>
+          {Object.keys(metadata).map((meta) => (
+            <div key={meta} className="flex items-center rounded overflow-hidden bg-gray-lightest">
+              <div className="bg-gray-light-shade py-1 px-2">{meta}</div>
+              <div className="py-1 px-2 text-gray-medium">{metadata[meta]}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -13,7 +13,7 @@ function Comments() {
   };
 
   React.useEffect(() => {
-    if (inputRef.current && bugReportStore.isTitleEdit) {
+    if (inputRef.current && bugReportStore.isCommentEdit) {
       inputRef.current?.focus();
     }
   }, [bugReportStore.isCommentEdit]);
@@ -26,13 +26,13 @@ function Comments() {
   return (
     <div className="w-full">
       <div className="flex items-center gap-2">
-        <SectionTitle>Comments</SectionTitle>{' '}
+        <SectionTitle>Comments</SectionTitle>
         <div className="text-disabled-text mb-2">(Optional)</div>
       </div>
       {bugReportStore.isCommentEdit ? (
         <textarea
           ref={inputRef}
-          name="name"
+          name="reportComments"
           placeholder="Comment..."
           rows={3}
           autoFocus

@@ -1,7 +1,9 @@
 export const INDEXES = {
+  PLAYER_REQUEST_WINDOW: 10,
+  BUG_REPORT_PICKER: 19,
+  BUG_REPORT: 20,
   POPUP_GUIDE_BG: 99998,
   POPUP_GUIDE_BTN: 99999,
-  PLAYER_REQUEST_WINDOW: 10,
 }
 
 export const getHighest = () => {
