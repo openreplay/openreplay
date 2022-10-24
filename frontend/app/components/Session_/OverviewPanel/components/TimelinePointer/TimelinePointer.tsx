@@ -13,10 +13,12 @@ import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
 interface Props {
   pointer: any;
   type: any;
+  noClick?: boolean;
 }
 const TimelinePointer = React.memo((props: Props) => {
-  const { showModal, hideModal } = useModal();
+  const { showModal } = useModal();
   const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
+    if (props.noClick) return;
     e.stopPropagation();
     Controls.jump(pointer.time);
     if (!type) {
@@ -56,7 +58,7 @@ const TimelinePointer = React.memo((props: Props) => {
         position="top"
       >
         <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
-          <div className="h-3 w-3 rounded-full bg-red" />
+          <div className="h-4 w-4 rounded-full bg-red" />
         </div>
       </Popup>
     );
