@@ -16,6 +16,7 @@ type RawMessage struct {
 	meta    *message
 	encoded bool
 	skipped *bool
+	broken  *bool
 }
 
 func (m *RawMessage) Encode() []byte {
@@ -28,7 +29,7 @@ func (m *RawMessage) Encode() []byte {
 	*m.skipped = false
 	_, err := io.ReadFull(m.reader, m.data[1:])
 	if err != nil {
-		log.Printf("message encode err: %s", err)
+		log.Printf("message encode err: %s, type: %d, sess: %d", err, m.tp, m.SessionID())
 		return nil
 	}
 	return m.data
@@ -36,7 +37,10 @@ func (m *RawMessage) Encode() []byte {
 
 func (m *RawMessage) EncodeWithIndex() []byte {
 	if !m.encoded {
-		m.Encode()
+		if m.Encode() == nil {
+			*m.broken = true
+			return nil
+		}
 	}
 	if IsIOSType(int(m.tp)) {
 		return m.data
@@ -49,14 +53,17 @@ func (m *RawMessage) EncodeWithIndex() []byte {
 
 func (m *RawMessage) Decode() Message {
 	if !m.encoded {
-		m.Encode()
+		if m.Encode() == nil {
+			*m.broken = true
+			return nil
+		}
 	}
 	msg, err := ReadMessage(m.tp, bytes.NewReader(m.data[1:]))
 	if err != nil {
 		log.Printf("decode err: %s", err)
+		*m.broken = true
 		return nil
 	}
-	msg = transformDeprecated(msg)
 	msg.Meta().SetMeta(m.meta)
 	return msg
 }
