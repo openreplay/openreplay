@@ -26,6 +26,26 @@ def get_urls(project_id, session_id):
     return results
 
 
+def get_urls_depercated(session_id):
+    return [
+        client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': config("sessions_bucket"),
+                'Key': str(session_id)
+            },
+            ExpiresIn=100000
+        ),
+        client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': config("sessions_bucket"),
+                'Key': str(session_id) + "e"
+            },
+            ExpiresIn=100000
+        )]
+
+
 def get_ios(session_id):
     return client.generate_presigned_url(
         'get_object',

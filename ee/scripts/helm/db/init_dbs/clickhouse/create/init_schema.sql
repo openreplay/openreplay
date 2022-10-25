@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS experimental.events
 (
     session_id                                     UInt64,
     project_id                                     UInt16,
-    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'ERROR'=5,'CUSTOM'=6, 'GRAPHQL'=7, 'STATEACTION'=8),
+    event_type Enum8('CLICK'=0, 'INPUT'=1, 'LOCATION'=2,'REQUEST'=3,'PERFORMANCE'=4,'ERROR'=5,'CUSTOM'=6, 'GRAPHQL'=7, 'STATEACTION'=8, 'ISSUE'=9),
     datetime                                       DateTime,
     label Nullable(String),
     hesitation_time Nullable(UInt32),
@@ -78,6 +78,10 @@ CREATE TABLE IF NOT EXISTS experimental.events
     success Nullable(UInt8),
     request_body Nullable(String),
     response_body Nullable(String),
+    issue_type Nullable(Enum8('click_rage'=1,'dead_click'=2,'excessive_scrolling'=3,'bad_request'=4,'missing_resource'=5,'memory'=6,'cpu'=7,'slow_resource'=8,'slow_page_load'=9,'crash'=10,'ml_cpu'=11,'ml_memory'=12,'ml_dead_click'=13,'ml_click_rage'=14,'ml_mouse_thrashing'=15,'ml_excessive_scrolling'=16,'ml_slow_resources'=17,'custom'=18,'js_exception'=19)),
+    issue_id Nullable(String),
+    error_tags_keys Array(String),
+    error_tags_values Array(Nullable(String)),
     message_id                                     UInt64   DEFAULT 0,
     _timestamp                                     DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(_timestamp)
@@ -192,6 +196,20 @@ CREATE TABLE IF NOT EXISTS experimental.user_viewed_errors
       ORDER BY (project_id, user_id, error_id)
       TTL _timestamp + INTERVAL 3 MONTH;
 
+CREATE TABLE IF NOT EXISTS experimental.issues
+(
+    project_id     UInt16,
+    issue_id       String,
+    type Enum8('click_rage'=1,'dead_click'=2,'excessive_scrolling'=3,'bad_request'=4,'missing_resource'=5,'memory'=6,'cpu'=7,'slow_resource'=8,'slow_page_load'=9,'crash'=10,'ml_cpu'=11,'ml_memory'=12,'ml_dead_click'=13,'ml_click_rage'=14,'ml_mouse_thrashing'=15,'ml_excessive_scrolling'=16,'ml_slow_resources'=17,'custom'=18,'js_exception'=19),
+    context_string String,
+    context_keys Array(String),
+    context_values Array(Nullable(String)),
+    _timestamp     DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(_timestamp)
+      PARTITION BY toYYYYMM(_timestamp)
+      ORDER BY (project_id, issue_id, type)
+      TTL _timestamp + INTERVAL 3 MONTH;
+
 CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.events_l7d_mv
             ENGINE = ReplacingMergeTree(_timestamp)
                 PARTITION BY toYYYYMM(datetime)
@@ -256,6 +274,10 @@ SELECT session_id,
        success,
        request_body,
        response_body,
+       issue_type,
+       issue_id,
+       error_tags_keys,
+       error_tags_values,
        message_id,
        _timestamp
 FROM experimental.events
@@ -339,3 +361,35 @@ FROM experimental.sessions
 WHERE datetime >= now() - INTERVAL 7 DAY
   AND isNotNull(duration)
   AND duration > 0;
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS experimental.js_errors_sessions_mv
+            ENGINE = ReplacingMergeTree(_timestamp)
+                PARTITION BY toYYYYMM(datetime)
+                ORDER BY (project_id, datetime, event_type, error_id, session_id)
+                TTL _timestamp + INTERVAL 35 DAY
+            POPULATE
+AS
+SELECT session_id,
+       project_id,
+       events.datetime         AS datetime,
+       event_type,
+       assumeNotNull(error_id) AS error_id,
+       source,
+       name,
+       message,
+       error_tags_keys,
+       error_tags_values,
+       message_id,
+       user_id,
+       user_browser,
+       user_browser_version,
+       user_os,
+       user_os_version,
+       user_device_type,
+       user_device,
+       user_country,
+       _timestamp
+FROM experimental.events
+         INNER JOIN experimental.sessions USING (session_id)
+WHERE event_type = 'ERROR'
+  AND source = 'js_exception';

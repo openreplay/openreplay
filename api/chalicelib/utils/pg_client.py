@@ -20,8 +20,6 @@ PG_CONFIG = dict(_PG_CONFIG)
 if config("PG_TIMEOUT", cast=int, default=0) > 0:
     PG_CONFIG["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int) * 1000}"
 
-logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
-
 
 class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
     def __init__(self, minconn, maxconn, *args, **kwargs):
@@ -83,10 +81,6 @@ def make_pool():
             raise error
 
 
-if config('PG_POOL', cast=bool, default=True):
-    make_pool()
-
-
 class PostgresClient:
     connection = None
     cursor = None
@@ -109,7 +103,7 @@ class PostgresClient:
         elif not config('PG_POOL', cast=bool, default=True):
             single_config = dict(_PG_CONFIG)
             single_config["application_name"] += "-NOPOOL"
-            single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=3 * 60) * 1000}"
+            single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=30) * 1000}"
             self.connection = psycopg2.connect(**single_config)
         else:
             self.connection = postgreSQL_pool.getconn()
@@ -117,6 +111,7 @@ class PostgresClient:
     def __enter__(self):
         if self.cursor is None:
             self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            self.cursor.recreate = self.recreate_cursor
         return self.cursor
 
     def __exit__(self, *args):
@@ -141,6 +136,26 @@ class PostgresClient:
                     and not self.unlimited_query:
                 postgreSQL_pool.putconn(self.connection)
 
+    def recreate_cursor(self):
+        try:
+            self.cursor.close()
+        except Exception as error:
+            logging.error("Error while closing cursor for recreation", error)
+        self.cursor = None
+        self.__enter__()
 
-def close():
-    pass
+
+async def init():
+    logging.info(f">PG_POOL:{config('PG_POOL', default=None)}")
+    if config('PG_POOL', cast=bool, default=True):
+        make_pool()
+
+
+async def terminate():
+    global postgreSQL_pool
+    if postgreSQL_pool is not None:
+        try:
+            postgreSQL_pool.closeall()
+            logging.info("Closed all connexions to PostgreSQL")
+        except (Exception, psycopg2.DatabaseError) as error:
+            logging.error("Error while closing all connexions to PostgreSQL", error)

@@ -20,8 +20,6 @@ check_prereq() {
 function build_api(){
     cp -R ../api ../_api
     cd ../_api
-    cp -R ../utilities/utils ../sourcemap-reader/.
-    cp -R ../sourcemap-reader .
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {

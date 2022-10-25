@@ -1,7 +1,5 @@
 import json
 
-from decouple import config
-
 import schemas
 from chalicelib.core import users, telemetry, tenants
 from chalicelib.utils import captcha
@@ -20,55 +18,41 @@ def create_step1(data: schemas.UserSignupSchema):
     print(f"=====================> {email}")
     password = data.password
 
-    print("Verifying email validity")
-    if email is None or len(email) < 5 or not helper.is_valid_email(email):
+    if email is None or len(email) < 5:
         errors.append("Invalid email address.")
     else:
-        print("Verifying email existance")
         if users.email_exists(email):
             errors.append("Email address already in use.")
         if users.get_deleted_user_by_email(email) is not None:
             errors.append("Email address previously deleted.")
 
-    print("Verifying captcha")
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         errors.append("Invalid captcha.")
 
-    print("Verifying password validity")
     if len(password) < 6:
         errors.append("Password is too short, it must be at least 6 characters long.")
 
-    print("Verifying fullname validity")
     fullname = data.fullname
     if fullname is None or len(fullname) < 1 or not helper.is_alphabet_space_dash(fullname):
         errors.append("Invalid full name.")
 
-    print("Verifying company's name validity")
-    company_name = data.organizationName
-    if company_name is None or len(company_name) < 1:
-        errors.append("invalid organization's name")
-
-    print("Verifying project's name validity")
-    project_name = data.projectName
-    if project_name is None or len(project_name) < 1:
-        project_name = "my first project"
+    organization_name = data.organizationName
+    if organization_name is None or len(organization_name) < 1:
+        errors.append("Invalid organization name.")
 
     if len(errors) > 0:
-        print("==> error")
+        print(f"==> error for email:{data.email}, fullname:{data.fullname}, organizationName:{data.organizationName}")
         print(errors)
         return {"errors": errors}
-    print("No errors detected")
+
+    project_name = "my first project"
     params = {
-        "email": email, "password": password,
-        "fullname": fullname,
-        "projectName": project_name,
-        "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-        "organizationName": company_name
+        "email": email, "password": password, "fullname": fullname, "projectName": project_name,
+        "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}), "organizationName": organization_name
     }
-    query = f"""\
-                WITH t AS (
-                    INSERT INTO public.tenants (name, version_number)
-                        VALUES (%(organizationName)s, (SELECT openreplay_version()))
+    query = f"""WITH t AS (
+                    INSERT INTO public.tenants (name)
+                        VALUES (%(organizationName)s)
                     RETURNING api_key
                 ),
                  u AS (
@@ -106,7 +90,7 @@ def create_step1(data: schemas.UserSignupSchema):
     }
     c = {
         "tenantId": 1,
-        "name": company_name,
+        "name": organization_name,
         "apiKey": api_key,
         "remainingTrial": 14,
         "trialEnded": False,

@@ -28,7 +28,6 @@ class UserLoginSchema(_Grecaptcha):
 class UserSignupSchema(UserLoginSchema):
     fullname: str = Field(...)
     organizationName: str = Field(...)
-    projectName: str = Field(default="my first project")
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -1084,3 +1083,41 @@ class IntegrationType(str, Enum):
     stackdriver = "STACKDRIVER"
     cloudwatch = "CLOUDWATCH"
     newrelic = "NEWRELIC"
+
+
+class SearchNoteSchema(_PaginatedSchema):
+    sort: str = Field(default="createdAt")
+    order: SortOrderType = Field(default=SortOrderType.desc)
+    tags: Optional[List[str]] = Field(default=[])
+    shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class SessionNoteSchema(BaseModel):
+    message: str = Field(..., min_length=2)
+    tag: Optional[str] = Field(default=None)
+    timestamp: int = Field(default=-1)
+    is_public: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class SessionUpdateNoteSchema(SessionNoteSchema):
+    message: Optional[str] = Field(default=None, min_length=2)
+    timestamp: Optional[int] = Field(default=None, ge=-1)
+    is_public: Optional[bool] = Field(default=None)
+
+    @root_validator
+    def validator(cls, values):
+        assert len(values.keys()) > 0, "at least 1 attribute should be provided for update"
+        c = 0
+        for v in values.values():
+            if v is not None and (not isinstance(v, str) or len(v) > 0):
+                c += 1
+                break
+        assert c > 0, "at least 1 value should be provided for update"
+        return values

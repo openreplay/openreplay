@@ -35,24 +35,57 @@ class Slack:
         return True
 
     @classmethod
-    def send_text(cls, tenant_id, webhook_id, text, **args):
+    def send_text_attachments(cls, tenant_id, webhook_id, text, **args):
         integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
-        print("====> sending slack notification")
-        r = requests.post(
-            url=integration["endpoint"],
-            json={
-                "attachments": [
-                    {
-                        "text": text,
-                        "ts": datetime.now().timestamp(),
-                        **args
-                    }
-                ]
-            })
-        print(r)
-        print(r.text)
+        try:
+            r = requests.post(
+                url=integration["endpoint"],
+                json={
+                    "attachments": [
+                        {
+                            "text": text,
+                            "ts": datetime.now().timestamp(),
+                            **args
+                        }
+                    ]
+                },
+                timeout=5)
+            if r.status_code != 200:
+                print(f"!! issue sending slack text attachments; webhookId:{webhook_id} code:{r.status_code}")
+                print(r.text)
+                return None
+        except requests.exceptions.Timeout:
+            print(f"!! Timeout sending slack text attachments webhookId:{webhook_id}")
+            return None
+        except Exception as e:
+            print(f"!! Issue sending slack text attachments webhookId:{webhook_id}")
+            print(str(e))
+            return None
+        return {"data": r.text}
+
+    @classmethod
+    def send_raw(cls, tenant_id, webhook_id, body):
+        integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
+        if integration is None:
+            return {"errors": ["slack integration not found"]}
+        try:
+            r = requests.post(
+                url=integration["endpoint"],
+                json=body,
+                timeout=5)
+            if r.status_code != 200:
+                print(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
+                print(r.text)
+                return None
+        except requests.exceptions.Timeout:
+            print(f"!! Timeout sending slack raw webhookId:{webhook_id}")
+            return None
+        except Exception as e:
+            print(f"!! Issue sending slack raw webhookId:{webhook_id}")
+            print(str(e))
+            return None
         return {"data": r.text}
 
     @classmethod

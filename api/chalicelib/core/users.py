@@ -252,9 +252,8 @@ def generate_new_api_key(user_id):
             cur.mogrify(
                 f"""UPDATE public.users
                     SET api_key=generate_api_key(20)
-                    WHERE
-                     users.user_id = %(userId)s
-                     AND deleted_at IS NULL
+                    WHERE users.user_id = %(userId)s
+                            AND deleted_at IS NULL
                     RETURNING api_key;""",
                 {"userId": user_id})
         )
@@ -292,6 +291,39 @@ def edit(user_id_to_update, tenant_id, changes: schemas.EditUserSchema, editor_i
     if len(_changes.keys()) > 0:
         updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
         return {"data": updated_user}
+    return {"data": user}
+
+
+def edit_member(user_id_to_update, tenant_id, changes: schemas.EditUserSchema, editor_id):
+    user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
+    if editor_id != user_id_to_update or changes.admin is not None and changes.admin != user["admin"]:
+        admin = get(tenant_id=tenant_id, user_id=editor_id)
+        if not admin["superAdmin"] and not admin["admin"]:
+            return {"errors": ["unauthorized"]}
+    _changes = {}
+    if editor_id == user_id_to_update:
+        if changes.admin is not None:
+            if user["superAdmin"]:
+                changes.admin = None
+            elif changes.admin != user["admin"]:
+                return {"errors": ["cannot change your own role"]}
+
+    if changes.email is not None and changes.email != user["email"]:
+        if email_exists(changes.email):
+            return {"errors": ["email already exists."]}
+        if get_deleted_user_by_email(changes.email) is not None:
+            return {"errors": ["email previously deleted."]}
+        _changes["email"] = changes.email
+
+    if changes.name is not None and len(changes.name) > 0:
+        _changes["name"] = changes.name
+
+    if changes.admin is not None:
+        _changes["role"] = "admin" if changes.admin else "member"
+
+    if len(_changes.keys()) > 0:
+        update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
+        return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
     return {"data": user}
 
 
@@ -342,11 +374,42 @@ def get_by_email_reset(email, reset_token):
     return helper.dict_to_camel_case(r)
 
 
+def get_member(tenant_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify(
+            f"""SELECT 
+                        users.user_id,
+                        users.email, 
+                        users.role, 
+                        users.name, 
+                        users.created_at,
+                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        basic_authentication.password IS NOT NULL AS joined,
+                        invitation_token
+                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
+                    WHERE users.deleted_at IS NULL AND users.user_id=%(user_id)s
+                    ORDER BY name, user_id""", {"user_id": user_id})
+        )
+        u = helper.dict_to_camel_case(cur.fetchone())
+        if u:
+            u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
+            if u["invitationToken"]:
+                u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+            else:
+                u["invitationLink"] = None
+
+    return u
+
+
 def get_members(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         users.email, 
                         users.role, 
                         users.name, 
@@ -360,7 +423,7 @@ def get_members(tenant_id):
                         invitation_token
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL
-                    ORDER BY name, id"""
+                    ORDER BY name, user_id"""
         )
         r = cur.fetchall()
         if len(r):

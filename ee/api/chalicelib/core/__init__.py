@@ -18,7 +18,11 @@ else:
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
     print(">>> Using experimental error search")
+    from . import errors as errors_legacy
     from . import errors_exp as errors
+
+    if config("EXP_ERRORS_GET", cast=bool, default=False):
+        print(">>> Using experimental error get")
 else:
     from . import errors as errors
 

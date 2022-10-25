@@ -61,10 +61,10 @@ def __get_live_sessions_ws(project_id, data):
             return {"total": 0, "sessions": []}
         live_peers = results.json().get("data", [])
     except requests.exceptions.Timeout:
-        print("Timeout getting Assist response")
+        print("!! Timeout getting Assist response")
         live_peers = {"total": 0, "sessions": []}
     except Exception as e:
-        print("issue getting Live-Assist response")
+        print("!! Issue getting Live-Assist response")
         print(str(e))
         print("expected JSON, received:")
         try:
@@ -89,11 +89,11 @@ def __get_agent_token(project_id, project_key, session_id):
             "projectId": project_id,
             "sessionId": session_id,
             "iat": iat // 1000,
-            "exp": iat // 1000 + config("JWT_EXP_DELTA_SECONDS", cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "exp": iat // 1000 + config("ASSIST_JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000,
             "iss": config("JWT_ISSUER"),
             "aud": f"openreplay:agent"
         },
-        key=config("jwt_secret"),
+        key=config("ASSIST_JWT_SECRET"),
         algorithm=config("jwt_algorithm")
     )
 
@@ -116,7 +116,7 @@ def get_live_session_by_id(project_id, session_id):
         print("!! Timeout getting Assist response")
         return None
     except Exception as e:
-        print("issue getting Assist response")
+        print("!! Issue getting Assist response")
         print(str(e))
         print("expected JSON, received:")
         try:
@@ -139,10 +139,10 @@ def is_live(project_id, session_id, project_key=None):
             return False
         results = results.json().get("data")
     except requests.exceptions.Timeout:
-        print("Timeout getting Assist response")
+        print("!! Timeout getting Assist response")
         return False
     except Exception as e:
-        print("issue getting Assist response")
+        print("!! Issue getting Assist response")
         print(str(e))
         print("expected JSON, received:")
         try:
@@ -168,10 +168,10 @@ def autocomplete(project_id, q: str, key: str = None):
             return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
         results = results.json().get("data", [])
     except requests.exceptions.Timeout:
-        print("Timeout getting Assist response")
+        print("!! Timeout getting Assist response")
         return {"errors": ["Assist request timeout"]}
     except Exception as e:
-        print("issue getting Assist response")
+        print("!! Issue getting Assist response")
         print(str(e))
         print("expected JSON, received:")
         try:
@@ -250,7 +250,7 @@ def session_exists(project_id, session_id):
         print("!! Timeout getting Assist response")
         return False
     except Exception as e:
-        print("issue getting Assist response")
+        print("!! Issue getting Assist response")
         print(str(e))
         print("expected JSON, received:")
         try:
