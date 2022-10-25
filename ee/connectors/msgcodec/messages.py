@@ -63,12 +63,11 @@ class SessionStart(Message):
         self.user_id = user_id
 
 
-class SessionEnd(Message):
+class SessionEndDeprecated(Message):
     __id__ = 3
 
-    def __init__(self, timestamp, encryption_key):
+    def __init__(self, timestamp):
         self.timestamp = timestamp
-        self.encryption_key = encryption_key
 
 
 class SetPageLocation(Message):
@@ -740,6 +739,14 @@ class JSException(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class SessionEnd(Message):
+    __id__ = 126
+
+    def __init__(self, timestamp, encryption_key):
+        self.timestamp = timestamp
+        self.encryption_key = encryption_key
 
 
 class SessionSearch(Message):

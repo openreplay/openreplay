@@ -46,9 +46,8 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
 end
 ## message 2, 'CreateDocument', do
 # end
-message 3, 'SessionEnd', :tracker => false, :replayer => false do
+message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
   uint 'Timestamp'
-  string 'EncryptionKey'
 end
 message 4, 'SetPageLocation' do
   string 'URL'
@@ -467,7 +466,10 @@ message 78, 'JSException', :replayer => false do
   string 'Payload'
   string 'Metadata'
 end
-
+message 126, 'SessionEnd', :tracker => false, :replayer => false do
+  uint 'Timestamp'
+  string 'EncryptionKey'
+end
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
