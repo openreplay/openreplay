@@ -22,6 +22,8 @@ echo $DOCKER_REPO
     PUSH_IMAGE=1 bash build.sh $@
     cd ../frontend
     PUSH_IMAGE=1 bash build.sh $@
+    cd ../sourcemap-reader
+    PUSH_IMAGE=1 bash build.sh $@
     cd ../api
     PUSH_IMAGE=1 bash build.sh $@
 }
