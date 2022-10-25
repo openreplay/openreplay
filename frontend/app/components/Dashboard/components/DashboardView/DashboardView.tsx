@@ -76,8 +76,8 @@ function DashboardView(props: Props) {
   return (
     <Loader loading={loading}>
       <div style={{ maxWidth: '1300px', margin: 'auto' }}>
-         {/* @ts-ignore  */}
-        <DashboardHeader renderReport={props.renderReport} />
+        {/* @ts-ignore */}
+        <DashboardHeader renderReport={props.renderReport} siteId={siteId} />
 
         <DashboardWidgetGrid
           siteId={siteId}

@@ -11,6 +11,7 @@ import DashboardOptions from '../DashboardOptions';
 import withModal from 'App/components/Modal/withModal';
 import { observer } from 'mobx-react-lite';
 import DashboardEditModal from '../DashboardEditModal';
+import AddCardModal from '../AddCardModal';
 
 interface IProps {
   siteId: string;
@@ -23,7 +24,7 @@ function DashboardHeader(props: Props) {
   const { siteId } = props;
   const { dashboardStore } = useStore();
   const { showModal } = useModal();
-  const [showTooltip, setShowTooltip] = React.useState(false);
+  // const [showTooltip, setShowTooltip] = React.useState(false);
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const period = dashboardStore.period;
@@ -79,7 +80,11 @@ function DashboardHeader(props: Props) {
           />
         </div>
         <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
-          <Button variant="primary" onClick={() => setShowTooltip(true)} icon="plus">
+          <Button
+            variant="primary"
+            onClick={() => showModal(<AddCardModal />, { right: true })}
+            icon="plus"
+          >
             Add Card
           </Button>
           <div className="mx-4"></div>

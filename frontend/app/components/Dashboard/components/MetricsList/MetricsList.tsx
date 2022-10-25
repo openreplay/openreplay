@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
-import { NoContent, Pagination, Icon } from 'UI';
+import React, { useEffect, useState } from 'react';
+import { NoContent, Pagination, Icon, Checkbox } from 'UI';
 import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import MetricListItem from '../MetricListItem';
@@ -11,6 +11,16 @@ function MetricsList({ siteId }: { siteId: string }) {
   const { metricStore } = useStore();
   const metrics = metricStore.sortedWidgets;
   const metricsSearch = metricStore.metricsSearch;
+  const [selectedMetrics, setSelectedMetrics] = useState([]);
+
+  const toggleMetricSelection = (id: any) => {
+    console.log('id', id);
+    if (selectedMetrics.includes(id)) {
+      selectedMetrics.splice(selectedMetrics.indexOf(id), 1);
+    } else {
+      selectedMetrics.push(id);
+    }
+  };
 
   const filterByDashboard = (item: Widget, searchRE: RegExp) => {
     const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ');
@@ -40,7 +50,16 @@ function MetricsList({ siteId }: { siteId: string }) {
     >
       <div className="mt-3 border-b rounded bg-white">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
-          <div className="col-span-4">Title</div>
+          <div className="col-span-4 flex items-center">
+            <Checkbox
+              name="slack"
+              className="mr-4"
+              type="checkbox"
+              checked={false}
+              onClick={() => setSelectedMetrics(list.map((i: any) => i.metricId))}
+            />
+            <span>Title</span>
+          </div>
           <div className="col-span-4">Owner</div>
           <div className="col-span-2">Visibility</div>
           <div className="col-span-2 text-right">Last Modified</div>
@@ -48,7 +67,15 @@ function MetricsList({ siteId }: { siteId: string }) {
 
         {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
           <React.Fragment key={metric.metricId}>
-            <MetricListItem metric={metric} siteId={siteId} />
+            <MetricListItem
+              metric={metric}
+              siteId={siteId}
+              selected={selectedMetrics[parseInt(metric.metricId)]}
+              toggleSelection={(e: any) => {
+                e.stopPropagation();
+                toggleMetricSelection(parseInt(metric.metricId));
+              }}
+            />
           </React.Fragment>
         ))}
       </div>

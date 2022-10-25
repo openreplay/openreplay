@@ -1,4 +1,6 @@
+import { useModal } from 'App/components/Modal';
 import React from 'react';
+import MetricsLibraryModal from '../MetricsLibraryModal';
 import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
 
 const METRIC_TYPES: MetricType[] = [
@@ -71,10 +73,16 @@ const METRIC_TYPES: MetricType[] = [
 ];
 
 function MetricTypeList() {
+  const { showModal } = useModal();
+  const onClick = ({ slug }: MetricType) => {
+    if (slug === 'library') {
+      showModal(<MetricsLibraryModal />, { right: true, width: 700 });
+    }
+  };
   return (
     <>
       {METRIC_TYPES.map((metric: MetricType) => (
-        <MetricTypeItem metric={metric} />
+        <MetricTypeItem metric={metric} onClick={() => onClick(metric)} />
       ))}
     </>
   );
