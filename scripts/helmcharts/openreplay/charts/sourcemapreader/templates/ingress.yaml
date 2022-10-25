@@ -1,0 +1,40 @@
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "sourcemapreader.fullname" . -}}
+{{- $svcPort := .Values.service.ports.sourcemapreader -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sourcemapreader.labels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      index /index.html;
+      rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /index.html break;
+      proxy_intercept_errors on; # see sourcemapreader://nginx.org/en/docs/sourcemapreader/ngx_sourcemapreader_proxy_module.html#proxy_intercept_errors
+      error_page 404 =200 /index.html;
+      {{- .Values.ingress.cspSnippet | nindent 6}}
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+            path: /(.*)
+{{- end }}
