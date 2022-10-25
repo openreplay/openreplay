@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,6 +20,8 @@ import (
 )
 
 func main() {
+	pprof.StartProfilingServer()
+
 	metrics := monitoring.New("sink")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -34,9 +37,10 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
-	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
+	assetMessageHandler := assetscache.New(cfg, rewriter, producer, metrics)
 
 	counter := storage.NewLogCounter()
+	// Session message metrics
 	totalMessages, err := metrics.RegisterCounter("messages_total")
 	if err != nil {
 		log.Printf("can't create messages_total metric: %s", err)
@@ -68,7 +72,12 @@ func main() {
 			msg.TypeID() == messages.MsgCSSInsertRuleURLBased ||
 			msg.TypeID() == messages.MsgAdoptedSSReplaceURLBased ||
 			msg.TypeID() == messages.MsgAdoptedSSInsertRuleURLBased {
-			msg = assetMessageHandler.ParseAssets(msg.Decode()) // TODO: filter type only once (use iterator inside or bring ParseAssets out here).
+			m := msg.Decode()
+			if m == nil {
+				log.Printf("assets decode err, info: %s", msg.Meta().Batch().Info())
+				return
+			}
+			msg = assetMessageHandler.ParseAssets(m)
 		}
 
 		// Filter message
@@ -87,15 +96,19 @@ func main() {
 
 		// Write encoded message with index to session file
 		data := msg.EncodeWithIndex()
+		if data == nil {
+			log.Printf("can't encode with index, err: %s", err)
+			return
+		}
 		if messages.IsDOMType(msg.TypeID()) {
 			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				log.Printf("DOM Writer error: %v\n", err)
+				log.Printf("DOM Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
 			}
 		}
 		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
 			// TODO: write only necessary timestamps
 			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				log.Printf("Devtools Writer error: %v\n", err)
+				log.Printf("Devtools Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
 			}
 		}
 
@@ -146,5 +159,4 @@ func main() {
 			}
 		}
 	}
-
 }

@@ -23,6 +23,7 @@ type messageIteratorImpl struct {
 	version     uint64
 	size        uint64
 	canSkip     bool
+	broken      bool
 	messageInfo *message
 	batchInfo   *BatchInfo
 }
@@ -47,6 +48,7 @@ func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 	i.messageInfo = &message{batch: batchInfo}
 	i.version = 0
 	i.canSkip = false
+	i.broken = false
 	i.size = 0
 }
 
@@ -62,9 +64,14 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		// Increase message index (can be overwritten by batch info message)
 		i.messageInfo.Index++
 
+		if i.broken {
+			log.Printf("skipping broken batch, info: %s", i.batchInfo.Info())
+			return
+		}
+
 		if i.canSkip {
 			if _, err := reader.Seek(int64(i.size), io.SeekCurrent); err != nil {
-				log.Printf("seek err: %s", err)
+				log.Printf("can't skip message: %s, info: %s", err, i.batchInfo.Info())
 				return
 			}
 		}
@@ -74,7 +81,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		msgType, err := ReadUint(reader)
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("can't read message type: %s", err)
+				log.Printf("can't read message type: %s, info: %s", err, i.batchInfo.Info())
 			}
 			return
 		}
@@ -85,7 +92,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 			// Read message size if it is a new protocol version
 			i.size, err = ReadSize(reader)
 			if err != nil {
-				log.Printf("can't read message size: %s", err)
+				log.Printf("can't read message size: %s, info: %s", err, i.batchInfo.Info())
 				return
 			}
 			msg = &RawMessage{
@@ -93,6 +100,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 				size:    i.size,
 				reader:  reader,
 				skipped: &i.canSkip,
+				broken:  &i.broken,
 				meta:    i.messageInfo,
 			}
 			i.canSkip = true
@@ -100,17 +108,18 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 			msg, err = ReadMessage(msgType, reader)
 			if err != nil {
 				if err != io.EOF {
-					log.Printf("Batch Message decoding error on message with index %v, err: %s", i.messageInfo.Index, err)
+					log.Printf("can't read message body: %s, info: %s", err, i.batchInfo.Info())
 				}
 				return
 			}
+			msg = transformDeprecated(msg)
 		}
 
 		// Preprocess "system" messages
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("can't decode message")
+				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 			if err := i.preprocessing(msg); err != nil {
@@ -129,7 +138,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if i.autoDecode {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("can't decode message")
+				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 		}
@@ -143,17 +152,17 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 }
 
 func (i *messageIteratorImpl) zeroTsLog(msgType string) {
-	log.Printf("zero timestamp in %s, sess: %d", msgType, i.batchInfo.SessionID())
+	log.Printf("zero timestamp in %s, info: %s", msgType, i.batchInfo.Info())
 }
 
 func (i *messageIteratorImpl) preprocessing(msg Message) error {
 	switch m := msg.(type) {
 	case *BatchMetadata:
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
-			return fmt.Errorf("batchMetadata found at the end of the batch")
+			return fmt.Errorf("batchMetadata found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
 		if m.Version > 1 {
-			return fmt.Errorf("incorrect batch version: %d, skip current batch", i.version)
+			return fmt.Errorf("incorrect batch version: %d, skip current batch, info: %s", i.version, i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.messageInfo.Timestamp = m.Timestamp
@@ -162,10 +171,11 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 		i.messageInfo.Url = m.Url
 		i.version = m.Version
+		i.batchInfo.version = m.Version
 
 	case *BatchMeta: // Is not required to be present in batch since IOS doesn't have it (though we might change it)
 		if i.messageInfo.Index > 1 { // Might be several 0-0 BatchMeta in a row without an error though
-			return fmt.Errorf("batchMeta found at the end of the batch")
+			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
 		i.messageInfo.Timestamp = m.Timestamp
@@ -183,6 +193,8 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Timestamp = int64(m.Timestamp)
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionStart")
+			log.Printf("zero session start, project: %d, UA: %s, tracker: %s, info: %s",
+				m.ProjectID, m.UserAgent, m.TrackerVersion, i.batchInfo.Info())
 		}
 
 	case *SessionEnd:
