@@ -27,6 +27,24 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
+        - name: {{ .Chart.Name }}-backup
+          env:
+          {{- range $key, $value := .Values.env }}
+          - name: "{{ $key }}"
+            value: "{{ $value }}"
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.backupImage.repository }}:{{ .Values.backupImage.tag }}"
+          imagePullPolicy: {{ .Values.backupImage.pullPolicy }}
+          args:
+            - server
+          ports:
+          - containerPort: 7171
+            name: backup-web
+          volumeMounts:
+          - name: default-chi-openreplay-clickhouse-replicated-0-0-0 
+            mountPath: /var/lib/clickhouse
         - name: {{ .Chart.Name }}
           env:
           {{- range $key, $value := .Values.env }}
