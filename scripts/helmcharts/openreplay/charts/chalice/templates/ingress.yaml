@@ -28,13 +28,6 @@ spec:
           - pathType: Prefix
             backend:
               service:
-                name: never-to-return
-                port:
-                  number: {{ $svcPort }}
-            path: /api/private/(.*)
-          - pathType: Prefix
-            backend:
-              service:
                 name: {{ $fullName }}
                 port:
                   number: {{ $svcPort }}
