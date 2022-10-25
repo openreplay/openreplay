@@ -177,6 +177,7 @@ func (consumer *Consumer) ConsumeNext() error {
 				decodeKey(e.Key),
 				*(e.TopicPartition.Topic),
 				uint64(e.TopicPartition.Offset),
+				uint64(e.TopicPartition.Partition),
 				ts))
 		consumer.lastReceivedPrtTs[e.TopicPartition.Partition] = ts
 	case kafka.Error:
