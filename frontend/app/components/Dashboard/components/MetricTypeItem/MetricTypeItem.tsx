@@ -11,14 +11,19 @@ export interface MetricType {
 
 interface Props {
   metric: MetricType;
+  onClick?: any;
 }
 
 function MetricTypeItem(props: Props) {
   const {
     metric: { title, icon, description, slug },
+    onClick = () => {},
   } = props;
   return (
-    <div className="flex items-start p-4 hover:bg-active-blue cursor-pointer group hover-color-teal">
+    <div
+      className="flex items-start p-4 hover:bg-active-blue cursor-pointer group hover-color-teal"
+      onClick={onClick}
+    >
       <div className="pr-4 pt-1">
         <Icon name={icon} size="20" />
       </div>

@@ -119,7 +119,7 @@ export default class DashboardStore {
         return this.dashboards.filter((d) => ids.includes(d.dashboardId));
     }
 
-    initDashboard(dashboard: Dashboard) {
+    initDashboard(dashboard?: Dashboard) {
         this.dashboardInstance = dashboard
             ? new Dashboard().fromJson(dashboard)
             : new Dashboard();
