@@ -10,6 +10,11 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "22.2.2.1"
 
+backupImage:
+  repository: alexakulov/clickhouse-backup
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
