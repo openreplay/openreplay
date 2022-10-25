@@ -36,7 +36,6 @@ function DefaultMenuView(props: Props) {
         </div>
       </NavLink>
       <SiteDropdown />
-      {/* <div className={ styles.divider } /> */}
 
       <NavLink
         to={withSiteId(SESSIONS_PATH, siteId)}

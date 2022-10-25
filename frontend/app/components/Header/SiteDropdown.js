@@ -68,13 +68,14 @@ export default class SiteDropdown extends React.PureComponent {
 
         return (
             <div className={styles.wrapper}>
-                <div className={cn(styles.currentSite, 'ml-2')}>{showCurrent && activeSite ? activeSite.host : 'All Projects'}</div>
+                <div className={cn(styles.currentSite)}>{showCurrent && activeSite ? activeSite.host : 'All Projects'}</div>
                 <Icon className={styles.drodownIcon} color="gray-light" name="chevron-down" size="16" />
                 <div className={styles.menu}>
                     <ul data-can-disable={disabled}>
                         {isAdmin && (
                             <NewProjectButton onClick={this.newSite} isAdmin={isAdmin} />
                         )}
+                        <div className="border-b border-dashed mb-1" />
                         {sites.map((site) => (
                             <li key={site.id} onClick={() => this.switchSite(site.id)}>
                                 <Icon name="folder2" size="16" />

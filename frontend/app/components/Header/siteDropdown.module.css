@@ -2,15 +2,17 @@
   display: flex;
   align-items: center;
   /* border-left: solid thin $gray-light !important; */
-  padding: 10px 10px;
+  padding: 10px;
   min-width: 180px;
   justify-content: flex-start;
   position: relative;
   user-select: none;
   border: solid thin transparent;
-  height: 100%;
+  height: 32px;
+  border: solid thin $gray-light;
   border-radius: 3px;
   margin: 10px;
+  cursor: pointer;
 
   &:hover {
     background-color: $active-blue;
@@ -44,7 +46,7 @@
   & .menu {
     display: none;
     position: absolute;
-    top: 48px;
+    top: 32px;
     left: -1px;
     background-color: white;
     min-width: 200px;
@@ -57,6 +59,7 @@
     margin: 0;
     max-height: 300px;
     overflow-y: auto;
+    padding: 10px;
 
     &::-webkit-scrollbar {
       width: 2px;
@@ -64,15 +67,19 @@
 
     & li {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       cursor: pointer;
       list-style-type: none;
-      border-bottom: 1px solid $gray-light;
-      border-top: none;
-      padding: 10px 15px;
+      border: solid thin transparent;
+      /* border-top: none; */
+      padding: 10px;
       transition: all 0.2s;
+      line-height: 16px;
+      border-radius: 3px;
+
       &:hover {
-        background-color: $gray-lightest;
+        background-color: $active-blue;
+        border-color: $active-blue-border;
         transition: all 0.2s;
         color: $teal;
         svg {

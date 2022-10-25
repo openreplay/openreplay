@@ -9,22 +9,18 @@ import {
   client,
   dashboard,
   alerts,
-  withSiteId,
   CLIENT_DEFAULT_TAB,
 } from 'App/routes';
 import { logout } from 'Duck/user';
 import { Icon, Popup } from 'UI';
-import SiteDropdown from './SiteDropdown';
 import styles from './header.module.css';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore';
-import Announcements from '../Announcements';
 import Notifications from '../Alerts/Notifications';
 import { init as initSite } from 'Duck/site';
 import { getInitials } from 'App/utils';
 
 import ErrorGenPanel from 'App/dev/components';
 import Alerts from '../Alerts/Alerts';
-import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
@@ -33,19 +29,12 @@ import SettingsMenu from './SettingsMenu';
 import DefaultMenuView from './DefaultMenuView';
 import PreferencesView from './PreferencesView';
 
-const DASHBOARD_PATH = dashboard();
-const ALERTS_PATH = alerts();
-const METRICS_PATH = metrics();
-const SESSIONS_PATH = sessions();
-const ASSIST_PATH = assist();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
 const Header = (props) => {
   const {
     sites,
-    location,
     account,
-    onLogoutClick,
     siteId,
     boardingCompletion = 100,
     showAlerts = false,
