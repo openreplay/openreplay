@@ -6,7 +6,7 @@ set -e
 # Usage: IMAGE_TAG=latest DOCKER_REPO=rg.fr-par.scw.cloud/foss bash build_deploy.sh
 
 # Removing local alpine:latest image
-docker rmi alpine
+docker rmi alpine || true
 
 echo $DOCKER_REPO
 [[ -z DOCKER_REPO ]] && {
