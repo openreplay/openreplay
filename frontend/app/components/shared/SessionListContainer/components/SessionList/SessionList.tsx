@@ -156,7 +156,8 @@ function SessionList(props: Props) {
             <Button
               variant="text-primary"
               className="mt-4"
-              icon="sync-alt"
+              icon="arrow-repeat"
+              iconSize={20}
               onClick={() => props.fetchSessions(null, true)}
             >
               Refresh
