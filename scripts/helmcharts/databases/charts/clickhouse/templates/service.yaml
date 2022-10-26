@@ -15,5 +15,9 @@ spec:
       targetPort: data
       protocol: TCP
       name: data
+    - port: 7171
+      targetPort: backup-web
+      protocol: TCP
+      name: backup-web
   selector:
     {{- include "clickhouse.selectorLabels" . | nindent 4 }}
