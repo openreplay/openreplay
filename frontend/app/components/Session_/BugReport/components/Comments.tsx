@@ -24,7 +24,7 @@ function Comments() {
     : 'Expected results, additional steps or any other useful information for debugging.';
 
   return (
-    <div className="w-full">
+    <div className="w-full" id={commentsEnabled ? '' : 'pdf-ignore'}>
       <div className="flex items-center gap-2">
         <SectionTitle>Comments</SectionTitle>
         <div className="text-disabled-text mb-2">(Optional)</div>

@@ -58,7 +58,9 @@ const TimelinePointer = React.memo((props: Props) => {
         position="top"
       >
         <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
-          <div className="h-4 w-4 rounded-full bg-red" />
+          <div className="h-4 w-4 rounded-full bg-red text-white font-bold flex items-center justify-center text-sm">
+            <span>!</span>
+          </div>
         </div>
       </Popup>
     );
@@ -138,12 +140,9 @@ const TimelinePointer = React.memo((props: Props) => {
         position="top"
       >
         <div onClick={createEventClickHandler(item, 'ERRORS')} className="cursor-pointer">
-          <Icon
-            className="rounded-full bg-white"
-            name="funnel/exclamation-circle-fill"
-            color="red"
-            size="16"
-          />
+          <div className="h-4 w-4 rounded-full bg-red text-white font-bold flex items-center justify-center text-sm">
+              <span>!</span>
+            </div>
         </div>
       </Popup>
     );

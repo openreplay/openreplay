@@ -78,7 +78,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
           ) : null}
         </div>
         {!shouldShowPointerReset ? (
-          <div className="flex items-center gap-2 px-2 py-1 rounded bg-light-blue-bg">
+          <div className="flex items-center gap-2 px-2 py-1 rounded bg-light-blue-bg" id="pdf-ignore">
             <Icon name="info-circle" size={16} />
             <div>
               Click anywhere on <span className="font-semibold">X-RAY</span> to drilldown and add
@@ -86,7 +86,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
             </div>
           </div>
         ) : (
-          <div className="text-blue py-1 cursor-pointer" onClick={clearEventSelection}>
+          <div className="text-blue py-1 cursor-pointer" onClick={clearEventSelection} id="pdf-ignore">
             Clear Selection
           </div>
         )}
@@ -95,11 +95,12 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
         className="relative cursor-pointer"
         onClick={pickEventRadius}
         ref={xrayContainer}
-        style={{ background: timePointer > 0 ? 'rgba(57, 78, 255, 0.07)' : undefined }}
       >
+          <div id="pdf-ignore" style={{ pointerEvents: 'none', background: timePointer > 0 ? 'rgb(57, 78, 255)' : undefined, opacity: '0.07', position: 'absolute', top:0, left:0, width:'100%', height: '100%' }} />
         {timePointer > 0 ? (
           <div
             className="absolute h-full bg-white"
+            // id="pdf-ignore"
             style={{
               zIndex: INDEXES.BUG_REPORT_PICKER,
               width: 41,
@@ -111,15 +112,16 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
               style={{
                 height: '100%',
                 width: 0,
-                border: '1px dashed rgba(0,0,0, 0.5)',
+                borderLeft: '2px dashed rgba(0,0,0, 0.5)',
                 left: 20,
                 position: 'absolute',
+                zIndex: INDEXES.BUG_REPORT + 1,
               }}
             />
           </div>
         ) : null}
         {Object.keys(resources).map((feature) => (
-          <div key={feature} className="border-b-2 last:border-none z-20">
+          <div key={feature} className="border-b-2 last:border-none relative z-20">
             <EventRow
               title={feature}
               // @ts-ignore

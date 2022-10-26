@@ -2,14 +2,15 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
+import { Button } from 'UI';
 import { session as sessionRoute } from 'App/routes';
-import { ReportDefaults, EnvData } from './types'
-import Session from './components/Session'
-import MetaInfo from './components/MetaInfo'
-import Title from './components/Title'
-import Comments from './components/Comments'
-import Steps from './components/Steps'
-import { mapEvents } from './utils'
+import { ReportDefaults, EnvData } from './types';
+import Session from './components/Session';
+import MetaInfo from './components/MetaInfo';
+import Title from './components/Title';
+import Comments from './components/Comments';
+import Steps from './components/Steps';
+import { mapEvents } from './utils';
 
 interface Props {
   hideModal: () => void;
@@ -23,11 +24,14 @@ interface Props {
     exceptionsList: Record<string, any>[];
     eventsList: Record<string, any>[];
     endTime: number;
-  }
+  };
 }
 
 function BugReportModal({ hideModal, session, width, height, account, xrayProps }: Props) {
-  const { bugReportStore } = useStore()
+  const reportRef = React.createRef<HTMLDivElement>();
+  const [isRendering, setRendering] = React.useState(false);
+
+  const { bugReportStore } = useStore();
   const {
     userBrowser,
     userDevice,
@@ -43,7 +47,7 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
     events,
   } = session;
 
-  console.log(session.toJS())
+  console.log(session.toJS());
 
   const envObject: EnvData = {
     Device: `${userDevice}${userDeviceType !== userDevice ? ` ${userDeviceType}` : ''}`,
@@ -54,9 +58,13 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
     Country: countries[userCountry],
   };
   if (revId) {
-    Object.assign(envObject, { Rev: revId })
+    Object.assign(envObject, { Rev: revId });
   }
-  const sessionUrl = `${window.location.origin}/${window.location.pathname.split('/')[1]}${sessionRoute(sessionId)}`
+
+  const sessionUrl = `${window.location.origin}/${
+    window.location.pathname.split('/')[1]
+  }${sessionRoute(sessionId)}`;
+
   const defaults: ReportDefaults = {
     author: account.name,
     env: envObject,
@@ -65,32 +73,132 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
       user: userDisplayName,
       id: sessionId,
       url: sessionUrl,
-    }
-  }
-
-  bugReportStore.updateReportDefaults(defaults)
-  bugReportStore.setDefaultSteps(mapEvents(events))
+    },
+  };
 
   React.useEffect(() => {
-    return () => bugReportStore.clearStore()
-  }, [])
+    bugReportStore.updateReportDefaults(defaults);
+    bugReportStore.setDefaultSteps(mapEvents(events));
+    return () => bugReportStore.clearStore();
+  }, []);
+
+  const onGen = () => {
+    // @ts-ignore
+    import('html2canvas').then(({ default: html2canvas }) => {
+      // @ts-ignore
+      window.html2canvas = html2canvas;
+
+      // @ts-ignore
+      import('jspdf').then(({ jsPDF }) => {
+        setRendering(true);
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const now = new Date().toISOString();
+
+        doc.addMetadata('Author', account.name);
+        doc.addMetadata('Title', 'OpenReplay Bug Report');
+        doc.addMetadata('Subject', 'OpenReplay Bug Report');
+        doc.addMetadata('Keywords', 'OpenReplay Bug Report');
+        doc.addMetadata('Creator', 'OpenReplay');
+        doc.addMetadata('Producer', 'OpenReplay');
+        doc.addMetadata('CreationDate', now);
+
+        // DO NOT DELETE UNUSED RENDER FUNCTION
+        // REQUIRED FOR FUTURE USAGE AND AS AN EXAMPLE OF THE FUNCTIONALITY
+
+        function buildPng() {
+          html2canvas(reportRef.current, {
+            scale: 2,
+            ignoreElements: (e) => e.id.includes('pdf-ignore'),
+          }).then((canvas) => {
+            const imgData = canvas.toDataURL('img/png');
+
+            var imgWidth = 210;
+            var pageHeight = 295;
+            var imgHeight = (canvas.height * imgWidth) / canvas.width;
+            var heightLeft = imgHeight;
+            var position = 0;
+
+            doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft >= 0) {
+              position = heightLeft - imgHeight + 10;
+              doc.addPage();
+              doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+              heightLeft -= pageHeight;
+            }
+
+            doc.link(5, 295 - Math.abs(heightLeft) - 25, 200, 30, { url: sessionUrl });
+
+            doc.save('Bug Report: ' + sessionId + '.pdf');
+            setRendering(false);
+          });
+        }
+        function buildText() {
+          doc
+            .html(reportRef.current, {
+              x: 0,
+              y: 0,
+              width: 210,
+              windowWidth: reportRef.current.getBoundingClientRect().width,
+              autoPaging: 'text',
+              html2canvas: {
+                ignoreElements: (e) => e.id.includes('pdf-ignore') || e instanceof SVGElement,
+              },
+            })
+            .save('html.pdf')
+            .then(() => {
+              setRendering(false);
+            })
+            .catch((e) => {
+              console.error(e);
+              setRendering(false);
+            });
+        }
+        // buildText();
+        buildPng();
+      });
+    });
+  };
+
   return (
     <div
-      className="flex flex-col p-4 gap-4 bg-white overflow-y-scroll"
+      className="bg-white overflow-y-scroll"
       style={{ maxWidth: '70vw', width: 620, height: '100vh' }}
     >
-      <Title userName={account.name} />
-      <MetaInfo envObject={envObject} metadata={metadata} />
-      <Steps xrayProps={xrayProps} />
-      <Session user={userDisplayName} sessionId={sessionId} sessionUrl={sessionUrl} />
-      <Comments />
+      <div className="flex flex-col p-4 gap-4 bg-white h-auto relative" ref={reportRef}>
+        <Title userName={account.name} />
+        <MetaInfo envObject={envObject} metadata={metadata} />
+        <Steps xrayProps={xrayProps} />
+        <Comments />
+        <Session user={userDisplayName} sessionId={sessionId} sessionUrl={sessionUrl} />
+        <div id="pdf-ignore" className="flex items-center gap-2 mt-4">
+          <Button icon="file-pdf" variant="primary" onClick={onGen} loading={isRendering}>
+            Download Bug Report
+          </Button>
+          <Button variant="text-primary" onClick={hideModal}>
+            Close
+          </Button>
+        </div>
+      </div>
+      {isRendering ? (
+        <div
+          className="fixed min-h-screen flex text-xl items-center justify-center top-0 right-0 cursor-wait"
+          style={{ background: 'rgba(0,0,0, 0.2)', zIndex: 9999, width: 620, maxWidth: '70vw' }}
+          id="pdf-ignore"
+        >
+          <div>Rendering PDF Report</div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-// @ts-ignore
-const WithUIState = connect((state) => ({ session: state.getIn(['sessions', 'current']), account: state.getIn(['user', 'account']), }))(
-  BugReportModal
-);
+const WithUIState = connect((state) => ({
+  // @ts-ignore
+  session: state.getIn(['sessions', 'current']),
+  // @ts-ignore
+  account: state.getIn(['user', 'account']),
+}))(BugReportModal);
 
-export default WithUIState
+export default WithUIState;
