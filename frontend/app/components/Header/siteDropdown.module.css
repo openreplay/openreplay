@@ -3,21 +3,20 @@
   align-items: center;
   /* border-left: solid thin $gray-light !important; */
   padding: 10px;
-  min-width: 180px;
+  width: fit-content;
   justify-content: flex-start;
   position: relative;
   user-select: none;
-  border: solid thin transparent;
-  height: 32px;
-  border: solid thin $gray-light;
+  height: 50px;
+  /* border: solid thin $gray-light; */
   border-radius: 3px;
-  margin: 10px;
+  margin: 0 10px;
   cursor: pointer;
 
   &:hover {
     background-color: $active-blue;
     /* border: solid thin $active-blue-border; */
-    & .drodownIcon {
+    & .dropdownIcon {
       transform: rotate(180deg);
       transition: all 0.2s;
     }
@@ -26,10 +25,10 @@
     }
   }
 
-  & .drodownIcon {
+  & .dropdownIcon {
     transition: all 0.4s;
     margin: 0;
-    margin-left: auto;
+    margin-left: 8px;
   }
 
   & [data-can-disable=true] {
@@ -46,13 +45,13 @@
   & .menu {
     display: none;
     position: absolute;
-    top: 32px;
+    top: 50px;
     left: -1px;
     background-color: white;
     min-width: 200px;
     z-index: 2;
     border-radius: 3px;
-    border: 1px solid $gray-light;
+    border: 1px solid rgb(238, 238, 238);
   }
 
   & ul {
@@ -76,6 +75,7 @@
       transition: all 0.2s;
       line-height: 16px;
       border-radius: 3px;
+      text-transform: capitalize;
 
       &:hover {
         background-color: $active-blue;
@@ -105,6 +105,8 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  font-weight: 500;
+  text-transform: capitalize;
 }
 
 .statusGreenIcon {

@@ -30,12 +30,14 @@ function UserMenu(props: RouteComponentProps<Props>) {
         <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white shrink-0">
           {getInitials(account.name)}
         </div>
-        <div className="overflow-hidden">
+        <div className="overflow-hidden leading-8">
           <div className="color-teal font-medium leading-none">{account.name}</div>
           <div className="overflow-hidden whitespace-nowrap color-gray-medium text-ellipsis">
             {account.email}
           </div>
-          <div className="rounded-full bg-gray-light flex items-center px-2 color-gray-medium text-sm w-fit text-center">{account.superAdmin ? 'Super Admin' : account.admin ? 'Admin' : 'Member'}</div>
+          <div className="rounded-full bg-gray-light flex items-center px-2 color-gray-medium text-sm w-fit text-center">
+            {account.superAdmin ? 'Super Admin' : account.admin ? 'Admin' : 'Member'}
+          </div>
         </div>
       </div>
       <div className="p-2">
