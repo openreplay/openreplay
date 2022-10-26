@@ -21,6 +21,6 @@ spec:
               - |
                 set -x
                 BACKUP_NAME=openreplay_clickhouse_backup$(date -u +%Y-%m-%dT%H-%M-%S)
-                curl -XPOST http://clickhouse-openreplay-clickhouse.db:7171/backup/all?name=$BACKUP_NAME
+                curl -XPOST http://clickhouse-openreplay-clickhouse.db:7171/backup/create?name=$BACKUP_NAME
                 curl -XPOST http://clickhouse-openreplay-clickhouse.db:7171/backup/upload/$BACKUP_NAME
           restartPolicy: Never
