@@ -17,7 +17,7 @@ function PreferencesView(props: Props) {
         <span className="color-teal ml-2">Exit Preferences</span>
       </div>
 
-      <div className="flex items-center p-3">
+      <div className="flex items-center p-3 text-lg">
         <Icon name="info-circle" size="16" color="gray-dark" />
         <span className="ml-2">Changes applied at organization level</span>
       </div>
