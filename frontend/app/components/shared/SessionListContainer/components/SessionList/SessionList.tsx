@@ -137,8 +137,8 @@ function SessionList(props: Props) {
             <div className="text-center text-gray-600 relative">
               {NO_CONTENT.message}
               {noContentType === NoContentType.ToDate ? (
-                <div style={{ position: 'absolute', right: -140, top: -115 }}>
-                  <Icon name="list-arrow" size={130} />
+                <div style={{ position: 'absolute', right: -170, top: -110 }}>
+                  <Icon name="list-arrow" size={130} width={150} />
                 </div>
               ) : null}
             </div>
