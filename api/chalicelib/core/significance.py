@@ -298,7 +298,7 @@ def get_transitions_and_issues_of_each_type(rows: List[RealDictRow], all_issues_
 
     transitions ::: if transited from the first stage to the last - 1
                     else - 0
-    errors      ::: a dictionary where the keys are all unique issues (currently context-wise)
+    errors      ::: a dictionary WHERE the keys are all unique issues (currently context-wise)
                     the values are lists
                     if an issue happened between the first stage to the last - 1
                     else - 0

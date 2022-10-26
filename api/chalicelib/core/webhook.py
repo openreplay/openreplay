@@ -10,10 +10,9 @@ def get_by_id(webhook_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT
-                           w.*
+                    SELECT w.*
                     FROM public.webhooks AS w 
-                    where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
+                    WHERE w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
@@ -25,11 +24,10 @@ def get_by_id(webhook_id):
 def get(tenant_id, webhook_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT
-                           webhook_id AS integration_id, webhook_id AS id, w.*
-                    FROM public.webhooks AS w 
-                    where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
+            cur.mogrify("""SELECT w.*
+                            FROM public.webhooks AS w 
+                            WHERE w.webhook_id =%(webhook_id)s 
+                                AND deleted_at ISNULL AND type='webhook';""",
                         {"webhook_id": webhook_id})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
@@ -41,11 +39,9 @@ def get(tenant_id, webhook_id):
 def get_by_type(tenant_id, webhook_type):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT
-                           w.webhook_id AS integration_id, w.webhook_id AS id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
-                    FROM public.webhooks AS w 
-                    WHERE w.type =%(type)s AND deleted_at ISNULL;""",
+            cur.mogrify("""SELECT w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
+                            FROM public.webhooks AS w 
+                            WHERE w.type =%(type)s AND deleted_at ISNULL;""",
                         {"type": webhook_type})
         )
         webhooks = helper.list_to_camel_case(cur.fetchall())
@@ -56,22 +52,12 @@ def get_by_type(tenant_id, webhook_type):
 
 def get_by_tenant(tenant_id, replace_none=False):
     with pg_client.PostgresClient() as cur:
-        cur.execute("""\
-                    SELECT
-                           webhook_id AS integration_id, webhook_id AS id, w.*
-                    FROM public.webhooks AS w 
-                    WHERE deleted_at ISNULL;"""
-                    )
+        cur.execute("""SELECT w.*
+                        FROM public.webhooks AS w 
+                        WHERE deleted_at ISNULL AND type='webhook';""")
         all = helper.list_to_camel_case(cur.fetchall())
-        if replace_none:
-            for w in all:
-                w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
-                for k in w.keys():
-                    if w[k] is None:
-                        w[k] = ''
-        else:
-            for w in all:
-                w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
+        for w in all:
+            w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
         return all
 
 
