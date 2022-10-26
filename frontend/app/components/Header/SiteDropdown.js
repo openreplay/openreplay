@@ -76,7 +76,7 @@ export default class SiteDropdown extends React.PureComponent {
           <div className={styles.menu}>
             <ul data-can-disable={disabled}>
               {isAdmin && <NewProjectButton onClick={this.newSite} isAdmin={isAdmin} />}
-              <div className="border-b border-dashed mb-1" />
+              <div className="border-b border-dashed my-1" />
               {sites.map((site) => (
                 <li key={site.id} onClick={() => this.switchSite(site.id)}>
                   <Icon name="folder2" size="16" />
