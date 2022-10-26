@@ -13,11 +13,6 @@ type ProjectMeta struct {
 	expirationTime time.Time
 }
 
-// !TODO: remove old sessions by timeout to avoid memleaks
-
-/*
- *  Cache layer around the stateless PG adapter
-**/
 type PGCache struct {
 	*postgres.Conn
 	sessions                 map[uint64]*Session
@@ -26,7 +21,6 @@ type PGCache struct {
 	projectExpirationTimeout time.Duration
 }
 
-// TODO: create conn automatically
 func NewPGCache(pgConn *postgres.Conn, projectExpirationTimeoutMs int64) *PGCache {
 	return &PGCache{
 		Conn:                     pgConn,
