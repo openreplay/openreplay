@@ -113,3 +113,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | clickhouse | Apache2 | Infrastructure |
 | redis | BSD3 | Infrastructure |
 | yq | MIT | Infrastructure |
+| html2canvas | MIT | JavaScript |

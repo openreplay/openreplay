@@ -11,7 +11,7 @@ export default function Session({ user, sessionId, sessionUrl }: { user: string,
         <div className="flex flex-col">
           <div className="text-lg">{user}</div>
           <div className="text-disabled-text">
-            {sessionUrl}
+            <a href={sessionUrl}>{sessionUrl}</a>
           </div>
         </div>
         <PlayLink newTab isAssist={false} viewed={false} sessionId={sessionId} />

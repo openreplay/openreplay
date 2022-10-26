@@ -25,6 +25,7 @@
     "copy-to-clipboard": "^3.3.1",
     "deep-diff": "^1.0.2",
     "html-to-image": "^1.9.0",
+    "html2canvas": "^1.4.1",
     "immutable": "^4.0.0-rc.12",
     "jsbi": "^4.1.0",
     "jshint": "^2.11.1",

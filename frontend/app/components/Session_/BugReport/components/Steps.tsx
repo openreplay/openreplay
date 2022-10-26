@@ -57,9 +57,9 @@ function Steps({ xrayProps }: Props) {
         <div className="mt-4 mb-2 text-gray-dark flex items-center gap-4">
           STEPS
 
-          {timePointer > 0 ? <StepRadius pickRadius={stepPickRadius} setRadius={setRadius} /> : null}
+          <div id="pdf-ignore">{timePointer > 0 ? <StepRadius pickRadius={stepPickRadius} setRadius={setRadius} /> : null}</div>
         </div>
-        <div className="text-blue cursor-pointer" onClick={handleStepsSelection}>
+        <div className="text-blue cursor-pointer" id="pdf-ignore" onClick={handleStepsSelection}>
           {!shouldShowEventReset ? (
             <span>Add {timePointer > 0 ? '' : 'All'} Steps</span>
           ) : (

@@ -25,8 +25,10 @@ export default function MetaInfo({
           <div key={envTag} className="flex items-center">
             <div className="py-1 px-2">{envTag}</div>
             <div className="py-1 px-2 text-gray-medium bg-light-blue-bg rounded">
+              <span className="text-base">
               {/* @ts-ignore */}
               {envObject[envTag]}
+              </span>
             </div>
           </div>
         ))}
