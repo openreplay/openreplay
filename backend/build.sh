@@ -26,6 +26,7 @@ function build_service() {
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
     }
+    echo "Build completed for $image"
     return
 }
 
