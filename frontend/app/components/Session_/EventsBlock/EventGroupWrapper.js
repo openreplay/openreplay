@@ -46,6 +46,7 @@ class EventGroupWrapper extends React.PureComponent {
     const isLocation = event.type === TYPES.LOCATION;
 
     const whiteBg = isLastInGroup && event.type !== TYPES.LOCATION || (!isLastEvent && event.type !== TYPES.LOCATION)
+    const safeRef = String(event.referrer || '');
     return (
       <div
         className={
@@ -59,7 +60,7 @@ class EventGroupWrapper extends React.PureComponent {
         { isFirst && isLocation && event.referrer &&
           <div className={ stl.referrer }>
             <TextEllipsis>
-              Referrer: <span className={stl.url}>{ event.referrer }</span>
+              Referrer: <span className={stl.url}>{safeRef}</span>
             </TextEllipsis>
           </div>
         }
