@@ -34,9 +34,9 @@ function NoteTags() {
         </div>
       ))}
       <div className="ml-2" />
-      <Select name="sortNotes" plain right options={sortOptions} onChange={({ value }) => notesStore.toggleSort(value.value)} defaultValue={sortOptions[0].value} />
-      <div className="ml-2" />
       <Select name="notesOwner" plain right options={notesOwner} onChange={({ value }) => notesStore.toggleShared(value.value === '1')} defaultValue={notesOwner[0].value} />
+      <div className="ml-2" />
+      <Select name="sortNotes" plain right options={sortOptions} onChange={({ value }) => notesStore.toggleSort(value.value)} defaultValue={sortOptions[0].value} />
     </div>
   );
 }

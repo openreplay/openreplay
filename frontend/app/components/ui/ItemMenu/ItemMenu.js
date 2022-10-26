@@ -39,7 +39,7 @@ export default class ItemMenu extends React.PureComponent {
                 <OutsideClickDetectingDiv onClickOutside={this.closeMenu}>
                     <div
                         onClick={this.toggleMenu}
-                        className={cn('flex items-center cursor-pointer select-none', parentStyles, { 'bg-gray-light': displayed && label })}
+                        className={cn('flex items-center cursor-pointer select-none hover rounded-full', parentStyles, { 'bg-gray-light': displayed && label })}
                     >
                         {label && <span className={cn('mr-1', bold ? 'font-medium color-gray-darkest' : 'color-gray-medium')}>{label}</span>}
                         <div

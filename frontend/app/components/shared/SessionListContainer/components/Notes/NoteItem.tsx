@@ -9,7 +9,7 @@ import { ItemMenu } from 'UI';
 import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
-import TeamBadge from './TeamBadge'
+import TeamBadge from './TeamBadge';
 
 interface Props {
   note: Note;
@@ -39,11 +39,12 @@ function NoteItem(props: Props) {
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
 
-  const safeStrMessage = props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message
+  const safeStrMessage =
+    props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message;
   return (
     <div
-      className="flex items-center p-4 border-b"
-      style={{ background: 'rgba(253, 243, 155, 0.1)' }}
+      className="flex items-center p-2 border-b"
+      // style={{ background: '#FFFEF5' }}
     >
       <Link
         style={{ width: '90%' }}
@@ -54,8 +55,8 @@ function NoteItem(props: Props) {
             : '')
         }
       >
-        <div className="flex flex-col gap-1 cursor-pointer">
-          <div className="text-xl py-3">{safeStrMessage}</div>
+        <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
+          <div className="py-1 capitalize-first">{safeStrMessage}</div>
           <div className="flex items-center gap-2">
             {props.note.tag ? (
               <div
@@ -71,13 +72,12 @@ function NoteItem(props: Props) {
                 {props.note.tag}
               </div>
             ) : null}
-            <div className="text-disabled-text flex items-center">
-              <span className="text-figmaColors-text-primary mr-1">By </span>
+            <div className="text-disabled-text flex items-center text-sm">
+              <span className="color-gray-darkest mr-1">By </span>
               {props.userEmail},{' '}
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
-              {!props.note.isPublic ? null : (
-                <TeamBadge />
-              )}
+              <div className="mx-2" />
+              {!props.note.isPublic ? null : <TeamBadge />}
             </div>
           </div>
         </div>

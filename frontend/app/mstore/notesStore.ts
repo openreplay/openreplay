@@ -11,7 +11,7 @@ export default class NotesStore {
   sessionNotes: SessionNotes = {}
   loading: boolean
   page = 1
-  pageSize = 15
+  pageSize = 10
   activeTags: iTag[] = []
   sort = 'createdAt'
   order: 'DESC' | 'ASC' = 'DESC'

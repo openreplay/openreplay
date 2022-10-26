@@ -73,7 +73,7 @@ function NoteEvent(props: Props) {
   return (
     <div
       className="flex items-start flex-col p-2 border rounded"
-      style={{ background: 'rgba(253, 243, 155, 0.1)' }}
+      style={{ background: '#FFFEF5' }}
     >
       <div className="flex items-center w-full relative">
         <div className="p-3 bg-gray-light rounded-full">
@@ -83,7 +83,7 @@ function NoteEvent(props: Props) {
           <div
             className="text-base"
             style={{
-              maxWidth: 160,
+              maxWidth: 150,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -95,12 +95,12 @@ function NoteEvent(props: Props) {
             {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
           </div>
         </div>
-        <div className="cursor-pointer absolute" style={{ right: -10 }}>
+        <div className="cursor-pointer absolute" style={{ right: -5 }}>
           <ItemMenu bold items={menuItems} />
         </div>
       </div>
       <div
-        className="text-xl my-3 overflow-y-scroll overflow-x-hidden"
+        className="text-base capitalize-first my-3 overflow-y-scroll overflow-x-hidden"
         style={{ maxHeight: 200, maxWidth: 220 }}
       >
         {props.note.message}
