@@ -1,4 +1,4 @@
-fromVersion: "v1.8.1"
+fromVersion: "v1.8.2"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -19,7 +19,7 @@ postgresql: &postgres
 
 clickhouse:
   # For enterpriseEdition
-  enabled: false
+  enabled: true
 
 quickwit: &quickwit
   # For enterpriseEdition
