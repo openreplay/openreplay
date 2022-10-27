@@ -281,13 +281,13 @@ export function PageRenderTiming(
   ]
 }
 
-export function JSException(
+export function JSExceptionDeprecated(
   name: string,
   message: string,
   payload: string,
-): Messages.JSException {
+): Messages.JSExceptionDeprecated {
   return [
-    Messages.Type.JSException,
+    Messages.Type.JSExceptionDeprecated,
     name,
     message,
     payload,
@@ -716,6 +716,21 @@ export function Zustand(
     Messages.Type.Zustand,
     mutation,
     state,
+  ]
+}
+
+export function JSException(
+  name: string,
+  message: string,
+  payload: string,
+  metadata: string,
+): Messages.JSException {
+  return [
+    Messages.Type.JSException,
+    name,
+    message,
+    payload,
+    metadata,
   ]
 }
 

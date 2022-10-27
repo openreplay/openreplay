@@ -1,9 +1,11 @@
 import React from 'react';
-import { JSONTree, NoContent, Button, Tabs } from 'UI';
+import { JSONTree, NoContent, Button, Tabs, Icon } from 'UI';
 import cn from 'classnames';
 import stl from './fetchDetails.module.css';
 import Headers from './components/Headers';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { TYPES } from 'Types/session/resource';
+import { formatBytes } from 'App/utils';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -129,43 +131,107 @@ export default class FetchDetailsModal extends React.PureComponent {
 
   render() {
     const {
-      resource: { method, url, duration },
+      resource,
+      fetchPresented,
       nextClick,
       prevClick,
       first = false,
       last = false,
     } = this.props;
+    const { method, url, duration } = resource;
     const { activeTab, tabs } = this.state;
-
-    const _duration = parseInt(duration)
-    console.log('_duration', _duration);
+    const _duration = parseInt(duration);
 
     return (
       <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
-        <h5 className="mb-2">{'URL'}</h5>
-        <div className={cn(stl.url, 'color-gray-darkest')}>{url}</div>
-        <div className="flex items-start mt-4">
-          {method && (
-            <div className="w-4/12">
-              <div className="font-medium mb-2">Method</div>
-              <div>{method}</div>
-            </div>
-          )}
-          {!!_duration && (
-            <div className="w-4/12">
-              <div className="font-medium mb-2">Duration</div>
-              <div>{_duration } ms</div>
-            </div>
-          )}
+        <h5 className="mb-2 text-2xl">Network Request</h5>
+        <div className="flex items-center py-1">
+          <div className="font-medium">Name</div>
+          <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+            {resource.name}
+          </div>
         </div>
 
-        <div className="mt-6">
-          <div>
-            <Tabs tabs={tabs} active={activeTab} onClick={this.onTabClick} border={true} />
-            <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
-              {this.renderActiveTab(activeTab)}
+        <div className="flex items-center py-1">
+          <div className="font-medium">Type</div>
+          <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+            {resource.type}
+          </div>
+        </div>
+
+        {!!resource.decodedBodySize && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Size</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+              {formatBytes(resource.decodedBodySize)}
             </div>
           </div>
+        )}
+
+        {method && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Request Method</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+              {resource.method}
+            </div>
+          </div>
+        )}
+
+        {resource.status && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Status</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center">
+              {resource.status === '200' && (
+                <div className="w-4 h-4 bg-green rounded-full mr-2"></div>
+              )}
+              {resource.status}
+            </div>
+          </div>
+        )}
+
+        {!!_duration && (
+          <div className="flex items-center py-1">
+            <div className="font-medium">Time</div>
+            <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+              {_duration} ms
+            </div>
+          </div>
+        )}
+
+        {resource.type === TYPES.XHR && !fetchPresented && (
+          <div className="bg-active-blue rounded p-3 mt-4">
+            <div className="mb-2 flex items-center">
+              <Icon name="lightbulb" size="18" />
+              <span className="ml-2 font-medium">Get more out of network requests</span>
+            </div>
+            <ul className="list-disc ml-5">
+              <li>
+                Integrate{' '}
+                <a href="https://docs.openreplay.com/plugins/fetch" className="link" target="_blank">
+                  Fetch plugin
+                </a>{' '}
+                to capture fetch payloads.
+              </li>
+              <li>
+                Find a detailed{' '}
+                <a href="https://www.youtube.com/watch?v=YFCKstPZzZg" className="link" target="_blank">
+                  video tutorial
+                </a>{' '}
+                to understand practical example of how to use fetch plugin.
+              </li>
+            </ul>
+          </div>
+        )}
+
+        <div className="mt-6">
+          {resource.type === TYPES.XHR && fetchPresented && (
+            <div>
+              <Tabs tabs={tabs} active={activeTab} onClick={this.onTabClick} border={true} />
+              <div style={{ height: 'calc(100vh - 314px)', overflowY: 'auto' }}>
+                {this.renderActiveTab(activeTab)}
+              </div>
+            </div>
+          )}
 
           {/* <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
             <Button variant="outline" onClick={prevClick} disabled={first}>

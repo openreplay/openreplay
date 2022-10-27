@@ -11,6 +11,7 @@ interface Props {
     variant?: 'default' | 'primary' | 'text' | 'text-primary' | 'text-red' | 'outline' | 'green'
     loading?: boolean;
     icon?: string;
+    iconSize?: number;
     rounded?: boolean;
     tooltip?: any;
     [x: string]: any;
@@ -18,6 +19,7 @@ interface Props {
 export default (props: Props) => {
     const {
         icon = '',
+        iconSize = 18,
         className = '',
         variant = 'default', // 'default|primary|text|text-primary|text-red|outline',
         type = 'button',
@@ -79,7 +81,7 @@ export default (props: Props) => {
 
     const render = () => (
         <button {...rest} type={type} className={cn(classes, className)}>
-            {icon && <Icon className={cn({ 'mr-2': children })} name={icon} color={iconColor} size="16" />}
+            {icon && <Icon className={cn({ 'mr-2': children })} name={icon} color={iconColor} size={iconSize} />}
             {loading && (
                 <div className="absolute flex items-center justify-center inset-0 z-1 rounded">
                     <CircularLoader />

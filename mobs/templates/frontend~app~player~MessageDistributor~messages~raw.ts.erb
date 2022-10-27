@@ -1,11 +1,11 @@
 // Auto-generated, do not edit
 /* eslint-disable */
 
-<% $messages.select { |msg| msg.replayer }.each do |msg| %>
+<% $messages.select { |msg| msg.replayer != false  }.each do |msg| %>
 export interface Raw<%= msg.name.snake_case.pascal_case %> {
   tp: "<%= msg.name.snake_case %>",
 <%= msg.attributes.map { |attr| "  #{attr.name.camel_case}: #{attr.type_js}," }.join "\n" %>
 }
 <% end %>
 
-export type RawMessage = <%= $messages.select { |msg| msg.replayer }.map { |msg| "Raw#{msg.name.snake_case.pascal_case}" }.join " | " %>;
+export type RawMessage = <%= $messages.select { |msg| msg.replayer != false  }.map { |msg| "Raw#{msg.name.snake_case.pascal_case}" }.join " | " %>;

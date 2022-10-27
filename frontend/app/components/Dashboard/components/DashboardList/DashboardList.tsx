@@ -9,7 +9,7 @@ import DashboardListItem from './DashboardListItem';
 function DashboardList() {
   const { dashboardStore } = useStore();
   const [shownDashboards, setDashboards] = React.useState([]);
-  const dashboards = dashboardStore.dashboards;
+  const dashboards = dashboardStore.sortedDashboards;
   const dashboardsSearch = dashboardStore.dashboardsSearch;
 
   React.useEffect(() => {

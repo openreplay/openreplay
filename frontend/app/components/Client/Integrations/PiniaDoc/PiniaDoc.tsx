@@ -87,7 +87,7 @@ piniaStorePlugin(examplePiniaStore)
 
         <DocLink
           className="mt-4"
-          label="Integrate Vuex"
+          label="Integrate Pinia"
           url="https://docs.openreplay.com/plugins/pinia"
         />
       </div>

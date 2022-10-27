@@ -39,7 +39,7 @@ export default class ItemMenu extends React.PureComponent {
                 <OutsideClickDetectingDiv onClickOutside={this.closeMenu}>
                     <div
                         onClick={this.toggleMenu}
-                        className={cn('flex items-center cursor-pointer select-none', parentStyles, { 'bg-gray-light': displayed && label })}
+                        className={cn('flex items-center cursor-pointer select-none hover rounded-full', parentStyles, { 'bg-gray-light': displayed && label })}
                     >
                         {label && <span className={cn('mr-1', bold ? 'font-medium color-gray-darkest' : 'color-gray-medium')}>{label}</span>}
                         <div
@@ -56,13 +56,12 @@ export default class ItemMenu extends React.PureComponent {
                 <div className={cn(styles.menu, { [styles.menuDim]: !bold })} data-displayed={displayed}>
                     {items
                         .filter(({ hidden }) => !hidden)
-                        .map(({ onClick, text, icon, disabled = false, disabledMessage = '' }) => (
+                        .map(({ onClick, text, icon, disabled = false }) => (
                             <div
                                 key={text}
                                 onClick={!disabled ? this.onClick(onClick) : () => {}}
                                 className={disabled ? 'cursor-not-allowed' : ''}
                                 role="menuitem"
-                                tabIndex="-1"
                             >
                                 <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
                                     {icon && (

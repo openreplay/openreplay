@@ -13,6 +13,7 @@ export default class FunnelStage {
     isActive: boolean = true;
     completedPercentage: number = 0;
     droppedCount: number = 0;
+    droppedPercentage: number = 0;
 
     constructor() {
         makeAutoObservable(this, {
@@ -33,6 +34,7 @@ export default class FunnelStage {
         this.completedPercentage = total ? Math.round((this.sessionsCount / total) * 100) : 0;
         this.dropDueToIssuesPercentage = total ? Math.round((this.dropDueToIssues / total) * 100) : 0;
         this.droppedCount = previousSessionCount - this.sessionsCount;
+        this.droppedPercentage = this.droppedCount ? Math.round((this.droppedCount / total) * 100) : 0;
         return this;
     }
 

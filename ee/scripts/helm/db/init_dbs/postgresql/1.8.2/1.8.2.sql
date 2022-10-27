@@ -60,4 +60,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+ALTER TABLE sessions ADD file_key BYTEA NULL;
+
 COMMIT;

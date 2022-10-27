@@ -49,9 +49,13 @@ function PlayerControls(props: Props) {
   const speedRef = React.useRef(null);
   const arrowBackRef = React.useRef(null);
   const arrowForwardRef = React.useRef(null);
+  const skipRef = React.useRef<HTMLDivElement>()
 
   React.useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
       if (e.key === 'ArrowRight') {
         arrowForwardRef.current.focus();
       }
@@ -72,6 +76,9 @@ function PlayerControls(props: Props) {
   const toggleTooltip = () => {
     setShowTooltip(!showTooltip);
   };
+  const handleClickOutside = () => {
+    setShowTooltip(false)
+  }
   return (
     <div className="flex items-center">
       {playButton}
@@ -102,6 +109,7 @@ function PlayerControls(props: Props) {
           </button>
         </Tooltip>
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
+        <OutsideClickDetectingDiv onClickOutside={handleClickOutside}>
           <Tooltip
             open={showTooltip}
             interactive
@@ -112,15 +120,13 @@ function PlayerControls(props: Props) {
             className="cursor-pointer select-none"
             distance={20}
             html={
-              <OutsideClickDetectingDiv
-                onClickOutside={() => (showTooltip ? toggleTooltip() : null)}
-              >
                 <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
                   <div className="font-semibold py-2 px-4 w-full text-left">
                     Jump <span className="text-disabled-text">(Secs)</span>
                   </div>
                   {Object.keys(skipIntervals).map((interval) => (
                     <div
+                      key={interval}
                       onClick={() => {
                         toggleTooltip();
                         setSkipInterval(parseInt(interval, 10));
@@ -135,16 +141,16 @@ function PlayerControls(props: Props) {
                     </div>
                   ))}
                 </div>
-              </OutsideClickDetectingDiv>
             }
           >
-            <div onClick={toggleTooltip}>
+            <div onClick={toggleTooltip} ref={skipRef}>
               {/* @ts-ignore */}
               <Tooltip disabled={showTooltip} title="Set default skip duration">
                 {currentInterval}s
               </Tooltip>
             </div>
           </Tooltip>
+          </OutsideClickDetectingDiv>
         </div>
         {/* @ts-ignore */}
         <Tooltip title="Forward 10s" delay={0} position="top">

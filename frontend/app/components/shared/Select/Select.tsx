@@ -12,7 +12,7 @@ type ValueObject = {
 interface Props<Value extends ValueObject> {
     options: Value[];
     isSearchable?: boolean;
-    defaultValue?: string;
+    defaultValue?: string | number;
     plain?: boolean;
     components?: any;
     styles?: any;
@@ -103,7 +103,7 @@ export default function<Value extends ValueObject>({ placeholder='Select', name 
         singleValue: (provided: any, state: { isDisabled: any; }) => {
           const opacity = state.isDisabled ? 0.5 : 1;
           const transition = 'opacity 300ms';
-      
+
           return { ...provided, opacity, transition, fontWeight: '500' };
         },
         input: (provided: any) => ({
@@ -160,13 +160,13 @@ const DropdownIndicator = (
 const CustomValueContainer = ({ children, ...rest }: any) => {
     const selectedCount = rest.getValue().length
     const conditional = (selectedCount < 3)
-  
+
     let firstChild: any = []
-  
+
     if (!conditional) {
       firstChild = [children[0].shift(), children[1]]
     }
-  
+
     return (
       <ValueContainer {...rest}>
         {conditional ? children : firstChild}

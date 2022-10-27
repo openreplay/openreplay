@@ -71,6 +71,12 @@ func (c *PGCache) HandleWebSessionEnd(sessionID uint64, e *SessionEnd) error {
 	return c.HandleSessionEnd(sessionID)
 }
 
+func (c *PGCache) InsertWebJSException(e *JSException) error {
+	return c.InsertWebErrorEvent(e.SessionID(), WrapJSException(e))
+}
+func (c *PGCache) InsertWebIntegrationEvent(e *IntegrationEvent) error {
+	return c.InsertWebErrorEvent(e.SessionID(), WrapIntegrationEvent(e))
+}
 func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
 	session, err := c.GetSession(sessionID)
 	if err != nil {

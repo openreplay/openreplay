@@ -17,6 +17,8 @@ type Config struct {
 	CacheAssets          bool   `env:"CACHE_ASSETS,required"`
 	AssetsOrigin         string `env:"ASSETS_ORIGIN,required"`
 	ProducerCloseTimeout int    `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
+	CacheThreshold       int64  `env:"CACHE_THRESHOLD,default=75"`
+	CacheExpiration      int64  `env:"CACHE_EXPIRATION,default=120"`
 }
 
 func New() *Config {

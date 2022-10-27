@@ -44,7 +44,7 @@ spec:
           env:
             - name: ASSIST_KEY
               value: {{ .Values.global.assistKey }}
-            - name: S3_KEYASSIST_KEY
+            - name: S3_KEY
               value: {{ .Values.global.s3.accessKey }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}

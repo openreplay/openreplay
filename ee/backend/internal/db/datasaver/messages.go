@@ -3,31 +3,40 @@ package datasaver
 import (
 	"fmt"
 	"log"
-	"openreplay/backend/pkg/messages"
+	. "openreplay/backend/pkg/messages"
 )
 
-func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
+func (mi *Saver) InsertMessage(msg Message) error {
+	sessionID := msg.SessionID()
 	switch m := msg.(type) {
 	// Common
-	case *messages.Metadata:
+	case *Metadata:
 		if err := mi.pg.InsertMetadata(sessionID, m); err != nil {
 			return fmt.Errorf("insert metadata err: %s", err)
 		}
 		return nil
-	case *messages.IssueEvent:
+	case *IssueEvent:
+		session, err := mi.pg.GetSession(sessionID)
+		if err != nil {
+			log.Printf("can't get session info for CH: %s", err)
+		} else {
+			if err := mi.ch.InsertIssue(session, m); err != nil {
+				log.Printf("can't insert issue event into clickhouse: %s", err)
+			}
+		}
 		return mi.pg.InsertIssueEvent(sessionID, m)
 	//TODO: message adapter (transformer) (at the level of pkg/message) for types: *IOSMetadata, *IOSIssueEvent and others
 
 	// Web
-	case *messages.SessionStart:
+	case *SessionStart:
 		return mi.pg.HandleWebSessionStart(sessionID, m)
-	case *messages.SessionEnd:
+	case *SessionEnd:
 		return mi.pg.HandleWebSessionEnd(sessionID, m)
-	case *messages.UserID:
+	case *UserID:
 		return mi.pg.InsertWebUserID(sessionID, m)
-	case *messages.UserAnonymousID:
+	case *UserAnonymousID:
 		return mi.pg.InsertWebUserAnonymousID(sessionID, m)
-	case *messages.CustomEvent:
+	case *CustomEvent:
 		session, err := mi.pg.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
@@ -37,17 +46,19 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 			}
 		}
 		return mi.pg.InsertWebCustomEvent(sessionID, m)
-	case *messages.ClickEvent:
+	case *ClickEvent:
 		return mi.pg.InsertWebClickEvent(sessionID, m)
-	case *messages.InputEvent:
+	case *InputEvent:
 		return mi.pg.InsertWebInputEvent(sessionID, m)
 
 	// Unique Web messages
-	case *messages.PageEvent:
+	case *PageEvent:
 		return mi.pg.InsertWebPageEvent(sessionID, m)
-	case *messages.ErrorEvent:
-		return mi.pg.InsertWebErrorEvent(sessionID, m)
-	case *messages.FetchEvent:
+	case *JSException:
+		return mi.pg.InsertWebJSException(m)
+	case *IntegrationEvent:
+		return mi.pg.InsertWebIntegrationEvent(m)
+	case *FetchEvent:
 		session, err := mi.pg.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
@@ -62,7 +73,7 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 			}
 		}
 		return mi.pg.InsertWebFetchEvent(sessionID, m)
-	case *messages.GraphQLEvent:
+	case *GraphQLEvent:
 		session, err := mi.pg.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
@@ -72,39 +83,30 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg messages.Message) error {
 			}
 		}
 		return mi.pg.InsertWebGraphQLEvent(sessionID, m)
-	case *messages.IntegrationEvent:
-		return mi.pg.InsertWebErrorEvent(sessionID, &messages.ErrorEvent{
-			MessageID: m.Meta().Index,
-			Timestamp: m.Timestamp,
-			Source:    m.Source,
-			Name:      m.Name,
-			Message:   m.Message,
-			Payload:   m.Payload,
-		})
-	case *messages.SetPageLocation:
+	case *SetPageLocation:
 		return mi.pg.InsertSessionReferrer(sessionID, m.Referrer)
 
 		// IOS
-	case *messages.IOSSessionStart:
+	case *IOSSessionStart:
 		return mi.pg.InsertIOSSessionStart(sessionID, m)
-	case *messages.IOSSessionEnd:
+	case *IOSSessionEnd:
 		return mi.pg.InsertIOSSessionEnd(sessionID, m)
-	case *messages.IOSUserID:
+	case *IOSUserID:
 		return mi.pg.InsertIOSUserID(sessionID, m)
-	case *messages.IOSUserAnonymousID:
+	case *IOSUserAnonymousID:
 		return mi.pg.InsertIOSUserAnonymousID(sessionID, m)
-	case *messages.IOSCustomEvent:
+	case *IOSCustomEvent:
 		return mi.pg.InsertIOSCustomEvent(sessionID, m)
-	case *messages.IOSClickEvent:
+	case *IOSClickEvent:
 		return mi.pg.InsertIOSClickEvent(sessionID, m)
-	case *messages.IOSInputEvent:
+	case *IOSInputEvent:
 		return mi.pg.InsertIOSInputEvent(sessionID, m)
 		// Unique IOS messages
-	case *messages.IOSNetworkCall:
+	case *IOSNetworkCall:
 		return mi.pg.InsertIOSNetworkCall(sessionID, m)
-	case *messages.IOSScreenEnter:
+	case *IOSScreenEnter:
 		return mi.pg.InsertIOSScreenEnter(sessionID, m)
-	case *messages.IOSCrash:
+	case *IOSCrash:
 		return mi.pg.InsertIOSCrash(sessionID, m)
 
 	}

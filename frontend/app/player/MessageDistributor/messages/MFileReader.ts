@@ -4,7 +4,7 @@ import logger from 'App/logger';
 import RawMessageReader from './RawMessageReader';
 
 // TODO: composition instead of inheritance
-// needSkipMessage() and next() methods here use buf and p protected properties, 
+// needSkipMessage() and next() methods here use buf and p protected properties,
 // which should be probably somehow incapsulated
 export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
@@ -18,10 +18,18 @@ export default class MFileReader extends RawMessageReader {
     if (this.p === 0) return false
     for (let i = 7; i >= 0; i--) {
       if (this.buf[ this.p + i ] !== this.buf[ this.pLastMessageID + i ]) {
-        return this.buf[ this.p + i ] - this.buf[ this.pLastMessageID + i ] < 0
+        return this.buf[ this.p + i ] < this.buf[ this.pLastMessageID + i ]
       }
     }
     return false
+  }
+
+  private getLastMessageID(): number {
+    let id = 0
+    for (let i = 0; i< 8; i++) {
+      id += this.buf[ this.p + i ] * 2**(8*i)
+    }
+    return id
   }
 
   private readRawMessage(): RawMessage | null {
@@ -49,7 +57,7 @@ export default class MFileReader extends RawMessageReader {
       if (!skippedMessage) {
         return null
       }
-      logger.log("Skipping message: ", skippedMessage)
+      logger.group("Skipping message: ", skippedMessage)
     }
 
     this.pLastMessageID = this.p
@@ -65,13 +73,14 @@ export default class MFileReader extends RawMessageReader {
       }
       this.currentTime = rMsg.timestamp - this.startTime
       return this.next()
-    } 
+    }
 
+    const index = this.getLastMessageID()
     const msg = Object.assign(rMsg, {
       time: this.currentTime,
-      _index: this.pLastMessageID,
+      _index: index,
     })
 
-    return [msg, this.pLastMessageID]
+    return [msg, index]
   }
 }

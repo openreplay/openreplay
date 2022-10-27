@@ -98,7 +98,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) 
     break
     
-    case Messages.Type.JSException:
+    case Messages.Type.JSExceptionDeprecated:
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) 
     break
     
@@ -232,6 +232,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
     
     case Messages.Type.Zustand:
       return  this.string(msg[1]) && this.string(msg[2]) 
+    break
+    
+    case Messages.Type.JSException:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) 
     break
     
     }

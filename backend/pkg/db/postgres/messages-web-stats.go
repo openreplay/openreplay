@@ -5,11 +5,6 @@ import (
 	"openreplay/backend/pkg/url"
 )
 
-func (conn *Conn) InsertWebStatsLongtask(sessionID uint64, l *LongTask) error {
-	return nil // Do we even use them?
-	// conn.exec(``);
-}
-
 func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrackAggr) error {
 	timestamp := (p.TimestampEnd + p.TimestampStart) / 2
 

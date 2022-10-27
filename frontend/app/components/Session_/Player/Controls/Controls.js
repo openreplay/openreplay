@@ -8,7 +8,7 @@ import {
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
-import { toggleTimetravel, jumpToLive } from 'Player';
+import { jumpToLive } from 'Player';
 
 import { Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
@@ -25,8 +25,6 @@ import {
   PROFILER,
   PERFORMANCE,
   GRAPHQL,
-  FETCH,
-  EXCEPTIONS,
   INSPECTOR,
 } from 'Duck/components/player';
 import { AssistDuration } from './Time';
@@ -37,23 +35,6 @@ import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import { Tooltip } from 'react-tippy';
 import XRayButton from 'Shared/XRayButton';
-
-function getStorageIconName(type) {
-  switch (type) {
-    case STORAGE_TYPES.REDUX:
-      return 'vendors/redux';
-    case STORAGE_TYPES.MOBX:
-      return 'vendors/mobx';
-    case STORAGE_TYPES.VUEX:
-      return 'vendors/vuex';
-    case STORAGE_TYPES.NGRX:
-      return 'vendors/ngrx';
-    case STORAGE_TYPES.ZUSTAND:
-      return 'vendors/zustand';
-    case STORAGE_TYPES.NONE:
-      return 'store';
-  }
-}
 
 const SKIP_INTERVALS = {
   2: 2e3,
@@ -95,25 +76,22 @@ function getStorageName(type) {
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode || state.markedTargets,
   inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
-  logCount: state.logListNow.length,
-  logRedCount: state.logRedCountNow,
-  resourceRedCount: state.resourceRedCountNow,
-  fetchRedCount: state.fetchRedCountNow,
+  // logCount: state.logList.length,
+  logRedCount: state.logRedCount,
+  resourceRedCount: state.resourceRedCount,
+  fetchRedCount: state.fetchRedCount,
   showStack: state.stackList.length > 0,
-  stackCount: state.stackListNow.length,
-  stackRedCount: state.stackRedCountNow,
-  profilesCount: state.profilesListNow.length,
+  stackCount: state.stackList.length,
+  stackRedCount: state.stackRedCount,
+  profilesCount: state.profilesList.length,
   storageCount: selectStorageListNow(state).length,
   storageType: selectStorageType(state),
   showStorage: selectStorageType(state) !== STORAGE_TYPES.NONE,
   showProfiler: state.profilesList.length > 0,
   showGraphql: state.graphqlList.length > 0,
   showFetch: state.fetchCount > 0,
-  fetchCount: state.fetchCountNow,
-  graphqlCount: state.graphqlListNow.length,
-  exceptionsCount: state.exceptionsListNow.length,
-  showExceptions: state.exceptionsList.length > 0,
-  showLongtasks: state.longtasksList.length > 0,
+  fetchCount: state.fetchCount,
+  graphqlCount: state.graphqlList.length,
   liveTimeTravel: state.liveTimeTravel,
 }))
 @connect(
@@ -163,7 +141,7 @@ export default class Controls extends React.Component {
       nextProps.disabled !== this.props.disabled ||
       nextProps.fullscreenDisabled !== this.props.fullscreenDisabled ||
       // nextProps.inspectorMode !== this.props.inspectorMode ||
-      nextProps.logCount !== this.props.logCount ||
+      // nextProps.logCount !== this.props.logCount ||
       nextProps.logRedCount !== this.props.logRedCount ||
       nextProps.resourceRedCount !== this.props.resourceRedCount ||
       nextProps.fetchRedCount !== this.props.fetchRedCount ||
@@ -179,9 +157,6 @@ export default class Controls extends React.Component {
       nextProps.showFetch !== this.props.showFetch ||
       nextProps.fetchCount !== this.props.fetchCount ||
       nextProps.graphqlCount !== this.props.graphqlCount ||
-      nextProps.showExceptions !== this.props.showExceptions ||
-      nextProps.exceptionsCount !== this.props.exceptionsCount ||
-      nextProps.showLongtasks !== this.props.showLongtasks ||
       nextProps.liveTimeTravel !== this.props.liveTimeTravel ||
       nextProps.skipInterval !== this.props.skipInterval
     )
@@ -286,24 +261,14 @@ export default class Controls extends React.Component {
       skip,
       speed,
       disabled,
-      logCount,
       logRedCount,
       resourceRedCount,
-      fetchRedCount,
       showStack,
-      stackCount,
       stackRedCount,
-      profilesCount,
-      storageCount,
       showStorage,
       storageType,
       showProfiler,
       showGraphql,
-      showFetch,
-      fetchCount,
-      graphqlCount,
-      exceptionsCount,
-      showExceptions,
       fullscreen,
       inspectorMode,
       closedLive,
@@ -380,7 +345,6 @@ export default class Controls extends React.Component {
                 label="CONSOLE"
                 noIcon
                 labelClassName="!text-base font-semibold"
-                count={logCount}
                 hasErrors={logRedCount > 0}
                 containerClassName="mx-2"
               />
@@ -407,25 +371,11 @@ export default class Controls extends React.Component {
                   containerClassName="mx-2"
                 />
               )}
-              {showFetch && (
-                <ControlButton
-                  disabled={disabled && !inspectorMode}
-                  onClick={() => toggleBottomTools(FETCH)}
-                  active={bottomBlock === FETCH && !inspectorMode}
-                  hasErrors={fetchRedCount > 0}
-                  count={fetchCount}
-                  label="FETCH"
-                  noIcon
-                  labelClassName="!text-base font-semibold"
-                  containerClassName="mx-2"
-                />
-              )}
               {!live && showGraphql && (
                 <ControlButton
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(GRAPHQL)}
                   active={bottomBlock === GRAPHQL && !inspectorMode}
-                  count={graphqlCount}
                   label="GRAPHQL"
                   noIcon
                   labelClassName="!text-base font-semibold"
@@ -437,24 +387,10 @@ export default class Controls extends React.Component {
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(STORAGE)}
                   active={bottomBlock === STORAGE && !inspectorMode}
-                  count={storageCount}
                   label={getStorageName(storageType)}
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
-                />
-              )}
-              {showExceptions && (
-                <ControlButton
-                  disabled={disabled && !inspectorMode}
-                  onClick={() => toggleBottomTools(EXCEPTIONS)}
-                  active={bottomBlock === EXCEPTIONS && !inspectorMode}
-                  label="EXCEPTIONS"
-                  noIcon
-                  labelClassName="!text-base font-semibold"
-                  containerClassName="mx-2"
-                  count={exceptionsCount}
-                  hasErrors={exceptionsCount > 0}
                 />
               )}
               {!live && showStack && (
@@ -466,7 +402,6 @@ export default class Controls extends React.Component {
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
-                  count={stackCount}
                   hasErrors={stackRedCount > 0}
                 />
               )}
@@ -475,7 +410,6 @@ export default class Controls extends React.Component {
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(PROFILER)}
                   active={bottomBlock === PROFILER && !inspectorMode}
-                  count={profilesCount}
                   label="PROFILER"
                   noIcon
                   labelClassName="!text-base font-semibold"

@@ -1,4 +1,4 @@
-fromVersion: "v1.8.1"
+fromVersion: "v1.8.2"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -19,7 +19,7 @@ postgresql: &postgres
 
 clickhouse:
   # For enterpriseEdition
-  enabled: false
+  enabled: true
 
 quickwit: &quickwit
   # For enterpriseEdition
@@ -101,6 +101,7 @@ global:
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
   assistKey: "SetARandomStringHere"
+  assistJWTSecret: "SetARandomStringHere"
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
@@ -136,6 +137,9 @@ global:
 #   pvc:
 #     name: mysharedpersistence
 # storage:
+#   pvc:
+#     name: mysharedpersistence
+# chalice:
 #   pvc:
 #     name: mysharedpersistence
 

@@ -47,7 +47,7 @@ export default connect(
     }
 )(SessionTags);
 
-function TagItem({ isActive, onClick, label, icon = '', disabled = false }: any) {
+export function TagItem({ isActive, onClick, label, icon = '', disabled = false }: any) {
     return (
         <div>
             <button

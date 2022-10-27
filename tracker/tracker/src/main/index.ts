@@ -245,7 +245,7 @@ export default class API {
     this.setMetadata(key, value)
   }
 
-  event(key: string, payload: any, issue = false): void {
+  event(key: string, payload: any = null, issue = false): void {
     if (typeof key === 'string' && this.app !== null) {
       if (issue) {
         return this.issue(key, payload)
@@ -260,7 +260,7 @@ export default class API {
     }
   }
 
-  issue(key: string, payload: any): void {
+  issue(key: string, payload: any = null): void {
     if (typeof key === 'string' && this.app !== null) {
       try {
         payload = JSON.stringify(payload)
@@ -271,17 +271,21 @@ export default class API {
     }
   }
 
-  handleError = (e: Error | ErrorEvent | PromiseRejectionEvent) => {
+  handleError = (
+    e: Error | ErrorEvent | PromiseRejectionEvent,
+    metadata: Record<string, any> = {},
+  ) => {
     if (this.app === null) {
       return
     }
     if (e instanceof Error) {
-      this.app.send(getExceptionMessage(e, []))
+      const msg = getExceptionMessage(e, [], metadata)
+      this.app.send(msg)
     } else if (
       e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
-      const msg = getExceptionMessageFromEvent(e)
+      const msg = getExceptionMessageFromEvent(e, undefined, metadata)
       if (msg != null) {
         this.app.send(msg)
       }

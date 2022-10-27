@@ -10,7 +10,7 @@ interface Props {
   className?: string;
 }
 export default function ReloadButton(props: Props) {
-  const { loading, onClick, iconSize = '14', iconName = 'sync-alt', className = '' } = props;
+  const { loading, onClick, iconSize = '20', iconName = 'arrow-repeat', className = '' } = props;
   return (
     <Popup content="Refresh">
       <div
