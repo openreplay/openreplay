@@ -13,4 +13,3 @@ uvicorn[standard]==0.18.2
 python-decouple==3.6
 pydantic[email]==1.9.2
 apscheduler==3.9.1
-
