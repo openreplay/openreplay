@@ -19,7 +19,6 @@ func (c *PGCache) HandleSessionEnd(sessionID uint64) error {
 	if err := c.Conn.HandleSessionEnd(sessionID); err != nil {
 		log.Printf("can't handle session end: %s", err)
 	}
-	c.DeleteSession(sessionID)
 	return nil
 }
 

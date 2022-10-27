@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"errors"
+	"fmt"
 	. "openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 )
@@ -31,10 +31,10 @@ func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error
 }
 
 func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error {
-	if c.sessions[sessionID] != nil {
-		return errors.New("This session already in cache!")
+	if c.cache.HasSession(sessionID) {
+		return fmt.Errorf("session %d already in cache", sessionID)
 	}
-	c.sessions[sessionID] = &Session{
+	newSess := &Session{
 		SessionID:      sessionID,
 		Platform:       "web",
 		Timestamp:      s.Timestamp,
@@ -55,8 +55,10 @@ func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error
 		UserDeviceHeapSize:   s.UserDeviceHeapSize,
 		UserID:               &s.UserID,
 	}
-	if err := c.Conn.HandleSessionStart(sessionID, c.sessions[sessionID]); err != nil {
-		c.sessions[sessionID] = nil
+	c.cache.SetSession(newSess)
+	if err := c.Conn.HandleSessionStart(sessionID, newSess); err != nil {
+		// don't know why?
+		c.cache.SetSession(nil)
 		return err
 	}
 	return nil
