@@ -86,6 +86,8 @@ func main() {
 						} else {
 							msg.EncryptionKey = string(key)
 						}
+					} else {
+						log.Printf("encryption key is empty")
 					}
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
