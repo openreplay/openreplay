@@ -201,6 +201,7 @@ export default class App {
 
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
+      this.debug.log('SendiTrying to send when not active', message)
       return
     }
     this.messages.push(message)
@@ -268,8 +269,8 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target.addEventListener(type, listener, useCapture), useSafe)
-    this.attachStopCallback(() => target.removeEventListener(type, listener, useCapture), useSafe)
+    this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
+    this.attachStopCallback(() => target?.removeEventListener(type, listener, useCapture), useSafe)
   }
 
   // TODO: full correct semantic
