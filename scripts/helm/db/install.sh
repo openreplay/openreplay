@@ -79,7 +79,7 @@ for file in $(ls *.sql); do
     echo -e ${green}${bold}Restoring $file ${reset}
     kubectl exec postgresql-postgresql-0 -- /bin/bash -c "rm -rf /tmp/$file"
     kubectl cp $file postgresql-postgresql-0:/tmp/
-    kubectl exec postgresql-postgresql-0 -- /bin/bash -c "PGPASSWORD=asayerPostgres psql -U postgres -f /tmp/$file" &> $cwd/postgresql_init.log
+    kubectl exec postgresql-postgresql-0 -- /bin/bash -c "PGPASSWORD=asayerPostgres psql -v ON_ERROR_STOP=1 -U postgres -f /tmp/$file" &> $cwd/postgresql_init.log
     echo -e ${green}${bold}Done ✔${reset}
 done
 cd $cwd
