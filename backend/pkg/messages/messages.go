@@ -119,6 +119,8 @@ const (
 
     MsgPerformanceTrackAggr = 56
 
+    MsgSetNodeFocus = 58
+
     MsgLongTask = 59
 
     MsgSetNodeAttributeURLBased = 60
@@ -2350,6 +2352,38 @@ func (msg *PerformanceTrackAggr) Decode() Message {
 
 func (msg *PerformanceTrackAggr) TypeID() int {
 	return 56
+}
+
+type SetNodeFocus struct {
+	message
+	ID int64
+}
+
+func (msg *SetNodeFocus) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 58
+	p := 1
+	p = WriteInt(msg.ID, buf, p)
+	return buf[:p]
+}
+
+func (msg *SetNodeFocus) EncodeWithIndex() []byte {
+    encoded := msg.Encode()
+    if IsIOSType(msg.TypeID()) {
+        return encoded
+    }
+    data := make([]byte, len(encoded)+8)
+    copy(data[8:], encoded[:])
+    binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+    return data
+}
+
+func (msg *SetNodeFocus) Decode() Message {
+	return msg
+}
+
+func (msg *SetNodeFocus) TypeID() int {
+	return 58
 }
 
 type LongTask struct {

@@ -1064,6 +1064,16 @@ func DecodePerformanceTrackAggr(reader io.Reader) (Message, error) {
 }
 
 
+func DecodeSetNodeFocus(reader io.Reader) (Message, error) {
+    var err error = nil
+    msg := &SetNodeFocus{}
+    		if msg.ID, err = ReadInt(reader); err != nil {
+    			return nil, err
+    		}
+    		return msg, err
+}
+
+
 func DecodeLongTask(reader io.Reader) (Message, error) {
     var err error = nil
     msg := &LongTask{}
@@ -1995,6 +2005,9 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 56:
 		return DecodePerformanceTrackAggr(reader)
+
+	case 58:
+		return DecodeSetNodeFocus(reader)
 
 	case 59:
 		return DecodeLongTask(reader)

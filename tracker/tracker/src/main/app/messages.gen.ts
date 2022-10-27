@@ -535,6 +535,15 @@ export function SetPageVisibility(
   ]
 }
 
+export function SetNodeFocus(
+  id: number,
+): Messages.SetNodeFocus {
+  return [
+    Messages.Type.SetNodeFocus,
+    id,
+  ]
+}
+
 export function LongTask(
   timestamp: number,
   duration: number,

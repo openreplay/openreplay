@@ -46,6 +46,7 @@ export const TP_MAP = {
   53: "resource_timing",
   54: "connection_information",
   55: "set_page_visibility",
+  58: "set_node_focus",
   59: "long_task",
   60: "set_node_attribute_url_based",
   61: "set_css_data_url_based",
