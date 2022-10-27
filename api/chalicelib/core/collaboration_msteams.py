@@ -7,30 +7,28 @@ from chalicelib.core import webhook
 from chalicelib.core.collaboration_base import BaseCollaboration
 
 
-class Slack(BaseCollaboration):
+class MSTeams(BaseCollaboration):
     @classmethod
     def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
                                endpoint=data.url,
-                               webhook_type="slack",
+                               webhook_type="msteams",
                                name=data.name)
         return None
-
+    # https://messagecardplayground.azurewebsites.net
     @classmethod
     def say_hello(cls, url):
         r = requests.post(
             url=url,
             json={
-                "attachments": [
-                    {
-                        "text": "Welcome to OpenReplay",
-                        "ts": datetime.now().timestamp(),
-                    }
-                ]
+                "@type": "MessageCard",
+                "@context": "https://schema.org/extensions",
+                "summary": "Hello message",
+                "title": "Welcome to OpenReplay"
             })
         if r.status_code != 200:
-            print("slack integration failed")
+            print("MSTeams integration failed")
             print(r.text)
             return False
         return True

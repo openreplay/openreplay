@@ -12,6 +12,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, signup, tenants, boarding, notifications, webhook, users, \
     custom_metrics, saved_search, integrations_global
+from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import helper, captcha
 from or_dependencies import OR_context
@@ -946,6 +947,32 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
             "projects": -1,
         }
     }
+
+
+@app.post('/integrations/msteams', tags=['integrations'])
+def add_msteams_integration(data: schemas.AddCollaborationSchema,
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    n = MSTeams.add(tenant_id=context.tenant_id, data=data)
+    if n is None:
+        return {
+            "errors": ["We couldn't send you a test message on your Microsoft Teams channel. Please verify your webhook url."]
+        }
+    return {"data": n}
+
+
+@app.post('/integrations/msteams/{integrationId}', tags=['integrations'])
+def edit_msteams_integration(integrationId: int, data: schemas.EditCollaborationSchema = Body(...),
+                             context: schemas.CurrentContext = Depends(OR_context)):
+    if len(data.url) > 0:
+        old = webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)
+        if old["endpoint"] != data.url:
+            if not Slack.say_hello(data.url):
+                return {
+                    "errors": [
+                        "We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
+                }
+    return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=integrationId,
+                                   changes={"name": data.name, "endpoint": data.url})}
 
 
 @public_app.get('/', tags=["health"])

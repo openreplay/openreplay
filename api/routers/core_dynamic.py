@@ -71,8 +71,8 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_con
 
 @app.post('/integrations/slack', tags=['integrations'])
 @app.put('/integrations/slack', tags=['integrations'])
-def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
-    n = Slack.add_channel(tenant_id=context.tenant_id, url=data.url, name=data.name)
+def add_slack_integration(data: schemas.AddCollaborationSchema, context: schemas.CurrentContext = Depends(OR_context)):
+    n = Slack.add(tenant_id=context.tenant_id, data=data)
     if n is None:
         return {
             "errors": ["We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
@@ -81,7 +81,7 @@ def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentConte
 
 
 @app.post('/integrations/slack/{integrationId}', tags=['integrations'])
-def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = Body(...),
+def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
         old = webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)

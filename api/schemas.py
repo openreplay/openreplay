@@ -78,14 +78,13 @@ class CurrentContext(CurrentAPIContext):
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
-class AddSlackSchema(BaseModel):
+class AddCollaborationSchema(BaseModel):
     name: str = Field(...)
     url: HttpUrl = Field(...)
 
 
-class EditSlackSchema(BaseModel):
+class EditCollaborationSchema(AddCollaborationSchema):
     name: Optional[str] = Field(None)
-    url: HttpUrl = Field(...)
 
 
 class CreateNotificationSchema(BaseModel):
