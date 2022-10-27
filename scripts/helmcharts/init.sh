@@ -85,7 +85,7 @@ fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.m
 # This wrapper will help to check the sed, and use the correct version="v1.8.2"
 # Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.8.2"
 function is_gnu_sed(){
-  sed --version="v1.8.2"
+  sed --version >/dev/null 2>&1
 }
 
 function sed_i_wrapper(){
