@@ -123,7 +123,7 @@ export default class MainSection extends React.PureComponent {
             </Button>
           </div>
           <SessionBar className="my-4" session={error.lastHydratedSession} />
-          {error.customTags ? (
+          {error.customTags.length > 0 ? (
             <div className="flex items-start flex-col">
               <div>
                 <span className="font-semibold">More Info</span> <span className="text-disabled-text">(most recent call)</span>
