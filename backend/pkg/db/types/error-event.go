@@ -79,11 +79,36 @@ func WrapIntegrationEvent(m *IntegrationEvent) *ErrorEvent {
 	}
 }
 
+type stackFrame struct {
+	FileName string `json:"fileName"`
+	LineNo   int    `json:"lineNumber"`
+	ColNo    int    `json:"columnNumber"`
+}
+
+func parseFirstFrame(payload string) (*stackFrame, error) {
+	var frames []*stackFrame
+	if err := json.Unmarshal([]byte(payload), &frames); err != nil {
+		return nil, err
+	}
+	if len(frames) == 0 {
+		return nil, nil
+	}
+	return frames[0], nil
+}
+
 func (e *ErrorEvent) ID(projectID uint32) string {
 	hash := fnv.New128a()
 	hash.Write([]byte(e.Source))
 	hash.Write([]byte(e.Name))
 	hash.Write([]byte(e.Message))
-	hash.Write([]byte(e.Payload))
+	frame, err := parseFirstFrame(e.Payload)
+	if err != nil {
+		log.Printf("Can't parse stackframe ((( %v ))): %v", e.Payload, err)
+	}
+	if frame != nil {
+		hash.Write([]byte(frame.FileName))
+		hash.Write([]byte(strconv.Itoa(frame.LineNo)))
+		hash.Write([]byte(strconv.Itoa(frame.ColNo)))
+	}
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
