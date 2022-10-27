@@ -92,34 +92,6 @@ nginx-ingress:
     # Overrides the image tag whose default is the chart appVersion.
     tag: "buster"
 
-# By default http listens to 80 port, and for v1.7.0 http listens in 80
-http:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-# Running sink and storage as non root users, because of existing volume permission change will take time
-sink:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-storage:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-
-chalice:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-
 ingress-nginx:
   enabled: true
   controller:
