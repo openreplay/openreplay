@@ -3,21 +3,41 @@ import { isNode } from '../app/guards.js'
 import { SetNodeFocus } from "../app/messages.gen";
 
 export default function (app: App): void {
-    app.attachEventListener(document, 'focus', (e: Event): void => {
-        if (!isNode(e.target)) {
-            return
+    function findFocusedElement(): Element | null {
+        let focused_element = null
+        if (
+            document.hasFocus() &&
+            document.activeElement !== document.body &&
+            document.activeElement !== document.documentElement
+        ) {
+            focused_element = document.activeElement
         }
-        const id = app.nodes.getID(e.target)
+        return focused_element
+    }
+
+    function sendSetNodeFocus(n: Node) {
+        const id = app.nodes.getID(n)
         if (id !== undefined) {
             app.send(SetNodeFocus(id))
+        }
+    }
+
+    app.attachEventListener(document, 'focus', (e: Event): void => {
+        if (isNode(e.target)) {
+            sendSetNodeFocus(e.target)
         }
     })
 
     app.attachEventListener(document, 'blur', (): void => {
-        // get current focus element, send SetFocus(-1) if blur == null
+        if (findFocusedElement() === null) {
+            app.send(SetNodeFocus(-1))
+        }
     })
 
     app.attachStartCallback(() => {
-        // get current focus, send SetNodeFocus if blur != null
+        let elem = findFocusedElement()
+        if (elem !== null) {
+            sendSetNodeFocus(elem)
+        }
     })
 }
