@@ -18,10 +18,10 @@ echo $DOCKER_REPO
     tmux split-window "cd ../../backend && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux split-window "cd ../../utilities && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux select-layout tiled
-    tmux split-window "cd ../../peers && PUSH_IMAGE=1 bash build.sh $@"
+    tmux split-window "cd ../../peers && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux split-window "cd ../../frontend && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux select-layout tiled
-    tmux split-window "cd ../../sourcemap-reader && PUSH_IMAGE=1 bash build.sh $@"
+    tmux split-window "cd ../../sourcemap-reader && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux split-window "cd ../../api && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux select-layout tiled
 
