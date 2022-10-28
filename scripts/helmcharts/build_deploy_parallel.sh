@@ -14,6 +14,7 @@ echo $DOCKER_REPO
     exit 1
 } || {
     docker login $DOCKER_REPO
+    tmux set-option remain-on-exit on
     tmux split-window "cd ../../backend && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux split-window "cd ../../utilities && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux select-layout tiled
