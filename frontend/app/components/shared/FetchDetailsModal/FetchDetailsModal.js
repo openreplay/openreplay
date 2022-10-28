@@ -6,6 +6,7 @@ import Headers from './components/Headers';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
+import CopyText from 'Shared/CopyText';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -147,8 +148,8 @@ export default class FetchDetailsModal extends React.PureComponent {
         <h5 className="mb-2 text-2xl">Network Request</h5>
         <div className="flex items-center py-1">
           <div className="font-medium">Name</div>
-          <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
-            {resource.name}
+          <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip cursor-pointer">
+            <CopyText content={resource.url}>{resource.name}</CopyText>
           </div>
         </div>
 
@@ -207,14 +208,22 @@ export default class FetchDetailsModal extends React.PureComponent {
             <ul className="list-disc ml-5">
               <li>
                 Integrate{' '}
-                <a href="https://docs.openreplay.com/plugins/fetch" className="link" target="_blank">
+                <a
+                  href="https://docs.openreplay.com/plugins/fetch"
+                  className="link"
+                  target="_blank"
+                >
                   Fetch plugin
                 </a>{' '}
                 to capture fetch payloads.
               </li>
               <li>
                 Find a detailed{' '}
-                <a href="https://www.youtube.com/watch?v=YFCKstPZzZg" className="link" target="_blank">
+                <a
+                  href="https://www.youtube.com/watch?v=YFCKstPZzZg"
+                  className="link"
+                  target="_blank"
+                >
                   video tutorial
                 </a>{' '}
                 to understand practical example of how to use fetch plugin.
