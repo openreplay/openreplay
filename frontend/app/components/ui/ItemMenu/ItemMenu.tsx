@@ -16,7 +16,7 @@ interface Props {
   bold?: boolean;
   flat?: boolean;
   items: Item[];
-  label?: React.ReactNode;
+  label: React.ReactNode;
   onToggle?: (args: any) => void;
 }
 
