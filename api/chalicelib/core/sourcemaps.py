@@ -155,6 +155,7 @@ def fetch_missed_contexts(frames):
             print(">>>>>>>> fetch_missed_contexts exception:")
             print(frames)
             print("------------------")
+            raise
         file_abs_path = frames[i]["frame"]["absPath"]
         if file_abs_path in source_cache:
             file = source_cache[file_abs_path]
