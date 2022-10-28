@@ -77,7 +77,7 @@ function Steps({ xrayProps }: Props) {
         }
       />
       {bugReportStore.isSubStepModalOpen ? (
-        <SubModal type={bugReportStore.subModalType} xrayProps={xrayProps}/>
+        <SubModal type={bugReportStore.subModalType} toggleModal={bugReportStore.toggleSubStepModal} xrayProps={xrayProps}/>
       ) : null}
     </div>
   );

@@ -10,6 +10,7 @@ const Titles = {
 
 interface Props {
   type: 'note' | 'network' | 'error';
+  toggleModal: (isOpen: boolean) => void;
 }
 
 function ModalContent(props: Props) {
@@ -34,7 +35,7 @@ function ModalContent(props: Props) {
         <Button disabled={selected.length === 0} variant="primary">
           Add Selected
         </Button>
-        <Button variant="text-primary">Cancel</Button>
+        <Button variant="text-primary" onClick={() => props.toggleModal(false)}>Cancel</Button>
       </div>
     </div>
   );
@@ -49,6 +50,7 @@ interface ModalProps {
     endTime: number;
   };
   type: 'note' | 'network' | 'error';
+  toggleModal: (isOpen: boolean) => void;
 }
 
 function SubModal(props: ModalProps) {
@@ -57,7 +59,7 @@ function SubModal(props: ModalProps) {
       className="bg-white overflow-y-scroll absolute"
       style={{ maxWidth: '70vw', width: 620, height: '100vh', top: 0, right: 0, zIndex: 999 }}
     >
-      <ModalContent type={props.type} />
+      <ModalContent type={props.type} toggleModal={props.toggleModal} />
     </div>
   );
 }
