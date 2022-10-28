@@ -2,7 +2,7 @@
 
 set -ex
 
-pgdir=/opt/openreplay/openreplay/scripts/helm/db/init_dbs/postgresql
+pgdir=/opt/openreplay/openreplay/scripts/schema/db/init_dbs/postgresql
 
 # ENV variables
 # Ref: https://www.postgresql.org/docs/current/libpq-envars.html

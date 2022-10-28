@@ -2,7 +2,7 @@
 
 set -ex
 
-clickhousedir=/opt/openreplay/openreplay/scripts/helm/db/init_dbs/clickhouse
+clickhousedir=/opt/openreplay/openreplay/scripts/schema/db/init_dbs/clickhouse
 
 function migrate() {
     echo "Starting clickhouse migration"

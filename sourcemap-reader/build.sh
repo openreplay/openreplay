@@ -8,8 +8,12 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 set -e
 
+image_name="sourcemap-reader"
+
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 envarg="default-foss"
+tmp_folder_name="${image_name}_${RANDOM}"
+
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
@@ -29,15 +33,15 @@ function build_api(){
         envarg="default-ee"
         tag="ee-"
     }
-    docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/sourcemaps-reader:${git_sha1} .
+    docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1} .
     cd ../sourcemap-reader
     rm -rf ../_smr
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/sourcemaps-reader:${git_sha1}
-        docker tag ${DOCKER_REPO:-'local'}/sourcemaps-reader:${git_sha1} ${DOCKER_REPO:-'local'}/sourcemaps-reader:${tag}latest
-        docker push ${DOCKER_REPO:-'local'}/sourcemaps-reader:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1}
+        docker tag ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1} ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
     }
-    echo "sourcemaps-reader docker build completed"
+    echo "${image_name} docker build completed"
 }
 
 check_prereq

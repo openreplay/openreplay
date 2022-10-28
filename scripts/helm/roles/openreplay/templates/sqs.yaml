@@ -1,8 +1,0 @@
-resources:
-  limits:
-    cpu: {{ ( 250 * scale|float ) | int }}m
-    memory: {{ ( 512 * scale|float ) | int }}Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-
