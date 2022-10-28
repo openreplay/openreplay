@@ -76,6 +76,8 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
     },
   };
 
+  console.log(bugReportStore)
+
   React.useEffect(() => {
     bugReportStore.updateReportDefaults(defaults);
     bugReportStore.setDefaultSteps(mapEvents(events));

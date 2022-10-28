@@ -6,6 +6,7 @@ import SectionTitle from './SectionTitle';
 import XRay from './StepsComponents/XRay';
 import StepRenderer from './StepsComponents/StepRenderer';
 import StepRadius from './StepsComponents/StepRadius'
+import SubModal from './StepsComponents/SubModal'
 
 interface Props {
   xrayProps: {
@@ -75,6 +76,9 @@ function Steps({ xrayProps }: Props) {
             : bugReportStore.chosenEventSteps
         }
       />
+      {bugReportStore.isSubStepModalOpen ? (
+        <SubModal type={bugReportStore.subModalType} xrayProps={xrayProps}/>
+      ) : null}
     </div>
   );
 }

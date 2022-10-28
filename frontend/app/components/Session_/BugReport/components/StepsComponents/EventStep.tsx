@@ -11,9 +11,9 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
   const [menuOpen, setMenu] = React.useState(false);
 
   const menuItems = [
-    { icon: 'quotes', text: 'Add Note', onClick: () => console.log('note') },
-    { icon: 'info-circle', text: `Add Error`, onClick: () => console.log('note') },
-    { icon: 'network', text: 'Add Fetch/XHR', onClick: () => console.log('note') },
+    { icon: 'quotes', text: 'Add Note', onClick: () => bugReportStore.toggleSubStepModal(true, 'note') },
+    { icon: 'info-circle', text: `Add Error`, onClick: () => bugReportStore.toggleSubStepModal(true, 'error') },
+    { icon: 'network', text: 'Add Fetch/XHR', onClick: () => bugReportStore.toggleSubStepModal(true, 'network') },
   ];
 
   return (
