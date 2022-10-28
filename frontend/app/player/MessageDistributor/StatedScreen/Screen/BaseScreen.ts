@@ -79,7 +79,8 @@ export default abstract class BaseScreen {
 
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
-      throw new Error("BaseScreen: Trying to attach an attached screen.");
+      this.parentElement = undefined
+      console.error("BaseScreen: Trying to attach an attached screen.");
     }
 
     parentElement.appendChild(this.screen);
