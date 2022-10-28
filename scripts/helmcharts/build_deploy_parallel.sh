@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+# Must run inside tmux
 # This script will build and push docker image to registry
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=rg.fr-par.scw.cloud/foss bash build_deploy.sh
@@ -14,6 +14,7 @@ echo $DOCKER_REPO
     exit 1
 } || {
     docker login $DOCKER_REPO
+    tmux set-option remain-on-exit on
     tmux split-window "cd ../../backend && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux split-window "cd ../../utilities && IMAGE_TAG=$IMAGE_TAG DOCKER_REPO=$DOCKER_REPO PUSH_IMAGE=1 bash build.sh $@"
     tmux select-layout tiled
