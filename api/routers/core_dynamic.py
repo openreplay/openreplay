@@ -165,7 +165,6 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
-@app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                 context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
@@ -183,7 +182,6 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
 
 
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
-@app.get('/{projectId}/sessions2/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
@@ -323,7 +321,6 @@ def add_remove_favorite_session2(projectId: int, sessionId: int,
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
-@app.get('/{projectId}/sessions2/{sessionId}/assign', tags=["sessions"])
 def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
                                                tenant_id=context.tenant_id,
@@ -336,7 +333,6 @@ def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = 
 
 
 @app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
-@app.get('/{projectId}/sessions2/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 def assign_session(projectId: int, sessionId: int, issueId: str,
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
@@ -349,7 +345,6 @@ def assign_session(projectId: int, sessionId: int, issueId: str,
 
 
 @app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-@app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
