@@ -43,8 +43,8 @@ def compute():
 def new_client():
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            f"""SELECT *, 
-                (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email 
+            f"""SELECT *, openreplay_version() AS version_number,
+                (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email
                 FROM public.tenants
                 LIMIT 1;""")
         data = cur.fetchone()
