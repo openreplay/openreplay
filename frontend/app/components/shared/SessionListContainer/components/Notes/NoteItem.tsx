@@ -63,11 +63,12 @@ function NoteItem(props: Props) {
                 style={{
                   // @ts-ignore
                   background: tagProps[props.note.tag],
-                  userSelect: 'none',
-                  width: 50,
-                  fontSize: 11,
+                  // userSelect: 'none',
+                  // width: 'fit-content',
+                  // fontSize: 11,
+                  padding: '1px 6px',
                 }}
-                className="rounded-full px-2 py-1 text-white flex items-center justify-center"
+                className="rounded-full text-white text-xs select-none w-fit"
               >
                 {props.note.tag}
               </div>

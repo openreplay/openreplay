@@ -125,6 +125,14 @@
   }
 }
 
+.hover-teal:hover {
+  background-color: $active-blue;
+  color: $teal;
+  & svg {
+    fill: $teal;
+  }
+}
+
 .note-hover {
   border: solid thin transparent;
   &:hover {
