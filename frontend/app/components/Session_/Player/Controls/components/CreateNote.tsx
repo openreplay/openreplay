@@ -162,7 +162,7 @@ function CreateNote({
         <h3 className="text-xl ml-2 mr-4 font-semibold">Add Note</h3>
         <div className="flex items-center cursor-pointer" onClick={() => setUseTs(!useTimestamp)}>
           <Checkbox checked={useTimestamp} />
-          <span className="ml-1">{`at ${duration}`}</span>
+          <span className="ml-1"> {`at ${duration}`} </span>
         </div>
 
         <div className="ml-auto cursor-pointer" onClick={closeTooltip}>
