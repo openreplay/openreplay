@@ -1,84 +1,97 @@
-import { makeAutoObservable } from "mobx"
-import { BugReportPdf, ReportDefaults, Step } from 'Components/Session_/BugReport/types'
+import { makeAutoObservable } from 'mobx';
+import { BugReportPdf, ReportDefaults, Step } from 'Components/Session_/BugReport/types';
 
 export enum SeverityLevels {
   Low,
   Medium,
-  High
+  High,
 }
 
 export default class BugReportStore {
-  reportTitle = 'Untitled Report'
-  comment = ''
-  severity = SeverityLevels.High
+  reportTitle = 'Untitled Report';
+  comment = '';
+  severity = SeverityLevels.High;
 
-  isCommentEdit = false
-  isTitleEdit = false
+  isCommentEdit = false;
+  isTitleEdit = false;
+  isSubStepModalOpen = false;
 
-  bugReport: Partial<BugReportPdf>
-  sessionEventSteps: Step[] = []
-  chosenEventSteps: Step[] = []
+  bugReport: Partial<BugReportPdf>;
+  sessionEventSteps: Step[] = [];
+  chosenEventSteps: Step[] = [];
+  subModalType: 'note' | 'network' | 'error';
 
   constructor() {
-    makeAutoObservable(this)
+    makeAutoObservable(this);
   }
 
   clearStore() {
-    this.reportTitle = 'Untitled Report'
-    this.comment = ''
-    this.severity = SeverityLevels.High
+    this.reportTitle = 'Untitled Report';
+    this.comment = '';
+    this.severity = SeverityLevels.High;
 
-    this.isCommentEdit = false
-    this.isTitleEdit = false
+    this.isCommentEdit = false;
+    this.isTitleEdit = false;
 
-    this.bugReport = undefined
-    this.sessionEventSteps = []
-    this.chosenEventSteps = []
+    this.bugReport = undefined;
+    this.sessionEventSteps = [];
+    this.chosenEventSteps = [];
+    this.subModalType = undefined;
+    this.isSubStepModalOpen = false;
   }
 
   toggleTitleEdit(isEdit: boolean) {
-    this.isTitleEdit = isEdit
+    this.isTitleEdit = isEdit;
   }
 
   setTitle(title: string) {
-    this.reportTitle = title
+    this.reportTitle = title;
 
-    this.bugReport = Object.assign(this.bugReport, { title: this.reportTitle })
+    this.bugReport = Object.assign(this.bugReport, { title: this.reportTitle });
   }
 
   setSeverity(severity: SeverityLevels) {
-    this.severity = severity
+    this.severity = severity;
 
-    this.bugReport = Object.assign(this.bugReport, { severity: this.severity })
+    this.bugReport = Object.assign(this.bugReport, { severity: this.severity });
   }
 
   toggleCommentEditing(isEdit: boolean) {
-    this.isCommentEdit = isEdit
+    this.isCommentEdit = isEdit;
   }
 
   setComment(comment: string) {
-    this.comment = comment
+    this.comment = comment;
 
-    this.bugReport = Object.assign(this.bugReport, { comment: this.comment.length > 0 ? this.comment : undefined })
+    this.bugReport = Object.assign(this.bugReport, {
+      comment: this.comment.length > 0 ? this.comment : undefined,
+    });
   }
 
   updateReportDefaults(defaults: ReportDefaults) {
-    this.bugReport = Object.assign(this.bugReport || {}, defaults)
+    this.bugReport = Object.assign(this.bugReport || {}, defaults);
   }
 
   setDefaultSteps(steps: Step[]) {
-    this.sessionEventSteps = steps
+    this.sessionEventSteps = steps;
   }
 
   setSteps(steps: Step[]) {
-    this.chosenEventSteps = steps
+    this.chosenEventSteps = steps;
   }
 
   removeStep(step: Step) {
-    this.chosenEventSteps = this.chosenEventSteps.filter(chosenStep => chosenStep.key !== step.key)
+    this.chosenEventSteps = this.chosenEventSteps.filter(
+      (chosenStep) => chosenStep.key !== step.key
+    );
+  }
+
+  toggleSubStepModal(isOpen: boolean, type: 'note' | 'network' | 'error') {
+    this.isSubStepModalOpen = isOpen;
+    this.subModalType = type;
   }
 
   resetSteps() {
-    this.chosenEventSteps = []
+    this.chosenEventSteps = [];
   }
 }
