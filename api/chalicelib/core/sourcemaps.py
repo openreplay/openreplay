@@ -147,12 +147,8 @@ MAX_COLUMN_OFFSET = 60
 
 def fetch_missed_contexts(frames):
     source_cache = {}
-    print(f">>>>>>>> fetch_missed_contexts of: {len(frames)} frames")
     for i in range(len(frames)):
-        print(">>>>>>>> fetch_missed_contexts exception:")
-        print(frames[i])
-        print("------------------")
-        if len(frames[i]["context"]) > 0:
+        if frames[i] and frames[i].get("context") and len(frames[i]["context"]) > 0:
             continue
         file_abs_path = frames[i]["frame"]["absPath"]
         if file_abs_path in source_cache:
