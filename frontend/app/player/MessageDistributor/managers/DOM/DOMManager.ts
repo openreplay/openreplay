@@ -5,6 +5,7 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
 import ListWalker from '../ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
+import FocusManager from './FocusManager';
 import {
   VElement,
   VText,
@@ -35,9 +36,9 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 
 
 export default class DOMManager extends ListWalker<Message> {
-  private vTexts: Map<number, VText> = new Map() // map vs object here?
-  private vElements: Map<number, VElement> = new Map()
-  private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
+  private readonly vTexts: Map<number, VText> = new Map() // map vs object here?
+  private readonly vElements: Map<number, VElement> = new Map()
+  private readonly vRoots: Map<number, VShadowRoot | VDocument> = new Map()
   private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
@@ -46,6 +47,7 @@ export default class DOMManager extends ListWalker<Message> {
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
   private stylesManager: StylesManager
+  private focusManager: FocusManager = new FocusManager(this.vElements)
 
 
   constructor(
@@ -66,6 +68,10 @@ export default class DOMManager extends ListWalker<Message> {
         this.nodeScrollManagers.set(m.id, scrollManager)
       }
       scrollManager.append(m)
+      return
+    }
+    if (m.tp === "set_node_focus") {
+      this.focusManager.append(m)
       return
     }
     if (m.tp === "create_element_node") {
@@ -146,12 +152,15 @@ export default class DOMManager extends ListWalker<Message> {
         fRoot.innerText = '';
 
         vn = new VElement(fRoot)
-        this.vElements = new Map([[0, vn]])
+        this.vElements.clear()
+        this.vElements.set(0, vn)
         const vDoc = new VDocument(doc)
         vDoc.insertChildAt(vn, 0)
-        this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
+        this.vRoots.clear()
+        this.vRoots.set(0, vDoc) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
         // todo: start from 0 (sync logic with tracker)
+        this.vTexts.clear()
         this.stylesManager.reset()
         this.activeIframeRoots.clear()
         return
@@ -386,6 +395,8 @@ export default class DOMManager extends ListWalker<Message> {
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady(t).then(() => {
+      // Apply focus
+      this.focusManager.move(t)
       // Apply all scrolls after the styles got applied
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)
