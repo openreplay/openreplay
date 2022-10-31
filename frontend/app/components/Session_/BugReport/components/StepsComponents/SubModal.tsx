@@ -1,20 +1,48 @@
 import React from 'react';
 import { Icon, Button } from 'UI';
-import cn from 'classnames';
+import { observer } from 'mobx-react-lite';
+import { Note } from 'App/services/NotesService';
+import { NoteItem, ErrorItem, NetworkReq, SubItem } from './SubModalItems';
+import { filterList, debounce } from 'App/utils';
+import { useStore } from 'App/mstore';
 
 const Titles = {
   note: 'Note',
   network: 'Fetch/XHR',
   error: 'Console Error',
 };
+const Filters = {
+  note: 'note message or author',
+  network: 'url',
+  error: 'error name or message',
+};
 
 interface Props {
   type: 'note' | 'network' | 'error';
-  toggleModal: (isOpen: boolean) => void;
+  items: SubItem[];
 }
 
+let debounceUpdate: any = () => {};
+
+const SUB_ITEMS = {
+  note: NoteItem,
+  error: ErrorItem,
+  network: NetworkReq,
+};
+
 function ModalContent(props: Props) {
-  const [selected, setSelected] = React.useState([]);
+  const [searchStr, setSearch] = React.useState('');
+  const list =
+    searchStr !== ''
+      ? filterList(props.items, searchStr, ['url', 'name', 'title', 'message'])
+      : props.items;
+
+  React.useEffect(() => {
+    debounceUpdate = debounce((val: string) => setSearch(val), 250);
+  }, []);
+
+  const SubItem = SUB_ITEMS[props.type];
+
   return (
     <div className="flex flex-col p-4 bg-white gap-4 w-full">
       <div className="flex items-center gap-2">
@@ -22,24 +50,62 @@ function ModalContent(props: Props) {
           <Icon name="quotes" size={18} />
         </div>
         <div className="text-2xl font-semibold">{`Select ${Titles[props.type]}`}</div>
+        <div className="ml-auto">
+          <input
+            onChange={(e) => debounceUpdate(e.target.value)}
+            className="bg-white p-2 border border-borderColor-gray-light-shade rounded"
+            placeholder={`Filter by ${Filters[props.type]}`}
+            style={{ width: 250 }}
+          />
+        </div>
       </div>
       <div
-        className="flex flex-col border rounded w-full"
-        style={{ background: props.type === 'note' ? '#FFFEF5' : 'white' }}
+        className="flex flex-col rounded -mx-4 px-4 py-2 bg-white"
+        style={{ height: '90vh', overflowY: 'scroll', maxWidth: '70vw', width: 620 }}
       >
-        <div className="p-2 border-b last:border-b-none w-full">item1</div>
-        <div className="p-2 border-b last:border-b-none w-full">item2</div>
+        {list.map((item) => (
+          <React.Fragment key={item.key}>
+            {/* @ts-ignore */}
+            <SubItem item={item} />
+          </React.Fragment>
+        ))}
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button disabled={selected.length === 0} variant="primary">
-          Add Selected
-        </Button>
-        <Button variant="text-primary" onClick={() => props.toggleModal(false)}>Cancel</Button>
-      </div>
+      <ModalActionsObs />
     </div>
   );
 }
+
+function ModalActions() {
+  const { bugReportStore } = useStore();
+
+  const removeModal = () => {
+    bugReportStore.toggleSubStepModal(false, bugReportStore.subModalType, undefined)
+  }
+  const saveChoice = () => {
+    bugReportStore.saveSubItems()
+    removeModal()
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        disabled={bugReportStore.pickedSubItems.size === 0}
+        variant="primary"
+        onClick={saveChoice}
+      >
+        Add Selected
+      </Button>
+      <Button
+        variant="text-primary"
+        onClick={removeModal}
+      >
+        Cancel
+      </Button>
+    </div>
+  );
+}
+
+const ModalActionsObs = observer(ModalActions);
 
 interface ModalProps {
   xrayProps: {
@@ -50,16 +116,56 @@ interface ModalProps {
     endTime: number;
   };
   type: 'note' | 'network' | 'error';
-  toggleModal: (isOpen: boolean) => void;
+  notes: Note[];
+  members: Record<string, any>[];
 }
 
 function SubModal(props: ModalProps) {
+  let items;
+  if (props.type === 'note') {
+    items = props.notes.map((note) => ({
+      type: 'note' as const,
+      title: props.members.find((m) => m.id === note.userId)?.email || note.userId,
+      message: note.message,
+      time: 0,
+      key: note.noteId as unknown as string,
+    }));
+  }
+  if (props.type === 'error') {
+    items = props.xrayProps.exceptionsList.map((error) => ({
+      type: 'error' as const,
+      time: error.time,
+      message: error.message,
+      name: error.name,
+      key: error.key,
+    }));
+  }
+  if (props.type === 'network') {
+    items = props.xrayProps.resourceList.map((fetch) => ({
+      type: 'network' as const,
+      time: fetch.time,
+      url: fetch.url,
+      status: fetch.status,
+      success: fetch.success,
+      message: fetch.name,
+      key: fetch.key,
+    }));
+  }
+
   return (
     <div
-      className="bg-white overflow-y-scroll absolute"
-      style={{ maxWidth: '70vw', width: 620, height: '100vh', top: 0, right: 0, zIndex: 999 }}
+      className="bg-white absolute"
+      style={{
+        maxWidth: '70vw',
+        overflow: 'hidden',
+        width: 620,
+        height: '100vh',
+        top: 0,
+        right: 0,
+        zIndex: 999,
+      }}
     >
-      <ModalContent type={props.type} toggleModal={props.toggleModal} />
+      <ModalContent type={props.type} items={items} />
     </div>
   );
 }
