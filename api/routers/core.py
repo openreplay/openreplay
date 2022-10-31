@@ -777,7 +777,7 @@ def create_project(data: schemas.CreateProjectSchema = Body(...),
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
-@app.post('/projects/{projectId}', tags=['projects'])
+@app.put('/projects/{projectId}', tags=['projects'])
 def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
