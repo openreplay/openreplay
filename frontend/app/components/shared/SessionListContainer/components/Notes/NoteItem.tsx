@@ -24,7 +24,7 @@ function NoteItem(props: Props) {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
         props.note.sessionId
-      )}${props.note.timestamp > 0 ? '?jumpto=' + props.note.timestamp : ''}`
+      )}${props.note.timestamp > 0 ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}` : `?note=${props.note.noteId}`}`
     );
     toast.success('Note URL copied to clipboard');
   };
@@ -49,7 +49,7 @@ function NoteItem(props: Props) {
           session(props.note.sessionId) +
           (props.note.timestamp > 0
             ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
-            : '')
+            : `?note=${props.note.noteId}`)
         }
       >
         <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
@@ -60,9 +60,6 @@ function NoteItem(props: Props) {
                 style={{
                   // @ts-ignore
                   background: tagProps[props.note.tag],
-                  // userSelect: 'none',
-                  // width: 'fit-content',
-                  // fontSize: 11,
                   padding: '1px 6px',
                 }}
                 className="rounded-full text-white text-xs select-none w-fit"

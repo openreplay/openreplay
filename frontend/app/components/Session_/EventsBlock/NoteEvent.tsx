@@ -45,7 +45,7 @@ function NoteEvent(props: Props) {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
         props.note.sessionId
-      )}${props.note.timestamp > 0 ? '?jumpto=' + props.note.timestamp : ''}`
+      )}${props.note.timestamp > 0 ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}` : `?note=${props.note.noteId}`}`
     );
     toast.success('Note URL copied to clipboard');
   };
