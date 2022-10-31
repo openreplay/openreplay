@@ -568,6 +568,13 @@ class PerformanceTrackAggr(Message):
         self.max_used_js_heap_size = max_used_js_heap_size
 
 
+class SetNodeFocus(Message):
+    __id__ = 58
+
+    def __init__(self, id):
+        self.id = id
+
+
 class LongTask(Message):
     __id__ = 59
 

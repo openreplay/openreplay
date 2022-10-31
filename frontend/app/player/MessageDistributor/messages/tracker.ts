@@ -290,6 +290,11 @@ type TrSetPageVisibility = [
   hidden: boolean,
 ]
 
+type TrSetNodeFocus = [
+  type: 58,
+  id: number,
+]
+
 type TrLongTask = [
   type: 59,
   timestamp: number,
@@ -398,7 +403,7 @@ type TrJSException = [
 ]
 
 
-export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSExceptionDeprecated | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrJSException
+export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSExceptionDeprecated | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrJSException
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -659,6 +664,13 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       return {
         tp: "set_page_visibility",
         hidden: tMsg[1],
+      }
+    }
+    
+    case 58: {
+      return {
+        tp: "set_node_focus",
+        id: tMsg[1],
       }
     }
     

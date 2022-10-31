@@ -359,7 +359,13 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
+
 ## 57 58
+# Since 4.1.17 / 1.9.0
+message 58, 'SetNodeFocus' do
+  int 'ID'
+end
+
 #Depricated (since 3.0.?)
 message 59, 'LongTask' do
   uint 'Timestamp'
