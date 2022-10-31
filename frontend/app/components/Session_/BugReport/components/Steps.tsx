@@ -5,8 +5,9 @@ import { RADIUS } from '../utils';
 import SectionTitle from './SectionTitle';
 import XRay from './StepsComponents/XRay';
 import StepRenderer from './StepsComponents/StepRenderer';
-import StepRadius from './StepsComponents/StepRadius'
-import SubModal from './StepsComponents/SubModal'
+import StepRadius from './StepsComponents/StepRadius';
+import SubModal from './StepsComponents/SubModal';
+import { Note } from 'App/services/NotesService';
 
 interface Props {
   xrayProps: {
@@ -16,9 +17,11 @@ interface Props {
     eventsList: Record<string, any>[];
     endTime: number;
   };
+  notes: Note[];
+  members: Record<string, any>[];
 }
 
-function Steps({ xrayProps }: Props) {
+function Steps({ xrayProps, notes, members }: Props) {
   const { bugReportStore } = useStore();
   const [stepPickRadius, setRadius] = React.useState(RADIUS);
   const [timePointer, setPointer] = React.useState(0);
@@ -57,8 +60,11 @@ function Steps({ xrayProps }: Props) {
       <div className="flex items-center justify-between">
         <div className="mt-4 mb-2 text-gray-dark flex items-center gap-4">
           STEPS
-
-          <div id="pdf-ignore">{timePointer > 0 ? <StepRadius pickRadius={stepPickRadius} setRadius={setRadius} /> : null}</div>
+          <div id="pdf-ignore">
+            {timePointer > 0 ? (
+              <StepRadius pickRadius={stepPickRadius} setRadius={setRadius} />
+            ) : null}
+          </div>
         </div>
         <div className="text-blue cursor-pointer" id="pdf-ignore" onClick={handleStepsSelection}>
           {!shouldShowEventReset ? (
@@ -77,7 +83,12 @@ function Steps({ xrayProps }: Props) {
         }
       />
       {bugReportStore.isSubStepModalOpen ? (
-        <SubModal type={bugReportStore.subModalType} toggleModal={bugReportStore.toggleSubStepModal} xrayProps={xrayProps}/>
+        <SubModal
+          members={members}
+          type={bugReportStore.subModalType}
+          notes={notes}
+          xrayProps={xrayProps}
+        />
       ) : null}
     </div>
   );

@@ -1,4 +1,5 @@
 import { SeverityLevels } from 'App/mstore/bugReportStore';
+import { SubItem, INoteItem, IError, INetworkReq } from './components/StepsComponents/SubModalItems';
 
 export interface BugReportPdf extends ReportDefaults {
   title: string;
@@ -6,9 +7,8 @@ export interface BugReportPdf extends ReportDefaults {
   severity: SeverityLevels;
   steps: Step[];
   activity: {
-    network: NetworkError[];
-    console: ConsoleError[];
-    clickRage: ClickRage[];
+    network: INetworkReq[];
+    console: IError[];
   };
 }
 
@@ -33,19 +33,6 @@ export interface EnvData {
   Resolution: string;
 }
 
-export interface NetworkError {
-  time: number;
-}
-
-export interface ConsoleError {
-  time: number;
-}
-
-export interface ClickRage {
-  time: number;
-}
-
-export type SubStep = Note | Error | Request;
 
 export interface Step {
   key: string;
@@ -53,7 +40,7 @@ export interface Step {
   time: number;
   details: string;
   icon: string;
-  substeps?: SubStep[]
+  substeps?: SubItem[]
 }
 
 export interface Note {

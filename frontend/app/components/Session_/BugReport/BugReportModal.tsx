@@ -11,6 +11,7 @@ import Title from './components/Title';
 import Comments from './components/Comments';
 import Steps from './components/Steps';
 import { mapEvents } from './utils';
+import { fetchList as fetchMembers } from 'Duck/member';
 
 interface Props {
   hideModal: () => void;
@@ -25,9 +26,11 @@ interface Props {
     eventsList: Record<string, any>[];
     endTime: number;
   };
+  fetchMembers: () => void
+  members: any;
 }
 
-function BugReportModal({ hideModal, session, width, height, account, xrayProps }: Props) {
+function BugReportModal({ hideModal, session, width, height, account, xrayProps, fetchMembers, members }: Props) {
   const reportRef = React.createRef<HTMLDivElement>();
   const [isRendering, setRendering] = React.useState(false);
 
@@ -45,9 +48,8 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
     metadata,
     sessionId,
     events,
+    notes,
   } = session;
-
-  console.log(session.toJS());
 
   const envObject: EnvData = {
     Device: `${userDevice}${userDeviceType !== userDevice ? ` ${userDeviceType}` : ''}`,
@@ -76,9 +78,8 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
     },
   };
 
-  console.log(bugReportStore)
-
   React.useEffect(() => {
+    fetchMembers()
     bugReportStore.updateReportDefaults(defaults);
     bugReportStore.setDefaultSteps(mapEvents(events));
     return () => bugReportStore.clearStore();
@@ -168,10 +169,10 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps 
       className="bg-white overflow-y-scroll"
       style={{ maxWidth: '70vw', width: 620, height: '100vh' }}
     >
-      <div className="flex flex-col p-4 gap-4 bg-white h-auto relative" ref={reportRef}>
+      <div className="flex flex-col p-4 gap-4 bg-white relative" ref={reportRef}>
         <Title userName={account.name} />
         <MetaInfo envObject={envObject} metadata={metadata} />
-        <Steps xrayProps={xrayProps} />
+        <Steps xrayProps={xrayProps} notes={notes} members={members} />
         <Comments />
         <Session user={userDisplayName} sessionId={sessionId} sessionUrl={sessionUrl} />
         <div id="pdf-ignore" className="flex items-center gap-2 mt-4">
@@ -201,6 +202,8 @@ const WithUIState = connect((state) => ({
   session: state.getIn(['sessions', 'current']),
   // @ts-ignore
   account: state.getIn(['user', 'account']),
-}))(BugReportModal);
+  // @ts-ignore
+  members: state.getIn(['members', 'list']),
+}), { fetchMembers })(BugReportModal);
 
 export default WithUIState;
