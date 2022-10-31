@@ -38,7 +38,7 @@ export default function (app: App): void {
     while (elem && hasTag(elem, 'IFRAME') && elem.contentDocument) {
       elem = elem.contentDocument.activeElement
     }
-    if (elem && elem !== document.body) {
+    if (elem && elem !== elem.ownerDocument.body) {
       sendSetNodeFocus(elem)
     }
   }, true)
