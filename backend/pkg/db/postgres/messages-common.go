@@ -102,14 +102,14 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 	return conn.c.Exec(sqlRequest, sessionID)
 }
 
-func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {
+func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool) error {
 	if err := conn.requests.Append(sessionID, timestamp, index, url, duration, success); err != nil {
 		return fmt.Errorf("insert request in bulk err: %s", err)
 	}
 	return nil
 }
 
-func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint64, name string, payload string) error {
+func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint32, name string, payload string) error {
 	if err := conn.customEvents.Append(sessionID, timestamp, index, name, payload); err != nil {
 		return fmt.Errorf("insert custom event in bulk err: %s", err)
 	}
@@ -184,7 +184,7 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			$1, $2, $3, $4, CAST($5 AS jsonb)
 		)`,
 		sessionID, issueID, e.Timestamp,
-		e.MessageID,
+		truncSqIdx(e.MessageID),
 		payload,
 	); err != nil {
 		return err
@@ -204,7 +204,7 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			VALUES
 				($1, $2, $3, left($4, 2700), $5, 'error')
 			`,
-			sessionID, e.MessageID, e.Timestamp, e.ContextString, e.Payload,
+			sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload,
 		); err != nil {
 			return err
 		}

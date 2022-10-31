@@ -60,7 +60,7 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 	urlQuery := url.DiscardURLQuery(e.URL)
 	urlMethod := url.EnsureMethod(e.Method)
 	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, e.MessageID,
+		sessionID, e.Timestamp, truncSqIdx(e.MessageID),
 		e.Type,
 		e.URL, host, urlQuery,
 		e.Success, e.Status,

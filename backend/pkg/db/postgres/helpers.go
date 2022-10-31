@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"math"
+
 	"openreplay/backend/pkg/messages"
 )
 
@@ -32,4 +34,9 @@ func calcResponseTime(pe *messages.PageEvent) uint64 {
 		return pe.ResponseEnd - pe.ResponseStart
 	}
 	return 0
+}
+
+// TODO: review message indexing (it is better to have lower values in db for faster search (int4/int2))
+func truncSqIdx(messageID uint64) uint32 {
+	return uint32(messageID % math.MaxInt32)
 }
