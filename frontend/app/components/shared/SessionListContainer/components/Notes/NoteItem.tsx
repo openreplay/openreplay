@@ -42,10 +42,7 @@ function NoteItem(props: Props) {
   const safeStrMessage =
     props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message;
   return (
-    <div
-      className="flex items-center p-2 border-b"
-      // style={{ background: '#FFFEF5' }}
-    >
+    <div className="flex items-center p-2 border-b">
       <Link
         style={{ width: '90%' }}
         to={

@@ -111,7 +111,7 @@ export function addActivity(sessionId, params) {
   const data = { ...params, assignee: params.assignee.value, issueType: params.issueType.value }
   return {
     types: ADD_ACTIVITY.toArray(),
-    call: client => client.post(`/sessions/${ sessionId }/assign/projects/${params.projectId.value}`, data),
+    call: client => client.post(`/sessions/${ sessionId }/assign/projects/${params.projectId}`, data),
   }
 }
 

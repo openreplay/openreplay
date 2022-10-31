@@ -7,10 +7,25 @@ interface Props {
   diff: Record<string, any>;
 }
 
+const getCircularReplacer = () => {
+  const seen = new WeakSet();
+  // @ts-ignore
+  return (key, value) => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
+
 function DiffRow({ diff, path }: Props) {
   const [shorten, setShorten] = React.useState(true);
-  const oldValue = diff.item ? JSON.stringify(diff.item.lhs) : JSON.stringify(diff.lhs);
-  const newValue = diff.item ? JSON.stringify(diff.item.rhs) : JSON.stringify(diff.rhs);
+
+  const oldValue = diff.item ? JSON.stringify(diff.item.lhs, getCircularReplacer()) : JSON.stringify(diff.lhs, getCircularReplacer());
+  const newValue = diff.item ? JSON.stringify(diff.item.rhs, getCircularReplacer()) : JSON.stringify(diff.rhs, getCircularReplacer());
 
   const pathStr = path.length > 15 && shorten ? path.slice(0, 5) + '...' + path.slice(10) : path;
   return (

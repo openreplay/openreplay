@@ -9,7 +9,8 @@ const store = createStore(reducer);
 export const getState = store.getState.bind(store);
 
 export function update(...args) {
-	return store.dispatch(updateAction(...args));
+	const action = updateAction(...args)
+	return store.dispatch(action);
 }
 
 export function clean() {

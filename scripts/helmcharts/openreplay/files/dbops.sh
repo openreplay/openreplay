@@ -32,7 +32,7 @@ function migration() {
     fi
 
     # Checking migration versions
-    cd /opt/openreplay/openreplay/scripts/helm
+    cd /opt/openreplay/openreplay/scripts/schema
     migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${PREVIOUS_APP_VERSION} '$NF > number {print $NF}' | grep -v create`)
     echo "Migration version: ${migration_versions[*]}"
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
