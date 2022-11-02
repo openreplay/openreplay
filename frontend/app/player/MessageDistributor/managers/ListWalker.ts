@@ -104,7 +104,7 @@ export default class ListWalker<T extends Timed> {
 		return changed ? this._list[ this.p - 1 ] : null;
 	}
 
-	moveApply(t: number, fn: (T) => void, fnBack?: (T) => void): void {
+	moveApply(t: number, fn: (msg: T) => void, fnBack?: (msg: T) => void): void {
 		// Applying only in increment order for now
 		if (t < this.timeNow) {
 			this.reset();
@@ -112,6 +112,21 @@ export default class ListWalker<T extends Timed> {
 
 		while (!!this._list[this.p] && this._list[this.p].time <= t) {
 			fn(this._list[ this.p++ ]);
+		}
+		while (fnBack && this.p > 0 && this._list[ this.p - 1 ].time > t) {
+			fnBack(this._list[ --this.p ]);
+		}
+	}
+
+	async moveWait(t: number, fn: (msg: T) => Promise<any> | undefined, fnBack?: (msg: T) => void): Promise<void> {
+		// Applying only in increment order for now
+		if (t < this.timeNow) {
+			this.reset();
+		}
+
+		while (!!this._list[this.p] && this._list[this.p].time <= t) {
+			const ret = fn(this._list[ this.p++ ]);
+			if (ret) { await ret }
 		}
 		while (fnBack && this.p > 0 && this._list[ this.p - 1 ].time > t) {
 			fnBack(this._list[ --this.p ]);

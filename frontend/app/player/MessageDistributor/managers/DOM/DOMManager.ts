@@ -133,7 +133,7 @@ export default class DOMManager extends ListWalker<Message> {
     parent.insertChildAt(child, index)
   }
 
-  private applyMessage = (msg: Message): void => {
+  private applyMessage = (msg: Message): Promise<any> | undefined => {
     let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
@@ -381,15 +381,28 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
+      case "load_font_face":
+        vn = this.vRoots.get(msg.parentID)
+        if (!vn) { logger.error("Node not found", msg); return }
+        if (vn instanceof VShadowRoot) { logger.error(`Node ${vn} expected to be a Document`, msg); return }
+        let descr: Object
+        try {
+          descr = JSON.parse(msg.descriptors)
+          descr = typeof descr === 'object' ? descr : undefined
+        } catch {}
+        const ff = new FontFace(msg.family, msg.source, descr)
+        vn.node.fonts.add(ff)
+        return ff.load()
     }
   }
 
-  moveReady(t: number): Promise<void> {
+  async moveReady(t: number): Promise<void> {
     // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
-    this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)
-
+    // This function autoresets pointer if necessary (better name?)
+   
+    await this.moveThen(t, this.applyMessage)
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
     // Thinkabout (read): css preload
