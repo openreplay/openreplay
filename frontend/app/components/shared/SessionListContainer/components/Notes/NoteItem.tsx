@@ -35,7 +35,7 @@ function NoteItem(props: Props) {
     });
   };
   const menuItems = [
-    { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
+    { icon: 'link-45deg', text: 'Copy Note URL', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
 
@@ -53,7 +53,7 @@ function NoteItem(props: Props) {
         }
       >
         <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
-          <div className="py-1 capitalize-first">{safeStrMessage}</div>
+          <div className="py-1 capitalize-first text-lg">{safeStrMessage}</div>
           <div className="flex items-center gap-2">
             {props.note.tag ? (
               <div
