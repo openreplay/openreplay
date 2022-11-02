@@ -402,7 +402,7 @@ export default class DOMManager extends ListWalker<Message> {
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     // This function autoresets pointer if necessary (better name?)
    
-    await this.moveThen(t, this.applyMessage)
+    await this.moveWait(t, this.applyMessage)
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
     // Thinkabout (read): css preload
