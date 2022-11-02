@@ -61,14 +61,18 @@ function ModalContent(props: Props) {
       </div>
       <div
         className="flex flex-col rounded -mx-4 px-4 py-2 bg-white"
-        style={{ height: '90vh', overflowY: 'scroll', maxWidth: '70vw', width: 620 }}
+        style={{ height: 'calc(100vh - 130px)', overflowY: 'scroll', maxWidth: '70vw', width: 620 }}
       >
-        {list.map((item) => (
-          <React.Fragment key={item.key}>
-            {/* @ts-ignore */}
-            <SubItem item={item} />
-          </React.Fragment>
-        ))}
+        {list.length > 0 ? (
+          list.map((item) => (
+            <React.Fragment key={item.key}>
+              {/* @ts-ignore */}
+              <SubItem item={item} />
+            </React.Fragment>
+          ))
+        ) : (
+          <div className="text-2xl font-semibold text-center">No items to show.</div>
+        )}
       </div>
 
       <ModalActionsObs />
@@ -80,12 +84,12 @@ function ModalActions() {
   const { bugReportStore } = useStore();
 
   const removeModal = () => {
-    bugReportStore.toggleSubStepModal(false, bugReportStore.subModalType, undefined)
-  }
+    bugReportStore.toggleSubStepModal(false, bugReportStore.subModalType, undefined);
+  };
   const saveChoice = () => {
-    bugReportStore.saveSubItems()
-    removeModal()
-  }
+    bugReportStore.saveSubItems();
+    removeModal();
+  };
   return (
     <div className="flex items-center gap-2">
       <Button
@@ -95,10 +99,7 @@ function ModalActions() {
       >
         Add Selected
       </Button>
-      <Button
-        variant="text-primary"
-        onClick={removeModal}
-      >
+      <Button variant="text-primary" onClick={removeModal}>
         Cancel
       </Button>
     </div>
@@ -154,7 +155,7 @@ function SubModal(props: ModalProps) {
 
   return (
     <div
-      className="bg-white absolute"
+      className="bg-white fixed"
       style={{
         maxWidth: '70vw',
         overflow: 'hidden',

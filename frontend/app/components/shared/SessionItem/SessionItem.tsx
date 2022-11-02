@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import cn from 'classnames';
 import { CountryFlag, Avatar, TextEllipsis, Label, Icon } from 'UI';
 import { useStore } from 'App/mstore';

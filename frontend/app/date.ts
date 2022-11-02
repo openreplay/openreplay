@@ -24,6 +24,12 @@ export function durationFromMsFormatted(ms: number): string {
   return durationFormatted(Duration.fromMillis(ms || 0));
 }
 
+export function durationFromMs(ms: number): string {
+  const dur = Duration.fromMillis(ms)
+
+  return dur.toFormat('hh:mm:ss')
+}
+
 export const durationFormattedFull = (duration: Duration): string => {
   if (duration.as('minutes') < 1) { // show in seconds
     let d = duration.toFormat('s');
