@@ -178,6 +178,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.boolean(msg[1]) 
     break
     
+    case Messages.Type.LoadFontFace:
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) 
+    break
+    
     case Messages.Type.SetNodeFocus:
       return  this.int(msg[1]) 
     break

@@ -480,7 +480,8 @@ export default class App {
 
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
-        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // TODO: start as early as possible (before receiving the token)
+        // TODO: start as early as possible (before receiving the token)
+        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         this.observer.observe()
         this.ticker.start()
         this.activityState = ActivityState.Active
