@@ -26,7 +26,7 @@ function UserMenu(props: RouteComponentProps<Props>) {
       style={{ width: '250px' }}
       className={cn(className, 'absolute right-0 top-0 bg-white border mt-14')}
     >
-      <div className="flex items-start p-3 border-b border-dashed">
+      <div className="flex items-start p-3 border-b border-dashed hover:bg-active-blue">
         <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white shrink-0 uppercase">
           {getInitials(account.name)}
         </div>

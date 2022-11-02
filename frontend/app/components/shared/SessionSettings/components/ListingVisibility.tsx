@@ -38,7 +38,7 @@ function ListingVisibility() {
                 <div className="col-span-4">
                     <Select
                         options={numberOptions}
-                        defaultValue={numberOptions[0].value}
+                        defaultValue={durationSettings.operator || numberOptions[0].value}
                         onChange={({ value }) => {
                             changeSettings({ operator: value.value })
                         }}
