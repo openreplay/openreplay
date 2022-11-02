@@ -47,7 +47,7 @@ func NewCache(conn *postgres.Conn, projectExpirationTimeoutMs int64) Cache {
 }
 
 func (c *cacheImpl) cleaner() {
-	cleanTick := time.Tick(time.Second * 30)
+	cleanTick := time.Tick(time.Minute * 5)
 	for {
 		select {
 		case <-cleanTick:
@@ -64,7 +64,7 @@ func (c *cacheImpl) clearCache() {
 	cacheSize := len(c.sessions)
 	deleted := 0
 	for id, sess := range c.sessions {
-		if now.Sub(sess.lastUse).Minutes() > 2 {
+		if now.Sub(sess.lastUse).Minutes() > 3 {
 			deleted++
 			delete(c.sessions, id)
 		}
