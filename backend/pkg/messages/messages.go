@@ -118,6 +118,8 @@ const (
 
 	MsgPerformanceTrackAggr = 56
 
+	MsgLoadFontFace = 57
+
 	MsgSetNodeFocus = 58
 
 	MsgLongTask = 59
@@ -2348,6 +2350,44 @@ func (msg *PerformanceTrackAggr) Decode() Message {
 
 func (msg *PerformanceTrackAggr) TypeID() int {
 	return 56
+}
+
+type LoadFontFace struct {
+	message
+	ParentID    uint64
+	Family      string
+	Source      string
+	Descriptors string
+}
+
+func (msg *LoadFontFace) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Family)+len(msg.Source)+len(msg.Descriptors))
+	buf[0] = 57
+	p := 1
+	p = WriteUint(msg.ParentID, buf, p)
+	p = WriteString(msg.Family, buf, p)
+	p = WriteString(msg.Source, buf, p)
+	p = WriteString(msg.Descriptors, buf, p)
+	return buf[:p]
+}
+
+func (msg *LoadFontFace) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *LoadFontFace) Decode() Message {
+	return msg
+}
+
+func (msg *LoadFontFace) TypeID() int {
+	return 57
 }
 
 type SetNodeFocus struct {

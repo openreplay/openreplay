@@ -1006,6 +1006,24 @@ func DecodePerformanceTrackAggr(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
+func DecodeLoadFontFace(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &LoadFontFace{}
+	if msg.ParentID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Family, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Source, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Descriptors, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeSetNodeFocus(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &SetNodeFocus{}
@@ -1905,6 +1923,9 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 56:
 		return DecodePerformanceTrackAggr(reader)
+
+	case 57:
+		return DecodeLoadFontFace(reader)
 
 	case 58:
 		return DecodeSetNodeFocus(reader)

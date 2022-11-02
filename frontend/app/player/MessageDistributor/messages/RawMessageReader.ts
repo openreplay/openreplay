@@ -366,6 +366,20 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 57: {
+      const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
+      const family = this.readString(); if (family === null) { return resetPointer() }
+      const source = this.readString(); if (source === null) { return resetPointer() }
+      const descriptors = this.readString(); if (descriptors === null) { return resetPointer() }
+      return {
+        tp: "load_font_face",
+        parentID,
+        family,
+        source,
+        descriptors,
+      };
+    }
+
     case 58: {
       const id = this.readInt(); if (id === null) { return resetPointer() }
       return {
