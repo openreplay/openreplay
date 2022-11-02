@@ -60,7 +60,6 @@ export default function (app: App) {
     }
 
     ffDataArr.forEach((ffData) => {
-      console.log('on node send', ffData)
       app.send(LoadFontFace(parentID, ...ffData))
     })
   })
