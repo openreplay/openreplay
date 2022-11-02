@@ -14,16 +14,7 @@ function AddUserButton({ isAdmin = false, onClick }: any ) {
         <Popup
             content={ `${ !isAdmin ? PERMISSION_WARNING : (!cannAddUser ? LIMIT_WARNING : 'Add team member') }` }
         >
-            <Button disabled={ !cannAddUser || !isAdmin } variant="primary" onClick={ onClick }>Add</Button>
-            {/* <IconButton
-                id="add-button"
-                disabled={ !cannAddUser || !isAdmin }
-                circle
-                icon="plus"
-                outline
-                onClick={ onClick }
-                className="ml-4"
-            /> */}
+            <Button disabled={ !cannAddUser || !isAdmin } variant="primary" onClick={ onClick }>Add Team Member</Button>
         </Popup>
     );
 }
