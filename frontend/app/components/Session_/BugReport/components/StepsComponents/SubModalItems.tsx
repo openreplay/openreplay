@@ -2,6 +2,7 @@ import React from 'react';
 import { Checkbox } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import { durationFromMs } from 'App/date'
 
 interface Item {
   time: number;
@@ -31,7 +32,7 @@ const safeStr = (ogStr: string) => (ogStr.length > 60 ? ogStr.slice(0, 60) + '..
 export const NetworkComp = ({ item }: { item: INetworkReq }) => (
   <div className="flex items-start flex-col z-10">
     <div className="flex items-center gap-2 text-disabled-text">
-      <div>{item.time}</div>
+      <div>{durationFromMs(item.time)}</div>
       <div>{safeStr(item.url)}</div>
     </div>
     <div className="flex items-center gap-2">
@@ -75,7 +76,7 @@ export const NoteItem = observer(({ item }: { item: INoteItem }) => {
 
 export const ErrorComp = ({ item }: { item: IError }) => (
   <div className="flex items-start flex-col z-10">
-    <div className="text-disabled-text">{item.time}</div>
+    <div className="text-disabled-text">{durationFromMs(item.time)}</div>
     {item.name ? <div className="text-red">{item.name}</div> : null}
     <div className="text-secondary">{safeStr(item.message)}</div>
   </div>

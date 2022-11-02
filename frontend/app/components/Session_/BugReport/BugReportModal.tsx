@@ -4,7 +4,7 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { Button } from 'UI';
 import { session as sessionRoute } from 'App/routes';
-import { ReportDefaults, EnvData } from './types';
+import { ReportDefaults, EnvData, Activity } from './types';
 import Session from './components/Session';
 import MetaInfo from './components/MetaInfo';
 import Title from './components/Title';
@@ -160,6 +160,13 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
         }
         // buildText();
         buildPng();
+
+        const activity = {
+          network: xrayProps.resourceList,
+          console: xrayProps.exceptionsList,
+          clickRage: xrayProps.eventsList.filter((item: any) => item.type === 'CLICKRAGE'),
+        }
+        bugReportStore.composeReport(activity as unknown as Activity)
       });
     });
   };

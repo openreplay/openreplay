@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx';
-import { BugReportPdf, ReportDefaults, Step } from 'Components/Session_/BugReport/types';
+import { BugReportPdf, ReportDefaults, Step, Activity } from 'Components/Session_/BugReport/types';
 import { SubItem } from 'App/components/Session_/BugReport/components/StepsComponents/SubModalItems';
 
 export enum SeverityLevels {
@@ -77,13 +77,27 @@ export default class BugReportStore {
     this.bugReport = Object.assign(this.bugReport || {}, defaults);
   }
 
+  composeReport(activity: Activity) {
+    const reportObj = {
+      title: this.reportTitle,
+      comment: this.comment,
+      severity: this.severity,
+      steps: this.chosenEventSteps,
+      activity
+    }
+    this.bugReport = Object.assign(this.bugReport, reportObj)
+
+    console.log(JSON.stringify(this.bugReport, undefined, 2))
+    return this.bugReport
+  }
+
   setDefaultSteps(steps: Step[]) {
     this.sessionEventSteps = steps;
   }
 
   setSteps(steps: Step[]) {
     this.chosenEventSteps = steps.map(step => ({ ...step, substeps: undefined }));
-    this.pickedSubItems = undefined;
+    this.pickedSubItems = new Map();
   }
 
   removeStep(step: Step) {
@@ -107,7 +121,7 @@ export default class BugReportStore {
   }
 
   isSubItemChecked(item: SubItem) {
-    return this.pickedSubItems.has(item.key)
+    return this.pickedSubItems?.get(item.key) !== undefined
   }
 
   saveSubItems() {

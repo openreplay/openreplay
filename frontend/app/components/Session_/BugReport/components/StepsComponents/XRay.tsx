@@ -1,6 +1,7 @@
 import React from 'react';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
+import { toJS } from 'mobx'
 import { Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { INDEXES } from 'App/constants/zindex';
@@ -34,6 +35,8 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
     ERRORS: exceptionsList,
     CLICKRAGE: eventsList.filter((item: any) => item.type === 'CLICKRAGE'),
   };
+
+  console.log(JSON.stringify(resources.CLICKRAGE, undefined, 2))
 
   const pickEventRadius = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();

@@ -5,8 +5,8 @@ import { Step as IStep } from '../../types';
 const STEP_NAMES = { CLICKRAGE: 'Multiple click', CLICK: 'Clicked', LOCATION: 'Visited' };
 import { useStore } from 'App/mstore';
 import cn from 'classnames';
-import { Duration } from 'luxon';
 import { ErrorComp, NetworkComp, NoteComp } from './SubModalItems';
+import { durationFromMs } from 'App/date'
 
 const SUBSTEP = {
   network: NetworkComp,
@@ -54,7 +54,7 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
             {/* @ts-ignore */}
             <Icon name={step.icon} size={16} color="gray-darkest" className="relative z-10"/>
             <div className="px-2 text-disabled-text rounded bg-light-blue-bg">
-              {Duration.fromMillis(step.time).toFormat('hh:mm:ss')}
+              {durationFromMs(step.time)}
             </div>
             {/* @ts-ignore */}
             <div className="font-semibold">{STEP_NAMES[step.type]}</div>
