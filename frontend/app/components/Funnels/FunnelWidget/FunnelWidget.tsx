@@ -98,7 +98,7 @@ function Stage({ stage, index, isWidget }: any) {
     return useObserver(() => stage ? (
         <div className={cn("flex items-start", stl.step, { [stl['step-disabled']] : !stage.isActive })}>
             <IndexNumber index={index } />
-            <Funnelbar filter={stage} />
+            <Funnelbar filter={stage} isFirst={index === 1}/>
             {!isWidget && (
                 <BarActions bar={stage} />
             )}
