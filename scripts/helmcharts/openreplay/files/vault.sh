@@ -14,12 +14,11 @@ vault_output=$(vault operator init) 2> /tmp/err.txt || {
     echo "Vault already initialized."
     err_code=0
   }
-  exit $err_code
+  echo exit $err_code
 }
 
 # Writting output to a file
 echo $vault_output > /tmp/vault_creds.txt
-echo $vault_output
 
 # Unsealing vault
 for i in 1 2 3; do
@@ -33,13 +32,6 @@ vault login  `echo $vault_output | grep -Eio "initial root token: \S+" | awk '{p
 
 vault secrets enable database
 
-vault write database/config/postgres \
-    plugin_name=postgresql-database-plugin \
-    allowed_roles="*" \
-    connection_url="postgresql://{{username}}:{{password}}@$PGHOST:$PGPORT/$PGDATABASE" \
-    username="${PGUSER}" \
-    password="${PGPASSWD}"
-
 vault write database/roles/db-app \
   db_name=postgres \
   creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; \
@@ -47,6 +39,13 @@ vault write database/roles/db-app \
   revocation_statements="ALTER ROLE \"{{name}}\" NOLOGIN;"\
   default_ttl="1m" \
   max_ttl="5m"
+
+vault write database/config/postgres \
+    plugin_name=postgresql-database-plugin \
+    allowed_roles="*" \
+    connection_url="postgresql://{{username}}:{{password}}@$PGHOST:$PGPORT/$PGDATABASE" \
+    username="${PGUSER}" \
+    password="${PGPASSWD}"
 
 vault auth enable kubernetes
 
