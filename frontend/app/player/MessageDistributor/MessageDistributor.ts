@@ -246,14 +246,16 @@ export default class MessageDistributor extends StatedScreen {
     .finally(this.onFileReadFinally)
 
     // load devtools
-    update({ devtoolsLoading: true })
-    loadFiles(this.session.devtoolsURL, createNewParser())
-    .catch(() =>
-      requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser(false))
-    )
-    //.catch() // not able to download the devtools file
-    .finally(() => update({ devtoolsLoading: false }))
+    if (this.session.devtoolsURL.length) {
+      update({ devtoolsLoading: true })
+      loadFiles(this.session.devtoolsURL, createNewParser())
+      .catch(() =>
+        requestEFSDevtools(this.session.sessionId)
+          .then(createNewParser(false))
+      )
+      //.catch() // not able to download the devtools file
+      .finally(() => update({ devtoolsLoading: false }))
+    }
   }
 
   reloadWithUnprocessedFile() {
