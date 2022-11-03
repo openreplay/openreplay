@@ -15,7 +15,7 @@ import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 
 // TODO: fully specified strict check with no-any (everywhere)
 
-type StartEndCallback = (agentInfo?: Record<string, any>) => (((agentInfo?: Record<string, any>)=>Record<string, unknown>) | void)
+type StartEndCallback = (agentInfo?: Record<string, any>) => ((() => any) | void)
 
 export interface Options {
   onAgentConnect: StartEndCallback;
