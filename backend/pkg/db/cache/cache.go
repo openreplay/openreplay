@@ -21,7 +21,8 @@ type ProjectMeta struct {
 type Cache interface {
 	SetSession(sess *types.Session)
 	HasSession(sessID uint64) bool
-	GetSession(sessionID uint64) (*types.Session, error)
+	GetSession(sessID uint64) (*types.Session, error)
+	SetSessionDuration(sessID, duration uint64) error
 	GetProject(projectID uint32) (*types.Project, error)
 	GetProjectByKey(projectKey string) (*types.Project, error)
 }

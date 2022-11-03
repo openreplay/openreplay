@@ -4,7 +4,6 @@ import (
 	"log"
 	. "openreplay/backend/pkg/messages"
 	"time"
-	//	. "openreplay/backend/pkg/db/types"
 )
 
 func (c *PGCache) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
@@ -16,14 +15,19 @@ func (c *PGCache) InsertSessionEncryptionKey(sessionID uint64, key []byte) error
 }
 
 func (c *PGCache) HandleSessionEnd(sessionID uint64) error {
-	if err := c.Conn.HandleSessionEnd(sessionID); err != nil {
+	dur, err := c.Conn.HandleSessionEnd(sessionID)
+	if err != nil {
 		log.Printf("can't handle session end: %s", err)
+		return nil
+	}
+	if err := c.Cache.SetSessionDuration(sessionID, dur); err != nil {
+		log.Printf("can't update session duration: %s", err)
 	}
 	return nil
 }
 
 func (c *PGCache) InsertIssueEvent(sessionID uint64, crash *IssueEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -31,11 +35,11 @@ func (c *PGCache) InsertIssueEvent(sessionID uint64, crash *IssueEvent) error {
 }
 
 func (c *PGCache) InsertMetadata(sessionID uint64, metadata *Metadata) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
-	project, err := c.GetProject(session.ProjectID)
+	project, err := c.Cache.GetProject(session.ProjectID)
 	if err != nil {
 		return err
 	}

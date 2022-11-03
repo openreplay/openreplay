@@ -6,7 +6,7 @@ import (
 
 type PGCache struct {
 	*postgres.Conn
-	cache Cache
+	Cache Cache
 }
 
 func NewPGCache(conn *postgres.Conn, projectExpirationTimeoutMs int64) *PGCache {
@@ -15,6 +15,6 @@ func NewPGCache(conn *postgres.Conn, projectExpirationTimeoutMs int64) *PGCache 
 	// Return PG wrapper with integrated cache layer
 	return &PGCache{
 		Conn:  conn,
-		cache: c,
+		Cache: c,
 	}
 }

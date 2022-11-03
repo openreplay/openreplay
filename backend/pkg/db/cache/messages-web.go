@@ -31,7 +31,7 @@ func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error
 }
 
 func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error {
-	if c.cache.HasSession(sessionID) {
+	if c.Cache.HasSession(sessionID) {
 		return fmt.Errorf("session %d already in cache", sessionID)
 	}
 	newSess := &Session{
@@ -55,10 +55,10 @@ func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error
 		UserDeviceHeapSize:   s.UserDeviceHeapSize,
 		UserID:               &s.UserID,
 	}
-	c.cache.SetSession(newSess)
+	c.Cache.SetSession(newSess)
 	if err := c.Conn.HandleSessionStart(sessionID, newSess); err != nil {
 		// don't know why?
-		c.cache.SetSession(nil)
+		c.Cache.SetSession(nil)
 		return err
 	}
 	return nil
@@ -80,7 +80,7 @@ func (c *PGCache) InsertWebIntegrationEvent(e *IntegrationEvent) error {
 	return c.InsertWebErrorEvent(e.SessionID(), WrapIntegrationEvent(e))
 }
 func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
 }
 
 func (c *PGCache) InsertSessionReferrer(sessionID uint64, referrer string) error {
-	_, err := c.GetSession(sessionID)
+	_, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -100,11 +100,11 @@ func (c *PGCache) InsertSessionReferrer(sessionID uint64, referrer string) error
 }
 
 func (c *PGCache) InsertWebFetchEvent(sessionID uint64, e *FetchEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
-	project, err := c.GetProject(session.ProjectID)
+	project, err := c.Cache.GetProject(session.ProjectID)
 	if err != nil {
 		return err
 	}
@@ -112,11 +112,11 @@ func (c *PGCache) InsertWebFetchEvent(sessionID uint64, e *FetchEvent) error {
 }
 
 func (c *PGCache) InsertWebGraphQLEvent(sessionID uint64, e *GraphQLEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
-	project, err := c.GetProject(session.ProjectID)
+	project, err := c.Cache.GetProject(session.ProjectID)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (c *PGCache) InsertWebGraphQLEvent(sessionID uint64, e *GraphQLEvent) error
 }
 
 func (c *PGCache) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (c *PGCache) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
 }
 
 func (c *PGCache) InsertWebUserID(sessionID uint64, userID *UserID) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (c *PGCache) InsertWebUserID(sessionID uint64, userID *UserID) error {
 }
 
 func (c *PGCache) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *UserAnonymousID) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (c *PGCache) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *Us
 }
 
 func (c *PGCache) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (c *PGCache) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 }
 
 func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 }
 
 func (c *PGCache) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
-	session, err := c.GetSession(sessionID)
+	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}

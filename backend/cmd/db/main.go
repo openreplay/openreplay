@@ -77,7 +77,7 @@ func main() {
 			return
 		}
 
-		session, err := pg.GetSession(msg.SessionID())
+		session, err := pg.Cache.GetSession(msg.SessionID())
 		if session == nil {
 			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
 				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)

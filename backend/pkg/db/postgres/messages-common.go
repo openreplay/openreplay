@@ -86,7 +86,8 @@ func (conn *Conn) InsertSessionEncryptionKey(sessionID uint64, key []byte) error
 	return conn.c.Exec(`UPDATE sessions SET file_key = $2 WHERE session_id = $1`, sessionID, string(key))
 }
 
-func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
+func (conn *Conn) HandleSessionEnd(sessionID uint64) (uint64, error) {
+	var dur uint64
 	sqlRequest := `
 	UPDATE sessions
 		SET issue_types=(SELECT 
@@ -95,11 +96,16 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 			ELSE
 				(COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}'))::issue_type[]
 			END
-    FROM events_common.issues
-      INNER JOIN issues AS ps USING (issue_id)
-                WHERE session_id = $1)
-		WHERE session_id = $1`
-	return conn.c.Exec(sqlRequest, sessionID)
+    	FROM events_common.issues
+		INNER JOIN issues AS ps USING (issue_id)
+		WHERE session_id = $1)
+	WHERE session_id = $1
+	RETURNING duration
+	`
+	if err := conn.c.QueryRow(sqlRequest, sessionID).Scan(&dur); err != nil {
+		return 0, err
+	}
+	return dur, nil
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool) error {
