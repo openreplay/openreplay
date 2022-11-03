@@ -142,7 +142,6 @@ export default class AssistManager {
       // @ts-ignore
       const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
-      // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {
         path: '/ws-assist/socket',
         auth: {
@@ -151,7 +150,10 @@ export default class AssistManager {
         query: {
           peerId: this.peerID,
           identity: "agent",
-          //agentInfo: JSON.stringify({})
+          agentInfo: JSON.stringify({
+            ...this.session.agentInfo,
+            query: document.location.search
+          })
         }
       })
       socket.on("connect", () => {
@@ -314,7 +316,10 @@ export default class AssistManager {
     if (remoteControl === RemoteControlStatus.Requesting) { return }
     if (remoteControl === RemoteControlStatus.Disabled) {
       update({ remoteControl: RemoteControlStatus.Requesting })
-      this.socket.emit("request_control")
+      this.socket.emit("request_control", JSON.stringify({
+        ...this.session.agentInfo,
+        query: document.location.search
+      }))
       // setTimeout(() => {
       //   if (getState().remoteControl !== RemoteControlStatus.Requesting) { return }
       //   this.socket?.emit("release_control")
