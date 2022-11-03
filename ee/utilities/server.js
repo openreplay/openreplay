@@ -31,6 +31,14 @@ if (process.env.uws !== "true") {
     );
     heapdump && wsapp.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
     wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
+    wsapp.get('/private/shutdown', (req, res) => {
+            console.log("Requested shutdown");
+            res.statusCode = 200;
+            res.end("ok!");
+            process.kill(1, "SIGTERM");
+        }
+    );
+
     wsapp.enable('trust proxy');
     const wsserver = wsapp.listen(PORT, HOST, () => {
         console.log(`WS App listening on http://${HOST}:${PORT}`);
@@ -94,6 +102,12 @@ if (process.env.uws !== "true") {
     uapp.post(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
     uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveByProject));
 
+    uapp.get('/private/shutdown', (res, req) => {
+            console.log("Requested shutdown");
+            res.writeStatus('200 OK').end("ok!");
+            process.kill(1, "SIGTERM");
+        }
+    );
 
     socket.start(uapp);
 
@@ -112,21 +126,4 @@ if (process.env.uws !== "true") {
         // process.exit(1);
     });
     module.exports = {uapp};
-}
-
-if (process.env.uws !== "true") {
-    wsapp.get('/private/shutdown', (req, res) => {
-            console.log("Requested shutdown");
-            res.statusCode = 200;
-            res.end("ok!");
-            process.kill(1, "SIGTERM");
-        }
-    );
-} else {
-    uapp.get('/private/shutdown', (res, req) => {
-            console.log("Requested shutdown");
-            res.writeStatus('200 OK').end("ok!");
-            process.kill(1, "SIGTERM");
-        }
-    );
 }
