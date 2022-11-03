@@ -37,8 +37,8 @@ vault write database/roles/db-app \
   creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; \
       GRANT SELECT ON ALL TABLES IN SCHEMA public TO \"{{name}}\";" \
   revocation_statements="ALTER ROLE \"{{name}}\" NOLOGIN;"\
-  default_ttl="1m" \
-  max_ttl="5m"
+  default_ttl="1h" \
+  max_ttl="1d"
 
 vault write database/config/postgres \
     plugin_name=postgresql-database-plugin \
