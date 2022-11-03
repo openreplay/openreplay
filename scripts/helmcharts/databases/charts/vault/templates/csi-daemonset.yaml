@@ -1,0 +1,100 @@
+{{- template "vault.csiEnabled" . -}}
+{{- if .csiEnabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ template "vault.fullname" . }}-csi-provider
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}-csi-provider
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- if  .Values.csi.daemonSet.extraLabels -}}
+      {{- toYaml .Values.csi.daemonSet.extraLabels | nindent 4 -}}
+    {{- end -}}
+  {{ template "csi.daemonSet.annotations" . }}
+spec:
+  updateStrategy:
+    type: {{ .Values.csi.daemonSet.updateStrategy.type }}
+    {{- if .Values.csi.daemonSet.updateStrategy.maxUnavailable }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.csi.daemonSet.updateStrategy.maxUnavailable }}
+    {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "vault.name" . }}-csi-provider
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ template "vault.name" . }}-csi-provider
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- if  .Values.csi.pod.extraLabels -}}
+          {{- toYaml .Values.csi.pod.extraLabels | nindent 8 -}}
+        {{- end -}}
+      {{ template "csi.pod.annotations" . }}
+    spec:
+      {{ template "csi.daemonSet.securityContext.pod" . }}
+      {{- if .Values.csi.priorityClassName }}
+      priorityClassName: {{ .Values.csi.priorityClassName }}
+      {{- end }}
+      serviceAccountName: {{ template "vault.fullname" . }}-csi-provider
+      {{- template "csi.pod.tolerations" . }}
+      containers:
+        - name: {{ include "vault.name" . }}-csi-provider
+          {{ template "csi.resources" . }}
+          {{ template "csi.daemonSet.securityContext.container" . }}
+          image: "{{ .Values.csi.image.repository }}:{{ .Values.csi.image.tag }}"
+          imagePullPolicy: {{ .Values.csi.image.pullPolicy }}
+          args:
+            - --endpoint=/provider/vault.sock
+            - --debug={{ .Values.csi.debug }}
+            {{- if .Values.csi.extraArgs }}
+              {{- toYaml .Values.csi.extraArgs | nindent 12 }}
+            {{- end }}
+          env:
+            - name: VAULT_ADDR
+            {{- if .Values.global.externalVaultAddr }}
+              value: "{{ .Values.global.externalVaultAddr }}"
+            {{- else }}
+              value: {{ include "vault.scheme" . }}://{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.server.service.port }}
+            {{- end }}
+          volumeMounts:
+            - name: providervol
+              mountPath: "/provider"
+            - name: mountpoint-dir
+              mountPath: {{ .Values.csi.daemonSet.kubeletRootDir }}/pods
+              mountPropagation: HostToContainer
+            {{- if .Values.csi.volumeMounts }}
+              {{- toYaml .Values.csi.volumeMounts | nindent 12}}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            failureThreshold: {{ .Values.csi.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.csi.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.csi.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.csi.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.csi.livenessProbe.timeoutSeconds }}
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            failureThreshold: {{ .Values.csi.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.csi.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.csi.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.csi.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.csi.readinessProbe.timeoutSeconds }}
+      volumes:
+        - name: providervol
+          hostPath:
+            path: {{ .Values.csi.daemonSet.providersDir }}
+        - name: mountpoint-dir
+          hostPath:
+            path: {{ .Values.csi.daemonSet.kubeletRootDir }}/pods
+       {{- if .Values.csi.volumes }}
+         {{- toYaml .Values.csi.volumes | nindent 8}}
+       {{- end }}
+      {{- include "imagePullSecrets" . | nindent 6 }}
+{{- end }}

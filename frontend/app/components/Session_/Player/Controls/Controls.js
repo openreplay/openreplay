@@ -78,6 +78,7 @@ function getStorageName(type) {
   fullscreenDisabled: state.messagesLoading,
   // logCount: state.logList.length,
   logRedCount: state.logRedCount,
+  showExceptions: state.exceptionsList.length > 0,
   resourceRedCount: state.resourceRedCount,
   fetchRedCount: state.fetchRedCount,
   showStack: state.stackList.length > 0,
@@ -143,6 +144,7 @@ export default class Controls extends React.Component {
       // nextProps.inspectorMode !== this.props.inspectorMode ||
       // nextProps.logCount !== this.props.logCount ||
       nextProps.logRedCount !== this.props.logRedCount ||
+      nextProps.showExceptions !== this.props.showExceptions ||
       nextProps.resourceRedCount !== this.props.resourceRedCount ||
       nextProps.fetchRedCount !== this.props.fetchRedCount ||
       nextProps.showStack !== this.props.showStack ||
@@ -262,6 +264,7 @@ export default class Controls extends React.Component {
       speed,
       disabled,
       logRedCount,
+      showExceptions,
       resourceRedCount,
       showStack,
       stackRedCount,
@@ -345,7 +348,7 @@ export default class Controls extends React.Component {
                 label="CONSOLE"
                 noIcon
                 labelClassName="!text-base font-semibold"
-                hasErrors={logRedCount > 0}
+                hasErrors={logRedCount > 0 || showExceptions}
                 containerClassName="mx-2"
               />
               {!live && (

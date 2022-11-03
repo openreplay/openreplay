@@ -5,10 +5,10 @@ import { Tooltip } from 'react-tippy';
 
 interface Props {
   filter: any;
+  isFirst: boolean
 }
 function FunnelBar(props: Props) {
-  const { filter } = props;
-  // const completedPercentage = calculatePercentage(filter.sessionsCount, filter.dropDueToIssues);
+  const { filter, isFirst = false } = props;
 
   return (
     <div className="w-full mb-4">
@@ -16,7 +16,6 @@ function FunnelBar(props: Props) {
       <div
         style={{
           height: '25px',
-          // marginBottom: '10px',
           width: '100%',
           backgroundColor: '#f5f5f5',
           position: 'relative',
@@ -32,15 +31,12 @@ function FunnelBar(props: Props) {
             top: 0,
             left: 0,
             bottom: 0,
-            // height: '10px',
             backgroundColor: '#00b5ad',
           }}
         >
-          <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
-            {/* {filter.completedPercentage}% */}
-          </div>
+          <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3" />
         </div>
-        {filter.dropDueToIssues > 0 && (
+        {/* {filter.dropDueToIssues > 0 && (
           <div
             className="flex items-center"
             style={{
@@ -57,32 +53,35 @@ function FunnelBar(props: Props) {
               className="stripes relative"
               style={{
                 width: `${filter.dropDueToIssuesPercentage}%`,
-                // backgroundColor: 'red',
                 height: '16px',
               }}
             >
-              {/* @ts-ignore */}
               <Tooltip title={`${filter.dropDueToIssues} (${filter.dropDueToIssuesPercentage}%) Dropped due to issues`} position="top-start">
                 <div className="w-full h-8 absolute"/>
               </Tooltip>
             </div>
           </div>
-        )}
+        )} */}
       </div>
       <div className="flex justify-between py-2">
-        <div className="flex items-center">
-          <Icon name="arrow-right-short" size="20" color="green" />
-          <span className="mx-1 font-medium">{filter.sessionsCount}</span>
-          <span className="color-gray-medium text-sm">
-            ({filter.completedPercentage}%) Completed
-          </span>
-          {/* <span>Completed</span> */}
-        </div>
-        <div className="flex items-center">
-          <Icon name="caret-down-fill" color="red" size={16} />
-          <span className="font-medium mx-1 color-red">{filter.droppedCount}</span>
-          <span className="text-sm color-red">({filter.droppedPercentage}%) Dropped</span>
-        </div>
+        {/* @ts-ignore */}
+        <Tooltip title="With respect to the previous step." disabled={isFirst}>
+          <div className="flex items-center">
+            <Icon name="arrow-right-short" size="20" color="green" />
+            <span className="mx-1 font-medium">{filter.sessionsCount}</span>
+            <span className="color-gray-medium text-sm">
+              ({filter.completedPercentage}%) Completed
+            </span>
+          </div>
+        </Tooltip>
+        {/* @ts-ignore */}
+        <Tooltip title="Total drop till this step." disabled={isFirst}>
+          <div className="flex items-center">
+            <Icon name="caret-down-fill" color="red" size={16} />
+            <span className="font-medium mx-1 color-red">{filter.droppedCount}</span>
+            <span className="text-sm color-red">({filter.droppedPercentage}%) Dropped</span>
+          </div>
+        </Tooltip>
       </div>
     </div>
   );

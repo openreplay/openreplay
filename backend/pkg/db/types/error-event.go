@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"hash/fnv"
 	"log"
 	"strconv"
@@ -27,6 +28,9 @@ func unquote(s string) string {
 	return s
 }
 func parseTags(tagsJSON string) (tags map[string]*string, err error) {
+	if len(tagsJSON) == 0 {
+		return nil, fmt.Errorf("empty tags")
+	}
 	if tagsJSON[0] == '[' {
 		var tagsArr []json.RawMessage
 		if err = json.Unmarshal([]byte(tagsJSON), &tagsArr); err != nil {

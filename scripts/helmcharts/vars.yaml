@@ -19,7 +19,7 @@ postgresql: &postgres
 
 clickhouse:
   # For enterpriseEdition
-  enabled: true
+  enabled: false
 
 quickwit: &quickwit
   # For enterpriseEdition

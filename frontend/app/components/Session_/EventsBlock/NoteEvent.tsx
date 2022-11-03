@@ -45,7 +45,7 @@ function NoteEvent(props: Props) {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
         props.note.sessionId
-      )}${props.note.timestamp > 0 ? '?jumpto=' + props.note.timestamp : ''}`
+      )}${props.note.timestamp > 0 ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}` : `?note=${props.note.noteId}`}`
     );
     toast.success('Note URL copied to clipboard');
   };
@@ -114,11 +114,9 @@ function NoteEvent(props: Props) {
                 // @ts-ignore
                 background: tagProps[props.note.tag],
                 userSelect: 'none',
-                width: 50,
-                textAlign: 'center',
-                fontSize: 11,
+                padding: '1px 6px',
               }}
-              className="rounded-full px-2 py-1 text-white text-sm"
+              className="rounded-full text-white text-xs select-none w-fit"
             >
               {props.note.tag}
             </div>

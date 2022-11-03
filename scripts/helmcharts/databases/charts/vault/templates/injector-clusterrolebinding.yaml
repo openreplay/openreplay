@@ -1,0 +1,19 @@
+{{- template "vault.injectorEnabled" . -}}
+{{- if .injectorEnabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "vault.fullname" . }}-agent-injector-binding
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}-agent-injector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "vault.fullname" . }}-agent-injector-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: {{ template "vault.fullname" . }}-agent-injector
+  namespace: {{ .Release.Namespace }}
+{{ end }}

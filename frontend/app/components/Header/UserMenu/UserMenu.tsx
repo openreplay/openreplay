@@ -26,7 +26,7 @@ function UserMenu(props: RouteComponentProps<Props>) {
       style={{ width: '250px' }}
       className={cn(className, 'absolute right-0 top-0 bg-white border mt-14')}
     >
-      <div className="flex items-start p-3 border-b border-dashed">
+      <div className="flex items-start p-3 border-b border-dashed hover:bg-active-blue" onClick={onAccountClick}>
         <div className="w-10 h-10 bg-tealx rounded-full flex items-center justify-center mr-2 color-white shrink-0 uppercase">
           {getInitials(account.name)}
         </div>
@@ -41,13 +41,6 @@ function UserMenu(props: RouteComponentProps<Props>) {
         </div>
       </div>
       <div className="p-2">
-        <div
-          className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
-          onClick={onAccountClick}
-        >
-          <Icon name="user-circle" size="16" />
-          <button className="ml-2">{'Account'}</button>
-        </div>
         <div
           className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
           onClick={onLogoutClick}

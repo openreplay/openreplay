@@ -24,7 +24,7 @@ function NoteItem(props: Props) {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
         props.note.sessionId
-      )}${props.note.timestamp > 0 ? '?jumpto=' + props.note.timestamp : ''}`
+      )}${props.note.timestamp > 0 ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}` : `?note=${props.note.noteId}`}`
     );
     toast.success('Note URL copied to clipboard');
   };
@@ -35,7 +35,7 @@ function NoteItem(props: Props) {
     });
   };
   const menuItems = [
-    { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
+    { icon: 'link-45deg', text: 'Copy Note URL', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
 
@@ -49,20 +49,17 @@ function NoteItem(props: Props) {
           session(props.note.sessionId) +
           (props.note.timestamp > 0
             ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
-            : '')
+            : `?note=${props.note.noteId}`)
         }
       >
         <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
-          <div className="py-1 capitalize-first">{safeStrMessage}</div>
+          <div className="py-1 capitalize-first text-lg">{safeStrMessage}</div>
           <div className="flex items-center gap-2">
             {props.note.tag ? (
               <div
                 style={{
                   // @ts-ignore
                   background: tagProps[props.note.tag],
-                  // userSelect: 'none',
-                  // width: 'fit-content',
-                  // fontSize: 11,
                   padding: '1px 6px',
                 }}
                 className="rounded-full text-white text-xs select-none w-fit"
