@@ -25,14 +25,6 @@ serviceAccount:
 
 podAnnotations: {}
 
-securityContext:
-  runAsUser: 1001
-  runAsGroup: 1001
-podSecurityContext:
-  runAsUser: 1001
-  runAsGroup: 1001
-  fsGroup: 1001
-  fsGroupChangePolicy: "OnRootMismatch"
 # podSecurityContext: {}
   # fsGroup: 2000
 
