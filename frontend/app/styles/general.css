@@ -5,15 +5,24 @@
 
 
 .info.info.info.info.info { /* BAD HACK >:) */
-  background-color: #f2f8ff;
+  background-color: rgba(242, 248, 255, 0.6);
+  &:hover {
+    background-color: rgba(242, 248, 255, 1);
+  }
 }
 
 .warn.warn.warn.warn {
-  background-color: rgb(244 208 154 / 15%);
+  background-color: rgba(253, 248, 240, 0.6);
+  &:hover {
+    background-color: rgba(253, 248, 240, 1);
+  }
 }
 
 .error.error.error.error {
-  background-color:  #fcf2f2;
+  background-color:  rgba(252, 242, 242, 0.6);
+  &:hover {
+    background-color:  rgba(252, 242, 242, 1);
+  }
 }
 
 

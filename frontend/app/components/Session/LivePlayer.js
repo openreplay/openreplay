@@ -49,7 +49,7 @@ function LivePlayer ({
   }, [])
 
   const TABS = {
-    EVENTS: 'User Actions',
+    EVENTS: 'User Steps',
     HEATMAPS: 'Click Map',
   }
   const [activeTab, setActiveTab] = useState('');

@@ -31,7 +31,7 @@ export default Record({
 			return isRed(this);
 		},
 		isYellow() {
-			return this.level === WARNING;
+			return this.level === WARNING || WARN;
 		}
 	}
 });

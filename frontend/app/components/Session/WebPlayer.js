@@ -16,7 +16,7 @@ import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import { fetchList as fetchMembers } from 'Duck/member';
 
 const TABS = {
-    EVENTS: 'User Actions',
+    EVENTS: 'User Steps',
     HEATMAPS: 'Click Map',
 };
 
