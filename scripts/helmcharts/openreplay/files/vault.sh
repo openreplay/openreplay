@@ -12,7 +12,7 @@ vault_output=$(vault operator init) 2> /tmp/err.txt || {
   err_code=$?
   (cat /tmp/err.txt | grep -i "vault is already initialized") && {
     echo "Vault already initialized."
-    exit 0
+    err_code=0
   }
   exit $err_code
 }
