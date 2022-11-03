@@ -389,7 +389,9 @@ export default class DOMManager extends ListWalker<Message> {
         try {
           descr = JSON.parse(msg.descriptors)
           descr = typeof descr === 'object' ? descr : undefined
-        } catch {}
+        } catch {
+          logger.warn("Can't parse font-face descriptors: ", msg)
+        }
         const ff = new FontFace(msg.family, msg.source, descr)
         vn.node.fonts.add(ff)
         return ff.load()
