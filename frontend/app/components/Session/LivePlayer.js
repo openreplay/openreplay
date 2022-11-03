@@ -34,8 +34,9 @@ function LivePlayer ({
 }) {
   useEffect(() => {
     if (!loadingCredentials) {
+
       const sessionWithAgentData = {
-        ...session,
+        ...session.toJS(),
         agentInfo: {
           email: userEmail,
           name: userName,

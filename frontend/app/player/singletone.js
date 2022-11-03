@@ -29,7 +29,6 @@ document.addEventListener("visibilitychange", function() {
 });
 
 export function init(session, config, live = false) {
-  // const live = session.live;
   const endTime = !live && session.duration.valueOf();
 
   instance = new Player(session, config, live);
