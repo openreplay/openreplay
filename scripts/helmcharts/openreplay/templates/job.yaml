@@ -147,7 +147,7 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             value: "{{ .Values.global.postgresql.postgresqlPassword }}"
-        image: hashicorp/vault:1.11.3
+        image: hashicorp/vault:1.12.0
         command: 
         - /bin/sh
         - /opt/migrations/vault.sh
