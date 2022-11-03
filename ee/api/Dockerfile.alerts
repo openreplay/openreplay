@@ -7,6 +7,7 @@ ENV APP_NAME=alerts \
     PG_MINCONN=1 \
     PG_MAXCONN=10 \
     LISTEN_PORT=8000 \
+    PRIVATE_ENDPOINTS=true \
     ENTERPRISE_BUILD=${envarg}
 
 COPY requirements-alerts.txt /work_tmp/requirements.txt
