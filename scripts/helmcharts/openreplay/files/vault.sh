@@ -45,7 +45,7 @@ vault write database/config/postgres \
     allowed_roles="*" \
     connection_url="postgresql://{{username}}:{{password}}@$PGHOST:$PGPORT/$PGDATABASE" \
     username="${PGUSER}" \
-    password="${PGPASSWD}"
+    password="${PGPASSWORD}"
 
 vault auth enable kubernetes
 
