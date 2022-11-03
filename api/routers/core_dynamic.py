@@ -132,7 +132,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
     return users.set_password_invitation(new_password=data.password, user_id=user["userId"])
 
 
-@app.post('/client/members/{memberId}', tags=["client"])
+@app.put('/client/members/{memberId}', tags=["client"])
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
