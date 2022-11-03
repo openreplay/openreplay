@@ -6,6 +6,7 @@ ARG envarg
 ENV SOURCE_MAP_VERSION=0.7.4 \
     APP_NAME=chalice \
     LISTEN_PORT=8000 \
+    PRIVATE_ENDPOINTS=false \
     ENTERPRISE_BUILD=${envarg}
 
 WORKDIR /work_tmp

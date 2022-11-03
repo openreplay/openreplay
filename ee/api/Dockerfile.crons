@@ -6,6 +6,7 @@ ARG envarg
 ENV APP_NAME=crons \
     PG_MINCONN=2 \
     PG_MAXCONN=10 \
+    PRIVATE_ENDPOINTS=true \
     ENTERPRISE_BUILD=${envarg} \
     ACTION="" \
     PG_POOL=false
