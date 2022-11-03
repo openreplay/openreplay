@@ -15,7 +15,7 @@ import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 
 // TODO: fully specified strict check with no-any (everywhere)
 
-type StartEndCallback = () => ((()=>Record<string, unknown>) | void)
+type StartEndCallback = (agentInfo?: Record<string, any>) => (((agentInfo?: Record<string, any>)=>Record<string, unknown>) | void)
 
 export interface Options {
   onAgentConnect: StartEndCallback;
@@ -49,7 +49,7 @@ type OptionalCallback = (()=>Record<string, unknown>) | void
 type Agent = {
   onDisconnect?: OptionalCallback,
   onControlReleased?: OptionalCallback,
-  //name?: string
+  agentInfo: Record<string, string>
   //
 }
 
@@ -174,7 +174,7 @@ export default class Assist {
         if (this.remoteControl){
           callUI?.showRemoteControl(this.remoteControl.releaseControl)
         }
-        this.agents[id].onControlReleased = this.options.onRemoteControlStart()
+        this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id].agentInfo)
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
         annot.mount()
@@ -220,8 +220,8 @@ export default class Assist {
 
     socket.on('NEW_AGENT', (id: string, info) => {
       this.agents[id] = {
-        onDisconnect: this.options.onAgentConnect?.(),
-        ...info, // TODO
+        onDisconnect: this.options.onAgentConnect?.(info),
+        agentInfo: info, // TODO ?
       }
       this.assistDemandedRestart = true
       this.app.stop()
@@ -230,7 +230,8 @@ export default class Assist {
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
         this.agents[id] = {
-          onDisconnect: this.options.onAgentConnect?.(),
+          ...this.agents[id],
+          onDisconnect: this.options.onAgentConnect?.(  this.agents[id].agentInfo),
         }
       })
       this.assistDemandedRestart = true

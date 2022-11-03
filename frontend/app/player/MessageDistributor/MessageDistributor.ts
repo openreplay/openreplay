@@ -215,7 +215,7 @@ export default class MessageDistributor extends StatedScreen {
     this.setMessagesLoading(false)
   }
 
-  private loadMessages() { 
+  private loadMessages() {
     // TODO: reuseable decryptor instance
     const createNewParser = (shouldDecrypt=true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
@@ -242,7 +242,7 @@ export default class MessageDistributor extends StatedScreen {
         )
     )
     .then(this.onFileReadSuccess)
-    .catch(this.onFileReadFailed)   
+    .catch(this.onFileReadFailed)
     .finally(this.onFileReadFinally)
 
     // load devtools
