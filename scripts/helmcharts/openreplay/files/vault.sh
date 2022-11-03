@@ -10,6 +10,7 @@ export VAULT_ADDR=http://databases-vault.db.svc.cluster.local:8200
 vault_output=$(vault operator init) 2> /tmp/err.txt || {
   err_code=$?
   (cat /tmp/err.txt | grep -i "vault is already initialized") && {
+    echo "Vault already initialized."
     exit 0
   }
   exit $err_code
