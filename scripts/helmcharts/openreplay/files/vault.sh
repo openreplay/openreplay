@@ -4,6 +4,7 @@
 
 export VAULT_ADDR=http://databases-vault.db.svc.cluster.local:8200
 
+
 # Check vault is already initialized, if so return 
 
 # initialize vault
@@ -18,6 +19,7 @@ vault_output=$(vault operator init) 2> /tmp/err.txt || {
 
 # Writting output to a file
 echo $vault_output > /tmp/vault_creds.txt
+echo $vault_output
 
 # Unsealing vault
 for i in 1 2 3; do
@@ -34,12 +36,9 @@ vault secrets enable database
 vault write database/config/postgres \
     plugin_name=postgresql-database-plugin \
     allowed_roles="*" \
-    connection_url="postgresql://{{username}}:{{password}}@{{host}}:{{port}}/{{db}}" \
+    connection_url="postgresql://{{username}}:{{password}}@$PGHOST:$PGPORT/$PGDATABASE" \
     username="${PGUSER}" \
-    password="${PGPASSWD}" \
-    host="${PGHOST}" \
-    port="${PGPORT}" \
-    db="${PGDATABASE}"
+    password="${PGPASSWD}"
 
 vault write database/roles/db-app \
   db_name=postgres \
