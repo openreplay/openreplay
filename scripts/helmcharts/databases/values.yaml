@@ -142,3 +142,6 @@ clickhouse:
 
 postgreql:
   enabled: true
+
+vault:
+  enabled: false

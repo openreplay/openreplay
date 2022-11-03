@@ -1,0 +1,37 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- template "vault.uiEnabled" . -}}
+{{- if .uiEnabled -}}
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.fullname" . }}-ui
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}-ui
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- template "vault.ui.annotations" . }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    component: server
+    {{- if and (.Values.ui.activeVaultPodOnly) (eq .mode "ha") }}
+    vault-active: "true"
+    {{- end }}
+  publishNotReadyAddresses: {{ .Values.ui.publishNotReadyAddresses }}
+  ports:
+    - name: {{ include "vault.scheme" . }}
+      port: {{ .Values.ui.externalPort }}
+      targetPort: {{ .Values.ui.targetPort }}
+      {{- if .Values.ui.serviceNodePort }}
+      nodePort: {{ .Values.ui.serviceNodePort }}
+      {{- end }}
+  type: {{ .Values.ui.serviceType }}
+  {{- include "service.externalTrafficPolicy" .Values.ui }}
+  {{- include "service.loadBalancer" .Values.ui }}
+{{- end -}}
+{{- end }}
