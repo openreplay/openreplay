@@ -114,11 +114,9 @@ function NoteEvent(props: Props) {
                 // @ts-ignore
                 background: tagProps[props.note.tag],
                 userSelect: 'none',
-                width: 50,
-                textAlign: 'center',
-                fontSize: 11,
+                padding: '1px 6px',
               }}
-              className="rounded-full px-2 py-1 text-white text-sm"
+              className="rounded-full text-white text-xs select-none w-fit"
             >
               {props.note.tag}
             </div>
