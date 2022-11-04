@@ -2,6 +2,7 @@
 
 # This script will initialize vault
 
+# VERBOSE=1 for verbose logging
 if [ "x$VERBOSE" == "x1" ]; then
   set -x
 fi
