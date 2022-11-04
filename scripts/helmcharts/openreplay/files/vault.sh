@@ -18,7 +18,7 @@ vault_output=$(vault operator init) 2> /tmp/err.txt || {
     echo "Vault already initialized."
     err_code=0
   }
-  echo exit $err_code
+  exit $err_code
 }
 
 # Writting output to a file
