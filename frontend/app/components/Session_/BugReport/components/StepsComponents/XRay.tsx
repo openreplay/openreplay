@@ -89,7 +89,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
             </div>
           </div>
         ) : (
-          <Button variant="text-primary" onClick={clearEventSelection}>
+          <Button id="pdf-ignore" variant="text-primary" onClick={clearEventSelection}>
             Clear Selection
           </Button>
         )}

@@ -67,7 +67,7 @@ function Steps({ xrayProps, notes, members }: Props) {
             ) : null}
           </div>
         </div>
-        <Button variant="text-primary" onClick={handleStepsSelection}>
+        <Button id="pdf-ignore" variant="text-primary" onClick={handleStepsSelection}>
           {!shouldShowEventReset ? (
               <span>Add {timePointer > 0 ? '' : 'All'} Steps</span>
             ) : (
