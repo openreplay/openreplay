@@ -54,7 +54,6 @@ const reducer = (state = initialState, action = {}) => {
 		case FETCH_GDPR_SUCCESS:
 			return state.mergeIn([ 'instance', 'gdpr' ], action.data);
 		case success(SAVE):
-			console.log(action)
 			const newSite = Site(action.data);
 			return updateItemInList(state, newSite)
 				.set('siteId', newSite.get('id'))

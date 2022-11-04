@@ -27,8 +27,7 @@ interface Props {
 }
 
 function Roles(props: Props) {
-    const { loading, instance, roles, init, edit, deleteRole, account, permissionsMap, projectsMap, removeErrors } = props;
-    // const [showModal, setShowmModal] = useState(false);
+    const { loading, roles, init, edit, deleteRole, account, permissionsMap, projectsMap, removeErrors } = props;
     const { showModal, hideModal } = useModal();
     const isAdmin = account.admin || account.superAdmin;
 
@@ -46,17 +45,6 @@ function Roles(props: Props) {
             props.resetErrors();
         };
     }, [removeErrors]);
-
-    // const closeModal = (showToastMessage: boolean) => {
-    //     if (showToastMessage) {
-    //         toast.success(showToastMessage);
-    //         props.fetchList();
-    //     }
-    //     // setShowmModal(false);
-    //     setTimeout(() => {
-    //         init();
-    //     }, 100);
-    // };
 
     const editHandler = (role: any) => {
         init(role);
@@ -103,6 +91,7 @@ function Roles(props: Props) {
                             </div>
                             {roles.map((role) => (
                                 <RoleItem
+                                    key={role.roleId}
                                     role={role}
                                     isAdmin={isAdmin}
                                     permissions={permissionsMap}
