@@ -50,9 +50,10 @@ export default class BugReportStore {
   }
 
   setTitle(title: string) {
-    this.reportTitle = title;
-
-    this.bugReport = Object.assign(this.bugReport, { title: this.reportTitle });
+    if (title.length < 40) {
+      this.reportTitle = title;
+      this.bugReport = Object.assign(this.bugReport, { title: this.reportTitle });
+    }
   }
 
   setSeverity(severity: SeverityLevels) {

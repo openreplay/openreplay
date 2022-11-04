@@ -1,8 +1,7 @@
 import React from 'react';
 import { Duration } from 'luxon';
 import { observer } from 'mobx-react-lite';
-import { toJS } from 'mobx'
-import { Icon } from 'UI';
+import { Icon, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { INDEXES } from 'App/constants/zindex';
 import TimelinePointer from 'App/components/Session_/OverviewPanel/components/TimelinePointer';
@@ -36,7 +35,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
     CLICKRAGE: eventsList.filter((item: any) => item.type === 'CLICKRAGE'),
   };
 
-  console.log(JSON.stringify(resources.CLICKRAGE, undefined, 2))
+  console.log(JSON.stringify(resources.CLICKRAGE, undefined, 2));
 
   const pickEventRadius = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();
@@ -65,14 +64,14 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
 
       bugReportStore.setSteps(selectedSteps);
     }
-  }, [stepPickRadius])
+  }, [stepPickRadius]);
 
   const shouldShowPointerReset = timePointer > 0;
 
   return (
     <>
       <div className="flex items-center justify-between my-2">
-        <div className=" text-gray-dark">
+        <div className=" text-gray-dark py-2">
           XRAY
           {timePointer > 0 ? (
             <span className="text-disabled-text ml-2">
@@ -81,7 +80,10 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
           ) : null}
         </div>
         {!shouldShowPointerReset ? (
-          <div className="flex items-center gap-2 px-2 py-1 rounded bg-light-blue-bg" id="pdf-ignore">
+          <div
+            className="flex items-center gap-2 rounded bg-active-blue px-2 py-1 whitespace-nowrap overflow-hidden text-clip"
+            id="pdf-ignore"
+          >
             <Icon name="info-circle" size={16} />
             <div>
               Click anywhere on <span className="font-semibold">X-RAY</span> to drilldown and add
@@ -89,17 +91,25 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
             </div>
           </div>
         ) : (
-          <div className="text-blue py-1 cursor-pointer" onClick={clearEventSelection} id="pdf-ignore">
+          <Button variant="text-primary" onClick={clearEventSelection}>
             Clear Selection
-          </div>
+          </Button>
         )}
       </div>
-      <div
-        className="relative cursor-pointer"
-        onClick={pickEventRadius}
-        ref={xrayContainer}
-      >
-          <div id="pdf-ignore" style={{ pointerEvents: 'none', background: timePointer > 0 ? 'rgb(57, 78, 255)' : undefined, opacity: '0.07', position: 'absolute', top:0, left:0, width:'100%', height: '100%' }} />
+      <div className="relative cursor-pointer" onClick={pickEventRadius} ref={xrayContainer}>
+        <div
+          id="pdf-ignore"
+          style={{
+            pointerEvents: 'none',
+            background: timePointer > 0 ? 'rgb(57, 78, 255)' : undefined,
+            opacity: '0.07',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+          }}
+        />
         {timePointer > 0 ? (
           <div
             className="absolute h-full bg-white"

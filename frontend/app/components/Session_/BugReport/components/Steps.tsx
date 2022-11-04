@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from 'UI'
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { RADIUS } from '../utils';
@@ -66,13 +67,13 @@ function Steps({ xrayProps, notes, members }: Props) {
             ) : null}
           </div>
         </div>
-        <div className="text-blue cursor-pointer" id="pdf-ignore" onClick={handleStepsSelection}>
+        <Button variant="text-primary" onClick={handleStepsSelection}>
           {!shouldShowEventReset ? (
-            <span>Add {timePointer > 0 ? '' : 'All'} Steps</span>
-          ) : (
-            <span>Reset</span>
-          )}
-        </div>
+              <span>Add {timePointer > 0 ? '' : 'All'} Steps</span>
+            ) : (
+              <span>Reset</span>
+            )}
+          </Button>
       </div>
       <StepRenderer
         isDefault={bugReportStore.chosenEventSteps.length === 0}

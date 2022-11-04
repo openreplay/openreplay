@@ -51,11 +51,11 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
         <div className="rounded-3xl px-4 bg-gray-lightest relative z-10">{ind + 1}</div>
         <div className="w-full">
           <div className="flex items-center w-full gap-2">
-            {/* @ts-ignore */}
-            <Icon name={step.icon} size={16} color="gray-darkest" className="relative z-10"/>
-            <div className="px-2 text-disabled-text rounded bg-light-blue-bg">
+            <div className="px-1 text-disabled-text">
               {durationFromMs(step.time)}
             </div>
+            {/* @ts-ignore */}
+            <Icon name={step.icon} size={16} color="gray-darkest" className="relative z-10"/>
             {/* @ts-ignore */}
             <div className="font-semibold">{STEP_NAMES[step.type]}</div>
             <div className="text-gray-medium">{step.details}</div>

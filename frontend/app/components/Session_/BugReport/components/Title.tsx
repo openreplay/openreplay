@@ -1,14 +1,39 @@
 import React from 'react';
 import Select from 'Shared/Select';
+import { Icon } from 'UI';
 import ReportTitle from './ReportTitle';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { SeverityLevels } from 'App/mstore/bugReportStore';
 
 const selectOptions = [
-  { label: <div className="flex items-center gap-2 cursor-pointer w-full"> <div className="p-1 bg-red rounded-full" /> HIGH</div>, value: SeverityLevels.High },
-  { label: <div className="flex items-center gap-2 cursor-pointer w-full"> <div className="p-1 bg-yellow2 rounded-full" /> MEDIUM</div>, value: SeverityLevels.Medium },
-  { label:<div className="flex items-center gap-2 cursor-pointer w-full"> <div className="p-1 bg-blue rounded-full" /> LOW</div>, value: SeverityLevels.Low },
+  {
+    label: (
+      <div className="flex items-center gap-1 cursor-pointer w-full">
+        <Icon name="arrow-up-short" color="red" size="24" />
+        HIGH
+      </div>
+    ),
+    value: SeverityLevels.High,
+  },
+  {
+    label: (
+      <div className="flex items-center gap-1 cursor-pointer w-full">
+        <Icon name="dash" size="24" color="yellow2" />
+        MEDIUM
+      </div>
+    ),
+    value: SeverityLevels.Medium,
+  },
+  {
+    label: (
+      <div className="flex items-center gap-1 cursor-pointer w-full">
+        <Icon name="arrow-down-short" color="blue" size="24" />
+        LOW
+      </div>
+    ),
+    value: SeverityLevels.Low,
+  },
 ];
 
 function Title({ userName }: { userName: string }) {

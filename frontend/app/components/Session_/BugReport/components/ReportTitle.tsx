@@ -13,6 +13,19 @@ function ReportTitle() {
   };
 
   React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (bugReportStore.isTitleEdit && e.key === 'Enter') {
+        inputRef.current?.blur();
+        bugReportStore.toggleTitleEdit(false);
+      }
+    }
+
+    document.addEventListener('keydown', handler, false)
+
+    return () => document.removeEventListener('keydown', handler)
+  })
+
+  React.useEffect(() => {
     if (inputRef.current && bugReportStore.isTitleEdit) {
       inputRef.current?.focus();
     }
