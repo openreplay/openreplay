@@ -132,6 +132,31 @@ spec:
       {{- end}}
       {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
+      {{- if .Values.vault.enabled }}
+      - name: vault
+        env:
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
+          - name: PGHOST
+            value: "{{ .Values.global.postgresql.postgresqlHost }}"
+          - name: PGPORT
+            value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: PGDATABASE
+            value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+          - name: PGUSER
+            value: "{{ .Values.global.postgresql.postgresqlUser }}"
+          - name: PGPASSWORD
+            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+        image: hashicorp/vault:1.12.0
+        command: 
+        - /bin/sh
+        - /opt/migrations/vault.sh
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+      {{- end }}
       - name: clickhouse
         image: yandex/clickhouse-client:21.9.4.35
         env:
