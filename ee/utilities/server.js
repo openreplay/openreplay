@@ -105,7 +105,7 @@ if (process.env.uws !== "true") {
 
     process.on('uncaughtException', err => {
         console.log(`Uncaught Exception: ${err.message}`);
-        debug && console.log(err.stack);
+        console.error(err.stack);
         // process.exit(1);
     });
     module.exports = {uapp};
