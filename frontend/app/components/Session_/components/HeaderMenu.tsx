@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from 'UI';
 import styles from './menu.module.css';
 import cn from 'classnames';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 interface MenuItem {
   key: number;
@@ -30,20 +31,22 @@ export default class ItemMenu extends React.PureComponent<Props> {
     this.setState({ displayed: !this.state.displayed });
   };
 
+  closeMenu = () => {
+    this.setState({ displayed: false })
+  }
+
   render() {
     const { items } = this.props;
     const { displayed } = this.state;
 
     return (
       <div className={styles.wrapper}>
+        <OutsideClickDetectingDiv onClickOutside={this.closeMenu}>
         <div
           onClick={this.toggleMenu}
           className={cn(
             'flex items-center cursor-pointer select-none',
-            'rounded p-2 hover:bg-gray-light-shade',
-            {
-              'bg-gray-light': displayed,
-            }
+            'rounded p-2', displayed ? 'bg-gray-light' : 'hover:bg-gray-light-shade'
           )}
         >
           <div
@@ -69,6 +72,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
             ) : null
           )}
         </div>
+        </OutsideClickDetectingDiv>
       </div>
     );
   }

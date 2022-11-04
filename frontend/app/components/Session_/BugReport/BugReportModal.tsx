@@ -181,7 +181,7 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
         <MetaInfo envObject={envObject} metadata={metadata} />
         <Steps xrayProps={xrayProps} notes={notes} members={members} />
         <Comments />
-        <Session user={userDisplayName} sessionId={sessionId} sessionUrl={sessionUrl} />
+        <Session user={userDisplayName} sessionUrl={sessionUrl} />
         <div id="pdf-ignore" className="flex items-center gap-2 mt-4">
           <Button icon="file-pdf" variant="primary" onClick={onGen} loading={isRendering}>
             Download Bug Report

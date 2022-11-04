@@ -37,7 +37,7 @@ export const NetworkComp = ({ item }: { item: INetworkReq }) => (
       <div>{safeStr(item.url)}</div>
     </div>
     <div className="flex items-center gap-2">
-      <div className="px-1 bg-light-blue-bg rounded-xl font-mono">{item.status}</div>
+      <div className="rounded bg-active-blue px-2 whitespace-nowrap overflow-hidden text-clip font-mono">{item.status}</div>
       <div className={item.success ? '' : 'text-red'}>{safeStr(item.message)}</div>
     </div>
   </div>
@@ -57,8 +57,8 @@ export const NetworkReq = observer(({ item }: { item: INetworkReq }) => {
 
 export const NoteComp = ({ item }: { item: INoteItem }) => (
   <div className="flex items-start flex-col z-10">
-    <div className="font-semibold">{item.title}</div>
-    <div className="text-secondary">{item.message}</div>
+    <div>{item.message}</div>
+    <div className="text-disabled-text text-sm">{item.title}</div>
   </div>
 );
 
