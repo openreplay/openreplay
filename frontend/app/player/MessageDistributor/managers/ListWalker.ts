@@ -2,7 +2,7 @@ import type { Timed } from '../messages/timed';
 
 export default class ListWalker<T extends Timed> {
 	private p = 0
-	constructor(private list: Array<T> = []) {}
+	constructor(private _list: Array<T> = []) {}
 
 	append(m: T): void {
 		if (this.length > 0 && this.last && m.time < this.last.time) {
@@ -68,7 +68,7 @@ export default class ListWalker<T extends Timed> {
 	}
 
 	get list(): Array<T> {
-		return this.list;
+		return this._list;
 	}
 
 	get count(): number {
