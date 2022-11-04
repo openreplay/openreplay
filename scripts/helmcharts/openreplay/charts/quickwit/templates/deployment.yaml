@@ -56,6 +56,8 @@ spec:
               value: {{ .Values.global.s3.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY
               value: {{ .Values.global.s3.secretKey }}
+            - name: QW_DATA_DIR
+              value: /opt/openreplay/
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
@@ -67,10 +69,14 @@ spec:
           volumeMounts:
           - name: configs
             mountPath: /quickwit/config/
+          - name: datadir
+            mountPath: /opt/openreplay
       volumes:
       - name: configs
         configMap:
           name: {{ include "quickwit.fullname" . }}
+      - name: datadir
+        emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
