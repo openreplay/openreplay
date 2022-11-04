@@ -49,7 +49,7 @@ function Comments() {
             !commentsEnabled
               ? 'text-disabled-text border-dotted border-gray-medium'
               : 'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium',
-            'h-8 pt-1 flex items-center w-fit -mt-2',
+            'pt-1 w-fit -mt-2',
             'cursor-pointer select-none border-b'
           )}
         >
