@@ -40,7 +40,7 @@ export const filters = [
   { key: FilterKey.DURATION, type: FilterType.DURATION, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Duration', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is']), icon: 'filters/duration' },
   { key: FilterKey.USER_COUNTRY, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.USER, label: 'User Country', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/country', options: countryOptions },
     // { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
-  { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'Identifier (User ID, Name, Email, etc)', placeholder: 'E.g. Alex, or alex@domain.com, or EMP123', operator: 'is', operatorOptions: filterOptions.stringOperators.concat([{ label: 'is undefined', value: 'isUndefined'}]), icon: 'filters/userid' },
+  { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', placeholder: 'E.g. Alex, or alex@domain.com, or EMP123', operator: 'is', operatorOptions: filterOptions.stringOperators.concat([{ label: 'is undefined', value: 'isUndefined'}]), icon: 'filters/userid' },
   { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
   
     // PERFORMANCE
