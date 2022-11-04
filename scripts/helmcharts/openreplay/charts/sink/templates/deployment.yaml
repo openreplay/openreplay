@@ -61,7 +61,7 @@ spec:
             - name: ASSETS_ORIGIN
             {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
               # Local minio Installation
-              value: 'https://{{ .Values.global.domainName }}/{{.Values.global.s3.assetsBucket}}'
+              value: 'https://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
             {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
               # AWS S3
               # Ref: https://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
