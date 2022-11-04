@@ -2,6 +2,10 @@
 
 # This script will initialize vault
 
+if [ "x$VERBOSE" == "x1" ]; then
+  set -x
+fi
+
 export VAULT_ADDR=http://databases-vault.db.svc.cluster.local:8200
 
 
