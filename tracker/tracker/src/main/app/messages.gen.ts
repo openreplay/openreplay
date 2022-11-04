@@ -535,6 +535,30 @@ export function SetPageVisibility(
   ]
 }
 
+export function LoadFontFace(
+  parentID: number,
+  family: string,
+  source: string,
+  descriptors: string,
+): Messages.LoadFontFace {
+  return [
+    Messages.Type.LoadFontFace,
+    parentID,
+    family,
+    source,
+    descriptors,
+  ]
+}
+
+export function SetNodeFocus(
+  id: number,
+): Messages.SetNodeFocus {
+  return [
+    Messages.Type.SetNodeFocus,
+    id,
+  ]
+}
+
 export function LongTask(
   timestamp: number,
   duration: number,

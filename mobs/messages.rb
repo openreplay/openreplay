@@ -359,7 +359,19 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
-## 57 58
+
+# Since 4.1.7 / 1.9.0
+message 57, 'LoadFontFace' do 
+  uint 'ParentID'
+  string 'Family'
+  string 'Source'
+  string 'Descriptors'
+end
+# Since 4.1.7 / 1.9.0
+message 58, 'SetNodeFocus' do
+  int 'ID'
+end
+
 #Depricated (since 3.0.?)
 message 59, 'LongTask' do
   uint 'Timestamp'
@@ -466,6 +478,8 @@ message 78, 'JSException', :replayer => false do
   string 'Payload'
   string 'Metadata'
 end
+
+
 message 126, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'EncryptionKey'

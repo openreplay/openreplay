@@ -20,6 +20,8 @@ import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
+import Focus from './modules/focus.js'
+import Fonts from './modules/fonts.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
@@ -123,6 +125,8 @@ export default class API {
       Timing(app, options)
       Performance(app, options)
       Scroll(app)
+      Focus(app)
+      Fonts(app)
       ;(window as any).__OPENREPLAY__ = this
 
       if (options.autoResetOnWindowOpen) {

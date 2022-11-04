@@ -524,6 +524,19 @@ class MessageCodec(Codec):
                 max_used_js_heap_size=self.read_uint(reader)
             )
 
+        if message_id == 57:
+            return LoadFontFace(
+                parent_id=self.read_uint(reader),
+                family=self.read_string(reader),
+                source=self.read_string(reader),
+                descriptors=self.read_string(reader)
+            )
+
+        if message_id == 58:
+            return SetNodeFocus(
+                id=self.read_int(reader)
+            )
+
         if message_id == 59:
             return LongTask(
                 timestamp=self.read_uint(reader),

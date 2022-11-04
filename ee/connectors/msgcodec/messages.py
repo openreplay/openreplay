@@ -568,6 +568,23 @@ class PerformanceTrackAggr(Message):
         self.max_used_js_heap_size = max_used_js_heap_size
 
 
+class LoadFontFace(Message):
+    __id__ = 57
+
+    def __init__(self, parent_id, family, source, descriptors):
+        self.parent_id = parent_id
+        self.family = family
+        self.source = source
+        self.descriptors = descriptors
+
+
+class SetNodeFocus(Message):
+    __id__ = 58
+
+    def __init__(self, id):
+        self.id = id
+
+
 class LongTask(Message):
     __id__ = 59
 
