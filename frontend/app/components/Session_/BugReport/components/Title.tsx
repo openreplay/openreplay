@@ -28,7 +28,7 @@ const selectOptions = [
   {
     label: (
       <div className="flex items-center gap-1 cursor-pointer w-full">
-        <Icon name="arrow-down-short" color="blue" size="24" />
+        <Icon name="arrow-down-short" color="teal" size="24" />
         LOW
       </div>
     ),

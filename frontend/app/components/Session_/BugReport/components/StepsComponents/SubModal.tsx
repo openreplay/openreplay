@@ -11,6 +11,11 @@ const Titles = {
   network: 'Fetch/XHR',
   error: 'Console Error',
 };
+const Icons = {
+  note: 'quotes' as const,
+  network: 'network' as const,
+  error: 'info-circle' as const
+}
 const Filters = {
   note: 'note message or author',
   network: 'url',
@@ -47,7 +52,7 @@ function ModalContent(props: Props) {
     <div className="flex flex-col p-4 bg-white gap-4 w-full">
       <div className="flex items-center gap-2">
         <div className="p-2 rounded-full bg-light-blue-bg">
-          <Icon name="quotes" size={18} />
+          <Icon name={Icons[props.type]} size={18} />
         </div>
         <div className="text-2xl font-semibold">{`Select ${Titles[props.type]}`}</div>
         <div className="ml-auto">

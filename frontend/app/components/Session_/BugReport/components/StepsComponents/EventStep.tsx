@@ -7,6 +7,7 @@ import { useStore } from 'App/mstore';
 import cn from 'classnames';
 import { ErrorComp, NetworkComp, NoteComp } from './SubModalItems';
 import { durationFromMs } from 'App/date'
+import { Tooltip } from 'react-tippy'
 
 const SUBSTEP = {
   network: NetworkComp,
@@ -65,17 +66,23 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
                 menuOpen ? 'flex' : 'hidden'
               )}
             >
+              {/* @ts-ignore */}
+              <Tooltip title="Add Note, Error or Network Request" className="!flex items-center">
               <ItemMenu
                 label={
-                  <Icon name="plus" size={16} className="cursor-pointer hover:fill-gray-darkest" />
+                    <Icon name="plus" size={16} className="cursor-pointer hover:fill-gray-darkest" />
                 }
                 items={menuItems}
                 flat
                 onToggle={(isOpen) => setMenu(isOpen)}
               />
+              </Tooltip>
+              {/* @ts-ignore */}
+              <Tooltip title="Delete Step">
               <div onClick={() => bugReportStore.removeStep(step)}>
                 <Icon name="trash" size={16} className="cursor-pointer hover:fill-gray-darkest" />
               </div>
+              </Tooltip>
             </div>
           </div>
           {step.substeps?.length ? (

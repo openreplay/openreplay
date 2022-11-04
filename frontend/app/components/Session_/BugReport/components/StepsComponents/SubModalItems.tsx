@@ -3,6 +3,7 @@ import { Checkbox } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { durationFromMs } from 'App/date'
+import cn from 'classnames'
 
 interface Item {
   time: number;
@@ -107,8 +108,8 @@ export function SubModalItemContainer({
 }) {
   return (
     <div
-      className="flex items-start p-2 gap-2 shadow-border-gray hover:shadow-border-main hover:bg-active-blue cursor-pointer"
-      style={{ background: isNote ? '#FFFEF5' : undefined }}
+      className={cn("flex items-start p-2 gap-2 border-t last:border-b cursor-pointer", isNote ? 'note-hover-bg' : 'hover:bg-active-blue')}
+      // style={{ background: isNote ? '#FFFEF5' : undefined }}
       onClick={() => onChange(!isChecked)}
     >
       <Checkbox

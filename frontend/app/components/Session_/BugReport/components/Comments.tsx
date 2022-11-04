@@ -36,7 +36,7 @@ function Comments() {
           placeholder="Comment..."
           rows={3}
           autoFocus
-          className="rounded fluid border -mx-2 px-2 py-1 w-full"
+          className="rounded fluid border -mx-2 px-2 py-1 w-full -mt-2"
           value={bugReportStore.comment}
           onChange={(e) => bugReportStore.setComment(e.target.value)}
           onBlur={() => bugReportStore.toggleCommentEditing(false)}
@@ -49,7 +49,7 @@ function Comments() {
             !commentsEnabled
               ? 'text-disabled-text border-dotted border-gray-medium'
               : 'border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium',
-            'h-8 pt-1 flex items-center w-fit',
+            'h-8 pt-1 flex items-center w-fit -mt-2',
             'cursor-pointer select-none border-b'
           )}
         >

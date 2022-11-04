@@ -140,6 +140,11 @@
     border-color: $gray-lightest;
   }
 }
+.note-hover-bg {
+  &:hover {
+    background-color: #FFFEF5;
+  }
+}
 
 .text-dotted-underline {
   text-decoration: underline dotted !important;
@@ -154,7 +159,7 @@
 .divider-h {
   height: 1px;
   width: 100%;
-  
+
   margin: 25px 0;
   background-color: $gray-light;
 } */
