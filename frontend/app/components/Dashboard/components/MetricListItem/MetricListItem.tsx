@@ -45,7 +45,7 @@ function MetricListItem(props: Props) {
         history.push(path);
     };
     return (
-        <div className="grid grid-cols-12 py-4 border-t select-none hover:bg-active-blue cursor-pointer px-6" onClick={onItemClick}>
+        <div className="grid grid-cols-12 py-4 border-t select-none items-center hover:bg-active-blue cursor-pointer px-6" onClick={onItemClick}>
             <div className="col-span-4 flex items-start">
                 <div className="flex items-center">
                     <MetricTypeIcon type={metric.metricType} />
