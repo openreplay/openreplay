@@ -2,7 +2,7 @@ BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.8.2'
+SELECT 'v1.9.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 ALTER TABLE IF EXISTS public.tenants
