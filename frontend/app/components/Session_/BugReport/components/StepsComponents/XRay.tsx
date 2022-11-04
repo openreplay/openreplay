@@ -35,8 +35,6 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
     CLICKRAGE: eventsList.filter((item: any) => item.type === 'CLICKRAGE'),
   };
 
-  console.log(JSON.stringify(resources.CLICKRAGE, undefined, 2));
-
   const pickEventRadius = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.stopPropagation();
 

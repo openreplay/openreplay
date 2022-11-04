@@ -98,7 +98,7 @@ function ModalActions() {
   return (
     <div className="flex items-center gap-2">
       <Button
-        disabled={bugReportStore.pickedSubItems.size === 0}
+        disabled={bugReportStore.pickedSubItems[bugReportStore.targetStep].size === 0}
         variant="primary"
         onClick={saveChoice}
       >

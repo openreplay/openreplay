@@ -22,7 +22,7 @@ export default class BugReportStore {
   chosenEventSteps: Step[] = [];
   subModalType: 'note' | 'network' | 'error';
   targetStep: string
-  pickedSubItems: Map<string, SubItem> = new Map()
+  pickedSubItems: Record<string, Map<string, SubItem>> = {}
 
   constructor() {
     makeAutoObservable(this);
@@ -42,7 +42,7 @@ export default class BugReportStore {
     this.subModalType = undefined;
     this.isSubStepModalOpen = false;
     this.targetStep = undefined;
-    this.pickedSubItems = new Map();
+    this.pickedSubItems = {};
   }
 
   toggleTitleEdit(isEdit: boolean) {
@@ -88,7 +88,6 @@ export default class BugReportStore {
     }
     this.bugReport = Object.assign(this.bugReport, reportObj)
 
-    console.log(JSON.stringify(this.bugReport, undefined, 2))
     return this.bugReport
   }
 
@@ -98,39 +97,41 @@ export default class BugReportStore {
 
   setSteps(steps: Step[]) {
     this.chosenEventSteps = steps.map(step => ({ ...step, substeps: undefined }));
-    this.pickedSubItems = new Map();
+    this.pickedSubItems = {};
   }
 
   removeStep(step: Step) {
     this.chosenEventSteps = this.chosenEventSteps.filter(
       (chosenStep) => chosenStep.key !== step.key
     );
+    if (this.pickedSubItems[step.key]) this.pickedSubItems[step.key] = new Map()
   }
 
   toggleSubStepModal(isOpen: boolean, type: 'note' | 'network' | 'error', stepKey?: string) {
     this.isSubStepModalOpen = isOpen;
     this.subModalType = type;
     this.targetStep = stepKey
+    if (!this.pickedSubItems[this.targetStep]) this.pickedSubItems[this.targetStep] = new Map()
   }
 
   toggleSubItem(isAdded: boolean, item: SubItem) {
     if (isAdded) {
-      this.pickedSubItems.set(item.key, item)
+      this.pickedSubItems[this.targetStep].set(item.key, item)
     } else {
-      this.pickedSubItems.delete(item.key)
+      this.pickedSubItems[this.targetStep].delete(item.key)
     }
   }
 
   isSubItemChecked(item: SubItem) {
-    return this.pickedSubItems?.get(item.key) !== undefined
+    return this.pickedSubItems[this.targetStep]?.get(item.key) !== undefined
   }
 
   saveSubItems() {
     const targetIndex = this.chosenEventSteps.findIndex(step => step.key === this.targetStep)
     const eventStepsCopy = this.chosenEventSteps
     const step = this.chosenEventSteps[targetIndex]
-    if (this.pickedSubItems.size > 0) {
-      step.substeps = Array.from(this.pickedSubItems, ([name, value]) => ({ ...value }));
+    if (this.pickedSubItems[this.targetStep].size > 0) {
+      step.substeps = Array.from(this.pickedSubItems[this.targetStep], ([name, value]) => ({ ...value }));
     }
     eventStepsCopy[targetIndex] = step
 
