@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	types2 "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
@@ -77,7 +78,15 @@ func main() {
 			return
 		}
 
-		session, err := pg.Cache.GetSession(msg.SessionID())
+		var (
+			session *types2.Session
+			err     error
+		)
+		if msg.TypeID() == messages.MsgSessionEnd {
+			session, err = pg.GetSession(msg.SessionID())
+		} else {
+			session, err = pg.Cache.GetSession(msg.SessionID())
+		}
 		if session == nil {
 			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
 				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)

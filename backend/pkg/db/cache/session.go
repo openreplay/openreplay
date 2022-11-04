@@ -2,7 +2,6 @@ package cache
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jackc/pgx/v4"
 	. "openreplay/backend/pkg/db/types"
 	"time"
@@ -49,20 +48,4 @@ func (c *cacheImpl) GetSession(sessionID uint64) (*Session, error) {
 	}
 	c.sessions[sessionID] = &SessionMeta{s, time.Now()}
 	return s, nil
-}
-
-func (c *cacheImpl) SetSessionDuration(sessID, duration uint64) error {
-	if duration <= 0 {
-		return fmt.Errorf("session duration wrong value, val: %d", duration)
-	}
-
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	// Updating session duration to avoid insert errors in CH
-	sess, ok := c.sessions[sessID]
-	if ok && sess.Session != nil {
-		sess.Session.Duration = &duration
-	}
-	return nil
 }

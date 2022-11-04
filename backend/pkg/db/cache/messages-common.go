@@ -15,13 +15,8 @@ func (c *PGCache) InsertSessionEncryptionKey(sessionID uint64, key []byte) error
 }
 
 func (c *PGCache) HandleSessionEnd(sessionID uint64) error {
-	dur, err := c.Conn.HandleSessionEnd(sessionID)
-	if err != nil {
+	if err := c.Conn.HandleSessionEnd(sessionID); err != nil {
 		log.Printf("can't handle session end: %s", err)
-		return nil
-	}
-	if err := c.Cache.SetSessionDuration(sessionID, dur); err != nil {
-		log.Printf("can't update session duration: %s", err)
 	}
 	return nil
 }
