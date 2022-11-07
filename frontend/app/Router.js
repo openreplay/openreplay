@@ -20,7 +20,7 @@ import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
-import { GLOBAL_DESTINATION_PATH } from 'App/constants/storageKeys';
+import { GLOBAL_DESTINATION_PATH, GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 import SupportCallout from 'Shared/SupportCallout';
 
 const Login = lazy(() => import('Components/Login/Login'));
@@ -171,6 +171,7 @@ class Router extends React.Component {
         const siteIdList = sites.map(({ id }) => id).toJS();
         const hideHeader = (location.pathname && location.pathname.includes('/session/')) || location.pathname.includes('/assist/');
         const isPlayer = isRoute(SESSION_PATH, location.pathname) || isRoute(LIVE_SESSION_PATH, location.pathname);
+        const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true'
 
         return isLoggedIn ? (
             <ModalProvider>
@@ -196,7 +197,7 @@ class Router extends React.Component {
                                     return <Redirect to={CLIENT_PATH} />;
                                 }}
                             />
-                            {onboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
+                            {redirectToOnboarding && <Redirect to={withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />}
 
                             {/* DASHBOARD and Metrics */}
                             <Route exact strict path={withSiteId(ALERTS_PATH, siteIdList)} component={Dashboard} />
