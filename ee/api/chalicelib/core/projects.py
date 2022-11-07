@@ -150,36 +150,6 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         return helper.dict_to_camel_case(row)
 
 
-def is_authorized(project_id, tenant_id, user_id=None):
-    if project_id is None or not str(project_id).isdigit():
-        return False
-    with pg_client.PostgresClient() as cur:
-        role_query = """INNER JOIN LATERAL (SELECT 1
-                             FROM users
-                                      INNER JOIN roles USING (role_id)
-                                      LEFT JOIN roles_projects USING (role_id)
-                             WHERE users.user_id = %(user_id)s 
-                                AND users.deleted_at ISNULL 
-                                AND users.tenant_id = %(tenant_id)s 
-                                AND (roles.all_projects OR roles_projects.project_id = %(project_id)s)
-                        ) AS role_project ON (TRUE)"""
-
-        query = cur.mogrify(f"""\
-                    SELECT project_id
-                    FROM public.projects AS s
-                    {role_query if user_id is not None else ""}
-                    where s.tenant_id =%(tenant_id)s 
-                        AND s.project_id =%(project_id)s
-                        AND s.deleted_at IS NULL
-                    LIMIT 1;""",
-                            {"tenant_id": tenant_id, "project_id": project_id, "user_id": user_id})
-        cur.execute(
-            query=query
-        )
-        row = cur.fetchone()
-    return row is not None
-
-
 def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
     if not skip_authorization:
         admin = users.get(user_id=user_id, tenant_id=tenant_id)
@@ -198,17 +168,6 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
                              changes={"name": data.name})}
 
 
-def count_by_tenant(tenant_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
-                    SELECT
-                           count(s.project_id)
-                    FROM public.projects AS s
-                    WHERE s.deleted_at IS NULL
-                     AND tenant_id= %(tenant_id)s;""", {"tenant_id": tenant_id}))
-        return cur.fetchone()["count"]
-
-
 def delete(tenant_id, user_id, project_id):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
@@ -225,6 +184,17 @@ def delete(tenant_id, user_id, project_id):
                         {"project_id": project_id})
         )
     return {"data": {"state": "success"}}
+
+
+def count_by_tenant(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify("""\
+                    SELECT
+                           count(s.project_id)
+                    FROM public.projects AS s
+                    WHERE s.deleted_at IS NULL
+                     AND tenant_id= %(tenant_id)s;""", {"tenant_id": tenant_id}))
+        return cur.fetchone()["count"]
 
 
 def get_gdpr(project_id):
@@ -318,6 +288,16 @@ def update_capture_status(project_id, changes):
     return changes
 
 
+def get_projects_ids(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify("""SELECT s.project_id
+                                    FROM public.projects AS s
+                                    WHERE tenant_id =%(tenant_id)s AND s.deleted_at IS NULL
+                                    ORDER BY s.project_id;""", {"tenant_id": tenant_id}))
+        rows = cur.fetchall()
+    return [r["project_id"] for r in rows]
+
+
 def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
@@ -340,6 +320,36 @@ def get_project_by_key(tenant_id, project_key, include_last_session=False, inclu
         return helper.dict_to_camel_case(row)
 
 
+def is_authorized(project_id, tenant_id, user_id=None):
+    if project_id is None or not str(project_id).isdigit():
+        return False
+    with pg_client.PostgresClient() as cur:
+        role_query = """INNER JOIN LATERAL (SELECT 1
+                             FROM users
+                                      INNER JOIN roles USING (role_id)
+                                      LEFT JOIN roles_projects USING (role_id)
+                             WHERE users.user_id = %(user_id)s 
+                                AND users.deleted_at ISNULL 
+                                AND users.tenant_id = %(tenant_id)s 
+                                AND (roles.all_projects OR roles_projects.project_id = %(project_id)s)
+                        ) AS role_project ON (TRUE)"""
+
+        query = cur.mogrify(f"""\
+                    SELECT project_id
+                    FROM public.projects AS s
+                    {role_query if user_id is not None else ""}
+                    where s.tenant_id =%(tenant_id)s 
+                        AND s.project_id =%(project_id)s
+                        AND s.deleted_at IS NULL
+                    LIMIT 1;""",
+                            {"tenant_id": tenant_id, "project_id": project_id, "user_id": user_id})
+        cur.execute(
+            query=query
+        )
+        row = cur.fetchone()
+    return row is not None
+
+
 def is_authorized_batch(project_ids, tenant_id):
     if project_ids is None or not len(project_ids):
         return False
@@ -357,13 +367,3 @@ def is_authorized_batch(project_ids, tenant_id):
         )
         rows = cur.fetchall()
         return [r["project_id"] for r in rows]
-
-
-def get_projects_ids(tenant_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""SELECT s.project_id
-                                    FROM public.projects AS s
-                                    WHERE tenant_id =%(tenant_id)s AND s.deleted_at IS NULL
-                                    ORDER BY s.project_id;""", {"tenant_id": tenant_id}))
-        rows = cur.fetchall()
-    return [r["project_id"] for r in rows]

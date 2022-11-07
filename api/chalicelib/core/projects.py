@@ -2,7 +2,7 @@ import json
 
 import schemas
 from chalicelib.core import users
-from chalicelib.utils import pg_client, helper, dev
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -48,7 +48,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         if gdpr:
             extra_projection += ',s.gdpr'
         if recorded:
-            extra_projection += """, COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
+            extra_projection += """,COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
                                       (SELECT MIN(sessions.start_ts)
                                        FROM public.sessions
                                        WHERE sessions.project_id = s.project_id
