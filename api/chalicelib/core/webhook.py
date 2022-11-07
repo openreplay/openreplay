@@ -10,8 +10,7 @@ def get_by_id(webhook_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT
-                           w.*
+                    SELECT w.*
                     FROM public.webhooks AS w 
                     where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id})
