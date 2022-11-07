@@ -32,6 +32,7 @@ export default class DashboardStore {
     drillDownPeriod: Record<string, any> = Period({ rangeName: LAST_7_DAYS });
     startTimestamp: number = 0;
     endTimestamp: number = 0;
+    pendingReuqests: number = 0;
 
     // Metrics
     metricsPage: number = 1;
@@ -421,6 +422,7 @@ export default class DashboardStore {
         }
 
         return new Promise((resolve, reject) => {
+            this.pendingReuqests += 1
             return metricService
                 .getMetricChartData(metric, params, isWidget)
                 .then((data: any) => {
@@ -498,6 +500,10 @@ export default class DashboardStore {
                 })
                 .catch((err: any) => {
                     reject(err);
+                }).finally(() => {
+                    setTimeout(() => {
+                        this.pendingReuqests = this.pendingReuqests - 1
+                    }, 100)
                 });
         });
     }

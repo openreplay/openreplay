@@ -269,9 +269,9 @@ export const positionOfTheNumber = (min, max, value, length) => {
     return position;
 };
 
-export const convertElementToImage = async (el) => {
+export const convertElementToImage = async (el: HTMLElement) => {
     // const fontEmbedCss = await htmlToImage.getFontEmbedCSS(el);
-    const image = await htmlToImage.toPng(el, {
+    const image = await htmlToImage.toJpeg(el, {
         pixelRatio: 2,
         // fontEmbedCss,
         filter: function (node) {

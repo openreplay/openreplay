@@ -11,6 +11,7 @@ import TemplateOverlay from './TemplateOverlay';
 import AlertButton from './AlertButton';
 import stl from './widgetWrapper.module.css';
 import { FilterKey } from 'App/types/filter/filterType';
+import LazyLoad from 'react-lazyload';
 
 interface Props {
     className?: string;
@@ -147,10 +148,11 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
                     </div>
 
                     {/* <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} > */}
+                    <LazyLoad offset={!isTemplate ? 100 : 10} >
                         <div className="px-4" onClick={onChartClick}>
                             <WidgetChart metric={widget} isTemplate={isTemplate} isWidget={isWidget} />
                         </div>
-                    {/* </LazyLoad> */}
+                    </LazyLoad>
                 </Popup>
             </div>
 
