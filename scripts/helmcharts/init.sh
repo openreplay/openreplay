@@ -59,7 +59,7 @@ usr=`whoami`
     which helm &> /dev/null
     if [[ $? -ne 0 ]]; then
         info "helm not installed. Installing it..."
-        curl -ssl https://get.helm.sh/helm-v3.4.2-linux-amd64.tar.gz -o /tmp/helm.tar.gz
+        curl -ssl https://get.helm.sh/helm-v3.10.1-linux-amd64.tar.gz -o /tmp/helm.tar.gz
         tar -xf /tmp/helm.tar.gz
         chmod +x linux-amd64/helm
         sudo cp linux-amd64/helm /usr/local/bin/helm
