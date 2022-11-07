@@ -34,6 +34,12 @@ export enum RemoteControlStatus {
   Enabled,
 }
 
+export enum SessionRecordingStatus {
+  Off,
+  Requesting,
+  Recording
+}
+
 
 export function getStatusText(status: ConnectionStatus): string {
   switch(status) {
@@ -58,6 +64,7 @@ export interface State {
   calling: CallingState;
   peerConnectionStatus: ConnectionStatus;
   remoteControl: RemoteControlStatus;
+  recordingState: SessionRecordingStatus;
   annotating: boolean;
   assistStart: number;
 }
@@ -66,6 +73,7 @@ export const INITIAL_STATE: State = {
   calling: CallingState.NoCall,
   peerConnectionStatus: ConnectionStatus.Connecting,
   remoteControl: RemoteControlStatus.Disabled,
+  recordingState: SessionRecordingStatus.Off,
   annotating: false,
   assistStart: 0,
 }
@@ -245,10 +253,43 @@ export default class AssistManager {
         this.toggleRemoteControl(false)
       })
       socket.on('call_end', this.onRemoteCallEnd)
+      socket.on('recording_accepted', () => {
+        this.toggleRecording(true)
+      })
+      socket.on('recording_denied', () => {
+        this.toggleRecording(false)
+      })
 
       document.addEventListener('visibilitychange', this.onVisChange)
 
     })
+  }
+
+  /* ==== Recording the session ==== */
+
+  public requestRecording = () => {
+    const recordingState = getState().recordingState
+    if (!this.socket || recordingState === SessionRecordingStatus.Requesting) return;
+
+    update({ recordingState: SessionRecordingStatus.Requesting })
+    this.socket.emit("request_recording", JSON.stringify({
+      ...this.session.agentInfo,
+      query: document.location.search,
+    }))
+  }
+
+  public stopRecording = () => {
+    const recordingState = getState().recordingState
+    if (!this.socket || recordingState === SessionRecordingStatus.Off) return;
+
+    this.socket.emit("stop_recording")
+    this.toggleRecording(false)
+  }
+
+  private toggleRecording = (isAccepted: boolean) => {
+    this.md.toggleRecordingStatus(isAccepted)
+
+    update({ recordingStatus: isAccepted ? SessionRecordingStatus.Recording : SessionRecordingStatus.Off })
   }
 
   /* ==== Remote Control ==== */

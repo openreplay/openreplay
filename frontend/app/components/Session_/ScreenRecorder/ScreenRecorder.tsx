@@ -1,7 +1,11 @@
 import React from 'react';
 import { screenRecorder } from 'App/utils/screenRecorder';
 import { Tooltip } from 'react-tippy'
-
+import { Button } from 'UI'
+import { requestRecording, stopRecording, connectPlayer } from 'Player'
+import {
+  SessionRecordingStatus,
+} from 'Player/MessageDistributor/managers/AssistManager';
 let stopRecorderCb: () => void
 
 /**
@@ -22,35 +26,60 @@ function isSupported() {
   return false
 }
 
-function ScreenRecorder() {
+const supportedBrowsers = ["Chrome v91+", "Edge v90+"]
+const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`
+
+function ScreenRecorder({ recordingState }: { recordingState: SessionRecordingStatus }) {
   const [isRecording, setRecording] = React.useState(false);
 
-  const toggleRecording = async () => {
-    console.log(isRecording);
-    if (isRecording) {
-      stopRecorderCb?.();
-      setRecording(false);
-    } else {
+  React.useEffect(() => {
+    return () => stopRecorderCb?.()
+  }, [])
+
+  React.useEffect(() => {
+    if (!isRecording && recordingState === SessionRecordingStatus.Recording) {
+      startRecording();
+    }
+    if (isRecording && recordingState !== SessionRecordingStatus.Recording) {
+      stopRecordingHandler();
+    }
+  }, [recordingState, isRecording])
+
+  const startRecording = async () => {
       const stop = await screenRecorder();
       stopRecorderCb = stop;
       setRecording(true);
-    }
   };
 
-  const isSupportedBrowser = isSupported()
-  if (!isSupportedBrowser) return (
-    <div className="p-3">
+  const stopRecordingHandler = () => {
+    stopRecording()
+    stopRecorderCb?.();
+    setRecording(false);
+  }
+
+  const recordingRequest = () => {
+    requestRecording()
+    // startRecording()
+  }
+
+  if (!isSupported()) return (
+    <div className="p-2">
       {/* @ts-ignore */}
-      <Tooltip title="Supported browsers: Chrome v91+; Edge v90+">
-        <div className="p-1 text-disabled-text cursor-not-allowed">Record</div>
+      <Tooltip title={supportedMessage}>
+        <Button icon="record-circle" disabled variant={isRecording ? "text-red" : "text-primary"}>
+          Record Activity
+        </Button>
       </Tooltip>
     </div>
   )
   return (
-    <div onClick={toggleRecording} className="p-3">
-      <div className="p-1 font-semibold cursor-pointer hover:text-main">{isRecording ? 'STOP' : 'RECORD'}</div>
+    <div onClick={!isRecording ? recordingRequest : stopRecordingHandler} className="p-2">
+      <Button icon={!isRecording ? 'stop-record-circle' : 'record-circle'} variant={isRecording ? "text-red" : "text-primary"}>
+        {isRecording ? 'Stop Recording' : 'Record Activity'}
+      </Button>
     </div>
   );
 }
 
-export default ScreenRecorder
+// @ts-ignore
+export default connectPlayer(state => ({ recordingState: state.recordingState}))(ScreenRecorder)
