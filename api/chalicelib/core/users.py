@@ -7,7 +7,7 @@ from fastapi import BackgroundTasks
 import schemas
 from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants, assist
-from chalicelib.utils import dev, email_helper
+from chalicelib.utils import email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -194,7 +194,6 @@ def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data["email"],
         "invitation_link": new_member["invitationLink"],
@@ -339,15 +338,15 @@ def get_by_email_only(email):
                         users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        TRUE AS has_password
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                    WHERE
-                     users.email = %(email)s                     
+                    WHERE users.email = %(email)s                     
                      AND users.deleted_at IS NULL
                     LIMIT 1;""",
                 {"email": email})
         )
-        r = cur.fetone()
+        r = cur.fetchone()
     return helper.dict_to_camel_case(r)
 
 
@@ -377,8 +376,9 @@ def get_by_email_reset(email, reset_token):
 
 def get_member(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(
-            f"""SELECT 
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
                         users.user_id,
                         users.email, 
                         users.role, 
@@ -393,7 +393,8 @@ def get_member(tenant_id, user_id):
                         invitation_token
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL AND users.user_id=%(user_id)s
-                    ORDER BY name, user_id""", {"user_id": user_id})
+                    ORDER BY name, user_id""",
+                {"user_id": user_id})
         )
         u = helper.dict_to_camel_case(cur.fetchone())
         if u:
@@ -481,8 +482,8 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
-    tenant_id = r.pop("tenantId")
 
+    tenant_id = r.pop("tenantId")
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
@@ -509,8 +510,8 @@ def set_password_invitation(user_id, new_password):
                "changePwdExpireAt": None, "changePwdToken": None}
     user = update(tenant_id=-1, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
-    tenant_id = r.pop("tenantId")
 
+    tenant_id = r.pop("tenantId")
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
@@ -609,6 +610,18 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                 )
 
 
+def change_jwt_iat(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""UPDATE public.users
+                       SET jwt_iat = timezone('utc'::text, now())
+                       WHERE user_id = %(user_id)s 
+                       RETURNING jwt_iat;""",
+            {"user_id": user_id})
+        cur.execute(query)
+        return cur.fetchone().get("jwt_iat")
+
+
 def authenticate(email, password, for_change_password=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
@@ -630,22 +643,16 @@ def authenticate(email, password, for_change_password=False):
         cur.execute(query)
         r = cur.fetchone()
 
-        if r is not None:
-            if for_change_password:
-                return True
-            r = helper.dict_to_camel_case(r)
-            query = cur.mogrify(
-                f"""UPDATE public.users
-                   SET jwt_iat = timezone('utc'::text, now())
-                   WHERE user_id = %(user_id)s 
-                   RETURNING jwt_iat;""",
-                {"user_id": r["userId"]})
-            cur.execute(query)
-            return {
-                "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                                TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),
-                                                aud=f"front:{helper.get_stage_name()}"),
-                "email": email,
-                **r
-            }
+    if r is not None:
+        if for_change_password:
+            return True
+        r = helper.dict_to_camel_case(r)
+        jwt_iat = change_jwt_iat(r['userId'])
+        return {
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
+                                            TimeUTC.datetime_to_timestamp(jwt_iat),
+                                            aud=f"front:{helper.get_stage_name()}"),
+            "email": email,
+            **r
+        }
     return None

@@ -3,7 +3,6 @@ __maintainer__ = "KRAIEM Taha Yassine"
 
 import schemas
 from chalicelib.core import events, metadata, sessions
-from chalicelib.utils import dev
 
 """
 todo: remove LIMIT from the query
@@ -559,8 +558,8 @@ def get_top_insights(filter_d, project_id):
             "dropDueToIssues": 0
 
         }]
-        counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d), project_id=project_id,
-                                          user_id=None, count_only=True)
+        counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
+                                          project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0

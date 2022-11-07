@@ -527,7 +527,7 @@ def delete_member(user_id, tenant_id, id_to_delete):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""UPDATE public.users 
+            cur.mogrify(f"""UPDATE public.users
                            SET deleted_at = timezone('utc'::text, now()) 
                            WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
