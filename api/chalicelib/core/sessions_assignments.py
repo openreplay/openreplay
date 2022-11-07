@@ -23,7 +23,8 @@ def __get_saved_data(project_id, session_id, issue_id, tool):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def create_new_assignment(tenant_id, project_id, session_id, creator_id, assignee, description, title, issue_type, integration_project_id):
+def create_new_assignment(tenant_id, project_id, session_id, creator_id, assignee, description, title, issue_type,
+                          integration_project_id):
     error, integration = integrations_manager.get_integration(tenant_id=tenant_id, user_id=creator_id)
     if error is not None:
         return error
@@ -40,7 +41,7 @@ def create_new_assignment(tenant_id, project_id, session_id, creator_id, assigne
                                                                 integration_project_id=integration_project_id)
     except integration_base_issue.RequestException as e:
         return integration_base_issue.proxy_issues_handler(e)
-    if issue is not None and "id" not in issue:
+    if issue is None or "id" not in issue:
         return {"errors": ["something went wrong while creating the issue"]}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\

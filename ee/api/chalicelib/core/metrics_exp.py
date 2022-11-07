@@ -1,7 +1,7 @@
 import math
 
 import schemas
-from chalicelib.utils import pg_client, exp_ch_helper
+from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import args_transformer
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
