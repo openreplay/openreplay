@@ -82,6 +82,17 @@ func (w *Writer) WriteDEV(sid uint64, data []byte) error {
 	return w.write(strconv.FormatUint(sid, 10)+"/devtools.mob", data)
 }
 
+func (w *Writer) WriteMOB(sid uint64, data []byte) error {
+	// Use session id as a file name without directory
+	fname := strconv.FormatUint(sid, 10)
+	file, err := w.openWithoutDir(fname)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	return err
+}
+
 func (w *Writer) write(fname string, data []byte) error {
 	file, err := w.open(fname)
 	if err != nil {
@@ -89,6 +100,34 @@ func (w *Writer) write(fname string, data []byte) error {
 	}
 	_, err = file.Write(data)
 	return err
+}
+
+func (w *Writer) openWithoutDir(fname string) (*os.File, error) {
+	file, ok := w.files[fname]
+	if ok {
+		return file, nil
+	}
+	if len(w.atimes) == w.ulimit {
+		var m_k string
+		var m_t int64 = math.MaxInt64
+		for k, t := range w.atimes {
+			if t < m_t {
+				m_k = k
+				m_t = t
+			}
+		}
+		if err := w.close(m_k); err != nil {
+			return nil, err
+		}
+	}
+
+	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+	w.files[fname] = file
+	w.atimes[fname] = time.Now().Unix()
+	return file, nil
 }
 
 func (w *Writer) SyncAll() error {

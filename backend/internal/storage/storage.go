@@ -72,7 +72,12 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 func (s *Storage) UploadSessionFiles(msg *messages.SessionEnd) error {
 	sessionDir := strconv.FormatUint(msg.SessionID(), 10)
 	if err := s.uploadKey(msg.SessionID(), sessionDir+"/dom.mob", true, 5, msg.EncryptionKey); err != nil {
-		return err
+		oldErr := s.uploadKey(msg.SessionID(), sessionDir, true, 5, msg.EncryptionKey)
+		if oldErr != nil {
+			return fmt.Errorf("upload file error: %s. failed checking mob file using old path: %s", err, oldErr)
+		}
+		// Exit method anyway because we don't have dev tools separation in prev version
+		return nil
 	}
 	if err := s.uploadKey(msg.SessionID(), sessionDir+"/devtools.mob", false, 4, msg.EncryptionKey); err != nil {
 		return err
