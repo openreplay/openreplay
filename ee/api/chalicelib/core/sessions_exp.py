@@ -101,7 +101,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)
