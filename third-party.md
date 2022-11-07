@@ -1,4 +1,4 @@
-## Licenses (as of September 23, 2022)
+## Licenses (as of November 04, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
