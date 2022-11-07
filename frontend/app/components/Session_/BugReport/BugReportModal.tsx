@@ -82,8 +82,12 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
     fetchMembers()
     bugReportStore.updateReportDefaults(defaults);
     bugReportStore.setDefaultSteps(mapEvents(events));
-    return () => bugReportStore.clearStore();
   }, []);
+
+  const onClose = () => {
+    hideModal();
+    return bugReportStore.clearStore();
+  }
 
   const onGen = () => {
     // @ts-ignore
@@ -192,7 +196,7 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
           <Button icon="file-pdf" variant="primary" onClick={onGen} loading={isRendering}>
             Download Bug Report
           </Button>
-          <Button variant="text-primary" onClick={hideModal}>
+          <Button variant="text-primary" onClick={onClose}>
             Close
           </Button>
         </div>
