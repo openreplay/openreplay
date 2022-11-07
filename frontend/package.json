@@ -57,7 +57,7 @@
     "react-select": "^5.3.2",
     "react-svg-map": "^2.2.0",
     "react-tippy": "^1.4.0",
-    "react-toastify": "^9.0.3",
+    "react-toastify": "^9.1.1",
     "react-virtualized": "^9.22.3",
     "recharts": "^2.1.13",
     "redux": "^4.0.5",
