@@ -6,17 +6,19 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {
   userDisplayName: string;
-  type: WindowType;
+  getWindowType: () => WindowType | null;
 }
 
 export enum WindowType {
   Call,
   Control,
+  Record,
 }
 
 enum Actions {
   CallEnd,
-  ControlEnd
+  ControlEnd,
+  RecordingEnd,
 }
 
 const WIN_VARIANTS = {
@@ -24,27 +26,40 @@ const WIN_VARIANTS = {
     text: 'to accept the call',
     icon: 'call' as const,
     action: Actions.CallEnd,
+    iconColor: 'teal',
   },
   [WindowType.Control]: {
     text: 'to accept remote control request',
     icon: 'remote-control' as const,
     action: Actions.ControlEnd,
+    iconColor: 'teal',
   },
+  [WindowType.Record]: {
+    text: 'to accept recording request',
+    icon: 'record-circle' as const,
+    iconColor: 'red',
+    action: Actions.RecordingEnd,
+  }
 };
 
-function RequestingWindow({ userDisplayName, type }: Props) {
+function RequestingWindow({ userDisplayName, getWindowType }: Props) {
+  const windowType = getWindowType()
+  if (!windowType) return;
   const { player } = React.useContext(PlayerContext)
+
 
   const {
     assistManager: {
       initiateCallEnd,
       releaseRemoteControl,
+      stopRecording,
     }
   } = player
 
   const actions = {
     [Actions.CallEnd]: initiateCallEnd,
-    [Actions.ControlEnd]: releaseRemoteControl
+    [Actions.ControlEnd]: releaseRemoteControl,
+    [Actions.RecordingEnd]: stopRecording,
   }
   return (
     <div
@@ -52,13 +67,13 @@ function RequestingWindow({ userDisplayName, type }: Props) {
       style={{ background: 'rgba(0,0,0, 0.30)', zIndex: INDEXES.PLAYER_REQUEST_WINDOW }}
     >
       <div className="rounded bg-white pt-4 pb-2 px-8 flex flex-col text-lg items-center max-w-lg text-center">
-        <Icon size={40} color="teal" name={WIN_VARIANTS[type].icon} className="mb-4" />
+        <Icon size={40} color={WIN_VARIANTS[windowType].iconColor} name={WIN_VARIANTS[windowType].icon} className="mb-4" />
         <div>
           Waiting for <span className="font-semibold">{userDisplayName}</span>
         </div>
-        <span>{WIN_VARIANTS[type].text}</span>
+        <span>{WIN_VARIANTS[windowType].text}</span>
         <Loader size={30} style={{ minHeight: 60 }} />
-        <Button variant="text-primary" onClick={actions[WIN_VARIANTS[type].action]}>
+        <Button variant="text-primary" onClick={actions[WIN_VARIANTS[windowType].action]}>
           Cancel
         </Button>
       </div>

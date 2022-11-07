@@ -111,6 +111,11 @@ export default class Screen {
     return Object.assign(this.screen.style, styles)
   }
 
+  toggleRecordingStatus(isEnabled: boolean) {
+    const styles = isEnabled ? { border: '2px dashed red' } : { border: 'unset'}
+    return Object.assign(this.screen.style, styles)
+  }
+
   get window(): WindowProxy | null {
     return this.iframe.contentWindow;
   }

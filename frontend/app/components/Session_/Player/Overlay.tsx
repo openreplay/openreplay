@@ -1,5 +1,11 @@
 import React from 'react';
-import { CallingState, ConnectionStatus, RemoteControlStatus, getStatusText } from 'Player';
+import {
+  SessionRecordingStatus,
+  getStatusText,
+  CallingState,
+  ConnectionStatus,
+  RemoteControlStatus,
+} from 'Player';
 
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import PlayIconLayer from './Overlay/PlayIconLayer';
@@ -36,6 +42,7 @@ function Overlay({
     livePlay,
     calling,
     remoteControl,
+    recordingState,
   } = store.get()
   const loading = messagesLoading || cssLoading
   const liveStatusText = getStatusText(peerConnectionStatus)
@@ -45,25 +52,41 @@ function Overlay({
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
   const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
-  const showRequestWindow = live && (calling === CallingState.Connecting || remoteControl === RemoteControlStatus.Requesting)
-  const requestWindowType = calling === CallingState.Connecting ? WindowType.Call : remoteControl === RemoteControlStatus.Requesting ? WindowType.Control : null
+  const showRequestWindow =
+    live &&
+    (calling === CallingState.Connecting ||
+      remoteControl === RemoteControlStatus.Requesting ||
+      recordingState === SessionRecordingStatus.Requesting);
+
+  const getRequestWindowType = () => {
+    if (calling === CallingState.Connecting) {
+      return WindowType.Call
+    }
+    if (remoteControl === RemoteControlStatus.Requesting) {
+      return WindowType.Control
+    }
+    if (recordingState === SessionRecordingStatus.Requesting) {
+      return WindowType.Record
+    }
+
+    return null;
+  }
 
   return (
     <>
-      {showRequestWindow ? <RequestingWindow type={requestWindowType} /> : null}
-      { showAutoplayTimer && <AutoplayTimer /> }
-      { showLiveStatusText &&
-        <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
-      }
-      { loading ? <Loader /> : null }
-      { showPlayIconLayer &&
-        <PlayIconLayer playing={playing} togglePlay={togglePlay} />
-      }
-      { markedTargets && <ElementsMarker targets={ markedTargets } activeIndex={activeTargetIndex}/>
-      }
+      {showRequestWindow ? <RequestingWindow getWindowType={getRequestWindowType} /> : null}
+      {showAutoplayTimer && <AutoplayTimer />}
+      {showLiveStatusText && (
+        <LiveStatusText
+          text={liveStatusText}
+          concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus}
+        />
+      )}
+      {loading ? <Loader /> : null}
+      {showPlayIconLayer && <PlayIconLayer playing={playing} togglePlay={togglePlay} />}
+      {markedTargets && <ElementsMarker targets={markedTargets} activeIndex={activeTargetIndex} />}
     </>
   );
 }
-
 
 export default observer(Overlay);
