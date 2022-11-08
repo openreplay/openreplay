@@ -1,6 +1,7 @@
 package oswriter
 
 import (
+	"errors"
 	"log"
 	"math"
 	"os"
@@ -46,9 +47,14 @@ func (w *Writer) open(fname string) (*os.File, error) {
 
 	// mkdir if not exist
 	pathTo := w.dir + filepath.Dir(fname)
-	if _, err := os.Stat(pathTo); os.IsNotExist(err) {
+	if info, err := os.Stat(pathTo); os.IsNotExist(err) {
 		if err := os.MkdirAll(pathTo, 0755); err != nil {
 			log.Printf("os.MkdirAll error: %s", err)
+		}
+	} else {
+		if !info.IsDir() {
+			log.Printf("found file")
+			return nil, errors.New("not a directory")
 		}
 	}
 
