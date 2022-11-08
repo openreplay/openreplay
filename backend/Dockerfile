@@ -1,6 +1,6 @@
 FROM golang:1.18-alpine3.15 AS prepare
 
-RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
+RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 
 WORKDIR /root
 
@@ -15,11 +15,11 @@ COPY pkg pkg
 COPY internal internal
 
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
 
 FROM alpine AS entrypoint
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
 ENV TZ=UTC \

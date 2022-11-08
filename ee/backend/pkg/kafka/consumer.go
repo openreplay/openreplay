@@ -47,6 +47,16 @@ func NewConsumer(
 		kafkaConfig.SetKey("ssl.key.location", os.Getenv("KAFKA_SSL_KEY"))
 		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
+
+		// Apply Kerberos configuration
+	if env.Bool("KAFKA_USE_KERBEROS") {
+		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
+		kafkaConfig.SetKey("sasl.mechanisms", "GSSAPI")
+		kafkaConfig.SetKey("sasl.kerberos.service.name", os.Getenv("KERBEROS_SERVICE_NAME"))
+		kafkaConfig.SetKey("sasl.kerberos.principal", os.Getenv("KERBEROS_PRINCIPAL"))
+		kafkaConfig.SetKey("sasl.kerberos.keytab", os.Getenv("KERBEROS_KEYTAB_LOCATION"))
+	}
+
 	c, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
 		log.Fatalln(err)

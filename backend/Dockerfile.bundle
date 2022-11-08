@@ -1,6 +1,6 @@
 FROM golang:1.18-alpine3.15 AS prepare
 
-RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
+RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl-gssapi cyrus-sasl-devel
 
 WORKDIR /root
 
@@ -14,11 +14,11 @@ COPY cmd cmd
 COPY pkg pkg
 COPY internal internal
 
-RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/cmd/$name; done
+RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags dynamic openreplay/backend/cmd/$name; done
 
 FROM alpine AS entrypoint
 #FROM pygmy/alpine-tini:latest
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl-gssapi cyrus-sasl-devel pkgconf
 
 ENV TZ=UTC \
     FS_ULIMIT=1000 \
