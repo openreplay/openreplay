@@ -10,7 +10,5 @@ app.py
 app_crons.py
 requirements.txt
 requirements-crons.txt
-build.sh
-build_crons.sh
 entrypoint.sh
 entrypoint_crons.sh
