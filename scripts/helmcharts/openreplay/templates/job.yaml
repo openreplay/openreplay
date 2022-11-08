@@ -166,6 +166,8 @@ spec:
             value: "{{ .Values.global.s3.region }}"
           - name: AWS_ENDPOINT
             value: "{{ .Values.global.s3.endpoint }}"
+          - name: VAULT_BUCKET
+            value: "{{ .Values.global.s3.vaultBucket }}"
         image: amazon/aws-cli
         command: 
         - /bin/bash
@@ -174,7 +176,7 @@ spec:
         - |
           while true; do
           [[ -f /opt/openreplay/vault_creds.txt ]] && {
-            aws s3 cp --endpoint ${AWS_ENDPOINT} /opt/openreplay/vault_creds.txt s3://static/vault/
+            aws s3 cp --endpoint ${AWS_ENDPOINT} /opt/openreplay/vault_creds.txt s3://${VAULT_BUCKET}/vault/
             exit 0
           } || {
             echo vault not yet initialized;
