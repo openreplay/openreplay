@@ -5,3 +5,7 @@
 **/build_*.sh
 **/*deploy.sh
 Dockerfile*
+
+app_alerts.py
+requirements-alerts.txt
+entrypoint_alerts.sh
