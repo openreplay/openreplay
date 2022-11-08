@@ -63,4 +63,8 @@ $$ LANGUAGE plpgsql;
 ALTER TABLE IF EXISTS sessions
     ADD COLUMN IF NOT EXISTS file_key BYTEA DEFAULT NULL;
 
+UPDATE users
+SET role_id=NULL
+WHERE deleted_at IS NOT NULL;
+
 COMMIT;
