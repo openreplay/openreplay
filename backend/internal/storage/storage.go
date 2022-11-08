@@ -93,9 +93,9 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 	}
 
 	// Ignore "s" at the end of mob file name for "old" sessions
-	prevVers := false
+	newVers := false
 	if strings.Contains(key, "/") {
-		prevVers = true
+		newVers = true
 	}
 	start := time.Now()
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
@@ -145,7 +145,7 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		// Compress and save to s3
 		startReader := bytes.NewBuffer(encryptedData)
 		startKey := key
-		if prevVers {
+		if newVers {
 			startKey += "s"
 		}
 		if err := s.s3.Upload(s.gzipFile(startReader), startKey, "application/octet-stream", true); err != nil {
