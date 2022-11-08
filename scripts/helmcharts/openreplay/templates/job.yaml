@@ -180,11 +180,13 @@ spec:
             exit 0
           } || {
             (cat /opt/openreplay/err.txt | grep -i "vault is already initialized") && { 
-            echo vault already initialized
-            exit 0
-            } || {
-              echo Unknown error
-              cat /opt/openreplay/err.txt
+                cat /opt/openreplay/err.txt
+                echo vault already initialized
+                exit 0
+              } || {
+                echo Unknown error
+                cat /opt/openreplay/err.txt
+                exit 2
             }
           } || {
             echo vault not yet initialized;
