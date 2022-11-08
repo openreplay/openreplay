@@ -241,6 +241,7 @@ Pipfile
 /routers/subs/__init__.py
 /routers/__init__.py
 /chalicelib/core/assist.py
+/auth/__init__.py
 /auth/auth_apikey.py
 /build.sh
 /routers/base.py
