@@ -13,9 +13,9 @@ export VAULT_ADDR=http://databases-vault.db.svc.cluster.local:8200
 # Check vault is already initialized, if so return 
 
 # initialize vault
-vault_output=$(vault operator init) 2> /tmp/err.txt || {
+vault_output=$(vault operator init) 2> /opt/openreplay/err.txt || {
   err_code=$?
-  (cat /tmp/err.txt | grep -i "vault is already initialized") && {
+  (cat /opt/openreplay/err.txt | grep -i "vault is already initialized") && {
     echo "Vault already initialized."
     err_code=0
   }
@@ -23,7 +23,7 @@ vault_output=$(vault operator init) 2> /tmp/err.txt || {
 }
 
 # Writting output to a file
-echo $vault_output > /tmp/vault_creds.txt
+echo $vault_output > /opt/openreplay/vault_creds.txt
 
 # Unsealing vault
 for i in 1 2 3; do
@@ -60,13 +60,13 @@ vault write auth/kubernetes/config \
 
 
 # Allow apps to create credentials for the policy db-app
-cat <<EOF >/tmp/pgaccess-policy.hcl
+cat <<EOF >/opt/openreplay/pgaccess-policy.hcl
 path "database/creds/db-app" {
   capabilities = ["read"]
 }
 EOF
 
-vault policy write pgaccess /tmp/pgaccess-policy.hcl
+vault policy write pgaccess /opt/openreplay/pgaccess-policy.hcl
 
 vault write auth/kubernetes/role/pgaccess \
     bound_service_account_names="*-openreplay" \
