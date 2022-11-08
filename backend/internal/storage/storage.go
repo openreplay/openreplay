@@ -73,6 +73,7 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 func (s *Storage) UploadSessionFiles(msg *messages.SessionEnd) error {
 	sessionDir := strconv.FormatUint(msg.SessionID(), 10)
 	if err := s.uploadKey(msg.SessionID(), sessionDir+"/dom.mob", true, 5, msg.EncryptionKey); err != nil {
+		log.Printf("uploadKey error: %s", err)
 		oldErr := s.uploadKey(msg.SessionID(), sessionDir, true, 5, msg.EncryptionKey)
 		if oldErr != nil {
 			return fmt.Errorf("upload file error: %s. failed checking mob file using old path: %s", err, oldErr)
@@ -92,11 +93,6 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		return nil
 	}
 
-	// Ignore "s" at the end of mob file name for "old" sessions
-	newVers := false
-	if strings.Contains(key, "/") {
-		newVers = true
-	}
 	start := time.Now()
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
@@ -107,6 +103,12 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 	}
 	defer file.Close()
 
+	// Ignore "s" at the end of mob file name for "old" sessions
+	newVers := false
+	if strings.Contains(key, "/") {
+		newVers = true
+	}
+
 	var fileSize int64 = 0
 	fileInfo, err := file.Stat()
 	if err != nil {
@@ -114,6 +116,8 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 	} else {
 		fileSize = fileInfo.Size()
 	}
+	log.Printf("file size: %d", fileSize)
+
 	var encryptedData []byte
 	if shouldSplit {
 		nRead, err := file.Read(s.startBytes)
