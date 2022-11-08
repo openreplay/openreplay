@@ -179,6 +179,14 @@ spec:
             aws s3 cp --endpoint ${AWS_ENDPOINT} /opt/openreplay/vault_creds.txt s3://${VAULT_BUCKET}/vault/
             exit 0
           } || {
+            (cat /opt/openreplay/err.txt | grep -i "vault is already initialized") && { 
+            echo vault already initialized
+            exit 0
+            } || {
+              echo Unknown error
+              cat /opt/openreplay/err.txt
+            }
+          } || {
             echo vault not yet initialized;
             sleep 2
           };
