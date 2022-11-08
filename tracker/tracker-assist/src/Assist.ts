@@ -12,6 +12,7 @@ import AnnotationCanvas from './AnnotationCanvas.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
+import ScreenRecordingState, { RecordingState, } from './ScreenRecordingState'
 
 // TODO: fully specified strict check with no-any (everywhere)
 
@@ -21,6 +22,7 @@ export interface Options {
   onAgentConnect: StartEndCallback;
   onCallStart: StartEndCallback;
   onRemoteControlStart: StartEndCallback;
+  onRecordingRequest?: (agentInfo: Record<string, any>) => any;
   session_calling_peer_key: string;
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
@@ -144,6 +146,7 @@ export default class Assist {
   private onStart() {
     const app = this.app
     const sessionId = app.getSessionID()
+
     if (!sessionId) {
       return app.debug.error('No session ID')
     }
@@ -199,6 +202,14 @@ export default class Assist {
       },
     )
 
+    const onAcceptRecording = () => {
+      socket.emit('recording_accepted')
+    }
+    const onDenyRecording = () => {
+      socket.emit('recording_denied')
+    }
+    const recordingState =  new ScreenRecordingState(onAcceptRecording, onDenyRecording)
+    setTimeout(() => recordingState.requestRecording(), 5000)
     // TODO: check incoming args
     socket.on('request_control', this.remoteControl.requestControl)
     socket.on('release_control', this.remoteControl.releaseControl)
@@ -231,7 +242,7 @@ export default class Assist {
       ids.forEach(id =>{
         const agentInfo = this.agents[id]?.agentInfo
         this.agents[id] = {
-          agentInfo,
+          ...this.agents[id],
           onDisconnect: this.options.onAgentConnect?.(agentInfo),
         }
       })
@@ -268,6 +279,12 @@ export default class Assist {
     })
     socket.on('videofeed', (id, feedState) => {
       callUI?.toggleVideoStream(feedState)
+    })
+    socket.on('request_recording', (id, agentData) => {
+      if (recordingState.status === RecordingState.Off) {
+        console.log('requested screen recording', this.agents[id].agentInfo, agentData)
+        this.options.onRecordingRequest?.(agentData)
+      }
     })
 
     const callingAgents: Map<string, string> = new Map() // !! uses socket.io ID
