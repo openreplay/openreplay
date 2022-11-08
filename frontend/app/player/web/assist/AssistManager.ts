@@ -150,6 +150,7 @@ export default class AssistManager {
     const now = +new Date()
     this.store.update({ assistStart: now })
 
+    // @ts-ignore
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
@@ -395,6 +396,8 @@ export default class AssistManager {
 
     // @ts-ignore
     const urlObject = new URL(window.env.API_EDP || window.location.origin)
+
+    // @ts-ignore TODO: set module in ts settings
     return import('peerjs').then(({ default: Peer }) => {
       if (this.cleaned) {return Promise.reject("Already cleaned")}
       const peerOpts: Peer.PeerJSOption = {
