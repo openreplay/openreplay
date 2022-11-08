@@ -199,14 +199,12 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     n_stages_query += ") AS stages_t"
 
     n_stages_query = f"""
-    SELECT stages_and_issues_t.*,sessions.session_id, sessions.user_uuid FROM (
+    SELECT stages_and_issues_t.*, sessions.user_uuid FROM (
         SELECT * FROM (
              SELECT * FROM
                 {n_stages_query}
         LEFT JOIN LATERAL 
-        (
-            SELECT * FROM 
-            (SELECT ISE.session_id, 
+        (   SELECT ISE.session_id, 
                     ISS.type as issue_type,  
                     ISE.timestamp AS issue_timestamp,
                     ISS.context_string as issue_context,
@@ -215,10 +213,9 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             WHERE ISE.timestamp >= stages_t.stage1_timestamp 
                 AND ISE.timestamp <= stages_t.stage{i + 1}_timestamp 
                 AND ISS.project_id=%(project_id)s
-                {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}) AS base_t
-        ) AS issues_t 
-        USING (session_id)) AS stages_and_issues_t
-    inner join sessions USING(session_id);
+                {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}
+        ) AS issues_t USING (session_id)
+    ) AS stages_and_issues_t INNER JOIN sessions USING(session_id);
     """
 
     #  LIMIT 10000
