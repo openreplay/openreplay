@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -91,6 +92,11 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		return nil
 	}
 
+	// Ignore "s" at the end of mob file name for "old" sessions
+	prevVers := false
+	if strings.Contains(key, "/") {
+		prevVers = true
+	}
 	start := time.Now()
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
@@ -138,7 +144,11 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		}
 		// Compress and save to s3
 		startReader := bytes.NewBuffer(encryptedData)
-		if err := s.s3.Upload(s.gzipFile(startReader), key+"s", "application/octet-stream", true); err != nil {
+		startKey := key
+		if prevVers {
+			startKey += "s"
+		}
+		if err := s.s3.Upload(s.gzipFile(startReader), startKey, "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: start upload failed.  %v\n", err)
 		}
 		// TODO: fix possible error (if we read less then FileSplitSize)
