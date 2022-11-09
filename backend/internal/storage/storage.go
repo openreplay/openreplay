@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -72,7 +73,12 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 func (s *Storage) UploadSessionFiles(msg *messages.SessionEnd) error {
 	sessionDir := strconv.FormatUint(msg.SessionID(), 10)
 	if err := s.uploadKey(msg.SessionID(), sessionDir+"/dom.mob", true, 5, msg.EncryptionKey); err != nil {
-		return err
+		oldErr := s.uploadKey(msg.SessionID(), sessionDir, true, 5, msg.EncryptionKey)
+		if oldErr != nil {
+			return fmt.Errorf("upload file error: %s. failed checking mob file using old path: %s", err, oldErr)
+		}
+		// Exit method anyway because we don't have dev tools separation in prev version
+		return nil
 	}
 	if err := s.uploadKey(msg.SessionID(), sessionDir+"/devtools.mob", false, 4, msg.EncryptionKey); err != nil {
 		return err
@@ -96,6 +102,12 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 	}
 	defer file.Close()
 
+	// Ignore "s" at the end of mob file name for "old" sessions
+	newVers := false
+	if strings.Contains(key, "/") {
+		newVers = true
+	}
+
 	var fileSize int64 = 0
 	fileInfo, err := file.Stat()
 	if err != nil {
@@ -103,6 +115,7 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 	} else {
 		fileSize = fileInfo.Size()
 	}
+
 	var encryptedData []byte
 	if shouldSplit {
 		nRead, err := file.Read(s.startBytes)
@@ -133,7 +146,11 @@ func (s *Storage) uploadKey(sessID uint64, key string, shouldSplit bool, retryCo
 		}
 		// Compress and save to s3
 		startReader := bytes.NewBuffer(encryptedData)
-		if err := s.s3.Upload(s.gzipFile(startReader), key+"s", "application/octet-stream", true); err != nil {
+		startKey := key
+		if newVers {
+			startKey += "s"
+		}
+		if err := s.s3.Upload(s.gzipFile(startReader), startKey, "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: start upload failed.  %v\n", err)
 		}
 		// TODO: fix possible error (if we read less then FileSplitSize)

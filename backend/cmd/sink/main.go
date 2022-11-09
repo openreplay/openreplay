@@ -6,6 +6,7 @@ import (
 	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -100,15 +101,36 @@ func main() {
 			log.Printf("can't encode with index, err: %s", err)
 			return
 		}
+		wasWritten := false // To avoid timestamp duplicates in original mob file
 		if messages.IsDOMType(msg.TypeID()) {
 			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				log.Printf("DOM Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
+				if strings.Contains(err.Error(), "not a directory") {
+					// Trying to write data to mob file by original path
+					oldErr := writer.WriteMOB(msg.SessionID(), data)
+					if oldErr != nil {
+						log.Printf("MOB Writeer error: %s, prev DOM error: %s, info: %s", oldErr, err, msg.Meta().Batch().Info())
+					} else {
+						wasWritten = true
+					}
+				} else {
+					log.Printf("DOM Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
+				}
 			}
 		}
 		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
 			// TODO: write only necessary timestamps
 			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				log.Printf("Devtools Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
+				if strings.Contains(err.Error(), "not a directory") {
+					if !wasWritten {
+						// Trying to write data to mob file by original path
+						oldErr := writer.WriteMOB(msg.SessionID(), data)
+						if oldErr != nil {
+							log.Printf("MOB Writeer error: %s, prev DEV error: %s, info: %s", oldErr, err, msg.Meta().Batch().Info())
+						}
+					}
+				} else {
+					log.Printf("Devtools Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
+				}
 			}
 		}
 
@@ -136,8 +158,8 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			if err := writer.SyncAll(); err != nil {
-				log.Printf("sync error: %v\n", err)
+			if err := writer.CloseAll(); err != nil {
+				log.Printf("closeAll error: %v\n", err)
 			}
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)

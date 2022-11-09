@@ -1,6 +1,8 @@
 package oswriter
 
 import (
+	"errors"
+	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -45,12 +47,22 @@ func (w *Writer) open(fname string) (*os.File, error) {
 
 	// mkdir if not exist
 	pathTo := w.dir + filepath.Dir(fname)
-	if _, err := os.Stat(pathTo); os.IsNotExist(err) {
-		os.MkdirAll(pathTo, 0755)
+	if info, err := os.Stat(pathTo); os.IsNotExist(err) {
+		if err := os.MkdirAll(pathTo, 0755); err != nil {
+			log.Printf("os.MkdirAll error: %s", err)
+		}
+	} else {
+		if err != nil {
+			return nil, err
+		}
+		if !info.IsDir() {
+			return nil, errors.New("not a directory")
+		}
 	}
 
 	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
+		log.Printf("os.OpenFile error: %s", err)
 		return nil, err
 	}
 	w.files[fname] = file
@@ -82,6 +94,17 @@ func (w *Writer) WriteDEV(sid uint64, data []byte) error {
 	return w.write(strconv.FormatUint(sid, 10)+"/devtools.mob", data)
 }
 
+func (w *Writer) WriteMOB(sid uint64, data []byte) error {
+	// Use session id as a file name without directory
+	fname := strconv.FormatUint(sid, 10)
+	file, err := w.openWithoutDir(fname)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write(data)
+	return err
+}
+
 func (w *Writer) write(fname string, data []byte) error {
 	file, err := w.open(fname)
 	if err != nil {
@@ -89,6 +112,34 @@ func (w *Writer) write(fname string, data []byte) error {
 	}
 	_, err = file.Write(data)
 	return err
+}
+
+func (w *Writer) openWithoutDir(fname string) (*os.File, error) {
+	file, ok := w.files[fname]
+	if ok {
+		return file, nil
+	}
+	if len(w.atimes) == w.ulimit {
+		var m_k string
+		var m_t int64 = math.MaxInt64
+		for k, t := range w.atimes {
+			if t < m_t {
+				m_k = k
+				m_t = t
+			}
+		}
+		if err := w.close(m_k); err != nil {
+			return nil, err
+		}
+	}
+
+	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+	w.files[fname] = file
+	w.atimes[fname] = time.Now().Unix()
+	return file, nil
 }
 
 func (w *Writer) SyncAll() error {
