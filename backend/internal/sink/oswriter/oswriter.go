@@ -52,6 +52,9 @@ func (w *Writer) open(fname string) (*os.File, error) {
 			log.Printf("os.MkdirAll error: %s", err)
 		}
 	} else {
+		if err != nil {
+			return nil, err
+		}
 		if !info.IsDir() {
 			return nil, errors.New("not a directory")
 		}
