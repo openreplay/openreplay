@@ -1,4 +1,5 @@
 import React from 'react';
+import cn from 'classnames';
 
 interface Props {
   shades: Record<string, string>;
@@ -11,7 +12,7 @@ const getCircularReplacer = () => {
   const seen = new WeakSet();
   // @ts-ignore
   return (key, value) => {
-    if (typeof value === "object" && value !== null) {
+    if (typeof value === 'object' && value !== null) {
       if (seen.has(value)) {
         return;
       }
@@ -23,20 +24,57 @@ const getCircularReplacer = () => {
 
 function DiffRow({ diff, path }: Props) {
   const [shorten, setShorten] = React.useState(true);
+  const [shortenOldVal, setShortenOldVal] = React.useState(true);
+  const [shortenNewVal, setShortenNewVal] = React.useState(true);
 
-  const oldValue = diff.item ? JSON.stringify(diff.item.lhs, getCircularReplacer()) : JSON.stringify(diff.lhs, getCircularReplacer());
-  const newValue = diff.item ? JSON.stringify(diff.item.rhs, getCircularReplacer()) : JSON.stringify(diff.rhs, getCircularReplacer());
+  const oldValue = diff.item
+    ? JSON.stringify(diff.item.lhs, getCircularReplacer(), 1)
+    : JSON.stringify(diff.lhs, getCircularReplacer(), 1);
+  const newValue = diff.item
+    ? JSON.stringify(diff.item.rhs, getCircularReplacer(), 1)
+    : JSON.stringify(diff.rhs, getCircularReplacer(), 1);
 
-  const pathStr = path.length > 15 && shorten ? path.slice(0, 5) + '...' + path.slice(10) : path;
+  const length = path.length;
+  const diffLengths = [oldValue?.length || 0, newValue?.length || 0];
+
+  const pathStr =
+    length > 20 && shorten ? path.slice(0, 5) + '...' + path.slice(length - 10, length) : path;
+
+  const oldValueSafe =
+    diffLengths[0] > 50 && shortenOldVal
+      ? `${oldValue.slice(0, 10)} ... ${oldValue.slice(diffLengths[0] - 25, diffLengths[0])}`
+      : oldValue;
+  const newValueSafe =
+    diffLengths[1] > 50 && shortenNewVal
+      ? `${newValue.slice(0, 10)} ... ${newValue.slice(diffLengths[1] - 25, diffLengths[1])}`
+      : newValue;
+
   return (
     <div className="p-1 rounded">
-      <span className={path.length > 15 ? 'cursor-pointer' : ''} onClick={() => setShorten(false)}>
+      <span className={length > 20 ? 'cursor-pointer' : ''} onClick={() => setShorten(!shorten)}>
         {pathStr}
         {': '}
       </span>
-      <span className="line-through text-disabled-text">{oldValue || 'undefined'}</span>
+      <span
+        onClick={() => setShortenOldVal(!shortenOldVal)}
+        className={cn(
+          'line-through text-disabled-text',
+          diffLengths[0] > 50 ? 'cursor-pointer' : ''
+        )}
+      >
+        {oldValueSafe || 'undefined'}
+      </span>
       {' -> '}
-      <span className={`${!newValue ? 'text-red' : 'text-green'}`}>{newValue || 'undefined'}</span>
+      <span
+        onClick={() => setShortenNewVal(!shortenNewVal)}
+        className={cn(
+          'whitespace-pre',
+          newValue ? 'text-red' : 'text-green',
+          diffLengths[1] > 50 ? 'cursor-pointer' : ''
+        )}
+      >
+        {newValueSafe || 'undefined'}
+      </span>
     </div>
   );
 }

@@ -77,14 +77,14 @@ export default class Storage extends React.PureComponent {
 
     if (!stateDiff) {
       return (
-        <div style={{ flex: 1 }} className="flex flex-col p-2 pr-0 font-mono text-disabled-text">
+        <div style={{ flex: 3 }} className="flex flex-col p-2 pr-0 font-mono text-disabled-text">
           No diff
         </div>
       );
     }
 
     return (
-      <div style={{ flex: 1 }} className="flex flex-col p-1 font-mono">
+      <div style={{ flex: 3 }} className="flex flex-col p-1 font-mono">
         {stateDiff.map((d, i) => this.renderDiffs(d, i))}
       </div>
     );
@@ -166,13 +166,12 @@ export default class Storage extends React.PureComponent {
       >
         {src === null ? (
           <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}>
-            {' '}
-            {name}{' '}
+            {name}
           </div>
         ) : (
           <>
             {this.renderDiff(item, prevItem)}
-            <div style={{ flex: 2 }} className="flex pl-10">
+            <div style={{ flex: 2 }} className="flex pl-10 pt-2">
               <JSONTree
                 name={this.ensureString(name)}
                 src={src}
@@ -182,7 +181,7 @@ export default class Storage extends React.PureComponent {
             </div>
           </>
         )}
-        <div style={{ flex: 1 }} className="flex-1 flex gap-2 items-center justify-end self-center">
+        <div style={{ flex: 1 }} className="flex-1 flex gap-2 pt-2 items-center justify-end self-start">
           {typeof item.duration === 'number' && (
             <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
           )}
@@ -214,11 +213,11 @@ export default class Storage extends React.PureComponent {
             <div className="flex w-full">
               {showStore && <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">{'STATE'}</h3>}
               {this.state.showDiffs ? (
-                <h3 style={{ width: '20%'}}  className="font-semibold">
+                <h3 style={{ width: '39%'}}  className="font-semibold">
                   DIFFS
                 </h3>
               ) : null}
-              <h3 style={{ width: '50%' }}  className="font-semibold">{getActionsName(type)}</h3>
+              <h3 style={{ width: '30%' }}  className="font-semibold">{getActionsName(type)}</h3>
               <h3 style={{ paddingRight: 30, marginLeft: 'auto' }}  className="font-semibold">
                 <Tooltip title="Time to execute">
                   TTE
