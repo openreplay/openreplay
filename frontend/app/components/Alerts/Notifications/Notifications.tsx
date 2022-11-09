@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import stl from './notifications.module.css';
 import { connect } from 'react-redux';
-import { Icon, Popup } from 'UI';
+import { Icon, Popup, Tooltip } from 'UI';
 import { fetchList, setViewed, clearAll } from 'Duck/notifications';
 import { setLastRead } from 'Duck/announcements';
 import { useModal } from 'App/components/Modal';
@@ -29,7 +29,7 @@ function Notifications(props: Props) {
   }, []);
 
   return useObserver(() => (
-    <Popup content={`Alerts`}>
+    <Tooltip tooltip={`Alerts`}>
       <div
         className={stl.button}
         onClick={() => showModal(<AlertTriggersModal />, { right: true })}
@@ -39,7 +39,7 @@ function Notifications(props: Props) {
         </div>
         <Icon name="bell" size="18" color="gray-dark" />
       </div>
-    </Popup>
+    </Tooltip>
   ));
 }
 

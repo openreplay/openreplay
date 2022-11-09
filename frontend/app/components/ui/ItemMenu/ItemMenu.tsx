@@ -1,7 +1,6 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, Popover } from 'UI';
 import styles from './itemMenu.module.css';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import cn from 'classnames';
 
 interface Item {
@@ -58,71 +57,69 @@ export default class ItemMenu extends React.PureComponent<Props> {
     const parentStyles = label ? 'rounded px-2 py-2 hover:bg-gray-light' : '';
 
     return (
-      <div className={styles.wrapper}>
-        <OutsideClickDetectingDiv onClickOutside={this.closeMenu}>
+      <Popover
+        render={() => (
           <div
-            onClick={this.toggleMenu}
-            className={cn(
-              'flex items-center cursor-pointer select-none hover rounded-full',
-              !this.props.flat ? parentStyles : '',
-              { 'bg-gray-light': !this.props.flat && displayed && label }
-            )}
+            className={cn(styles.menu, { [styles.menuDim]: !bold })}
+            // style={{
+            //   top: this.props.flat ? 24 : undefined,
+            // }}
+            // data-displayed={displayed}
           >
-            {label && (
-              <span
-                className={cn(
-                  'mr-1',
-                  bold ? 'font-medium color-gray-darkest' : 'color-gray-medium'
-                )}
-              >
-                {label}
-              </span>
-            )}
-            {this.props.flat ? null : (
-              <div
-                ref={(ref) => {
-                  this.menuBtnRef = ref;
-                }}
-                className={cn('rounded-full flex items-center justify-center', {
-                  'bg-gray-light': displayed,
-                  'w-10 h-10': !label,
-                })}
-                role="button"
-              >
-                <Icon name="ellipsis-v" size="16" />
-              </div>
-            )}
-          </div>
-        </OutsideClickDetectingDiv>
-        <div
-          className={cn(styles.menu, { [styles.menuDim]: !bold })}
-          style={{
-            top: this.props.flat ? 24 : undefined,
-          }}
-          data-displayed={displayed}
-        >
-          {items
-            .filter(({ hidden }) => !hidden)
-            .map(({ onClick, text, icon, disabled = false }) => (
-              <div
-                key={text}
-                onClick={!disabled ? this.onClick(onClick) : () => {}}
-                className={disabled ? 'cursor-not-allowed' : ''}
-                role="menuitem"
-              >
-                <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
-                  {icon && (
-                    <div className={styles.iconWrapper}>
-                      {/* @ts-ignore */}
-                      <Icon name={icon} size="13" color="gray-dark" />
-                    </div>
-                  )}
-                  <div>{text}</div>
+            {items
+              .filter(({ hidden }) => !hidden)
+              .map(({ onClick, text, icon, disabled = false }) => (
+                <div
+                  key={text}
+                  onClick={!disabled ? this.onClick(onClick) : () => {}}
+                  className={disabled ? 'cursor-not-allowed' : ''}
+                  role="menuitem"
+                >
+                  <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
+                    {icon && (
+                      <div className={styles.iconWrapper}>
+                        {/* @ts-ignore */}
+                        <Icon name={icon} size="13" color="gray-dark" />
+                      </div>
+                    )}
+                    <div>{text}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+          </div>
+        )}
+      >
+        <div
+          // onClick={this.toggleMenu}
+          className={cn(
+            'flex items-center cursor-pointer select-none hover rounded-full',
+            !this.props.flat ? parentStyles : '',
+            { 'bg-gray-light': !this.props.flat && displayed && label }
+          )}
+        >
+          {label && (
+            <span
+              className={cn('mr-1', bold ? 'font-medium color-gray-darkest' : 'color-gray-medium')}
+            >
+              {label}
+            </span>
+          )}
+          {this.props.flat ? null : (
+            <div
+              ref={(ref) => {
+                this.menuBtnRef = ref;
+              }}
+              className={cn('rounded-full flex items-center justify-center', {
+                'bg-gray-light': displayed,
+                'w-10 h-10': !label,
+              })}
+              role="button"
+            >
+              <Icon name="ellipsis-v" size="16" />
+            </div>
+          )}
         </div>
-      </div>
+      </Popover>
     );
   }
 }
