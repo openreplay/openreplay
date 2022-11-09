@@ -208,7 +208,7 @@ export default class Assist {
     const onDenyRecording = () => {
       socket.emit('recording_denied')
     }
-    const recordingState =  new ScreenRecordingState(onAcceptRecording, onDenyRecording)
+    const recordingState =  new ScreenRecordingState(onAcceptRecording, onDenyRecording, this.options)
     setTimeout(() => recordingState.requestRecording(), 5000)
     // TODO: check incoming args
     socket.on('request_control', this.remoteControl.requestControl)
