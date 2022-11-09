@@ -10,7 +10,7 @@ from enum import Enum
 class Permissions(str, Enum):
     session_replay = "SESSION_REPLAY"
     dev_tools = "DEV_TOOLS"
-    errors = "ERRORS"
+    # errors = "ERRORS"
     metrics = "METRICS"
     assist_live = "ASSIST_LIVE"
     assist_call = "ASSIST_CALL"
