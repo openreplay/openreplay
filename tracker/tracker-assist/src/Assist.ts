@@ -177,7 +177,7 @@ export default class Assist {
         if (this.remoteControl){
           callUI?.showRemoteControl(this.remoteControl.releaseControl)
         }
-        this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id].agentInfo)
+        this.agents[id].onControlReleased = this.options.onRemoteControlStart(this.agents[id]?.agentInfo)
         this.emit('control_granted', id)
         annot = new AnnotationCanvas()
         annot.mount()
@@ -209,7 +209,7 @@ export default class Assist {
       socket.emit('recording_denied')
     }
     const recordingState =  new ScreenRecordingState(onAcceptRecording, onDenyRecording, this.options)
-    setTimeout(() => recordingState.requestRecording(), 5000)
+
     // TODO: check incoming args
     socket.on('request_control', this.remoteControl.requestControl)
     socket.on('release_control', this.remoteControl.releaseControl)
@@ -282,8 +282,13 @@ export default class Assist {
     })
     socket.on('request_recording', (id, agentData) => {
       if (recordingState.status === RecordingState.Off) {
-        console.log('requested screen recording', this.agents[id].agentInfo, agentData)
-        this.options.onRecordingRequest?.(agentData)
+        this.options.onRecordingRequest?.(JSON.parse(agentData))
+        recordingState.requestRecording(id)
+      }
+    })
+    socket.on('stop_recording', (id) => {
+      if (recordingState.status !== RecordingState.Off) {
+        recordingState.denyRecording(id)
       }
     })
 

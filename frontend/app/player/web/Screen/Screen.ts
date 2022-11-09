@@ -54,9 +54,11 @@ export default class Screen {
   readonly cursor: Cursor
 
   private readonly iframe: HTMLIFrameElement;
-  private readonly screen: HTMLDivElement;
-  private readonly controlButton: HTMLDivElement;
-  private parentElement: HTMLElement | null = null;
+  protected readonly screen: HTMLDivElement;
+  protected readonly controlButton: HTMLDivElement;
+  protected parentElement: HTMLElement | null = null;
+  private remoteControlEnabled = false;
+  private recordingEnabled = false;
 
   constructor() {
     const iframe = document.createElement('iframe');
@@ -102,17 +104,23 @@ export default class Screen {
     })
   }
 
-  getParentElement():  HTMLElement | null {
-    return this.parentElement
-  }
-
-  toggleBorder(isEnabled: boolean ) {
-    const styles = isEnabled ? { border: '2px dashed blue' } : { border: 'unset'}
+  toggleRemoteControlStatus(isEnabled: boolean ) {
+    this.remoteControlEnabled = isEnabled;
+    if (!isEnabled) {
+      const styles = this.recordingEnabled ? { border: '2px dashed red' } : { border: 'unset'}
+      return Object.assign(this.screen.style, styles)
+    }
+    const styles = { border: '2px dashed blue' }
     return Object.assign(this.screen.style, styles)
   }
 
   toggleRecordingStatus(isEnabled: boolean) {
-    const styles = isEnabled ? { border: '2px dashed red' } : { border: 'unset'}
+    this.recordingEnabled = isEnabled;
+    if (!isEnabled) {
+      const styles = this.remoteControlEnabled ? { border: '2px dashed blue' } : { border: 'unset'}
+      return Object.assign(this.screen.style, styles)
+    }
+    const styles = { border: '2px dashed red' }
     return Object.assign(this.screen.style, styles)
   }
 

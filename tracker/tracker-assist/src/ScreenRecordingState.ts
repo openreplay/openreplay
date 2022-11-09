@@ -41,6 +41,8 @@ const borderEmulationStyles = {
 
 export default class ScreenRecordingState {
   public status = RecordingState.Off
+  private agentsRecordingSession: string[] = []
+  private overlayAdded = false
 
   constructor(
     private readonly onAccept: () => void,
@@ -50,20 +52,15 @@ export default class ScreenRecordingState {
 
   private confirm: ConfirmWindow | null = null
 
-  public requestRecording = () => {
+  public requestRecording = (id: string) => {
     if (this.status !== RecordingState.Off) return
     this.status = RecordingState.Requested
-
-      // todo: change timeout to deny after testing
-      setTimeout(() => {
-        console.log('starting recording')
-        this.acceptRecording()
-      }, 5000)
 
     this.confirm = new ConfirmWindow(recordRequestDefault(this.options.controlConfirm))
     this.confirm.mount().then(allowed => {
       if (allowed) {
         this.acceptRecording()
+        this.agentsRecordingSession.push(id)
       } else {
         this.confirm?.remove()
         this.denyRecording()
@@ -79,43 +76,57 @@ export default class ScreenRecordingState {
   }
 
   private readonly acceptRecording = () => {
-    const borders = {
-      left: window.document.createElement('div'),
-      top: window.document.createElement('div'),
-      right: window.document.createElement('div'),
-      bottom: window.document.createElement('div'),
-    }
+    if (!this.overlayAdded) {
+      const borders = {
+        left: window.document.createElement('div'),
+        top: window.document.createElement('div'),
+        right: window.document.createElement('div'),
+        bottom: window.document.createElement('div'),
+      }
 
-    const stopButton = window.document.createElement('div')
-    stopButton.onclick = this.denyRecording
-    const styles = {
-      cursor: 'pointer',
-      color: 'white',
-      position: 'fixed',
-      bottom: 0,
-      left: 'calc(50vw - 10px)',
-      padding: 4,
-      background: 'blue',
-      borderRadius: 6,
-      textAlign: 'center',
-    }
-    Object.assign(stopButton.style, styles)
-    stopButton.textContent = 'Stop Recording'
-    stopButton.id = 'or-recording-border'
-    window.document.body.appendChild(stopButton)
+      const stopButton = window.document.createElement('div')
+      stopButton.onclick = () => this.denyRecording()
+      const styles = {
+        cursor: 'pointer',
+        color: 'white',
+        position: 'fixed',
+        bottom: '0',
+        left: 'calc(50vw - 60px)',
+        padding: '1px 3px',
+        background: 'blue',
+        'border-top-right-radius': '3px',
+        'border-top-left-radius': '3px',
+        'text-align': 'center',
+      }
+      Object.assign(stopButton.style, styles)
+      stopButton.textContent = 'Stop Recording'
+      stopButton.id = 'or-recording-border'
+      window.document.body.appendChild(stopButton)
 
-    Object.entries(borderEmulationStyles).forEach(([key, style,]) => {
-      Object.assign(borders[key].style, style)
-      borders[key].id = 'or-recording-border'
-      window.document.body.appendChild(borders[key])
-    })
+      Object.entries(borderEmulationStyles).forEach(([key, style,]) => {
+        Object.assign(borders[key].style, style)
+        borders[key].id = 'or-recording-border'
+        window.document.body.appendChild(borders[key])
+      })
+
+      this.overlayAdded = true
+    }
 
     this.onAccept()
     this.status = RecordingState.Recording
   }
 
-  private readonly denyRecording = () => {
+  public readonly denyRecording = (id?: string) => {
+    if (id) {
+      const agentIndex = this.agentsRecordingSession.findIndex(agentId => agentId === id)
+      if (agentIndex === -1) return
+      else this.agentsRecordingSession = this.agentsRecordingSession.filter(agentId => agentId !== id)
+
+      if (this.agentsRecordingSession.length > 0) return
+    }
+
     this.onDeny()
+    this.confirm?.remove()
     this.status = RecordingState.Off
 
     const borders = window.document.querySelectorAll('#or-recording-border')
