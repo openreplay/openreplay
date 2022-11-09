@@ -95,7 +95,10 @@ function AssistActions({
     if (remoteActive) {
       toggleUserName(userDisplayName);
     } else {
-      toggleUserName();
+      // higher than waiting for messages
+      if (peerConnectionStatus > 1) {
+        toggleUserName();
+      }
     }
   }, [remoteActive]);
 
