@@ -187,7 +187,7 @@ export default class App {
 
   private _debug(context: string, e: any) {
     if (this.options.__debug_report_edp !== null) {
-      fetch(this.options.__debug_report_edp, {
+      void fetch(this.options.__debug_report_edp, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -201,7 +201,7 @@ export default class App {
 
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
-      this.debug.log('SendiTrying to send when not active', message)
+      // this.debug.log('SendiTrying to send when not active', message) <- crashing the app
       return
     }
     this.messages.push(message)
