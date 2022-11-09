@@ -67,4 +67,7 @@ UPDATE users
 SET role_id=NULL
 WHERE deleted_at IS NOT NULL;
 
+UPDATE roles
+SET permissions=array_remove(permissions, 'ERRORS');
+
 COMMIT;

@@ -190,7 +190,7 @@ def get_session(projectId: int, sessionId: Union[int, str], background_tasks: Ba
 
 
 @app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"],
-         dependencies=[OR_scope(Permissions.session_replay, Permissions.errors)])
+         dependencies=[OR_scope(Permissions.dev_tools)])
 def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
@@ -201,19 +201,19 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
     }
 
 
-@app.post('/{projectId}/errors/search', tags=['errors'], dependencies=[OR_scope(Permissions.errors)])
+@app.post('/{projectId}/errors/search', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
 def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": errors.search(data, projectId, user_id=context.user_id)}
 
 
-@app.get('/{projectId}/errors/stats', tags=['errors'], dependencies=[OR_scope(Permissions.errors)])
+@app.get('/{projectId}/errors/stats', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
 def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
                  context: schemas.CurrentContext = Depends(OR_context)):
     return errors.stats(projectId, user_id=context.user_id, startTimestamp=startTimestamp, endTimestamp=endTimestamp)
 
 
-@app.get('/{projectId}/errors/{errorId}', tags=['errors'], dependencies=[OR_scope(Permissions.errors)])
+@app.get('/{projectId}/errors/{errorId}', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
 def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
                        density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
@@ -224,7 +224,7 @@ def errors_get_details(projectId: int, errorId: str, background_tasks: Backgroun
     return data
 
 
-@app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'], dependencies=[OR_scope(Permissions.errors)])
+@app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
 def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
                                     endDate: int = TimeUTC.now(), density: int = 7,
                                     context: schemas.CurrentContext = Depends(OR_context)):
@@ -233,7 +233,7 @@ def errors_get_details_right_column(projectId: int, errorId: str, startDate: int
     return data
 
 
-@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'], dependencies=[OR_scope(Permissions.errors)])
+@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
 def errors_get_details_sourcemaps(projectId: int, errorId: str,
                                   context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
@@ -244,7 +244,7 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
     }
 
 
-@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"], dependencies=[OR_scope(Permissions.errors)])
+@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"], dependencies=[OR_scope(Permissions.dev_tools)])
 def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
                               endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
     if action == "favorite":
