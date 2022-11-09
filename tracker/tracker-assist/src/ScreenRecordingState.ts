@@ -1,18 +1,42 @@
+import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
+import { recordRequestDefault, } from './ConfirmWindow/defaults.js'
+import type { Options as AssistOptions, } from './Assist'
+
 export enum RecordingState {
   Off,
   Requested,
   Recording,
 }
 
-const defaultStyles = '2px dashed red; position: fixed;'
-const leftTop = 'left: 0; top: 0'
-const bottomRight = 'right: 0; bottom: 0'
+const defaultStyles = '2px dashed red'
+const leftTop = { left: 0, top: 0, position: 'fixed', }
+const bottomRight = { right: 0, bottom: 0, position: 'fixed', }
 
 const borderEmulationStyles = {
-  left: `${leftTop}; height: 100vh; width: 0; border-left: ${defaultStyles}`,
-  top: `${leftTop}; height: 0; width: 100vw; border-top: ${defaultStyles}`,
-  right: `${bottomRight}; height: 100vh; width: 0; border-right: ${defaultStyles}`,
-  bottom: `${bottomRight}; height: 0; width: 100vw; border-bottom: ${defaultStyles}`,
+  left: {
+    ...leftTop,
+    height: '100vh',
+    width: 0,
+    borderLeft: defaultStyles,
+  },
+  top: {
+    ...leftTop,
+    height: 0,
+    width: '100vw',
+    borderTop: defaultStyles,
+  },
+  right: {
+    ...bottomRight,
+    height: '100vh',
+    width: 0,
+    borderRight: defaultStyles,
+  },
+  bottom: {
+    ...bottomRight,
+    height: 0,
+    width: '100vw',
+    borderBottom: defaultStyles,
+  },
 }
 
 export default class ScreenRecordingState {
@@ -21,18 +45,37 @@ export default class ScreenRecordingState {
   constructor(
     private readonly onAccept: () => void,
     private readonly onDeny: () => void,
+    private readonly options: AssistOptions
   ) {}
 
+  private confirm: ConfirmWindow | null = null
+
   public requestRecording = () => {
-    // mount recording window
     if (this.status !== RecordingState.Off) return
     this.status = RecordingState.Requested
 
-    // todo: change timeout to deny after testing
-    setTimeout(() => {
-      console.log('starting recording')
-      this.acceptRecording()
-    }, 5000)
+      // todo: change timeout to deny after testing
+      setTimeout(() => {
+        console.log('starting recording')
+        this.acceptRecording()
+      }, 5000)
+
+    this.confirm = new ConfirmWindow(recordRequestDefault(this.options.controlConfirm))
+    this.confirm.mount().then(allowed => {
+      if (allowed) {
+        this.acceptRecording()
+      } else {
+        this.confirm?.remove()
+        this.denyRecording()
+      }
+    })
+    .then(() => {
+      this.confirm?.remove()
+    })
+    .catch(e => {
+        this.confirm?.remove()
+        console.error(e)
+      })
   }
 
   private readonly acceptRecording = () => {
@@ -45,28 +88,27 @@ export default class ScreenRecordingState {
 
     const stopButton = window.document.createElement('div')
     stopButton.onclick = this.denyRecording
-    const buttonStyle = 'position: fixed; bottom: 0; left: calc(50vw - 10px); padding: 4px; background: blue; border-radius: 6px; text-align: center;'
-    buttonStyle.split(';').forEach(styleEntry => {
-      console.log(styleEntry)
-      const styleKeyVal = styleEntry.split(':')
-      stopButton.style[styleKeyVal[0]] = styleKeyVal[1]
-    })
+    const styles = {
+      cursor: 'pointer',
+      color: 'white',
+      position: 'fixed',
+      bottom: 0,
+      left: 'calc(50vw - 10px)',
+      padding: 4,
+      background: 'blue',
+      borderRadius: 6,
+      textAlign: 'center',
+    }
+    Object.assign(stopButton.style, styles)
     stopButton.textContent = 'Stop Recording'
     stopButton.id = 'or-recording-border'
+    window.document.body.appendChild(stopButton)
 
     Object.entries(borderEmulationStyles).forEach(([key, style,]) => {
-      const styleEntries = style.split(';')
-      styleEntries.forEach(styleEntry => {
-        console.log(styleEntry)
-        const styleKeyVal = styleEntry.split(':')
-        borders[key].style[styleKeyVal[0]] = styleKeyVal[1]
-      })
-      borders[key].style = style
+      Object.assign(borders[key].style, style)
       borders[key].id = 'or-recording-border'
-
-      window.document.appendChild(borders[key])
+      window.document.body.appendChild(borders[key])
     })
-    window.document.appendChild(stopButton)
 
     this.onAccept()
     this.status = RecordingState.Recording
