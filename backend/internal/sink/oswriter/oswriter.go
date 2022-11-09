@@ -53,7 +53,6 @@ func (w *Writer) open(fname string) (*os.File, error) {
 		}
 	} else {
 		if !info.IsDir() {
-			log.Printf("found file")
 			return nil, errors.New("not a directory")
 		}
 	}

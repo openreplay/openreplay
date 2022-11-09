@@ -158,8 +158,8 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			if err := writer.SyncAll(); err != nil {
-				log.Printf("sync error: %v\n", err)
+			if err := writer.CloseAll(); err != nil {
+				log.Printf("closeAll error: %v\n", err)
 			}
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
