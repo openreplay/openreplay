@@ -20,7 +20,7 @@ export default function withReport<P extends Props>(WrappedComponent: React.Comp
     const { dashboardStore } = useStore();
     const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
     const period = useObserver(() => dashboardStore.period);
-    const pendingRequests = useObserver(() => dashboardStore.pendingReuqests);
+    const pendingRequests = useObserver(() => dashboardStore.pendingRequests);
 
     useEffect(() => {
       if (rendering && pendingRequests <= 0) {

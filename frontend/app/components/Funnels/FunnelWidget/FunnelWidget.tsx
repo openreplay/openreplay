@@ -70,14 +70,8 @@ function FunnelWidget(props: Props) {
                         <span className="text-sm">({funnel.totalConversionsPercentage}%)</span>
                     </div>
                 </div>
-                <div className="mx-3" />
-                <div className="flex items-center">
-                    <span className="text-xl mr-2">Affected users</span>
-                    <div className="rounded px-2 py-1 bg-gray-lightest">
-                        <span className="text-xl font-medium">{funnel.affectedUsers}</span>
-                    </div>
-                </div>
             </div>
+            {funnel.totalDropDueToIssues && <div>{funnel.totalDropDueToIssues} sessions dropped due to issues.</div>}
         </NoContent>
     ));
 }

@@ -26,7 +26,7 @@ function FunnelBar(props: Props) {
         <div
           className="flex items-center"
           style={{
-            width: `${filter.completedPercentage}%`,
+            width: `${filter.completedPercentageTotal}%`,
             position: 'absolute',
             top: 0,
             left: 0,
@@ -34,7 +34,9 @@ function FunnelBar(props: Props) {
             backgroundColor: '#00b5ad',
           }}
         >
-          <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3" />
+          <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">
+            {filter.completedPercentageTotal}%
+          </div>
         </div>
         {/* {filter.dropDueToIssues > 0 && (
           <div
@@ -65,23 +67,19 @@ function FunnelBar(props: Props) {
       </div>
       <div className="flex justify-between py-2">
         {/* @ts-ignore */}
-        <Tooltip title="With respect to the previous step." disabled={isFirst}>
-          <div className="flex items-center">
-            <Icon name="arrow-right-short" size="20" color="green" />
-            <span className="mx-1 font-medium">{filter.sessionsCount}</span>
-            <span className="color-gray-medium text-sm">
-              ({filter.completedPercentage}%) Completed
-            </span>
-          </div>
-        </Tooltip>
+        <div className="flex items-center">
+          <Icon name="arrow-right-short" size="20" color="green" />
+          <span className="mx-1 font-medium">{filter.sessionsCount} Sessions</span>
+          <span className="color-gray-medium text-sm">
+            ({filter.completedPercentage}%) Completed
+          </span>
+        </div>
         {/* @ts-ignore */}
-        <Tooltip title="Total drop till this step." disabled={isFirst}>
-          <div className="flex items-center">
-            <Icon name="caret-down-fill" color="red" size={16} />
-            <span className="font-medium mx-1 color-red">{filter.droppedCount}</span>
-            <span className="text-sm color-red">({filter.droppedPercentage}%) Dropped</span>
-          </div>
-        </Tooltip>
+        <div className="flex items-center">
+          <Icon name="caret-down-fill" color="red" size={16} />
+          <span className="font-medium mx-1 color-red">{filter.droppedCount} Sessions</span>
+          <span className="text-sm color-red">({filter.droppedPercentage}%) Dropped</span>
+        </div>
       </div>
     </div>
   );
