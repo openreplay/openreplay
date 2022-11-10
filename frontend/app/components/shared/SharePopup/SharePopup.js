@@ -77,7 +77,7 @@ export default class SharePopup extends React.PureComponent {
       .toJS();
     return (
       <OutsideClickDetectingDiv
-        className={cn('relative flex items-center')}
+        className={cn('relative flex items-center w-full')}
         onClickOutside={() => {
           this.setState({ isOpen: false });
         }}
@@ -92,7 +92,7 @@ export default class SharePopup extends React.PureComponent {
           arrow
           trigger="click"
           shown={this.handleOpen}
-          className="h-full w-full p-3"
+          className="w-full"
         // beforeHidden={this.handleClose}
           html={
             <div className={styles.wrapper}>
@@ -150,7 +150,7 @@ export default class SharePopup extends React.PureComponent {
             </div>
           }
         >
-          <div onClick={this.onClickHandler}>{trigger}</div>
+          <div onClick={this.onClickHandler} className="h-full w-full p-3">{trigger}</div>
         </Tooltip>
       </OutsideClickDetectingDiv>
     );

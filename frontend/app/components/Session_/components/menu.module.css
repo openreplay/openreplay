@@ -52,7 +52,7 @@
 
   & .menuItem {
     cursor: pointer;
-    padding: 10px;
+    /* padding: 10px; */
     color: black;
     display: flex;
     align-items: center;

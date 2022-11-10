@@ -65,7 +65,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
               <div
                 key={item.key}
                 role="menuitem"
-                className="hover:bg-gray-light-shade cursor-pointer flex items-center"
+                className="hover:bg-gray-light-shade cursor-pointer flex items-center w-full"
               >
                 {item.component}
               </div>
