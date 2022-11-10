@@ -142,7 +142,7 @@ class PostgresClient:
         except Exception as error:
             logging.error("Error while closing cursor for recreation", error)
         self.cursor = None
-        self.__enter__()
+        return self.__enter__()
 
 
 async def init():
