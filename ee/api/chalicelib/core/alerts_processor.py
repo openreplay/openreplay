@@ -134,7 +134,7 @@ def Build(a):
         if a["seriesId"] is not None:
             q += f""" FROM ({subQ}) AS stat"""
         else:
-            q += f""" FROM ({subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if is_ss else ""} 
+            q += f""" FROM ({subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if not is_ss else ""} 
                                 {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
@@ -151,7 +151,7 @@ def Build(a):
                                   AND timestamp<=%(now)s
                                 {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
-                sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if is_ss else ""}
+                sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if not is_ss else ""}
                             {"AND start_ts < %(startDate)s AND start_ts >= %(timestamp_sub2)s" if j_s else ""}"""
                 params["timestamp_sub2"] = TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000
                 sub1 = f"SELECT (( {sub1} )-( {sub2} )) AS value"
@@ -168,10 +168,10 @@ def Build(a):
                                             - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) \
                                             * 60 * 1000}
             else:
-                sub1 = f"""{subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if is_ss else ""}
+                sub1 = f"""{subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if not is_ss else ""}
                                 {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
-                sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if is_ss else ""}
+                sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if not is_ss else ""}
                         {"AND start_ts < %(startDate)s AND start_ts >= %(timestamp_sub2)s" if j_s else ""}"""
                 params["timestamp_sub2"] = TimeUTC.now() \
                                            - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) * 60 * 1000
