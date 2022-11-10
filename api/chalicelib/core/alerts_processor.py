@@ -142,9 +142,9 @@ def Build(a):
                           "timestamp_sub2": TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000}
             else:
                 sub1 = f"""{subQ} AND timestamp>=%(startDate)s 
-                                    AND datetime<=toDateTime(%(now)s/1000)
-                                    {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
-                                    {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
+                                  AND timestamp<=%(now)s
+                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
+                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
                 sub2 = f"""{subQ} AND timestamp<%(startDate)s 
                                     AND timestamp>=%(timestamp_sub2)s
@@ -198,8 +198,10 @@ def process():
                         notifications.append(generate_notification(alert, result))
                 except Exception as e:
                     logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
-                    logging.error(str(e))
                     logging.error(query)
+                    print("------------")
+                    logging.error(e)
+                    cur = cur.recreate()
         if len(notifications) > 0:
             cur.execute(
                 cur.mogrify(f"""UPDATE public.Alerts 
