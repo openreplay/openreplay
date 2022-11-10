@@ -203,7 +203,7 @@ def process():
                     logging.error(query)
                     print("------------")
                     logging.error(e)
-                    cur = cur.recreate()
+                    cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
             cur.execute(
                 cur.mogrify(f"""UPDATE public.Alerts 
