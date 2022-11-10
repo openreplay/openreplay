@@ -1,9 +1,8 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Button } from 'UI';
 import { connectPlayer, pause } from 'Player';
 import { connect } from 'react-redux';
 import { setCreateNoteTooltip } from 'Duck/sessions';
-import cn from 'classnames';
 
 function NotePopup({
   setCreateNoteTooltip,
@@ -25,17 +24,9 @@ function NotePopup({
   }, []);
 
   return (
-    <div
-      onClick={toggleNotePopup}
-      className={cn(
-        'h-full w-full p-3',
-        'mr-4 hover:bg-gray-light-shade rounded-md flex items-center',
-        tooltipActive ? 'cursor-not-allowed' : 'cursor-pointer'
-      )}
-    >
-      <Icon name="quotes" size="16" className="mr-2" />
+    <Button icon="quotes" variant="text" disabled={tooltipActive} onClick={toggleNotePopup}>
       Add Note
-    </div>
+    </Button>
   );
 }
 

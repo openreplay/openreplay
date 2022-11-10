@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, Button } from 'UI';
 import Autoplay from './Autoplay';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
@@ -63,16 +63,10 @@ function SubHeader(props) {
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
         >
-          <div
-            onClick={showReportModal}
-            className="cursor-pointer rounded flex items-center p-2 gap-1 hover:bg-gray-light-shade"
-          >
-            <Icon name="file-pdf" size={16} />
-            <span>Create Bug Report</span>
-          </div>
+          <Button icon="file-pdf" variant="text" onClick={showReportModal}>Create Bug Report</Button>
+          <NotePopup />
           <ItemMenu
             items={[
-              { key: 1, component: <NotePopup /> },
               {
                 key: 2,
                 component: props.jiraConfig && props.jiraConfig.token && (

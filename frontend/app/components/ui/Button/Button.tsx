@@ -49,7 +49,7 @@ export default (props: Props) => {
     }
 
     if (variant === 'text') {
-        classes.push('bg-transparent color-gray-dark hover:bg-gray-light hover:color-gray-dark');
+        classes.push('bg-transparent color-gray-dark hover:bg-gray-light-shade');
     }
 
     if (variant === 'text-primary') {
