@@ -117,6 +117,13 @@ func (c *connectorImpl) checkError(name string, err error) {
 
 func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueEvent) error {
 	issueID := hashid.IssueID(session.ProjectID, msg)
+	// Check issue type before insert to avoid panic from clickhouse lib
+	switch msg.Type {
+	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception":
+	default:
+		return fmt.Errorf("unknown issueType: %s", msg.Type)
+	}
+	// Insert issue event to batches
 	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
