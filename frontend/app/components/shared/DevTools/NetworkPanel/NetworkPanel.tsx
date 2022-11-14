@@ -374,6 +374,7 @@ function NetworkPanel(props: Props) {
                   dataKey: 'decodedBodySize',
                   render: renderSize,
                   onClick: handleSort,
+                  hidden: activeTab === XHR
                 },
                 {
                   label: 'Time',

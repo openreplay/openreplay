@@ -213,7 +213,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         onClick={typeof onRowClick === 'function' ? () => onRowClick(row, index) : undefined}
         id="table-row"
       >
-        {columns.map(({ dataKey, render, width }) => (
+        {columns.filter((i: any) => !i.hidden).map(({ dataKey, render, width }) => (
           <div className={stl.cell} style={{ width: `${width}px` }}>
             {render
               ? render(row)
@@ -266,7 +266,6 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     const {
       className,
       rows,
-      children: columns,
       navigation = false,
       referenceLines = [],
       additionalHeight = 0,
@@ -274,6 +273,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       sortBy = '',
       sortAscending = true,
     } = this.props;
+    const columns = this.props.children.filter((i: any) => !i.hidden);
     const { timewidth, timestart } = this.state;
 
     _additionalHeight = additionalHeight;
