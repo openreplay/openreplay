@@ -81,3 +81,12 @@ class SessionModel(BaseModel):
     userDeviceType: str
     userAnonymousId: Optional[str]
     metadata: dict = Field(default={})
+
+
+class AssistRecord(BaseModel):
+    name: str = Field(...)
+    duration: int = Field(...)
+
+
+class AssistRecordUploadPayloadSchema(BaseModel):
+    records: List[AssistRecord] = Field(default=[])
