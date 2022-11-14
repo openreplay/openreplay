@@ -160,6 +160,7 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	tick := time.Tick(30 * time.Second)
+	logTick := time.Tick(time.Second)
 	for {
 		select {
 		case sig := <-sigchan:
@@ -176,10 +177,11 @@ func main() {
 			if err := writer.SyncAll(); err != nil {
 				log.Fatalf("sync error: %v\n", err)
 			}
-			counter.Print()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+		case <-logTick:
+			counter.Print()
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {

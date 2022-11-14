@@ -12,6 +12,7 @@ type logCounter struct {
 	timestamp  time.Time
 	lastTS     time.Time
 	lastSessID uint64
+	maxNum     int
 }
 
 func NewLogCounter() *logCounter {
@@ -37,7 +38,11 @@ func (c *logCounter) Update(sessID uint64, ts time.Time) {
 
 func (c *logCounter) Print() {
 	c.mu.Lock()
-	log.Printf("count: %d, dur: %ds, msgTS: %s, sessID: %d, part: %d",
+	if c.counter > c.maxNum {
+		c.maxNum = c.counter
+	}
+	log.Printf("max/s: %d, count: %d, dur: %ds, msgTS: %s, sessID: %d, part: %d",
+		c.maxNum,
 		c.counter,
 		int(time.Now().Sub(c.timestamp).Seconds()),
 		c.lastTS.String(),
