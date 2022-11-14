@@ -89,8 +89,10 @@ func main() {
 			}
 		}
 	}
+	var min, max int64 = 10000000, 0
 
 	msgHandler := func(msg messages.Message) {
+		s := time.Now()
 		// [METRICS] Increase the number of processed messages
 		totalMessages.Add(context.Background(), 1)
 
@@ -143,6 +145,15 @@ func main() {
 		// [METRICS] Increase the number of written to the files messages and the message size
 		messageSize.Record(context.Background(), float64(len(data)))
 		savedMessages.Add(context.Background(), 1)
+
+		// Check timings
+		dur := time.Now().Sub(s).Milliseconds()
+		if dur > max {
+			max = dur
+		}
+		if dur < min {
+			min = dur
+		}
 	}
 
 	consumer := queue.NewConsumer(
@@ -182,6 +193,7 @@ func main() {
 			}
 		case <-logTick:
 			counter.Print()
+			log.Printf("min: %d, max: %d", min, max)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
