@@ -1,7 +1,6 @@
 import React from 'react';
 import FunnelStepText from './FunnelStepText';
-import { Icon, Popup } from 'UI';
-import { Tooltip } from 'react-tippy';
+import { Icon, Tooltip } from 'UI';
 
 interface Props {
   filter: any;

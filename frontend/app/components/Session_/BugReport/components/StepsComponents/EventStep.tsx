@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, ItemMenu } from 'UI';
+import { Icon, ItemMenu, Tooltip } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { Step as IStep } from '../../types';
 const STEP_NAMES = { CLICKRAGE: 'Multiple click', CLICK: 'Clicked', LOCATION: 'Visited' };
@@ -7,7 +7,6 @@ import { useStore } from 'App/mstore';
 import cn from 'classnames';
 import { ErrorComp, NetworkComp, NoteComp } from './SubModalItems';
 import { durationFromMs } from 'App/date';
-import { Tooltip } from 'react-tippy';
 
 const SUBSTEP = {
   network: NetworkComp,
@@ -80,7 +79,7 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
                 />
               </Tooltip>
               {/* @ts-ignore */}
-              <Tooltip title="Delete Step">
+              <Tooltip title="Delete Step" className="whitespace-nowrap">
                 <div onClick={() => bugReportStore.removeStep(step)}>
                   <Icon name="trash" size={16} className="cursor-pointer hover:fill-gray-darkest" />
                 </div>

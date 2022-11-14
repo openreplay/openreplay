@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { CountryFlag, Avatar, TextEllipsis, Label, Icon } from 'UI';
+import { CountryFlag, Avatar, TextEllipsis, Label, Icon, Tooltip } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
@@ -12,7 +12,6 @@ import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { Tooltip } from 'react-tippy';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();

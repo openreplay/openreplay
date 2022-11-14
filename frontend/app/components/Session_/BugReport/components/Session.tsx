@@ -1,7 +1,6 @@
 import React from 'react'
 import SectionTitle from './SectionTitle';
-import { Icon } from 'UI'
-import { Tooltip } from 'react-tippy'
+import { Icon, Tooltip } from 'UI'
 
 export default function Session({ user, sessionUrl }: { user: string, sessionUrl: string }) {
 

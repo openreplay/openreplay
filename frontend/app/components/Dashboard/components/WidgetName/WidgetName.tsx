@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Icon } from 'UI';
+import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
-import { Tooltip } from 'react-tippy';
 
 interface Props {
   name: string;
@@ -65,7 +64,7 @@ function WidgetName(props: Props) {
         />
       ) : (
         // @ts-ignore
-        <Tooltip delay={100} arrow title="Double click to rename" disabled={!canEdit}>
+        <Tooltip title="Double click to rename" disabled={!canEdit}>
           <div 
             onDoubleClick={() => setEditing(true)} 
             className={

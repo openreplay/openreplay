@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tooltip } from 'react-tippy';
+import { Tooltip } from 'UI';
 import copy from 'copy-to-clipboard';
 
 interface Props {
@@ -17,14 +17,7 @@ function CopyText(props: Props) {
     setTimeout(() => setIsCopied(false), 5000);
   };
   return (
-    // @ts-ignore
-    <Tooltip
-      delay={0}
-      arrow
-      animation="fade"
-      hideOnClick={false}
-      title={isCopied ? afterLabel : label}
-    >
+    <Tooltip delay={0} title={isCopied ? afterLabel : label}>
       <span onClick={onClick}>{children}</span>
     </Tooltip>
   );

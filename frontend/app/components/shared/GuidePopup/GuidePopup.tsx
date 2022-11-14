@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from 'react-tippy';
+import { Tooltip } from 'UI';
 
 export const FEATURE_KEYS = {
   XRAY: 'featureViewed'
@@ -16,7 +16,7 @@ export default function GuidePopup({ children, title, description }: IProps) {
   return (
     // @ts-ignore
     <Tooltip
-      html={
+      title={
         <div>
           <div className="font-bold">
             {title}
@@ -26,10 +26,10 @@ export default function GuidePopup({ children, title, description }: IProps) {
           </div>
         </div>
       }
-      distance={30}
-      theme={'light'}
+      // distance={30}
+      // theme={'light'}
       open={true}
-      arrow={true}
+      // arrow={true}
     >
       {children}
     </Tooltip>

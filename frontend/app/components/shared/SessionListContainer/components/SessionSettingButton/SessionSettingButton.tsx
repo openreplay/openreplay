@@ -2,7 +2,6 @@ import { useModal } from 'App/components/Modal';
 import React from 'react';
 import SessionSettings from 'Shared/SessionSettings';
 import { Button, Tooltip } from 'UI';
-// import { Tooltip } from 'react-tippy';
 
 function SessionSettingButton(props: any) {
     const { showModal } = useModal();
@@ -13,8 +12,7 @@ function SessionSettingButton(props: any) {
 
     return (
         <div className="cursor-pointer ml-4" onClick={handleClick}>
-            {/* @ts-ignore */}
-            <Tooltip tooltip="Session Settings">
+            <Tooltip title="Session Settings">
                 <Button icon="sliders" variant="text" />
             </Tooltip>
         </div>

@@ -8,7 +8,7 @@ import {
   selectStorageListNow,
   selectStorageList,
 } from 'Player/store';
-import { JSONTree, NoContent } from 'UI';
+import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
 import { diff } from 'deep-diff';
 import { jump } from 'Player';
@@ -17,7 +17,6 @@ import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
-import { Tooltip } from 'react-tippy'
 
 // const STATE = 'STATE';
 // const DIFF = 'DIFF';

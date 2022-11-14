@@ -14,6 +14,7 @@ import {
   FloatingFocusManager,
 } from '@floating-ui/react-dom-interactions';
 import { mergeRefs } from 'react-merge-refs';
+import { INDEXES } from 'App/constants/zindex';
 
 interface Props {
   render: (data: { close: () => void; labelId: string; descriptionId: string }) => React.ReactNode;
@@ -62,6 +63,7 @@ const Popover = ({ children, render, placement }: Props) => {
               position: strategy,
               top: y ?? 0,
               left: x ?? 0,
+              zIndex: INDEXES.TOOLTIP
             }}
             aria-labelledby={labelId}
             aria-describedby={descriptionId}

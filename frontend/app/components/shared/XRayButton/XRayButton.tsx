@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import stl from './xrayButton.module.css';
 import cn from 'classnames';
-import { Popup } from 'UI';
+import { Tooltip } from 'UI';
 import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
 import { Controls as Player } from 'Player';
 import { INDEXES } from 'App/constants/zindex';
@@ -63,14 +63,14 @@ function XRayButton(props: Props) {
             ></div>
           </GuidePopup>
         ) : (
-          <Popup content="Get a quick overview on the issues in this session." disabled={isActive}>
+          <Tooltip title="Get a quick overview on the issues in this session." disabled={isActive}>
             <button
               className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
               onClick={onClick}
             >
               <span className="z-1">X-RAY</span>
             </button>
-          </Popup>
+          </Tooltip>
         )}
       </div>
     </>

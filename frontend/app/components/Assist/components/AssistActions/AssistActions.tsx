@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Popup, Button } from 'UI';
+import { Popup, Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { toggleChatWindow } from 'Duck/sessions';
@@ -19,7 +19,6 @@ import {
 } from 'Player/MessageDistributor/managers/AssistManager';
 import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
-import { Tooltip } from 'react-tippy';
 import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
