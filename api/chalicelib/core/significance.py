@@ -222,11 +222,20 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     params = {"project_id": project_id, "startTimestamp": filter_d["startDate"], "endTimestamp": filter_d["endDate"],
               "issueTypes": tuple(filter_issues), **values}
     with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(n_stages_query, params)
         # print("---------------------------------------------------")
-        # print(cur.mogrify(n_stages_query, params))
+        # print(query)
         # print("---------------------------------------------------")
-        cur.execute(cur.mogrify(n_stages_query, params))
-        rows = cur.fetchall()
+        try:
+            cur.execute(query)
+            rows = cur.fetchall()
+        except Exception as err:
+            print("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
+            print(query.decode('UTF-8'))
+            print("--------- PAYLOAD -----------")
+            print(filter_d)
+            print("--------------------")
+            raise err
     return rows
 
 
