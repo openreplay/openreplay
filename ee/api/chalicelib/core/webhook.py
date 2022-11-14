@@ -166,8 +166,8 @@ def __trigger(hook, data):
 
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            logging.error("=======> webhook: something went wrong")
-            logging.error(r)
+            logging.error("=======> webhook: something went wrong for:")
+            logging.error(hook)
             logging.error(r.status_code)
             logging.error(r.text)
             return
