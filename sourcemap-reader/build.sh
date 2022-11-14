@@ -23,8 +23,12 @@ check_prereq() {
 }
 
 function build_api(){
-    cp -R ../sourcemap-reader ../_smr
-    cd ../_smr
+    destination="_smr"
+    [[ $1 == "ee" ]] && {
+        destination="_smr_ee"
+    }
+    cp -R ../sourcemap-reader ../${destination}
+    cd ../${destination}
     cp -R ../utilities/utils .
     tag=""
     # Copy enterprise code
@@ -35,7 +39,7 @@ function build_api(){
     }
     docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1} .
     cd ../sourcemap-reader
-    rm -rf ../_smr
+    rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1} ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
