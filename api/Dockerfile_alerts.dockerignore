@@ -7,5 +7,5 @@
 Dockerfile*
 
 app.py
-entrypoint_alerts.sh
+entrypoint.sh
 requirements.txt
