@@ -19,8 +19,12 @@ check_prereq() {
 }
 
 function build_api(){
-    cp -R ../api ../_api
-    cd ../_api
+    destination="_api"
+    [[ $1 == "ee" ]] && {
+        destination="_api_ee"
+    }
+    cp -R ../api ../${destination}
+    cd ../${destination}
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
@@ -28,9 +32,10 @@ function build_api(){
         envarg="default-ee"
         tag="ee-"
     }
+    mv Dockerfile.dockerignore .dockerignore
     docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/chalice:${git_sha1} .
     cd ../api
-    rm -rf ../_api
+    rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:${tag}latest
@@ -47,4 +52,5 @@ IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_
 [[ $1 == "ee" ]] && {
   cp ../ee/api/build_crons.sh .
   IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
+  rm build_crons.sh
 }

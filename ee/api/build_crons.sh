@@ -17,19 +17,20 @@ check_prereq() {
     [[ exit -eq 1 ]] && exit 1
 }
 
-function build_api(){
-    cp -R ../api ../_crons
-    cd ../_crons
+function build_crons(){
+    destination="_crons_ee"
+    cp -R ../api ../${destination}
+    cd ../${destination}
     tag=""
     # Copy enterprise code
 
     cp -rf ../ee/api/* ./
     envarg="default-ee"
     tag="ee-"
-
-    docker build -f ./Dockerfile.crons --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/crons:${git_sha1} .
+    mv Dockerfile_crons.dockerignore .dockerignore
+    docker build -f ./Dockerfile_crons --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/crons:${git_sha1} .
     cd ../api
-    rm -rf ../_crons
+    rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/crons:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/crons:${git_sha1} ${DOCKER_REPO:-'local'}/crons:${tag}latest
@@ -39,4 +40,4 @@ function build_api(){
 }
 
 check_prereq
-build_api $1
+build_crons $1
