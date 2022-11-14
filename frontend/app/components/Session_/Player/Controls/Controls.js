@@ -396,7 +396,7 @@ export default class Controls extends React.Component {
                   containerClassName="mx-2"
                 />
               )}
-              {!live && showStack && (
+              {!live && (
                 <ControlButton
                   disabled={disabled && !inspectorMode}
                   onClick={() => toggleBottomTools(STACKEVENTS)}
