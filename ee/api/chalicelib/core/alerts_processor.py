@@ -187,12 +187,12 @@ def process():
     with pg_client.PostgresClient() as cur:
         for alert in all_alerts:
             if can_check(alert):
-                logging.info(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
                 try:
                     query = cur.mogrify(query, params)
                 except Exception as e:
-                    logging.error(f"!!!Error while building alert query for alertId:{alert['alertId']}")
+                    logging.error(
+                        f"!!!Error while building alert query for alertId:{alert['alertId']} name: {alert['name']}")
                     logging.error(e)
                     continue
                 logging.debug(alert)
@@ -201,14 +201,13 @@ def process():
                     cur.execute(query)
                     result = cur.fetchone()
                     if result["valid"]:
-                        logging.info("Valid alert, notifying users")
+                        logging.info("Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
                 except Exception as e:
-                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
+                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
                     logging.error(query)
-                    print("------------")
                     logging.error(e)
-                    cur = cur.recreate()
+                    cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
             cur.execute(
                 cur.mogrify(f"""UPDATE public.Alerts 
