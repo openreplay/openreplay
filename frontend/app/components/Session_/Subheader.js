@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
+import { Icon, Tooltip, Button } from 'UI';
 import Autoplay from './Autoplay';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';

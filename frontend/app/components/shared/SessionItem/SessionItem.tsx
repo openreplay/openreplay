@@ -131,8 +131,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                     )}
                     <div style={{ width: compact ? '40%' : '20%' }} className="px-2 flex flex-col justify-between">
                         <div>
-                            {/* @ts-ignore */}
                             <Tooltip
+                                delay={0}
                                 title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
                                 className="w-fit !block"
                             >

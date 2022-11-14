@@ -21,7 +21,7 @@ function Autoplay(props) {
         className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2"
       >
         <Toggler name="sessionsLive" onChange={props.toggleAutoplay} checked={autoplay} />
-        <span className="ml-2">Auto-Play</span>
+        <span className="ml-2 whitespace-nowrap">Auto-Play</span>
       </div>
 
       <Tooltip
