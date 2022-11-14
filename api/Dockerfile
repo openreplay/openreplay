@@ -11,11 +11,10 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
     PRIVATE_ENDPOINTS=false \
     ENTERPRISE_BUILD=${envarg}
 
-WORKDIR /work_tmp
-COPY requirements.txt /work_tmp/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /work_tmp/requirements.txt
-
 WORKDIR /work
+COPY requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
 COPY . .
 RUN mv env.default .env
 

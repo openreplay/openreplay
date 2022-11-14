@@ -11,11 +11,10 @@ ENV APP_NAME=crons \
     ACTION="" \
     PG_POOL=false
 
-WORKDIR /work_tmp
-COPY requirements-crons.txt /work_tmp/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /work_tmp/requirements.txt
-
 WORKDIR /work
+COPY requirements-crons.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
 COPY . .
 RUN mv env.default .env && mv entrypoint_crons.sh entrypoint.sh
 

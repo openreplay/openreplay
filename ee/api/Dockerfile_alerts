@@ -10,10 +10,10 @@ ENV APP_NAME=alerts \
     PRIVATE_ENDPOINTS=true \
     ENTERPRISE_BUILD=${envarg}
 
-COPY requirements-alerts.txt /work_tmp/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /work_tmp/requirements.txt
-
 WORKDIR /work
+COPY requirements-alerts.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
 COPY . .
 RUN mv env.default .env && mv app_alerts.py app.py && mv entrypoint_alerts.sh entrypoint.sh
 
