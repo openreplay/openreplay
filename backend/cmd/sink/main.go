@@ -93,6 +93,7 @@ func main() {
 
 	msgHandler := func(msg messages.Message) {
 		s := time.Now()
+		parsedAsset := false
 		// [METRICS] Increase the number of processed messages
 		totalMessages.Add(context.Background(), 1)
 
@@ -116,6 +117,7 @@ func main() {
 				return
 			}
 			msg = assetMessageHandler.ParseAssets(m)
+			parsedAsset = true
 		}
 
 		// Filter message
@@ -147,6 +149,9 @@ func main() {
 		savedMessages.Add(context.Background(), 1)
 
 		// Check timings
+		if parsedAsset {
+			return
+		}
 		dur := time.Now().Sub(s).Milliseconds()
 		if dur > max {
 			max = dur
