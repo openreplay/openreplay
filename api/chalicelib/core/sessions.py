@@ -332,7 +332,15 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             # print("--------------------")
             # print(main_query)
             # print("--------------------")
-            cur.execute(main_query)
+            try:
+                cur.execute(main_query)
+            except Exception as err:
+                print("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
+                print(main_query.decode('UTF-8'))
+                print("--------- PAYLOAD -----------")
+                print(data.json())
+                print("--------------------")
+                raise err
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 sessions = cur.fetchall()
             else:
