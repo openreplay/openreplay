@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Popup, Button, Tooltip } from 'UI';
+import { Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { toggleChatWindow } from 'Duck/sessions';
@@ -195,8 +195,8 @@ function AssistActions({
       </Tooltip>
       <div className={stl.divider} />
 
-      <Popup
-        content={
+      <Tooltip
+        title={
           cannotCall
             ? `You don't have the permissions to perform this action.`
             : `Call ${userId ? userId : 'User'}`
@@ -218,7 +218,7 @@ function AssistActions({
             {onCall ? 'End' : isPrestart ? 'Join Call' : 'Call'}
           </Button>
         </div>
-      </Popup>
+      </Tooltip>
 
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
         {onCall && callObject && (

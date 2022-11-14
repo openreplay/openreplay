@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import FilterItem from '../FilterItem';
-import { SegmentSelection, Popup } from 'UI';
+import { SegmentSelection, Tooltip } from 'UI';
 import { List } from 'immutable';
 import { useObserver } from 'mobx-react-lite';
 
@@ -24,31 +24,34 @@ function FilterList(props: Props) {
 
   const onRemoveFilter = (filterIndex: any) => {
     props.onRemoveFilter(filterIndex);
-  }
+  };
 
   return useObserver(() => (
     <div className="flex flex-col">
-      { hasEvents && (
+      {hasEvents && (
         <>
           <div className="flex items-center mb-2">
             <div className="text-sm color-gray-medium mr-auto">EVENTS</div>
-            { !hideEventsOrder && (
+            {!hideEventsOrder && (
               <div className="flex items-center">
-                <div className="mr-2 color-gray-medium text-sm" style={{ textDecoration: 'underline dotted'}}>
-                  <Popup
-                    content={ `Select the operator to be applied between events in your search.` }
+                <div
+                  className="mr-2 color-gray-medium text-sm"
+                  style={{ textDecoration: 'underline dotted' }}
+                >
+                  <Tooltip
+                    title={`Select the operator to be applied between events in your search.`}
                   >
                     <div>Events Order</div>
-                  </Popup>
+                  </Tooltip>
                 </div>
-              
+
                 <SegmentSelection
                   primary
                   name="eventsOrder"
                   extraSmall={true}
                   onSelect={props.onChangeEventsOrder}
                   value={{ value: filter.eventsOrder }}
-                  list={ [
+                  list={[
                     { name: 'THEN', value: 'then' },
                     { name: 'AND', value: 'and' },
                     { name: 'OR', value: 'or' },
@@ -57,34 +60,38 @@ function FilterList(props: Props) {
               </div>
             )}
           </div>
-          {filters.map((filter: any, filterIndex: any) => filter.isEvent ? (
-            <FilterItem
-              key={`${filter.key}-${filterIndex}`}
-              filterIndex={rowIndex++}
-              filter={filter}
-              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
-              onRemoveFilter={() => onRemoveFilter(filterIndex) }
-              saveRequestPayloads={saveRequestPayloads}
-            />
-          ): null)}
-          <div className='mb-2' />
+          {filters.map((filter: any, filterIndex: any) =>
+            filter.isEvent ? (
+              <FilterItem
+                key={`${filter.key}-${filterIndex}`}
+                filterIndex={rowIndex++}
+                filter={filter}
+                onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+                onRemoveFilter={() => onRemoveFilter(filterIndex)}
+                saveRequestPayloads={saveRequestPayloads}
+              />
+            ) : null
+          )}
+          <div className="mb-2" />
         </>
       )}
 
       {hasFilters && (
         <>
-          {hasEvents && <div className='border-t -mx-5 mb-4' />}
+          {hasEvents && <div className="border-t -mx-5 mb-4" />}
           <div className="mb-2 text-sm color-gray-medium mr-auto">FILTERS</div>
-          {filters.map((filter: any, filterIndex: any) => !filter.isEvent ? (
-            <FilterItem
-              key={filterIndex}
-              isFilter={true}
-              filterIndex={filterIndex}
-              filter={filter}
-              onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
-              onRemoveFilter={() => onRemoveFilter(filterIndex) }
-            />
-          ): null)}
+          {filters.map((filter: any, filterIndex: any) =>
+            !filter.isEvent ? (
+              <FilterItem
+                key={filterIndex}
+                isFilter={true}
+                filterIndex={filterIndex}
+                filter={filter}
+                onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
+                onRemoveFilter={() => onRemoveFilter(filterIndex)}
+              />
+            ) : null
+          )}
         </>
       )}
     </div>

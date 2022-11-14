@@ -5,7 +5,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Button, Icon, SegmentSelection } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { confirm, Popup } from 'UI';
+import { confirm, Tooltip } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 
@@ -200,8 +200,8 @@ function WidgetForm(props: Props) {
             </div>
 
             <div className="form-groups flex items-center justify-between">
-                <Popup
-                    content="Cannot save funnel metric without at least 2 events"
+                <Tooltip
+                    title="Cannot save funnel metric without at least 2 events"
                     disabled={!cannotSaveFunnel}
                 >
                     <Button
@@ -211,7 +211,7 @@ function WidgetForm(props: Props) {
                     >
                         {metric.exists() ? 'Update' : 'Create'}
                     </Button>
-                </Popup>
+                </Tooltip>
                 <div className="flex items-center">
                     {metric.exists() && (
                         <Button variant="text-primary" onClick={onDelete}>

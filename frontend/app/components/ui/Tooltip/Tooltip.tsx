@@ -11,9 +11,18 @@ interface Props {
   placement?: Placement;
   className?: string;
   delay?: number;
+  style?: any;
 }
 function Tooltip(props: Props) {
-  const { title, disabled = false, open = false, placement, className = '', delay = 500 } = props;
+  const {
+    title,
+    disabled = false,
+    open = false,
+    placement,
+    className = '',
+    delay = 500,
+    style = {},
+  } = props;
   const state = useTooltipState({ disabled: disabled, placement, delay });
   return (
     <>

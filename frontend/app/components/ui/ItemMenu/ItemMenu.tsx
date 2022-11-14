@@ -4,7 +4,7 @@ import styles from './itemMenu.module.css';
 import cn from 'classnames';
 
 interface Item {
-  icon: string;
+  icon?: string;
   text: string;
   onClick: (args: any) => void;
   hidden?: boolean;
@@ -15,7 +15,7 @@ interface Props {
   bold?: boolean;
   flat?: boolean;
   items: Item[];
-  label: React.ReactNode;
+  label?: React.ReactNode;
   onToggle?: (args: any) => void;
 }
 

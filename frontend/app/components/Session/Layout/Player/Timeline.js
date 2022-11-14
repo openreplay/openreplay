@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCallback } from 'react';
 import cn from 'classnames';
-import { Popup } from 'UI';
+import { Tooltip } from 'UI';
 import { CRASHES, EVENTS } from 'Player/ios/state';
 import TimeTracker from './TimeTracker';
 import PlayerTime from './PlayerTime';
@@ -28,12 +28,10 @@ export default function Timeline({ player }) {
           <div key={e.key} className={cls.event} style={{ left: `${e.time * scale}%` }} />
         ))}
         {player.lists[CRASHES].list.map((e) => (
-          <Popup
+          <Tooltip
             key={e.key}
-            offset="-19"
-            pinned
             className="error"
-            content={
+            title={
               <div className={cls.popup}>
                 <b>{`Crash ${e.name}:`}</b>
                 <br />
@@ -46,7 +44,7 @@ export default function Timeline({ player }) {
               className={cn(cls.markup, cls.error)}
               style={{ left: `${e.time * scale}%` }}
             />
-          </Popup>
+          </Tooltip>
         ))}
       </div>
       <PlayerTime player={player} timeKey="endTime" />
