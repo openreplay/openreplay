@@ -1,6 +1,6 @@
 import React from 'react';
 import copy from 'copy-to-clipboard';
-import { Tooltip } from 'react-tippy';
+import { Tooltip } from 'UI';
 
 const withCopy = (WrappedComponent: React.ComponentType) => {
     const ComponentWithCopy = (props: any) => {
@@ -15,7 +15,7 @@ const withCopy = (WrappedComponent: React.ComponentType) => {
         };
         return (
             <div onClick={() => copyToClipboard(value)} className="w-fit">
-                <Tooltip delay={0} arrow animation="fade" hideOnClick={false} title={copied ? tooltip : 'Click to copy'}>
+                <Tooltip title={copied ? tooltip : 'Click to copy'}>
                     <WrappedComponent {...props} copyToClipboard={copyToClipboard} />
                 </Tooltip>
             </div>

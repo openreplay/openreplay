@@ -17,6 +17,7 @@
     "postinstall": "yarn gen:icons && yarn gen:colors"
   },
   "dependencies": {
+    "@floating-ui/react-dom-interactions": "^0.10.3",
     "@sentry/browser": "^5.21.1",
     "@svg-maps/world": "^1.0.1",
     "@svgr/webpack": "^6.2.1",
@@ -51,6 +52,7 @@
     "react-highlight": "^0.14.0",
     "react-json-view": "^1.21.3",
     "react-lazyload": "^3.2.0",
+    "react-merge-refs": "^2.0.1",
     "react-redux": "^5.1.2",
     "react-router": "^5.3.3",
     "react-router-dom": "^5.3.3",

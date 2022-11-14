@@ -5,11 +5,10 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { Avatar, TextEllipsis, CountryFlag, Icon } from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from '../../SessionInfoItem';
-import { Tooltip } from 'react-tippy';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
 
@@ -77,12 +76,13 @@ function UserCard({ className, request, session, width, height, similarSessions,
                         </span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
                         <Tooltip
-                            theme="light"
+                            // theme="light"
                             delay={0}
-                            hideOnClick="persistent"
-                            arrow
-                            interactive
-                            html={
+                            // hideOnClick="persistent"
+                            // arrow
+                            // interactive
+                            className="!bg-white shadow border !color-gray-dark"
+                            title={
                                 <div className="text-left">
                                     <SessionInfoItem
                                         comp={<CountryFlag country={userCountry} />}
@@ -100,9 +100,9 @@ function UserCard({ className, request, session, width, height, similarSessions,
                                     {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
                                 </div>
                             }
-                            position="bottom center"
-                            hoverable
-                            disabled={false}
+                            position="bottom"
+                            // hoverable
+                            // disabled={false}
                             on="hover"
                         >
                             <span className="color-teal cursor-pointer">More</span>

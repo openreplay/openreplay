@@ -10,7 +10,7 @@ import {
 import LiveTag from 'Shared/LiveTag';
 import { jumpToLive } from 'Player';
 
-import { Icon } from 'UI';
+import { Icon, Tooltip } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
@@ -33,7 +33,6 @@ import ControlButton from './ControlButton';
 import PlayerControls from './components/PlayerControls';
 
 import styles from './controls.module.css';
-import { Tooltip } from 'react-tippy';
 import XRayButton from 'Shared/XRayButton';
 
 const SKIP_INTERVALS = {
@@ -227,11 +226,7 @@ export default class Controls extends React.Component {
 
     return (
       <Tooltip
-        delay={0}
-        position="top"
         title={label}
-        interactive
-        hideOnClick="persistent"
         className="mr-4"
       >
         <div

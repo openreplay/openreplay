@@ -2,7 +2,7 @@ import React from 'react';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
-import { Tooltip } from 'react-tippy';
+import { Tooltip } from 'UI';
 
 function ReportTitle() {
   const { bugReportStore } = useStore();
@@ -45,7 +45,7 @@ function ReportTitle() {
         />
       ) : (
         // @ts-ignore
-        <Tooltip delay={100} arrow title="Double click to rename">
+        <Tooltip title="Double click to rename">
           <div
             onDoubleClick={toggleEdit}
             className={cn(

@@ -1,11 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Popup, Button, Icon } from 'UI';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import { Icon, Popover } from 'UI';
 import IssuesModal from './IssuesModal';
 import { fetchProjects, fetchMeta } from 'Duck/assignments';
 import stl from './issues.module.css';
-import { Tooltip } from 'react-tippy';
 
 @connect(
   (state) => ({
@@ -71,32 +69,25 @@ class Issues extends React.Component {
     return (
       <div className="relative h-full w-full p-3">
         <div className={stl.buttonWrapper}>
-          <OutsideClickDetectingDiv onClickOutside={this.closeModal}>
-            <Tooltip
-              open={this.state.showModal}
-              position="bottom"
-              interactive
-              trigger="click"
-              unmountHTMLWhenHide
-              useContext
-              theme="light"
-              arrow
-              html={
-                <div>
-                  <IssuesModal
-                    provider={provider}
-                    sessionId={sessionId}
-                    closeHandler={this.closeModal}
-                  />
-                </div>
-              }
+          <Popover
+            render={({ close }) => (
+              <div>
+                <IssuesModal
+                  provider={provider}
+                  sessionId={sessionId}
+                  closeHandler={close}
+                />
+              </div>
+            )}
+          >
+            <div
+              className="flex items-center"
+              disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}
             >
-              <div className="flex items-center" onClick={this.handleOpen} disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}>
-                    <Icon name={ `integrations/${ provider === 'jira' ? 'jira' : 'github'}` } size="16" />
-                    <span className="ml-2">Create Issue</span>
-                </div>
-            </Tooltip>
-          </OutsideClickDetectingDiv>
+              <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} size="16" />
+              <span className="ml-2">Create Issue</span>
+            </div>
+          </Popover>
         </div>
       </div>
     );
