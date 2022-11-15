@@ -32,7 +32,7 @@ function ConsoleRow(props: Props) {
           info: !log.isYellow() && !log.isRed(),
           warn: log.isYellow(),
           error: log.isRed(),
-          'cursor-pointer': clickable,
+          'cursor-pointer underline decoration-dotted decoration-gray-200': clickable,
         }
       )}
       onClick={
