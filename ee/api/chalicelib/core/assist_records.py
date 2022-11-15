@@ -16,11 +16,12 @@ def presign_records(project_id, data: schemas_ee.AssistRecordUploadPayloadSchema
                                                        key=s3.generate_file_key(project_id=project_id, key=key)))
         params[f"name_{i}"] = r.name
         params[f"duration_{i}"] = r.duration
+        params[f"session_id_{i}"] = r.session_id
         params[f"key_{i}"] = key
     with pg_client.PostgresClient() as cur:
-        values = [f"(%(project_id)s, %(user_id)s, %(name_{i})s, %(key_{i})s, %(duration_{i})s)" for i in
-                  range(len(data.records))]
-        query = cur.mogrify(f"""INSERT INTO assist_records(project_id, user_id, name, file_key, duration)
+        values = [f"(%(project_id)s, %(user_id)s, %(name_{i})s, %(key_{i})s, %(duration_{i})s, %(session_id_{i})s)"
+                  for i in range(len(data.records))]
+        query = cur.mogrify(f"""INSERT INTO assist_records(project_id, user_id, name, file_key, duration, session_id)
                                 VALUES {",".join(values)}""", params)
         cur.execute(query)
     return results

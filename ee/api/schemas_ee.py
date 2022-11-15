@@ -86,6 +86,10 @@ class SessionModel(BaseModel):
 class AssistRecord(BaseModel):
     name: str = Field(...)
     duration: int = Field(...)
+    session_id: int = Field(...)
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
 
 
 class AssistRecordUploadPayloadSchema(BaseModel):
