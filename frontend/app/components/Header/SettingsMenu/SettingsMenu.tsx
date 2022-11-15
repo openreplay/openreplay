@@ -30,7 +30,7 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   };
   return (
     <div
-      style={{ width: '150px', marginTop: '49px' }}
+      style={{ width: '150px', marginTop: '35px' }}
       className={cn(className, 'absolute right-0 top-0 bg-white border p-2')}
     >
       {isAdmin && (
