@@ -99,7 +99,8 @@ class Slack:
                 url=integration["endpoint"],
                 json={"attachments": attachments[i:i + 100]})
             if r.status_code != 200:
-                print("!!!! something went wrong")
+                print("!!!! something went wrong while sending to:")
+                print(integration)
                 print(r)
                 print(r.text)
 
