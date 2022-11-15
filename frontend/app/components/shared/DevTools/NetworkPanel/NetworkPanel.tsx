@@ -67,36 +67,36 @@ export function renderStart(r: any) {
   );
 }
 
-const renderXHRText = () => (
-  <span className="flex items-center">
-    {XHR}
-    <QuestionMarkHint
-      content={
-        <>
-          Use our{' '}
-          <a
-            className="color-teal underline"
-            target="_blank"
-            href="https://docs.openreplay.com/plugins/fetch"
-          >
-            Fetch plugin
-          </a>
-          {' to capture HTTP requests and responses, including status codes and bodies.'} <br />
-          We also provide{' '}
-          <a
-            className="color-teal underline"
-            target="_blank"
-            href="https://docs.openreplay.com/plugins/graphql"
-          >
-            support for GraphQL
-          </a>
-          {' for easy debugging of your queries.'}
-        </>
-      }
-      className="ml-1"
-    />
-  </span>
-);
+// const renderXHRText = () => (
+//   <span className="flex items-center">
+//     {XHR}
+//     <QuestionMarkHint
+//       content={
+//         <>
+//           Use our{' '}
+//           <a
+//             className="color-teal underline"
+//             target="_blank"
+//             href="https://docs.openreplay.com/plugins/fetch"
+//           >
+//             Fetch plugin
+//           </a>
+//           {' to capture HTTP requests and responses, including status codes and bodies.'} <br />
+//           We also provide{' '}
+//           <a
+//             className="color-teal underline"
+//             target="_blank"
+//             href="https://docs.openreplay.com/plugins/graphql"
+//           >
+//             support for GraphQL
+//           </a>
+//           {' for easy debugging of your queries.'}
+//         </>
+//       }
+//       className="ml-1"
+//     />
+//   </span>
+// );
 
 function renderSize(r: any) {
   if (r.responseBodySize) return formatBytes(r.responseBodySize);
@@ -180,6 +180,7 @@ function NetworkPanel(props: Props) {
   const [sortAscending, setSortAscending] = useState(true);
   const [filter, setFilter] = useState('');
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
+  const [activeRequest, setActiveRequest] = useState(false )
   const onTabClick = (activeTab: any) => setActiveTab(activeTab);
   const onFilterChange = ({ target: { value } }: any) => setFilter(value);
   const additionalHeight = 0;
@@ -237,7 +238,7 @@ function NetworkPanel(props: Props) {
   }
 
   const onRowClick = (row: any) => {
-    showModal(<FetchDetailsModal resource={row} fetchPresented={fetchPresented} />, {
+    showModal(<FetchDetailsModal resource={row} rows={filtered} fetchPresented={fetchPresented} />, {
       right: true,
     });
   };
