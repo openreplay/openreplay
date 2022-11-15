@@ -90,5 +90,5 @@ def search_records(projectId: int, data: schemas_ee.AssistRecordSearchPayloadSch
 
 
 @app.get('/{projectId}/assist/records/{recordId}', tags=["assist"])
-def search_records(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
+def get_record(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {"data": assist_records.get_record(project_id=projectId, record_id=recordId, context=context)}

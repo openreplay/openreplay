@@ -29,7 +29,7 @@ def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema,
                   "assist_records.created_at<=%(endDate)s"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id,
               "startDate": data.startDate, "endDate": data.endDate,
-              "p_start": (data.page - 1) * data.limit, "p_end": data.page * data.limit,
+              "p_start": (data.page - 1) * data.limit, "p_limit": data.limit,
               **data.dict()}
     if data.user_id is not None:
         conditions.append("assist_records.user_id=%(user_id)s")
@@ -43,7 +43,9 @@ def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema,
                                 FROM assist_records
                                          INNER JOIN projects USING (project_id)
                                          LEFT JOIN users USING (user_id)
-                                WHERE {" AND ".join(conditions)};""",
+                                WHERE {" AND ".join(conditions)}
+                                ORDER BY assist_records.created_at
+                                LIMIT %(p_limit)s OFFSET %(p_start)s;""",
                             params)
         cur.execute(query)
         results = helper.list_to_camel_case(cur.fetchall())
