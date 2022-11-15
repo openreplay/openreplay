@@ -6,8 +6,16 @@
 # Default will be OSS build.
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
-set -e
 
+# Helper function
+exit_err() {
+  err_code=$1
+  if [[ err_code != 0 ]]; then
+    exit $err_code
+  fi
+}
+
+environment=$1
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 envarg="default-foss"
 check_prereq() {
@@ -45,12 +53,13 @@ function build_api(){
 }
 
 check_prereq
-build_api $1
+build_api $environment
 echo buil_complete
 IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
 
-[[ $1 == "ee" ]] && {
+[[ $environment == "ee" ]] && {
   cp ../ee/api/build_crons.sh .
   IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
+  exit_err $?
   rm build_crons.sh
-}
+} || true

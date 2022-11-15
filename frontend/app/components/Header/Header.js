@@ -4,7 +4,7 @@ import { NavLink, withRouter } from 'react-router-dom';
 import cn from 'classnames';
 import { client, CLIENT_DEFAULT_TAB } from 'App/routes';
 import { logout } from 'Duck/user';
-import { Icon, Popup } from 'UI';
+import { Icon, Tooltip } from 'UI';
 import styles from './header.module.css';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore';
 import Notifications from '../Alerts/Notifications';
@@ -68,7 +68,7 @@ const Header = (props) => {
 
         <Notifications />
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>
-          <Popup content={`Preferences`} disabled>
+          <Tooltip title={`Preferences`} disabled>
             <div className="flex items-center">
               <NavLink to={CLIENT_PATH}>
                 <Icon name="gear" size="20" color="gray-dark" />
@@ -76,7 +76,7 @@ const Header = (props) => {
 
               <SettingsMenu className="invisible group-hover:visible" account={account} />
             </div>
-          </Popup>
+          </Tooltip>
         </div>
 
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>

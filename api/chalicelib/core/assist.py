@@ -1,5 +1,5 @@
 from os import access, R_OK
-from os.path import exists as path_exists
+from os.path import exists as path_exists, getsize
 
 import jwt
 import requests
@@ -207,9 +207,11 @@ def get_raw_mob_by_id(project_id, session_id):
     path_to_file = efs_path + "/" + __get_mob_path(project_id=project_id, session_id=session_id)
     if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
-            raise HTTPException(400, f"Replay file found under: {efs_path};"
-                                     f" but it is not readable, please check permissions")
-
+            raise HTTPException(400, f"Replay file found under: {efs_path};" +
+                                f" but it is not readable, please check permissions")
+        # getsize return size in bytes, UNPROCESSED_MAX_SIZE is in Kb
+        if (getsize(path_to_file) / 1000) >= config("UNPROCESSED_MAX_SIZE", cast=int, default=200 * 1000):
+            raise HTTPException(413, "Replay file too large")
         return path_to_file
 
     return None

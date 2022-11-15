@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import cn from 'classnames';
-// import { connectPlayer } from 'Player';
-import { QuestionMarkHint, Popup, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
+import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
 import { getRE } from 'App/utils';
 import Resource, { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
@@ -10,12 +8,10 @@ import { formatMs } from 'App/date';
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-// import stl from './network.module.css';
 import { Duration } from 'luxon';
-import { connectPlayer, jump, pause } from 'Player';
+import { connectPlayer, jump } from 'Player';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
-import { sort } from 'App/duck/sessions';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -49,17 +45,17 @@ function compare(a: any, b: any, key: string) {
 
 export function renderType(r: any) {
   return (
-    <Popup style={{ width: '100%' }} content={<div>{r.type}</div>}>
+    <Tooltip style={{ width: '100%' }} title={<div>{r.type}</div>}>
       <div>{r.type}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
 export function renderName(r: any) {
   return (
-    <Popup style={{ width: '100%' }} content={<div>{r.url}</div>}>
+    <Tooltip style={{ width: '100%' }} title={<div>{r.url}</div>}>
       <div>{r.name}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -75,7 +71,6 @@ const renderXHRText = () => (
   <span className="flex items-center">
     {XHR}
     <QuestionMarkHint
-      onHover={true}
       content={
         <>
           Use our{' '}
@@ -128,9 +123,9 @@ function renderSize(r: any) {
   }
 
   return (
-    <Popup style={{ width: '100%' }} content={content}>
+    <Tooltip style={{ width: '100%' }} title={content}>
       <div>{triggerText}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -151,9 +146,9 @@ export function renderDuration(r: any) {
   }
 
   return (
-    <Popup style={{ width: '100%' }} content={tooltipText}>
+    <Tooltip style={{ width: '100%' }} title={tooltipText}>
       <div> {text} </div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -221,7 +216,7 @@ function NetworkPanel(props: Props) {
       ({ type, name, status, success }: any) =>
         (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
         (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
-        (showOnlyErrors ? (parseInt(status) >= 400 || !success) : true)
+        (showOnlyErrors ? parseInt(status) >= 400 || !success : true)
     );
     return list;
   }, [filter, sortBy, sortAscending, showOnlyErrors, activeTab]);
@@ -374,7 +369,7 @@ function NetworkPanel(props: Props) {
                   dataKey: 'decodedBodySize',
                   render: renderSize,
                   onClick: handleSort,
-                  hidden: activeTab === XHR
+                  hidden: activeTab === XHR,
                 },
                 {
                   label: 'Time',

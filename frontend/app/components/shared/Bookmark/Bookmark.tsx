@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Popup, Button, Icon } from 'UI';
+import { Tooltip, Button, Icon } from 'UI';
 import { toggleFavorite } from 'Duck/sessions';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 
 interface Props {
   toggleFavorite: (sessionId: string) => Promise<void>;
-  favorite: Boolean;
+  favorite: boolean;
   sessionId: any;
-  isEnterprise: Boolean;
+  isEnterprise: boolean;
   noMargin?: boolean;
 }
 function Bookmark(props: Props) {
@@ -37,12 +37,7 @@ function Bookmark(props: Props) {
 
   return (
     <div onClick={toggleFavorite} className="w-full">
-      <Popup
-        delay={500}
-        content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
-        hideOnClick={true}
-        distance={20}
-      >
+      <Tooltip title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}>
         {noMargin ? (
           <div className="flex items-center cursor-pointer h-full w-full p-3">
             <Icon
@@ -62,13 +57,13 @@ function Bookmark(props: Props) {
             <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
           </Button>
         )}
-      </Popup>
+      </Tooltip>
     </div>
   );
 }
 
 export default connect(
-  (state) => ({
+  (state: any) => ({
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     favorite: state.getIn(['sessions', 'current', 'favorite']),
   }),

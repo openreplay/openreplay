@@ -47,7 +47,8 @@ def __frame_is_valid(f):
 
 def __format_frame(f):
     f["context"] = []  # no context by default
-    if "source" in f: f.pop("source")
+    if "source" in f:
+        f.pop("source")
     url = f.pop("fileName")
     f["absPath"] = url
     f["filename"] = urlparse(url).path
@@ -67,8 +68,13 @@ def format_payload(p, truncate_to_first=False):
 
 
 def url_exists(url):
-    r = requests.head(url, allow_redirects=False)
-    return r.status_code == 200 and r.headers.get("Content-Type") != "text/html"
+    try:
+        r = requests.head(url, allow_redirects=False)
+        return r.status_code == 200 and r.headers.get("Content-Type") != "text/html"
+    except Exception as e:
+        print(f"!! Issue checking if URL exists: {url}")
+        print(e)
+        return False
 
 
 def get_traces_group(project_id, payload):
@@ -90,8 +96,8 @@ def get_traces_group(project_id, payload):
             continue
 
         if key not in payloads:
-            file_exists_in_bucket = s3.exists(config('sourcemaps_bucket'), key)
-            if not file_exists_in_bucket:
+            file_exists_in_bucket = len(file_url) > 0 and s3.exists(config('sourcemaps_bucket'), key)
+            if len(file_url) > 0 and not file_exists_in_bucket:
                 print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 looking in server")
                 if not file_url.endswith(".map"):
                     file_url += '.map'

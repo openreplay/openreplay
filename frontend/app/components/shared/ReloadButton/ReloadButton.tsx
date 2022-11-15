@@ -1,5 +1,5 @@
 import React from 'react';
-import { CircularLoader, Icon, Popup } from 'UI';
+import { CircularLoader, Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 
 interface Props {
@@ -12,13 +12,11 @@ interface Props {
 export default function ReloadButton(props: Props) {
   const { loading, onClick, iconSize = '20', iconName = 'arrow-repeat', className = '' } = props;
   return (
-    <Popup content="Refresh">
-      <div
-        className={cn('h-5 w-6 flex items-center justify-center', className)}
-        onClick={onClick}
-      >
+    <Tooltip title="Refresh">
+      <div className={cn('h-5 w-6 flex items-center justify-center', className)} onClick={onClick}>
+        {/* @ts-ignore */}
         {loading ? <CircularLoader className="ml-1" /> : <Icon name={iconName} size={iconSize} />}
       </div>
-    </Popup>
+    </Tooltip>
   );
 }

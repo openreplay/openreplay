@@ -7,6 +7,10 @@ on:
         description: 'Name of a single service to build(in small letters). "all" to build everything'
         required: false
         default: 'false'
+      skip_security_checks:
+        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        required: false
+        default: 'false'
   push:
     branches:
     - dev
@@ -61,6 +65,7 @@ jobs:
         #
         set -x
         touch /tmp/images_to_build.txt
+        skip_security_checks=${{ github.event.inputs.skip_security_checks }}
         tmp_param=${{ github.event.inputs.build_service }}
         build_param=${tmp_param:-'false'}
         case ${build_param} in
@@ -89,7 +94,18 @@ jobs:
         for image in $(cat /tmp/images_to_build.txt);
         do
           echo "Bulding $image"
-          PUSH_IMAGE=1 bash -x ./build.sh ee $image
+          PUSH_IMAGE=0 bash -x ./build.sh skip $image
+          [[ "x$skip_security_checks" == "xtrue" ]]  || {
+            curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+            ./trivy image --exit-code 1 --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+            err_code=$?
+            [[ $err_code -ne 0 ]] && {
+              exit $err_code
+            }
+          } && {
+            echo "Skipping Security Checks"
+          }
+          PUSH_IMAGE=1 bash -x ./build.sh skip $image
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
 
@@ -139,6 +155,18 @@ jobs:
 
         # Deploy command
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
+
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ee
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
+
 
     # - name: Debug Job
     #   if: ${{ failure() }}

@@ -1,7 +1,6 @@
 import React from 'react';
-import { Icon, Link } from 'UI';
+import { Icon, Tooltip } from 'UI';
 import { checkForRecent } from 'App/date';
-import { Tooltip } from 'react-tippy'
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
 
@@ -24,9 +23,7 @@ function MetricTypeIcon({ type }: any) {
 
     return (
         <Tooltip
-            html={<div className="capitalize">{type}</div>}
-            position="top"
-            arrow
+            title={<div className="capitalize">{type}</div>}
         >
             <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
                 <Icon name={getIcon()} size="16" color="tealx" />

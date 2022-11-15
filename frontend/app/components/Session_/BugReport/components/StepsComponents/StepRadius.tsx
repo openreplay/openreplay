@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip } from 'react-tippy'
+import { Tooltip } from 'UI'
 
 interface Props {
   pickRadius: number;
@@ -11,7 +11,7 @@ function StepRadius({ pickRadius, setRadius }: Props) {
     <div className="w-full flex items-center gap-4">
       <div className="border-b border-dotted border-gray-medium cursor-help">
         {/* @ts-ignore */}
-        <Tooltip html={<span>Closest step to the selected timestamp &plusmn; {pickRadius}.</span>}>
+        <Tooltip title={<span>Closest step to the selected timestamp &plusmn; {pickRadius}.</span>}>
         <span>&plusmn; {pickRadius}</span>
         </Tooltip>
       </div>
