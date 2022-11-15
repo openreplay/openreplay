@@ -26,8 +26,7 @@ let debounceTooltipChange = () => null;
   skipIntervals: state.skipIntervals,
   events: state.eventList,
   skip: state.skip,
-  // not updating properly rn
-  // skipToIssue: state.skipToIssue,
+  skipToIssue: state.skipToIssue,
   disabled: state.cssLoading || state.messagesLoading || state.markedTargets,
   endTime: state.endTime,
   live: state.live,
@@ -85,8 +84,7 @@ export default class Timeline extends React.PureComponent {
   };
 
   componentDidMount() {
-    const { issues } = this.props;
-    const skipToIssue = Controls.updateSkipToIssue();
+    const { issues, skipToIssue } = this.props;
     const firstIssue = issues.get(0);
     deboucneJump = debounce(this.props.jump, 500);
     debounceTooltipChange = debounce(this.props.setTimelineHoverTime, 50);

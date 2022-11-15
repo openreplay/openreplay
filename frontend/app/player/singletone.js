@@ -58,7 +58,6 @@ export const togglePlay = initCheck((...args) => instance.togglePlay(...args));
 export const pause = initCheck((...args) => instance.pause(...args));
 export const toggleSkip = initCheck((...args) => instance.toggleSkip(...args));
 export const toggleSkipToIssue = initCheck((...args) => instance.toggleSkipToIssue(...args));
-export const updateSkipToIssue = initCheck((...args) => instance.updateSkipToIssue(...args));
 export const toggleAutoplay = initCheck((...args) => instance.toggleAutoplay(...args));
 export const toggleSpeed = initCheck((...args) => instance.toggleSpeed(...args));
 export const toggleEvents = initCheck((...args) => instance.toggleEvents(...args));
@@ -94,7 +93,6 @@ export const Controls = {
   pause,
   toggleSkip,
   toggleSkipToIssue,
-  updateSkipToIssue,
   toggleAutoplay,
   toggleEvents,
   toggleSpeed,
