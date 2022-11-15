@@ -27,6 +27,7 @@ export default function GuidePopup({ children, title, description }: IProps) {
   const onClick = () => {
     setShowGuide(false);
     localStorage.setItem(FEATURE_KEYS.NOTES, 'true');
+    Player.togglePlay()
   };
 
   return showGuide ? (
