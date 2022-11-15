@@ -1,4 +1,4 @@
-import { connectPlayer } from 'App/player';
+import { connectPlayer } from 'Player';
 import { toggleBottomBlock } from 'Duck/components/player';
 import React, { useEffect } from 'react';
 import BottomBlock from '../BottomBlock';

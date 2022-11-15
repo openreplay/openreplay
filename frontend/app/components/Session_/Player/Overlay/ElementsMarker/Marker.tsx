@@ -1,5 +1,5 @@
 import React from 'react';
-import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
+import type { MarkedTarget } from 'Player';
 import cn from 'classnames';
 import stl from './Marker.module.css';
 import { activeTarget } from 'Player';

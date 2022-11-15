@@ -6,7 +6,7 @@ import {
   STORAGE_TYPES,
   selectStorageType,
   selectStorageListNow,
-} from 'Player/store';
+} from 'Player';
 import LiveTag from 'Shared/LiveTag';
 import { jumpToLive } from 'Player';
 

@@ -1,5 +1,5 @@
 import Player from './Player';
-import { update, clean as cleanStore, getState } from './store';
+import { update, cleanStore, getState } from './store';
 import { clean as cleanLists } from './lists';
 
 /** @type {Player} */

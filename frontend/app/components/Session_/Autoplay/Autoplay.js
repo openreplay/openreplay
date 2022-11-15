@@ -3,8 +3,7 @@ import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
 import { Link, Icon, Toggler, Tooltip } from 'UI';
-import { connectPlayer } from 'Player/store';
-import { Controls as PlayerControls } from 'Player';
+import { Controls as PlayerControls, connectPlayer } from 'Player';
 import cn from 'classnames';
 
 function Autoplay(props) {

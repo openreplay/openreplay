@@ -13,7 +13,7 @@ export function update(...args) {
 	return store.dispatch(action);
 }
 
-export function clean() {
+export function cleanStore() {
 	return store.dispatch(cleanAction());
 }
 

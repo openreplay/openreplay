@@ -7,7 +7,7 @@ import {
   STORAGE_TYPES,
   selectStorageListNow,
   selectStorageList,
-} from 'Player/store';
+} from 'Player';
 import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
 import { diff } from 'deep-diff';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Controls } from 'App/player';
+import { Controls } from 'Player';
 import { NETWORK, EXCEPTIONS } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
 import { Icon, Tooltip } from 'UI';

@@ -1,6 +1,6 @@
 import React from 'react';
 import ovStl from './overlay.module.css';
-import { ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import { ConnectionStatus } from 'Player';
 import { Loader } from 'UI';
 
 interface Props {
