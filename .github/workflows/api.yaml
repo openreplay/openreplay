@@ -118,9 +118,11 @@ jobs:
       uses: rtCamp/action-slack-notify@v2
       env:
         SLACK_CHANNEL: foss
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
         SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
-        SLACK_TITLE: "Failed ${{ github.action }}"
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
 
     # - name: Debug Job
     #   if: ${{ failure() }}
