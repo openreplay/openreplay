@@ -63,7 +63,7 @@ function Condition({
           isSearchable={true}
           options={triggerOptions}
           name="left"
-          value={triggerOptions.find((i) => i.value === instance.query.left)}
+          value={triggerOptions.find((i) => i.value === instance.query.left) || ''}
           onChange={({ value }) => writeQueryOption(null, { name: 'left', value: value.value })}
         />
       </div>
@@ -75,7 +75,7 @@ function Condition({
             placeholder="Select Condition"
             options={conditions}
             name="operator"
-            value={conditions.find(c => c.value === instance.query.operator)}
+            value={conditions.find(c => c.value === instance.query.operator) || ''}
             onChange={({ value }) =>
               writeQueryOption(null, { name: 'operator', value: value.value })
             }
