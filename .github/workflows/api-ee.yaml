@@ -114,6 +114,15 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ee
+        SLACK_TITLE: "Failed ${{ github.action }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+
     # - name: Debug Job
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3
