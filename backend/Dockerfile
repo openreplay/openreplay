@@ -29,6 +29,7 @@ ENV TZ=UTC \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
     HTTP_PORT=8080 \
     KAFKA_USE_SSL=true \
+    KAFKA_USE_KERBEROS=false \
     KAFKA_MAX_POLL_INTERVAL_MS=400000 \
     REDIS_STREAMS_MAX_LEN=10000 \
     TOPIC_RAW_WEB=raw \
