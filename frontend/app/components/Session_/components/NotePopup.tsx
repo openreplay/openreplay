@@ -3,6 +3,7 @@ import { Button } from 'UI';
 import { connectPlayer, pause } from 'Player';
 import { connect } from 'react-redux';
 import { setCreateNoteTooltip } from 'Duck/sessions';
+import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
 
 function NotePopup({
   setCreateNoteTooltip,
@@ -24,9 +25,18 @@ function NotePopup({
   }, []);
 
   return (
-    <Button icon="quotes" variant="text" disabled={tooltipActive} onClick={toggleNotePopup}>
-      Add Note
-    </Button>
+    <GuidePopup
+      title={
+        <div className="color-gray-dark">
+          Introducing <span className={''}>Notes</span>
+        </div>
+      }
+      description={'Annotate session replays and share your feedback with the rest of your team.'}
+    >
+      <Button icon="quotes" variant="text" disabled={tooltipActive} onClick={toggleNotePopup}>
+        Add Note
+      </Button>
+    </GuidePopup>
   );
 }
 
@@ -36,7 +46,7 @@ const NotePopupPl = connectPlayer(
 )(React.memo(NotePopup));
 
 const NotePopupComp = connect(
-  (state) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
+  (state: any) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
   { setCreateNoteTooltip }
 )(NotePopupPl);
 

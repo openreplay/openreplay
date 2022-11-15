@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Button, PageTitle, Loader } from 'UI';
+import { Button, PageTitle, Loader, Tooltip, Popover } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
@@ -15,7 +15,6 @@ import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import DashboardOptions from '../DashboardOptions';
 import SelectDateRange from 'Shared/SelectDateRange';
-import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
 import AddMetricContainer from '../DashboardWidgetGrid/AddMetricContainer';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
@@ -126,24 +125,25 @@ function DashboardView(props: Props) {
             <PageTitle
               title={
                 // @ts-ignore
-                <Tooltip delay={100} arrow title="Double click to rename">
+                <Tooltip title="Double click to rename">
                   {dashboard?.name}
                 </Tooltip>
               }
               onDoubleClick={() => onEdit(true)}
               className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
               actionButton={
-                <OutsideClickDetectingDiv onClickOutside={() => setShowTooltip(false)}>
-                  <Tooltip
-                    open={showTooltip}
-                    interactive
-                    useContext
+                // <OutsideClickDetectingDiv onClickOutside={() => setShowTooltip(false)}>
+                  <Popover
+                    // open={showTooltip}
+                    // interactive
+                    // useContext
                     // @ts-ignore
-                    theme="nopadding"
-                    hideDelay={0}
-                    duration={0}
-                    distance={20}
-                    html={
+                    // theme="nopadding"
+                    // hideDelay={0}
+                    // duration={0}
+                    // distance={20}
+                    placement="left"
+                    render={() => showTooltip && (
                       <div style={{ padding: 0 }}>
                         <AddMetricContainer
                           onAction={() => setShowTooltip(false)}
@@ -151,13 +151,13 @@ function DashboardView(props: Props) {
                           siteId={siteId}
                         />
                       </div>
-                    }
+                    )}
                   >
                     <Button variant="primary" onClick={() => setShowTooltip(true)}>
                       Add Metric
                     </Button>
-                  </Tooltip>
-                </OutsideClickDetectingDiv>
+                  </Popover>
+                // </OutsideClickDetectingDiv>
               }
             />
           </div>

@@ -335,3 +335,24 @@ p {
     #ccc 4px
   );
 }
+
+.animate-fade {
+  animation: fade 0.1s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes fade {
+  100% {
+    opacity: 1;
+  }
+  0% {
+    opacity: 0;
+  }
+}
+
+#arrow {
+  position: absolute;
+  background: #333;
+  width: 80px;
+  height: 80px;
+  transform: rotate(45deg);
+}

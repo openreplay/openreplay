@@ -1,10 +1,9 @@
 import React from 'react';
-import { Icon, Button } from 'UI';
+import { Icon, Tooltip, Button } from 'UI';
 import Autoplay from './Autoplay';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import copy from 'copy-to-clipboard';
-import { Tooltip } from 'react-tippy';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
 import { connectPlayer, pause } from 'Player';
@@ -46,14 +45,7 @@ function SubHeader(props) {
           }}
         >
           <Icon size="20" name="event/link" className="mr-1" />
-          <Tooltip
-            delay={0}
-            arrow
-            animation="fade"
-            hideOnClick={false}
-            position="bottom center"
-            title={isCopied ? 'URL Copied to clipboard' : 'Click to copy'}
-          >
+          <Tooltip title={isCopied ? 'URL Copied to clipboard' : 'Click to copy'}>
             {location}
           </Tooltip>
         </div>

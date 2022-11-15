@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Map } from 'immutable';
 import cn from 'classnames';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Legend } from 'recharts';
-import { Loader, TextEllipsis, Popup, Icon } from 'UI';
+import { Loader, TextEllipsis, Tooltip } from 'UI';
 import { TYPES } from 'Types/resource';
 import { LAST_24_HOURS, LAST_30_MINUTES, LAST_7_DAYS, LAST_30_DAYS } from 'Types/app/period';
 import { fetchPerformanseSearch } from 'Duck/dashboard';
@@ -101,7 +101,7 @@ export default class Performance extends React.PureComponent {
 
   compare = () => this.setState({ comparing: true })
 
-  legendPopup = (component, trigger) => <Popup size="mini" content={ component }>{trigger}</Popup>
+  legendPopup = (component, trigger) => <Tooltip size="mini" content={ component }>{trigger}</Tooltip>
 
   legendFormatter = (value, entry, index) => {
     const { opacity } = this.state;
@@ -113,16 +113,15 @@ export default class Performance extends React.PureComponent {
     if (value.includes(BASE_KEY)) {
       const resourceIndex = Number.parseInt(value.substr(BASE_KEY.length));
       return (
-        <Popup
-          wide
-          content={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
+        <Tooltip
+          title={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
         >
           <TextEllipsis
               maxWidth="200px"
               style={ { verticalAlign: 'middle' } }
               text={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
             />
-        </Popup>
+        </Tooltip>
       );
     }
   }
