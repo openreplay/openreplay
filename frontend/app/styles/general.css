@@ -348,3 +348,11 @@ p {
     opacity: 0;
   }
 }
+
+#arrow {
+  position: absolute;
+  background: #333;
+  width: 80px;
+  height: 80px;
+  transform: rotate(45deg);
+}

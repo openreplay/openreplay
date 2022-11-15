@@ -1,37 +1,71 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { Controls as Player } from 'Player';
 import { Tooltip } from 'UI';
+import { INDEXES } from 'App/constants/zindex';
 
 export const FEATURE_KEYS = {
-  XRAY: 'featureViewed'
-}
+  XRAY: 'featureViewed',
+  NOTES: 'notesFeatureViewed',
+};
 
 interface IProps {
-  children: React.ReactNode
-  title: React.ReactNode
-  description: React.ReactNode
-  key?: keyof typeof FEATURE_KEYS
+  children?: React.ReactNode;
+  title: React.ReactNode;
+  description: React.ReactNode;
+  key?: keyof typeof FEATURE_KEYS;
 }
 
 export default function GuidePopup({ children, title, description }: IProps) {
-  return (
-    // @ts-ignore
-    <Tooltip
-      title={
-        <div>
-          <div className="font-bold">
-            {title}
+  const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.NOTES));
+  useEffect(() => {
+    if (!showGuide) {
+      return;
+    }
+    Player.pause();
+  }, []);
+
+  const onClick = () => {
+    setShowGuide(false);
+    localStorage.setItem(FEATURE_KEYS.NOTES, 'true');
+  };
+
+  return showGuide ? (
+    <div>
+      <div
+        onClick={onClick}
+        className="bg-gray-darkest fixed inset-0 z-10 w-full h-screen cursor-pointer"
+        style={{ zIndex: INDEXES.POPUP_GUIDE_BG, opacity: '0.7' }}
+      ></div>
+      <Tooltip
+        offset={30}
+        className="!bg-white rounded text-center shadow !p-6"
+        title={
+          <div className="relative">
+            <div className="font-bold">{title}</div>
+            <div className="color-gray-medium w-80">{description}</div>
+            <div className="w-10 h-10 bg-white rotate-45 absolute right-0 left-0 m-auto" style={{ top: '-38px'}} />
           </div>
-          <div className="color-gray-medium">
-            {description}
+        }
+        open={true}
+      >
+        <div className="relative pointer-events-none">
+          <div className="" style={{ zIndex: INDEXES.POPUP_GUIDE_BTN, position: 'inherit' }}>
+            {children}
           </div>
+          <div
+            className="absolute bg-white top-0 left-0"
+            style={{
+              zIndex: INDEXES.POPUP_GUIDE_BG,
+              width: '120px',
+              height: '40px',
+              borderRadius: '30px',
+              margin: '-2px -10px',
+            }}
+          ></div>
         </div>
-      }
-      // distance={30}
-      // theme={'light'}
-      open={true}
-      // arrow={true}
-    >
-      {children}
-    </Tooltip>
+      </Tooltip>
+    </div>
+  ) : (
+    children
   );
 }
