@@ -7,11 +7,11 @@ import FetchTabs from './components/FetchTabs/FetchTabs';
 
 interface Props {
   resource: any;
-  rows: any;
+  rows?: any;
   fetchPresented?: boolean;
 }
 function FetchDetailsModal(props: Props) {
-  const { rows, fetchPresented = false } = props;
+  const { rows = [], fetchPresented = false } = props;
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
