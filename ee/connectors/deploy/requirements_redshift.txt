@@ -13,3 +13,4 @@ urllib3==1.26.5
 pandas-redshift
 PyYAML
 awswrangler
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
