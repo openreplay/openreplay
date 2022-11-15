@@ -1,6 +1,6 @@
 from typing import Union
 
-from chalicelib.core import roles, traces, projects, sourcemaps, assist_records
+from chalicelib.core import roles, traces, projects, sourcemaps, assist_records, sessions
 from chalicelib.core import unlock
 from chalicelib.utils import assist_helper
 
@@ -76,6 +76,8 @@ def get_available_trail_actions(context: schemas_ee.CurrentContext = Depends(OR_
 
 @app.put('/{projectId}/assist/save/', tags=["assist"])
 @app.put('/{projectId}/assist/save', tags=["assist"])
-def sign_record_for_upload(projectId: int, data: schemas_ee.AssistRecordUploadPayloadSchema = Body(...),
+def sign_record_for_upload(projectId: int, data: schemas_ee.AssistRecordPayloadSchema = Body(...),
                            context: schemas_ee.CurrentContext = Depends(OR_context)):
-    return {"data": assist_records.presign_records(project_id=projectId, data=data, context=context)}
+    if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
+        return {"errors": ["Session not found"]}
+    return {"data": {"URL": assist_records.presign_records(project_id=projectId, data=data, context=context)}}

@@ -83,14 +83,10 @@ class SessionModel(BaseModel):
     metadata: dict = Field(default={})
 
 
-class AssistRecord(BaseModel):
+class AssistRecordPayloadSchema(BaseModel):
     name: str = Field(...)
     duration: int = Field(...)
     session_id: int = Field(...)
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
-
-
-class AssistRecordUploadPayloadSchema(BaseModel):
-    records: List[AssistRecord] = Field(default=[])
