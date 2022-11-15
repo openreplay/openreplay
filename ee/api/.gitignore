@@ -248,7 +248,7 @@ Pipfile
 /routers/core.py
 /routers/crons/core_crons.py
 /db_changes.sql
-/Dockerfile.bundle
+/Dockerfile_bundle
 /entrypoint.bundle.sh
 /chalicelib/core/heatmaps.py
 /schemas.py

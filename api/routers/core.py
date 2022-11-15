@@ -49,6 +49,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
+@app.post('/{projectId}/sessions/search2', tags=["sessions"])
 def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
@@ -867,7 +868,7 @@ def delete_slack_integration(integrationId: int, context: schemas.CurrentContext
     return webhook.delete(context.tenant_id, integrationId)
 
 
-@app.post('/webhooks', tags=["webhooks"])
+@app.put('/webhooks', tags=["webhooks"])
 def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data.dict(), replace_none=True)}

@@ -70,7 +70,7 @@ rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py
 rm -rf ./db_changes.sql
-rm -rf ./Dockerfile.bundle
+rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./schemas.py
