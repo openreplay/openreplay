@@ -1252,7 +1252,7 @@ $$
                 project_id integer                     NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
                 user_id    integer                     NOT NULL REFERENCES users (user_id) ON DELETE SET NULL,
                 session_id bigint                      NOT NULL REFERENCES sessions (session_id) ON DELETE SET NULL,
-                created_at timestamp without time zone NOT NULL default (now() at time zone 'utc'),
+                created_at bigint                      NOT NULL DEFAULT (EXTRACT(EPOCH FROM now() at time zone 'utc') * 1000)::bigint,
                 deleted_at timestamp without time zone NULL     DEFAULT NULL,
                 name       text                        NOT NULL,
                 file_key   text                        NOT NULL,

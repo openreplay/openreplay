@@ -81,3 +81,14 @@ def sign_record_for_upload(projectId: int, data: schemas_ee.AssistRecordPayloadS
     if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
     return {"data": {"URL": assist_records.presign_records(project_id=projectId, data=data, context=context)}}
+
+
+@app.post('/{projectId}/assist/records', tags=["assist"])
+def search_records(projectId: int, data: schemas_ee.AssistRecordSearchPayloadSchema = Body(...),
+                   context: schemas_ee.CurrentContext = Depends(OR_context)):
+    return {"data": assist_records.search_records(project_id=projectId, data=data, context=context)}
+
+
+@app.get('/{projectId}/assist/records/{recordId}', tags=["assist"])
+def search_records(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
+    return {"data": assist_records.get_record(project_id=projectId, record_id=recordId, context=context)}
