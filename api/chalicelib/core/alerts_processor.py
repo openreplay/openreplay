@@ -196,7 +196,7 @@ def process():
                     cur.execute(query)
                     result = cur.fetchone()
                     if result["valid"]:
-                        logging.info("Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
+                        logging.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
                 except Exception as e:
                     logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
