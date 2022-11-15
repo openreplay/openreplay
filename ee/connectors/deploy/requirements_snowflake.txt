@@ -32,3 +32,4 @@ s3transfer==0.3.3
 six==1.15.0
 urllib3==1.26.5
 
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
