@@ -1,4 +1,6 @@
-export * from './store';
-export * from './singletone';
-export * from './MessageDistributor/managers/AssistManager';
-export * from './MessageDistributor/managers/LocalStream';
+export * from './_store';
+export * from './_web/assist/AssistManager';
+export * from './_web/assist/LocalStream';
+export * from './_singletone';
+
+export * from './create';

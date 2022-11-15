@@ -30,7 +30,7 @@ let debounceTooltipChange = () => null;
   disabled: state.cssLoading || state.messagesLoading || state.markedTargets,
   endTime: state.endTime,
   live: state.live,
-  notes: state.notes,
+  notes: state.notes || [], // TODO: implement notes without interaction with Player state
 }))
 @connect(
   (state) => ({
