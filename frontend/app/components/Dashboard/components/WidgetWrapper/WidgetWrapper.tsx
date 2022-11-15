@@ -119,7 +119,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
           {'Cannot drill down system provided metrics'}
         </div>
       )}
-      <Tooltip disabled={!isTemplate} title={<span>Click to select</span>} className="w-full">
+      <Tooltip disabled={!isTemplate} title="Click to select">
         {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
         <div
           className={cn('p-3 pb-4 flex items-center justify-between', {
@@ -160,8 +160,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
           )}
         </div>
 
-        {/* <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} > */}
-        <LazyLoad offset={!isTemplate ? 100 : 0}>
+        <LazyLoad offset={!isTemplate ? 100 : 600}>
           <div className="px-4" onClick={onChartClick}>
             <WidgetChart metric={widget} isTemplate={isTemplate} isWidget={isWidget} />
           </div>
