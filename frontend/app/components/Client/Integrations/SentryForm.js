@@ -14,6 +14,11 @@ const SentryForm = (props) => (
             name="sentry"
             formFields={[
                 {
+                    key: 'sentryUrl',
+                    label: 'Sentry Url',
+                    placeholder: 'https://sentry.io'
+                },
+                {
                     key: 'organizationSlug',
                     label: 'Organization Slug',
                 },

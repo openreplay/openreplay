@@ -756,6 +756,7 @@ class AssistSearchPayloadSchema(BaseModel):
 
 
 class SentrySchema(BaseModel):
+    sentryUrl: Optional[str] = Field(default='https://sentry.io')
     projectSlug: str = Field(...)
     organizationSlug: str = Field(...)
     token: str = Field(...)

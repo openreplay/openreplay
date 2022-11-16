@@ -2,6 +2,7 @@ import Record from 'Types/Record';
 
 export default Record({
   projectId: undefined,
+  sentryUrl: '',
   organizationSlug: '',
   projectSlug: '',
   token: '',
@@ -13,7 +14,7 @@ export default Record({
   }),
   methods: {
     validate() {
-      return this.organizationSlug !== '' && this.projectSlug !== '' && this.token !== '';
+      return this.sentryUrl !== '' && this.organizationSlug !== '' && this.projectSlug !== '' && this.token !== '';
     },
     exists() {
       return this.projectId >= 0;
