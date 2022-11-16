@@ -294,6 +294,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             sessions = cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
+            print(main_query)
             print("--------- PAYLOAD -----------")
             print(data.json())
             print("--------------------")

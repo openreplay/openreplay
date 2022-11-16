@@ -1222,19 +1222,9 @@ $$
                 query         text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
-            CREATE INDEX IF NOT EXISTS requests_url_idx ON events_common.requests (url);
+
             CREATE INDEX IF NOT EXISTS requests_duration_idx ON events_common.requests (duration);
-            CREATE INDEX IF NOT EXISTS requests_url_gin_idx ON events_common.requests USING GIN (url gin_trgm_ops);
             CREATE INDEX IF NOT EXISTS requests_timestamp_idx ON events_common.requests (timestamp);
-            CREATE INDEX IF NOT EXISTS requests_url_gin_idx2 ON events_common.requests USING GIN (RIGHT(url,
-                                                                                                        length(url) -
-                                                                                                        (CASE
-                                                                                                             WHEN url LIKE 'http://%'
-                                                                                                                 THEN 7
-                                                                                                             WHEN url LIKE 'https://%'
-                                                                                                                 THEN 8
-                                                                                                             ELSE 0 END))
-                                                                                                  gin_trgm_ops);
             CREATE INDEX IF NOT EXISTS requests_timestamp_session_id_failed_idx ON events_common.requests (timestamp, session_id) WHERE success = FALSE;
             CREATE INDEX IF NOT EXISTS requests_request_body_nn_gin_idx ON events_common.requests USING GIN (request_body gin_trgm_ops) WHERE request_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_response_body_nn_gin_idx ON events_common.requests USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
