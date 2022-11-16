@@ -46,7 +46,7 @@ const EventRow = React.memo((props: Props) => {
         >
           {title}
         </div>
-        {message ? <RowInfo zIndex={props.zIndex} message={message} /> : null}
+        {message ? <RowInfo message={message} /> : null}
       </div>
       <div className="relative w-full" style={{ zIndex: props.zIndex ? props.zIndex : undefined }}>
         {isGraph ? (
@@ -78,9 +78,9 @@ const EventRow = React.memo((props: Props) => {
 
 export default EventRow;
 
-function RowInfo({ message, zIndex }: any) {
+function RowInfo({ message }: any) {
   return (
-    <Tooltip title={message} delay={0} style={{ zIndex: zIndex ? zIndex : undefined }}>
+    <Tooltip title={message} delay={0}>
       <Icon name="info-circle" color="gray-medium" />
     </Tooltip>
   );
