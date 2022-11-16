@@ -31,10 +31,14 @@ mc mb minio/${bucket} || true
 done
 mc ilm import minio/mobs < /tmp/lifecycle.json || true
 
-# Creating frontend bucket
+#####################################################
+# Creating frontend bucket; Do not change this block!
+# !! PUBLIC BUCKETS !!
+#####################################################
 mc mb minio/frontend || true
 mc policy set download minio/frontend || true
 mc policy set download minio/sessions-assets || true
+
 }
 
 # /bin/bash kafka.sh migrate $migration_versions
