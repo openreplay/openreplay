@@ -60,4 +60,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP INDEX IF EXISTS events_common.requests_url_idx;
+DROP INDEX IF EXISTS events_common.requests_url_gin_idx;
+DROP INDEX IF EXISTS events_common.requests_url_gin_idx2;
+
 COMMIT;
