@@ -12,7 +12,7 @@ import AnnotationCanvas from './AnnotationCanvas.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
-import ScreenRecordingState, { RecordingState, } from './ScreenRecordingState'
+import ScreenRecordingState from './ScreenRecordingState'
 
 // TODO: fully specified strict check with no-any (everywhere)
 
@@ -208,7 +208,7 @@ export default class Assist {
     const onDenyRecording = () => {
       socket.emit('recording_denied')
     }
-    const recordingState =  new ScreenRecordingState(onAcceptRecording, onDenyRecording, this.options)
+    const recordingState = new ScreenRecordingState(onAcceptRecording, onDenyRecording, this.options)
 
     // TODO: check incoming args
     socket.on('request_control', this.remoteControl.requestControl)
@@ -259,11 +259,15 @@ export default class Assist {
       this.agents[id]?.onDisconnect?.()
       delete this.agents[id]
 
+      if (Object.keys(this.agents).length === 0 && recordingState.isActive) {
+        recordingState.denyRecording()
+      }
       endAgentCall(id)
     })
     socket.on('NO_AGENT', () => {
       Object.values(this.agents).forEach(a => a.onDisconnect?.())
       this.agents = {}
+      if (recordingState.isActive) recordingState.denyRecording()
     })
     socket.on('call_end', (id) => {
       if (!callingAgents.has(id)) {
@@ -281,13 +285,13 @@ export default class Assist {
       callUI?.toggleVideoStream(feedState)
     })
     socket.on('request_recording', (id, agentData) => {
-      if (recordingState.status === RecordingState.Off) {
+      if (!recordingState.isActive) {
         this.options.onRecordingRequest?.(JSON.parse(agentData))
         recordingState.requestRecording(id)
       }
     })
     socket.on('stop_recording', (id) => {
-      if (recordingState.status !== RecordingState.Off) {
+      if (recordingState.isActive) {
         recordingState.denyRecording(id)
       }
     })
