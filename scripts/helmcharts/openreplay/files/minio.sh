@@ -5,7 +5,7 @@ set -e
 
 cd /tmp
 
-buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data")
+buckets=("mobs" "sessions-assets" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data")
 
 mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
@@ -35,7 +35,6 @@ mc ilm import minio/mobs < /tmp/lifecycle.json || true
 mc mb minio/frontend || true
 mc policy set download minio/frontend || true
 mc policy set download minio/sessions-assets || true
-mc policy set download minio/static || true
 }
 
 # /bin/bash kafka.sh migrate $migration_versions
