@@ -1,38 +1,53 @@
 package oswriter
 
 import (
-	"errors"
-	"log"
+	"fmt"
 	"math"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 )
 
+type FileType int
+
+const (
+	DOM FileType = 1
+	DEV FileType = 2
+)
+
 type Writer struct {
-	ulimit int
-	dir    string
-	files  map[string]*os.File
-	atimes map[string]int64
+	ulimit   int
+	dir      string
+	files    map[uint64]*os.File
+	devtools map[uint64]*os.File
+	atimes   map[uint64]int64
 }
 
 func NewWriter(ulimit uint16, dir string) *Writer {
 	return &Writer{
-		ulimit: int(ulimit),
-		dir:    dir + "/",
-		files:  make(map[string]*os.File),
-		atimes: make(map[string]int64),
+		ulimit:   int(ulimit),
+		dir:      dir + "/",
+		files:    make(map[uint64]*os.File, 1024),
+		devtools: make(map[uint64]*os.File, 1024),
+		atimes:   make(map[uint64]int64, 1024),
 	}
 }
 
-func (w *Writer) open(fname string) (*os.File, error) {
-	file, ok := w.files[fname]
-	if ok {
-		return file, nil
+func (w *Writer) open(key uint64, mode FileType) (*os.File, error) {
+	if mode == DOM {
+		file, ok := w.files[key]
+		if ok {
+			return file, nil
+		}
+	} else {
+		file, ok := w.devtools[key]
+		if ok {
+			return file, nil
+		}
 	}
-	if len(w.atimes) == w.ulimit {
-		var m_k string
+
+	if len(w.atimes) >= w.ulimit {
+		var m_k uint64
 		var m_t int64 = math.MaxInt64
 		for k, t := range w.atimes {
 			if t < m_t {
@@ -40,38 +55,30 @@ func (w *Writer) open(fname string) (*os.File, error) {
 				m_t = t
 			}
 		}
-		if err := w.close(m_k); err != nil {
+		if err := w.Close(m_k); err != nil {
 			return nil, err
 		}
 	}
-
-	// mkdir if not exist
-	pathTo := w.dir + filepath.Dir(fname)
-	if info, err := os.Stat(pathTo); os.IsNotExist(err) {
-		if err := os.MkdirAll(pathTo, 0755); err != nil {
-			log.Printf("os.MkdirAll error: %s", err)
-		}
-	} else {
-		if err != nil {
-			return nil, err
-		}
-		if !info.IsDir() {
-			return nil, errors.New("not a directory")
-		}
+	filePath := w.dir + strconv.FormatUint(key, 10)
+	if mode == DEV {
+		filePath += "devtools"
 	}
-
-	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
-		log.Printf("os.OpenFile error: %s", err)
 		return nil, err
 	}
-	w.files[fname] = file
-	w.atimes[fname] = time.Now().Unix()
+	if mode == DOM {
+		w.files[key] = file
+	} else {
+		w.devtools[key] = file
+	}
+	w.atimes[key] = time.Now().Unix()
 	return file, nil
 }
 
-func (w *Writer) close(fname string) error {
-	file := w.files[fname]
+func (w *Writer) Close(key uint64) error {
+	// Close dom file
+	file := w.files[key]
 	if file == nil {
 		return nil
 	}
@@ -81,69 +88,47 @@ func (w *Writer) close(fname string) error {
 	if err := file.Close(); err != nil {
 		return err
 	}
-	delete(w.files, fname)
-	delete(w.atimes, fname)
+	delete(w.files, key)
+	delete(w.atimes, key)
+	// Close dev file
+	file = w.devtools[key]
+	if file == nil {
+		return nil
+	}
+	if err := file.Sync(); err != nil {
+		return err
+	}
+	if err := file.Close(); err != nil {
+		return err
+	}
+	delete(w.devtools, key)
 	return nil
 }
 
-func (w *Writer) WriteDOM(sid uint64, data []byte) error {
-	return w.write(strconv.FormatUint(sid, 10)+"/dom.mob", data)
+func (w *Writer) WriteDOM(key uint64, data []byte) error {
+	return w.Write(key, DOM, data)
 }
 
-func (w *Writer) WriteDEV(sid uint64, data []byte) error {
-	return w.write(strconv.FormatUint(sid, 10)+"/devtools.mob", data)
+func (w *Writer) WriteDEV(key uint64, data []byte) error {
+	return w.Write(key, DEV, data)
 }
 
-func (w *Writer) WriteMOB(sid uint64, data []byte) error {
-	// Use session id as a file name without directory
-	fname := strconv.FormatUint(sid, 10)
-	file, err := w.openWithoutDir(fname)
+func (w *Writer) Write(key uint64, mode FileType, data []byte) error {
+	file, err := w.open(key, mode)
 	if err != nil {
 		return err
 	}
 	_, err = file.Write(data)
 	return err
-}
-
-func (w *Writer) write(fname string, data []byte) error {
-	file, err := w.open(fname)
-	if err != nil {
-		return err
-	}
-	_, err = file.Write(data)
-	return err
-}
-
-func (w *Writer) openWithoutDir(fname string) (*os.File, error) {
-	file, ok := w.files[fname]
-	if ok {
-		return file, nil
-	}
-	if len(w.atimes) == w.ulimit {
-		var m_k string
-		var m_t int64 = math.MaxInt64
-		for k, t := range w.atimes {
-			if t < m_t {
-				m_k = k
-				m_t = t
-			}
-		}
-		if err := w.close(m_k); err != nil {
-			return nil, err
-		}
-	}
-
-	file, err := os.OpenFile(w.dir+fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return nil, err
-	}
-	w.files[fname] = file
-	w.atimes[fname] = time.Now().Unix()
-	return file, nil
 }
 
 func (w *Writer) SyncAll() error {
 	for _, file := range w.files {
+		if err := file.Sync(); err != nil {
+			return err
+		}
+	}
+	for _, file := range w.devtools {
 		if err := file.Sync(); err != nil {
 			return err
 		}
@@ -161,6 +146,19 @@ func (w *Writer) CloseAll() error {
 		}
 	}
 	w.files = nil
+	for _, file := range w.devtools {
+		if err := file.Sync(); err != nil {
+			return err
+		}
+		if err := file.Close(); err != nil {
+			return err
+		}
+	}
+	w.devtools = nil
 	w.atimes = nil
 	return nil
+}
+
+func (w *Writer) Info() string {
+	return fmt.Sprintf("dom: %d, dev: %d", len(w.files), len(w.devtools))
 }

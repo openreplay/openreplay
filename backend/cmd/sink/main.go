@@ -3,10 +3,8 @@ package main
 import (
 	"context"
 	"log"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -16,6 +14,7 @@ import (
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
@@ -64,6 +63,9 @@ func main() {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, msg.SessionID())
 			}
+			if err := writer.Close(msg.SessionID()); err != nil {
+				log.Printf("can't close session file: %s", err)
+			}
 			return
 		}
 
@@ -98,39 +100,18 @@ func main() {
 		// Write encoded message with index to session file
 		data := msg.EncodeWithIndex()
 		if data == nil {
-			log.Printf("can't encode with index, err: %s", err)
 			return
 		}
-		wasWritten := false // To avoid timestamp duplicates in original mob file
+
+		// Write message to file
 		if messages.IsDOMType(msg.TypeID()) {
 			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				if strings.Contains(err.Error(), "not a directory") {
-					// Trying to write data to mob file by original path
-					oldErr := writer.WriteMOB(msg.SessionID(), data)
-					if oldErr != nil {
-						log.Printf("MOB Writeer error: %s, prev DOM error: %s, info: %s", oldErr, err, msg.Meta().Batch().Info())
-					} else {
-						wasWritten = true
-					}
-				} else {
-					log.Printf("DOM Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
-				}
+				log.Printf("Writer error: %v\n", err)
 			}
 		}
 		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
-			// TODO: write only necessary timestamps
 			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				if strings.Contains(err.Error(), "not a directory") {
-					if !wasWritten {
-						// Trying to write data to mob file by original path
-						oldErr := writer.WriteMOB(msg.SessionID(), data)
-						if oldErr != nil {
-							log.Printf("MOB Writeer error: %s, prev DEV error: %s, info: %s", oldErr, err, msg.Meta().Batch().Info())
-						}
-					}
-				} else {
-					log.Printf("Devtools Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
-				}
+				log.Printf("Writer error: %v\n", err)
 			}
 		}
 
@@ -167,13 +148,18 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
+			counter.Print()
+			log.Printf("writer info: %s", writer.Info())
+			s := time.Now()
 			if err := writer.SyncAll(); err != nil {
 				log.Fatalf("sync error: %v\n", err)
 			}
-			counter.Print()
+			dur := time.Now().Sub(s).Milliseconds()
+			s = time.Now()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+			log.Printf("sync duration: %d, commit duration: %d", dur, time.Now().Sub(s).Milliseconds())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
