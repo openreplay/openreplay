@@ -241,13 +241,14 @@ Pipfile
 /routers/subs/__init__.py
 /routers/__init__.py
 /chalicelib/core/assist.py
+/auth/__init__.py
 /auth/auth_apikey.py
 /build.sh
 /routers/base.py
 /routers/core.py
 /routers/crons/core_crons.py
 /db_changes.sql
-/Dockerfile.bundle
+/Dockerfile_bundle
 /entrypoint.bundle.sh
 /chalicelib/core/heatmaps.py
 /schemas.py

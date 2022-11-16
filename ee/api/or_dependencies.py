@@ -12,7 +12,6 @@ from starlette.responses import Response, JSONResponse
 
 import schemas_ee
 from chalicelib.core import traces
-from chalicelib.core import permissions
 
 
 async def OR_context(request: Request) -> schemas_ee.CurrentContext:

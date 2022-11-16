@@ -29,10 +29,20 @@ function LivePlayer ({
   assistCredendials,
   request,
   isEnterprise,
+  userEmail,
+  userName
 }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, assistCredendials, true);
+
+      const sessionWithAgentData = {
+        ...session.toJS(),
+        agentInfo: {
+          email: userEmail,
+          name: userName,
+        },
+      }
+      initPlayer(sessionWithAgentData, assistCredendials, true);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
@@ -49,7 +59,7 @@ function LivePlayer ({
   }, [])
 
   const TABS = {
-    EVENTS: 'User Actions',
+    EVENTS: 'User Steps',
     HEATMAPS: 'Click Map',
   }
   const [activeTab, setActiveTab] = useState('');
@@ -79,6 +89,8 @@ export default withRequest({
       showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
       fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
       isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
+      userEmail: state.getIn(['user', 'account', 'email']),
+      userName: state.getIn(['user', 'account', 'name']),
     }
   },
   { toggleFullscreen, closeBottomBlock },

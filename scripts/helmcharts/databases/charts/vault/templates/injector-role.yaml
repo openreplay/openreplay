@@ -1,0 +1,29 @@
+{{- template "vault.injectorEnabled" . -}}
+{{- if .injectorEnabled -}}
+{{- if and (eq (.Values.injector.leaderElector.enabled | toString) "true") (gt (.Values.injector.replicas | int) 1) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "vault.fullname" . }}-agent-injector-leader-elector-role
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}-agent-injector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs:
+      - "create"
+      - "get"
+      - "watch"
+      - "list"
+      - "update"
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs:
+      - "get"
+      - "patch"
+      - "delete"
+{{- end }}
+{{- end }}

@@ -17,7 +17,7 @@ export default class RawMessageReader extends PrimitiveReader {
     if (tp === null) { return resetPointer() }
 
     switch (tp) {
-    <% $messages.select { |msg| msg.replayer }.each do |msg| %>
+<% $messages.select { |msg| msg.replayer != false }.each do |msg| %>
     case <%= msg.id %>: {
 <%= msg.attributes.map { |attr|
 "      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>
@@ -27,7 +27,7 @@ export default class RawMessageReader extends PrimitiveReader {
 "        #{attr.name.camel_case}," }.join "\n" %>
       };
     }
-    <% end %>
+<% end %>
     default:
       throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
       return null;

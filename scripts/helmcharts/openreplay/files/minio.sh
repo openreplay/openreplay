@@ -5,7 +5,7 @@ set -e
 
 cd /tmp
 
-buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit")
+buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data" "records")
 
 mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
@@ -28,8 +28,8 @@ EOF
 
 for bucket in ${buckets[*]}; do
 mc mb minio/${bucket} || true
-mc ilm import minio/${bucket} < /tmp/lifecycle.json || true
 done
+mc ilm import minio/mobs < /tmp/lifecycle.json || true
 
 # Creating frontend bucket
 mc mb minio/frontend || true

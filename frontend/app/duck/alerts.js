@@ -41,7 +41,7 @@ const reducer = (state = initialState, action = {}) => {
 export function save(instance) {
   return {
     types: crudDuck.actionTypes.SAVE.toArray(),
-    call: client => client.put( instance[idKey] ? `/alerts/${ instance[idKey] }` : '/alerts', instance.toData()),
+    call: client => client.post( instance[idKey] ? `/alerts/${ instance[idKey] }` : '/alerts', instance.toData()),
   };
 }
 

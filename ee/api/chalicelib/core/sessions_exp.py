@@ -59,6 +59,7 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
+# This function should not use Clickhouse because it doesn't have `file_key`
 def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, full_data=False, include_fav_viewed=False,
                   group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
@@ -77,7 +78,8 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
             SELECT
                 s.*,
                 s.session_id::text AS session_id,
-                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
+                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key,
+                encode(file_key,'hex') AS file_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata._get_column_names()]) + ") AS project_metadata") if group_metadata else ''}
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
@@ -101,16 +103,16 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)
                     all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
-                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors if
-                                      e['source'] == "js_exception"][
-                                     :500]  # limit the number of errors to reduce the response-body size
+                    # limit the number of errors to reduce the response-body size
+                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
+                                      if e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
@@ -292,6 +294,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             sessions = cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
+            print(main_query)
             print("--------- PAYLOAD -----------")
             print(data.json())
             print("--------------------")

@@ -2,19 +2,20 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { hideHint } from 'Duck/components/player';
 import {
-	connectPlayer,
-	selectStorageType,
-	STORAGE_TYPES,
-	selectStorageListNow,
-	selectStorageList,
+  connectPlayer,
+  selectStorageType,
+  STORAGE_TYPES,
+  selectStorageListNow,
+  selectStorageList,
 } from 'Player/store';
-import { JSONTree, NoContent } from 'UI';
+import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
-
+import { diff } from 'deep-diff';
 import { jump } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
-
+import DiffRow from './DiffRow';
+import cn from 'classnames';
 import stl from './storage.module.css';
 
 // const STATE = 'STATE';
@@ -22,229 +23,297 @@ import stl from './storage.module.css';
 // const TABS = [ DIFF, STATE ].map(tab => ({ text: tab, key: tab }));
 
 function getActionsName(type) {
-	switch(type) {
-		case STORAGE_TYPES.MOBX:
-			return "MUTATIONS";
-		case STORAGE_TYPES.VUEX:
-			return "MUTATIONS";
-		default:
-			return "ACTIONS";
-	}
+  switch (type) {
+    case STORAGE_TYPES.MOBX:
+    case STORAGE_TYPES.VUEX:
+      return 'MUTATIONS';
+    default:
+      return 'ACTIONS';
+  }
 }
 
-@connectPlayer(state => ({
-	type: selectStorageType(state),
-	list: selectStorageList(state),
-	listNow: selectStorageListNow(state),
+@connectPlayer((state) => ({
+  type: selectStorageType(state),
+  list: selectStorageList(state),
+  listNow: selectStorageListNow(state),
 }))
-@connect(state => ({
-	hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'storage']),
-}), {
-	hideHint
-})
+@connect(
+  (state) => ({
+    hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'storage']),
+  }),
+  {
+    hideHint,
+  }
+)
 //@withEnumToggle('activeTab', 'setActiveTab', DIFF)
 export default class Storage extends React.PureComponent {
-	lastBtnRef = React.createRef()
+  lastBtnRef = React.createRef();
+  state = { showDiffs: false };
 
-	focusNextButton() {
-		if (this.lastBtnRef.current) {
-			this.lastBtnRef.current.focus();
-		}
-	}
+  focusNextButton() {
+    if (this.lastBtnRef.current) {
+      this.lastBtnRef.current.focus();
+    }
+  }
 
-	componentDidMount() {
-		this.focusNextButton();
-	}
+  componentDidMount() {
+    this.focusNextButton();
+  }
 
-	componentDidUpdate(prevProps) {
-		if (prevProps.listNow.length !== this.props.listNow.length) {
-			this.focusNextButton();
-		}
-	}
+  componentDidUpdate(prevProps) {
+    if (prevProps.listNow.length !== this.props.listNow.length) {
+      this.focusNextButton();
+    }
+  }
 
-	renderDiff() {
-		// const { listNow, type } = this.props;
-		// const lastRAction = listNow[ listNow.length - 1 ];
-		// if (lastRAction.state) {
-		// 	const greenPaths = Object.keys(lastRAction.state).map(key => [ key ]);
-		// 	return <DiffTree data={ lastRAction.state } greenPaths={ greenPaths } />;
-		// }
-		// const df = {};
-		// const redPaths = [];
-		// const yellowPaths = [];
-		// const greenPaths = [];
-		// lastRAction.diff.forEach(d => {
-		// 	try {
-	 //  		let { path, kind, rhs: value } = d;
-		// 		if (kind === 'A') {
-		// 			path.slice().push(d.index);
-		// 			kind = d.item.kind;
-		// 			value = d.item.rhs;
-		// 		}
-		// 		setIn(df, path, value);
-		// 		if (kind === 'N') greenPaths.push(d.path.slice().reverse());
-		// 		if (kind === 'D') redPaths.push(d.path.slice().reverse());
-		// 		if (kind === 'E') yellowPaths.push(d.path.slice().reverse());
-	 //  	} catch (e) {
-	 //  	}
-	 //  });
-		// return (
-		// 	<DiffTree
-		// 		data={ df }
-		// 		redPaths={ redPaths }
-		// 		yellowPaths={ yellowPaths }
-		// 		greenPaths={ greenPaths }
-		// 	/>
-		// );
-	}
+  renderDiff(item, prevItem) {
+    if (!prevItem) {
+      // we don't have state before first action
+      return <div style={{ flex: 1 }} className="p-1" />;
+    }
 
-	ensureString(actionType) {
-		if (typeof actionType === 'string') return actionType;
-		return "UNKNOWN";
-	}
+    const stateDiff = diff(prevItem.state, item.state);
 
-	goNext = () => {
-		const { list, listNow } = this.props;
-		jump(list[ listNow.length ].time, list[ listNow.length ]._index);
-	}
+    if (!stateDiff) {
+      return (
+        <div style={{ flex: 3 }} className="flex flex-col p-2 pr-0 font-mono text-disabled-text">
+          No diff
+        </div>
+      );
+    }
 
+    return (
+      <div style={{ flex: 3 }} className="flex flex-col p-1 font-mono">
+        {stateDiff.map((d, i) => this.renderDiffs(d, i))}
+      </div>
+    );
+  }
 
-	renderTab () {
-		const { listNow } = this.props;
-		if (listNow.length === 0) {
-			return "Not initialized"; //?
-		}
-		return  <JSONTree src={ listNow[ listNow.length - 1 ].state  } />;
-	}
+  renderDiffs(diff, i) {
+    const path = this.createPath(diff);
+    return (
+      <React.Fragment key={i}>
+        <DiffRow shades={this.pathShades} path={path} diff={diff} />
+      </React.Fragment>
+    );
+  }
 
-	renderItem(item, i) {
-		const { type, listNow, list } = this.props;
-		let src;
-		let name;
+  createPath = (diff) => {
+    let path = [];
 
-		// ZUSTAND TODO
-		console.log(item, type)
-		switch(type) {
-			case STORAGE_TYPES.REDUX:
-			case STORAGE_TYPES.NGRX:
-				src = item.action;
-				name = src && src.type;
-			break;
-			case STORAGE_TYPES.VUEX:
-				src = item.mutation;
-				name = src && src.type;
-			break;
-			case STORAGE_TYPES.MOBX:
-				src = item.payload;
-				name = `@${item.type} ${src && src.type}`;
-			break;
-			case STORAGE_TYPES.ZUSTAND:
-				src = null;
-				name = item.mutation.join('')
-		}
+    if (diff.path) {
+      path = path.concat(diff.path);
+    }
+    if (typeof diff.index !== 'undefined') {
+      path.push(diff.index);
+    }
 
-		return (
-			<div className="flex justify-between items-start" key={ `store-${i}` }>
-				{src === null ? (
-					<div className="font-mono"> {name} </div>
-				) : (
-					<JSONTree
-						name={ this.ensureString(name) }
-						src={ src }
-						collapsed
-						collapseStringsAfterLength={ 7 }
-					/>
-				)}
-				<div className="flex items-center">
-					{ i + 1 < listNow.length &&
-						<button
-							className={ stl.button }
-							onClick={ () => jump(item.time, item._index) }
-						>
-							{"JUMP"}
-						</button>
-					}
-					{ i + 1 === listNow.length && i + 1 < list.length  &&
-						<button
-							className={ stl.button }
-							ref={ this.lastBtnRef }
-							onClick={ this.goNext }
-						>
-							{"NEXT"}
-						</button>
-					}
-					{ typeof item.duration === 'number' &&
-						<div className="font-size-12 color-gray-medium">
-							{ formatMs(item.duration) }
-						</div>
-					}
-				</div>
-			</div>
-		);
-	}
+    const pathStr = path.length ? path.join('.') : '';
+    return pathStr;
+  };
 
-	render() {
-		const {
-			type,
-			listNow,
-			list,
-			hintIsHidden,
-		} = this.props;
+  ensureString(actionType) {
+    if (typeof actionType === 'string') return actionType;
+    return 'UNKNOWN';
+  }
 
-		const showStore = type !== STORAGE_TYPES.MOBX;
-		return (
-			<BottomBlock>
-				<BottomBlock.Header>
-					<span className="font-semibold color-gray-medium mr-4">State</span>
-					{ list.length > 0 &&
-						<div className="flex w-full">
-							{ showStore &&
-								<h3 style={{ width: "40%" }}>
-									{"STORE"}
-								</h3>
-							}
-							<h3 style={{ width: "40%" }}>
-								{getActionsName(type)}
-							</h3>
-						</div>
-					}
-				</BottomBlock.Header>
-				<BottomBlock.Content className="flex" >
-					<NoContent
+  goNext = () => {
+    const { list, listNow } = this.props;
+    jump(list[listNow.length].time, list[listNow.length]._index);
+  };
+
+  renderTab() {
+    const { listNow } = this.props;
+    if (listNow.length === 0) {
+      return 'Not initialized'; //?
+    }
+    return <JSONTree collapsed={2} src={listNow[listNow.length - 1].state} />;
+  }
+
+  renderItem(item, i, prevItem) {
+    const { type, listNow, list } = this.props;
+    let src;
+    let name;
+
+    switch (type) {
+      case STORAGE_TYPES.REDUX:
+      case STORAGE_TYPES.NGRX:
+        src = item.action;
+        name = src && src.type;
+        break;
+      case STORAGE_TYPES.VUEX:
+        src = item.mutation;
+        name = src && src.type;
+        break;
+      case STORAGE_TYPES.MOBX:
+        src = item.payload;
+        name = `@${item.type} ${src && src.type}`;
+        break;
+      case STORAGE_TYPES.ZUSTAND:
+        src = null;
+        name = item.mutation.join('');
+    }
+
+    if (src !== null && !this.state.showDiffs) {
+      this.setState({ showDiffs: true })
+    }
+
+    return (
+      <div
+        className={cn('flex justify-between items-start', src !== null ? 'border-b' : '')}
+        key={`store-${i}`}
+      >
+        {src === null ? (
+          <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}>
+            {name}
+          </div>
+        ) : (
+          <>
+            {this.renderDiff(item, prevItem)}
+            <div style={{ flex: 2 }} className="flex pl-10 pt-2">
+              <JSONTree
+                name={this.ensureString(name)}
+                src={src}
+                collapsed
+                collapseStringsAfterLength={7}
+              />
+            </div>
+          </>
+        )}
+        <div style={{ flex: 1 }} className="flex-1 flex gap-2 pt-2 items-center justify-end self-start">
+          {typeof item.duration === 'number' && (
+            <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
+          )}
+          <div className="w-12">
+            {i + 1 < listNow.length && (
+              <button className={stl.button} onClick={() => jump(item.time, item._index)}>
+                {'JUMP'}
+              </button>
+            )}
+            {i + 1 === listNow.length && i + 1 < list.length && (
+              <button className={stl.button} ref={this.lastBtnRef} onClick={this.goNext}>
+                {'NEXT'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  render() {
+    const { type, listNow, list, hintIsHidden } = this.props;
+
+    const showStore = type !== STORAGE_TYPES.MOBX;
+    return (
+      <BottomBlock>
+        <BottomBlock.Header>
+          {list.length > 0 && (
+            <div className="flex w-full">
+              {showStore && <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">{'STATE'}</h3>}
+              {this.state.showDiffs ? (
+                <h3 style={{ width: '39%'}}  className="font-semibold">
+                  DIFFS
+                </h3>
+              ) : null}
+              <h3 style={{ width: '30%' }}  className="font-semibold">{getActionsName(type)}</h3>
+              <h3 style={{ paddingRight: 30, marginLeft: 'auto' }}  className="font-semibold">
+                <Tooltip title="Time to execute">
+                  TTE
+                </Tooltip>
+              </h3>
+            </div>
+          )}
+        </BottomBlock.Header>
+        <BottomBlock.Content className="flex">
+          <NoContent
             title="Nothing to display yet."
-            subtext={ !hintIsHidden
-              ?
+            subtext={
+              !hintIsHidden ? (
                 <>
-                	{'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '}
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/redux" target="_blank">Redux</a>{', '}
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/vuex" target="_blank">VueX</a>{', '}
-									{/* ZUSTAND TODO */}
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/mobx" target="_blank">MobX</a>{' and '}
-                	<a className="underline color-teal" href="https://docs.openreplay.com/plugins/ngrx" target="_blank">NgRx</a>.
-                	<br/><br/>
-                  <button className="color-teal" onClick={() => this.props.hideHint("storage")}>Got It!</button>
+                  {
+                    'Inspect your application state while you’re replaying your users sessions. OpenReplay supports '
+                  }
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/redux"
+                    target="_blank"
+                  >
+                    Redux
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/vuex"
+                    target="_blank"
+                  >
+                    VueX
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/pinia"
+                    target="_blank"
+                  >
+                    Pinia
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/zustand"
+                    target="_blank"
+                  >
+                    Zustand
+                  </a>
+                  {', '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/mobx"
+                    target="_blank"
+                  >
+                    MobX
+                  </a>
+                  {' and '}
+                  <a
+                    className="underline color-teal"
+                    href="https://docs.openreplay.com/plugins/ngrx"
+                    target="_blank"
+                  >
+                    NgRx
+                  </a>
+                  .
+                  <br />
+                  <br />
+                  <button className="color-teal" onClick={() => this.props.hideHint('storage')}>
+                    Got It!
+                  </button>
                 </>
-              : null
+              ) : null
             }
             size="small"
-            show={ listNow.length === 0 }
+            show={listNow.length === 0}
           >
-						{ showStore &&
-						  <div className="ph-10 scroll-y" style={{ width: "40%" }} >
-								{ listNow.length === 0
-									? <div className="color-gray-light font-size-16 mt-20 text-center" >{ "Empty state." }</div>
-									: this.renderTab()
-								}
-							</div>
-						}
-						<div className="flex" style={{ width: showStore ? "60%" : "100%" }} >
-							<Autoscroll className="ph-10" >
-								{ listNow.map((item, i) => this.renderItem(item, i)) }
-							</Autoscroll>
-						</div>
-					</NoContent>
-				</BottomBlock.Content>
-			</BottomBlock>
-		);
-	}
+            {showStore && (
+              <div className="ph-10 scroll-y" style={{ width: '25%' }}>
+                {listNow.length === 0 ? (
+                  <div className="color-gray-light font-size-16 mt-20 text-center">
+                    {'Empty state.'}
+                  </div>
+                ) : (
+                  this.renderTab()
+                )}
+              </div>
+            )}
+            <div className="flex" style={{ width: showStore ? '75%' : '100%' }}>
+              <Autoscroll className="ph-10">
+                {listNow.map((item, i) =>
+                  this.renderItem(item, i, i > 0 ? listNow[i - 1] : undefined)
+                )}
+              </Autoscroll>
+            </div>
+          </NoContent>
+        </BottomBlock.Content>
+      </BottomBlock>
+    );
+  }
 }

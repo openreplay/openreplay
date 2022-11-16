@@ -29,7 +29,6 @@ document.addEventListener("visibilitychange", function() {
 });
 
 export function init(session, config, live = false) {
-  // const live = session.live;
   const endTime = !live && session.duration.valueOf();
 
   instance = new Player(session, config, live);
@@ -84,6 +83,10 @@ export const toggleAnnotation = initCheck((...args) => instance.assistManager.to
 export const toggleTimetravel = initCheck((...args) => instance.toggleTimetravel(...args))
 export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
 export const toggleUserName = initCheck((...args) => instance.toggleUserName(...args))
+export const injectNotes = initCheck((...args) => instance.injectNotes(...args))
+export const filterOutNote = initCheck((...args) => instance.filterOutNote(...args))
+/** @type {Player.assistManager.toggleVideoLocalStream} */
+export const toggleVideoLocalStream = initCheck((...args) => instance.assistManager.toggleVideoLocalStream(...args))
 
 export const Controls = {
   jump,

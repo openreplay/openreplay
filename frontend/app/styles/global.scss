@@ -16,3 +16,9 @@ input.no-focus:focus {
 .widget-wrapper {
     @apply rounded border bg-white;
 }
+
+@layer base {
+  img {
+    @apply inline-block;
+  }
+}

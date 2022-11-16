@@ -10,7 +10,7 @@ from enum import Enum
 class Permissions(str, Enum):
     session_replay = "SESSION_REPLAY"
     dev_tools = "DEV_TOOLS"
-    errors = "ERRORS"
+    # errors = "ERRORS"
     metrics = "METRICS"
     assist_live = "ASSIST_LIVE"
     assist_call = "ASSIST_CALL"
@@ -81,3 +81,24 @@ class SessionModel(BaseModel):
     userDeviceType: str
     userAnonymousId: Optional[str]
     metadata: dict = Field(default={})
+
+
+class AssistRecordPayloadSchema(BaseModel):
+    name: str = Field(...)
+    duration: int = Field(...)
+    session_id: int = Field(...)
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
+
+
+class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema):
+    limit: int = Field(default=200, gt=0)
+    startDate: int = Field(default=TimeUTC.now(-7))
+    endDate: int = Field(default=TimeUTC.now(1))
+    user_id: Optional[int] = Field(default=None)
+    query: Optional[str] = Field(default=None)
+    order: Literal["asc", "desc"] = Field(default="desc")
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case

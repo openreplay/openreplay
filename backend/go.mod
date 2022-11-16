@@ -5,6 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go/logging v1.4.2
 	github.com/ClickHouse/clickhouse-go/v2 v2.2.0
+	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.44.98
 	github.com/btcsuite/btcutil v1.0.2
 	github.com/elastic/go-elasticsearch/v7 v7.13.1

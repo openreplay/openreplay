@@ -12,7 +12,7 @@ export default function BackLink ({
       { label && <div className="ml-1">{ label }</div> }
     </div>
   );
-  const verticalClassName = cn(className, cls.backLink, "flex justify-center items-center pr-4 color-gray-dark", { "flex-col": vertical });
+  const verticalClassName = cn(className, cls.backLink, "flex justify-center items-center pr-2 color-gray-dark", { "flex-col": vertical });
   return to ?
     <Link
       className={ verticalClassName }

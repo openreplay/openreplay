@@ -34,8 +34,6 @@ export interface MarkedTarget {
 export interface State extends SuperState {
   messagesLoading: boolean,
   cssLoading: boolean,
-  disconnected: boolean,
-  userPageLoading: boolean, 
   markedTargets: MarkedTarget[] | null,
   activeTargetIndex: number,
 }
@@ -44,8 +42,6 @@ export const INITIAL_STATE: State = {
   ...SUPER_INITIAL_STATE,
   messagesLoading: false,
   cssLoading: false,
-  disconnected: false,
-  userPageLoading: false,
   markedTargets: null,
   activeTargetIndex: 0
 };
@@ -63,21 +59,13 @@ export default class StatedScreen extends Screen {
     update({ cssLoading });
   }
 
-  setDisconnected(disconnected: boolean) {
-    if (!getState().live) return; //?
-    this.display(!disconnected);
-    update({ disconnected });
-  }
-
-  setUserPageLoading(userPageLoading: boolean) {
-    this.display(!userPageLoading);
-    update({ userPageLoading });
-  }
-
   setSize({ height, width }: { height: number, width: number }) {
     update({ width, height });
     this.scale();
+    this.updateMarketTargets()
+  }
 
+  updateMarketTargets() {
     const { markedTargets } = getState();
     if (markedTargets) {
       update({

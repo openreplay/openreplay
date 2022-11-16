@@ -56,7 +56,7 @@ function FunnelWidget(props: Props) {
             </div>
             <div className="flex items-center pb-4">
                 <div className="flex items-center">
-                    <span className="text-xl mr-2">Lost conversions</span>
+                    <span className="text-xl mr-2">Lost conversion</span>
                     <div className="rounded px-2 py-1 bg-red-lightest color-red">
                         <span className="text-xl mr-2 font-medium">{funnel.lostConversions}</span>
                         <span className="text-sm">({funnel.lostConversionsPercentage}%)</span>
@@ -64,20 +64,14 @@ function FunnelWidget(props: Props) {
                 </div>
                 <div className="mx-3" />
                 <div className="flex items-center">
-                    <span className="text-xl mr-2">Total conversions</span>
+                    <span className="text-xl mr-2">Total conversion</span>
                     <div className="rounded px-2 py-1 bg-tealx-lightest color-tealx">
                         <span className="text-xl mr-2 font-medium">{funnel.totalConversions}</span>
                         <span className="text-sm">({funnel.totalConversionsPercentage}%)</span>
                     </div>
                 </div>
-                <div className="mx-3" />
-                <div className="flex items-center">
-                    <span className="text-xl mr-2">Affected users</span>
-                    <div className="rounded px-2 py-1 bg-gray-lightest">
-                        <span className="text-xl font-medium">{funnel.affectedUsers}</span>
-                    </div>
-                </div>
             </div>
+            {funnel.totalDropDueToIssues > 0 && <div className="flex items-center mb-2"><Icon name="magic" /> <span className="ml-2">{funnel.totalDropDueToIssues} sessions dropped due to issues.</span></div>}
         </NoContent>
     ));
 }
@@ -98,7 +92,7 @@ function Stage({ stage, index, isWidget }: any) {
     return useObserver(() => stage ? (
         <div className={cn("flex items-start", stl.step, { [stl['step-disabled']] : !stage.isActive })}>
             <IndexNumber index={index } />
-            <Funnelbar filter={stage} />
+            <Funnelbar filter={stage} isFirst={index === 1}/>
             {!isWidget && (
                 <BarActions bar={stage} />
             )}

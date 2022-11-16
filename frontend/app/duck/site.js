@@ -20,6 +20,7 @@ import {
 } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { Map, List, fromJS } from "immutable";
+import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
 
 const SITE_ID_STORAGE_KEY = "__$user-siteId$__";
 const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
@@ -54,7 +55,6 @@ const reducer = (state = initialState, action = {}) => {
 		case FETCH_GDPR_SUCCESS:
 			return state.mergeIn([ 'instance', 'gdpr' ], action.data);
 		case success(SAVE):
-			console.log(action)
 			const newSite = Site(action.data);
 			return updateItemInList(state, newSite)
 				.set('siteId', newSite.get('id'))
@@ -70,9 +70,17 @@ const reducer = (state = initialState, action = {}) => {
 				? storedSiteId 
 				: action.data[0].projectId;
 			}
-			return state.set('list', List(action.data.map(Site)))
+			const list = List(action.data.map(Site));
+			const hasRecordings = list.some(s => s.recorded);
+			if (!hasRecordings) {
+				localStorage.setItem(GLOBAL_HAS_NO_RECORDINGS, true)
+			} else {
+				localStorage.removeItem(GLOBAL_HAS_NO_RECORDINGS)
+			}
+			
+			return state.set('list', list)
 				.set('siteId', siteId)
-				.set('active', List(action.data.map(Site)).find(s => s.id === parseInt(siteId)));
+				.set('active', list.find(s => s.id === parseInt(siteId)));
 		case SET_SITE_ID:
 			localStorage.setItem(SITE_ID_STORAGE_KEY, action.siteId)
 			const site = state.get('list').find(s => s.id === action.siteId);

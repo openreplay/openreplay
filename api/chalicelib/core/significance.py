@@ -3,7 +3,6 @@ __maintainer__ = "KRAIEM Taha Yassine"
 
 import schemas
 from chalicelib.core import events, metadata, sessions
-from chalicelib.utils import dev
 
 """
 todo: remove LIMIT from the query
@@ -200,14 +199,12 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     n_stages_query += ") AS stages_t"
 
     n_stages_query = f"""
-    SELECT stages_and_issues_t.*,sessions.session_id, sessions.user_uuid FROM (
+    SELECT stages_and_issues_t.*, sessions.user_uuid FROM (
         SELECT * FROM (
              SELECT * FROM
                 {n_stages_query}
         LEFT JOIN LATERAL 
-        (
-            SELECT * FROM 
-            (SELECT ISE.session_id, 
+        (   SELECT ISE.session_id, 
                     ISS.type as issue_type,  
                     ISE.timestamp AS issue_timestamp,
                     ISS.context_string as issue_context,
@@ -216,21 +213,29 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             WHERE ISE.timestamp >= stages_t.stage1_timestamp 
                 AND ISE.timestamp <= stages_t.stage{i + 1}_timestamp 
                 AND ISS.project_id=%(project_id)s
-                {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}) AS base_t
-        ) AS issues_t 
-        USING (session_id)) AS stages_and_issues_t
-    inner join sessions USING(session_id);
+                {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}
+        ) AS issues_t USING (session_id)
+    ) AS stages_and_issues_t INNER JOIN sessions USING(session_id);
     """
 
     #  LIMIT 10000
     params = {"project_id": project_id, "startTimestamp": filter_d["startDate"], "endTimestamp": filter_d["endDate"],
               "issueTypes": tuple(filter_issues), **values}
     with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(n_stages_query, params)
         # print("---------------------------------------------------")
-        # print(cur.mogrify(n_stages_query, params))
+        # print(query)
         # print("---------------------------------------------------")
-        cur.execute(cur.mogrify(n_stages_query, params))
-        rows = cur.fetchall()
+        try:
+            cur.execute(query)
+            rows = cur.fetchall()
+        except Exception as err:
+            print("--------- FUNNEL SEARCH QUERY EXCEPTION -----------")
+            print(query.decode('UTF-8'))
+            print("--------- PAYLOAD -----------")
+            print(filter_d)
+            print("--------------------")
+            raise err
     return rows
 
 
@@ -559,8 +564,8 @@ def get_top_insights(filter_d, project_id):
             "dropDueToIssues": 0
 
         }]
-        counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d), project_id=project_id,
-                                          user_id=None, count_only=True)
+        counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
+                                          project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0

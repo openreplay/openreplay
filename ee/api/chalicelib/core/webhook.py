@@ -39,11 +39,13 @@ def get(tenant_id, webhook_id):
 def get_by_type(tenant_id, webhook_type):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""SELECT w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
-                            FROM public.webhooks AS w 
-                            WHERE w.tenant_id =%(tenant_id)s 
-                                AND w.type =%(type)s 
-                                AND deleted_at ISNULL;""",
+            cur.mogrify("""\
+                    SELECT
+                           w.webhook_id AS integration_id, w.webhook_id AS id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
+                    FROM public.webhooks AS w 
+                    WHERE w.tenant_id =%(tenant_id)s 
+                        AND w.type =%(type)s 
+                        AND deleted_at ISNULL;""",
                         {"type": webhook_type, "tenant_id": tenant_id})
         )
         webhooks = helper.list_to_camel_case(cur.fetchall())
@@ -154,8 +156,8 @@ def __trigger(hook, data):
 
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            logging.error("=======> webhook: something went wrong")
-            logging.error(r)
+            logging.error("=======> webhook: something went wrong for:")
+            logging.error(hook)
             logging.error(r.status_code)
             logging.error(r.text)
             return

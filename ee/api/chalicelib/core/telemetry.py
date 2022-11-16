@@ -65,7 +65,7 @@ def compute():
 def new_client(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""SELECT *,
+            cur.mogrify(f"""SELECT *, openreplay_version() AS version_number,
                             (SELECT email FROM public.users WHERE tenant_id=%(tenant_id)s AND role='owner' LIMIT 1) AS email
                             FROM public.tenants 
                             WHERE tenant_id=%(tenant_id)s

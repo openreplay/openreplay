@@ -50,6 +50,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
+@app.post('/{projectId}/sessions/search2', tags=["sessions"])
 def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
@@ -445,7 +446,7 @@ def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depend
     }
 
 
-@app.post('/{projectId}/sessions2/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
+@app.post('/{projectId}/sessions/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
 def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
                             data: schemas.AssignmentSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
@@ -778,7 +779,7 @@ def create_project(data: schemas.CreateProjectSchema = Body(...),
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
-@app.post('/projects/{projectId}', tags=['projects'])
+@app.put('/projects/{projectId}', tags=['projects'])
 def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
@@ -868,7 +869,7 @@ def delete_slack_integration(integrationId: int, context: schemas.CurrentContext
     return webhook.delete(context.tenant_id, integrationId)
 
 
-@app.post('/webhooks', tags=["webhooks"])
+@app.put('/webhooks', tags=["webhooks"])
 def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data.dict(), replace_none=True)}

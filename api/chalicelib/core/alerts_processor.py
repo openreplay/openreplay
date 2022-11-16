@@ -103,6 +103,7 @@ def Build(a):
     params = {"project_id": a["projectId"], "now": now}
     full_args = {}
     j_s = True
+    main_table = ""
     if a["seriesId"] is not None:
         a["filter"]["sort"] = "session_id"
         a["filter"]["order"] = schemas.SortOrderType.desc
@@ -120,16 +121,16 @@ def Build(a):
                     WHERE project_id = %(project_id)s 
                         {"AND " + colDef["condition"] if colDef.get("condition") is not None else ""}"""
         j_s = colDef.get("joinSessions", True)
-
+        main_table = colDef["table"]
+    is_ss = main_table == "public.sessions"
     q = f"""SELECT coalesce(value,0) AS value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
 
     if a["detectionMethod"] == schemas.AlertDetectionMethod.threshold:
         if a["seriesId"] is not None:
             q += f""" FROM ({subQ}) AS stat"""
         else:
-            q += f""" FROM ({subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s 
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
-                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}) AS stat"""
+            q += f""" FROM ({subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if not is_ss else ""} 
+                                {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}) AS stat"""
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
         if a["change"] == schemas.AlertDetectionType.change:
@@ -142,13 +143,11 @@ def Build(a):
                           "timestamp_sub2": TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000}
             else:
                 sub1 = f"""{subQ} AND timestamp>=%(startDate)s 
-                                    AND datetime<=toDateTime(%(now)s/1000)
-                                    {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
-                                    {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
+                                  AND timestamp<=%(now)s
+                                {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
-                sub2 = f"""{subQ} AND timestamp<%(startDate)s 
-                                    AND timestamp>=%(timestamp_sub2)s
-                            {"AND sessions.start_ts < %(startDate)s AND sessions.start_ts >= %(timestamp_sub2)s" if j_s else ""}"""
+                sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if not is_ss else ""}
+                            {"AND start_ts < %(startDate)s AND start_ts >= %(timestamp_sub2)s" if j_s else ""}"""
                 params["timestamp_sub2"] = TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000
                 sub1 = f"SELECT (( {sub1} )-( {sub2} )) AS value"
                 q += f" FROM ( {sub1} ) AS stat"
@@ -164,13 +163,11 @@ def Build(a):
                                             - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) \
                                             * 60 * 1000}
             else:
-                sub1 = f"""{subQ} AND timestamp>=%(startDate)s AND timestamp<=%(now)s
-                                {"AND sessions.start_ts >= %(startDate)s" if j_s else ""}
-                                {"AND sessions.start_ts <= %(now)s" if j_s else ""}"""
+                sub1 = f"""{subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if not is_ss else ""}
+                                {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
-                sub2 = f"""{subQ} AND timestamp<%(startDate)s
-                                AND timestamp>=%(timestamp_sub2)s
-                        {"AND sessions.start_ts < %(startDate)s AND sessions.start_ts >= %(timestamp_sub2)s" if j_s else ""}"""
+                sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if not is_ss else ""}
+                        {"AND start_ts < %(startDate)s AND start_ts >= %(timestamp_sub2)s" if j_s else ""}"""
                 params["timestamp_sub2"] = TimeUTC.now() \
                                            - (a["options"]["currentPeriod"] + a["options"]["currentPeriod"]) * 60 * 1000
                 sub1 = f"SELECT (({sub1})/NULLIF(({sub2}),0)-1)*100 AS value"
@@ -185,21 +182,27 @@ def process():
     with pg_client.PostgresClient() as cur:
         for alert in all_alerts:
             if can_check(alert):
-                logging.info(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
-                query = cur.mogrify(query, params)
+                try:
+                    query = cur.mogrify(query, params)
+                except Exception as e:
+                    logging.error(
+                        f"!!!Error while building alert query for alertId:{alert['alertId']} name: {alert['name']}")
+                    logging.error(e)
+                    continue
                 logging.debug(alert)
                 logging.debug(query)
                 try:
                     cur.execute(query)
                     result = cur.fetchone()
                     if result["valid"]:
-                        logging.info("Valid alert, notifying users")
+                        logging.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
                 except Exception as e:
-                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
-                    logging.error(str(e))
+                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
                     logging.error(query)
+                    logging.error(e)
+                    cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
             cur.execute(
                 cur.mogrify(f"""UPDATE public.Alerts 

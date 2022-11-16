@@ -1,12 +1,13 @@
 import React from 'react';
 import cn from 'classnames';
 import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
-import { Icon, IconButton } from 'UI';
+import { Icon } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import Sentry from './Sentry';
 import JsonViewer from './JsonViewer';
 import stl from './userEvent.module.css';
 import { Duration } from 'luxon';
+import JumpButton from 'Shared/DevTools/JumpButton';
 
 // const modalSources = [ SENTRY, DATADOG ];
 
@@ -34,34 +35,33 @@ export default class UserEvent extends React.PureComponent {
 
   render() {
     const { userEvent, inactive, selected } = this.props;
-    //const message = this.getEventMessage();
+    let message = userEvent.payload[0] || '';
+    message = typeof message === 'string' ? message : JSON.stringify(message);
     return (
       <div
         data-scroll-item={userEvent.isRed()}
-        // onClick={ this.props.switchOpen } //
-        onClick={this.props.onJump} //
-        className={cn('group flex py-2 px-4 ', stl.userEvent, this.getLevelClassname(), {
-          // [stl.inactive]: inactive,
-          [stl.selected]: selected,
-        })}
+        onClick={this.onClickDetails}
+        className={cn(
+          'group flex items-center py-2 px-4 border-b cursor-pointer relative',
+          // stl.userEvent,
+          // this.getLevelClassname(),
+          // {
+          //   [stl.selected]: selected,
+          // },
+          'hover:bg-active-blue'
+        )}
       >
-        <div className={'self-start pr-4'}>
+        {/* <div className={'self-start pr-4'}>
           {Duration.fromMillis(userEvent.time).toFormat('mm:ss.SSS')}
-        </div>
-        <div className={cn('mr-auto', stl.infoWrapper)}>
-          <div className={stl.title}>
-            <Icon {...this.getIconProps()} />
-            {userEvent.name}
+        </div> */}
+        <div className={cn('mr-auto flex items-start')}>
+          <Icon {...this.getIconProps()} />
+          <div>
+            <div className="capitalize font-medium mb-1">{userEvent.name}</div>
+            <div className="code-font text-xs">{message}</div>
           </div>
         </div>
-        <div className="self-center">
-          <IconButton
-            outline={!userEvent.isRed()}
-            red={userEvent.isRed()}
-            onClick={this.onClickDetails}
-            label="DETAILS"
-          />
-        </div>
+        <JumpButton onClick={this.props.onJump} />
       </div>
     );
   }

@@ -18,30 +18,29 @@ function PermisionLabelLinked({ label, route }: any) {
 
 interface Props {
     role: any;
-    deleteHandler?: (role: any) => void;
     editHandler?: (role: any) => void;
     permissions: any;
     isAdmin: boolean;
     projects: any;
 }
-function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, projects }: Props) {
+function RoleItem({ role, editHandler, isAdmin, permissions, projects }: Props) {
     return (
         <div className={cn('flex items-start relative py-4 hover border-b last:border-none px-5 pr-20 group')}>
             <div className="flex" style={{ width: '20%' }}>
-                <Icon name="user-alt" size="16" marginRight="10" />
+                <Icon name="user-alt" size="16" className="mr-2" />
                 {role.name}
             </div>
             <div className="flex items-start flex-wrap" style={{ width: '30%' }}>
                 {role.allProjects ? (
                     <PermisionLabelLinked label="All projects" route={clientRoute(CLIENT_TABS.SITES)} />
                 ) : (
-                    role.projects.map((p) => <PermisionLabel label={projects[p]} />)
+                    role.projects.map((p: any) => <PermisionLabel label={projects[p]} />)
                 )}
             </div>
             <div className="flex items-start flex-wrap" style={{ width: '50%' }}>
                 <div className="flex items-center flex-wrap">
                     {role.permissions.map((permission: any) => (
-                        <PermisionLabel label={permissions[permission]} key={permission.id} />
+                        <PermisionLabel label={permissions[permission]} key={permission} />
                     ))}
                 </div>
 

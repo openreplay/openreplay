@@ -1,7 +1,0 @@
-# vim: set ft=yaml.ansible :
----
-- hosts: localhost
-  environment:
-    KUBECONFIG: "{{ kubeconfig_path }}"
-  roles:
-    - openreplay

@@ -23,7 +23,7 @@ function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[]
   }
 
   if (typeof doc.elementsFromPoint === 'function') {
-    return doc.elementsFromPoint(x, y)     
+    return doc.elementsFromPoint(x, y)
   }
   const el = doc.elementFromPoint(x, y)
   return el ? [ el ] : []
@@ -53,10 +53,13 @@ function isIframe(el: Element): el is HTMLIFrameElement {
 }
 
 export default abstract class BaseScreen {
-  public    readonly overlay: HTMLDivElement;
-  private   readonly iframe: HTMLIFrameElement;
-  protected   readonly screen: HTMLDivElement;
+  public readonly overlay: HTMLDivElement;
+
+  private readonly iframe: HTMLIFrameElement;
+  protected readonly screen: HTMLDivElement;
+  protected readonly controlButton: HTMLDivElement;
   protected parentElement: HTMLElement | null = null;
+
   constructor() {
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
@@ -76,14 +79,15 @@ export default abstract class BaseScreen {
 
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
-      throw new Error("BaseScreen: Trying to attach an attached screen.");
+      this.parentElement = undefined
+      console.error("BaseScreen: Trying to attach an attached screen.");
     }
 
     parentElement.appendChild(this.screen);
 
     this.parentElement = parentElement;
     // parentElement.onresize = this.scale;
-    window.addEventListener('resize', this.scale);  
+    window.addEventListener('resize', this.scale);
     this.scale();
 
     /* == For the Inspecting Document content  == */
@@ -99,6 +103,11 @@ export default abstract class BaseScreen {
       doc.addEventListener('mousemove', returnOverlay)
       doc.addEventListener('mouseclick', returnOverlay)
     })
+  }
+
+  toggleRemoteControlStatus(isEnabled: boolean ) {
+    const styles = isEnabled ? { border: '2px dashed blue' } : { border: 'unset'}
+    return Object.assign(this.screen.style, styles)
   }
 
   get window(): WindowProxy | null {
@@ -145,7 +154,7 @@ export default abstract class BaseScreen {
   }
 
   getElementFromInternalPoint({ x, y }: Point): Element | null {
-    // elementFromPoint && elementFromPoints require viewpoint-related coordinates, 
+    // elementFromPoint && elementFromPoints require viewpoint-related coordinates,
     //                                                 not document-related
     return this.document?.elementFromPoint(x, y) || null;
   }

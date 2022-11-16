@@ -1,16 +1,22 @@
 .wrapper {
   display: flex;
   align-items: center;
-  border-left: solid thin $gray-light !important;
-  padding: 10px 10px;
-  min-width: 180px;
+  /* border-left: solid thin $gray-light !important; */
+  padding: 10px;
+  width: fit-content;
   justify-content: flex-start;
   position: relative;
   user-select: none;
-  
+  height: 50px;
+  /* border: solid thin $gray-light; */
+  border-radius: 3px;
+  margin: 0 10px;
+  cursor: pointer;
+
   &:hover {
-    background-color: $gray-lightest;
-    & .drodownIcon {
+    background-color: $active-blue;
+    /* border: solid thin $active-blue-border; */
+    & .dropdownIcon {
       transform: rotate(180deg);
       transition: all 0.2s;
     }
@@ -19,15 +25,15 @@
     }
   }
 
-  & .drodownIcon {
+  & .dropdownIcon {
     transition: all 0.4s;
     margin: 0;
-    margin-left: auto;
+    margin-left: 8px;
   }
 
   & [data-can-disable=true] {
     & > li {
-      &:first-child {        
+      &:first-child {
         pointer-events: none;
       }
       &:not(:first-child) {
@@ -44,33 +50,44 @@
     background-color: white;
     min-width: 200px;
     z-index: 2;
-    border: 1px solid $gray-light;
+    border-radius: 3px;
+    border: 1px solid rgb(238, 238, 238);
   }
 
   & ul {
     margin: 0;
     max-height: 300px;
     overflow-y: auto;
+    padding: 10px;
 
     &::-webkit-scrollbar {
-      width: 2px;      
+      width: 2px;
     }
 
     & li {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       cursor: pointer;
-      list-style-type: none;      
-      border-bottom: 1px solid $gray-light;
-      border-top: none;
-      padding: 10px 15px;
+      list-style-type: none;
+      border: solid thin transparent;
+      /* border-top: none; */
+      padding: 10px;
       transition: all 0.2s;
+      line-height: 17px;
+      border-radius: 3px;
+      text-transform: capitalize;
+
       &:hover {
-        background-color: $gray-lightest;
+        background-color: $active-blue;
+        border-color: $active-blue-border;
         transition: all 0.2s;
+        color: $teal;
+        svg {
+          fill: $teal;
+        }
       }
       &:first-child {
-        border-top: 1px solid $gray-light;
+        /* border-top: 1px solid $gray-light; */
       }
     }
   }
@@ -80,7 +97,7 @@
   border: none !important;
   display: flex !important;
   align-items: center;
-  border-radius: 0 !important;  
+  border-radius: 0 !important;
 }
 
 .currentSite {
@@ -88,6 +105,8 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  font-weight: 500;
+  text-transform: capitalize;
 }
 
 .statusGreenIcon {

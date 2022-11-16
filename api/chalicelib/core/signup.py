@@ -60,8 +60,8 @@ def create_step1(data: schemas.UserSignupSchema):
                              VALUES (%(email)s, 'owner', %(fullname)s,%(data)s)
                              RETURNING user_id,email,role,name
                  ),
-                 au AS (INSERT
-                     INTO public.basic_authentication (user_id, password)
+                 au AS (
+                     INSERT INTO public.basic_authentication (user_id, password)
                          VALUES ((SELECT user_id FROM u), crypt(%(password)s, gen_salt('bf', 12)))
                  )
                  INSERT INTO public.projects (name, active)
@@ -70,9 +70,9 @@ def create_step1(data: schemas.UserSignupSchema):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
-        cur = cur.fetchone()
-        project_id = cur["project_id"]
-        api_key = cur["api_key"]
+        data = cur.fetchone()
+        project_id = data["project_id"]
+        api_key = data["api_key"]
     telemetry.new_client()
     created_at = TimeUTC.now()
     r = users.authenticate(email, password)

@@ -1,5 +1,7 @@
 import json
 
+from decouple import config
+
 import schemas
 import schemas_ee
 from chalicelib.core import users, telemetry, tenants
@@ -12,7 +14,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 def create_step1(data: schemas.UserSignupSchema):
     print(f"===================== SIGNUP STEP 1 AT {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
-    if tenants.tenants_exists():
+    if not config("MULTI_TENANTS", cast=bool, default=False) and tenants.tenants_exists():
         return {"errors": ["tenants already registered"]}
 
     email = data.email

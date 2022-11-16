@@ -7,16 +7,16 @@ In order to build locally any of the javascript packages located under this dire
 cd tracker	# or any tracker-* plugin
 
 ```
-Then run 
+Then run
 ```sh
-yarn		
-yarn build  
+yarn
+yarn build
 ```
 OR
 
 ```sh
-npm i	
-npm run build  
+npm i
+npm run build
 ```
 
 You can then use it as a local javascript package by executing the folowing line under your local project location:
@@ -29,3 +29,7 @@ OR
 npm install --save ../path/to/openreplay/monorepo/tracker/tracker
 ```
 
+
+## Contributing notes
+
+Please use `dev` branch as base and target branch.

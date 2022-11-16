@@ -7,7 +7,8 @@ import { LEVEL } from 'Types/session/log';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
 import stl from './console.module.css';
-import { Duration } from 'luxon';
+import ConsoleRow from './ConsoleRow';
+// import { Duration } from 'luxon';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -83,44 +84,34 @@ export default class ConsoleContent extends React.PureComponent {
               <Tabs tabs={TABS} active={activeTab} onClick={this.onTabClick} border={false} />
             </div>
             <Input
-              className="input-small"
+              className="input-small h-8"
               placeholder="Filter by keyword"
               icon="search"
               iconPosition="left"
               name="filter"
+              height={28}
               onChange={this.onFilterChange}
             />
           </BottomBlock.Header>
           <BottomBlock.Content>
-            <NoContent title={
-              <div className="capitalize flex items-center mt-16">
+            <NoContent
+              title={
+                <div className="capitalize flex items-center mt-16">
                   <Icon name="info-circle" className="mr-2" size="18" />
                   No Data
-              </div>
-            } size="small" show={filtered.length === 0}>
+                </div>
+              }
+              size="small"
+              show={filtered.length === 0}
+            >
               <Autoscroll autoScrollTo={Math.max(lastIndex, 0)}>
-                {filtered.map((l, index) => (
-                  <div
-                    className={cn('flex py-2 px-4', {
-                      info: !l.isYellow() && !l.isRed(),
-                      warn: l.isYellow(),
-                      error: l.isRed(),
-                      [stl.activeRow]: lastIndex === index,
-                      // [stl.inactiveRow]: index > lastIndex,
-                      'cursor-pointer': !isResult,
-                    })}
-                    onClick={() => !isResult && jump(l.time)}
-                  >
-                    <div className={cn(stl.timestamp)}>
-                      <Icon size="14" className={stl.icon} {...getIconProps(l.level)} />
-                    </div>
-                    <div className={cn(stl.timestamp, {})}>
-                      {Duration.fromMillis(l.time).toFormat('mm:ss.SSS')}
-                    </div>
-                    <div key={l.key} className={cn(stl.line)} data-scroll-item={l.isRed()}>
-                      <div className={stl.message}>{renderWithNL(l.value)}</div>
-                    </div>
-                  </div>
+                {filtered.map((l) => (
+                  <ConsoleRow
+                    log={l}
+                    jump={jump}
+                    iconProps={getIconProps(l.level)}
+                    renderWithNL={renderWithNL}
+                  />
                 ))}
               </Autoscroll>
             </NoContent>

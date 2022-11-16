@@ -1,6 +1,7 @@
 import { goTo as listsGoTo } from './lists';
 import { update, getState } from './store';
 import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE }  from './MessageDistributor/MessageDistributor';
+import { Note } from 'App/services/NotesService';
 
 const fps = 60;
 const performance = window.performance || { now: Date.now.bind(Date) };
@@ -46,6 +47,7 @@ export const INITIAL_STATE = {
   live: false,
   livePlay: false,
   liveTimeTravel: false,
+  notes: [],
 } as const;
 
 
@@ -156,10 +158,10 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  jump(time = getState().time, index: number) {
+  jump(setTime: number, index: number) {
     const { live, liveTimeTravel, endTime } = getState();
     if (live && !liveTimeTravel) return;
-
+    const time = setTime ? setTime : getState().time
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
       // this._animationFrameRequestId = requestAnimationFrame(() => {
@@ -267,6 +269,15 @@ export default class Player extends MessageDistributor {
 
   toggleUserName(name?: string) {
     this.cursor.toggleUserName(name)
+  }
+
+  injectNotes(notes: Note[]) {
+    update({ notes })
+  }
+
+  filterOutNote(noteId: number) {
+    const { notes } = getState()
+    update({ notes: notes.filter((note: Note) => note.noteId !== noteId) })
   }
 
   clean() {

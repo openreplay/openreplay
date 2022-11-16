@@ -1,4 +1,4 @@
-fromVersion: "v1.8.1"
+fromVersion: "v1.9.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -101,12 +101,14 @@ global:
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
   assistKey: "SetARandomStringHere"
+  assistJWTSecret: "SetARandomStringHere"
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"
+    vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
     # if you're using one node installation, where
@@ -138,6 +140,9 @@ global:
 # storage:
 #   pvc:
 #     name: mysharedpersistence
+# chalice:
+#   pvc:
+#     name: mysharedpersistence
 
 chalice:
   env:
@@ -166,3 +171,22 @@ chalice:
 #     requests:
 #       cpu: 512m
 #       memory: 2056Mi
+
+# For enterpriseEdition Only
+vault:
+  enabled: false
+  annotations:
+    vault.hashicorp.com/agent-cache-enable: "true"
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/agent-inject-token: "true"
+    vault.hashicorp.com/template-static-secret-render-interval: 2m
+    # vault.hashicorp.com/log-level: debug
+    vault.hashicorp.com/agent-run-as-same-user: "true"
+    vault.hashicorp.com/agent-inject-command-processor.properties: |
+      pkill -TERM openreplay
+    vault.hashicorp.com/role: pgaccess
+    vault.hashicorp.com/agent-inject-secret-processor.properties: database/creds/db-app
+    vault.hashicorp.com/agent-inject-template-processor.properties: |
+      {{- with secret "database/creds/db-app" -}}
+      POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
+      {{- end -}}

@@ -63,13 +63,14 @@ rm -rf ./routers/crons/__init__.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
+rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh
 rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py
 rm -rf ./db_changes.sql
-rm -rf ./Dockerfile.bundle
+rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./schemas.py

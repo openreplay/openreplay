@@ -48,3 +48,7 @@ dependencies:
     repository: file://charts/minio
     version: 3.7.14
     condition: minio.enabled
+  - name: vault
+    repository: file://charts/vault
+    version: 0.22.1
+    condition: vault.enabled

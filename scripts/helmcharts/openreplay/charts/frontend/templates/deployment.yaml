@@ -28,6 +28,7 @@ spec:
       serviceAccountName: {{ include "frontend.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -68,7 +69,7 @@ spec:
             - name: ASSETS_ORIGIN
             {{- if eq .Values.global.s3.endpoint "frontend://minio.db.svc.cluster.local:9000" }}
               # Local minio Installation
-              value: 'frontends://{{ .Values.global.domainName }}/{{.Values.global.s3.assetsBucket}}'
+              value: 'frontends://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
             {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
               # AWS S3
               # Ref: frontends://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter

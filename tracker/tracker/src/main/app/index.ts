@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID } from './messages.gen.js'
-import { timestamp as now, deprecationWarn } from '../utils.js'
+import { now, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -14,7 +14,15 @@ import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
-import type { Options as WebworkerOptions, WorkerMessageData } from '../../common/interaction.js'
+import type {
+  Options as WebworkerOptions,
+  ToWorkerData,
+  FromWorkerData,
+} from '../../common/interaction.js'
+
+interface TypedWorker extends Omit<Worker, 'postMessage'> {
+  postMessage(data: ToWorkerData): void
+}
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -94,7 +102,7 @@ export default class App {
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
-  private readonly worker?: Worker
+  private readonly worker?: TypedWorker
   constructor(projectKey: string, sessionToken: string | undefined, options: Partial<Options>) {
     // if (options.onStart !== undefined) {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
@@ -114,13 +122,15 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        localStorage: window?.localStorage,
-        sessionStorage: window?.sessionStorage,
+        localStorage: null,
+        sessionStorage: null,
       },
       options,
     )
 
     this.revID = this.options.revID
+    this.localStorage = this.options.localStorage ?? window.localStorage
+    this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
     this.nodes = new Nodes(this.options.node_id)
     this.observer = new Observer(this, options)
@@ -128,8 +138,6 @@ export default class App {
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
-    this.localStorage = this.options.localStorage || window.localStorage
-    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
     this.session = new Session(this, this.options)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
@@ -153,13 +161,13 @@ export default class App {
       this.worker.onerror = (e) => {
         this._debug('webworker_error', e)
       }
-      this.worker.onmessage = ({ data }: MessageEvent) => {
-        if (data === 'failed') {
+      this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
+        if (data === 'restart') {
           this.stop(false)
-          this._debug('worker_failed', {}) // add context (from worker)
-        } else if (data === 'restart') {
+          this.start({ forceNew: true }) // TODO: keep userID & metadata (draw scenarios)
+        } else if (data.type === 'failure') {
           this.stop(false)
-          this.start({ forceNew: true })
+          this._debug('worker_failed', data.reason)
         }
       }
       const alertWorker = () => {
@@ -179,7 +187,7 @@ export default class App {
 
   private _debug(context: string, e: any) {
     if (this.options.__debug_report_edp !== null) {
-      fetch(this.options.__debug_report_edp, {
+      void fetch(this.options.__debug_report_edp, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -193,24 +201,31 @@ export default class App {
 
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
+      // this.debug.log('SendiTrying to send when not active', message) <- crashing the app
       return
     }
     this.messages.push(message)
     // TODO: commit on start if there were `urgent` sends;
-    // Clearify where urgent can be used for;
-    // Clearify workflow for each type of message in case it was sent before start
+    // Clarify where urgent can be used for;
+    // Clarify workflow for each type of message in case it was sent before start
     //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
+    // Careful: `this.delay` is equal to zero before start hense all Timestamp-s will have to be updated on start
     if (this.activityState === ActivityState.Active && urgent) {
       this.commit()
     }
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(Timestamp(now()))
+      this.messages.unshift(Timestamp(this.timestamp()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
     }
+  }
+
+  private delay = 0
+  timestamp(): number {
+    return now() + this.delay
   }
 
   safe<T extends (this: any, ...args: any[]) => void>(fn: T): T {
@@ -220,7 +235,7 @@ export default class App {
         fn.apply(this, args)
       } catch (e) {
         app._debug('safe_fn_call', e)
-        // time: now(),
+        // time: this.timestamp(),
         // name: e.name,
         // message: e.message,
         // stack: e.stack
@@ -254,8 +269,8 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target.addEventListener(type, listener, useCapture), useSafe)
-    this.attachStopCallback(() => target.removeEventListener(type, listener, useCapture), useSafe)
+    this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
+    this.attachStopCallback(() => target?.removeEventListener(type, listener, useCapture), useSafe)
   }
 
   // TODO: full correct semantic
@@ -304,12 +319,16 @@ export default class App {
       this.debug.error('OpenReplay error: Unable to build session URL')
       return undefined
     }
+    const ingest = this.options.ingestPoint
+    const isSaas = ingest === DEFAULT_INGEST_POINT
 
-    return this.options.ingestPoint.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+    const projectPath = isSaas ? ingest.replace('api', 'app') : ingest
+
+    return projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
   }
 
   getHost(): string {
-    return new URL(this.options.ingestPoint).hostname
+    return new URL(this.options.ingestPoint).host
   }
   getProjectKey(): string {
     return this.projectKey
@@ -368,7 +387,7 @@ export default class App {
     }
 
     const timestamp = now()
-    const startWorkerMsg: WorkerMessageData = {
+    this.worker.postMessage({
       type: 'start',
       pageNo: this.session.incPageNo(),
       ingestPoint: this.options.ingestPoint,
@@ -376,8 +395,7 @@ export default class App {
       url: document.URL,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
-    }
-    this.worker.postMessage(startWorkerMsg)
+    })
 
     this.session.update({
       // TODO: transparent "session" module logic AND explicit internal api for plugins.
@@ -433,33 +451,37 @@ export default class App {
           projectID,
           beaconSizeLimit,
           startTimestamp, // real startTS, derived from sessionID
+          delay,
         } = r
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
           //typeof startTimestamp !== 'number' ||
           //typeof sessionID !== 'string' ||
+          typeof delay !== 'number' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
-        if (sessionID !== this.session.getInfo().sessionID) {
+        this.delay = delay
+        const prevSessionID = this.session.getInfo().sessionID
+        if (prevSessionID && prevSessionID !== sessionID) {
           this.session.reset()
         }
         this.session.setSessionToken(token)
         this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
 
-        const startWorkerMsg: WorkerMessageData = {
+        this.worker.postMessage({
           type: 'auth',
           token,
           beaconSizeLimit,
-        }
-        this.worker.postMessage(startWorkerMsg)
+        })
 
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
-        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // TODO: start as early as possible (before receiving the token)
+        // TODO: start as early as possible (before receiving the token)
+        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         this.observer.observe()
         this.ticker.start()
         this.activityState = ActivityState.Active

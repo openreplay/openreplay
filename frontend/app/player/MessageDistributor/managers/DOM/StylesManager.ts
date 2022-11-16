@@ -1,7 +1,7 @@
 import type StatedScreen from '../../StatedScreen';
-import type { CssInsertRule, CssDeleteRule, ReplaceVcss } from '../../messages';
+import type { CssInsertRule, CssDeleteRule } from '../../messages';
 
-type CSSRuleMessage = CssInsertRule | CssDeleteRule | ReplaceVcss;
+type CSSRuleMessage = CssInsertRule | CssDeleteRule;
 
 import ListWalker from '../ListWalker';
 

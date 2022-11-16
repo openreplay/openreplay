@@ -136,13 +136,18 @@ class PostgresClient:
                     and not self.unlimited_query:
                 postgreSQL_pool.putconn(self.connection)
 
-    def recreate_cursor(self):
+    def recreate_cursor(self, rollback=False):
+        if rollback:
+            try:
+                self.connection.rollback()
+            except Exception as error:
+                logging.error("Error while rollbacking connection for recreation", error)
         try:
             self.cursor.close()
         except Exception as error:
             logging.error("Error while closing cursor for recreation", error)
         self.cursor = None
-        self.__enter__()
+        return self.__enter__()
 
 
 async def init():

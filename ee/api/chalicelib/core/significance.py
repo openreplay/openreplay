@@ -1,11 +1,10 @@
 __author__ = "AZNAUROV David"
 __maintainer__ = "KRAIEM Taha Yassine"
 
+from decouple import config
+
 import schemas
 from chalicelib.core import events, metadata
-from chalicelib.utils import dev
-
-from decouple import config
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     from chalicelib.core import sessions_legacy as sessions
@@ -567,8 +566,7 @@ def get_top_insights(filter_d, project_id):
 
         }]
         counts = sessions.search_sessions(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d),
-                                          project_id=project_id,
-                                          user_id=None, count_only=True)
+                                          project_id=project_id, user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0

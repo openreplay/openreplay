@@ -2,13 +2,18 @@ package messages
 
 func transformDeprecated(msg Message) Message {
 	switch m := msg.(type) {
-	case *MouseClickDepricated:
-		return &MouseClick{
-			ID:             m.ID,
-			HesitationTime: m.HesitationTime,
-			Label:          m.Label,
+	case *JSExceptionDeprecated:
+		return &JSException{
+			Name:     m.Name,
+			Message:  m.Message,
+			Payload:  m.Payload,
+			Metadata: "{}",
 		}
-	default:
-		return msg
+	case *SessionEndDeprecated:
+		return &SessionEnd{
+			Timestamp:     m.Timestamp,
+			EncryptionKey: "",
+		}
 	}
+	return msg
 }

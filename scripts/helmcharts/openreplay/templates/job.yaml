@@ -132,6 +132,73 @@ spec:
       {{- end}}
       {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
+      {{- if .Values.vault.enabled }}
+      - name: vault
+        env:
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
+          - name: PGHOST
+            value: "{{ .Values.global.postgresql.postgresqlHost }}"
+          - name: PGPORT
+            value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: PGDATABASE
+            value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+          - name: PGUSER
+            value: "{{ .Values.global.postgresql.postgresqlUser }}"
+          - name: PGPASSWORD
+            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+        image: hashicorp/vault:1.12.0
+        command: 
+        - /bin/sh
+        - /opt/migrations/vault.sh
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+      - name: vault-s3-upload
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            value: "{{ .Values.global.s3.accessKey }}"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "{{ .Values.global.s3.secretKey }}"
+          - name: AWS_DEFAULT_REGION
+            value: "{{ .Values.global.s3.region }}"
+          - name: AWS_ENDPOINT
+            value: "{{ .Values.global.s3.endpoint }}"
+          - name: VAULT_BUCKET
+            value: "{{ .Values.global.s3.vaultBucket }}"
+        image: amazon/aws-cli
+        command: 
+        - /bin/bash
+        - -c
+        args:
+        - |
+          while true; do
+          [[ -f /opt/openreplay/vault_creds.txt ]] && {
+            aws s3 cp --endpoint ${AWS_ENDPOINT} /opt/openreplay/vault_creds.txt s3://${VAULT_BUCKET}/vault/
+            exit 0
+          } || {
+            [[ -f /opt/openreplay/err.txt ]] && {
+              (cat /opt/openreplay/err.txt | grep -i "vault is already initialized") && { 
+                  cat /opt/openreplay/err.txt
+                  echo vault already initialized
+                  exit 0
+                } || {
+                  echo Unknown error
+                  cat /opt/openreplay/err.txt
+                  exit 2
+              }
+            }
+          } || {
+            echo vault not yet initialized;
+            sleep 2
+          };
+          done
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+      {{- end }}
       - name: clickhouse
         image: yandex/clickhouse-client:21.9.4.35
         env:
