@@ -50,6 +50,10 @@ export default class ScreenRecordingState {
     private readonly options: AssistOptions
   ) {}
 
+  public get isActive() {
+    return this.status !== RecordingState.Off
+  }
+
   private confirm: ConfirmWindow | null = null
 
   public requestRecording = (id: string) => {
