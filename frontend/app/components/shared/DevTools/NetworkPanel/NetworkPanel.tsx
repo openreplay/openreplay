@@ -102,7 +102,7 @@ function renderSize(r: any) {
   if (r.responseBodySize) return formatBytes(r.responseBodySize);
   let triggerText;
   let content;
-  if (r.decodedBodySize == null) {
+  if (r.decodedBodySize == null || r.decodedBodySize === 0) {
     triggerText = 'x';
     content = 'Not captured';
   } else {
