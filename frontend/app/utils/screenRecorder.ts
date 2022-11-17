@@ -95,7 +95,11 @@ export async function screenRecorder(recName: string, sessionId: string, saveCb:
     const stream = await recordScreen();
     const mediaRecorder = createFileRecorder(stream, FILE_TYPE, recName, sessionId, saveCb);
 
-    return () => mediaRecorder.stop();
+    return () => {
+      if (mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+    }
   } catch (e) {
     console.log(e);
   }
