@@ -31,6 +31,14 @@ class RolePayloadSchema(BaseModel):
         alias_generator = schemas.attribute_to_camel_case
 
 
+class SignalsSchema(BaseModel):
+    timestamp: int = Field(...)
+    action: str = Field(...)
+    source: str = Field(...)
+    category: str = Field(...)
+    data: dict = Field(default={})
+
+
 class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(None)
 
