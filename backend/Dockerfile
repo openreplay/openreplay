@@ -29,7 +29,18 @@ ENV TZ=UTC \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
     HTTP_PORT=8080 \
     KAFKA_USE_SSL=true \
+    # KAFKA_USE_KERBEROS should be set true if you wish to use Kerberos auth for Kafka
     KAFKA_USE_KERBEROS=false \
+    # KERBEROS_SERVICE_NAME is the primary name of the Brokers configured in the Broker JAAS file
+    KERBEROS_SERVICE_NAME="" \
+    # KERBEROS_PRINCIPAL is this client's principal name
+    KERBEROS_PRINCIPAL="" \
+    # KERBEROS_PRINCIPAL is the absolute path to the keytab to be used for authentication
+    KERBEROS_KEYTAB_LOCATION="" \
+    # KAFKA_SSL_KEY is the absolute path to the CA cert for verifying the broker's key
+    KAFKA_SSL_KEY="" \
+    # KAFKA_SSL_CERT is a CA cert string (PEM format) for verifying the broker's key
+    KAFKA_SSL_CERT="" \
     KAFKA_MAX_POLL_INTERVAL_MS=400000 \
     REDIS_STREAMS_MAX_LEN=10000 \
     TOPIC_RAW_WEB=raw \
