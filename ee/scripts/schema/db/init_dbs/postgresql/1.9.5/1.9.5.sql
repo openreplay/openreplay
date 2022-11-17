@@ -18,4 +18,6 @@ CREATE TABLE IF NOT EXISTS assist_records
     duration   integer                     NOT NULL
 );
 
+ALTER TYPE webhook_type ADD VALUE IF NOT EXISTS 'msteams';
+
 COMMIT;
