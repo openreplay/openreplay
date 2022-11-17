@@ -1,27 +1,31 @@
-import { makeAutoObservable } from "mobx"
-import { recordingsService } from "App/services"
-import { IRecord } from 'App/services/RecordingsService'
+import { makeAutoObservable } from 'mobx';
+import { recordingsService } from 'App/services';
+import { IRecord } from 'App/services/RecordingsService';
 
 export default class RecordingsStore {
-  recordings: IRecord[] = []
-  loading: boolean
+  recordings: IRecord[] = [];
+  loading: boolean;
 
-  page = 1
-  pageSize = 15
-  order: 'desc' | 'asc' = 'desc'
-  search = ''
+  page = 1;
+  pageSize = 15;
+  order: 'desc' | 'asc' = 'desc';
+  search = '';
   // not later we will add search by user id
-  userId: number
+  userId: number;
 
   constructor() {
-    makeAutoObservable(this)
+    makeAutoObservable(this);
+  }
+
+  setRecordings(records: IRecord[]) {
+    this.recordings = records;
   }
 
   updateSearch(val: string) {
-    this.search = val
+    this.search = val;
   }
   updatePage(page: number) {
-    this.page = page
+    this.page = page;
   }
 
   async fetchRecordings() {
@@ -30,45 +34,53 @@ export default class RecordingsStore {
       limit: this.pageSize,
       order: this.order,
       search: this.search,
-    }
+    };
 
-    this.loading = true
+    this.loading = true;
     try {
-      const recordings = await recordingsService.fetchRecordings(filter)
-      this.recordings = recordings;
-      this.fetchRecordingUrl(recordings[0].recordId)
+      const recordings = await recordingsService.fetchRecordings(filter);
+      this.setRecordings(recordings);
       return recordings;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     } finally {
-      this.loading = false
+      this.loading = false;
     }
   }
 
   async fetchRecordingUrl(id: number): Promise<string> {
-    this.loading = true
+    this.loading = true;
     try {
-      const recording = await recordingsService.fetchRecording(id)
+      const recording = await recordingsService.fetchRecording(id);
       return recording.URL;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     } finally {
-      this.loading = false
+      this.loading = false;
     }
   }
 
   async deleteRecording(id: number) {
-    this.loading = true
+    this.loading = true;
     try {
-      const recording = await recordingsService.deleteRecording(id)
-      console.log(recording)
-      return recording
+      const recording = await recordingsService.deleteRecording(id);
+      return recording;
     } catch (e) {
-      console.error(e)
+      console.error(e);
     } finally {
-      this.loading = false
+      this.loading = false;
     }
   }
 
-
+  async updateRecordingName(id: number, name: string) {
+    this.loading = true;
+    try {
+      const recording = await recordingsService.updateRecordingName(id, name);
+      return recording;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.loading = false;
+    }
+  }
 }

@@ -13,8 +13,8 @@ function RecordingsList() {
   const recordsSearch = recordingsStore.search;
 
   React.useEffect(() => {
-    recordingsStore.fetchRecordings()
-  }, [])
+    recordingsStore.fetchRecordings();
+  }, []);
 
   React.useEffect(() => {
     setRecordings(filterList(recordings, recordsSearch, ['createdBy', 'name']));
