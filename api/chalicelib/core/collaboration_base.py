@@ -30,7 +30,7 @@ class BaseCollaboration(ABC):
 
     @classmethod
     @abstractmethod
-    def __share(cls, tenant_id, integration_id, fallback, pretext, title, title_link, text):
+    def __share(cls, tenant_id, integration_id, attachments):
         pass
 
     @classmethod

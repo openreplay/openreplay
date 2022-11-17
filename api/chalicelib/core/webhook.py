@@ -21,14 +21,14 @@ def get_by_id(webhook_id):
         return w
 
 
-def get(tenant_id, webhook_id):
+def get_webhook(tenant_id, webhook_id, webhook_type='webhook'):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""SELECT w.*
                             FROM public.webhooks AS w 
                             WHERE w.webhook_id =%(webhook_id)s 
-                                AND deleted_at ISNULL AND type='webhook';""",
-                        {"webhook_id": webhook_id})
+                                AND deleted_at ISNULL AND type=%(webhook_type)s;""",
+                        {"webhook_id": webhook_id, "webhook_type": webhook_type})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
         if w:
@@ -70,7 +70,7 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
                     UPDATE public.webhooks
                     SET {','.join(sub_query)}
                     WHERE webhook_id =%(id)s AND deleted_at ISNULL
-                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
+                    RETURNING *;""",
                         {"id": webhook_id, **changes})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
@@ -87,7 +87,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
         query = cur.mogrify("""\
                     INSERT INTO public.webhooks(endpoint,auth_header,type,name)
                     VALUES (%(endpoint)s, %(auth_header)s, %(type)s,%(name)s)
-                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
+                    RETURNING *;""",
                             {"endpoint": endpoint, "auth_header": auth_header,
                              "type": webhook_type, "name": name})
         cur.execute(

@@ -1120,3 +1120,10 @@ class SessionUpdateNoteSchema(SessionNoteSchema):
                 break
         assert c > 0, "at least 1 value should be provided for update"
         return values
+
+
+class WebhookType(str, Enum):
+    webhook = "webhook"
+    slack = "slack"
+    email = "email"
+    msteams = "msteams"

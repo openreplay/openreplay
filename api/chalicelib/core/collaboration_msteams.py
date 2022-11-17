@@ -1,6 +1,5 @@
 import requests
 from decouple import config
-from datetime import datetime
 
 import schemas
 from chalicelib.core import webhook
@@ -16,6 +15,7 @@ class MSTeams(BaseCollaboration):
                                webhook_type="msteams",
                                name=data.name)
         return None
+
     # https://messagecardplayground.azurewebsites.net
     @classmethod
     def say_hello(cls, url):
@@ -58,6 +58,7 @@ class MSTeams(BaseCollaboration):
 
     @classmethod
     def send_batch(cls, tenant_id, webhook_id, attachments):
+        # TODO: change this
         integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
@@ -72,50 +73,87 @@ class MSTeams(BaseCollaboration):
                 print(r.text)
 
     @classmethod
-    def __share(cls, tenant_id, integration_id, fallback, pretext, title, title_link, text):
+    def __share(cls, tenant_id, integration_id, attachement):
         integration = cls.__get(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
-            return {"errors": ["slack integration not found"]}
+            return {"errors": ["Microsoft Teams integration not found"]}
         r = requests.post(
             url=integration["endpoint"],
-            json={
-                "attachments": [
-                    {
-                        "fallback": fallback,
-                        "pretext": pretext,
-                        "title": title,
-                        "title_link": title_link,
-                        "text": text,
-                        "ts": datetime.now().timestamp()
-                    }
-                ]
-            })
+            json={"type": "message",
+                  "attachments": [
+                      {"contentType": "application/vnd.microsoft.card.adaptive",
+                       "contentUrl": None,
+                       "content": {
+                           "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                           "type": "AdaptiveCard",
+                           "version": "1.2",
+                           "body": [attachement]}}
+                  ]
+                  })
+
         return r.text
 
     @classmethod
     def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
-        args = {"fallback": f"{user} has shared the below session!",
-                "pretext": f"{user} has shared the below session!",
-                "title": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
-                "title_link": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
-                "text": comment}
-        return {"data": cls.__share(tenant_id, integration_id, **args)}
+        title = f"[{user}](mailto:{user}) has shared the below session!"
+        link = f"{config('SITE_URL')}/{project_id}/session/{session_id}"
+        link = f"[{link}]({link})"
+        args = {"type": "ColumnSet",
+                "columns": [{
+                    "width": "stretch",
+                    "items": [
+                        {"type": "TextBlock",
+                         "text": title},
+                        {"type": "TextBlock",
+                         "spacing": "small",
+                         "text": link}
+                    ]
+                }]}
+        if comment and len(comment) > 0:
+            args["columns"][0]["items"].append({
+                "type": "TextBlock",
+                "spacing": "small",
+                "text": comment
+            })
+        data = cls.__share(tenant_id, integration_id, attachement=args)
+        if "errors" in data:
+            return data
+        return {"data": data}
 
     @classmethod
     def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
-        args = {"fallback": f"{user} has shared the below error!",
-                "pretext": f"{user} has shared the below error!",
-                "title": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
-                "title_link": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
-                "text": comment}
-        return {"data": cls.__share(tenant_id, integration_id, **args)}
+        title = f"[{user}](mailto:{user}) has shared the below error!"
+        link = f"{config('SITE_URL')}/{project_id}/errors/{error_id}"
+        link = f"[{link}]({link})"
+        args = {"type": "ColumnSet",
+                "columns": [{
+                    "width": "stretch",
+                    "items": [
+                        {"type": "TextBlock",
+                         "text": title},
+                        {"type": "TextBlock",
+                         "spacing": "small",
+                         "text": link}
+                    ]
+                }]}
+        if comment and len(comment) > 0:
+            args["columns"][0]["items"].append({
+                "type": "TextBlock",
+                "spacing": "small",
+                "text": comment
+            })
+        data = cls.__share(tenant_id, integration_id, attachement=args)
+        if "errors" in data:
+            return data
+        return {"data": data}
 
     @classmethod
     def __get(cls, tenant_id, integration_id=None):
         if integration_id is not None:
-            return webhook.get(tenant_id=tenant_id, webhook_id=integration_id)
+            return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
+                                       webhook_type=schemas.WebhookType.msteams)
 
-        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type="slack")
+        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.msteams)
         if integrations is None or len(integrations) == 0:
             return None
         return integrations[0]
