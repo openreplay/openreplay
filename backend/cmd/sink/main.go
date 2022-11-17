@@ -149,7 +149,6 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			counter.Print()
-			log.Printf("writer info: %s", writer.Info())
 			s := time.Now()
 			if err := writer.SyncAll(); err != nil {
 				log.Fatalf("sync error: %v\n", err)
@@ -159,7 +158,7 @@ func main() {
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
-			log.Printf("sync duration: %d, commit duration: %d", dur, time.Now().Sub(s).Milliseconds())
+			log.Printf("sync: %d, commit: %d, writer: %s", dur, time.Now().Sub(s).Milliseconds(), writer.Info())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
