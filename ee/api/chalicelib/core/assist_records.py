@@ -24,7 +24,8 @@ def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema,
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
                   "assist_records.created_at>=%(startDate)s",
-                  "assist_records.created_at<=%(endDate)s"]
+                  "assist_records.created_at<=%(endDate)s",
+                  "assist_records.deleted_at ISNULL"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id,
               "startDate": data.startDate, "endDate": data.endDate,
               "p_start": (data.page - 1) * data.limit, "p_limit": data.limit,
@@ -53,12 +54,13 @@ def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema,
 def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
     conditions = ["projects.tenant_id=%(tenant_id)s",
                   "projects.deleted_at ISNULL",
-                  "assist_records.record_id=%(record_id)s"]
+                  "assist_records.record_id=%(record_id)s",
+                  "assist_records.deleted_at ISNULL"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT record_id, user_id, session_id, assist_records.created_at, 
-                                        assist_records.name, duration, users.name AS created_by,
-                                        file_key
+                                       assist_records.name, duration, users.name AS created_by,
+                                       file_key
                                 FROM assist_records
                                          INNER JOIN projects USING (project_id)
                                          LEFT JOIN users USING (user_id)
@@ -73,3 +75,41 @@ def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
                 ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
             )
     return result
+
+
+def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayloadSchema,
+                  context: schemas_ee.CurrentContext):
+    conditions = ["assist_records.record_id=%(record_id)s", "assist_records.deleted_at ISNULL"]
+    params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id, "name": data.name}
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""UPDATE assist_records
+                                SET name= %(name)s
+                                WHERE {" AND ".join(conditions)}
+                                RETURNING record_id, user_id, session_id, assist_records.created_at, 
+                                       assist_records.name, duration, users.name AS created_by,
+                                       file_key;""", params)
+        cur.execute(query)
+        result = helper.dict_to_camel_case(cur.fetchone())
+        if not result:
+            return {"errors": ["record not found"]}
+        result["URL"] = s3.client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
+            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        )
+    return result
+
+
+def delete_record(project_id, record_id, context: schemas_ee.CurrentContext):
+    conditions = ["assist_records.record_id=%(record_id)s"]
+    params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id}
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""UPDATE assist_records
+                                SET deleted_at= (now() at time zone 'utc')
+                                WHERE {" AND ".join(conditions)}
+                                RETURNING 1;""", params)
+        cur.execute(query)
+        result = helper.dict_to_camel_case(cur.fetchone())
+        if not result:
+            return {"errors": ["record not found"]}
+    return {"state": "success"}

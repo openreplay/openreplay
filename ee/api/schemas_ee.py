@@ -83,8 +83,11 @@ class SessionModel(BaseModel):
     metadata: dict = Field(default={})
 
 
-class AssistRecordPayloadSchema(BaseModel):
-    name: str = Field(...)
+class AssistRecordUpdatePayloadSchema(BaseModel):
+    name: str = Field(..., min_length=1)
+
+
+class AssistRecordPayloadSchema(AssistRecordUpdatePayloadSchema):
     duration: int = Field(...)
     session_id: int = Field(...)
 
