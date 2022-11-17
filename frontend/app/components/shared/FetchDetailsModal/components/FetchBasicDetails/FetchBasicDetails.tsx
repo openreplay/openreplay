@@ -1,8 +1,7 @@
 import React from 'react';
-import { Icon } from 'UI';
 import { formatBytes } from 'App/utils';
 import CopyText from 'Shared/CopyText';
-import { TYPES } from 'Types/session/resource';
+import cn from 'classnames';
 
 interface Props {
   resource: any;
@@ -46,7 +45,7 @@ function FetchBasicDetails({ resource }: Props) {
       {resource.status && (
         <div className="flex items-center py-1">
           <div className="font-medium">Status</div>
-          <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center">
+          <div className={cn("rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center", { 'error color-red': !resource.success })}>
             {resource.status === '200' && (
               <div className="w-4 h-4 bg-green rounded-full mr-2"></div>
             )}
