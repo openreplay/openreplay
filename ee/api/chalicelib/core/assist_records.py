@@ -77,7 +77,7 @@ def get_record(project_id, record_id, context: schemas_ee.CurrentContext):
     return result
 
 
-def update_record(project_id, record_id, data: schema_ee.AssistRecordUpdatePayloadSchema,
+def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayloadSchema,
                   context: schemas_ee.CurrentContext):
     conditions = ["assist_records.record_id=%(record_id)s", "assist_records.deleted_at ISNULL"]
     params = {"tenant_id": context.tenant_id, "project_id": project_id, "record_id": record_id, "name": data.name}
