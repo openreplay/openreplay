@@ -100,7 +100,6 @@ def get_traces_group(project_id, payload):
                 and not (file_url[:params_idx] if params_idx > -1 else file_url).endswith(".js"):
             print(f"{u['absPath']} sourcemap is not a JS file")
             payloads[key] = None
-            continue
 
         if key not in payloads:
             file_exists_in_bucket = len(file_url) > 0 and s3.exists(config('sourcemaps_bucket'), key)
