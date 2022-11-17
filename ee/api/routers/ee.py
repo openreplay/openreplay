@@ -92,3 +92,20 @@ def search_records(projectId: int, data: schemas_ee.AssistRecordSearchPayloadSch
 @app.get('/{projectId}/assist/records/{recordId}', tags=["assist"])
 def get_record(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {"data": assist_records.get_record(project_id=projectId, record_id=recordId, context=context)}
+
+
+@app.post('/{projectId}/assist/records/{recordId}', tags=["assist"])
+def update_record(projectId: int, recordId: int, data: schemas_ee.AssistRecordUpdatePayloadSchema = Body(...),
+                  context: schemas_ee.CurrentContext = Depends(OR_context)):
+    result = assist_records.update_record(project_id=projectId, record_id=recordId, data=data, context=context)
+    if "errors" in result:
+        return result
+    return {"data": result}
+
+
+@app.delete('/{projectId}/assist/records/{recordId}', tags=["assist"])
+def delete_record(projectId: int, recordId: int, context: schemas_ee.CurrentContext = Depends(OR_context)):
+    result = assist_records.delete_record(project_id=projectId, record_id=recordId, context=context)
+    if "errors" in result:
+        return result
+    return {"data": result}
