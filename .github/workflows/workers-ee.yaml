@@ -94,7 +94,7 @@ jobs:
         for image in $(cat /tmp/images_to_build.txt);
         do
           echo "Bulding $image"
-          PUSH_IMAGE=0 bash -x ./build.sh skip $image
+          PUSH_IMAGE=0 bash -x ./build.sh ee $image
           [[ "x$skip_security_checks" == "xtrue" ]]  || {
             curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
             ./trivy image --exit-code 1 --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
@@ -105,7 +105,7 @@ jobs:
           } && {
             echo "Skipping Security Checks"
           }
-          PUSH_IMAGE=1 bash -x ./build.sh skip $image
+          PUSH_IMAGE=1 bash -x ./build.sh ee $image
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
 
