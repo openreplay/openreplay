@@ -92,14 +92,12 @@ func (s *Storage) uploadKey(sessID uint64, suffix string, shouldSplit bool, retr
 		mobFileName += "devtools"
 	}
 	filePath := s.cfg.FSDir + "/" + mobFileName
-	var fileSize int64 = 0
 
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err != nil {
-		fileSize = info.Size()
-		if fileSize > s.cfg.MaxFileSize {
-			log.Printf("big file, size: %d, session: %d", fileSize, sessID)
+		if info.Size() > s.cfg.MaxFileSize {
+			log.Printf("big file, size: %d, session: %d", info.Size(), sessID)
 			return nil
 		}
 	}
@@ -111,6 +109,14 @@ func (s *Storage) uploadKey(sessID uint64, suffix string, shouldSplit bool, retr
 		)
 	}
 	defer file.Close()
+
+	var fileSize int64 = 0
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Printf("can't get file info: %s", err)
+	} else {
+		fileSize = fileInfo.Size()
+	}
 
 	var encryptedData []byte
 	fileName += suffix
