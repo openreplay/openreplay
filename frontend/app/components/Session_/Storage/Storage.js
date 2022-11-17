@@ -48,7 +48,6 @@ function getActionsName(type) {
 //@withEnumToggle('activeTab', 'setActiveTab', DIFF)
 export default class Storage extends React.PureComponent {
   lastBtnRef = React.createRef();
-  state = { showDiffs: false };
 
   focusNextButton() {
     if (this.lastBtnRef.current) {
@@ -130,8 +129,8 @@ export default class Storage extends React.PureComponent {
     return <JSONTree collapsed={2} src={listNow[listNow.length - 1].state} />;
   }
 
-  renderItem(item, i, prevItem) {
-    const { type, listNow, list } = this.props;
+  renderItem(item, i, prevItem, listNowLen, listLen) {
+    const { type } = this.props;
     let src;
     let name;
 
@@ -152,10 +151,6 @@ export default class Storage extends React.PureComponent {
       case STORAGE_TYPES.ZUSTAND:
         src = null;
         name = item.mutation.join('');
-    }
-
-    if (src !== null && !this.state.showDiffs) {
-      this.setState({ showDiffs: true })
     }
 
     return (
@@ -185,12 +180,12 @@ export default class Storage extends React.PureComponent {
             <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
           )}
           <div className="w-12">
-            {i + 1 < listNow.length && (
+            {i + 1 < listNowLen && (
               <button className={stl.button} onClick={() => jump(item.time, item._index)}>
                 {'JUMP'}
               </button>
             )}
-            {i + 1 === listNow.length && i + 1 < list.length && (
+            {i + 1 === listNowLen && i + 1 <  listLen && (
               <button className={stl.button} ref={this.lastBtnRef} onClick={this.goNext}>
                 {'NEXT'}
               </button>
@@ -205,13 +200,15 @@ export default class Storage extends React.PureComponent {
     const { type, listNow, list, hintIsHidden } = this.props;
 
     const showStore = type !== STORAGE_TYPES.MOBX;
+    const listNowLen = listNow.length
+    const listLen = list.length
     return (
       <BottomBlock>
         <BottomBlock.Header>
           {list.length > 0 && (
             <div className="flex w-full">
               {showStore && <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">{'STATE'}</h3>}
-              {this.state.showDiffs ? (
+              {type !== STORAGE_TYPES.ZUSTAND ? (
                 <h3 style={{ width: '39%'}}  className="font-semibold">
                   DIFFS
                 </h3>
@@ -307,7 +304,7 @@ export default class Storage extends React.PureComponent {
             <div className="flex" style={{ width: showStore ? '75%' : '100%' }}>
               <Autoscroll className="ph-10">
                 {listNow.map((item, i) =>
-                  this.renderItem(item, i, i > 0 ? listNow[i - 1] : undefined)
+                  this.renderItem(item, i, i > 0 ? listNow[i - 1] : undefined, listNowLen, listLen)
                 )}
               </Autoscroll>
             </div>
