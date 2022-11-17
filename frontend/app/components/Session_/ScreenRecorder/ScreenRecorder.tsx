@@ -44,6 +44,7 @@ function ScreenRecorder({
   React.useEffect(() => {
     return () => stopRecorderCb?.();
   }, []);
+
   const onSave = async (saveObj: { name: string; duration: number }, blob: Blob) => {
     try {
       const url = await recordingsService.reserveUrl(siteId, saveObj);

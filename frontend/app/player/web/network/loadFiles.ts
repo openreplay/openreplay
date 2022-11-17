@@ -17,8 +17,8 @@ export const loadFiles = (
     return processAPIStreamResponse(r, true)
   })
   .then(onData)
-  .then(() => 
-    urls.reduce((p, url) => 
+  .then(() =>
+    urls.reduce((p, url) =>
       p.then(() =>
         window.fetch(url)
         .then(r => {
@@ -62,7 +62,7 @@ const processAPIStreamResponse = (response: Response, isMainFile: boolean) => {
     }
     if (response.status >= 400) {
       return rej(
-        isMainFile ? `no start file. status code ${ response.status }` 
+        isMainFile ? `no start file. status code ${ response.status }`
         : `Bad endfile status code ${response.status}`
       )
     }

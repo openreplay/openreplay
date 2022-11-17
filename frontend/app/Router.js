@@ -67,6 +67,7 @@ const DASHBOARD_METRIC_DETAILS_PATH = routes.dashboardMetricDetails();
 // const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
 const ASSIST_PATH = routes.assist();
+const RECORDINGS_PATH = routes.recordings();
 const ERRORS_PATH = routes.errors();
 const ERROR_PATH = routes.error();
 const FUNNEL_PATH = routes.funnels();
@@ -213,6 +214,7 @@ class Router extends React.Component {
                             <Route exact strict path={withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)} component={Dashboard} />
 
                             <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
+                            <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
                             <Route exact strict path={withSiteId(ERRORS_PATH, siteIdList)} component={Errors} />
                             <Route exact strict path={withSiteId(ERROR_PATH, siteIdList)} component={Errors} />
                             <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />

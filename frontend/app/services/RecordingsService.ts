@@ -5,6 +5,24 @@ interface RecordingData {
   duration: number;
 }
 
+interface FetchFilter {
+  page: number
+  limit: number
+  order: 'asc' | 'desc'
+  search: string
+}
+
+export interface IRecord {
+  createdAt: number
+  createdBy: string
+  duration: number
+  name: string
+  recordId: number
+  sessionId: number
+  userId: number
+  URL?: string
+}
+
 export default class RecordingsService {
   private client: APIClient;
 
@@ -34,6 +52,39 @@ export default class RecordingsService {
             return true
           } else {
             throw new Error("Can't upload file: " + r.status)
+          }
+        })
+    }
+
+    fetchRecordings(filters: FetchFilter): Promise<IRecord[]> {
+      return this.client.post(`/assist/records`, filters)
+        .then(r => {
+          if (r.ok) {
+            return r.json().then(j => j.data)
+          } else {
+            throw new Error("Can't get recordings: " + r.status);
+          }
+        })
+    }
+
+    fetchRecording(id: number): Promise<IRecord> {
+      return this.client.get(`/assist/records/${id}`)
+        .then(r => {
+          if (r.ok) {
+            return r.json().then(j => j.data)
+          } else {
+            throw new Error("Can't get recordings: " + r.status);
+          }
+        })
+    }
+
+    deleteRecording(id: number): Promise<any> {
+      return this.client.delete(`/assist/records/${id}`)
+        .then(r => {
+          if (r.ok) {
+            return r.json().then(j => j.data)
+          } else {
+            throw new Error("Can't get recordings: " + r.status);
           }
         })
     }
