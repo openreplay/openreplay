@@ -203,7 +203,7 @@ export default class Controls extends React.Component {
   backTenSeconds = () => {
     //shouldComponentUpdate
     const { time, jump, skipInterval } = this.props;
-    jump(Math.max(0, time - SKIP_INTERVALS[skipInterval]));
+    jump(Math.max(1, time - SKIP_INTERVALS[skipInterval]));
   };
 
   goLive = () => this.props.jump(this.props.endTime);
