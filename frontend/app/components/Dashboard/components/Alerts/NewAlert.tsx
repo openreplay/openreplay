@@ -122,6 +122,9 @@ const NewAlert = (props: IProps) => {
     ) {
       remove(instance.alertId).then(() => {
         props.history.push(withSiteId(alerts(), siteId));
+        toast.success('Alert deleted');
+      }).catch(() => {
+        toast.error('Failed to delete an alert');
       });
     }
   };
@@ -135,6 +138,8 @@ const NewAlert = (props: IProps) => {
       } else {
         toast.success('Alert updated');
       }
+    }).catch(() => {
+      toast.error('Failed to create an alert');
     });
   };
 
