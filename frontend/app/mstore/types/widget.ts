@@ -6,7 +6,7 @@ import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
-import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
 
 export default class Widget {
     public static get ID_KEY():string { return "metricId" }
