@@ -24,10 +24,11 @@ export default class FunnelStage {
     }
 
     fromJSON(json: any, total: number = 0, previousSessionCount: number = 0) {
-        this.dropDueToIssues = json.dropDueToIssues;
+        previousSessionCount = previousSessionCount || 0;
+        this.dropDueToIssues = json.dropDueToIssues || 0;
         this.dropPct = json.dropPct;
         this.operator = json.operator;
-        this.sessionsCount = json.sessionsCount;
+        this.sessionsCount = json.sessionsCount || 0;
         this.usersCount = json.usersCount;
         this.value = json.value;
         this.type = json.type;
