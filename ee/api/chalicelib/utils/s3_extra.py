@@ -1,6 +1,6 @@
 from decouple import config
 
-from chalicelib.utils.s3 import client
+from chalicelib.utils import s3
 
 
 def tag_session(file_key, tag_key='retention', tag_value='vault'):
@@ -8,7 +8,7 @@ def tag_session(file_key, tag_key='retention', tag_value='vault'):
 
 
 def tag_file(file_key, bucket, tag_key, tag_value):
-    return client.put_object_tagging(
+    return s3.client.put_object_tagging(
         Bucket=bucket,
         Key=file_key,
         Tagging={
