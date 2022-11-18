@@ -30,7 +30,7 @@ function MetricsView({ siteId }: Props) {
             </div>
             <div className="text-base text-disabled-text flex items-center px-6">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />
-                Create custom Metrics to capture key interactions and track KPIs.
+                Create custom Metrics to capture user frustrations, monitor your app's performance and track other KPIs.
             </div>
             <MetricsList siteId={siteId} />
         </div>
