@@ -164,7 +164,7 @@ export default class App {
       this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
         if (data === 'restart') {
           this.stop(false)
-          this.start({ forceNew: true }) // TODO: keep userID & metadata (draw scenarios)
+          this.start({}, true)
         } else if (data.type === 'failure') {
           this.stop(false)
           this._debug('worker_failed', data.reason)
@@ -201,7 +201,6 @@ export default class App {
 
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
-      // this.debug.log('SendiTrying to send when not active', message) <- crashing the app
       return
     }
     this.messages.push(message)
@@ -370,7 +369,7 @@ export default class App {
       this.sessionStorage.removeItem(this.options.session_reset_key)
     }
   }
-  private _start(startOpts: StartOptions): Promise<StartPromiseReturn> {
+  private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
     if (!this.worker) {
       return Promise.resolve(UnsuccessfulStart('No worker found: perhaps, CSP is not set.'))
     }
@@ -382,9 +381,19 @@ export default class App {
       )
     }
     this.activityState = ActivityState.Starting
+
     if (startOpts.sessionHash) {
       this.session.applySessionHash(startOpts.sessionHash)
     }
+    if (startOpts.forceNew) {
+      // Reset session metadata only if requested directly
+      this.session.reset()
+    }
+    this.session.assign({
+      // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
+      userID: startOpts.userID,
+      metadata: startOpts.metadata,
+    })
 
     const timestamp = now()
     this.worker.postMessage({
@@ -397,17 +406,9 @@ export default class App {
       connAttemptGap: this.options.connAttemptGap,
     })
 
-    this.session.update({
-      // TODO: transparent "session" module logic AND explicit internal api for plugins.
-      // "updating" with old metadata in order to trigger session's UpdateCallbacks.
-      // (for the case of internal .start() calls, like on "restart" webworker signal or assistent connection in tracker-assist )
-      metadata: startOpts.metadata || this.session.getInfo().metadata,
-      userID: startOpts.userID,
-    })
-
-    const sReset = this.sessionStorage.getItem(this.options.session_reset_key)
+    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     this.sessionStorage.removeItem(this.options.session_reset_key)
-    const shouldReset = startOpts.forceNew || sReset !== null
+    const needNewSessionID = startOpts.forceNew || lsReset || resetByWorker
 
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
@@ -419,7 +420,7 @@ export default class App {
           ...this.getTrackerInfo(),
           timestamp,
           userID: this.session.getInfo().userID,
-          token: shouldReset ? undefined : this.session.getSessionToken(),
+          token: needNewSessionID ? undefined : this.session.getSessionToken(),
           deviceMemory,
           jsHeapSizeLimit,
         }),
@@ -447,29 +448,33 @@ export default class App {
         const {
           token,
           userUUID,
-          sessionID,
           projectID,
           beaconSizeLimit,
-          startTimestamp, // real startTS, derived from sessionID
-          delay,
+          delay, //  derived from token
+          sessionID, //  derived from token
+          startTimestamp, // real startTS (server time), derived from sessionID
         } = r
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
-          //typeof startTimestamp !== 'number' ||
-          //typeof sessionID !== 'string' ||
+          (typeof startTimestamp !== 'number' && typeof startTimestamp !== 'undefined') ||
+          typeof sessionID !== 'string' ||
           typeof delay !== 'number' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
         this.delay = delay
-        const prevSessionID = this.session.getInfo().sessionID
-        if (prevSessionID && prevSessionID !== sessionID) {
-          this.session.reset()
-        }
         this.session.setSessionToken(token)
-        this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
+        this.session.assign({
+          sessionID,
+          timestamp: startTimestamp || timestamp,
+          projectID,
+        })
+        // (Re)send Metadata for the case of a new session
+        Object.entries(this.session.getInfo().metadata).forEach(([key, value]) =>
+          this.send(Metadata(key, value)),
+        )
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
 
         this.worker.postMessage({
@@ -506,15 +511,15 @@ export default class App {
       })
   }
 
-  start(options: StartOptions = {}): Promise<StartPromiseReturn> {
+  start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
     if (!document.hidden) {
-      return this._start(options)
+      return this._start(...args)
     } else {
       return new Promise((resolve) => {
         const onVisibilityChange = () => {
           if (!document.hidden) {
             document.removeEventListener('visibilitychange', onVisibilityChange)
-            resolve(this._start(options))
+            resolve(this._start(...args))
           }
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
@@ -537,9 +542,5 @@ export default class App {
         this.activityState = ActivityState.NotActive
       }
     }
-  }
-  restart() {
-    this.stop(false)
-    this.start({ forceNew: false })
   }
 }
