@@ -15,7 +15,7 @@ def generate_file_key(project_id, key):
 def presign_record(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
     key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
     presigned_url = s3.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800, key=key)
-    return {"URL": presigned_url, "key": presigned_url}
+    return {"URL": presigned_url, "key": key}
 
 
 def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, context: schemas_ee.CurrentContext):
