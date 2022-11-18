@@ -95,6 +95,10 @@ class AssistRecordPayloadSchema(AssistRecordUpdatePayloadSchema):
         alias_generator = schemas.attribute_to_camel_case
 
 
+class AssistRecordSavePayloadSchema(AssistRecordPayloadSchema):
+    key: str = Field(...)
+
+
 class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema):
     limit: int = Field(default=200, gt=0)
     startDate: int = Field(default=TimeUTC.now(-7))

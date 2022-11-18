@@ -74,13 +74,20 @@ def get_available_trail_actions(context: schemas_ee.CurrentContext = Depends(OR_
     return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}
 
 
-@app.put('/{projectId}/assist/save/', tags=["assist"])
 @app.put('/{projectId}/assist/save', tags=["assist"])
 def sign_record_for_upload(projectId: int, data: schemas_ee.AssistRecordPayloadSchema = Body(...),
                            context: schemas_ee.CurrentContext = Depends(OR_context)):
     if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
         return {"errors": ["Session not found"]}
-    return {"data": {"URL": assist_records.presign_records(project_id=projectId, data=data, context=context)}}
+    return {"data": assist_records.presign_record(project_id=projectId, data=data, context=context)}
+
+
+@app.put('/{projectId}/assist/save/done', tags=["assist"])
+def save_record_after_upload(projectId: int, data: schemas_ee.AssistRecordSavePayloadSchema = Body(...),
+                             context: schemas_ee.CurrentContext = Depends(OR_context)):
+    if not sessions.session_exists(project_id=projectId, session_id=data.session_id):
+        return {"errors": ["Session not found"]}
+    return {"data": {"URL": assist_records.save_record(project_id=projectId, data=data, context=context)}}
 
 
 @app.post('/{projectId}/assist/records', tags=["assist"])

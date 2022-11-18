@@ -6,18 +6,29 @@ from chalicelib.utils import s3, pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def presign_records(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
-    params = {"user_id": context.user_id, "project_id": project_id, **data.dict()}
-
+def presign_record(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
     key = s3.generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
     presigned_url = s3.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800, key=key)
-    params["key"] = key
+    return {"URL": presigned_url, "key": presigned_url}
+
+
+def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, context: schemas_ee.CurrentContext):
+    params = {"user_id": context.user_id, "project_id": project_id, **data.dict()}
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""INSERT INTO assist_records(project_id, user_id, name, file_key, duration, session_id)
-                                VALUES (%(project_id)s, %(user_id)s, %(name)s, %(key)s, 
-                                        %(duration)s, %(session_id)s);""", params)
+        query = cur.mogrify(
+            f"""INSERT INTO assist_records(project_id, user_id, name, file_key, duration, session_id)
+                VALUES (%(project_id)s, %(user_id)s, %(name)s, %(key)s,%(duration)s, %(session_id)s)
+                RETURNING record_id, user_id, session_id, created_at, name, duration, 
+                        (SELECT name FROM users WHERE users.user_id = %(user_id)s LIMIT 1) AS created_by, file_key;""",
+            params)
         cur.execute(query)
-    return presigned_url
+        result = helper.dict_to_camel_case(cur.fetchone())
+        result["URL"] = s3.client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': config("ASSIST_RECORDS_BUCKET"), 'Key': result.pop("fileKey")},
+            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        )
+    return result
 
 
 def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema, context: schemas_ee.CurrentContext):
@@ -84,10 +95,14 @@ def update_record(project_id, record_id, data: schemas_ee.AssistRecordUpdatePayl
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""UPDATE assist_records
                                 SET name= %(name)s
+                                FROM (SELECT users.name AS created_by
+                                      FROM assist_records INNER JOIN users USING (user_id)
+                                      WHERE record_id = %(record_id)s
+                                        AND assist_records.deleted_at ISNULL
+                                      LIMIT 1) AS users
                                 WHERE {" AND ".join(conditions)}
                                 RETURNING record_id, user_id, session_id, assist_records.created_at, 
-                                       assist_records.name, duration, users.name AS created_by,
-                                       file_key;""", params)
+                                       assist_records.name, duration, created_by, file_key;""", params)
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
         if not result:
