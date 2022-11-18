@@ -47,7 +47,7 @@ const TimelinePointer = React.memo((props: Props) => {
       <Tooltip
         title={
           <div className="">
-            <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
+            <b>{item.success ? 'Slow resource: ' : '4xx/5xx Error:'}</b>
             <br />
             {name.length > 200
               ? name.slice(0, 100) + ' ... ' + name.slice(-50)
