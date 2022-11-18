@@ -30,7 +30,7 @@ function FeatureSelection(props: Props) {
         const checked = list.includes(feature);
         const _disabled = disabled && !checked;
         return (
-          <Tooltip title="X-RAY supports up to 3 views" disabled={!_disabled} delay={0}>
+          <Tooltip key={index} title="X-RAY supports up to 3 views" disabled={!_disabled} delay={0}>
             <Checkbox
               key={index}
               label={feature}
