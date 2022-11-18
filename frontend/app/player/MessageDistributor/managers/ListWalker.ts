@@ -79,6 +79,23 @@ export default class ListWalker<T extends Timed> {
 		return this.p;
 	}
 
+	private hasNext() {
+		return this.p < this.length
+	}
+	private hasPrev() {
+		return this.p > 0
+	}
+	protected moveNext(): T | null {
+		return this.hasNext()
+			? this.list[ this.p++ ]
+			: null
+	}
+	protected movePrev(): T | null {
+		return this.hasPrev()
+			? this.list[ --this.p ]
+			: null
+	}
+
 	/*
 		Returns last message with the time <= t.
 		Assumed that the current message is already handled so 
@@ -94,11 +111,11 @@ export default class ListWalker<T extends Timed> {
 
 		let changed = false;
 		while (this.p < this.length && this.list[this.p][key] <= val) {
-			this.p++;
+			this.moveNext()
 			changed = true;
 		}
 		while (this.p > 0 && this.list[ this.p - 1 ][key] > val) {
-			this.p--;
+			this.movePrev()
 			changed = true;
 		}
 		return changed ? this.list[ this.p - 1 ] : null;
@@ -112,10 +129,10 @@ export default class ListWalker<T extends Timed> {
 
 		const list = this.list
 		while (list[this.p] && list[this.p].time <= t) {
-			fn(list[ this.p++ ]);
+			fn(this.moveNext())
 		}
 		while (fnBack && this.p > 0 && list[ this.p - 1 ].time > t) {
-			fnBack(list[ --this.p ]);
+			fnBack(this.movePrev());
 		}
 	}
 
