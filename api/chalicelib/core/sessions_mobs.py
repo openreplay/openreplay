@@ -15,6 +15,10 @@ def __get_mob_keys(project_id, session_id):
     ]
 
 
+def __get_mob_keys_deprecated(session_id):
+    return [str(session_id), str(session_id) + "e"]
+
+
 def get_urls(project_id, session_id):
     results = []
     for k in __get_mob_keys(project_id=project_id, session_id=session_id):
@@ -27,23 +31,14 @@ def get_urls(project_id, session_id):
 
 
 def get_urls_depercated(session_id):
-    return [
-        client.generate_presigned_url(
+    results = []
+    for k in __get_mob_keys_deprecated(session_id=session_id):
+        results.append(client.generate_presigned_url(
             'get_object',
-            Params={
-                'Bucket': config("sessions_bucket"),
-                'Key': str(session_id)
-            },
+            Params={'Bucket': config("sessions_bucket"), 'Key': k},
             ExpiresIn=100000
-        ),
-        client.generate_presigned_url(
-            'get_object',
-            Params={
-                'Bucket': config("sessions_bucket"),
-                'Key': str(session_id) + "e"
-            },
-            ExpiresIn=100000
-        )]
+        ))
+    return results
 
 
 def get_ios(session_id):
