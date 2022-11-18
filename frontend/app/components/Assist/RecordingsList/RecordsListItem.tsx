@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon, ItemMenu } from 'UI';
-import { durationFromMs, checkForRecent, getDateFromMill } from 'App/date';
+import { durationFromMs, formatTimeOrDate, getDateFromMill } from 'App/date';
 import { IRecord } from 'App/services/RecordingsService';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
@@ -12,7 +12,8 @@ interface Props {
 
 function RecordsListItem(props: Props) {
   const { record } = props;
-  const { recordingsStore } = useStore();
+  const { recordingsStore, settingsStore } = useStore();
+  const { timezone } = settingsStore.sessionSettings;
   const [isEdit, setEdit] = React.useState(false);
   const [recordingTitle, setRecordingTitle] = React.useState(record.name);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -85,7 +86,7 @@ function RecordsListItem(props: Props) {
           <div className="flex flex-col">
             <div>{record.createdBy}</div>
             <div className="text-gray-medium text-sm">
-              {checkForRecent(getDateFromMill(record.createdAt), 'LLL dd, yyyy, hh:mm a')}
+              {formatTimeOrDate(record.createdAt, timezone, true)}
             </div>
           </div>
         </div>
