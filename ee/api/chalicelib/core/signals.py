@@ -1,7 +1,7 @@
 import json
 
 import schemas_ee
-from chalicelib.utils import helper
+from chalicelib.utils import helper, queue
 from chalicelib.utils import pg_client
 
 
