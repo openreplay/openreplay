@@ -77,7 +77,7 @@ def format_payload(p, truncate_to_first=False):
 def url_exists(url):
     try:
         r = requests.head(url, allow_redirects=False)
-        return r.status_code == 200 and r.headers.get("Content-Type") != "text/html"
+        return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
     except Exception as e:
         print(f"!! Issue checking if URL exists: {url}")
         print(e)
