@@ -1,6 +1,5 @@
 import Player from './Player';
 import { update, cleanStore, getState } from './store';
-import { clean as cleanLists } from './lists';
 
 /** @type {Player} */
 let instance = null;
@@ -49,7 +48,6 @@ export function clean() {
   if (instance === null) return;
   instance.clean();
   cleanStore();
-  cleanLists();
   instance = null;
 }
 export const jump = initCheck((...args) => instance.jump(...args));

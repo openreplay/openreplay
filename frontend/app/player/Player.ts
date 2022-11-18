@@ -1,4 +1,3 @@
-import { goTo as listsGoTo } from './lists';
 import { update, getState } from './store';
 import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE }  from './MessageDistributor/MessageDistributor';
 import { Note } from 'App/services/NotesService';
@@ -68,7 +67,6 @@ export default class Player extends MessageDistributor {
       completed: false,
     });
     super.move(time, index);
-    listsGoTo(time, index);
   }
 
   private _startAnimation() {
