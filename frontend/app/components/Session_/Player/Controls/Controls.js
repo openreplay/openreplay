@@ -242,7 +242,7 @@ export default class Controls extends React.Component {
   controlIcon = (icon, size, action, isBackwards, additionalClasses) => (
     <div
       onClick={action}
-      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
+      className={cn('py-2 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
       style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
     >
       <Icon name={icon} size={size} color="inherit" />
