@@ -139,9 +139,9 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			if err := writer.CloseAll(); err != nil {
-				log.Printf("closeAll error: %v\n", err)
-			}
+			// Sync and stop writer
+			writer.Stop()
+			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
@@ -149,16 +149,10 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			counter.Print()
-			s := time.Now()
-			if err := writer.SyncAll(); err != nil {
-				log.Fatalf("sync error: %v\n", err)
-			}
-			dur := time.Now().Sub(s).Milliseconds()
-			s = time.Now()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
-			log.Printf("sync: %d, commit: %d, writer: %s", dur, time.Now().Sub(s).Milliseconds(), writer.Info())
+			log.Printf("writer: %s", writer.Info())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
