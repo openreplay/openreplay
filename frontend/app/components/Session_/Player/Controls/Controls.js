@@ -78,8 +78,8 @@ function getStorageName(type) {
   // logCount: state.logList.length,
   logRedCount: state.logRedCount,
   showExceptions: state.exceptionsList.length > 0,
-  resourceRedCount: state.resourceRedCount,
-  fetchRedCount: state.fetchRedCount,
+  resourceRedCount: state.resourceRedCountNow, // TODO missing state.resourceRedCount
+  fetchRedCount: state.fetchRedCountNow,
   showStack: state.stackList.length > 0,
   stackCount: state.stackList.length,
   stackRedCount: state.stackRedCount,
@@ -261,6 +261,7 @@ export default class Controls extends React.Component {
       logRedCount,
       showExceptions,
       resourceRedCount,
+      fetchRedCount,
       showStack,
       stackRedCount,
       showStorage,
@@ -352,7 +353,7 @@ export default class Controls extends React.Component {
                   onClick={() => toggleBottomTools(NETWORK)}
                   active={bottomBlock === NETWORK && !inspectorMode}
                   label="NETWORK"
-                  hasErrors={resourceRedCount > 0}
+                  hasErrors={resourceRedCount > 0 || fetchRedCount > 0}
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"

@@ -394,7 +394,6 @@ export default connectPlayer((state: any) => ({
   fetchList: state.fetchList.map((i: any) => Resource({ ...i.toJS(), type: TYPES.XHR })),
   domContentLoadedTime: state.domContentLoadedTime,
   loadTime: state.loadTime,
-  // time: state.time,
   playing: state.playing,
   domBuildingTime: state.domBuildingTime,
 }))(NetworkPanel);
