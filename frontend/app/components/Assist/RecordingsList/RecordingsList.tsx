@@ -39,7 +39,7 @@ function RecordingsList() {
     >
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
-          <div className="col-span-8">Title</div>
+          <div className="col-span-8">Name</div>
           <div className="col-span-4">By</div>
         </div>
 
