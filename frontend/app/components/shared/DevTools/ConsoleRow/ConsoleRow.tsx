@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-// import stl from '../console.module.css';
 import { Icon } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 import { useModal } from 'App/components/Modal';
@@ -32,7 +31,8 @@ function ConsoleRow(props: Props) {
           info: !log.isYellow() && !log.isRed(),
           warn: log.isYellow(),
           error: log.isRed(),
-          'cursor-pointer underline decoration-dotted decoration-gray-200': clickable,
+          'cursor-pointer': clickable,
+          'cursor-pointer underline decoration-dotted decoration-gray-200': !!log.errorId,
         }
       )}
       onClick={
