@@ -28,7 +28,7 @@ function RecordingsList() {
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" />
+          <Icon name="camera-video-off" size={80} color="figmaColors-accent-secondary" />
           <div className="text-center text-gray-600 my-4">
             {recordsSearch !== ''
               ? 'No matching results'
