@@ -1,18 +1,25 @@
+import hashlib
+
 from decouple import config
 
 import schemas
 import schemas_ee
-from chalicelib.utils import s3, pg_client, helper
+from chalicelib.utils import s3, pg_client, helper, s3_extra
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
+def generate_file_key(project_id, key):
+    return f"{project_id}/{hashlib.md5(key.encode()).hexdigest()}"
+
+
 def presign_record(project_id, data: schemas_ee.AssistRecordPayloadSchema, context: schemas_ee.CurrentContext):
-    key = s3.generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
+    key = generate_file_key(project_id=project_id, key=f"{TimeUTC.now()}-{data.name}")
     presigned_url = s3.get_presigned_url_for_upload(bucket=config('ASSIST_RECORDS_BUCKET'), expires_in=1800, key=key)
     return {"URL": presigned_url, "key": presigned_url}
 
 
 def save_record(project_id, data: schemas_ee.AssistRecordSavePayloadSchema, context: schemas_ee.CurrentContext):
+    s3_extra.tag_record(file_key=data.key, tag_value=config('RETENTION_L_VALUE', default='vault'))
     params = {"user_id": context.user_id, "project_id": project_id, **data.dict()}
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
@@ -122,9 +129,10 @@ def delete_record(project_id, record_id, context: schemas_ee.CurrentContext):
         query = cur.mogrify(f"""UPDATE assist_records
                                 SET deleted_at= (now() at time zone 'utc')
                                 WHERE {" AND ".join(conditions)}
-                                RETURNING 1;""", params)
+                                RETURNING file_key;""", params)
         cur.execute(query)
         result = helper.dict_to_camel_case(cur.fetchone())
         if not result:
             return {"errors": ["record not found"]}
+        s3_extra.tag_record(file_key=result["fileKey"], tag_value=config('RETENTION_D_VALUE', default='default'))
     return {"state": "success"}
