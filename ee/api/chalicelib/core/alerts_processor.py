@@ -204,7 +204,8 @@ def process():
                         logging.info(f"Valid alert, notifying users, alertId:{alert['alertId']} name: {alert['name']}")
                         notifications.append(generate_notification(alert, result))
                 except Exception as e:
-                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
+                    logging.error(
+                        f"!!!Error while running alert query for alertId:{alert['alertId']} name: {alert['name']}")
                     logging.error(query)
                     logging.error(e)
                     cur = cur.recreate(rollback=True)
@@ -217,12 +218,22 @@ def process():
         alerts.process_notifications(notifications)
 
 
+def __format_value(x):
+    if x % 1 == 0:
+        x = int(x)
+    else:
+        x = round(x, 2)
+    return f"{x:,}"
+
+
 def generate_notification(alert, result):
+    left = __format_value(result['value'])
+    right = __format_value(alert['query']['right'])
     return {
         "alertId": alert["alertId"],
         "tenantId": alert["tenantId"],
         "title": alert["name"],
-        "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
+        "description": f"has been triggered, {alert['query']['left']} = {left} ({alert['query']['operator']} {right}).",
         "buttonText": "Check metrics for more details",
         "buttonUrl": f"/{alert['projectId']}/metrics",
         "imageUrl": None,
