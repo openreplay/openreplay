@@ -125,7 +125,7 @@ function DashboardView(props: Props) {
             <PageTitle
               title={
                 // @ts-ignore
-                <Tooltip title="Double click to rename">
+                <Tooltip delay={200} title="Double click to rename">
                   {dashboard?.name}
                 </Tooltip>
               }

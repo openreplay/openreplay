@@ -47,11 +47,12 @@ function ScreenRecorder({
 
   const onSave = async (saveObj: { name: string; duration: number }, blob: Blob) => {
     try {
+      toast.warn('Uploading the recording...');
       const url = await recordingsService.reserveUrl(siteId, saveObj);
       const status = recordingsService.saveFile(url, blob);
 
       if (status) {
-        toast.success('Session recording saved');
+        toast.success('Session recording uploaded');
       }
     } catch (e) {
       console.error(e);
@@ -68,7 +69,7 @@ function ScreenRecorder({
   }, [recordingState, isRecording]);
 
   const startRecording = async () => {
-    const stop = await screenRecorder('test rec_' + new Date().getTime(), sessionId, onSave);
+    const stop = await screenRecorder(`${sessionId}_${new Date().getTime()}`, sessionId, onSave);
     stopRecorderCb = stop;
     setRecording(true);
   };

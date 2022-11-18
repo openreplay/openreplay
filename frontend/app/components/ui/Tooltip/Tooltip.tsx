@@ -4,8 +4,8 @@ import type { Placement } from '@floating-ui/react-dom-interactions';
 import cn from 'classnames';
 
 interface Props {
-  title: React.ReactNode;
-  children: any;
+  title?: React.ReactNode;
+  children: React.ReactNode;
   disabled?: boolean;
   open?: boolean;
   placement?: Placement;
