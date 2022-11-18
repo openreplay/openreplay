@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, ItemMenu } from 'UI';
+import { Icon, ItemMenu, Tooltip } from 'UI';
 import { durationFromMs, formatTimeOrDate, getDateFromMill } from 'App/date';
 import { IRecord } from 'App/services/RecordingsService';
 import { useStore } from 'App/mstore';
@@ -67,16 +67,18 @@ function RecordsListItem(props: Props) {
                   onFocus={() => setEdit(true)}
                 />
               ) : (
-                <div
-                  onDoubleClick={() => setEdit(true)}
-                  className={cn(
-                    'border-dotted border-gray-medium',
-                    'pt-1 w-fit -mt-2',
-                    'cursor-pointer select-none border-b'
-                  )}
-                >
-                  {recordingTitle}
-                </div>
+                <Tooltip delay={200} title="Double click to rename">
+                  <div
+                    onDoubleClick={() => setEdit(true)}
+                    className={cn(
+                      'border-dotted border-gray-medium',
+                      'pt-1 w-fit -mt-2',
+                      'cursor-pointer select-none border-b'
+                    )}
+                  >
+                    {recordingTitle}
+                  </div>
+                </Tooltip>
               )}
               <div className="text-gray-medium text-sm">{durationFromMs(record.duration)}</div>
             </div>
