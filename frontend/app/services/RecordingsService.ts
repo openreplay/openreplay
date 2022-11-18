@@ -3,6 +3,7 @@ import APIClient from 'App/api_client';
 interface RecordingData {
   name: string;
   duration: number;
+  sessionId: string;
 }
 
 interface FetchFilter {
@@ -34,10 +35,10 @@ export default class RecordingsService {
     this.client = client || new APIClient();
   }
 
-  reserveUrl(siteId: string, recordingData: RecordingData): Promise<string> {
+  reserveUrl(siteId: string, recordingData: RecordingData): Promise<{ URL: string; key: string }> {
     return this.client.put(`/${siteId}/assist/save`, recordingData).then((r) => {
       if (r.ok) {
-        return r.json().then((j) => j.data.URL);
+        return r.json().then((j) => j.data);
       } else {
         throw new Error("Can't reserve space for recording: " + r.status);
       }
@@ -54,6 +55,16 @@ export default class RecordingsService {
         return true;
       } else {
         throw new Error("Can't upload file: " + r.status);
+      }
+    });
+  }
+
+  confirmFile(siteId: string, recordingData: RecordingData, key: string): Promise<any> {
+    return this.client.put(`/${siteId}/assist/save/done`, { ...recordingData, key }).then((r) => {
+      if (r.ok) {
+        return r.json().then((j) => j.data);
+      } else {
+        throw new Error("Can't confirm file saving: " + r.status);
       }
     });
   }

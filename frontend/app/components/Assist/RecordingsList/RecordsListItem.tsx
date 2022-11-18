@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon, ItemMenu, Tooltip } from 'UI';
-import { durationFromMs, formatTimeOrDate, getDateFromMill } from 'App/date';
+import { durationFromMs, formatTimeOrDate } from 'App/date';
 import { IRecord } from 'App/services/RecordingsService';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
@@ -32,7 +32,9 @@ function RecordsListItem(props: Props) {
 
   const onDelete = () => {
     recordingsStore.deleteRecording(record.recordId).then(() => {
-      recordingsStore.setRecordings(recordingsStore.recordings.filter(rec => rec.recordId !== record.recordId))
+      recordingsStore.setRecordings(
+        recordingsStore.recordings.filter((rec) => rec.recordId !== record.recordId)
+      );
       toast.success('Recording deleted');
     });
   };
@@ -40,7 +42,12 @@ function RecordsListItem(props: Props) {
   const menuItems = [{ icon: 'trash', text: 'Delete', onClick: onDelete }];
 
   const onSave = () => {
-    recordingsStore.updateRecordingName(record.recordId, recordingTitle);
+    recordingsStore
+      .updateRecordingName(record.recordId, recordingTitle)
+      .then(() => {
+        toast.success('Name updated');
+      })
+      .catch(() => toast.error("Couldn't update name"));
     setEdit(false);
   };
 

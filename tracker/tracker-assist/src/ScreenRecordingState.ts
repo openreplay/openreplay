@@ -105,11 +105,18 @@ export default class ScreenRecordingState {
       Object.assign(stopButton.style, styles)
       stopButton.textContent = 'Stop Recording'
       stopButton.id = 'or-recording-border'
+      stopButton.setAttribute('data-openreplay-obscured', '')
+      stopButton.setAttribute('data-openreplay-hidden', '')
+      stopButton.setAttribute('data-openreplay-ignore', '')
       window.document.body.appendChild(stopButton)
 
       Object.entries(borderEmulationStyles).forEach(([key, style,]) => {
         Object.assign(borders[key].style, style)
         borders[key].id = 'or-recording-border'
+
+        borders[key].setAttribute('data-openreplay-obscured', '')
+        borders[key].setAttribute('data-openreplay-hidden', '')
+        borders[key].setAttribute('data-openreplay-ignore', '')
         window.document.body.appendChild(borders[key])
       })
 
