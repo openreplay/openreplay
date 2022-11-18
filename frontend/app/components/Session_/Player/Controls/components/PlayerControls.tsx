@@ -109,7 +109,7 @@ function PlayerControls(props: Props) {
           </button>
         </Tooltip>
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
-          <OutsideClickDetectingDiv onClickOutside={handleClickOutside}>
+          {/* <OutsideClickDetectingDiv onClickOutside={handleClickOutside}> */}
             <Popover
               // open={showTooltip}
               // interactive
@@ -119,7 +119,7 @@ function PlayerControls(props: Props) {
               duration={0}
               className="cursor-pointer select-none"
               distance={20}
-              render={() => (
+              render={({ close }: any) => (
                 <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
                   <div className="font-semibold py-2 px-4 w-full text-left">
                     Jump <span className="text-disabled-text">(Secs)</span>
@@ -128,7 +128,7 @@ function PlayerControls(props: Props) {
                     <div
                       key={interval}
                       onClick={() => {
-                        toggleTooltip();
+                        close();
                         setSkipInterval(parseInt(interval, 10));
                       }}
                       className={cn(
@@ -143,14 +143,14 @@ function PlayerControls(props: Props) {
                 </div>
               )}
             >
-              <div onClick={toggleTooltip} ref={skipRef}>
+              <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
                 {/* @ts-ignore */}
                 <Tooltip disabled={showTooltip} title="Set default skip duration">
                   {currentInterval}s
                 </Tooltip>
               </div>
             </Popover>
-          </OutsideClickDetectingDiv>
+          {/* </OutsideClickDetectingDiv> */}
         </div>
         {/* @ts-ignore */}
         <Tooltip title="Forward 10s" position="top">
