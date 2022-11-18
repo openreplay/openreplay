@@ -63,17 +63,27 @@ function DiffRow({ diff, path }: Props) {
         )}
       >
         {oldValueSafe || 'undefined'}
+        {diffLengths[0] > 50
+          ? (
+            <div onClick={() => setShortenOldVal(!shortenOldVal)} className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit">
+              {!shortenOldVal ? 'collapse' : 'expand'}
+            </div>
+          ) : null}
       </span>
       {' -> '}
       <span
-        onClick={() => setShortenNewVal(!shortenNewVal)}
         className={cn(
           'whitespace-pre',
           newValue ? 'text-red' : 'text-green',
-          diffLengths[1] > 50 ? 'cursor-pointer' : ''
         )}
       >
         {newValueSafe || 'undefined'}
+        {diffLengths[1] > 50
+          ? (
+            <div onClick={() => setShortenNewVal(!shortenNewVal)} className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit">
+              {!shortenNewVal ? 'collapse' : 'expand'}
+            </div>
+          ) : null}
       </span>
     </div>
   );

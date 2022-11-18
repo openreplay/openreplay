@@ -12,7 +12,6 @@ import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
 import { diff } from 'deep-diff';
 import { jump } from 'Player';
-import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
 import cn from 'classnames';
@@ -22,6 +21,7 @@ import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtuali
 // const STATE = 'STATE';
 // const DIFF = 'DIFF';
 // const TABS = [ DIFF, STATE ].map(tab => ({ text: tab, key: tab }));
+const ROW_HEIGHT = 90;
 
 function getActionsName(type) {
   switch (type) {
@@ -48,8 +48,8 @@ function getActionsName(type) {
 )
 //@withEnumToggle('activeTab', 'setActiveTab', DIFF)
 export default class Storage extends React.PureComponent {
-  constructor(props, ctx) {
-    super(props, ctx);
+  constructor(props) {
+    super(props);
 
     this.lastBtnRef = React.createRef();
     this._list = React.createRef();
@@ -57,8 +57,6 @@ export default class Storage extends React.PureComponent {
       fixedWidth: true,
       keyMapper: index => this.props.listNow[index]
     });
-    this._listNowLen = this.props.listNow.length
-    this._listLen = this.props.list.length
     this._rowRenderer = this._rowRenderer.bind(this)
   }
 
@@ -72,27 +70,25 @@ export default class Storage extends React.PureComponent {
     this.focusNextButton();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidUpdate(prevProps, prevState) {
     if (prevProps.listNow.length !== this.props.listNow.length) {
       this.focusNextButton();
-      const newRows = this.props.listNow.filter(evt => prevProps.listNow.indexOf(evt.id) < 0);
-      console.log(newRows, this.props.listNow)
-      if (newRows.length > 0) {
-        const newRowsIndexes = newRows.map(r => this.props.listNow.indexOf(r))
-
-        newRowsIndexes.forEach(ind => this.cache.clean(ind))
-        this._list.recomputeRowHeights([...newRowsIndexes])
-      }
-
-      this._listNowLen = this.props.listNow.length
-      this._listLen = this.props.list.length
+      /** possible performance gain, but does not work with dynamic list insertion for some reason
+       * getting NaN offsets, maybe I detect changed rows wrongly
+       */
+      // const newRows = this.props.listNow.filter(evt => prevProps.listNow.indexOf(evt._index) < 0);
+      // if (newRows.length > 0) {
+      //   const newRowsIndexes = newRows.map(r => this.props.listNow.indexOf(r))
+      //   newRowsIndexes.forEach(ind => this.cache.clear(ind))
+      //   this._list.recomputeRowHeights(newRowsIndexes)
+      // }
     }
   }
 
   renderDiff(item, prevItem) {
     if (!prevItem) {
       // we don't have state before first action
-      return <div style={{ flex: 1 }} className="p-1" />;
+      return <div style={{ flex: 3 }} className="p-1" />;
     }
 
     const stateDiff = diff(prevItem.state, item.state);
@@ -106,7 +102,7 @@ export default class Storage extends React.PureComponent {
     }
 
     return (
-      <div style={{ flex: 3 }} className="flex flex-col p-1 font-mono">
+      <div style={{ flex: 3, maxHeight: ROW_HEIGHT, overflowY: 'scroll' }} className="flex flex-col p-1 font-mono">
         {stateDiff.map((d, i) => this.renderDiffs(d, i))}
       </div>
     );
@@ -114,6 +110,7 @@ export default class Storage extends React.PureComponent {
 
   renderDiffs(diff, i) {
     const path = this.createPath(diff);
+
     return (
       <React.Fragment key={i}>
         <DiffRow shades={this.pathShades} path={path} diff={diff} />
@@ -153,7 +150,7 @@ export default class Storage extends React.PureComponent {
     return <JSONTree collapsed={2} src={listNow[listNow.length - 1].state} />;
   }
 
-  renderItem(item, i, prevItem, style) {
+  renderItem(item, i, prevItem, style, measure) {
     const { type } = this.props;
     let src;
     let name;
@@ -179,10 +176,10 @@ export default class Storage extends React.PureComponent {
 
     return (
       <div
-        style={style}
+        style={{ ...style, height: ROW_HEIGHT }}
         className={cn('flex justify-between items-start', src !== null ? 'border-b' : '')}
         key={`store-${i}`}
-        onClick={() => this._list.recomputeRowHeights(i)}
+        // onClick={() => {measure(); this._list.recomputeRowHeights(i)}}
       >
         {src === null ? (
           <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}>
@@ -190,13 +187,14 @@ export default class Storage extends React.PureComponent {
           </div>
         ) : (
           <>
-            {this.renderDiff(item, prevItem)}
-            <div style={{ flex: 2 }} className="flex pl-10 pt-2">
+            {this.renderDiff(item, prevItem, i)}
+            <div style={{ flex: 2, maxHeight: ROW_HEIGHT, overflowY: 'scroll', overflowX: 'scroll' }} className="flex pl-10 pt-2">
               <JSONTree
                 name={this.ensureString(name)}
                 src={src}
                 collapsed
                 collapseStringsAfterLength={7}
+                onSelect={() => console.log('test')}
               />
             </div>
           </>
@@ -206,12 +204,12 @@ export default class Storage extends React.PureComponent {
             <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
           )}
           <div className="w-12">
-            {i + 1 < this._listNowLen && (
+            {i + 1 < this.props.listNow.length && (
               <button className={stl.button} onClick={() => jump(item.time, item._index)}>
                 {'JUMP'}
               </button>
             )}
-            {i + 1 === this._listNowLen && i + 1 <  this._listLen && (
+            {i + 1 === this.props.listNow.length && i + 1 <  this.props.list.length && (
               <button className={stl.button} ref={this.lastBtnRef} onClick={this.goNext}>
                 {'NEXT'}
               </button>
@@ -227,15 +225,18 @@ export default class Storage extends React.PureComponent {
     // this.renderItem(item, i, i > 0 ? listNow[i - 1] : undefined, listNowLen, listLen)
     // )
     const { listNow } = this.props;
+
+    if (!listNow[index]) return console.warn(index, listNow)
+
     return (
       <CellMeasurer
-      cache={this.cache}
-      columnIndex={0}
-      key={key}
-      rowIndex={index}
-      parent={parent}
+        cache={this.cache}
+        columnIndex={0}
+        key={key}
+        rowIndex={index}
+        parent={parent}
       >
-          {this.renderItem(listNow[index], index, index > 0 ? listNow[index - 1] : undefined, style)}
+          {({ measure }) => this.renderItem(listNow[index], index, index > 0 ? listNow[index - 1] : undefined, style, measure)}
       </CellMeasurer>
     )
   }
@@ -345,20 +346,20 @@ export default class Storage extends React.PureComponent {
             )}
             <div className="flex" style={{ width: showStore ? '75%' : '100%' }}>
             <AutoSizer>
-            {({ height, width }) => (
+              {({ height, width }) => (
                   <List
                     ref={element => {
                       this._list = element;
                     }}
                     deferredMeasurementCache={this.cache}
-                    overscanRowCount={2}
-                    rowCount={this._listNowLen}
-                    rowHeight={this.cache.rowHeight}
+                    overscanRowCount={1}
+                    rowCount={Math.ceil(parseInt(this.props.listNow.length) || 1)}
+                    rowHeight={ROW_HEIGHT}
                     rowRenderer={this._rowRenderer}
                     width={width}
                     height={height}
                   />
-            )}
+              )}
             </AutoSizer>
             </div>
           </NoContent>

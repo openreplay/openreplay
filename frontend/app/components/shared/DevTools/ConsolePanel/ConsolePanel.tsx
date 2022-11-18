@@ -8,6 +8,12 @@ import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { getRE } from 'App/utils';
+import {
+  List,
+  CellMeasurer,
+  CellMeasurerCache,
+  AutoSizer,
+} from 'react-virtualized';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -62,6 +68,34 @@ function ConsolePanel(props: Props) {
   const [activeTab, setActiveTab] = useState(ALL);
   const [filter, setFilter] = useState('');
 
+  const cache = new CellMeasurerCache({
+    fixedWidth: true,
+    keyMapper: (index: number) => filtered[index],
+  });
+  const _list = React.useRef();
+
+  const _rowRenderer = ({ index, key, parent, style }: any) => {
+    const item = filtered[index];
+
+    return (
+      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
+        {({ measure }: any) => (
+          <ConsoleRow
+            style={style}
+            log={item}
+            jump={jump}
+            iconProps={getIconProps(item.level)}
+            renderWithNL={renderWithNL}
+            recalcHeight={() => {
+              measure();
+              (_list as any).current.recomputeRowHeights(index);
+            }}
+          />
+        )}
+      </CellMeasurer>
+    );
+  };
+
   let filtered = React.useMemo(() => {
     const filterRE = getRE(filter, 'i');
     let list = logs;
@@ -105,17 +139,20 @@ function ConsolePanel(props: Props) {
           size="small"
           show={filtered.length === 0}
         >
-          {/* <Autoscroll> */}
-          {filtered.map((l: any, index: any) => (
-            <ConsoleRow
-              key={index}
-              log={l}
-              jump={jump}
-              iconProps={getIconProps(l.level)}
-              renderWithNL={renderWithNL}
-            />
-          ))}
-          {/* </Autoscroll> */}
+          <AutoSizer>
+            {({ height, width }: any) => (
+              <List
+                ref={_list}
+                deferredMeasurementCache={cache}
+                overscanRowCount={5}
+                rowCount={Math.ceil(filtered.length || 1)}
+                rowHeight={cache.rowHeight}
+                rowRenderer={_rowRenderer}
+                width={width}
+                height={height}
+              />
+            )}
+          </AutoSizer>
         </NoContent>
       </BottomBlock.Content>
     </BottomBlock>

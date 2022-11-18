@@ -11,9 +11,11 @@ interface Props {
   iconProps: any;
   jump?: any;
   renderWithNL?: any;
+  style?: any;
+  recalcHeight?: () => void;
 }
 function ConsoleRow(props: Props) {
-  const { log, iconProps, jump, renderWithNL } = props;
+  const { log, iconProps, jump, renderWithNL, style, recalcHeight } = props;
   const { showModal } = useModal();
   const [expanded, setExpanded] = useState(false);
   const lines = log.value.split('\n').filter((l: any) => !!l);
@@ -24,8 +26,14 @@ function ConsoleRow(props: Props) {
   const onErrorClick = () => {
     showModal(<ErrorDetailsModal errorId={log.errorId} />, { right: true });
   };
+
+  const toggleExpand = () => {
+    setExpanded(!expanded)
+    setTimeout(() => recalcHeight(), 0)
+  }
   return (
     <div
+      style={style}
       className={cn(
         'border-b flex items-center py-2 px-4 overflow-hidden group relative select-none',
         {
@@ -36,7 +44,7 @@ function ConsoleRow(props: Props) {
         }
       )}
       onClick={
-        clickable ? () => (!!log.errorId ? onErrorClick() : setExpanded(!expanded)) : () => {}
+        clickable ? () => (!!log.errorId ? onErrorClick() : toggleExpand()) : () => {}
       }
     >
       <div className="mr-2">
@@ -49,7 +57,7 @@ function ConsoleRow(props: Props) {
           )}
           <span>{renderWithNL(lines.pop())}</span>
         </div>
-        {canExpand && expanded && lines.map((l: any) => <div className="ml-4 mb-1">{l}</div>)}
+        {canExpand && expanded && lines.map((l: string, i: number) => <div key={l.slice(0,4)+i} className="ml-4 mb-1">{l}</div>)}
       </div>
       <JumpButton onClick={() => jump(log.time)} />
     </div>
