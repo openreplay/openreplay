@@ -8,7 +8,7 @@ function updateObjectLink(obj) {
 }
 
 export default ({ src, ...props }) => (
-  <JSONTree 
+  <JSONTree
     name={ false }
     collapsed={ 1 }
     enableClipboard={ false }
