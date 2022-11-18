@@ -8,6 +8,7 @@ import { SessionRecordingStatus } from 'Player/MessageDistributor/managers/Assis
 let stopRecorderCb: () => void;
 import { recordingsService } from 'App/services';
 import { toast } from 'react-toastify';
+import { durationFromMs, formatTimeOrDate } from 'App/date';
 
 /**
  * "edge" || "edg/"   chromium based edge (dev or canary)
@@ -48,14 +49,16 @@ function ScreenRecorder({
   const onSave = async (saveObj: { name: string; duration: number }, blob: Blob) => {
     try {
       toast.warn('Uploading the recording...');
-      const url = await recordingsService.reserveUrl(siteId, saveObj);
-      const status = recordingsService.saveFile(url, blob);
+      const { URL, key } = await recordingsService.reserveUrl(siteId, { ...saveObj, sessionId });
+      const status = recordingsService.saveFile(URL, blob);
 
       if (status) {
+        await recordingsService.confirmFile(siteId, { ...saveObj, sessionId }, key);
         toast.success('Session recording uploaded');
       }
     } catch (e) {
       console.error(e);
+      toast.error("Couldn't upload the file");
     }
   };
 
@@ -69,7 +72,11 @@ function ScreenRecorder({
   }, [recordingState, isRecording]);
 
   const startRecording = async () => {
-    const stop = await screenRecorder(`${sessionId}_${new Date().getTime()}`, sessionId, onSave);
+    const stop = await screenRecorder(
+      `${formatTimeOrDate(new Date().getTime(), undefined, true)}_${sessionId}`,
+      sessionId,
+      onSave
+    );
     stopRecorderCb = stop;
     setRecording(true);
   };
