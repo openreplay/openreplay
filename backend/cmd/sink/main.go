@@ -10,7 +10,7 @@ import (
 
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
-	"openreplay/backend/internal/sink/oswriter"
+	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
+	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
@@ -63,9 +63,7 @@ func main() {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, msg.SessionID())
 			}
-			if err := writer.Close(msg.SessionID()); err != nil {
-				log.Printf("can't close session file: %s", err)
-			}
+			writer.Close(msg.SessionID())
 			return
 		}
 
@@ -139,9 +137,9 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			if err := writer.CloseAll(); err != nil {
-				log.Printf("closeAll error: %v\n", err)
-			}
+			// Sync and stop writer
+			writer.Stop()
+			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
@@ -149,16 +147,10 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			counter.Print()
-			s := time.Now()
-			if err := writer.SyncAll(); err != nil {
-				log.Fatalf("sync error: %v\n", err)
-			}
-			dur := time.Now().Sub(s).Milliseconds()
-			s = time.Now()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
-			log.Printf("sync: %d, commit: %d, writer: %s", dur, time.Now().Sub(s).Milliseconds(), writer.Info())
+			log.Printf("writer: %s", writer.Info())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
