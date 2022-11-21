@@ -95,7 +95,7 @@ func (s *Storage) uploadKey(sessID uint64, suffix string, shouldSplit bool, retr
 
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
-	if err != nil {
+	if err == nil {
 		if info.Size() > s.cfg.MaxFileSize {
 			log.Printf("big file, size: %d, session: %d", info.Size(), sessID)
 			return nil
