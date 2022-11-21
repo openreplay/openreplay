@@ -12,6 +12,7 @@ interface Props {
   pointer: any;
   type: any;
   noClick?: boolean;
+  fetchPresented?: boolean;
 }
 const TimelinePointer = React.memo((props: Props) => {
   const { showModal } = useModal();
@@ -35,7 +36,7 @@ const TimelinePointer = React.memo((props: Props) => {
       if (pointer.tp === 'graph_ql') {
         showModal(<GraphQLDetailsModal resource={pointer} />, { right: true });
       } else {
-        showModal(<FetchDetails resource={pointer} />, { right: true });
+        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true });
       }
     }
     // props.toggleBottomBlock(type);
