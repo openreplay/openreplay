@@ -19,7 +19,7 @@ function Assist(props: Props) {
   const isRecords = history.location.pathname.includes('recordings');
 
   const redirect = (path: string) => {
-    history.push(path);
+    history.push(withSiteId(path, siteId));
   };
   return (
     <div className="page-margin container-90 flex relative">
@@ -30,14 +30,14 @@ function Assist(props: Props) {
             id="menu-assist"
             title="Live Sessions"
             iconName="play-circle-light"
-            onClick={() => redirect(withSiteId(assist(), siteId))}
+            onClick={() => redirect(assist())}
           />
           <SideMenuitem
             active={isRecords}
             id="menu-rec"
             title="Recordings"
             iconName="record-circle"
-            onClick={() => redirect(withSiteId(recordings(), siteId))}
+            onClick={() => redirect(recordings())}
           />
           </div>
           <div className="side-menu-margined w-full">

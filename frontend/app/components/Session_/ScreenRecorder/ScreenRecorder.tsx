@@ -89,20 +89,21 @@ function ScreenRecorder({
 
   const recordingRequest = () => {
     requestRecording();
-    // startRecording()
   };
 
-  if (!isSupported())
+  if (!isSupported()) {
     return (
       <div className="p-2">
         {/* @ts-ignore */}
         <Tooltip title={supportedMessage}>
-          <Button icon="record-circle" disabled variant={isRecording ? 'text-red' : 'text-primary'}>
+          <Button icon="record-circle" disabled variant="text-primary">
             Record Activity
           </Button>
         </Tooltip>
       </div>
     );
+  }
+
   return (
     <div onClick={!isRecording ? recordingRequest : stopRecordingHandler} className="p-2">
       <Button

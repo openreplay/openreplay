@@ -10,7 +10,7 @@ export default class RecordingsStore {
   pageSize = 15;
   order: 'desc' | 'asc' = 'desc';
   search = '';
-  // not later we will add search by user id
+  // later we will add search by user id
   userId: number;
 
   constructor() {

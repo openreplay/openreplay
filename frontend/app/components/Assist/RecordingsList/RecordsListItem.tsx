@@ -45,9 +45,9 @@ function RecordsListItem(props: Props) {
     recordingsStore
       .updateRecordingName(record.recordId, recordingTitle)
       .then(() => {
-        toast.success('Name updated');
+        toast.success('Recording name updated');
       })
-      .catch(() => toast.error("Couldn't update name"));
+      .catch(() => toast.error("Couldn't update recording name"));
     setEdit(false);
   };
 
