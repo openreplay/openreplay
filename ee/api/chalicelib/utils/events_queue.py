@@ -35,7 +35,7 @@ class EventQueue():
 
     def force_flush(self):
         if not self.events.empty():
-            with pg_client.PostgreClient() as conn:
+            with pg_client.PostgresClient() as conn:
                 self.flush(conn)
 
     def put(self, element):
