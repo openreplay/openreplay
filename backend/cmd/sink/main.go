@@ -10,7 +10,7 @@ import (
 
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
-	"openreplay/backend/internal/sink/oswriter"
+	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
+	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
@@ -63,9 +63,7 @@ func main() {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, msg.SessionID())
 			}
-			if err := writer.Close(msg.SessionID()); err != nil {
-				log.Printf("can't close session file: %s", err)
-			}
+			writer.Close(msg.SessionID())
 			return
 		}
 
