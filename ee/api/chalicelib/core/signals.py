@@ -1,13 +1,13 @@
 import json
 
 import schemas_ee
-from chalicelib.utils import helper, queue
+from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
 
 def handle_frontend_signals(project_id: int, user_id: str, data: schemas_ee.SignalsSchema):
     res = {'errors': 'query not executed'}
-    insights_query = """INSERT INTO public.frontend_signals VALUES ({project_id}, {user_id}, {timestamp}, {action}, {source}, {category}, {data})"""
+    insights_query = """INSERT INTO public.frontend_signals VALUES (%(project_id)s, %(user_id)s, %(timestamp)s, %(action)s, %(source)s, %(category)s, %(data)s)"""
     with pg_client.PostgresClient() as conn:
         query = conn.mogrify(insights_query, {'project_id': project_id, 'user_id': user_id, 'timestamp': data['timestamp'], 'source': data['source'],
                                       'category': data['category'], 'data': json.dumps(data['data'])})
