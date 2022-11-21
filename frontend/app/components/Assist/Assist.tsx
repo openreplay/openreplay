@@ -10,11 +10,10 @@ import { withSiteId, assist, recordings } from 'App/routes';
 interface Props extends RouteComponentProps {
   siteId: string;
   history: any;
-  setShowAlerts: (show: boolean) => void;
 }
 
 function Assist(props: Props) {
-  const { history, siteId, setShowAlerts } = props;
+  const { history, siteId } = props;
   const isAssist = history.location.pathname.includes('assist');
   const isRecords = history.location.pathname.includes('recordings');
 
