@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { formatBytes } from 'App/utils';
 import CopyText from 'Shared/CopyText';
 import cn from 'classnames';
@@ -8,12 +8,20 @@ interface Props {
 }
 function FetchBasicDetails({ resource }: Props) {
   const _duration = parseInt(resource.duration);
+  const text = useMemo(() => {
+    if (resource.url.length > 50) {
+      const endText = resource.url.split('/').pop();
+      return resource.url.substring(0, 50 - endText.length) + '.../' + endText;
+    }
+    return resource.url;
+  }, [resource]);
+
   return (
     <div>
       <div className="flex items-center py-1">
         <div className="font-medium">Name</div>
         <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip cursor-pointer">
-          <CopyText content={resource.url}>{resource.url}</CopyText>
+          <CopyText content={resource.url}>{text}</CopyText>
         </div>
       </div>
 
@@ -45,7 +53,12 @@ function FetchBasicDetails({ resource }: Props) {
       {resource.status && (
         <div className="flex items-center py-1">
           <div className="font-medium">Status</div>
-          <div className={cn("rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center", { 'error color-red': !resource.success })}>
+          <div
+            className={cn(
+              'rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip flex items-center',
+              { 'error color-red': !resource.success }
+            )}
+          >
             {resource.status === '200' && (
               <div className="w-4 h-4 bg-green rounded-full mr-2"></div>
             )}
