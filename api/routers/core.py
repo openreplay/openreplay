@@ -117,7 +117,7 @@ def integration_notify(projectId: int, integration: str, webhookId: int, source:
         if source == "sessions":
             return MSTeams.share_session(session_id=sourceId, **args)
         elif source == "errors":
-            return Slack.share_error(error_id=sourceId, **args)
+            return MSTeams.share_error(error_id=sourceId, **args)
     return {"data": None}
 
 

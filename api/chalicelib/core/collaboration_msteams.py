@@ -1,3 +1,5 @@
+import json
+
 import requests
 from decouple import config
 
@@ -17,6 +19,7 @@ class MSTeams(BaseCollaboration):
         return None
 
     # https://messagecardplayground.azurewebsites.net
+    # https://adaptivecards.io/designer/
     @classmethod
     def say_hello(cls, url):
         r = requests.post(
@@ -58,15 +61,33 @@ class MSTeams(BaseCollaboration):
 
     @classmethod
     def send_batch(cls, tenant_id, webhook_id, attachments):
-        # TODO: change this
         integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
-            return {"errors": ["slack integration not found"]}
-        print(f"====> sending slack batch notification: {len(attachments)}")
+            return {"errors": ["msteams integration not found"]}
+        print(f"====> sending msteams batch notification: {len(attachments)}")
         for i in range(0, len(attachments), 100):
+            print(json.dumps({"type": "message",
+                              "attachments": [
+                                  {"contentType": "application/vnd.microsoft.card.adaptive",
+                                   "contentUrl": None,
+                                   "content": {
+                                       "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                                       "type": "AdaptiveCard",
+                                       "version": "1.2",
+                                       "body": attachments[i:i + 100]}}
+                              ]}))
             r = requests.post(
                 url=integration["endpoint"],
-                json={"attachments": attachments[i:i + 100]})
+                json={"type": "message",
+                      "attachments": [
+                          {"contentType": "application/vnd.microsoft.card.adaptive",
+                           "contentUrl": None,
+                           "content": {
+                               "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                               "type": "AdaptiveCard",
+                               "version": "1.2",
+                               "body": attachments[i:i + 100]}}
+                      ]})
             if r.status_code != 200:
                 print("!!!! something went wrong")
                 print(r)
@@ -86,7 +107,7 @@ class MSTeams(BaseCollaboration):
                        "content": {
                            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
                            "type": "AdaptiveCard",
-                           "version": "1.2",
+                           "version": "1.5",
                            "body": [attachement]}}
                   ]
                   })
@@ -99,11 +120,16 @@ class MSTeams(BaseCollaboration):
         link = f"{config('SITE_URL')}/{project_id}/session/{session_id}"
         link = f"[{link}]({link})"
         args = {"type": "ColumnSet",
+                "style": "emphasis",
+                "separator": True,
+                "bleed": True,
                 "columns": [{
                     "width": "stretch",
                     "items": [
                         {"type": "TextBlock",
-                         "text": title},
+                         "text": title,
+                         "style": "heading",
+                         "size": "Large"},
                         {"type": "TextBlock",
                          "spacing": "small",
                          "text": link}
@@ -126,11 +152,16 @@ class MSTeams(BaseCollaboration):
         link = f"{config('SITE_URL')}/{project_id}/errors/{error_id}"
         link = f"[{link}]({link})"
         args = {"type": "ColumnSet",
+                "style": "emphasis",
+                "separator": True,
+                "bleed": True,
                 "columns": [{
                     "width": "stretch",
                     "items": [
                         {"type": "TextBlock",
-                         "text": title},
+                         "text": title,
+                         "style": "heading",
+                         "size": "Large"},
                         {"type": "TextBlock",
                          "spacing": "small",
                          "text": link}

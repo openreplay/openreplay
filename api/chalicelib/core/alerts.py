@@ -1,9 +1,14 @@
 import json
 import logging
 import time
+from datetime import datetime
+
+from decouple import config
 
 import schemas
-from chalicelib.core import notifications, slack, webhook
+from chalicelib.core import notifications, webhook
+from chalicelib.core.collaboration_msteams import MSTeams
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper, email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -95,7 +100,7 @@ def process_notifications(data):
             for c in n["options"].pop("message"):
                 if c["type"] not in full:
                     full[c["type"]] = []
-                if c["type"] in ["slack", "email"]:
+                if c["type"] in ["slack", "msteams", "email"]:
                     full[c["type"]].append({
                         "notification": n,
                         "destination": c["value"]
@@ -107,12 +112,20 @@ def process_notifications(data):
     for t in full.keys():
         for i in range(0, len(full[t]), BATCH_SIZE):
             notifications_list = full[t][i:i + BATCH_SIZE]
+            if notifications_list is None or len(notifications_list) == 0:
+                break
 
             if t == "slack":
                 try:
-                    slack.send_batch(notifications_list=notifications_list)
+                    send_to_slack_batch(notifications_list=notifications_list)
                 except Exception as e:
                     logging.error("!!!Error while sending slack notifications batch")
+                    logging.error(str(e))
+            elif t == "msteams":
+                try:
+                    send_to_msteams_batch(notifications_list=notifications_list)
+                except Exception as e:
+                    logging.error("!!!Error while sending msteams notifications batch")
                     logging.error(str(e))
             elif t == "email":
                 try:
@@ -149,16 +162,60 @@ def send_by_email_batch(notifications_list):
         time.sleep(1)
 
 
+def send_to_slack_batch(notifications_list):
+    webhookId_map = {}
+    for n in notifications_list:
+        if n.get("destination") not in webhookId_map:
+            webhookId_map[n.get("destination")] = {"tenantId": n["notification"]["tenantId"], "batch": []}
+        webhookId_map[n.get("destination")]["batch"].append({"text": n["notification"]["description"] \
+                                                                     + f"\n<{config('SITE_URL')}{n['notification']['buttonUrl']}|{n['notification']['buttonText']}>",
+                                                             "title": n["notification"]["title"],
+                                                             "title_link": n["notification"]["buttonUrl"],
+                                                             "ts": datetime.now().timestamp()})
+    for batch in webhookId_map.keys():
+        Slack.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+                         attachments=webhookId_map[batch]["batch"])
+
+
+def send_to_msteams_batch(notifications_list):
+    webhookId_map = {}
+    for n in notifications_list:
+        if n.get("destination") not in webhookId_map:
+            webhookId_map[n.get("destination")] = {"tenantId": n["notification"]["tenantId"], "batch": []}
+
+        link = f"[{n['notification']['buttonText']}]({config('SITE_URL')}{n['notification']['buttonUrl']})"
+        webhookId_map[n.get("destination")]["batch"].append({"type": "ColumnSet",
+                                                             "style": "emphasis",
+                                                             "separator": True,
+                                                             "bleed": True,
+                                                             "columns": [{
+                                                                 "width": "stretch",
+                                                                 "items": [
+                                                                     {"type": "TextBlock",
+                                                                      "text": n["notification"]["title"],
+                                                                      "style": "heading",
+                                                                      "size": "Large"},
+                                                                     {"type": "TextBlock",
+                                                                      "spacing": "small",
+                                                                      "text": n["notification"]["description"],
+                                                                      "wrap": True},
+                                                                     {"type": "TextBlock",
+                                                                      "spacing": "small",
+                                                                      "text": link}
+                                                                 ]
+                                                             }]})
+    for batch in webhookId_map.keys():
+        MSTeams.send_batch(tenant_id=webhookId_map[batch]["tenantId"], webhook_id=batch,
+                           attachments=webhookId_map[batch]["batch"])
+
+
 def delete(project_id, alert_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                            UPDATE public.alerts 
-                            SET 
-                              deleted_at = timezone('utc'::text, now()),
-                              active = FALSE
-                            WHERE 
-                                alert_id = %(alert_id)s AND project_id=%(project_id)s;""",
+            cur.mogrify(""" UPDATE public.alerts 
+                            SET deleted_at = timezone('utc'::text, now()),
+                                active = FALSE
+                            WHERE alert_id = %(alert_id)s AND project_id=%(project_id)s;""",
                         {"alert_id": alert_id, "project_id": project_id})
         )
     return {"data": {"state": "success"}}

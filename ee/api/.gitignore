@@ -214,7 +214,6 @@ Pipfile
 /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
 #exp /chalicelib/core/significance.py
-/chalicelib/core/slack.py
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
