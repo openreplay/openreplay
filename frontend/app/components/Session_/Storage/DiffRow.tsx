@@ -50,28 +50,28 @@ function DiffRow({ diff, path }: Props) {
       : newValue;
 
   return (
-    <div className="p-1 rounded">
+    <div className="p-1 rounded flex flex-wrap gap-2">
       <span className={length > 20 ? 'cursor-pointer' : ''} onClick={() => setShorten(!shorten)}>
         {pathStr}
         {': '}
       </span>
-      <span
+      <div
         onClick={() => setShortenOldVal(!shortenOldVal)}
         className={cn(
-          'line-through text-disabled-text',
+          'text-disabled-text',
           diffLengths[0] > 50 ? 'cursor-pointer' : ''
         )}
       >
-        {oldValueSafe || 'undefined'}
+        <span className="line-through">{oldValueSafe || 'undefined'}</span>
         {diffLengths[0] > 50
           ? (
             <div onClick={() => setShortenOldVal(!shortenOldVal)} className="cursor-pointer px-1 text-white bg-gray-light rounded text-sm w-fit">
               {!shortenOldVal ? 'collapse' : 'expand'}
             </div>
           ) : null}
-      </span>
+      </div>
       {' -> '}
-      <span
+      <div
         className={cn(
           'whitespace-pre',
           newValue ? 'text-red' : 'text-green',
@@ -84,7 +84,7 @@ function DiffRow({ diff, path }: Props) {
               {!shortenNewVal ? 'collapse' : 'expand'}
             </div>
           ) : null}
-      </span>
+      </div>
     </div>
   );
 }
