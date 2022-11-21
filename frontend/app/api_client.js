@@ -104,12 +104,12 @@ export default class APIClient {
 
   post(path, params, options) {
     this.init.method = 'POST';
-    return this.fetch(path, params, undefined);
+    return this.fetch(path, params);
   }
 
   put(path, params, options) {
     this.init.method = 'PUT';
-    return this.fetch(path, params, undefined);
+    return this.fetch(path, params);
   }
 
   delete(path, params, options) {
