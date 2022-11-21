@@ -15,6 +15,7 @@ function FetchDetailsModal(props: Props) {
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
+  const isXHR = resource.type === TYPES.XHR || resource.type === TYPES.FETCH;
 
   useEffect(() => {
     const index = rows.indexOf(resource);
@@ -42,9 +43,8 @@ function FetchDetailsModal(props: Props) {
       <h5 className="mb-2 text-2xl">Network Request</h5>
       <FetchBasicDetails resource={resource} />
 
-      {resource.type === TYPES.XHR && !fetchPresented && <FetchPluginMessage />}
-
-      {resource.type === TYPES.XHR && fetchPresented && <FetchTabs resource={resource} />}
+      {isXHR && !fetchPresented && <FetchPluginMessage />}
+      {isXHR && <FetchTabs resource={resource} />}
 
       {rows && rows.length > 0 && (
         <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
