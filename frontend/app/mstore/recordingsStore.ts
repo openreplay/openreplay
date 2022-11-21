@@ -11,7 +11,7 @@ export default class RecordingsStore {
   order: 'desc' | 'asc' = 'desc';
   search = '';
   // later we will add search by user id
-  userId: number;
+  userId?: string;
 
   constructor() {
     makeAutoObservable(this);
@@ -19,6 +19,11 @@ export default class RecordingsStore {
 
   setRecordings(records: IRecord[]) {
     this.recordings = records;
+  }
+
+  setUserId(userId: string) {
+    this.userId = userId;
+    this.fetchRecordings();
   }
 
   updateSearch(val: string) {
@@ -34,6 +39,7 @@ export default class RecordingsStore {
       limit: this.pageSize,
       order: this.order,
       search: this.search,
+      userId: this.userId === '0' ? undefined : this.userId,
     };
 
     this.loading = true;
