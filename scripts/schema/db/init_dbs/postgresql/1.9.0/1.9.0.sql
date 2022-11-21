@@ -64,4 +64,7 @@ DROP INDEX IF EXISTS events_common.requests_url_idx;
 DROP INDEX IF EXISTS events_common.requests_url_gin_idx;
 DROP INDEX IF EXISTS events_common.requests_url_gin_idx2;
 
+DROP INDEX IF EXISTS events.resources_url_gin_idx;
+DROP INDEX IF EXISTS events.resources_url_idx;
+
 COMMIT;
