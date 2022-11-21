@@ -1,10 +1,6 @@
 from abc import ABC, abstractmethod
-import requests
-from decouple import config
-from datetime import datetime
 
 import schemas
-from chalicelib.core import webhook
 
 
 class BaseCollaboration(ABC):
