@@ -13,7 +13,7 @@ function FetchBasicDetails({ resource }: Props) {
       <div className="flex items-center py-1">
         <div className="font-medium">Name</div>
         <div className="rounded-lg bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip cursor-pointer">
-          <CopyText content={resource.url}>{resource.name}</CopyText>
+          <CopyText content={resource.url}>{resource.url}</CopyText>
         </div>
       </div>
 
