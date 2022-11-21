@@ -86,7 +86,7 @@ function OverviewPanel(props: Props) {
         <BottomBlock.Content>
           <OverviewPanelContainer endTime={props.endTime}>
             <TimelineScale endTime={props.endTime} />
-            <div style={{ width: '100%', height: '187px', overflow: 'hidden' }} className="transition relative">
+            <div style={{ width: 'calc(100vw - 1rem)', margin: '0 auto', height: '187px' }} className="transition relative">
               <NoContent
                 show={selectedFeatures.length === 0}
                 title={

@@ -3,8 +3,8 @@ import { connectPlayer } from 'Player';
 import VerticalLine from '../VerticalLine';
 
 interface Props {
-    time: number;
-    scale: number;
+    time?: number;
+    scale?: number;
 }
 function VerticalPointerLine(props: Props) {
     const { time, scale } = props;
