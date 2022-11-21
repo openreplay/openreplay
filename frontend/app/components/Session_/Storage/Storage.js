@@ -14,13 +14,9 @@ import { diff } from 'deep-diff';
 import { jump } from 'Player';
 import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
-import cn from 'classnames';
 import stl from './storage.module.css';
-import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized'
+import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
 
-// const STATE = 'STATE';
-// const DIFF = 'DIFF';
-// const TABS = [ DIFF, STATE ].map(tab => ({ text: tab, key: tab }));
 const ROW_HEIGHT = 90;
 
 function getActionsName(type) {
@@ -46,7 +42,6 @@ function getActionsName(type) {
     hideHint,
   }
 )
-//@withEnumToggle('activeTab', 'setActiveTab', DIFF)
 export default class Storage extends React.PureComponent {
   constructor(props) {
     super(props);
@@ -55,9 +50,9 @@ export default class Storage extends React.PureComponent {
     this._list = React.createRef();
     this.cache = new CellMeasurerCache({
       fixedWidth: true,
-      keyMapper: index => this.props.listNow[index]
+      keyMapper: (index) => this.props.listNow[index],
     });
-    this._rowRenderer = this._rowRenderer.bind(this)
+    this._rowRenderer = this._rowRenderer.bind(this);
   }
 
   focusNextButton() {
@@ -102,7 +97,10 @@ export default class Storage extends React.PureComponent {
     }
 
     return (
-      <div style={{ flex: 3, maxHeight: ROW_HEIGHT, overflowY: 'scroll' }} className="flex flex-col p-1 font-mono">
+      <div
+        style={{ flex: 3, maxHeight: ROW_HEIGHT, overflowY: 'scroll' }}
+        className="flex flex-col p-1 font-mono"
+      >
         {stateDiff.map((d, i) => this.renderDiffs(d, i))}
       </div>
     );
@@ -150,7 +148,7 @@ export default class Storage extends React.PureComponent {
     return <JSONTree collapsed={2} src={listNow[listNow.length - 1].state} />;
   }
 
-  renderItem(item, i, prevItem, style, measure) {
+  renderItem(item, i, prevItem, style) {
     const { type } = this.props;
     let src;
     let name;
@@ -177,9 +175,8 @@ export default class Storage extends React.PureComponent {
     return (
       <div
         style={{ ...style, height: ROW_HEIGHT }}
-        className={cn('flex justify-between items-start', src !== null ? 'border-b' : '')}
+        className="flex justify-between items-start border-b"
         key={`store-${i}`}
-        // onClick={() => {measure(); this._list.recomputeRowHeights(i)}}
       >
         {src === null ? (
           <div className="font-mono" style={{ flex: 2, marginLeft: '26.5%' }}>
@@ -188,7 +185,10 @@ export default class Storage extends React.PureComponent {
         ) : (
           <>
             {this.renderDiff(item, prevItem, i)}
-            <div style={{ flex: 2, maxHeight: ROW_HEIGHT, overflowY: 'scroll', overflowX: 'scroll' }} className="flex pl-10 pt-2">
+            <div
+              style={{ flex: 2, maxHeight: ROW_HEIGHT, overflowY: 'scroll', overflowX: 'scroll' }}
+              className="flex pl-10 pt-2"
+            >
               <JSONTree
                 name={this.ensureString(name)}
                 src={src}
@@ -199,7 +199,10 @@ export default class Storage extends React.PureComponent {
             </div>
           </>
         )}
-        <div style={{ flex: 1 }} className="flex-1 flex gap-2 pt-2 items-center justify-end self-start">
+        <div
+          style={{ flex: 1 }}
+          className="flex-1 flex gap-2 pt-2 items-center justify-end self-start"
+        >
           {typeof item.duration === 'number' && (
             <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
           )}
@@ -209,7 +212,7 @@ export default class Storage extends React.PureComponent {
                 {'JUMP'}
               </button>
             )}
-            {i + 1 === this.props.listNow.length && i + 1 <  this.props.list.length && (
+            {i + 1 === this.props.listNow.length && i + 1 < this.props.list.length && (
               <button className={stl.button} ref={this.lastBtnRef} onClick={this.goNext}>
                 {'NEXT'}
               </button>
@@ -220,29 +223,20 @@ export default class Storage extends React.PureComponent {
     );
   }
 
-  _rowRenderer({index, key, parent, style}) {
-    //  listNow.map((item, i) =>
-    // this.renderItem(item, i, i > 0 ? listNow[i - 1] : undefined, listNowLen, listLen)
-    // )
+  _rowRenderer({ index, parent, key, style }) {
     const { listNow } = this.props;
 
-    if (!listNow[index]) return console.warn(index, listNow)
+    if (!listNow[index]) return console.warn(index, listNow);
 
     return (
-      <CellMeasurer
-        cache={this.cache}
-        columnIndex={0}
-        key={key}
-        rowIndex={index}
-        parent={parent}
-      >
-          {({ measure }) => this.renderItem(listNow[index], index, index > 0 ? listNow[index - 1] : undefined, style, measure)}
+      <CellMeasurer cache={this.cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
+        {this.renderItem(listNow[index], index, index > 0 ? listNow[index - 1] : undefined, style)}
       </CellMeasurer>
-    )
+    );
   }
 
   render() {
-    const { type, listNow, list, hintIsHidden } = this.props;
+    const { type, list, listNow, hintIsHidden } = this.props;
 
     const showStore = type !== STORAGE_TYPES.MOBX;
     return (
@@ -250,17 +244,21 @@ export default class Storage extends React.PureComponent {
         <BottomBlock.Header>
           {list.length > 0 && (
             <div className="flex w-full">
-              {showStore && <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">{'STATE'}</h3>}
+              {showStore && (
+                <h3 style={{ width: '25%', marginRight: 20 }} className="font-semibold">
+                  {'STATE'}
+                </h3>
+              )}
               {type !== STORAGE_TYPES.ZUSTAND ? (
-                <h3 style={{ width: '39%'}}  className="font-semibold">
+                <h3 style={{ width: '39%' }} className="font-semibold">
                   DIFFS
                 </h3>
               ) : null}
-              <h3 style={{ width: '30%' }}  className="font-semibold">{getActionsName(type)}</h3>
-              <h3 style={{ paddingRight: 30, marginLeft: 'auto' }}  className="font-semibold">
-                <Tooltip title="Time to execute">
-                  TTE
-                </Tooltip>
+              <h3 style={{ width: '30%' }} className="font-semibold">
+                {getActionsName(type)}
+              </h3>
+              <h3 style={{ paddingRight: 30, marginLeft: 'auto' }} className="font-semibold">
+                <Tooltip title="Time to execute">TTE</Tooltip>
               </h3>
             </div>
           )}
@@ -345,10 +343,10 @@ export default class Storage extends React.PureComponent {
               </div>
             )}
             <div className="flex" style={{ width: showStore ? '75%' : '100%' }}>
-            <AutoSizer>
-              {({ height, width }) => (
+              <AutoSizer>
+                {({ height, width }) => (
                   <List
-                    ref={element => {
+                    ref={(element) => {
                       this._list = element;
                     }}
                     deferredMeasurementCache={this.cache}
@@ -359,8 +357,8 @@ export default class Storage extends React.PureComponent {
                     width={width}
                     height={height}
                   />
-              )}
-            </AutoSizer>
+                )}
+              </AutoSizer>
             </div>
           </NoContent>
         </BottomBlock.Content>

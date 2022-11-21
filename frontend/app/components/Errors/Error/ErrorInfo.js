@@ -35,8 +35,10 @@ export default class ErrorInfo extends React.PureComponent {
   componentDidMount() {
     this.ensureInstance();
   }
-  componentDidUpdate() {
-    this.ensureInstance();
+  componentDidUpdate(prevProps) {
+    if (prevProps.errorId !== this.props.errorId || prevProps.errorIdInStore !== this.props.errorIdInStore) {
+      this.ensureInstance();
+    }
   }
   next = () => {
     const { list, errorId } = this.props;
