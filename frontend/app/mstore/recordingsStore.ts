@@ -11,7 +11,7 @@ export default class RecordingsStore {
   order: 'desc' | 'asc' = 'desc';
   search = '';
   // later we will add search by user id
-  userId?: string;
+  userId = '0';
 
   constructor() {
     makeAutoObservable(this);
