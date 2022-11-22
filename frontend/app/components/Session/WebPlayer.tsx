@@ -7,7 +7,8 @@ import {
   PlayerProvider,
   createWebPlayer,
 } from 'Player';
-
+import { makeAutoObservable } from 'mobx'
+import { observer } from "mobx-react-lite"
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
@@ -35,7 +36,10 @@ function WebPlayer(props: any) {
 
   useEffect(() => {
     fetchList('issues');
-    const [WebPlayerInst, PlayerStore] = createWebPlayer(session, jwt);
+    const [WebPlayerInst, PlayerStore] = createWebPlayer(
+      session,
+      (state) => makeAutoObservable(state)
+    );
     setContextValue({ player: WebPlayerInst, store: PlayerStore })
 
     // initPlayer(session, jwt); TODOPlayer

@@ -73,7 +73,7 @@ function Player(props) {
       >
         {fullscreen && <EscapeButton onClose={fullscreenOff} />}
         <div className="relative flex-1 overflow-hidden">
-          <Overlay nextId={nextId} togglePlay={playerContext.player.togglePlay} closedLive={closedLive} />
+          <Overlay nextId={nextId} closedLive={closedLive} />
           <div className={stl.screenWrapper} ref={screenWrapper} />
         </div>
         {!fullscreen && !!bottomBlock && (
@@ -94,7 +94,11 @@ function Player(props) {
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        <Controls {...playerContext.player} />
+        <Controls
+          speedDown={playerContext.player.speedDown}
+          speedUp={playerContext.player.speedUp}
+          jump={playerContext.player.jump}
+         />
       </div>
   )
 }
