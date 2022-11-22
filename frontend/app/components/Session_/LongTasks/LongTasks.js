@@ -40,12 +40,12 @@ export default class GraphQL extends React.PureComponent {
     const { filter, current } = this.state;
     const filterRE = getRE(filter, 'i');
     const filtered = list
-      .filter(({ containerType, context, containerName = "", containerId = "", containerSrc="" }) => 
-          filterRE.test(containerName) || 
+      .filter(({ containerType, context, containerName = "", containerId = "", containerSrc="" }) =>
+          filterRE.test(containerName) ||
           filterRE.test(containerId) ||
           filterRE.test(containerSrc) ||
           filterRE.test(CONTEXTS[ context ]) ||
-          filterRE.test(CONTAINER_TYPES[ containerType ]));    
+          filterRE.test(CONTAINER_TYPES[ containerType ]));
     const lastIndex = filtered.filter(item => item.time <= time).length - 1;
     return (
       <BottomBlock>
@@ -64,7 +64,7 @@ export default class GraphQL extends React.PureComponent {
             <QuestionMarkHint
               content={
                 <>
-                  <a className="color-teal underline mr-2" target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Long_Tasks_API">Learn more </a> 
+                  <a className="color-teal underline mr-2" target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/Long_Tasks_API">Learn more </a>
                   about Long Tasks API
                 </>
               }

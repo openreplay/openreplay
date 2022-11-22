@@ -33,7 +33,7 @@ export default class Profiler extends React.PureComponent {
 
     return (
       <React.Fragment>
-        <SlideModal 
+        <SlideModal
           title={ modalProfile && modalProfile.name }
           isDisplayed={ modalProfile !== null }
           content={ modalProfile && <ProfileInfo profile={ modalProfile } />}
@@ -55,7 +55,7 @@ export default class Profiler extends React.PureComponent {
             />
           </BottomBlock.Header>
           <BottomBlock.Content>
-            <TimeTable 
+            <TimeTable
               rows={ filteredProfiles }
               onRowClick={ this.onProfileClick }
               hoverable

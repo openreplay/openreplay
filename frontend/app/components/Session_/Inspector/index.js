@@ -53,10 +53,10 @@ export default function Inspector () {
 
 	if  (!doc) return null;
 	return (
-		<BottomBlock>      
+		<BottomBlock>
       <BottomBlock.Content>
         <div onMouseLeave={ () => markElement(null) } className={stl.wrapper}>
-        	<ElementView 
+        	<ElementView
             element={ doc.documentElement }
             level={0}
             context={doc.defaultView}

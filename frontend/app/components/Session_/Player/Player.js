@@ -20,21 +20,13 @@ import {
   OVERVIEW,
 } from 'Duck/components/player';
 import NetworkPanel from 'Shared/DevTools/NetworkPanel';
-import Console from '../Console/Console';
 import StackEvents from '../StackEvents/StackEvents';
 import Storage from '../Storage';
-import Profiler from '../Profiler';
 import { ConnectedPerformance } from '../Performance';
 import GraphQL from '../GraphQL';
 import Exceptions from '../Exceptions/Exceptions';
 import LongTasks from '../LongTasks';
 import Inspector from '../Inspector';
-import {
-  attach as attachPlayer,
-  Controls as PlayerControls,
-  scale as scalePlayerScreen,
-  connectPlayer,
-} from 'Player';
 import Controls from './Controls';
 import Overlay from './Overlay';
 import stl from './player.module.css';
@@ -42,70 +34,47 @@ import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
-@connectPlayer((state) => ({
-  live: state.live,
-}))
-@connect(
-  (state) => {
-    const isAssist = window.location.pathname.includes('/assist/');
-    return {
-      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-      nextId: state.getIn(['sessions', 'nextId']),
-      sessionId: state.getIn(['sessions', 'current', 'sessionId']),
-      closedLive:
-        !!state.getIn(['sessions', 'errors']) ||
-        (isAssist && !state.getIn(['sessions', 'current', 'live'])),
-    };
-  },
-  {
-    hideTargetDefiner,
+function Player(props) {
+  const {
+    className,
+    bottomBlockIsActive,
+    fullscreen,
     fullscreenOff,
-    updateLastPlayedSession,
-  }
-)
-export default class Player extends React.PureComponent {
-  screenWrapper = React.createRef();
+    nextId,
+    closedLive,
+    bottomBlock,
+    activeTab,
+  } = props;
+  const playerContext = React.useContext(PlayerContext)
+  const screenWrapper = React.useRef();
 
-  componentDidUpdate(prevProps) {
-    if (
-      [prevProps.bottomBlock, this.props.bottomBlock].includes(NONE) ||
-      prevProps.fullscreen !== this.props.fullscreen
-    ) {
-      scalePlayerScreen();
+  React.useEffect(() => {
+    props.updateLastPlayedSession(props.sessionId);
+    if (!props.closedLive) {
+      const parentElement = findDOMNode(screenWrapper.current); //TODO: good architecture
+      playerContext.player.attach(parentElement);
     }
-  }
 
-  componentDidMount() {
-    this.props.updateLastPlayedSession(this.props.sessionId);
-    if (this.props.closedLive) return;
+  }, [])
 
-    const parentElement = findDOMNode(this.screenWrapper.current); //TODO: good architecture
-    attachPlayer(parentElement);
-  }
+  React.useEffect(() => {
+    playerContext.player.scale();
+  }, [props.bottomBlock, props.fullscreen, playerContext.player])
 
-  render() {
-    const {
-      className,
-      bottomBlockIsActive,
-      fullscreen,
-      fullscreenOff,
-      nextId,
-      closedLive,
-      bottomBlock,
-      activeTab,
-    } = this.props;
+  if (!playerContext.player) return null;
 
-    const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
-    return (
-      <div
+  const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
+  return (
+    <div
         className={cn(className, stl.playerBody, 'flex flex-col relative', fullscreen && 'pb-2')}
         data-bottom-block={bottomBlockIsActive}
       >
         {fullscreen && <EscapeButton onClose={fullscreenOff} />}
         <div className="relative flex-1 overflow-hidden">
-          <Overlay nextId={nextId} togglePlay={PlayerControls.togglePlay} closedLive={closedLive} />
-          <div className={stl.screenWrapper} ref={this.screenWrapper} />
+          <Overlay nextId={nextId} togglePlay={playerContext.player.togglePlay} closedLive={closedLive} />
+          <div className={stl.screenWrapper} ref={screenWrapper} />
         </div>
         {!fullscreen && !!bottomBlock && (
           <div style={{ maxWidth, width: '100%' }}>
@@ -125,8 +94,25 @@ export default class Player extends React.PureComponent {
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        <Controls {...PlayerControls} />
+        <Controls {...playerContext.player} />
       </div>
-    );
-  }
+  )
 }
+
+export default connect((state) => {
+    const isAssist = window.location.pathname.includes('/assist/');
+    return {
+      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+      nextId: state.getIn(['sessions', 'nextId']),
+      sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+      closedLive:
+        !!state.getIn(['sessions', 'errors']) ||
+        (isAssist && !state.getIn(['sessions', 'current', 'live'])),
+    };
+  },
+  {
+    hideTargetDefiner,
+    fullscreenOff,
+    updateLastPlayedSession,
+  }
+)(Player)

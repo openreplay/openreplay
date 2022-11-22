@@ -6,8 +6,10 @@ import Player, { State as PState } from './player/Player'
 import WebPlayer from './_web/WebPlayer'
 
 type WebPlayerStore = Store<PState & MMState>
+export type IWebPlayer = WebPlayer
+export type IWebPlayerStore = Store<PState & MMState>
 
-export function createWebPlayer(session, wrapStore?: (s:WebPlayerStore) => WebPlayerStore): [WebPlayer, WebPlayerStore] {
+export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
 	let store: WebPlayerStore = new SimpleStore<PState & MMState>({
 		...Player.INITIAL_STATE,
 		...MM_INITIAL_STATE,
@@ -20,7 +22,7 @@ export function createWebPlayer(session, wrapStore?: (s:WebPlayerStore) => WebPl
 }
 
 
-export function createLiveWebPlayer(session, config: RTCIceServer[], wrapStore?: (s:WebPlayerStore) => WebPlayerStore): [WebPlayer, WebPlayerStore] {
+export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
 	let store: WebPlayerStore = new SimpleStore<PState & MMState>({
 		...Player.INITIAL_STATE,
 		...MM_INITIAL_STATE,
