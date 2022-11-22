@@ -20,6 +20,7 @@ export default class WebPlayer extends Player {
     ...ASSIST_INITIAL_STATE,
 
     inspectorMode: false,
+    liveTimeTravel: false,
   }
 
   private readonly screen: Screen
@@ -29,9 +30,17 @@ export default class WebPlayer extends Player {
   assistManager: AssistManager // public so far
   private targetMarker: TargetMarker
 
-  constructor(private wpState: Store<State>, session, config: RTCIceServer[], live: boolean) {
+  constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
+
+    let initialLists = live ? {
+      event: session.events.toJSON(),
+      stack: session.stackEvents.toJSON(),
+      resource: session.resources.toJSON(),
+      exceptions: session.errors,
+    } : {}
+
     // TODO: separate screen from manager
-    const screen = new MessageManager(session, wpState, config, live) 
+    const screen = new MessageManager(session, wpState, initialLists) 
     super(wpState, screen)
     this.screen = screen
     this.messageManager = screen
@@ -39,7 +48,7 @@ export default class WebPlayer extends Player {
     // TODO: separate LiveWebPlayer
     this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
 
-    this.targetMarker = new TargetMarker(this.screen)
+    this.targetMarker = new TargetMarker(this.screen, wpState)
 
     this.inspectorController = new InspectorController(screen)
 
@@ -106,7 +115,11 @@ export default class WebPlayer extends Player {
   // TODO
   async toggleTimetravel() {
     if (!this.wpState.get().liveTimeTravel) {
-      return await this.messageManager.reloadWithUnprocessedFile()
+      return await this.messageManager.reloadWithUnprocessedFile(() =>
+        this.wpState.update({
+          liveTimeTravel: true,
+        })
+      )
     }
   }
 

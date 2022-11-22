@@ -27,6 +27,7 @@ import { decryptSessionBytes } from './network/crypto';
 import { INITIAL_STATE as SCREEN_INITIAL_STATE, State as SuperState } from './Screen/Screen';
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE } from './Lists';
 
+import type { InitialLists } from './Lists'
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
 
@@ -45,7 +46,6 @@ export interface State extends SuperState {
   error: boolean,
   devtoolsLoading: boolean,
 
-  liveTimeTravel: boolean,
   messagesLoading: boolean,
   cssLoading: boolean,
 
@@ -82,7 +82,6 @@ export default class MessageManager extends Screen {
     error: false,
     devtoolsLoading: false,
 
-    liveTimeTravel: false,
     messagesLoading: false,
     cssLoading: false,
     get ready() {
@@ -118,39 +117,25 @@ export default class MessageManager extends Screen {
   constructor(
     private readonly session: any /*Session*/, 
     private readonly state: Store<State>,  
-    config: any,
-    live: boolean,
+    initialLists?: Partial<InitialLists>
   ) {
     super();
     this.pagesManager = new PagesManager(this, this.session.isMobile)
-    this.mouseMoveManager = new MouseMoveManager(this);
+    this.mouseMoveManager = new MouseMoveManager(this)
 
-    this.sessionStart = this.session.startedAt;
+    this.sessionStart = this.session.startedAt
 
-    if (live) {
-      this.lists = new Lists()
-    } else {
-      this.activityManager = new ActivityManager(this.session.duration.milliseconds);
-      /* == REFACTOR_ME == */
-      const eventList = session.events.toJSON();
-      // TODO: fix types for events, remove immutable js
-      eventList.forEach((e: Record<string, string>) => {
-        if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
-          this.locationEventManager.append(e);
-        }
-      })
+    this.lists = new Lists(initialLists)
+    initialLists && initialLists.event.forEach((e: Record<string, string>) => { // TODO: to one of "Moveable" module
+      if (e.type === EVENT_TYPES.LOCATION) {
+        this.locationEventManager.append(e);
+      }
+    })
 
-      this.lists = new Lists({
-        event: eventList,
-        stack: session.stackEvents.toJSON(),
-        resource: session.resources.toJSON(),
-        exceptions: session.errors,
-      })
+    this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
 
 
-      /* === */
-      this.loadMessages();
-    }
+    this.loadMessages()
   }
 
   private parseAndDistributeMessages(fileReader: MFileReader, onMessage?: (msg: Message) => void) {
@@ -264,15 +249,11 @@ export default class MessageManager extends Screen {
     }
   }
 
-  reloadWithUnprocessedFile() {
+  reloadWithUnprocessedFile(onSuccess: ()=>void) {
     const onData = (byteArray: Uint8Array) => {
       const onMessage = (msg: Message) => { this.lastMessageInFileTime = msg.time }
       this.parseAndDistributeMessages(new MFileReader(byteArray, this.sessionStart), onMessage)
     }
-    const updateState = () =>
-      this.state.update({
-        liveTimeTravel: true,
-      });
 
     // assist will pause and skip messages to prevent timestamp related errors
     this.reloadMessageManagers()
@@ -283,7 +264,7 @@ export default class MessageManager extends Screen {
 
     return requestEFSDom(this.session.sessionId)
       .then(onData)
-      .then(updateState)
+      .then(onSuccess)
       .then(this.onFileReadSuccess)
       .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally)

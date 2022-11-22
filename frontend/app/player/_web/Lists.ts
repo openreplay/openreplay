@@ -29,7 +29,7 @@ type MarkedListsObject = {
 }
 type ListsObject = SimpleListsObject & MarkedListsObject
 
-type InitialLists = { 
+export type InitialLists = { 
   [key in typeof LIST_NAMES[number]]: any[] 
 }
 
