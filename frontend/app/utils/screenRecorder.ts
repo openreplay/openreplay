@@ -105,9 +105,6 @@ export async function screenRecorder(recName: string, sessionId: string, saveCb:
   }
 }
 
-// @ts-ignore
-window.recordSceenSample = screenRecorder;
-
 // NOT SUPPORTED:
 // macOS:  chrome and edge only support capturing current tab's audio
 // windows: chrome and edge supports all audio

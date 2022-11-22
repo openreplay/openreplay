@@ -257,7 +257,7 @@ export default class AssistManager {
       socket.on('recording_accepted', () => {
         this.toggleRecording(true)
       })
-      socket.on('recording_denied', () => {
+      socket.on('recording_rejected', () => {
         this.toggleRecording(false)
       })
 
@@ -288,7 +288,7 @@ export default class AssistManager {
   }
 
   private toggleRecording = (isAccepted: boolean) => {
-    this.md.toggleRecordingStatus(isAccepted)
+    this.md.toggleRecordingBorders(isAccepted)
 
     update({ recordingState: isAccepted ? SessionRecordingStatus.Recording : SessionRecordingStatus.Off })
   }
@@ -346,13 +346,13 @@ export default class AssistManager {
       this.screen.overlay.addEventListener("mousemove", this.onMouseMove)
       this.screen.overlay.addEventListener("click", this.onMouseClick)
       this.screen.overlay.addEventListener("wheel", this.onWheel)
-      this.screen.toggleBorder(true)
+      this.screen.toggleRemoteControlBorders(true)
       this.store.update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
       this.screen.overlay.removeEventListener("mousemove", this.onMouseMove)
       this.screen.overlay.removeEventListener("click", this.onMouseClick)
       this.screen.overlay.removeEventListener("wheel", this.onWheel)
-      this.screen.toggleBorder(false)
+      this.screen.toggleRemoteControlBorders(false)
       this.store.update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
     }
