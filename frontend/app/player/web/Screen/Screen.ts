@@ -104,7 +104,7 @@ export default class Screen {
     })
   }
 
-  toggleRemoteControlStatus(isEnabled: boolean ) {
+  toggleRemoteControlBorders(isEnabled: boolean ) {
     this.remoteControlEnabled = isEnabled;
     if (!isEnabled) {
       const styles = this.recordingEnabled ? { border: '2px dashed red' } : { border: 'unset'}
@@ -114,7 +114,7 @@ export default class Screen {
     return Object.assign(this.screen.style, styles)
   }
 
-  toggleRecordingStatus(isEnabled: boolean) {
+  toggleRecordingBorders(isEnabled: boolean) {
     this.recordingEnabled = isEnabled;
     if (!isEnabled) {
       const styles = this.remoteControlEnabled ? { border: '2px dashed blue' } : { border: 'unset'}

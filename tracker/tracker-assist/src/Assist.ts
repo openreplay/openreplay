@@ -205,10 +205,10 @@ export default class Assist {
     const onAcceptRecording = () => {
       socket.emit('recording_accepted')
     }
-    const onDenyRecording = () => {
-      socket.emit('recording_denied')
+    const onRejectRecording = () => {
+      socket.emit('recording_rejected')
     }
-    const recordingState = new ScreenRecordingState(onAcceptRecording, onDenyRecording, this.options)
+    const recordingState = new ScreenRecordingState(onAcceptRecording, onRejectRecording, this.options)
 
     // TODO: check incoming args
     socket.on('request_control', this.remoteControl.requestControl)
@@ -260,14 +260,14 @@ export default class Assist {
       delete this.agents[id]
 
       if (Object.keys(this.agents).length === 0 && recordingState.isActive) {
-        recordingState.denyRecording()
+        recordingState.rejectRecording()
       }
       endAgentCall(id)
     })
     socket.on('NO_AGENT', () => {
       Object.values(this.agents).forEach(a => a.onDisconnect?.())
       this.agents = {}
-      if (recordingState.isActive) recordingState.denyRecording()
+      if (recordingState.isActive) recordingState.rejectRecording()
     })
     socket.on('call_end', (id) => {
       if (!callingAgents.has(id)) {
@@ -292,7 +292,7 @@ export default class Assist {
     })
     socket.on('stop_recording', (id) => {
       if (recordingState.isActive) {
-        recordingState.denyRecording(id)
+        recordingState.rejectRecording(id)
       }
     })
 
