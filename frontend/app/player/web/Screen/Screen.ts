@@ -104,24 +104,8 @@ export default class Screen {
     })
   }
 
-  toggleRemoteControlBorders(isEnabled: boolean ) {
-    this.remoteControlEnabled = isEnabled;
-    if (!isEnabled) {
-      const styles = this.recordingEnabled ? { border: '2px dashed red' } : { border: 'unset'}
-      return Object.assign(this.screen.style, styles)
-    }
-    const styles = { border: '2px dashed blue' }
-    return Object.assign(this.screen.style, styles)
-  }
-
-  toggleRecordingBorders(isEnabled: boolean) {
-    this.recordingEnabled = isEnabled;
-    if (!isEnabled) {
-      const styles = this.remoteControlEnabled ? { border: '2px dashed blue' } : { border: 'unset'}
-      return Object.assign(this.screen.style, styles)
-    }
-    const styles = { border: '2px dashed red' }
-    return Object.assign(this.screen.style, styles)
+  setBorderStyle(style: { border: string }) {
+    return Object.assign(this.screen.style, style)
   }
 
   get window(): WindowProxy | null {
