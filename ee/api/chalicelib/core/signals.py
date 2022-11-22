@@ -13,10 +13,9 @@ def handle_frontend_signals(project_id: int, user_id: str, data: schemas_ee.Sign
         with pg_client.PostgresClient() as conn:
             query = conn.mogrify(insights_query, {'project_id': project_id, 'user_id': user_id, 'timestamp': data.timestamp, 'action': data.action, 'source': data.source,
                                       'category': data.category, 'data': json.dumps(data.data)})
-            logging.info(f'QUERY: {query}')
             conn.execute(query)
             # res = helper.dict_to_camel_case(conn.fetchone())
-        return None
+        return {'data': 'insertion succeded'}
     except Exception as e:
+        logging.info(f'Error while inserting: {e}')
         return {'errors': [e]}
-    return None
