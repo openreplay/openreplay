@@ -5,31 +5,37 @@ import Player, { State as PState } from './player/Player'
 
 import WebPlayer from './_web/WebPlayer'
 
-type WebPlayerStore = Store<PState & MMState>
+type WebState = PState & MMState
+type WebPlayerStore = Store<WebState>
+export type IWebState = WebState
 export type IWebPlayer = WebPlayer
-export type IWebPlayerStore = Store<PState & MMState>
+export type IWebPlayerStore = WebPlayerStore
 
-export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
-	let store: WebPlayerStore = new SimpleStore<PState & MMState>({
+export function createWebPlayer(session: Record<string, any>, wrapState?: (s:IWebState) => IWebState): [IWebPlayer, IWebPlayerStore] {
+	let state: WebState = {
 		...Player.INITIAL_STATE,
 		...MM_INITIAL_STATE,
-	})
-	if (wrapStore) {
-		store = wrapStore(store)
 	}
+	if (wrapState) {
+		state = wrapState(state)
+	}
+	const store: WebPlayerStore = new SimpleStore<WebState>(state)
+
 	const player = new WebPlayer(store, session, null, false)
 	return [player, store]
 }
 
 
-export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
-	let store: WebPlayerStore = new SimpleStore<PState & MMState>({
+export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapState?: (s:IWebState) => IWebState): [IWebPlayer, IWebPlayerStore] {
+	let state: WebState = {
 		...Player.INITIAL_STATE,
 		...MM_INITIAL_STATE,
-	})
-	if (wrapStore) {
-		store = wrapStore(store)
 	}
+	if (wrapState) {
+		state = wrapState(state)
+	}
+	const store: WebPlayerStore = new SimpleStore<WebState>(state)
+
 	const player = new WebPlayer(store, session, config, true)
 	return [player, store]
 }
