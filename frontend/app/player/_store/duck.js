@@ -1,7 +1,7 @@
 import { applyChange, revertChange } from 'deep-diff';
 
 import { INITIAL_STATE as MM_INITIAL_STATE } from '../_web/MessageManager'
-import {  INITIAL_STATE as PLAYER_INITIAL_STATE } from '../player/Player'
+import Player from '../player/Player'
 
 const UPDATE = 'player/UPDATE';
 const CLEAN = 'player/CLEAN';
@@ -9,7 +9,7 @@ const REDUX = 'player/REDUX';
 
 const resetState = {
 	...MM_INITIAL_STATE,
-	...PLAYER_INITIAL_STATE,
+	...Player.INITIAL_STATE,
 	initialized: false,
 };
 

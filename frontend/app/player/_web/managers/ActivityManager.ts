@@ -7,7 +7,7 @@ class SkipIntervalCls {
   get time(): number {
   	return this.start;
   }
-  contains(ts) {
+  contains(ts: number) {
     return ts > this.start && ts < this.end;
   }
 }

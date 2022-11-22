@@ -2,19 +2,19 @@ import type { Store } from '../player/types'
 import Player, { State as PlayerState } from '../player/Player'
 
 import MessageManager from './MessageManager'
+import InspectorController from './InspectorController'
 import AssistManager from './assist/AssistManager'
 import Screen from './Screen/Screen'
-import { State as MMState, INITIAL_STATE as MM_INITIAL_STATE } from './MessageManager'
-
-
+import type { State as MMState } from './MessageManager'
 
 export default class WebPlayer extends Player {
   private readonly screen: Screen
-  private readonly messageManager: MessageManager
+  private readonly inspectorController: InspectorController
+  protected readonly messageManager: MessageManager
 
   assistManager: AssistManager // public so far
 
-  constructor(private wpState: Store<MMState & PlayerState>, session, config, live: boolean) {
+  constructor(private wpState: Store<MMState & PlayerState>, session, config: RTCIceServer[], live: boolean) {
     // TODO: separate screen from manager
     const screen = new MessageManager(session, wpState, config, live) 
     super(wpState, screen)
@@ -23,6 +23,8 @@ export default class WebPlayer extends Player {
 
     // TODO: separate LiveWebPlayer
     this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
+
+    this.inspectorController = new InspectorController(screen)
 
   
     const endTime = !live && session.duration.valueOf()
@@ -50,9 +52,29 @@ export default class WebPlayer extends Player {
   scale = () => {
     const { width, height } = this.wpState.get()
     this.screen.scale({ width, height })
+    this.inspectorController.scale({ width, height })
+
+    // this.updateMarketTargets() ??
   }
+
+  // Inspector & marker
   mark(e: Element) {
-    this.screen.marker.mark(e)
+    this.inspectorController.marker?.mark(e)
+  }
+  toggleInspectorMode(flag: boolean, clickCallback) {
+    if (typeof flag !== 'boolean') {
+      const { inspectorMode } = this.wpState.get()
+      flag = !inspectorMode;
+    }
+
+    if (flag) {
+      this.pause()
+      this.wpState.update({ inspectorMode: true })
+      return this.inspectorController.enableInspector(clickCallback);
+    } else {
+      this.inspectorController.disableInspector();
+      this.wpState.update({ inspectorMode: false });
+    }
   }
 
   updateMarketTargets() {
@@ -109,7 +131,7 @@ export default class WebPlayer extends Player {
   }
 
   // private actualScroll: Point | null = null
-  setMarkedTargets(selections: { selector: string, count: number }[] | null) {
+  private setMarkedTargets(selections: { selector: string, count: number }[] | null) {
   //   if (selections) {
   //     const totalCount = selections.reduce((a, b) => {
   //       return a + b.count
@@ -132,7 +154,7 @@ export default class WebPlayer extends Player {
   //     update({ markedTargets });
   //   } else {
   //     if (this.actualScroll) {
-  //       this.window?.scrollTo(this.actualScroll.x, this.actualScroll.y)
+  //       this.screen.window?.scrollTo(this.actualScroll.x, this.actualScroll.y)
   //       this.actualScroll = null
   //     }
   //     update({ markedTargets: null });
@@ -140,26 +162,11 @@ export default class WebPlayer extends Player {
   }
 
   markTargets(targets: { selector: string, count: number }[] | null) {
-  //   this.animator.pause();
-  //   this.setMarkedTargets(targets);
+    // this.pause();
+    // this.setMarkedTargets(targets);
   }
 
-  toggleInspectorMode(flag, clickCallback) {
-  //   if (typeof flag !== 'boolean') {
-  //     const { inspectorMode } = getState();
-  //     flag = !inspectorMode;
-  //   }
-
-  //   if (flag) {
-  //     this.pause()
-  //     update({ inspectorMode: true });
-  //     return super.enableInspector(clickCallback);
-  //   } else {
-  //     super.disableInspector();
-  //     update({ inspectorMode: false });
-  //   }
-  }
-
+  // TODO
   async toggleTimetravel() {
     if (!this.wpState.get().liveTimeTravel) {
       return await this.messageManager.reloadWithUnprocessedFile()
@@ -167,7 +174,7 @@ export default class WebPlayer extends Player {
   }
 
   toggleUserName(name?: string) {
-    this.screen.cursor.toggleUserName(name)
+    this.screen.cursor.showTag(name)
   }
   clean() {
     super.clean()

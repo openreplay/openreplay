@@ -1,8 +1,7 @@
 import * as typedLocalStorage from './localStorage';
 
-import type { Mover, Cleaner, Store } from './types';
+import type { Moveable, Cleanable, Store } from './types';
 import Animator from './Animator';
-import { INITIAL_STATE as ANIMATOR_INITIAL_STATE } from './Animator';
 import type { GetState as AnimatorGetState, SetState as AnimatorSetState } from './Animator';
 
 
@@ -19,21 +18,22 @@ const initialSkip = typedLocalStorage.boolean(SKIP_STORAGE_KEY)
 const initialSkipToIssue = typedLocalStorage.boolean(SKIP_TO_ISSUE_STORAGE_KEY)
 const initialAutoplay = typedLocalStorage.boolean(AUTOPLAY_STORAGE_KEY)
 const initialShowEvents = typedLocalStorage.boolean(SHOW_EVENTS_STORAGE_KEY)
-export const INITIAL_STATE = {
-  ...ANIMATOR_INITIAL_STATE,
 
-  skipToIssue: initialSkipToIssue,
-  showEvents: initialShowEvents,
-
-  autoplay: initialAutoplay,
-  skip: initialSkip,
-  speed: initialSpeed,
-}
-export type State = typeof INITIAL_STATE & AnimatorGetState
+export type State = typeof Player.INITIAL_STATE
 /* == */
 
 export default class Player extends Animator {
-  constructor(private pState: Store<State>, private manager: Mover & Cleaner) {
+  static INITIAL_STATE = {
+    ...Animator.INITIAL_STATE,
+    skipToIssue: initialSkipToIssue,
+    showEvents: initialShowEvents,
+
+    autoplay: initialAutoplay,
+    skip: initialSkip,
+    speed: initialSpeed,
+  } as const
+
+  constructor(private pState: Store<State & AnimatorGetState>, private manager: Moveable & Cleanable) {
     super(pState, manager)
 
     // Autoplay

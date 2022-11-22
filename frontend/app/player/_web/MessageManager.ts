@@ -93,7 +93,6 @@ const visualChanges = [
 ]
 
 export default class MessageManager extends Screen {
-  // TODO: consistent with the other data-lists
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
   private locationManager: ListWalker<SetPageLocation> = new ListWalker();
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
@@ -198,7 +197,7 @@ export default class MessageManager extends Screen {
 
   private waitingForFiles: boolean = false
   private onFileReadSuccess = () => {
-    const stateToUpdate = {
+    const stateToUpdate : Partial<State>= {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvaliability: this.performanceTrackManager.avaliability,
       ...this.lists.getFullListsState()
@@ -349,7 +348,7 @@ export default class MessageManager extends Screen {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
-    this.lists.moveGetState(t)
+    Object.assign(stateToUpdate, this.lists.moveGetState(t))
     Object.keys(stateToUpdate).length > 0 && this.state.update(stateToUpdate);
 
     /* Sequence of the managers is important here */
@@ -534,15 +533,6 @@ export default class MessageManager extends Screen {
         break;
     }
   }
-
-  getLastMessageTime(): number {
-    return this.lastMessageTime;
-  }
-
-  getFirstMessageTime(): number {
-    return this.pagesManager.minTime;
-  }
-
 
   setMessagesLoading(messagesLoading: boolean) {
     this.display(!messagesLoading);

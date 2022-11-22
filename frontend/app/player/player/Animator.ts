@@ -1,4 +1,4 @@
-import type { Store, Mover, Interval } from './types';
+import type { Store, Moveable, Interval } from './types';
 import * as localStorage from './localStorage';
 
 const fps = 60
@@ -25,7 +25,6 @@ export interface SetState {
   time: number
   playing: boolean
   completed: boolean
-  endTime: number
   live: boolean
   livePlay: boolean
 }
@@ -34,27 +33,27 @@ export interface GetState extends SetState {
   skip: boolean
   speed: number
   skipIntervals: Interval[]
-  lastMessageTime: number
+  endTime: number
   ready: boolean
+
+  lastMessageTime: number
 }
 
-export const INITIAL_STATE: SetState = {
-  time: 0,
-  playing: false,
-  completed: false,
-  endTime: 0,
-  live: false,
-  livePlay: false,
-} as const
-
-
 export default class Animator {
+  static INITIAL_STATE: SetState = {
+    time: 0,
+    playing: false,
+    completed: false,
+    live: false,
+    livePlay: false,
+  } as const
+
   private animationFrameRequestId: number = 0
 
-  constructor(private state: Store<GetState, SetState>, private mm: Mover) {}
+  constructor(private store: Store<GetState>, private mm: Moveable) {}
 
   private setTime(time: number) {
-    this.state.update({
+    this.store.update({
       time,
       completed: false,
     })
@@ -62,7 +61,7 @@ export default class Animator {
   }
 
   private startAnimation() {
-    let prevTime = this.state.get().time
+    let prevTime = this.store.get().time
     let animationPrevTime = performance.now()
 
     const frameHandler = (animationCurrentTime: number) => {
@@ -74,8 +73,9 @@ export default class Animator {
         live,
         livePlay,
         ready,  // = messagesLoading || cssLoading || disconnected
-        lastMessageTime, // should be updated
-      } = this.state.get()
+
+        lastMessageTime,
+      } = this.store.get()
 
       const diffTime = !ready
         ? 0
@@ -83,20 +83,22 @@ export default class Animator {
 
       let time = prevTime + diffTime
 
-      const skipInterval = skip && skipIntervals.find(si => si.contains(time))  // TODO: good skip by messages
+      const skipInterval = skip && skipIntervals.find(si => si.contains(time))
       if (skipInterval) time = skipInterval.end
 
       if (time < 0) { time = 0 } // ?
       //const fmt = getFirstMessageTime();
       //if (time < fmt) time = fmt; // ?
 
-
+      // if (livePlay && time < endTime) { time = endTime }
+      // === live only
       if (livePlay && time < lastMessageTime) { time = lastMessageTime }
       if (endTime < lastMessageTime) {
-        this.state.update({
+        this.store.update({
           endTime: lastMessageTime,
         })
       }
+      // ===
 
       prevTime = time
       animationPrevTime = animationCurrentTime
@@ -104,17 +106,20 @@ export default class Animator {
       const completed = !live && time >= endTime
       if (completed) {
         this.setTime(endTime)
-        return this.state.update({
+        return this.store.update({
           playing: false,
           completed: true,
         })
       }
 
+      // === live only
       if (live && time > endTime) {
-        this.state.update({
+        this.store.update({
           endTime: time,
         })
       }
+      // ===
+
       this.setTime(time)
       this.animationFrameRequestId = requestAnimationFrame(frameHandler)
     }
@@ -123,17 +128,17 @@ export default class Animator {
 
   play() {
     cancelAnimationFrame(this.animationFrameRequestId)
-    this.state.update({ playing: true })
+    this.store.update({ playing: true })
     this.startAnimation()
   }
 
   pause() {
     cancelAnimationFrame(this.animationFrameRequestId)
-    this.state.update({ playing: false })
+    this.store.update({ playing: false })
   }
 
   togglePlay() {
-    const { playing, completed } = this.state.get()
+    const { playing, completed } = this.store.get()
     if (playing) {
       this.pause()
     } else if (completed) {
@@ -146,26 +151,26 @@ export default class Animator {
 
   // jump by index?
   jump(time: number) {
-    const { live } = this.state.get()
+    const { live } = this.store.get()
     if (live) return
 
-    if (this.state.get().playing) {
+    if (this.store.get().playing) {
       cancelAnimationFrame(this.animationFrameRequestId)
       this.setTime(time)
       this.startAnimation()
-      this.state.update({ livePlay: time === this.state.get().endTime })
+      this.store.update({ livePlay: time === this.store.get().endTime })
     } else {
       this.setTime(time)
-      this.state.update({ livePlay: time === this.state.get().endTime })
+      this.store.update({ livePlay: time === this.store.get().endTime })
     }
   }
 
   // TODO: clearify logic of live time-travel
   jumpToLive() {
     cancelAnimationFrame(this.animationFrameRequestId)
-    this.setTime(this.state.get().endTime)
+    this.setTime(this.store.get().endTime)
     this.startAnimation()
-    this.state.update({ livePlay: true })
+    this.store.update({ livePlay: true })
   }
 
 

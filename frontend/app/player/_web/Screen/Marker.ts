@@ -1,4 +1,4 @@
-import type BaseScreen from './BaseScreen'
+import type Screen from './Screen'
 import styles from './marker.module.css';
 
 function escapeRegExp(string: string) {
@@ -19,7 +19,7 @@ export default class Marker {
   private tooltip: HTMLDivElement
   private marker: HTMLDivElement
 
-  constructor(overlay: HTMLElement, private readonly screen: BaseScreen) {
+  constructor(overlay: HTMLElement, private readonly screen: Screen) {
     this.tooltip = document.createElement('div');
     this.tooltip.className = styles.tooltip;
     this.tooltip.appendChild(document.createElement('div'));
@@ -74,13 +74,14 @@ export default class Marker {
         if (fitTargets.length === 0) {
           this._target = null;
         } else {
-          this._target = fitTargets[0];
-          const cursorTarget = this.screen.getCursorTarget();
-          fitTargets.forEach((target) => {
-            if (target.contains(cursorTarget)) {
-              this._target = target;
-            }
-          });
+          // TODO: fix getCursorTarget()?
+          // this._target = fitTargets[0];
+          // const cursorTarget = this.screen.getCursorTarget();
+          // fitTargets.forEach((target) => {
+          //   if (target.contains(cursorTarget)) {
+          //     this._target = target;
+          //   }
+          // });
         }
       } catch (e) {
         console.info(e);
@@ -96,9 +97,9 @@ export default class Marker {
     this.redraw();
   }
 
-  getTagString(tag) {
-    const attrs = tag.attributes;
-    let str = `<span style="color:#9BBBDC">${tag.tagName.toLowerCase()}</span>`;
+  private getTagString(el: Element) {
+    const attrs = el.attributes;
+    let str = `<span style="color:#9BBBDC">${el.tagName.toLowerCase()}</span>`;
 
     for (let i = 0; i < attrs.length; i++) {
       let k = attrs[i];

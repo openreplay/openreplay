@@ -9,7 +9,7 @@ const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const;
 
 const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES ];
 
-// TODO: provide correct types
+// TODO: provide correct types; maybe use list object itself inside the store
 
 export const INITIAL_STATE = LIST_NAMES.reduce((state, name) => {
   state[`${name}List`] = []

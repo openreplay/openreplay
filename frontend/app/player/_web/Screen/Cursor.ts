@@ -4,8 +4,7 @@ import styles from './cursor.module.css';
 
 export default class Cursor {
   private readonly cursor: HTMLDivElement;
-  private nameElement: HTMLDivElement;
-  private readonly position: Point = { x: -1, y: -1 }
+  private tagElement: HTMLDivElement;
   constructor(overlay: HTMLDivElement) {
     this.cursor = document.createElement('div');
     this.cursor.className = styles.cursor;
@@ -20,10 +19,10 @@ export default class Cursor {
     }
   }
 
-  toggleUserName(name?: string) {
-    if (!this.nameElement) {
-      this.nameElement = document.createElement('div')
-      Object.assign(this.nameElement.style, {
+  showTag(tag?: string) {
+    if (!this.tagElement) {
+      this.tagElement = document.createElement('div')
+      Object.assign(this.tagElement.style, {
         position: 'absolute',
         padding: '4px 6px',
         borderRadius: '8px',
@@ -34,21 +33,19 @@ export default class Cursor {
         fontSize: '12px',
         whiteSpace: 'nowrap',
       })
-      this.cursor.appendChild(this.nameElement)
+      this.cursor.appendChild(this.tagElement)
     }
 
-    if (!name) {
-      this.nameElement.style.display = 'none'
+    if (!tag) {
+      this.tagElement.style.display = 'none'
     } else {
-      this.nameElement.style.display = 'block'
-      const nameStr = name ? name.length > 10 ? name.slice(0, 9) + '...' : name : 'User'
-      this.nameElement.innerHTML = `<span>${nameStr}</span>`
+      this.tagElement.style.display = 'block'
+      const nameStr = tag.length > 10 ? tag.slice(0, 9) + '...' : tag
+      this.tagElement.innerHTML = `<span>${nameStr}</span>`
     }
   }
 
   move({ x, y }: Point) {
-    this.position.x = x;
-    this.position.y = y;
     this.cursor.style.left = x + 'px';
     this.cursor.style.top = y + 'px';
   }
@@ -63,9 +60,5 @@ export default class Cursor {
   // TODO (to keep on a different playig speed):
   // transition
   // setTransitionSpeed()
-
-  getPosition(): Point {
-    return { x: this.position.x, y: this.position.y };
-  }
 
 }

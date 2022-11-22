@@ -1,9 +1,9 @@
 
-export interface Mover {
+export interface Moveable {
   move(time: number): void
 }
 
-export interface Cleaner {
+export interface Cleanable {
   clean(): void
 }
 

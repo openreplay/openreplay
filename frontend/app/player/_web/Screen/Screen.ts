@@ -1,83 +1,215 @@
-import Marker from './Marker';
-import Cursor from './Cursor';
-import Inspector from './Inspector'; 
-// import styles from './screen.module.css';
-import BaseScreen from './BaseScreen';
+import styles from './screen.module.css'
+import Cursor from './Cursor'
 
-export { INITIAL_STATE } from './BaseScreen';
-export type { State } from './BaseScreen';
+import type { Point, Dimensions } from './types';
 
-export default class Screen extends BaseScreen {
-  public readonly cursor: Cursor;
-  private substitutor: BaseScreen | null = null;
-  private inspector: Inspector | null = null;
-  public marker: Marker | null = null;
-  constructor() {
-    super();
-    this.cursor = new Cursor(this.overlay);
+
+export type State  = Dimensions
+
+export const INITIAL_STATE: State = {
+  width: 0,
+  height: 0,
+}
+
+
+function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[] {
+  // @ts-ignore (IE, Edge)
+  if (typeof doc.msElementsFromRect === 'function') {
+    // @ts-ignore
+    return Array.prototype.slice.call(doc.msElementsFromRect(x,y)) || []
   }
 
-  getCursorTarget() {
-    return this.getElementFromInternalPoint(this.cursor.getPosition());
+  if (typeof doc.elementsFromPoint === 'function') {
+    return doc.elementsFromPoint(x, y)
   }
+  const el = doc.elementFromPoint(x, y)
+  return el ? [ el ] : []
+}
 
-  getCursorTargets() {
-    return this.getElementsFromInternalPoint(this.cursor.getPosition());
-  }
-
-  scale(dims: { height: number, width: number }) {
-    super.scale(dims)
-    if (this.substitutor) {
-      this.substitutor.scale(dims)
-    }
-  }
-
-  enableInspector(clickCallback: (e: { target: Element }) => void): Document | null {
-    if (!this.parentElement) return null;
-    if (!this.substitutor) {
-      this.substitutor = new Screen();
-      this.marker = new Marker(this.substitutor.overlay, this.substitutor);
-      this.inspector = new Inspector(this.substitutor, this.marker);
-      //this.inspector.addClickListener(clickCallback, true);
-      this.substitutor.attach(this.parentElement);          
-    }
-
-    this.substitutor.display(false);
-   
-    const docElement = this.document?.documentElement; // this.substitutor.document?.importNode(
-    const doc = this.substitutor.document;
-    if (doc && docElement) {
-      // doc.documentElement.innerHTML = "";
-      // // Better way?
-      // for (let i = 1; i < docElement.attributes.length; i++) {
-      //   const att = docElement.attributes[i];
-      //   doc.documentElement.setAttribute(att.name, att.value);
-      // }
-      // for (let i = 1; i < docElement.childNodes.length; i++) {
-      //   doc.documentElement.appendChild(docElement.childNodes[i].cloneNode(true));
-      // }
-      doc.open();
-      doc.write(docElement.outerHTML); // Context will be iframe, so instanceof Element won't work
-      doc.close();
-
-      // TODO! : copy stylesheets, check with styles
-    }
-    this.display(false);
-    this.inspector.toggle(true, clickCallback);
-    this.substitutor.display(true);
-    return doc;
-  }
-  
-  disableInspector() {
-    if (this.substitutor) {
-      const doc = this.substitutor.document;
-      if (doc) { 
-        doc.documentElement.innerHTML = "";
+function getElementsFromInternalPointDeep(doc: Document, point: Point): Element[] {
+  const elements = getElementsFromInternalPoint(doc, point)
+  // is it performant though??
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i]
+    if (isIframe(el)){
+      const iDoc = el.contentDocument
+      if (iDoc) {
+        const iPoint: Point = {
+          x: point.x - el.clientLeft,
+          y: point.y - el.clientTop,
+        }
+        elements.push(...getElementsFromInternalPointDeep(iDoc, iPoint))
       }
-      this.inspector.toggle(false);
-      this.substitutor.display(false);
     }
-    this.display(true);
+  }
+  return elements
+}
+
+function isIframe(el: Element): el is HTMLIFrameElement {
+  return el.tagName === "IFRAME"
+}
+
+export default class Screen {
+  readonly overlay: HTMLDivElement
+  readonly cursor: Cursor
+
+  private readonly iframe: HTMLIFrameElement;
+  protected readonly screen: HTMLDivElement;
+  protected readonly controlButton: HTMLDivElement;
+  protected parentElement: HTMLElement | null = null;
+
+  constructor() {
+    const iframe = document.createElement('iframe');
+    iframe.className = styles.iframe;
+    this.iframe = iframe;
+
+    const overlay = document.createElement('div');
+    overlay.className = styles.overlay;
+    this.overlay = overlay;
+
+    const screen = document.createElement('div');
+
+    screen.className = styles.screen;
+    screen.appendChild(iframe);
+    screen.appendChild(overlay);
+    this.screen = screen;
+
+    this.cursor = new Cursor(this.overlay) // TODO: move outside
   }
 
+  attach(parentElement: HTMLElement) {
+    if (this.parentElement) {
+      this.parentElement = undefined
+      console.error("BaseScreen: Trying to attach an attached screen.");
+    }
+
+    parentElement.appendChild(this.screen);
+
+    this.parentElement = parentElement;
+
+    /* == For the Inspecting Document content  == */
+    this.overlay.addEventListener('contextmenu', () => {
+      this.overlay.style.display = 'none'
+      const doc = this.document
+      if (!doc) { return }
+      const returnOverlay = () => {
+        this.overlay.style.display = 'block'
+        doc.removeEventListener('mousemove', returnOverlay)
+        doc.removeEventListener('mouseclick', returnOverlay) // TODO: prevent default in case of input selection
+      }
+      doc.addEventListener('mousemove', returnOverlay)
+      doc.addEventListener('mouseclick', returnOverlay)
+    })
+  }
+
+  toggleBorder(isEnabled: boolean ) {
+    const styles = isEnabled ? { border: '2px dashed blue' } : { border: 'unset'}
+    return Object.assign(this.screen.style, styles)
+  }
+
+  get window(): WindowProxy | null {
+    return this.iframe.contentWindow;
+  }
+
+  get document(): Document | null {
+    return this.iframe.contentDocument;
+  }
+
+  private boundingRect: DOMRect | null  = null;
+  private getBoundingClientRect(): DOMRect {
+     if (this.boundingRect === null) {
+      return this.boundingRect = this.overlay.getBoundingClientRect() // expensive operation?
+    }
+    return this.boundingRect
+  }
+
+  getInternalViewportCoordinates({ x, y }: Point): Point {
+    const { x: overlayX, y: overlayY, width } = this.getBoundingClientRect();
+
+    const screenWidth = this.overlay.offsetWidth;
+
+    const scale = screenWidth / width;
+    const screenX = (x - overlayX) * scale;
+    const screenY = (y - overlayY) * scale;
+
+    return { x: Math.round(screenX), y: Math.round(screenY) };
+  }
+
+  getCurrentScroll(): Point {
+    const docEl = this.document?.documentElement
+    const x = docEl ? docEl.scrollLeft : 0
+    const y = docEl ? docEl.scrollTop : 0
+    return { x, y }
+  }
+
+  getInternalCoordinates(p: Point): Point {
+    const { x, y } = this.getInternalViewportCoordinates(p);
+
+    const sc = this.getCurrentScroll()
+
+    return { x: x+sc.x, y: y+sc.y };
+  }
+
+  getElementFromInternalPoint({ x, y }: Point): Element | null {
+    // elementFromPoint && elementFromPoints require viewpoint-related coordinates,
+    //                                                 not document-related
+    return this.document?.elementFromPoint(x, y) || null;
+  }
+
+  getElementsFromInternalPoint(point: Point): Element[] {
+    const doc = this.document
+    if (!doc) { return [] }
+    return getElementsFromInternalPointDeep(doc, point)
+  }
+
+  getElementFromPoint(point: Point): Element | null {
+    return this.getElementFromInternalPoint(this.getInternalViewportCoordinates(point));
+  }
+
+  getElementsFromPoint(point: Point): Element[] {
+    return this.getElementsFromInternalPoint(this.getInternalViewportCoordinates(point));
+  }
+
+  getElementBySelector(selector: string): Element | null {
+    if (!selector) return null;
+    try {
+      const safeSelector = selector.replace(/:/g, '\\\\3A ').replace(/\//g, '\\/');
+      return this.document?.querySelector(safeSelector) || null;
+    } catch (e) {
+      console.error("Can not select element. ", e)
+      return null
+    }
+  }
+
+  display(flag: boolean = true) {
+    this.screen.style.display = flag ? '' : 'none';
+  }
+
+  displayFrame(flag: boolean = true) {
+    this.iframe.style.display = flag ? '' : 'none';
+  }
+
+  private s: number = 1;
+  getScale() {
+    return this.s;
+  }
+
+  scale({ height, width }: Dimensions) {
+    if (!this.parentElement) return;
+    const { offsetWidth, offsetHeight } = this.parentElement;
+
+    this.s = Math.min(offsetWidth / width, offsetHeight / height);
+    if (this.s > 1) {
+      this.s = 1;
+    } else {
+      this.s = Math.round(this.s * 1e3) / 1e3;
+    }
+    this.screen.style.transform =  `scale(${ this.s }) translate(-50%, -50%)`;
+    this.screen.style.width = width + 'px';
+    this.screen.style.height =  height + 'px';
+    this.iframe.style.width = width + 'px';
+    this.iframe.style.height = height + 'px';
+
+    this.boundingRect = this.overlay.getBoundingClientRect();
+  }
 }

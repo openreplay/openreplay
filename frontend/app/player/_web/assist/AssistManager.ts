@@ -78,7 +78,7 @@ export default class AssistManager {
   constructor(
     private session: any,
     private md: MessageManager,
-    private config: any,
+    private config: RTCIceServer[],
     private store: Store<State>,
   ) {}
 
@@ -302,13 +302,13 @@ export default class AssistManager {
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
       this.md.overlay.addEventListener("click", this.onMouseClick)
       this.md.overlay.addEventListener("wheel", this.onWheel)
-      this.md.toggleRemoteControlStatus(true)
+      this.md.toggleBorder(true)
       this.store.update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
       this.md.overlay.removeEventListener("mousemove", this.onMouseMove)
       this.md.overlay.removeEventListener("click", this.onMouseClick)
       this.md.overlay.removeEventListener("wheel", this.onWheel)
-      this.md.toggleRemoteControlStatus(false)
+      this.md.toggleBorder(false)
       this.store.update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
     }
@@ -354,7 +354,7 @@ export default class AssistManager {
     const urlObject = new URL(window.env.API_EDP || window.location.origin)
     return import('peerjs').then(({ default: Peer }) => {
       if (this.cleaned) {return Promise.reject("Already cleaned")}
-      const peerOpts: any = {
+      const peerOpts: Peer.PeerJSOption = {
         host: urlObject.hostname,
         path: '/assist',
         port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),
@@ -362,6 +362,7 @@ export default class AssistManager {
       if (this.config) {
         peerOpts['config'] = {
           iceServers: this.config,
+          //@ts-ignore
           sdpSemantics: 'unified-plan',
           iceTransportPolicy: 'relay',
         };
