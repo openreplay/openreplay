@@ -52,7 +52,7 @@ func (w *SessionWriter) Stop() {
 }
 
 func (w *SessionWriter) Info() string {
-	return fmt.Sprintf("%d files", w.numberOfSessions())
+	return fmt.Sprintf("%d sessions", w.numberOfSessions())
 }
 
 func (w *SessionWriter) addSession(sid uint64) {
