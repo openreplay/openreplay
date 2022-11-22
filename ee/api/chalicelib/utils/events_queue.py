@@ -25,23 +25,31 @@ class EventQueue():
         if self.test:
             print(events)
             return 1
-        _query = conn.mogrify("""INSERT INTO %(database)s.%(table)s (project_id, user_id, timestamp, action, source, category, data) VALUES %(events)s""",
-                               {'database': 'public', 'table': 'frontend_signals', 'events': "(0, 'test', 0, 'action', 's', 'c', '{}')"})
-        logging.info(_query)
-        res = 'done'
+        _query = """INSERT INTO {database}.{table} (project_id, user_id, timestamp, action, source, category, data) VALUES %(events)s""".format(
+                     database='public', table='frontend_signals')
+        _query = conn.mogrify(_query, {'events': (0, 'test', 0, 'action', 's', 'c', '{}')})
+        conn.execute(_query)
+        # logging.info(_query)
+        # res = 'done'
         # res = conn.fetchone()
-        #res = helper.dict_to_camel_case(conn.fetchone())
-        return res
+        # res = helper.dict_to_camel_case(conn.fetchone())
+        return 1
 
     def force_flush(self):
         if not self.events.empty():
-            with pg_client.PostgresClient() as conn:
-                self.flush(conn)
+            try:
+                with pg_client.PostgresClient() as conn:
+                    self.flush(conn)
+            except Exception as e:
+                logging.info(f'Error: {e}')
 
     def put(self, element):
         if self.events.full():
-            with pg_client.PostgresClient() as conn:
-                self.flush(conn)
+            try:
+                with pg_client.PostgresClient() as conn:
+                    self.flush(conn)
+            except Exception as e:
+                logging.info(f'Error: {e}')
         self.events.put(element)
         self.events.task_done()
 
