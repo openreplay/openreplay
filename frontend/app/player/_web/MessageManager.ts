@@ -126,7 +126,7 @@ export default class MessageManager extends Screen {
     this.sessionStart = this.session.startedAt
 
     this.lists = new Lists(initialLists)
-    initialLists && initialLists.event.forEach((e: Record<string, string>) => { // TODO: to one of "Moveable" module
+    initialLists?.event?.forEach((e: Record<string, string>) => { // TODO: to one of "Moveable" module
       if (e.type === EVENT_TYPES.LOCATION) {
         this.locationEventManager.append(e);
       }
