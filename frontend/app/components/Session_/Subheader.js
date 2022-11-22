@@ -6,31 +6,50 @@ import SharePopup from '../shared/SharePopup/SharePopup';
 import copy from 'copy-to-clipboard';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
-import { connectPlayer, pause } from 'Player';
 import ItemMenu from './components/HeaderMenu';
 import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 function SubHeader(props) {
+  const { player, store } = React.useContext(PlayerContext)
+  const {
+    width,
+    height,
+    location: currentLocation,
+    fetchList,
+    graphqlList,
+    resourceList,
+    exceptionsList,
+    eventList: eventsList,
+    endTime,
+  } = store.get()
+
+  const mappedResourceList = resourceList
+    .filter((r) => r.isRed() || r.isYellow())
+    .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
+    .concat(graphqlList.filter((i) => parseInt(i.status) >= 400))
+
   const [isCopied, setCopied] = React.useState(false);
   const { showModal, hideModal } = useModal();
   const isAssist = window.location.pathname.includes('/assist/');
 
   const location =
-    props.currentLocation && props.currentLocation.length > 60
-      ? `${props.currentLocation.slice(0, 60)}...`
-      : props.currentLocation;
+    currentLocation && currentLocation.length > 60
+      ? `${currentLocation.slice(0, 60)}...`
+      : currentLocation;
 
   const showReportModal = () => {
-    pause();
+    player.pause();
     const xrayProps = {
-      currentLocation: props.currentLocation,
-      resourceList: props.resourceList,
-      exceptionsList: props.exceptionsList,
-      eventsList: props.eventsList,
-      endTime: props.endTime,
+      currentLocation: currentLocation,
+      resourceList: mappedResourceList,
+      exceptionsList: exceptionsList,
+      eventsList: eventsList,
+      endTime: endTime,
     }
-    showModal(<BugReportModal width={props.width} height={props.height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
+    showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
   };
 
   return (
@@ -39,7 +58,7 @@ function SubHeader(props) {
         <div
           className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-gray-light-shade rounded-md"
           onClick={() => {
-            copy(props.currentLocation);
+            copy(currentLocation);
             setCopied(true);
             setTimeout(() => setCopied(false), 5000);
           }}
@@ -102,20 +121,4 @@ function SubHeader(props) {
   );
 }
 
-const SubH = connectPlayer(
-  (state) => ({
-    width: state.width,
-    height: state.height,
-    currentLocation: state.location,
-    resourceList: state.resourceList
-      .filter((r) => r.isRed() || r.isYellow())
-      .concat(state.fetchList.filter((i) => parseInt(i.status) >= 400))
-      .concat(state.graphqlList.filter((i) => parseInt(i.status) >= 400)),
-    exceptionsList: state.exceptionsList,
-    eventsList: state.eventList,
-    endTime: state.endTime,
-  })
-
-  )(SubHeader);
-
-export default React.memo(SubH);
+export default observer(SubHeader);

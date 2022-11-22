@@ -1,14 +1,21 @@
 import React from 'react';
-import {
-  connectPlayer,
-} from 'Player';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
 import { countDaysFrom } from 'App/date';
 import cn from 'classnames';
 import RightBlock from './RightBlock';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
-function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, hasError }) {
+function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab }) {
+  const { store } = React.useContext(PlayerContext)
+
+  const {
+    error,
+  } = store.get()
+
+  const hasError = !!error
+
   const sessionDays = countDaysFrom(session.startedAt);
   return (
     <div className="relative">
@@ -64,7 +71,4 @@ function RightMenu({ live, tabs, activeTab, setActiveTab, fullscreen }) {
   );
 }
 
-export default connectPlayer((state) => ({
-  showEvents: !state.showEvents,
-  hasError: state.error,
-}))(PlayerContent);
+export default observer(PlayerContent);

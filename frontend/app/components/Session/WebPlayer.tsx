@@ -3,23 +3,16 @@ import { connect } from 'react-redux';
 import { Modal } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
-import {
-  PlayerProvider,
-  createWebPlayer,
-} from 'Player';
-import { makeAutoObservable } from 'mobx'
-import { observer } from "mobx-react-lite"
+import { PlayerProvider, createWebPlayer } from 'Player';
+import { makeAutoObservable } from 'mobx';
+import { observer } from 'mobx-react-lite';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import { fetchList as fetchMembers } from 'Duck/member';
-import PlayerContent from './PlayerContent'
-import {
-  IPlayerContext,
-  PlayerContext,
-  defaultContextValue
-} from './playerContext'
+import PlayerContent from './PlayerContent';
+import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 
 const TABS = {
   EVENTS: 'User Steps',
@@ -27,20 +20,27 @@ const TABS = {
 };
 
 function WebPlayer(props: any) {
-  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, fetchList } = props;
+  const {
+    session,
+    toggleFullscreen,
+    closeBottomBlock,
+     live,
+     fullscreen,
+     jwt,
+     fetchList
+  } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [showNoteModal, setShowNote] = useState(false);
   const [noteItem, setNoteItem] = useState(null);
-  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue)
+  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
     fetchList('issues');
-    const [WebPlayerInst, PlayerStore] = createWebPlayer(
-      session,
-      (state) => makeAutoObservable(state)
+    const [WebPlayerInst, PlayerStore] = createWebPlayer(session, (state) =>
+      makeAutoObservable(state)
     );
-    setContextValue({ player: WebPlayerInst, store: PlayerStore })
+    setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
     // initPlayer(session, jwt); TODOPlayer
     props.fetchMembers();
@@ -101,14 +101,17 @@ function WebPlayer(props: any) {
           <Modal open={showNoteModal} onClose={onNoteClose}>
             {showNoteModal ? (
               <ReadNote
-                userEmail={props.members.find((m: Record<string, any>) => m.id === noteItem?.userId)?.email || ''}
+                userEmail={
+                  props.members.find((m: Record<string, any>) => m.id === noteItem?.userId)
+                    ?.email || ''
+                }
                 note={noteItem}
                 onClose={onNoteClose}
                 notFound={!noteItem}
               />
             ) : null}
           </Modal>
-          </>
+        </>
       </PlayerProvider>
     </PlayerContext.Provider>
   );

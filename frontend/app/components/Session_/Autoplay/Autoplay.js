@@ -3,11 +3,16 @@ import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
 import { Link, Icon, Toggler, Tooltip } from 'UI';
-import { Controls as PlayerControls, connectPlayer } from 'Player';
 import cn from 'classnames';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 function Autoplay(props) {
-  const { previousId, nextId, autoplay, disabled } = props;
+  const { previousId, nextId, disabled } = props;
+  const { player, store } = React.useContext(PlayerContext)
+
+  const { autoplay } = store.get()
+  const { toggleAutoplay } = player
 
   useEffect(() => {
     props.setAutoplayValues();
@@ -16,10 +21,10 @@ function Autoplay(props) {
   return (
     <div className="flex items-center">
       <div
-        onClick={props.toggleAutoplay}
+        onClick={toggleAutoplay}
         className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2"
       >
-        <Toggler name="sessionsLive" onChange={props.toggleAutoplay} checked={autoplay} />
+        <Toggler name="sessionsLive" onChange={toggleAutoplay} checked={autoplay} />
         <span className="ml-2 whitespace-nowrap">Auto-Play</span>
       </div>
 
@@ -71,12 +76,5 @@ const connectAutoplay = connect(
 );
 
 export default connectAutoplay(
-  connectPlayer(
-    (state) => ({
-      autoplay: state.autoplay,
-    }),
-    {
-      toggleAutoplay: PlayerControls.toggleAutoplay,
-    }
-  )(Autoplay)
+  observer(Autoplay)
 );

@@ -21,7 +21,6 @@ export function createWebPlayer(session: Record<string, any>, wrapState?: (s:IWe
 	return [player, store]
 }
 
-
 export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapState?: (s:IWebState) => IWebState): [IWebPlayer, IWebPlayerStore] {
 	let state: WebState = {
 		...WebPlayer.INITIAL_STATE,
