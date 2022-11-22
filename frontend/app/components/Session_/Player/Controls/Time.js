@@ -1,7 +1,8 @@
 import React from 'react';
 import { Duration } from 'luxon';
-import { connectPlayer } from 'Player';
 import styles from './time.module.css';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 const Time = ({ time, isCustom, format = 'm:ss', }) => (
   <div className={ !isCustom ? styles.time : undefined }>
@@ -11,10 +12,12 @@ const Time = ({ time, isCustom, format = 'm:ss', }) => (
 
 Time.displayName = "Time";
 
-const ReduxTime = connectPlayer((state, { name, format }) => ({
-  time: state[ name ],
-  format,
-}))(Time);
+const ReduxTime = observer(({ format, name }) => {
+  const { store } = React.useContext(PlayerContext)
+  const time = store.get()[name]
+
+  return <Time format={format} time={time} />
+})
 
 const AssistDurationCont = connectPlayer(
   state => {
