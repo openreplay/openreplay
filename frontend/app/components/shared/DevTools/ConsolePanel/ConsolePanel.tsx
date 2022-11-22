@@ -4,7 +4,6 @@ import Log from 'Types/session/log';
 import BottomBlock from '../BottomBlock';
 import { LEVEL } from 'Types/session/log';
 import { Tabs, Input, Icon, NoContent } from 'UI';
-// import Autoscroll from 'App/components/Session_/Autoscroll';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { getRE } from 'App/utils';
