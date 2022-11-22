@@ -1,12 +1,12 @@
 import logging
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
-from fastapi_utils.tasks import repeat_every
+# from fastapi_utils.tasks import repeat_every
 from utils import events_queue
 from utils import pg_client
 
 app = FastAPI()
-first_boot=True
-
+app.schedule = AsyncIOScheduler()
 
 @app.get('/')
 def home():
@@ -21,20 +21,15 @@ def number(value: int):
 
 
 @app.on_event("startup")
-@repeat_every(seconds=60*1) # every 5 mins
 async def startup():
-    global first_boot
-    if first_boot:
-        await pg_client.init()
-        await events_queue.init(test=False)
-        first_boot = False
-    else:
-        events_queue.global_queue.force_flush()
+    await pg_client.init()
+    await events_queue.init(test=False)
+    app.schedule.start()
 
 
-# @repeat_every(seconds=60*5) # 5 min
-# def clean_up():
-#     events_queue.force_flush()
+@app.schedule.scheduled_job("interval", seconds=60*1)
+def clean_up():
+    events_queue.global_queue.force_flush()
 
 
 @app.on_event("shutdown")
