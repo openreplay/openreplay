@@ -24,15 +24,14 @@ import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
-import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './Screen/Screen';
-import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './assist/AssistManager';
+import { INITIAL_STATE as SCREEN_INITIAL_STATE, State as SuperState } from './Screen/Screen';
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE } from './Lists';
 
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
 
 
-export interface State extends SuperState, AssistState {
+export interface State extends SuperState {
   performanceChartData: PerformanceChartPoint[],
   skipIntervals: SkipInterval[],
   connType?: string,
@@ -53,24 +52,6 @@ export interface State extends SuperState, AssistState {
   ready: boolean,
   lastMessageTime: number,
 }
-
-export const INITIAL_STATE: State = {
-  ...SUPER_INITIAL_STATE,
-  ...LISTS_INITIAL_STATE,
-  ...ASSIST_INITIAL_STATE,
-  performanceChartData: [],
-  skipIntervals: [],
-  error: false,
-  devtoolsLoading: false,
-
-  liveTimeTravel: false,
-  messagesLoading: false,
-  cssLoading: false,
-  get ready() {
-    return !this.messagesLoading && !this.cssLoading
-  },
-  lastMessageTime: 0,
-};
 
 
 import type {
@@ -93,6 +74,23 @@ const visualChanges = [
 ]
 
 export default class MessageManager extends Screen {
+  static INITIAL_STATE: State = {
+    ...SCREEN_INITIAL_STATE,
+    ...LISTS_INITIAL_STATE,
+    performanceChartData: [],
+    skipIntervals: [],
+    error: false,
+    devtoolsLoading: false,
+
+    liveTimeTravel: false,
+    messagesLoading: false,
+    cssLoading: false,
+    get ready() {
+      return !this.messagesLoading && !this.cssLoading
+    },
+    lastMessageTime: 0,
+  }
+
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
   private locationManager: ListWalker<SetPageLocation> = new ListWalker();
   private loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
@@ -553,7 +551,7 @@ export default class MessageManager extends Screen {
 
   // TODO: clean managers?
   clean() {
-    this.state.update(INITIAL_STATE);
+    this.state.update(MessageManager.INITIAL_STATE);
     this.incomingMessages.length = 0
   }
 

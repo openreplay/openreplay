@@ -27,13 +27,14 @@ export interface SetState {
   completed: boolean
   live: boolean
   livePlay: boolean
+
+  endTime: number
 }
 
 export interface GetState extends SetState {
   skip: boolean
   speed: number
   skipIntervals: Interval[]
-  endTime: number
   ready: boolean
 
   lastMessageTime: number
@@ -46,6 +47,8 @@ export default class Animator {
     completed: false,
     live: false,
     livePlay: false,
+
+    endTime: 0,
   } as const
 
   private animationFrameRequestId: number = 0

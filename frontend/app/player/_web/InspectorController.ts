@@ -3,6 +3,7 @@ import Inspector from './Screen/Inspector'
 import Screen from './Screen/Screen'
 import type { Dimensions } from './Screen/types'
 
+
 export default class InspectorController {
   private substitutor: Screen | null = null
   private inspector: Inspector | null = null
@@ -16,13 +17,14 @@ export default class InspectorController {
   }
 
   enableInspector(clickCallback: (e: { target: Element }) => void): Document | null {
-    if (!this.screen.parentElement) return null;
+    const parent = this.screen.getParentElement()
+    if (!parent) return null;
     if (!this.substitutor) {
       this.substitutor = new Screen()
       this.marker = new Marker(this.substitutor.overlay, this.substitutor)
       this.inspector = new Inspector(this.substitutor, this.marker)
       //this.inspector.addClickListener(clickCallback, true)
-      this.substitutor.attach(this.screen.parentElement)
+      this.substitutor.attach(parent)
     }
 
     this.substitutor.display(false)

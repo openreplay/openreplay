@@ -54,9 +54,9 @@ export default class Screen {
   readonly cursor: Cursor
 
   private readonly iframe: HTMLIFrameElement;
-  protected readonly screen: HTMLDivElement;
-  protected readonly controlButton: HTMLDivElement;
-  protected parentElement: HTMLElement | null = null;
+  private readonly screen: HTMLDivElement;
+  private readonly controlButton: HTMLDivElement;
+  private parentElement: HTMLElement | null = null;
 
   constructor() {
     const iframe = document.createElement('iframe');
@@ -100,6 +100,10 @@ export default class Screen {
       doc.addEventListener('mousemove', returnOverlay)
       doc.addEventListener('mouseclick', returnOverlay)
     })
+  }
+
+  getParentElement():  HTMLElement | null {
+    return this.parentElement
   }
 
   toggleBorder(isEnabled: boolean ) {

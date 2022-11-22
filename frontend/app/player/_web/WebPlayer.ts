@@ -3,18 +3,33 @@ import Player, { State as PlayerState } from '../player/Player'
 
 import MessageManager from './MessageManager'
 import InspectorController from './InspectorController'
-import AssistManager from './assist/AssistManager'
+import TargetMarker from './TargetMarker'
+import AssistManager, { 
+  INITIAL_STATE as ASSIST_INITIAL_STATE,
+} from './assist/AssistManager'
 import Screen from './Screen/Screen'
-import type { State as MMState } from './MessageManager'
+
+// export type State = typeof WebPlayer.INITIAL_STATE
 
 export default class WebPlayer extends Player {
+  static INITIAL_STATE = {
+    ...Player.INITIAL_STATE,
+    ...TargetMarker.INITIAL_STATE,
+
+    ...MessageManager.INITIAL_STATE,
+    ...ASSIST_INITIAL_STATE,
+
+    inspectorMode: false,
+  }
+
   private readonly screen: Screen
   private readonly inspectorController: InspectorController
   protected readonly messageManager: MessageManager
 
   assistManager: AssistManager // public so far
+  private targetMarker: TargetMarker
 
-  constructor(private wpState: Store<MMState & PlayerState>, session, config: RTCIceServer[], live: boolean) {
+  constructor(private wpState: Store<State>, session, config: RTCIceServer[], live: boolean) {
     // TODO: separate screen from manager
     const screen = new MessageManager(session, wpState, config, live) 
     super(wpState, screen)
@@ -23,6 +38,8 @@ export default class WebPlayer extends Player {
 
     // TODO: separate LiveWebPlayer
     this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
+
+    this.targetMarker = new TargetMarker(this.screen)
 
     this.inspectorController = new InspectorController(screen)
 
@@ -77,94 +94,14 @@ export default class WebPlayer extends Player {
     }
   }
 
-  updateMarketTargets() {
-  //   const { markedTargets } = getState();
-  //   if (markedTargets) {
-  //     update({
-  //       markedTargets: markedTargets.map((mt: any) => ({ 
-  //         ...mt, 
-  //         boundingRect: this.calculateRelativeBoundingRect(mt.el),
-  //       })),
-  //     });
-  //   }
+  setActiveTarget(args: Parameters<TargetMarker['setActiveTarget']>) {
+    this.targetMarker.setActiveTarget(...args)
+  }
+  markTargets(args: Parameters<TargetMarker['markTargets']>) {
+    this.pause()
+    this.targetMarker.markTargets(...args)
   }
 
-  // private calculateRelativeBoundingRect(el: Element): BoundingRect {
-  //   if (!this.parentElement) return {top:0, left:0, width:0,height:0} //TODO
-  //   const { top, left, width, height } = el.getBoundingClientRect();
-  //   const s = this.getScale();
-  //   const scrinRect = this.screen.getBoundingClientRect();
-  //   const parentRect = this.parentElement.getBoundingClientRect();
-
-  //   return {
-  //     top: top*s + scrinRect.top - parentRect.top,
-  //     left: left*s + scrinRect.left - parentRect.left,
-  //     width: width*s,
-  //     height: height*s,
-  //   }
-  // }
-
-  setActiveTarget(index: number) {
-  //   const window = this.window
-  //   const markedTargets: MarkedTarget[] | null = getState().markedTargets
-  //   const target = markedTargets && markedTargets[index]
-  //   if (target && window) {
-  //     const { fixedTop, rect } = getOffset(target.el, window)
-  //     const scrollToY = fixedTop - window.innerHeight / 1.5
-  //     if (rect.top < 0 || rect.top > window.innerHeight) {
-  //       // behavior hack TODO: fix it somehow when they will decide to remove it from browser api
-  //       // @ts-ignore
-  //       window.scrollTo({ top: scrollToY, behavior: 'instant' })
-  //       setTimeout(() => {
-  //         if (!markedTargets) { return }
-  //         update({
-  //           markedTargets: markedTargets.map(t => t === target ? {
-  //               ...target,
-  //               boundingRect:  this.calculateRelativeBoundingRect(target.el),
-  //             } : t)
-  //         })
-  //       }, 0)
-  //     }
-     
-  //   }
-  //   update({ activeTargetIndex: index });
-  }
-
-  // private actualScroll: Point | null = null
-  private setMarkedTargets(selections: { selector: string, count: number }[] | null) {
-  //   if (selections) {
-  //     const totalCount = selections.reduce((a, b) => {
-  //       return a + b.count
-  //     }, 0);
-  //     const markedTargets: MarkedTarget[] = [];
-  //     let index = 0;
-  //     selections.forEach((s) => {
-  //       const el = this.getElementBySelector(s.selector);
-  //       if (!el) return;
-  //       markedTargets.push({
-  //         ...s,
-  //         el,
-  //         index: index++,
-  //         percent: Math.round((s.count * 100) / totalCount),
-  //         boundingRect:  this.calculateRelativeBoundingRect(el),
-  //         count: s.count,
-  //       })
-  //     });
-  //     this.actualScroll = this.getCurrentScroll() 
-  //     update({ markedTargets });
-  //   } else {
-  //     if (this.actualScroll) {
-  //       this.screen.window?.scrollTo(this.actualScroll.x, this.actualScroll.y)
-  //       this.actualScroll = null
-  //     }
-  //     update({ markedTargets: null });
-  //   }
-  }
-
-  markTargets(targets: { selector: string, count: number }[] | null) {
-    // this.pause();
-    // this.setMarkedTargets(targets);
-  }
 
   // TODO
   async toggleTimetravel() {
@@ -176,6 +113,7 @@ export default class WebPlayer extends Player {
   toggleUserName(name?: string) {
     this.screen.cursor.showTag(name)
   }
+  
   clean() {
     super.clean()
     this.assistManager.clean()
