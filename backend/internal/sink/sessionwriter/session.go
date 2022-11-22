@@ -5,12 +5,14 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Session struct {
-	lock *sync.Mutex
-	dom  *os.File
-	dev  *os.File
+	lock       *sync.Mutex
+	dom        *os.File
+	dev        *os.File
+	lastUpdate time.Time
 }
 
 func NewSession(dir string, id uint64) (*Session, error) {
@@ -31,9 +33,10 @@ func NewSession(dir string, id uint64) (*Session, error) {
 	}
 
 	return &Session{
-		lock: &sync.Mutex{},
-		dom:  domFile,
-		dev:  devFile,
+		lock:       &sync.Mutex{},
+		dom:        domFile,
+		dev:        devFile,
+		lastUpdate: time.Now(),
 	}, nil
 }
 
@@ -51,7 +54,12 @@ func (s *Session) Write(mode FileType, data []byte) (err error) {
 	} else {
 		_, err = s.dev.Write(data)
 	}
+	s.lastUpdate = time.Now()
 	return err
+}
+
+func (s *Session) LastUpdate() time.Time {
+	return s.lastUpdate
 }
 
 func (s *Session) Sync() error {

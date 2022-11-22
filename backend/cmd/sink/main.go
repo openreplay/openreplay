@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
+	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir, cfg.DeadSessionTimeout)
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)

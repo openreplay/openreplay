@@ -9,25 +9,26 @@ import (
 )
 
 type SessionWriter struct {
-	ulimit   int
-	dir      string
-	lock     *sync.Mutex
-	sessions *sync.Map
-	meta     map[uint64]int64
-	count    int
-	done     chan struct{}
-	stopped  chan struct{}
+	ulimit               int
+	dir                  string
+	zombieSessionTimeout float64
+	lock                 *sync.Mutex
+	sessions             *sync.Map
+	meta                 map[uint64]int64
+	done                 chan struct{}
+	stopped              chan struct{}
 }
 
-func NewWriter(ulimit uint16, dir string) *SessionWriter {
+func NewWriter(ulimit uint16, dir string, zombieSessionTimeout int64) *SessionWriter {
 	w := &SessionWriter{
-		ulimit:   int(ulimit),
-		dir:      dir + "/",
-		lock:     &sync.Mutex{},
-		sessions: &sync.Map{},
-		meta:     make(map[uint64]int64, ulimit),
-		done:     make(chan struct{}),
-		stopped:  make(chan struct{}),
+		ulimit:               int(ulimit) / 2, // should divide by 2 because each session has 2 files
+		dir:                  dir + "/",
+		zombieSessionTimeout: float64(zombieSessionTimeout),
+		lock:                 &sync.Mutex{},
+		sessions:             &sync.Map{},
+		meta:                 make(map[uint64]int64, ulimit),
+		done:                 make(chan struct{}),
+		stopped:              make(chan struct{}),
 	}
 	go w.synchronizer()
 	return w
@@ -51,10 +52,25 @@ func (w *SessionWriter) Stop() {
 }
 
 func (w *SessionWriter) Info() string {
+	return fmt.Sprintf("%d files", w.numberOfSessions())
+}
+
+func (w *SessionWriter) addSession(sid uint64) {
 	w.lock.Lock()
-	count := w.count
+	w.meta[sid] = time.Now().Unix()
 	w.lock.Unlock()
-	return fmt.Sprintf("%d files", count)
+}
+
+func (w *SessionWriter) deleteSession(sid uint64) {
+	w.lock.Lock()
+	delete(w.meta, sid)
+	w.lock.Unlock()
+}
+
+func (w *SessionWriter) numberOfSessions() int {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+	return len(w.meta)
 }
 
 func (w *SessionWriter) write(sid uint64, mode FileType, data []byte) error {
@@ -71,10 +87,8 @@ func (w *SessionWriter) write(sid uint64, mode FileType, data []byte) error {
 		}
 		sess.Lock()
 		defer sess.Unlock()
-		w.sessions.Store(sid, sess)
 
 		// Check opened files limit
-		w.meta[sid] = time.Now().Unix()
 		if len(w.meta) >= w.ulimit {
 			var oldSessID uint64
 			var minTimestamp int64 = math.MaxInt64
@@ -84,21 +98,19 @@ func (w *SessionWriter) write(sid uint64, mode FileType, data []byte) error {
 					minTimestamp = timestamp
 				}
 			}
-			delete(w.meta, oldSessID)
 			if err := w.close(oldSessID); err != nil {
 				log.Printf("can't close session: %s", err)
 			}
 		}
+
+		// Add new session to manager
+		w.sessions.Store(sid, sess)
+		w.addSession(sid)
 	} else {
 		sess = sessObj.(*Session)
 		sess.Lock()
 		defer sess.Unlock()
 	}
-
-	// Update info
-	w.lock.Lock()
-	w.count = len(w.meta)
-	w.lock.Unlock()
 
 	// Write data to session
 	return sess.Write(mode, data)
@@ -113,7 +125,16 @@ func (w *SessionWriter) sync(sid uint64) error {
 	sess.Lock()
 	defer sess.Unlock()
 
-	return sess.Sync()
+	err := sess.Sync()
+	if time.Now().Sub(sess.LastUpdate()).Seconds() > w.zombieSessionTimeout {
+		if err != nil {
+			log.Printf("can't sync session: %d, err: %s", sid, err)
+		}
+		// Close "zombie" session
+		err = sess.Close()
+		w.deleteSession(sid)
+	}
+	return err
 }
 
 func (w *SessionWriter) close(sid uint64) error {
@@ -129,6 +150,7 @@ func (w *SessionWriter) close(sid uint64) error {
 		log.Printf("can't sync session: %d, err: %s", sid, err)
 	}
 	err := sess.Close()
+	w.deleteSession(sid)
 	return err
 }
 
