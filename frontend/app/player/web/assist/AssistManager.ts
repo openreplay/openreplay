@@ -269,10 +269,10 @@ export default class AssistManager {
   /* ==== Recording the session ==== */
 
   public requestRecording = () => {
-    const recordingState = getState().recordingState
+    const recordingState =this.store.get().recordingState
     if (!this.socket || recordingState === SessionRecordingStatus.Requesting) return;
 
-    update({ recordingState: SessionRecordingStatus.Requesting })
+    this.store.update({ recordingState: SessionRecordingStatus.Requesting })
     this.socket.emit("request_recording", JSON.stringify({
       ...this.session.agentInfo,
       query: document.location.search,
@@ -280,17 +280,29 @@ export default class AssistManager {
   }
 
   public stopRecording = () => {
-    const recordingState = getState().recordingState
+    const recordingState = this.store.get().recordingState
     if (!this.socket || recordingState === SessionRecordingStatus.Off) return;
 
     this.socket.emit("stop_recording")
     this.toggleRecording(false)
   }
 
-  private toggleRecording = (isAccepted: boolean) => {
-    this.md.toggleRecordingBorders(isAccepted)
+  private get borderStyle() {
+    const { recordingState, remoteControl } = this.store.get()
 
-    update({ recordingState: isAccepted ? SessionRecordingStatus.Recording : SessionRecordingStatus.Off })
+    const isRecordingActive = recordingState === SessionRecordingStatus.Recording
+    const isControlActive = remoteControl === RemoteControlStatus.Enabled
+    const baseBorder = '2px dashed'
+    // recording gets priority here
+    if (isRecordingActive) return { border: `${baseBorder} red`}
+    if (isControlActive) return { border: `${baseBorder} blue`}
+    return { border: 'unset'}
+  }
+
+  private toggleRecording = (isAccepted: boolean) => {
+    this.store.update({ recordingState: isAccepted ? SessionRecordingStatus.Recording : SessionRecordingStatus.Off })
+
+    this.screen.setBorderStyle(this.borderStyle)
   }
 
   /* ==== Remote Control ==== */
@@ -346,15 +358,17 @@ export default class AssistManager {
       this.screen.overlay.addEventListener("mousemove", this.onMouseMove)
       this.screen.overlay.addEventListener("click", this.onMouseClick)
       this.screen.overlay.addEventListener("wheel", this.onWheel)
-      this.screen.toggleRemoteControlBorders(true)
       this.store.update({ remoteControl: RemoteControlStatus.Enabled })
+
+      this.screen.setBorderStyle(this.borderStyle)
     } else {
       this.screen.overlay.removeEventListener("mousemove", this.onMouseMove)
       this.screen.overlay.removeEventListener("click", this.onMouseClick)
       this.screen.overlay.removeEventListener("wheel", this.onWheel)
-      this.screen.toggleRemoteControlBorders(false)
       this.store.update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
+
+      this.screen.setBorderStyle(this.borderStyle)
     }
   }
 
