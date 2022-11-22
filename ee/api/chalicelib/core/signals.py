@@ -15,7 +15,7 @@ def handle_frontend_signals(project_id: int, user_id: str, data: schemas_ee.Sign
                                       'category': data.category, 'data': json.dumps(data.data)})
             conn.execute(query)
             # res = helper.dict_to_camel_case(conn.fetchone())
-        return {'success': 1}
+        return None
     except Exception as e:
-        return {'errors': e}
-    return {}
+        return {'errors': [e]}
+    return None
