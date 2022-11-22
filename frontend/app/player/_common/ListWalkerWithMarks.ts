@@ -1,4 +1,4 @@
-import type { Timed } from './messages/timed';
+import type { Timed } from '../_web/messages/timed';
 import ListWalker from './ListWalker'
 
 
@@ -7,9 +7,17 @@ type CheckFn<T> = (t: T) => boolean
 
 export default class ListWalkerWithMarks<T extends Timed> extends ListWalker<T> {
 	private _markCountNow: number = 0
-	constructor(private isMarked: CheckFn<T>, initialList?: T[]) {
+	private _markCount: number = 0
+	constructor(private isMarked: CheckFn<T>, initialList: T[] = []) {
 		super(initialList)
+		this._markCount = initialList.reduce((n, item) => isMarked(item) ? n+1 : n, 0)
 	}
+
+	append(item: T) {
+		if (this.isMarked(item)) { this._markCount++ }
+		super.append(item)
+	}
+
 	protected moveNext() {
 		const val = super.moveNext()
 		if (val && this.isMarked(val)) {
@@ -24,8 +32,11 @@ export default class ListWalkerWithMarks<T extends Timed> extends ListWalker<T> 
 		}
  		return val
 	}
-	get markCountNow(): number {
+	get markedCountNow(): number {
 		return this._markCountNow
+	}
+	get markedCount(): number {
+		return this._markCount
 	}
 
 }

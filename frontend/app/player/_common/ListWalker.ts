@@ -1,4 +1,4 @@
-import type { Timed } from './messages/timed';
+import type { Timed } from '../_web/messages/timed';
 
 export default class ListWalker<T extends Timed> {
 	private p = 0
@@ -80,18 +80,18 @@ export default class ListWalker<T extends Timed> {
 	}
 
 	private hasNext() {
-		return this.p < this.length	
+		return this.p < this.length
 	}
 	private hasPrev() {
 		return this.p > 0
 	}
 	protected moveNext(): T | null {
-		return this.hasNext() 
+		return this.hasNext()
 			? this.list[ this.p++ ]
 			: null
 	}
 	protected movePrev(): T | null {
-		return this.hasPrev() 
+		return this.hasPrev()
 			? this.list[ --this.p ]
 			: null
 	}
