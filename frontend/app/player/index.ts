@@ -1,9 +1,9 @@
-export * from './_web/assist/AssistManager';
-export * from './_web/assist/LocalStream';
-export * from './_web/WebPlayer';
+export * from './web/assist/AssistManager';
+export * from './web/assist/LocalStream';
+export * from './web/WebPlayer';
 export * from './create';
 
-export type { MarkedTarget } from './_web/TargetMarker'
+export type { MarkedTarget } from './web/TargetMarker'
 
-//export * from './_store';
-//export * from './_singletone';
+export * from './_store';
+export * from './_singletone';

@@ -1,6 +1,6 @@
 import * as typedLocalStorage from './localStorage';
 
-import type { Moveable, Cleanable, Store } from './types';
+import type { Moveable, Cleanable, Store } from '../common/types';
 import Animator from './Animator';
 import type { GetState as AnimatorGetState, SetState as AnimatorSetState } from './Animator';
 
@@ -57,8 +57,6 @@ export default class Player extends Animator {
     }
   }
 
-
-
   /* === TODO: incapsulate in LSCache === */
 
   toggleAutoplay() {
@@ -67,14 +65,14 @@ export default class Player extends Animator {
     this.pState.update({ autoplay })
   }
 
-  // Shouldn't it be in the react part as a fully  (with localStorage-cache react hook)?
+  //TODO: move to react part (with localStorage-cache react hook)?
   toggleEvents() {
     const showEvents = !this.pState.get().showEvents
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
     this.pState.update({ showEvents })
   }
 
-  // move to React part?
+  // TODO: move to React part
   toggleSkipToIssue() {
     const skipToIssue = !this.pState.get().skipToIssue
     localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
@@ -106,15 +104,6 @@ export default class Player extends Animator {
     this.updateSpeed(Math.max(1, speed / 2))
   }
   /* === === */
-
-  // TODO: move theese to React hooks
-  // injectNotes(notes: Note[]) {
-  //   update({ notes })
-  // }
-  // filterOutNote(noteId: number) {
-  //   const { notes } = getState()
-  //   update({ notes: notes.filter((note: Note) => note.noteId !== noteId) })
-  // }
 
 
   clean() {

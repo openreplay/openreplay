@@ -2,7 +2,7 @@ import type Screen from '../Screen/Screen'
 import type { Point } from '../Screen/types'
 import type { MouseMove } from '../messages'
 
-import ListWalker from '../../_common/ListWalker'
+import ListWalker from '../../common/ListWalker'
 
 const HOVER_CLASS = "-openreplay-hover";
 const HOVER_CLASS_DEPR = "-asayer-hover";

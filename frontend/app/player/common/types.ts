@@ -1,3 +1,6 @@
+export interface Timed { 
+  time: number
+}
 
 export interface Moveable {
   move(time: number): void
@@ -17,5 +20,4 @@ export interface Store<G extends Object, S extends Object = G> {
   get(): G
   update(state: Partial<S>): void
 }
-
 

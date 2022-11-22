@@ -1,28 +1,23 @@
 import type Screen from '../Screen/Screen';
 import type { Message } from '../messages';
+import type MessageManager from '../MessageManager';
 
-import ListWalker from '../../_common/ListWalker';
+
+import ListWalker from '../../common/ListWalker';
 import DOMManager from './DOM/DOMManager'; 
 
 
 export default class PagesManager extends ListWalker<DOMManager> {
 	private currentPage: DOMManager | null = null
 
-	private isMobile: boolean;
-	private screen: Screen;
-
-	constructor(screen: Screen, isMobile: boolean) {
-		super()
-		this.screen = screen
-		this.isMobile = isMobile
-	}
+	constructor(private screen: Screen, private isMobile: boolean, private mm: MessageManager) { super() }
 
 	/*
 		Assumed that messages added in a correct time sequence.
 	*/
 	appendMessage(m: Message): void {
 		if (m.tp === "create_document") {
-			super.append(new DOMManager(this.screen, this.isMobile, m.time))
+			super.append(new DOMManager(this.screen, this.isMobile, m.time, this.mm))
 		}
 		if (this.last === null) {
 			// Log wrong

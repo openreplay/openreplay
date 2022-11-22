@@ -1,7 +1,7 @@
-import SimpleStore from './_common/SimpleStore'
-import type { Store } from './player/types'
+import SimpleStore from './common/SimpleStore'
+import type { Store } from './common/types'
 
-import WebPlayer from './_web/WebPlayer'
+import WebPlayer from './web/WebPlayer'
 
 type WebState = typeof WebPlayer.INITIAL_STATE //?
 type WebPlayerStore = Store<WebState>

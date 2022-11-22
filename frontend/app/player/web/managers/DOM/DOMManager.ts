@@ -1,9 +1,11 @@
 import logger from 'App/logger';
 
+import type Screen from '../../Screen/Screen';
 import type MessageManager from '../../MessageManager';
+
 import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
-import ListWalker from '../../../_common/ListWalker';
+import ListWalker from '../../../common/ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
 import FocusManager from './FocusManager';
 import {
@@ -51,12 +53,13 @@ export default class DOMManager extends ListWalker<Message> {
 
 
   constructor(
-    private readonly screen: MessageManager,
+    private readonly screen: Screen,
     private readonly isMobile: boolean,
-    public readonly time: number
+    public readonly time: number,
+    mm: MessageManager,
   ) {
     super()
-    this.stylesManager = new StylesManager(screen)
+    this.stylesManager = new StylesManager(screen, mm)
   }
 
   append(m: Message): void {

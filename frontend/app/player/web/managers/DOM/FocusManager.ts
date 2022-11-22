@@ -1,7 +1,7 @@
 import logger from 'App/logger';
 import type { SetNodeFocus } from '../../messages';
 import type { VElement } from './VirtualDOM';
-import ListWalker from '../../../_common/ListWalker';
+import ListWalker from '../../../common/ListWalker';
 
 
 const FOCUS_CLASS = "-openreplay-focus"

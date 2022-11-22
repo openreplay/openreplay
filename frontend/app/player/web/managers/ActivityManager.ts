@@ -1,4 +1,4 @@
-import ListWalker from '../../_common/ListWalker';
+import ListWalker from '../../common/ListWalker';
 
 
 class SkipIntervalCls {

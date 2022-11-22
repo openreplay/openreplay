@@ -1,10 +1,8 @@
-import type MessageManager from '../../MessageManager';
+import type Screen from '../../Screen/Screen';
+import type MessageManager from '../../MessageManager'
 import type { CssInsertRule, CssDeleteRule } from '../../messages';
 
 type CSSRuleMessage = CssInsertRule | CssDeleteRule;
-
-import ListWalker from '../../../_common/ListWalker';
-
 
 const HOVER_CN = "-openreplay-hover";
 const HOVER_SELECTOR = `.${HOVER_CN}`;
@@ -21,17 +19,14 @@ export function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTM
   }
 }
 
-export default class StylesManager extends ListWalker<CSSRuleMessage> {
+export default class StylesManager {
   private linkLoadingCount: number = 0;
   private linkLoadPromises: Array<Promise<void>> = [];
   private skipCSSLinks: Array<string> = []; // should be common for all pages
 
-  constructor(private readonly screen: MessageManager) {
-    super();
-  }
+  constructor(private readonly screen: Screen, private readonly mm: MessageManager) {}
 
   reset():void {
-    super.reset();
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
 
@@ -43,7 +38,7 @@ export default class StylesManager extends ListWalker<CSSRuleMessage> {
     const promise = new Promise<void>((resolve) => {
       if (this.skipCSSLinks.includes(value)) resolve();
       this.linkLoadingCount++;
-      this.screen.setCSSLoading(true);
+      this.mm.setCSSLoading(true);
       const addSkipAndResolve = () => {
         this.skipCSSLinks.push(value); // watch out
         resolve()
@@ -62,44 +57,13 @@ export default class StylesManager extends ListWalker<CSSRuleMessage> {
       clearTimeout(timeoutId);
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
-        this.screen.setCSSLoading(false);
+        this.mm.setCSSLoading(false);
       }
     });
     this.linkLoadPromises.push(promise);
   }
 
-  private manageRule = (msg: CSSRuleMessage):void => {
-    // if (msg.tp === "css_insert_rule") {
-    //   let styleSheet = this.#screen.document.styleSheets[ msg.stylesheetID ];
-    //   if (!styleSheet) {
-    //     logger.log("No stylesheet with corresponding ID found: ", msg)
-    //     styleSheet = this.#screen.document.styleSheets[0];
-    //     if (!styleSheet) {
-    //       return;
-    //     }
-    //   }
-    //   try {
-    //     styleSheet.insertRule(msg.rule, msg.index);
-    //   } catch (e) {
-    //     logger.log(e, msg)
-    //     //const index = Math.min(msg.index, styleSheet.cssRules.length);
-    //     styleSheet.insertRule(msg.rule, styleSheet.cssRules.length);
-    //     //styleSheet.ownerNode.innerHTML += msg.rule;
-    //   }
-    // }
-    // if (msg.tp === "css_delete_rule") {
-    //   // console.warn('Warning: STYLESHEET_DELETE_RULE msg')
-    //   const styleSheet = this.#screen.document.styleSheets[msg.stylesheetID];
-    //   if (!styleSheet) {
-    //     logger.log("No stylesheet with corresponding ID found: ", msg)
-    //     return;
-    //   }
-    //   styleSheet.deleteRule(msg.index);
-    // }
-  }
-
-  moveReady(t: number): Promise<void> {
+  moveReady(t: number): Promise<void[]> {
     return Promise.all(this.linkLoadPromises)
-      .then(() => this.moveApply(t, this.manageRule));
   }
 }

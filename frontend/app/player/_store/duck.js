@@ -1,15 +1,11 @@
-import { applyChange, revertChange } from 'deep-diff';
-
-import { INITIAL_STATE as MM_INITIAL_STATE } from '../_web/MessageManager'
-import Player from '../player/Player'
+import WebPlayer from '../web/WebPlayer'
 
 const UPDATE = 'player/UPDATE';
 const CLEAN = 'player/CLEAN';
 const REDUX = 'player/REDUX';
 
 const resetState = {
-	...MM_INITIAL_STATE,
-	...Player.INITIAL_STATE,
+	...WebPlayer.INITIAL_STATE,
 	initialized: false,
 };
 

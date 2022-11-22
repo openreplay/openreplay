@@ -1,6 +1,6 @@
 import type { PerformanceTrack, SetPageVisibility } from '../messages';
 
-import ListWalker from '../../_common/ListWalker';
+import ListWalker from '../../common/ListWalker';
 
 export type PerformanceChartPoint = {
 	time: number,

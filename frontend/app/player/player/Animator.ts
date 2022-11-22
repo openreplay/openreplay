@@ -1,4 +1,4 @@
-import type { Store, Moveable, Interval } from './types';
+import type { Store, Moveable, Interval } from '../common/types';
 import * as localStorage from './localStorage';
 
 const fps = 60

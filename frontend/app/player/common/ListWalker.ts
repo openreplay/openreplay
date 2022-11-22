@@ -1,4 +1,4 @@
-import type { Timed } from '../_web/messages/timed';
+import type { Timed } from './types';
 
 export default class ListWalker<T extends Timed> {
 	private p = 0

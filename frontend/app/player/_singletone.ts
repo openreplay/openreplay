@@ -1,9 +1,9 @@
-import WebPlayer from './_web/WebPlayer';
+import WebPlayer from './web/WebPlayer';
 import reduxStore, {update, cleanStore} from './_store';
 
-import type { State as MMState } from './_web/MessageManager'
+import type { State as MMState } from './web/MessageManager'
 import type { State as PState } from './player/Player'
-import type { Store } from './player/types'
+import type { Store } from './common/types'
 
 
 const myStore: Store<PState & MMState> = {

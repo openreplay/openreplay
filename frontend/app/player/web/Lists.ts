@@ -1,5 +1,5 @@
-import ListWalker from '../_common/ListWalker';
-import ListWalkerWithMarks from '../_common/ListWalkerWithMarks';
+import ListWalker from '../common/ListWalker';
+import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 
 import type { Message } from './messages'
 

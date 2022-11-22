@@ -1,4 +1,4 @@
-import type { Store } from '../player/types'
+import type { Store } from '../common/types'
 import Player, { State as PlayerState } from '../player/Player'
 
 import MessageManager from './MessageManager'
@@ -39,17 +39,13 @@ export default class WebPlayer extends Player {
       exceptions: session.errors,
     } : {}
 
-    // TODO: separate screen from manager
-    const screen = new MessageManager(session, wpState, initialLists) 
-    super(wpState, screen)
+    const screen = new Screen()
+    const messageManager = new MessageManager(session, wpState, screen, initialLists) 
+    super(wpState, messageManager)
     this.screen = screen
-    this.messageManager = screen
-
-    // TODO: separate LiveWebPlayer
-    this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
+    this.messageManager = messageManager
 
     this.targetMarker = new TargetMarker(this.screen, wpState)
-
     this.inspectorController = new InspectorController(screen)
 
   
@@ -65,6 +61,8 @@ export default class WebPlayer extends Player {
       endTime, // : 0, //TODO: through initialState
     })
 
+    // TODO: separate LiveWebPlayer
+    this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
     if (live) {
       this.assistManager.connect(session.agentToken)
     }
@@ -122,6 +120,15 @@ export default class WebPlayer extends Player {
       )
     }
   }
+
+  // TODO: restore notes functionality
+  // injectNotes(notes: Note[]) {
+  //   update({ notes })
+  // }
+  // filterOutNote(noteId: number) {
+  //   const { notes } = getState()
+  //   update({ notes: notes.filter((note: Note) => note.noteId !== noteId) })
+  // }
 
   toggleUserName(name?: string) {
     this.screen.cursor.showTag(name)

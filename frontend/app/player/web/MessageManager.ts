@@ -8,10 +8,8 @@ import Log from 'Types/session/log';
 
 import { toast } from 'react-toastify';
 
-import type  { Store } from '../player/types';
-import ListWalker from '../_common/ListWalker';
-
-import Screen from './Screen/Screen';
+import type  { Store } from '../common/types';
+import ListWalker from '../common/ListWalker';
 
 import PagesManager from './managers/PagesManager';
 import MouseMoveManager from './managers/MouseMoveManager';
@@ -24,15 +22,19 @@ import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
-import { INITIAL_STATE as SCREEN_INITIAL_STATE, State as SuperState } from './Screen/Screen';
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE } from './Lists';
+
+import Screen, { 
+  INITIAL_STATE as SCREEN_INITIAL_STATE,
+  State as ScreenState,
+} from './Screen/Screen';
 
 import type { InitialLists } from './Lists'
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
 
 
-export interface State extends SuperState {
+export interface State extends ScreenState {
   performanceChartData: PerformanceChartPoint[],
   skipIntervals: SkipInterval[],
   connType?: string,
@@ -73,7 +75,7 @@ const visualChanges = [
   "set_viewport_scroll",
 ]
 
-export default class MessageManager extends Screen {
+export default class MessageManager {
   static INITIAL_STATE: State = {
     ...SCREEN_INITIAL_STATE,
     ...LISTS_INITIAL_STATE,
@@ -116,12 +118,12 @@ export default class MessageManager extends Screen {
 
   constructor(
     private readonly session: any /*Session*/, 
-    private readonly state: Store<State>,  
+    private readonly state: Store<State>,
+    private readonly screen: Screen,
     initialLists?: Partial<InitialLists>
   ) {
-    super();
-    this.pagesManager = new PagesManager(this, this.session.isMobile)
-    this.mouseMoveManager = new MouseMoveManager(this)
+    this.pagesManager = new PagesManager(screen, this.session.isMobile,  this)
+    this.mouseMoveManager = new MouseMoveManager(screen)
 
     this.sessionStart = this.session.startedAt
 
@@ -281,8 +283,8 @@ export default class MessageManager extends Screen {
 
     this.performanceTrackManager = new PerformanceTrackManager()
     this.windowNodeCounter = new WindowNodeCounter();
-    this.pagesManager = new PagesManager(this, this.session.isMobile)
-    this.mouseMoveManager = new MouseMoveManager(this);
+    this.pagesManager = new PagesManager(this.screen, this.session.isMobile, this)
+    this.mouseMoveManager = new MouseMoveManager(this.screen);
     this.activityManager = new ActivityManager(this.session.duration.milliseconds);
   }
 
@@ -339,14 +341,14 @@ export default class MessageManager extends Screen {
     this.pagesManager.moveReady(t).then(() => {
 
       const lastScroll = this.scrollManager.moveGetLast(t, index);
-      if (!!lastScroll && this.window) {
-        this.window.scrollTo(lastScroll.x, lastScroll.y);
+      if (!!lastScroll && this.screen.window) {
+        this.screen.window.scrollTo(lastScroll.x, lastScroll.y);
       }
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
       if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
-        this.cursor.click();
+        this.screen.cursor.click();
       }
       // After all changes - redraw the marker
       //this.marker.redraw();
@@ -514,17 +516,17 @@ export default class MessageManager extends Screen {
   }
 
   setMessagesLoading(messagesLoading: boolean) {
-    this.display(!messagesLoading);
+    this.screen.display(!messagesLoading);
     this.state.update({ messagesLoading });
   }
 
   setCSSLoading(cssLoading: boolean) {
-    this.displayFrame(!cssLoading);
+    this.screen.displayFrame(!cssLoading);
     this.state.update({ cssLoading });
   }
 
   private setSize({ height, width }: { height: number, width: number }) { 
-    this.scale({ height, width });
+    this.screen.scale({ height, width });
     this.state.update({ width, height });
 
     //this.updateMarketTargets()
