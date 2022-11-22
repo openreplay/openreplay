@@ -86,7 +86,11 @@ jobs:
             ;;
         esac
 
-        [[ $(cat /tmp/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
+        if [[ $(cat /tmp/images_to_build.txt) == "" ]]; then
+          echo "Nothing to build here"
+          touch /tmp/nothing-to-build-here
+          exit 0
+        fi
         #
         # Pushing image to registry
         #
@@ -116,6 +120,8 @@ jobs:
         #
         # Deploying image to environment.
         #
+        set -x
+        [[ -f /tmp/nothing-to-build-here ]] && exit 0
         cd scripts/helmcharts/
 
         ## Update secerts
