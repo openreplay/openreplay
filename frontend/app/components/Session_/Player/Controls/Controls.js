@@ -6,12 +6,12 @@ import {
   STORAGE_TYPES,
   selectStorageType,
   selectStorageListNow,
+  jumpToLive,
+  toggleInspectorMode,
 } from 'Player';
 import LiveTag from 'Shared/LiveTag';
-import { jumpToLive } from 'Player';
 
 import { Icon, Tooltip } from 'UI';
-import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
   fullscreenOff,

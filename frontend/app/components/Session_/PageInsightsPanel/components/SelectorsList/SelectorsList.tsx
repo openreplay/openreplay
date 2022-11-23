@@ -1,16 +1,15 @@
 import React from 'react';
 import { NoContent } from 'UI';
-import { connectPlayer } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 import SelectorCard from '../SelectorCard/SelectorCard';
-import type { MarkedTarget } from 'Player';
 import stl from './selectorList.module.css';
 
-interface Props {
-    targets: Array<MarkedTarget>;
-    activeTargetIndex: number;
-}
+function SelectorsList() {
+    const { store } = React.useContext(PlayerContext)
 
-function SelectorsList({ targets, activeTargetIndex }: Props) {
+    const { markedTargets: targets, activeTargetIndex } = store.get()
+
     return (
         <NoContent title="No data available." size="small" show={targets && targets.length === 0}>
             <div className={stl.wrapper}>
@@ -20,7 +19,4 @@ function SelectorsList({ targets, activeTargetIndex }: Props) {
     );
 }
 
-export default connectPlayer((state: any) => ({
-    targets: state.markedTargets,
-    activeTargetIndex: state.activeTargetIndex,
-}))(SelectorsList);
+export default observer(SelectorsList);

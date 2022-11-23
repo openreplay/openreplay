@@ -1,9 +1,13 @@
 import React, { useEffect } from 'react'
 import { Input, Icon } from 'UI'
-import { connectPlayer, toggleEvents, scale } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 function EventSearch(props) {
-  const { onChange, clearSearch, value, header, toggleEvents, setActiveTab } = props;
+  const { player } = React.useContext(PlayerContext)
+
+  const { onChange, clearSearch, value, header, setActiveTab } = props;
+
+  const toggleEvents = () => player.toggleEvents()
 
   useEffect(() => {
     return () => {
@@ -42,4 +46,4 @@ function EventSearch(props) {
   )
 }
 
-export default connectPlayer(() => ({}), { toggleEvents })(EventSearch)
+export default EventSearch

@@ -1,6 +1,5 @@
 import React from 'react';
-import { getStatusText } from 'Player';
-import { CallingState, ConnectionStatus, RemoteControlStatus } from 'Player';
+import { CallingState, ConnectionStatus, RemoteControlStatus, getStatusText } from 'Player';
 
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import PlayIconLayer from './Overlay/PlayIconLayer';

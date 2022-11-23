@@ -1,13 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { hideHint } from 'Duck/components/player';
-import {
-  connectPlayer,
-  selectStorageType,
-  STORAGE_TYPES,
-  selectStorageListNow,
-  selectStorageList,
-} from 'Player';
+// import {
+//   connectPlayer,
+//   selectStorageType,
+//   STORAGE_TYPES,
+//   selectStorageListNow,
+//   selectStorageList,
+// } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 import { JSONTree, NoContent, Tooltip } from 'UI';
 import { formatMs } from 'App/date';
 import { diff } from 'deep-diff';
@@ -32,11 +34,11 @@ function getActionsName(type) {
   }
 }
 
-@connectPlayer((state) => ({
-  type: selectStorageType(state),
-  list: selectStorageList(state),
-  listNow: selectStorageListNow(state),
-}))
+// @connectPlayer((state) => ({
+//   type: selectStorageType(state),
+//   list: selectStorageList(state),
+//   listNow: selectStorageListNow(state),
+// }))
 @connect(
   (state) => ({
     hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'storage']),

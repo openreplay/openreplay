@@ -66,6 +66,7 @@ function ConsolePanel() {
       errorId,
     })
   );
+  // @ts-ignore
   const logs = logList.concat(logExceptions)
 
   const additionalHeight = 0;
