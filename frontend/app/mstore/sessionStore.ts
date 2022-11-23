@@ -49,15 +49,20 @@ class UserFilter {
   }
 }
 
-class DevTools {
-  networkIndex: 0;
-  network: any;
+interface BaseDevState {
+  index: number;
+  filter: string;
+  activeTab: string;
+  isError: boolean;
+}
 
-  consoleIndex: 0;
-  eventsIndex: 0;
+class DevTools {
+  network: BaseDevState;
+  stackEvent: BaseDevState;
 
   constructor() {
-    this.network = { index: 0, search: '', activeTab: 'ALL', isError: false };
+    this.network = { index: 0, filter: '', activeTab: 'ALL', isError: false };
+    this.stackEvent = { index: 0, filter: '', activeTab: 'ALL', isError: false };
     makeAutoObservable(this, {
       update: action,
     });

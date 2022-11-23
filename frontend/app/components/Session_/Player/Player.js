@@ -42,6 +42,7 @@ import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
+import StackEventPanel from 'Shared/DevTools/StackEventPanel';
 
 @connectPlayer((state) => ({
   live: state.live,
@@ -115,7 +116,8 @@ export default class Player extends React.PureComponent {
               // <Network />
               <NetworkPanel />
             )}
-            {bottomBlock === STACKEVENTS && <StackEvents />}
+            {/* {bottomBlock === STACKEVENTS && <StackEvents />} */}
+            {bottomBlock === STACKEVENTS && <StackEventPanel />}
             {bottomBlock === STORAGE && <Storage />}
             {bottomBlock === PROFILER && <ProfilerPanel />}
             {bottomBlock === PERFORMANCE && <ConnectedPerformance />}

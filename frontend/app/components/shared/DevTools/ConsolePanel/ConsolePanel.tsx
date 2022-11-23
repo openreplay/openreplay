@@ -95,7 +95,7 @@ function ConsolePanel(props: Props) {
     );
   };
 
-  let filtered = React.useMemo(() => {
+  const filtered = React.useMemo(() => {
     const filterRE = getRE(filter, 'i');
     let list = logs;
 

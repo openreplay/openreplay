@@ -233,9 +233,9 @@ function NetworkPanel(props: Props) {
         (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
     );
     list = list.concat(fetchList);
-    list = list.sort((a: any, b: any) => {
-      return compare(a, b, sortBy);
-    });
+    // list = list.sort((a: any, b: any) => {
+    //   return compare(a, b, sortBy);
+    // });
 
     // if (!sortAscending) {
     //   list = list.reverse();
