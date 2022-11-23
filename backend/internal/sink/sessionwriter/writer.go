@@ -16,7 +16,7 @@ type SessionWriter struct {
 	sessions map[uint64]*Session
 	meta     map[uint64]int64
 	edited   map[uint64]bool
-	toSync   chan uint64
+	toSync   chan *Session
 	done     chan struct{}
 	stopped  chan struct{}
 	synced   int
@@ -30,7 +30,7 @@ func NewWriter(ulimit uint16, dir string, zombieSessionTimeout int64) *SessionWr
 		sessions: make(map[uint64]*Session, ulimit),
 		meta:     make(map[uint64]int64, ulimit),
 		edited:   make(map[uint64]bool, ulimit),
-		toSync:   make(chan uint64, ulimit),
+		toSync:   make(chan *Session, ulimit),
 		done:     make(chan struct{}),
 		stopped:  make(chan struct{}),
 	}
@@ -55,6 +55,7 @@ func (w *SessionWriter) Info() string {
 	w.lock.Lock()
 	sess := len(w.meta)
 	sync := w.synced
+	w.synced = 0
 	w.lock.Unlock()
 	return fmt.Sprintf("%d sessions, %d synced", sess, sync)
 }
@@ -127,23 +128,6 @@ func (w *SessionWriter) write(msg messages.Message) error {
 	return err
 }
 
-func (w *SessionWriter) sync(sid uint64) error {
-	w.lock.Lock()
-	sess, ok := w.sessions[sid]
-	w.synced++
-	w.lock.Unlock()
-	if !ok {
-		return nil
-		//return fmt.Errorf("session: %d not found", sid)
-	}
-
-	sess.Lock()
-	err := sess.Sync()
-	sess.Unlock()
-
-	return err
-}
-
 func (w *SessionWriter) close(sid uint64) error {
 	w.lock.Lock()
 	sess, ok := w.sessions[sid]
@@ -167,18 +151,24 @@ func (w *SessionWriter) close(sid uint64) error {
 }
 
 func (w *SessionWriter) synchronizer() {
-	tick := time.Tick(2 * time.Second)
+	tick := time.Tick(5 * time.Second)
 	for {
 		select {
 		case <-tick:
 			w.lock.Lock()
 			for sid, _ := range w.edited {
-				w.toSync <- sid
+				if sess, ok := w.sessions[sid]; ok {
+					w.toSync <- sess
+					w.synced++
+				}
 			}
 			w.edited = make(map[uint64]bool, w.ulimit)
 			w.lock.Unlock()
-		case sid := <-w.toSync:
-			if err := w.sync(sid); err != nil {
+		case sess := <-w.toSync:
+			sess.Lock()
+			err := sess.Sync()
+			sess.Unlock()
+			if err != nil {
 				log.Printf("can't sync: %s", err)
 			}
 		case <-w.done:
