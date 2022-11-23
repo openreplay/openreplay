@@ -22,7 +22,7 @@ import MFileReader from './messages/MFileReader';
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
-import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE } from './Lists';
+import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
 
 import Screen, { 
   INITIAL_STATE as SCREEN_INITIAL_STATE,
@@ -34,7 +34,7 @@ import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
 
 
-export interface State extends ScreenState {
+export interface State extends ScreenState, ListsState {
   performanceChartData: PerformanceChartPoint[],
   skipIntervals: SkipInterval[],
   connType?: string,

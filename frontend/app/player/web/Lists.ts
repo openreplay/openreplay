@@ -1,36 +1,52 @@
 import ListWalker from '../common/ListWalker';
 import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
+import type { Timed } from '../common/types';
 
-import type { Message } from './messages'
 
-const SIMPLE_LIST_NAMES = [ "event", "redux", "mobx", "vuex", "zustand", "ngrx", "graphql", "exceptions", "profiles"] as const;
-const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const;
+const SIMPLE_LIST_NAMES = [ "event", "redux", "mobx", "vuex", "zustand", "ngrx", "graphql", "exceptions", "profiles"] as const
+const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const
 //const entityNamesSimple = [ "event", "profile" ];
 
-const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES ];
+const LIST_NAMES = [...SIMPLE_LIST_NAMES, ...MARKED_LIST_NAMES ] as const
 
-// TODO: provide correct types; maybe use list object itself inside the store
+type KeysList = `${typeof LIST_NAMES[number]}List`
+type KeysListNow = `${typeof LIST_NAMES[number]}ListNow`
+type KeysMarkedCountNow = `${typeof MARKED_LIST_NAMES[number]}MarkedCountNow`
+type StateList = {
+  [key in KeysList]: Timed[]
+}
+type StateListNow = {
+  [key in KeysListNow]: Timed[]
+}
+type StateMarkedCountNow = {
+  [key in KeysMarkedCountNow]: number
+}
+type StateNow = StateListNow & StateMarkedCountNow
+export type State = StateList & StateNow
+
+// maybe use list object itself inside the store
 
 export const INITIAL_STATE = LIST_NAMES.reduce((state, name) => {
   state[`${name}List`] = []
   state[`${name}ListNow`] = []
-  if (MARKED_LIST_NAMES.includes(name)) {
-    state[`${name}MarkedCountNow`] = 0
-  }
   return state
-}, {})
+}, MARKED_LIST_NAMES.reduce((state, name) => {
+    state[`${name}MarkedCountNow`] = 0
+    return state
+  }, {} as Partial<StateMarkedCountNow>) as Partial<State>
+) as State
 
 
 type SimpleListsObject = {
-  [key in typeof SIMPLE_LIST_NAMES[number]]: ListWalker<any>
+  [key in typeof SIMPLE_LIST_NAMES[number]]: ListWalker<Timed>
 }
 type MarkedListsObject = {
-  [key in typeof MARKED_LIST_NAMES[number]]: ListWalkerWithMarks<any>
+  [key in typeof MARKED_LIST_NAMES[number]]: ListWalkerWithMarks<Timed> 
 }
 type ListsObject = SimpleListsObject & MarkedListsObject
 
 export type InitialLists = { 
-  [key in typeof LIST_NAMES[number]]: any[] 
+  [key in typeof LIST_NAMES[number]]: any[] // .isRed()?
 }
 
 export default class Lists {
@@ -47,14 +63,14 @@ export default class Lists {
     this.lists = lists as ListsObject
   }
 
-  getFullListsState() {
+  getFullListsState(): StateList {
     return LIST_NAMES.reduce((state, name) => {
       state[`${name}List`] = this.lists[name].list
       return state
-    }, {})
+    }, {} as Partial<StateList>) as StateList
   }
 
-  moveGetState(t: number) {
+  moveGetState(t: number): StateNow {
     return LIST_NAMES.reduce((state, name) => {
       const lastMsg = this.lists[name].moveGetLast(t) // index: name === 'exceptions' ? undefined : index);
       if (lastMsg != null) {
@@ -62,10 +78,10 @@ export default class Lists {
       }
       return state
     }, MARKED_LIST_NAMES.reduce((state, name) => {
-        state[`${name}RedCountNow`] = this.lists[name].markCountNow // Red --> Marked
+        state[`${name}MarkedCountNow`] = this.lists[name].markedCountNow // Red --> Marked
         return state
-      }, {})
-    );
+      }, {} as Partial<StateMarkedCountNow>) as Partial<State>
+    ) as State
   }
 
 }
