@@ -4,7 +4,6 @@ import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
 import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
 
-import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import { connectPlayer, jump } from 'Player';
 import { useModal } from 'App/components/Modal';
@@ -13,6 +12,7 @@ import { useObserver } from 'mobx-react-lite';
 import { DATADOG, SENTRY, STACKDRIVER, typeList } from 'Types/session/stackEvent';
 import { connect } from 'react-redux';
 import StackEventRow from 'Shared/DevTools/StackEventRow';
+import StackEventModal from '../StackEventModal';
 
 let timeOut: any = null;
 const TIMEOUT_DURATION = 5000;
@@ -31,6 +31,7 @@ function StackEventPanel(props: Props) {
   const {
     sessionStore: { devTools },
   } = useStore();
+  const { showModal } = useModal();
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const [filteredList, setFilteredList] = useState([]);
   const filter = useObserver(() => devTools[INDEX_KEY].filter);
@@ -55,6 +56,7 @@ function StackEventPanel(props: Props) {
 
   const removePause = () => {
     clearTimeout(timeOut);
+    setIsDetailsModalActive(false);
     timeOut = setTimeout(() => {
       devTools.update(INDEX_KEY, { index: getCurrentIndex() });
       setPauseSync(false);
@@ -94,6 +96,13 @@ function StackEventPanel(props: Props) {
     keyMapper: (index: number) => filteredList[index],
   });
 
+  const showDetails = (item: any) => {
+    setIsDetailsModalActive(true);
+    showModal(<StackEventModal event={item} />, { right: true, onClose: removePause });
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
+    setPauseSync(true);
+  };
+
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
 
@@ -106,7 +115,12 @@ function StackEventPanel(props: Props) {
             style={style}
             key={item.key}
             event={item}
-            onJump={() => jump(item.time)}
+            onJump={() => {
+              setPauseSync(true);
+              devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
+              jump(item.time);
+            }}
+            onClick={() => showDetails(item)}
           />
         )}
       </CellMeasurer>

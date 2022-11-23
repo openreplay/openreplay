@@ -3,23 +3,18 @@ import JumpButton from '../JumpButton';
 import { Icon } from 'UI';
 import cn from 'classnames';
 import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
-import { useModal } from 'App/components/Modal';
-import StackEventModal from '../StackEventModal';
 
 interface Props {
   event: any;
   onJump: any;
   style?: any;
   isActive?: boolean;
+  onClick?: any;
 }
 function StackEventRow(props: Props) {
   const { event, onJump, style, isActive } = props;
   let message = event.payload[0] || '';
   message = typeof message === 'string' ? message : JSON.stringify(message);
-  const onClickDetails = () => {
-    showModal(<StackEventModal event={event} />, { right: true });
-  };
-  const { showModal } = useModal();
 
   const iconProps: any = React.useMemo(() => {
     const { source } = event;
@@ -34,7 +29,7 @@ function StackEventRow(props: Props) {
     <div
       style={style}
       data-scroll-item={event.isRed()}
-      onClick={onClickDetails}
+      onClick={props.onClick}
       className={cn(
         'group flex items-center py-2 px-4 border-b cursor-pointer relative',
         'hover:bg-active-blue',

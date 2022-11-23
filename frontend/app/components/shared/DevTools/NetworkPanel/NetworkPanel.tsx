@@ -141,7 +141,7 @@ interface Props {
 function NetworkPanel(props: Props) {
   const { resources, time, domContentLoadedTime, loadTime, domBuildingTime, fetchList } = props;
   const { showModal } = useModal();
-  
+
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);
 
@@ -161,7 +161,7 @@ function NetworkPanel(props: Props) {
   const [pauseSync, setPauseSync] = useState(activeIndex > 0);
   const synRef: any = useRef({});
 
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });;
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) => {
     devTools.update(INDEX_KEY, { filter: value });
   };
@@ -172,6 +172,7 @@ function NetworkPanel(props: Props) {
   };
 
   const removePause = () => {
+    setIsDetailsModalActive(false);
     clearTimeout(timeOut);
     timeOut = setTimeout(() => {
       devTools.update(INDEX_KEY, { index: getCurrentIndex() });
