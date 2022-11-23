@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
+import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
 import Resource, { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
@@ -9,9 +9,10 @@ import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import { Duration } from 'luxon';
-import { connectPlayer, jump } from 'Player';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -67,37 +68,6 @@ export function renderStart(r: any) {
   );
 }
 
-// const renderXHRText = () => (
-//   <span className="flex items-center">
-//     {XHR}
-//     <QuestionMarkHint
-//       content={
-//         <>
-//           Use our{' '}
-//           <a
-//             className="color-teal underline"
-//             target="_blank"
-//             href="https://docs.openreplay.com/plugins/fetch"
-//           >
-//             Fetch plugin
-//           </a>
-//           {' to capture HTTP requests and responses, including status codes and bodies.'} <br />
-//           We also provide{' '}
-//           <a
-//             className="color-teal underline"
-//             target="_blank"
-//             href="https://docs.openreplay.com/plugins/graphql"
-//           >
-//             support for GraphQL
-//           </a>
-//           {' for easy debugging of your queries.'}
-//         </>
-//       }
-//       className="ml-1"
-//     />
-//   </span>
-// );
-
 function renderSize(r: any) {
   if (r.responseBodySize) return formatBytes(r.responseBodySize);
   let triggerText;
@@ -107,8 +77,6 @@ function renderSize(r: any) {
     content = 'Not captured';
   } else {
     const headerSize = r.headerSize || 0;
-    const encodedSize = r.encodedBodySize || 0;
-    const transferred = headerSize + encodedSize;
     const showTransferred = r.headerSize != null;
 
     triggerText = formatBytes(r.decodedBodySize);
@@ -152,35 +120,24 @@ export function renderDuration(r: any) {
   );
 }
 
-interface Props {
-  location: any;
-  resources: any;
-  fetchList: any;
-  domContentLoadedTime: any;
-  loadTime: any;
-  playing: boolean;
-  domBuildingTime: any;
-  currentIndex: any;
-  time: any;
-}
-function NetworkPanel(props: Props) {
+function NetworkPanel() {
+  const { player, store } = React.useContext(PlayerContext)
+
   const {
-    resources,
-    time,
-    currentIndex,
+    resourceList: resources,
     domContentLoadedTime,
     loadTime,
-    playing,
     domBuildingTime,
-    fetchList,
-  } = props;
+    fetchList: fetchUnmap,
+  } = store.get();
+  const fetchList = fetchUnmap.map((i: any) => Resource({ ...i.toJS(), type: TYPES.XHR }))
+
   const { showModal, hideModal } = useModal();
   const [activeTab, setActiveTab] = useState(ALL);
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);
   const [filter, setFilter] = useState('');
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-  const [activeRequest, setActiveRequest] = useState(false )
   const onTabClick = (activeTab: any) => setActiveTab(activeTab);
   const onFilterChange = ({ target: { value } }: any) => setFilter(value);
   const additionalHeight = 0;
@@ -333,7 +290,7 @@ function NetworkPanel(props: Props) {
               renderPopup
               onRowClick={onRowClick}
               additionalHeight={additionalHeight}
-              onJump={jump}
+              onJump={(t: number) => player.jump(t)}
               sortBy={sortBy}
               sortAscending={sortAscending}
               // activeIndex={lastIndex}
@@ -388,13 +345,4 @@ function NetworkPanel(props: Props) {
   );
 }
 
-export default connectPlayer((state: any) => ({
-  location: state.location,
-  resources: state.resourceList,
-  fetchList: state.fetchList.map((i: any) => Resource({ ...i.toJS(), type: TYPES.XHR })),
-  domContentLoadedTime: state.domContentLoadedTime,
-  loadTime: state.loadTime,
-  // time: state.time,
-  playing: state.playing,
-  domBuildingTime: state.domBuildingTime,
-}))(NetworkPanel);
+export default observer(NetworkPanel);

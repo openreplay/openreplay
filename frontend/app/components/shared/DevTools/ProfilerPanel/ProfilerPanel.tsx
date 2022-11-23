@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { connectPlayer } from 'Player';
 import { TextEllipsis, Input } from 'UI';
 import { getRE } from 'App/utils';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
-// import ProfileInfo from './ProfileInfo';
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import { useModal } from 'App/components/Modal';
@@ -12,11 +12,11 @@ import ProfilerModal from '../ProfilerModal';
 const renderDuration = (p: any) => `${p.duration}ms`;
 const renderName = (p: any) => <TextEllipsis text={p.name} />;
 
-interface Props {
-  profiles: any;
-}
-function ProfilerPanel(props: Props) {
-  const { profiles } = props;
+function ProfilerPanel() {
+  const { store } = React.useContext(PlayerContext)
+
+  const profiles = store.get().profilesList
+
   const { showModal } = useModal();
   const [filter, setFilter] = useState('');
   const filtered: any = React.useMemo(() => {
@@ -68,8 +68,4 @@ function ProfilerPanel(props: Props) {
   );
 }
 
-export default connectPlayer((state: any) => {
-  return {
-    profiles: state.profilesList,
-  };
-})(ProfilerPanel);
+export default observer(ProfilerPanel);

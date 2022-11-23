@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { connectPlayer, jump } from 'Player';
 import Log from 'Types/session/log';
 import BottomBlock from '../BottomBlock';
 import { LEVEL } from 'Types/session/log';
 import { Tabs, Input, Icon, NoContent } from 'UI';
-// import Autoscroll from 'App/components/Session_/Autoscroll';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import { getRE } from 'App/utils';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -52,12 +52,22 @@ const getIconProps = (level: any) => {
   return null;
 };
 
-interface Props {
-  logs: any;
-  exceptions: any;
-}
-function ConsolePanel(props: Props) {
-  const { logs } = props;
+function ConsolePanel() {
+  const { player, store } = React.useContext(PlayerContext)
+
+  const jump = (t: number) => player.jump(t)
+  const { logList, exceptionsList } = store.get()
+
+  const logExceptions = exceptionsList.map(({ time, errorId, name, projectId }: any) =>
+    Log({
+      level: LEVEL.ERROR,
+      value: name,
+      time,
+      errorId,
+    })
+  );
+  const logs = logList.concat(logExceptions)
+
   const additionalHeight = 0;
   const [activeTab, setActiveTab] = useState(ALL);
   const [filter, setFilter] = useState('');
@@ -122,18 +132,4 @@ function ConsolePanel(props: Props) {
   );
 }
 
-export default connectPlayer((state: any) => {
-  const logs = state.logList;
-  const exceptions = state.exceptionsList; // TODO merge
-  const logExceptions = exceptions.map(({ time, errorId, name, projectId }: any) =>
-    Log({
-      level: LEVEL.ERROR,
-      value: name,
-      time,
-      errorId,
-    })
-  );
-  return {
-    logs: logs.concat(logExceptions),
-  };
-})(ConsolePanel);
+export default observer(ConsolePanel);
