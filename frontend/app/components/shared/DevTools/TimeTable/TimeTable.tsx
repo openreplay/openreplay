@@ -72,8 +72,6 @@ type Props = {
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
   onJump?: (time: any) => void;
-  sortBy?: string;
-  sortAscending?: boolean;
 };
 
 type TimeLineInfo = {
@@ -281,8 +279,6 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       referenceLines = [],
       additionalHeight = 0,
       activeIndex,
-      sortBy = '',
-      sortAscending = true,
     } = this.props;
     const columns = this.props.children.filter((i: any) => !i.hidden);
     const { timewidth, timestart } = this.state;
@@ -338,12 +334,6 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                 // onClick={() => this.onColumnClick(dataKey, onClick)}
               >
                 <span>{label}</span>
-                {!!sortBy && sortBy === dataKey && (
-                  <Icon
-                    name={sortAscending ? 'caret-down-fill' : 'caret-up-fill'}
-                    className="ml-1"
-                  />
-                )}
               </div>
             ))}
           </div>

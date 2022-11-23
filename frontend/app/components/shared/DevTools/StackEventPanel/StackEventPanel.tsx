@@ -127,6 +127,13 @@ function StackEventPanel(props: Props) {
     );
   };
 
+  useEffect(() => {
+    if (_list.current) {
+      // @ts-ignore
+      _list.current.scrollToRow(activeIndex);
+    }
+  }, [activeIndex]);
+
   return (
     <BottomBlock
       style={{ height: 300 + additionalHeight + 'px' }}
@@ -171,7 +178,6 @@ function StackEventPanel(props: Props) {
                 rowRenderer={_rowRenderer}
                 width={width}
                 height={height}
-                scrollToIndex={activeIndex}
                 scrollToAlignment="center"
               />
             )}

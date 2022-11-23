@@ -142,9 +142,6 @@ function NetworkPanel(props: Props) {
   const { resources, time, domContentLoadedTime, loadTime, domBuildingTime, fetchList } = props;
   const { showModal } = useModal();
 
-  const [sortBy, setSortBy] = useState('time');
-  const [sortAscending, setSortAscending] = useState(true);
-
   const [filteredList, setFilteredList] = useState([]);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
@@ -234,13 +231,6 @@ function NetworkPanel(props: Props) {
         (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
     );
     list = list.concat(fetchList);
-    // list = list.sort((a: any, b: any) => {
-    //   return compare(a, b, sortBy);
-    // });
-
-    // if (!sortAscending) {
-    //   list = list.reverse();
-    // }
 
     list = list.filter(
       ({ type, name, status, success }: any) =>
@@ -249,7 +239,7 @@ function NetworkPanel(props: Props) {
         (showOnlyErrors ? parseInt(status) >= 400 || !success : true)
     );
     setFilteredList(list);
-  }, [resources, filter, sortBy, sortAscending, showOnlyErrors, activeTab]);
+  }, [resources, filter, showOnlyErrors, activeTab]);
 
   const referenceLines = useMemo(() => {
     const arr = [];
@@ -281,13 +271,6 @@ function NetworkPanel(props: Props) {
     );
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
     setPauseSync(true);
-  };
-
-  const handleSort = (sortKey: string) => {
-    if (sortKey === sortBy) {
-      setSortAscending(!sortAscending);
-    }
-    setSortBy(sortKey);
   };
 
   useEffect(() => {
@@ -387,8 +370,6 @@ function NetworkPanel(props: Props) {
                 devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
                 jump(row.time);
               }}
-              sortBy={sortBy}
-              sortAscending={sortAscending}
               activeIndex={activeIndex}
             >
               {[
@@ -401,28 +382,24 @@ function NetworkPanel(props: Props) {
                   label: 'Status',
                   dataKey: 'status',
                   width: 70,
-                  // onClick: handleSort,
                 },
                 {
                   label: 'Type',
                   dataKey: 'type',
                   width: 90,
                   render: renderType,
-                  // onClick: handleSort,
                 },
                 {
                   label: 'Name',
                   width: 240,
                   dataKey: 'name',
                   render: renderName,
-                  // onClick: handleSort,
                 },
                 {
                   label: 'Size',
                   width: 80,
                   dataKey: 'decodedBodySize',
                   render: renderSize,
-                  // onClick: handleSort,
                   hidden: activeTab === XHR,
                 },
                 {
@@ -430,7 +407,6 @@ function NetworkPanel(props: Props) {
                   width: 80,
                   dataKey: 'duration',
                   render: renderDuration,
-                  // onClick: handleSort,
                 },
               ]}
             </TimeTable>

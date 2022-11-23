@@ -59,10 +59,12 @@ interface BaseDevState {
 class DevTools {
   network: BaseDevState;
   stackEvent: BaseDevState;
+  console: BaseDevState;
 
   constructor() {
     this.network = { index: 0, filter: '', activeTab: 'ALL', isError: false };
     this.stackEvent = { index: 0, filter: '', activeTab: 'ALL', isError: false };
+    this.console = { index: 0, filter: '', activeTab: 'ALL', isError: false };
     makeAutoObservable(this, {
       update: action,
     });
