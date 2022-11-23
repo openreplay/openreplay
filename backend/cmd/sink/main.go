@@ -95,26 +95,14 @@ func main() {
 			counter.Update(msg.SessionID(), time.UnixMilli(ts))
 		}
 
-		// Write encoded message with index to session file
-		data := msg.EncodeWithIndex()
-		if data == nil {
+		// Write message to file
+		if err := writer.Write(msg); err != nil {
+			log.Printf("writer error: %s", err)
 			return
 		}
 
-		// Write message to file
-		if messages.IsDOMType(msg.TypeID()) {
-			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				log.Printf("Writer error: %v\n", err)
-			}
-		}
-		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
-			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				log.Printf("Writer error: %v\n", err)
-			}
-		}
-
 		// [METRICS] Increase the number of written to the files messages and the message size
-		messageSize.Record(context.Background(), float64(len(data)))
+		messageSize.Record(context.Background(), float64(len(msg.Encode())))
 		savedMessages.Add(context.Background(), 1)
 	}
 

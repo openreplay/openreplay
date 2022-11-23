@@ -1,18 +1,19 @@
 package sessionwriter
 
 import (
+	"encoding/binary"
 	"fmt"
+	"openreplay/backend/pkg/messages"
 	"os"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type Session struct {
-	lock       *sync.Mutex
-	dom        *os.File
-	dev        *os.File
-	lastUpdate time.Time
+	lock  *sync.Mutex
+	dom   *os.File
+	dev   *os.File
+	index []byte
 }
 
 func NewSession(dir string, id uint64) (*Session, error) {
@@ -33,10 +34,10 @@ func NewSession(dir string, id uint64) (*Session, error) {
 	}
 
 	return &Session{
-		lock:       &sync.Mutex{},
-		dom:        domFile,
-		dev:        devFile,
-		lastUpdate: time.Now(),
+		lock:  &sync.Mutex{},
+		dom:   domFile,
+		dev:   devFile,
+		index: make([]byte, 8),
 	}, nil
 }
 
@@ -48,18 +49,31 @@ func (s *Session) Unlock() {
 	s.lock.Unlock()
 }
 
-func (s *Session) Write(mode FileType, data []byte) (err error) {
-	if mode == DOM {
-		_, err = s.dom.Write(data)
-	} else {
-		_, err = s.dev.Write(data)
+func (s *Session) Write(msg messages.Message) (err error) {
+	// Try to encode message
+	data := msg.Encode()
+	if data == nil {
+		return fmt.Errorf("can't encode message")
 	}
-	s.lastUpdate = time.Now()
-	return err
-}
+	// Encode message index
+	binary.LittleEndian.PutUint64(s.index, msg.Meta().Index)
 
-func (s *Session) LastUpdate() time.Time {
-	return s.lastUpdate
+	// Write message to file
+	if messages.IsDOMType(msg.TypeID()) {
+		_, err = s.dom.Write(s.index)
+		_, err = s.dom.Write(data)
+		if err != nil {
+			return err
+		}
+	}
+	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
+		_, err = s.dev.Write(s.index)
+		_, err = s.dev.Write(data)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Session) Sync() error {
