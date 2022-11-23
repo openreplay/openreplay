@@ -4,6 +4,7 @@ import { Button } from 'UI';
 import FetchPluginMessage from './components/FetchPluginMessage';
 import { TYPES } from 'Types/session/resource';
 import FetchTabs from './components/FetchTabs/FetchTabs';
+import { useStore } from 'App/mstore';
 
 interface Props {
   resource: any;
@@ -16,6 +17,9 @@ function FetchDetailsModal(props: Props) {
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
   const isXHR = resource.type === TYPES.XHR || resource.type === TYPES.FETCH;
+  const {
+    sessionStore: { devTools },
+  } = useStore();
 
   useEffect(() => {
     const index = rows.indexOf(resource);
@@ -28,6 +32,7 @@ function FetchDetailsModal(props: Props) {
     const index = rows.indexOf(resource);
     if (index > 0) {
       setResource(rows[index - 1]);
+      devTools.update('network', { index: index - 1 })
     }
   };
 
@@ -35,6 +40,7 @@ function FetchDetailsModal(props: Props) {
     const index = rows.indexOf(resource);
     if (index < rows.length - 1) {
       setResource(rows[index + 1]);
+      devTools.update('network', { index: index + 1 })
     }
   };
 

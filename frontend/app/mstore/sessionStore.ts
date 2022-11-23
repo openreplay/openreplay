@@ -51,12 +51,13 @@ class UserFilter {
 
 class DevTools {
   networkIndex: 0;
+  network: any;
+
   consoleIndex: 0;
   eventsIndex: 0;
-  networkActive: null;
-  consoleActive: null;
-  eventsActive: null;
+
   constructor() {
+    this.network = { index: 0, search: '', activeTab: 'ALL', isError: false };
     makeAutoObservable(this, {
       update: action,
     });
@@ -64,7 +65,7 @@ class DevTools {
 
   update(key: string, value: any) {
     // @ts-ignore
-    this[key] = value;
+    this[key] = Object.assign(this[key], value);
   }
 }
 

@@ -15,8 +15,7 @@ import FetchDetailsModal from 'Shared/FetchDetailsModal';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
-const INDEX_KEY = 'networkIndex';
-const INDEX_KEY_ACTIVE = 'networkActive';
+const INDEX_KEY = 'network';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -126,6 +125,9 @@ export function renderDuration(r: any) {
   );
 }
 
+let timeOut: any = null;
+const TIMEOUT_DURATION = 5000;
+
 interface Props {
   location: any;
   resources: any;
@@ -139,49 +141,70 @@ interface Props {
 function NetworkPanel(props: Props) {
   const { resources, time, domContentLoadedTime, loadTime, domBuildingTime, fetchList } = props;
   const { showModal } = useModal();
-  const [activeTab, setActiveTab] = useState(ALL);
+  
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);
-  const [filter, setFilter] = useState('');
+
   const [filteredList, setFilteredList] = useState([]);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-  const onTabClick = (activeTab: any) => setActiveTab(activeTab);
-  const onFilterChange = ({ target: { value } }: any) => setFilter(value);
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const additionalHeight = 0;
   const fetchPresented = fetchList.length > 0;
   const {
     sessionStore: { devTools },
   } = useStore();
-
-  const activeIndex = useObserver(() => devTools[INDEX_KEY]);
-  const activeClick = useObserver(() => devTools[INDEX_KEY_ACTIVE]);
-  const [pauseSync, setPauseSync] = useState(!!activeClick);
+  // const [filter, setFilter] = useState(devTools[INDEX_KEY].filter);
+  // const [activeTab, setActiveTab] = useState(ALL);
+  const filter = useObserver(() => devTools[INDEX_KEY].filter);
+  const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
+  const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
+  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
   const synRef: any = useRef({});
+
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });;
+  const onFilterChange = ({ target: { value } }: any) => {
+    devTools.update(INDEX_KEY, { filter: value });
+  };
 
   synRef.current = {
     pauseSync,
     activeIndex,
-    activeClick,
+  };
+
+  const removePause = () => {
+    clearTimeout(timeOut);
+    timeOut = setTimeout(() => {
+      devTools.update(INDEX_KEY, { index: getCurrentIndex() });
+      setPauseSync(false);
+    }, TIMEOUT_DURATION);
+  };
+
+  const onMouseLeave = () => {
+    if (isDetailsModalActive) return;
+    removePause();
   };
 
   useEffect(() => {
-    if (!!activeClick) {
-      setPauseSync(true);
-      devTools.update(INDEX_KEY, activeClick);
-      console.log('mounting at: ', activeClick);
+    if (pauseSync) {
+      removePause();
     }
+
     return () => {
-      if (synRef.current.pauseSync) {
-        console.log('unmouting at: ', synRef.current.activeIndex);
-        devTools.update(INDEX_KEY_ACTIVE, synRef.current.activeIndex);
+      clearTimeout(timeOut);
+      if (!synRef.current.pauseSync) {
+        devTools.update(INDEX_KEY, { index: 0 });
       }
     };
   }, []);
 
+  const getCurrentIndex = () => {
+    return filteredList.filter((item: any) => item.time <= time).length - 1;
+  };
+
   useEffect(() => {
-    const lastIndex = filteredList.filter((item: any) => item.time <= time).length - 1;
-    if (lastIndex !== activeIndex && !pauseSync) {
-      devTools.update(INDEX_KEY, lastIndex);
+    const currentIndex = getCurrentIndex();
+    if (currentIndex !== activeIndex && !pauseSync) {
+      devTools.update(INDEX_KEY, { index: currentIndex });
     }
   }, [time]);
 
@@ -246,14 +269,16 @@ function NetworkPanel(props: Props) {
     return arr;
   }, []);
 
-  const onRowClick = (row: any) => {
+  const showDetailsModal = (row: any) => {
+    setIsDetailsModalActive(true);
     showModal(
       <FetchDetailsModal resource={row} rows={filteredList} fetchPresented={fetchPresented} />,
       {
         right: true,
+        onClose: removePause,
       }
     );
-    devTools.update(INDEX_KEY, filteredList.indexOf(row));
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
     setPauseSync(true);
   };
 
@@ -264,12 +289,17 @@ function NetworkPanel(props: Props) {
     setSortBy(sortKey);
   };
 
+  useEffect(() => {
+    devTools.update(INDEX_KEY, { filter, activeTab });
+  }, [filter, activeTab]);
+
   return (
     <React.Fragment>
       <BottomBlock
         style={{ height: 300 + additionalHeight + 'px' }}
         className="border"
         onMouseEnter={() => setPauseSync(true)}
+        onMouseLeave={onMouseLeave}
       >
         <BottomBlock.Header>
           <div className="flex items-center">
@@ -291,6 +321,7 @@ function NetworkPanel(props: Props) {
             onChange={onFilterChange}
             height={28}
             width={230}
+            value={filter}
           />
         </BottomBlock.Header>
         <BottomBlock.Content>
@@ -348,11 +379,11 @@ function NetworkPanel(props: Props) {
               rows={filteredList}
               referenceLines={referenceLines}
               renderPopup
-              onRowClick={onRowClick}
+              onRowClick={showDetailsModal}
               additionalHeight={additionalHeight}
               onJump={(row: any) => {
                 setPauseSync(true);
-                devTools.update(INDEX_KEY, filteredList.indexOf(row));
+                devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
                 jump(row.time);
               }}
               sortBy={sortBy}
