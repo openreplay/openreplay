@@ -34,7 +34,7 @@ const buttonStyles = {
 
 export default class ScreenRecordingState {
   private status = RecordingState.Off
-  private agentsRecordingSession: string[] = []
+  private recordingAgent: string
   private overlayAdded = false
 
   constructor(
@@ -53,13 +53,12 @@ export default class ScreenRecordingState {
     if (this.status !== RecordingState.Off) return
     this.status = RecordingState.Requested
 
-    this.confirm = new ConfirmWindow(recordRequestDefault(this.options.controlConfirm))
+    this.confirm = new ConfirmWindow(recordRequestDefault(this.options.recordingConfirm))
     this.confirm.mount().then(allowed => {
       if (allowed) {
         this.acceptRecording()
-        this.agentsRecordingSession.push(id)
+        this.recordingAgent = id
       } else {
-        this.confirm?.remove()
         this.rejectRecording()
       }
     })
@@ -98,15 +97,13 @@ export default class ScreenRecordingState {
     this.status = RecordingState.Recording
   }
 
-  public readonly rejectRecording = (id?: string) => {
-    if (id) {
-      const agentIndex = this.agentsRecordingSession.findIndex(agentId => agentId === id)
-      if (agentIndex === -1) return
-      else this.agentsRecordingSession = this.agentsRecordingSession.filter(agentId => agentId !== id)
-
-      if (this.agentsRecordingSession.length > 0) return
+  public readonly stopAgentRecording = (id) => {
+    if (id === this.recordingAgent) {
+      this.rejectRecording()
     }
+  }
 
+  public readonly rejectRecording = () => {
     this.onDeny()
     this.confirm?.remove()
     this.status = RecordingState.Off

@@ -27,6 +27,7 @@ export interface Options {
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
   controlConfirm: ConfirmOptions;
+  recordingConfirm: ConfirmOptions;
 
   // @depricated
   confirmText?: string;
@@ -82,6 +83,7 @@ export default class Assist {
         onRemoteControlStart: ()=>{},
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overriting
+        recordingConfirm: {},
       },
       options,
     )
@@ -261,6 +263,8 @@ export default class Assist {
 
       if (Object.keys(this.agents).length === 0 && recordingState.isActive) {
         recordingState.rejectRecording()
+      } else {
+        recordingState.stopAgentRecording(id)
       }
       endAgentCall(id)
     })
@@ -281,18 +285,20 @@ export default class Assist {
       callingAgents.set(id, name)
       updateCallerNames()
     })
-    socket.on('videofeed', (id, feedState) => {
+    socket.on('videofeed', (_, feedState) => {
       callUI?.toggleVideoStream(feedState)
     })
     socket.on('request_recording', (id, agentData) => {
       if (!recordingState.isActive) {
         this.options.onRecordingRequest?.(JSON.parse(agentData))
         recordingState.requestRecording(id)
+      } else {
+        this.emit('recording_busy')
       }
     })
-    socket.on('stop_recording', (id) => {
+    socket.on('stop_recording', () => {
       if (recordingState.isActive) {
-        recordingState.rejectRecording(id)
+        recordingState.rejectRecording()
       }
     })
 

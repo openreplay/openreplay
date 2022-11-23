@@ -9,6 +9,7 @@ import type { Store } from '../../common/types'
 import AnnotationCanvas from './AnnotationCanvas';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
+import { toast } from 'react-toastify'
 
 export enum CallingState {
   NoCall,
@@ -260,6 +261,9 @@ export default class AssistManager {
       socket.on('recording_rejected', () => {
         this.toggleRecording(false)
       })
+      socket.on('recording_busy', () => {
+        this.onRecordingBusy()
+      })
 
       document.addEventListener('visibilitychange', this.onVisChange)
 
@@ -267,6 +271,10 @@ export default class AssistManager {
   }
 
   /* ==== Recording the session ==== */
+
+  private onRecordingBusy = () => {
+    toast.error("This session is already being recorded by another agent")
+  }
 
   public requestRecording = () => {
     const recordingState =this.store.get().recordingState
@@ -292,10 +300,9 @@ export default class AssistManager {
 
     const isRecordingActive = recordingState === SessionRecordingStatus.Recording
     const isControlActive = remoteControl === RemoteControlStatus.Enabled
-    const baseBorder = '2px dashed'
     // recording gets priority here
-    if (isRecordingActive) return { border: `${baseBorder} red`}
-    if (isControlActive) return { border: `${baseBorder} blue`}
+    if (isRecordingActive) return { border: '2px dashed red' }
+    if (isControlActive) return { border: '2px dashed blue' }
     return { border: 'unset'}
   }
 
