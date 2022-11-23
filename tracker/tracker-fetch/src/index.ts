@@ -159,7 +159,7 @@ export default function(opts: Partial<Options> = {}): (app: App | null) => Windo
               getStj(reqResInfo.request),
               getStj(reqResInfo.response),
               r.status,
-              startTime + performance.timing.navigationStart,
+              startTime + performance?.timing?.navigationStart,
               duration,
             ),
           ) 

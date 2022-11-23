@@ -3,7 +3,7 @@ import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/mess
 
 export default function (app: App): void {
   let url: string, width: number, height: number
-  let navigationStart = performance.timing.navigationStart
+  let navigationStart = performance?.timing?.navigationStart
 
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document

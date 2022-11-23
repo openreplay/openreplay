@@ -156,7 +156,7 @@ export default function(opts: Partial<Options> = {}) {
           getStj(reqResData.request),
           getStj(reqResData.response),
           status,
-          startTime + performance.timing.navigationStart,
+          startTime + performance?.timing?.navigationStart,
           duration,
         ),
       );

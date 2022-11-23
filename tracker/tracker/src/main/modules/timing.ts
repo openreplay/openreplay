@@ -110,7 +110,7 @@ export default function (app: App, opts: Partial<Options>): void {
     }
     app.send(
       ResourceTiming(
-        entry.startTime + performance.timing.navigationStart,
+        entry.startTime + performance?.timing?.navigationStart,
         entry.duration,
         entry.responseStart && entry.startTime ? entry.responseStart - entry.startTime : 0,
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
@@ -231,8 +231,8 @@ export default function (app: App, opts: Partial<Options>): void {
             ? Math.max(
                 interactiveWindowStartTime,
                 firstContentfulPaint,
-                performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart ||
-                  0,
+                performance?.timing?.domContentLoadedEventEnd -
+                  performance?.timing?.navigationStart || 0,
               )
             : 0
         app.send(
