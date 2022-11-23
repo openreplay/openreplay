@@ -57,8 +57,6 @@ export default class Screen {
   protected readonly screen: HTMLDivElement;
   protected readonly controlButton: HTMLDivElement;
   protected parentElement: HTMLElement | null = null;
-  private remoteControlEnabled = false;
-  private recordingEnabled = false;
 
   constructor() {
     const iframe = document.createElement('iframe');

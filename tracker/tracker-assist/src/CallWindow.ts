@@ -17,8 +17,6 @@ export default class CallWindow {
 	private remoteControlContainer: HTMLElement | null = null
 	private remoteControlEndBtn: HTMLElement | null = null
 	private controlsContainer: HTMLElement | null = null
-	private remoteVideoOn = false
-	private localVideoOn = false
 	private onToggleVideo: (args: any) => void
 	private tsInterval: ReturnType<typeof setInterval>
 	private remoteVideo: MediaStreamTrack
@@ -177,7 +175,6 @@ export default class CallWindow {
 		this.load
 			.then(() => {
 				if (this.videoContainer) {
-					this.remoteVideoOn = enable
 					if (enable) {
 						this.videoContainer.classList.add('remote')
 					} else {
@@ -235,7 +232,6 @@ export default class CallWindow {
 		if (!this.videoBtn || !this.videoContainer) {
 			return
 		}
-		this.localVideoOn = enabled
 		if (enabled) {
 			this.videoContainer.classList.add('local')
 			this.videoBtn.classList.remove('off')
