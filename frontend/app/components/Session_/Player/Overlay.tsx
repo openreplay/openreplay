@@ -22,6 +22,7 @@ function Overlay({
 }: Props) {
   const { player, store } = React.useContext(PlayerContext)
 
+  const togglePlay = () => player.togglePlay()
   const {
     playing,
     messagesLoading,
@@ -57,7 +58,7 @@ function Overlay({
       }
       { loading ? <Loader /> : null }
       { showPlayIconLayer &&
-        <PlayIconLayer playing={playing} togglePlay={player.togglePlay} />
+        <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       }
       { markedTargets && <ElementsMarker targets={ markedTargets } activeIndex={activeTargetIndex}/>
       }
