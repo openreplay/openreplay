@@ -67,6 +67,8 @@ usr=`whoami`
     fi
 }
 
+sleep 10
+
 # ## Installing openssl
 # sudo apt update &> /dev/null
 # sudo apt install openssl -y &> /dev/null
