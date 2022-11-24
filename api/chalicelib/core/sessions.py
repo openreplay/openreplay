@@ -237,6 +237,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 GROUP BY user_id
                                             ) AS users_sessions;""",
                                      full_args)
+        elif ids_only:
+            main_query = cur.mogrify(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                     full_args)
         else:
             if data.order is None:
                 data.order = schemas.SortOrderType.desc
@@ -244,25 +250,17 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
-
-            if ids_only:
-                main_query = cur.mogrify(f"""SELECT DISTINCT ON(s.session_id) s.session_id
-                                             {query_part}
-                                             ORDER BY s.session_id desc
-                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
-                                         full_args)
-            else:
-                meta_keys = metadata.get(project_id=project_id)
-                main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
-                                                    COALESCE(JSONB_AGG(full_sessions) 
-                                                        FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                                FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
-                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
-                                                                    {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
-                                                {query_part}
-                                                ORDER BY s.session_id desc) AS filtred_sessions
-                                                ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
-                                         full_args)
+            meta_keys = metadata.get(project_id=project_id)
+            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
+                                                COALESCE(JSONB_AGG(full_sessions) 
+                                                    FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                            {query_part}
+                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                            ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
+                                     full_args)
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
