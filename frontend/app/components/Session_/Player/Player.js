@@ -95,6 +95,7 @@ export default class Player extends React.PureComponent {
       closedLive,
       bottomBlock,
       activeTab,
+      fullView = false,
     } = this.props;
 
     const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
@@ -127,7 +128,7 @@ export default class Player extends React.PureComponent {
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        <Controls {...PlayerControls} />
+        {!fullView && <Controls {...PlayerControls} /> }
       </div>
     );
   }
