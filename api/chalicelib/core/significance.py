@@ -214,6 +214,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 AND ISS.project_id=%(project_id)s
                 AND ISE.session_id = stages_t.session_id
                 {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}
+            LIMIT 20 -- remove the limit to get exact stats
         ) AS issues_t ON (TRUE)
     ) AS stages_and_issues_t INNER JOIN sessions USING(session_id);
     """

@@ -221,6 +221,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 AND ISS.project_id=%(project_id)s
                 AND ISE.session_id = stages_t.session_id
                 {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}
+            LIMIT 20 -- remove the limit to get exact stats
         ) AS issues_t ON (TRUE)
     ) AS stages_and_issues_t INNER JOIN sessions USING(session_id);
     """
@@ -353,12 +354,10 @@ def get_transitions_and_issues_of_each_type(rows: List[RealDictRow], all_issues,
             if error_id not in errors:
                 errors[error_id] = []
             ic = 0
-            issue_type = all_issues[error_id]["issue_type"]
-            context = all_issues[error_id]["context"]
-            if row['issue_type'] is not None:
+            row_issue_id=row['issue_id']
+            if row_issue_id is not None:
                 if last_ts is None or (first_ts < row['issue_timestamp'] < last_ts):
-                    context_in_row = row['issue_context'] if row['issue_context'] is not None else ''
-                    if issue_type == row['issue_type'] and context == context_in_row:
+                    if error_id == row_issue_id:
                         ic = 1
                         ic_present = True
             errors[error_id].append(ic)
@@ -399,9 +398,8 @@ def get_affected_users_for_all_issues(rows, first_stage, last_stage):
         # check that the issue exists and belongs to subfunnel:
         if iss is not None and (row[f'stage{last_stage}_timestamp'] is None or
                                 (row[f'stage{first_stage}_timestamp'] < iss_ts < row[f'stage{last_stage}_timestamp'])):
-            context_string = row['issue_context'] if row['issue_context'] is not None else ''
             if row["issue_id"] not in all_issues:
-                all_issues[row["issue_id"]] = {"context": context_string, "issue_type": row["issue_type"]}
+                all_issues[row["issue_id"]] = {"context": row['issue_context'], "issue_type": row["issue_type"]}
             n_issues_dict[row["issue_id"]] += 1
             if row['user_uuid'] is not None:
                 affected_users[row["issue_id"]].add(row['user_uuid'])
