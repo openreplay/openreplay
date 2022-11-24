@@ -67,7 +67,7 @@ spec:
             # 4. Using AWS itself.
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
-            {{- if eq .Values.global.s3.endpoint "frontend://minio.db.svc.cluster.local:9000" }}
+            {{- if contains "minio" .Values.global.s3.endpoint }}
               # Local minio Installation
               value: 'frontends://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
             {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}

@@ -7,7 +7,7 @@ if [ "x$VERBOSE" == "x1" ]; then
   set -x
 fi
 
-export VAULT_ADDR=http://databases-vault.db.svc.cluster.local:8200
+export VAULT_ADDR=${VAULT_ADDR}
 
 
 # Check vault is already initialized, if so return 

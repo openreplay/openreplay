@@ -50,7 +50,7 @@ spec:
               error_connection=1
 
               while [ $exit_count -le 20 ];do
-                nc -zv clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000 -w 1
+                nc -zv {{.Values.clickhouse.chHost}} 9000 -w 1
                 if [ $? -ne 0 ]; then
                   echo "[info] clickhouse is not up; retrying in 5 seconds"
                   sleep 4
@@ -103,7 +103,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-      {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+      {{- if contains "minio" .Values.global.s3.endpoint }}
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
@@ -119,6 +119,8 @@ spec:
             value: "{{ .Values.minio.global.minio.accessKey }}"
           - name: MINIO_SECRET_KEY
             value: "{{ .Values.minio.global.minio.secretKey }}"
+          - name: MINIO_HOST
+            value: "{{ .Values.global.s3.endpoint }}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -147,6 +149,8 @@ spec:
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
             value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+          - name: VAULT_ADDR
+            value: "{{ .Values.global.vault.vaultHost }}"
         image: hashicorp/vault:1.12.0
         command: 
         - /bin/sh
@@ -208,6 +212,8 @@ spec:
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
+          - name: CLICKHOUSE_HOST
+            value: "{{.Values.clickhouse.chHost}}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
