@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
 import Resource, { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
@@ -12,6 +12,10 @@ import { Duration } from 'luxon';
 import { connectPlayer, jump } from 'Player';
 import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
+import { useStore } from 'App/mstore';
+import { useObserver } from 'mobx-react-lite';
+
+const INDEX_KEY = 'network';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -67,37 +71,6 @@ export function renderStart(r: any) {
   );
 }
 
-// const renderXHRText = () => (
-//   <span className="flex items-center">
-//     {XHR}
-//     <QuestionMarkHint
-//       content={
-//         <>
-//           Use our{' '}
-//           <a
-//             className="color-teal underline"
-//             target="_blank"
-//             href="https://docs.openreplay.com/plugins/fetch"
-//           >
-//             Fetch plugin
-//           </a>
-//           {' to capture HTTP requests and responses, including status codes and bodies.'} <br />
-//           We also provide{' '}
-//           <a
-//             className="color-teal underline"
-//             target="_blank"
-//             href="https://docs.openreplay.com/plugins/graphql"
-//           >
-//             support for GraphQL
-//           </a>
-//           {' for easy debugging of your queries.'}
-//         </>
-//       }
-//       className="ml-1"
-//     />
-//   </span>
-// );
-
 function renderSize(r: any) {
   if (r.responseBodySize) return formatBytes(r.responseBodySize);
   let triggerText;
@@ -152,6 +125,9 @@ export function renderDuration(r: any) {
   );
 }
 
+let timeOut: any = null;
+const TIMEOUT_DURATION = 5000;
+
 interface Props {
   location: any;
   resources: any;
@@ -160,58 +136,101 @@ interface Props {
   loadTime: any;
   playing: boolean;
   domBuildingTime: any;
-  currentIndex: any;
   time: any;
 }
 function NetworkPanel(props: Props) {
-  const {
-    resources,
-    time,
-    currentIndex,
-    domContentLoadedTime,
-    loadTime,
-    playing,
-    domBuildingTime,
-    fetchList,
-  } = props;
-  const { showModal, hideModal } = useModal();
-  const [activeTab, setActiveTab] = useState(ALL);
-  const [sortBy, setSortBy] = useState('time');
-  const [sortAscending, setSortAscending] = useState(true);
-  const [filter, setFilter] = useState('');
+  const { resources, time, domContentLoadedTime, loadTime, domBuildingTime, fetchList } = props;
+  const { showModal } = useModal();
+
+  const [filteredList, setFilteredList] = useState([]);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-  const [activeRequest, setActiveRequest] = useState(false )
-  const onTabClick = (activeTab: any) => setActiveTab(activeTab);
-  const onFilterChange = ({ target: { value } }: any) => setFilter(value);
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const additionalHeight = 0;
   const fetchPresented = fetchList.length > 0;
+  const {
+    sessionStore: { devTools },
+  } = useStore();
+  // const [filter, setFilter] = useState(devTools[INDEX_KEY].filter);
+  // const [activeTab, setActiveTab] = useState(ALL);
+  const filter = useObserver(() => devTools[INDEX_KEY].filter);
+  const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
+  const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
+  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
+  const synRef: any = useRef({});
 
-  const resourcesSize = resources.reduce(
-    (sum: any, { decodedBodySize }: any) => sum + (decodedBodySize || 0),
-    0
-  );
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
+  const onFilterChange = ({ target: { value } }: any) => {
+    devTools.update(INDEX_KEY, { filter: value });
+  };
 
-  const transferredSize = resources.reduce(
-    (sum: any, { headerSize, encodedBodySize }: any) =>
-      sum + (headerSize || 0) + (encodedBodySize || 0),
-    0
-  );
+  synRef.current = {
+    pauseSync,
+    activeIndex,
+  };
 
-  const filterRE = getRE(filter, 'i');
-  let filtered = React.useMemo(() => {
+  const removePause = () => {
+    setIsDetailsModalActive(false);
+    clearTimeout(timeOut);
+    timeOut = setTimeout(() => {
+      devTools.update(INDEX_KEY, { index: getCurrentIndex() });
+      setPauseSync(false);
+    }, TIMEOUT_DURATION);
+  };
+
+  const onMouseLeave = () => {
+    if (isDetailsModalActive) return;
+    removePause();
+  };
+
+  useEffect(() => {
+    if (pauseSync) {
+      removePause();
+    }
+
+    return () => {
+      clearTimeout(timeOut);
+      if (!synRef.current.pauseSync) {
+        devTools.update(INDEX_KEY, { index: 0 });
+      }
+    };
+  }, []);
+
+  const getCurrentIndex = () => {
+    return filteredList.filter((item: any) => item.time <= time).length - 1;
+  };
+
+  useEffect(() => {
+    const currentIndex = getCurrentIndex();
+    if (currentIndex !== activeIndex && !pauseSync) {
+      devTools.update(INDEX_KEY, { index: currentIndex });
+    }
+  }, [time]);
+
+  const { resourcesSize, transferredSize } = useMemo(() => {
+    const resourcesSize = resources.reduce(
+      (sum: any, { decodedBodySize }: any) => sum + (decodedBodySize || 0),
+      0
+    );
+
+    const transferredSize = resources.reduce(
+      (sum: any, { headerSize, encodedBodySize }: any) =>
+        sum + (headerSize || 0) + (encodedBodySize || 0),
+      0
+    );
+    return {
+      resourcesSize,
+      transferredSize,
+    };
+  }, [resources]);
+
+  useEffect(() => {
+    const filterRE = getRE(filter, 'i');
     let list = resources;
     fetchList.forEach(
       (fetchCall: any) =>
         (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
     );
     list = list.concat(fetchList);
-    list = list.sort((a: any, b: any) => {
-      return compare(a, b, sortBy);
-    });
-
-    if (!sortAscending) {
-      list = list.reverse();
-    }
 
     list = list.filter(
       ({ type, name, status, success }: any) =>
@@ -219,41 +238,53 @@ function NetworkPanel(props: Props) {
         (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
         (showOnlyErrors ? parseInt(status) >= 400 || !success : true)
     );
-    return list;
-  }, [filter, sortBy, sortAscending, showOnlyErrors, activeTab]);
+    setFilteredList(list);
+  }, [resources, filter, showOnlyErrors, activeTab]);
 
-  // const lastIndex = currentIndex || filtered.filter((item: any) => item.time <= time).length - 1;
-  const referenceLines = [];
-  if (domContentLoadedTime != null) {
-    referenceLines.push({
-      time: domContentLoadedTime.time,
-      color: DOM_LOADED_TIME_COLOR,
-    });
-  }
-  if (loadTime != null) {
-    referenceLines.push({
-      time: loadTime.time,
-      color: LOAD_TIME_COLOR,
-    });
-  }
+  const referenceLines = useMemo(() => {
+    const arr = [];
 
-  const onRowClick = (row: any) => {
-    showModal(<FetchDetailsModal resource={row} rows={filtered} fetchPresented={fetchPresented} />, {
-      right: true,
-    });
-  };
-
-  const handleSort = (sortKey: string) => {
-    if (sortKey === sortBy) {
-      setSortAscending(!sortAscending);
-      // setSortBy('time');
+    if (domContentLoadedTime != null) {
+      arr.push({
+        time: domContentLoadedTime.time,
+        color: DOM_LOADED_TIME_COLOR,
+      });
     }
-    setSortBy(sortKey);
+    if (loadTime != null) {
+      arr.push({
+        time: loadTime.time,
+        color: LOAD_TIME_COLOR,
+      });
+    }
+
+    return arr;
+  }, []);
+
+  const showDetailsModal = (row: any) => {
+    setIsDetailsModalActive(true);
+    showModal(
+      <FetchDetailsModal resource={row} rows={filteredList} fetchPresented={fetchPresented} />,
+      {
+        right: true,
+        onClose: removePause,
+      }
+    );
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
+    setPauseSync(true);
   };
+
+  useEffect(() => {
+    devTools.update(INDEX_KEY, { filter, activeTab });
+  }, [filter, activeTab]);
 
   return (
     <React.Fragment>
-      <BottomBlock style={{ height: 300 + additionalHeight + 'px' }} className="border">
+      <BottomBlock
+        style={{ height: 300 + additionalHeight + 'px' }}
+        className="border"
+        onMouseEnter={() => setPauseSync(true)}
+        onMouseLeave={onMouseLeave}
+      >
         <BottomBlock.Header>
           <div className="flex items-center">
             <span className="font-semibold color-gray-medium mr-4">Network</span>
@@ -274,6 +305,7 @@ function NetworkPanel(props: Props) {
             onChange={onFilterChange}
             height={28}
             width={230}
+            value={filter}
           />
         </BottomBlock.Header>
         <BottomBlock.Content>
@@ -287,7 +319,7 @@ function NetworkPanel(props: Props) {
               />
             </div>
             <InfoLine>
-              <InfoLine.Point label={filtered.length} value=" requests" />
+              <InfoLine.Point label={filteredList.length + ''} value=" requests" />
               <InfoLine.Point
                 label={formatBytes(transferredSize)}
                 value="transferred"
@@ -325,18 +357,20 @@ function NetworkPanel(props: Props) {
               </div>
             }
             size="small"
-            show={filtered.length === 0}
+            show={filteredList.length === 0}
           >
             <TimeTable
-              rows={filtered}
+              rows={filteredList}
               referenceLines={referenceLines}
               renderPopup
-              onRowClick={onRowClick}
+              onRowClick={showDetailsModal}
               additionalHeight={additionalHeight}
-              onJump={jump}
-              sortBy={sortBy}
-              sortAscending={sortAscending}
-              // activeIndex={lastIndex}
+              onJump={(row: any) => {
+                setPauseSync(true);
+                devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
+                jump(row.time);
+              }}
+              activeIndex={activeIndex}
             >
               {[
                 // {
@@ -348,28 +382,24 @@ function NetworkPanel(props: Props) {
                   label: 'Status',
                   dataKey: 'status',
                   width: 70,
-                  onClick: handleSort,
                 },
                 {
                   label: 'Type',
                   dataKey: 'type',
                   width: 90,
                   render: renderType,
-                  onClick: handleSort,
                 },
                 {
                   label: 'Name',
                   width: 240,
                   dataKey: 'name',
                   render: renderName,
-                  onClick: handleSort,
                 },
                 {
                   label: 'Size',
                   width: 80,
                   dataKey: 'decodedBodySize',
                   render: renderSize,
-                  onClick: handleSort,
                   hidden: activeTab === XHR,
                 },
                 {
@@ -377,7 +407,6 @@ function NetworkPanel(props: Props) {
                   width: 80,
                   dataKey: 'duration',
                   render: renderDuration,
-                  onClick: handleSort,
                 },
               ]}
             </TimeTable>
@@ -391,9 +420,12 @@ function NetworkPanel(props: Props) {
 export default connectPlayer((state: any) => ({
   location: state.location,
   resources: state.resourceList,
-  fetchList: state.fetchList.map((i: any) => Resource({ ...i.toJS(), type: TYPES.XHR })),
+  fetchList: state.fetchList.map((i: any) =>
+    Resource({ ...i.toJS(), type: TYPES.XHR, time: i.time < 0 ? 0 : i.time })
+  ),
   domContentLoadedTime: state.domContentLoadedTime,
   loadTime: state.loadTime,
+  time: state.time,
   playing: state.playing,
   domBuildingTime: state.domBuildingTime,
 }))(NetworkPanel);

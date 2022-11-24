@@ -132,7 +132,6 @@ export default class MessageDistributor extends StatedScreen {
         exceptions: session.errors.toJSON(),
       })
 
-
       /* === */
       this.loadMessages();
     }
