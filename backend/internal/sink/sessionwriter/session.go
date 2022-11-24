@@ -10,10 +10,11 @@ import (
 )
 
 type Session struct {
-	lock  *sync.Mutex
-	dom   *os.File
-	dev   *os.File
-	index []byte
+	lock    *sync.Mutex
+	dom     *os.File
+	dev     *os.File
+	index   []byte
+	updated bool
 }
 
 func NewSession(dir string, id uint64) (*Session, error) {
@@ -34,10 +35,11 @@ func NewSession(dir string, id uint64) (*Session, error) {
 	}
 
 	return &Session{
-		lock:  &sync.Mutex{},
-		dom:   domFile,
-		dev:   devFile,
-		index: make([]byte, 8),
+		lock:    &sync.Mutex{},
+		dom:     domFile,
+		dev:     devFile,
+		index:   make([]byte, 8),
+		updated: false,
 	}, nil
 }
 
@@ -50,25 +52,20 @@ func (s *Session) Unlock() {
 }
 
 func (s *Session) Write(msg messages.Message) (err error) {
-	// Try to encode message
-	data := msg.Encode()
-	if data == nil {
-		return fmt.Errorf("can't encode message")
-	}
-	// Encode message index
+	// Message index
 	binary.LittleEndian.PutUint64(s.index, msg.Meta().Index)
-
-	// Write message to file
+	// Write index and data to file
 	if messages.IsDOMType(msg.TypeID()) {
 		_, err = s.dom.Write(s.index)
-		_, err = s.dom.Write(data)
+		_, err = s.dom.Write(msg.Encode())
 		if err != nil {
 			return err
 		}
 	}
+	s.updated = true
 	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
 		_, err = s.dev.Write(s.index)
-		_, err = s.dev.Write(data)
+		_, err = s.dev.Write(msg.Encode())
 		if err != nil {
 			return err
 		}
@@ -77,6 +74,9 @@ func (s *Session) Write(msg messages.Message) (err error) {
 }
 
 func (s *Session) Sync() error {
+	if !s.updated {
+		return nil
+	}
 	domErr := s.dom.Sync()
 	devErr := s.dev.Sync()
 	if domErr == nil && devErr == nil {

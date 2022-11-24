@@ -10,29 +10,26 @@ import (
 )
 
 type SessionWriter struct {
-	ulimit   int
-	dir      string
-	lock     *sync.Mutex
-	sessions map[uint64]*Session
-	meta     map[uint64]int64
-	edited   map[uint64]bool
-	toSync   chan *Session
-	done     chan struct{}
-	stopped  chan struct{}
-	synced   int
+	ulimit               int
+	dir                  string
+	zombieSessionTimeout float64
+	lock                 *sync.Mutex
+	sessions             *sync.Map
+	meta                 map[uint64]int64
+	done                 chan struct{}
+	stopped              chan struct{}
 }
 
 func NewWriter(ulimit uint16, dir string, zombieSessionTimeout int64) *SessionWriter {
 	w := &SessionWriter{
-		ulimit:   int(ulimit) / 2, // should divide by 2 because each session has 2 files
-		dir:      dir + "/",
-		lock:     &sync.Mutex{},
-		sessions: make(map[uint64]*Session, ulimit),
-		meta:     make(map[uint64]int64, ulimit),
-		edited:   make(map[uint64]bool, ulimit),
-		toSync:   make(chan *Session, ulimit),
-		done:     make(chan struct{}),
-		stopped:  make(chan struct{}),
+		ulimit:               int(ulimit) / 2, // should divide by 2 because each session has 2 files
+		dir:                  dir + "/",
+		zombieSessionTimeout: float64(zombieSessionTimeout),
+		lock:                 &sync.Mutex{},
+		sessions:             &sync.Map{},
+		meta:                 make(map[uint64]int64, ulimit),
+		done:                 make(chan struct{}),
+		stopped:              make(chan struct{}),
 	}
 	go w.synchronizer()
 	return w
@@ -52,12 +49,7 @@ func (w *SessionWriter) Stop() {
 }
 
 func (w *SessionWriter) Info() string {
-	w.lock.Lock()
-	sess := len(w.meta)
-	sync := w.synced
-	w.synced = 0
-	w.lock.Unlock()
-	return fmt.Sprintf("%d sessions, %d synced", sess, sync)
+	return fmt.Sprintf("%d sessions", w.numberOfSessions())
 }
 
 func (w *SessionWriter) addSession(sid uint64) {
@@ -82,21 +74,17 @@ func (w *SessionWriter) write(msg messages.Message) error {
 	var (
 		sess *Session
 		err  error
+		sid  = msg.SessionID()
 	)
-	sid := msg.SessionID()
 
-	// Try to get session
-	w.lock.Lock()
-	sess, ok := w.sessions[sid]
-	w.edited[sid] = true
-	w.lock.Unlock()
-
+	sessObj, ok := w.sessions.Load(sid)
 	if !ok {
-		// Open/create session file
 		sess, err = NewSession(w.dir, sid)
 		if err != nil {
 			return fmt.Errorf("can't write to session: %d, err: %s", sid, err)
 		}
+		sess.Lock()
+		defer sess.Unlock()
 
 		// Check opened files limit
 		if len(w.meta) >= w.ulimit {
@@ -113,70 +101,65 @@ func (w *SessionWriter) write(msg messages.Message) error {
 			}
 		}
 
-		// Add new session
-		w.lock.Lock()
-		w.meta[sid] = time.Now().Unix()
-		w.sessions[sid] = sess
-		w.lock.Unlock()
+		// Add new session to manager
+		w.sessions.Store(sid, sess)
+		w.addSession(sid)
+	} else {
+		sess = sessObj.(*Session)
+		sess.Lock()
+		defer sess.Unlock()
 	}
 
 	// Write data to session
-	sess.Lock()
-	err = sess.Write(msg)
-	sess.Unlock()
+	return sess.Write(msg)
+}
 
+func (w *SessionWriter) sync(sid uint64) error {
+	sessObj, ok := w.sessions.Load(sid)
+	if !ok {
+		return fmt.Errorf("can't sync, session: %d not found", sid)
+	}
+	sess := sessObj.(*Session)
+	sess.Lock()
+	err := sess.Sync()
+	sess.Unlock()
 	return err
 }
 
 func (w *SessionWriter) close(sid uint64) error {
-	w.lock.Lock()
-	sess, ok := w.sessions[sid]
-	w.lock.Unlock()
+	sessObj, ok := w.sessions.LoadAndDelete(sid)
 	if !ok {
-		return fmt.Errorf("session: %d not found", sid)
+		return fmt.Errorf("can't close, session: %d not found", sid)
 	}
+	sess := sessObj.(*Session)
 	sess.Lock()
 	if err := sess.Sync(); err != nil {
 		log.Printf("can't sync session: %d, err: %s", sid, err)
 	}
 	err := sess.Close()
+	w.deleteSession(sid)
 	sess.Unlock()
-
-	w.lock.Lock()
-	delete(w.sessions, sid)
-	delete(w.meta, sid)
-	delete(w.edited, sid)
-	w.lock.Unlock()
 	return err
 }
 
 func (w *SessionWriter) synchronizer() {
-	tick := time.Tick(5 * time.Second)
+	tick := time.Tick(2 * time.Second)
 	for {
 		select {
 		case <-tick:
-			w.lock.Lock()
-			for sid, _ := range w.edited {
-				if sess, ok := w.sessions[sid]; ok {
-					w.toSync <- sess
-					w.synced++
+			w.sessions.Range(func(sid, lockObj any) bool {
+				if err := w.sync(sid.(uint64)); err != nil {
+					log.Printf("can't sync file descriptor: %s", err)
 				}
-			}
-			w.edited = make(map[uint64]bool, w.ulimit)
-			w.lock.Unlock()
-		case sess := <-w.toSync:
-			sess.Lock()
-			err := sess.Sync()
-			sess.Unlock()
-			if err != nil {
-				log.Printf("can't sync: %s", err)
-			}
+				return true
+			})
 		case <-w.done:
-			for sid, _ := range w.sessions {
-				if err := w.close(sid); err != nil {
-					log.Printf("can't close session: %s", err)
+			w.sessions.Range(func(sid, lockObj any) bool {
+				if err := w.close(sid.(uint64)); err != nil {
+					log.Printf("can't close file descriptor: %s", err)
 				}
-			}
+				return true
+			})
 			w.stopped <- struct{}{}
 			return
 		}

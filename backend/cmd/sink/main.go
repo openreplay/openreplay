@@ -95,14 +95,19 @@ func main() {
 			counter.Update(msg.SessionID(), time.UnixMilli(ts))
 		}
 
-		// Write message to file
-		if err := writer.Write(msg); err != nil {
-			log.Printf("writer error: %s", err)
+		// Encode message to avoid empty data because of corrupted batch
+		data := msg.Encode()
+		if data == nil {
 			return
 		}
 
+		// Write message to session
+		if err := writer.Write(msg); err != nil {
+			log.Printf("writer error: %s", err)
+		}
+
 		// [METRICS] Increase the number of written to the files messages and the message size
-		messageSize.Record(context.Background(), float64(len(msg.Encode())))
+		messageSize.Record(context.Background(), float64(len(data)))
 		savedMessages.Add(context.Background(), 1)
 	}
 
