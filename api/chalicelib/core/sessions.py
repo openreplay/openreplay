@@ -177,7 +177,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
     if data.bookmarked:
         data.startDate, data.endDate = sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
@@ -185,9 +185,11 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)
     if data.limit is not None and data.page is not None:
+        full_args["sessions_limit"] = data.limit
         full_args["sessions_limit_s"] = (data.page - 1) * data.limit
         full_args["sessions_limit_e"] = data.page * data.limit
     else:
+        full_args["sessions_limit"] = 200
         full_args["sessions_limit_s"] = 1
         full_args["sessions_limit_e"] = 200
 
@@ -243,17 +245,24 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
 
-            meta_keys = metadata.get(project_id=project_id)
-            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
-                                                COALESCE(JSONB_AGG(full_sessions) 
-                                                    FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
-                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
-                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
-                                            {query_part}
-                                            ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
-                                     full_args)
+            if ids_only:
+                main_query = cur.mogrify(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                         full_args)
+            else:
+                meta_keys = metadata.get(project_id=project_id)
+                main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
+                                                    COALESCE(JSONB_AGG(full_sessions) 
+                                                        FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
+                                                FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
+                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                                                    {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                {query_part}
+                                                ORDER BY s.session_id desc) AS filtred_sessions
+                                                ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
+                                         full_args)
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
@@ -266,7 +275,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print(data.json())
             print("--------------------")
             raise err
-        if errors_only:
+        if errors_only or ids_only:
             return helper.list_to_camel_case(cur.fetchall())
 
         sessions = cur.fetchone()
