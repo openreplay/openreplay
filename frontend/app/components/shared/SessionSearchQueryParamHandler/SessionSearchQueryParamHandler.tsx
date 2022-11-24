@@ -49,10 +49,12 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
       } else {
         const _filters: any = { ...filtersMap };
         const _filter = _filters[key];
-        _filter.value = valueArr;
-        _filter.operator = operator;
-        _filter.source = sourceArr;
-        props.addFilter(_filter);
+        if (!!_filter) {
+          _filter.value = valueArr;
+          _filter.operator = operator;
+          _filter.source = sourceArr;
+          props.addFilter(_filter);
+        }
       }
     }
   };
