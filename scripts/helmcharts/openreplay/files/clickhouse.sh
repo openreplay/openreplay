@@ -3,7 +3,6 @@
 set -ex
 
 clickhousedir=/opt/openreplay/openreplay/scripts/schema/db/init_dbs/clickhouse
-CLICKHOUSE_HOST=${CLICKHOUSE_HOST}
 
 function migrate() {
     echo "Starting clickhouse migration"
@@ -20,7 +19,7 @@ function init() {
     echo "Initializing clickhouse"
     for file in `ls ${clickhousedir}/create/*.sql`; do
         echo "Injecting $file"
-        clickhouse-client -h ${CH_CLIENT} --port ${CH_PORT} --multiquery < $file || true
+        clickhouse-client -h ${CH_HOST} --port ${CH_PORT} --multiquery < $file || true
     done
 }
 

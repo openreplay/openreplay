@@ -22,7 +22,7 @@ clickhouse: &clickhouse
   enabled: false
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   service:
-    webPort: 9200
+    webPort: 9000
 
 quickwit: &quickwit
   # For enterpriseEdition

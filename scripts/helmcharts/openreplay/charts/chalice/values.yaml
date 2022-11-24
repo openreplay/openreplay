@@ -91,7 +91,6 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  ch_port: 9000
   captcha_server: ''
   captcha_key: ''
   async_Token: ''

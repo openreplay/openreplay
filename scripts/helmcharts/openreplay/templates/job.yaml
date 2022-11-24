@@ -50,7 +50,7 @@ spec:
               error_connection=1
 
               while [ $exit_count -le 20 ];do
-                nc -zv {{.Values.clickhouse.chHost}} 9000 -w 1
+                nc -zv {{.Values.global.clickhouse.chHost}} 9000 -w 1
                 if [ $? -ne 0 ]; then
                   echo "[info] clickhouse is not up; retrying in 5 seconds"
                   sleep 4
@@ -212,8 +212,10 @@ spec:
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
-          - name: CLICKHOUSE_HOST
-            value: "{{.Values.clickhouse.chHost}}"
+          - name: CH_HOST
+            value: "{{.Values.global.clickhouse.chHost}}"
+          - name: CH_PORT
+            value: "{{.Values.global.clickhouse.service.webPort}}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

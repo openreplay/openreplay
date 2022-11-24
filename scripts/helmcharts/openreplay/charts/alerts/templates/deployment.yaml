@@ -51,6 +51,10 @@ spec:
               value: "5432"
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+            - name: ch_host
+              value: "{{ .Values.global.clickhouse.chHost }}"
+            - name: ch_port
+              value: "{{ .Values.global.clickhouse.service.webPort }}"
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password

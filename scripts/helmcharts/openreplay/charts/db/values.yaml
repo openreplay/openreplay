@@ -97,7 +97,8 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-env: {}
+env:
+  ch_db: default
 
 
 nodeSelector: {}

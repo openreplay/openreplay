@@ -59,6 +59,8 @@ spec:
               value: {{ .Values.global.s3.accessKey }}
             - name: S3_SECRET
               value: {{ .Values.global.s3.secretKey }}
+            - name: REDIS_URL
+              value: {{ .Values.global.redis.redisHost }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

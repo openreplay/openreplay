@@ -43,6 +43,10 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: ch_host
+              value: "{{ .Values.global.clickhouse.chHost }}"
+            - name: ch_port
+              value: "{{ .Values.global.clickhouse.service.webPort }}"
             - name: ASSIST_JWT_SECRET
               value: {{ .Values.global.assistJWTSecret }}
             - name: ASSIST_KEY
