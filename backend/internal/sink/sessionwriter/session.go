@@ -1,20 +1,25 @@
 package sessionwriter
 
 import (
+	"bufio"
 	"encoding/binary"
 	"fmt"
 	"openreplay/backend/pkg/messages"
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Session struct {
-	lock    *sync.Mutex
-	dom     *os.File
-	dev     *os.File
-	index   []byte
-	updated bool
+	lock       *sync.Mutex
+	domFile    *os.File
+	devFile    *os.File
+	dom        *bufio.Writer
+	dev        *bufio.Writer
+	lastUpdate time.Time // TODO: keep for timeout logic
+	index      []byte
+	updated    bool // TODO: try with timeout to write data once in N minutes
 }
 
 func NewSession(dir string, id uint64) (*Session, error) {
@@ -36,8 +41,10 @@ func NewSession(dir string, id uint64) (*Session, error) {
 
 	return &Session{
 		lock:    &sync.Mutex{},
-		dom:     domFile,
-		dev:     devFile,
+		domFile: domFile,
+		devFile: devFile,
+		dom:     bufio.NewWriter(domFile),
+		dev:     bufio.NewWriter(domFile),
 		index:   make([]byte, 8),
 		updated: false,
 	}, nil
@@ -54,7 +61,7 @@ func (s *Session) Unlock() {
 func (s *Session) Write(msg messages.Message) (err error) {
 	// Message index
 	binary.LittleEndian.PutUint64(s.index, msg.Meta().Index)
-	// Write index and data to file
+	//
 	if messages.IsDOMType(msg.TypeID()) {
 		_, err = s.dom.Write(s.index)
 		_, err = s.dom.Write(msg.Encode())
@@ -77,19 +84,27 @@ func (s *Session) Sync() error {
 	if !s.updated {
 		return nil
 	}
-	domErr := s.dom.Sync()
-	devErr := s.dev.Sync()
-	if domErr == nil && devErr == nil {
-		return nil
+	if err := s.dom.Flush(); err != nil {
+		return err
 	}
-	return fmt.Errorf("dom: %s, dev: %s", domErr, devErr)
+	if err := s.domFile.Sync(); err != nil {
+		return err
+	}
+	if err := s.dev.Flush(); err != nil {
+		return err
+	}
+	if err := s.devFile.Sync(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Session) Close() error {
-	domErr := s.dom.Close()
-	devErr := s.dev.Close()
-	if domErr == nil && devErr == nil {
-		return nil
+	if err := s.domFile.Close(); err != nil {
+		return err
 	}
-	return fmt.Errorf("dom: %s, dev: %s", domErr, devErr)
+	if err := s.devFile.Close(); err != nil {
+		return err
+	}
+	return nil
 }

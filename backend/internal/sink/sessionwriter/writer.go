@@ -70,7 +70,7 @@ func (w *SessionWriter) numberOfSessions() int {
 	return len(w.meta)
 }
 
-func (w *SessionWriter) write(msg messages.Message) error {
+func (w *SessionWriter) write(msg messages.Message) error { //sid uint64, mode FileType, data []byte) error {
 	var (
 		sess *Session
 		err  error
@@ -111,7 +111,7 @@ func (w *SessionWriter) write(msg messages.Message) error {
 	}
 
 	// Write data to session
-	return sess.Write(msg)
+	return sess.Write(msg) //mode, data)
 }
 
 func (w *SessionWriter) sync(sid uint64) error {
