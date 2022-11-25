@@ -20,7 +20,7 @@ import {
   OVERVIEW,
 } from 'Duck/components/player';
 import NetworkPanel from 'Shared/DevTools/NetworkPanel';
-import StackEvents from '../StackEvents/StackEvents';
+// import StackEvents from '../StackEvents/StackEvents';
 import Storage from '../Storage';
 import { ConnectedPerformance } from '../Performance';
 import GraphQL from '../GraphQL';
@@ -40,7 +40,6 @@ import StackEventPanel from 'Shared/DevTools/StackEventPanel';
 function Player(props) {
   const {
     className,
-    bottomBlockIsActive,
     fullscreen,
     fullscreenOff,
     nextId,
@@ -51,6 +50,7 @@ function Player(props) {
   } = props;
   const playerContext = React.useContext(PlayerContext)
   const screenWrapper = React.useRef();
+  const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE
 
   React.useEffect(() => {
     props.updateLastPlayedSession(props.sessionId);
@@ -66,6 +66,8 @@ function Player(props) {
   }, [props.bottomBlock, props.fullscreen, playerContext.player])
 
   if (!playerContext.player) return null;
+
+  console.log(bottomBlock)
 
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
   return (
@@ -112,6 +114,7 @@ export default connect((state) => {
       fullscreen: state.getIn(['components', 'player', 'fullscreen']),
       nextId: state.getIn(['sessions', 'nextId']),
       sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
       closedLive:
         !!state.getIn(['sessions', 'errors']) ||
         (isAssist && !state.getIn(['sessions', 'current', 'live'])),

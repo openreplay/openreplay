@@ -13,6 +13,7 @@ import { useObserver } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
+import { throttle } from 'App/utils'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -28,6 +29,7 @@ const LEVEL_TAB = {
 };
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
+let throttledCall = () => 999
 
 function renderWithNL(s = '') {
   if (typeof s !== 'string') return '';
@@ -64,11 +66,24 @@ const TIMEOUT_DURATION = 5000;
 
 function ConsolePanel() {
   const { player, store } = React.useContext(PlayerContext)
+  const additionalHeight = 0;
+  const {
+    sessionStore: { devTools },
+  } = useStore();
+
+  const filter = devTools[INDEX_KEY].filter;
+  const activeTab = devTools[INDEX_KEY].activeTab;
+  const activeIndex = devTools[INDEX_KEY].index;
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
+  const [filteredList, setFilteredList] = useState([]);
+  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
+  const synRef: any = useRef({});
+  const { showModal } = useModal();
 
   const jump = (t: number) => player.jump(t)
   const { logList, exceptionsList, time } = store.get()
 
-  const logExceptions = exceptionsList.map(({ time, errorId, name, projectId }: any) =>
+  const logExceptions = exceptionsList.map(({ time, errorId, name }: any) =>
     Log({
       level: LEVEL.ERROR,
       value: name,
@@ -78,19 +93,6 @@ function ConsolePanel() {
   );
   // @ts-ignore
   const logs = logList.concat(logExceptions)
-  const additionalHeight = 0;
-  const {
-    sessionStore: { devTools },
-  } = useStore();
-
-  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
-  const [filteredList, setFilteredList] = useState([]);
-  const filter = useObserver(() => devTools[INDEX_KEY].filter);
-  const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
-  const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
-  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
-  const synRef: any = useRef({});
-  const { showModal } = useModal();
 
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) => {
@@ -116,29 +118,9 @@ function ConsolePanel() {
     removePause();
   };
 
-  useEffect(() => {
-    if (pauseSync) {
-      removePause();
-    }
-
-    return () => {
-      clearTimeout(timeOut);
-      if (!synRef.current.pauseSync) {
-        devTools.update(INDEX_KEY, { index: 0 });
-      }
-    };
-  }, []);
-
   const getCurrentIndex = () => {
     return filteredList.filter((item: any) => item.time <= time).length - 1;
   };
-
-  useEffect(() => {
-    const currentIndex = getCurrentIndex();
-    if (currentIndex !== activeIndex && !pauseSync) {
-      devTools.update(INDEX_KEY, { index: currentIndex });
-    }
-  }, [time]);
 
   const cache = new CellMeasurerCache({
     fixedWidth: true,
@@ -177,6 +159,27 @@ function ConsolePanel() {
     );
   };
 
+  useEffect(() => {
+    if (pauseSync) {
+      removePause();
+    }
+    throttledCall = throttle(getCurrentIndex, 500, undefined)
+    return () => {
+      clearTimeout(timeOut);
+      if (!synRef.current.pauseSync) {
+        devTools.update(INDEX_KEY, { index: 0 });
+      }
+    };
+  }, []);
+
+
+  useEffect(() => {
+    const currentIndex = throttledCall()
+    if (currentIndex !== activeIndex && !pauseSync) {
+      devTools.update(INDEX_KEY, { index: currentIndex });
+    }
+  }, [time]);
+
   React.useMemo(() => {
     const filterRE = getRE(filter, 'i');
     let list = logs;
@@ -186,16 +189,19 @@ function ConsolePanel() {
         (!!filter ? filterRE.test(value) : true) &&
         (activeTab === ALL || activeTab === LEVEL_TAB[level])
     );
+    console.log('log filter tab', logs.length, filter, activeTab)
     setFilteredList(list);
-  }, [logs, filter, activeTab]);
+  }, [logs.length, filter, activeTab]);
 
   useEffect(() => {
     if (_list.current) {
+      console.log('active index')
       // @ts-ignore
       _list.current.scrollToRow(activeIndex);
     }
   }, [activeIndex]);
 
+  console.log('rerender')
   return (
     <BottomBlock
       style={{ height: 300 + additionalHeight + 'px' }}

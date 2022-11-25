@@ -2,6 +2,7 @@ import JSBI from 'jsbi';
 import chroma from 'chroma-js';
 import * as htmlToImage from 'html-to-image';
 import { SESSION_FILTER } from 'App/constants/storageKeys';
+import { useEffect, useRef, useState } from 'react';
 
 export function debounce(callback, wait, context = this) {
     let timeout = null;
@@ -380,3 +381,35 @@ export function millisToMinutesAndSeconds(millis: any) {
     const seconds: any = ((millis % 60000) / 1000).toFixed(0);
     return minutes + 'm' + (seconds < 10 ? '0' : '') + seconds + 's';
 }
+
+export function throttle(func, wait, options) {
+    var context, args, result;
+    var timeout = null;
+    var previous = 0;
+    if (!options) options = {};
+    var later = function() {
+      previous = options.leading === false ? 0 : Date.now();
+      timeout = null;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    };
+    return function() {
+      var now = Date.now();
+      if (!previous && options.leading === false) previous = now;
+      var remaining = wait - (now - previous);
+      context = this;
+      args = arguments;
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        previous = now;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      } else if (!timeout && options.trailing !== false) {
+        timeout = setTimeout(later, remaining);
+      }
+      return result;
+    };
+  };

@@ -12,7 +12,6 @@ function Autoplay(props) {
   const { player, store } = React.useContext(PlayerContext)
 
   const { autoplay } = store.get()
-  const { toggleAutoplay } = player
 
   useEffect(() => {
     props.setAutoplayValues();
@@ -21,10 +20,10 @@ function Autoplay(props) {
   return (
     <div className="flex items-center">
       <div
-        onClick={toggleAutoplay}
+        onClick={() => player.toggleAutoplay()}
         className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2"
       >
-        <Toggler name="sessionsLive" onChange={toggleAutoplay} checked={autoplay} />
+        <Toggler name="sessionsLive" onChange={() => player.toggleAutoplay()} checked={autoplay} />
         <span className="ml-2 whitespace-nowrap">Auto-Play</span>
       </div>
 

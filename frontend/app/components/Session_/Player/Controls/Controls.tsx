@@ -75,11 +75,11 @@ function Controls(props: any) {
     inspectorMode,
     markedTargets,
     // messagesLoading: fullscreenDisabled, UPDATE
-    stackList,
+    // stackList,
     exceptionsList,
     profilesList,
     graphqlList,
-    fetchList,
+    // fetchList,
     liveTimeTravel,
     logMarkedCountNow: logRedCount,
     resourceMarkedCountNow: resourceRedCount,
@@ -204,10 +204,10 @@ function Controls(props: any) {
 
   const toggleBottomTools = (blockName: number) => {
     if (blockName === INSPECTOR) {
-      player.toggleInspectorMode(false);
+      // player.toggleInspectorMode(false);
       bottomBlock && toggleBottomBlock();
     } else {
-      player.toggleInspectorMode(false);
+      // player.toggleInspectorMode(false);
       toggleBottomBlock(blockName);
     }
   };
