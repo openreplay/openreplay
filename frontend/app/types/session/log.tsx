@@ -16,7 +16,7 @@ export const LEVEL = {
 }
 
 export function isRed(log) {
-	return log.level === EXCEPTION || log.level === ERROR;
+	return
 }
 
 export default Record({
@@ -36,4 +36,16 @@ export default Record({
 	}
 });
 
+interface ILog {
+  level: string
+  value: string
+  time: number
+  index?: number
+  errorId?: string
+}
 
+export const Log = (log: ILog) => ({
+  isRed: () => log.level === EXCEPTION || log.level === ERROR,
+  isYellow: () => log.level === WARNING || log.level === WARN,
+  ...log
+})

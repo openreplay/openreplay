@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Log from 'Types/session/log';
+import { Log, LEVEL } from 'Types/session/log';
 import BottomBlock from '../BottomBlock';
-import { LEVEL } from 'Types/session/log';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
@@ -9,7 +8,6 @@ import { getRE } from 'App/utils';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
-import { useObserver } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
@@ -138,6 +136,7 @@ function ConsolePanel() {
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
 
+    console.log({ ...filteredList }, { ...item })
     return (
       // @ts-ignore
       <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>

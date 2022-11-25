@@ -4,7 +4,7 @@ import logger from 'App/logger';
 
 import Resource, { TYPES } from 'Types/session/resource';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
-import Log from 'Types/session/log';
+import { Log } from 'Types/session/log';
 
 import { toast } from 'react-toastify';
 
