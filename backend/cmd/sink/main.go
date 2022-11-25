@@ -96,7 +96,7 @@ func main() {
 		}
 
 		// Write encoded message with index to session file
-		data := msg.Encode()
+		data := msg.Encode() //WithIndex()
 		if data == nil {
 			return
 		}
@@ -126,7 +126,8 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(30 * time.Second)
+	tick := time.Tick(10 * time.Second)
+	tickInfo := time.Tick(30 * time.Second)
 	for {
 		select {
 		case sig := <-sigchan:
@@ -140,10 +141,11 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			counter.Print()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+		case <-tickInfo:
+			counter.Print()
 			log.Printf("writer: %s", writer.Info())
 		default:
 			err := consumer.ConsumeNext()

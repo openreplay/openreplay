@@ -9,7 +9,7 @@ type Config struct {
 	common.Config
 	FsDir                string `env:"FS_DIR,required"`
 	FsUlimit             uint16 `env:"FS_ULIMIT,required"`
-	SyncTimeout          int    `env:"SYNC_TIMEOUT,default=10"`
+	SyncTimeout          int    `env:"SYNC_TIMEOUT,default=5"`
 	GroupSink            string `env:"GROUP_SINK,required"`
 	TopicRawWeb          string `env:"TOPIC_RAW_WEB,required"`
 	TopicRawIOS          string `env:"TOPIC_RAW_IOS,required"`

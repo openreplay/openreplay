@@ -45,7 +45,7 @@ func (w *SessionWriter) Write(msg messages.Message) (err error) {
 		// Create new session
 		sess, err = NewSession(w.workingDir, sid)
 		if err != nil {
-			return fmt.Errorf("can't write to session: %d, err: %s", sid, err)
+			return fmt.Errorf("can't create session: %d, err: %s", sid, err)
 		}
 
 		// Check opened sessions limit and close extra session if you need to

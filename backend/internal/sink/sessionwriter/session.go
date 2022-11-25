@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"openreplay/backend/pkg/messages"
 	"os"
 	"strconv"
@@ -41,14 +42,26 @@ func NewSession(dir string, id uint64) (*Session, error) {
 		lock:    &sync.Mutex{},
 		domFile: domFile,
 		devFile: devFile,
-		dom:     bufio.NewWriter(domFile),
-		dev:     bufio.NewWriter(domFile),
+		dom:     bufio.NewWriterSize(domFile, 32*1024),
+		dev:     bufio.NewWriterSize(devFile, 32*1024),
 		index:   make([]byte, 8),
 		updated: false,
 	}, nil
 }
 
-func (s *Session) Write(msg messages.Message) (err error) {
+func (s *Session) write(w io.Writer, data []byte) error {
+	leftToWrite := len(data)
+	for leftToWrite > 0 {
+		writtenDown, err := w.Write(data)
+		if err != nil {
+			return err
+		}
+		leftToWrite -= writtenDown
+	}
+	return nil
+}
+
+func (s *Session) Write(msg messages.Message) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -57,18 +70,24 @@ func (s *Session) Write(msg messages.Message) (err error) {
 
 	// Write message to dom.mob file
 	if messages.IsDOMType(msg.TypeID()) {
-		_, err = s.dom.Write(s.index)
-		_, err = s.dom.Write(msg.Encode())
-		if err != nil {
+		// Write message index
+		if err := s.write(s.dom, s.index); err != nil {
+			return err
+		}
+		// Write message body
+		if err := s.write(s.dom, msg.Encode()); err != nil {
 			return err
 		}
 	}
 	s.updated = true
 	// Write message to dev.mob file
 	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
-		_, err = s.dev.Write(s.index)
-		_, err = s.dev.Write(msg.Encode())
-		if err != nil {
+		// Write message index
+		if err := s.write(s.dev, s.index); err != nil {
+			return err
+		}
+		// Write message body
+		if err := s.write(s.dev, msg.Encode()); err != nil {
 			return err
 		}
 	}
