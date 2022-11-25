@@ -391,28 +391,6 @@ export default class MessageManager {
     let decoded;
     const time = msg.time;
     switch (msg.tp) {
-      /* Lists: */
-      case "console_log":
-        if (msg.level === 'debug') break;
-        this.lists.lists.log.append(
-          // @ts-ignore : TODO: enums in the message schema
-          Log(msg)
-        )
-        break;
-      case "fetch":
-        this.lists.lists.fetch.append(Resource({
-          method: msg.method,
-          url: msg.url,
-          payload: msg.request,
-          response: msg.response,
-          status: msg.status,
-          duration: msg.duration,
-          type: TYPES.FETCH,
-          time: msg.timestamp - this.sessionStart, //~
-          index,
-        }));
-        break;
-      /* */
       case "set_page_location":
         this.locationManager.append(msg);
         if (msg.navigationStart > 0) {
@@ -442,6 +420,27 @@ export default class MessageManager {
         break;
       case "o_table":
         this.decoder.set(msg.key, msg.value);
+        break;
+      /* Lists: */
+      case "console_log":
+        if (msg.level === 'debug') break;
+        this.lists.lists.log.append(
+          // @ts-ignore : TODO: enums in the message schema
+          Log(msg)
+        )
+        break;
+      case "fetch":
+        this.lists.lists.fetch.append(Resource({
+          method: msg.method,
+          url: msg.url,
+          payload: msg.request,
+          response: msg.response,
+          status: msg.status,
+          duration: msg.duration,
+          type: TYPES.FETCH,
+          time: msg.timestamp - this.sessionStart, //~
+          index,
+        }));
         break;
       case "redux":
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
@@ -484,6 +483,7 @@ export default class MessageManager {
       case "profiler":
         this.lists.lists.profiles.append(msg);
         break;
+      /* ===|=== */
       default:
         switch (msg.tp) {
           case "create_document":

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { LogLevel } from 'Player';
+import { LogLevel, ILog } from 'Player';
 import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
@@ -11,7 +11,6 @@ import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtuali
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
-import { throttle } from 'App/utils'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -21,13 +20,12 @@ const ERRORS = 'ERRORS';
 const LEVEL_TAB = {
   [LogLevel.INFO]: INFO,
   [LogLevel.LOG]: INFO,
-  [LogLevel.WARNING]: WARNINGS,
+  [LogLevel.WARN]: WARNINGS,
   [LogLevel.ERROR]: ERRORS,
   [LogLevel.EXCEPTION]: ERRORS,
-};
+} as const
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
-let throttledCall = () => 999
 
 function renderWithNL(s = '') {
   if (typeof s !== 'string') return '';
@@ -59,72 +57,113 @@ const getIconProps = (level: any) => {
 
 
 const INDEX_KEY = 'console';
-let timeOut: any = null;
 const TIMEOUT_DURATION = 5000;
 
 function ConsolePanel() {
-  const { player, store } = React.useContext(PlayerContext)
-  const additionalHeight = 0;
   const {
     sessionStore: { devTools },
-  } = useStore();
+  } = useStore()
 
   const filter = devTools[INDEX_KEY].filter;
   const activeTab = devTools[INDEX_KEY].activeTab;
+  // Why do we need to keep index in the store? if we could get read of it it would simplify the code
   const activeIndex = devTools[INDEX_KEY].index;
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const [filteredList, setFilteredList] = useState([]);
-  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
-  const synRef: any = useRef({});
+  const [autoScroll, setAutoScroll] = useState(activeIndex === 0);
   const { showModal } = useModal();
+  const [logs, setLogs] = useState([])
 
+  const { player, store } = React.useContext(PlayerContext)
   const jump = (t: number) => player.jump(t)
-  const { logList, exceptionsList, time } = store.get()
 
-  // @ts-ignore
-  const logs = logList.concat(exceptionsList)
+  const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
+  useEffect(() => {
+    setLogs(logList.concat(exceptionsList).sort((a, b) => a.time - b.time))
+  }, [logList.length, exceptionsList.length ])
 
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) => {
-    devTools.update(INDEX_KEY, { filter: value });
-  };
+  useEffect(() => {
+    const filterRE = getRE(filter, 'i')
+    const list = logs.filter(
+      ({ value, level }: ILog) =>
+        (!!filter ? filterRE.test(value) : true) &&
+        (activeTab === ALL || activeTab === LEVEL_TAB[level])
+    )
+    setFilteredList(list)
+  }, [logs.length, filter, activeTab])
 
-  synRef.current = {
-    pauseSync,
-    activeIndex,
-  };
+  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
+  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
 
-  const removePause = () => {
-    setIsDetailsModalActive(false);
-    clearTimeout(timeOut);
-    timeOut = setTimeout(() => {
-      devTools.update(INDEX_KEY, { index: getCurrentIndex() });
-      setPauseSync(false);
+  
+  const autoScrollIndex = logListNow.length + exceptionsListNow.length
+  // AutoScroll index update
+  useEffect(() => {
+    if (autoScroll && autoScrollIndex !== activeIndex) {
+      devTools.update(INDEX_KEY, { index: autoScrollIndex }) // can just scroll here
+    }
+  }, [autoScroll, autoScrollIndex])
+
+  const timeoutIDRef = React.useRef<ReturnType<typeof setTimeout>>()
+  const timeoutStartAutoScroll = () => {
+    clearTimeout(timeoutIDRef.current);
+    timeoutIDRef.current = setTimeout(() => {
+      setAutoScroll(true)
     }, TIMEOUT_DURATION);
-  };
-
+  }
+  const stopAutoScroll = () => {
+    clearTimeout(timeoutIDRef.current)
+    setAutoScroll(false)
+  }
+  const onMouseEnter = stopAutoScroll
   const onMouseLeave = () => {
-    if (isDetailsModalActive) return;
-    removePause();
-  };
+    if (isDetailsModalActive) { return }
+    timeoutStartAutoScroll()
+  }
 
-  const getCurrentIndex = () => {
-    return filteredList.filter((item: any) => item.time <= time).length - 1;
-  };
+  // latest ref
+  const autoScrollRef = useRef(autoScroll)
+  useEffect(() => { autoScrollRef.current = autoScroll }, [ autoScroll ])
+  useEffect(() => {
+    if (!autoScroll) {
+      timeoutStartAutoScroll()
+    }
+    return () => {
+      clearTimeout(timeoutIDRef.current)
+      if (autoScrollRef.current) {
+        devTools.update(INDEX_KEY, { index: 0 }) // index:0 means autoscroll is active
+      }
+    }
+  }, [])
+  
 
   const cache = new CellMeasurerCache({
     fixedWidth: true,
     keyMapper: (index: number) => filteredList[index],
   });
   const _list = React.useRef();
+  useEffect(() => {
+    if (_list.current) {
+      // @ts-ignore
+      _list.current.scrollToRow(activeIndex);
+    }
+  }, [activeIndex]);
+
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
-    showModal(<ErrorDetailsModal errorId={log.errorId} />, { right: true, onClose: removePause });
+    showModal(
+      <ErrorDetailsModal errorId={log.errorId} />, 
+      { 
+        right: true, 
+        onClose: () => {
+          setIsDetailsModalActive(false)
+          timeoutStartAutoScroll()
+        }
+      });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
-    setPauseSync(true);
-  };
-
+    stopAutoScroll()
+  }
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
 
@@ -149,52 +188,12 @@ function ConsolePanel() {
         </CellMeasurer>
       </React.Fragment>
     );
-  };
-
-  useEffect(() => {
-    if (pauseSync) {
-      removePause();
-    }
-    throttledCall = throttle(getCurrentIndex, 500, undefined)
-    return () => {
-      clearTimeout(timeOut);
-      if (!synRef.current.pauseSync) {
-        devTools.update(INDEX_KEY, { index: 0 });
-      }
-    };
-  }, []);
-
-
-  useEffect(() => {
-    const currentIndex = throttledCall()
-    if (currentIndex !== activeIndex && !pauseSync) {
-      devTools.update(INDEX_KEY, { index: currentIndex });
-    }
-  }, [time]);
-
-  React.useMemo(() => {
-    const filterRE = getRE(filter, 'i');
-    let list = logs;
-
-    list = list.filter(
-      ({ value, level }: any) =>
-        (!!filter ? filterRE.test(value) : true) &&
-        (activeTab === ALL || activeTab === LEVEL_TAB[level])
-    );
-    setFilteredList(list);
-  }, [logs.length, filter, activeTab]);
-
-  useEffect(() => {
-    if (_list.current) {
-      // @ts-ignore
-      _list.current.scrollToRow(activeIndex);
-    }
-  }, [activeIndex]);
+  }
 
   return (
     <BottomBlock
-      style={{ height: 300 + additionalHeight + 'px' }}
-      onMouseEnter={() => setPauseSync(true)}
+      style={{ height: 300 + 'px' }}
+      onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       {/* @ts-ignore */}
