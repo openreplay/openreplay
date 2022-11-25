@@ -26,13 +26,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-      with:
-        # We need to diff with old commit 
-        # to see which workers got changed.
-        fetch-depth: 2
-        # ref: staging
+   # - name: Checkout
+   #   uses: actions/checkout@v2
+   #   with:
+   #     # We need to diff with old commit 
+   #     # to see which workers got changed.
+   #     fetch-depth: 2
+   #     # ref: staging
 
     - name: Docker login
       run: |
