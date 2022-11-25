@@ -11,6 +11,7 @@ import { getDateRangeFromValue } from 'App/dateRange';
 const name = 'sessions';
 const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
+const FETCH_AUTOPLAY_LIST = new RequestTypes('sessions/FETCH_AUTOPLAY_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
 const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
@@ -96,6 +97,10 @@ const reducer = (state = initialState, action = {}) => {
                     list.filter(({ favorite }) => favorite)
                 )
                 .set('total', total);
+        case FETCH_AUTOPLAY_LIST.SUCCESS:
+            let sessionIds = state.get('sessionIds');
+            sessionIds = sessionIds.concat(action.data.map(i => i.sessionId + ''))
+            return state.set('sessionIds', sessionIds.filter((i, index) => sessionIds.indexOf(i) === index ))
         case SET_AUTOPLAY_VALUES: {
             const sessionIds = state.get('sessionIds');
             const currentSessionId = state.get('current').sessionId;
@@ -257,7 +262,7 @@ function init(session) {
 
 export const fetchList =
     (params = {}, force = false) =>
-    (dispatch, getState) => {
+    (dispatch) => {
         if (!force) { // compare with the last fetched filter
             const oldFilters = getSessionFilter();
             if (compareJsonObjects(oldFilters, cleanSessionFilters(params))) {
@@ -272,6 +277,19 @@ export const fetchList =
             params: cleanParams(params),
         });
     };
+
+export const fetchAutoplayList =
+    (params = {}) =>
+    (dispatch) => {
+        setSessionFilter(cleanSessionFilters(params));
+        return dispatch({
+            types: FETCH_AUTOPLAY_LIST.toArray(),
+            call: (client) => client.post('/sessions/search/ids', params),
+            params: cleanParams(params),
+        });
+    };
+
+
 
 export function fetchErrorStackList(sessionId, errorId) {
     return {

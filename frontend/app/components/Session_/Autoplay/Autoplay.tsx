@@ -4,13 +4,52 @@ import { setAutoplayValues } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
 import { Link, Icon, Toggler, Tooltip } from 'UI';
 import { Controls as PlayerControls, connectPlayer } from 'Player';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
+import { fetchAutoplaySessions } from 'Duck/search';
 
-function Autoplay(props) {
-  const { previousId, nextId, autoplay, disabled } = props;
+const PER_PAGE = 10;
+
+interface Props extends RouteComponentProps {
+  previousId: string;
+  nextId: string;
+  autoplay: boolean;
+  defaultList: any;
+  currentPage: number;
+  total: number;
+  setAutoplayValues?: () => void;
+  toggleAutoplay?: () => void;
+  latestRequestTime: any;
+  sessionIds: any;
+  fetchAutoplaySessions?: (page: number) => Promise<void>;
+}
+function Autoplay(props: Props) {
+  const {
+    previousId,
+    nextId,
+    currentPage,
+    total,
+    autoplay,
+    sessionIds,
+    latestRequestTime,
+    match: {
+      // @ts-ignore
+      params: { siteId, sessionId },
+    },
+  } = props;
+  const disabled = sessionIds.length === 0;
 
   useEffect(() => {
-    props.setAutoplayValues();
+    if (latestRequestTime) {
+      props.setAutoplayValues();
+      const totalPages = Math.ceil(total / PER_PAGE);
+      const index = sessionIds.indexOf(sessionId);
+
+      // check for the last page and load the next
+      if (currentPage !== totalPages && index === sessionIds.length - 1) {
+        props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
+      }
+    }
   }, []);
 
   return (
@@ -62,21 +101,23 @@ function Autoplay(props) {
   );
 }
 
-const connectAutoplay = connect(
-  (state) => ({
+export default connect(
+  (state: any) => ({
     previousId: state.getIn(['sessions', 'previousId']),
     nextId: state.getIn(['sessions', 'nextId']),
+    currentPage: state.getIn(['search', 'currentPage']) || 1,
+    total: state.getIn(['sessions', 'total']) || 0,
+    sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
+    latestRequestTime: state.getIn(['search', 'latestRequestTime']),
   }),
-  { setAutoplayValues }
-);
-
-export default connectAutoplay(
+  { setAutoplayValues, fetchAutoplaySessions }
+)(
   connectPlayer(
-    (state) => ({
+    (state: any) => ({
       autoplay: state.autoplay,
     }),
     {
       toggleAutoplay: PlayerControls.toggleAutoplay,
     }
-  )(Autoplay)
+  )(withRouter(Autoplay))
 );
