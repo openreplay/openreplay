@@ -4,6 +4,7 @@ import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
+import useLatestRef from 'App/hooks/useLatestRef'
 import { getRE } from 'App/utils';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -11,6 +12,7 @@ import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtuali
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
+import useAutoscroll from '../useAutoscroll';
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -57,7 +59,6 @@ const getIconProps = (level: any) => {
 
 
 const INDEX_KEY = 'console';
-const TIMEOUT_DURATION = 5000;
 
 function ConsolePanel() {
   const {
@@ -70,7 +71,6 @@ function ConsolePanel() {
   const activeIndex = devTools[INDEX_KEY].index;
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const [filteredList, setFilteredList] = useState([]);
-  const [autoScroll, setAutoScroll] = useState(activeIndex === 0);
   const { showModal } = useModal();
   const [logs, setLogs] = useState([])
 
@@ -95,48 +95,24 @@ function ConsolePanel() {
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
 
-  
-  const autoScrollIndex = logListNow.length + exceptionsListNow.length
-  // AutoScroll index update
-  useEffect(() => {
-    if (autoScroll && autoScrollIndex !== activeIndex) {
-      devTools.update(INDEX_KEY, { index: autoScrollIndex }) // can just scroll here
-    }
-  }, [autoScroll, autoScrollIndex])
 
-  const timeoutIDRef = React.useRef<ReturnType<typeof setTimeout>>()
-  const timeoutStartAutoScroll = () => {
-    clearTimeout(timeoutIDRef.current);
-    timeoutIDRef.current = setTimeout(() => {
-      setAutoScroll(true)
-    }, TIMEOUT_DURATION);
-  }
-  const stopAutoScroll = () => {
-    clearTimeout(timeoutIDRef.current)
-    setAutoScroll(false)
-  }
-  const onMouseEnter = stopAutoScroll
+  // AutoScroll 
+  const autoScrollIndex = logListNow.length + exceptionsListNow.length
+  const {
+    timeoutStartAutoscroll,
+    stopAutoscroll,
+  } = useAutoscroll(
+    activeIndex,
+    autoScrollIndex,
+    index => devTools.update(INDEX_KEY, { index })
+  )
+  
+  const onMouseEnter = stopAutoscroll
   const onMouseLeave = () => {
     if (isDetailsModalActive) { return }
-    timeoutStartAutoScroll()
+    timeoutStartAutoscroll()
   }
-
-  // latest ref
-  const autoScrollRef = useRef(autoScroll)
-  useEffect(() => { autoScrollRef.current = autoScroll }, [ autoScroll ])
-  useEffect(() => {
-    if (!autoScroll) {
-      timeoutStartAutoScroll()
-    }
-    return () => {
-      clearTimeout(timeoutIDRef.current)
-      if (autoScrollRef.current) {
-        devTools.update(INDEX_KEY, { index: 0 }) // index:0 means autoscroll is active
-      }
-    }
-  }, [])
   
-
   const cache = new CellMeasurerCache({
     fixedWidth: true,
     keyMapper: (index: number) => filteredList[index],
@@ -158,11 +134,11 @@ function ConsolePanel() {
         right: true, 
         onClose: () => {
           setIsDetailsModalActive(false)
-          timeoutStartAutoScroll()
+          timeoutStartAutoscroll()
         }
       });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
-    stopAutoScroll()
+    stopAutoscroll()
   }
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
