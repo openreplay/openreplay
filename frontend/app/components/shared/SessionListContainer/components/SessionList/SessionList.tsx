@@ -9,24 +9,25 @@ import {
   addFilterByKeyAndValue,
   updateCurrentPage,
   setScrollPosition,
+  checkForLatestSessions,
 } from 'Duck/search';
 import useTimeout from 'App/hooks/useTimeout';
 import { numberWithCommas } from 'App/utils';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
 enum NoContentType {
-    Bookmarked,
-    Vaulted,
-    ToDate,
+  Bookmarked,
+  Vaulted,
+  ToDate,
 }
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
-const PER_PAGE = 10;
 let sessionTimeOut: any = null;
 interface Props {
   loading: boolean;
   list: any;
   currentPage: number;
+  pageSize: number;
   total: number;
   filters: any;
   lastPlayedSessionId: string;
@@ -39,13 +40,15 @@ interface Props {
   fetchMetadata: () => void;
   activeTab: any;
   isEnterprise?: boolean;
+  checkForLatestSessions: () => void;
 }
 function SessionList(props: Props) {
-  const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate)
+  const [noContentType, setNoContentType] = React.useState<NoContentType>(NoContentType.ToDate);
   const {
     loading,
     list,
     currentPage,
+    pageSize,
     total,
     filters,
     lastPlayedSessionId,
@@ -60,19 +63,19 @@ function SessionList(props: Props) {
   const isVault = isBookmark && isEnterprise;
   const NO_CONTENT = React.useMemo(() => {
     if (isBookmark && !isEnterprise) {
-      setNoContentType(NoContentType.Bookmarked)
+      setNoContentType(NoContentType.Bookmarked);
       return {
         icon: ICONS.NO_BOOKMARKS,
         message: 'No sessions bookmarked.',
       };
     } else if (isVault) {
-      setNoContentType(NoContentType.Vaulted)
+      setNoContentType(NoContentType.Vaulted);
       return {
         icon: ICONS.NO_SESSIONS_IN_VAULT,
         message: 'No sessions found in vault.',
       };
     }
-    setNoContentType(NoContentType.ToDate)
+    setNoContentType(NoContentType.ToDate);
     return {
       icon: ICONS.NO_SESSIONS,
       message: 'No relevant sessions found for the selected time period.',
@@ -81,7 +84,7 @@ function SessionList(props: Props) {
 
   useTimeout(() => {
     if (!document.hidden) {
-      props.fetchSessions(null, true);
+      props.checkForLatestSessions();
     }
   }, AUTOREFRESH_INTERVAL);
 
@@ -107,7 +110,7 @@ function SessionList(props: Props) {
 
     sessionTimeOut = setTimeout(function () {
       if (!document.hidden) {
-        props.fetchSessions(null, true);
+        props.checkForLatestSessions();
       }
     }, 5000);
   };
@@ -182,15 +185,15 @@ function SessionList(props: Props) {
       {total > 0 && (
         <div className="flex items-center justify-between p-5">
           <div>
-            Showing <span className="font-medium">{(currentPage - 1) * PER_PAGE + 1}</span> to{' '}
-            <span className="font-medium">{(currentPage - 1) * PER_PAGE + list.size}</span> of{' '}
+            Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+            <span className="font-medium">{(currentPage - 1) * pageSize + list.size}</span> of{' '}
             <span className="font-medium">{numberWithCommas(total)}</span> sessions.
           </div>
           <Pagination
             page={currentPage}
-            totalPages={Math.ceil(total / PER_PAGE)}
+            totalPages={Math.ceil(total / pageSize)}
             onPageChange={(page) => props.updateCurrentPage(page)}
-            limit={PER_PAGE}
+            limit={pageSize}
             debounceRequest={1000}
           />
         </div>
@@ -210,7 +213,15 @@ export default connect(
     total: state.getIn(['sessions', 'total']) || 0,
     scrollY: state.getIn(['search', 'scrollY']),
     activeTab: state.getIn(['search', 'activeTab']),
+    pageSize: state.getIn(['search', 'pageSize']),
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
   }),
-  { updateCurrentPage, addFilterByKeyAndValue, setScrollPosition, fetchSessions, fetchMetadata }
+  {
+    updateCurrentPage,
+    addFilterByKeyAndValue,
+    setScrollPosition,
+    fetchSessions,
+    fetchMetadata,
+    checkForLatestSessions,
+  }
 )(SessionList);
