@@ -14,7 +14,7 @@ import { NoContent, Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
-function OverviewPanel() {
+function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
   const { store } = React.useContext(PlayerContext)
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
@@ -37,9 +37,9 @@ function OverviewPanel() {
     const fetchPresented = fetchList.length > 0;
 
     const resourceList = resourceListUnmap
-    .filter((r: any) => r.isRed() || r.isYellow())
-    .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
-    .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
+      .filter((r: any) => r.isRed() || r.isYellow())
+      .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
+      .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
 
   const resources: any = React.useMemo(() => {
     return {
@@ -68,6 +68,7 @@ function OverviewPanel() {
     }
   }, [
     resourceList,
+    issuesList,
     exceptionsList,
     eventsList,
     stackEventList,
