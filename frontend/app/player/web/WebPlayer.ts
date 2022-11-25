@@ -32,11 +32,11 @@ export default class WebPlayer extends Player {
 
   constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
 
-    let initialLists = live ? {} :{
+    let initialLists = live ? {} : {
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
       resource: session.resources.toJSON(),
-      exceptions: session.errors,
+      exceptions: session.errors.toJSON(),
     }
 
     const screen = new Screen()
