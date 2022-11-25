@@ -4,12 +4,26 @@ from pydantic import BaseModel, Field, EmailStr
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
+from enum import Enum
+
+
+class Permissions(str, Enum):
+    session_replay = "SESSION_REPLAY"
+    dev_tools = "DEV_TOOLS"
+    # errors = "ERRORS"
+    metrics = "METRICS"
+    assist_live = "ASSIST_LIVE"
+    assist_call = "ASSIST_CALL"
+
+
+class CurrentContext(schemas.CurrentContext):
+    permissions: List[Optional[Permissions]] = Field(...)
 
 
 class RolePayloadSchema(BaseModel):
     name: str = Field(...)
     description: Optional[str] = Field(None)
-    permissions: List[str] = Field(...)
+    permissions: List[Permissions] = Field(...)
     all_projects: bool = Field(True)
     projects: List[int] = Field([])
 

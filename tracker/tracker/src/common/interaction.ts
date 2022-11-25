@@ -19,4 +19,11 @@ type Auth = {
   beaconSizeLimit?: number
 }
 
-export type WorkerMessageData = null | 'stop' | Start | Auth | Array<Message>
+export type ToWorkerData = null | 'stop' | Start | Auth | Array<Message>
+
+type Failure = {
+  type: 'failure'
+  reason: string
+}
+
+export type FromWorkerData = 'restart' | Failure

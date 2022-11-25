@@ -6,23 +6,24 @@ const { ValueContainer } = components;
 
 type ValueObject = {
     value: string | number,
-    label: string,
+    label: React.ReactNode,
 }
 
 interface Props<Value extends ValueObject> {
     options: Value[];
     isSearchable?: boolean;
-    defaultValue?: string;
+    defaultValue?: string | number;
     plain?: boolean;
     components?: any;
-    styles?: any;
+    styles?: Record<string, any>;
+    controlStyle?: Record<string, any>;
     onChange: (newValue: { name: string, value: Value }) => void;
     name?: string;
     placeholder?: string;
     [x:string]: any;
 }
 
-export default function<Value extends ValueObject>({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props<Value>) {
+export default function<Value extends ValueObject>({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', controlStyle = {}, ...rest }: Props<Value>) {
     const defaultSelected = defaultValue ? (options.find(o => o.value === defaultValue) || options[0]): null;
     const customStyles = {
         option: (provided: any, state: any) => ({
@@ -71,7 +72,8 @@ export default function<Value extends ValueObject>({ placeholder='Select', name 
                 ['&:hover']: {
                     backgroundColor: colors['gray-lightest'],
                     transition: 'all 0.2s ease-in-out'
-                }
+                },
+                ...controlStyle,
             }
             if (plain) {
                 obj['backgroundColor'] = 'transparent';
@@ -103,7 +105,7 @@ export default function<Value extends ValueObject>({ placeholder='Select', name 
         singleValue: (provided: any, state: { isDisabled: any; }) => {
           const opacity = state.isDisabled ? 0.5 : 1;
           const transition = 'opacity 300ms';
-      
+
           return { ...provided, opacity, transition, fontWeight: '500' };
         },
         input: (provided: any) => ({
@@ -160,13 +162,13 @@ const DropdownIndicator = (
 const CustomValueContainer = ({ children, ...rest }: any) => {
     const selectedCount = rest.getValue().length
     const conditional = (selectedCount < 3)
-  
+
     let firstChild: any = []
-  
+
     if (!conditional) {
       firstChild = [children[0].shift(), children[1]]
     }
-  
+
     return (
       <ValueContainer {...rest}>
         {conditional ? children : firstChild}

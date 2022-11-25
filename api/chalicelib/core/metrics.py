@@ -419,7 +419,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
     pg_sub_query_chart.append("resources.type = 'img'")
-    pg_sub_query_chart.append("resources.url = top_img.url")
+    pg_sub_query_chart.append("resources.url_hostpath = top_img.url_hostpath")
 
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
                                             chart=False, data=args)
@@ -431,13 +431,13 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT *
-                        FROM (SELECT resources.url,
+                        FROM (SELECT resources.url_hostpath,
                                      COALESCE(AVG(resources.duration), 0) AS avg_duration,
                                      COUNT(resources.session_id)          AS sessions_count
                               FROM events.resources
                                        INNER JOIN sessions USING (session_id)
                               WHERE {" AND ".join(pg_sub_query_subset)}
-                              GROUP BY resources.url
+                              GROUP BY resources.url_hostpath
                               ORDER BY avg_duration DESC
                               LIMIT 10) AS top_img
                                  LEFT JOIN LATERAL (
@@ -485,13 +485,13 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
     if resources and len(resources) > 0:
         for r in resources:
             if r["type"] == "IMG":
-                img_constraints.append(f"resources.url = %(val_{len(img_constraints)})s")
+                img_constraints.append(f"resources.url_hostpath = %(val_{len(img_constraints)})s")
                 img_constraints_vals["val_" + str(len(img_constraints) - 1)] = r['value']
             elif r["type"] == "LOCATION":
                 location_constraints.append(f"pages.path = %(val_{len(location_constraints)})s")
                 location_constraints_vals["val_" + str(len(location_constraints) - 1)] = r['value']
             else:
-                request_constraints.append(f"resources.url = %(val_{len(request_constraints)})s")
+                request_constraints.append(f"resources.url_hostpath = %(val_{len(request_constraints)})s")
                 request_constraints_vals["val_" + str(len(request_constraints) - 1)] = r['value']
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
@@ -627,12 +627,12 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
         pg_sub_query.append("url_hostpath ILIKE %(value)s")
         with pg_client.PostgresClient() as cur:
             pg_query = f"""SELECT key, value
-                            FROM ( SELECT DISTINCT ON (url) ROW_NUMBER() OVER (PARTITION BY type ORDER BY url) AS r,
-                                              url AS value,
+                            FROM ( SELECT DISTINCT ON (url_hostpath) ROW_NUMBER() OVER (PARTITION BY type ORDER BY url_hostpath) AS r,
+                                              url_hostpath AS value,
                                               type AS key
                                   FROM events.resources INNER JOIN public.sessions USING (session_id)
                                   WHERE {" AND ".join(pg_sub_query)} 
-                                  ORDER BY url, type ASC) AS ranked_values
+                                  ORDER BY url_hostpath, type ASC) AS ranked_values
                             WHERE ranked_values.r<=5;"""
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "value": helper.string_to_sql_like(text)}))
             rows = cur.fetchall()
@@ -893,7 +893,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
     if type is not None:
         pg_sub_query_subset.append(f"resources.type = '{__get_resource_db_type_from_type(type)}'")
     if url is not None:
-        pg_sub_query_subset.append(f"resources.url = %(value)s")
+        pg_sub_query_subset.append(f"resources.url_hostpath = %(value)s")
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (SELECT resources.duration, timestamp
@@ -1009,7 +1009,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                               ORDER BY avg DESC
                               LIMIT 10) AS main_list
                                  INNER JOIN LATERAL (
-                            SELECT url, type
+                            SELECT url_hostpath AS url, type
                             FROM events.resources
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE {" AND ".join(pg_sub_query)}

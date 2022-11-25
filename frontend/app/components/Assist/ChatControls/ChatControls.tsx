@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import stl from './ChatControls.module.css'
 import cn from 'classnames'
 import { Button, Icon } from 'UI'
-import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
+import type { LocalStream } from 'Player';
 
 
 interface Props {
@@ -19,11 +19,11 @@ function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled, isPresta
     if (!stream) { return; }
     setAudioEnabled(stream.toggleAudio());
   }
-  
+
   const toggleVideo = () => {
     if (!stream) { return; }
     stream.toggleVideo()
-    .then(setVideoEnabled)
+    .then((v) => setVideoEnabled(v))
   }
 
   /** muting user if he is auto connected to the call */

@@ -2,7 +2,7 @@
     text-align: center;
     padding: 4px 14px;
     border: none;
-    border-radius: 6px;
+    border-radius: 3px;
     font-weight: 500;
 
     &.default {

@@ -17,9 +17,6 @@ import (
 )
 
 func readFile(path string) (map[string]string, error) {
-	if path == "" {
-		return nil, fmt.Errorf("file path is empty")
-	}
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("can't open file: %s", err)
@@ -33,13 +30,23 @@ func readFile(path string) (map[string]string, error) {
 	res := make(map[string]string)
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
 		env := strings.Split(line, "=")
+		if len(env) < 2 {
+			continue
+		}
 		res[env[0]] = env[1]
 	}
 	return res, nil
 }
 
 func parseFile(a interface{}, path string) {
+	// Skip parsing process without logs if we don't have path to config file
+	if path == "" {
+		return
+	}
 	envs, err := readFile(path)
 	if err != nil {
 		log.Printf("can't parse config file: %s", err)

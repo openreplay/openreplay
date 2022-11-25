@@ -5,6 +5,7 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
 import ListWalker from '../ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
+import FocusManager from './FocusManager';
 import {
   VElement,
   VText,
@@ -15,6 +16,7 @@ import {
   PostponedStyleSheet,
 } from './VirtualDOM';
 import type { StyleElement } from './VirtualDOM';
+import { insertRule, deleteRule } from './safeCSSRules';
 
 
 type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -32,32 +34,11 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 //     .replace(/\-webkit\-/g, "")
 // }
 
-function insertRule(sheet: CSSStyleSheet | PostponedStyleSheet, msg: { rule: string, index: number }) {
-  try {
-    sheet.insertRule(msg.rule, msg.index)
-  } catch (e) {
-    logger.warn(e, msg)
-    try {
-      sheet.insertRule(msg.rule, 0)
-      logger.warn("Inserting rule into 0-index", e, msg)
-    } catch (e) {
-      logger.warn("Cannot insert rule.", e, msg)
-    }
-  }
-}
-
-function deleteRule(sheet: CSSStyleSheet | PostponedStyleSheet, msg: { index: number }) {
-  try {
-    sheet.deleteRule(msg.index)
-  } catch (e) {
-    logger.warn(e, msg)
-  }
-}
 
 export default class DOMManager extends ListWalker<Message> {
-  private vTexts: Map<number, VText> = new Map() // map vs object here?
-  private vElements: Map<number, VElement> = new Map()
-  private vRoots: Map<number, VShadowRoot | VDocument> = new Map()
+  private readonly vTexts: Map<number, VText> = new Map() // map vs object here?
+  private readonly vElements: Map<number, VElement> = new Map()
+  private readonly vRoots: Map<number, VShadowRoot | VDocument> = new Map()
   private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
@@ -66,6 +47,7 @@ export default class DOMManager extends ListWalker<Message> {
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
   private stylesManager: StylesManager
+  private focusManager: FocusManager = new FocusManager(this.vElements)
 
 
   constructor(
@@ -75,7 +57,6 @@ export default class DOMManager extends ListWalker<Message> {
   ) {
     super()
     this.stylesManager = new StylesManager(screen)
-    logger.log(this.vElements)
   }
 
   append(m: Message): void {
@@ -86,6 +67,10 @@ export default class DOMManager extends ListWalker<Message> {
         this.nodeScrollManagers.set(m.id, scrollManager)
       }
       scrollManager.append(m)
+      return
+    }
+    if (m.tp === "set_node_focus") {
+      this.focusManager.append(m)
       return
     }
     if (m.tp === "create_element_node") {
@@ -147,7 +132,7 @@ export default class DOMManager extends ListWalker<Message> {
     parent.insertChildAt(child, index)
   }
 
-  private applyMessage = (msg: Message): void => {
+  private applyMessage = (msg: Message): Promise<any> | undefined => {
     let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
@@ -166,12 +151,15 @@ export default class DOMManager extends ListWalker<Message> {
         fRoot.innerText = '';
 
         vn = new VElement(fRoot)
-        this.vElements = new Map([[0, vn]])
+        this.vElements.clear()
+        this.vElements.set(0, vn)
         const vDoc = new VDocument(doc)
         vDoc.insertChildAt(vn, 0)
-        this.vRoots = new Map([[0, vDoc]]) // watchout: id==0 for both Document and documentElement
+        this.vRoots.clear()
+        this.vRoots.set(0, vDoc) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
         // todo: start from 0 (sync logic with tracker)
+        this.vTexts.clear()
         this.stylesManager.reset()
         this.activeIframeRoots.clear()
         return
@@ -361,7 +349,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (!vn) {
           // non-constructed case
           vn = this.vElements.get(msg.id)
-          if (!vn) { logger.error("Node not found", msg); return } 
+          if (!vn) { logger.error("Node not found", msg); return }
           if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
           this.ppStyleSheets.set(msg.sheetID, new PostponedStyleSheet(vn.node))
           return
@@ -392,20 +380,37 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
+      case "load_font_face":
+        vn = this.vRoots.get(msg.parentID)
+        if (!vn) { logger.error("Node not found", msg); return }
+        if (vn instanceof VShadowRoot) { logger.error(`Node ${vn} expected to be a Document`, msg); return }
+        let descr: Object
+        try {
+          descr = JSON.parse(msg.descriptors)
+          descr = typeof descr === 'object' ? descr : undefined
+        } catch {
+          logger.warn("Can't parse font-face descriptors: ", msg)
+        }
+        const ff = new FontFace(msg.family, msg.source, descr)
+        vn.node.fonts.add(ff)
+        return ff.load()
     }
   }
 
-  moveReady(t: number): Promise<void> {
+  async moveReady(t: number): Promise<void> {
     // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
-    this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)
-
+    // This function autoresets pointer if necessary (better name?)
+   
+    await this.moveWait(t, this.applyMessage)
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady(t).then(() => {
+      // Apply focus
+      this.focusManager.move(t)
       // Apply all scrolls after the styles got applied
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)

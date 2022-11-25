@@ -71,7 +71,7 @@ function CustomFields(props) {
                 <div style={{ marginRight: '15px' }}>
                     <SiteDropdown value={currentSite && currentSite.id} onChange={onChangeSelect} />
                 </div>
-                <Button className="ml-auto" variant="primary" onClick={() => init()}>Add</Button>
+                <Button className="ml-auto" variant="primary" onClick={() => init()}>Add Metadata</Button>
             </div>
             <div className="text-base text-disabled-text flex px-5 items-center my-3">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />

@@ -63,7 +63,7 @@ class SessionStart(Message):
         self.user_id = user_id
 
 
-class SessionEnd(Message):
+class SessionEndDeprecated(Message):
     __id__ = 3
 
     def __init__(self, timestamp):
@@ -213,15 +213,6 @@ class MouseMove(Message):
         self.y = y
 
 
-class MouseClickDepricated(Message):
-    __id__ = 21
-
-    def __init__(self, id, hesitation_time, label):
-        self.id = id
-        self.hesitation_time = hesitation_time
-        self.label = label
-
-
 class ConsoleLog(Message):
     __id__ = 22
 
@@ -254,7 +245,7 @@ class PageRenderTiming(Message):
         self.time_to_interactive = time_to_interactive
 
 
-class JSException(Message):
+class JSExceptionDeprecated(Message):
     __id__ = 25
 
     def __init__(self, name, message, payload):
@@ -347,18 +338,6 @@ class ClickEvent(Message):
         self.hesitation_time = hesitation_time
         self.label = label
         self.selector = selector
-
-
-class ErrorEvent(Message):
-    __id__ = 34
-
-    def __init__(self, message_id, timestamp, source, name, message, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.source = source
-        self.name = name
-        self.message = message
-        self.payload = payload
 
 
 class ResourceEvent(Message):
@@ -589,6 +568,23 @@ class PerformanceTrackAggr(Message):
         self.max_used_js_heap_size = max_used_js_heap_size
 
 
+class LoadFontFace(Message):
+    __id__ = 57
+
+    def __init__(self, parent_id, family, source, descriptors):
+        self.parent_id = parent_id
+        self.family = family
+        self.source = source
+        self.descriptors = descriptors
+
+
+class SetNodeFocus(Message):
+    __id__ = 58
+
+    def __init__(self, id):
+        self.id = id
+
+
 class LongTask(Message):
     __id__ = 59
 
@@ -750,6 +746,32 @@ class Zustand(Message):
     def __init__(self, mutation, state):
         self.mutation = mutation
         self.state = state
+
+
+class JSException(Message):
+    __id__ = 78
+
+    def __init__(self, name, message, payload, metadata):
+        self.name = name
+        self.message = message
+        self.payload = payload
+        self.metadata = metadata
+
+
+class SessionEnd(Message):
+    __id__ = 126
+
+    def __init__(self, timestamp, encryption_key):
+        self.timestamp = timestamp
+        self.encryption_key = encryption_key
+
+
+class SessionSearch(Message):
+    __id__ = 127
+
+    def __init__(self, timestamp, partition):
+        self.timestamp = timestamp
+        self.partition = partition
 
 
 class IOSBatchMeta(Message):

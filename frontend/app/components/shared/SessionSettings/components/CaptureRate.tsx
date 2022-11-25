@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Icon, Toggler, Button, Input, Loader, Popup } from 'UI';
+import { Icon, Toggler, Button, Input, Loader, Tooltip } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { connect } from 'react-redux';
@@ -43,17 +43,17 @@ function CaptureRate({ isAdmin = false }) {
         <Loader loading={loading}>
             <h3 className="text-lg">Capture Rate</h3>
             <div className="my-1">The percentage of session you want to capture</div>
-            <Popup content="You don't have permission to change." disabled={isAdmin} delay={0}>
+            <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
                 <div className={cn('mt-2 mb-4 mr-1 flex items-center', { disabled: !isAdmin })}>
                     <Toggler checked={captureAll} name="test" onChange={toggleRate} />
                     <span className="ml-2" style={{ color: captureAll ? '#000000' : '#999' }}>
                         100%
                     </span>
                 </div>
-            </Popup>
+            </Tooltip>
             {!captureAll && (
                 <div className="flex items-center">
-                    <Popup content="You don't have permission to change." disabled={isAdmin} delay={0}>
+                    <Tooltip title="You don't have permission to change." disabled={isAdmin} delay={0}>
                         <div className={cn("relative", { 'disabled' : !isAdmin })}>
                             <Input
                                 type="number"
@@ -66,7 +66,7 @@ function CaptureRate({ isAdmin = false }) {
                             />
                             <Icon className="absolute right-0 mr-6 top-0 bottom-0 m-auto" name="percent" color="gray-medium" size="18" />
                         </div>
-                    </Popup>
+                    </Tooltip>
                     <span className="mx-3">of the sessions</span>
                     <Button
                         disabled={!changed}

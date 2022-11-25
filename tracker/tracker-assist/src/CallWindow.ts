@@ -4,6 +4,7 @@ import attachDND from './dnd.js'
 const SS_START_TS_KEY = '__openreplay_assist_call_start_ts'
 
 export default class CallWindow {
+	private remoteVideoId: string
 	private readonly iframe: HTMLIFrameElement
 	private vRemote: HTMLVideoElement | null = null
 	private vLocal: HTMLVideoElement | null = null
@@ -16,8 +17,11 @@ export default class CallWindow {
 	private remoteControlContainer: HTMLElement | null = null
 	private remoteControlEndBtn: HTMLElement | null = null
 	private controlsContainer: HTMLElement | null = null
-
+	private remoteVideoOn = false
+	private localVideoOn = false
+	private onToggleVideo: (args: any) => void
 	private tsInterval: ReturnType<typeof setInterval>
+	private remoteVideo: MediaStreamTrack
 
 	private readonly load: Promise<void>
 
@@ -27,7 +31,7 @@ export default class CallWindow {
 			position: 'fixed',
 			zIndex: 2147483647 - 1,
 			border: 'none',
-			bottom: '10px',
+			bottom: '50px',
 			right: '10px',
 			height: '200px',
 			width: '200px',
@@ -44,8 +48,9 @@ export default class CallWindow {
 			return
 		}
 
-		//const baseHref = "https://static.openreplay.com/tracker-assist/test"
+		// const baseHref = "https://static.openreplay.com/tracker-assist/test"
 		const baseHref = 'https://static.openreplay.com/tracker-assist/4.0.0'
+		// this.load = fetch(this.callUITemplate || baseHref + '/index2.html')
 		this.load = fetch(this.callUITemplate || baseHref + '/index.html')
 			.then((r) => r.text())
 			.then((text) => {
@@ -98,7 +103,7 @@ export default class CallWindow {
 						const secsFull = ~~(ellapsed / 1000)
 						const mins = ~~(secsFull / 60)
 						const secs = secsFull - mins * 60
-						tsElem.innerText = `${mins}:${secs < 10 ? 0 : ''}${secs}`
+						tsElem.innerText = `${mins > 0 ? `${mins}m` : ''}${secs < 10 ? 0 : ''}${secs}s`
 					}, 500)
 				}
 
@@ -124,12 +129,14 @@ export default class CallWindow {
 
 	private checkRemoteVideoInterval: ReturnType<typeof setInterval>
 	private audioContainer: HTMLDivElement | null = null
-	addRemoteStream(rStream: MediaStream) {
+	addRemoteStream(rStream: MediaStream, peerId: string) {
 		this.load
 			.then(() => {
 				// Video
 				if (this.vRemote && !this.vRemote.srcObject) {
 					this.vRemote.srcObject = rStream
+					this.remoteVideo = rStream.getVideoTracks()[0]
+					this.remoteVideoId = peerId
 					if (this.vPlaceholder) {
 						this.vPlaceholder.innerText =
 							'Video has been paused. Click anywhere to resume.'
@@ -141,9 +148,8 @@ export default class CallWindow {
 					} // just in case
 					let enabled = false
 					this.checkRemoteVideoInterval = setInterval(() => {
-						const settings = rStream.getVideoTracks()[0]?.getSettings()
-						const isDummyVideoTrack =
-							!!settings && (settings.width === 2 || settings.frameRate === 0)
+						const settings = this.remoteVideo?.getSettings()
+						const isDummyVideoTrack = !this.remoteVideo.enabled || (!!settings && (settings.width === 2 || settings.frameRate === 0))
 						const shouldBeEnabled = !isDummyVideoTrack
 						if (enabled !== shouldBeEnabled) {
 							this.toggleRemoteVideoUI((enabled = shouldBeEnabled))
@@ -171,6 +177,7 @@ export default class CallWindow {
 		this.load
 			.then(() => {
 				if (this.videoContainer) {
+					this.remoteVideoOn = enable
 					if (enable) {
 						this.videoContainer.classList.add('remote')
 					} else {
@@ -228,6 +235,7 @@ export default class CallWindow {
 		if (!this.videoBtn || !this.videoContainer) {
 			return
 		}
+		this.localVideoOn = enabled
 		if (enabled) {
 			this.videoContainer.classList.add('local')
 			this.videoBtn.classList.remove('off')
@@ -243,6 +251,7 @@ export default class CallWindow {
 			stream
 				.toggleVideo()
 				.then((enabled) => {
+					this.onToggleVideo?.({ streamId: stream.stream.id, enabled, })
 					this.toggleVideoUI(enabled)
 					this.load
 						.then(() => {
@@ -298,6 +307,10 @@ export default class CallWindow {
 		this.adjustIframeSize()
 	}
 
+	public setVideoToggleCallback(cb) {
+		this.onToggleVideo = cb
+	}
+
 	remove() {
 		clearInterval(this.tsInterval)
 		clearInterval(this.checkRemoteVideoInterval)
@@ -310,5 +323,12 @@ export default class CallWindow {
 		}
 		sessionStorage.removeItem(SS_START_TS_KEY)
 		this.localStreams = []
+	}
+
+	toggleVideoStream({ streamId, enabled, }: { streamId: string, enabled: boolean }) {
+		if (this.remoteVideoId === streamId) {
+			this.remoteVideo.enabled = enabled
+			this.toggleRemoteVideoUI(enabled)
+		}
 	}
 }

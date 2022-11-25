@@ -1,20 +1,7 @@
-.tippy-tooltip.tippy-light-theme {
-    background-color: white;
-    color: #333;
-    text-align: left;
-    border: 1px solid #ddd;
-    box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.2);
-}
-
-.tippy-tooltip.tippy-light-theme .arrow-regular {
-    // border-color: #ddd;
-    border-bottom-color: white;
+.tippy-tooltip.light-theme {
+    padding: 0;
 }
   
-.tippy-tooltip.tippy-light-theme[data-animatefill] {
-    background-color: transparent;
-}
-
-.tippy-tooltip.tippy-light-theme .tippy-backdrop {
-    background-color: white;
+.tippy-tooltip.light-theme[data-animatefill] {
+    background-color: white !important;
 }

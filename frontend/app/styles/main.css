@@ -6,7 +6,7 @@
 }
 
 * {
-  border-color: #EEEEEE;
+  border-color: #eeeeee;
 }
 .page {
   padding-top: 50px;
@@ -24,23 +24,23 @@
 }
 
 @media only screen and (max-width: 1380px) {
-  .container-70 {    
+  .container-70 {
     width: 90%;
   }
 }
 
 @media only screen and (min-width: 1380px) {
   .container-70 {
-    width: 1280px;    
+    width: 1280px;
   }
 }
 
 .container-70 {
-  position: relative;  
+  position: relative;
   margin: 0 auto;
 }
 
-.container-90 {  
+.container-90 {
   width: 98%;
   margin: 0 auto;
 }
@@ -62,7 +62,7 @@
   }
 }
 .side-menu-margined {
-  margin-left: 260px;
+  margin-left: 220px;
 }
 
 .top-header {
@@ -84,7 +84,7 @@
 
   & .title {
     margin-right: 15px;
-  
+
     & span {
       color: $gray-medium;
       font-weight: 300;
@@ -97,13 +97,13 @@
   align-items: center;
 }
 
-[data-hidden=true] {
+[data-hidden='true'] {
   display: none !important;
 }
 
-[data-disabled=true] {
+[data-disabled='true'] {
   pointer-events: none;
-  opacity: .5;
+  opacity: 0.5;
 }
 
 .form-group {
@@ -125,6 +125,27 @@
   }
 }
 
+.hover-teal:hover {
+  background-color: $active-blue;
+  color: $teal;
+  & svg {
+    fill: $teal;
+  }
+}
+
+.note-hover {
+  border: solid thin transparent;
+  &:hover {
+    background-color: #FFFEF5;
+    border-color: $gray-lightest;
+  }
+}
+.note-hover-bg {
+  &:hover {
+    background-color: #FFFEF5;
+  }
+}
+
 .text-dotted-underline {
   text-decoration: underline dotted !important;
 }
@@ -138,12 +159,12 @@
 .divider-h {
   height: 1px;
   width: 100%;
-  
+
   margin: 25px 0;
   background-color: $gray-light;
 } */
 
-.no-scroll { 
+.no-scroll {
   height: 100vh;
   overflow-y: hidden;
   padding-right: 15px;

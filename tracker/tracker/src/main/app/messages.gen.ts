@@ -281,13 +281,13 @@ export function PageRenderTiming(
   ]
 }
 
-export function JSException(
+export function JSExceptionDeprecated(
   name: string,
   message: string,
   payload: string,
-): Messages.JSException {
+): Messages.JSExceptionDeprecated {
   return [
-    Messages.Type.JSException,
+    Messages.Type.JSExceptionDeprecated,
     name,
     message,
     payload,
@@ -535,6 +535,30 @@ export function SetPageVisibility(
   ]
 }
 
+export function LoadFontFace(
+  parentID: number,
+  family: string,
+  source: string,
+  descriptors: string,
+): Messages.LoadFontFace {
+  return [
+    Messages.Type.LoadFontFace,
+    parentID,
+    family,
+    source,
+    descriptors,
+  ]
+}
+
+export function SetNodeFocus(
+  id: number,
+): Messages.SetNodeFocus {
+  return [
+    Messages.Type.SetNodeFocus,
+    id,
+  ]
+}
+
 export function LongTask(
   timestamp: number,
   duration: number,
@@ -716,6 +740,21 @@ export function Zustand(
     Messages.Type.Zustand,
     mutation,
     state,
+  ]
+}
+
+export function JSException(
+  name: string,
+  message: string,
+  payload: string,
+  metadata: string,
+): Messages.JSException {
+  return [
+    Messages.Type.JSException,
+    name,
+    message,
+    payload,
+    metadata,
   ]
 }
 

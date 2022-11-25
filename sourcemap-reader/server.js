@@ -24,3 +24,11 @@ const server = app.listen(PORT, HOST, () => {
     console.log('Press Ctrl+C to quit.');
 });
 module.exports = {server};
+
+app.get('/private/shutdown', (req, res) => {
+        console.log("Requested shutdown");
+        res.statusCode = 200;
+        res.end("ok!");
+        process.kill(1, "SIGTERM");
+    }
+);

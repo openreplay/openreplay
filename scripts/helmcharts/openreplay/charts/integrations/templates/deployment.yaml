@@ -28,6 +28,7 @@ spec:
       serviceAccountName: {{ include "integrations.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -44,14 +45,22 @@ spec:
           env:
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
-            - name: REDIS_STRING
-              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
               value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: pg_password
+              {{- if .Values.global.postgresql.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgresql.existingSecret }}
+                  key: postgresql-postgres-password
+              {{- else }}
+              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+              {{- end}}
             - name: POSTGRES_STRING
-              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
@@ -62,14 +71,16 @@ spec:
               containerPort: {{ $val }}
               protocol: TCP
             {{- end }}
-          {{- with .Values.persistence.mounts  }}
           volumeMounts:
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 12 }}
+          {{- with .Values.persistence.mounts  }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.persistence.volumes  }}
       volumes:
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 8 }}
+      {{- with .Values.persistence.volumes  }}
         {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.nodeSelector }}

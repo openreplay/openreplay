@@ -117,9 +117,9 @@ func DecodeSessionStart(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeSessionEnd(reader io.Reader) (Message, error) {
+func DecodeSessionEndDeprecated(reader io.Reader) (Message, error) {
 	var err error = nil
-	msg := &SessionEnd{}
+	msg := &SessionEndDeprecated{}
 	if msg.Timestamp, err = ReadUint(reader); err != nil {
 		return nil, err
 	}
@@ -349,21 +349,6 @@ func DecodeMouseMove(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeMouseClickDepricated(reader io.Reader) (Message, error) {
-	var err error = nil
-	msg := &MouseClickDepricated{}
-	if msg.ID, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.HesitationTime, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.Label, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeConsoleLog(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &ConsoleLog{}
@@ -424,9 +409,9 @@ func DecodePageRenderTiming(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
-func DecodeJSException(reader io.Reader) (Message, error) {
+func DecodeJSExceptionDeprecated(reader io.Reader) (Message, error) {
 	var err error = nil
-	msg := &JSException{}
+	msg := &JSExceptionDeprecated{}
 	if msg.Name, err = ReadString(reader); err != nil {
 		return nil, err
 	}
@@ -596,30 +581,6 @@ func DecodeClickEvent(reader io.Reader) (Message, error) {
 		return nil, err
 	}
 	if msg.Selector, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeErrorEvent(reader io.Reader) (Message, error) {
-	var err error = nil
-	msg := &ErrorEvent{}
-	if msg.MessageID, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = ReadUint(reader); err != nil {
-		return nil, err
-	}
-	if msg.Source, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Name, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Message, err = ReadString(reader); err != nil {
-		return nil, err
-	}
-	if msg.Payload, err = ReadString(reader); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1045,6 +1006,33 @@ func DecodePerformanceTrackAggr(reader io.Reader) (Message, error) {
 	return msg, err
 }
 
+func DecodeLoadFontFace(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &LoadFontFace{}
+	if msg.ParentID, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Family, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Source, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Descriptors, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSetNodeFocus(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &SetNodeFocus{}
+	if msg.ID, err = ReadInt(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeLongTask(reader io.Reader) (Message, error) {
 	var err error = nil
 	msg := &LongTask{}
@@ -1313,6 +1301,48 @@ func DecodeZustand(reader io.Reader) (Message, error) {
 		return nil, err
 	}
 	if msg.State, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeJSException(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &JSException{}
+	if msg.Name, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Message, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Payload, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	if msg.Metadata, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSessionEnd(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &SessionEnd{}
+	if msg.Timestamp, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.EncryptionKey, err = ReadString(reader); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSessionSearch(reader io.Reader) (Message, error) {
+	var err error = nil
+	msg := &SessionSearch{}
+	if msg.Timestamp, err = ReadUint(reader); err != nil {
+		return nil, err
+	}
+	if msg.Partition, err = ReadUint(reader); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1739,7 +1769,7 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 		return DecodeSessionStart(reader)
 
 	case 3:
-		return DecodeSessionEnd(reader)
+		return DecodeSessionEndDeprecated(reader)
 
 	case 4:
 		return DecodeSetPageLocation(reader)
@@ -1792,9 +1822,6 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 	case 20:
 		return DecodeMouseMove(reader)
 
-	case 21:
-		return DecodeMouseClickDepricated(reader)
-
 	case 22:
 		return DecodeConsoleLog(reader)
 
@@ -1805,7 +1832,7 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 		return DecodePageRenderTiming(reader)
 
 	case 25:
-		return DecodeJSException(reader)
+		return DecodeJSExceptionDeprecated(reader)
 
 	case 26:
 		return DecodeIntegrationEvent(reader)
@@ -1830,9 +1857,6 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 33:
 		return DecodeClickEvent(reader)
-
-	case 34:
-		return DecodeErrorEvent(reader)
 
 	case 35:
 		return DecodeResourceEvent(reader)
@@ -1900,6 +1924,12 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 	case 56:
 		return DecodePerformanceTrackAggr(reader)
 
+	case 57:
+		return DecodeLoadFontFace(reader)
+
+	case 58:
+		return DecodeSetNodeFocus(reader)
+
 	case 59:
 		return DecodeLongTask(reader)
 
@@ -1953,6 +1983,15 @@ func ReadMessage(t uint64, reader io.Reader) (Message, error) {
 
 	case 79:
 		return DecodeZustand(reader)
+
+	case 78:
+		return DecodeJSException(reader)
+
+	case 126:
+		return DecodeSessionEnd(reader)
+
+	case 127:
+		return DecodeSessionSearch(reader)
 
 	case 107:
 		return DecodeIOSBatchMeta(reader)

@@ -25,36 +25,24 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+podSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  fsGroupChangePolicy: "OnRootMismatch"
+# podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+# securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -81,45 +69,6 @@ tolerations: []
 
 affinity: {}
 
-nginx-ingress:
-  fullnameOverride: nginx-ingress
-  image:
-    # Using openresty because we need lua support,
-    # and dynamic resolve config from local.
-    # Ref: https://serverfault.com/questions/638822/nginx-resolver-address-from-etc-resolv-conf
-    repository: rg.fr-par.scw.cloud/foss/openresty
-    pullPolicy: IfNotPresent
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: "buster"
-
-# By default http listens to 80 port, and for v1.7.0 http listens in 80
-http:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-# Running sink and storage as non root users, because of existing volume permission change will take time
-sink:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-storage:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-
-chalice:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-
 ingress-nginx:
   enabled: true
   controller:
@@ -132,3 +81,26 @@ ingress-nginx:
       ## repository:
       tag: "v1.3.0"
       digest: ""
+
+# For enterpriseEdition Only
+vault: &vault
+  vaultHost: databases-vault.db.svc.cluster.local:8200
+  annotations:
+    vault.hashicorp.com/agent-cache-enable: "true"
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/agent-inject-token: "true"
+    vault.hashicorp.com/template-static-secret-render-interval: 2m
+    # vault.hashicorp.com/log-level: debug
+    vault.hashicorp.com/agent-run-as-same-user: "true"
+    vault.hashicorp.com/agent-inject-command-processor.properties: |
+      pkill -TERM openreplay
+    vault.hashicorp.com/role: pgaccess
+    vault.hashicorp.com/agent-inject-secret-processor.properties: database/creds/db-app
+    vault.hashicorp.com/agent-inject-template-processor.properties: |
+      {{- with secret "database/creds/db-app" -}}
+      POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
+      {{- end -}}
+
+global:
+  vault: *vault
+  clusterDomain: "svc.cluster.local"

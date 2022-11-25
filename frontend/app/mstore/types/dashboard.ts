@@ -15,7 +15,7 @@ export default class Dashboard {
     isValid: boolean = false
     currentWidget: Widget = new Widget()
     config: any = {}
-    createdAt: Date = new Date()
+    createdAt: number = new Date().getTime()
 
     constructor() {
         makeAutoObservable(this)

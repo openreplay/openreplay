@@ -1,0 +1,20 @@
+{{- template "vault.injectorEnabled" . -}}
+{{- if .injectorEnabled -}}
+{{- if eq (.Values.global.psp.enable | toString) "true" }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ template "vault.fullname" . }}-agent-injector-psp
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs:     ['use']
+  resourceNames:
+    - {{ template "vault.fullname" . }}-agent-injector
+{{- end }}
+{{- end }}

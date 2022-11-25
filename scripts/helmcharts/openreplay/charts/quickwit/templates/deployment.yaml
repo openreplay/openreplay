@@ -27,6 +27,7 @@ spec:
       serviceAccountName: {{ include "quickwit.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -47,14 +48,15 @@ spec:
           env:
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
-              {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
             - name: QW_S3_ENDPOINT
-              value: 'http://minio.db.svc.cluster.local:9000'
+              value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
             - name: AWS_ACCESS_KEY_ID
               value: {{ .Values.global.s3.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY
               value: {{ .Values.global.s3.secretKey }}
+            - name: QW_DATA_DIR
+              value: /opt/openreplay/
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}
@@ -66,10 +68,14 @@ spec:
           volumeMounts:
           - name: configs
             mountPath: /quickwit/config/
+          - name: datadir
+            mountPath: /opt/openreplay
       volumes:
       - name: configs
         configMap:
           name: {{ include "quickwit.fullname" . }}
+      - name: datadir
+        emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

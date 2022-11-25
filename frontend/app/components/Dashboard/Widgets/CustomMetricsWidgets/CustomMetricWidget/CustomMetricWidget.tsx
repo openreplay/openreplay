@@ -1,28 +1,35 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, Icon, Popup } from 'UI';
+import { Loader, NoContent, Icon, Tooltip } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer } from 'recharts';
 import stl from './CustomMetricWidget.module.css';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
-import { init, edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
+import {
+  init,
+  edit,
+  remove,
+  setAlertMetricId,
+  setActiveWidget,
+  updateActiveState,
+} from 'Duck/customMetrics';
 import { setShowAlerts } from 'Duck/dashboard';
 import CustomMetriLineChart from '../CustomMetriLineChart';
 import CustomMetricPieChart from '../CustomMetricPieChart';
 import CustomMetricPercentage from '../CustomMetricPercentage';
 import CustomMetricTable from '../CustomMetricTable';
-import { NO_METRIC_DATA } from 'App/constants/messages'
+import { NO_METRIC_DATA } from 'App/constants/messages';
 
-const customParams = rangeName => {
-  const params = { density: 70 }
+const customParams = (rangeName) => {
+  const params = { density: 70 };
 
   // if (rangeName === LAST_24_HOURS) params.density = 70
   // if (rangeName === LAST_30_MINUTES) params.density = 70
   // if (rangeName === YESTERDAY) params.density = 70
   // if (rangeName === LAST_7_DAYS) params.density = 70
 
-  return params
-}
+  return params;
+};
 
 interface Props {
   metric: any;
@@ -43,12 +50,12 @@ interface Props {
 }
 function CustomMetricWidget(props: Props) {
   const { metric, period, isTemplate } = props;
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>([]);
   // const [seriesMap, setSeriesMap] = useState<any>([]);
 
   const colors = Styles.customMetricColors;
-  const params = customParams(period.rangeName)
+  const params = customParams(period.rangeName);
   // const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
   const isLineChart = metric.viewType === 'lineChart';
   const isProgress = metric.viewType === 'progress';
@@ -61,17 +68,18 @@ function CustomMetricWidget(props: Props) {
       period: period,
       ...period.toTimestamps(),
       filters,
-    }
+    };
     props.setActiveWidget(activeWidget);
-  }
+  };
 
   const clickHandler = (event, index) => {
     if (event) {
       const payload = event.activePayload[0].payload;
       const timestamp = payload.timestamp;
-      const periodTimestamps = metric.metricType === 'timeseries' ?
-        getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density) :
-        period.toTimestamps();
+      const periodTimestamps =
+        metric.metricType === 'timeseries'
+          ? getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density)
+          : period.toTimestamps();
 
       const activeWidget = {
         widget: metric,
@@ -79,68 +87,81 @@ function CustomMetricWidget(props: Props) {
         ...periodTimestamps,
         timestamp: payload.timestamp,
         index,
-      }
+      };
 
       props.setActiveWidget(activeWidget);
     }
-  }
+  };
 
   const updateActiveState = (metricId, state) => {
     props.updateActiveState(metricId, state);
-  }
+  };
 
   return (
     <div className={stl.wrapper}>
       <div className="flex items-center p-2">
         <div className="font-medium">{metric.name}</div>
         <div className="ml-auto flex items-center">
-          {!isTable && !isPieChart && <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} /> }
-          <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.init(metric)} />
-          <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={() => updateActiveState(metric.metricId, false)} />
+          {!isTable && !isPieChart && (
+            <WidgetIcon
+              className="cursor-pointer mr-6"
+              icon="bell-plus"
+              tooltip="Set Alert"
+              onClick={props.onAlertClick}
+            />
+          )}
+          <WidgetIcon
+            className="cursor-pointer mr-6"
+            icon="pencil"
+            tooltip="Edit Metric"
+            onClick={() => props.init(metric)}
+          />
+          <WidgetIcon
+            className="cursor-pointer"
+            icon="close"
+            tooltip="Hide Metric"
+            onClick={() => updateActiveState(metric.metricId, false)}
+          />
         </div>
       </div>
       <div className="px-3">
-        <Loader loading={ loading } size="small">
-          <NoContent
-            size="small"
-            title={NO_METRIC_DATA}
-            show={ data.length === 0 }
-          >
-            <ResponsiveContainer height={ 240 } width="100%">
+        <Loader loading={loading} size="small">
+          <NoContent size="small" title={NO_METRIC_DATA} show={data.length === 0}>
+            <ResponsiveContainer height={240} width="100%">
               <>
                 {isLineChart && (
                   <CustomMetriLineChart
-                      data={ data }
-                      params={ params }
-                      // seriesMap={ seriesMap }
-                      colors={ colors }
-                      onClick={ clickHandler }
+                    data={data}
+                    params={params}
+                    // seriesMap={ seriesMap }
+                    colors={colors}
+                    onClick={clickHandler}
                   />
                 )}
 
                 {isPieChart && (
                   <CustomMetricPieChart
                     metric={metric}
-                    data={ data[0] }
-                    colors={ colors }
-                    onClick={ clickHandlerTable }
+                    data={data[0]}
+                    colors={colors}
+                    onClick={clickHandlerTable}
                   />
                 )}
 
                 {isProgress && (
                   <CustomMetricPercentage
-                    data={ data[0] }
-                    params={ params }
-                    colors={ colors }
-                    onClick={ clickHandler }
+                    data={data[0]}
+                    params={params}
+                    colors={colors}
+                    onClick={clickHandler}
                   />
                 )}
 
                 {isTable && (
                   <CustomMetricTable
-                    metric={ metric }
-                    data={ data[0] }
-                    onClick={ clickHandlerTable }
+                    metric={metric}
+                    data={data[0]}
+                    onClick={clickHandlerTable}
                     isTemplate={isTemplate}
                   />
                 )}
@@ -153,26 +174,36 @@ function CustomMetricWidget(props: Props) {
   );
 }
 
-export default connect(state => ({
-  period: state.getIn(['dashboard', 'period']),
-}), {
-  remove,
-  setShowAlerts,
-  setAlertMetricId,
-  edit,
-  setActiveWidget,
-  updateActiveState,
-  init,
-})(CustomMetricWidget);
+export default connect(
+  (state) => ({
+    period: state.getIn(['dashboard', 'period']),
+  }),
+  {
+    remove,
+    setShowAlerts,
+    setAlertMetricId,
+    edit,
+    setActiveWidget,
+    updateActiveState,
+    init,
+  }
+)(CustomMetricWidget);
 
-
-const WidgetIcon = ({ className = '', tooltip = '', icon, onClick }) => (
-  <Popup
-    size="small"
-    content={tooltip}
-  >
+const WidgetIcon = ({
+  className = '',
+  tooltip = '',
+  icon,
+  onClick,
+}: {
+  className: string;
+  tooltip: string;
+  icon: string;
+  onClick: any;
+}) => (
+  <Tooltip title={tooltip}>
     <div className={className} onClick={onClick}>
-        <Icon name={icon} size="14" />
+      {/* @ts-ignore */}
+      <Icon name={icon} size="14" />
     </div>
-  </Popup>
-)
+  </Tooltip>
+);

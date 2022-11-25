@@ -1,6 +1,5 @@
 import React from 'react';
-import { Tooltip } from 'react-tippy';
-import { Icon } from 'UI';
+import { Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { ReduxTime } from '../Time';
@@ -49,9 +48,13 @@ function PlayerControls(props: Props) {
   const speedRef = React.useRef(null);
   const arrowBackRef = React.useRef(null);
   const arrowForwardRef = React.useRef(null);
+  const skipRef = React.useRef<HTMLDivElement>();
 
   React.useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
       if (e.key === 'ArrowRight') {
         arrowForwardRef.current.focus();
       }
@@ -72,9 +75,13 @@ function PlayerControls(props: Props) {
   const toggleTooltip = () => {
     setShowTooltip(!showTooltip);
   };
+  const handleClickOutside = () => {
+    setShowTooltip(false);
+  };
   return (
     <div className="flex items-center">
       {playButton}
+      <div className="mx-1" />
       {!live && (
         <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
           {/* @ts-ignore */}
@@ -86,12 +93,11 @@ function PlayerControls(props: Props) {
       )}
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-        {/* @ts-ignore */}
-        <Tooltip title="Rewind 10s" delay={0} position="top">
-          <button
-            ref={arrowBackRef}
-            className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
-          >
+        <button
+          ref={arrowBackRef}
+          className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
+        >
+          <Tooltip title="Rewind 10s">
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -99,59 +105,57 @@ function PlayerControls(props: Props) {
               true,
               'hover:bg-active-blue-border color-main h-full flex items-center'
             )}
-          </button>
-        </Tooltip>
-        <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
-          <Tooltip
-            open={showTooltip}
-            interactive
+          </Tooltip>
+        </button>
+
+        <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border flex items-center">
+          <Popover
+            // open={showTooltip}
+            // interactive
             // @ts-ignore
             theme="nopadding"
             animation="none"
             duration={0}
             className="cursor-pointer select-none"
             distance={20}
-            html={
-              <OutsideClickDetectingDiv
-                onClickOutside={() => (showTooltip ? toggleTooltip() : null)}
-              >
-                <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
-                  <div className="font-semibold py-2 px-4 w-full text-left">
-                    Jump <span className="text-disabled-text">(Secs)</span>
-                  </div>
-                  {Object.keys(skipIntervals).map((interval) => (
-                    <div
-                      onClick={() => {
-                        toggleTooltip();
-                        setSkipInterval(parseInt(interval, 10));
-                      }}
-                      className={cn(
-                        'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                        'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
-                      )}
-                    >
-                      {interval}
-                      <span className="text-disabled-text">s</span>
-                    </div>
-                  ))}
+            render={({ close }: any) => (
+              <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
+                <div className="font-semibold py-2 px-4 w-full text-left">
+                  Jump <span className="text-disabled-text">(Secs)</span>
                 </div>
-              </OutsideClickDetectingDiv>
-            }
+                {Object.keys(skipIntervals).map((interval) => (
+                  <div
+                    key={interval}
+                    onClick={() => {
+                      close();
+                      setSkipInterval(parseInt(interval, 10));
+                    }}
+                    className={cn(
+                      'py-2 px-4 cursor-pointer w-full text-left font-semibold',
+                      'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
+                    )}
+                  >
+                    {interval}
+                    <span className="text-disabled-text">s</span>
+                  </div>
+                ))}
+              </div>
+            )}
           >
-            <div onClick={toggleTooltip}>
+            <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
               {/* @ts-ignore */}
               <Tooltip disabled={showTooltip} title="Set default skip duration">
                 {currentInterval}s
               </Tooltip>
             </div>
-          </Tooltip>
+          </Popover>
         </div>
-        {/* @ts-ignore */}
-        <Tooltip title="Forward 10s" delay={0} position="top">
-          <button
-            ref={arrowForwardRef}
-            className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
-          >
+
+        <button
+          ref={arrowForwardRef}
+          className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
+        >
+          <Tooltip title="Forward 10s">
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -159,15 +163,15 @@ function PlayerControls(props: Props) {
               false,
               'hover:bg-active-blue-border color-main h-full flex items-center'
             )}
-          </button>
-        </Tooltip>
+          </Tooltip>
+        </button>
       </div>
 
       {!live && (
         <div className="flex items-center">
           <div className="mx-2" />
           {/* @ts-ignore */}
-          <Tooltip title="Control play back speed (↑↓)" delay={0} position="top">
+          <Tooltip title="Control play back speed (↑↓)" placement="top">
             <button
               ref={speedRef}
               className={cn(styles.speedButton, 'focus:border focus:border-blue')}
@@ -179,10 +183,10 @@ function PlayerControls(props: Props) {
           </Tooltip>
           <div className="mx-2" />
           <button
-            className={cn(
-              styles.skipIntervalButton,
-              { [styles.withCheckIcon]: skip, [styles.active]: skip },
-            )}
+            className={cn(styles.skipIntervalButton, {
+              [styles.withCheckIcon]: skip,
+              [styles.active]: skip,
+            })}
             onClick={toggleSkip}
             data-disabled={disabled}
           >

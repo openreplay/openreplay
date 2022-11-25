@@ -1,0 +1,44 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- template "vault.serverServiceEnabled" . -}}
+{{- if .serverServiceEnabled -}}
+# Service for Vault cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+{{ template "vault.service.annotations" .}}
+spec:
+  {{- if .Values.server.service.type}}
+  type: {{ .Values.server.service.type }}
+  {{- end}}
+  {{- if .Values.server.service.clusterIP }}
+  clusterIP: {{ .Values.server.service.clusterIP }}
+  {{- end }}
+  {{- include "service.externalTrafficPolicy" .Values.server.service }}
+  # We want the servers to become available even if they're not ready
+  # since this DNS is also used for join operations.
+  publishNotReadyAddresses: {{ .Values.server.service.publishNotReadyAddresses }}
+  ports:
+    - name: {{ include "vault.scheme" . }}
+      port: {{ .Values.server.service.port }}
+      targetPort: {{ .Values.server.service.targetPort }}
+      {{- if and (.Values.server.service.nodePort) (eq (.Values.server.service.type | toString) "NodePort") }}
+      nodePort: {{ .Values.server.service.nodePort }}
+      {{- end }}
+    - name: https-internal
+      port: 8201
+      targetPort: 8201
+  selector:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    component: server
+{{- end }}
+{{- end }}

@@ -2,7 +2,7 @@ import json
 
 import schemas
 from chalicelib.core import users
-from chalicelib.utils import pg_client, helper, dev
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -48,7 +48,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         if gdpr:
             extra_projection += ',s.gdpr'
         if recorded:
-            extra_projection += """, COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
+            extra_projection += """,COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
                                       (SELECT MIN(sessions.start_ts)
                                        FROM public.sessions
                                        WHERE sessions.project_id = s.project_id
@@ -76,19 +76,21 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         rows = cur.fetchall()
         # if recorded is requested, check if it was saved or computed
         if recorded:
-            for r in rows:
+            u_values = []
+            params = {}
+            for i, r in enumerate(rows):
                 if r["first_recorded_session_at"] is None:
-                    extra_update = ""
-                    if r["recorded"]:
-                        extra_update = ", first_recorded_session_at=to_timestamp(%(first_recorded)s/1000)"
-                    query = cur.mogrify(f"""UPDATE public.projects 
-                                               SET sessions_last_check_at=(now() at time zone 'utc')
-                                                {extra_update} 
-                                               WHERE project_id=%(project_id)s""",
-                                        {"project_id": r["project_id"], "first_recorded": r["first_recorded"]})
-                    cur.execute(query)
+                    u_values.append(f"(%(project_id_{i})s,to_timestamp(%(first_recorded_{i})s/1000))")
+                    params[f"project_id_{i}"] = r["project_id"]
+                    params[f"first_recorded_{i}"] = r["first_recorded"] if r["recorded"] else None
                 r.pop("first_recorded_session_at")
                 r.pop("first_recorded")
+            if len(u_values) > 0:
+                query = cur.mogrify(f"""UPDATE public.projects 
+                                        SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
+                                        FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
+                                        WHERE projects.project_id=u.project_id;""", params)
+                cur.execute(query)
 
         if recording_state and len(rows) > 0:
             project_ids = [f'({r["project_id"]})' for r in rows]

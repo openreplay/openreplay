@@ -3,5 +3,5 @@
 // Auto-generated, do not edit
 
 export const TP_MAP = {
-<%= $messages.select { |msg| msg.tracker || msg.replayer }.map { |msg| "  #{msg.id}: \"#{msg.name.snake_case}\"," }.join "\n" %>
+<%= $messages.select { |msg| msg.tracker || msg.replayer != false  }.map { |msg| "  #{msg.id}: \"#{msg.name.snake_case}\"," }.join "\n" %>
 } as const

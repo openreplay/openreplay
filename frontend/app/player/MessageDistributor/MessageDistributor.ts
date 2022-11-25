@@ -9,12 +9,6 @@ import Log from 'Types/session/log';
 import { update } from '../store';
 import { toast } from 'react-toastify';
 
-import {
-  init as initListsDepr,
-  append as listAppend,
-  setStartTime as setListsStartTime
-} from '../lists';
-
 import StatedScreen from './StatedScreen/StatedScreen';
 
 import ListWalker from './managers/ListWalker';
@@ -27,11 +21,12 @@ import ActivityManager from './managers/ActivityManager';
 import AssistManager from './managers/AssistManager';
 
 import MFileReader from './messages/MFileReader';
-import { loadFiles, checkUnprocessedMobs } from './network/loadFiles';
+import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
+import { decryptSessionBytes } from './network/crypto';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
-import { INITIAL_STATE as LISTS_INITIAL_STATE , LIST_NAMES, initLists } from './Lists';
+import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE } from './Lists';
 
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
@@ -49,6 +44,7 @@ export interface State extends SuperState, AssistState {
   domBuildingTime?: any,
   loadTime?: any,
   error: boolean,
+  devtoolsLoading: boolean
 }
 export const INITIAL_STATE: State = {
   ...SUPER_INITIAL_STATE,
@@ -56,7 +52,8 @@ export const INITIAL_STATE: State = {
   ...ASSIST_INITIAL_STATE,
   performanceChartData: [],
   skipIntervals: [],
-  error: false
+  error: false,
+  devtoolsLoading: false,
 };
 
 
@@ -69,7 +66,15 @@ import type {
   MouseClick,
 } from './messages';
 
-import type { Timed } from './messages/timed';
+const visualChanges = [
+  "mouse_move",
+  "mouse_click",
+  "create_element_node",
+  "set_input_value",
+  "set_input_checked",
+  "set_viewport_size",
+  "set_viewport_scroll",
+]
 
 export default class MessageDistributor extends StatedScreen {
   // TODO: consistent with the other data-lists
@@ -89,15 +94,14 @@ export default class MessageDistributor extends StatedScreen {
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   private readonly decoder = new Decoder();
-  private readonly lists = initLists();
+  private readonly lists: Lists;
 
   private activityManager: ActivityManager | null = null;
-  private fileReader: MFileReader;
 
   private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
-  private lastRecordedMessageTime: number = 0;
+  private lastMessageInFileTime: number = 0;
 
   constructor(private readonly session: any /*Session*/, config: any, live: boolean) {
     super();
@@ -108,69 +112,44 @@ export default class MessageDistributor extends StatedScreen {
     this.sessionStart = this.session.startedAt;
 
     if (live) {
-      initListsDepr({})
-      this.assistManager.connect();
+      this.lists = new Lists()
+      this.assistManager.connect(this.session.agentToken);
     } else {
       this.activityManager = new ActivityManager(this.session.duration.milliseconds);
       /* == REFACTOR_ME == */
-      const eventList = this.session.events.toJSON();
-      initListsDepr({
-        event: eventList,
-        stack: this.session.stackEvents.toJSON(),
-        resource: this.session.resources.toJSON(),
-      });
-
+      const eventList = session.events.toJSON();
       // TODO: fix types for events, remove immutable js
       eventList.forEach((e: Record<string, string>) => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
           this.locationEventManager.append(e);
         }
-      });
-      this.session.errors.forEach((e: Record<string, string>) => {
-        this.lists.exceptions.append(e);
-      });
+      })
+
+      this.lists = new Lists({
+        event: eventList,
+        stack: session.stackEvents.toJSON(),
+        resource: session.resources.toJSON(),
+        exceptions: session.errors.toJSON(),
+      })
+
       /* === */
       this.loadMessages();
     }
   }
 
-  private waitingForFiles: boolean = false
-
-  private onFileSuccessRead() {
-    this.windowNodeCounter.reset()
-
-    if (this.activityManager) {
-      this.activityManager.end()
-      update({
-        skipIntervals: this.activityManager.list
-      })
-    }
-
-    this.waitingForFiles = false
-    this.setMessagesLoading(false)
-  }
-
-  private readAndDistributeMessages(byteArray: Uint8Array, onReadCb?: (msg: Message) => void) {
+  private parseAndDistributeMessages(fileReader: MFileReader, onMessage?: (msg: Message) => void) {
     const msgs: Array<Message> = []
-    if (!this.fileReader) {
-      this.fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
-    }
-
-    this.fileReader.append(byteArray)
     let next: ReturnType<MFileReader['next']>
-    while (next = this.fileReader.next()) {
+    while (next = fileReader.next()) {
       const [msg, index] = next
       this.distributeMessage(msg, index)
       msgs.push(msg)
-      onReadCb?.(msg)
+      onMessage?.(msg)
     }
 
     logger.info("Messages count: ", msgs.length, msgs)
 
-    return msgs
-  }
 
-  private processStateUpdates(msgs: Message[]) {
     // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
     const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
     this.pagesManager.sortPages((m1, m2) => {
@@ -195,87 +174,103 @@ export default class MessageDistributor extends StatedScreen {
       }
       return 0;
     })
+  }
 
-    const stateToUpdate: {[key:string]: any} = {
+
+  private waitingForFiles: boolean = false
+  private onFileReadSuccess = () => {
+    const stateToUpdate = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvaliability: this.performanceTrackManager.avaliability,
+      ...this.lists.getFullListsState()
     }
-    LIST_NAMES.forEach(key => {
-      stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
-    })
+    if (this.activityManager) {
+      this.activityManager.end()
+      stateToUpdate.skipIntervals = this.activityManager.list
+    }
+
     update(stateToUpdate)
+  }
+  private onFileReadFailed = (e: any) => {
+    logger.error(e)
+    update({ error: true })
+    toast.error('Error requesting a session file')
+  }
+  private onFileReadFinally = () => {
+    this.incomingMessages
+      .filter(msg => msg.time >= this.lastMessageInFileTime)
+      .forEach(msg => this.distributeMessage(msg, 0))
+
+    this.waitingForFiles = false
     this.setMessagesLoading(false)
   }
 
   private loadMessages() {
+    // TODO: reuseable decryptor instance
+    const createNewParser = (shouldDecrypt=true) => {
+      const decrypt = shouldDecrypt && this.session.fileKey
+        ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
+        : (b: Uint8Array) => Promise.resolve(b)
+      // Each time called - new fileReader created
+      const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
+      return (b: Uint8Array) => decrypt(b).then(b => {
+        fileReader.append(b)
+        this.parseAndDistributeMessages(fileReader)
+        this.setMessagesLoading(false)
+      })
+    }
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    const onData = (byteArray: Uint8Array) => {
-      const msgs = this.readAndDistributeMessages(byteArray)
-      this.processStateUpdates(msgs)
-    }
-
-    loadFiles(this.session.mobsUrl,
-      onData
+    loadFiles(this.session.domURL, createNewParser())
+    .catch(() => // do if  only the first file missing (404) (?)
+      requestEFSDom(this.session.sessionId)
+        .then(createNewParser(false))
+        // Fallback to back Compatability with mobsUrl
+        .catch(e =>
+          loadFiles(this.session.mobsUrl, createNewParser(false))
+        )
     )
-    .then(() => this.onFileSuccessRead())
-    .catch(async () => {
-        checkUnprocessedMobs(this.session.sessionId)
-       .then(file => file ? onData(file) : Promise.reject('No session file'))
-       .then(() => this.onFileSuccessRead())
-       .catch((e) => {
-          logger.error(e)
-          update({ error: true })
-          toast.error('Error getting a session replay file')
-       })
-       .finally(() => {
-         this.waitingForFiles = false
-         this.setMessagesLoading(false)
-        })
+    .then(this.onFileReadSuccess)
+    .catch(this.onFileReadFailed)
+    .finally(this.onFileReadFinally)
 
-    })
+    // load devtools
+    if (this.session.devtoolsURL.length) {
+      update({ devtoolsLoading: true })
+      loadFiles(this.session.devtoolsURL, createNewParser())
+      .catch(() =>
+        requestEFSDevtools(this.session.sessionId)
+          .then(createNewParser(false))
+      )
+      //.catch() // not able to download the devtools file
+      .finally(() => update({ devtoolsLoading: false }))
+    }
   }
 
-  public async reloadWithUnprocessedFile() {
-    // assist will pause and skip messages to prevent timestamp related errors
-    this.assistManager.toggleTimeTravelJump()
-    this.reloadMessageManagers()
-
-    this.setMessagesLoading(true)
-    this.waitingForFiles = true
-
+  reloadWithUnprocessedFile() {
     const onData = (byteArray: Uint8Array) => {
-      const onReadCallback = () => this.setLastRecordedMessageTime(this.lastMessageTime)
-      const msgs = this.readAndDistributeMessages(byteArray, onReadCallback)
-      this.processStateUpdates(msgs)
+      const onMessage = (msg: Message) => { this.lastMessageInFileTime = msg.time }
+      this.parseAndDistributeMessages(new MFileReader(byteArray, this.sessionStart), onMessage)
     }
-
-    // unpausing assist
-    const unpauseAssist = () => {
-      this.assistManager.toggleTimeTravelJump()
+    const updateState = () =>
       update({
         liveTimeTravel: true,
       });
-    }
 
-    try {
-      const unprocessedFile = await checkUnprocessedMobs(this.session.sessionId)
+    // assist will pause and skip messages to prevent timestamp related errors
+    this.reloadMessageManagers()
+    this.windowNodeCounter.reset()
 
-      Promise.resolve(onData(unprocessedFile))
-      .then(() => this.onFileSuccessRead())
-      .then(unpauseAssist)
-    } catch (unprocessedFilesError) {
-      logger.error(unprocessedFilesError)
-      update({ error: true })
-      toast.error('Error getting a session replay file')
-      this.assistManager.toggleTimeTravelJump()
-    } finally {
-      this.waitingForFiles = false
-      this.setMessagesLoading(false)
-    }
+    this.setMessagesLoading(true)
+    this.waitingForFiles = true
 
-
+    return requestEFSDom(this.session.sessionId)
+      .then(onData)
+      .then(updateState)
+      .then(this.onFileReadSuccess)
+      .catch(this.onFileReadFailed)
+      .finally(this.onFileReadFinally)
   }
 
   private reloadMessageManagers() {
@@ -299,7 +294,6 @@ export default class MessageDistributor extends StatedScreen {
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
-      setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
     const llEvent = this.locationEventManager.moveGetLast(t, index);
@@ -335,14 +329,7 @@ export default class MessageDistributor extends StatedScreen {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
-    LIST_NAMES.forEach(key => {
-      const lastMsg = this.lists[key].moveGetLast(t, key === 'exceptions' ? undefined : index);
-      if (lastMsg != null) {
-        // @ts-ignore TODO: fix types
-        stateToUpdate[`${key}ListNow`] = this.lists[key].listNow;
-      }
-    });
-
+    Object.assign(stateToUpdate, this.lists.moveGetState(t))
     Object.keys(stateToUpdate).length > 0 && update(stateToUpdate);
 
     /* Sequence of the managers is important here */
@@ -372,7 +359,7 @@ export default class MessageDistributor extends StatedScreen {
     }
   }
 
-  private decodeMessage(msg: any, keys: Array<string>) {
+  private decodeStateMessage(msg: any, keys: Array<string>) {
     const decoded = {};
     try {
       keys.forEach(key => {
@@ -386,37 +373,38 @@ export default class MessageDistributor extends StatedScreen {
     return { ...msg, ...decoded };
   }
 
-  /* Binded */
-  distributeMessage(msg: Message, index: number): void {
+  private readonly incomingMessages: Message[] = []
+  appendMessage(msg: Message, index: number) {
+    // @ts-ignore
+     //       msg.time = this.md.getLastRecordedMessageTime() + msg.time\
+     //TODO: put index in message type
+    this.incomingMessages.push(msg)
+    if (!this.waitingForFiles) {
+      this.distributeMessage(msg, index)
+    }
+  }
+
+  private distributeMessage(msg: Message, index: number): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
-    if ([
-      "mouse_move",
-      "mouse_click",
-      "create_element_node", // not a user activity, though visual change
-      "set_input_value",
-      "set_input_checked",
-      "set_viewport_size",
-      "set_viewport_scroll",
-    ].includes(msg.tp)) {
+    if (visualChanges.includes(msg.tp)) {
       this.activityManager?.updateAcctivity(msg.time);
     }
-    //const index = i + index; //?
     let decoded;
     const time = msg.time;
     switch (msg.tp) {
       /* Lists: */
       case "console_log":
         if (msg.level === 'debug') break;
-        listAppend("log", Log({
+        this.lists.lists.log.append(Log({
           level: msg.level,
           value: msg.value,
           time,
           index,
-        }));
+        }))
         break;
       case "fetch":
-        listAppend("fetch", Resource({
+        this.lists.lists.fetch.append(Resource({
           method: msg.method,
           url: msg.url,
           payload: msg.request,
@@ -460,51 +448,45 @@ export default class MessageDistributor extends StatedScreen {
         this.decoder.set(msg.key, msg.value);
         break;
       case "redux":
-        decoded = this.decodeMessage(msg, ["state", "action"]);
-        logger.log(decoded)
+        decoded = this.decodeStateMessage(msg, ["state", "action"]);
+        logger.log('redux', decoded)
         if (decoded != null) {
-          this.lists.redux.append(decoded);
+          this.lists.lists.redux.append(decoded);
         }
         break;
       case "ng_rx":
-        decoded = this.decodeMessage(msg, ["state", "action"]);
-        logger.log(decoded)
+        decoded = this.decodeStateMessage(msg, ["state", "action"]);
+        logger.log('ngrx', decoded)
         if (decoded != null) {
-          this.lists.ngrx.append(decoded);
+          this.lists.lists.ngrx.append(decoded);
         }
         break;
       case "vuex":
-        decoded = this.decodeMessage(msg, ["state", "mutation"]);
-        logger.log(decoded)
+        decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
+        logger.log('vuex', decoded)
         if (decoded != null) {
-          this.lists.vuex.append(decoded);
+          this.lists.lists.vuex.append(decoded);
         }
         break;
       case "zustand":
-        decoded = this.decodeMessage(msg, ["state", "mutation"])
-        logger.log(decoded)
+        decoded = this.decodeStateMessage(msg, ["state", "mutation"])
+        logger.log('zustand', decoded)
         if (decoded != null) {
-          this.lists.zustand.append(decoded)
+          this.lists.lists.zustand.append(decoded)
         }
       case "mob_x":
-        decoded = this.decodeMessage(msg, ["payload"]);
-        logger.log(decoded)
+        decoded = this.decodeStateMessage(msg, ["payload"]);
+        logger.log('mobx', decoded)
 
         if (decoded != null) {
-          this.lists.mobx.append(decoded);
+          this.lists.lists.mobx.append(decoded);
         }
         break;
       case "graph_ql":
-        this.lists.graphql.append(msg);
+        this.lists.lists.graphql.append(msg);
         break;
       case "profiler":
-        this.lists.profiles.append(msg);
-        break;
-      case "long_task":
-        this.lists.longtasks.append({
-          ...msg,
-          time: msg.timestamp - this.sessionStart,
-        });
+        this.lists.lists.profiles.append(msg);
         break;
       default:
         switch (msg.tp) {
@@ -545,13 +527,7 @@ export default class MessageDistributor extends StatedScreen {
     super.clean();
     update(INITIAL_STATE);
     this.assistManager.clear();
+    this.incomingMessages.length = 0
   }
 
-  public setLastRecordedMessageTime(time: number) {
-    this.lastRecordedMessageTime = time;
-  }
-
-  public getLastRecordedMessageTime(): number {
-    return this.lastRecordedMessageTime;
-  }
 }

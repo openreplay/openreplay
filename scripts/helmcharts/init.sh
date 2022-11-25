@@ -15,7 +15,7 @@ fatal()
     exit 1
 }
 
-version="v1.8.1"
+version="v1.9.0"
 usr=`whoami`
 
 # Installing k3s
@@ -59,13 +59,15 @@ usr=`whoami`
     which helm &> /dev/null
     if [[ $? -ne 0 ]]; then
         info "helm not installed. Installing it..."
-        curl -ssl https://get.helm.sh/helm-v3.4.2-linux-amd64.tar.gz -o /tmp/helm.tar.gz
+        curl -ssl https://get.helm.sh/helm-v3.10.1-linux-amd64.tar.gz -o /tmp/helm.tar.gz
         tar -xf /tmp/helm.tar.gz
         chmod +x linux-amd64/helm
         sudo cp linux-amd64/helm /usr/local/bin/helm
         rm -rf linux-amd64/helm /tmp/helm.tar.gz
     fi
 }
+
+sleep 10
 
 # ## Installing openssl
 # sudo apt update &> /dev/null
@@ -82,8 +84,8 @@ fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.m
 }
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.8.1"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.8.1"
+# This wrapper will help to check the sed, and use the correct version="v1.9.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.9.0"
 function is_gnu_sed(){
   sed --version >/dev/null 2>&1
 }
@@ -106,6 +108,7 @@ sed_i_wrapper -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomP
 sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
 sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
 sed_i_wrapper -i "s/assistKey: \"SetARandomStringHere\"/assistKey: \"$(randomPass)\"/g" vars.yaml
+sed_i_wrapper -i "s/assistJWTSecret: \"SetARandomStringHere\"/assistJWTSecret: \"$(randomPass)\"/g" vars.yaml
 sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 
 info "Setting proper permission for shared folder"

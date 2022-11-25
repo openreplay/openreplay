@@ -7,6 +7,7 @@
 
 # Example
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
+set -e
 
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 ee="false"
@@ -25,12 +26,17 @@ function build_service() {
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
     }
+    echo "Build completed for $image"
     return
 }
 
 function build_api(){
-    cp -R ../backend ../_backend
-    cd ../_backend
+    destination="_backend"
+    [[ $1 == "ee" ]] && {
+        destination="_backend_ee"
+    }
+    cp -R ../backend ../${destination}
+    cd ../${destination}
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -r ../ee/backend/* ./
@@ -38,6 +44,8 @@ function build_api(){
     }
     [[ $2 != "" ]] && {
         build_service $2
+        cd ../backend
+        rm -rf ../${destination}
         return
     }
     for image in $(ls cmd);
@@ -46,7 +54,7 @@ function build_api(){
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${git_sha1}"
     done
     cd ../backend
-    rm -rf ../_backend
+    rm -rf ../${destination}
     echo "backend build completed"
 }
 

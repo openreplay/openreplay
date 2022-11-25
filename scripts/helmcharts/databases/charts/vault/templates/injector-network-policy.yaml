@@ -1,0 +1,24 @@
+{{- template "vault.injectorEnabled" . -}}
+{{- if .injectorEnabled -}}
+{{- if eq (.Values.global.openshift | toString) "true" }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ template "vault.fullname" . }}-agent-injector
+  labels:
+    app.kubernetes.io/name: {{ template "vault.name" . }}-agent-injector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "vault.name" . }}-agent-injector
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      component: webhook
+  ingress:
+    - from:
+        - namespaceSelector: {}
+      ports:
+      - port: 8080
+        protocol: TCP
+{{ end }}
+{{ end }}

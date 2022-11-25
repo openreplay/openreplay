@@ -6,7 +6,7 @@ import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
-import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS } from 'Types/app/period';
 
 export default class Widget {
     public static get ID_KEY():string { return "metricId" }
@@ -24,7 +24,7 @@ export default class Widget {
     sessions: [] = []
     isPublic: boolean = true
     owner: string = ""
-    lastModified: Date = new Date()
+    lastModified: number = new Date().getTime()
     dashboards: any[] = []
     dashboardIds: any[] = []
     config: any = {}
@@ -131,7 +131,7 @@ export default class Widget {
             series: this.series.map((series: any) => series.toJson()),
             config: {
                 ...this.config,
-                col: this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS ? 4 : this.config.col
+                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS) ? 4 : 2
             },
         }
     }

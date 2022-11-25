@@ -1,4 +1,4 @@
-## Licenses (as of June 30, 2022)
+## Licenses (as of November 04, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -53,6 +53,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | classnames | MIT | JavaScript |
 | codemirror | MIT | JavaScript |
 | copy-to-clipboard | MIT | JavaScript |
+| jsonwebtoken | MIT | JavaScript |
 | datamaps | MIT | JavaScript |
 | deep-diff | MIT | JavaScript |
 | immutable | MIT | JavaScript |
@@ -112,3 +113,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | clickhouse | Apache2 | Infrastructure |
 | redis | BSD3 | Infrastructure |
 | yq | MIT | Infrastructure |
+| html2canvas | MIT | JavaScript |

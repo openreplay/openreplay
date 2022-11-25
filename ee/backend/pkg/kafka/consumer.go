@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"log"
+	"openreplay/backend/pkg/messages"
 	"os"
 	"time"
 
@@ -9,16 +10,15 @@ import (
 
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"openreplay/backend/pkg/env"
-	"openreplay/backend/pkg/queue/types"
 )
 
 type Message = kafka.Message
 
 type Consumer struct {
-	c              *kafka.Consumer
-	messageHandler types.MessageHandler
-	commitTicker   *time.Ticker
-	pollTimeout    uint
+	c               *kafka.Consumer
+	messageIterator messages.MessageIterator
+	commitTicker    *time.Ticker
+	pollTimeout     uint
 
 	lastReceivedPrtTs map[int32]int64
 }
@@ -26,7 +26,7 @@ type Consumer struct {
 func NewConsumer(
 	group string,
 	topics []string,
-	messageHandler types.MessageHandler,
+	messageIterator messages.MessageIterator,
 	autoCommit bool,
 	messageSizeLimit int,
 ) *Consumer {
@@ -47,6 +47,16 @@ func NewConsumer(
 		kafkaConfig.SetKey("ssl.key.location", os.Getenv("KAFKA_SSL_KEY"))
 		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
+
+		// Apply Kerberos configuration
+	if env.Bool("KAFKA_USE_KERBEROS") {
+		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
+		kafkaConfig.SetKey("sasl.mechanisms", "GSSAPI")
+		kafkaConfig.SetKey("sasl.kerberos.service.name", os.Getenv("KERBEROS_SERVICE_NAME"))
+		kafkaConfig.SetKey("sasl.kerberos.principal", os.Getenv("KERBEROS_PRINCIPAL"))
+		kafkaConfig.SetKey("sasl.kerberos.keytab", os.Getenv("KERBEROS_KEYTAB_LOCATION"))
+	}
+
 	c, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
 		log.Fatalln(err)
@@ -70,7 +80,7 @@ func NewConsumer(
 
 	return &Consumer{
 		c:                 c,
-		messageHandler:    messageHandler,
+		messageIterator:   messageIterator,
 		commitTicker:      commitTicker,
 		pollTimeout:       200,
 		lastReceivedPrtTs: make(map[int32]int64),
@@ -171,11 +181,14 @@ func (consumer *Consumer) ConsumeNext() error {
 			return errors.Wrap(e.TopicPartition.Error, "Consumer Partition Error")
 		}
 		ts := e.Timestamp.UnixMilli()
-		consumer.messageHandler(decodeKey(e.Key), e.Value, &types.Meta{
-			Topic:     *(e.TopicPartition.Topic),
-			ID:        uint64(e.TopicPartition.Offset),
-			Timestamp: ts,
-		})
+		consumer.messageIterator.Iterate(
+			e.Value,
+			messages.NewBatchInfo(
+				decodeKey(e.Key),
+				*(e.TopicPartition.Topic),
+				uint64(e.TopicPartition.Offset),
+				uint64(e.TopicPartition.Partition),
+				ts))
 		consumer.lastReceivedPrtTs[e.TopicPartition.Partition] = ts
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
@@ -193,17 +206,4 @@ func (consumer *Consumer) Close() {
 	if err := consumer.c.Close(); err != nil {
 		log.Printf("Kafka consumer close error: %v", err)
 	}
-}
-
-func (consumer *Consumer) HasFirstPartition() bool {
-	assigned, err := consumer.c.Assignment()
-	if err != nil {
-		return false
-	}
-	for _, p := range assigned {
-		if p.Partition == 1 {
-			return true
-		}
-	}
-	return false
 }

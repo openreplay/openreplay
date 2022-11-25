@@ -31,12 +31,12 @@ function partitionsWrapper(partitions = [], mapCountry = false) {
 		.sort((a, b) => b.count - a.count)
 		.slice(0, showLength)
   	.map(p => ({
-  		label: mapCountry 
-  			? (countries[p.name] || "Unknown") 
+  		label: mapCountry
+  			? (countries[p.name] || "Unknown")
   			: p.name,
   		prc: p.count/sum * 100,
 		}))
-	
+
   if (otherPrcsSum > 0) {
     show.push({
       label: "Other",
@@ -47,9 +47,9 @@ function partitionsWrapper(partitions = [], mapCountry = false) {
   return show;
 }
 function tagsWrapper(tags = []) {
-	return tags.map(({ name, partitions }) => ({ 
-		name, 
-		partitions: partitionsWrapper(partitions, name === "country") 
+	return tags.map(({ name, partitions }) => ({
+		name,
+		partitions: partitionsWrapper(partitions, name === "country")
 	}))
 }
 
@@ -59,7 +59,7 @@ function dataWrapper(data = {}) {
 		chart30: data.chart30 || [],
 		tags: tagsWrapper(data.tags),
 	};
-} 
+}
 
 @connect(state => ({
 	error: state.getIn([ "errors", "instance" ])
@@ -75,7 +75,7 @@ export default class SideSection extends React.PureComponent {
 	}
 
 	render() {
-		const { 
+		const {
 			className,
 			error,
 			data,
@@ -96,20 +96,20 @@ export default class SideSection extends React.PureComponent {
 						timeFormat={'l'}
 					/>
 					<div className="mb-6" />
-					<DateAgo 
+					<DateAgo
 						className="my-4"
 						title="First Seen"
 						timestamp={ error.firstOccurrence }
 					/>
-					<DateAgo 
+					<DateAgo
 						className="my-4"
 						title="Last Seen"
 						timestamp={ error.lastOccurrence }
 					/>
-					{ data.tags.length > 0 && <h4 className="text-xl mt-6 mb-3">Tags</h4> }
+					{ data.tags.length > 0 && <h4 className="text-xl mt-6 mb-3">Summary</h4> }
 					<Loader loading={loading}>
 						{ data.tags.map(({ name, partitions }) =>
-							<DistributionBar 
+							<DistributionBar
 								key={ name }
 								title={name}
 								partitions={partitions}

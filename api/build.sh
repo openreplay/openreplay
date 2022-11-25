@@ -7,6 +7,15 @@
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
+# Helper function
+exit_err() {
+  err_code=$1
+  if [[ err_code != 0 ]]; then
+    exit $err_code
+  fi
+}
+
+environment=$1
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 envarg="default-foss"
 check_prereq() {
@@ -18,10 +27,12 @@ check_prereq() {
 }
 
 function build_api(){
-    cp -R ../api ../_api
-    cd ../_api
-    cp -R ../utilities/utils ../sourcemap-reader/.
-    cp -R ../sourcemap-reader .
+    destination="_api"
+    [[ $1 == "ee" ]] && {
+        destination="_api_ee"
+    }
+    cp -R ../api ../${destination}
+    cd ../${destination}
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
@@ -29,9 +40,10 @@ function build_api(){
         envarg="default-ee"
         tag="ee-"
     }
+    mv Dockerfile.dockerignore .dockerignore
     docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/chalice:${git_sha1} .
     cd ../api
-    rm -rf ../_api
+    rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:${tag}latest
@@ -41,11 +53,13 @@ function build_api(){
 }
 
 check_prereq
-build_api $1
+build_api $environment
 echo buil_complete
 IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
 
-[[ $1 == "ee" ]] && {
+[[ $environment == "ee" ]] && {
   cp ../ee/api/build_crons.sh .
   IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
-}
+  exit_err $?
+  rm build_crons.sh
+} || true

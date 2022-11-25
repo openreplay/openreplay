@@ -81,12 +81,6 @@ export default class GraphQL extends React.PureComponent {
     const { list } = nextProps;
     if (nextProps.time) {
       const filtered = GraphQL.filterList(list, prevState.filter);
-      console.log({
-        list,
-        filtered,
-        time: nextProps.time,
-      });
-
       let i = 0;
       filtered.forEach((item, index) => {
         if (item.time <= nextProps.time) {

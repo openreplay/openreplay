@@ -10,8 +10,7 @@ def get_by_id(webhook_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT
-                           w.*
+                    SELECT w.*
                     FROM public.webhooks AS w 
                     where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id})
@@ -161,8 +160,8 @@ def __trigger(hook, data):
 
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            logging.error("=======> webhook: something went wrong")
-            logging.error(r)
+            logging.error("=======> webhook: something went wrong for:")
+            logging.error(hook)
             logging.error(r.status_code)
             logging.error(r.text)
             return

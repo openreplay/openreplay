@@ -16,7 +16,7 @@ def jwt_authorizer(token):
             token[1],
             config("jwt_secret"),
             algorithms=config("jwt_algorithm"),
-            audience=[f"plugin:{helper.get_stage_name()}", f"front:{helper.get_stage_name()}"]
+            audience=[f"front:{helper.get_stage_name()}"]
         )
     except jwt.ExpiredSignatureError:
         print("! JWT Expired signature")
@@ -43,9 +43,9 @@ def generate_jwt(id, tenant_id, iat, aud, exp=None):
         payload={
             "userId": id,
             "tenantId": tenant_id,
-            "exp": iat // 1000 + int(config("jwt_exp_delta_seconds")) + TimeUTC.get_utc_offset() // 1000 \
-                if exp is None else exp+ TimeUTC.get_utc_offset() // 1000,
-            "iss": config("jwt_issuer"),
+            "exp": exp + TimeUTC.get_utc_offset() // 1000 if exp is not None \
+                else iat // 1000 + config("JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "iss": config("JWT_ISSUER"),
             "iat": iat // 1000,
             "aud": aud
         },

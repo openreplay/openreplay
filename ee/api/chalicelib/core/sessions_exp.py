@@ -3,7 +3,8 @@ from typing import List, Union
 import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics, sessions_devtool, \
+    sessions_notes
 from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
 
 SESSION_PROJECTION_COLS_CH = """\
@@ -58,8 +59,9 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False,
-                  live=True):
+# This function should not use Clickhouse because it doesn't have `file_key`
+def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, full_data=False, include_fav_viewed=False,
+                  group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
@@ -76,13 +78,14 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
             SELECT
                 s.*,
                 s.session_id::text AS session_id,
-                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
+                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key,
+                encode(file_key,'hex') AS file_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata._get_column_names()]) + ") AS project_metadata") if group_metadata else ''}
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
             WHERE s.project_id = %(project_id)s
                 AND s.session_id = %(session_id)s;""",
-            {"project_id": project_id, "session_id": session_id, "userId": user_id}
+            {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
         # print("===============")
         # print(query)
@@ -100,23 +103,28 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)
                     all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
-                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors if
-                                      e['source'] == "js_exception"][
-                                     :500]  # limit the number of errors to reduce the response-body size
+                    # limit the number of errors to reduce the response-body size
+                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
+                                      if e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
+                    data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
+                    data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
+                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                                                                    context=context)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                     start_ts=data["startTs"],
                                                                     duration=data["duration"])
 
+                data['notes'] = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=project_id,
+                                                                 session_id=session_id, user_id=context.user_id)
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
                 data['live'] = live and assist.is_live(project_id=project_id,
@@ -286,6 +294,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             sessions = cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS-CH SEARCH QUERY EXCEPTION -----------")
+            print(main_query)
             print("--------- PAYLOAD -----------")
             print(data.json())
             print("--------------------")
@@ -1542,3 +1551,14 @@ def count_all():
     with pg_client.PostgresClient(unlimited_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)
+
+
+def session_exists(project_id, session_id):
+    with ch_client.ClickHouseClient() as cur:
+        query = cur.format("""SELECT 1 
+                         FROM public.sessions 
+                         WHERE session_id=%(session_id)s 
+                            AND project_id=%(project_id)s""",
+                           {"project_id": project_id, "session_id": session_id})
+        row = cur.execute(query)
+    return row is not None

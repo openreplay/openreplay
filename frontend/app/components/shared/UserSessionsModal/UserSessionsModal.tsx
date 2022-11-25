@@ -72,7 +72,7 @@ function UserSessionsModal(props: Props) {
                 <div className="border rounded m-5">
                     <Loader loading={loading}>
                         {data.sessions.map((session: any) => (
-                            <div className="border-b last:border-none">
+                            <div className="border-b last:border-none" key={session.sessionId}>
                                 <SessionItem key={session.sessionId} session={session} compact={true} onClick={hideModal} />
                             </div>
                         ))}

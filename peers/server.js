@@ -42,3 +42,11 @@ process.on('uncaughtException', err => {
     debug && console.log(err.stack);
     // process.exit(1);
 });
+
+app.get('/private/shutdown', (req, res) => {
+        console.log("Requested shutdown");
+        res.statusCode = 200;
+        res.end("ok!");
+        process.kill(1, "SIGTERM");
+    }
+);

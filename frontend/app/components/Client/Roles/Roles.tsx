@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import cn from 'classnames';
-import { Loader, Popup, NoContent, Button } from 'UI';
+import { Loader, NoContent, Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import stl from './roles.module.css';
 import RoleForm from './components/RoleForm';
@@ -27,8 +27,7 @@ interface Props {
 }
 
 function Roles(props: Props) {
-    const { loading, instance, roles, init, edit, deleteRole, account, permissionsMap, projectsMap, removeErrors } = props;
-    // const [showModal, setShowmModal] = useState(false);
+    const { loading, roles, init, edit, deleteRole, account, permissionsMap, projectsMap, removeErrors } = props;
     const { showModal, hideModal } = useModal();
     const isAdmin = account.admin || account.superAdmin;
 
@@ -46,17 +45,6 @@ function Roles(props: Props) {
             props.resetErrors();
         };
     }, [removeErrors]);
-
-    // const closeModal = (showToastMessage: boolean) => {
-    //     if (showToastMessage) {
-    //         toast.success(showToastMessage);
-    //         props.fetchList();
-    //     }
-    //     // setShowmModal(false);
-    //     setTimeout(() => {
-    //         init();
-    //     }, 100);
-    // };
 
     const editHandler = (role: any) => {
         init(role);
@@ -81,9 +69,9 @@ function Roles(props: Props) {
                     <div className={cn(stl.tabHeader, 'flex items-center')}>
                         <div className="flex items-center mr-auto px-5 pt-5">
                             <h3 className={cn(stl.tabTitle, 'text-2xl')}>Roles and Access</h3>
-                            <Popup content="You don’t have the permissions to perform this action." disabled={isAdmin}>
+                            <Tooltip title="You don’t have the permissions to perform this action." disabled={isAdmin}>
                                 <Button variant="primary" onClick={() => editHandler({})}>Add</Button>
-                            </Popup>
+                            </Tooltip>
                         </div>
                     </div>
 
@@ -103,6 +91,7 @@ function Roles(props: Props) {
                             </div>
                             {roles.map((role) => (
                                 <RoleItem
+                                    key={role.roleId}
                                     role={role}
                                     isAdmin={isAdmin}
                                     permissions={permissionsMap}

@@ -1,7 +1,9 @@
+const jwt = require('jsonwebtoken');
 const uaParser = require('ua-parser-js');
 const {geoip} = require('./geoIP');
+const {extractPeerId} = require('./helper');
 
-let debug = process.env.debug === "1" || false;
+let debug = process.env.debug === "1";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const EVENTS_DEFINITION = {
     listen: {
@@ -92,7 +94,6 @@ function socketConnexionTimeout(io) {
                 console.error(e);
             }
         }, 0.5 * 60 * 1000, io);
-        // }, 2.5 * 60 * 1000, io);
     } else {
         debug && console.log(`WS no manually disconnecting sockets.`);
     }
@@ -103,6 +104,56 @@ function errorHandler(listenerName, error) {
     console.error(error);
 }
 
+
+function generateAccessToken(payload) {
+    return jwt.sign(payload, process.env.ASSIST_JWT_SECRET, {expiresIn: process.env.ASSIST_JWT_EXPIRATION || '30m'});
+}
+
+
+const JWT_TOKEN_PREFIX = "Bearer ";
+
+function check(socket, next) {
+    if (socket.handshake.query.identity === IDENTITIES.session) {
+        return next();
+    }
+    if (socket.handshake.query.peerId && socket.handshake.auth && socket.handshake.auth.token) {
+        let token = socket.handshake.auth.token;
+        if (token.startsWith(JWT_TOKEN_PREFIX)) {
+            token = token.substring(JWT_TOKEN_PREFIX.length);
+        }
+        jwt.verify(token, process.env.ASSIST_JWT_SECRET, (err, decoded) => {
+            debug && console.log("JWT payload:");
+            debug && console.log(decoded);
+            if (err) {
+                debug && console.error(err);
+                return next(new Error('Authentication error'));
+            }
+            const {projectKey, sessionId} = extractPeerId(socket.handshake.query.peerId);
+            if (!projectKey || !sessionId) {
+                debug && console.error("Missing attribute:");
+                debug && console.error(`projectKey:${projectKey}, sessionId:${sessionId}`);
+                return next(new Error('Authentication error'));
+            }
+            if (String(projectKey) !== String(decoded.projectKey) || String(sessionId) !== String(decoded.sessionId)) {
+                debug && console.error(`Trying to access projectKey:${projectKey} instead of ${decoded.projectKey}\nor`);
+                debug && console.error(`Trying to access sessionId:${sessionId} instead of ${decoded.sessionId}`);
+                return next(new Error('Authorization error'));
+            }
+            socket.decoded = decoded;
+            return next();
+        });
+    } else {
+        debug && console.error("something missing in:");
+        debug && console.error(socket.handshake);
+        return next(new Error('Authentication error'));
+    }
+}
+
 module.exports = {
-    extractSessionInfo, EVENTS_DEFINITION, IDENTITIES, socketConnexionTimeout, errorHandler
+    extractSessionInfo,
+    EVENTS_DEFINITION,
+    IDENTITIES,
+    socketConnexionTimeout,
+    errorHandler,
+    authorizer: {generateAccessToken, check}
 };

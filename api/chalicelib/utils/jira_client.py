@@ -35,7 +35,7 @@ class JiraManager:
             if (e.status_code // 100) == 4 and self.retries > 0:
                 time.sleep(1)
                 return self.get_projects()
-            print(f"=>Exception {e.text}")
+            print(f"=>JIRA Exception {e.text}")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: {e.text}")
         projects_dict_list = []
         for project in projects:

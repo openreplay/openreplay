@@ -2,7 +2,7 @@ import React from 'react';
 import stl from './announcements.module.css';
 import ListItem from './ListItem';
 import { connect } from 'react-redux';
-import { SlideModal, Icon, NoContent, Popup } from 'UI';
+import { SlideModal, Icon, NoContent, Tooltip } from 'UI';
 import { fetchList, setLastRead } from 'Duck/announcements';
 import withToggle from 'Components/hocs/withToggle';
 import { withRouter } from 'react-router-dom';
@@ -45,14 +45,14 @@ class Announcements extends React.Component {
 
     return (
       <div>
-        <Popup content={ `Announcements` } >
+        <Tooltip content={ `Announcements` } >
           <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
             <div className={ stl.counter } data-hidden={ unReadNotificationsCount === 0 }>
               { unReadNotificationsCount }
             </div>
             <Icon name="bullhorn" size="18" />
           </div>
-        </Popup>
+        </Tooltip>
         
         <SlideModal
           title="Announcements"

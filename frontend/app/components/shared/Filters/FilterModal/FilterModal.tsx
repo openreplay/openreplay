@@ -8,19 +8,19 @@ import { filtersMap } from 'Types/filter/newFilter';
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
   const matchingCategories: string[] = [];
   const matchingFilters: Record<string, any> = {};
-
-  if (searchQuery.length === 0) return {
+  const lowerCaseQuery = searchQuery.toLowerCase();
+  if (lowerCaseQuery.length === 0) return {
     matchingCategories: Object.keys(filters),
     matchingFilters: filters,
   };
 
   Object.keys(filters).forEach(name => {
-    if (name.toLocaleLowerCase().includes(searchQuery)) {
+    if (name.toLocaleLowerCase().includes(lowerCaseQuery)) {
       matchingCategories.push(name);
       matchingFilters[name] = filters[name];
     } else {
         const filtersQuery = filters[name]
-        .filter(filterOption => filterOption.label.toLocaleLowerCase().includes(searchQuery))
+        .filter((filterOption: any) => filterOption.label.toLocaleLowerCase().includes(lowerCaseQuery))
 
         if (filtersQuery.length > 0) matchingFilters[name] = filtersQuery
         filtersQuery.length > 0 && matchingCategories.push(name);
@@ -64,10 +64,10 @@ function FilterModal(props: Props) {
     // console.log(matchingFilters)
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
-      <div className={searchQuery && !isResultEmpty ? 'mb-6' : ''} style={{ columns: "auto 200px" }}>
+      <div className={searchQuery && !isResultEmpty ? 'mb-6' : ''} style={{ columns: matchingCategories.length > 1 ? 'auto 200px' : 1 }}>
           {matchingCategories.map((key) => {
             return (
-              <div className="mb-6" key={key}>
+              <div className="mb-6 flex flex-col gap-2" key={key}>
                 <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
                 <div>
                   {matchingFilters[key] && matchingFilters[key].map((filter: any) => (

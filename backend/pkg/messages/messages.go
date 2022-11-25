@@ -14,7 +14,7 @@ const (
 
 	MsgSessionStart = 1
 
-	MsgSessionEnd = 3
+	MsgSessionEndDeprecated = 3
 
 	MsgSetPageLocation = 4
 
@@ -50,15 +50,13 @@ const (
 
 	MsgMouseMove = 20
 
-	MsgMouseClickDepricated = 21
-
 	MsgConsoleLog = 22
 
 	MsgPageLoadTiming = 23
 
 	MsgPageRenderTiming = 24
 
-	MsgJSException = 25
+	MsgJSExceptionDeprecated = 25
 
 	MsgIntegrationEvent = 26
 
@@ -75,8 +73,6 @@ const (
 	MsgInputEvent = 32
 
 	MsgClickEvent = 33
-
-	MsgErrorEvent = 34
 
 	MsgResourceEvent = 35
 
@@ -122,6 +118,10 @@ const (
 
 	MsgPerformanceTrackAggr = 56
 
+	MsgLoadFontFace = 57
+
+	MsgSetNodeFocus = 58
+
 	MsgLongTask = 59
 
 	MsgSetNodeAttributeURLBased = 60
@@ -157,6 +157,12 @@ const (
 	MsgAdoptedSSRemoveOwner = 77
 
 	MsgZustand = 79
+
+	MsgJSException = 78
+
+	MsgSessionEnd = 126
+
+	MsgSessionSearch = 127
 
 	MsgIOSBatchMeta = 107
 
@@ -401,12 +407,12 @@ func (msg *SessionStart) TypeID() int {
 	return 1
 }
 
-type SessionEnd struct {
+type SessionEndDeprecated struct {
 	message
 	Timestamp uint64
 }
 
-func (msg *SessionEnd) Encode() []byte {
+func (msg *SessionEndDeprecated) Encode() []byte {
 	buf := make([]byte, 11)
 	buf[0] = 3
 	p := 1
@@ -414,7 +420,7 @@ func (msg *SessionEnd) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *SessionEnd) EncodeWithIndex() []byte {
+func (msg *SessionEndDeprecated) EncodeWithIndex() []byte {
 	encoded := msg.Encode()
 	if IsIOSType(msg.TypeID()) {
 		return encoded
@@ -425,11 +431,11 @@ func (msg *SessionEnd) EncodeWithIndex() []byte {
 	return data
 }
 
-func (msg *SessionEnd) Decode() Message {
+func (msg *SessionEndDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *SessionEnd) TypeID() int {
+func (msg *SessionEndDeprecated) TypeID() int {
 	return 3
 }
 
@@ -1024,42 +1030,6 @@ func (msg *MouseMove) TypeID() int {
 	return 20
 }
 
-type MouseClickDepricated struct {
-	message
-	ID             uint64
-	HesitationTime uint64
-	Label          string
-}
-
-func (msg *MouseClickDepricated) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Label))
-	buf[0] = 21
-	p := 1
-	p = WriteUint(msg.ID, buf, p)
-	p = WriteUint(msg.HesitationTime, buf, p)
-	p = WriteString(msg.Label, buf, p)
-	return buf[:p]
-}
-
-func (msg *MouseClickDepricated) EncodeWithIndex() []byte {
-	encoded := msg.Encode()
-	if IsIOSType(msg.TypeID()) {
-		return encoded
-	}
-	data := make([]byte, len(encoded)+8)
-	copy(data[8:], encoded[:])
-	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
-	return data
-}
-
-func (msg *MouseClickDepricated) Decode() Message {
-	return msg
-}
-
-func (msg *MouseClickDepricated) TypeID() int {
-	return 21
-}
-
 type ConsoleLog struct {
 	message
 	Level string
@@ -1178,14 +1148,14 @@ func (msg *PageRenderTiming) TypeID() int {
 	return 24
 }
 
-type JSException struct {
+type JSExceptionDeprecated struct {
 	message
 	Name    string
 	Message string
 	Payload string
 }
 
-func (msg *JSException) Encode() []byte {
+func (msg *JSExceptionDeprecated) Encode() []byte {
 	buf := make([]byte, 31+len(msg.Name)+len(msg.Message)+len(msg.Payload))
 	buf[0] = 25
 	p := 1
@@ -1195,7 +1165,7 @@ func (msg *JSException) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *JSException) EncodeWithIndex() []byte {
+func (msg *JSExceptionDeprecated) EncodeWithIndex() []byte {
 	encoded := msg.Encode()
 	if IsIOSType(msg.TypeID()) {
 		return encoded
@@ -1206,11 +1176,11 @@ func (msg *JSException) EncodeWithIndex() []byte {
 	return data
 }
 
-func (msg *JSException) Decode() Message {
+func (msg *JSExceptionDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *JSException) TypeID() int {
+func (msg *JSExceptionDeprecated) TypeID() int {
 	return 25
 }
 
@@ -1528,48 +1498,6 @@ func (msg *ClickEvent) Decode() Message {
 
 func (msg *ClickEvent) TypeID() int {
 	return 33
-}
-
-type ErrorEvent struct {
-	message
-	MessageID uint64
-	Timestamp uint64
-	Source    string
-	Name      string
-	Message   string
-	Payload   string
-}
-
-func (msg *ErrorEvent) Encode() []byte {
-	buf := make([]byte, 61+len(msg.Source)+len(msg.Name)+len(msg.Message)+len(msg.Payload))
-	buf[0] = 34
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteString(msg.Source, buf, p)
-	p = WriteString(msg.Name, buf, p)
-	p = WriteString(msg.Message, buf, p)
-	p = WriteString(msg.Payload, buf, p)
-	return buf[:p]
-}
-
-func (msg *ErrorEvent) EncodeWithIndex() []byte {
-	encoded := msg.Encode()
-	if IsIOSType(msg.TypeID()) {
-		return encoded
-	}
-	data := make([]byte, len(encoded)+8)
-	copy(data[8:], encoded[:])
-	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
-	return data
-}
-
-func (msg *ErrorEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ErrorEvent) TypeID() int {
-	return 34
 }
 
 type ResourceEvent struct {
@@ -2424,6 +2352,76 @@ func (msg *PerformanceTrackAggr) TypeID() int {
 	return 56
 }
 
+type LoadFontFace struct {
+	message
+	ParentID    uint64
+	Family      string
+	Source      string
+	Descriptors string
+}
+
+func (msg *LoadFontFace) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Family)+len(msg.Source)+len(msg.Descriptors))
+	buf[0] = 57
+	p := 1
+	p = WriteUint(msg.ParentID, buf, p)
+	p = WriteString(msg.Family, buf, p)
+	p = WriteString(msg.Source, buf, p)
+	p = WriteString(msg.Descriptors, buf, p)
+	return buf[:p]
+}
+
+func (msg *LoadFontFace) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *LoadFontFace) Decode() Message {
+	return msg
+}
+
+func (msg *LoadFontFace) TypeID() int {
+	return 57
+}
+
+type SetNodeFocus struct {
+	message
+	ID int64
+}
+
+func (msg *SetNodeFocus) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 58
+	p := 1
+	p = WriteInt(msg.ID, buf, p)
+	return buf[:p]
+}
+
+func (msg *SetNodeFocus) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *SetNodeFocus) Decode() Message {
+	return msg
+}
+
+func (msg *SetNodeFocus) TypeID() int {
+	return 58
+}
+
 type LongTask struct {
 	message
 	Timestamp     uint64
@@ -3072,6 +3070,112 @@ func (msg *Zustand) Decode() Message {
 
 func (msg *Zustand) TypeID() int {
 	return 79
+}
+
+type JSException struct {
+	message
+	Name     string
+	Message  string
+	Payload  string
+	Metadata string
+}
+
+func (msg *JSException) Encode() []byte {
+	buf := make([]byte, 41+len(msg.Name)+len(msg.Message)+len(msg.Payload)+len(msg.Metadata))
+	buf[0] = 78
+	p := 1
+	p = WriteString(msg.Name, buf, p)
+	p = WriteString(msg.Message, buf, p)
+	p = WriteString(msg.Payload, buf, p)
+	p = WriteString(msg.Metadata, buf, p)
+	return buf[:p]
+}
+
+func (msg *JSException) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *JSException) Decode() Message {
+	return msg
+}
+
+func (msg *JSException) TypeID() int {
+	return 78
+}
+
+type SessionEnd struct {
+	message
+	Timestamp     uint64
+	EncryptionKey string
+}
+
+func (msg *SessionEnd) Encode() []byte {
+	buf := make([]byte, 21+len(msg.EncryptionKey))
+	buf[0] = 126
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteString(msg.EncryptionKey, buf, p)
+	return buf[:p]
+}
+
+func (msg *SessionEnd) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *SessionEnd) Decode() Message {
+	return msg
+}
+
+func (msg *SessionEnd) TypeID() int {
+	return 126
+}
+
+type SessionSearch struct {
+	message
+	Timestamp uint64
+	Partition uint64
+}
+
+func (msg *SessionSearch) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 127
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Partition, buf, p)
+	return buf[:p]
+}
+
+func (msg *SessionSearch) EncodeWithIndex() []byte {
+	encoded := msg.Encode()
+	if IsIOSType(msg.TypeID()) {
+		return encoded
+	}
+	data := make([]byte, len(encoded)+8)
+	copy(data[8:], encoded[:])
+	binary.LittleEndian.PutUint64(data[0:], msg.Meta().Index)
+	return data
+}
+
+func (msg *SessionSearch) Decode() Message {
+	return msg
+}
+
+func (msg *SessionSearch) TypeID() int {
+	return 127
 }
 
 type IOSBatchMeta struct {

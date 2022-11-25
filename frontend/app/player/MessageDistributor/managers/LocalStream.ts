@@ -18,7 +18,7 @@ function dummyTrack(): MediaStreamTrack {
   return canvas.captureStream(60).getTracks()[0];
 }
 
-export default function RequestLocalStream(): Promise<LocalStream> {
+export function RequestLocalStream(): Promise<LocalStream> {
   return navigator.mediaDevices.getUserMedia({ audio:true })
     .then(aStream => {
       const aTrack = aStream.getAudioTracks()[0]

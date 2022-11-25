@@ -25,10 +25,18 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+podSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  fsGroupChangePolicy: "OnRootMismatch"
+# podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+# securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -90,8 +98,6 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  ch_host: clickhouse-openreplay-clickhouse.db.svc.cluster.local
-  ch_port: 9000
   PYTHONUNBUFFERED: '0'
 
 

@@ -31,6 +31,7 @@ export default class Mouse {
     Object.assign(this.mouse.style, {
       position: 'absolute',
       zIndex: '999998',
+      pointerEvents: 'none',
     })
   }
 
@@ -47,10 +48,8 @@ export default class Mouse {
 
     this.position = pos
     Object.assign(this.mouse.style, {
-      // we're moving it off by few pixels
-      // so the doc.elementFromPoint works
-      left: `${(pos[0] || 0) + 3}px`,
-      top: `${(pos[1] || 0) + 3}px`,
+      left: `${pos[0] || 0}px`,
+      top: `${pos[1] || 0}px`,
     })
 
   }

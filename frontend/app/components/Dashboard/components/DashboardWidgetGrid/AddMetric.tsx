@@ -57,7 +57,7 @@ function AddMetric({ history, siteId, title, description }: IProps) {
         className="border-l shadow h-screen"
         style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%' }}
       >
-        <div className="mb-6 pt-8 px-8 flex items-start justify-between">
+        <div className="py-6 px-8 flex items-start justify-between">
           <div className="flex flex-col">
             <h1 className="text-2xl">{title}</h1>
             <div className="text-disabled-text">{description}</div>
