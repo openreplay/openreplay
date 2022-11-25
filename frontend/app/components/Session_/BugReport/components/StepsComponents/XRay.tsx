@@ -70,7 +70,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
     <>
       <div className="flex items-center justify-between my-2">
         <div className=" text-gray-dark py-2">
-          XRAY
+          X-RAY
           {timePointer > 0 ? (
             <span className="text-disabled-text ml-2">
               {Duration.fromMillis(selectedTime).toFormat('hh:mm:ss')}
@@ -84,7 +84,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
           >
             <Icon name="info-circle" size={16} />
             <div>
-              Click anywhere on <span className="font-semibold">X-RAY</span> to drilldown and add
+              Click anywhere in the graph below to drilldown and add
               steps
             </div>
           </div>
