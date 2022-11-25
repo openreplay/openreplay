@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir, cfg.DeadSessionTimeout)
+	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir, cfg.FileBuffer, cfg.SyncTimeout)
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
@@ -95,26 +95,20 @@ func main() {
 			counter.Update(msg.SessionID(), time.UnixMilli(ts))
 		}
 
-		// Write encoded message with index to session file
-		data := msg.EncodeWithIndex()
+		// Try to encode message to avoid null data inserts
+		data := msg.Encode()
 		if data == nil {
 			return
 		}
 
 		// Write message to file
-		if messages.IsDOMType(msg.TypeID()) {
-			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				log.Printf("Writer error: %v\n", err)
-			}
-		}
-		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
-			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				log.Printf("Writer error: %v\n", err)
-			}
+		if err := writer.Write(msg); err != nil {
+			log.Printf("writer error: %s", err)
+			return
 		}
 
 		// [METRICS] Increase the number of written to the files messages and the message size
-		messageSize.Record(context.Background(), float64(len(data)))
+		messageSize.Record(context.Background(), float64(len(msg.Encode())))
 		savedMessages.Add(context.Background(), 1)
 	}
 
@@ -132,7 +126,8 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(30 * time.Second)
+	tick := time.Tick(10 * time.Second)
+	tickInfo := time.Tick(30 * time.Second)
 	for {
 		select {
 		case sig := <-sigchan:
@@ -146,10 +141,11 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			counter.Print()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+		case <-tickInfo:
+			counter.Print()
 			log.Printf("writer: %s", writer.Info())
 		default:
 			err := consumer.ConsumeNext()
