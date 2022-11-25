@@ -24,7 +24,7 @@ import { decryptSessionBytes } from './network/crypto';
 
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
 
-import Screen, { 
+import Screen, {
   INITIAL_STATE as SCREEN_INITIAL_STATE,
   State as ScreenState,
 } from './Screen/Screen';
@@ -117,7 +117,7 @@ export default class MessageManager {
   private lastMessageInFileTime: number = 0;
 
   constructor(
-    private readonly session: any /*Session*/, 
+    private readonly session: any /*Session*/,
     private readonly state: Store<State>,
     private readonly screen: Screen,
     initialLists?: Partial<InitialLists>
@@ -293,7 +293,7 @@ export default class MessageManager {
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
-      // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time) 
+      // TODO: page-wise resources list  // setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
     const llEvent = this.locationEventManager.moveGetLast(t, index);
@@ -525,7 +525,7 @@ export default class MessageManager {
     this.state.update({ cssLoading });
   }
 
-  private setSize({ height, width }: { height: number, width: number }) { 
+  private setSize({ height, width }: { height: number, width: number }) {
     this.screen.scale({ height, width });
     this.state.update({ width, height });
 

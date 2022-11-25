@@ -17,6 +17,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 function OverviewPanel({ issuesList }: { issuesList: any[] }) {
   const { store } = React.useContext(PlayerContext)
 
+function OverviewPanel() {
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -34,6 +35,8 @@ function OverviewPanel({ issuesList }: { issuesList: any[] }) {
       fetchList,
       graphqlList,
     } = store.get()
+
+    const fetchPresented = fetchList.length > 0;
 
     const resourceList = resourceListUnmap
     .filter((r: any) => r.isRed() || r.isYellow())
@@ -84,7 +87,11 @@ function OverviewPanel({ issuesList }: { issuesList: any[] }) {
         <BottomBlock.Content>
           <OverviewPanelContainer endTime={endTime}>
             <TimelineScale endTime={endTime} />
-            <div style={{ width: '100%', height: '187px', overflow: 'hidden' }} className="transition relative">
+            <div
+              // style={{ width: '100%', height: '187px', overflow: 'hidden' }}
+              style={{ width: 'calc(100vw - 1rem)', margin: '0 auto', height: '187px' }}
+              className="transition relative"
+            >
               <NoContent
                 show={selectedFeatures.length === 0}
                 title={
@@ -105,7 +112,11 @@ function OverviewPanel({ issuesList }: { issuesList: any[] }) {
                       title={feature}
                       list={resources[feature]}
                       renderElement={(pointer: any) => (
-                        <TimelinePointer pointer={pointer} type={feature} />
+                        <TimelinePointer
+                          pointer={pointer}
+                          type={feature}
+                          fetchPresented={fetchPresented}
+                        />
                       )}
                       endTime={endTime}
                       message={HELP_MESSAGE[feature]}

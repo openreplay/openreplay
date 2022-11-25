@@ -24,7 +24,7 @@ export function init(session, config, live = false) {
 export function clean() {
   if (instance === null) return;
   instance.clean();
-  cleanStore()
+  cleanStore();
   instance = null;
 }
 

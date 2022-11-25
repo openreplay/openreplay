@@ -35,6 +35,7 @@ import OverviewPanel from '../OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import StackEventPanel from 'Shared/DevTools/StackEventPanel';
 
 function Player(props) {
   const {
@@ -84,7 +85,8 @@ function Player(props) {
               // <Network />
               <NetworkPanel />
             )}
-            {bottomBlock === STACKEVENTS && <StackEvents />}
+            {/* {bottomBlock === STACKEVENTS && <StackEvents />} */}
+            {bottomBlock === STACKEVENTS && <StackEventPanel />}
             {bottomBlock === STORAGE && <Storage />}
             {bottomBlock === PROFILER && <ProfilerPanel />}
             {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
@@ -94,11 +96,11 @@ function Player(props) {
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        <Controls
+        {!fullView && <Controls
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}
-         />
+         />}
       </div>
   )
 }

@@ -1,7 +1,7 @@
 from decouple import config
 
 import schemas_ee
-from chalicelib.core import sessions, sessions_favorite_exp
+from chalicelib.core import sessions, sessions_favorite_exp, sessions_mobs, sessions_devtool
 from chalicelib.utils import pg_client, s3_extra
 
 
@@ -34,32 +34,31 @@ def remove_favorite_session(context: schemas_ee.CurrentContext, project_id, sess
 
 
 def favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
+    keys = sessions_mobs.__get_mob_keys(project_id=project_id, session_id=session_id)
+    keys += sessions_mobs.__get_mob_keys_deprecated(session_id=session_id)  # To support old sessions
+    keys += sessions_devtool.__get_devtools_keys(project_id=project_id, session_id=session_id)
+
     if favorite_session_exists(user_id=context.user_id, session_id=session_id):
-        key = str(session_id)
-        try:
-            s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_D_VALUE', default='default'))
-        except Exception as e:
-            print(f"!!!Error while tagging: {key} to default")
-            print(str(e))
-        key = str(session_id) + "e"
-        try:
-            s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_D_VALUE', default='default'))
-        except Exception as e:
-            print(f"!!!Error while tagging: {key} to default")
-            print(str(e))
+        tag = config('RETENTION_D_VALUE', default='default')
+
+        for k in keys:
+            try:
+                s3_extra.tag_session(file_key=k, tag_value=tag)
+            except Exception as e:
+                print(f"!!!Error while tagging: {k} to {tag} for removal")
+                print(str(e))
+
         return remove_favorite_session(context=context, project_id=project_id, session_id=session_id)
-    key = str(session_id)
-    try:
-        s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_L_VALUE', default='vault'))
-    except Exception as e:
-        print(f"!!!Error while tagging: {key} to vault")
-        print(str(e))
-    key = str(session_id) + "e"
-    try:
-        s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_L_VALUE', default='vault'))
-    except Exception as e:
-        print(f"!!!Error while tagging: {key} to vault")
-        print(str(e))
+
+    tag = config('RETENTION_L_VALUE', default='vault')
+
+    for k in keys:
+        try:
+            s3_extra.tag_session(file_key=k, tag_value=tag)
+        except Exception as e:
+            print(f"!!!Error while tagging: {k} to {tag} for vault")
+            print(str(e))
+
     return add_favorite_session(context=context, project_id=project_id, session_id=session_id)
 
 
