@@ -32,12 +32,12 @@ export default class WebPlayer extends Player {
 
   constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
 
-    let initialLists = live ? {
+    let initialLists = live ? {} :{
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
       resource: session.resources.toJSON(),
       exceptions: session.errors,
-    } : {}
+    }
 
     const screen = new Screen()
     const messageManager = new MessageManager(session, wpState, screen, initialLists)
@@ -68,7 +68,7 @@ export default class WebPlayer extends Player {
     }
   }
 
-  attach(parent: HTMLElement) {
+  attach = (parent: HTMLElement) => {
     this.screen.attach(parent)
     window.addEventListener('resize', this.scale)
     this.scale()
@@ -86,7 +86,7 @@ export default class WebPlayer extends Player {
     this.inspectorController.marker?.mark(e)
   }
 
-  toggleInspectorMode(flag: boolean, clickCallback?: Parameters<InspectorController['enableInspector']>[0]) {
+  toggleInspectorMode = (flag: boolean, clickCallback?: Parameters<InspectorController['enableInspector']>[0]) => {
     if (typeof flag !== 'boolean') {
       const { inspectorMode } = this.wpState.get()
       flag = !inspectorMode
@@ -103,18 +103,18 @@ export default class WebPlayer extends Player {
   }
 
   // Target Marker
-  setActiveTarget(args: Parameters<TargetMarker['setActiveTarget']>) {
+  setActiveTarget = (args: Parameters<TargetMarker['setActiveTarget']>) => {
     this.targetMarker.setActiveTarget(...args)
   }
 
-  markTargets(args: Parameters<TargetMarker['markTargets']>) {
+  markTargets = (args: Parameters<TargetMarker['markTargets']>) => {
     this.pause()
     this.targetMarker.markTargets(...args)
   }
 
 
   // TODO separate message receivers
-  async toggleTimetravel() {
+  toggleTimetravel = async () => {
     if (!this.wpState.get().liveTimeTravel) {
       await this.messageManager.reloadWithUnprocessedFile(() =>
         this.wpState.update({
@@ -133,11 +133,11 @@ export default class WebPlayer extends Player {
   //   update({ notes: notes.filter((note: Note) => note.noteId !== noteId) })
   // }
 
-  toggleUserName(name?: string) {
+  toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name)
   }
 
-  clean() {
+  clean = () => {
     super.clean()
     this.assistManager.clean()
     window.removeEventListener('resize', this.scale)
