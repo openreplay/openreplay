@@ -15,7 +15,6 @@ import {
   PERFORMANCE,
   GRAPHQL,
   EXCEPTIONS,
-  LONGTASKS,
   INSPECTOR,
   OVERVIEW,
 } from 'Duck/components/player';
@@ -93,7 +92,6 @@ function Player(props) {
             {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
             {bottomBlock === GRAPHQL && <GraphQL />}
             {bottomBlock === EXCEPTIONS && <Exceptions />}
-            {bottomBlock === LONGTASKS && <LongTasks />}
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}

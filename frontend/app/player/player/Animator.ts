@@ -182,7 +182,7 @@ export default class Animator {
       return this.jump(
         Math.max(
           0,
-          time - interval
+          time + interval
         )
       );
     }
