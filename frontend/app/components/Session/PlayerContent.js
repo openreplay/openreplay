@@ -7,6 +7,12 @@ import RightBlock from './RightBlock';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 
+
+const TABS = {
+  EVENTS: 'User Steps',
+  HEATMAPS: 'Click Map',
+};
+
 function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab }) {
   const { store } = React.useContext(PlayerContext)
 

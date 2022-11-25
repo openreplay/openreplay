@@ -179,6 +179,8 @@ function Performance({
   userDeviceHeapSize: number;
 }) {
   const { player, store } = React.useContext(PlayerContext);
+  const [_timeTicks, setTicks] = React.useState<number[]>([])
+  const [_data, setData] = React.useState<any[]>([])
 
   const {
     performanceChartTime,
@@ -188,8 +190,11 @@ function Performance({
     performanceAvaliability: avaliability,
   } = store.get();
 
-  const _timeTicks = generateTicks(performanceChartData);
-  const _data = addFpsMetadata(performanceChartData);
+  React.useState(() => {
+    setTicks(generateTicks(performanceChartData));
+    setData(addFpsMetadata(performanceChartData));
+  })
+
 
   const onDotClick = ({ index: pointer }: { index: number }) => {
     const point = _data[pointer];
