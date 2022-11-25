@@ -874,14 +874,14 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
 
 
 class CustomMetricsConfigSchema(BaseModel):
-    col: Optional[int] = Field(default=2)
-    row: Optional[int] = Field(default=2)
+    col: Optional[int] = Field(...)
+    row: Optional[int] = Field(...)
     position: Optional[int] = Field(default=0)
 
 
 class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    config: CustomMetricsConfigSchema = Field(default=CustomMetricsConfigSchema())
+    config: CustomMetricsConfigSchema = Field(...)
 
     @root_validator(pre=True)
     def transform_series(cls, values):
