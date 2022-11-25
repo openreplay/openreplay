@@ -534,8 +534,8 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
         if is_sign:
             n_critical_issues += n_issues_dict[issue_id]
     # To limit the number of returned issues to the frontend
-    issues_dict["significant"] = issues_dict["significant"][:50]
-    issues_dict["insignificant"] = issues_dict["insignificant"][:50]
+    issues_dict["significant"] = issues_dict["significant"][:20]
+    issues_dict["insignificant"] = issues_dict["insignificant"][:20]
 
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
