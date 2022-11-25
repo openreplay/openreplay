@@ -136,7 +136,6 @@ function ConsolePanel() {
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
 
-    console.log({ ...filteredList }, { ...item })
     return (
       // @ts-ignore
       <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
