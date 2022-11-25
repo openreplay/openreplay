@@ -45,7 +45,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: minio
-  namespace: db
+  namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   rules:
