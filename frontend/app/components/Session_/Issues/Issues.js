@@ -70,6 +70,7 @@ class Issues extends React.Component {
       <div className="relative h-full w-full p-3">
         <div className={stl.buttonWrapper}>
           <Popover
+            onOpen={this.handleOpen}
             render={({ close }) => (
               <div>
                 <IssuesModal

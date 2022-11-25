@@ -1,4 +1,4 @@
-import React, { cloneElement, useMemo, useState } from 'react';
+import React, { cloneElement, useEffect, useMemo, useState } from 'react';
 import {
   Placement,
   offset,
@@ -20,10 +20,17 @@ interface Props {
   render: (data: { close: () => void; labelId: string; descriptionId: string }) => React.ReactNode;
   placement?: Placement;
   children: JSX.Element;
+  onOpen?: () => void;
 }
 
-const Popover = ({ children, render, placement }: Props) => {
+const Popover = ({ children, render, placement, onOpen = () => {} }: Props) => {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      onOpen();
+    }
+  }, [open]);
 
   const { x, y, reference, floating, strategy, context } = useFloating({
     open,
