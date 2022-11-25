@@ -175,8 +175,7 @@ function FilterValue(props: Props) {
     };
 
     return (
-        // 
-        <div className={cn("grid gap-3 w-full", { 'grid-cols-2': filter.hasSource, 'grid-cols-3' : !filter.hasSource })}>
+        <div className={cn("grid gap-3", { 'grid-cols-2': filter.hasSource, 'grid-cols-3' : !filter.hasSource })}>
             {filter.type === FilterType.DURATION
                 ? renderValueFiled(filter.value, 0)
                 : filter.value &&

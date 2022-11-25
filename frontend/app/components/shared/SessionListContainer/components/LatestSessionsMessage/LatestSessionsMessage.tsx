@@ -16,7 +16,7 @@ function LatestSessionsMessage(props: Props) {
       style={{ backgroundColor: 'rgb(255 251 235)' }}
       onClick={() => props.updateCurrentPage(1)}
     >
-      Show {numberWithCommas(count)} new Sessions
+      Show {numberWithCommas(count)} New Sessions
     </div>
   ) : (
     <></>
