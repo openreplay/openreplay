@@ -21,12 +21,12 @@ type Session struct {
 	updated bool
 }
 
-func NewSession(dir string, id uint64) (*Session, error) {
-	if id == 0 {
+func NewSession(sessID uint64, workDir string, bufSize int) (*Session, error) {
+	if sessID == 0 {
 		return nil, fmt.Errorf("wrong session id")
 	}
 
-	filePath := dir + strconv.FormatUint(id, 10)
+	filePath := workDir + strconv.FormatUint(sessID, 10)
 	domFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
@@ -42,8 +42,8 @@ func NewSession(dir string, id uint64) (*Session, error) {
 		lock:    &sync.Mutex{},
 		domFile: domFile,
 		devFile: devFile,
-		dom:     bufio.NewWriterSize(domFile, 32*1024),
-		dev:     bufio.NewWriterSize(devFile, 32*1024),
+		dom:     bufio.NewWriterSize(domFile, bufSize),
+		dev:     bufio.NewWriterSize(devFile, bufSize),
 		index:   make([]byte, 8),
 		updated: false,
 	}, nil

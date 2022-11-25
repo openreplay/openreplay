@@ -32,7 +32,7 @@ func main() {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir, cfg.SyncTimeout)
+	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir, cfg.FileBuffer, cfg.SyncTimeout)
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
@@ -95,8 +95,8 @@ func main() {
 			counter.Update(msg.SessionID(), time.UnixMilli(ts))
 		}
 
-		// Write encoded message with index to session file
-		data := msg.Encode() //WithIndex()
+		// Try to encode message to avoid null data inserts
+		data := msg.Encode()
 		if data == nil {
 			return
 		}
