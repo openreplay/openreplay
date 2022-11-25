@@ -64,10 +64,10 @@ function FilterModal(props: Props) {
     // console.log(matchingFilters)
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
-      <div className={searchQuery && !isResultEmpty ? 'mb-6' : ''} style={{ columns: "auto 200px" }}>
+      <div className={searchQuery && !isResultEmpty ? 'mb-6' : ''} style={{ columns: matchingCategories.length > 1 ? 'auto 200px' : 1 }}>
           {matchingCategories.map((key) => {
             return (
-              <div className="mb-6" key={key}>
+              <div className="mb-6 flex flex-col gap-2" key={key}>
                 <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
                 <div>
                   {matchingFilters[key] && matchingFilters[key].map((filter: any) => (
