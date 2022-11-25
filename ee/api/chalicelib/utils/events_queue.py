@@ -7,7 +7,7 @@ global_queue = None
 
 class EventQueue():
 
-    def __init__(self, test=False, queue_max_length=5):
+    def __init__(self, test=False, queue_max_length=100):
         self.events = queue.Queue()
         self.events.maxsize = queue_max_length
         self.test = test
