@@ -8,19 +8,19 @@ import { filtersMap } from 'Types/filter/newFilter';
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
   const matchingCategories: string[] = [];
   const matchingFilters: Record<string, any> = {};
-
-  if (searchQuery.length === 0) return {
+  const lowerCaseQuery = searchQuery.toLowerCase();
+  if (lowerCaseQuery.length === 0) return {
     matchingCategories: Object.keys(filters),
     matchingFilters: filters,
   };
 
   Object.keys(filters).forEach(name => {
-    if (name.toLocaleLowerCase().includes(searchQuery)) {
+    if (name.toLocaleLowerCase().includes(lowerCaseQuery)) {
       matchingCategories.push(name);
       matchingFilters[name] = filters[name];
     } else {
         const filtersQuery = filters[name]
-        .filter(filterOption => filterOption.label.toLocaleLowerCase().includes(searchQuery))
+        .filter((filterOption: any) => filterOption.label.toLocaleLowerCase().includes(lowerCaseQuery))
 
         if (filtersQuery.length > 0) matchingFilters[name] = filtersQuery
         filtersQuery.length > 0 && matchingCategories.push(name);
