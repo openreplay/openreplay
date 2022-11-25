@@ -1,14 +1,14 @@
 import type Screen from './Screen'
 import type Marker from './Marker'
 
-//import { select } from 'optimal-select'; 
+//import { select } from 'optimal-select';
 
 export default class Inspector {
   // private captureCallbacks = [];
   // private bubblingCallbacks = [];
   constructor(private screen: Screen, private marker: Marker) {}
 
-  private onMouseMove = (e: MouseEvent) => {    
+  private onMouseMove = (e: MouseEvent) => {
     // const { overlay } = this.screen;
     // if (!overlay.contains(e.target)) {
     //   return;
@@ -21,7 +21,7 @@ export default class Inspector {
       return;
     }
 
-    this.marker.mark(target);    
+    this.marker.mark(target);
   }
 
   private onOverlayLeave = () => {
@@ -57,7 +57,7 @@ export default class Inspector {
   // }
 
   private clickCallback: (e: { target: Element }) => void | null = null
-  enable(clickCallback: Inspector['clickCallback']) {
+  enable(clickCallback?: Inspector['clickCallback']) {
     this.screen.overlay.addEventListener('mousemove', this.onMouseMove)
     this.screen.overlay.addEventListener('mouseleave', this.onOverlayLeave)
     this.screen.overlay.addEventListener('click', this.onMarkClick)

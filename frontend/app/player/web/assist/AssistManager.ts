@@ -461,7 +461,7 @@ export default class AssistManager {
     onStream: (s: MediaStream)=>void,
     onCallEnd: () => void,
     onReject: () => void,
-    onError?: ()=> void,
+    onError?: (e?: any)=> void,
   ) {
     this.callArgs = {
       localStream,
@@ -472,7 +472,7 @@ export default class AssistManager {
     }
   }
 
-  public call(thirdPartyPeers?: string[]): { end: Function } {
+  public call(thirdPartyPeers?: string[]): { end: () => void } {
     if (thirdPartyPeers && thirdPartyPeers.length > 0) {
       this.addPeerCall(thirdPartyPeers)
     } else {

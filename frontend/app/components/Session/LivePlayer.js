@@ -1,24 +1,19 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { withRequest } from 'HOCs'
 import {
   PlayerProvider,
-  connectPlayer,
-  init as initPlayer,
-  clean as cleanPlayer,
 } from 'Player';
 import withPermissions from 'HOCs/withPermissions';
+import { PlayerContext, defaultContextValue } from './playerContext';
+import { createLiveWebPlayer } from 'Player';
+import { makeAutoObservable } from 'mobx';
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
-
-const InitLoader = connectPlayer(state => ({
-  loading: !state.initialized
-}))(Loader);
 
 function LivePlayer ({
   session,
@@ -32,6 +27,8 @@ function LivePlayer ({
   userEmail,
   userName
 }) {
+  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
+
   useEffect(() => {
     if (!loadingCredentials) {
 
@@ -42,9 +39,16 @@ function LivePlayer ({
           name: userName,
         },
       }
-      initPlayer(sessionWithAgentData, assistCredendials, true);
+      // initPlayer(sessionWithAgentData, assistCredendials, true);
+      const [LivePlayer, LivePlayerStore] = createLiveWebPlayer(
+        sessionWithAgentData,
+        assistCredendials,
+        (state) => makeAutoObservable(state)
+        )
+      setContextValue({ player: LivePlayer, store: LivePlayerStore });
+
     }
-    return () => cleanPlayer()
+    return () => LivePlayer.clean()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
@@ -64,15 +68,17 @@ function LivePlayer ({
   }
   const [activeTab, setActiveTab] = useState('');
 
+  if (!contextValue.player) return null;
+
   return (
-    <PlayerProvider>
-      <InitLoader className="flex-1 p-3">
-        <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
-        <div className={ styles.session } data-fullscreen={fullscreen}>
-            <PlayerBlock />
-        </div>
-      </InitLoader>
-    </PlayerProvider>
+    <PlayerContext.Provider value={contextValue}>
+      <PlayerProvider>
+          <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
+          <div className={ styles.session } data-fullscreen={fullscreen}>
+              <PlayerBlock />
+          </div>
+      </PlayerProvider>
+    </PlayerContext.Provider>
   );
 };
 

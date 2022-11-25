@@ -168,6 +168,26 @@ export default class Animator {
     }
   }
 
+  jumpInterval(interval: number) {
+    const { endTime, time } = this.store.get()
+
+    if (interval > 0) {
+      return this.jump(
+        Math.min(
+          endTime,
+          time + interval
+        )
+      );
+    } else {
+      return this.jump(
+        Math.max(
+          0,
+          time - interval
+        )
+      );
+    }
+  }
+
   // TODO: clearify logic of live time-travel
   jumpToLive() {
     cancelAnimationFrame(this.animationFrameRequestId)

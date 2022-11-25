@@ -38,7 +38,7 @@ function OverviewPanel({ issuesList }: { issuesList: any[] }) {
     const resourceList = resourceListUnmap
     .filter((r: any) => r.isRed() || r.isYellow())
     .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
-    .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400)),
+    .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
 
   const resources: any = React.useMemo(() => {
     return {

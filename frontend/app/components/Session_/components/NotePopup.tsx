@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { setCreateNoteTooltip } from 'Duck/sessions';
 import GuidePopup from 'Shared/GuidePopup';
 import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
 
 function NotePopup({
   setCreateNoteTooltip,
@@ -14,12 +13,11 @@ function NotePopup({
   tooltipActive: boolean;
 }) {
   const { player, store } = React.useContext(PlayerContext)
-  const { time } = store.get();
 
   const toggleNotePopup = () => {
     if (tooltipActive) return;
     player.pause();
-    setCreateNoteTooltip({ time: time, isVisible: true });
+    setCreateNoteTooltip({ time: store.get().time, isVisible: true });
   };
 
   React.useEffect(() => {
@@ -42,11 +40,9 @@ function NotePopup({
   );
 }
 
-const NotePopupPl = observer(NotePopup);
-
 const NotePopupComp = connect(
   (state: any) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
   { setCreateNoteTooltip }
-)(NotePopupPl);
+)(NotePopup);
 
 export default React.memo(NotePopupComp);

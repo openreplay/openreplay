@@ -55,16 +55,6 @@ export default class Exceptions extends React.PureComponent {
 
     const filtered = exceptions.filter((e) => filterRE.test(e.name) || filterRE.test(e.message));
 
-    // let lastIndex = -1;
-    // filtered.forEach((item, index) => {
-    //   if (
-    //     this.props.exceptionsNow.length > 0 &&
-    //     item.time <= this.props.exceptionsNow[this.props.exceptionsNow.length - 1].time
-    //   ) {
-    //     lastIndex = index;
-    //   }
-    // });
-
     return (
       <>
         <SlideModal
@@ -140,8 +130,6 @@ export default class Exceptions extends React.PureComponent {
                     onJump={() => jump(e.time)}
                     error={e}
                     key={e.key}
-                    // selected={lastIndex === index}
-                    // inactive={index > lastIndex}
                     onErrorClick={(jsEvent) => {
                       jsEvent.stopPropagation();
                       jsEvent.preventDefault();

@@ -12,21 +12,17 @@ const Time = ({ time, isCustom, format = 'm:ss', }) => (
 
 Time.displayName = "Time";
 
-const ReduxTime = observer(({ format, name }) => {
+const ReduxTime = observer(({ format, name, isCustom }) => {
   const { store } = React.useContext(PlayerContext)
   const time = store.get()[name]
 
-  return <Time format={format} time={time} />
+  return <Time format={format} time={time} isCustom={isCustom} />
 })
 
-const AssistDurationCont = connectPlayer(
-  state => {
-    const assistStart = state.assistStart;
-    return {
-      assistStart,
-    }
-  }
-)(({ assistStart }) => {
+const AssistDurationCont = () => {
+  const { store } = React.useContext(PlayerContext)
+  const { assistStart } = store.get()
+
   const [assistDuration, setAssistDuration] = React.useState('00:00');
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -40,9 +36,9 @@ const AssistDurationCont = connectPlayer(
       Elapsed {assistDuration}
     </>
   )
-})
+}
 
-const AssistDuration = React.memo(AssistDurationCont);
+const AssistDuration = observer(AssistDurationCont)
 
 ReduxTime.displayName = "ReduxTime";
 

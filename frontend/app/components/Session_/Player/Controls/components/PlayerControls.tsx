@@ -94,7 +94,7 @@ function PlayerControls(props: Props) {
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
-        <Tooltip title="Rewind 10s" position="top">
+        <Tooltip anchorClassName='h-full' title={`Rewind ${currentInterval}s`} position="top">
           <button
             ref={arrowBackRef}
             className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
@@ -111,8 +111,6 @@ function PlayerControls(props: Props) {
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
           <OutsideClickDetectingDiv onClickOutside={handleClickOutside}>
             <Popover
-              // open={showTooltip}
-              // interactive
               // @ts-ignore
               theme="nopadding"
               animation="none"
@@ -145,7 +143,7 @@ function PlayerControls(props: Props) {
             >
               <div onClick={toggleTooltip} ref={skipRef}>
                 {/* @ts-ignore */}
-                <Tooltip disabled={showTooltip} title="Set default skip duration">
+                <Tooltip anchorClassName='cursor-pointer' disabled={showTooltip} title="Set default skip duration">
                   {currentInterval}s
                 </Tooltip>
               </div>
@@ -153,7 +151,7 @@ function PlayerControls(props: Props) {
           </OutsideClickDetectingDiv>
         </div>
         {/* @ts-ignore */}
-        <Tooltip title="Forward 10s" position="top">
+        <Tooltip anchorClassName='h-full' title={`Forward ${currentInterval}s`} position="top">
           <button
             ref={arrowForwardRef}
             className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"

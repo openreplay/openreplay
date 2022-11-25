@@ -69,6 +69,8 @@ export default function GuidePopup({ children, title, description }: IProps) {
       </Tooltip>
     </div>
   ) : (
-    children
+    <>
+      {children}
+    </>
   );
 }

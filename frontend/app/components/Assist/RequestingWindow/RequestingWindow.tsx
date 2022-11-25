@@ -2,7 +2,7 @@ import React from 'react';
 import { INDEXES } from 'App/constants/zindex';
 import { connect } from 'react-redux';
 import { Button, Loader, Icon } from 'UI';
-import { initiateCallEnd, releaseRemoteControl } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {
   userDisplayName: string;
@@ -14,20 +14,38 @@ export enum WindowType {
   Control,
 }
 
+enum Actions {
+  CallEnd,
+  ControlEnd
+}
+
 const WIN_VARIANTS = {
   [WindowType.Call]: {
     text: 'to accept the call',
     icon: 'call' as const,
-    action: initiateCallEnd,
+    action: Actions.CallEnd,
   },
   [WindowType.Control]: {
     text: 'to accept remote control request',
     icon: 'remote-control' as const,
-    action: releaseRemoteControl,
+    action: Actions.ControlEnd,
   },
 };
 
 function RequestingWindow({ userDisplayName, type }: Props) {
+  const { player } = React.useContext(PlayerContext)
+
+  const {
+    assistManager: {
+      initiateCallEnd,
+      releaseRemoteControl,
+    }
+  } = player
+
+  const actions = {
+    [Actions.CallEnd]: initiateCallEnd,
+    [Actions.ControlEnd]: releaseRemoteControl
+  }
   return (
     <div
       className="w-full h-full absolute top-0 left-0 flex items-center justify-center"
@@ -40,7 +58,7 @@ function RequestingWindow({ userDisplayName, type }: Props) {
         </div>
         <span>{WIN_VARIANTS[type].text}</span>
         <Loader size={30} style={{ minHeight: 60 }} />
-        <Button variant="text-primary" onClick={WIN_VARIANTS[type].action}>
+        <Button variant="text-primary" onClick={actions[WIN_VARIANTS[type].action]}>
           Cancel
         </Button>
       </div>
@@ -48,6 +66,6 @@ function RequestingWindow({ userDisplayName, type }: Props) {
   );
 }
 
-export default connect((state) => ({
+export default connect((state: any) => ({
   userDisplayName: state.getIn(['sessions', 'current', 'userDisplayName']),
 }))(RequestingWindow);

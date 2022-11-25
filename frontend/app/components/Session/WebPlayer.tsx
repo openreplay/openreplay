@@ -5,7 +5,6 @@ import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
 import { PlayerProvider, createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
-import { observer } from 'mobx-react-lite';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
@@ -85,6 +84,7 @@ function WebPlayer(props: any) {
       <PlayerProvider>
         <>
           <PlayerBlockHeader
+          // @ts-ignore TODO?
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             tabs={TABS}

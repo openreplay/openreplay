@@ -16,7 +16,7 @@ export default class InspectorController {
     }
   }
 
-  enableInspector(clickCallback: (e: { target: Element }) => void): Document | null {
+  enableInspector(clickCallback?: (e: { target: Element }) => void): Document | null {
     const parent = this.screen.getParentElement()
     if (!parent) return null;
     if (!this.substitutor) {
@@ -28,7 +28,7 @@ export default class InspectorController {
     }
 
     this.substitutor.display(false)
-   
+
     const docElement = this.screen.document?.documentElement // this.substitutor.document?.importNode(
     const doc = this.substitutor.document
     if (doc && docElement) {
@@ -43,11 +43,11 @@ export default class InspectorController {
     this.substitutor.display(true);
     return doc;
   }
-  
+
   disableInspector() {
     if (this.substitutor) {
       const doc = this.substitutor.document;
-      if (doc) { 
+      if (doc) {
         doc.documentElement.innerHTML = "";
       }
       this.inspector.clean();

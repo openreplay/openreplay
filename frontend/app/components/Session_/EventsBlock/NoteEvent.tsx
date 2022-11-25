@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { tagProps, iTag, Note } from 'App/services/NotesService';
+import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';

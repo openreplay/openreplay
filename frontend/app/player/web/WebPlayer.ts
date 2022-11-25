@@ -4,7 +4,7 @@ import Player, { State as PlayerState } from '../player/Player'
 import MessageManager from './MessageManager'
 import InspectorController from './InspectorController'
 import TargetMarker from './TargetMarker'
-import AssistManager, { 
+import AssistManager, {
   INITIAL_STATE as ASSIST_INITIAL_STATE,
 } from './assist/AssistManager'
 import Screen from './Screen/Screen'
@@ -40,7 +40,7 @@ export default class WebPlayer extends Player {
     } : {}
 
     const screen = new Screen()
-    const messageManager = new MessageManager(session, wpState, screen, initialLists) 
+    const messageManager = new MessageManager(session, wpState, screen, initialLists)
     super(wpState, messageManager)
     this.screen = screen
     this.messageManager = messageManager
@@ -48,14 +48,14 @@ export default class WebPlayer extends Player {
     this.targetMarker = new TargetMarker(this.screen, wpState)
     this.inspectorController = new InspectorController(screen)
 
-  
+
     const endTime = !live && session.duration.valueOf()
     wpState.update({
       //@ts-ignore
       initialized: true,
       //@ts-ignore
       session,
-      
+
       live,
       livePlay: live,
       endTime, // : 0, //TODO: through initialState
@@ -85,7 +85,7 @@ export default class WebPlayer extends Player {
   mark(e: Element) {
     this.inspectorController.marker?.mark(e)
   }
-  toggleInspectorMode(flag: boolean, clickCallback) {
+  toggleInspectorMode(flag: boolean, clickCallback?: (args: any) => any) {
     if (typeof flag !== 'boolean') {
       const { inspectorMode } = this.wpState.get()
       flag = !inspectorMode;
@@ -104,6 +104,7 @@ export default class WebPlayer extends Player {
   setActiveTarget(args: Parameters<TargetMarker['setActiveTarget']>) {
     this.targetMarker.setActiveTarget(...args)
   }
+
   markTargets(args: Parameters<TargetMarker['markTargets']>) {
     this.pause()
     this.targetMarker.markTargets(...args)
@@ -133,11 +134,10 @@ export default class WebPlayer extends Player {
   toggleUserName(name?: string) {
     this.screen.cursor.showTag(name)
   }
-  
+
   clean() {
     super.clean()
     this.assistManager.clean()
     window.removeEventListener('resize', this.scale)
   }
 }
-
