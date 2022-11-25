@@ -49,7 +49,7 @@ type OptionalCallback = (()=>Record<string, unknown>) | void
 type Agent = {
   onDisconnect?: OptionalCallback,
   onControlReleased?: OptionalCallback,
-  agentInfo: Record<string, string>
+  agentInfo: Record<string, string> | undefined
   //
 }
 
@@ -229,9 +229,10 @@ export default class Assist {
     })
     socket.on('AGENTS_CONNECTED', (ids: string[]) => {
       ids.forEach(id =>{
+        const agentInfo = this.agents[id]?.agentInfo
         this.agents[id] = {
-          ...this.agents[id],
-          onDisconnect: this.options.onAgentConnect?.(  this.agents[id].agentInfo),
+          agentInfo,
+          onDisconnect: this.options.onAgentConnect?.(agentInfo),
         }
       })
       this.assistDemandedRestart = true
