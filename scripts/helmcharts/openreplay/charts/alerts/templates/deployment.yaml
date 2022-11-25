@@ -51,6 +51,10 @@ spec:
               value: "5432"
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+            - name: ch_host
+              value: "{{ .Values.global.clickhouse.chHost }}"
+            - name: ch_port
+              value: "{{ .Values.global.clickhouse.service.webPort }}"
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
@@ -58,7 +62,7 @@ spec:
             - name: SITE_URL
               value: 'https://{{ .Values.global.domainName }}'
             - name: S3_HOST
-              {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+              {{- if contains "minio" .Values.global.s3.endpoint }}
               value: 'https://{{ .Values.global.domainName }}:{{ .Values.global.ingress.controller.service.ports.https}}'
               {{- else}}
               value: '{{ .Values.global.s3.endpoint }}'

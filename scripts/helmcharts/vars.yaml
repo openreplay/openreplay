@@ -17,9 +17,12 @@ postgresql: &postgres
   # asdf
   #     cpu: 2
 
-clickhouse:
+clickhouse: &clickhouse
   # For enterpriseEdition
   enabled: false
+  chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  service:
+    webPort: 9000
 
 quickwit: &quickwit
   # For enterpriseEdition
@@ -91,6 +94,7 @@ ingress-nginx: &ingress-nginx
       force-ssl-redirect: false
       proxy-body-size: 10m
 
+
 # Application specific variables
 global:
   ingress: *ingress-nginx
@@ -98,6 +102,8 @@ global:
   kafka: *kafka
   redis: *redis
   quickwit: *quickwit
+  clickhouse: *clickhouse
+  # Registry URL from where the OR images should be pulled.
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
   assistKey: "SetARandomStringHere"
@@ -172,21 +178,3 @@ chalice:
 #       cpu: 512m
 #       memory: 2056Mi
 
-# For enterpriseEdition Only
-vault:
-  enabled: false
-  annotations:
-    vault.hashicorp.com/agent-cache-enable: "true"
-    vault.hashicorp.com/agent-inject: "true"
-    vault.hashicorp.com/agent-inject-token: "true"
-    vault.hashicorp.com/template-static-secret-render-interval: 2m
-    # vault.hashicorp.com/log-level: debug
-    vault.hashicorp.com/agent-run-as-same-user: "true"
-    vault.hashicorp.com/agent-inject-command-processor.properties: |
-      pkill -TERM openreplay
-    vault.hashicorp.com/role: pgaccess
-    vault.hashicorp.com/agent-inject-secret-processor.properties: database/creds/db-app
-    vault.hashicorp.com/agent-inject-template-processor.properties: |
-      {{- with secret "database/creds/db-app" -}}
-      POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
-      {{- end -}}

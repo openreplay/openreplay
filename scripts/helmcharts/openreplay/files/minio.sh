@@ -7,7 +7,8 @@ cd /tmp
 
 buckets=("mobs" "sessions-assets" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data")
 
-mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
+
+mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
 function init() {
 echo "Initializing minio"

@@ -55,7 +55,6 @@ sessionsCleaner:
 # Common env values are from chalice for the crons
 chalice:
   env:
-    ch_host: clickhouse-openreplay-clickhouse.db.svc.cluster.local
     ch_port: 9000
     captcha_server: ''
     captcha_key: ''

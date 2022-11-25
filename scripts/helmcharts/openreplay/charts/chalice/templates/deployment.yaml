@@ -43,6 +43,14 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: ch_host
+              value: "{{ .Values.global.clickhouse.chHost }}"
+            - name: ch_port
+              value: "{{ .Values.global.clickhouse.service.webPort }}"
+            - name: sourcemaps_reader
+              value: "http://sourcemaps-reader-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9000/sourcemaps/%s/sourcemaps"
+            - name: ASSIST_URL
+              value: "http://assist-openreplay.{{.Release.Namespace}}.{{.Values.global.clusterDomain}}:9001/assist/%s"
             - name: ASSIST_JWT_SECRET
               value: {{ .Values.global.assistJWTSecret }}
             - name: ASSIST_KEY
@@ -64,7 +72,7 @@ spec:
             - name: SITE_URL
               value: 'https://{{ .Values.global.domainName }}'
             - name: S3_HOST
-              {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+              {{- if contains "minio" .Values.global.s3.endpoint }}
               value: 'https://{{ .Values.global.domainName }}:{{ .Values.global.ingress.controller.service.ports.https}}'
               {{- else}}
               value: '{{ .Values.global.s3.endpoint }}'
