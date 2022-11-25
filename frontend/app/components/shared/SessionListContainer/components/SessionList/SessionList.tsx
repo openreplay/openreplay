@@ -11,7 +11,6 @@ import {
   setScrollPosition,
   checkForLatestSessions,
 } from 'Duck/search';
-import useTimeout from 'App/hooks/useTimeout';
 import { numberWithCommas } from 'App/utils';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
@@ -82,11 +81,14 @@ function SessionList(props: Props) {
     };
   }, [isBookmark, isVault, activeTab]);
 
-  useTimeout(() => {
-    if (!document.hidden) {
-      props.checkForLatestSessions();
-    }
-  }, AUTOREFRESH_INTERVAL);
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!document.hidden) {
+        props.checkForLatestSessions()
+      }
+    }, AUTOREFRESH_INTERVAL)
+    return () => clearInterval(id)
+  }, [])
 
   useEffect(() => {
     // handle scroll position
