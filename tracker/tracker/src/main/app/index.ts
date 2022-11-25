@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
 import { Timestamp, Metadata, UserID } from './messages.gen.js'
-import { now, deprecationWarn } from '../utils.js'
+import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -369,6 +369,7 @@ export default class App {
       this.sessionStorage.removeItem(this.options.session_reset_key)
     }
   }
+
   private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
     if (!this.worker) {
       return Promise.resolve(UnsuccessfulStart('No worker found: perhaps, CSP is not set.'))
@@ -381,6 +382,7 @@ export default class App {
       )
     }
     this.activityState = ActivityState.Starting
+    adjustTimeOrigin()
 
     if (startOpts.sessionHash) {
       this.session.applySessionHash(startOpts.sessionHash)

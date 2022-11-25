@@ -67,9 +67,9 @@ spec:
             # 4. Using AWS itself.
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
-            {{- if eq .Values.global.s3.endpoint "sourcemapreader://minio.db.svc.cluster.local:9000" }}
+            {{- if contains "minio" .Values.global.s3.endpoint }}
               # Local minio Installation
-              value: 'sourcemapreaders://{{ .Values.global.domainName }}:{{.Values.global.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
+              value: 'sourcemapreaders://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
             {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
               # AWS S3
               # Ref: sourcemapreaders://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter

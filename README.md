@@ -91,9 +91,3 @@ Check out our [roadmap](https://www.notion.so/openreplay/Roadmap-889d2c3d968b478
 ## License
 
 This monorepo uses several licenses. See [LICENSE](/LICENSE) for more details.
-
-## Contributors
-
-<a href="https://github.com/openreplay/openreplay/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=openreplay/openreplay" />
-</a>

@@ -44,9 +44,23 @@ spec:
           {{- end}}
           env:
             - name: AWS_ACCESS_KEY_ID
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: access-key
+              {{- else }}
               value: {{ .Values.global.s3.accessKey }}
+              {{- end }}
             - name: AWS_SECRET_ACCESS_KEY
+              {{- if .Values.global.s3.existingSecret }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.existingSecret }}
+                  key: secret-key
+              {{- else }}
               value: {{ .Values.global.s3.secretKey }}
+              {{- end }}
             - name: S3_BUCKET_ASSETS
               value: {{ .Values.global.s3.assetsBucket }}
             - name: LICENSE_KEY
@@ -69,7 +83,7 @@ spec:
             # 4. Using AWS itself.
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
-            {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+            {{- if contains "minio" .Values.global.s3.endpoint }}
               # Local minio Installation
               value: 'https://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
             {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}

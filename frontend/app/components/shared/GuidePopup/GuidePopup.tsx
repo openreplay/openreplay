@@ -40,13 +40,13 @@ export default function GuidePopup({ children, title, description }: IProps) {
         style={{ zIndex: INDEXES.POPUP_GUIDE_BG, opacity: '0.7' }}
       ></div>
       <Tooltip
-        offset={30}
+        offset={20}
         className="!bg-white rounded text-center shadow !p-6"
         title={
           <div className="relative">
-            <div className="font-bold">{title}</div>
-            <div className="color-gray-medium w-80">{description}</div>
-            <div className="w-10 h-10 bg-white rotate-45 absolute right-0 left-0 m-auto" style={{ top: '-38px'}} />
+            <div className="font-bold text-figmaColors-text-primary">{title}</div>
+            <div className="color-gray-dark w-80">{description}</div>
+            <div className="w-4 h-4 bg-white rotate-45 absolute right-0 left-0 m-auto" style={{ top: '-28px'}} />
           </div>
         }
         open={true}

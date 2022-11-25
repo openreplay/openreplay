@@ -13,7 +13,10 @@ function XRayButton(props: Props) {
   const { player: Player } = React.useContext(PlayerContext);
 
   const { isActive } = props;
-  const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.XRAY));
+  // const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.XRAY));
+  const showGuide = false;
+  const setShowGuide = (anyt: any) => anyt;
+
   useEffect(() => {
     if (!showGuide) {
       return;

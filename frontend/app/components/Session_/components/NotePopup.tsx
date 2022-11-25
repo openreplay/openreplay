@@ -26,11 +26,7 @@ function NotePopup({
 
   return (
     <GuidePopup
-      title={
-        <div className="color-gray-dark">
-          Introducing <span className={''}>Notes</span>
-        </div>
-      }
+      title="Introducing Notes"
       description={'Annotate session replays and share your feedback with the rest of your team.'}
     >
       <Button icon="quotes" variant="text" disabled={tooltipActive} onClick={toggleNotePopup}>

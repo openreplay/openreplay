@@ -3,18 +3,56 @@ import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
 import { Link, Icon, Toggler, Tooltip } from 'UI';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
+import { fetchAutoplaySessions } from 'Duck/search';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 
-function Autoplay(props) {
-  const { previousId, nextId, disabled } = props;
-  const { player, store } = React.useContext(PlayerContext)
+const PER_PAGE = 10;
 
+interface Props extends RouteComponentProps {
+  previousId: string;
+  nextId: string;
+  autoplay: boolean;
+  defaultList: any;
+  currentPage: number;
+  total: number;
+  setAutoplayValues?: () => void;
+  toggleAutoplay?: () => void;
+  latestRequestTime: any;
+  sessionIds: any;
+  fetchAutoplaySessions?: (page: number) => Promise<void>;
+}
+function Autoplay(props: Props) {
+  const {
+    previousId,
+    nextId,
+    currentPage,
+    total,
+    sessionIds,
+    latestRequestTime,
+    match: {
+      // @ts-ignore
+      params: { sessionId },
+    },
+  } = props;
+  const { player, store } = React.useContext(PlayerContext)
   const { autoplay } = store.get()
 
+  const disabled = sessionIds.length === 0;
+
   useEffect(() => {
-    props.setAutoplayValues();
+    if (latestRequestTime) {
+      props.setAutoplayValues();
+      const totalPages = Math.ceil(total / PER_PAGE);
+      const index = sessionIds.indexOf(sessionId);
+
+      // check for the last page and load the next
+      if (currentPage !== totalPages && index === sessionIds.length - 1) {
+        props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
+      }
+    }
   }, []);
 
   return (
@@ -66,14 +104,14 @@ function Autoplay(props) {
   );
 }
 
-const connectAutoplay = connect(
-  (state) => ({
+export default connect(
+  (state: any) => ({
     previousId: state.getIn(['sessions', 'previousId']),
     nextId: state.getIn(['sessions', 'nextId']),
+    currentPage: state.getIn(['search', 'currentPage']) || 1,
+    total: state.getIn(['sessions', 'total']) || 0,
+    sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
+    latestRequestTime: state.getIn(['search', 'latestRequestTime']),
   }),
-  { setAutoplayValues }
-);
-
-export default connectAutoplay(
-  observer(Autoplay)
-);
+  { setAutoplayValues, fetchAutoplaySessions }
+)(withRouter(observer(Autoplay)))

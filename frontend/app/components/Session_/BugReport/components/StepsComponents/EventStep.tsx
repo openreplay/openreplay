@@ -50,7 +50,7 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
       >
         <div className="rounded-3xl px-4 bg-gray-lightest relative z-10">{ind + 1}</div>
         <div className="w-full">
-          <div className="flex items-center w-full gap-2">
+          <div className="flex items-start w-full gap-2">
             <div className="px-1 text-disabled-text">{durationFromMs(step.time)}</div>
             {/* @ts-ignore */}
             <Icon name={step.icon} size={16} color="gray-darkest" className="relative z-10" />

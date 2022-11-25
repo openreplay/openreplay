@@ -24,7 +24,6 @@ import Storage from '../Storage';
 import { ConnectedPerformance } from '../Performance';
 import GraphQL from '../GraphQL';
 import Exceptions from '../Exceptions/Exceptions';
-import LongTasks from '../LongTasks';
 import Inspector from '../Inspector';
 import Controls from './Controls';
 import Overlay from './Overlay';
