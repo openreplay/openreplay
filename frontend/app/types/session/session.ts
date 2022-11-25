@@ -2,7 +2,6 @@ import Record from 'Types/Record';
 import { List, Map } from 'immutable';
 import { Duration } from 'luxon';
 import SessionEvent, { TYPES } from './event';
-import Log from './log';
 import StackEvent from './stackEvent';
 import Resource from './resource';
 import SessionError from './error';
@@ -32,7 +31,6 @@ export default Record(
     startedAt: 0,
     duration: 0,
     events: List(),
-    logs: List(),
     stackEvents: List(),
     resources: List(),
     missedResources: List(),
@@ -125,7 +123,6 @@ export default Record(
         .map((r) => r.set('time', r.time - firstResourceTime))
         .sort((r1, r2) => r1.time - r2.time);
       const missedResources = resources.filter(({ success }) => !success);
-      const logs = List(session.logs).map(Log);
 
       const stackEventsList = List(stackEvents)
         .concat(List(session.userEvents))
@@ -156,7 +153,6 @@ export default Record(
         errors: exceptions,
         siteId: projectId,
         events,
-        logs,
         stackEvents: stackEventsList,
         resources,
         missedResources,

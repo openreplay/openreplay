@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Log, LEVEL } from 'Types/session/log';
+import { LogLevel } from 'Player';
 import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
@@ -19,11 +19,11 @@ const WARNINGS = 'WARNINGS';
 const ERRORS = 'ERRORS';
 
 const LEVEL_TAB = {
-  [LEVEL.INFO]: INFO,
-  [LEVEL.LOG]: INFO,
-  [LEVEL.WARNING]: WARNINGS,
-  [LEVEL.ERROR]: ERRORS,
-  [LEVEL.EXCEPTION]: ERRORS,
+  [LogLevel.INFO]: INFO,
+  [LogLevel.LOG]: INFO,
+  [LogLevel.WARNING]: WARNINGS,
+  [LogLevel.ERROR]: ERRORS,
+  [LogLevel.EXCEPTION]: ERRORS,
 };
 
 const TABS = [ALL, ERRORS, WARNINGS, INFO].map((tab) => ({ text: tab, key: tab }));
@@ -36,19 +36,19 @@ function renderWithNL(s = '') {
 
 const getIconProps = (level: any) => {
   switch (level) {
-    case LEVEL.INFO:
-    case LEVEL.LOG:
+    case LogLevel.INFO:
+    case LogLevel.LOG:
       return {
         name: 'console/info',
         color: 'blue2',
       };
-    case LEVEL.WARN:
-    case LEVEL.WARNING:
+    case LogLevel.WARN:
+    case LogLevel.WARNING:
       return {
         name: 'console/warning',
         color: 'red2',
       };
-    case LEVEL.ERROR:
+    case LogLevel.ERROR:
       return {
         name: 'console/error',
         color: 'red',
@@ -81,16 +81,8 @@ function ConsolePanel() {
   const jump = (t: number) => player.jump(t)
   const { logList, exceptionsList, time } = store.get()
 
-  const logExceptions = exceptionsList.map(({ time, errorId, name }: any) =>
-    Log({
-      level: LEVEL.ERROR,
-      value: name,
-      time,
-      errorId,
-    })
-  );
   // @ts-ignore
-  const logs = logList.concat(logExceptions)
+  const logs = logList.concat(exceptionsList)
 
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) => {

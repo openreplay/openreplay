@@ -4,7 +4,6 @@ import Environment from 'Types/environment';
 import stepFromJS from './step';
 import seleniumStepFromJS from './seleniumStep';
 import Resource from '../session/resource';
-import Log from '../session/log';
 
 export const NOT_FETCHED = undefined;
 export const QUEUED = 'queued';
@@ -45,7 +44,6 @@ class Run extends Record({
   finishedAt: undefined,
   steps: List(),
   resources: [],
-  logs: [],
   seleniumSteps: List(),
   url_browser_logs: undefined,
   url_logs: undefined,
@@ -148,7 +146,6 @@ function fromJS(run = {}) {
     .map(r => r.set("time", r.time - firstResourceTime))
     .sort((r1, r2) => r1.time - r2.time).toArray()
 
-  const logs = List(run.console).map(Log);
   const screenshotUrl = run.screenshot_url ||
     seleniumSteps.find(({ screenshotUrl }) => !!screenshotUrl, null, {}).screenshotUrl;
 
@@ -163,7 +160,6 @@ function fromJS(run = {}) {
     lastExecutedString,
     steps,
     resources,
-    logs,
     seleniumSteps,
     tags,
     environment,

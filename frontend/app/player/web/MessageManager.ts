@@ -4,7 +4,7 @@ import logger from 'App/logger';
 
 import Resource, { TYPES } from 'Types/session/resource';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
-import { Log } from 'Types/session/log';
+import { Log } from './types';
 
 import { toast } from 'react-toastify';
 
@@ -394,12 +394,10 @@ export default class MessageManager {
       /* Lists: */
       case "console_log":
         if (msg.level === 'debug') break;
-        this.lists.lists.log.append(Log({
-          level: msg.level,
-          value: msg.value,
-          time,
-          index,
-        }))
+        this.lists.lists.log.append(
+          // @ts-ignore : TODO: enums in the message schema
+          Log(msg)
+        )
         break;
       case "fetch":
         this.lists.lists.fetch.append(Resource({

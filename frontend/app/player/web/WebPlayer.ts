@@ -1,3 +1,5 @@
+import { Log, LogLevel } from './types'
+
 import type { Store } from '../common/types'
 import Player, { State as PlayerState } from '../player/Player'
 
@@ -36,7 +38,14 @@ export default class WebPlayer extends Player {
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
       resource: session.resources.toJSON(),
-      exceptions: session.errors.toJSON(),
+      exceptions: session.errors.toJSON().map(({ time, errorId, name }: any) =>
+        Log({
+          level: LogLevel.ERROR,
+          value: name,
+          time,
+          errorId,
+        })
+      ),
     }
 
     const screen = new Screen()
