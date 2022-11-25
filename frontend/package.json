@@ -98,7 +98,6 @@
     "babel-loader": "^8.2.4",
     "babel-plugin-recharts": "^1.2.1",
     "babel-plugin-transform-decorators-legacy": "^1.3.5",
-    "circular-dependency-plugin": "^5.2.0",
     "compression-webpack-plugin": "^10.0.0",
     "copy-webpack-plugin": "^11.0.0",
     "country-data": "0.0.31",

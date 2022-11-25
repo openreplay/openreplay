@@ -95,19 +95,19 @@ function Controls(props: any) {
     skipInterval,
     disabledRedux,
     showStorageRedux,
-    showStackRedux,
+    // showStackRedux,
   } = props;
 
   const storageType = selectStorageType(store.get());
   const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
-  const stackCount = stackList.length;
   const profilesCount = profilesList.length;
   const graphqlCount = graphqlList.length;
   const showGraphql = graphqlCount > 0;
-  const fetchCount = fetchList.length;
   const showProfiler = profilesCount > 0;
   const showExceptions = exceptionsList.length > 0;
   const showStorage = storageType !== STORAGE_TYPES.NONE || showStorageRedux;
+  // const fetchCount = fetchList.length;
+  // const stackCount = stackList.length;
   // const showStack =  stackCount > 0 || showStackRedux UPDATE
   // const showFetch = fetchCount > 0 UPDATE
 
@@ -130,17 +130,17 @@ function Controls(props: any) {
       backTenSeconds();
     }
     if (e.key === 'ArrowDown') {
-      props.speedDown();
+      player.speedDown();
     }
     if (e.key === 'ArrowUp') {
-      props.speedUp();
+      player.speedUp();
     }
   };
 
   React.useEffect(() => {
-    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keydown', onKeyDown.bind(this));
     return () => {
-      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keydown', onKeyDown.bind(this));
     };
   }, []);
 
@@ -204,10 +204,10 @@ function Controls(props: any) {
 
   const toggleBottomTools = (blockName: number) => {
     if (blockName === INSPECTOR) {
-      toggleInspectorMode(false);
+      player.toggleInspectorMode(false);
       bottomBlock && toggleBottomBlock();
     } else {
-      toggleInspectorMode(false);
+      player.toggleInspectorMode(false);
       toggleBottomBlock(blockName);
     }
   };

@@ -123,7 +123,7 @@ const config: Configuration = {
         { from: "./app/assets", to: "assets" },
       ],
     }),
-    new MiniCssExtractPlugin(),
+    new MiniCssExtractPlugin({ ignoreOrder: true }),
   ],
   devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
