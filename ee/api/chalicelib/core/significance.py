@@ -198,7 +198,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         GROUP BY main.session_id)
         AS T{i + 1} {"ON (TRUE)" if i > 0 else ""}
         """)
-    n_stages=len(n_stages_query)
+    n_stages = len(n_stages_query)
     if n_stages == 0:
         return []
     n_stages_query = " LEFT JOIN LATERAL ".join(n_stages_query)
@@ -222,7 +222,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 AND ISE.session_id = stages_t.session_id
                 AND ISS.type!='custom' -- ignore custom issues because they are massive
                 {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}
-            LIMIT 50 -- remove the limit to get exact stats
+            LIMIT 10 -- remove the limit to get exact stats
         ) AS issues_t ON (TRUE)
     ) AS stages_and_issues_t INNER JOIN sessions USING(session_id);
     """
@@ -355,7 +355,7 @@ def get_transitions_and_issues_of_each_type(rows: List[RealDictRow], all_issues,
             if error_id not in errors:
                 errors[error_id] = []
             ic = 0
-            row_issue_id=row['issue_id']
+            row_issue_id = row['issue_id']
             if row_issue_id is not None:
                 if last_ts is None or (first_ts < row['issue_timestamp'] < last_ts):
                     if error_id == row_issue_id:
@@ -540,6 +540,9 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
 
         if is_sign:
             n_critical_issues += n_issues_dict[issue_id]
+    # To limit the number of returned issues to the frontend
+    issues_dict["significant"] = issues_dict["significant"][:50]
+    issues_dict["insignificant"] = issues_dict["insignificant"][:50]
 
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
