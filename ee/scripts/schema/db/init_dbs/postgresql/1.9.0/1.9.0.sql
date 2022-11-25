@@ -78,3 +78,5 @@ DROP INDEX IF EXISTS events.resources_url_gin_idx;
 DROP INDEX IF EXISTS events.resources_url_idx;
 
 COMMIT;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_session_id_status_code_nn_idx ON events_common.requests (session_id, status_code) WHERE status_code IS NOT NULL;
