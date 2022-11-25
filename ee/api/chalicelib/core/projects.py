@@ -51,6 +51,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                        AND users.deleted_at ISNULL
                        AND users.tenant_id = %(tenant_id)s
                        AND (roles.all_projects OR roles_projects.project_id = s.project_id)
+                     LIMIT 1
                     ) AS role_project ON (TRUE)"""
         extra_projection = ""
         extra_join = ""
