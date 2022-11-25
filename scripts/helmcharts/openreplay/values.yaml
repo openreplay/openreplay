@@ -103,3 +103,4 @@ vault: &vault
 
 global:
   vault: *vault
+  clusterDomain: "svc.cluster.local"
