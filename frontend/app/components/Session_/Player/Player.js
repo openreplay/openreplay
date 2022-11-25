@@ -47,6 +47,7 @@ function Player(props) {
     closedLive,
     bottomBlock,
     activeTab,
+    fullView,
   } = props;
   const playerContext = React.useContext(PlayerContext)
   const screenWrapper = React.useRef();

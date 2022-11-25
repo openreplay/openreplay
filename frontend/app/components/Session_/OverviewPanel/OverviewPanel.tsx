@@ -14,10 +14,8 @@ import { NoContent, Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
-function OverviewPanel({ issuesList }: { issuesList: any[] }) {
-  const { store } = React.useContext(PlayerContext)
-
 function OverviewPanel() {
+  const { store } = React.useContext(PlayerContext)
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -140,4 +138,4 @@ export default connect(
   }
 )(
   observer(OverviewPanel)
-);
+)

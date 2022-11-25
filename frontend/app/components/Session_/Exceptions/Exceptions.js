@@ -8,10 +8,8 @@ import {
   ErrorItem,
   SlideModal,
   ErrorDetails,
-  ErrorHeader,
   Link,
   QuestionMarkHint,
-  Tabs,
 } from 'UI';
 import { fetchErrorStackList } from 'Duck/sessions';
 import { connectPlayer, jump } from 'Player';
