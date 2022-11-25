@@ -8,18 +8,16 @@ import (
 	"os"
 	"strconv"
 	"sync"
-	"time"
 )
 
 type Session struct {
-	lock       *sync.Mutex
-	domFile    *os.File
-	devFile    *os.File
-	dom        *bufio.Writer
-	dev        *bufio.Writer
-	lastUpdate time.Time // TODO: keep for timeout logic
-	index      []byte
-	updated    bool // TODO: try with timeout to write data once in N minutes
+	lock    *sync.Mutex
+	domFile *os.File
+	devFile *os.File
+	dom     *bufio.Writer
+	dev     *bufio.Writer
+	index   []byte
+	updated bool
 }
 
 func NewSession(dir string, id uint64) (*Session, error) {
@@ -50,18 +48,14 @@ func NewSession(dir string, id uint64) (*Session, error) {
 	}, nil
 }
 
-func (s *Session) Lock() {
-	s.lock.Lock()
-}
-
-func (s *Session) Unlock() {
-	s.lock.Unlock()
-}
-
 func (s *Session) Write(msg messages.Message) (err error) {
-	// Message index
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	// Encode message index
 	binary.LittleEndian.PutUint64(s.index, msg.Meta().Index)
-	//
+
+	// Write message to dom.mob file
 	if messages.IsDOMType(msg.TypeID()) {
 		_, err = s.dom.Write(s.index)
 		_, err = s.dom.Write(msg.Encode())
@@ -70,6 +64,7 @@ func (s *Session) Write(msg messages.Message) (err error) {
 		}
 	}
 	s.updated = true
+	// Write message to dev.mob file
 	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
 		_, err = s.dev.Write(s.index)
 		_, err = s.dev.Write(msg.Encode())
@@ -81,6 +76,13 @@ func (s *Session) Write(msg messages.Message) (err error) {
 }
 
 func (s *Session) Sync() error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.sync()
+}
+
+func (s *Session) sync() error {
 	if !s.updated {
 		return nil
 	}
@@ -96,10 +98,19 @@ func (s *Session) Sync() error {
 	if err := s.devFile.Sync(); err != nil {
 		return err
 	}
+	s.updated = false
 	return nil
 }
 
 func (s *Session) Close() error {
+	s.lock.Lock()
+	s.lock.Unlock()
+
+	_ = s.sync()
+	return s.close()
+}
+
+func (s *Session) close() error {
 	if err := s.domFile.Close(); err != nil {
 		return err
 	}
