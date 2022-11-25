@@ -1,3 +1,4 @@
+import json
 import queue
 import logging
 
@@ -17,7 +18,7 @@ class EventQueue():
         while not self.events.empty():
             project_id, user_id, element = self.events.get()
             events.append("({project_id}, '{user_id}', {timestamp}, '{action}', '{source}', '{category}', '{data}')".format(
-                           project_id=project_id, user_id=user_id, timestamp=element.timestamp, action=element.action, source=element.source, category=element.category, data=element.data))
+                           project_id=project_id, user_id=user_id, timestamp=element.timestamp, action=element.action, source=element.source, category=element.category, data=json.dumps(element.data)))
         if len(events)==0:
             return 0
         if self.test:
