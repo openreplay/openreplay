@@ -20,13 +20,13 @@ function Logs({ player }) {
 	const [ activeTab, setTab ] = useState(ALL);
 	const onInputChange = useCallback(({ target }) => setFilter(target.value));
 	const filterRE = getRE(filter, 'i');
-  const filtered = player.lists[LOGS].listNow.filter(({ severity, content }) => 
+  const filtered = player.lists[LOGS].listNow.filter(({ severity, content }) =>
   	(activeTab === ALL || activeTab === severity) && filterRE.test(content)
   );
 	return (
 		<>
 			<PanelLayout.Header>
-				<Tabs 
+				<Tabs
 	        tabs={ TABS }
 	        active={ activeTab }
 	        onClick={ setTab }
@@ -36,7 +36,6 @@ function Logs({ player }) {
 	        className="input-small"
 	        placeholder="Filter"
 	        icon="search"
-	        iconPosition="left"
 	        name="filter"
 	        onChange={ onInputChange }
 	      />
@@ -48,8 +47,8 @@ function Logs({ player }) {
 					title="No recordings found"
 	      >
 					<Autoscroll>
-						{	filtered.map(log => 
-							<Log text={log.content} level={log.severity}/>	
+						{	filtered.map(log =>
+							<Log text={log.content} level={log.severity}/>
 						)}
 					</Autoscroll>
 				</NoContent>

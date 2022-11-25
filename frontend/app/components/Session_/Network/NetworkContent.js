@@ -230,7 +230,6 @@ export default class NetworkContent extends React.PureComponent {
               className="input-small"
               placeholder="Filter by name"
               icon="search"
-              iconPosition="left"
               name="filter"
               onChange={this.onFilterChange}
               height={28}

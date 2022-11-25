@@ -35,7 +35,6 @@ function LiveSessionSearchField(props: Props) {
         onBlur={ () => setTimeout(setShowModal, 200, false) }
         onChange={ onSearchChange }
         icon="search"
-        iconPosition="left"
         placeholder={ 'Find live sessions by user or metadata.'}
         fluid
         id="search"

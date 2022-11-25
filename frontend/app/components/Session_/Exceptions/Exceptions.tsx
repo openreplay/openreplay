@@ -81,7 +81,6 @@ function Exceptions({ errorStack, sourcemapUploaded, loading }: IProps) {
               className="input-small"
               placeholder="Filter by name or message"
               icon="search"
-              iconPosition="left"
               name="filter"
               onChange={onFilterChange}
               height={28}

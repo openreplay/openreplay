@@ -310,7 +310,6 @@ function NetworkPanel() {
             className="input-small"
             placeholder="Filter by name, type or value"
             icon="search"
-            iconPosition="left"
             name="filter"
             onChange={onFilterChange}
             height={28}

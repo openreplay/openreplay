@@ -31,7 +31,7 @@ let throttledCall = () => 999
 
 function renderWithNL(s = '') {
   if (typeof s !== 'string') return '';
-  return s.split('\n').map((line, i) => <div className={cn({ 'ml-20': i !== 0 })}>{line}</div>);
+  return s.split('\n').map((line, i) => <div key={i + line.slice(0, 6)} className={cn({ 'ml-20': i !== 0 })}>{line}</div>);
 }
 
 const getIconProps = (level: any) => {
@@ -129,23 +129,25 @@ function ConsolePanel() {
     const item = filteredList[index];
 
     return (
-      // @ts-ignore
-      <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
-        {({ measure }: any) => (
-          <ConsoleRow
-            style={style}
-            log={item}
-            jump={jump}
-            iconProps={getIconProps(item.level)}
-            renderWithNL={renderWithNL}
-            onClick={() => showDetails(item)}
-            recalcHeight={() => {
-              measure();
-              (_list as any).current.recomputeRowHeights(index);
-            }}
-          />
-        )}
-      </CellMeasurer>
+      <React.Fragment key={key}>
+        {/* @ts-ignore */}
+        <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
+          {({ measure }: any) => (
+            <ConsoleRow
+              style={style}
+              log={item}
+              jump={jump}
+              iconProps={getIconProps(item.level)}
+              renderWithNL={renderWithNL}
+              onClick={() => showDetails(item)}
+              recalcHeight={() => {
+                measure();
+                (_list as any).current.recomputeRowHeights(index);
+              }}
+            />
+          )}
+        </CellMeasurer>
+      </React.Fragment>
     );
   };
 
@@ -205,7 +207,6 @@ function ConsolePanel() {
           className="input-small h-8"
           placeholder="Filter by keyword"
           icon="search"
-          iconPosition="left"
           name="filter"
           height={28}
           onChange={onFilterChange}

@@ -132,7 +132,6 @@ export default class GraphQL extends React.PureComponent {
                 // className="input-small"
                 placeholder="Filter by name or type"
                 icon="search"
-                iconPosition="left"
                 name="filter"
                 onChange={this.onFilterChange}
               />

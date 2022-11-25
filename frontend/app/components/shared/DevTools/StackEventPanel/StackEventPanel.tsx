@@ -149,7 +149,6 @@ function StackEventPanel(props: Props) {
           className="input-small h-8"
           placeholder="Filter by keyword"
           icon="search"
-          iconPosition="left"
           name="filter"
           height={28}
           onChange={onFilterChange}

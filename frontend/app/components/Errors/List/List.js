@@ -25,7 +25,7 @@ const sortOptions = Object.entries(sortOptionsMap)
 
 @connect(state => ({
 	loading: state.getIn([ "errors", "loading" ]),
-	resolveToggleLoading: state.getIn(["errors", "resolve", "loading"]) || 
+	resolveToggleLoading: state.getIn(["errors", "resolve", "loading"]) ||
 		state.getIn(["errors", "unresolve", "loading"]),
 	ignoreLoading: state.getIn([ "errors", "ignore", "loading" ]),
 	mergeLoading: state.getIn([ "errors", "merge", "loading" ]),
@@ -54,19 +54,19 @@ export default class List extends React.PureComponent {
 		}
 		this.debounceFetch = debounce(this.props.editOptions, 1000);
 	}
-	
+
 	componentDidMount() {
 		this.props.applyFilter({ });
 	}
 
 	check = ({ errorId }) => {
 		const { checkedIds } = this.state;
-		const newCheckedIds = checkedIds.contains(errorId) 
-			? checkedIds.remove(errorId) 
+		const newCheckedIds = checkedIds.contains(errorId)
+			? checkedIds.remove(errorId)
 			: checkedIds.add(errorId);
 		this.setState({
 			checkedAll: newCheckedIds.size === this.props.list.size,
-			checkedIds: newCheckedIds 
+			checkedIds: newCheckedIds
 		});
 	}
 
@@ -184,7 +184,7 @@ export default class List extends React.PureComponent {
 									onClick={ this.unresolve }
 									disabled={ someLoading || currentCheckedIds.size === 0}
 								/>
-						}	
+						}
 						{ status !== IGNORED &&
 							<IconButton
 								outline
@@ -196,10 +196,10 @@ export default class List extends React.PureComponent {
 								onClick={ this.ignore }
 								disabled={ someLoading || currentCheckedIds.size === 0}
 							/>
-						}							
+						}
 					</div>
 					<div className="flex items-center ml-6">
-						<span className="mr-2 color-gray-medium">Sort By</span>	          
+						<span className="mr-2 color-gray-medium">Sort By</span>
 						<Select
 							defaultValue={ `${sort}-${order}` }
 							name="sort"
@@ -212,7 +212,6 @@ export default class List extends React.PureComponent {
 							wrapperClassName="ml-3"
 							placeholder="Filter by name or message"
 							icon="search"
-							iconPosition="left"
 							name="filter"
 							onChange={ this.onQueryChange }
 							value={query}
