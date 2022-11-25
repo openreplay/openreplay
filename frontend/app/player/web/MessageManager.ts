@@ -41,6 +41,7 @@ export interface State extends ScreenState, ListsState {
   connBandwidth?: number,
   location?: string,
   performanceChartTime?: number,
+  performanceAvaliability?: PerformanceTrackManager['avaliability']
 
   domContentLoadedTime?: any,
   domBuildingTime?: any,
@@ -279,7 +280,7 @@ export default class MessageManager {
     this.connectionInfoManger = new ListWalker();
     this.clickManager = new ListWalker();
     this.scrollManager = new ListWalker();
-    this.resizeManager = new ListWalker([]);
+    this.resizeManager = new ListWalker();
 
     this.performanceTrackManager = new PerformanceTrackManager()
     this.windowNodeCounter = new WindowNodeCounter();
@@ -350,8 +351,6 @@ export default class MessageManager {
       if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
         this.screen.cursor.click();
       }
-      // After all changes - redraw the marker
-      //this.marker.redraw();
     })
 
     if (this.waitingForFiles && this.lastMessageTime <= t) {
@@ -375,8 +374,6 @@ export default class MessageManager {
 
   private readonly incomingMessages: Message[] = []
   appendMessage(msg: Message, index: number) {
-    // @ts-ignore
-     //       msg.time = this.md.getLastRecordedMessageTime() + msg.time\
      //TODO: put index in message type
     this.incomingMessages.push(msg)
     if (!this.waitingForFiles) {

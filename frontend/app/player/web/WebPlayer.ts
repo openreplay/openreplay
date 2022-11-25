@@ -58,7 +58,7 @@ export default class WebPlayer extends Player {
 
       live,
       livePlay: live,
-      endTime, // : 0, //TODO: through initialState
+      endTime, // : 0,
     })
 
     // TODO: separate LiveWebPlayer
@@ -85,22 +85,24 @@ export default class WebPlayer extends Player {
   mark(e: Element) {
     this.inspectorController.marker?.mark(e)
   }
-  toggleInspectorMode(flag: boolean, clickCallback?: (args: any) => any) {
+
+  toggleInspectorMode(flag: boolean, clickCallback?: Parameters<InspectorController['enableInspector']>[0]) {
     if (typeof flag !== 'boolean') {
       const { inspectorMode } = this.wpState.get()
-      flag = !inspectorMode;
+      flag = !inspectorMode
     }
 
     if (flag) {
       this.pause()
       this.wpState.update({ inspectorMode: true })
-      return this.inspectorController.enableInspector(clickCallback);
+      return this.inspectorController.enableInspector(clickCallback)
     } else {
-      this.inspectorController.disableInspector();
-      this.wpState.update({ inspectorMode: false });
+      this.inspectorController.disableInspector()
+      this.wpState.update({ inspectorMode: false })
     }
   }
 
+  // Target Marker
   setActiveTarget(args: Parameters<TargetMarker['setActiveTarget']>) {
     this.targetMarker.setActiveTarget(...args)
   }
@@ -111,10 +113,10 @@ export default class WebPlayer extends Player {
   }
 
 
-  // TODO
+  // TODO separate message receivers
   async toggleTimetravel() {
     if (!this.wpState.get().liveTimeTravel) {
-      return await this.messageManager.reloadWithUnprocessedFile(() =>
+      await this.messageManager.reloadWithUnprocessedFile(() =>
         this.wpState.update({
           liveTimeTravel: true,
         })
