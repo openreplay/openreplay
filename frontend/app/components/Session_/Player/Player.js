@@ -67,8 +67,6 @@ function Player(props) {
 
   if (!playerContext.player) return null;
 
-  console.log(bottomBlock)
-
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
   return (
     <div

@@ -188,19 +188,16 @@ function ConsolePanel() {
         (!!filter ? filterRE.test(value) : true) &&
         (activeTab === ALL || activeTab === LEVEL_TAB[level])
     );
-    console.log('log filter tab', logs.length, filter, activeTab)
     setFilteredList(list);
   }, [logs.length, filter, activeTab]);
 
   useEffect(() => {
     if (_list.current) {
-      console.log('active index')
       // @ts-ignore
       _list.current.scrollToRow(activeIndex);
     }
   }, [activeIndex]);
 
-  console.log('rerender')
   return (
     <BottomBlock
       style={{ height: 300 + additionalHeight + 'px' }}

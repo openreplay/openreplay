@@ -15,7 +15,6 @@ interface Props {
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL, style, recalcHeight } = props;
   const [expanded, setExpanded] = useState(false);
-  console.log(log)
   const lines = log.value?.split('\n').filter((l: any) => !!l) || [];
   const canExpand = lines.length > 1;
 
