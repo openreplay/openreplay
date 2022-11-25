@@ -875,7 +875,7 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
 
 class CustomMetricsConfigSchema(BaseModel):
     col: Optional[int] = Field(...)
-    row: Optional[int] = Field(...)
+    row: Optional[int] = Field(default=2)
     position: Optional[int] = Field(default=0)
 
 
