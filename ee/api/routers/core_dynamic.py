@@ -440,7 +440,7 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
 @app.post('/{projectId}/signals', tags=['signals'])
 def send_interactions(projectId:int, data: schemas_ee.SignalsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    data = signals.handle_frontend_signals(project_id=projectId, user_id=context.user_id, data=data)
+    data = signals.handle_frontend_signals_queued(project_id=projectId, user_id=context.user_id, data=data)
     
     if "errors" in data:
         return data

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 # from fastapi_utils.tasks import repeat_every
 from utils import events_queue
 from utils import pg_client
+from utils import schemas_ee
 
 app = FastAPI()
 app.schedule = AsyncIOScheduler()
@@ -17,7 +18,10 @@ def home():
 @app.put('/value/{value}')
 def number(value: int):
     logging.info(f'> {value} as input. Testing queue with pg')
-    events_queue.global_queue.put(value)
+    d = {'timestamp': 23786, 'action': 'action', 'source': 'source', 'category': 'cat', 'data':  {}}
+    events = schemas_ee.SignalsSchema
+    event = events.parse_obj(d)
+    events_queue.global_queue.put((value, 0, event))
 
 
 @app.on_event("startup")

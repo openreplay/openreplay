@@ -1,12 +1,7 @@
 import queue
 import logging
-# import threading
 
-# import schemas
-# import schemas_ee
-
-#from utils import helper
-from utils import pg_client
+from chalicelib.utils import pg_client
 
 global_queue = None
 
@@ -20,15 +15,16 @@ class EventQueue():
     def flush(self, conn):
         events = list()
         while not self.events.empty():
-            events.append(self.events.get())
-        # self.events.task_done()
+            project_id, user_id, element = self.events.get()
+            events.append("({project_id}, '{user_id}', {timestamp}, '{action}', '{source}', '{category}', '{data}')".format(
+                           project_id=project_id, user_id=user_id, timestamp=element.timestamp, action=element.action, source=element.source, category=element.category, data=element.data))
+        if len(events)==0:
+            return 0
         if self.test:
             print(events)
             return 1
-        _query = """INSERT INTO {database}.{table} (project_id, user_id, timestamp, action, source, category, data) VALUES %(events)s""".format(
-                     database='public', table='frontend_signals')
-        _query = conn.mogrify(_query, {'events': (0, 'test', 0, 'action', 's', 'c', '{}')})
-        conn.execute(_query)
+        _base_query = 'INSERT INTO {database}.{table} (project_id, user_id, timestamp, action, source, category, data) VALUES {values_list}'
+        conn.execute(_base_query.format(database='public', table='frontend_signals', values_list=', '.join(events)))
         # logging.info(_query)
         # res = 'done'
         # res = conn.fetchone()
