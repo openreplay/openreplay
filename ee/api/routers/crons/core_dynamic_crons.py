@@ -27,14 +27,15 @@ def pg_events_queue() -> None:
     events_queue.global_queue.force_flush()
 
 cron_jobs = [
-    {"func": unlock_cron, "trigger": "cron", "hour": "*"}
+    {"func": unlock_cron, "trigger": "cron", "hour": "*"},
+    {"func": pg_events_queue, "trigger": "interval", "seconds": 60*5, "misfire_grace_time": 20}
 ]
 
 SINGLE_CRONS = [{"func": telemetry_cron, "trigger": "cron", "day_of_week": "*"},
                 {"func": run_scheduled_jobs, "trigger": "interval", "seconds": 60, "misfire_grace_time": 20},
                 {"func": weekly_report, "trigger": "cron", "day_of_week": "mon", "hour": 5,
-                 "misfire_grace_time": 60 * 60},
-                {"func": pg_events_queue, "trigger": "cron", "interval": 60*5, "misfire_grace_time": 20}]
+                 "misfire_grace_time": 60 * 60}
+]
 
 if config("LOCAL_CRONS", default=False, cast=bool):
     cron_jobs += SINGLE_CRONS
