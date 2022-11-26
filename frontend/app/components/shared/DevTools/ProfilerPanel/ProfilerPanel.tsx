@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { TextEllipsis, Input } from 'UI';
-import { getRE } from 'App/utils';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { TextEllipsis, Input } from 'UI';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import useInputState from 'App/hooks/useInputState'
 
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import { useModal } from 'App/components/Modal';
 import ProfilerModal from '../ProfilerModal';
+import { useRegExListFilterMemo } from '../useListFilter'
 
 const renderDuration = (p: any) => `${p.duration}ms`;
 const renderName = (p: any) => <TextEllipsis text={p.name} />;
@@ -15,19 +16,12 @@ const renderName = (p: any) => <TextEllipsis text={p.name} />;
 function ProfilerPanel() {
   const { store } = React.useContext(PlayerContext)
 
-  const profiles = store.get().profilesList
+  const profiles = store.get().profilesList as any[] // TODO lest internal types
 
   const { showModal } = useModal();
-  const [filter, setFilter] = useState('');
-  const filtered: any = React.useMemo(() => {
-    const filterRE = getRE(filter, 'i');
-    let list = profiles;
+  const [ filter, onFilterChange ] = useInputState()
+  const filtered = useRegExListFilterMemo(profiles, pr => pr.name, filter)
 
-    list = list.filter(({ name }: any) => (!!filter ? filterRE.test(name) : true));
-    return list;
-  }, [filter]);
-
-  const onFilterChange = ({ target: { value } }: any) => setFilter(value);
   const onRowClick = (profile: any) => {
     showModal(<ProfilerModal profile={profile} />, { right: true });
   };

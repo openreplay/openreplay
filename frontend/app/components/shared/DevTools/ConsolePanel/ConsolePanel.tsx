@@ -5,7 +5,6 @@ import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
 import useLatestRef from 'App/hooks/useLatestRef'
-import { getRE } from 'App/utils';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
@@ -159,7 +158,7 @@ function ConsolePanel() {
 
   return (
     <BottomBlock
-      style={{ height: 300 + 'px' }}
+      style={{ height: '300px' }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
