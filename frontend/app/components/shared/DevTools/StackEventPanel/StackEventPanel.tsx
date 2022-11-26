@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
-import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
+import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import BottomBlock from '../BottomBlock';
 import { useModal } from 'App/components/Modal';
@@ -12,6 +12,7 @@ import StackEventRow from 'Shared/DevTools/StackEventRow';
 import StackEventModal from '../StackEventModal';
 import useAutoscroll from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
+import useCellMeasurerCache from '../useCellMeasurerCache'
 
 const INDEX_KEY = 'stackEvent';
 const ALL = 'ALL';
@@ -57,10 +58,7 @@ function StackEventPanel() {
     timeoutStartAutoscroll()
   }
 
-  const cache = new CellMeasurerCache({
-    fixedWidth: true,
-    keyMapper: (index: number) => filteredList[index],
-  });
+  const cache = useCellMeasurerCache(filteredList)
 
   const showDetails = (item: any) => {
     setIsDetailsModalActive(true)

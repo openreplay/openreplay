@@ -4,15 +4,15 @@ import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
 import cn from 'classnames';
 import ConsoleRow from '../ConsoleRow';
-import useLatestRef from 'App/hooks/useLatestRef'
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
+import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import useAutoscroll from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
+import useCellMeasurerCache from '../useCellMeasurerCache'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -101,11 +101,6 @@ function ConsolePanel() {
     timeoutStartAutoscroll()
   }
   
-  //Shouldn't it be declared outside the render function?
-  const cache = new CellMeasurerCache({
-    fixedWidth: true,
-    keyMapper: (index: number) => filteredList[index],
-  });
   const _list = useRef();
   useEffect(() => {
     if (_list.current) {
@@ -114,6 +109,7 @@ function ConsolePanel() {
     }
   }, [activeIndex]);
 
+  const cache = useCellMeasurerCache(filteredList)
 
   const showDetails = (log: any) => {
     setIsDetailsModalActive(true);
