@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { LogLevel, ILog } from 'Player';
 import BottomBlock from '../BottomBlock';
 import { Tabs, Input, Icon, NoContent } from 'UI';
@@ -13,6 +13,7 @@ import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
 import useAutoscroll from '../useAutoscroll';
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 
 const ALL = 'ALL';
 const INFO = 'INFO';
@@ -43,7 +44,6 @@ const getIconProps = (level: any) => {
         color: 'blue2',
       };
     case LogLevel.WARN:
-    case LogLevel.WARNING:
       return {
         name: 'console/warning',
         color: 'red2',
@@ -69,32 +69,22 @@ function ConsolePanel() {
   const activeTab = devTools[INDEX_KEY].activeTab;
   // Why do we need to keep index in the store? if we could get read of it it would simplify the code
   const activeIndex = devTools[INDEX_KEY].index;
-  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
-  const [filteredList, setFilteredList] = useState([]);
+  const [ isDetailsModalActive, setIsDetailsModalActive ] = useState(false);
   const { showModal } = useModal();
-  const [logs, setLogs] = useState([])
 
   const { player, store } = React.useContext(PlayerContext)
   const jump = (t: number) => player.jump(t)
 
   const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
-  useEffect(() => {
-    setLogs(logList.concat(exceptionsList).sort((a, b) => a.time - b.time))
-  }, [logList.length, exceptionsList.length ])
-
-  useEffect(() => {
-    const filterRE = getRE(filter, 'i')
-    const list = logs.filter(
-      ({ value, level }: ILog) =>
-        (!!filter ? filterRE.test(value) : true) &&
-        (activeTab === ALL || activeTab === LEVEL_TAB[level])
-    )
-    setFilteredList(list)
-  }, [logs.length, filter, activeTab])
+  const logs = useMemo(() => 
+    logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
+    [ logList.length, exceptionsList.length ],
+  ) as ILog[]
+  let filteredList = useRegExListFilterMemo(logs, l => l.value, filter)  
+  filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
 
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
-
 
   // AutoScroll 
   const autoScrollIndex = logListNow.length + exceptionsListNow.length
@@ -113,11 +103,12 @@ function ConsolePanel() {
     timeoutStartAutoscroll()
   }
   
+  //Shouldn't it be declared outside the render function?
   const cache = new CellMeasurerCache({
     fixedWidth: true,
     keyMapper: (index: number) => filteredList[index],
   });
-  const _list = React.useRef();
+  const _list = useRef();
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
