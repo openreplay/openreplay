@@ -8,8 +8,8 @@ const CSS = 'css';
 const IMG = 'img';
 const MEDIA = 'media';
 const OTHER = 'other';
-//
-const FETCH = 'tracked_fetch';
+
+
 // 
 // const IMG_EXTENTIONS = [ "png", "gif", "jpg", "jpeg", "svg" ];
 // const MEDIA_EXTENTIONS = [ 'mp4', 'mkv', 'ogg', 'webm', 'avi', 'mp3' ];
@@ -58,7 +58,6 @@ export const TYPES = {
   IMG,
   MEDIA,
   OTHER,
-  FETCH,
 }
 
 const YELLOW_BOUND = 10;

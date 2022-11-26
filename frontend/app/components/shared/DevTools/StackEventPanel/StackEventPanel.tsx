@@ -29,14 +29,14 @@ function StackEventPanel() {
   const { showModal } = useModal();
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false) // TODO:embed that into useModal
   const filter = devTools[INDEX_KEY].filter
-  const activeTab = devTools[INDEX_KEY].activeTab)
+  const activeTab = devTools[INDEX_KEY].activeTab
   const activeIndex = devTools[INDEX_KEY].index
 
   let filteredList = useRegExListFilterMemo(list, it => it.name, filter)  
   filteredList = useTabListFilterMemo(filteredList, it => it.source, ALL, activeTab)
 
   const onTabClick = (activeTab: typeof TAB_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
-  const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
+  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
 
   const tabs = useMemo(() => 
     TABS.filter(({ key }) => key === ALL || list.some(({ source }) => key === source)), 

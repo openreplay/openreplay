@@ -1,19 +1,21 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { observer } from 'mobx-react-lite';
+import { Duration } from 'luxon';
+
 import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
-import { getRE } from 'App/utils';
-import Resource, { TYPES } from 'Types/session/resource';
+import { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
 import { formatMs } from 'App/date';
+import { useModal } from 'App/components/Modal';
+import FetchDetailsModal from 'Shared/FetchDetailsModal';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { useStore } from 'App/mstore';
 
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-import { Duration } from 'luxon';
-import { useModal } from 'App/components/Modal';
-import FetchDetailsModal from 'Shared/FetchDetailsModal';
-import { PlayerContext } from 'App/components/Session/playerContext';
-import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
+import useAutoscroll from '../useAutoscroll';
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 
 const INDEX_KEY = 'network';
 
@@ -25,15 +27,17 @@ const IMG = 'img';
 const MEDIA = 'media';
 const OTHER = 'other';
 
-const TAB_TO_TYPE_MAP: any = {
-  [XHR]: TYPES.XHR,
-  [JS]: TYPES.JS,
-  [CSS]: TYPES.CSS,
-  [IMG]: TYPES.IMG,
-  [MEDIA]: TYPES.MEDIA,
-  [OTHER]: TYPES.OTHER,
-};
-const TABS: any = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER].map((tab) => ({
+const TYPE_TO_TAB = {
+  [TYPES.XHR]: XHR,
+  [TYPES.JS]: JS,
+  [TYPES.CSS]: CSS,
+  [TYPES.IMG]: IMG,
+  [TYPES.MEDIA]: MEDIA,
+  [TYPES.OTHER]: OTHER,
+}
+
+const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER] as const;
+const TABS = TAP_KEYS.map((tab) => ({
   text: tab === 'xhr' ? 'Fetch/XHR' : tab,
   key: tab,
 }));
@@ -123,133 +127,81 @@ export function renderDuration(r: any) {
   );
 }
 
-interface Props {
-  location: any;
-  resources: any;
-  fetchList: any;
-  domContentLoadedTime: any;
-  loadTime: any;
-  playing: boolean;
-  domBuildingTime: any;
-  time: any;
-}
-let timeOut: any = null;
-const TIMEOUT_DURATION = 5000;
-
 function NetworkPanel() {
   const { player, store } = React.useContext(PlayerContext)
 
   const {
-    resourceList: resources,
     domContentLoadedTime,
     loadTime,
-    time,
     domBuildingTime,
-    fetchList: fetchUnmap,
-  } = store.get();
-  const fetchList = fetchUnmap.map((i: any) => Resource({ ...i.toJS(), type: TYPES.XHR, time: i.time < 0 ? 0 : i.time }))
-
+    fetchList,
+    resourceList,
+    fetchListNow,
+    resourceListNow,
+  } = store.get()
   const { showModal } = useModal();
   const [sortBy, setSortBy] = useState('time');
   const [sortAscending, setSortAscending] = useState(true);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
 
-  const [filteredList, setFilteredList] = useState([]);
   const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
-  const additionalHeight = 0;
-  const fetchPresented = fetchList.length > 0;
   const {
     sessionStore: { devTools },
   } = useStore();
   const filter = devTools[INDEX_KEY].filter;
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
-  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
-  const synRef: any = useRef({});
 
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) => {
-    devTools.update(INDEX_KEY, { filter: value });
-  };
+  const list = useMemo(() =>
+    resourceList.filter(res => !fetchList.some(ft => {
+      if (res.url !== ft.url) { return false }
+      if (Math.abs(res.time - ft.time) > 200) { return false } // TODO: find good epsilons
+      if (Math.abs(res.duration - ft.duration) > 100) { return false }
+      return true
+    }))
+    .concat(fetchList)
+    .sort((a, b) => a.time - b.time)
+  , [ resourceList.length, fetchList.length ])
+  let filteredList = useMemo(() => {
+    if (!showOnlyErrors) { return list }
+    return list.filter(it => parseInt(it.status) >= 400 || !it.success)
+  }, [ showOnlyErrors, list ])
+  filteredList = useRegExListFilterMemo(filteredList, it => it.status, filter)
+  filteredList = useRegExListFilterMemo(filteredList, it => it.name, filter)
+  filteredList = useRegExListFilterMemo(filteredList, it => it.type, filter)  
+  filteredList = useTabListFilterMemo(filteredList, it => TYPE_TO_TAB[it.type], ALL, activeTab)
 
-  synRef.current = {
-    pauseSync,
+  const onTabClick = (activeTab: typeof TAP_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
+  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
+
+  // AutoScroll 
+  const autoScrollIndex = fetchListNow.length + resourceListNow.length
+  const {
+    timeoutStartAutoscroll,
+    stopAutoscroll,
+  } = useAutoscroll(
     activeIndex,
-  };
-
-  const removePause = () => {
-    setIsDetailsModalActive(false);
-    clearTimeout(timeOut);
-    timeOut = setTimeout(() => {
-      devTools.update(INDEX_KEY, { index: getCurrentIndex() });
-      setPauseSync(false);
-    }, TIMEOUT_DURATION);
-  };
-
+    autoScrollIndex,
+    index => devTools.update(INDEX_KEY, { index })
+  )
+  const onMouseEnter = stopAutoscroll
   const onMouseLeave = () => {
-    if (isDetailsModalActive) return;
-    removePause();
-  };
+    if (isDetailsModalActive) { return }
+    timeoutStartAutoscroll()
+  }
 
-  useEffect(() => {
-    if (pauseSync) {
-      removePause();
-    }
-
-    return () => {
-      clearTimeout(timeOut);
-      if (!synRef.current.pauseSync) {
-        devTools.update(INDEX_KEY, { index: 0 });
-      }
-    };
-  }, []);
-
-  const getCurrentIndex = () => {
-    return filteredList.filter((item: any) => item.time <= time).length - 1;
-  };
-
-  useEffect(() => {
-    const currentIndex = getCurrentIndex();
-    if (currentIndex !== activeIndex && !pauseSync) {
-      devTools.update(INDEX_KEY, { index: currentIndex });
-    }
-  }, [time]);
-
-  const { resourcesSize, transferredSize } = useMemo(() => {
-    const resourcesSize = resources.reduce(
-      (sum: any, { decodedBodySize }: any) => sum + (decodedBodySize || 0),
-      0
-    );
-
-    const transferredSize = resources.reduce(
-      (sum: any, { headerSize, encodedBodySize }: any) =>
+  const resourcesSize = useMemo(() => 
+    resourceList.reduce(
+      (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
+      0,
+    ), [ resourceList.length ])
+  const transferredSize = useMemo(() => 
+    resourceList.reduce(
+      (sum, { headerSize, encodedBodySize }) =>
         sum + (headerSize || 0) + (encodedBodySize || 0),
-      0
-    );
-    return {
-      resourcesSize,
-      transferredSize,
-    };
-  }, [resources]);
+      0,
+    ), [ resourceList.length ])
 
-  useEffect(() => {
-    const filterRE = getRE(filter, 'i');
-    let list = resources;
-    fetchList.forEach(
-      (fetchCall: any) =>
-        (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
-    );
-    // @ts-ignore
-    list = list.concat(fetchList);
-
-    list = list.filter(
-      ({ type, name, status, success }: any) =>
-        (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
-        (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
-        (showOnlyErrors ? parseInt(status) >= 400 || !success : true)
-    );
-    setFilteredList(list);
-  }, [resources, filter, showOnlyErrors, activeTab]);
 
   const referenceLines = useMemo(() => {
     const arr = [];
@@ -268,31 +220,30 @@ function NetworkPanel() {
     }
 
     return arr;
-  }, []);
+  }, [ domContentLoadedTime, loadTime ])
 
-  const showDetailsModal = (row: any) => {
-    setIsDetailsModalActive(true);
+  const showDetailsModal = (item: any) => {
+    setIsDetailsModalActive(true)
     showModal(
-      <FetchDetailsModal resource={row} rows={filteredList} fetchPresented={fetchPresented} />,
-      {
+      <FetchDetailsModal resource={item} rows={filteredList} fetchPresented={fetchList.length > 0} />,
+      { 
         right: true,
-        onClose: removePause,
+        onClose: () => {
+          setIsDetailsModalActive(false)
+          timeoutStartAutoscroll()
+        } 
       }
-    );
-    devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
-    setPauseSync(true);
-  };
-
-  useEffect(() => {
-    devTools.update(INDEX_KEY, { filter, activeTab });
-  }, [filter, activeTab]);
+    )
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) })
+    stopAutoscroll()
+  }
 
   return (
     <React.Fragment>
       <BottomBlock
-        style={{ height: 300 + additionalHeight + 'px' }}
+        style={{ height: '300px' }}
         className="border"
-        onMouseEnter={() => setPauseSync(true)}
+        onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         <BottomBlock.Header>
@@ -373,7 +324,6 @@ function NetworkPanel() {
               referenceLines={referenceLines}
               renderPopup
               onRowClick={showDetailsModal}
-              additionalHeight={additionalHeight}
               sortBy={sortBy}
               sortAscending={sortAscending}
               onJump={(row: any) => {

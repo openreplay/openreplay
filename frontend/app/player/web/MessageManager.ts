@@ -43,9 +43,9 @@ export interface State extends ScreenState, ListsState {
   performanceChartTime?: number,
   performanceAvaliability?: PerformanceTrackManager['avaliability']
 
-  domContentLoadedTime?: any,
-  domBuildingTime?: any,
-  loadTime?: any,
+  domContentLoadedTime?:  { time: number, value: number },
+  domBuildingTime?: number,
+  loadTime?: { time: number, value: number },
   error: boolean,
   devtoolsLoading: boolean,
 
@@ -437,10 +437,10 @@ export default class MessageManager {
           response: msg.response,
           status: msg.status,
           duration: msg.duration,
-          type: TYPES.FETCH,
-          time: msg.timestamp - this.sessionStart, //~
+          type: TYPES.XHR,
+          time: Math.max(msg.timestamp - this.sessionStart, 0), // !!! doesn't look good. TODO: find solution to show negative timings
           index,
-        }));
+        }) as Timed)
         break;
       case "redux":
         decoded = this.decodeStateMessage(msg, ["state", "action"]);

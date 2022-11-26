@@ -75,11 +75,11 @@ function ConsolePanel() {
   const jump = (t: number) => player.jump(t)
 
   const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
-  const logs = useMemo(() => 
+  const list = useMemo(() => 
     logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
     [ logList.length, exceptionsList.length ],
   ) as ILog[]
-  let filteredList = useRegExListFilterMemo(logs, l => l.value, filter)  
+  let filteredList = useRegExListFilterMemo(list, l => l.value, filter)  
   filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
 
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab })
@@ -95,7 +95,6 @@ function ConsolePanel() {
     autoScrollIndex,
     index => devTools.update(INDEX_KEY, { index })
   )
-  
   const onMouseEnter = stopAutoscroll
   const onMouseLeave = () => {
     if (isDetailsModalActive) { return }
