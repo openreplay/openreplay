@@ -4,7 +4,6 @@ import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import { EscapeButton } from 'UI';
 import { hide as hideTargetDefiner } from 'Duck/components/targetDefiner';
-import { fullscreenOff } from 'Duck/components/player';
 import {
   NONE,
   CONSOLE,
@@ -17,9 +16,9 @@ import {
   EXCEPTIONS,
   INSPECTOR,
   OVERVIEW,
+  fullscreenOff,
 } from 'Duck/components/player';
 import NetworkPanel from 'Shared/DevTools/NetworkPanel';
-// import StackEvents from '../StackEvents/StackEvents';
 import Storage from '../Storage';
 import { ConnectedPerformance } from '../Performance';
 import GraphQL from '../GraphQL';

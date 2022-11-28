@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { STORAGE_TYPES, selectStorageType, selectStorageListNow } from 'Player';
+import { STORAGE_TYPES, selectStorageType } from 'Player';
 import LiveTag from 'Shared/LiveTag';
 
 import { Icon, Tooltip } from 'UI';
