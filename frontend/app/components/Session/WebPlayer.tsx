@@ -41,12 +41,9 @@ function WebPlayer(props: any) {
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
-    // initPlayer(session, jwt); TODOPlayer
     props.fetchMembers();
 
     notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-      // WebPlayerInst.injectNotes(r);
-      // PlayerStore.update({ notes: r })
       const note = props.query.get('note');
       if (note) {
         WebPlayerInst.pause();

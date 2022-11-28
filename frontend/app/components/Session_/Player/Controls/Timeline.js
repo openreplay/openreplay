@@ -10,6 +10,7 @@ import { debounce } from 'App/utils';
 import TooltipContainer from './components/TooltipContainer';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 
 const BOUNDRY = 0;
 
@@ -26,6 +27,7 @@ let debounceTooltipChange = () => null;
 function Timeline(props) {
   const { player, store } = React.useContext(PlayerContext)
   const [wasPlaying, setWasPlaying] = React.useState(false);
+  const { notesStore } = useStore();
   const {
     playing,
     time,
@@ -36,8 +38,8 @@ function Timeline(props) {
     disabled,
     endTime,
     live,
-    notes = [],
   } = store.get()
+  const notes = notesStore.sessionNotes
 
   const progressRef = React.useRef();
   const timelineRef = React.useRef();

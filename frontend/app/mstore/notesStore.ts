@@ -2,13 +2,9 @@ import { makeAutoObservable } from "mobx"
 import { notesService } from "App/services"
 import { Note, WriteNote, iTag, NotesFilter } from 'App/services/NotesService'
 
-interface SessionNotes {
-  [sessionId: string]: Note[]
-}
-
 export default class NotesStore {
   notes: Note[] = []
-  sessionNotes: SessionNotes = {}
+  sessionNotes: Note[] = []
   loading: boolean
   page = 1
   pageSize = 10
@@ -48,7 +44,7 @@ export default class NotesStore {
     this.loading = true
     try {
       const notes = await notesService.getNotesBySessionId(sessionId)
-      this.sessionNotes[sessionId] = notes
+      this.sessionNotes = notes
       return notes;
     } catch (e) {
       console.error(e)
