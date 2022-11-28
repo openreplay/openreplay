@@ -67,7 +67,7 @@ function ReadNote(props: Props) {
             <Icon name="close" size={18} />
           </div>
         </div>
-        <div className="text-xl py-3 overflow-y-scroll capitalize-first" style={{ maxHeight: 400 }}>
+        <div className="text-xl py-3 overflow-y-auto capitalize-first" style={{ maxHeight: 400 }}>
           {props.note.message}
         </div>
         <div className="w-full">
