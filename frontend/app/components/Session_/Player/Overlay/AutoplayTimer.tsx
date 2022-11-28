@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { Button, Link } from 'UI';
+import { Button, Link, Icon } from 'UI';
 import { session as sessionRoute, withSiteId } from 'App/routes';
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
@@ -51,7 +51,10 @@ function AutoplayTimer({ nextId, siteId, history }: IProps) {
             <Button variant="primary">Play Now</Button>
           </Link>
         </div>
-        <div className="mt-2 italic">Turn on/off auto-replay in: More options</div>
+        <div className="mt-2 flex items-center">
+          <Icon name="ellipsis-v" className="mr-2" />
+          <span className="color-gray-medium">Turn on/off auto-replay in: More options</span>
+        </div>
       </div>
     </div>
   );
