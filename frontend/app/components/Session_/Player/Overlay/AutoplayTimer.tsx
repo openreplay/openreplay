@@ -51,7 +51,7 @@ function AutoplayTimer({ nextId, siteId, history }: IProps) {
             <Button variant="primary">Play Now</Button>
           </Link>
         </div>
-        <div className="mt-2 flex items-center">
+        <div className="mt-2 flex items-center color-gray-dark">
           Turn on/off auto-replay in <Icon name="ellipsis-v" className="mx-1" /> More options
         </div>
       </div>
