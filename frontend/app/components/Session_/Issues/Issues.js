@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Icon, Popover } from 'UI';
+import { Icon, Popover, Button } from 'UI';
 import IssuesModal from './IssuesModal';
 import { fetchProjects, fetchMeta } from 'Duck/assignments';
 import stl from './issues.module.css';
@@ -67,30 +67,27 @@ class Issues extends React.Component {
     const provider = issuesIntegration.provider;
 
     return (
-      <div className="relative h-full w-full p-3">
-        <div className={stl.buttonWrapper}>
-          <Popover
-            onOpen={this.handleOpen}
-            render={({ close }) => (
-              <div>
-                <IssuesModal
-                  provider={provider}
-                  sessionId={sessionId}
-                  closeHandler={close}
-                />
-              </div>
-            )}
-          >
-            <div
-              className="flex items-center"
-              disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}
-            >
-              <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} size="16" />
-              <span className="ml-2">Create Issue</span>
-            </div>
-          </Popover>
+      <Popover
+        onOpen={this.handleOpen}
+        render={({ close }) => (
+          <div>
+            <IssuesModal provider={provider} sessionId={sessionId} closeHandler={close} />
+          </div>
+        )}
+      >
+        <div className="relative">
+          <Button icon={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} variant="text">
+            Create Issue
+          </Button>
         </div>
-      </div>
+        {/* <div
+        className="flex items-center cursor-pointer"
+        disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}
+      >
+        <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} size="16" />
+        <span className="ml-2 whitespace-nowrap">Create Issue</span>
+      </div> */}
+      </Popover>
     );
   }
 }
