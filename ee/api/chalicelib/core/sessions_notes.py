@@ -144,7 +144,9 @@ def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
     note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
     if note is None:
         return {"errors": ["Note not found"]}
-    session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/session/{note['sessionId']}")
+    session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/session/{note['sessionId']}?note={note['noteId']}")
+    if note["timestamp"] > 0:
+        session_url += f"&jumpto={note['timestamp']}"
     title = f"<{session_url}|Note for session {note['sessionId']}>"
 
     blocks = [{"type": "section",
