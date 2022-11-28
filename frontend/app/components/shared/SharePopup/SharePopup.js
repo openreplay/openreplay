@@ -128,7 +128,7 @@ export default class SharePopup extends React.PureComponent {
           </div>
         )}
       >
-        <div className="p-3 w-full">{trigger}</div>
+        {trigger}
       </Popover>
     );
   }

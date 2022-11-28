@@ -10,6 +10,7 @@ import { connectPlayer, pause } from 'Player';
 import ItemMenu from './components/HeaderMenu';
 import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
+import AutoplayToggle from 'Shared/AutoplayToggle';
 
 function SubHeader(props) {
   const [isCopied, setCopied] = React.useState(false);
@@ -29,8 +30,16 @@ function SubHeader(props) {
       exceptionsList: props.exceptionsList,
       eventsList: props.eventsList,
       endTime: props.endTime,
-    }
-    showModal(<BugReportModal width={props.width} height={props.height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
+    };
+    showModal(
+      <BugReportModal
+        width={props.width}
+        height={props.height}
+        xrayProps={xrayProps}
+        hideModal={hideModal}
+      />,
+      { right: true }
+    );
   };
 
   return (
@@ -55,39 +64,31 @@ function SubHeader(props) {
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
         >
-          <Button icon="file-pdf" variant="text" onClick={showReportModal}>Create Bug Report</Button>
+          <Button icon="file-pdf" variant="text" onClick={showReportModal}>
+            Create Bug Report
+          </Button>
           <NotePopup />
+          <Issues sessionId={props.sessionId} />
+          <SharePopup
+            entity="sessions"
+            id={props.sessionId}
+            showCopyLink={true}
+            trigger={
+              <div className="relative">
+                <Button icon="share-alt" variant="text" className="relative">
+                  Share
+                </Button>
+              </div>
+            }
+          />
           <ItemMenu
             items={[
               {
+                key: 1,
+                component: <AutoplayToggle />,
+              },
+              {
                 key: 2,
-                component: props.jiraConfig && props.jiraConfig.token && (
-                  <Issues sessionId={props.sessionId} />
-                ),
-              },
-              {
-                key: 3,
-                component: (
-                  <SharePopup
-                    entity="sessions"
-                    id={props.sessionId}
-                    showCopyLink={true}
-                    trigger={
-                      <div className="flex items-center h-full w-full">
-                        <Icon
-                          className="mr-2"
-                          disabled={props.disabled}
-                          name="share-alt"
-                          size="16"
-                        />
-                        <span>Share</span>
-                      </div>
-                    }
-                  />
-                ),
-              },
-              {
-                key: 4,
                 component: <Bookmark noMargin sessionId={props.sessionId} />,
               },
             ]}
@@ -102,20 +103,17 @@ function SubHeader(props) {
   );
 }
 
-const SubH = connectPlayer(
-  (state) => ({
-    width: state.width,
-    height: state.height,
-    currentLocation: state.location,
-    resourceList: state.resourceList
-      .filter((r) => r.isRed() || r.isYellow())
-      .concat(state.fetchList.filter((i) => parseInt(i.status) >= 400))
-      .concat(state.graphqlList.filter((i) => parseInt(i.status) >= 400)),
-    exceptionsList: state.exceptionsList,
-    eventsList: state.eventList,
-    endTime: state.endTime,
-  })
-
-  )(SubHeader);
+const SubH = connectPlayer((state) => ({
+  width: state.width,
+  height: state.height,
+  currentLocation: state.location,
+  resourceList: state.resourceList
+    .filter((r) => r.isRed() || r.isYellow())
+    .concat(state.fetchList.filter((i) => parseInt(i.status) >= 400))
+    .concat(state.graphqlList.filter((i) => parseInt(i.status) >= 400)),
+  exceptionsList: state.exceptionsList,
+  eventsList: state.eventList,
+  endTime: state.endTime,
+}))(SubHeader);
 
 export default React.memo(SubH);

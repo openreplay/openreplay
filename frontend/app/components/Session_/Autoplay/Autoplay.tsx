@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
-import { Link, Icon, Toggler, Tooltip } from 'UI';
-import { Controls as PlayerControls, connectPlayer } from 'Player';
+import { Link, Icon, Tooltip } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import { fetchAutoplaySessions } from 'Duck/search';
@@ -13,12 +12,10 @@ const PER_PAGE = 10;
 interface Props extends RouteComponentProps {
   previousId: string;
   nextId: string;
-  autoplay: boolean;
   defaultList: any;
   currentPage: number;
   total: number;
   setAutoplayValues?: () => void;
-  toggleAutoplay?: () => void;
   latestRequestTime: any;
   sessionIds: any;
   fetchAutoplaySessions?: (page: number) => Promise<void>;
@@ -29,7 +26,6 @@ function Autoplay(props: Props) {
     nextId,
     currentPage,
     total,
-    autoplay,
     sessionIds,
     latestRequestTime,
     match: {
@@ -54,14 +50,6 @@ function Autoplay(props: Props) {
 
   return (
     <div className="flex items-center">
-      <div
-        onClick={props.toggleAutoplay}
-        className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2"
-      >
-        <Toggler name="sessionsLive" onChange={props.toggleAutoplay} checked={autoplay} />
-        <span className="ml-2 whitespace-nowrap">Auto-Play</span>
-      </div>
-
       <Tooltip
         placement="bottom"
         title={<div className="whitespace-nowrap">Play Previous Session</div>}
@@ -111,13 +99,4 @@ export default connect(
     latestRequestTime: state.getIn(['search', 'latestRequestTime']),
   }),
   { setAutoplayValues, fetchAutoplaySessions }
-)(
-  connectPlayer(
-    (state: any) => ({
-      autoplay: state.autoplay,
-    }),
-    {
-      toggleAutoplay: PlayerControls.toggleAutoplay,
-    }
-  )(withRouter(Autoplay))
-);
+)(withRouter(Autoplay));
