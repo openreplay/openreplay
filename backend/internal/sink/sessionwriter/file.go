@@ -2,6 +2,8 @@ package sessionwriter
 
 import (
 	"bufio"
+	"io"
+	"log"
 	"os"
 )
 
@@ -24,15 +26,32 @@ func NewFile(path string, bufSize int) (*File, error) {
 }
 
 func (f *File) Write(data []byte) error {
+	f.updated = true
+	if len(data) > f.buffer.Available()+f.buffer.Size() {
+		// Flush buffer to file
+		for i := 0; i < 3; i++ {
+			err := f.buffer.Flush()
+			if err == nil {
+				break
+			}
+			log.Printf("can't flush buffer: %s", err)
+		}
+		// Write big message directly to file
+		return f.write(f.file, data)
+	}
+	return f.write(f.buffer, data)
+}
+
+func (f *File) write(w io.Writer, data []byte) error {
 	leftToWrite := len(data)
 	for leftToWrite > 0 {
-		writtenDown, err := f.buffer.Write(data)
+		from := len(data) - leftToWrite
+		writtenDown, err := w.Write(data[from:])
 		if err != nil {
 			return err
 		}
 		leftToWrite -= writtenDown
 	}
-	f.updated = true
 	return nil
 }
 
