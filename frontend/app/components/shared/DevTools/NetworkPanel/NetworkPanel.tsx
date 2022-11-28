@@ -168,13 +168,13 @@ function NetworkPanel() {
   }, [ showOnlyErrors, list ])
   filteredList = useRegExListFilterMemo(filteredList, it => it.status, filter)
   filteredList = useRegExListFilterMemo(filteredList, it => it.name, filter)
-  filteredList = useRegExListFilterMemo(filteredList, it => it.type, filter)  
+  filteredList = useRegExListFilterMemo(filteredList, it => it.type, filter)
   filteredList = useTabListFilterMemo(filteredList, it => TYPE_TO_TAB[it.type], ALL, activeTab)
 
   const onTabClick = (activeTab: typeof TAP_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
 
-  // AutoScroll 
+  // AutoScroll
   const autoScrollIndex = fetchListNow.length + resourceListNow.length
   const {
     timeoutStartAutoscroll,
@@ -190,12 +190,12 @@ function NetworkPanel() {
     timeoutStartAutoscroll()
   }
 
-  const resourcesSize = useMemo(() => 
+  const resourcesSize = useMemo(() =>
     resourceList.reduce(
       (sum, { decodedBodySize }) => sum + (decodedBodySize || 0),
       0,
     ), [ resourceList.length ])
-  const transferredSize = useMemo(() => 
+  const transferredSize = useMemo(() =>
     resourceList.reduce(
       (sum, { headerSize, encodedBodySize }) =>
         sum + (headerSize || 0) + (encodedBodySize || 0),
@@ -226,12 +226,12 @@ function NetworkPanel() {
     setIsDetailsModalActive(true)
     showModal(
       <FetchDetailsModal resource={item} rows={filteredList} fetchPresented={fetchList.length > 0} />,
-      { 
+      {
         right: true,
         onClose: () => {
           setIsDetailsModalActive(false)
           timeoutStartAutoscroll()
-        } 
+        }
       }
     )
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) })
@@ -327,7 +327,6 @@ function NetworkPanel() {
               sortBy={sortBy}
               sortAscending={sortAscending}
               onJump={(row: any) => {
-                setPauseSync(true);
                 devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
                 player.jump(row.time);
               }}
