@@ -72,14 +72,13 @@ function ConsolePanel(props: Props) {
   const {
     sessionStore: { devTools },
   } = useStore();
-  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const [filteredList, setFilteredList] = useState([]);
   const filter = useObserver(() => devTools[INDEX_KEY].filter);
   const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
   const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
   const [pauseSync, setPauseSync] = useState(activeIndex > 0);
   const synRef: any = useRef({});
-  const { showModal } = useModal();
+  const { showModal, component: modalActive } = useModal();
 
   const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
   const onFilterChange = ({ target: { value } }: any) => {
@@ -92,7 +91,7 @@ function ConsolePanel(props: Props) {
   };
 
   const removePause = () => {
-    setIsDetailsModalActive(false);
+    if (!!modalActive) return;
     clearTimeout(timeOut);
     timeOut = setTimeout(() => {
       devTools.update(INDEX_KEY, { index: getCurrentIndex() });
@@ -101,7 +100,6 @@ function ConsolePanel(props: Props) {
   };
 
   const onMouseLeave = () => {
-    if (isDetailsModalActive) return;
     removePause();
   };
 
@@ -136,7 +134,7 @@ function ConsolePanel(props: Props) {
   const _list = React.useRef();
 
   const showDetails = (log: any) => {
-    setIsDetailsModalActive(true);
+    clearTimeout(timeOut);
     showModal(<ErrorDetailsModal errorId={log.errorId} />, { right: true, onClose: removePause });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(log) });
     setPauseSync(true);

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { hideHint } from 'Duck/components/player';
-import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
+import { Tabs, Input, NoContent, Icon } from 'UI';
 import { getRE } from 'App/utils';
 import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
 
@@ -31,8 +31,7 @@ function StackEventPanel(props: Props) {
   const {
     sessionStore: { devTools },
   } = useStore();
-  const { showModal } = useModal();
-  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
+  const { showModal, component: modalActive } = useModal();
   const [filteredList, setFilteredList] = useState([]);
   const filter = useObserver(() => devTools[INDEX_KEY].filter);
   const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
@@ -55,8 +54,8 @@ function StackEventPanel(props: Props) {
   };
 
   const removePause = () => {
+    if (!!modalActive) return;
     clearTimeout(timeOut);
-    setIsDetailsModalActive(false);
     timeOut = setTimeout(() => {
       devTools.update(INDEX_KEY, { index: getCurrentIndex() });
       setPauseSync(false);
@@ -71,7 +70,6 @@ function StackEventPanel(props: Props) {
   }, [time]);
 
   const onMouseLeave = () => {
-    if (isDetailsModalActive) return;
     removePause();
   };
 
@@ -97,7 +95,7 @@ function StackEventPanel(props: Props) {
   });
 
   const showDetails = (item: any) => {
-    setIsDetailsModalActive(true);
+    clearTimeout(timeOut);
     showModal(<StackEventModal event={item} />, { right: true, onClose: removePause });
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
     setPauseSync(true);
