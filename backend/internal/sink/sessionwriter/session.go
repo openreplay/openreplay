@@ -1,81 +1,96 @@
 package sessionwriter
 
 import (
+	"encoding/binary"
 	"fmt"
-	"os"
 	"strconv"
 	"sync"
-	"time"
+
+	"openreplay/backend/pkg/messages"
 )
 
 type Session struct {
-	lock       *sync.Mutex
-	dom        *os.File
-	dev        *os.File
-	lastUpdate time.Time
+	lock    *sync.Mutex
+	dom     *File
+	dev     *File
+	index   []byte
+	updated bool
 }
 
-func NewSession(dir string, id uint64) (*Session, error) {
-	if id == 0 {
+func NewSession(sessID uint64, workDir string, bufSize int) (*Session, error) {
+	if sessID == 0 {
 		return nil, fmt.Errorf("wrong session id")
 	}
+	filePath := workDir + strconv.FormatUint(sessID, 10)
 
-	filePath := dir + strconv.FormatUint(id, 10)
-	domFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	dom, err := NewFile(filePath, bufSize)
 	if err != nil {
 		return nil, err
 	}
-	filePath += "devtools"
-	devFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	dev, err := NewFile(filePath+"devtools", bufSize)
 	if err != nil {
-		domFile.Close() // should close first file descriptor
+		dom.Close()
 		return nil, err
 	}
 
 	return &Session{
-		lock:       &sync.Mutex{},
-		dom:        domFile,
-		dev:        devFile,
-		lastUpdate: time.Now(),
+		lock:    &sync.Mutex{},
+		dom:     dom,
+		dev:     dev,
+		index:   make([]byte, 8),
+		updated: false,
 	}, nil
 }
 
-func (s *Session) Lock() {
+func (s *Session) Write(msg messages.Message) error {
 	s.lock.Lock()
-}
+	defer s.lock.Unlock()
 
-func (s *Session) Unlock() {
-	s.lock.Unlock()
-}
+	// Encode message index
+	binary.LittleEndian.PutUint64(s.index, msg.Meta().Index)
 
-func (s *Session) Write(mode FileType, data []byte) (err error) {
-	if mode == DOM {
-		_, err = s.dom.Write(data)
-	} else {
-		_, err = s.dev.Write(data)
+	// Write message to dom.mob file
+	if messages.IsDOMType(msg.TypeID()) {
+		// Write message index
+		if err := s.dom.Write(s.index); err != nil {
+			return err
+		}
+		// Write message body
+		if err := s.dom.Write(msg.Encode()); err != nil {
+			return err
+		}
 	}
-	s.lastUpdate = time.Now()
-	return err
-}
-
-func (s *Session) LastUpdate() time.Time {
-	return s.lastUpdate
+	s.updated = true
+	// Write message to dev.mob file
+	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
+		// Write message index
+		if err := s.dev.Write(s.index); err != nil {
+			return err
+		}
+		// Write message body
+		if err := s.dev.Write(msg.Encode()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Session) Sync() error {
-	domErr := s.dom.Sync()
-	devErr := s.dev.Sync()
-	if domErr == nil && devErr == nil {
-		return nil
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if err := s.dom.Sync(); err != nil {
+		return err
 	}
-	return fmt.Errorf("dom: %s, dev: %s", domErr, devErr)
+	return s.dev.Sync()
 }
 
 func (s *Session) Close() error {
-	domErr := s.dom.Close()
-	devErr := s.dev.Close()
-	if domErr == nil && devErr == nil {
-		return nil
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	if err := s.dom.Close(); err != nil {
+		return err
 	}
-	return fmt.Errorf("dom: %s, dev: %s", domErr, devErr)
+	return s.dev.Close()
 }

@@ -73,7 +73,7 @@ export const filterList = <T extends Record<string, any>>(
     if (searchQuery === '') return list;
     const filterRE = getRE(searchQuery, 'i');
     let _list = list.filter((listItem: T) => {
-        return testKeys.some((key) => filterRE.test(listItem[key]) || searchCb?.(listItem, filterRE));
+        return testKeys.some((key) => filterRE.test(listItem[key])) || searchCb?.(listItem, filterRE);
     });
     return _list;
   }

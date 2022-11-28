@@ -100,6 +100,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 				tp:      msgType,
 				size:    i.size,
 				reader:  reader,
+				raw:     batchData,
 				skipped: &i.canSkip,
 				broken:  &i.broken,
 				meta:    i.messageInfo,

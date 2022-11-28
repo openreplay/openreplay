@@ -45,8 +45,6 @@ spec:
           env:
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
-            - name: REDIS_STRING
-              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
             - name: KAFKA_SERVERS
               value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
             - name: KAFKA_USE_SSL
@@ -71,6 +69,7 @@ spec:
               # S3 compatible storage
               value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
             {{- end }}
+            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
@@ -86,6 +85,7 @@ spec:
           volumeMounts:
           - name: datadir
             mountPath: /mnt/efs
+          {{- include "openreplay.volume.redis_ca_certificate.mount" .Values.global.redis | nindent 10 }}
           {{- with .Values.persistence.mounts  }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
@@ -96,6 +96,7 @@ spec:
           # Ensure the file directory is created.
           path: {{ .Values.pvc.hostMountPath }}
           type: DirectoryOrCreate
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.persistence.volumes  }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
@@ -104,6 +105,7 @@ spec:
       - name: datadir
         persistentVolumeClaim:
           claimName: {{ .Values.pvc.name }}
+      {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.persistence.volumes  }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

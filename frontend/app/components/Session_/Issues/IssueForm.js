@@ -76,8 +76,6 @@ class IssueForm extends React.PureComponent {
 
     const selectedIssueType = issueTypes.filter((issue) => issue.id == instance.issueType)[0];
 
-    console.log('instance', instance);
-
     return (
       <Loader loading={projectsLoading} size={40}>
         <Form onSubmit={this.onSubmit} className="text-left">

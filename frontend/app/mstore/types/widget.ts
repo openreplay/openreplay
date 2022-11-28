@@ -131,7 +131,7 @@ export default class Widget {
             series: this.series.map((series: any) => series.toJson()),
             config: {
                 ...this.config,
-                col: this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS ? 4 : this.config.col
+                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS) ? 4 : 2
             },
         }
     }
