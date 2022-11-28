@@ -140,11 +140,9 @@ interface Props {
 }
 function NetworkPanel(props: Props) {
   const { resources, time, domContentLoadedTime, loadTime, domBuildingTime, fetchList } = props;
-  const { showModal } = useModal();
-
+  const { showModal, component: modalActive } = useModal();
   const [filteredList, setFilteredList] = useState([]);
   const [showOnlyErrors, setShowOnlyErrors] = useState(false);
-  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false);
   const additionalHeight = 0;
   const fetchPresented = fetchList.length > 0;
   const {
@@ -169,7 +167,7 @@ function NetworkPanel(props: Props) {
   };
 
   const removePause = () => {
-    setIsDetailsModalActive(false);
+    if (!!modalActive) return;
     clearTimeout(timeOut);
     timeOut = setTimeout(() => {
       devTools.update(INDEX_KEY, { index: getCurrentIndex() });
@@ -178,7 +176,7 @@ function NetworkPanel(props: Props) {
   };
 
   const onMouseLeave = () => {
-    if (isDetailsModalActive) return;
+    if (!!modalActive) return;
     removePause();
   };
 
@@ -261,7 +259,8 @@ function NetworkPanel(props: Props) {
   }, []);
 
   const showDetailsModal = (row: any) => {
-    setIsDetailsModalActive(true);
+    clearTimeout(timeOut);
+    setPauseSync(true);
     showModal(
       <FetchDetailsModal resource={row} rows={filteredList} fetchPresented={fetchPresented} />,
       {
@@ -270,7 +269,6 @@ function NetworkPanel(props: Props) {
       }
     );
     devTools.update(INDEX_KEY, { index: filteredList.indexOf(row) });
-    setPauseSync(true);
   };
 
   useEffect(() => {
