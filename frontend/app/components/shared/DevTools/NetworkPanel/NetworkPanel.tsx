@@ -294,7 +294,6 @@ function NetworkPanel(props: Props) {
               border={false}
             />
           </div>
-          {pauseSync && <div>pause</div>}
           <Input
             className="input-small"
             placeholder="Filter by name, type or value"
