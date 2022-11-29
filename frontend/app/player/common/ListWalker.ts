@@ -6,7 +6,7 @@ export default class ListWalker<T extends Timed> {
 
 	append(m: T): void {
 		if (this.length > 0 && this.last && m.time < this.last.time) {
-			console.error("Trying to append message with the less time then the list tail: ", m)
+			console.error("Trying to append message with the less time then the list tail: ", m.time, 'vs', this.last.time, m)
 			return
 		}
 		this.list.push(m);
@@ -98,7 +98,7 @@ export default class ListWalker<T extends Timed> {
 
 	/*
 		Returns last message with the time <= t.
-		Assumed that the current message is already handled so 
+		Assumed that the current message is already handled so
 		if pointer doesn't cahnge <null> is returned.
 	*/
 	moveGetLast(t: number, index?: number): T | null {
