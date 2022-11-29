@@ -170,9 +170,11 @@ function NetworkPanel() {
     if (!showOnlyErrors) { return list }
     return list.filter(it => parseInt(it.status) >= 400 || !it.success)
   }, [ showOnlyErrors, list ])
-  filteredList = useRegExListFilterMemo(filteredList, it => it.status, filter)
-  filteredList = useRegExListFilterMemo(filteredList, it => it.name, filter)
-  filteredList = useRegExListFilterMemo(filteredList, it => it.type, filter)
+  filteredList = useRegExListFilterMemo(
+    filteredList,
+    it => [ it.status, it.name, it.type ],
+    filter,
+  )
   filteredList = useTabListFilterMemo(filteredList, it => TYPE_TO_TAB[it.type], ALL, activeTab)
 
   const onTabClick = (activeTab: typeof TAP_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })

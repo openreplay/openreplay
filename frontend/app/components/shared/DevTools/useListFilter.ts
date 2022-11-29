@@ -1,19 +1,31 @@
 import { useMemo } from 'react'
 import { getRE } from 'App/utils'
 
-export function useRegExListFilterMemo<T>(list: T[], filterBy: (item: T) => string, reText: string) {
+
+// TODO: merge with utils/filterList (use logic of string getter like here instead of using callback)
+export function useRegExListFilterMemo<T>(
+	list: T[],
+	filterBy: (it: T) => string | string[],
+	reText: string,
+) {
 	return useMemo(() => {
 		if (!reText) { return list }
 		const re = getRE(reText, 'i')
-    list.filter(it => re.test(filterBy(it)))
+    return list.filter(it => {
+    	const strs = filterBy(it)
+    	return Array.isArray(strs)
+	    	? strs.some(s => re.test(s))
+	    	: re.test(strs)
+	  })
   }, [ list, list.length, reText ])
 }
 
-export function useTabListFilterMemo<T>(
+
+export function useTabListFilterMemo<T, Tab=string>(
 	list: T[],
-	itemToTab: (item: T) => string,
-	commonTab: string,
-	currentTab: string,
+	itemToTab: (it: T) => Tab,
+	commonTab: Tab,
+	currentTab: Tab,
 ) {
 	return useMemo(() => {
 		if (currentTab === commonTab) { return list }
