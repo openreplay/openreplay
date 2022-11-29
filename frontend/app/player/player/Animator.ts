@@ -153,7 +153,7 @@ export default class Animator {
   }
 
   // jump by index?
-  jump(time: number) {
+  jump = (time: number) => {
     const { live } = this.store.get()
     if (live) return
 

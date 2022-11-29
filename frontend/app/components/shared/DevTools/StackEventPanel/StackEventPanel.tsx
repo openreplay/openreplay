@@ -10,7 +10,7 @@ import { typeList } from 'Types/session/stackEvent';
 import StackEventRow from 'Shared/DevTools/StackEventRow';
 
 import StackEventModal from '../StackEventModal';
-import useAutoscroll from '../useAutoscroll';
+import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 import useCellMeasurerCache from '../useCellMeasurerCache'
 
@@ -48,7 +48,7 @@ function StackEventPanel() {
     stopAutoscroll,
   ] = useAutoscroll(
     filteredList,
-    listNow[listNow.length-1].time,
+    getLastItemTime(listNow),
     activeIndex,
     index => devTools.update(INDEX_KEY, { index })
   )

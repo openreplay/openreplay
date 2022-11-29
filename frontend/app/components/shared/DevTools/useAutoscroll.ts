@@ -5,6 +5,9 @@ import useCancelableTimeout from 'App/hooks/useCancelableTimeout'
 
 const TIMEOUT_DURATION = 5000;
 
+export function getLastItemTime(...lists: Timed[][]) {
+  return Math.max(...lists.map(l => l.length ? l[l.length-1].time : 0))
+}
 
 function useAutoupdate<T>(
   savedValue: T,

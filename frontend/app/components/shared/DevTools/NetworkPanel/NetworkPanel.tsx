@@ -14,7 +14,7 @@ import { useStore } from 'App/mstore';
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-import useAutoscroll from '../useAutoscroll';
+import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 
 const INDEX_KEY = 'network';
@@ -152,19 +152,16 @@ function NetworkPanel() {
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
 
-  const { list, intersectedCount } = useMemo(() => {
-    let intersectedCount = 0
-    const list = resourceList.filter(res => !fetchList.some(ft => {
+  const list = useMemo(() => 
+    resourceList.filter(res => !fetchList.some(ft => {
       if (res.url !== ft.url) { return false }
       if (Math.abs(res.time - ft.time) > 200) { return false } // TODO: find good epsilons
       if (Math.abs(res.duration - ft.duration) > 100) { return false }
-      intersectedCount++
       return true
     }))
     .concat(fetchList)
     .sort((a, b) => a.time - b.time)
-    return { list, intersectedCount }
-  }, [ resourceList.length, fetchList.length ])
+  , [ resourceList.length, fetchList.length ])
 
   let filteredList = useMemo(() => {
     if (!showOnlyErrors) { return list }
@@ -181,13 +178,12 @@ function NetworkPanel() {
   const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
 
   // AutoScroll
-  const countNow = fetchListNow.length + resourceListNow.length - intersectedCount
   const [
     timeoutStartAutoscroll,
     stopAutoscroll,
   ] = useAutoscroll(
     filteredList,
-    list[countNow].time,
+    getLastItemTime(fetchListNow, resourceListNow),
     activeIndex,
     index => devTools.update(INDEX_KEY, { index })
   )

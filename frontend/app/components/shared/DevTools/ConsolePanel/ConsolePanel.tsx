@@ -10,7 +10,7 @@ import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { useStore } from 'App/mstore';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import { useModal } from 'App/components/Modal';
-import useAutoscroll from '../useAutoscroll';
+import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
 import useCellMeasurerCache from '../useCellMeasurerCache'
 
@@ -86,13 +86,12 @@ function ConsolePanel() {
   const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
 
   // AutoScroll 
-  const countNow = logListNow.length + exceptionsListNow.length
   const [
     timeoutStartAutoscroll,
     stopAutoscroll,
   ] = useAutoscroll(
     filteredList,
-    list[countNow].time,
+    getLastItemTime(logListNow, exceptionsListNow),
     activeIndex,
     index => devTools.update(INDEX_KEY, { index })
   )
