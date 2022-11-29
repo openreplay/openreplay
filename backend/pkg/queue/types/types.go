@@ -6,6 +6,7 @@ type Consumer interface {
 	CommitBack(gap int64) error
 	Commit() error
 	Close()
+	Rebalanced() <-chan interface{}
 }
 
 // Producer sends batches of session data to queue (redis or kafka)
