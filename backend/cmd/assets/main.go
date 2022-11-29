@@ -73,6 +73,8 @@ func main() {
 			log.Printf("Error while caching: %v", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
+		case msg := <-msgConsumer.Rebalanced():
+			log.Println(msg)
 		default:
 			if !cacher.CanCache() {
 				continue

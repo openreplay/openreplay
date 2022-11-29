@@ -98,6 +98,8 @@ func main() {
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Printf("can't commit messages with offset: %s", err)
 			}
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)

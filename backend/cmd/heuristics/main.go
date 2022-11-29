@@ -82,6 +82,8 @@ func main() {
 			})
 			producer.Flush(cfg.ProducerTimeout)
 			consumer.Commit()
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)
