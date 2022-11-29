@@ -147,6 +147,15 @@ func main() {
 		case <-tickInfo:
 			counter.Print()
 			log.Printf("writer: %s", writer.Info())
+		case <-consumer.Rebalanced():
+			s := time.Now()
+			// Commit now to avoid duplicate reads
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
+			// Sync all files
+			writer.Sync()
+			log.Printf("manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
