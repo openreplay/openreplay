@@ -43,6 +43,7 @@ export class ModalProvider extends Component {
 
     state = {
         component: null,
+        get isModalActive() { return this.component !== null },
         props: {},
         showModal: this.showModal,
         hideModal: this.hideModal,
