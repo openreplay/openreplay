@@ -64,15 +64,6 @@ def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
     }}
 
 
-@app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
-                                include_gdpr=True)
-    if data is None:
-        return {"errors": ["project not found"]}
-    return {"data": data}
-
-
 @app.post('/integrations/slack', tags=['integrations'])
 @app.put('/integrations/slack', tags=['integrations'])
 def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
@@ -159,11 +150,6 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     return {
         "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
                                             m_key=key, project_id=projectId)}
-
-
-@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
-def get_general_stats():
-    return {"data": {"sessions:": sessions.count_all()}}
 
 
 @app.get('/projects', tags=['projects'])
@@ -266,8 +252,8 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
                      context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId, full_data=True,
-                                      include_fav_viewed=True, group_metadata=True, live=False)
+        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId,
+                                      full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
@@ -420,7 +406,8 @@ def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = D
     return data
 
 
-@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
+@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.session_replay)])
 def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                         context: schemas.CurrentContext = Depends(OR_context)):
     return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,

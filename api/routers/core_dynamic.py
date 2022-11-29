@@ -60,15 +60,6 @@ def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
     }}
 
 
-@app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
-                                include_gdpr=True)
-    if data is None:
-        return {"errors": ["project not found"]}
-    return {"data": data}
-
-
 @app.post('/integrations/slack', tags=['integrations'])
 @app.put('/integrations/slack', tags=['integrations'])
 def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
@@ -151,11 +142,6 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     return {
         "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
                                             m_key=key, project_id=projectId)}
-
-
-@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
-def get_general_stats():
-    return {"data": {"sessions:": sessions.count_all()}}
 
 
 @app.get('/projects', tags=['projects'])

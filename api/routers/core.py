@@ -786,6 +786,15 @@ def create_project(data: schemas.CreateProjectSchema = Body(...),
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
+@app.get('/projects/{projectId}', tags=['projects'])
+def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
+                                include_gdpr=True)
+    if data is None:
+        return {"errors": ["project not found"]}
+    return {"data": data}
+
+
 @app.put('/projects/{projectId}', tags=['projects'])
 def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
@@ -955,6 +964,11 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
             "projects": -1,
         }
     }
+
+
+@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
+def get_general_stats():
+    return {"data": {"sessions:": sessions.count_all()}}
 
 
 @public_app.get('/', tags=["health"])
