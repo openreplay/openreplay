@@ -6,7 +6,6 @@ import { Link, Icon, Tooltip } from 'UI';;
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import { fetchAutoplaySessions } from 'Duck/search';
-import { observer } from 'mobx-react-lite';
 
 const PER_PAGE = 10;
 
@@ -21,7 +20,7 @@ interface Props extends RouteComponentProps {
   sessionIds: any;
   fetchAutoplaySessions?: (page: number) => Promise<void>;
 }
-function Autoplay(props: Props) {
+function QueueControls(props: Props) {
   const {
     previousId,
     nextId,
@@ -101,4 +100,4 @@ export default connect(
     latestRequestTime: state.getIn(['search', 'latestRequestTime']),
   }),
   { setAutoplayValues, fetchAutoplaySessions }
-)(withRouter(Autoplay))
+)(withRouter(QueueControls))

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon, Tooltip, Button } from 'UI';
-import Autoplay from './Autoplay';
+import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import copy from 'copy-to-clipboard';
@@ -106,7 +106,7 @@ function SubHeader(props) {
           />
 
           <div>
-            <Autoplay />
+            <QueueControls />
           </div>
         </div>
       ) : null}
