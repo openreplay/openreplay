@@ -132,10 +132,12 @@ const config: Configuration = {
   devServer: {
     // static: path.join(__dirname, "public"),
     historyApiFallback: true,
-    host: 'localhost',
+    host: '0.0.0.0',
     open: true,
     port: 3333,
     hot: true,
+    compress: true,
+    allowedHosts: "all",
   },
 };
 
