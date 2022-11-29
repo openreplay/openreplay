@@ -97,17 +97,21 @@ func (w *SessionWriter) Info() string {
 	return fmt.Sprintf("%d sessions", w.meta.Count())
 }
 
+func (w *SessionWriter) Sync() {
+	w.sessions.Range(func(sid, lockObj any) bool {
+		if err := w.sync(sid.(uint64)); err != nil {
+			log.Printf("can't sync file descriptor: %s", err)
+		}
+		return true
+	})
+}
+
 func (w *SessionWriter) synchronizer() {
 	tick := time.Tick(w.syncTimeout)
 	for {
 		select {
 		case <-tick:
-			w.sessions.Range(func(sid, lockObj any) bool {
-				if err := w.sync(sid.(uint64)); err != nil {
-					log.Printf("can't sync file descriptor: %s", err)
-				}
-				return true
-			})
+			w.Sync()
 		case <-w.done:
 			w.sessions.Range(func(sid, lockObj any) bool {
 				if err := w.Close(sid.(uint64)); err != nil {

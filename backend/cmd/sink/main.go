@@ -14,14 +14,11 @@ import (
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
 
 func main() {
-	pprof.StartProfilingServer()
-
 	metrics := monitoring.New("sink")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -147,6 +144,15 @@ func main() {
 		case <-tickInfo:
 			counter.Print()
 			log.Printf("writer: %s", writer.Info())
+		case <-consumer.Rebalanced():
+			s := time.Now()
+			// Commit now to avoid duplicate reads
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
+			// Sync all files
+			writer.Sync()
+			log.Printf("manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
