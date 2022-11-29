@@ -93,11 +93,16 @@ function PlayerControls(props: Props) {
       )}
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-        <button
-          ref={arrowBackRef}
-          className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
+        {/* @ts-ignore */}
+        <Tooltip
+          anchorClassName="h-full hover:border-active-blue-border hover:bg-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
+          title={`Rewind ${currentInterval}s`}
+          placement="top"
         >
-          <Tooltip title="Rewind 10s">
+          <button
+            ref={arrowBackRef}
+            className="h-full  bg-transparent"
+          >
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -105,8 +110,8 @@ function PlayerControls(props: Props) {
               true,
               'hover:bg-active-blue-border color-main h-full flex items-center'
             )}
-          </Tooltip>
-        </button>
+          </button>
+        </Tooltip>
 
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border flex items-center">
           <Popover
@@ -143,19 +148,23 @@ function PlayerControls(props: Props) {
             )}
           >
             <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
-              {/* @ts-ignore */}
               <Tooltip disabled={showTooltip} title="Set default skip duration">
+                {/* @ts-ignore */}
                 {currentInterval}s
               </Tooltip>
             </div>
           </Popover>
         </div>
 
-        <button
-          ref={arrowForwardRef}
-          className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
+        <Tooltip
+          anchorClassName="h-full hover:border-active-blue-border hover:bg-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
+          title={`Rewind ${currentInterval}s`}
+          placement="top"
         >
-          <Tooltip title="Forward 10s">
+          <button
+            ref={arrowForwardRef}
+            className="h-full bg-transparent"
+          >
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -163,8 +172,8 @@ function PlayerControls(props: Props) {
               false,
               'hover:bg-active-blue-border color-main h-full flex items-center'
             )}
-          </Tooltip>
-        </button>
+          </button>
+        </Tooltip>
       </div>
 
       {!live && (

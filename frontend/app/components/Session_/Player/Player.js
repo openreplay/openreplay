@@ -4,7 +4,6 @@ import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import { EscapeButton } from 'UI';
 import { hide as hideTargetDefiner } from 'Duck/components/targetDefiner';
-import { fullscreenOff } from 'Duck/components/player';
 import {
   NONE,
   CONSOLE,
@@ -15,26 +14,16 @@ import {
   PERFORMANCE,
   GRAPHQL,
   EXCEPTIONS,
-  LONGTASKS,
   INSPECTOR,
   OVERVIEW,
+  fullscreenOff,
 } from 'Duck/components/player';
 import NetworkPanel from 'Shared/DevTools/NetworkPanel';
-import Console from '../Console/Console';
-import StackEvents from '../StackEvents/StackEvents';
 import Storage from '../Storage';
-import Profiler from '../Profiler';
 import { ConnectedPerformance } from '../Performance';
 import GraphQL from '../GraphQL';
 import Exceptions from '../Exceptions/Exceptions';
-import LongTasks from '../LongTasks';
 import Inspector from '../Inspector';
-import {
-  attach as attachPlayer,
-  Controls as PlayerControls,
-  scale as scalePlayerScreen,
-  connectPlayer,
-} from 'Player';
 import Controls from './Controls';
 import Overlay from './Overlay';
 import stl from './player.module.css';
@@ -42,72 +31,49 @@ import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
+import { PlayerContext } from 'App/components/Session/playerContext';
 import StackEventPanel from 'Shared/DevTools/StackEventPanel';
 
-@connectPlayer((state) => ({
-  live: state.live,
-}))
-@connect(
-  (state) => {
-    const isAssist = window.location.pathname.includes('/assist/');
-    return {
-      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-      nextId: state.getIn(['sessions', 'nextId']),
-      sessionId: state.getIn(['sessions', 'current', 'sessionId']),
-      closedLive:
-        !!state.getIn(['sessions', 'errors']) ||
-        (isAssist && !state.getIn(['sessions', 'current', 'live'])),
-    };
-  },
-  {
-    hideTargetDefiner,
+function Player(props) {
+  const {
+    className,
+    fullscreen,
     fullscreenOff,
-    updateLastPlayedSession,
-  }
-)
-export default class Player extends React.PureComponent {
-  screenWrapper = React.createRef();
+    nextId,
+    closedLive,
+    bottomBlock,
+    activeTab,
+    fullView,
+  } = props;
+  const playerContext = React.useContext(PlayerContext)
+  const screenWrapper = React.useRef();
+  const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE
 
-  componentDidUpdate(prevProps) {
-    if (
-      [prevProps.bottomBlock, this.props.bottomBlock].includes(NONE) ||
-      prevProps.fullscreen !== this.props.fullscreen
-    ) {
-      scalePlayerScreen();
+  React.useEffect(() => {
+    props.updateLastPlayedSession(props.sessionId);
+    if (!props.closedLive) {
+      const parentElement = findDOMNode(screenWrapper.current); //TODO: good architecture
+      playerContext.player.attach(parentElement);
     }
-  }
 
-  componentDidMount() {
-    this.props.updateLastPlayedSession(this.props.sessionId);
-    if (this.props.closedLive) return;
+  }, [])
 
-    const parentElement = findDOMNode(this.screenWrapper.current); //TODO: good architecture
-    attachPlayer(parentElement);
-  }
+  React.useEffect(() => {
+    playerContext.player.scale();
+  }, [props.bottomBlock, props.fullscreen, playerContext.player])
 
-  render() {
-    const {
-      className,
-      bottomBlockIsActive,
-      fullscreen,
-      fullscreenOff,
-      nextId,
-      closedLive,
-      bottomBlock,
-      activeTab,
-      fullView = false,
-    } = this.props;
+  if (!playerContext.player) return null;
 
-    const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
-    return (
-      <div
+  const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
+  return (
+    <div
         className={cn(className, stl.playerBody, 'flex flex-col relative', fullscreen && 'pb-2')}
         data-bottom-block={bottomBlockIsActive}
       >
         {fullscreen && <EscapeButton onClose={fullscreenOff} />}
         <div className="relative flex-1 overflow-hidden">
-          <Overlay nextId={nextId} togglePlay={PlayerControls.togglePlay} closedLive={closedLive} />
-          <div className={stl.screenWrapper} ref={this.screenWrapper} />
+          <Overlay nextId={nextId} closedLive={closedLive} />
+          <div className={stl.screenWrapper} ref={screenWrapper} />
         </div>
         {!fullscreen && !!bottomBlock && (
           <div style={{ maxWidth, width: '100%' }}>
@@ -124,12 +90,33 @@ export default class Player extends React.PureComponent {
             {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
             {bottomBlock === GRAPHQL && <GraphQL />}
             {bottomBlock === EXCEPTIONS && <Exceptions />}
-            {bottomBlock === LONGTASKS && <LongTasks />}
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        {!fullView && <Controls {...PlayerControls} /> }
+        {!fullView && <Controls
+          speedDown={playerContext.player.speedDown}
+          speedUp={playerContext.player.speedUp}
+          jump={playerContext.player.jump}
+         />}
       </div>
-    );
-  }
+  )
 }
+
+export default connect((state) => {
+    const isAssist = window.location.pathname.includes('/assist/');
+    return {
+      fullscreen: state.getIn(['components', 'player', 'fullscreen']),
+      nextId: state.getIn(['sessions', 'nextId']),
+      sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+      bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
+      closedLive:
+        !!state.getIn(['sessions', 'errors']) ||
+        (isAssist && !state.getIn(['sessions', 'current', 'live'])),
+    };
+  },
+  {
+    hideTargetDefiner,
+    fullscreenOff,
+    updateLastPlayedSession,
+  }
+)(Player)

@@ -41,7 +41,7 @@ function ConsoleRow(props: Props) {
           )}
           <span>{renderWithNL(lines.pop())}</span>
         </div>
-        {canExpand && expanded && lines.map((l: any, i: number) => <div key={l.slice(0,3)+i} className="ml-4 mb-1">{l}</div>)}
+        {/* {canExpand && expanded && lines.map((l: any, i: number) => <div key={l.slice(0,3)+i} className="ml-4 mb-1">{l}</div>)} */}
       </div>
       <JumpButton onClick={() => jump(log.time)} />
     </div>

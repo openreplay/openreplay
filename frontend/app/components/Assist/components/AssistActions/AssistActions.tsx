@@ -3,15 +3,8 @@ import { Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { toggleChatWindow } from 'Duck/sessions';
-import { connectPlayer } from 'Player';
 import ChatWindow from '../../ChatWindow';
-import {
-  callPeer,
-  setCallArgs,
-  requestReleaseRemoteControl,
-  toggleAnnotation,
-  toggleUserName,
-} from 'Player';
+// state enums
 import {
   CallingState,
   ConnectionStatus,
@@ -19,6 +12,8 @@ import {
   RequestLocalStream,
 } from 'Player';
 import type { LocalStream } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
@@ -48,17 +43,31 @@ interface Props {
 
 function AssistActions({
   userId,
-  calling,
-  annotating,
-  peerConnectionStatus,
-  remoteControlStatus,
   hasPermission,
   isEnterprise,
   isCallActive,
   agentIds,
-  livePlay,
   userDisplayName,
 }: Props) {
+  const { player, store } = React.useContext(PlayerContext)
+
+  const {
+    assistManager: {
+      call: callPeer,
+      setCallArgs,
+      requestReleaseRemoteControl,
+      toggleAnnotation,
+    },
+  toggleUserName,
+  } = player
+  const {
+    calling,
+    annotating,
+    peerConnectionStatus,
+    remoteControl: remoteControlStatus,
+    livePlay,
+  } = store.get()
+
   const [isPrestart, setPrestart] = useState(false);
   const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
@@ -236,7 +245,7 @@ function AssistActions({
 }
 
 const con = connect(
-  (state) => {
+  (state: any) => {
     const permissions = state.getIn(['user', 'account', 'permissions']) || [];
     return {
       hasPermission: permissions.includes('ASSIST_CALL'),
@@ -248,11 +257,5 @@ const con = connect(
 );
 
 export default con(
-  connectPlayer((state) => ({
-    calling: state.calling,
-    annotating: state.annotating,
-    remoteControlStatus: state.remoteControl,
-    peerConnectionStatus: state.peerConnectionStatus,
-    livePlay: state.livePlay,
-  }))(AssistActions)
+  observer(AssistActions)
 );

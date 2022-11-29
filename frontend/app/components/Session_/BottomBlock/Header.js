@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { closeBottomBlock } from 'Duck/components/player';
-import { Input, CloseButton } from 'UI';
+import { CloseButton } from 'UI';
 import stl from './header.module.css';
 
 const Header = ({

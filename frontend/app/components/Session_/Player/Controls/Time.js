@@ -1,7 +1,8 @@
 import React from 'react';
 import { Duration } from 'luxon';
-import { connectPlayer } from 'Player';
 import styles from './time.module.css';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 const Time = ({ time, isCustom, format = 'm:ss', }) => (
   <div className={ !isCustom ? styles.time : undefined }>
@@ -11,19 +12,17 @@ const Time = ({ time, isCustom, format = 'm:ss', }) => (
 
 Time.displayName = "Time";
 
-const ReduxTime = connectPlayer((state, { name, format }) => ({
-  time: state[ name ],
-  format,
-}))(Time);
+const ReduxTime = observer(({ format, name, isCustom }) => {
+  const { store } = React.useContext(PlayerContext)
+  const time = store.get()[name]
 
-const AssistDurationCont = connectPlayer(
-  state => {
-    const assistStart = state.assistStart;
-    return {
-      assistStart,
-    }
-  }
-)(({ assistStart }) => {
+  return <Time format={format} time={time} isCustom={isCustom} />
+})
+
+const AssistDurationCont = () => {
+  const { store } = React.useContext(PlayerContext)
+  const { assistStart } = store.get()
+
   const [assistDuration, setAssistDuration] = React.useState('00:00');
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -37,9 +36,9 @@ const AssistDurationCont = connectPlayer(
       Elapsed {assistDuration}
     </>
   )
-})
+}
 
-const AssistDuration = React.memo(AssistDurationCont);
+const AssistDuration = observer(AssistDurationCont)
 
 ReduxTime.displayName = "ReduxTime";
 

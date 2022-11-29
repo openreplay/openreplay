@@ -7,7 +7,6 @@ import { setCreateNoteTooltip, addNote, updateNote } from 'Duck/sessions';
 import stl from './styles.module.css';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
-import { injectNotes } from 'Player';
 import { fetchList as fetchSlack } from 'Duck/integrations/slack';
 import Select from 'Shared/Select';
 import { TeamBadge } from 'Shared/SessionListContainer/components/Notes'
@@ -86,7 +85,6 @@ function CreateNote({
         .then((r) => {
           toast.success('Note updated');
           notesStore.fetchSessionNotes(sessionId).then((notes) => {
-            injectNotes(notes);
             onSuccess(editNote.noteId)
             updateNote(r);
           });
@@ -108,7 +106,6 @@ function CreateNote({
         onSuccess(r.noteId as unknown as string)
         toast.success('Note added');
         notesStore.fetchSessionNotes(sessionId).then((notes) => {
-          injectNotes(notes);
           addNote(r);
         });
       })

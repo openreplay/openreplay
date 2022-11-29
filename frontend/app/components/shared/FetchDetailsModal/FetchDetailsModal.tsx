@@ -16,7 +16,7 @@ function FetchDetailsModal(props: Props) {
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
-  const isXHR = resource.type === TYPES.XHR || resource.type === TYPES.FETCH;
+  const isXHR = resource.type === TYPES.XHR
   const {
     sessionStore: { devTools },
   } = useStore();

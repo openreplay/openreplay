@@ -3,7 +3,8 @@ import { Loader, Icon } from 'UI';
 import { connect } from 'react-redux';
 import { fetchInsights } from 'Duck/sessions';
 import SelectorsList from './components/SelectorsList/SelectorsList';
-import { markTargets, Controls as Player } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+
 import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
 import Period from 'Types/app/period';
@@ -22,6 +23,9 @@ interface Props {
 }
 
 function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab }: Props) {
+    const { player: Player } = React.useContext(PlayerContext)
+    const markTargets = (t: any) => Player.markTargets(t)
+
     const [insightsFilters, setInsightsFilters] = useState(filters);
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
 
