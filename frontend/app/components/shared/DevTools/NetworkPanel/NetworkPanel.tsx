@@ -180,7 +180,6 @@ function NetworkPanel() {
   const onTabClick = (activeTab: typeof TAP_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
 
-
   // AutoScroll
   const countNow = fetchListNow.length + resourceListNow.length - intersectedCount
   const [

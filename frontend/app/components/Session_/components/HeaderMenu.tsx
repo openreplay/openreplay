@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, Button } from 'UI';
 import styles from './menu.module.css';
 import cn from 'classnames';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
@@ -32,8 +32,8 @@ export default class ItemMenu extends React.PureComponent<Props> {
   };
 
   closeMenu = () => {
-    this.setState({ displayed: false })
-  }
+    this.setState({ displayed: false });
+  };
 
   render() {
     const { items } = this.props;
@@ -42,36 +42,22 @@ export default class ItemMenu extends React.PureComponent<Props> {
     return (
       <div className={styles.wrapper}>
         <OutsideClickDetectingDiv onClickOutside={this.closeMenu}>
-        <div
-          onClick={this.toggleMenu}
-          className={cn(
-            'flex items-center cursor-pointer select-none',
-            'rounded p-2', displayed ? 'bg-gray-light' : 'hover:bg-gray-light-shade'
-          )}
-        >
-          <div
-            className={cn('rounded-full flex items-center justify-center', {
-              'bg-gray-light': displayed,
-            })}
-            role="button"
-          >
-            <Icon name="ellipsis-v" size="16" />
+          <Button variant="text" icon="ellipsis-v" onClick={this.toggleMenu}>
+            More
+          </Button>
+          <div className={cn(styles.menu, styles.menuDim)} data-displayed={displayed}>
+            {items.map((item) =>
+              item.component ? (
+                <div
+                  key={item.key}
+                  role="menuitem"
+                  className="hover:bg-gray-light-shade cursor-pointer flex items-center w-full"
+                >
+                  {item.component}
+                </div>
+              ) : null
+            )}
           </div>
-          <span className={'mr-1 text-disabled-text'}>More</span>
-        </div>
-        <div className={cn(styles.menu, styles.menuDim)} data-displayed={displayed}>
-          {items.map((item) =>
-            item.component ? (
-              <div
-                key={item.key}
-                role="menuitem"
-                className="hover:bg-gray-light-shade cursor-pointer flex items-center w-full"
-              >
-                {item.component}
-              </div>
-            ) : null
-          )}
-        </div>
         </OutsideClickDetectingDiv>
       </div>
     );

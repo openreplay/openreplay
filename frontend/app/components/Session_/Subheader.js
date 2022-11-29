@@ -11,6 +11,7 @@ import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import AutoplayToggle from 'Shared/AutoplayToggle';
 
 function SubHeader(props) {
   const { player, store } = React.useContext(PlayerContext)
@@ -74,39 +75,31 @@ function SubHeader(props) {
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
         >
-          <Button icon="file-pdf" variant="text" onClick={showReportModal}>Create Bug Report</Button>
+          <Button icon="file-pdf" variant="text" onClick={showReportModal}>
+            Create Bug Report
+          </Button>
           <NotePopup />
+          <Issues sessionId={props.sessionId} />
+          <SharePopup
+            entity="sessions"
+            id={props.sessionId}
+            showCopyLink={true}
+            trigger={
+              <div className="relative">
+                <Button icon="share-alt" variant="text" className="relative">
+                  Share
+                </Button>
+              </div>
+            }
+          />
           <ItemMenu
             items={[
               {
+                key: 1,
+                component: <AutoplayToggle />,
+              },
+              {
                 key: 2,
-                component: props.jiraConfig && props.jiraConfig.token && (
-                  <Issues sessionId={props.sessionId} />
-                ),
-              },
-              {
-                key: 3,
-                component: (
-                  <SharePopup
-                    entity="sessions"
-                    id={props.sessionId}
-                    showCopyLink={true}
-                    trigger={
-                      <div className="flex items-center h-full w-full">
-                        <Icon
-                          className="mr-2"
-                          disabled={props.disabled}
-                          name="share-alt"
-                          size="16"
-                        />
-                        <span>Share</span>
-                      </div>
-                    }
-                  />
-                ),
-              },
-              {
-                key: 4,
                 component: <Bookmark noMargin sessionId={props.sessionId} />,
               },
             ]}

@@ -38,7 +38,6 @@ function StackEventPanel() {
 
   const onTabClick = (activeTab: typeof TAB_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
-
   const tabs = useMemo(() => 
     TABS.filter(({ key }) => key === ALL || list.some(({ source }) => key === source)), 
     [ list.length ],

@@ -149,7 +149,7 @@ function ConsolePanel() {
           )}
         </CellMeasurer>
       </React.Fragment>
-    );
+    )
   }
 
   return (

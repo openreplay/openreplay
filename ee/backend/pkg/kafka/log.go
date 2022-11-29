@@ -1,12 +1,11 @@
 package kafka
 
 import (
-	"log"
 	"fmt"
+	"log"
 
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
-
 
 func logPartitions(s string, prts []kafka.TopicPartition) {
 	for _, p := range prts {
