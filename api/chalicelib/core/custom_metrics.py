@@ -394,7 +394,7 @@ def get(metric_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT *
+                """SELECT *, default_config AS config
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
@@ -445,7 +445,7 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                                                 ) AS connected_dashboards ON (TRUE)"""
         cur.execute(
             cur.mogrify(
-                f"""SELECT *
+                f"""SELECT *, default_config AS config
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
