@@ -133,15 +133,6 @@ export default class WebPlayer extends Player {
     }
   }
 
-  // TODO: restore notes functionality
-  // injectNotes(notes: Note[]) {
-  //   update({ notes })
-  // }
-  // filterOutNote(noteId: number) {
-  //   const { notes } = getState()
-  //   update({ notes: notes.filter((note: Note) => note.noteId !== noteId) })
-  // }
-
   toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name)
   }

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Modal } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
-import { PlayerProvider, createWebPlayer } from 'Player';
+import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
@@ -78,7 +78,6 @@ function WebPlayer(props: any) {
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      <PlayerProvider>
         <>
           <PlayerBlockHeader
           // @ts-ignore TODO?
@@ -109,7 +108,6 @@ function WebPlayer(props: any) {
             ) : null}
           </Modal>
         </>
-      </PlayerProvider>
     </PlayerContext.Provider>
   );
 }

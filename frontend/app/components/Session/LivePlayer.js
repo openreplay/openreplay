@@ -72,12 +72,10 @@ function LivePlayer ({
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      <PlayerProvider>
       {!fullView && (<PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>)}
           <div className={ styles.session } data-fullscreen={fullscreen}>
               <PlayerBlock />
           </div>
-      </PlayerProvider>
     </PlayerContext.Provider>
   );
 }
