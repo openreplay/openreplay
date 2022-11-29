@@ -1,42 +1,61 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
+import { Timed } from 'Player'
 import useLatestRef from 'App/hooks/useLatestRef'
 import useCancelableTimeout from 'App/hooks/useCancelableTimeout'
 
 const TIMEOUT_DURATION = 5000;
 
-export default function useAutoscroll(
-  savedIndex: number,
-  autoscrollIndex: number,
-  updadteIndex: (index: number) => void,
+
+function useAutoupdate<T>(
+  savedValue: T,
+  actualValue: T,
+  resetValue: T,
+  updadteValue: (value: T) => void,
 ) {
-  const [ autoscroll, setAutoscroll ] = useState(savedIndex === 0)
+  const [ autoupdate, setAutoupdate ] = useState(savedValue === resetValue)
   
-  const [ timeoutStartAutoscroll, stopAutoscroll ] = useCancelableTimeout(
-    () => setAutoscroll(true), 
-    () => setAutoscroll(false),
+  const [ timeoutStartAutoupdate, stopAutoupdate ] = useCancelableTimeout(
+    () => setAutoupdate(true), 
+    () => setAutoupdate(false),
     TIMEOUT_DURATION,
   )
   useEffect(() => {
-    if (autoscroll && autoscrollIndex !== savedIndex) {
-      updadteIndex(autoscrollIndex)
+    if (autoupdate && actualValue !== savedValue) {
+      updadteValue(actualValue)
     }
-  }, [ autoscroll, autoscrollIndex ])
+  }, [ autoupdate, actualValue ])
 
-  const autoScrollRef = useLatestRef(autoscroll)
+  const autoScrollRef = useLatestRef(autoupdate)
   useEffect(() => {
-    if (!autoscroll) {
-      timeoutStartAutoscroll()
+    if (!autoupdate) {
+      timeoutStartAutoupdate()
     }
     return () => {
       if (autoScrollRef.current) {
-        updadteIndex(0) // index:0 means autoscroll is active
+        updadteValue(resetValue)
       }
     }
   }, [])
 
-  return {
-    autoscrollIndex,
-    timeoutStartAutoscroll,
-    stopAutoscroll,
-  }
+  return [ timeoutStartAutoupdate, stopAutoupdate ]
+}
+
+// That might be simplified by removing index from devTools[INDEX_KEY] store...
+export default function useAutoscroll(
+  filteredList: Timed[],
+  time: number,
+  savedIndex: number,
+  updadteIndex: (index: number) => void,
+) {
+  const filteredIndexNow = useMemo(() => {
+    // Should use findLastIndex here
+    for (let i=0; i < filteredList.length; i++) {
+      if (filteredList[i].time > time) {
+        return i-1
+      }
+    }
+    return filteredList.length
+  }, [ time, filteredList ])
+
+  return useAutoupdate(savedIndex, filteredIndexNow, 0, updadteIndex)
 }

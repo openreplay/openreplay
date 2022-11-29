@@ -44,12 +44,13 @@ function StackEventPanel() {
     [ list.length ],
   )
 
-  const {
+  const [
     timeoutStartAutoscroll,
     stopAutoscroll,
-  } = useAutoscroll(
+  ] = useAutoscroll(
+    filteredList,
+    listNow[listNow.length-1].time,
     activeIndex,
-    listNow.length,
     index => devTools.update(INDEX_KEY, { index })
   )
   const onMouseEnter = stopAutoscroll

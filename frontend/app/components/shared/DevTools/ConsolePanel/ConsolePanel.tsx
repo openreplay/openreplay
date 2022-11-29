@@ -86,13 +86,14 @@ function ConsolePanel() {
   const onFilterChange = ({ target: { value } }: any) => devTools.update(INDEX_KEY, { filter: value })
 
   // AutoScroll 
-  const autoScrollIndex = logListNow.length + exceptionsListNow.length
-  const {
+  const countNow = logListNow.length + exceptionsListNow.length
+  const [
     timeoutStartAutoscroll,
     stopAutoscroll,
-  } = useAutoscroll(
+  ] = useAutoscroll(
+    filteredList,
+    list[countNow].time,
     activeIndex,
-    autoScrollIndex,
     index => devTools.update(INDEX_KEY, { index })
   )
   const onMouseEnter = stopAutoscroll
@@ -101,7 +102,7 @@ function ConsolePanel() {
     timeoutStartAutoscroll()
   }
   
-  const _list = useRef();
+  const _list = useRef(); // TODO: fix react-virtualized types & incapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore

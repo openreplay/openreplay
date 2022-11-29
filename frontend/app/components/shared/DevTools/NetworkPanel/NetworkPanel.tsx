@@ -152,16 +152,20 @@ function NetworkPanel() {
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
 
-  const list = useMemo(() =>
-    resourceList.filter(res => !fetchList.some(ft => {
+  const { list, intersectedCount } = useMemo(() => {
+    let intersectedCount = 0
+    const list = resourceList.filter(res => !fetchList.some(ft => {
       if (res.url !== ft.url) { return false }
       if (Math.abs(res.time - ft.time) > 200) { return false } // TODO: find good epsilons
       if (Math.abs(res.duration - ft.duration) > 100) { return false }
+      intersectedCount++
       return true
     }))
     .concat(fetchList)
     .sort((a, b) => a.time - b.time)
-  , [ resourceList.length, fetchList.length ])
+    return { list, intersectedCount }
+  }, [ resourceList.length, fetchList.length ])
+
   let filteredList = useMemo(() => {
     if (!showOnlyErrors) { return list }
     return list.filter(it => parseInt(it.status) >= 400 || !it.success)
@@ -174,14 +178,16 @@ function NetworkPanel() {
   const onTabClick = (activeTab: typeof TAP_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
   const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
 
+
   // AutoScroll
-  const autoScrollIndex = fetchListNow.length + resourceListNow.length
-  const {
+  const countNow = fetchListNow.length + resourceListNow.length - intersectedCount
+  const [
     timeoutStartAutoscroll,
     stopAutoscroll,
-  } = useAutoscroll(
+  ] = useAutoscroll(
+    filteredList,
+    list[countNow].time,
     activeIndex,
-    autoScrollIndex,
     index => devTools.update(INDEX_KEY, { index })
   )
   const onMouseEnter = stopAutoscroll
