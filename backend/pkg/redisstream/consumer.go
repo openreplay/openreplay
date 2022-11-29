@@ -27,6 +27,7 @@ type Consumer struct {
 	idsPending      streamPendingIDsMap
 	lastTs          int64
 	autoCommit      bool
+	event           chan interface{}
 }
 
 func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) *Consumer {
@@ -57,10 +58,15 @@ func NewConsumer(group string, streams []string, messageIterator messages.Messag
 		group:           group,
 		autoCommit:      true,
 		idsPending:      idsPending,
+		event:           make(chan interface{}, 4),
 	}
 }
 
 const READ_COUNT = 10
+
+func (c *Consumer) Rebalanced() <-chan interface{} {
+	return c.event
+}
 
 func (c *Consumer) ConsumeNext() error {
 	// MBTODO: read in go routine, send messages to channel

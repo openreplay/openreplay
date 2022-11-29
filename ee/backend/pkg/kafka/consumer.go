@@ -2,24 +2,24 @@ package kafka
 
 import (
 	"log"
-	"openreplay/backend/pkg/messages"
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
-
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"openreplay/backend/pkg/env"
+	"openreplay/backend/pkg/messages"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/pkg/errors"
 )
 
 type Message = kafka.Message
 
 type Consumer struct {
-	c               *kafka.Consumer
-	messageIterator messages.MessageIterator
-	commitTicker    *time.Ticker
-	pollTimeout     uint
-
+	c                 *kafka.Consumer
+	messageIterator   messages.MessageIterator
+	commitTicker      *time.Ticker
+	pollTimeout       uint
+	events            chan interface{}
 	lastReceivedPrtTs map[int32]int64
 }
 
@@ -48,7 +48,7 @@ func NewConsumer(
 		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
 
-		// Apply Kerberos configuration
+	// Apply Kerberos configuration
 	if env.Bool("KAFKA_USE_KERBEROS") {
 		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
 		kafkaConfig.SetKey("sasl.mechanisms", "GSSAPI")
@@ -61,6 +61,21 @@ func NewConsumer(
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	var commitTicker *time.Ticker
+	if autoCommit {
+		commitTicker = time.NewTicker(2 * time.Minute)
+	}
+
+	consumer := &Consumer{
+		c:                 c,
+		messageIterator:   messageIterator,
+		commitTicker:      commitTicker,
+		pollTimeout:       200,
+		events:            make(chan interface{}, 4),
+		lastReceivedPrtTs: make(map[int32]int64, 16),
+	}
+
 	subREx := "^("
 	for i, t := range topics {
 		if i != 0 {
@@ -69,22 +84,27 @@ func NewConsumer(
 		subREx += t
 	}
 	subREx += ")$"
-	if err := c.Subscribe(subREx, nil); err != nil {
+	if err := c.Subscribe(subREx, consumer.reBalanceCallback); err != nil {
 		log.Fatalln(err)
 	}
 
-	var commitTicker *time.Ticker
-	if autoCommit {
-		commitTicker = time.NewTicker(2 * time.Minute)
-	}
+	return consumer
+}
 
-	return &Consumer{
-		c:                 c,
-		messageIterator:   messageIterator,
-		commitTicker:      commitTicker,
-		pollTimeout:       200,
-		lastReceivedPrtTs: make(map[int32]int64),
+func (consumer *Consumer) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error {
+	switch evt := e.(type) {
+	case kafka.RevokedPartitions:
+		// receive before re-balancing partitions; stop consuming messages and commit current state
+		consumer.events <- evt.String()
+	case kafka.AssignedPartitions:
+		// receive after re-balancing partitions; continue consuming messages
+		//consumer.events <- evt.String()
 	}
+	return nil
+}
+
+func (consumer *Consumer) Rebalanced() <-chan interface{} {
+	return consumer.events
 }
 
 func (consumer *Consumer) Commit() error {
