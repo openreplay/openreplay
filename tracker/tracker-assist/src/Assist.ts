@@ -244,7 +244,7 @@ export default class Assist {
       ids.forEach(id =>{
         const agentInfo = this.agents[id]?.agentInfo
         this.agents[id] = {
-          ...this.agents[id],
+          agentInfo,
           onDisconnect: this.options.onAgentConnect?.(agentInfo),
         }
       })
