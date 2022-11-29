@@ -14,14 +14,11 @@ import (
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
 
 func main() {
-	pprof.StartProfilingServer()
-
 	metrics := monitoring.New("sink")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
