@@ -1,4 +1,5 @@
 #/bin/bash
+set -e
 
 # --- helper functions for logs ---
 info()
@@ -19,19 +20,16 @@ version="v1.9.0"
 usr=`whoami`
 
 # Installing k3s
-[[ x$SKIP_K8S_INSTALL == "xtrue" ]] && {
-    info "Skipping Kuberntes installation"
-} || {
+function install_k8s() {
     curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.22.8+k3s1' INSTALL_K3S_EXEC="--no-deploy=traefik" sh -
     [[ -d ~/.kube ]] || mkdir ~/.kube
     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
     sudo chmod 0644 ~/.kube/config
     sudo chown -R $usr ~/.kube/config
+    sleep 10
 }
 
-[[ x$SKIP_K8S_TOOLS == "xtrue" ]] && {
-    info "Skipping Kuberntes installation"
-} || {
+function install_tools() {
     ## installing kubectl
     which kubectl &> /dev/null || {
         info "kubectl not installed. Installing it..."
@@ -66,8 +64,6 @@ usr=`whoami`
         rm -rf linux-amd64/helm /tmp/helm.tar.gz
     fi
 }
-
-sleep 10
 
 # ## Installing openssl
 # sudo apt update &> /dev/null
@@ -116,7 +112,31 @@ sudo mkdir -p /openreplay/storage/nfs
 sudo chown -R 1001:1001 /openreplay/storage/nfs
 
 ## Installing OpenReplay
-info "installing databases"
-helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
-info "installing application"
-helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
+function install_openreplay() {
+  info "installing databases"
+  helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
+  info "installing application"
+  helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
+}
+
+function main() {
+  [[ x$SKIP_K8S_INSTALL == "x1" ]] && {
+      info "Skipping Kuberntes installation"
+  } || {
+    install_k8s
+  }
+  [[ x$SKIP_K8S_TOOLS == "x1" ]] && {
+      info "Skipping Kuberntes tools installation"
+  } || {
+    install_tools
+  }
+  create_passwords
+  set_permissions
+  [[ x$SKIP_OR_INSTALL == "x1" ]] && {
+      info "Skipping OpenReplay installation"
+  } || {
+    install_openreplay
+  }
+}
+
+main
