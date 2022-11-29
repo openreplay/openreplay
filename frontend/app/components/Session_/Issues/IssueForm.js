@@ -18,7 +18,6 @@ const SelectedValue = ({ icon, text }) => {
 class IssueForm extends React.PureComponent {
   componentDidMount() {
     const { projects, issueTypes } = this.props;
-
     this.props.init({
       projectId: projects[0] ? projects[0].id : '',
       issueType: issueTypes[0] ? issueTypes[0].id : '',
@@ -27,8 +26,8 @@ class IssueForm extends React.PureComponent {
 
   componentWillReceiveProps(newProps) {
     const { instance } = this.props;
-    if (instance.projectId && newProps.instance.projectId != instance.projectId) {
-      this.props.fetchMeta(instance.projectId).then(() => {
+    if (newProps.instance.projectId && newProps.instance.projectId != instance.projectId) {
+      this.props.fetchMeta(newProps.instance.projectId).then(() => {
         this.props.edit({ issueType: '', assignee: '', projectId: newProps.instance.projectId });
       });
     }
@@ -87,7 +86,7 @@ class IssueForm extends React.PureComponent {
             <Select
               name="projectId"
               options={projectOptions}
-              // value={instance.projectId}
+              defaultValue={instance.projectId}
               fluid
               onChange={this.writeOption}
               placeholder="Project"
@@ -100,7 +99,7 @@ class IssueForm extends React.PureComponent {
               name="issueType"
               labeled
               options={issueTypeOptions}
-              value={instance.issueType}
+              defaultValue={instance.issueType}
               fluid
               onChange={this.writeOption}
               placeholder="Select issue type"
