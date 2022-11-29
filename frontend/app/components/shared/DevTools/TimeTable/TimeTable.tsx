@@ -2,7 +2,7 @@ import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
 import { Duration } from 'luxon';
-import { NoContent, Icon, Button } from 'UI';
+import { NoContent, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';
@@ -222,8 +222,8 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       >
         {columns
           .filter((i: any) => !i.hidden)
-          .map(({ dataKey, render, width }) => (
-            <div className={stl.cell} style={{ width: `${width}px` }}>
+          .map(({ dataKey, render, width, label }) => (
+            <div key={parseInt(label, 36)} className={stl.cell} style={{ width: `${width}px` }}>
               {render
                 ? render(row)
                 : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
@@ -327,6 +327,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width, dataKey, onClick = null }) => (
               <div
+                key={parseInt(label, 36)}
                 className={cn(stl.headerCell, 'flex items-center select-none', {
                   'cursor-pointer': typeof onClick === 'function',
                 })}

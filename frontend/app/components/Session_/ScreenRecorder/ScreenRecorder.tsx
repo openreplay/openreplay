@@ -3,12 +3,13 @@ import { screenRecorder } from 'App/utils/screenRecorder';
 import { Tooltip } from 'react-tippy';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
-import { requestRecording, stopRecording, connectPlayer } from 'Player';
-import { SessionRecordingStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import { SessionRecordingStatus } from 'Player';
 let stopRecorderCb: () => void;
 import { recordingsService } from 'App/services';
 import { toast } from 'react-toastify';
-import { durationFromMs, formatTimeOrDate } from 'App/date';
+import { formatTimeOrDate } from 'App/date';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 
 /**
  * "edge" || "edg/"   chromium based edge (dev or canary)
@@ -32,14 +33,15 @@ const supportedBrowsers = ['Chrome v91+', 'Edge v90+'];
 const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 
 function ScreenRecorder({
-  recordingState,
   siteId,
   sessionId,
 }: {
-  recordingState: SessionRecordingStatus;
   siteId: string;
   sessionId: string;
 }) {
+  const { player, store } = React.useContext(PlayerContext)
+  const recordingState = store.get().recordingState
+
   const [isRecording, setRecording] = React.useState(false);
 
   React.useEffect(() => {
@@ -82,13 +84,13 @@ function ScreenRecorder({
   };
 
   const stopRecordingHandler = () => {
-    stopRecording();
+    player.assistManager.stopRecording();
     stopRecorderCb?.();
     setRecording(false);
   };
 
   const recordingRequest = () => {
-    requestRecording();
+    player.assistManager.requestRecording()
   };
 
   if (!isSupported()) {
@@ -116,9 +118,7 @@ function ScreenRecorder({
   );
 }
 
-export default connectPlayer((state: any) => ({ recordingState: state.recordingState }))(
-  connect((state: any) => ({
+export default connect((state: any) => ({
     siteId: state.getIn(['site', 'siteId']),
     sessionId: state.getIn(['sessions', 'current', 'sessionId']),
-  }))(ScreenRecorder)
-);
+  }))(observer(ScreenRecorder))
