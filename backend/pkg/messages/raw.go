@@ -2,7 +2,6 @@ package messages
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
 	"log"
 )
@@ -44,22 +43,6 @@ func (m *RawMessage) Encode() []byte {
 	m.data = m.raw[currPos-1 : currPos+int64(m.size)]
 	m.encoded = true
 	return m.data
-}
-
-func (m *RawMessage) EncodeWithIndex() []byte {
-	if !m.encoded {
-		if m.Encode() == nil {
-			*m.broken = true
-			return nil
-		}
-	}
-	if IsIOSType(int(m.tp)) {
-		return m.data
-	}
-	data := make([]byte, len(m.data)+8)
-	copy(data[8:], m.data[:])
-	binary.LittleEndian.PutUint64(data[0:], m.Meta().Index)
-	return data
 }
 
 func (m *RawMessage) Decode() Message {
