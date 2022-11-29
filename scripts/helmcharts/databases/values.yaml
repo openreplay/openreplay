@@ -143,5 +143,6 @@ clickhouse:
 postgreql:
   enabled: true
 
+# For enterpriseEdition Only
 vault:
   enabled: false

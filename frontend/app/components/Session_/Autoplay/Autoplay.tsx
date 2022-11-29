@@ -2,28 +2,54 @@ import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
-import { Link, Icon, Toggler, Tooltip } from 'UI';
-import { connectPlayer } from 'Player/store';
-import { Controls as PlayerControls } from 'Player';
+import { Link, Icon, Tooltip } from 'UI';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
+import { fetchAutoplaySessions } from 'Duck/search';
 
-function Autoplay(props) {
-  const { previousId, nextId, autoplay, disabled } = props;
+const PER_PAGE = 10;
+
+interface Props extends RouteComponentProps {
+  previousId: string;
+  nextId: string;
+  defaultList: any;
+  currentPage: number;
+  total: number;
+  setAutoplayValues?: () => void;
+  latestRequestTime: any;
+  sessionIds: any;
+  fetchAutoplaySessions?: (page: number) => Promise<void>;
+}
+function Autoplay(props: Props) {
+  const {
+    previousId,
+    nextId,
+    currentPage,
+    total,
+    sessionIds,
+    latestRequestTime,
+    match: {
+      // @ts-ignore
+      params: { siteId, sessionId },
+    },
+  } = props;
+  const disabled = sessionIds.length === 0;
 
   useEffect(() => {
-    props.setAutoplayValues();
+    if (latestRequestTime) {
+      props.setAutoplayValues();
+      const totalPages = Math.ceil(total / PER_PAGE);
+      const index = sessionIds.indexOf(sessionId);
+
+      // check for the last page and load the next
+      if (currentPage !== totalPages && index === sessionIds.length - 1) {
+        props.fetchAutoplaySessions(currentPage + 1).then(props.setAutoplayValues);
+      }
+    }
   }, []);
 
   return (
     <div className="flex items-center">
-      <div
-        onClick={props.toggleAutoplay}
-        className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2"
-      >
-        <Toggler name="sessionsLive" onChange={props.toggleAutoplay} checked={autoplay} />
-        <span className="ml-2 whitespace-nowrap">Auto-Play</span>
-      </div>
-
       <Tooltip
         placement="bottom"
         title={<div className="whitespace-nowrap">Play Previous Session</div>}
@@ -63,21 +89,14 @@ function Autoplay(props) {
   );
 }
 
-const connectAutoplay = connect(
-  (state) => ({
+export default connect(
+  (state: any) => ({
     previousId: state.getIn(['sessions', 'previousId']),
     nextId: state.getIn(['sessions', 'nextId']),
+    currentPage: state.getIn(['search', 'currentPage']) || 1,
+    total: state.getIn(['sessions', 'total']) || 0,
+    sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
+    latestRequestTime: state.getIn(['search', 'latestRequestTime']),
   }),
-  { setAutoplayValues }
-);
-
-export default connectAutoplay(
-  connectPlayer(
-    (state) => ({
-      autoplay: state.autoplay,
-    }),
-    {
-      toggleAutoplay: PlayerControls.toggleAutoplay,
-    }
-  )(Autoplay)
-);
+  { setAutoplayValues, fetchAutoplaySessions }
+)(withRouter(Autoplay));

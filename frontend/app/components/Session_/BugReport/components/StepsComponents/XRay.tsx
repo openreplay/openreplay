@@ -70,7 +70,7 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
     <>
       <div className="flex items-center justify-between my-2">
         <div className=" text-gray-dark py-2">
-          XRAY
+          X-RAY
           {timePointer > 0 ? (
             <span className="text-disabled-text ml-2">
               {Duration.fromMillis(selectedTime).toFormat('hh:mm:ss')}
@@ -79,14 +79,11 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
         </div>
         {!shouldShowPointerReset ? (
           <div
-            className="flex items-center gap-2 rounded bg-active-blue px-2 py-1 whitespace-nowrap overflow-hidden text-clip"
+            className="flex items-center gap-2 rounded bg-active-blue px-2 py-1 whitespace-nowrap overflow-hidden text-clip group"
             id="pdf-ignore"
           >
             <Icon name="info-circle" size={16} />
-            <div>
-              Click anywhere on <span className="font-semibold">X-RAY</span> to drilldown and add
-              steps
-            </div>
+            <div>Click anywhere in the graph below to drilldown and add steps</div>
           </div>
         ) : (
           <Button id="pdf-ignore" variant="text-primary" onClick={clearEventSelection}>
@@ -94,7 +91,11 @@ function XRay({ xrayProps, timePointer, stepPickRadius, clearEventSelection, set
           </Button>
         )}
       </div>
-      <div className="relative cursor-pointer" onClick={pickEventRadius} ref={xrayContainer}>
+      <div
+        className="relative cursor-pointer group-hover:border-dotted hover:border-dotted group-hover:border-gray-dark hover:border-gray-dark border border-transparent"
+        onClick={pickEventRadius}
+        ref={xrayContainer}
+      >
         <div
           id="pdf-ignore"
           style={{

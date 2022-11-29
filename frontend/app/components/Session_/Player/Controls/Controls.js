@@ -6,7 +6,7 @@ import {
   STORAGE_TYPES,
   selectStorageType,
   selectStorageListNow,
-} from 'Player/store';
+} from 'Player';
 import LiveTag from 'Shared/LiveTag';
 import { jumpToLive } from 'Player';
 
@@ -76,13 +76,13 @@ function getStorageName(type) {
   inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
   // logCount: state.logList.length,
-  logRedCount: state.logRedCount,
+  logRedCount: state.logMarkedCount,
   showExceptions: state.exceptionsList.length > 0,
-  resourceRedCount: state.resourceRedCount,
-  fetchRedCount: state.fetchRedCount,
+  resourceRedCount: state.resourceMarkedCount,
+  fetchRedCount: state.fetchMarkedCount,
   showStack: state.stackList.length > 0,
   stackCount: state.stackList.length,
-  stackRedCount: state.stackRedCount,
+  stackRedCount: state.stackMarkedCount,
   profilesCount: state.profilesList.length,
   storageCount: selectStorageListNow(state).length,
   storageType: selectStorageType(state),
@@ -203,7 +203,7 @@ export default class Controls extends React.Component {
   backTenSeconds = () => {
     //shouldComponentUpdate
     const { time, jump, skipInterval } = this.props;
-    jump(Math.max(0, time - SKIP_INTERVALS[skipInterval]));
+    jump(Math.max(1, time - SKIP_INTERVALS[skipInterval]));
   };
 
   goLive = () => this.props.jump(this.props.endTime);
@@ -242,7 +242,7 @@ export default class Controls extends React.Component {
   controlIcon = (icon, size, action, isBackwards, additionalClasses) => (
     <div
       onClick={action}
-      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
+      className={cn('py-2 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
       style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
     >
       <Icon name={icon} size={size} color="inherit" />
@@ -261,6 +261,7 @@ export default class Controls extends React.Component {
       logRedCount,
       showExceptions,
       resourceRedCount,
+      fetchRedCount,
       showStack,
       stackRedCount,
       showStorage,
@@ -352,7 +353,7 @@ export default class Controls extends React.Component {
                   onClick={() => toggleBottomTools(NETWORK)}
                   active={bottomBlock === NETWORK && !inspectorMode}
                   label="NETWORK"
-                  hasErrors={resourceRedCount > 0}
+                  hasErrors={resourceRedCount > 0 || fetchRedCount > 0}
                   noIcon
                   labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"

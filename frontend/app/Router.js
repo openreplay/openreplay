@@ -126,8 +126,9 @@ class Router extends React.Component {
     }
 
     fetchInitialData = async () => {
+        const siteIdFromPath = parseInt(window.location.pathname.split("/")[1])
         await this.props.fetchUserInfo()
-        await this.props.fetchSiteList()
+        await this.props.fetchSiteList(siteIdFromPath)
         const { mstore } = this.props;
         mstore.initClient();
     };

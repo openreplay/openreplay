@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from 'UI';
 import { checkForRecent } from 'App/date';
 import { withSiteId, alertEdit } from 'App/routes';
+import { numberWithCommas } from 'App/utils';
 // @ts-ignore
 import { DateTime } from 'luxon';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
@@ -108,7 +109,7 @@ function AlertListItem(props: Props) {
         {' is '}
         <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
           {alert.query.operator}
-          {alert.query.right} {alert.metric.unit}
+          {numberWithCommas(alert.query.right)} {alert.metric.unit}
         </span>
         {' over the past '}
         <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{getThreshold(alert.currentPeriod)}</span>

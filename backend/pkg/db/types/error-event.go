@@ -11,6 +11,8 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+const SOURCE_JS = "js_exception"
+
 type ErrorEvent struct {
 	MessageID uint64
 	Timestamp uint64
@@ -64,7 +66,7 @@ func WrapJSException(m *JSException) *ErrorEvent {
 	return &ErrorEvent{
 		MessageID: m.Meta().Index,
 		Timestamp: uint64(m.Meta().Timestamp),
-		Source:    "js_exception",
+		Source:    SOURCE_JS,
 		Name:      m.Name,
 		Message:   m.Message,
 		Payload:   m.Payload,
@@ -105,14 +107,16 @@ func (e *ErrorEvent) ID(projectID uint32) string {
 	hash.Write([]byte(e.Source))
 	hash.Write([]byte(e.Name))
 	hash.Write([]byte(e.Message))
-	frame, err := parseFirstFrame(e.Payload)
-	if err != nil {
-		log.Printf("Can't parse stackframe ((( %v ))): %v", e.Payload, err)
-	}
-	if frame != nil {
-		hash.Write([]byte(frame.FileName))
-		hash.Write([]byte(strconv.Itoa(frame.LineNo)))
-		hash.Write([]byte(strconv.Itoa(frame.ColNo)))
+	if e.Source == SOURCE_JS {
+		frame, err := parseFirstFrame(e.Payload)
+		if err != nil {
+			log.Printf("Can't parse stackframe ((( %v ))): %v", e.Payload, err)
+		}
+		if frame != nil {
+			hash.Write([]byte(frame.FileName))
+			hash.Write([]byte(strconv.Itoa(frame.LineNo)))
+			hash.Write([]byte(strconv.Itoa(frame.ColNo)))
+		}
 	}
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }

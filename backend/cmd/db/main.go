@@ -163,6 +163,8 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			commitDBUpdates()
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			// Handle new message from queue
 			if err := consumer.ConsumeNext(); err != nil {

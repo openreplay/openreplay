@@ -73,6 +73,8 @@ func main() {
 			os.Exit(0)
 		case <-counterTick:
 			go counter.Print()
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {

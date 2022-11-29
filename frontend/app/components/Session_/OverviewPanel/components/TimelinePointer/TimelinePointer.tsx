@@ -1,5 +1,5 @@
 import React from 'react';
-import { Controls } from 'App/player';
+import { Controls } from 'Player';
 import { NETWORK, EXCEPTIONS } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
 import { Icon, Tooltip } from 'UI';
@@ -12,6 +12,7 @@ interface Props {
   pointer: any;
   type: any;
   noClick?: boolean;
+  fetchPresented?: boolean;
 }
 const TimelinePointer = React.memo((props: Props) => {
   const { showModal } = useModal();
@@ -35,7 +36,7 @@ const TimelinePointer = React.memo((props: Props) => {
       if (pointer.tp === 'graph_ql') {
         showModal(<GraphQLDetailsModal resource={pointer} />, { right: true });
       } else {
-        showModal(<FetchDetails resource={pointer} />, { right: true });
+        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true });
       }
     }
     // props.toggleBottomBlock(type);
@@ -47,7 +48,7 @@ const TimelinePointer = React.memo((props: Props) => {
       <Tooltip
         title={
           <div className="">
-            <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
+            <b>{item.success ? 'Slow resource: ' : '4xx/5xx Error:'}</b>
             <br />
             {name.length > 200
               ? name.slice(0, 100) + ' ... ' + name.slice(-50)

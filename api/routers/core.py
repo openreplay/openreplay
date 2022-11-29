@@ -56,6 +56,14 @@ def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchem
     return {'data': data}
 
 
+@app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
+@app.post('/{projectId}/sessions/search2/ids', tags=["sessions"])
+def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
+    return {'data': data}
+
+
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,

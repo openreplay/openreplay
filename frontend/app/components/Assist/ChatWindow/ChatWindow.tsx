@@ -5,7 +5,7 @@ import Counter from 'App/components/shared/SessionItem/Counter';
 import stl from './chatWindow.module.css';
 import ChatControls from '../ChatControls/ChatControls';
 import Draggable from 'react-draggable';
-import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
+import type { LocalStream } from 'Player';
 import { toggleVideoLocalStream } from 'Player'
 
 export interface Props {

@@ -6,12 +6,19 @@ export const IS_FIREFOX = IN_BROWSER && navigator.userAgent.match(/firefox|fxios
 
 export const MAX_STR_LEN = 1e5
 
-const navigationStart: number | false =
-  IN_BROWSER && (performance.timing.navigationStart || performance.timeOrigin)
-// performance.now() is buggy in some browsers
+// Buggy to use `performance.timeOrigin || performance.timing.navigationStart`
+// https://github.com/mdn/content/issues/4713
+// Maybe move to timer/ticker
+let timeOrigin: number = IN_BROWSER ? Date.now() - performance.now() : 0
+export function adjustTimeOrigin() {
+  timeOrigin = Date.now() - performance.now()
+}
+export function getTimeOrigin() {
+  return timeOrigin
+}
 export const now: () => number =
-  IN_BROWSER && performance.now() && navigationStart
-    ? () => Math.round(performance.now() + navigationStart)
+  IN_BROWSER && !!performance.now
+    ? () => Math.round(performance.now() + timeOrigin)
     : () => Date.now()
 
 export const stars: (str: string) => string =

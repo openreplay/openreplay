@@ -1229,6 +1229,7 @@ $$
             CREATE INDEX IF NOT EXISTS requests_request_body_nn_gin_idx ON events_common.requests USING GIN (request_body gin_trgm_ops) WHERE request_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_response_body_nn_gin_idx ON events_common.requests USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_session_id_status_code_nn_idx ON events_common.requests (session_id, status_code) WHERE status_code IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_path_nn_idx ON events_common.requests (path) WHERE path IS NOT NULL;

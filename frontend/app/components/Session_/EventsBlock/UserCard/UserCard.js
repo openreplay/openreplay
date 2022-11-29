@@ -5,7 +5,7 @@ import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip } from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from '../../SessionInfoItem';
@@ -75,15 +75,9 @@ function UserCard({ className, request, session, width, height, similarSessions,
                             {userBrowser}, {userOs}, {userDevice}
                         </span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
-                        <Tooltip
-                            // theme="light"
-                            delay={0}
-                            // hideOnClick="persistent"
-                            // arrow
-                            // interactive
-                            className="!bg-white shadow border !color-gray-dark"
-                            title={
-                                <div className="text-left">
+                        <Popover
+                            render={() => (
+                                <div className="text-left bg-white">
                                     <SessionInfoItem
                                         comp={<CountryFlag country={userCountry} />}
                                         label={countries[userCountry]}
@@ -99,14 +93,10 @@ function UserCard({ className, request, session, width, height, similarSessions,
                                     />
                                     {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
                                 </div>
-                            }
-                            position="bottom"
-                            // hoverable
-                            // disabled={false}
-                            on="hover"
+                            )}
                         >
-                            <span className="color-teal cursor-pointer">More</span>
-                        </Tooltip>
+                            <span className="link">More</span>
+                        </Popover>
                     </div>
                 </div>
             </div>

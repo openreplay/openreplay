@@ -93,12 +93,11 @@ function PlayerControls(props: Props) {
       )}
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-        {/* @ts-ignore */}
-        <Tooltip title="Rewind 10s" position="top">
-          <button
-            ref={arrowBackRef}
-            className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
-          >
+        <button
+          ref={arrowBackRef}
+          className="h-full hover:border-active-blue-border focus:border focus:border-blue border-borderColor-transparent"
+        >
+          <Tooltip title="Rewind 10s">
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -106,58 +105,57 @@ function PlayerControls(props: Props) {
               true,
               'hover:bg-active-blue-border color-main h-full flex items-center'
             )}
-          </button>
-        </Tooltip>
-        <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border">
-          <OutsideClickDetectingDiv onClickOutside={handleClickOutside}>
-            <Popover
-              // open={showTooltip}
-              // interactive
-              // @ts-ignore
-              theme="nopadding"
-              animation="none"
-              duration={0}
-              className="cursor-pointer select-none"
-              distance={20}
-              render={() => (
-                <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
-                  <div className="font-semibold py-2 px-4 w-full text-left">
-                    Jump <span className="text-disabled-text">(Secs)</span>
-                  </div>
-                  {Object.keys(skipIntervals).map((interval) => (
-                    <div
-                      key={interval}
-                      onClick={() => {
-                        toggleTooltip();
-                        setSkipInterval(parseInt(interval, 10));
-                      }}
-                      className={cn(
-                        'py-2 px-4 cursor-pointer w-full text-left font-semibold',
-                        'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
-                      )}
-                    >
-                      {interval}
-                      <span className="text-disabled-text">s</span>
-                    </div>
-                  ))}
+          </Tooltip>
+        </button>
+
+        <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border flex items-center">
+          <Popover
+            // open={showTooltip}
+            // interactive
+            // @ts-ignore
+            theme="nopadding"
+            animation="none"
+            duration={0}
+            className="cursor-pointer select-none"
+            distance={20}
+            render={({ close }: any) => (
+              <div className="flex flex-col bg-white border border-borderColor-gray-light-shade text-figmaColors-text-primary rounded">
+                <div className="font-semibold py-2 px-4 w-full text-left">
+                  Jump <span className="text-disabled-text">(Secs)</span>
                 </div>
-              )}
-            >
-              <div onClick={toggleTooltip} ref={skipRef}>
-                {/* @ts-ignore */}
-                <Tooltip disabled={showTooltip} title="Set default skip duration">
-                  {currentInterval}s
-                </Tooltip>
+                {Object.keys(skipIntervals).map((interval) => (
+                  <div
+                    key={interval}
+                    onClick={() => {
+                      close();
+                      setSkipInterval(parseInt(interval, 10));
+                    }}
+                    className={cn(
+                      'py-2 px-4 cursor-pointer w-full text-left font-semibold',
+                      'hover:bg-active-blue border-t  border-borderColor-gray-light-shade'
+                    )}
+                  >
+                    {interval}
+                    <span className="text-disabled-text">s</span>
+                  </div>
+                ))}
               </div>
-            </Popover>
-          </OutsideClickDetectingDiv>
-        </div>
-        {/* @ts-ignore */}
-        <Tooltip title="Forward 10s" position="top">
-          <button
-            ref={arrowForwardRef}
-            className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
+            )}
           >
+            <div onClick={toggleTooltip} ref={skipRef} className="cursor-pointer select-none">
+              {/* @ts-ignore */}
+              <Tooltip disabled={showTooltip} title="Set default skip duration">
+                {currentInterval}s
+              </Tooltip>
+            </div>
+          </Popover>
+        </div>
+
+        <button
+          ref={arrowForwardRef}
+          className="h-full hover:border-active-blue-border focus:border focus:border-blue  border-borderColor-transparent"
+        >
+          <Tooltip title="Forward 10s">
             {controlIcon(
               'skip-forward-fill',
               18,
@@ -165,8 +163,8 @@ function PlayerControls(props: Props) {
               false,
               'hover:bg-active-blue-border color-main h-full flex items-center'
             )}
-          </button>
-        </Tooltip>
+          </Tooltip>
+        </button>
       </div>
 
       {!live && (

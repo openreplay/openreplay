@@ -60,3 +60,45 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the environment configuration for REDIS_STRING
+*/}}
+{{- define "openreplay.env.redis_string" -}}
+{{- $scheme := (eq (.tls | default dict).enabled true) | ternary "rediss" "redis" -}}
+{{- $auth := "" -}}
+{{- if or .existingSecret .redisPassword -}}
+  {{- $auth = printf "%s:$(REDIS_PASSWORD)@" (.redisUsername | default "") -}}
+{{- end -}}
+{{- if .existingSecret -}}
+- name: REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .existingSecret }}
+      key: redis-password
+{{- else if .redisPassword }}
+- name: REDIS_PASSWORD
+  value: {{ .redisPassword }}
+{{- end}}
+- name: REDIS_STRING
+  value: '{{ $scheme }}://{{ $auth }}{{ .redisHost }}:{{ .redisPort }}'
+{{- end }}
+
+{{/*
+Create the volume mount config for redis TLS certificates
+*/}}
+{{- define "openreplay.volume.redis_ca_certificate" -}}
+{{- if and ((.tls | default dict).enabled) (.tls.certificatesSecret) (.tls.certCAFilename) -}}
+- name: redis-ca-certificate
+  secret:
+    secretName: {{ .tls.certificatesSecret }}
+{{- end }}
+{{- end }}
+
+{{- define "openreplay.volume.redis_ca_certificate.mount" -}}
+{{- if and ((.tls |default dict).enabled) (.tls.certificatesSecret) (.tls.certCAFilename) -}}
+- name: redis-ca-certificate
+  mountPath: /etc/ssl/certs/redis-ca-certificate.pem
+  subPath: {{ .tls.certCAFilename }}
+{{- end }}
+{{- end }}

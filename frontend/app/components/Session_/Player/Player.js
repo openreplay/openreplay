@@ -42,6 +42,7 @@ import { updateLastPlayedSession } from 'Duck/sessions';
 import OverviewPanel from '../OverviewPanel';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
 import ProfilerPanel from 'Shared/DevTools/ProfilerPanel';
+import StackEventPanel from 'Shared/DevTools/StackEventPanel';
 
 @connectPlayer((state) => ({
   live: state.live,
@@ -94,6 +95,7 @@ export default class Player extends React.PureComponent {
       closedLive,
       bottomBlock,
       activeTab,
+      fullView = false,
     } = this.props;
 
     const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
@@ -115,7 +117,8 @@ export default class Player extends React.PureComponent {
               // <Network />
               <NetworkPanel />
             )}
-            {bottomBlock === STACKEVENTS && <StackEvents />}
+            {/* {bottomBlock === STACKEVENTS && <StackEvents />} */}
+            {bottomBlock === STACKEVENTS && <StackEventPanel />}
             {bottomBlock === STORAGE && <Storage />}
             {bottomBlock === PROFILER && <ProfilerPanel />}
             {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
@@ -125,7 +128,7 @@ export default class Player extends React.PureComponent {
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        <Controls {...PlayerControls} />
+        {!fullView && <Controls {...PlayerControls} /> }
       </div>
     );
   }

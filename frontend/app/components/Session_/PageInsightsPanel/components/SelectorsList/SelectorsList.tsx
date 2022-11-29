@@ -1,8 +1,8 @@
 import React from 'react';
 import { NoContent } from 'UI';
-import { connectPlayer } from 'Player/store';
+import { connectPlayer } from 'Player';
 import SelectorCard from '../SelectorCard/SelectorCard';
-import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
+import type { MarkedTarget } from 'Player';
 import stl from './selectorList.module.css';
 
 interface Props {

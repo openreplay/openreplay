@@ -51,6 +51,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                        AND users.deleted_at ISNULL
                        AND users.tenant_id = %(tenant_id)s
                        AND (roles.all_projects OR roles_projects.project_id = s.project_id)
+                     LIMIT 1
                     ) AS role_project ON (TRUE)"""
         extra_projection = ""
         extra_join = ""
@@ -86,22 +87,23 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                             {"tenant_id": tenant_id, "user_id": user_id, "now": TimeUTC.now()})
         cur.execute(query)
         rows = cur.fetchall()
-
         # if recorded is requested, check if it was saved or computed
         if recorded:
-            for r in rows:
+            u_values = []
+            params = {}
+            for i, r in enumerate(rows):
                 if r["first_recorded_session_at"] is None:
-                    extra_update = ""
-                    if r["recorded"]:
-                        extra_update = ", first_recorded_session_at=to_timestamp(%(first_recorded)s/1000)"
-                    query = cur.mogrify(f"""UPDATE public.projects 
-                                                       SET sessions_last_check_at=(now() at time zone 'utc')
-                                                        {extra_update} 
-                                                       WHERE project_id=%(project_id)s""",
-                                        {"project_id": r["project_id"], "first_recorded": r["first_recorded"]})
-                    cur.execute(query)
+                    u_values.append(f"(%(project_id_{i})s,to_timestamp(%(first_recorded_{i})s/1000))")
+                    params[f"project_id_{i}"] = r["project_id"]
+                    params[f"first_recorded_{i}"] = r["first_recorded"] if r["recorded"] else None
                 r.pop("first_recorded_session_at")
                 r.pop("first_recorded")
+            if len(u_values) > 0:
+                query = cur.mogrify(f"""UPDATE public.projects 
+                                        SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
+                                        FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
+                                        WHERE projects.project_id=u.project_id;""", params)
+                cur.execute(query)
 
         if recording_state and len(rows) > 0:
             project_ids = [f'({r["project_id"]})' for r in rows]
@@ -111,6 +113,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                                     WHERE sessions.start_ts >= %(startDate)s AND sessions.start_ts <= %(endDate)s
                                     GROUP BY project_id;""",
                                 {"startDate": TimeUTC.now(delta_days=-3), "endDate": TimeUTC.now(delta_days=1)})
+
             cur.execute(query=query)
             status = cur.fetchall()
             for r in rows:

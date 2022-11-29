@@ -9,12 +9,6 @@ import Log from 'Types/session/log';
 import { update } from '../store';
 import { toast } from 'react-toastify';
 
-import {
-  init as initListsDepr,
-  append as listAppend,
-  setStartTime as setListsStartTime
-} from '../lists';
-
 import StatedScreen from './StatedScreen/StatedScreen';
 
 import ListWalker from './managers/ListWalker';
@@ -32,7 +26,7 @@ import { decryptSessionBytes } from './network/crypto';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
-import { INITIAL_STATE as LISTS_INITIAL_STATE , LIST_NAMES, initLists } from './Lists';
+import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE } from './Lists';
 
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
@@ -100,7 +94,7 @@ export default class MessageDistributor extends StatedScreen {
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   private readonly decoder = new Decoder();
-  private readonly lists = initLists();
+  private readonly lists: Lists;
 
   private activityManager: ActivityManager | null = null;
 
@@ -118,28 +112,26 @@ export default class MessageDistributor extends StatedScreen {
     this.sessionStart = this.session.startedAt;
 
     if (live) {
-      initListsDepr({})
+      this.lists = new Lists()
       this.assistManager.connect(this.session.agentToken);
     } else {
       this.activityManager = new ActivityManager(this.session.duration.milliseconds);
       /* == REFACTOR_ME == */
-      const eventList = this.session.events.toJSON();
-
-      initListsDepr({
-        event: eventList,
-        stack: this.session.stackEvents.toJSON(),
-        resource: this.session.resources.toJSON(),
-      });
-
+      const eventList = session.events.toJSON();
       // TODO: fix types for events, remove immutable js
       eventList.forEach((e: Record<string, string>) => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
           this.locationEventManager.append(e);
         }
-      });
-      this.session.errors.forEach((e: Record<string, string>) => {
-        this.lists.exceptions.append(e);
-      });
+      })
+
+      this.lists = new Lists({
+        event: eventList,
+        stack: session.stackEvents.toJSON(),
+        resource: session.resources.toJSON(),
+        exceptions: session.errors.toJSON(),
+      })
+
       /* === */
       this.loadMessages();
     }
@@ -187,13 +179,11 @@ export default class MessageDistributor extends StatedScreen {
 
   private waitingForFiles: boolean = false
   private onFileReadSuccess = () => {
-    const stateToUpdate: {[key:string]: any} = {
+    const stateToUpdate = {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvaliability: this.performanceTrackManager.avaliability,
+      ...this.lists.getFullListsState()
     }
-    LIST_NAMES.forEach(key => {
-      stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
-    })
     if (this.activityManager) {
       this.activityManager.end()
       stateToUpdate.skipIntervals = this.activityManager.list
@@ -304,7 +294,6 @@ export default class MessageDistributor extends StatedScreen {
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
-      setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
     const llEvent = this.locationEventManager.moveGetLast(t, index);
@@ -340,14 +329,7 @@ export default class MessageDistributor extends StatedScreen {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
-    LIST_NAMES.forEach(key => {
-      const lastMsg = this.lists[key].moveGetLast(t, key === 'exceptions' ? undefined : index);
-      if (lastMsg != null) {
-        // @ts-ignore TODO: fix types
-        stateToUpdate[`${key}ListNow`] = this.lists[key].listNow;
-      }
-    });
-
+    Object.assign(stateToUpdate, this.lists.moveGetState(t))
     Object.keys(stateToUpdate).length > 0 && update(stateToUpdate);
 
     /* Sequence of the managers is important here */
@@ -414,15 +396,15 @@ export default class MessageDistributor extends StatedScreen {
       /* Lists: */
       case "console_log":
         if (msg.level === 'debug') break;
-        listAppend("log", Log({
+        this.lists.lists.log.append(Log({
           level: msg.level,
           value: msg.value,
           time,
           index,
-        }));
+        }))
         break;
       case "fetch":
-        listAppend("fetch", Resource({
+        this.lists.lists.fetch.append(Resource({
           method: msg.method,
           url: msg.url,
           payload: msg.request,
@@ -469,42 +451,42 @@ export default class MessageDistributor extends StatedScreen {
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
         logger.log('redux', decoded)
         if (decoded != null) {
-          this.lists.redux.append(decoded);
+          this.lists.lists.redux.append(decoded);
         }
         break;
       case "ng_rx":
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
         logger.log('ngrx', decoded)
         if (decoded != null) {
-          this.lists.ngrx.append(decoded);
+          this.lists.lists.ngrx.append(decoded);
         }
         break;
       case "vuex":
         decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
         logger.log('vuex', decoded)
         if (decoded != null) {
-          this.lists.vuex.append(decoded);
+          this.lists.lists.vuex.append(decoded);
         }
         break;
       case "zustand":
         decoded = this.decodeStateMessage(msg, ["state", "mutation"])
         logger.log('zustand', decoded)
         if (decoded != null) {
-          this.lists.zustand.append(decoded)
+          this.lists.lists.zustand.append(decoded)
         }
       case "mob_x":
         decoded = this.decodeStateMessage(msg, ["payload"]);
         logger.log('mobx', decoded)
 
         if (decoded != null) {
-          this.lists.mobx.append(decoded);
+          this.lists.lists.mobx.append(decoded);
         }
         break;
       case "graph_ql":
-        this.lists.graphql.append(msg);
+        this.lists.lists.graphql.append(msg);
         break;
       case "profiler":
-        this.lists.profiles.append(msg);
+        this.lists.lists.profiles.append(msg);
         break;
       default:
         switch (msg.tp) {

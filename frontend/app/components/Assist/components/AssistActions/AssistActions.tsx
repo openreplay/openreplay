@@ -3,7 +3,7 @@ import { Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { toggleChatWindow } from 'Duck/sessions';
-import { connectPlayer } from 'Player/store';
+import { connectPlayer } from 'Player';
 import ChatWindow from '../../ChatWindow';
 import {
   callPeer,
@@ -16,9 +16,9 @@ import {
   CallingState,
   ConnectionStatus,
   RemoteControlStatus,
-} from 'Player/MessageDistributor/managers/AssistManager';
-import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
-import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
+  RequestLocalStream,
+} from 'Player';
+import type { LocalStream } from 'Player';
 import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';

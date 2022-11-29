@@ -91,6 +91,7 @@
     "@types/react-dom": "^18.0.4",
     "@types/react-redux": "^7.1.24",
     "@types/react-router-dom": "^5.3.3",
+    "@types/react-virtualized": "^9.21.21",
     "@typescript-eslint/eslint-plugin": "^5.24.0",
     "@typescript-eslint/parser": "^5.24.0",
     "autoprefixer": "^10.4.7",

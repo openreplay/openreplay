@@ -3,16 +3,14 @@ package main
 import (
 	"context"
 	"log"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/sink/assetscache"
-	"openreplay/backend/internal/sink/oswriter"
+	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
@@ -21,8 +19,6 @@ import (
 )
 
 func main() {
-	pprof.StartProfilingServer()
-
 	metrics := monitoring.New("sink")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -33,7 +29,7 @@ func main() {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
+	writer := sessionwriter.NewWriter(cfg.FsUlimit, cfg.FsDir, cfg.FileBuffer, cfg.SyncTimeout)
 
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
@@ -64,6 +60,7 @@ func main() {
 			if err := producer.Produce(cfg.TopicTrigger, msg.SessionID(), msg.Encode()); err != nil {
 				log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, msg.SessionID())
 			}
+			writer.Close(msg.SessionID())
 			return
 		}
 
@@ -95,47 +92,20 @@ func main() {
 			counter.Update(msg.SessionID(), time.UnixMilli(ts))
 		}
 
-		// Write encoded message with index to session file
-		data := msg.EncodeWithIndex()
+		// Try to encode message to avoid null data inserts
+		data := msg.Encode()
 		if data == nil {
-			log.Printf("can't encode with index, err: %s", err)
 			return
 		}
-		wasWritten := false // To avoid timestamp duplicates in original mob file
-		if messages.IsDOMType(msg.TypeID()) {
-			if err := writer.WriteDOM(msg.SessionID(), data); err != nil {
-				if strings.Contains(err.Error(), "not a directory") {
-					// Trying to write data to mob file by original path
-					oldErr := writer.WriteMOB(msg.SessionID(), data)
-					if oldErr != nil {
-						log.Printf("MOB Writeer error: %s, prev DOM error: %s, info: %s", oldErr, err, msg.Meta().Batch().Info())
-					} else {
-						wasWritten = true
-					}
-				} else {
-					log.Printf("DOM Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
-				}
-			}
-		}
-		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
-			// TODO: write only necessary timestamps
-			if err := writer.WriteDEV(msg.SessionID(), data); err != nil {
-				if strings.Contains(err.Error(), "not a directory") {
-					if !wasWritten {
-						// Trying to write data to mob file by original path
-						oldErr := writer.WriteMOB(msg.SessionID(), data)
-						if oldErr != nil {
-							log.Printf("MOB Writeer error: %s, prev DEV error: %s, info: %s", oldErr, err, msg.Meta().Batch().Info())
-						}
-					}
-				} else {
-					log.Printf("Devtools Writer error: %s, info: %s", err, msg.Meta().Batch().Info())
-				}
-			}
+
+		// Write message to file
+		if err := writer.Write(msg); err != nil {
+			log.Printf("writer error: %s", err)
+			return
 		}
 
 		// [METRICS] Increase the number of written to the files messages and the message size
-		messageSize.Record(context.Background(), float64(len(data)))
+		messageSize.Record(context.Background(), float64(len(msg.Encode())))
 		savedMessages.Add(context.Background(), 1)
 	}
 
@@ -153,27 +123,36 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(30 * time.Second)
+	tick := time.Tick(10 * time.Second)
+	tickInfo := time.Tick(30 * time.Second)
 	for {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			if err := writer.CloseAll(); err != nil {
-				log.Printf("closeAll error: %v\n", err)
-			}
+			// Sync and stop writer
+			writer.Stop()
+			// Commit and stop consumer
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			if err := writer.SyncAll(); err != nil {
-				log.Fatalf("sync error: %v\n", err)
-			}
-			counter.Print()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}
+		case <-tickInfo:
+			counter.Print()
+			log.Printf("writer: %s", writer.Info())
+		case <-consumer.Rebalanced():
+			s := time.Now()
+			// Commit now to avoid duplicate reads
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
+			// Sync all files
+			writer.Sync()
+			log.Printf("manual sync finished, dur: %d", time.Now().Sub(s).Milliseconds())
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
