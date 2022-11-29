@@ -2,6 +2,7 @@ from utils.ch_client import ClickHouseClient
 from utils.pg_client import PostgresClient
 
 def get_features_clickhouse(**kwargs):
+    """Gets features from ClickHouse database"""
     if 'limit' in kwargs:
         limit = kwargs['limit']
     else:
@@ -16,6 +17,7 @@ ON T1.session_id = T2.session_id AND T1.project_id = T2.project_id;"""
 
 
 def query_funnels(*kwargs):
+    """Gets Funnels (PG database)"""
     # If public.funnel is empty
     funnels_query = f"""SELECT project_id, user_id, filter FROM (SELECT project_id, user_id, metric_id FROM public.metrics WHERE metric_type='funnel'
     ) as T1 LEFT JOIN (SELECT filter, metric_id FROM public.metric_series) as T2 ON T1.metric_id = T2.metric_id"""
@@ -29,6 +31,7 @@ def query_funnels(*kwargs):
 
 
 def query_metrics(*kwargs):
+    """Gets Metrics (PG_database)"""
     metrics_query = """SELECT metric_type, metric_of, metric_value, metric_format FROM public.metrics"""
     with PostgresClient() as conn:
         conn.execute(metrics_query)
@@ -37,9 +40,10 @@ def query_metrics(*kwargs):
 
 
 def query_with_filters(*kwargs):
+    """Gets Metrics with filters (PG database)"""
     filters_query = """SELECT T1.metric_id as metric_id, project_id, name, metric_type, metric_of, filter FROM (
-    SELECT metric_id, project_id, name, metric_type, metric_of FROM metric_series WHERE filter != '{}') as T1 INNER JOIN
-    (SELECT metric_id, filter FROM metrics) as T2 ON T1.metric_id = T2.metric_id"""
+    SELECT metric_id, project_id, name, metric_type, metric_of FROM metrics) as T1 INNER JOIN
+    (SELECT metric_id, filter FROM metric_series WHERE filter != '{}') as T2 ON T1.metric_id = T2.metric_id"""
     with PostgresClient() as conn:
         conn.execute(filters_query)
         res = conn.fetchall()
@@ -104,6 +108,10 @@ def get_by_user(data, user_id):
     return [data[k] for k in index_]
 
 
+def test():
+    print('One test')
+
 if __name__ == '__main__':
-    data = get_features_clickhouse()
-    print('Data length:', len(data))
+    print('Just a test')
+    #data = get_features_clickhouse()
+    #print('Data length:', len(data))
