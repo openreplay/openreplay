@@ -2,6 +2,7 @@ import type { Socket } from 'socket.io-client';
 import type Peer from 'peerjs';
 import type { MediaConnection } from 'peerjs';
 import type MessageManager from '../MessageManager';
+import type Screen from '../Screen/Screen';
 import appStore from 'App/store';
 import type { LocalStream } from './LocalStream';
 import type { Store } from '../../common/types'
@@ -78,6 +79,7 @@ export default class AssistManager {
   constructor(
     private session: any,
     private md: MessageManager,
+    private screen: Screen,
     private config: RTCIceServer[],
     private store: Store<State>,
   ) {}
@@ -94,9 +96,9 @@ export default class AssistManager {
       this.md.setMessagesLoading(false);
     }
     if (status === ConnectionStatus.Connected) {
-      this.md.display(true);
+      this.screen.display(true);
     } else {
-      this.md.display(false);
+      this.screen.display(false);
     }
     this.store.update({ peerConnectionStatus: status });
   }
@@ -253,7 +255,7 @@ export default class AssistManager {
 
   private onMouseMove = (e: MouseEvent): void => {
     if (!this.socket) { return }
-    const data = this.md.getInternalCoordinates(e)
+    const data = this.screen.getInternalCoordinates(e)
     this.socket.emit("move", [ data.x, data.y ])
   }
 
@@ -269,9 +271,9 @@ export default class AssistManager {
     if (!this.socket) { return; }
     if (this.store.get().annotating) { return; } // ignore clicks while annotating
 
-    const data = this.md.getInternalViewportCoordinates(e)
-    // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
-    const el = this.md.getElementFromInternalPoint(data)
+    const data = this.screen.getInternalViewportCoordinates(e)
+    // const el = this.screen.getElementFromPoint(e); // requires requestiong node_id from domManager
+    const el = this.screen.getElementFromInternalPoint(data)
     if (el instanceof HTMLElement) {
       el.focus()
       el.oninput = e => {
@@ -299,16 +301,16 @@ export default class AssistManager {
 
   private toggleRemoteControl(enable: boolean){
     if (enable) {
-      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
-      this.md.overlay.addEventListener("click", this.onMouseClick)
-      this.md.overlay.addEventListener("wheel", this.onWheel)
-      this.md.toggleBorder(true)
+      this.screen.overlay.addEventListener("mousemove", this.onMouseMove)
+      this.screen.overlay.addEventListener("click", this.onMouseClick)
+      this.screen.overlay.addEventListener("wheel", this.onWheel)
+      this.screen.toggleBorder(true)
       this.store.update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
-      this.md.overlay.removeEventListener("mousemove", this.onMouseMove)
-      this.md.overlay.removeEventListener("click", this.onMouseClick)
-      this.md.overlay.removeEventListener("wheel", this.onWheel)
-      this.md.toggleBorder(false)
+      this.screen.overlay.removeEventListener("mousemove", this.onMouseMove)
+      this.screen.overlay.removeEventListener("click", this.onMouseClick)
+      this.screen.overlay.removeEventListener("wheel", this.onWheel)
+      this.screen.toggleBorder(false)
       this.store.update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
     }
@@ -540,10 +542,10 @@ export default class AssistManager {
     }
     if (enable && !this.annot) {
       const annot = this.annot = new AnnotationCanvas()
-      annot.mount(this.md.overlay)
+      annot.mount(this.screen.overlay)
       annot.canvas.addEventListener("mousedown", e => {
         if (!this.socket) { return }
-        const data = this.md.getInternalViewportCoordinates(e)
+        const data = this.screen.getInternalViewportCoordinates(e)
         annot.start([ data.x, data.y ])
         this.socket.emit("startAnnotation", [ data.x, data.y ])
       })
@@ -560,7 +562,7 @@ export default class AssistManager {
       annot.canvas.addEventListener("mousemove", e => {
         if (!this.socket || !annot.isPainting()) { return }
 
-        const data = this.md.getInternalViewportCoordinates(e)
+        const data = this.screen.getInternalViewportCoordinates(e)
         annot.move([ data.x, data.y ])
         this.socket.emit("moveAnnotation", [ data.x, data.y ])
       })

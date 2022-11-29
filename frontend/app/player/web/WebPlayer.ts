@@ -71,7 +71,7 @@ export default class WebPlayer extends Player {
     })
 
     // TODO: separate LiveWebPlayer
-    this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
+    this.assistManager = new AssistManager(session, this.messageManager, screen, config, wpState)
     if (live) {
       this.assistManager.connect(session.agentToken)
     }

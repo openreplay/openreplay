@@ -1,6 +1,6 @@
 import { State } from './Lists'
 
-enum StorageType {
+export enum StorageType {
  REDUX = "redux",
  MOBX = "mobx",
  VUEX = "vuex",
@@ -9,22 +9,22 @@ enum StorageType {
  NONE = 0,
 }
 
-export const STORAGE_TYPES = StorageType
+export const STORAGE_TYPES = StorageType // TODO: update name everywhere
 
 export function selectStorageType(state: State): StorageType {
-	if (!state.reduxList) return STORAGE_TYPES.NONE
+	if (!state.reduxList) return StorageType.NONE
 	if (state.reduxList.length > 0) {
-		return STORAGE_TYPES.REDUX
+		return StorageType.REDUX
 	} else if (state.vuexList.length > 0) {
-		return STORAGE_TYPES.VUEX
+		return StorageType.VUEX
 	} else if (state.mobxList.length > 0) {
-		return STORAGE_TYPES.MOBX
+		return StorageType.MOBX
 	} else if (state.ngrxList.length > 0) {
-		return STORAGE_TYPES.NGRX
+		return StorageType.NGRX
 	} else if (state.zustandList.length > 0) {
-		return STORAGE_TYPES.ZUSTAND
+		return StorageType.ZUSTAND
 	}
-	return STORAGE_TYPES.NONE
+	return StorageType.NONE
 }
 
 export function selectStorageList(state: State) {
