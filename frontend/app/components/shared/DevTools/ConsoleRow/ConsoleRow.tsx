@@ -37,7 +37,7 @@ function ConsoleRow(props: Props) {
           'cursor-pointer underline decoration-dotted decoration-gray-200': !!log.errorId,
         }
       )}
-      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : () => {}}
+      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : undefined}
     >
       <div className="mr-2">
         <Icon size="14" {...iconProps} />
