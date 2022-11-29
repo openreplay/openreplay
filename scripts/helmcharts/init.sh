@@ -1,4 +1,5 @@
 #/bin/bash
+set -e
 
 # --- helper functions for logs ---
 info()
@@ -19,15 +20,16 @@ version="v1.9.0"
 usr=`whoami`
 
 # Installing k3s
-function install_k8s{
+function install_k8s() {
     curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.22.8+k3s1' INSTALL_K3S_EXEC="--no-deploy=traefik" sh -
     [[ -d ~/.kube ]] || mkdir ~/.kube
     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
     sudo chmod 0644 ~/.kube/config
     sudo chown -R $usr ~/.kube/config
+    sleep 10
 }
 
-function install_tools(){
+function install_tools() {
     ## installing kubectl
     which kubectl &> /dev/null || {
         info "kubectl not installed. Installing it..."
@@ -64,8 +66,6 @@ function install_tools(){
         sudo eget --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
     }
 }
-
-sleep 10
 
 # ## Installing openssl
 # sudo apt update &> /dev/null
@@ -126,7 +126,7 @@ function install_openreplay() {
   helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
 }
 
-function main(){
+function main() {
   [[ x$SKIP_K8S_INSTALL == "x1" ]] && {
       info "Skipping Kuberntes installation"
   } || {
@@ -145,3 +145,5 @@ function main(){
     install_openreplay
   }
 }
+
+main
