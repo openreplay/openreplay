@@ -40,7 +40,7 @@ jobs:
     - name: Building and Pushing frontend image
       id: build-image
       env:
-        DOCKER_REPO: ${{ secrets.DEV_REGISTRY_URL }}
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
