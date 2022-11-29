@@ -53,7 +53,7 @@ function Storage(props: Props) {
   const renderDiff = (item: Record<string, any>, prevItem: Record<string, any>) => {
     if (!prevItem) {
       // we don't have state before first action
-      return <div style={{ flex: 1 }} className="p-1" />;
+      return <div style={{ flex: 3 }} className="p-1" />;
     }
 
     const stateDiff = diff(prevItem.state, item.state);
@@ -104,13 +104,6 @@ function Storage(props: Props) {
   const goNext = () => {
     // , list[listNow.length]._index
     player.jump(list[listNow.length].time);
-  };
-
-  const renderTab = () => {
-    if (listNow.length === 0) {
-      return 'Not initialized'; //?
-    }
-    return <JSONTree collapsed={2} src={listNow[listNow.length - 1].state} />;
   };
 
   const renderItem = (item: Record<string, any>, i: number, prevItem: Record<string, any>) => {
@@ -279,16 +272,16 @@ function Storage(props: Props) {
             ) : null
           }
           size="small"
-          show={listNow.length === 0}
+          show={list.length === 0}
         >
           {showStore && (
             <div className="ph-10 scroll-y" style={{ width: '25%' }}>
-              {listNow.length === 0 ? (
+              {list.length === 0 ? (
                 <div className="color-gray-light font-size-16 mt-20 text-center">
                   {'Empty state.'}
                 </div>
               ) : (
-                renderTab()
+                <JSONTree collapsed={2} src={listNow.length === 0 ? list[0].state : listNow[listNow.length - 1].state} />
               )}
             </div>
           )}
