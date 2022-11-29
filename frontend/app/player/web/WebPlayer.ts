@@ -112,11 +112,11 @@ export default class WebPlayer extends Player {
   }
 
   // Target Marker
-  setActiveTarget = (args: Parameters<TargetMarker['setActiveTarget']>) => {
+  setActiveTarget = (...args: Parameters<TargetMarker['setActiveTarget']>) => {
     this.targetMarker.setActiveTarget(...args)
   }
 
-  markTargets = (args: Parameters<TargetMarker['markTargets']>) => {
+  markTargets = (...args: Parameters<TargetMarker['markTargets']>) => {
     this.pause()
     this.targetMarker.markTargets(...args)
   }
