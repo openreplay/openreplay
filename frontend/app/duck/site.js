@@ -15,14 +15,12 @@ import {
 	createEdit,
 	createRemove,
 	createUpdate,
-	createSave,
 	saveType,
 } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { Map, List, fromJS } from "immutable";
-import { GLOBAL_HAS_NO_RECORDINGS } from 'App/constants/storageKeys';
+import { GLOBAL_HAS_NO_RECORDINGS, SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 
-const SITE_ID_STORAGE_KEY = "__$user-siteId$__";
 const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
 
 const name = 'project';
