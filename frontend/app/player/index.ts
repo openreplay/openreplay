@@ -6,6 +6,3 @@ export * from  './common/types';
 export * from './create';
 
 export type { MarkedTarget } from './web/TargetMarker'
-
-export * from './_store';
-export * from './_singletone';

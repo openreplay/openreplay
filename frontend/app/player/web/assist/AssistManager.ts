@@ -4,7 +4,7 @@ import type { MediaConnection } from 'peerjs';
 import type MessageManager from '../MessageManager';
 import appStore from 'App/store';
 import type { LocalStream } from './LocalStream';
-import type { Store } from '../../player/types'
+import type { Store } from '../../common/types'
 import AnnotationCanvas from './AnnotationCanvas';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
