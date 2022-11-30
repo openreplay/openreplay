@@ -31,24 +31,27 @@ const ItemTypes = {
 }
 
 interface Props {
-    left: number;
-    top: number;
-    onDrop?: (item, monitor) => void;
+    left: number
+    live: boolean
+    onDrop?: () => void
 }
 
-const DraggableCircle: FC<Props> = memo(function DraggableCircle(props) {
-    const { left, top, live } = props
+const DraggableCircle: FC<Props> = memo(function DraggableCircle({ 
+    left,
+    live,
+    onDrop,
+}) {
     const [{ isDragging, item }, dragRef, preview] = useDrag(
         () => ({
             type: ItemTypes.BOX,
-            item: { left, top },
-            end: props.onDrop,
+            item: { left },
+            end: onDrop,
             collect: (monitor: DragSourceMonitor) => ({
                 isDragging: monitor.isDragging(),
                 item: monitor.getItem(),
             }),
         }),
-        [left, top],
+        [left],
     )
 
     useEffect(() => {

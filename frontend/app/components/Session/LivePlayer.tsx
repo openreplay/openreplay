@@ -2,10 +2,12 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
-import { withRequest } from 'HOCs';
+import withRequest from 'HOCs/withRequest';
 import withPermissions from 'HOCs/withPermissions';
 import { PlayerContext, defaultContextValue } from './playerContext';
 import { makeAutoObservable } from 'mobx';
+import { createLiveWebPlayer } from 'Player'
+import type { IWebPlayer } from 'Player'
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
@@ -23,28 +25,25 @@ function LivePlayer ({
   userEmail,
   userName,
 }) {
-  const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
+  const [contextValue, setContextValue] = useState(defaultContextValue);
   const [fullView, setFullView] = useState(false);
   useEffect(() => {
-    if (!loadingCredentials) {
-      const sessionWithAgentData = {
-        ...session.toJS(),
-        agentInfo: {
-          email: userEmail,
-          name: userName,
-        },
-      }
-      // initPlayer(sessionWithAgentData, assistCredendials, true);
-      const [LivePlayer, LivePlayerStore] = createLiveWebPlayer(
-        sessionWithAgentData,
-        assistCredendials,
-        (state) => makeAutoObservable(state)
-        )
-      setContextValue({ player: LivePlayer, store: LivePlayerStore });
-
+    if (loadingCredentials) { return }
+    const sessionWithAgentData = {
+      ...session.toJS(),
+      agentInfo: {
+        email: userEmail,
+        name: userName,
+      },
     }
-    return () => LivePlayer.clean()
-  }, [ session.sessionId, loadingCredentials, assistCredendials ]);
+    const [player, store] = createLiveWebPlayer(
+      sessionWithAgentData,
+      assistCredendials,
+      (state) => makeAutoObservable(state)
+    )
+    setContextValue({ player, store })
+    return () => player.clean()
+  }, [ session.sessionId, assistCredendials ])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
@@ -83,7 +82,6 @@ function LivePlayer ({
 export default withRequest({
   initialData: null,
   endpoint: '/assist/credentials',
-  dataWrapper: (data) => data,
   dataName: 'assistCredendials',
   loadingName: 'loadingCredentials',
 })(

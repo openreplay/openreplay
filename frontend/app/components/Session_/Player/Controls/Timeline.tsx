@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useContext, useState, useRef } from 'react';
 import { connect } from 'react-redux';
 import { Icon } from 'UI'
 import TimeTracker from './TimeTracker';
@@ -14,19 +14,15 @@ import { useStore } from 'App/mstore';
 
 const BOUNDRY = 0;
 
-function getTimelinePosition(value, scale) {
+function getTimelinePosition(value: number, scale: number) {
   const pos = value * scale;
 
   return pos > 100 ? 99 : pos;
 }
 
-let deboucneJump = () => null;
-let debounceTooltipChange = () => null;
-
-
 function Timeline(props) {
-  const { player, store } = React.useContext(PlayerContext)
-  const [wasPlaying, setWasPlaying] = React.useState(false);
+  const { player, store } = useContext(PlayerContext)
+  const [wasPlaying, setWasPlaying] = useState(false)
   const { notesStore } = useStore();
   const {
     playing,
@@ -35,28 +31,30 @@ function Timeline(props) {
     eventList: events,
     skip,
     skipToIssue,
-    disabled,
+    ready,
     endTime,
     live,
+    liveTimeTravel,
   } = store.get()
   const notes = notesStore.sessionNotes
 
-  const progressRef = React.useRef();
-  const timelineRef = React.useRef();
+  const progressRef = useRef()
+  const timelineRef = useRef()
 
 
   const scale = 100 / endTime;
 
-  React.useEffect(() => {
+  useEffect(() => {
     const { issues } = props;
     const firstIssue = issues.get(0);
-    deboucneJump = debounce(player.jump, 500);
-    debounceTooltipChange = debounce(props.setTimelineHoverTime, 50);
 
     if (firstIssue && skipToIssue) {
       player.jump(firstIssue.time);
     }
   }, [])
+
+  const debouncedJump = useMemo(() => debounce(player.jump, 500), [])
+  const debouncedTooltipChange = useMemo(() => debounce(props.setTimelineHoverTime, 50), [])
 
   const onDragEnd = () => {
     if (live && !liveTimeTravel) return;
@@ -71,7 +69,7 @@ function Timeline(props) {
 
     const p = (offset.x - BOUNDRY) / progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
-    deboucneJump(time);
+    debouncedJump(time);
     hideTimeTooltip();
     if (playing) {
       setWasPlaying(true)
@@ -80,7 +78,7 @@ function Timeline(props) {
   };
 
   const getLiveTime = (e) => {
-    const duration = new Date().getTime() - startedAt;
+    const duration = new Date().getTime() - props.startedAt;
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * duration), 0);
 
@@ -111,12 +109,12 @@ function Timeline(props) {
       };
     }
 
-    debounceTooltipChange(timeLineTooltip);
-  };
+    debouncedTooltipChange(timeLineTooltip);
+  }
 
   const hideTimeTooltip = () => {
     const timeLineTooltip = { isVisible: false };
-    debounceTooltipChange(timeLineTooltip);
+    debouncedTooltipChange(timeLineTooltip);
   };
 
   const seekProgress = (e) => {
@@ -127,14 +125,14 @@ function Timeline(props) {
 
   const loadAndSeek = async (e) => {
     e.persist();
-    await toggleTimetravel();
+    await player.toggleTimetravel();
 
     setTimeout(() => {
       seekProgress(e);
     });
   };
 
-  const jumpToTime = (e) => {
+  const jumpToTime: React.MouseEventHandler = (e) => {
     if (live && !liveTimeTravel) {
       loadAndSeek(e);
     } else {
@@ -142,7 +140,7 @@ function Timeline(props) {
     }
   };
 
-  const getTime = (e, customEndTime) => {
+  const getTime = (e: React.MouseEvent, customEndTime?: number) => {
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const targetTime = customEndTime || endTime;
     const time = Math.max(Math.round(p * targetTime), 0);
@@ -163,7 +161,7 @@ function Timeline(props) {
       >
         <div
           className={stl.progress}
-          onClick={disabled ? null : jumpToTime}
+          onClick={ready ? jumpToTime : null }
           ref={progressRef}
           role="button"
           onMouseMoveCapture={showTimeTooltip}
