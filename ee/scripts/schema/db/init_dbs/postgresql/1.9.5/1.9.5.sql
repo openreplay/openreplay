@@ -20,4 +20,16 @@ CREATE TABLE IF NOT EXISTS assist_records
 
 ALTER TYPE webhook_type ADD VALUE IF NOT EXISTS 'msteams';
 
+DELETE
+FROM metrics
+WHERE is_predefined
+  AND is_template
+  AND metric_type = 'predefined';
+
+-- TODO: transform metric_type to text
+-- TODO: drop metric_type enum
+-- TODO: drop is_pinned
+-- TODO: drop is_predefined
+-- TODO: drop is_template
+
 COMMIT;

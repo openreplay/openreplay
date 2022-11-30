@@ -831,24 +831,27 @@ class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema, _Paginat
         alias_generator = attribute_to_camel_case
 
 
-class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
-    name: str = Field(...)
+class TryCardSchema(CustomMetricChartPayloadSchema):
+    name: Optional[str] = Field(...)
     series: List[CustomMetricCreateSeriesSchema] = Field(...)
     is_public: bool = Field(default=True)
-    view_type: Union[MetricTimeseriesViewType, MetricTableViewType] = Field(MetricTimeseriesViewType.line_chart)
-    metric_type: MetricType = Field(MetricType.timeseries)
-    metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
+    view_type: Union[MetricTimeseriesViewType, MetricTableViewType, str] = Field(MetricTimeseriesViewType.line_chart)
+    metric_type: Union[MetricType, str] = Field(MetricType.timeseries)
+    metric_of: Union[TableMetricOfType, TimeseriesMetricOfType, str] = Field(TableMetricOfType.user_id)
     metric_value: List[IssueType] = Field([])
     metric_format: Optional[MetricFormatType] = Field(None)
 
-    # metricFraction: float = Field(None, gt=0, lt=1)
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
-    def remove_metric_value(cls, values):
+    def transform(cls, values):
         if values.get("metricType") == MetricType.timeseries \
                 or values.get("metricType") == MetricType.table \
                 and values.get("metricOf") != TableMetricOfType.issues:
             values["metricValue"] = []
+
+        if values.get("metric_type") == MetricType.funnel.value and \
+                values.get("series") is not None and len(values["series"]) > 1:
+            values["series"] = [values["series"][0]]
         return values
 
     @root_validator
@@ -878,17 +881,8 @@ class CustomMetricsConfigSchema(BaseModel):
     position: Optional[int] = Field(default=0)
 
 
-class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
-    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    config: CustomMetricsConfigSchema = Field(...)
-
-    @root_validator(pre=True)
-    def transform_series(cls, values):
-        if values.get("series") is not None and len(values["series"]) > 1 and values.get(
-                "metric_type") == MetricType.funnel.value:
-            values["series"] = [values["series"][0]]
-
-        return values
+class CreateCardSchema(TryCardSchema):
+    name: str = Field(...)
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
@@ -898,8 +892,8 @@ class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
         alias_generator = attribute_to_camel_case
 
 
-class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
-    series: List[CustomMetricUpdateSeriesSchema] = Field(..., min_items=1)
+class UpdateCardSchema(CreateCardSchema):
+    series: List[CustomMetricUpdateSeriesSchema] = Field(...)
 
 
 class UpdateCustomMetricsStatusSchema(BaseModel):

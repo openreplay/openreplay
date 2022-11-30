@@ -9,7 +9,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 PIE_CHART_GROUP = 5
 
 
-def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+def __try_live(project_id, data: schemas.TryCardSchema):
     results = []
     for i, s in enumerate(data.series):
         s.filter.startDate = data.startTimestamp
@@ -42,11 +42,11 @@ def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     return results
 
 
-def __is_funnel_chart(data: schemas.TryCustomMetricsPayloadSchema):
+def __is_funnel_chart(data: schemas.TryCardSchema):
     return data.metric_type == schemas.MetricType.funnel
 
 
-def __get_funnel_chart(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+def __get_funnel_chart(project_id, data: schemas.TryCardSchema):
     if len(data.series) == 0:
         return {
             "stages": [],
@@ -94,7 +94,7 @@ def __get_sessions_list(project_id, user_id, data):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id=None):
+def merged_live(project_id, data: schemas.TryCardSchema, user_id=None):
     if __is_funnel_chart(data):
         return __get_funnel_chart(project_id=project_id, data=data)
     elif __is_errors_list(data):
@@ -115,10 +115,10 @@ def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id
 
 def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
                                                  schemas.CustomMetricSessionsPayloadSchema]) \
-        -> Union[schemas.CreateCustomMetricsSchema, None]:
+        -> Union[schemas.CreateCardSchema, None]:
     if data.series is not None and len(data.series) > 0:
         metric["series"] = data.series
-    metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
+    metric: schemas.CreateCardSchema = schemas.CreateCardSchema.parse_obj({**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
             if len(data.filters) > 0:
@@ -133,7 +133,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
         metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
 
     return merged_live(project_id=project_id, data=metric, user_id=user_id)
     # if __is_funnel_chart(metric):
@@ -156,7 +156,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     results = []
@@ -175,7 +175,7 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     for s in metric.series:
@@ -191,7 +191,7 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSe
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     for s in metric.series:
@@ -218,7 +218,7 @@ def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadS
     return results
 
 
-def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboard=False):
+def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         _data = {}
         for i, s in enumerate(data.series):
@@ -254,7 +254,7 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboa
     return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSchema):
+def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -509,7 +509,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     for s in metric.series:

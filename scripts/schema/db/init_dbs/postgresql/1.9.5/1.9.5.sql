@@ -5,6 +5,9 @@ $$
 SELECT 'v1.9.5'
 $$ LANGUAGE sql IMMUTABLE;
 
-ALTER TYPE webhook_type ADD VALUE IF NOT EXISTS 'msteams';
+DELETE
+FROM metrics
+WHERE is_predefined
+  AND is_template;
 
 COMMIT;
