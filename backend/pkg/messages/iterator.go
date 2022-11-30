@@ -60,6 +60,20 @@ func (i *messageIteratorImpl) preDecodeBatch(batchData []byte) error {
 
 	// Check full batch
 	for {
+		// Increase message index (can be overwritten by batch info message)
+		i.messageInfo.Index++
+
+		if i.broken {
+			return fmt.Errorf("skipping broken batch")
+		}
+
+		if i.canSkip {
+			if _, err := reader.Seek(int64(i.size), io.SeekCurrent); err != nil {
+				return fmt.Errorf("skip message err: %s", err)
+			}
+		}
+		i.canSkip = false
+
 		msgType, err := ReadUint(reader)
 		if err != nil {
 			if err == io.EOF {
