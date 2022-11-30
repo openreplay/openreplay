@@ -1,22 +1,19 @@
 import type { Socket } from 'socket.io-client';
-import type Peer from 'peerjs';
-import type { MediaConnection } from 'peerjs';
 import type MessageManager from '../MessageManager';
 import type Screen from '../Screen/Screen';
-import appStore from 'App/store';
-import type { LocalStream } from './LocalStream';
 import type { Store } from '../../common/types'
-import AnnotationCanvas from './AnnotationCanvas';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
-import { toast } from 'react-toastify'
+import appStore from 'App/store';
+import Call, { CallingState } from './Call';
+import RemoteControl, { RemoteControlStatus } from './RemoteControl'
+import ScreenRecording,  { SessionRecordingStatus } from './ScreenRecording'
 
-export enum CallingState {
-  NoCall,
-  Connecting,
-  Requesting,
-  Reconnecting,
-  OnCall,
+
+export {
+  RemoteControlStatus,
+  SessionRecordingStatus,
+  CallingState,
 }
 
 export enum ConnectionStatus {
@@ -27,18 +24,6 @@ export enum ConnectionStatus {
   Disconnected,
   Error,
   Closed,
-}
-
-export enum RemoteControlStatus {
-  Disabled = 0,
-  Requesting,
-  Enabled,
-}
-
-export enum SessionRecordingStatus {
-  Off,
-  Requesting,
-  Recording
 }
 
 
@@ -61,37 +46,40 @@ export function getStatusText(status: ConnectionStatus): string {
   }
 }
 
-export interface State {
-  calling: CallingState;
-  peerConnectionStatus: ConnectionStatus;
-  remoteControl: RemoteControlStatus;
-  recordingState: SessionRecordingStatus;
-  annotating: boolean;
-  assistStart: number;
-}
-
-export const INITIAL_STATE: State = {
-  calling: CallingState.NoCall,
-  peerConnectionStatus: ConnectionStatus.Connecting,
-  remoteControl: RemoteControlStatus.Disabled,
-  recordingState: SessionRecordingStatus.Off,
-  annotating: false,
-  assistStart: 0,
-}
+// export interface State {
+//   peerConnectionStatus: ConnectionStatus;
+//   assistStart: number;
+// }
 
 const MAX_RECONNECTION_COUNT = 4;
 
 export default class AssistManager {
-  private videoStreams: Record<string, MediaStreamTrack> = {}
-
+  static readonly INITIAL_STATE = {
+    peerConnectionStatus: ConnectionStatus.Connecting,
+    assistStart: 0,
+    ...Call.INITIAL_STATE,
+    ...RemoteControl.INITIAL_STATE,
+    ...ScreenRecording.INITIAL_STATE,
+  }
   // TODO: Session type
   constructor(
     private session: any,
     private md: MessageManager,
     private screen: Screen,
     private config: RTCIceServer[],
-    private store: Store<State>,
+    private store: Store<typeof AssistManager.INITIAL_STATE>,
   ) {}
+
+  private get borderStyle() {
+    const { recordingState, remoteControl } = this.store.get()
+
+    const isRecordingActive = recordingState === SessionRecordingStatus.Recording
+    const isControlActive = remoteControl === RemoteControlStatus.Enabled
+    // recording gets priority here
+    if (isRecordingActive) return { border: '2px dashed red' }
+    if (isControlActive) return { border: '2px dashed blue' }
+    return { border: 'unset'}
+  }
 
   private setStatus(status: ConnectionStatus) {
     if (this.store.get().peerConnectionStatus === ConnectionStatus.Disconnected &&
@@ -123,6 +111,7 @@ export default class AssistManager {
       this.socketCloseTimeout = setTimeout(() => {
         const state = this.store.get()
         if (document.hidden &&
+          // TODO: should here be disabled?
           (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
           this.socket?.close()
         }
@@ -133,28 +122,27 @@ export default class AssistManager {
   }
 
   private socket: Socket | null = null
+  private disconnectTimeout: ReturnType<typeof setTimeout> | undefined
+  private inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+  private clearDisconnectTimeout() {
+    this.disconnectTimeout && clearTimeout(this.disconnectTimeout)
+    this.disconnectTimeout = undefined
+  }
+  private clearInactiveTimeout() {
+    this.inactiveTimeout && clearTimeout(this.inactiveTimeout)
+    this.inactiveTimeout = undefined
+  }
   connect(agentToken: string) {
     const jmr = new JSONRawMessageReader()
     const reader = new MStreamReader(jmr, this.session.startedAt)
     let waitingForMessages = true
-    let disconnectTimeout: ReturnType<typeof setTimeout> | undefined
-    let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
-    function clearDisconnectTimeout() {
-      disconnectTimeout && clearTimeout(disconnectTimeout)
-      disconnectTimeout = undefined
-    }
-    function clearInactiveTimeout() {
-      inactiveTimeout && clearTimeout(inactiveTimeout)
-      inactiveTimeout = undefined
-    }
 
     const now = +new Date()
     this.store.update({ assistStart: now })
 
     // @ts-ignore
     import('socket.io-client').then(({ default: io }) => {
-      if (this.cleaned) { return }
-      if (this.socket) { this.socket.close() } // TODO: single socket connection
+      if (this.socket != null || this.cleaned) { return }
       // @ts-ignore
       const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
@@ -176,496 +164,126 @@ export default class AssistManager {
         waitingForMessages = true
         this.setStatus(ConnectionStatus.WaitingMessages) // TODO: happens frequently on bad network
       })
-      socket.on("disconnect", () => {
-        this.toggleRemoteControl(false)
-        this.store.update({ calling: CallingState.NoCall })
-      })
       socket.on('messages', messages => {
         jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
-
-          // Call State
-          if (this.store.get().calling === CallingState.Reconnecting) {
-            this._callSessionPeer() // reconnecting call (todo improve code separation)
-          }
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
-          // @ts-ignore TODO: fix msg types in generator
+          // @ts-ignore TODO: make index a thing.
           this.md.appendMessage(msg, msg._index)
         }
       })
-      socket.on("control_granted", id => {
-        this.toggleRemoteControl(id === socket.id)
-      })
-      socket.on("control_rejected", id => {
-        id === socket.id && this.toggleRemoteControl(false)
-      })
+
       socket.on('SESSION_RECONNECTED', () => {
-        clearDisconnectTimeout()
-        clearInactiveTimeout()
+        this.clearDisconnectTimeout()
+        this.clearInactiveTimeout()
         this.setStatus(ConnectionStatus.Connected)
       })
 
       socket.on('UPDATE_SESSION', ({ active }) => {
-        clearDisconnectTimeout()
-        !inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
+        this.clearDisconnectTimeout()
+        !this.inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
         if (typeof active === "boolean") {
-          clearInactiveTimeout()
+          this.clearInactiveTimeout()
           if (active) {
             this.setStatus(ConnectionStatus.Connected)
           } else {
-            inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+            this.inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
           }
         }
       })
-      socket.on('videofeed', ({ streamId, enabled }) => {
-        console.log(streamId, enabled)
-        console.log(this.videoStreams)
-        if (this.videoStreams[streamId]) {
-          this.videoStreams[streamId].enabled = enabled
-        }
-        console.log(this.videoStreams)
-      })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
-        clearDisconnectTimeout()
-        disconnectTimeout = setTimeout(() => {
-          if (this.cleaned) { return }
+        this.clearDisconnectTimeout()
+        this.disconnectTimeout = setTimeout(() => {
           this.setStatus(ConnectionStatus.Disconnected)
         }, 30000)
-
-        if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
-          this.toggleRemoteControl(false) // else its remaining
-        }
-
-        // Call State
-        if (this.store.get().calling === CallingState.OnCall) {
-          this.store.update({ calling: CallingState.Reconnecting })
-        } else if (this.store.get().calling === CallingState.Requesting){
-          this.store.update({ calling: CallingState.NoCall })
-        }
       })
       socket.on('error', e => {
         console.warn("Socket error: ", e )
         this.setStatus(ConnectionStatus.Error);
-        this.toggleRemoteControl(false)
       })
-      socket.on('call_end', this.onRemoteCallEnd)
-      socket.on('recording_accepted', () => {
-        this.toggleRecording(true)
-      })
-      socket.on('recording_rejected', () => {
-        this.toggleRecording(false)
-      })
-      socket.on('recording_busy', () => {
-        this.onRecordingBusy()
-      })
+
+      // Maybe  do lazy initialization for all?
+      this.callManager = new Call(
+        this.store,
+        socket,
+        this.config,
+        this.peerID,
+      )
+      this.remoteControl = new RemoteControl(
+        this.store,
+        socket,
+        this.screen,
+        this.session.agentInfo,
+        () => this.screen.setBorderStyle(this.borderStyle)
+      )
+      this.screenRecording = new ScreenRecording(
+        this.store,
+        socket,
+        this.session.agentInfo,
+        () => this.screen.setBorderStyle(this.borderStyle),
+      )
 
       document.addEventListener('visibilitychange', this.onVisChange)
-
     })
   }
 
-  /* ==== Recording the session ==== */
 
-  private onRecordingBusy = () => {
-    toast.error("This session is already being recorded by another agent")
+  /* ==== ScreenRecording ==== */
+  private screenRecording: ScreenRecording | null = null
+  requestRecording = (...args: Parameters<ScreenRecording['requestRecording']>) => {
+    return this.screenRecording?.requestRecording(...args)
   }
-
-  public requestRecording = () => {
-    const recordingState =this.store.get().recordingState
-    if (!this.socket || recordingState === SessionRecordingStatus.Requesting) return;
-
-    this.store.update({ recordingState: SessionRecordingStatus.Requesting })
-    this.socket.emit("request_recording", JSON.stringify({
-      ...this.session.agentInfo,
-      query: document.location.search,
-    }))
-  }
-
-  public stopRecording = () => {
-    const recordingState = this.store.get().recordingState
-    if (!this.socket || recordingState === SessionRecordingStatus.Off) return;
-
-    this.socket.emit("stop_recording")
-    this.toggleRecording(false)
-  }
-
-  private get borderStyle() {
-    const { recordingState, remoteControl } = this.store.get()
-
-    const isRecordingActive = recordingState === SessionRecordingStatus.Recording
-    const isControlActive = remoteControl === RemoteControlStatus.Enabled
-    // recording gets priority here
-    if (isRecordingActive) return { border: '2px dashed red' }
-    if (isControlActive) return { border: '2px dashed blue' }
-    return { border: 'unset'}
-  }
-
-  private toggleRecording = (isAccepted: boolean) => {
-    this.store.update({ recordingState: isAccepted ? SessionRecordingStatus.Recording : SessionRecordingStatus.Off })
-
-    this.screen.setBorderStyle(this.borderStyle)
-  }
-
-  /* ==== Remote Control ==== */
-
-  private onMouseMove = (e: MouseEvent): void => {
-    if (!this.socket) { return }
-    const data = this.screen.getInternalCoordinates(e)
-    this.socket.emit("move", [ data.x, data.y ])
-  }
-
-  private onWheel = (e: WheelEvent): void => {
-    e.preventDefault()
-    if (!this.socket) { return }
-    //throttling makes movements less smooth, so it is omitted
-    //this.onMouseMove(e)
-    this.socket.emit("scroll", [ e.deltaX, e.deltaY ])
-  }
-
-  private onMouseClick = (e: MouseEvent): void => {
-    if (!this.socket) { return; }
-    if (this.store.get().annotating) { return; } // ignore clicks while annotating
-
-    const data = this.screen.getInternalViewportCoordinates(e)
-    // const el = this.screen.getElementFromPoint(e); // requires requestiong node_id from domManager
-    const el = this.screen.getElementFromInternalPoint(data)
-    if (el instanceof HTMLElement) {
-      el.focus()
-      el.oninput = e => {
-        if (el instanceof HTMLTextAreaElement
-          || el instanceof HTMLInputElement
-        ) {
-          this.socket && this.socket.emit("input", el.value)
-        } else if (el.isContentEditable) {
-          this.socket && this.socket.emit("input", el.innerText)
-        }
-      }
-      // TODO: send "focus" event to assist with the nodeID
-      el.onkeydown = e => {
-        if (e.key == "Tab") {
-          e.preventDefault()
-        }
-      }
-      el.onblur = () => {
-        el.oninput = null
-        el.onblur = null
-      }
-    }
-    this.socket.emit("click",  [ data.x, data.y ]);
-  }
-
-  private toggleRemoteControl(enable: boolean){
-    if (enable) {
-      this.screen.overlay.addEventListener("mousemove", this.onMouseMove)
-      this.screen.overlay.addEventListener("click", this.onMouseClick)
-      this.screen.overlay.addEventListener("wheel", this.onWheel)
-      this.store.update({ remoteControl: RemoteControlStatus.Enabled })
-
-      this.screen.setBorderStyle(this.borderStyle)
-    } else {
-      this.screen.overlay.removeEventListener("mousemove", this.onMouseMove)
-      this.screen.overlay.removeEventListener("click", this.onMouseClick)
-      this.screen.overlay.removeEventListener("wheel", this.onWheel)
-      this.store.update({ remoteControl: RemoteControlStatus.Disabled })
-      this.toggleAnnotation(false)
-
-      this.screen.setBorderStyle(this.borderStyle)
-    }
-  }
-
-  requestReleaseRemoteControl = () => {
-    if (!this.socket) { return }
-    const remoteControl = this.store.get().remoteControl
-    if (remoteControl === RemoteControlStatus.Requesting) { return }
-    if (remoteControl === RemoteControlStatus.Disabled) {
-      this.store.update({ remoteControl: RemoteControlStatus.Requesting })
-      this.socket.emit("request_control", JSON.stringify({
-        ...this.session.agentInfo,
-        query: document.location.search
-      }))
-      // setTimeout(() => {
-      //   if (this.store.get().remoteControl !== RemoteControlStatus.Requesting) { return }
-      //   this.socket?.emit("release_control")
-      //   this.store.update({ remoteControl: RemoteControlStatus.Disabled })
-      // }, 8000)
-    } else {
-      this.socket.emit("release_control")
-      this.toggleRemoteControl(false)
-    }
-  }
-
-  releaseRemoteControl = () => {
-    if (!this.socket) { return }
-    this.socket.emit("release_control")
-    this.toggleRemoteControl(false)
+  stopRecording = (...args: Parameters<ScreenRecording['stopRecording']>) => {
+    return this.screenRecording?.stopRecording(...args)
   }
 
 
-  /* ==== PeerJS Call ==== */
-
-  private _peer: Peer | null = null
-  private connectionAttempts: number = 0
-  private callConnection: MediaConnection[] = []
-  private getPeer(): Promise<Peer> {
-    if (this._peer && !this._peer.disconnected) { return Promise.resolve(this._peer) }
-
-    // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP || window.location.origin)
-
-    // @ts-ignore TODO: set module in ts settings
-    return import('peerjs').then(({ default: Peer }) => {
-      if (this.cleaned) {return Promise.reject("Already cleaned")}
-      const peerOpts: Peer.PeerJSOption = {
-        host: urlObject.hostname,
-        path: '/assist',
-        port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),
-      }
-      if (this.config) {
-        peerOpts['config'] = {
-          iceServers: this.config,
-          //@ts-ignore
-          sdpSemantics: 'unified-plan',
-          iceTransportPolicy: 'relay',
-        };
-      }
-      const peer = this._peer = new Peer(peerOpts)
-      peer.on('call', call => {
-        console.log('getting call from', call.peer)
-          call.answer(this.callArgs.localStream.stream)
-          this.callConnection.push(call)
-
-          this.callArgs.localStream.onVideoTrack(vTrack => {
-            const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
-            if (!sender) {
-              console.warn("No video sender found")
-              return
-            }
-            sender.replaceTrack(vTrack)
-          })
-
-          call.on('stream', stream => {
-            this.videoStreams[call.peer] = stream.getVideoTracks()[0]
-            this.callArgs && this.callArgs.onStream(stream)
-          });
-          // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
-
-          call.on("close", this.onRemoteCallEnd)
-          call.on("error", (e) => {
-            console.error("PeerJS error (on call):", e)
-            this.initiateCallEnd();
-            this.callArgs && this.callArgs.onError && this.callArgs.onError();
-          });
-      })
-      peer.on('error', e => {
-        if (e.type === 'disconnected') {
-          return peer.reconnect()
-        } else if (e.type !== 'peer-unavailable') {
-          console.error(`PeerJS error (on peer). Type ${e.type}`, e);
-        }
-
-        //call-reconnection connected
- //       if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
-          // this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT
-          //   ? ConnectionStatus.Connecting
-          //   : ConnectionStatus.Disconnected);
-          // Reconnect...
-      })
-
-      return new Promise(resolve => {
-        peer.on("open", () => resolve(peer))
-      })
-    });
-
+  /* ==== RemoteControl ==== */
+  private remoteControl: RemoteControl | null = null
+  requestReleaseRemoteControl = (...args: Parameters<RemoteControl['requestReleaseRemoteControl']>) => {
+    return this.remoteControl?.requestReleaseRemoteControl(...args)
+  }
+  releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => {
+    return this.remoteControl?.releaseRemoteControl(...args)
+  }
+  toggleAnnotation = (...args: Parameters<RemoteControl['toggleAnnotation']>) => {
+    return this.remoteControl?.toggleAnnotation(...args)
   }
 
-
-  private handleCallEnd() {
-    this.callArgs && this.callArgs.onCallEnd()
-    this.callConnection[0] && this.callConnection[0].close()
-    this.store.update({ calling: CallingState.NoCall })
-    this.callArgs = null
-    this.toggleAnnotation(false)
+  /* ==== Call  ==== */
+  private callManager: Call | null = null
+  initiateCallEnd = async (...args: Parameters<Call['initiateCallEnd']>) => {
+    return this.callManager?.initiateCallEnd(...args)
+  }
+  setCallArgs = (...args: Parameters<Call['setCallArgs']>) => {
+    return this.callManager?.setCallArgs(...args)
+  }
+  call = (...args: Parameters<Call['call']>) => {
+    return this.callManager?.call(...args)
+  }
+  toggleVideoLocalStream = (...args: Parameters<Call['toggleVideoLocalStream']>) => {
+    return this.callManager?.toggleVideoLocalStream(...args)
+  }
+  addPeerCall = (...args: Parameters<Call['addPeerCall']>) => {
+    return this.callManager?.addPeerCall(...args)
   }
 
-  public initiateCallEnd = async () => {
-    this.socket?.emit("call_end", appStore.getState().getIn([ 'user', 'account', 'name']))
-    this.handleCallEnd()
-    const remoteControl = this.store.get().remoteControl
-    if (remoteControl === RemoteControlStatus.Enabled) {
-      this.socket.emit("release_control")
-      this.toggleRemoteControl(false)
-    }
-  }
-
-  private onRemoteCallEnd = () => {
-    if (this.store.get().calling === CallingState.Requesting) {
-      this.callArgs && this.callArgs.onReject()
-      this.callConnection[0] && this.callConnection[0].close()
-      this.store.update({ calling: CallingState.NoCall })
-      this.callArgs = null
-      this.toggleAnnotation(false)
-    } else {
-      this.handleCallEnd()
-    }
-  }
-
-  private callArgs: {
-    localStream: LocalStream,
-    onStream: (s: MediaStream)=>void,
-    onCallEnd: () => void,
-    onReject: () => void,
-    onError?: ()=> void,
-  } | null = null
-
-  public setCallArgs(
-    localStream: LocalStream,
-    onStream: (s: MediaStream)=>void,
-    onCallEnd: () => void,
-    onReject: () => void,
-    onError?: (e?: any)=> void,
-  ) {
-    this.callArgs = {
-      localStream,
-      onStream,
-      onCallEnd,
-      onReject,
-      onError,
-    }
-  }
-
-  public call(thirdPartyPeers?: string[]): { end: () => void } {
-    if (thirdPartyPeers && thirdPartyPeers.length > 0) {
-      this.addPeerCall(thirdPartyPeers)
-    } else {
-      this._callSessionPeer()
-    }
-    return {
-      end: this.initiateCallEnd,
-    }
-  }
-
-  /** Connecting to the other agents that are already
-   *  in the call with the user
-   */
-  public addPeerCall(thirdPartyPeers: string[]) {
-    thirdPartyPeers.forEach(peer => this._peerConnection(peer))
-  }
-
-  /** Connecting to the app user */
-  private _callSessionPeer() {
-    if (![CallingState.NoCall, CallingState.Reconnecting].includes(this.store.get().calling)) { return }
-    this.store.update({ calling: CallingState.Connecting })
-    this._peerConnection(this.peerID);
-    this.socket && this.socket.emit("_agent_name", appStore.getState().getIn([ 'user', 'account', 'name']))
-  }
-
-  private async _peerConnection(remotePeerId: string) {
-    try {
-      const peer = await this.getPeer();
-      const call = peer.call(remotePeerId, this.callArgs.localStream.stream)
-      this.callConnection.push(call)
-
-      this.callArgs.localStream.onVideoTrack(vTrack => {
-        const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
-        if (!sender) {
-          console.warn("No video sender found")
-          return
-        }
-        sender.replaceTrack(vTrack)
-      })
-
-      call.on('stream', stream => {
-        this.store.get().calling !== CallingState.OnCall && this.store.update({ calling: CallingState.OnCall })
-
-        this.videoStreams[call.peer] = stream.getVideoTracks()[0]
-
-        this.callArgs && this.callArgs.onStream(stream)
-      });
-      // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
-
-      call.on("close", this.onRemoteCallEnd)
-      call.on("error", (e) => {
-        console.error("PeerJS error (on call):", e)
-        this.initiateCallEnd();
-        this.callArgs && this.callArgs.onError && this.callArgs.onError();
-      });
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  toggleAnnotation(enable?: boolean) {
-    // if (this.store.get().calling !== CallingState.OnCall) { return }
-    if (typeof enable !== "boolean") {
-      enable = !!this.store.get().annotating
-    }
-    if (enable && !this.annot) {
-      const annot = this.annot = new AnnotationCanvas()
-      annot.mount(this.screen.overlay)
-      annot.canvas.addEventListener("mousedown", e => {
-        if (!this.socket) { return }
-        const data = this.screen.getInternalViewportCoordinates(e)
-        annot.start([ data.x, data.y ])
-        this.socket.emit("startAnnotation", [ data.x, data.y ])
-      })
-      annot.canvas.addEventListener("mouseleave", () => {
-        if (!this.socket) { return }
-        annot.stop()
-        this.socket.emit("stopAnnotation")
-      })
-      annot.canvas.addEventListener("mouseup", () => {
-        if (!this.socket) { return }
-        annot.stop()
-        this.socket.emit("stopAnnotation")
-      })
-      annot.canvas.addEventListener("mousemove", e => {
-        if (!this.socket || !annot.isPainting()) { return }
-
-        const data = this.screen.getInternalViewportCoordinates(e)
-        annot.move([ data.x, data.y ])
-        this.socket.emit("moveAnnotation", [ data.x, data.y ])
-      })
-      this.store.update({ annotating: true })
-    } else if (!enable && !!this.annot) {
-      this.annot.remove()
-      this.annot = null
-      this.store.update({ annotating: false })
-    }
-  }
-
-  toggleVideoLocalStream(enabled: boolean) {
-    this.getPeer().then((peer) => {
-      this.socket.emit('videofeed', { streamId: peer.id, enabled })
-    })
-  }
-
-  private annot: AnnotationCanvas | null = null
 
   /* ==== Cleaning ==== */
-  private cleaned: boolean = false
+  private cleaned = false
   clean() {
     this.cleaned = true // sometimes cleaned before modules loaded
-    this.initiateCallEnd();
-    if (this._peer) {
-      console.log("destroying peer...")
-      const peer = this._peer; // otherwise it calls reconnection on data chan close
-      this._peer = null;
-      peer.disconnect();
-      peer.destroy();
-    }
-    if (this.socket) {
-      this.socket.close()
-      document.removeEventListener('visibilitychange', this.onVisChange)
-    }
-    if (this.annot) {
-      this.annot.remove()
-      this.annot = null
-    }
+    this.remoteControl?.clean()
+    this.callManager?.clean()
+    this.socket?.close()
+    this.clearDisconnectTimeout()
+    this.clearInactiveTimeout()
+    document.removeEventListener('visibilitychange', this.onVisChange)
   }
 }

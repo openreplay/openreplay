@@ -6,9 +6,7 @@ import Player, { State as PlayerState } from '../player/Player'
 import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'
 import TargetMarker from './addons/TargetMarker'
-import AssistManager, {
-  INITIAL_STATE as ASSIST_INITIAL_STATE,
-} from './assist/AssistManager'
+import AssistManager from './assist/AssistManager'
 import Screen from './Screen/Screen'
 
 // export type State = typeof WebPlayer.INITIAL_STATE
@@ -19,7 +17,7 @@ export default class WebPlayer extends Player {
     ...TargetMarker.INITIAL_STATE,
 
     ...MessageManager.INITIAL_STATE,
-    ...ASSIST_INITIAL_STATE,
+    ...AssistManager.INITIAL_STATE,
 
     inspectorMode: false,
     liveTimeTravel: false,
