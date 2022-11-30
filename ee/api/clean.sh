@@ -4,6 +4,8 @@ rm -rf ./chalicelib/core/alerts.py
 #exp rm -rf ./chalicelib/core/alerts_processor.py
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/autocomplete.py
+rm -rf ./chalicelib/core/collaboration_base.py
+rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
 #exp rm -rf ./chalicelib/core/errors.py
@@ -36,7 +38,6 @@ rm -rf ./chalicelib/core/sessions_assignments.py
 rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
 #exp rm -rf ./chalicelib/core/significance.py
-rm -rf ./chalicelib/core/slack.py
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
 rm -rf ./chalicelib/core/sourcemaps_parser.py
