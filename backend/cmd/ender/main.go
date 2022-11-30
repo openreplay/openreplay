@@ -5,6 +5,7 @@ import (
 	"openreplay/backend/internal/storage"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -72,6 +73,10 @@ func main() {
 				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
 				if err != nil {
 					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
+					if strings.Contains(err.Error(), "integer out of range") {
+						// Skip message with broken duration
+						return true
+					}
 					return false
 				}
 				if currDuration == newDuration {
