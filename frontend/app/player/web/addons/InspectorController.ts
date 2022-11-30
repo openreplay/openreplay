@@ -1,7 +1,7 @@
-import Marker from './Screen/Marker'
-import Inspector from './Screen/Inspector'
-import Screen from './Screen/Screen'
-import type { Dimensions } from './Screen/types'
+import Marker from '../Screen/Marker'
+import Inspector from '../Screen/Inspector'
+import Screen from '../Screen/Screen'
+import type { Dimensions } from '../Screen/types'
 
 
 export default class InspectorController {
