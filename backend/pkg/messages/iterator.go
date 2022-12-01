@@ -55,56 +55,19 @@ func (i *messageIteratorImpl) prepareVars(batchInfo *BatchInfo) {
 
 // Trying to decode types and sizes of all messages in batch (v1 only)
 func (i *messageIteratorImpl) preDecodeBatch(batchData []byte) error {
-	// Initialize batch reader
-	reader := bytes.NewReader(batchData)
+	// Initialize message reader
+	messages := NewBatchReader(batchData)
 
-	// Check full batch
-	for {
+	// Check all messages in batch
+	for messages.Next() {
+		// Get next message
+		msg := messages.Message()
+
 		// Increase message index (can be overwritten by batch info message)
 		i.messageInfo.Index++
 
-		if i.broken {
-			return fmt.Errorf("skipping broken batch")
-		}
-
-		if i.canSkip {
-			if _, err := reader.Seek(int64(i.size), io.SeekCurrent); err != nil {
-				return fmt.Errorf("skip message err: %s", err)
-			}
-		}
-		i.canSkip = false
-
-		msgType, err := ReadUint(reader)
-		if err != nil {
-			if err == io.EOF {
-				// Successfully checked batch
-				return nil
-			}
-			return fmt.Errorf("read message type err: %s", err)
-		}
-
-		// Read message body (and decode if protocol version less than 1)
-		var msg Message
-		if i.version > 0 && messageHasSize(msgType) {
-			// Read message size if it is a new protocol version
-			i.size, err = ReadSize(reader)
-			if err != nil {
-				return fmt.Errorf("read message size err: %s", err)
-			}
-			i.canSkip = true
-		} else {
-			msg, err = ReadMessage(msgType, reader)
-			if err != nil {
-				if err == io.EOF {
-					return nil
-				}
-				return fmt.Errorf("read message err: %s", err)
-			}
-			msg = transformDeprecated(msg)
-		}
-
 		// Preprocess batch message
-		if msgType == MsgBatchMeta || msgType == MsgBatchMetadata {
+		if msg.TypeID() == MsgBatchMeta || msg.TypeID() == MsgBatchMetadata {
 			msg = msg.Decode()
 			if msg == nil {
 				return fmt.Errorf("decode message error")
@@ -118,6 +81,7 @@ func (i *messageIteratorImpl) preDecodeBatch(batchData []byte) error {
 			}
 		}
 	}
+	return messages.Error()
 }
 
 func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
@@ -126,7 +90,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 
 	// Pre-decode batch data
 	if err := i.preDecodeBatch(batchData); err != nil {
-		log.Printf("pre-decode batch err: %s", err)
+		log.Printf("pre-decode batch err: %s, info: %s", err, batchInfo.Info())
 		return
 	}
 
@@ -173,13 +137,10 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 				return
 			}
 			msg = &RawMessage{
-				tp:      msgType,
-				size:    i.size,
-				reader:  reader,
-				raw:     batchData,
-				skipped: &i.canSkip,
-				broken:  &i.broken,
-				meta:    i.messageInfo,
+				tp:     msgType,
+				size:   i.size,
+				broken: &i.broken,
+				meta:   i.messageInfo,
 			}
 			i.canSkip = true
 		} else {
