@@ -3,6 +3,7 @@ import cn from 'classnames';
 import { connect } from 'react-redux';
 import { STORAGE_TYPES, selectStorageType } from 'Player';
 import LiveTag from 'Shared/LiveTag';
+import AssistSessionsTabs from './AssistSessionsTabs';
 
 import { Icon, Tooltip } from 'UI';
 import {
@@ -95,6 +96,7 @@ function Controls(props: any) {
     skipInterval,
     disabledRedux,
     showStorageRedux,
+    session,
     // showStackRedux,
   } = props;
 
@@ -259,6 +261,10 @@ function Controls(props: any) {
             )}
           </div>
 
+          <div>
+            <AssistSessionsTabs session={session} />
+          </div>
+
           <div className="flex items-center h-full">
             <ControlButton
               disabled={disabled && !inspectorMode}
@@ -368,6 +374,7 @@ export default connect(
       bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
       showStorageRedux: !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
       showStackRedux: !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
+      session: state.getIn(['sessions', 'current']),
       closedLive:
         !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current', 'live']),
       skipInterval: state.getIn(['components', 'player', 'skipInterval']),
