@@ -24,6 +24,7 @@ import SessionStore from './sessionStore';
 import NotesStore from './notesStore';
 import BugReportStore from './bugReportStore'
 import RecordingsStore from './recordingsStore'
+import AssistTabStore from './assistTabStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -39,6 +40,7 @@ export class RootStore {
   notesStore: NotesStore;
   bugReportStore: BugReportStore;
   recordingsStore: RecordingsStore;
+  assistTabStore: AssistTabStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -54,6 +56,7 @@ export class RootStore {
     this.notesStore = new NotesStore();
     this.bugReportStore = new BugReportStore();
     this.recordingsStore = new RecordingsStore();
+    this.assistTabStore = new AssistTabStore();
   }
 
   initClient() {
