@@ -7,7 +7,6 @@ import withPermissions from 'HOCs/withPermissions';
 import { PlayerContext, defaultContextValue } from './playerContext';
 import { makeAutoObservable } from 'mobx';
 import { createLiveWebPlayer } from 'Player'
-
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
@@ -42,7 +41,7 @@ function LivePlayer({
   const [fullView, setFullView] = useState(false);
 
   useEffect(() => {
-    if (loadingCredentials || !session.sessionId) { return }
+    if (loadingCredentials || !session.sessionId) return;
     const sessionWithAgentData = {
       // @ts-ignore burn immutable
       ...session.toJS(),
@@ -89,6 +88,7 @@ function LivePlayer({
     <PlayerContext.Provider value={contextValue}>
       {!fullView && (
         <PlayerBlockHeader
+          // @ts-ignore
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           tabs={TABS}
