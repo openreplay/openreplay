@@ -87,7 +87,7 @@ function AssistSessionsModal(props: Props) {
         <>
           {list.map((session) => (
             <React.Fragment key={session.sessionID}>
-              <div className="rounded bg-white mb-2 overflow-hidden border">
+              <div className={cn("rounded bg-white mb-2 overflow-hidden border", session.sessionId === assistTabStore.activeSession.sessionId ? 'cursor-not-allowed' : '')}>
                 <SessionItem
                   key={session.sessionId}
                   session={session}
@@ -95,6 +95,8 @@ function AssistSessionsModal(props: Props) {
                   hasUserFilter={hasUserFilter}
                   onUserClick={onUserClick}
                   metaList={metaList}
+                  isDisabled={session.sessionId === assistTabStore.activeSession.sessionId}
+                  isAdd
                   onClick={() => onSessionAdd(session)}
                 />
               </div>
@@ -134,4 +136,4 @@ export default connect(
     addFilterByKeyAndValue,
     updateCurrentPage,
   }
-)(AssistSessionsModal);
+)(observer(AssistSessionsModal));

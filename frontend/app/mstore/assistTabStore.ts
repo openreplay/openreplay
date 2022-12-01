@@ -15,6 +15,10 @@ export default class AssistTabStore {
     return this.activeSession.sessionId === sessionId
   }
 
+  get activeSessionId() {
+    return this.activeSession?.sessionId || ''
+  }
+
   setSessions(sessions: TabSessions) {
     this.sessions = sessions
   }

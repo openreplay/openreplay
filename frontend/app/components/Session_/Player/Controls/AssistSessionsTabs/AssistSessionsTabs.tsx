@@ -50,6 +50,7 @@ function AssistTabs({ session }: { session: Session }) {
     if (assistTabStore.sessions.length === 0) {
       assistTabStore.addSession(session)
       assistTabStore.setActiveSession(session.sessionId)
+      console.log(assistTabStore.sessions, assistTabStore.activeSession, session.sessionId)
     }
   }, [])
 
@@ -59,7 +60,7 @@ function AssistTabs({ session }: { session: Session }) {
       {assistTabStore.sessions.map(session => (
         <React.Fragment key={session.sessionId}>
           {assistTabStore.isActive(session.sessionId)
-        ? <CurrentTab /> : <ActiveTab />}
+        ? <CurrentTab /> : <ActiveTab onClick={() => assistTabStore.setActiveSession(session.sessionId)} />}
         </React.Fragment>
       )
       )}
