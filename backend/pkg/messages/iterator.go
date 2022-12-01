@@ -114,7 +114,6 @@ func (i *messageIteratorImpl) preDecodeBatch(batchData []byte) error {
 				return fmt.Errorf("preprocessing message err: %s", err)
 			}
 			if i.version < 1 {
-				log.Printf("unsupported tracker version: %d", i.version)
 				return nil
 			}
 		}
