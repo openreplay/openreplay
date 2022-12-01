@@ -8,7 +8,7 @@ import { Log } from './types';
 
 import { toast } from 'react-toastify';
 
-import type  { Store } from '../common/types';
+import type  { Store, Timed } from '../common/types';
 import ListWalker from '../common/ListWalker';
 
 import PagesManager from './managers/PagesManager';
@@ -209,7 +209,7 @@ export default class MessageManager {
     this.setMessagesLoading(false)
   }
 
-  private loadMessages() {
+  private async loadMessages() {
     // TODO: reuseable decryptor instance
     const createNewParser = (shouldDecrypt=true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
@@ -226,18 +226,26 @@ export default class MessageManager {
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    loadFiles(this.session.domURL, createNewParser())
-    .catch(() => // do if  only the first file missing (404) (?)
-      requestEFSDom(this.session.sessionId)
-        .then(createNewParser(false))
-        // Fallback to back Compatability with mobsUrl
-        .catch(e =>
-          loadFiles(this.session.mobsUrl, createNewParser(false))
-        )
-    )
-    .then(this.onFileReadSuccess)
-    .catch(this.onFileReadFailed)
-    .finally(this.onFileReadFinally)
+    try {
+      if (this.session.domURL && this.session.domURL.length > 0) {
+        await loadFiles(this.session.domURL, createNewParser())
+        this.onFileReadSuccess()
+      } else {
+        const file = await requestEFSDom(this.session.sessionId)
+        const parser = createNewParser(false)
+        await parser(file)
+      }
+    } catch (e) {
+        console.error('Cant get session replay file:', e)
+        try {
+          // back compat with old mobsUrl
+          await loadFiles(this.session.mobsUrl, createNewParser(false))
+        } catch (e) {
+          this.onFileReadFailed(e)
+        }
+    } finally {
+      this.onFileReadFinally()
+    }
 
     // load devtools
     if (this.session.devtoolsURL.length) {
@@ -252,7 +260,7 @@ export default class MessageManager {
     }
   }
 
-  reloadWithUnprocessedFile(onSuccess: ()=>void) {
+  reloadWithUnprocessedFile(onSuccess: () => void) {
     const onData = (byteArray: Uint8Array) => {
       const onMessage = (msg: Message) => { this.lastMessageInFileTime = msg.time }
       this.parseAndDistributeMessages(new MFileReader(byteArray, this.sessionStart), onMessage)
@@ -430,6 +438,7 @@ export default class MessageManager {
         )
         break;
       case "fetch":
+        // @ts-ignore burn immutable
         this.lists.lists.fetch.append(Resource({
           method: msg.method,
           url: msg.url,

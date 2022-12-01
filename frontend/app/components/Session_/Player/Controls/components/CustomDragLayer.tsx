@@ -75,7 +75,7 @@ const  CustomDragLayer: FC<Props> = memo(function CustomDragLayer(props) {
             return null;
         }
       }
-    
+
     if (!isDragging) {
         return null;
     }

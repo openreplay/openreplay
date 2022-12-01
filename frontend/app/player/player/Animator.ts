@@ -154,9 +154,6 @@ export default class Animator {
 
   // jump by index?
   jump = (time: number) => {
-    const { live } = this.store.get()
-    if (live) return
-
     if (this.store.get().playing) {
       cancelAnimationFrame(this.animationFrameRequestId)
       this.setTime(time)
@@ -189,7 +186,7 @@ export default class Animator {
   }
 
   // TODO: clearify logic of live time-travel
-  jumpToLive() {
+  jumpToLive = () => {
     cancelAnimationFrame(this.animationFrameRequestId)
     this.setTime(this.store.get().endTime)
     this.startAnimation()

@@ -57,7 +57,7 @@ const DraggableCircle: FC<Props> = memo(function DraggableCircle({
     useEffect(() => {
         preview(getEmptyImage(), { captureDraggingState: true })
     }, [])
-    
+
     return (
         <div
             ref={dragRef}

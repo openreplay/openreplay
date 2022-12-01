@@ -4,8 +4,8 @@ import { Icon } from 'UI'
 import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
 import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
-import DraggableCircle from './DraggableCircle';
-import CustomDragLayer from './CustomDragLayer';
+import DraggableCircle from './components/DraggableCircle';
+import CustomDragLayer from './components/CustomDragLayer';
 import { debounce } from 'App/utils';
 import TooltipContainer from './components/TooltipContainer';
 import { PlayerContext } from 'App/components/Session/playerContext';

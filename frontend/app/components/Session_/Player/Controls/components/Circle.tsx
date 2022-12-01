@@ -1,5 +1,5 @@
 import React, { memo, FC } from 'react';
-import styles from './timeline.module.css';
+import styles from '../timeline.module.css';
 import cn from 'classnames';
 
 interface Props {

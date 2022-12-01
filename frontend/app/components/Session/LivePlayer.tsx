@@ -7,13 +7,26 @@ import withPermissions from 'HOCs/withPermissions';
 import { PlayerContext, defaultContextValue } from './playerContext';
 import { makeAutoObservable } from 'mobx';
 import { createLiveWebPlayer } from 'Player'
-import type { IWebPlayer } from 'Player'
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
+import Session from 'App/mstore/types/session';
 
-function LivePlayer ({
+interface Props {
+  session: Session;
+  toggleFullscreen: (isOn: boolean) => void;
+  closeBottomBlock: () => void;
+  fullscreen: boolean;
+  loadingCredentials: boolean;
+  assistCredendials: RTCIceServer[];
+  request: () => void;
+  isEnterprise: boolean;
+  userEmail: string;
+  userName: string;
+}
+
+function LivePlayer({
   session,
   toggleFullscreen,
   closeBottomBlock,
@@ -24,12 +37,14 @@ function LivePlayer ({
   isEnterprise,
   userEmail,
   userName,
-}) {
+}: Props) {
   const [contextValue, setContextValue] = useState(defaultContextValue);
   const [fullView, setFullView] = useState(false);
+
   useEffect(() => {
-    if (loadingCredentials) { return }
+    if (loadingCredentials || !session.sessionId) { return }
     const sessionWithAgentData = {
+      // @ts-ignore burn immutable
       ...session.toJS(),
       agentInfo: {
         email: userEmail,
@@ -42,6 +57,7 @@ function LivePlayer ({
       (state) => makeAutoObservable(state)
     )
     setContextValue({ player, store })
+    player.play()
     return () => player.clean()
   }, [ session.sessionId, assistCredendials ])
 
@@ -71,10 +87,17 @@ function LivePlayer ({
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      {!fullView && (<PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>)}
-          <div className={ styles.session } data-fullscreen={fullscreen}>
-              <PlayerBlock />
-          </div>
+      {!fullView && (
+        <PlayerBlockHeader
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          tabs={TABS}
+          fullscreen={fullscreen}
+        />
+      )}
+      <div className={styles.session} data-fullscreen={fullscreen}>
+        <PlayerBlock />
+      </div>
     </PlayerContext.Provider>
   );
 }
@@ -91,7 +114,7 @@ export default withRequest({
     true
   )(
     connect(
-      (state) => {
+      (state: any) => {
         return {
           session: state.getIn(['sessions', 'current']),
           showAssist: state.getIn(['sessions', 'showChatWindow']),
