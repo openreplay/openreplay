@@ -63,6 +63,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
+			failedSessionEnds := make(map[uint64]int64)
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
@@ -72,11 +73,12 @@ func main() {
 				}
 				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
 				if err != nil {
-					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
 					if strings.Contains(err.Error(), "integer out of range") {
-						// Skip message with broken duration
+						// Skip session with broken duration
+						failedSessionEnds[sessionID] = timestamp
 						return true
 					}
+					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
 					return false
 				}
 				if currDuration == newDuration {
@@ -99,6 +101,7 @@ func main() {
 				}
 				return true
 			})
+			log.Println("sessions with wrong duration:", failedSessionEnds)
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Printf("can't commit messages with offset: %s", err)
