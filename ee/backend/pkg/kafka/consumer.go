@@ -120,7 +120,6 @@ func (consumer *Consumer) commitAtTimestamps(
 	if err != nil {
 		return err
 	}
-	logPartitions("Actually assigned:", assigned)
 
 	var timestamps []kafka.TopicPartition
 	for _, p := range assigned { // p is a copy here since it is not a pointer
@@ -142,7 +141,6 @@ func (consumer *Consumer) commitAtTimestamps(
 		if err != nil {
 			return errors.Wrap(err, "Kafka Consumer retrieving committed error")
 		}
-		logPartitions("Actually committed:", committed)
 		for _, comm := range committed {
 			if comm.Offset == kafka.OffsetStored ||
 				comm.Offset == kafka.OffsetInvalid ||

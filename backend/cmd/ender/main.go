@@ -64,6 +64,8 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			failedSessionEnds := make(map[uint64]int64)
+			duplicatedSessionEnds := make(map[uint64]uint64)
+
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
@@ -82,8 +84,8 @@ func main() {
 					return false
 				}
 				if currDuration == newDuration {
-					log.Printf("sessionEnd duplicate, sessID: %d, prevDur: %d, newDur: %d", sessionID,
-						currDuration, newDuration)
+					// Skip session end duplicate
+					duplicatedSessionEnds[sessionID] = currDuration
 					return true
 				}
 				if cfg.UseEncryption {
@@ -101,7 +103,12 @@ func main() {
 				}
 				return true
 			})
-			log.Println("sessions with wrong duration:", failedSessionEnds)
+			if len(failedSessionEnds) > 0 {
+				log.Println("sessions with wrong duration:", failedSessionEnds)
+			}
+			if len(duplicatedSessionEnds) > 0 {
+				log.Println("session end duplicates:", duplicatedSessionEnds)
+			}
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Printf("can't commit messages with offset: %s", err)
