@@ -103,6 +103,7 @@ func (m *messageReaderImpl) Parse() (err error) {
 				}
 				if m.version != 1 {
 					// Unsupported tracker version
+					m.list = m.list[:0]
 					return nil
 				}
 			}
@@ -123,7 +124,7 @@ func (m *messageReaderImpl) Next() bool {
 	}
 
 	// For new version of tracker
-	if m.version == 1 {
+	if len(m.list) > 0 {
 		if m.listPtr >= len(m.list) {
 			return false
 		}
