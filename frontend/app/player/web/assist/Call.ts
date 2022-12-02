@@ -1,8 +1,8 @@
 import type Peer from 'peerjs';
 import type { MediaConnection } from 'peerjs';
-import type { Socket } from 'socket.io-client';
 
 import type { LocalStream } from './LocalStream';
+import type { Socket } from './types'
 import type { Store } from '../../common/types'
 
 import appStore from 'App/store';

@@ -111,7 +111,7 @@ export default class AssistManager {
       this.socketCloseTimeout = setTimeout(() => {
         const state = this.store.get()
         if (document.hidden &&
-          // TODO: should here be disabled?
+          // TODO: should it be RemoteControlStatus.Disabled? (check)
           (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
           this.socket?.close()
         }
@@ -162,7 +162,7 @@ export default class AssistManager {
       })
       socket.on("connect", () => {
         waitingForMessages = true
-        this.setStatus(ConnectionStatus.WaitingMessages) // TODO: happens frequently on bad network
+        this.setStatus(ConnectionStatus.WaitingMessages) // TODO: reconnect happens frequently on bad network
       })
       socket.on('messages', messages => {
         jmr.append(messages) // as RawMessage[]
@@ -209,6 +209,7 @@ export default class AssistManager {
       })
 
       // Maybe  do lazy initialization for all?
+      // TODO: socket proxy (depend on interfaces)
       this.callManager = new Call(
         this.store,
         socket,
@@ -284,6 +285,7 @@ export default class AssistManager {
     this.socket?.close()
     this.clearDisconnectTimeout()
     this.clearInactiveTimeout()
+    this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout)
     document.removeEventListener('visibilitychange', this.onVisChange)
   }
 }

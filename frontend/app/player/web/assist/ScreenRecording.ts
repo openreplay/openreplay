@@ -1,14 +1,7 @@
 import { toast } from 'react-toastify'
 
-import type { Socket as SocketIO } from 'socket.io-client';
-
+import type { Socket } from './types'
 import type { Store } from '../../common/types'
-
-
-interface Socket {
-	emit: SocketIO['emit'],
-	on: SocketIO['on'],
-}
 
 
 export enum SessionRecordingStatus {

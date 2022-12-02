@@ -2,6 +2,10 @@ export interface Timed {
   time: number
 }
 
+export interface Indexed {
+  index: number
+}
+
 export interface Moveable {
   move(time: number): void
 }

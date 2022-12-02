@@ -1,6 +1,5 @@
-import type { Socket } from 'socket.io-client';
-
 import AnnotationCanvas from './AnnotationCanvas';
+import type { Socket } from './types'
 import type Screen from '../Screen/Screen'
 import type { Store } from '../../common/types'
 
@@ -136,23 +135,20 @@ export default class RemoteControl {
       const annot = this.annot = new AnnotationCanvas()
       annot.mount(this.screen.overlay)
       annot.canvas.addEventListener("mousedown", e => {
-        if (!this.socket) { return }
         const data = this.screen.getInternalViewportCoordinates(e)
         annot.start([ data.x, data.y ])
         this.socket.emit("startAnnotation", [ data.x, data.y ])
       })
       annot.canvas.addEventListener("mouseleave", () => {
-        if (!this.socket) { return }
         annot.stop()
         this.socket.emit("stopAnnotation")
       })
       annot.canvas.addEventListener("mouseup", () => {
-        if (!this.socket) { return }
         annot.stop()
         this.socket.emit("stopAnnotation")
       })
       annot.canvas.addEventListener("mousemove", e => {
-        if (!this.socket || !annot.isPainting()) { return }
+        if (!annot.isPainting()) { return }
 
         const data = this.screen.getInternalViewportCoordinates(e)
         annot.move([ data.x, data.y ])
