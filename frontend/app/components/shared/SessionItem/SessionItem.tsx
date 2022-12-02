@@ -234,12 +234,16 @@ function SessionItem(props: RouteComponentProps & Props) {
               </div>
             )}
             {props.isAdd ? (
-              <Icon
-                name="plus-circle"
-                size={36}
-                color="teal"
-                onClick={() => (props.isDisabled ? null : props.onClick())}
-              />
+              <div className="rounded-full border-tealx p-2 border">
+                <div className="bg-tealx rounded-full p-2">
+                  <Icon
+                    name="plus"
+                    size={16}
+                    color="white"
+                    onClick={() => (props.isDisabled ? null : props.onClick())}
+                  />
+                </div>
+              </div>
             ) : (
               <PlayLink
                 isAssist={isAssist}

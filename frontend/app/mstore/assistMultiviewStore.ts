@@ -1,4 +1,5 @@
 import { makeAutoObservable } from 'mobx';
+import { sessionService } from 'App/services'
 
 type MultiSessions = [
   LiveSessionListItem?,
@@ -59,6 +60,20 @@ export default class AssistMultiviewStore {
       this.sessions = [firstItem]
       this.activeSession = firstItem
     }
+  }
+
+  async fetchAgentTokenInfo(sessionId: string) {
+    const info = await sessionService.getSessionInfo(sessionId, true)
+
+    return this.setToken(sessionId, info.agentToken)
+  }
+
+  setToken(sessionId: string, token: string) {
+    const sessions = this.sessions
+    const targetIndex = this.sessions.findIndex(s => s.sessionId === sessionId)
+    sessions[targetIndex].agentToken = token
+
+    return this.sessions = sessions
   }
 
   reset() {
