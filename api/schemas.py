@@ -1108,8 +1108,8 @@ class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(None)
-    operator: Literal[SearchEventOperator._is.value,
-    SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
+    operator: Literal[SearchEventOperator._is.value, SearchEventOperator._contains.value] = Field(
+        SearchEventOperator._contains.value)
 
     @root_validator
     def validator(cls, values):
@@ -1205,3 +1205,13 @@ class WebhookType(str, Enum):
     slack = "slack"
     email = "email"
     msteams = "msteams"
+
+
+class SearchCardsSchema(_PaginatedSchema):
+    order: SortOrderType = Field(default=SortOrderType.desc)
+    shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
+    query: Optional[str] = Field(default=None)
+
+    class Config:
+        alias_generator = attribute_to_camel_case

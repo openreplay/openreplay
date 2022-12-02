@@ -136,11 +136,12 @@ def create_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
     return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 
 
-@app.get('/{projectId}/cards', tags=["cards"])
-@app.get('/{projectId}/metrics', tags=["dashboard"])
-@app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
-def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
+@app.post('/{projectId}/cards/search', tags=["cards"])
+@app.post('/{projectId}/metrics/search', tags=["dashboard"])
+@app.post('/{projectId}/custom_metrics/search', tags=["customMetrics"])
+def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
+                 context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.search_all(project_id=projectId, user_id=context.user_id, data=data)}
 
 
 @app.get('/{projectId}/cards/{metric_id}', tags=["cards"])

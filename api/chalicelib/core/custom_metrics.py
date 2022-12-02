@@ -59,7 +59,7 @@ def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
 
 def __is_errors_list(data):
     return data.metric_type == schemas.MetricType.table \
-           and data.metric_of == schemas.TableMetricOfType.errors
+        and data.metric_of == schemas.TableMetricOfType.errors
 
 
 def __get_errors_list(project_id, user_id, data):
@@ -77,7 +77,7 @@ def __get_errors_list(project_id, user_id, data):
 
 def __is_sessions_list(data):
     return data.metric_type == schemas.MetricType.table \
-           and data.metric_of == schemas.TableMetricOfType.sessions
+        and data.metric_of == schemas.TableMetricOfType.sessions
 
 
 def __get_sessions_list(project_id, user_id, data):
@@ -114,7 +114,7 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
 
 
 def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
-                                                 schemas.CustomMetricSessionsPayloadSchema]) \
+schemas.CustomMetricSessionsPayloadSchema]) \
         -> Union[schemas.CreateCardSchema, None]:
     if data.series is not None and len(data.series) > 0:
         metric["series"] = data.series
@@ -327,7 +327,23 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def get_all(project_id, user_id, include_series=False):
+def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
+    constraints = ["metrics_clone.project_id = %(project_id)s",
+                   "metrics_clone.deleted_at ISNULL"]
+    params = {"project_id": project_id, "user_id": user_id,
+              "offset": (data.page - 1) * data.limit,
+              "limit": data.limit, }
+    if data.mine_only:
+        constraints.append("user_id = %(user_id)s")
+    else:
+        constraints.append("(user_id = %(user_id)s OR metrics_clone.is_public)")
+    if data.shared_only:
+        constraints.append("is_public")
+
+    if data.query is not None and len(data.query) > 0:
+        constraints.append("(name ILIKE %(query)s OR owner.owner_email ILIKE %(query)s)")
+        params["query"] = helper.values_for_operator(value=data.query,
+                                                     op=schemas.SearchEventOperator._contains)
     with pg_client.PostgresClient() as cur:
         sub_join = ""
         if include_series:
@@ -336,31 +352,27 @@ def get_all(project_id, user_id, include_series=False):
                                                 WHERE metric_series.metric_id = metrics_clone.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)"""
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT *
-                    FROM metrics_clone
-                             {sub_join}
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT DISTINCT dashboard_id, name, is_public
-                                                      FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
-                                                      WHERE deleted_at ISNULL
-                                                        AND dashboard_widgets.metric_id = metrics_clone.metric_id
-                                                        AND project_id = %(project_id)s
-                                                        AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
-                                                ) AS connected_dashboards ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT email AS owner_email
-                                                FROM users
-                                                WHERE deleted_at ISNULL
-                                                  AND users.user_id = metrics_clone.user_id
-                                                ) AS owner ON (TRUE)
-                    WHERE metrics_clone.project_id = %(project_id)s
-                      AND metrics_clone.deleted_at ISNULL
-                      AND (user_id = %(user_id)s OR metrics_clone.is_public)
-                    ORDER BY metrics_clone.edited_at DESC, metrics_clone.created_at DESC;""",
-                {"project_id": project_id, "user_id": user_id}
-            )
-        )
+        query = cur.mogrify(
+            f"""SELECT *
+                FROM metrics_clone
+                         {sub_join}
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                            FROM (SELECT DISTINCT dashboard_id, name, is_public
+                                                  FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                  WHERE deleted_at ISNULL
+                                                    AND dashboard_widgets.metric_id = metrics_clone.metric_id
+                                                    AND project_id = %(project_id)s
+                                                    AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                            ) AS connected_dashboards ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                                            FROM users
+                                            WHERE deleted_at ISNULL
+                                              AND users.user_id = metrics_clone.user_id
+                                            ) AS owner ON (TRUE)
+                WHERE {" AND ".join(constraints)}
+                ORDER BY created_at {data.order}
+                LIMIT %(limit)s OFFSET %(offset)s;""", params)
+        cur.execute(query)
         rows = cur.fetchall()
         if include_series:
             for r in rows:
