@@ -27,6 +27,7 @@ interface ConnectProps {
   metaList: any;
   sort: any;
   total: number;
+  replaceTarget?: string;
   addFilterByKeyAndValue: (key: FilterKey, value: string) => void;
   updateCurrentPage: (page: number) => void;
   applyFilter: (filter: any) => void;
@@ -36,7 +37,7 @@ interface ConnectProps {
 type Props = OwnProps & ConnectProps;
 
 function AssistSessionsModal(props: Props) {
-  const { assistTabStore } = useStore();
+  const { assistMultiviewStore } = useStore();
   const { loading, list, metaList = [], filter, currentPage, total, onAdd } = props;
   const onUserClick = () => false;
   const { filters } = filter;
@@ -56,7 +57,11 @@ function AssistSessionsModal(props: Props) {
     props.applyFilter({ sort: value.value });
   };
   const onSessionAdd = (session: Session) => {
-    assistTabStore.addSession(session);
+    if (props.replaceTarget) {
+      assistMultiviewStore.replaceSession(props.replaceTarget, session)
+    } else {
+      assistMultiviewStore.addSession(session);
+    }
     onAdd()
   }
 
@@ -87,7 +92,7 @@ function AssistSessionsModal(props: Props) {
         <>
           {list.map((session) => (
             <React.Fragment key={session.sessionID}>
-              <div className={cn("rounded bg-white mb-2 overflow-hidden border", session.sessionId === assistTabStore.activeSession.sessionId ? 'cursor-not-allowed' : '')}>
+              <div className={cn("rounded bg-white mb-2 overflow-hidden border", assistMultiviewStore.sessions.findIndex(s => s.sessionId === session.sessionId) !== -1 ? 'cursor-not-allowed' : '')}>
                 <SessionItem
                   key={session.sessionId}
                   session={session}
@@ -95,7 +100,7 @@ function AssistSessionsModal(props: Props) {
                   hasUserFilter={hasUserFilter}
                   onUserClick={onUserClick}
                   metaList={metaList}
-                  isDisabled={session.sessionId === assistTabStore.activeSession.sessionId}
+                  isDisabled={assistMultiviewStore.sessions.findIndex(s => s.sessionId === session.sessionId) !== -1}
                   isAdd
                   onClick={() => onSessionAdd(session)}
                 />
