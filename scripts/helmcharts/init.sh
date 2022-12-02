@@ -29,40 +29,52 @@ function install_k8s() {
     sleep 10
 }
 
+# Checking whether the app exists or we do have to upgade.
+function exists() {
+  install_status=Upgrading
+  [[ UPGRADE_TOOLS -eq 1 ]] && {
+    install_status=Upgrading
+    return 100
+  }
+  which $1 &> /dev/null
+  return $?
+}
+
+# Instal the toolings needed for installation/maintaining k8s
 function install_tools() {
     ## installing kubectl
-    which kubectl &> /dev/null || {
-        info "kubectl not installed. Installing it..."
+    exists kubectl || {
+        info "$install_status kubectl"
         sudo curl -SsL https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl ; sudo chmod +x /usr/local/bin/kubectl
     }
 
-    ## installing stern
-    which stern &> /dev/null || {
-        info "stern not installed. installing..."
-        sudo curl -SsL https://github.com/derdanne/stern/releases/download/2.1.16/stern_linux_amd64 -o /usr/local/bin/stern ; sudo chmod +x /usr/local/bin/stern
+    ## $install_status GH package manager
+    exists eget || {
+        info "$install_status eget"
+        download_url=`curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4`
+        curl -SsL ${download_url} -o /tmp/eget.tar.gz
+        tar -xf /tmp/eget.tar.gz --strip-components=1 -C /tmp/
+        sudo mv /tmp/eget /usr/local/bin/eget
+        sudo chmod +x /usr/local/bin/eget
     }
 
-    ## installing k9s
-    which k9s &> /dev/null || {
-        info "k9s not installed. Installing it..."
-        sudo curl -SsL https://github.com/derailed/k9s/releases/download/v0.24.2/k9s_Linux_x86_64.tar.gz -o /tmp/k9s.tar.gz
-        cd /tmp
-        tar -xf k9s.tar.gz
-        sudo mv k9s /usr/local/bin/k9s
-        sudo chmod +x /usr/local/bin/k9s
-        cd -
+    ## installing stern, log viewer for K8s
+    exists stern || {
+        info "$install_status Stern"
+        sudo eget -q --to /usr/local/bin stern/stern
     }
 
-    ## installing helm
-    which helm &> /dev/null
-    if [[ $? -ne 0 ]]; then
-        info "helm not installed. Installing it..."
-        curl -ssl https://get.helm.sh/helm-v3.10.1-linux-amd64.tar.gz -o /tmp/helm.tar.gz
-        tar -xf /tmp/helm.tar.gz
-        chmod +x linux-amd64/helm
-        sudo cp linux-amd64/helm /usr/local/bin/helm
-        rm -rf linux-amd64/helm /tmp/helm.tar.gz
-    fi
+    ## installing k9s, TUI K8s
+    exists k9s || {
+        info "$install_status K9s"
+        sudo eget -q --to /usr/local/bin derailed/k9s
+    }
+
+    ## installing helm, package manager for K8s
+    exists helm || {
+        info "$install_status Helm"
+        sudo eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+    }
 }
 
 # ## Installing openssl
@@ -70,14 +82,15 @@ function install_tools() {
 # sudo apt install openssl -y &> /dev/null
 
 randomPass() {
+    ## Installing openssl
+    exists openssl || {
+      sudo apt update &> /dev/null
+      sudo apt install openssl -y &> /dev/null
+    }
     openssl rand -hex 10
 }
 
 ## Prepping the infra
-
-[[ -z $DOMAIN_NAME ]] && {
-fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
-}
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
 # This wrapper will help to check the sed, and use the correct version="v1.9.0"
@@ -98,18 +111,27 @@ function sed_i_wrapper(){
   fi
 }
 
-info "Creating dynamic passwords"
-sed_i_wrapper -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
-sed_i_wrapper -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
-sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
-sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
-sed_i_wrapper -i "s/assistKey: \"SetARandomStringHere\"/assistKey: \"$(randomPass)\"/g" vars.yaml
-sed_i_wrapper -i "s/assistJWTSecret: \"SetARandomStringHere\"/assistJWTSecret: \"$(randomPass)\"/g" vars.yaml
-sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+function create_passwords() {
+  [[ -z $DOMAIN_NAME ]] && {
+  fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
+  }
 
-info "Setting proper permission for shared folder"
-sudo mkdir -p /openreplay/storage/nfs
-sudo chown -R 1001:1001 /openreplay/storage/nfs
+  info "Creating dynamic passwords"
+  sed_i_wrapper -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
+  sed_i_wrapper -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
+  sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
+  sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
+  sed_i_wrapper -i "s/assistKey: \"SetARandomStringHere\"/assistKey: \"$(randomPass)\"/g" vars.yaml
+  sed_i_wrapper -i "s/assistJWTSecret: \"SetARandomStringHere\"/assistJWTSecret: \"$(randomPass)\"/g" vars.yaml
+  sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+}
+
+
+function set_permissions() {
+  info "Setting proper permission for shared folder"
+  sudo mkdir -p /openreplay/storage/nfs
+  sudo chown -R 1001:1001 /openreplay/storage/nfs
+}
 
 ## Installing OpenReplay
 function install_openreplay() {
@@ -130,11 +152,13 @@ function main() {
   } || {
     install_tools
   }
-  create_passwords
-  set_permissions
+  [[ x$SKIP_ROTATE_SECRETS == "x1" ]] && {
+    create_passwords
+  }
   [[ x$SKIP_OR_INSTALL == "x1" ]] && {
       info "Skipping OpenReplay installation"
   } || {
+    set_permissions
     install_openreplay
   }
 }
