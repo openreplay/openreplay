@@ -130,6 +130,7 @@ func (m *messageReaderImpl) Next() bool {
 			tp:     meta.msgType,
 			data:   m.data[meta.msgFrom : meta.msgFrom+meta.msgSize],
 			broken: &m.broken,
+			meta:   &message{},
 		}
 		return true
 	}
