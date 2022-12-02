@@ -22,16 +22,18 @@ const Tab = (props: ITab) => (
   </div>
 );
 
-const InactiveTab = (props: Omit<ITab, 'children'>) => (
-  <Tab onClick={props.onClick} classNames="hover:bg-gray-bg bg-gray-light">
+export const InactiveTab = (props: Omit<ITab, 'children'>) => (
+  <Tab onClick={props.onClick} classNames={cn("hover:bg-gray-bg bg-gray-light", props.classNames)}>
     <Icon name="plus" size="22" color="white" />
   </Tab>
 );
+
 const ActiveTab = (props: Omit<ITab, 'children'>) => (
   <Tab onClick={props.onClick} classNames="hover:bg-teal bg-borderColor-primary">
     <Icon name="play-fill-new" size="22" color="white" />
   </Tab>
 );
+
 const CurrentTab = () => (
   <Tab classNames="bg-teal color-white">
     <span style={{ fontSize: '0.65rem' }}>PLAYING</span>

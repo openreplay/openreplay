@@ -60,7 +60,7 @@ function LivePlayer({
       makeAutoObservable(state)
     );
     setContextValue({ player, store });
-    player.play();
+
     return () => player.clean();
   }, [session.sessionId, assistCredendials]);
 

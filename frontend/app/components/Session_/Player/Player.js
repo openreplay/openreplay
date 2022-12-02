@@ -52,9 +52,10 @@ function Player(props) {
 
   React.useEffect(() => {
     props.updateLastPlayedSession(props.sessionId);
-    if (!props.closedLive) {
+    if (!props.closedLive || isMultiview) {
       const parentElement = findDOMNode(screenWrapper.current); //TODO: good architecture
-      playerContext.player.attach(parentElement);
+      playerContext.player.attach(parentElement)
+      playerContext.player.play();
     }
 
   }, [])
