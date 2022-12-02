@@ -32,7 +32,11 @@ function install_k8s() {
 # Checking whether the app exists or we do have to upgade.
 function exists() {
   install_status=Upgrading
+<<<<<<< HEAD
   [[ $UPGRADE_TOOLS -eq 1 ]] && {
+=======
+  [[ UPGRADE_TOOLS -eq 1 ]] && {
+>>>>>>> 724af8957 (Logic for Upgrading tools (#855))
     install_status=Upgrading
     return 100
   }
@@ -61,19 +65,31 @@ function install_tools() {
     ## installing stern, log viewer for K8s
     exists stern || {
         info "$install_status Stern"
+<<<<<<< HEAD
         sudo /usr/local/bin/eget -q --to /usr/local/bin stern/stern
+=======
+        sudo eget -q --to /usr/local/bin stern/stern
+>>>>>>> 724af8957 (Logic for Upgrading tools (#855))
     }
 
     ## installing k9s, TUI K8s
     exists k9s || {
         info "$install_status K9s"
+<<<<<<< HEAD
         sudo /usr/local/bin/eget -q --to /usr/local/bin derailed/k9s
+=======
+        sudo eget -q --to /usr/local/bin derailed/k9s
+>>>>>>> 724af8957 (Logic for Upgrading tools (#855))
     }
 
     ## installing helm, package manager for K8s
     exists helm || {
         info "$install_status Helm"
+<<<<<<< HEAD
         sudo /usr/local/bin/eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+=======
+        sudo eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+>>>>>>> 724af8957 (Logic for Upgrading tools (#855))
     }
 }
 
@@ -112,12 +128,17 @@ function sed_i_wrapper(){
 }
 
 function create_passwords() {
+<<<<<<< HEAD
   # Error out only if the domain name is empty in vars.yaml
   existing_domain_name=`awk '/domainName/ {print $2}' vars.yaml | xargs`
   [[ -z $existing_domain_name ]] && {
     [[ -z $DOMAIN_NAME ]] && {
       fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
     }
+=======
+  [[ -z $DOMAIN_NAME ]] && {
+  fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
+>>>>>>> 724af8957 (Logic for Upgrading tools (#855))
   }
 
   info "Creating dynamic passwords"
