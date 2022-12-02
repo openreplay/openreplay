@@ -34,7 +34,7 @@ type Conn struct {
 	customEvents      Bulk
 	webPageEvents     Bulk
 	webInputEvents    Bulk
-	webGraphQLEvents  Bulk
+	webGraphQL        Bulk
 	sessionUpdates    map[uint64]*sessionUpdates
 	batchQueueLimit   int
 	batchSizeLimit    int
@@ -144,7 +144,7 @@ func (conn *Conn) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk")
 	}
-	conn.webGraphQLEvents, err = NewBulk(conn.c,
+	conn.webGraphQL, err = NewBulk(conn.c,
 		"events.graphql",
 		"(session_id, timestamp, message_id, name, request_body, response_body)",
 		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d)",
@@ -214,8 +214,8 @@ func (conn *Conn) sendBulks() {
 	if err := conn.webInputEvents.Send(); err != nil {
 		log.Printf("webInputEvents bulk send err: %s", err)
 	}
-	if err := conn.webGraphQLEvents.Send(); err != nil {
-		log.Printf("webGraphQLEvents bulk send err: %s", err)
+	if err := conn.webGraphQL.Send(); err != nil {
+		log.Printf("webGraphQL bulk send err: %s", err)
 	}
 }
 

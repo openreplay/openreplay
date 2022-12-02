@@ -9,8 +9,8 @@ import (
 )
 
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
-	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
-		truncSqIdx(e.MessageID),
+	err := conn.InsertCustomEvent(sessionID, e.Meta().Timestamp,
+		truncSqIdx(e.Meta().Index),
 		e.Name, e.Payload)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
@@ -144,7 +144,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *typ
 	return
 }
 
-func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePayload bool, e *FetchEvent) error {
+func (conn *Conn) InsertWebFetch(sessionID uint64, projectID uint32, savePayload bool, e *Fetch) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Request
@@ -169,7 +169,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 			$12, $13
 		) ON CONFLICT DO NOTHING`
 	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, truncSqIdx(e.MessageID),
+		sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index),
 		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
 		e.Duration, e.Status < 400,
@@ -181,13 +181,13 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 	return nil
 }
 
-func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, savePayload bool, e *GraphQLEvent) error {
+func (conn *Conn) InsertWebGraphQL(sessionID uint64, projectID uint32, savePayload bool, e *GraphQL) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Variables
 		response = &e.Response
 	}
-	if err := conn.webGraphQLEvents.Append(sessionID, e.Timestamp, truncSqIdx(e.MessageID), e.OperationName, request, response); err != nil {
+	if err := conn.webGraphQL.Append(sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.OperationName, request, response); err != nil {
 		log.Printf("insert web graphQL event err: %s", err)
 	}
 	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)
