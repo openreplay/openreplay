@@ -69,6 +69,9 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		i.messageInfo.Index++
 
 		msg := reader.Message()
+		if msg.TypeID() == MsgSessionEnd {
+			log.Printf("iterate session end")
+		}
 
 		// Preprocess "system" messages
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
