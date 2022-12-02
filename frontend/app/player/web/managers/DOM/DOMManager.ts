@@ -2,9 +2,9 @@ import logger from 'App/logger';
 
 import type Screen from '../../Screen/Screen';
 import type MessageManager from '../../MessageManager';
-
 import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
 
+import { MType } from '../../messages';
 import ListWalker from '../../../common/ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
 import FocusManager from './FocusManager';
@@ -63,7 +63,7 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   append(m: Message): void {
-    if (m.tp === "set_node_scroll") {
+    if (m.tp === MType.SetNodeScroll) {
       let scrollManager = this.nodeScrollManagers.get(m.id)
       if (!scrollManager) {
         scrollManager = new ListWalker()
@@ -72,15 +72,15 @@ export default class DOMManager extends ListWalker<Message> {
       scrollManager.append(m)
       return
     }
-    if (m.tp === "set_node_focus") {
+    if (m.tp === MType.SetNodeFocus) {
       this.focusManager.append(m)
       return
     }
-    if (m.tp === "create_element_node") {
+    if (m.tp === MType.CreateElementNode) {
       if(m.tag === "BODY" && this.upperBodyId === -1) {
         this.upperBodyId = m.id
       }
-    } else if (m.tp === "set_node_attribute" &&
+    } else if (m.tp === MType.SetNodeAttribute &&
       (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))) {
       logger.log("Ignorring message: ", m)
       return; // Ignoring
@@ -141,7 +141,7 @@ export default class DOMManager extends ListWalker<Message> {
     let doc: Document | null
     let styleSheet: CSSStyleSheet | PostponedStyleSheet | undefined
     switch (msg.tp) {
-      case "create_document":
+      case MType.CreateDocument:
         doc = this.screen.document;
         if (!doc) {
           logger.error("No root iframe document found", msg)
@@ -166,12 +166,12 @@ export default class DOMManager extends ListWalker<Message> {
         this.stylesManager.reset()
         this.activeIframeRoots.clear()
         return
-      case "create_text_node":
+      case MType.CreateTextNode:
         vn = new VText()
         this.vTexts.set(msg.id, vn)
         this.insertNode(msg)
         return
-      case "create_element_node":
+      case MType.CreateElementNode:
         let element: Element
         if (msg.svg) {
           element = document.createElementNS('http://www.w3.org/2000/svg', msg.tag)
@@ -191,16 +191,16 @@ export default class DOMManager extends ListWalker<Message> {
           vn.enforceInsertion()
         }
         return
-      case "move_node":
+      case MType.MoveNode:
         this.insertNode(msg);
         return
-      case "remove_node":
+      case MType.RemoveNode:
         vn = this.vElements.get(msg.id) || this.vTexts.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (!vn.parentNode) { logger.error("Parent node not found", msg); return }
         vn.parentNode.removeChild(vn)
         return
-      case "set_node_attribute":
+      case MType.SetNodeAttribute:
         let { name, value } = msg;
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -224,12 +224,12 @@ export default class DOMManager extends ListWalker<Message> {
         vn.setAttribute(name, value)
         this.removeBodyScroll(msg.id, vn)
         return
-      case "remove_node_attribute":
+      case MType.RemoveNodeAttribute:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         vn.removeAttribute(msg.name)
         return
-      case "set_input_value":
+      case MType.SetInputValue:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         const nodeWithValue = vn.node
@@ -249,13 +249,13 @@ export default class DOMManager extends ListWalker<Message> {
         }
         nodeWithValue.value = val
         return
-      case "set_input_checked":
+      case MType.SetInputChecked:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         (vn.node as HTMLInputElement).checked = msg.checked
         return
-      case "set_node_data":
-      case "set_css_data": // mbtodo: remove  css transitions when timeflow is not natural (on jumps)
+      case MType.SetNodeData:
+      case MType.SetCssData: // mbtodo: remove  css transitions when timeflow is not natural (on jumps)
         vn = this.vTexts.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         vn.setData(msg.data)
@@ -264,13 +264,13 @@ export default class DOMManager extends ListWalker<Message> {
           // TODO: move to message parsing
           doc && rewriteNodeStyleSheet(doc, vn.node)
         }
-        if (msg.tp === "set_css_data") { // Styles in priority  (do we need inlines as well?)
+        if (msg.tp === MType.SetCssData) { // Styles in priority  (do we need inlines as well?)
           vn.applyChanges()
         }
         return
 
       // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
-      case "css_insert_rule":
+      case MType.CssInsertRule:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (!(vn instanceof VStyleElement)) {
@@ -279,7 +279,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         vn.onStyleSheet(sheet => insertRule(sheet, msg))
         return
-      case "css_delete_rule":
+      case MType.CssDeleteRule:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (!(vn instanceof VStyleElement)) {
@@ -290,7 +290,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       // end @depricated
 
-      case "create_i_frame_document":
+      case MType.CreateIFrameDocument:
         vn = this.vElements.get(msg.frameID)
         if (!vn) { logger.error("Node not found", msg); return }
         vn.enforceInsertion()
@@ -321,7 +321,7 @@ export default class DOMManager extends ListWalker<Message> {
           logger.warn("Context message host is not Element", msg)
         }
         return
-      case "adopted_ss_insert_rule":
+      case MType.AdoptedSsInsertRule:
         styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
@@ -329,7 +329,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         insertRule(styleSheet, msg)
         return
-      case "adopted_ss_delete_rule":
+      case MType.AdoptedSsDeleteRule:
         styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
@@ -338,7 +338,7 @@ export default class DOMManager extends ListWalker<Message> {
         deleteRule(styleSheet, msg)
         return
 
-      case "adopted_ss_replace":
+      case MType.AdoptedSsReplace:
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
@@ -347,7 +347,7 @@ export default class DOMManager extends ListWalker<Message> {
         // @ts-ignore
         styleSheet.replaceSync(msg.text)
         return
-      case "adopted_ss_add_owner":
+      case MType.AdoptedSsAddOwner:
         vn = this.vRoots.get(msg.id)
         if (!vn) {
           // non-constructed case
@@ -372,7 +372,7 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets, styleSheet]
         return
-      case "adopted_ss_remove_owner":
+      case MType.AdoptedSsRemoveOwner:
         styleSheet = this.styleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
@@ -383,7 +383,7 @@ export default class DOMManager extends ListWalker<Message> {
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
-      case "load_font_face":
+      case MType.LoadFontFace:
         vn = this.vRoots.get(msg.parentID)
         if (!vn) { logger.error("Node not found", msg); return }
         if (vn instanceof VShadowRoot) { logger.error(`Node ${vn} expected to be a Document`, msg); return }

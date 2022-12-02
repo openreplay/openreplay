@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { Timed } from './timed'
-import type { RawMessage } from './raw'
+import type { RawMessage } from './raw.gen'
 import type {
   RawTimestamp,
   RawSetPageLocation,
@@ -58,7 +58,7 @@ import type {
   RawIosPerformanceEvent,
   RawIosLog,
   RawIosNetworkCall,
-} from './raw'
+} from './raw.gen'
 
 export type Message = RawMessage & Timed
 

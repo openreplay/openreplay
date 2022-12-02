@@ -1,7 +1,8 @@
 // Auto-generated, do not edit
 /* eslint-disable */
 
-import type { RawMessage } from './raw'
+import type { RawMessage } from './raw.gen'
+import { MType } from './raw.gen'
 
 
 type TrBatchMetadata = [
@@ -418,14 +419,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 0: {
       return {
-        tp: "timestamp",
+        tp: MType.Timestamp,
         timestamp: tMsg[1],
       }
     }
     
     case 4: {
       return {
-        tp: "set_page_location",
+        tp: MType.SetPageLocation,
         url: tMsg[1],
         referrer: tMsg[2],
         navigationStart: tMsg[3],
@@ -434,7 +435,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 5: {
       return {
-        tp: "set_viewport_size",
+        tp: MType.SetViewportSize,
         width: tMsg[1],
         height: tMsg[2],
       }
@@ -442,7 +443,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 6: {
       return {
-        tp: "set_viewport_scroll",
+        tp: MType.SetViewportScroll,
         x: tMsg[1],
         y: tMsg[2],
       }
@@ -450,14 +451,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 7: {
       return {
-        tp: "create_document",
+        tp: MType.CreateDocument,
         
       }
     }
     
     case 8: {
       return {
-        tp: "create_element_node",
+        tp: MType.CreateElementNode,
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
@@ -468,7 +469,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 9: {
       return {
-        tp: "create_text_node",
+        tp: MType.CreateTextNode,
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
@@ -477,7 +478,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 10: {
       return {
-        tp: "move_node",
+        tp: MType.MoveNode,
         id: tMsg[1],
         parentID: tMsg[2],
         index: tMsg[3],
@@ -486,14 +487,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 11: {
       return {
-        tp: "remove_node",
+        tp: MType.RemoveNode,
         id: tMsg[1],
       }
     }
     
     case 12: {
       return {
-        tp: "set_node_attribute",
+        tp: MType.SetNodeAttribute,
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
@@ -502,7 +503,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 13: {
       return {
-        tp: "remove_node_attribute",
+        tp: MType.RemoveNodeAttribute,
         id: tMsg[1],
         name: tMsg[2],
       }
@@ -510,7 +511,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 14: {
       return {
-        tp: "set_node_data",
+        tp: MType.SetNodeData,
         id: tMsg[1],
         data: tMsg[2],
       }
@@ -518,7 +519,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 16: {
       return {
-        tp: "set_node_scroll",
+        tp: MType.SetNodeScroll,
         id: tMsg[1],
         x: tMsg[2],
         y: tMsg[3],
@@ -527,7 +528,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 18: {
       return {
-        tp: "set_input_value",
+        tp: MType.SetInputValue,
         id: tMsg[1],
         value: tMsg[2],
         mask: tMsg[3],
@@ -536,7 +537,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 19: {
       return {
-        tp: "set_input_checked",
+        tp: MType.SetInputChecked,
         id: tMsg[1],
         checked: tMsg[2],
       }
@@ -544,7 +545,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 20: {
       return {
-        tp: "mouse_move",
+        tp: MType.MouseMove,
         x: tMsg[1],
         y: tMsg[2],
       }
@@ -552,7 +553,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 22: {
       return {
-        tp: "console_log",
+        tp: MType.ConsoleLog,
         level: tMsg[1],
         value: tMsg[2],
       }
@@ -560,7 +561,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 37: {
       return {
-        tp: "css_insert_rule",
+        tp: MType.CssInsertRule,
         id: tMsg[1],
         rule: tMsg[2],
         index: tMsg[3],
@@ -569,7 +570,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 38: {
       return {
-        tp: "css_delete_rule",
+        tp: MType.CssDeleteRule,
         id: tMsg[1],
         index: tMsg[2],
       }
@@ -577,7 +578,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 39: {
       return {
-        tp: "fetch",
+        tp: MType.Fetch,
         method: tMsg[1],
         url: tMsg[2],
         request: tMsg[3],
@@ -590,7 +591,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 40: {
       return {
-        tp: "profiler",
+        tp: MType.Profiler,
         name: tMsg[1],
         duration: tMsg[2],
         args: tMsg[3],
@@ -600,7 +601,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 41: {
       return {
-        tp: "o_table",
+        tp: MType.OTable,
         key: tMsg[1],
         value: tMsg[2],
       }
@@ -608,7 +609,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 44: {
       return {
-        tp: "redux",
+        tp: MType.Redux,
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
@@ -617,7 +618,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 45: {
       return {
-        tp: "vuex",
+        tp: MType.Vuex,
         mutation: tMsg[1],
         state: tMsg[2],
       }
@@ -625,7 +626,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 46: {
       return {
-        tp: "mob_x",
+        tp: MType.MobX,
         type: tMsg[1],
         payload: tMsg[2],
       }
@@ -633,7 +634,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 47: {
       return {
-        tp: "ng_rx",
+        tp: MType.NgRx,
         action: tMsg[1],
         state: tMsg[2],
         duration: tMsg[3],
@@ -642,7 +643,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 48: {
       return {
-        tp: "graph_ql",
+        tp: MType.GraphQl,
         operationKind: tMsg[1],
         operationName: tMsg[2],
         variables: tMsg[3],
@@ -652,7 +653,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 49: {
       return {
-        tp: "performance_track",
+        tp: MType.PerformanceTrack,
         frames: tMsg[1],
         ticks: tMsg[2],
         totalJSHeapSize: tMsg[3],
@@ -662,7 +663,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 54: {
       return {
-        tp: "connection_information",
+        tp: MType.ConnectionInformation,
         downlink: tMsg[1],
         type: tMsg[2],
       }
@@ -670,14 +671,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 55: {
       return {
-        tp: "set_page_visibility",
+        tp: MType.SetPageVisibility,
         hidden: tMsg[1],
       }
     }
     
     case 57: {
       return {
-        tp: "load_font_face",
+        tp: MType.LoadFontFace,
         parentID: tMsg[1],
         family: tMsg[2],
         source: tMsg[3],
@@ -687,14 +688,14 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 58: {
       return {
-        tp: "set_node_focus",
+        tp: MType.SetNodeFocus,
         id: tMsg[1],
       }
     }
     
     case 59: {
       return {
-        tp: "long_task",
+        tp: MType.LongTask,
         timestamp: tMsg[1],
         duration: tMsg[2],
         context: tMsg[3],
@@ -707,7 +708,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 60: {
       return {
-        tp: "set_node_attribute_url_based",
+        tp: MType.SetNodeAttributeURLBased,
         id: tMsg[1],
         name: tMsg[2],
         value: tMsg[3],
@@ -717,7 +718,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 61: {
       return {
-        tp: "set_css_data_url_based",
+        tp: MType.SetCssDataURLBased,
         id: tMsg[1],
         data: tMsg[2],
         baseURL: tMsg[3],
@@ -726,7 +727,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 67: {
       return {
-        tp: "css_insert_rule_url_based",
+        tp: MType.CssInsertRuleURLBased,
         id: tMsg[1],
         rule: tMsg[2],
         index: tMsg[3],
@@ -736,7 +737,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 69: {
       return {
-        tp: "mouse_click",
+        tp: MType.MouseClick,
         id: tMsg[1],
         hesitationTime: tMsg[2],
         label: tMsg[3],
@@ -746,7 +747,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 70: {
       return {
-        tp: "create_i_frame_document",
+        tp: MType.CreateIFrameDocument,
         frameID: tMsg[1],
         id: tMsg[2],
       }
@@ -754,7 +755,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 71: {
       return {
-        tp: "adopted_ss_replace_url_based",
+        tp: MType.AdoptedSsReplaceURLBased,
         sheetID: tMsg[1],
         text: tMsg[2],
         baseURL: tMsg[3],
@@ -763,7 +764,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 73: {
       return {
-        tp: "adopted_ss_insert_rule_url_based",
+        tp: MType.AdoptedSsInsertRuleURLBased,
         sheetID: tMsg[1],
         rule: tMsg[2],
         index: tMsg[3],
@@ -773,7 +774,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 75: {
       return {
-        tp: "adopted_ss_delete_rule",
+        tp: MType.AdoptedSsDeleteRule,
         sheetID: tMsg[1],
         index: tMsg[2],
       }
@@ -781,7 +782,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 76: {
       return {
-        tp: "adopted_ss_add_owner",
+        tp: MType.AdoptedSsAddOwner,
         sheetID: tMsg[1],
         id: tMsg[2],
       }
@@ -789,7 +790,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 77: {
       return {
-        tp: "adopted_ss_remove_owner",
+        tp: MType.AdoptedSsRemoveOwner,
         sheetID: tMsg[1],
         id: tMsg[2],
       }
@@ -797,7 +798,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 79: {
       return {
-        tp: "zustand",
+        tp: MType.Zustand,
         mutation: tMsg[1],
         state: tMsg[2],
       }

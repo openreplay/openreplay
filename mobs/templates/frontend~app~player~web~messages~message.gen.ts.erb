@@ -2,10 +2,10 @@
 /* eslint-disable */
 
 import type { Timed } from './timed'
-import type { RawMessage } from './raw'
+import type { RawMessage } from './raw.gen'
 import type {
 <%= $messages.select { |msg| msg.replayer != false }.map { |msg| "  Raw#{msg.name.snake_case.pascal_case}," }.join "\n" %>
-} from './raw'
+} from './raw.gen'
 
 export type Message = RawMessage & Timed
 

@@ -1,7 +1,8 @@
 // Auto-generated, do not edit
 /* eslint-disable */
 
-import type { RawMessage } from './raw'
+import type { RawMessage } from './raw.gen'
+import { MType } from './raw.gen'
 
 <% $messages.select { |msg| msg.tracker }.each do |msg| %>
 type Tr<%= msg.name %> = [
@@ -17,7 +18,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     <% $messages.select { |msg| msg.replayer != false && msg.tracker }.each do |msg| %>
     case <%= msg.id %>: {
       return {
-        tp: "<%= msg.name.snake_case %>",
+        tp: MType.<%= msg.name.snake_case.pascal_case %>,
         <%= msg.attributes.map.with_index { |attr, i| "#{attr.name.camel_case}: tMsg[#{i+1}]," }.join "\n        " %>
       }
     }

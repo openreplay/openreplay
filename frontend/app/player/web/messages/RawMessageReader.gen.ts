@@ -2,7 +2,8 @@
 /* eslint-disable */
 
 import PrimitiveReader from './PrimitiveReader'
-import type { RawMessage } from './raw'
+import { MType } from './raw.gen'
+import type { RawMessage } from './raw.gen'
 
 
 export default class RawMessageReader extends PrimitiveReader {
@@ -21,7 +22,7 @@ export default class RawMessageReader extends PrimitiveReader {
     case 0: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       return {
-        tp: "timestamp",
+        tp: MType.Timestamp,
         timestamp,
       };
     }
@@ -31,7 +32,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const referrer = this.readString(); if (referrer === null) { return resetPointer() }
       const navigationStart = this.readUint(); if (navigationStart === null) { return resetPointer() }
       return {
-        tp: "set_page_location",
+        tp: MType.SetPageLocation,
         url,
         referrer,
         navigationStart,
@@ -42,7 +43,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const width = this.readUint(); if (width === null) { return resetPointer() }
       const height = this.readUint(); if (height === null) { return resetPointer() }
       return {
-        tp: "set_viewport_size",
+        tp: MType.SetViewportSize,
         width,
         height,
       };
@@ -52,7 +53,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const x = this.readInt(); if (x === null) { return resetPointer() }
       const y = this.readInt(); if (y === null) { return resetPointer() }
       return {
-        tp: "set_viewport_scroll",
+        tp: MType.SetViewportScroll,
         x,
         y,
       };
@@ -61,7 +62,7 @@ export default class RawMessageReader extends PrimitiveReader {
     case 7: {
 
       return {
-        tp: "create_document",
+        tp: MType.CreateDocument,
 
       };
     }
@@ -73,7 +74,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const tag = this.readString(); if (tag === null) { return resetPointer() }
       const svg = this.readBoolean(); if (svg === null) { return resetPointer() }
       return {
-        tp: "create_element_node",
+        tp: MType.CreateElementNode,
         id,
         parentID,
         index,
@@ -87,7 +88,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
       const index = this.readUint(); if (index === null) { return resetPointer() }
       return {
-        tp: "create_text_node",
+        tp: MType.CreateTextNode,
         id,
         parentID,
         index,
@@ -99,7 +100,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const parentID = this.readUint(); if (parentID === null) { return resetPointer() }
       const index = this.readUint(); if (index === null) { return resetPointer() }
       return {
-        tp: "move_node",
+        tp: MType.MoveNode,
         id,
         parentID,
         index,
@@ -109,7 +110,7 @@ export default class RawMessageReader extends PrimitiveReader {
     case 11: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       return {
-        tp: "remove_node",
+        tp: MType.RemoveNode,
         id,
       };
     }
@@ -119,7 +120,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const name = this.readString(); if (name === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
       return {
-        tp: "set_node_attribute",
+        tp: MType.SetNodeAttribute,
         id,
         name,
         value,
@@ -130,7 +131,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const name = this.readString(); if (name === null) { return resetPointer() }
       return {
-        tp: "remove_node_attribute",
+        tp: MType.RemoveNodeAttribute,
         id,
         name,
       };
@@ -140,7 +141,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const data = this.readString(); if (data === null) { return resetPointer() }
       return {
-        tp: "set_node_data",
+        tp: MType.SetNodeData,
         id,
         data,
       };
@@ -150,7 +151,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const data = this.readString(); if (data === null) { return resetPointer() }
       return {
-        tp: "set_css_data",
+        tp: MType.SetCssData,
         id,
         data,
       };
@@ -161,7 +162,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const x = this.readInt(); if (x === null) { return resetPointer() }
       const y = this.readInt(); if (y === null) { return resetPointer() }
       return {
-        tp: "set_node_scroll",
+        tp: MType.SetNodeScroll,
         id,
         x,
         y,
@@ -173,7 +174,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const value = this.readString(); if (value === null) { return resetPointer() }
       const mask = this.readInt(); if (mask === null) { return resetPointer() }
       return {
-        tp: "set_input_value",
+        tp: MType.SetInputValue,
         id,
         value,
         mask,
@@ -184,7 +185,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const checked = this.readBoolean(); if (checked === null) { return resetPointer() }
       return {
-        tp: "set_input_checked",
+        tp: MType.SetInputChecked,
         id,
         checked,
       };
@@ -194,7 +195,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const x = this.readUint(); if (x === null) { return resetPointer() }
       const y = this.readUint(); if (y === null) { return resetPointer() }
       return {
-        tp: "mouse_move",
+        tp: MType.MouseMove,
         x,
         y,
       };
@@ -204,7 +205,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const level = this.readString(); if (level === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
       return {
-        tp: "console_log",
+        tp: MType.ConsoleLog,
         level,
         value,
       };
@@ -215,7 +216,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const rule = this.readString(); if (rule === null) { return resetPointer() }
       const index = this.readUint(); if (index === null) { return resetPointer() }
       return {
-        tp: "css_insert_rule",
+        tp: MType.CssInsertRule,
         id,
         rule,
         index,
@@ -226,7 +227,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const index = this.readUint(); if (index === null) { return resetPointer() }
       return {
-        tp: "css_delete_rule",
+        tp: MType.CssDeleteRule,
         id,
         index,
       };
@@ -241,7 +242,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: "fetch",
+        tp: MType.Fetch,
         method,
         url,
         request,
@@ -258,7 +259,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const args = this.readString(); if (args === null) { return resetPointer() }
       const result = this.readString(); if (result === null) { return resetPointer() }
       return {
-        tp: "profiler",
+        tp: MType.Profiler,
         name,
         duration,
         args,
@@ -270,7 +271,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const key = this.readString(); if (key === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
       return {
-        tp: "o_table",
+        tp: MType.OTable,
         key,
         value,
       };
@@ -281,7 +282,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const state = this.readString(); if (state === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: "redux",
+        tp: MType.Redux,
         action,
         state,
         duration,
@@ -292,7 +293,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const mutation = this.readString(); if (mutation === null) { return resetPointer() }
       const state = this.readString(); if (state === null) { return resetPointer() }
       return {
-        tp: "vuex",
+        tp: MType.Vuex,
         mutation,
         state,
       };
@@ -302,7 +303,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const type = this.readString(); if (type === null) { return resetPointer() }
       const payload = this.readString(); if (payload === null) { return resetPointer() }
       return {
-        tp: "mob_x",
+        tp: MType.MobX,
         type,
         payload,
       };
@@ -313,7 +314,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const state = this.readString(); if (state === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: "ng_rx",
+        tp: MType.NgRx,
         action,
         state,
         duration,
@@ -326,7 +327,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const variables = this.readString(); if (variables === null) { return resetPointer() }
       const response = this.readString(); if (response === null) { return resetPointer() }
       return {
-        tp: "graph_ql",
+        tp: MType.GraphQl,
         operationKind,
         operationName,
         variables,
@@ -340,7 +341,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const totalJSHeapSize = this.readUint(); if (totalJSHeapSize === null) { return resetPointer() }
       const usedJSHeapSize = this.readUint(); if (usedJSHeapSize === null) { return resetPointer() }
       return {
-        tp: "performance_track",
+        tp: MType.PerformanceTrack,
         frames,
         ticks,
         totalJSHeapSize,
@@ -352,7 +353,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const downlink = this.readUint(); if (downlink === null) { return resetPointer() }
       const type = this.readString(); if (type === null) { return resetPointer() }
       return {
-        tp: "connection_information",
+        tp: MType.ConnectionInformation,
         downlink,
         type,
       };
@@ -361,7 +362,7 @@ export default class RawMessageReader extends PrimitiveReader {
     case 55: {
       const hidden = this.readBoolean(); if (hidden === null) { return resetPointer() }
       return {
-        tp: "set_page_visibility",
+        tp: MType.SetPageVisibility,
         hidden,
       };
     }
@@ -372,7 +373,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const source = this.readString(); if (source === null) { return resetPointer() }
       const descriptors = this.readString(); if (descriptors === null) { return resetPointer() }
       return {
-        tp: "load_font_face",
+        tp: MType.LoadFontFace,
         parentID,
         family,
         source,
@@ -383,7 +384,7 @@ export default class RawMessageReader extends PrimitiveReader {
     case 58: {
       const id = this.readInt(); if (id === null) { return resetPointer() }
       return {
-        tp: "set_node_focus",
+        tp: MType.SetNodeFocus,
         id,
       };
     }
@@ -397,7 +398,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const containerId = this.readString(); if (containerId === null) { return resetPointer() }
       const containerName = this.readString(); if (containerName === null) { return resetPointer() }
       return {
-        tp: "long_task",
+        tp: MType.LongTask,
         timestamp,
         duration,
         context,
@@ -414,7 +415,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const value = this.readString(); if (value === null) { return resetPointer() }
       const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
       return {
-        tp: "set_node_attribute_url_based",
+        tp: MType.SetNodeAttributeURLBased,
         id,
         name,
         value,
@@ -427,7 +428,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const data = this.readString(); if (data === null) { return resetPointer() }
       const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
       return {
-        tp: "set_css_data_url_based",
+        tp: MType.SetCssDataURLBased,
         id,
         data,
         baseURL,
@@ -440,7 +441,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const index = this.readUint(); if (index === null) { return resetPointer() }
       const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
       return {
-        tp: "css_insert_rule_url_based",
+        tp: MType.CssInsertRuleURLBased,
         id,
         rule,
         index,
@@ -454,7 +455,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const label = this.readString(); if (label === null) { return resetPointer() }
       const selector = this.readString(); if (selector === null) { return resetPointer() }
       return {
-        tp: "mouse_click",
+        tp: MType.MouseClick,
         id,
         hesitationTime,
         label,
@@ -466,7 +467,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const frameID = this.readUint(); if (frameID === null) { return resetPointer() }
       const id = this.readUint(); if (id === null) { return resetPointer() }
       return {
-        tp: "create_i_frame_document",
+        tp: MType.CreateIFrameDocument,
         frameID,
         id,
       };
@@ -477,7 +478,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const text = this.readString(); if (text === null) { return resetPointer() }
       const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_replace_url_based",
+        tp: MType.AdoptedSsReplaceURLBased,
         sheetID,
         text,
         baseURL,
@@ -488,7 +489,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
       const text = this.readString(); if (text === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_replace",
+        tp: MType.AdoptedSsReplace,
         sheetID,
         text,
       };
@@ -500,7 +501,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const index = this.readUint(); if (index === null) { return resetPointer() }
       const baseURL = this.readString(); if (baseURL === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_insert_rule_url_based",
+        tp: MType.AdoptedSsInsertRuleURLBased,
         sheetID,
         rule,
         index,
@@ -513,7 +514,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const rule = this.readString(); if (rule === null) { return resetPointer() }
       const index = this.readUint(); if (index === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_insert_rule",
+        tp: MType.AdoptedSsInsertRule,
         sheetID,
         rule,
         index,
@@ -524,7 +525,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
       const index = this.readUint(); if (index === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_delete_rule",
+        tp: MType.AdoptedSsDeleteRule,
         sheetID,
         index,
       };
@@ -534,7 +535,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
       const id = this.readUint(); if (id === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_add_owner",
+        tp: MType.AdoptedSsAddOwner,
         sheetID,
         id,
       };
@@ -544,7 +545,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const sheetID = this.readUint(); if (sheetID === null) { return resetPointer() }
       const id = this.readUint(); if (id === null) { return resetPointer() }
       return {
-        tp: "adopted_ss_remove_owner",
+        tp: MType.AdoptedSsRemoveOwner,
         sheetID,
         id,
       };
@@ -554,7 +555,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const mutation = this.readString(); if (mutation === null) { return resetPointer() }
       const state = this.readString(); if (state === null) { return resetPointer() }
       return {
-        tp: "zustand",
+        tp: MType.Zustand,
         mutation,
         state,
       };
@@ -572,7 +573,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const userDeviceType = this.readString(); if (userDeviceType === null) { return resetPointer() }
       const userCountry = this.readString(); if (userCountry === null) { return resetPointer() }
       return {
-        tp: "ios_session_start",
+        tp: MType.IosSessionStart,
         timestamp,
         projectID,
         trackerVersion,
@@ -592,7 +593,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const name = this.readString(); if (name === null) { return resetPointer() }
       const payload = this.readString(); if (payload === null) { return resetPointer() }
       return {
-        tp: "ios_custom_event",
+        tp: MType.IosCustomEvent,
         timestamp,
         length,
         name,
@@ -608,7 +609,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const width = this.readUint(); if (width === null) { return resetPointer() }
       const height = this.readUint(); if (height === null) { return resetPointer() }
       return {
-        tp: "ios_screen_changes",
+        tp: MType.IosScreenChanges,
         timestamp,
         length,
         x,
@@ -625,7 +626,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const x = this.readUint(); if (x === null) { return resetPointer() }
       const y = this.readUint(); if (y === null) { return resetPointer() }
       return {
-        tp: "ios_click_event",
+        tp: MType.IosClickEvent,
         timestamp,
         length,
         label,
@@ -640,7 +641,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const name = this.readString(); if (name === null) { return resetPointer() }
       const value = this.readUint(); if (value === null) { return resetPointer() }
       return {
-        tp: "ios_performance_event",
+        tp: MType.IosPerformanceEvent,
         timestamp,
         length,
         name,
@@ -654,7 +655,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const severity = this.readString(); if (severity === null) { return resetPointer() }
       const content = this.readString(); if (content === null) { return resetPointer() }
       return {
-        tp: "ios_log",
+        tp: MType.IosLog,
         timestamp,
         length,
         severity,
@@ -673,7 +674,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const method = this.readString(); if (method === null) { return resetPointer() }
       const status = this.readUint(); if (status === null) { return resetPointer() }
       return {
-        tp: "ios_network_call",
+        tp: MType.IosNetworkCall,
         timestamp,
         length,
         duration,

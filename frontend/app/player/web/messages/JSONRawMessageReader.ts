@@ -10,16 +10,17 @@ import type {
   RawAdoptedSsInsertRule,
   RawAdoptedSsReplaceURLBased,
   RawAdoptedSsReplace,
-} from './raw'
-import type { TrackerMessage } from './tracker'
-import  translate from './tracker'
-import { TP_MAP } from './tracker-legacy'
+} from './raw.gen'
+import type { TrackerMessage } from './tracker.gen'
+import { MType } from './raw.gen'
+import  translate from './tracker.gen'
+import { TP_MAP } from './tracker-legacy.gen'
 import { resolveURL, resolveCSS } from './urlResolve'
 
 
 function legacyTranslate(msg: any): RawMessage | null {
   const type = TP_MAP[msg._id as keyof typeof TP_MAP]
-  if (!type) {
+  if (!type) { // msg._id can be other than keyof TP_MAP, in fact
     return null
   }
   msg.tp = type
@@ -30,7 +31,7 @@ function legacyTranslate(msg: any): RawMessage | null {
 
 // TODO: commonURLBased logic for feilds
 const resolvers = {
-  "set_node_attribute_url_based": (msg: RawSetNodeAttributeURLBased): RawSetNodeAttribute =>
+  [MType.SetNodeAttributeURLBased]: (msg: RawSetNodeAttributeURLBased): RawSetNodeAttribute =>
   ({
     ...msg,
     value: msg.name === 'src' || msg.name === 'href'
@@ -39,31 +40,31 @@ const resolvers = {
         ? resolveCSS(msg.baseURL, msg.value)
         : msg.value
         ),
-    tp: "set_node_attribute",
+    tp: MType.SetNodeAttribute,
   }),
-  "set_css_data_url_based": (msg: RawSetCssDataURLBased): RawSetCssData =>
+  [MType.SetCssDataURLBased]: (msg: RawSetCssDataURLBased): RawSetCssData =>
   ({
     ...msg,
     data: resolveCSS(msg.baseURL, msg.data),
-    tp: "set_css_data",
+    tp: MType.SetCssData,
   }),
-  "css_insert_rule_url_based": (msg: RawCssInsertRuleURLBased): RawCssInsertRule =>
+  [MType.CssInsertRuleURLBased]: (msg: RawCssInsertRuleURLBased): RawCssInsertRule =>
   ({
     ...msg,
     rule: resolveCSS(msg.baseURL, msg.rule),
-    tp: "css_insert_rule",
+    tp: MType.CssInsertRule,
   }),
-  "adopted_ss_insert_rule_url_based": (msg: RawAdoptedSsInsertRuleURLBased): RawAdoptedSsInsertRule =>
+  [MType.AdoptedSsInsertRuleURLBased]: (msg: RawAdoptedSsInsertRuleURLBased): RawAdoptedSsInsertRule =>
   ({
     ...msg,
     rule: resolveCSS(msg.baseURL, msg.rule),
-    tp: "adopted_ss_insert_rule",
+    tp: MType.AdoptedSsInsertRule,
   }),
-  "adopted_ss_replace_url_based": (msg: RawAdoptedSsReplaceURLBased): RawAdoptedSsReplace =>
+  [MType.AdoptedSsReplaceURLBased]: (msg: RawAdoptedSsReplaceURLBased): RawAdoptedSsReplace =>
   ({
     ...msg,
     text: resolveCSS(msg.baseURL, msg.text),
-    tp: "adopted_ss_replace"
+    tp: MType.AdoptedSsReplace,
   }),
 } as const
 

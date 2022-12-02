@@ -1,7 +1,8 @@
-import type { Message } from './message';
-import type { RawMessage } from './raw';
+import type { Message } from './message.gen';
+import type { RawMessage } from './raw.gen';
+import { MType } from './raw.gen';
 import logger from 'App/logger';
-import RawMessageReader from './RawMessageReader';
+import RawMessageReader from './RawMessageReader.gen';
 
 // TODO: composition instead of inheritance
 // needSkipMessage() and next() methods here use buf and p protected properties,
@@ -67,7 +68,7 @@ export default class MFileReader extends RawMessageReader {
       return null
     }
 
-    if (rMsg.tp === "timestamp") {
+    if (rMsg.tp === MType.Timestamp) {
       if (!this.startTime) {
         this.startTime = rMsg.timestamp
       }

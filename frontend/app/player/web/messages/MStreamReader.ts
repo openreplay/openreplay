@@ -1,6 +1,7 @@
-import type { Message } from './message'
-import type { RawMessage } from './raw'
-import RawMessageReader from './RawMessageReader'
+import type { Message } from './message.gen'
+import type { RawMessage } from './raw.gen'
+import { MType } from './raw.gen'
+import RawMessageReader from './RawMessageReader.gen'
 
 interface RawMessageReaderI {
   readMessage(): RawMessage | null
@@ -14,7 +15,7 @@ export default class MStreamReader {
   readNext(): Message | null {
     let msg = this.r.readMessage()
     if (msg === null) { return null }
-    if (msg.tp === "timestamp") {
+    if (msg.tp === MType.Timestamp) {
       this.startTs = this.startTs || msg.timestamp
       this.t = msg.timestamp - this.startTs
       return this.readNext()

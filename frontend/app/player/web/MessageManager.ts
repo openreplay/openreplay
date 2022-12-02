@@ -19,6 +19,16 @@ import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
 
 import MFileReader from './messages/MFileReader';
+import { MType } from './messages';
+import type {
+  Message,
+  SetPageLocation,
+  ConnectionInformation,
+  SetViewportSize,
+  SetViewportScroll,
+  MouseClick,
+} from './messages';
+
 import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
@@ -57,23 +67,14 @@ export interface State extends ScreenState, ListsState {
 }
 
 
-import type {
-  Message,
-  SetPageLocation,
-  ConnectionInformation,
-  SetViewportSize,
-  SetViewportScroll,
-  MouseClick,
-} from './messages';
-
 const visualChanges = [
-  "mouse_move",
-  "mouse_click",
-  "create_element_node",
-  "set_input_value",
-  "set_input_checked",
-  "set_viewport_size",
-  "set_viewport_scroll",
+  MType.MouseMove,
+  MType.MouseClick,
+  MType.CreateElementNode,
+  MType.SetInputValue,
+  MType.SetInputChecked,
+  MType.SetViewportSize,
+  MType.SetViewportScroll,
 ]
 
 export default class MessageManager {
@@ -158,15 +159,15 @@ export default class MessageManager {
     const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
     this.pagesManager.sortPages((m1, m2) => {
       if (m1.time === m2.time) {
-        if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
+        if (m1.tp === MType.RemoveNode && m2.tp !== MType.RemoveNode) {
           if (headChildrenIds.includes(m1.id)) {
             return -1;
           }
-        } else if (m2.tp === "remove_node" && m1.tp !== "remove_node") {
+        } else if (m2.tp === MType.RemoveNode && m1.tp !== MType.RemoveNode) {
           if (headChildrenIds.includes(m2.id)) {
             return 1;
           }
-        }  else if (m2.tp === "remove_node" && m1.tp === "remove_node") {
+        }  else if (m2.tp === MType.RemoveNode && m1.tp === MType.RemoveNode) {
           const m1FromHead = headChildrenIds.includes(m1.id);
           const m2FromHead = headChildrenIds.includes(m2.id);
           if (m1FromHead && !m2FromHead) {
@@ -399,45 +400,45 @@ export default class MessageManager {
     let decoded;
     const time = msg.time;
     switch (msg.tp) {
-      case "set_page_location":
+      case MType.SetPageLocation:
         this.locationManager.append(msg);
         if (msg.navigationStart > 0) {
           this.loadedLocationManager.append(msg);
         }
         break;
-      case "set_viewport_size":
+      case MType.SetViewportSize:
         this.resizeManager.append(msg);
         break;
-      case "mouse_move":
+      case MType.MouseMove:
         this.mouseMoveManager.append(msg);
         break;
-      case "mouse_click":
+      case MType.MouseClick:
         this.clickManager.append(msg);
         break;
-      case "set_viewport_scroll":
+      case MType.SetViewportScroll:
         this.scrollManager.append(msg);
         break;
-      case "performance_track":
+      case MType.PerformanceTrack:
         this.performanceTrackManager.append(msg);
         break;
-      case "set_page_visibility":
+      case MType.SetPageVisibility:
         this.performanceTrackManager.handleVisibility(msg)
         break;
-      case "connection_information":
+      case MType.ConnectionInformation:
         this.connectionInfoManger.append(msg);
         break;
-      case "o_table":
+      case MType.OTable:
         this.decoder.set(msg.key, msg.value);
         break;
       /* Lists: */
-      case "console_log":
+      case MType.ConsoleLog:
         if (msg.level === 'debug') break;
         this.lists.lists.log.append(
           // @ts-ignore : TODO: enums in the message schema
           Log(msg)
         )
         break;
-      case "fetch":
+      case MType.Fetch:
         // @ts-ignore burn immutable
         this.lists.lists.fetch.append(Resource({
           method: msg.method,
@@ -451,34 +452,34 @@ export default class MessageManager {
           index,
         }) as Timed)
         break;
-      case "redux":
+      case MType.Redux:
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
         logger.log('redux', decoded)
         if (decoded != null) {
           this.lists.lists.redux.append(decoded);
         }
         break;
-      case "ng_rx":
+      case MType.NgRx:
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
         logger.log('ngrx', decoded)
         if (decoded != null) {
           this.lists.lists.ngrx.append(decoded);
         }
         break;
-      case "vuex":
+      case MType.Vuex:
         decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
         logger.log('vuex', decoded)
         if (decoded != null) {
           this.lists.lists.vuex.append(decoded);
         }
         break;
-      case "zustand":
+      case MType.Zustand:
         decoded = this.decodeStateMessage(msg, ["state", "mutation"])
         logger.log('zustand', decoded)
         if (decoded != null) {
           this.lists.lists.zustand.append(decoded)
         }
-      case "mob_x":
+      case MType.MobX:
         decoded = this.decodeStateMessage(msg, ["payload"]);
         logger.log('mobx', decoded)
 
@@ -486,29 +487,29 @@ export default class MessageManager {
           this.lists.lists.mobx.append(decoded);
         }
         break;
-      case "graph_ql":
+      case MType.GraphQl:
         this.lists.lists.graphql.append(msg);
         break;
-      case "profiler":
+      case MType.Profiler:
         this.lists.lists.profiles.append(msg);
         break;
       /* ===|=== */
       default:
         switch (msg.tp) {
-          case "create_document":
+          case MType.CreateDocument:
             this.windowNodeCounter.reset();
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
-          case "create_text_node":
-          case "create_element_node":
+          case MType.CreateTextNode:
+          case MType.CreateElementNode:
             this.windowNodeCounter.addNode(msg.id, msg.parentID);
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
-          case "move_node":
+          case MType.MoveNode:
             this.windowNodeCounter.moveNode(msg.id, msg.parentID);
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
-          case "remove_node":
+          case MType.RemoveNode:
             this.windowNodeCounter.removeNode(msg.id);
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
