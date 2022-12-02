@@ -3,7 +3,6 @@ package messages
 import (
 	"fmt"
 	"io"
-	"log"
 )
 
 type MessageReader interface {
@@ -53,9 +52,6 @@ func (m *messageReaderImpl) Parse() (err error) {
 			}
 			// Reached the end of batch
 			return nil
-		}
-		if m.msgType == MsgSessionEnd {
-			log.Printf("received session end")
 		}
 
 		// Read message body (and decode if protocol version less than 1)
