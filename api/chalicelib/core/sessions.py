@@ -304,13 +304,13 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
-                   metric_of: schemas.TableMetricOfType, metric_value: List):
+                   metric_of: schemas.MetricOfTable, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
-    if metric_of == schemas.TableMetricOfType.visited_url:
+    if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = "events.pages"
-    elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
+    elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,

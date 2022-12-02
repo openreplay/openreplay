@@ -580,7 +580,7 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
 class SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
     value: Union[Optional[Union[IssueType, PlatformType, int, str]],
-                 Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+    Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
@@ -792,26 +792,94 @@ class MetricTableViewType(str, Enum):
     pie_chart = "pieChart"
 
 
+class MetricOtherViewType(str, Enum):
+    other_chart = "chart"
+
+
 class MetricType(str, Enum):
     timeseries = "timeseries"
     table = "table"
-    predefined = "predefined"
     funnel = "funnel"
+    errors = "errors"
+    performance = "performance"
+    resources = "resources"
+    web_vital = "webVital"
+    pathAnalysis = "pathAnalysis"
+    retention = "retention"
+    stickiness = "stickiness"
+    click_map = "clickMap"
 
 
-class TableMetricOfType(str, Enum):
-    user_os = FilterType.user_os.value
-    user_browser = FilterType.user_browser.value
-    user_device = FilterType.user_device.value
-    user_country = FilterType.user_country.value
-    user_id = FilterType.user_id.value
-    issues = FilterType.issue.value
-    visited_url = EventType.location.value
-    sessions = "SESSIONS"
-    errors = IssueType.js_exception.value
+class MetricOfErrors(str, Enum):
+    calls_errors = "callsErrors"  # calls_errors
+    domains_errors_4xx = "domainsErrors4Xx"  # domains_errors_4xx
+    domains_errors_5xx = "domainsErrors5Xx"  # domains_errors_5xx
+    errors_per_domains = "errorsPerDomains"  # errors_per_domains
+    errors_per_type = "errorsPerType"  # errors_per_type
+    impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"  # impacted_sessions_by_js_errors
+    resources_by_party = "resourcesByParty"  # resources_by_party
 
 
-class TimeseriesMetricOfType(str, Enum):
+class MetricOfPerformance(str, Enum):
+    cpu = "cpu"  # cpu
+    crashes = "crashes"  # crashes
+    fps = "fps"  # fps
+    impacted_sessions_by_slow_pages = "impactedSessionsBySlowPages"  # impacted_sessions_by_slow_pages
+    memory_consumption = "memoryConsumption"  # memory_consumption
+    pages_dom_buildtime = "pagesDomBuildtime"  # pages_dom_buildtime
+    pages_response_time = "pagesResponseTime"  # pages_response_time
+    pages_response_time_distribution = "pagesResponseTimeDistribution"  # pages_response_time_distribution
+    resources_vs_visually_complete = "resourcesVsVisuallyComplete"  # resources_vs_visually_complete
+    sessions_per_browser = "sessionsPerBrowser"  # sessions_per_browser
+    slowest_domains = "slowestDomains"  # slowest_domains
+    speed_location = "speedLocation"  # speed_location
+    time_to_render = "timeToRender"  # time_to_render
+
+
+class MetricOfResources(str, Enum):
+    missing_resources = "missingResources"  # missing_resources
+    resources_count_by_type = "resourcesCountByType"  # resources_count_by_type
+    resources_loading_time = "resourcesLoadingTime"  # resources_loading_time
+    resource_type_vs_response_end = "resourceTypeVsResponseEnd"  # resource_type_vs_response_end
+    slowest_resources = "slowestResources"  # slowest_resources
+
+
+class MetricOfWebVitals(str, Enum):
+    avg_cpu = "avgCpu"  # avg_cpu
+    avg_dom_content_loaded = "avgDomContentLoaded"  # avg_dom_content_loaded
+    avg_dom_content_load_start = "avgDomContentLoadStart"  # avg_dom_content_load_start
+    avg_first_contentful_pixel = "avgFirstContentfulPixel"  # avg_first_contentful_pixel
+    avg_first_paint = "avgFirstPaint"  # avg_first_paint
+    avg_fps = "avgFps"  # avg_fps
+    avg_image_load_time = "avgImageLoadTime"  # avg_image_load_time
+    avg_page_load_time = "avgPageLoadTime"  # avg_page_load_time
+    avg_pages_dom_buildtime = "avgPagesDomBuildtime"  # avg_pages_dom_buildtime
+    avg_pages_response_time = "avgPagesResponseTime"  # avg_pages_response_time
+    avg_request_load_time = "avgRequestLoadTime"  # avg_request_load_time
+    avg_response_time = "avgResponseTime"  # avg_response_time
+    avg_session_duration = "avgSessionDuration"  # avg_session_duration
+    avg_till_first_byte = "avgTillFirstByte"  # avg_till_first_byte
+    avg_time_to_interactive = "avgTimeToInteractive"  # avg_time_to_interactive
+    avg_time_to_render = "avgTimeToRender"  # avg_time_to_render
+    avg_used_js_heap_size = "avgUsedJsHeapSize"  # avg_used_js_heap_size
+    avg_visited_pages = "avgVisitedPages"  # avg_visited_pages
+    count_requests = "countRequests"  # count_requests
+    count_sessions = "countSessions"  # count_sessions
+
+
+class MetricOfTable(str, Enum):
+    user_os = "userOS"  # USEROS
+    user_browser = "userBrowser"  # USERBROWSER
+    user_device = "userDevice"  # USERDEVICE
+    user_country = "userCountry"  # USERCOUNTRY
+    user_id = "userId"  # USERID
+    issues = "issue"  # ISSUE
+    visited_url = "location"  # LOCATION
+    sessions = "sessions"  # SESSIONS
+    errors = "jsException"  # js_exception
+
+
+class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
 
 
@@ -831,22 +899,31 @@ class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema, _Paginat
         alias_generator = attribute_to_camel_case
 
 
-class TryCardSchema(CustomMetricChartPayloadSchema):
+class CustomMetricsConfigSchema(BaseModel):
+    col: Optional[int] = Field(...)
+    row: Optional[int] = Field(default=2)
+    position: Optional[int] = Field(default=0)
+
+
+class CreateCardSchema(CustomMetricChartPayloadSchema):
     name: Optional[str] = Field(...)
-    series: List[CustomMetricCreateSeriesSchema] = Field(...)
+    series: List[CustomMetricCreateSeriesSchema] = Field(default=[])
     is_public: bool = Field(default=True)
-    view_type: Union[MetricTimeseriesViewType, MetricTableViewType, str] = Field(MetricTimeseriesViewType.line_chart)
-    metric_type: Union[MetricType, str] = Field(MetricType.timeseries)
-    metric_of: Union[TableMetricOfType, TimeseriesMetricOfType, str] = Field(TableMetricOfType.user_id)
+    view_type: Union[MetricTimeseriesViewType, MetricTableViewType, MetricOtherViewType] \
+        = Field(MetricTimeseriesViewType.line_chart)
+    metric_type: Union[MetricType] = Field(default=MetricType.timeseries)
+    metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, MetricOfPerformance,
+    MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
     metric_value: List[IssueType] = Field([])
     metric_format: Optional[MetricFormatType] = Field(None)
+    default_config: CustomMetricsConfigSchema = Field(...)
 
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
     def transform(cls, values):
         if values.get("metricType") == MetricType.timeseries \
                 or values.get("metricType") == MetricType.table \
-                and values.get("metricOf") != TableMetricOfType.issues:
+                and values.get("metricOf") != MetricOfTable.issues:
             values["metricValue"] = []
 
         if values.get("metric_type") == MetricType.funnel.value and \
@@ -858,31 +935,38 @@ class TryCardSchema(CustomMetricChartPayloadSchema):
     def validator(cls, values):
         if values.get("metric_type") == MetricType.table:
             assert isinstance(values.get("view_type"), MetricTableViewType), \
-                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table.value}"
-            assert isinstance(values.get("metric_of"), TableMetricOfType), \
-                f"metricOf must be of type {TableMetricOfType} for metricType:{MetricType.table.value}"
-            if values.get("metric_of") != TableMetricOfType.issues:
+                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
+            assert isinstance(values.get("metric_of"), MetricOfTable), \
+                f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
+            if values.get("metric_of") != MetricOfTable.issues:
                 assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
-                    f"metricValue is only available for metricOf:{TableMetricOfType.issues.value}"
+                    f"metricValue is only available for metricOf:{MetricOfTable.issues}"
         elif values.get("metric_type") == MetricType.timeseries:
             assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
-                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries.value}"
-            assert isinstance(values.get("metric_of"), TimeseriesMetricOfType), \
-                f"metricOf must be of type {TimeseriesMetricOfType} for metricType:{MetricType.timeseries.value}"
+                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
+            assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
+                f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.timeseries}"
+        else:
+            if values.get("metric_type") == MetricType.errors:
+                assert isinstance(values.get("metric_of"), MetricOfErrors), \
+                    f"metricOf must be of type {MetricOfErrors} for metricType:{MetricType.errors}"
+            elif values.get("metric_type") == MetricType.performance:
+                assert isinstance(values.get("metric_of"), MetricOfPerformance), \
+                    f"metricOf must be of type {MetricOfPerformance} for metricType:{MetricType.performance}"
+            elif values.get("metric_type") == MetricType.resources:
+                assert isinstance(values.get("metric_of"), MetricOfResources), \
+                    f"metricOf must be of type {MetricOfResources} for metricType:{MetricType.resources}"
+            elif values.get("metric_type") == MetricType.web_vital:
+                assert isinstance(values.get("metric_of"), MetricOfWebVitals), \
+                    f"metricOf must be of type {MetricOfWebVitals} for metricType:{MetricType.web_vital}"
+
+            assert isinstance(values.get("view_type"), MetricOtherViewType), \
+                f"viewType must be 'chart' for metricOf:{values.get('metric_of')}"
+
         return values
 
     class Config:
         alias_generator = attribute_to_camel_case
-
-
-class CustomMetricsConfigSchema(BaseModel):
-    col: Optional[int] = Field(...)
-    row: Optional[int] = Field(default=2)
-    position: Optional[int] = Field(default=0)
-
-
-class CreateCardSchema(TryCardSchema):
-    name: str = Field(...)
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
@@ -1025,7 +1109,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
     type: LiveFilterType = Field(...)
     source: Optional[str] = Field(None)
     operator: Literal[SearchEventOperator._is.value,
-                      SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
+    SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
 
     @root_validator
     def validator(cls, values):

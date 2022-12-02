@@ -9,7 +9,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 PIE_CHART_GROUP = 5
 
 
-def __try_live(project_id, data: schemas.TryCardSchema):
+def __try_live(project_id, data: schemas.CreateCardSchema):
     results = []
     for i, s in enumerate(data.series):
         s.filter.startDate = data.startTimestamp
@@ -42,11 +42,11 @@ def __try_live(project_id, data: schemas.TryCardSchema):
     return results
 
 
-def __is_funnel_chart(data: schemas.TryCardSchema):
+def __is_funnel_chart(data: schemas.CreateCardSchema):
     return data.metric_type == schemas.MetricType.funnel
 
 
-def __get_funnel_chart(project_id, data: schemas.TryCardSchema):
+def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
         return {
             "stages": [],
@@ -94,7 +94,7 @@ def __get_sessions_list(project_id, user_id, data):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def merged_live(project_id, data: schemas.TryCardSchema, user_id=None):
+def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
     if __is_funnel_chart(data):
         return __get_funnel_chart(project_id=project_id, data=data)
     elif __is_errors_list(data):
@@ -130,7 +130,7 @@ def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloa
 
 def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema, metric=None):
     if metric is None:
-        metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+        metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -153,7 +153,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -172,7 +172,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
 
 
 def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -188,7 +188,7 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
 
 
 def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -227,35 +227,35 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
             _data[f"index_{i}"] = i
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
-        data.series = None
-        params = {"user_id": user_id, "project_id": project_id,
-                  "default_config": json.dumps(data.config.dict()),
-                  **data.dict(), **_data}
-        query = cur.mogrify(f"""\
-            WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
-                                    view_type, metric_type, metric_of, metric_value,
-                                    metric_format, default_config)
-                         VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                                    %(metric_format)s, %(default_config)s)
-                         RETURNING *)
-            INSERT
-            INTO metric_series(metric_id, index, name, filter)
-            VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(name_{i})s, %(filter_{i})s::jsonb)"
-                              for i in range(series_len)])}
-            RETURNING metric_id;""", params)
+        params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
+        params["default_config"] = json.dumps(data.default_config.dict())
+        query = """INSERT INTO metrics_clone (project_id, user_id, name, is_public,
+                            view_type, metric_type, metric_of, metric_value,
+                            metric_format, default_config)
+                   VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
+                              %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
+                              %(metric_format)s, %(default_config)s)
+                   RETURNING metric_id"""
+        if len(data.series) > 0:
+            query = f"""WITH m AS ({query})
+                        INSERT INTO metric_series(metric_id, index, name, filter)
+                        VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(name_{i})s, %(filter_{i})s::jsonb)"
+                                          for i in range(series_len)])}
+                        RETURNING metric_id;"""
 
-        cur.execute(
-            query
-        )
+        query = cur.mogrify(query, params)
+        print("-------")
+        print(query)
+        print("-------")
+        cur.execute(query)
         r = cur.fetchone()
         if dashboard:
             return r["metric_id"]
-    return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
+    return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
 def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     series_ids = [r["seriesId"] for r in metric["series"]]
@@ -312,7 +312,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
                  RETURNING 1)""")
         query = cur.mogrify(f"""\
             {"WITH " if len(sub_queries) > 0 else ""}{",".join(sub_queries)}
-            UPDATE metrics
+            UPDATE metrics_clone
             SET name = %(name)s, is_public= %(is_public)s, 
                 view_type= %(view_type)s, metric_type= %(metric_type)s, 
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
@@ -324,7 +324,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
             AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
         cur.execute(query)
-    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
 def get_all(project_id, user_id, include_series=False):
@@ -333,31 +333,31 @@ def get_all(project_id, user_id, include_series=False):
         if include_series:
             sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
-                                                WHERE metric_series.metric_id = metrics.metric_id
+                                                WHERE metric_series.metric_id = metrics_clone.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)"""
         cur.execute(
             cur.mogrify(
                 f"""SELECT *
-                    FROM metrics
+                    FROM metrics_clone
                              {sub_join}
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
                                                 FROM (SELECT DISTINCT dashboard_id, name, is_public
                                                       FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
                                                       WHERE deleted_at ISNULL
-                                                        AND dashboard_widgets.metric_id = metrics.metric_id
+                                                        AND dashboard_widgets.metric_id = metrics_clone.metric_id
                                                         AND project_id = %(project_id)s
                                                         AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)
                              LEFT JOIN LATERAL (SELECT email AS owner_email
                                                 FROM users
                                                 WHERE deleted_at ISNULL
-                                                  AND users.user_id = metrics.user_id
+                                                  AND users.user_id = metrics_clone.user_id
                                                 ) AS owner ON (TRUE)
-                    WHERE metrics.project_id = %(project_id)s
-                      AND metrics.deleted_at ISNULL
-                      AND (user_id = %(user_id)s OR metrics.is_public)
-                    ORDER BY metrics.edited_at DESC, metrics.created_at DESC;""",
+                    WHERE metrics_clone.project_id = %(project_id)s
+                      AND metrics_clone.deleted_at ISNULL
+                      AND (user_id = %(user_id)s OR metrics_clone.is_public)
+                    ORDER BY metrics_clone.edited_at DESC, metrics_clone.created_at DESC;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )
@@ -379,7 +379,7 @@ def delete(project_id, metric_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-            UPDATE public.metrics 
+            UPDATE public.metrics_clone 
             SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
@@ -390,37 +390,37 @@ def delete(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
-def get(metric_id, project_id, user_id, flatten=True):
+def get_card(metric_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT *, default_config AS config
-                    FROM metrics
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
-                                                FROM metric_series
-                                                WHERE metric_series.metric_id = metrics.metric_id
-                                                  AND metric_series.deleted_at ISNULL 
-                                                ) AS metric_series ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT dashboard_id, name, is_public
-                                                      FROM dashboards
-                                                      WHERE deleted_at ISNULL
-                                                        AND project_id = %(project_id)s
-                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
-                                                ) AS connected_dashboards ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT email AS owner_email
-                                                FROM users
-                                                WHERE deleted_at ISNULL
-                                                AND users.user_id = metrics.user_id
-                                                ) AS owner ON (TRUE)
-                    WHERE metrics.project_id = %(project_id)s
-                      AND metrics.deleted_at ISNULL
-                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
-                      AND metrics.metric_id = %(metric_id)s
-                    ORDER BY created_at;""",
-                {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
-            )
+        query = cur.mogrify(
+            """SELECT *, default_config AS config
+                FROM metrics_clone
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
+                                            FROM metric_series
+                                            WHERE metric_series.metric_id = metrics_clone.metric_id
+                                              AND metric_series.deleted_at ISNULL 
+                                            ) AS metric_series ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                            FROM (SELECT dashboard_id, name, is_public
+                                                  FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                  WHERE deleted_at ISNULL
+                                                    AND project_id = %(project_id)s
+                                                    AND ((dashboards.user_id = %(user_id)s OR is_public))
+                                                    AND metric_id = %(metric_id)s) AS connected_dashboards
+                                            ) AS connected_dashboards ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                                            FROM users
+                                            WHERE deleted_at ISNULL
+                                            AND users.user_id = metrics_clone.user_id
+                                            ) AS owner ON (TRUE)
+                WHERE metrics_clone.project_id = %(project_id)s
+                  AND metrics_clone.deleted_at ISNULL
+                  AND (metrics_clone.user_id = %(user_id)s OR metrics_clone.is_public)
+                  AND metrics_clone.metric_id = %(metric_id)s
+                ORDER BY created_at;""",
+            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
         )
+        cur.execute(query)
         row = cur.fetchone()
         if row is None:
             return None
@@ -446,17 +446,17 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
         cur.execute(
             cur.mogrify(
                 f"""SELECT *, default_config AS config
-                    FROM metrics
+                    FROM metrics_clone
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
-                                                WHERE metric_series.metric_id = metrics.metric_id
+                                                WHERE metric_series.metric_id = metrics_clone.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)
                              {sub_query}
-                    WHERE (metrics.project_id = %(project_id)s OR metrics.project_id ISNULL)
-                      AND metrics.deleted_at ISNULL
-                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
-                      AND metrics.metric_id = %(metric_id)s
+                    WHERE (metrics_clone.project_id = %(project_id)s OR metrics_clone.project_id ISNULL)
+                      AND metrics_clone.deleted_at ISNULL
+                      AND (metrics_clone.user_id = %(user_id)s OR metrics_clone.is_public)
+                      AND metrics_clone.metric_id = %(metric_id)s
                     ORDER BY created_at;""",
                 {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
             )
@@ -470,16 +470,16 @@ def get_series_for_alert(project_id, user_id):
         cur.execute(
             cur.mogrify(
                 """SELECT series_id AS value,
-                       metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
+                       metrics_clone.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
                        'count' AS unit,
                        FALSE AS predefined,
                        metric_id,
                        series_id
                     FROM metric_series
-                             INNER JOIN metrics USING (metric_id)
-                    WHERE metrics.deleted_at ISNULL
-                      AND metrics.project_id = %(project_id)s
-                      AND metrics.metric_type = 'timeseries'
+                             INNER JOIN metrics_clone USING (metric_id)
+                    WHERE metrics_clone.deleted_at ISNULL
+                      AND metrics_clone.project_id = %(project_id)s
+                      AND metrics_clone.metric_type = 'timeseries'
                       AND (user_id = %(user_id)s OR is_public)
                     ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}
@@ -493,20 +493,20 @@ def change_state(project_id, metric_id, user_id, status):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-            UPDATE public.metrics 
+            UPDATE public.metrics_clone 
             SET active = %(status)s 
             WHERE metric_id = %(metric_id)s
               AND (user_id = %(user_id)s OR is_public);""",
                         {"metric_id": metric_id, "status": status, "user_id": user_id})
         )
-    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
 def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CustomMetricSessionsPayloadSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)

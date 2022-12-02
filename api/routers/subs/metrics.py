@@ -46,11 +46,12 @@ def pin_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentCont
     return {"data": dashboards.pin_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
 
 
+@app.post('/{projectId}/dashboards/{dashboardId}/cards', tags=["cards"])
 @app.post('/{projectId}/dashboards/{dashboardId}/widgets', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/widgets', tags=["dashboard"])
-def add_widget_to_dashboard(projectId: int, dashboardId: int,
-                            data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
+def add_card_to_dashboard(projectId: int, dashboardId: int,
+                          data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
+                          context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                           data=data)}
 
@@ -100,7 +101,7 @@ def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_c
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_custom_metric(projectId: int, data: schemas.TryCardSchema = Body(...),
+def try_custom_metric(projectId: int, data: schemas.CreateCardSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
 
@@ -132,7 +133,6 @@ def try_custom_metric_funnel_issues(projectId: int, data: schemas.CustomMetricSe
 @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
 def create_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": data.dict()}
     return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 
 
@@ -140,35 +140,6 @@ def create_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
 @app.get('/{projectId}/metrics', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
 def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": [
-            {
-                "metricId": 1180,
-                "projectId": 5053,
-                "userId": 283,
-                "name": "ts1",
-                "isPublic": true,
-                "createdAt": 1669818461027,
-                "deletedAt": null,
-                "active": true,
-                "metricType": "timeseries",
-                "viewType": "lineChart",
-                "metricOf": "sessionCount",
-                "metricValue": [],
-                "metricFormat": "sessionCount",
-                "editedAt": 1669818461027,
-                "category": "custom",
-                "predefinedKey": null,
-                "defaultConfig": {
-                    "col": 2,
-                    "row": 2,
-                    "position": 0
-                },
-                "dashboards": [],
-                "ownerEmail": "tahay@asayer.io"
-            }
-        ]
-    }
     return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
 
 
@@ -176,7 +147,7 @@ def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 @app.get('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
+    data = custom_metrics.get_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
     if data is None:
         return {"errors": ["card not found"]}
     return {"data": data}
