@@ -14,19 +14,19 @@ import styles from './playerBlock.module.css';
 }))
 export default class PlayerBlock extends React.PureComponent {
   render() {
-    const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false } = this.props;
+    const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false, isMultiview } = this.props;
 
     return (
-      <div className={cn(styles.playerBlock, 'flex flex-col overflow-x-hidden')}>
-        {!fullscreen && !fullView && (
+      <div className={cn(styles.playerBlock, 'flex flex-col overflow-x-hidden')} style={{ minWidth: isMultiview ? '100%' : undefined }}>
+        {!fullscreen && !fullView && !isMultiview && (
           <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
         )}
         <Player
           className="flex-1"
-          // bottomBlockIsActive={ true }
           fullscreen={fullscreen}
           activeTab={activeTab}
           fullView={fullView}
+          isMultiview={isMultiview}
         />
       </div>
     );

@@ -6,7 +6,7 @@ import withRequest from 'HOCs/withRequest';
 import withPermissions from 'HOCs/withPermissions';
 import { PlayerContext, defaultContextValue } from './playerContext';
 import { makeAutoObservable } from 'mobx';
-import { createLiveWebPlayer } from 'Player'
+import { createLiveWebPlayer } from 'Player';
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
@@ -23,6 +23,8 @@ interface Props {
   isEnterprise: boolean;
   userEmail: string;
   userName: string;
+  isMultiview?: boolean;
+  customSession?: Session;
 }
 
 function LivePlayer({
@@ -36,34 +38,39 @@ function LivePlayer({
   isEnterprise,
   userEmail,
   userName,
+  isMultiview,
+  customSession,
 }: Props) {
   const [contextValue, setContextValue] = useState(defaultContextValue);
   const [fullView, setFullView] = useState(false);
 
+  // @ts-ignore burn immutable
+  const usedSession = isMultiview ? customSession : session.toJS();
+
   useEffect(() => {
-    if (loadingCredentials || !session.sessionId) return;
+    if (loadingCredentials || !usedSession.sessionId) return;
     const sessionWithAgentData = {
-      // @ts-ignore burn immutable
-      ...session.toJS(),
+      ...usedSession,
       agentInfo: {
         email: userEmail,
         name: userName,
       },
-    }
-    const [player, store] = createLiveWebPlayer(
-      sessionWithAgentData,
-      assistCredendials,
-      (state) => makeAutoObservable(state)
-    )
-    setContextValue({ player, store })
-    player.play()
-    return () => player.clean()
-  }, [ session.sessionId, assistCredendials ])
+    };
+    const [player, store] = createLiveWebPlayer(sessionWithAgentData, assistCredendials, (state) =>
+      makeAutoObservable(state)
+    );
+    setContextValue({ player, store });
+    player.play();
+    return () => player.clean();
+  }, [session.sessionId, assistCredendials]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    if (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') {
+    if (
+      (queryParams.has('fullScreen') && queryParams.get('fullScreen') === 'true') ||
+      location.pathname.includes('multiview')
+    ) {
       setFullView(true);
     }
 
@@ -95,8 +102,15 @@ function LivePlayer({
           fullscreen={fullscreen}
         />
       )}
-      <div className={styles.session} data-fullscreen={fullscreen}>
-        <PlayerBlock />
+      <div
+        className={styles.session}
+        style={{
+          height: isMultiview ? '100%' : undefined,
+          width: isMultiview ? '100%' : undefined,
+        }}
+        data-fullscreen={fullscreen}
+      >
+        <PlayerBlock isMultiview={isMultiview} />
       </div>
     </PlayerContext.Provider>
   );

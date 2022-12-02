@@ -44,6 +44,7 @@ function Player(props) {
     bottomBlock,
     activeTab,
     fullView,
+    isMultiview,
   } = props;
   const playerContext = React.useContext(PlayerContext)
   const screenWrapper = React.useRef();
@@ -80,7 +81,6 @@ function Player(props) {
             {bottomBlock === OVERVIEW && <OverviewPanel />}
             {bottomBlock === CONSOLE && <ConsolePanel />}
             {bottomBlock === NETWORK && (
-              // <Network />
               <NetworkPanel />
             )}
             {/* {bottomBlock === STACKEVENTS && <StackEvents />} */}
@@ -93,7 +93,7 @@ function Player(props) {
             {bottomBlock === INSPECTOR && <Inspector />}
           </div>
         )}
-        {!fullView && <Controls
+        {!fullView && !isMultiview && <Controls
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}

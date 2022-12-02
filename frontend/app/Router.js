@@ -6,7 +6,6 @@ import { Notification } from 'UI';
 import { Loader } from 'UI';
 import { fetchUserInfo } from 'Duck/user';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
@@ -37,6 +36,7 @@ const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
 const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
 const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDetails'));
 const FunnelPagePure = lazy(() => import('Components/Funnels/FunnelPage'));
+const MultiviewPure = lazy(() => import('Components/Session_/Multiview/Multiview.tsx'));
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
@@ -49,6 +49,7 @@ const Errors = withSiteIdUpdater(ErrorsPure);
 const FunnelPage = withSiteIdUpdater(FunnelPagePure);
 const FunnelsDetails = withSiteIdUpdater(FunnelDetailsPure);
 const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
+const Multiview = withSiteIdUpdater(MultiviewPure)
 const withSiteId = routes.withSiteId;
 
 const METRICS_PATH = routes.metrics();
@@ -81,6 +82,7 @@ const FORGOT_PASSWORD = routes.forgotPassword();
 const CLIENT_PATH = routes.client();
 const ONBOARDING_PATH = routes.onboarding();
 const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
+const MULTIVIEW_PATH = routes.multiview();
 
 @withStore
 @withRouter
@@ -172,7 +174,7 @@ class Router extends React.Component {
         const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding, isEnterprise } = this.props;
         const siteIdList = sites.map(({ id }) => id).toJS();
         const hideHeader = (location.pathname && location.pathname.includes('/session/')) || location.pathname.includes('/assist/');
-        const isPlayer = isRoute(SESSION_PATH, location.pathname) || isRoute(LIVE_SESSION_PATH, location.pathname);
+        const isPlayer = isRoute(SESSION_PATH, location.pathname) || isRoute(LIVE_SESSION_PATH, location.pathname) || isRoute(MULTIVIEW_PATH, location.pathname);
         const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true'
 
         return isLoggedIn ? (
@@ -219,6 +221,7 @@ class Router extends React.Component {
                             <Route exact strict path={withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)} component={Dashboard} />
 
+                            <Route exact strict path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
                             <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
                             <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
                             <Route exact strict path={withSiteId(ERRORS_PATH, siteIdList)} component={Errors} />

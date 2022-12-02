@@ -23,6 +23,7 @@ import {
 } from 'Duck/components/player';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { fetchSessions } from 'Duck/liveSearch';
 
 import { AssistDuration } from './Time';
 import Timeline from './Timeline';
@@ -98,8 +99,11 @@ function Controls(props: any) {
     showStorageRedux,
     session,
     // showStackRedux,
+    fetchSessions: fetchAssistSessions,
+    totalAssistSessions,
   } = props;
 
+  const isAssist = window.location.pathname.includes('/assist/');
   const storageType = selectStorageType(store.get());
   const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
   const profilesCount = profilesList.length;
@@ -141,6 +145,9 @@ function Controls(props: any) {
 
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown.bind(this));
+    if (isAssist && totalAssistSessions === 0) {
+      fetchAssistSessions();
+    }
     return () => {
       document.removeEventListener('keydown', onKeyDown.bind(this));
     };
@@ -148,12 +155,12 @@ function Controls(props: any) {
 
   const forthTenSeconds = () => {
     // @ts-ignore
-    player.jumpInterval(SKIP_INTERVALS[skipInterval])
+    player.jumpInterval(SKIP_INTERVALS[skipInterval]);
   };
 
   const backTenSeconds = () => {
     // @ts-ignore
-    player.jumpInterval(-SKIP_INTERVALS[skipInterval])
+    player.jumpInterval(-SKIP_INTERVALS[skipInterval]);
   };
 
   const renderPlayBtn = () => {
@@ -261,9 +268,11 @@ function Controls(props: any) {
             )}
           </div>
 
-          <div>
-            <AssistSessionsTabs session={session} />
-          </div>
+          {isAssist && totalAssistSessions > 1 ? (
+            <div>
+              <AssistSessionsTabs session={session} />
+            </div>
+          ) : null}
 
           <div className="flex items-center h-full">
             <ControlButton
@@ -375,6 +384,7 @@ export default connect(
       showStorageRedux: !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
       showStackRedux: !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
       session: state.getIn(['sessions', 'current']),
+      totalAssistSessions: state.getIn(['liveSearch', 'total']),
       closedLive:
         !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current', 'live']),
       skipInterval: state.getIn(['components', 'player', 'skipInterval']),
@@ -385,6 +395,7 @@ export default connect(
     fullscreenOff,
     toggleBottomBlock,
     changeSkipInterval,
+    fetchSessions,
   }
 )(ControlPlayer);
 

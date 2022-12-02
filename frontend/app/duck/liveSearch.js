@@ -1,4 +1,4 @@
-import { List, Map } from 'immutable'; 
+import { List, Map } from 'immutable';
 import { fetchListType, fetchType, editType } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { mergeReducers, success } from './funcTools/tools';
@@ -23,6 +23,7 @@ const initialState = Map({
 	instance: new Filter({ filters: [], sort: '' }),
   filterSearchList: {},
   currentPage: 1,
+  total: 0,
 });
 
 function reducer(state = initialState, action = {}) {
