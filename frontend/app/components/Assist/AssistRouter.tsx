@@ -22,7 +22,7 @@ function AssistRouter(props: Props) {
   } = props;
 
   return (
-    <div>
+    <div className="w-full">
       <Switch>
         <Route exact strict path={withSiteId(assist(), siteId)}>
           <AssistView />
