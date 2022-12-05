@@ -294,12 +294,12 @@ export function JSExceptionDeprecated(
   ]
 }
 
-export function RawCustomEvent(
+export function CustomEvent(
   name: string,
   payload: string,
-): Messages.RawCustomEvent {
+): Messages.CustomEvent {
   return [
-    Messages.Type.RawCustomEvent,
+    Messages.Type.CustomEvent,
     name,
     payload,
   ]

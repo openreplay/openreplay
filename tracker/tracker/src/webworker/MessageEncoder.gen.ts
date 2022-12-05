@@ -102,7 +102,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) 
     break
     
-    case Messages.Type.RawCustomEvent:
+    case Messages.Type.CustomEvent:
       return  this.string(msg[1]) && this.string(msg[2]) 
     break
     
