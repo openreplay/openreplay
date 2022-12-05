@@ -85,11 +85,10 @@ export const onboarding = (tab = routerOBTabString) => `/onboarding/${ tab }`;
 export const sessions = params => queried('/sessions', params);
 export const assist = params => queried('/assist', params);
 export const recordings = params => queried("/recordings", params);
-export const multiview = params => queried("/assist/multiview", params);
-
+export const multiviewIndex = params => queried('/multiview', params);
+export const multiview = (sessionsQuery = ':sessionsquery', hash) => hashed(`/multiview/${sessionsQuery}`, hash);
 export const session = (sessionId = ':sessionId', hash) => hashed(`/session/${ sessionId }`, hash);
 export const liveSession = (sessionId = ':sessionId', params, hash) => hashed(queried(`/assist/${ sessionId }`, params), hash);
-// export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/live/session/${ sessionId }`, hash);
 
 export const errors = params => queried('/errors', params);
 export const error = (id = ':errorId', hash) => hashed(`/errors/${ id }`, hash);
@@ -127,6 +126,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     assist(),
     recordings(),
     multiview(),
+    multiviewIndex(),
 
     metrics(),
     metricDetails(''),

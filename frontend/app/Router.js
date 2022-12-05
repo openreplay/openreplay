@@ -83,6 +83,7 @@ const CLIENT_PATH = routes.client();
 const ONBOARDING_PATH = routes.onboarding();
 const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
 const MULTIVIEW_PATH = routes.multiview();
+const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
 
 @withStore
 @withRouter
@@ -173,8 +174,14 @@ class Router extends React.Component {
     render() {
         const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding, isEnterprise } = this.props;
         const siteIdList = sites.map(({ id }) => id).toJS();
-        const hideHeader = (location.pathname && location.pathname.includes('/session/')) || location.pathname.includes('/assist/');
-        const isPlayer = isRoute(SESSION_PATH, location.pathname) || isRoute(LIVE_SESSION_PATH, location.pathname) || isRoute(MULTIVIEW_PATH, location.pathname);
+        const hideHeader = (location.pathname && location.pathname.includes('/session/'))
+            || location.pathname.includes('/assist/')
+            || location.pathname.includes('multiview');
+        const isPlayer = isRoute(SESSION_PATH, location.pathname)
+            || isRoute(LIVE_SESSION_PATH, location.pathname)
+            || isRoute(MULTIVIEW_PATH, location.pathname)
+            || isRoute(MULTIVIEW_INDEX_PATH, location.pathname);
+
         const redirectToOnboarding = !onboarding && localStorage.getItem(GLOBAL_HAS_NO_RECORDINGS) === 'true'
 
         return isLoggedIn ? (
@@ -215,7 +222,8 @@ class Router extends React.Component {
                             <Route exact strict path={withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList)} component={Dashboard} />
                             <Route exact strict path={withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList)} component={Dashboard} />
 
-                            <Route exact strict path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
+                            <Route exact path={withSiteId(MULTIVIEW_INDEX_PATH, siteIdList)} component={Multiview} />
+                            <Route path={withSiteId(MULTIVIEW_PATH, siteIdList)} component={Multiview} />
                             <Route exact strict path={withSiteId(ASSIST_PATH, siteIdList)} component={Assist} />
                             <Route exact strict path={withSiteId(RECORDINGS_PATH, siteIdList)} component={Assist} />
                             <Route exact strict path={withSiteId(ERRORS_PATH, siteIdList)} component={Errors} />
