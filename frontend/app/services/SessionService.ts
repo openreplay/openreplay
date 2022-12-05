@@ -37,4 +37,11 @@ export default class SettingsService {
       .then((j) => j.data || {})
       .catch(console.error);
   }
+
+  getLiveSessions(filter: any) {
+    return this.client
+      .post('/assist/sessions', filter)
+      .then(fetchErrorCheck)
+      .then((response) => response.data || []);
+  }
 }

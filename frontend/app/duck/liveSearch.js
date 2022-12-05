@@ -64,6 +64,11 @@ export default mergeReducers(
 	}),
 );
 
+export const customSetSessions = (data) => ({
+  type: success(FETCH_SESSION_LIST),
+  data
+})
+
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'liveSearch', 'instance']).toData();

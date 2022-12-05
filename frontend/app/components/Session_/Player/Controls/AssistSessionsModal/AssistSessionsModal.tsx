@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader, Pagination, Tooltip } from 'UI';
+import { Loader, Pagination, Tooltip, Button } from 'UI';
 import { connect } from 'react-redux';
 import SessionItem from 'Shared/SessionItem';
 import { addFilterByKeyAndValue, updateCurrentPage, applyFilter } from 'Duck/liveSearch';
@@ -51,8 +51,11 @@ function AssistSessionsModal(props: Props) {
     .toJS();
 
   React.useEffect(() => {
-    props.applyFilter({ ...filter });
+    if (total === 0) {
+      reloadSessions()
+    }
   }, []);
+  const reloadSessions = () => props.applyFilter({ ...filter });
   const onSortChange = ({ value }: any) => {
     props.applyFilter({ sort: value.value });
   };
@@ -68,8 +71,9 @@ function AssistSessionsModal(props: Props) {
   return (
     <div className="bg-gray-lightest box-shadow h-screen p-4" style={{ width: '840px' }}>
       <div className="flex items-center my-2">
-        <div className="flex items-center">
-          <span className="mr-2 color-gray-medium">Sort By</span>
+        <div className="flex items-center gap-2" w-full>
+        <Button className="mr-2" variant="text" onClick={reloadSessions}>Refresh</Button>
+          <span className="color-gray-medium">Sort By</span>
           <Tooltip title="No metadata available to sort" disabled={sortOptions.length > 0}>
             <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
               <Select
@@ -79,7 +83,6 @@ function AssistSessionsModal(props: Props) {
                 onChange={onSortChange}
                 value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
               />
-              <div className="mx-2" />
               <SortOrderButton
                 onChange={(state: any) => props.applyFilter({ order: state })}
                 sortOrder={filter.order}
@@ -95,7 +98,7 @@ function AssistSessionsModal(props: Props) {
               className={cn(
                 'rounded bg-white mb-2 overflow-hidden border',
                 assistMultiviewStore.sessions.findIndex(
-                  (s) => s.sessionId === session.sessionId
+                  (s: Record<string, any>) => s.sessionId === session.sessionId
                 ) !== -1
                   ? 'cursor-not-allowed opacity-60'
                   : ''
@@ -110,7 +113,7 @@ function AssistSessionsModal(props: Props) {
                 metaList={metaList}
                 isDisabled={
                   assistMultiviewStore.sessions.findIndex(
-                    (s) => s.sessionId === session.sessionId
+                    (s: Record<string, any>) => s.sessionId === session.sessionId
                   ) !== -1
                 }
                 isAdd

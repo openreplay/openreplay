@@ -22,23 +22,23 @@ const Tab = (props: ITab) => (
   </div>
 );
 
-export const InactiveTab = (props: Omit<ITab, 'children'>) => (
+export const InactiveTab = React.memo((props: Omit<ITab, 'children'>) => (
   <Tab onClick={props.onClick} classNames={cn("hover:bg-gray-bg bg-gray-light", props.classNames)}>
     <Icon name="plus" size="22" color="white" />
   </Tab>
-);
+));
 
-const ActiveTab = (props: Omit<ITab, 'children'>) => (
+const ActiveTab = React.memo((props: Omit<ITab, 'children'>) => (
   <Tab onClick={props.onClick} classNames="hover:bg-teal bg-borderColor-primary">
     <Icon name="play-fill-new" size="22" color="white" />
   </Tab>
-);
+));
 
-const CurrentTab = () => (
+const CurrentTab = React.memo(() => (
   <Tab classNames="bg-teal color-white">
     <span style={{ fontSize: '0.65rem' }}>PLAYING</span>
   </Tab>
-);
+));
 
 function AssistTabs({ session, siteId }: { session: Record<string, any>; siteId: string }) {
   const history = useHistory();
@@ -53,17 +53,17 @@ function AssistTabs({ session, siteId }: { session: Record<string, any>; siteId:
   }, []);
 
   const openGrid = () => {
-    history.push(withSiteId(multiview(), siteId));
+    const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s.sessionId).join(','));
+    return history.push(withSiteId(multiview(sessionIdQuery), siteId));
   };
   const openLiveSession = (sessionId: string) => {
     assistMultiviewStore.setActiveSession(sessionId);
     history.push(withSiteId(liveSession(sessionId), siteId));
   };
 
-  console.log(assistMultiviewStore.activeSessionId)
   return (
     <div className="grid grid-cols-2 w-28 h-full" style={{ gap: '4px' }}>
-      {assistMultiviewStore.sortedSessions.map((session) => (
+      {assistMultiviewStore.sortedSessions.map((session: { key: number, sessionId: string }) => (
         <React.Fragment key={session.key}>
           {assistMultiviewStore.isActive(session.sessionId) ? (
             <CurrentTab />

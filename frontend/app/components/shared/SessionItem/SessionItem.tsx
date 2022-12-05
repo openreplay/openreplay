@@ -234,14 +234,12 @@ function SessionItem(props: RouteComponentProps & Props) {
               </div>
             )}
             {props.isAdd ? (
-              <div className="rounded-full border-tealx p-2 border">
+              <div
+                className="rounded-full border-tealx p-2 border"
+                onClick={() => (props.isDisabled ? null : props.onClick())}
+              >
                 <div className="bg-tealx rounded-full p-2">
-                  <Icon
-                    name="plus"
-                    size={16}
-                    color="white"
-                    onClick={() => (props.isDisabled ? null : props.onClick())}
-                  />
+                  <Icon name="plus" size={16} color="white" />
                 </div>
               </div>
             ) : (
