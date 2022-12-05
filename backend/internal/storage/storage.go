@@ -91,7 +91,13 @@ func (s *Storage) uploadKey(sessID uint64, suffix string, shouldSplit bool, retr
 	if suffix == "/devtools.mob" {
 		mobFileName += "devtools"
 	}
+
 	filePath := s.cfg.FSDir + "/" + mobFileName
+
+	// Use new work dir if session file doesn't exist by old path
+	if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
+		filePath = s.cfg.FsNewDir + "/" + mobFileName
+	}
 
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)

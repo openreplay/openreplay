@@ -10,26 +10,28 @@ import (
 )
 
 type SessionWriter struct {
-	filesLimit  int
-	workingDir  string
-	fileBuffer  int
-	syncTimeout time.Duration
-	meta        *Meta
-	sessions    *sync.Map
-	done        chan struct{}
-	stopped     chan struct{}
+	filesLimit    int
+	workingDir    string
+	newWorkingDir string
+	fileBuffer    int
+	syncTimeout   time.Duration
+	meta          *Meta
+	sessions      *sync.Map
+	done          chan struct{}
+	stopped       chan struct{}
 }
 
-func NewWriter(filesLimit uint16, workingDir string, fileBuffer int, syncTimeout int) *SessionWriter {
+func NewWriter(filesLimit uint16, workingDir, newWorkingDir string, fileBuffer int, syncTimeout int) *SessionWriter {
 	w := &SessionWriter{
-		filesLimit:  int(filesLimit) / 2, // should divide by 2 because each session has 2 files
-		workingDir:  workingDir + "/",
-		fileBuffer:  fileBuffer,
-		syncTimeout: time.Duration(syncTimeout) * time.Second,
-		meta:        NewMeta(int(filesLimit)),
-		sessions:    &sync.Map{},
-		done:        make(chan struct{}),
-		stopped:     make(chan struct{}),
+		filesLimit:    int(filesLimit) / 2, // should divide by 2 because each session has 2 files
+		workingDir:    workingDir + "/",
+		newWorkingDir: newWorkingDir + "/",
+		fileBuffer:    fileBuffer,
+		syncTimeout:   time.Duration(syncTimeout) * time.Second,
+		meta:          NewMeta(int(filesLimit)),
+		sessions:      &sync.Map{},
+		done:          make(chan struct{}),
+		stopped:       make(chan struct{}),
 	}
 	go w.synchronizer()
 	return w
@@ -45,7 +47,7 @@ func (w *SessionWriter) Write(msg messages.Message) (err error) {
 	sessObj, ok := w.sessions.Load(sid)
 	if !ok {
 		// Create new session
-		sess, err = NewSession(sid, w.workingDir, w.fileBuffer)
+		sess, err = NewSession(sid, w.workingDir, w.newWorkingDir, w.fileBuffer)
 		if err != nil {
 			return fmt.Errorf("can't create session: %d, err: %s", sid, err)
 		}

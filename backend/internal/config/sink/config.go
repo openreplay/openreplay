@@ -8,6 +8,7 @@ import (
 type Config struct {
 	common.Config
 	FsDir                string `env:"FS_DIR,required"`
+	FsNewDir             string `env:"FS_NEW_DIR,required"`
 	FsUlimit             uint16 `env:"FS_ULIMIT,required"`
 	FileBuffer           int    `env:"FILE_BUFFER,default=16384"`
 	SyncTimeout          int    `env:"SYNC_TIMEOUT,default=5"`

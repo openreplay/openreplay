@@ -3,6 +3,7 @@ package sessionwriter
 import (
 	"encoding/binary"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
 
@@ -17,11 +18,17 @@ type Session struct {
 	updated bool
 }
 
-func NewSession(sessID uint64, workDir string, bufSize int) (*Session, error) {
+func NewSession(sessID uint64, workDir, newWorkDir string, bufSize int) (*Session, error) {
 	if sessID == 0 {
 		return nil, fmt.Errorf("wrong session id")
 	}
-	filePath := workDir + strconv.FormatUint(sessID, 10)
+	sessionID := strconv.FormatUint(sessID, 10)
+	filePath := workDir + sessionID
+
+	// Use new work dir if session file doesn't exist by old path
+	if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
+		filePath = newWorkDir + sessionID
+	}
 
 	dom, err := NewFile(filePath, bufSize)
 	if err != nil {
