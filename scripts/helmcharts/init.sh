@@ -1,4 +1,5 @@
 #/bin/bash
+set -e
 
 # --- helper functions for logs ---
 info()
@@ -19,59 +20,73 @@ version="v1.9.0"
 usr=`whoami`
 
 # Installing k3s
-function install_k8s{
+function install_k8s() {
     curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.22.8+k3s1' INSTALL_K3S_EXEC="--no-deploy=traefik" sh -
     [[ -d ~/.kube ]] || mkdir ~/.kube
     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
     sudo chmod 0644 ~/.kube/config
     sudo chown -R $usr ~/.kube/config
+    sleep 10
 }
 
-function install_tools(){
+# Checking whether the app exists or we do have to upgade.
+function exists() {
+  install_status=Upgrading
+  [[ UPGRADE_TOOLS -eq 1 ]] && {
+    install_status=Upgrading
+    return 100
+  }
+  which $1 &> /dev/null
+  return $?
+}
+
+# Instal the toolings needed for installation/maintaining k8s
+function install_tools() {
     ## installing kubectl
-    which kubectl &> /dev/null || {
-        info "kubectl not installed. Installing it..."
+    exists kubectl || {
+        info "$install_status kubectl"
         sudo curl -SsL https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl ; sudo chmod +x /usr/local/bin/kubectl
     }
 
-    ## Installing GH package manager
-    which eget &> /dev/null || {
-        local version="1.3.0"
-        info "eget not installed. Installing it..."
-        curl -SsL https://github.com/zyedidia/eget/releases/download/v$version/eget-1.3.0-linux_amd64.tar.gz -o /tmp/eget.tar.gz
-        cd /tmp
-        tar -xf eget.tar.gz
-        sudo mv eget-$version-linux_amd64/eget  /usr/local/bin/eget
+    ## $install_status GH package manager
+    exists eget || {
+        info "$install_status eget"
+        download_url=`curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4`
+        curl -SsL ${download_url} -o /tmp/eget.tar.gz
+        tar -xf /tmp/eget.tar.gz --strip-components=1 -C /tmp/
+        sudo mv /tmp/eget /usr/local/bin/eget
         sudo chmod +x /usr/local/bin/eget
-        cd -
     }
 
-    ## installing stern
-    which stern &> /dev/null || {
-        info "stern not installed. installing..."
-        sudo eget --to /usr/local/bin stern/stern
+    ## installing stern, log viewer for K8s
+    exists stern || {
+        info "$install_status Stern"
+        sudo eget -q --to /usr/local/bin stern/stern
     }
 
-    ## installing k9s
-    which k9s &> /dev/null || {
-        info "k9s not installed. Installing it..."
-        sudo eget --to /usr/local/bin derailed/k9s
+    ## installing k9s, TUI K8s
+    exists k9s || {
+        info "$install_status K9s"
+        sudo eget -q --to /usr/local/bin derailed/k9s
     }
 
-    ## installing helm
-    which helm &> /dev/null || {
-        info "helm not installed. Installing it..."
-        sudo eget --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+    ## installing helm, package manager for K8s
+    exists helm || {
+        info "$install_status Helm"
+        sudo eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
     }
 }
-
-sleep 10
 
 # ## Installing openssl
 # sudo apt update &> /dev/null
 # sudo apt install openssl -y &> /dev/null
 
 randomPass() {
+    ## Installing openssl
+    exists openssl || {
+      sudo apt update &> /dev/null
+      sudo apt install openssl -y &> /dev/null
+    }
     openssl rand -hex 10
 }
 
@@ -126,7 +141,7 @@ function install_openreplay() {
   helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
 }
 
-function main(){
+function main() {
   [[ x$SKIP_K8S_INSTALL == "x1" ]] && {
       info "Skipping Kuberntes installation"
   } || {
@@ -137,11 +152,15 @@ function main(){
   } || {
     install_tools
   }
-  create_passwords
-  set_permissions
+  [[ x$SKIP_ROTATE_SECRETS == "x1" ]] && {
+    create_passwords
+  }
   [[ x$SKIP_OR_INSTALL == "x1" ]] && {
       info "Skipping OpenReplay installation"
   } || {
+    set_permissions
     install_openreplay
   }
 }
+
+main
