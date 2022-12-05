@@ -7,7 +7,7 @@ on:
     paths:
       - sourcemap-reader/**
 
-name: Build and Deploy Chalice
+name: Build and Deploy sourcemap-reader
 
 jobs:
   deploy:
