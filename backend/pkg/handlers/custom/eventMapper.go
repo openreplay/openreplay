@@ -77,5 +77,6 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 			ContextString: msg.Name,
 			Payload:       msg.Payload,
 		}
+	}
 	return nil
 }

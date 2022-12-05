@@ -9,9 +9,13 @@ import (
 )
 
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
-	err := conn.InsertCustomEvent(sessionID, e.Meta().Timestamp,
+	err := conn.InsertCustomEvent(
+		sessionID,
+		uint64(e.Meta().Timestamp),
 		truncSqIdx(e.Meta().Index),
-		e.Name, e.Payload)
+		e.Name,
+		e.Payload,
+	)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
 	}
