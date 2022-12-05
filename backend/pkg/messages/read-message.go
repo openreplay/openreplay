@@ -3,7 +3,6 @@ package messages
 
 import (
 	"fmt"
-	"io"
 )
 
 func DecodeBatchMeta(reader BytesReader) (Message, error) {
