@@ -11,7 +11,7 @@ import { KEYS } from 'Types/filter/customFilter';
 import { capitalize } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-
+import { fetchList as fetchMeta } from 'Duck/customField'
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';
 
@@ -32,13 +32,14 @@ interface ConnectProps {
   updateCurrentPage: (page: number) => void;
   applyFilter: (filter: any) => void;
   onAdd: () => void;
+  fetchMeta: () => void;
 }
 
 type Props = OwnProps & ConnectProps;
 
 function AssistSessionsModal(props: Props) {
   const { assistMultiviewStore } = useStore();
-  const { loading, list, metaList = [], filter, currentPage, total, onAdd } = props;
+  const { loading, list, metaList = [], filter, currentPage, total, onAdd, fetchMeta } = props;
   const onUserClick = () => false;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
@@ -54,6 +55,7 @@ function AssistSessionsModal(props: Props) {
     if (total === 0) {
       reloadSessions()
     }
+    fetchMeta()
   }, []);
   const reloadSessions = () => props.applyFilter({ ...filter });
   const onSortChange = ({ value }: any) => {
@@ -153,5 +155,6 @@ export default connect(
     applyFilter,
     addFilterByKeyAndValue,
     updateCurrentPage,
+    fetchMeta,
   }
 )(observer(AssistSessionsModal));
