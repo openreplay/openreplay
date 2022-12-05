@@ -98,8 +98,9 @@ func (m *messageReaderImpl) Parse() (err error) {
 					m.version = 0
 				}
 				if m.version != 1 {
-					// Unsupported tracker version
+					// Unsupported tracker version, reset reader
 					m.list = m.list[:0]
+					m.reader.SetPointer(0)
 					return nil
 				}
 			}
