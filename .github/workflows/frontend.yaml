@@ -1,4 +1,4 @@
-name: Frontend Dev Deployment 
+name: Frontend Foss Deployment 
 on:
   workflow_dispatch:
   push:
