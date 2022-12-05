@@ -25,6 +25,7 @@ RUN adduser -u 1001 openreplay -D
 ENV TZ=UTC \
     FS_ULIMIT=1000 \
     FS_DIR=/mnt/efs \
+    FS_NEW_DIR=/mnt/tmpefs \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
     HTTP_PORT=8080 \
