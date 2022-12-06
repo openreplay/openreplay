@@ -42,7 +42,6 @@
     "react": "^18.2.0",
     "react-circular-progressbar": "^2.1.0",
     "react-confirm": "^0.2.3",
-    "react-date-range": "^1.4.0",
     "react-daterange-picker": "^2.0.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^15.1.2",
