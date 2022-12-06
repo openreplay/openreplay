@@ -55,7 +55,7 @@ function Multiview({
   const openLiveSession = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
     assistMultiviewStore.setActiveSession(sessionId);
-    history.push(withSiteId(liveSession(sessionId), siteId));
+    history.push(withSiteId(liveSession(sessionId)+'?multi=true', siteId));
   };
 
   const returnToList = () => {
@@ -76,7 +76,9 @@ function Multiview({
     assistMultiviewStore.removeSession(sessionId);
   };
 
-  const placeholder = new Array(4 - assistMultiviewStore.sessions.length).fill(0);
+  const emptySpace = 4 - assistMultiviewStore.sessions.length;
+
+  const placeholder = emptySpace > 0 ? new Array(emptySpace).fill(0) : []
 
   return (
     <div className="w-screen h-screen flex flex-col">

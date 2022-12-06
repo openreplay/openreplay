@@ -6,8 +6,9 @@ import {
   assist as assistRoute,
   liveSession as liveSessionRoute,
   withSiteId,
+  multiview,
 } from 'App/routes';
-import { BackLink, Link } from 'UI';
+import { BackLink, Link, Icon } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
@@ -15,7 +16,7 @@ import UserCard from './EventsBlock/UserCard';
 import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-
+import { useStore } from 'App/mstore'
 import stl from './playerBlockHeader.module.css';
 import AssistActions from '../Assist/components/AssistActions';
 import AssistTabs from '../Assist/components/AssistTabs';
@@ -27,6 +28,7 @@ const ASSIST_ROUTE = assistRoute();
 function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
+  const { assistMultiviewStore } = useStore();
 
   const { width, height, showEvents } = store.get();
   const toggleEvents = player.toggleEvents;
@@ -43,6 +45,7 @@ function PlayerBlockHeader(props: any) {
     location,
     history,
     sessionPath,
+    isMultiview,
   } = props;
 
   React.useEffect(() => {
@@ -77,14 +80,36 @@ function PlayerBlockHeader(props: any) {
     key: tab,
   }));
 
+  const openGrid = () => {
+    const sessionIdQuery = encodeURIComponent(assistMultiviewStore.sessions.map((s) => s.sessionId).join(','));
+    return history.push(withSiteId(multiview(sessionIdQuery), siteId));
+  };
+
   return (
     <div className={cn(stl.header, 'flex justify-between', { hidden: fullscreen })}>
       <div className="flex w-full items-center">
         {!hideBack && (
-          <div className="flex items-center h-full" onClick={backHandler}>
-            {/* @ts-ignore TODO */}
-            <BackLink label="Back" className="h-full" />
-            <div className={stl.divider} />
+          <div
+            className="flex items-center h-full cursor-pointer group"
+            onClick={() => (isMultiview ? openGrid() : backHandler())}
+          >
+            {isMultiview ? (
+              <>
+                <div className="rounded-full border group-hover:border-teal group-hover:text-teal group-hover:fill-teal p-1 mr-2">
+                  <Icon name="close" color="inherit" size={13} />
+                </div>
+                <span className="group-hover:text-teal group-hover:fill-teal">
+                  Close
+                </span>
+                <div className={stl.divider} />
+              </>
+            ) : (
+              <>
+                {/* @ts-ignore TODO */}
+                <BackLink label="Back" className="h-full" />
+                <div className={stl.divider} />
+              </>
+            )}
           </div>
         )}
         <UserCard className="" width={width} height={height} />
