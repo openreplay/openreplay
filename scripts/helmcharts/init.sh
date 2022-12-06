@@ -61,19 +61,19 @@ function install_tools() {
     ## installing stern, log viewer for K8s
     exists stern || {
         info "$install_status Stern"
-        sudo eget -q --to /usr/local/bin stern/stern
+        sudo /usr/local/bin/eget -q --to /usr/local/bin stern/stern
     }
 
     ## installing k9s, TUI K8s
     exists k9s || {
         info "$install_status K9s"
-        sudo eget -q --to /usr/local/bin derailed/k9s
+        sudo /usr/local/bin/eget -q --to /usr/local/bin derailed/k9s
     }
 
     ## installing helm, package manager for K8s
     exists helm || {
         info "$install_status Helm"
-        sudo eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+        sudo /usr/local/bin/eget -q --to /usr/local/bin https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
     }
 }
 
