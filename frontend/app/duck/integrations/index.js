@@ -12,6 +12,7 @@ import GithubConfig from 'Types/integrations/githubConfig';
 import IssueTracker from 'Types/integrations/issueTracker';
 import slack from './slack';
 import integrations from './integrations';
+import teams from './teams'
 
 import { createIntegrationReducer } from './reducer';
 
@@ -29,6 +30,7 @@ export default {
     github: createIntegrationReducer('github', GithubConfig),
     issues: createIntegrationReducer('issues', IssueTracker),
     slack,
+    teams,
     integrations,
 };
 
