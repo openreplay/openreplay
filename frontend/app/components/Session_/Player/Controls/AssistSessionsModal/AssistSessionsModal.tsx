@@ -11,7 +11,9 @@ import { KEYS } from 'Types/filter/customFilter';
 import { capitalize } from 'App/utils';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { fetchList as fetchMeta } from 'Duck/customField'
+import { fetchList as fetchMeta } from 'Duck/customField';
+import AssistSearchField from 'App/components/Assist/AssistSearchField';
+import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames';
 import Session from 'App/mstore/types/session';
 
@@ -53,9 +55,9 @@ function AssistSessionsModal(props: Props) {
 
   React.useEffect(() => {
     if (total === 0) {
-      reloadSessions()
+      reloadSessions();
     }
-    fetchMeta()
+    fetchMeta();
   }, []);
   const reloadSessions = () => props.applyFilter({ ...filter });
   const onSortChange = ({ value }: any) => {
@@ -71,10 +73,21 @@ function AssistSessionsModal(props: Props) {
   };
 
   return (
-    <div className="bg-gray-lightest box-shadow h-screen p-4" style={{ width: '840px' }}>
-      <div className="flex items-center my-2">
-        <div className="flex items-center gap-2" w-full>
-        <Button className="mr-2" variant="text" onClick={reloadSessions}>Refresh</Button>
+    <div className="bg-gray-lightest box-shadow h-screen p-4" style={{ width: '1000px', maxWidth: '60vw' }}>
+      <div className="flex flex-col my-2 w-full gap-2 ">
+        <div className="flex items-center gap-2 w-full">
+          <Tooltip title="Refresh" placement="top" delay={200}>
+            <Button
+              loading={loading}
+              className="mr-2"
+              variant="text"
+              onClick={reloadSessions}
+              icon="arrow-repeat"
+            />
+          </Tooltip>
+          <AssistSearchField />
+        </div>
+        <div className="flex self-end items-center gap-2" w-full>
           <span className="color-gray-medium">Sort By</span>
           <Tooltip title="No metadata available to sort" disabled={sortOptions.length > 0}>
             <div className={cn('flex items-center', { disabled: sortOptions.length === 0 })}>
@@ -93,6 +106,8 @@ function AssistSessionsModal(props: Props) {
           </Tooltip>
         </div>
       </div>
+      <LiveSessionSearch />
+      <div className="my-4" />
       <Loader loading={loading}>
         {list.map((session) => (
           <React.Fragment key={session.sessionId}>

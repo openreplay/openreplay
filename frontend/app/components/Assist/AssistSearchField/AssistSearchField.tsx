@@ -16,7 +16,7 @@ function AssistSearchField(props: Props) {
     const hasEvents = props.appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
     const hasFilters = props.appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
     return (
-        <div className="flex items-center">
+        <div className="flex items-center w-full">
             <div style={{ width: '60%', marginRight: '10px' }}>
                 <SessionSearchField fetchFilterSearch={props.fetchFilterSearch} addFilterByKeyAndValue={props.addFilterByKeyAndValue} />
             </div>

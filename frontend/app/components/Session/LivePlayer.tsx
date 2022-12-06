@@ -11,20 +11,22 @@ import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
 import Session from 'App/mstore/types/session';
+import withLocationHandlers from 'HOCs/withLocationHandlers';
 
 interface Props {
   session: Session;
-  toggleFullscreen: (isOn: boolean) => void;
-  closeBottomBlock: () => void;
   fullscreen: boolean;
   loadingCredentials: boolean;
   assistCredendials: RTCIceServer[];
-  request: () => void;
   isEnterprise: boolean;
   userEmail: string;
   userName: string;
-  isMultiview?: boolean;
   customSession?: Session;
+  isMultiview?: boolean;
+  query?: Record<string, (key: string) => any>;
+  toggleFullscreen: (isOn: boolean) => void;
+  closeBottomBlock: () => void;
+  request: () => void;
 }
 
 function LivePlayer({
@@ -40,10 +42,11 @@ function LivePlayer({
   userName,
   isMultiview,
   customSession,
+  query
 }: Props) {
   const [contextValue, setContextValue] = useState(defaultContextValue);
   const [fullView, setFullView] = useState(false);
-
+  const openedFromMultiview = query.get('multi') === 'true'
   // @ts-ignore burn immutable
   const usedSession = isMultiview ? customSession : session.toJS();
 
@@ -100,6 +103,7 @@ function LivePlayer({
           setActiveTab={setActiveTab}
           tabs={TABS}
           fullscreen={fullscreen}
+          isMultiview={openedFromMultiview}
         />
       )}
       <div
@@ -139,6 +143,6 @@ export default withRequest({
         };
       },
       { toggleFullscreen, closeBottomBlock }
-    )(LivePlayer)
+    )(withLocationHandlers()(LivePlayer))
   )
 );
