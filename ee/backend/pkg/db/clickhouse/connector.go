@@ -27,9 +27,9 @@ type Connector interface {
 	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
+	InsertRequest(session *types.Session, msg *messages.Fetch, savePayload bool) error
 	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
-	InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error
+	InsertGraphQL(session *types.Session, msg *messages.GraphQL) error
 	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
 }
 
@@ -352,7 +352,7 @@ func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgV
 	return nil
 }
 
-func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error {
+func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetch, savePayload bool) error {
 	urlMethod := url.EnsureMethod(msg.Method)
 	if urlMethod == "" {
 		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
@@ -365,8 +365,8 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
+		msg.Meta().Index,
+		datetime(uint64(msg.Meta().Timestamp)),
 		msg.URL,
 		request,
 		response,
@@ -386,8 +386,8 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
+		msg.Meta().Index,
+		datetime(uint64(msg.Meta().Timestamp)),
 		msg.Name,
 		msg.Payload,
 		"CUSTOM",
@@ -398,12 +398,12 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	return nil
 }
 
-func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error {
+func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.GraphQL) error {
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
+		msg.Meta().Index,
+		datetime(uint64(msg.Meta().Timestamp)),
 		msg.OperationName,
 		nullableString(msg.Variables),
 		nullableString(msg.Response),

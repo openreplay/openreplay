@@ -3,7 +3,6 @@ package messages
 
 import (
 	"fmt"
-	"io"
 )
 <% $messages.each do |msg| %>
 func Decode<%= msg.name %>(reader BytesReader) (Message, error) {

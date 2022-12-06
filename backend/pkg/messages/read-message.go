@@ -444,9 +444,9 @@ func DecodeIntegrationEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRawCustomEvent(reader BytesReader) (Message, error) {
+func DecodeCustomEvent(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &RawCustomEvent{}
+	msg := &CustomEvent{}
 	if msg.Name, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -627,24 +627,6 @@ func DecodeResourceEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeCustomEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &CustomEvent{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Name, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Payload, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &CSSInsertRule{}
@@ -738,21 +720,6 @@ func DecodeStateAction(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeStateActionEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &StateActionEvent{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Type, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeRedux(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &Redux{}
@@ -838,60 +805,6 @@ func DecodePerformanceTrack(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.UsedJSHeapSize, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeGraphQLEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &GraphQLEvent{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.OperationKind, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.OperationName, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Variables, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Response, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeFetchEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &FetchEvent{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Method, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Request, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Response, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Status, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1808,7 +1721,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 26:
 		return DecodeIntegrationEvent(reader)
 	case 27:
-		return DecodeRawCustomEvent(reader)
+		return DecodeCustomEvent(reader)
 	case 28:
 		return DecodeUserID(reader)
 	case 29:
@@ -1823,8 +1736,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeClickEvent(reader)
 	case 35:
 		return DecodeResourceEvent(reader)
-	case 36:
-		return DecodeCustomEvent(reader)
 	case 37:
 		return DecodeCSSInsertRule(reader)
 	case 38:
@@ -1837,8 +1748,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeOTable(reader)
 	case 42:
 		return DecodeStateAction(reader)
-	case 43:
-		return DecodeStateActionEvent(reader)
 	case 44:
 		return DecodeRedux(reader)
 	case 45:
@@ -1851,10 +1760,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeGraphQL(reader)
 	case 49:
 		return DecodePerformanceTrack(reader)
-	case 50:
-		return DecodeGraphQLEvent(reader)
-	case 51:
-		return DecodeFetchEvent(reader)
 	case 52:
 		return DecodeDOMDrop(reader)
 	case 53:
