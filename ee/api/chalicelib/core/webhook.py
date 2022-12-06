@@ -58,8 +58,7 @@ def get_by_tenant(tenant_id, replace_none=False):
             cur.mogrify("""SELECT w.*
                             FROM public.webhooks AS w 
                             WHERE w.tenant_id =%(tenant_id)s 
-                                AND deleted_at ISNULL
-                                AND type='webhook';""",
+                                AND deleted_at ISNULL;""",
                         {"tenant_id": tenant_id})
         )
         all = helper.list_to_camel_case(cur.fetchall())

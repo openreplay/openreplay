@@ -54,7 +54,7 @@ def get_by_tenant(tenant_id, replace_none=False):
     with pg_client.PostgresClient() as cur:
         cur.execute("""SELECT w.*
                         FROM public.webhooks AS w 
-                        WHERE deleted_at ISNULL AND type='webhook';""")
+                        WHERE deleted_at ISNULL;""")
         all = helper.list_to_camel_case(cur.fetchall())
         for w in all:
             w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
