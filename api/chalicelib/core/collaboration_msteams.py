@@ -40,21 +40,21 @@ class MSTeams(BaseCollaboration):
     def send_raw(cls, tenant_id, webhook_id, body):
         integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
-            return {"errors": ["slack integration not found"]}
+            return {"errors": ["msteams integration not found"]}
         try:
             r = requests.post(
                 url=integration["endpoint"],
                 json=body,
                 timeout=5)
             if r.status_code != 200:
-                print(f"!! issue sending slack raw; webhookId:{webhook_id} code:{r.status_code}")
+                print(f"!! issue sending msteams raw; webhookId:{webhook_id} code:{r.status_code}")
                 print(r.text)
                 return None
         except requests.exceptions.Timeout:
-            print(f"!! Timeout sending slack raw webhookId:{webhook_id}")
+            print(f"!! Timeout sending msteams raw webhookId:{webhook_id}")
             return None
         except Exception as e:
-            print(f"!! Issue sending slack raw webhookId:{webhook_id}")
+            print(f"!! Issue sending msteams raw webhookId:{webhook_id}")
             print(str(e))
             return None
         return {"data": r.text}

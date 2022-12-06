@@ -414,6 +414,13 @@ def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                                          note_id=noteId, webhook_id=webhookId)
 
 
+@app.get('/{projectId}/notes/{noteId}/msteams/{webhookId}', tags=["sessions", "notes"])
+def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
+                          context: schemas.CurrentContext = Depends(OR_context)):
+    return sessions_notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                           note_id=noteId, webhook_id=webhookId)
+
+
 @app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
 def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
