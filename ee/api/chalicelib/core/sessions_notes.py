@@ -180,7 +180,7 @@ def share_to_msteams(tenant_id, user_id, project_id, note_id, webhook_id):
     session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/session/{note['sessionId']}?note={note['noteId']}")
     if note["timestamp"] > 0:
         session_url += f"&jumpto={note['timestamp']}"
-    title = f"[{session_url}](Note for session {note['sessionId']})"
+    title = f"[Note for session {note['sessionId']}]({session_url})"
 
     blocks = [{
         "type": "TextBlock",
