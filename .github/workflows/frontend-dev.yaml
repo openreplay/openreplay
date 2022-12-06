@@ -1,11 +1,5 @@
 name: Frontend Dev Deployment 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - player-refactoring-phase-1
-    paths:
-      - frontend/**
+on: workflow_dispatch
 # Disable previous workflows for this action.
 concurrency: 
   group: ${{ github.workflow }} #-${{ github.ref }}
