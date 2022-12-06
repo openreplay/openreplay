@@ -119,4 +119,15 @@ export default class NotesService {
         }
       })
     }
+
+    sendMsTeamsNotification(noteId: string, webhook: string) {
+      return this.client.get(`/notes/${noteId}/msteams/${webhook}`)
+      .then(r => {
+        if (r.ok) {
+          return r.json().then(r => r.data)
+        } else {
+          throw new Error('Error sending slack notif: ' + r.status)
+        }
+      })
+    }
 }

@@ -130,4 +130,13 @@ export default class NotesStore {
       console.error(e)
     }
   }
+
+  async sendMsTeamsNotification(noteId: string, webhook: string) {
+    try {
+      const resp = await notesService.sendMsTeamsNotification(noteId, webhook)
+      return resp
+    } catch (e) {
+      console.error(e)
+    }
+  }
 }

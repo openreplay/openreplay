@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import TeamsChannelList from './TeamsChannelList';
 import { fetchList, init } from 'Duck/integrations/teams';
 import { connect } from 'react-redux';
-import SlackAddForm from './SlackAddForm';
+import TeamsAddForm from './TeamsAddForm';
 import { Button } from 'UI';
 
 interface Props {
@@ -31,7 +31,7 @@ const MSTeams = (props: Props) => {
         <div className="bg-white h-screen overflow-y-auto flex items-start" style={{ width: active ? '700px' : '350px' }}>
             {active && (
                 <div className="border-r h-full" style={{ width: '350px' }}>
-                    <SlackAddForm onClose={() => setActive(false)} />
+                    <TeamsAddForm onClose={() => setActive(false)} />
                 </div>
             )}
             <div className="shrink-0" style={{ width: '350px' }}>
