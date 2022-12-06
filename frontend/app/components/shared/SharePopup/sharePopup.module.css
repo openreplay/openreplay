@@ -39,14 +39,9 @@
 }
 
 .footer {
-  /* display: flex; */
-  /* align-items: center; */
-  /* justify-content: space-between; */
-  /* padding: 10px 0; */
   border-top: solid thin $gray-light;
-  margin: 0 -14px;
+  margin: 0 -8px;
   padding: 0 14px;
-  /* border-bottom: solid thin $gray-light; */
 }
 
 textarea {

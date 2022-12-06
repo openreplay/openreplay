@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { Button, Form, Input, SegmentSelection, Checkbox, Message, Link, Icon } from 'UI';
-import { alertMetrics as metrics } from 'App/constants';
+import { Button, Form, Input, SegmentSelection, Checkbox, Icon } from 'UI';
 import { alertConditions as conditions } from 'App/constants';
 import { client, CLIENT_TABS } from 'App/routes';
 import { connect } from 'react-redux';
@@ -47,12 +46,12 @@ const AlertForm = (props) => {
     const {
         instance,
         slackChannels,
+        msTeamsChannels,
         webhooks,
         loading,
         onDelete,
         deleting,
         triggerOptions,
-        metricId,
         style = { width: '580px', height: '100vh' },
     } = props;
     const write = ({ target: { value, name } }) => props.edit({ [name]: value });
@@ -242,6 +241,14 @@ const AlertForm = (props) => {
                                     label="Slack"
                                 />
                                 <Checkbox
+                                    name="msteams"
+                                    className="mr-8"
+                                    type="checkbox"
+                                    checked={instance.msteams}
+                                    onClick={onChangeCheck}
+                                    label="MS Teams"
+                                />
+                                <Checkbox
                                     name="email"
                                     type="checkbox"
                                     checked={instance.email}
@@ -262,6 +269,20 @@ const AlertForm = (props) => {
                                             options={slackChannels}
                                             placeholder="Select Channel"
                                             onChange={(selected) => props.edit({ slackInput: selected })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            {instance.msteams && (
+                                <div className="flex items-start my-4">
+                                    <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'MS Teams'}</label>
+                                    <div className="w-4/6">
+                                        <DropdownChips
+                                            fluid
+                                            selected={instance.msTeamsInput}
+                                            options={msTeamsChannels}
+                                            placeholder="Select Channel"
+                                            onChange={(selected) => props.edit({ msTeamsInput: selected })}
                                         />
                                     </div>
                                 </div>

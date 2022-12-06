@@ -16,7 +16,7 @@ function Webhooks(props) {
   const { webhooks, loading } = props;
   const { showModal, hideModal } = useModal();
 
-  const noSlackWebhooks = webhooks.filter((hook) => hook.type !== 'slack');
+  const noSlackWebhooks = webhooks.filter((hook) => hook.type === 'webhook');
   useEffect(() => {
     props.fetchList();
   }, []);

@@ -17,6 +17,8 @@ const AlertItem = props => {
 
   const getNotifyChannel = alert => {
     let str = '';
+    if (alert.msteams)
+      str = 'MS Teams'
     if (alert.slack)
       str = 'Slack';
     if (alert.email)
@@ -36,7 +38,7 @@ const AlertItem = props => {
       className={cn(stl.wrapper, 'p-4 py-6 relative group cursor-pointer', { [stl.active]: active })}
       onClick={onEdit}
       id="alert-item"
-    >  
+    >
       <AlertTypeLabel type={alert.detectionMethod} />
       <div className="capitalize font-medium">{alert.name}</div>
       <div className="mt-2 text-sm color-gray-medium">

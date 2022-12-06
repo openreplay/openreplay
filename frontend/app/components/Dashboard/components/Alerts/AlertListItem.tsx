@@ -41,6 +41,9 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
     str = 'Slack';
     str += alert.slackInput.length > 0 ? getSlackChannels() : '';
   }
+  if (alert.msteams) {
+    str = 'MS Teams'
+  }
   if (alert.email) {
     str += (str === '' ? '' : ' and ') + (alert.emailInput.length > 1 ? 'Emails' : 'Email');
     str += alert.emailInput.length > 0 ? ' (' + alert.emailInput.join(', ') + ')' : '';

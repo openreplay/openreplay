@@ -7,6 +7,8 @@ const SAVE = new RequestTypes('msteams/SAVE');
 const UPDATE = new RequestTypes('msteams/UPDATE');
 const REMOVE = new RequestTypes('msteams/REMOVE');
 const FETCH_LIST = new RequestTypes('msteams/FETCH_LIST');
+const SEND_MSG = new RequestTypes('msteams/SEND_MSG');
+
 const EDIT = 'msteams/EDIT';
 const INIT = 'msteams/INIT';
 const idKey = 'webhookId';
@@ -85,4 +87,13 @@ export function remove(id) {
         call: (client) => client.delete(`/integrations/msteams/${id}`),
         id,
     };
+}
+
+// https://api.openreplay.com/5587/integrations/msteams/notify/315/sessions/7856803626558104
+//
+export function sendMsTeamsMsg({ integrationId, entity, entityId, data }) {
+    return {
+        types: SEND_MSG.toArray(),
+        call: (client) => client.post(`/integrations/msteams/notify/${integrationId}/${entity}/${entityId}`, data)
+    }
 }

@@ -195,6 +195,12 @@ class Router extends React.Component {
                                                 state: tenantId,
                                             });
                                             break;
+                                        case '/integrations/msteams':
+                                            client.post('integrations/msteams/add', {
+                                                code: location.search.split('=')[1],
+                                                state: tenantId,
+                                            });
+                                            break;
                                     }
                                     return <Redirect to={CLIENT_PATH} />;
                                 }}

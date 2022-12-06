@@ -10,6 +10,7 @@ interface Props {
   init: (inst: any) => void;
   update: (inst: any) => void;
   remove: (id: string) => void;
+  onClose: () => void;
   instance: any;
   saving: boolean;
   errors: any;
@@ -29,7 +30,7 @@ class TeamsAddForm extends React.PureComponent<Props> {
     }
   };
 
-  remove = async (id) => {
+  remove = async (id: string) => {
     if (
       await confirm({
         header: 'Confirm',
@@ -41,7 +42,7 @@ class TeamsAddForm extends React.PureComponent<Props> {
     }
   };
 
-  write = ({ target: { name, value } }) => this.props.edit({ [name]: value });
+  write = ({ target: { name, value } }: { target: { name: string, value: string }}) => this.props.edit({ [name]: value });
 
   render() {
     const { instance, saving, errors, onClose } = this.props;
@@ -91,8 +92,8 @@ class TeamsAddForm extends React.PureComponent<Props> {
 
         {errors && (
           <div className="my-3">
-            {errors.map((error) => (
-              <Message visible={errors} size="mini" error key={error}>
+            {errors.map((error: any) => (
+              <Message visible={errors} key={error}>
                 {error}
               </Message>
             ))}
@@ -105,9 +106,9 @@ class TeamsAddForm extends React.PureComponent<Props> {
 
 export default connect(
   (state: any) => ({
-    instance: state.getIn(['slack', 'instance']),
-    saving: state.getIn(['slack', 'saveRequest', 'loading']),
-    errors: state.getIn(['slack', 'saveRequest', 'errors']),
+    instance: state.getIn(['teams', 'instance']),
+    saving: state.getIn(['teams', 'saveRequest', 'loading']),
+    errors: state.getIn(['teams', 'saveRequest', 'errors']),
   }),
   { edit, save, init, remove, update }
 )(TeamsAddForm);
