@@ -15,6 +15,8 @@ import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
 import ScreenRecordingState from './ScreenRecordingState'
 
 // TODO: fully specified strict check with no-any (everywhere)
+// @ts-ignore
+Peer = Peer.default || Peer
 
 type StartEndCallback = (agentInfo?: Record<string, any>) => ((() => any) | void)
 
