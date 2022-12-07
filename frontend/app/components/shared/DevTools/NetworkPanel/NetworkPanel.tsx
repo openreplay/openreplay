@@ -149,9 +149,17 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
   const {
     sessionStore: { devTools },
   } = useStore();
+<<<<<<< HEAD
   const filter = devTools[INDEX_KEY].filter;
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
+=======
+  const filter = useObserver(() => devTools[INDEX_KEY].filter);
+  const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
+  const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
+  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
+  const synRef: any = useRef({});
+>>>>>>> 07a63ac48 (change(ui) - network list filter xhr based on fetch)
 
   const list = useMemo(() =>
     // TODO: better merge (with body size info)
@@ -208,6 +216,30 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
       0,
     ), [ resourceList.length ])
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    const filterRE = getRE(filter, 'i');
+    let list = resources;
+
+    fetchList.forEach(
+      (fetchCall: any) =>
+        (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
+    );
+    if (fetchPresented) {
+      list = list.filter((i: any) => i.type !== TYPES.XHR)
+    }
+    list = list.concat(fetchList);
+
+    list = list.filter(
+      ({ type, name, status, success }: any) =>
+        (!!filter ? filterRE.test(status) || filterRE.test(name) || filterRE.test(type) : true) &&
+        (activeTab === ALL || type === TAB_TO_TYPE_MAP[activeTab]) &&
+        (showOnlyErrors ? parseInt(status) >= 400 || !success : true)
+    );
+    setFilteredList(list);
+  }, [resources, filter, showOnlyErrors, activeTab, fetchPresented]);
+>>>>>>> 07a63ac48 (change(ui) - network list filter xhr based on fetch)
 
   const referenceLines = useMemo(() => {
     const arr = [];
@@ -383,6 +415,22 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
   );
 }
 
+<<<<<<< HEAD
 export default connect((state: any) => ({
   startedAt: state.getIn(['sessions', 'current', 'startedAt']),
 }))(observer(NetworkPanel));
+=======
+export default connectPlayer((state: any) => ({
+    location: state.location,
+    resources: state.resourceList,
+    domContentLoadedTime: state.domContentLoadedTime,
+    fetchList: state.fetchList.map((i: any) =>
+      Resource({ ...i.toJS(), type: TYPES.XHR, time: i.time < 0 ? 0 : i.time })
+    ),
+    loadTime: state.loadTime,
+    time: state.time,
+    playing: state.playing,
+    domBuildingTime: state.domBuildingTime,
+  }
+))(NetworkPanel);
+>>>>>>> 07a63ac48 (change(ui) - network list filter xhr based on fetch)
