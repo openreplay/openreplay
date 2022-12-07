@@ -2,90 +2,37 @@ import { useModal } from 'App/components/Modal';
 import React from 'react';
 import MetricsLibraryModal from '../MetricsLibraryModal';
 import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
+import { TYPES, LIBRARY } from 'App/constants/card';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { dashboardMetricCreate, withSiteId } from 'App/routes';
 
-const METRIC_TYPES: MetricType[] = [
-  {
-    title: 'Add From Library',
-    icon: 'grid',
-    description: 'Select a pre existing card from card library',
-    slug: 'library',
-  },
-  {
-    title: 'Timeseries',
-    icon: 'graph-up',
-    description: 'Trend of sessions count in over the time.',
-    slug: 'timeseries',
-  },
-  {
-    title: 'Table',
-    icon: 'list-alt',
-    description: 'See list of Users, Sessions, Errors, Issues, etc.,',
-    slug: 'table',
-  },
-  {
-    title: 'Funnel',
-    icon: 'funnel',
-    description: 'Uncover the issues impacting user journeys.',
-    slug: 'funnel',
-  },
-  {
-    title: 'Errors Tracking',
-    icon: 'exclamation-circle',
-    description: 'Discover user journeys between 2 points.',
-    slug: 'errors',
-  },
-  {
-    title: 'Performance Monitoring',
-    icon: 'speedometer2',
-    description: 'Retention graph of users / features over a period of time.',
-    slug: 'performance',
-  },
-  {
-    title: 'Resource Monitoring',
-    icon: 'files',
-    description: 'Find the adoption of your all features in your app.',
-    slug: 'resource-monitoring',
-  },
-  {
-    title: 'Web Vitals',
-    icon: 'activity',
-    description: 'Find the adoption of your all features in your app.',
-    slug: 'web-vitals',
-  },
-  {
-    title: 'User Path',
-    icon: 'signpost-split',
-    description: 'Discover user journeys between 2 points.',
-    slug: 'user-path',
-  },
-  {
-    title: 'Retention',
-    icon: 'arrow-repeat',
-    description: 'Retension graph of users / features over a period of time.',
-    slug: 'retention',
-  },
-  {
-    title: 'Feature Adoption',
-    icon: 'card-checklist',
-    description: 'Find the adoption of your all features in your app.',
-    slug: 'feature-adoption',
-  },
-];
+interface Props extends RouteComponentProps {
+  dashboardId: number;
+  siteId: string;
+}
+function MetricTypeList(props: Props) {
+  const { dashboardId, siteId, history } = props;
+  const { hideModal } = useModal();
 
-function MetricTypeList() {
   const { showModal } = useModal();
   const onClick = ({ slug }: MetricType) => {
-    if (slug === 'library') {
-      showModal(<MetricsLibraryModal />, { right: true, width: 700 });
+    hideModal();
+    if (slug === LIBRARY) {
+      return showModal(<MetricsLibraryModal siteId={siteId} dashboardId={dashboardId} />, { right: true, width: 800 });
     }
+
+    // TODO redirect to card builder with metricType query param
+    const path = withSiteId(dashboardMetricCreate(dashboardId + ''), siteId);
+    history.push(path);
   };
+
   return (
     <>
-      {METRIC_TYPES.map((metric: MetricType) => (
+      {TYPES.map((metric: MetricType) => (
         <MetricTypeItem metric={metric} onClick={() => onClick(metric)} />
       ))}
     </>
   );
 }
 
-export default MetricTypeList;
+export default withRouter(MetricTypeList);

@@ -4,7 +4,7 @@ import { Icon } from 'UI';
 
 export interface MetricType {
   title: string;
-  icon: IconNames;
+  icon?: IconNames;
   description: string;
   slug: string;
 }

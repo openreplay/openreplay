@@ -47,7 +47,7 @@ Modal.Header = ({ title }: { title: string }) => {
 };
 
 Modal.Content = ({ children, className = 'p-4' }: { children: any; className?: string }) => {
-  return <div className={cn('h-screen overflow-y-auto', className)}>{children}</div>;
+  return <div className={cn('overflow-y-auto relative', className)} style={{ height: 'calc(100vh - 52px)'}}>{children}</div>;
 };
 
 export default Modal;

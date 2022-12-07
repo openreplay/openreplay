@@ -14,6 +14,7 @@ import DashboardEditModal from '../DashboardEditModal';
 import AddCardModal from '../AddCardModal';
 
 interface IProps {
+  dashboardId: string;
   siteId: string;
   renderReport?: any;
 }
@@ -21,10 +22,9 @@ interface IProps {
 type Props = IProps & RouteComponentProps;
 
 function DashboardHeader(props: Props) {
-  const { siteId } = props;
+  const { siteId, dashboardId } = props;
   const { dashboardStore } = useStore();
   const { showModal } = useModal();
-  // const [showTooltip, setShowTooltip] = React.useState(false);
   const [focusTitle, setFocusedInput] = React.useState(true);
   const [showEditModal, setShowEditModal] = React.useState(false);
   const period = dashboardStore.period;
@@ -82,7 +82,9 @@ function DashboardHeader(props: Props) {
         <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
           <Button
             variant="primary"
-            onClick={() => showModal(<AddCardModal />, { right: true })}
+            onClick={() =>
+              showModal(<AddCardModal dashboardId={dashboardId} siteId={siteId} />, { right: true })
+            }
             icon="plus"
           >
             Add Card

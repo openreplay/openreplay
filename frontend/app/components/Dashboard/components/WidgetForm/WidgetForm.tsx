@@ -8,6 +8,8 @@ import FilterSeries from '../FilterSeries';
 import { confirm, Tooltip } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
+import MetricTypeDropdown from './components/MetricTypeDropdown';
+import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
 
 interface Props {
     history: any;
@@ -103,18 +105,10 @@ function WidgetForm(props: Props) {
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <SegmentSelection
-                        icons
-                        outline
-                        name="metricType"
-                        className="my-3"
-                        onSelect={ onSelect }
-                        value={metricTypes.find((i) => i.value === metric.metricType) || metricTypes[0]}
-                        // @ts-ignore
-                        list={metricTypes.map((i) => ({ value: i.value, name: i.label, icon: metricIcons[i.value] }))}
-                    />
+                    <MetricTypeDropdown onSelect={writeOption} />
+                    <MetricSubtypeDropdown onSelect={writeOption} />
 
-                    {metric.metricType === 'timeseries' && (
+                    {/* {metric.metricType === 'timeseries' && (
                         <>
                             <span className="mx-3">of</span>
                             <Select
@@ -124,9 +118,9 @@ function WidgetForm(props: Props) {
                                 onChange={ writeOption }
                             />
                         </>
-                    )}
+                    )} */}
 
-                    {metric.metricType === 'table' && (
+                    {/* {metric.metricType === 'table' && (
                         <>
                             <span className="mx-3">of</span>
                             <Select
@@ -136,7 +130,7 @@ function WidgetForm(props: Props) {
                                 onChange={ writeOption }
                             />
                         </>
-                    )}
+                    )} */}
 
                     {metric.metricOf === FilterKey.ISSUE && (
                         <>
@@ -177,7 +171,7 @@ function WidgetForm(props: Props) {
                             variant="text-primary"
                             onClick={() => metric.addSeries()}
                             disabled={!canAddSeries}
-                        >Add Series</Button>
+                        >ADD</Button>
                     )}
                 </div>
 
