@@ -148,8 +148,6 @@ function NetworkPanel(props: Props) {
   const {
     sessionStore: { devTools },
   } = useStore();
-  // const [filter, setFilter] = useState(devTools[INDEX_KEY].filter);
-  // const [activeTab, setActiveTab] = useState(ALL);
   const filter = useObserver(() => devTools[INDEX_KEY].filter);
   const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
   const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
@@ -224,10 +222,14 @@ function NetworkPanel(props: Props) {
   useEffect(() => {
     const filterRE = getRE(filter, 'i');
     let list = resources;
+
     fetchList.forEach(
       (fetchCall: any) =>
         (list = list.filter((networkCall: any) => networkCall.url !== fetchCall.url))
     );
+    if (fetchPresented) {
+      list = list.filter((i: any) => i.type !== TYPES.XHR)
+    }
     list = list.concat(fetchList);
 
     list = list.filter(
@@ -237,7 +239,7 @@ function NetworkPanel(props: Props) {
         (showOnlyErrors ? parseInt(status) >= 400 || !success : true)
     );
     setFilteredList(list);
-  }, [resources, filter, showOnlyErrors, activeTab]);
+  }, [resources, filter, showOnlyErrors, activeTab, fetchPresented]);
 
   const referenceLines = useMemo(() => {
     const arr = [];
@@ -416,14 +418,15 @@ function NetworkPanel(props: Props) {
 }
 
 export default connectPlayer((state: any) => ({
-  location: state.location,
-  resources: state.resourceList,
-  fetchList: state.fetchList.map((i: any) =>
-    Resource({ ...i.toJS(), type: TYPES.XHR, time: i.time < 0 ? 0 : i.time })
-  ),
-  domContentLoadedTime: state.domContentLoadedTime,
-  loadTime: state.loadTime,
-  time: state.time,
-  playing: state.playing,
-  domBuildingTime: state.domBuildingTime,
-}))(NetworkPanel);
+    location: state.location,
+    resources: state.resourceList,
+    domContentLoadedTime: state.domContentLoadedTime,
+    fetchList: state.fetchList.map((i: any) =>
+      Resource({ ...i.toJS(), type: TYPES.XHR, time: i.time < 0 ? 0 : i.time })
+    ),
+    loadTime: state.loadTime,
+    time: state.time,
+    playing: state.playing,
+    domBuildingTime: state.domBuildingTime,
+  }
+))(NetworkPanel);
