@@ -24,14 +24,26 @@ function NotifyHooks({
   return (
     <div className="flex flex-col">
       <div className="flex items-center my-4">
-        <Checkbox
-          name="slack"
-          className="mr-8"
-          type="checkbox"
-          checked={instance.slack}
-          onClick={onChangeCheck}
-          label="Slack"
-        />
+        {slackChannels.length > 0 && (
+          <Checkbox
+            name="slack"
+            className="mr-8"
+            type="checkbox"
+            checked={instance.slack}
+            onClick={onChangeCheck}
+            label="Slack"
+          />
+        )}
+        {msTeamsChannels.length > 0 && (
+          <Checkbox
+            name="msteams"
+            className="mr-8"
+            type="checkbox"
+            checked={instance.msteams}
+            onClick={onChangeCheck}
+            label="MS Teams"
+          />
+        )}
         <Checkbox
           name="email"
           type="checkbox"
