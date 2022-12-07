@@ -49,7 +49,7 @@ function DashboardWidgetGrid(props: Props) {
               </div>
             </div>
             <div className="grid grid-cols-4 p-8 gap-2">
-              <MetricTypeList />
+              <MetricTypeList dashboardId={dashboardId} siteId={siteId} />
             </div>
           </div>
         }

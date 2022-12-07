@@ -7,18 +7,31 @@ import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
 import Widget from 'App/mstore/types/widget';
 
-function MetricsList({ siteId }: { siteId: string }) {
+function MetricsList({
+  siteId,
+  onSelectionChange = () => {},
+}: {
+  siteId: string;
+  onSelectionChange?: (selected: any[]) => void;
+}) {
   const { metricStore } = useStore();
   const metrics = metricStore.sortedWidgets;
   const metricsSearch = metricStore.metricsSearch;
-  const [selectedMetrics, setSelectedMetrics] = useState([]);
+  const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
+
+  useEffect(() => {
+    metricStore.fetchList();
+  }, []);
+
+  useEffect(() => {
+    onSelectionChange(selectedMetrics);
+  }, [selectedMetrics]);
 
   const toggleMetricSelection = (id: any) => {
-    console.log('id', id);
     if (selectedMetrics.includes(id)) {
-      selectedMetrics.splice(selectedMetrics.indexOf(id), 1);
+      setSelectedMetrics(selectedMetrics.filter((i: number) => i !== id));
     } else {
-      selectedMetrics.push(id);
+      setSelectedMetrics([...selectedMetrics, id]);
     }
   };
 
@@ -48,7 +61,7 @@ function MetricsList({ siteId }: { siteId: string }) {
         </div>
       }
     >
-      <div className="mt-3 border-b rounded bg-white">
+      <div className="mt-3 rounded bg-white">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-4 flex items-center">
             <Checkbox
@@ -70,7 +83,7 @@ function MetricsList({ siteId }: { siteId: string }) {
             <MetricListItem
               metric={metric}
               siteId={siteId}
-              selected={selectedMetrics[parseInt(metric.metricId)]}
+              selected={selectedMetrics.includes(parseInt(metric.metricId))}
               toggleSelection={(e: any) => {
                 e.stopPropagation();
                 toggleMetricSelection(parseInt(metric.metricId));
@@ -80,7 +93,7 @@ function MetricsList({ siteId }: { siteId: string }) {
         ))}
       </div>
 
-      <div className="w-full flex items-center justify-between pt-4 px-6">
+      <div className="w-full flex items-center justify-between py-4 px-6 border-t">
         <div className="text-disabled-text">
           Showing{' '}
           <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out

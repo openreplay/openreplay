@@ -1,11 +1,27 @@
 import React from 'react';
 import { Sankey, Tooltip, Rectangle, Layer, ResponsiveContainer } from 'recharts';
 
+type Node = {
+  name: string;
+}
+
+type Link = {
+  source: number;
+  target: number;
+  value: number;
+}
+
+export interface SankeyChartData {
+  links: Link[];
+  nodes: Node[];
+}
 interface Props {
-  data: any;
+  data: SankeyChartData;
+  nodePadding?: number;
+  nodeWidth?: number;
 }
 function SankeyChart(props: Props) {
-  const { data } = props;
+  const { data, nodePadding = 50, nodeWidth = 10 } = props;
   return (
     <div className="rounded border shadow">
       <div className="text-lg p-3 border-b bg-gray-lightest">Sankey Chart</div>
@@ -17,8 +33,8 @@ function SankeyChart(props: Props) {
             data={data}
             // node={{ stroke: '#77c878', strokeWidth: 0 }}
             node={<CustomNodeComponent />}
-            nodePadding={50}
-            nodeWidth={10}
+            nodePadding={nodePadding}
+            nodeWidth={nodeWidth}
             margin={{
               left: 10,
               right: 100,
@@ -33,7 +49,7 @@ function SankeyChart(props: Props) {
                 <stop offset="100%" stopColor="rgba(0, 197, 159, 0.3)" />
               </linearGradient>
             </defs>
-            <Tooltip content={<CustomTooltip /> }/>
+            <Tooltip content={<CustomTooltip />} />
           </Sankey>
         </ResponsiveContainer>
       </div>
@@ -44,10 +60,7 @@ function SankeyChart(props: Props) {
 export default SankeyChart;
 
 const CustomTooltip = (props: any) => {
-  console.log('props', props);
-  return (
-    <div className="rounded bg-white border p-0 px-1 text-sm">test</div>
-  )
+  return <div className="rounded bg-white border p-0 px-1 text-sm">test</div>;
   // if (active && payload && payload.length) {
   //   return (
   //     <div className="custom-tooltip">

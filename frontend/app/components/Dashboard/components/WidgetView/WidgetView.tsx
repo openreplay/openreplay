@@ -100,7 +100,7 @@ function WidgetView(props: Props) {
                             </h1>
                             <div className="text-gray-600 w-full cursor-pointer" onClick={() => setExpanded(!expanded)}>
                                 <div className="flex items-center select-none w-fit ml-auto">
-                                    <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
+                                    <span className="mr-2 color-teal">{expanded ? 'Collapse' : 'Edit'}</span>
                                     <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
                                 </div>
                             </div>

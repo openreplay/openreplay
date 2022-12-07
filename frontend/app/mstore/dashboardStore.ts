@@ -277,9 +277,9 @@ export default class DashboardStore {
         );
     }
 
-    getDashboard(dashboardId: string): Dashboard | null {
+    getDashboard(dashboardId: string|number): Dashboard | null {
         return (
-            this.dashboards.find((d) => d.dashboardId === dashboardId) || null
+            this.dashboards.find((d) => d.dashboardId == dashboardId) || null
         );
     }
 
