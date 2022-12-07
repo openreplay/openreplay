@@ -38,12 +38,6 @@
   margin-bottom: 14px;
 }
 
-.footer {
-  border-top: solid thin $gray-light;
-  margin: 0 -8px;
-  padding: 0 14px;
-}
-
 textarea {
   width: 100%;
   background-color: $gray-lightest;

@@ -29,7 +29,7 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
         .map((channelId: number) => {
           return (
             '#' +
-            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack').name
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack')?.name
           );
         })
         .join(', ') +

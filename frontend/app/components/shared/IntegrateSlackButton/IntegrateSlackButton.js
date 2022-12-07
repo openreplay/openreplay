@@ -14,11 +14,12 @@ function IntegrateSlackTeamsButton({ history, tenantId }) {
       <Button
         className="my-auto mt-2 mb-2 flex items-center gap-2"
         onClick={gotoPreferencesIntegrations}
+        variant="text-primary"
       >
         <Icon name="integrations/slack" size={16} />
-        <Icon name="integrations/teams" size={18} className="mr-2" />
+        <Icon name="integrations/teams" size={24} className="mr-2" />
 
-        <span>Integrate Slack/MS Teams</span>
+        <span>Integrate Slack or MS Teams</span>
       </Button>
     </div>
   )
