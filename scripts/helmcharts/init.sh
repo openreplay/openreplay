@@ -156,6 +156,8 @@ function main() {
     install_tools
   }
   [[ x$SKIP_ROTATE_SECRETS == "x1" ]] && {
+      info "Skipping random password generation"
+  } || {
     create_passwords
   }
   [[ x$SKIP_OR_INSTALL == "x1" ]] && {
