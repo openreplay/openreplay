@@ -36,13 +36,31 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
       ')'
     );
   };
+  const getMsTeamsChannels = () => {
+    return (
+      ' (' +
+      alert.msteamsInput
+        .map((channelId: number) => {
+          return (
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')?.name
+          );
+        })
+        .join(', ') +
+      ')'
+    );
+  };
   let str = '';
   if (alert.slack) {
     str = 'Slack';
-    str += alert.slackInput.length > 0 ? getSlackChannels() : '';
+    if (alert.slackInput.length > 0) {
+      str += getSlackChannels();
+    }
   }
   if (alert.msteams) {
     str = 'MS Teams'
+    if (alert.msteamsInput.length > 0) {
+      str += getMsTeamsChannels();
+    }
   }
   if (alert.email) {
     str += (str === '' ? '' : ' and ') + (alert.emailInput.length > 1 ? 'Emails' : 'Email');

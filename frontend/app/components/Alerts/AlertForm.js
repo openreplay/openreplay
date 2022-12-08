@@ -306,10 +306,10 @@ const AlertForm = (props) => {
                   <div className="w-4/6">
                     <DropdownChips
                       fluid
-                      selected={instance.msTeamsInput}
+                      selected={instance.msteamsInput}
                       options={msTeamsChannels}
                       placeholder="Select Channel"
-                      onChange={(selected) => props.edit({ msTeamsInput: selected })}
+                      onChange={(selected) => props.edit({ msteamsInput: selected })}
                     />
                   </div>
                 </div>
