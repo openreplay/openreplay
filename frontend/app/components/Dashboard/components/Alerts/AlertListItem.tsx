@@ -57,7 +57,7 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
     }
   }
   if (alert.msteams) {
-    str = 'MS Teams'
+    str += (str === '' ? '' : ' and ') + 'MS Teams'
     if (alert.msteamsInput.length > 0) {
       str += getMsTeamsChannels();
     }
