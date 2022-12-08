@@ -16,7 +16,7 @@ import ScreenRecordingState from './ScreenRecordingState'
 
 // TODO: fully specified strict check with no-any (everywhere)
 // @ts-ignore
-Peer = Peer.default || Peer
+const safeCastedPeer = Peer.default || Peer
 
 type StartEndCallback = (agentInfo?: Record<string, any>) => ((() => any) | void)
 
@@ -332,7 +332,9 @@ export default class Assist {
     if (this.options.config) {
       peerOptions['config'] = this.options.config
     }
-    const peer = this.peer = new Peer(peerID, peerOptions)
+
+    const peer = new safeCastedPeer(peerID, peerOptions) as Peer
+    this.peer = peer
 
     // @ts-ignore (peerjs typing)
     peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
@@ -395,7 +397,7 @@ export default class Assist {
     const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
     peer.on('call', (call) => {
-      app.debug.log('Incoming call: ', JSON.stringify(call))
+      app.debug.log('Incoming call from', call.peer)
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
       if (callingPeerIds.includes(call.peer) || this.callingState === CallingState.True) {
