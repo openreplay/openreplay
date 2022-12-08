@@ -150,6 +150,13 @@ export default class Assist {
   private onStart() {
     const app = this.app
     const sessionId = app.getSessionID()
+    // Common for all incoming call requests
+    let callUI: CallWindow | null = null
+    let annot: AnnotationCanvas | null = null
+    // TODO: incapsulate
+    let callConfirmWindow: ConfirmWindow | null = null
+    let callConfirmAnswer: Promise<boolean> | null = null
+    let callEndCallback: ReturnType<StartEndCallback> | null = null
 
     if (!sessionId) {
       return app.debug.error('No session ID')
@@ -228,7 +235,7 @@ export default class Assist {
     })
     socket.on('input', this.remoteControl.input)
 
-    let annot: AnnotationCanvas | null = null
+
     socket.on('moveAnnotation', (_, p) => annot && annot.move(p)) // TODO: restrict by id
     socket.on('startAnnotation', (_, p) => annot && annot.start(p))
     socket.on('stopAnnotation', () => annot && annot.stop())
@@ -331,14 +338,10 @@ export default class Assist {
     peer.on('error', e => app.debug.warn('Peer error: ', e.type, e))
     peer.on('disconnected', () => peer.reconnect())
 
-    // Common for all incoming call requests
-    let callUI: CallWindow | null = null
     function updateCallerNames() {
       callUI?.setAssistentName(callingAgents)
     }
-    // TODO: incapsulate
-    let callConfirmWindow: ConfirmWindow | null = null
-    let callConfirmAnswer: Promise<boolean> | null = null
+
     const closeCallConfirmWindow = () => {
       if (callConfirmWindow) {
         callConfirmWindow.remove()
@@ -359,7 +362,7 @@ export default class Assist {
         return answer
       })
     }
-    let callEndCallback: ReturnType<StartEndCallback> | null = null
+
     const handleCallEnd = () => { // Completle stop and clear all calls
       // Streams
       Object.values(calls).forEach(call => call.close())
@@ -392,7 +395,7 @@ export default class Assist {
     const updateVideoFeed = ({ enabled, }) => this.emit('videofeed', { streamId: this.peer?.id, enabled, })
 
     peer.on('call', (call) => {
-      app.debug.log('Incoming call: ', call)
+      app.debug.log('Incoming call: ', JSON.stringify(call))
       let confirmAnswer: Promise<boolean>
       const callingPeerIds = JSON.parse(sessionStorage.getItem(this.options.session_calling_peer_key) || '[]')
       if (callingPeerIds.includes(call.peer) || this.callingState === CallingState.True) {
