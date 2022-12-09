@@ -1,7 +1,7 @@
 import App, { DEFAULT_INGEST_POINT } from './app/index.js'
 export { default as App } from './app/index.js'
 
-import { UserAnonymousID, RawCustomEvent, CustomIssue } from './app/messages.gen.js'
+import { UserAnonymousID, CustomEvent, CustomIssue } from './app/messages.gen.js'
 import * as _Messages from './app/messages.gen.js'
 export const Messages = _Messages
 export { SanitizeLevel } from './app/sanitizer.js'
@@ -259,7 +259,7 @@ export default class API {
         } catch (e) {
           return
         }
-        this.app.send(RawCustomEvent(key, payload))
+        this.app.send(CustomEvent(key, payload))
       }
     }
   }

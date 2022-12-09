@@ -149,8 +149,8 @@ export function JSException(
   return [Messages.Type.JSException, name, message, payload, metadata]
 }
 
-export function RawCustomEvent(name: string, payload: string): Messages.RawCustomEvent {
-  return [Messages.Type.RawCustomEvent, name, payload]
+export function RawCustomEvent(name: string, payload: string): Messages.CustomEvent {
+  return [Messages.Type.CustomEvent, name, payload]
 }
 
 export function UserID(id: string): Messages.UserID {
