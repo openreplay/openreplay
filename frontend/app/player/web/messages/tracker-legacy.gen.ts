@@ -20,6 +20,7 @@ export const TP_MAP = {
   18: MType.SetInputValue,
   19: MType.SetInputChecked,
   20: MType.MouseMove,
+  21: MType.NetworkRequest,
   22: MType.ConsoleLog,
   37: MType.CssInsertRule,
   38: MType.CssDeleteRule,

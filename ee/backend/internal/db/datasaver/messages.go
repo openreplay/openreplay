@@ -58,7 +58,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		return mi.pg.InsertWebJSException(m)
 	case *IntegrationEvent:
 		return mi.pg.InsertWebIntegrationEvent(m)
-	case *Fetch:
+	case *NetworkRequest:
 		session, err := mi.pg.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
@@ -72,7 +72,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				}
 			}
 		}
-		return mi.pg.InsertWebFetch(sessionID, m)
+		return mi.pg.InsertWebNetworkRequest(sessionID, m)
 	case *GraphQL:
 		session, err := mi.pg.GetSession(sessionID)
 		if err != nil {

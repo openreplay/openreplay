@@ -62,7 +62,7 @@ func main() {
 		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
 		messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
 		messages.MsgJSException, messages.MsgResourceTiming,
-		messages.MsgCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgGraphQL,
+		messages.MsgCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL,
 		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
 		messages.MsgMouseClick, messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming}
 

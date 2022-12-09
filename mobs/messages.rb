@@ -125,7 +125,16 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
-# 21
+message 21, 'NetworkRequest', :replayer => :devtools do
+  string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
+  string 'Method'
+  string 'URL'
+  string 'Request'
+  string 'Response'
+  uint 'Status'
+  uint 'Timestamp'
+  uint 'Duration'
+end
 message 22, 'ConsoleLog', :replayer => :devtools do
   string 'Level'
   string 'Value'
@@ -236,6 +245,7 @@ end
 #   string 'Name'
 #   string 'Payload'
 # end
+
 # deprecated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'

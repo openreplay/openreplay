@@ -25,6 +25,7 @@ const (
 	MsgSetInputValue               = 18
 	MsgSetInputChecked             = 19
 	MsgMouseMove                   = 20
+	MsgNetworkRequest              = 21
 	MsgConsoleLog                  = 22
 	MsgPageLoadTiming              = 23
 	MsgPageRenderTiming            = 24
@@ -671,6 +672,41 @@ func (msg *MouseMove) Decode() Message {
 
 func (msg *MouseMove) TypeID() int {
 	return 20
+}
+
+type NetworkRequest struct {
+	message
+	Type      string
+	Method    string
+	URL       string
+	Request   string
+	Response  string
+	Status    uint64
+	Timestamp uint64
+	Duration  uint64
+}
+
+func (msg *NetworkRequest) Encode() []byte {
+	buf := make([]byte, 81+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
+	buf[0] = 21
+	p := 1
+	p = WriteString(msg.Type, buf, p)
+	p = WriteString(msg.Method, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Request, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Status, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	return buf[:p]
+}
+
+func (msg *NetworkRequest) Decode() Message {
+	return msg
+}
+
+func (msg *NetworkRequest) TypeID() int {
+	return 21
 }
 
 type ConsoleLog struct {

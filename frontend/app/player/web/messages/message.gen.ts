@@ -21,6 +21,7 @@ import type {
   RawSetInputValue,
   RawSetInputChecked,
   RawMouseMove,
+  RawNetworkRequest,
   RawConsoleLog,
   RawCssInsertRule,
   RawCssDeleteRule,
@@ -96,6 +97,8 @@ export type SetInputValue = RawSetInputValue & Timed
 export type SetInputChecked = RawSetInputChecked & Timed
 
 export type MouseMove = RawMouseMove & Timed
+
+export type NetworkRequest = RawNetworkRequest & Timed
 
 export type ConsoleLog = RawConsoleLog & Timed
 
