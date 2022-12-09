@@ -8,6 +8,11 @@ const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
 const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({ text: tab, key: tab }));
 
+
+function isValidJSON(o: any): o is Object {
+  return typeof o === "object" && o != null
+}
+
 interface Props {
   resource: any;
 }
@@ -15,37 +20,41 @@ function FetchTabs(props: Props) {
   const { resource } = props;
   const [activeTab, setActiveTab] = useState(HEADERS);
   const onTabClick = (tab: string) => setActiveTab(tab);
-  const [jsonPayload, setJsonPayload] = useState(null);
-  const [jsonResponse, setJsonResponse] = useState(null);
+  const [jsonRequest, setJsonRequest] = useState<Object | string | null>(null);
+  const [jsonResponse, setJsonResponse] = useState<Object | string | null>(null);
   const [requestHeaders, setRequestHeaders] = useState(null);
   const [responseHeaders, setResponseHeaders] = useState(null);
 
   useEffect(() => {
-    const { payload, response } = resource;
+    const { request, response } = resource;
 
     try {
-      let jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload;
-      let requestHeaders = jsonPayload.headers;
-      jsonPayload.body =
-        typeof jsonPayload.body === 'string' ? JSON.parse(jsonPayload.body) : jsonPayload.body;
-      delete jsonPayload.headers;
-      setJsonPayload(jsonPayload);
-      setRequestHeaders(requestHeaders);
-    } catch (e) {}
+      let jRequest = JSON.parse(request)
+      setRequestHeaders(jRequest.headers);
+      try {
+        let jBody = JSON.parse(jRequest.body)
+        jBody = isValidJSON(jBody) ? jBody : jRequest.body
+        setJsonRequest(jBody)
+      } catch {
+        setJsonRequest(jRequest.body)
+      }
+    } catch {}
 
     try {
-      let jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
-      let responseHeaders = jsonResponse.headers;
-      jsonResponse.body =
-        typeof jsonResponse.body === 'string' ? JSON.parse(jsonResponse.body) : jsonResponse.body;
-      delete jsonResponse.headers;
-      setJsonResponse(jsonResponse);
-      setResponseHeaders(responseHeaders);
-    } catch (e) {}
-  }, [resource, activeTab]);
+      let jResponse = JSON.parse(response)
+      setResponseHeaders(jResponse.headers);
+      try {
+        let jBody = JSON.parse(jResponse.body)
+        jBody = isValidJSON(jBody) ? jBody : jResponse.body
+        setJsonResponse(jBody)
+      } catch {
+        setJsonResponse(jResponse.body)
+      }
+    } catch {}
+  }, [resource]);
 
   const renderActiveTab = () => {
-    const { payload, response } = resource;
+    const { request, response } = resource;
     switch (activeTab) {
       case REQUEST:
         return (
@@ -57,15 +66,15 @@ function FetchTabs(props: Props) {
               </div>
             }
             size="small"
-            show={!payload}
+            show={!request}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                {jsonPayload === undefined ? (
-                  <div className="ml-3 break-words my-3"> {payload} </div>
+                { !isValidJSON(jsonRequest) ? (
+                  <div className="ml-3 break-words my-3"> {jsonRequest || request} </div>
                 ) : (
-                  <JSONTree src={jsonPayload} collapsed={false} enableClipboard />
+                  <JSONTree src={jsonRequest} collapsed={false} enableClipboard />
                 )}
               </div>
               <div className="divider" />
@@ -87,8 +96,8 @@ function FetchTabs(props: Props) {
           >
             <div>
               <div className="mt-6">
-                {jsonResponse === undefined ? (
-                  <div className="ml-3 break-words my-3"> {response} </div>
+                { !isValidJSON(jsonResponse) ? (
+                  <div className="ml-3 break-words my-3"> {jsonResponse || response} </div>
                 ) : (
                   <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
                 )}

@@ -29,6 +29,7 @@ const OTHER = 'other';
 
 const TYPE_TO_TAB = {
   [TYPES.XHR]: XHR,
+  [TYPES.FETCH]: XHR,
   [TYPES.JS]: JS,
   [TYPES.CSS]: CSS,
   [TYPES.IMG]: IMG,

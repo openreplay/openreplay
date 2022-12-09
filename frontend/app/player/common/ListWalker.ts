@@ -12,6 +12,15 @@ export default class ListWalker<T extends Timed> {
 		this.list.push(m);
 	}
 
+	insert(m: T): void {
+		let index = this.list.findIndex(om => om.time > m.time)
+		if (index === -1) {
+			index = this.length
+		}
+		const oldList = this.list
+		this._list = [...oldList.slice(0, index), m, ...oldList.slice(index)]
+	}
+
 	reset(): void {
 		this.p = 0
 	}
