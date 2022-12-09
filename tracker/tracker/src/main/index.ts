@@ -212,11 +212,11 @@ export default class API {
     return this.getSessionID()
   }
 
-  getSessionURL(): string | undefined {
+  getSessionURL(options?: { withCurrentTime?: boolean }): string | undefined {
     if (this.app === null) {
       return undefined
     }
-    return this.app.getSessionURL()
+    return this.app.getSessionURL(options)
   }
 
   setUserID(id: string): void {
