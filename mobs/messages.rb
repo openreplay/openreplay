@@ -258,6 +258,7 @@ message 38, 'CSSDeleteRule' do
   uint 'Index'
 end
 
+# deprecated since 4.1.10 in favor of NetworkRequest
 message 39, 'Fetch', :replayer => :devtools do
   string 'Method'
   string 'URL'
