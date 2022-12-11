@@ -78,6 +78,8 @@ def __get_live_sessions_ws(project_id, data):
     for s in _live_peers:
         s["live"] = True
         s["projectId"] = project_id
+        if "projectID" in s:
+            s.pop("projectID")
     return live_peers
 
 
