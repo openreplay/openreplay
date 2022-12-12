@@ -947,6 +947,11 @@ class CreateCardSchema(CustomMetricChartPayloadSchema):
                 f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
             assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
                 f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.timeseries}"
+        elif values.get("metric_type") == MetricType.funnel:
+            # assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
+            #     f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
+            assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
+                f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
         else:
             if values.get("metric_type") == MetricType.errors:
                 assert isinstance(values.get("metric_of"), MetricOfErrors), \
@@ -1082,6 +1087,11 @@ class CustomMetricAndTemplate(BaseModel):
     is_template: bool = Field(...)
     project_id: Optional[int] = Field(...)
     predefined_key: Optional[TemplatePredefinedKeys] = Field(...)
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        values["isTemplate"] = values["metricType"] not in [MetricType.timeseries, MetricType.table, MetricType.funnel]
+        return values
 
     class Config:
         alias_generator = attribute_to_camel_case

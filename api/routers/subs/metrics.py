@@ -92,11 +92,6 @@ def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
     return {"data": data}
 
 
-@app.get('/{projectId}/metrics/templates', tags=["dashboard"])
-def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": dashboards.get_templates(project_id=projectId, user_id=context.user_id)}
-
-
 @app.post('/{projectId}/metrics/try', tags=["dashboard"])
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
@@ -124,6 +119,14 @@ def try_custom_metric_funnel_issues(projectId: int, data: schemas.CustomMetricSe
     data.series[0].filter.endDate = data.endTimestamp
     data = funnels.get_issues_on_the_fly_widget(project_id=projectId, data=data.series[0].filter)
     return {"data": data}
+
+
+@app.get('/{projectId}/cards', tags=["cards"])
+@app.get('/{projectId}/metrics', tags=["dashboard"])
+@app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
+def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.search_all(project_id=projectId, user_id=context.user_id,
+                                              data=schemas.SearchCardsSchema())}
 
 
 @app.post('/{projectId}/cards', tags=["cards"])
@@ -201,11 +204,11 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
     return {"data": data}
 
 
-@app.post('/{projectId}/cards/{metric_id}/chart', tags=["dashboard"])
+@app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
 @app.post('/{projectId}/metrics/{metric_id}/chart', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
-def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
+                   context: schemas.CurrentContext = Depends(OR_context)):
     data = dashboards.make_chart_metrics(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                          data=data)
     if data is None:

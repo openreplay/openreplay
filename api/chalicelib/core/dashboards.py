@@ -6,43 +6,6 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
-# category name should be lower cased
-CATEGORY_DESCRIPTION = {
-    'web vitals': 'A set of metrics that assess app performance on criteria such as load time, load performance, and stability.',
-    'custom': 'Previously created custom metrics by me and my team.',
-    'errors': 'Keep a closer eye on errors and track their type, origin and domain.',
-    'performance': 'Optimize your app’s performance by tracking slow domains, page response times, memory consumption, CPU usage and more.',
-    'resources': 'Find out which resources are missing and those that may be slowing your web app.'
-}
-
-
-def get_templates(project_id, user_id):
-    with pg_client.PostgresClient() as cur:
-        pg_query = cur.mogrify(f"""SELECT category, jsonb_agg(metrics ORDER BY name) AS widgets
-                        FROM (SELECT * , default_config AS config
-                              FROM metrics LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index), '[]'::jsonb) AS series
-                                                              FROM metric_series
-                                                              WHERE metric_series.metric_id = metrics.metric_id
-                                                                AND metric_series.deleted_at ISNULL
-                                                            ) AS metric_series ON (TRUE)
-                              WHERE deleted_at IS NULL 
-                                    AND (project_id ISNULL OR (project_id = %(project_id)s AND (is_public OR user_id= %(userId)s)))
-                            ) AS metrics  
-                        GROUP BY category
-                        ORDER BY ARRAY_POSITION(ARRAY ['custom','overview','errors','performance','resources'], category);""",
-                               {"project_id": project_id, "userId": user_id})
-        cur.execute(pg_query)
-        rows = cur.fetchall()
-    for r in rows:
-        r["description"] = CATEGORY_DESCRIPTION.get(r["category"].lower(), "")
-        for w in r["widgets"]:
-            w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
-            w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
-            for s in w["series"]:
-                s["filter"] = helper.old_search_payload_to_flat(s["filter"])
-
-    return helper.list_to_camel_case(rows)
-
 
 def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
     with pg_client.PostgresClient() as cur:
@@ -306,7 +269,7 @@ def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetri
                                                   include_dashboard=False)
     if raw_metric is None:
         return None
-    metric: schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
+    metric: schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate(**raw_metric)
     if metric.is_template and metric.predefined_key is None:
         return None
     if metric.is_template:
@@ -320,7 +283,7 @@ def make_chart_widget(dashboard_id, project_id, user_id, widget_id, data: schema
     raw_metric = get_widget(widget_id=widget_id, project_id=project_id, user_id=user_id, dashboard_id=dashboard_id)
     if raw_metric is None:
         return None
-    metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
+    metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate(**raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
     else:

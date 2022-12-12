@@ -118,7 +118,7 @@ schemas.CustomMetricSessionsPayloadSchema]) \
         -> Union[schemas.CreateCardSchema, None]:
     if data.series is not None and len(data.series) > 0:
         metric["series"] = data.series
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema.parse_obj({**data.dict(), **metric})
+    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**{**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
             if len(data.filters) > 0:
@@ -328,6 +328,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
 
 
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
+    print('>>>>')
+    print(data)
     constraints = ["metrics.project_id = %(project_id)s",
                    "metrics.deleted_at ISNULL"]
     params = {"project_id": project_id, "user_id": user_id,
