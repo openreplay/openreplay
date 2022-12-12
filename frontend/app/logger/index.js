@@ -1,7 +1,7 @@
 import { options } from 'App/dev/console';
 
 function log(...args) {
-  if (options.verbose) {
+  if (!window.env.PRODUCTION || options.verbose) {
     if (Object.keys(groupTm).length > 0) {
       console.groupEnd();
     }
