@@ -19,6 +19,7 @@ import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
+import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'
 
 interface Props {
     metric: any;
@@ -179,11 +180,11 @@ function WidgetChart(props: Props) {
         }
         if (metricType === CLICKMAP) {
             return (
-                <div>rendering clickmap</div>
+                <ClickMapCard />
             )
         }
 
-        return <div>Unknown</div>;
+        return <div>Unknown metric type</div>;
     }
     return (
         <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
