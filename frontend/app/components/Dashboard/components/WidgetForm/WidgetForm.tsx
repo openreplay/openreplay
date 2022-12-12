@@ -2,7 +2,7 @@ import React from 'react';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { Button, Icon, SegmentSelection } from 'UI'
 import FilterSeries from '../FilterSeries';
 import { confirm, Tooltip } from 'UI';
@@ -28,8 +28,8 @@ function WidgetForm(props: Props) {
     const { history, match: { params: { siteId, dashboardId } } } = props;
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
-    const isSaving = useObserver(() => metricStore.isSaving);
-    const metric: any = useObserver(() => metricStore.instance)
+    const isSaving = metricStore.isSaving;
+    const metric: any = metricStore.instance
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
@@ -37,7 +37,7 @@ function WidgetForm(props: Props) {
     const isFunnel = metric.metricType === 'funnel';
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
-    const eventsLength = useObserver(() => metric.series[0].filter.filters.filter((i: any) => i.isEvent).length)
+    const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length
     const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
     const writeOption = ({ value, name }: any) => {
@@ -100,12 +100,12 @@ function WidgetForm(props: Props) {
         }
     }
 
-    return useObserver(() => (
+    return (
         <div className="p-6">
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <MetricTypeDropdown onSelect={writeOption} />
+                    <MetricTypeDropdown />
                     <MetricSubtypeDropdown onSelect={writeOption} />
 
                     {/* {metric.metricType === 'timeseries' && (
@@ -216,7 +216,7 @@ function WidgetForm(props: Props) {
                 </div>
             </div>
         </div>
-    ));
+    );
 }
 
-export default WidgetForm;
+export default observer(WidgetForm);

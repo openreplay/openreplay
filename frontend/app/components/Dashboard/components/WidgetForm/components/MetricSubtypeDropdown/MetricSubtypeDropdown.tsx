@@ -1,5 +1,5 @@
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { TYPES } from 'App/constants/card';
 import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 import React from 'react';
@@ -12,8 +12,8 @@ interface Props {
 }
 function MetricSubtypeDropdown(props: Props) {
   const { metricStore } = useStore();
-  const metric: any = useObserver(() => metricStore.instance);
-  
+  const metric: any =  metricStore.instance;
+
   const options = React.useMemo(() => {
     const type = TYPES.find((i: MetricType) => i.slug === metric.metricType);
     if (type && type.subTypes) {
@@ -56,4 +56,4 @@ function MetricSubtypeDropdown(props: Props) {
   ) : null;
 }
 
-export default MetricSubtypeDropdown;
+export default observer(MetricSubtypeDropdown);

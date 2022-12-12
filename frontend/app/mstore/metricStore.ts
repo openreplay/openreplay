@@ -1,4 +1,4 @@
-import { makeAutoObservable, computed } from 'mobx';
+import { makeAutoObservable } from 'mobx';
 import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
@@ -24,7 +24,6 @@ export default class MetricStore {
     makeAutoObservable(this);
   }
 
-  @computed
   get sortedWidgets() {
     return [...this.metrics].sort((a, b) => b.lastModified - a.lastModified);
   }
@@ -42,6 +41,10 @@ export default class MetricStore {
   merge(object: any) {
     Object.assign(this.instance, object);
     this.instance.updateKey('hasChanged', true);
+  }
+
+  changeType(value: string) {
+    this.instance.update({ metricType: value})
   }
 
   reset(id: string) {

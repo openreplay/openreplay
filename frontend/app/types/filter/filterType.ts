@@ -274,4 +274,6 @@ export enum FilterKey {
   RESOURCE_TYPE_VS_RESPONSE_END = 'resourceTypeVsResponseEnd',
   RESOURCE_FETCH_TIME = 'resourceFetchTime',
   SLOWEST_RESOURCES = 'slowestResources',
+
+  CLICKMAP_URL = 'clickmapUrl'
 }
