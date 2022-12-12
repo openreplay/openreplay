@@ -135,18 +135,18 @@ export const getFilterKeyTypeByKey = (key: string) => {
 };
 
 export enum IssueType {
-  CLICK_RAGE = 'click_rage',
-  DEAD_CLICK = 'dead_click',
-  EXCESSIVE_SCROLLING = 'excessive_scrolling',
-  BAD_REQUEST = 'bad_request',
-  MISSING_RESOURCE = 'missing_resource',
+  CLICK_RAGE = 'clickRage',
+  DEAD_CLICK = 'deadClick',
+  EXCESSIVE_SCROLLING = 'excessiveScrolling',
+  BAD_REQUEST = 'badRequest',
+  MISSING_RESOURCE = 'missingResource',
   MEMORY = 'memory',
   CPU = 'cpu',
-  SLOW_RESOURCE = 'slow_resource',
-  SLOW_PAGE_LOAD = 'slow_page_load',
+  SLOW_RESOURCE = 'slowResource',
+  SLOW_PAGE_LOAD = 'slowPageLoad',
   CRASH = 'crash',
   CUSTOM = 'custom',
-  JS_EXCEPTION = 'js_exception',
+  JS_EXCEPTION = 'jsException',
 }
 
 export enum FilterType {

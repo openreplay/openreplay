@@ -1,7 +1,6 @@
 import {
     makeAutoObservable,
     runInAction,
-    computed,
 } from "mobx";
 import Dashboard from "./types/dashboard";
 import Widget from "./types/widget";
@@ -66,9 +65,9 @@ export default class DashboardStore {
         this.drillDownFilter.updateKey("endTimestamp", timeStamps.endTimestamp);
     }
 
-    @computed
     get sortedDashboards() {
-        return [...this.dashboards].sort((a, b) => b.createdAt - a.createdAt)
+        const sortOrder = this.sort.by
+        return [...this.dashboards].sort((a, b) => sortOrder === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt)
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {

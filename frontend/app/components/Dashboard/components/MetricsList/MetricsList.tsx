@@ -1,9 +1,8 @@
 import { observer, useObserver } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { NoContent, Pagination, Icon, Checkbox } from 'UI';
+import { NoContent, Pagination, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
-import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
 import Widget from 'App/mstore/types/widget';
 import GridView from './GridView';
@@ -97,7 +96,7 @@ function MetricsList({
           <div className="col-span-2 text-right">Last Modified</div>
         </div>
 
-         {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => ( 
+         {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
           // <React.Fragment key={metric.metricId}>
           //   <MetricListItem
           //     metric={metric}
@@ -109,7 +108,7 @@ function MetricsList({
           //     }}
           //   />
           // </React.Fragment>
-        ))} 
+        ))}
       </div>
       */}
 
