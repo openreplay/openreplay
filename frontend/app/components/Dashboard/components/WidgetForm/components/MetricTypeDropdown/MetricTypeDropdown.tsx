@@ -8,13 +8,20 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 
+interface Options {
+  label: string;
+  icon: string;
+  value: string;
+  description: string;
+}
+
 interface Props {
   query: Record<string, (key: string) => any>;
 }
 function MetricTypeDropdown(props: Props) {
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
-  const options: any = useMemo(() => {
+  const options: Options[] = useMemo(() => {
     // TYPES.shift(); // remove "Add from library" item
     return TYPES.filter((i: MetricType) => i.slug !== LIBRARY).map((i: MetricType) => ({
       label: i.title,
@@ -27,9 +34,8 @@ function MetricTypeDropdown(props: Props) {
   React.useEffect(() => {
     const queryCardType = props.query.get('type')
     if (queryCardType && options.length > 0 && metric.metricType) {
-      const type = options.find(i => i.value === queryCardType)
+      const type = options.find((i) => i.value === queryCardType)
       setTimeout(() => onChange(type.value), 0)
-      console.log('trying to change to ', type, metric.metricType)
     }
   }, [])
 

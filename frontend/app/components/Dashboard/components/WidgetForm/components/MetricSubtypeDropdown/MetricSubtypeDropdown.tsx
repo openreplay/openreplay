@@ -28,6 +28,11 @@ function MetricSubtypeDropdown(props: Props) {
     return false;
   }, [metric.metricType]);
 
+  React.useEffect(() => {
+    // @ts-ignore
+    setTimeout(() => props.onSelect({ name: 'metricOf', value: { value: options[0].value }}), 0)
+  }, [metric.metricType])
+
   return options ? (
     <>
       <div className="mx-3">of</div>
