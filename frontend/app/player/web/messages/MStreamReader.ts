@@ -8,7 +8,7 @@ interface RawMessageReaderI {
 }
 
 export default class MStreamReader {
-  constructor(private readonly r: RawMessageReaderI = new RawMessageReader(), private startTs: number = 0){}
+  constructor(private readonly r: RawMessageReaderI, private startTs: number = 0){}
 
   private t: number = 0
   private idx: number = 0
