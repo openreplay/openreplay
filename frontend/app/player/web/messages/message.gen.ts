@@ -34,6 +34,7 @@ import type {
   RawNgRx,
   RawGraphQl,
   RawPerformanceTrack,
+  RawResourceTiming,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLoadFontFace,
@@ -123,6 +124,8 @@ export type NgRx = RawNgRx & Timed
 export type GraphQl = RawGraphQl & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
+
+export type ResourceTiming = RawResourceTiming & Timed
 
 export type ConnectionInformation = RawConnectionInformation & Timed
 

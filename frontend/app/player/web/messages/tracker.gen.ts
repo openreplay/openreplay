@@ -687,6 +687,20 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
+    case 53: {
+      return {
+        tp: MType.ResourceTiming,
+        timestamp: tMsg[1],
+        duration: tMsg[2],
+        ttfb: tMsg[3],
+        headerSize: tMsg[4],
+        encodedBodySize: tMsg[5],
+        decodedBodySize: tMsg[6],
+        url: tMsg[7],
+        initiator: tMsg[8],
+      }
+    }
+    
     case 54: {
       return {
         tp: MType.ConnectionInformation,

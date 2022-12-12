@@ -33,6 +33,7 @@ export const TP_MAP = {
   47: MType.NgRx,
   48: MType.GraphQl,
   49: MType.PerformanceTrack,
+  53: MType.ResourceTiming,
   54: MType.ConnectionInformation,
   55: MType.SetPageVisibility,
   57: MType.LoadFontFace,

@@ -340,7 +340,7 @@ end
 message 52, 'DOMDrop', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
-message 53, 'ResourceTiming', :replayer => false do
+message 53, 'ResourceTiming', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
