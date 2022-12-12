@@ -151,6 +151,8 @@ def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
 @app.get('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = Depends(OR_context)):
+    if not isinstance(metric_id,int):
+        return {"errors": ["invalid card_id"]}
     data = custom_metrics.get_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
     if data is None:
         return {"errors": ["card not found"]}
