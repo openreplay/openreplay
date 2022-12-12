@@ -4,15 +4,16 @@ import Select from 'Shared/Select';
 import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import withLocationHandlers from 'HOCs/withLocationHandlers';
 
 interface Props {
-  onSelect: any;
+  query: Record<string, (key: string) => any>;
 }
 function MetricTypeDropdown(props: Props) {
   const { metricStore } = useStore();
-  const metric: any = useObserver(() => metricStore.instance);
+  const metric: any = metricStore.instance;
   const options: any = useMemo(() => {
     // TYPES.shift(); // remove "Add from library" item
     return TYPES.filter((i: MetricType) => i.slug !== LIBRARY).map((i: MetricType) => ({
@@ -23,16 +24,25 @@ function MetricTypeDropdown(props: Props) {
     }));
   }, []);
 
-  const onSelect = (_: any, option: Record<string, any>) =>
-    props.onSelect({ value: { value: option.value }, name: option.name });
+  React.useEffect(() => {
+    const queryCardType = props.query.get('type')
+    if (queryCardType && options.length > 0 && metric.metricType) {
+      const type = options.find(i => i.value === queryCardType)
+      setTimeout(() => onChange(type.value), 0)
+      console.log('trying to change to ', type, metric.metricType)
+    }
+  }, [])
 
+  const onChange = (type: string) => {
+    metricStore.changeType(type)
+  }
   return (
     <Select
       name="metricType"
       placeholder="Select Card Type"
       options={options}
       value={options.find((i: any) => i.value === metric.metricType) || options[0]}
-      onChange={props.onSelect}
+      onChange={(selected) => onChange(selected.value.value as string)}
       // onSelect={onSelect}
       components={{
         MenuList: ({ children, ...props }: any) => {
@@ -51,4 +61,4 @@ function MetricTypeDropdown(props: Props) {
   );
 }
 
-export default MetricTypeDropdown;
+export default withLocationHandlers()(observer(MetricTypeDropdown));

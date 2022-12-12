@@ -12,6 +12,7 @@ export interface CardType {
 export const LIBRARY = 'library';
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
+export const CLICKMAP = 'clickmap'
 
 export const TYPES: CardType[] = [
   {
@@ -19,6 +20,15 @@ export const TYPES: CardType[] = [
     icon: 'grid',
     description: 'Select a pre existing card from card library',
     slug: LIBRARY,
+  },
+  {
+    title: 'Clickmap',
+    icon: 'puzzle-piece',
+    description: 'Track the features that are being used the most.',
+    slug: CLICKMAP,
+    subTypes: [
+      { title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: "" },
+    ]
   },
   {
     title: 'Timeseries',

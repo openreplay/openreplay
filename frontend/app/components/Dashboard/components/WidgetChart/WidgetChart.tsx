@@ -4,7 +4,7 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
@@ -13,23 +13,25 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
 import { FilterKey } from 'Types/filter/filterType';
-
+import { CLICKMAP } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
+
 interface Props {
     metric: any;
     isWidget?: boolean;
     isTemplate?: boolean;
 }
+
 function WidgetChart(props: Props) {
     const { isWidget = false, metric, isTemplate } = props;
     const { dashboardStore, metricStore } = useStore();
     const _metric: any = metricStore.instance;
-    const period = useObserver(() => dashboardStore.period);
-    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
+    const period = dashboardStore.period;
+    const drillDownPeriod = dashboardStore.drillDownPeriod;
     const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
@@ -174,6 +176,11 @@ function WidgetChart(props: Props) {
                     />
                 )
             }
+        }
+        if (metricType === CLICKMAP) {
+            return (
+                <div>rendering clickmap</div>
+            )
         }
 
         return <div>Unknown</div>;
