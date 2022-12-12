@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, PageTitle, Button, Link } from 'UI';
+import { Icon, PageTitle, Button, Link, SegmentSelection } from 'UI';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
@@ -8,6 +8,9 @@ import { useObserver } from 'mobx-react-lite';
 function MetricViewHeader() {
   const { metricStore } = useStore();
   const sort = useObserver(() => metricStore.sort);
+  const listView = useObserver(() => metricStore.listView);
+
+  
   return (
     <div>
       <div className="flex items-center mb-4 justify-between px-6">
@@ -15,9 +18,21 @@ function MetricViewHeader() {
           <PageTitle title="Metrics" className="" />
         </div>
         <div className="ml-auto flex items-center">
-          <Link to={'/metrics/create'}>
+          {/* <Link to={'/metrics/create'}>
             <Button variant="primary">Create</Button>
-          </Link>
+          </Link> */}
+          <SegmentSelection
+              name="viewType"
+              className="my-3"
+              primary
+              icons={true}
+              onSelect={ () => metricStore.updateKey('listView', !listView) }
+              value={{ value: listView ? 'list' : 'grid' }}
+              list={ [
+                  { value: 'list', name: '', icon: 'graph-up-arrow' },
+                  { value: 'grid', name: '', icon: 'hash' },
+              ]}
+          />
           <div className="mx-2">
             <Select
               options={[

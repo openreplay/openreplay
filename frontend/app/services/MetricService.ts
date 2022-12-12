@@ -18,7 +18,7 @@ export default class MetricService {
      * @returns {Promise<any>}
      */
     getMetrics(): Promise<any> {
-        return this.client.get('/metrics')
+        return this.client.post('/cards/search', { limit: 100 })
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || []);
     }
@@ -29,7 +29,7 @@ export default class MetricService {
      * @returns {Promise<any>} 
      */
     getMetric(metricId: string): Promise<any> {
-        return this.client.get('/metrics/' + metricId)
+        return this.client.get('/cards/' + metricId)
             .then(fetchErrorCheck)
             .then((response: { data: any; }) => response.data || {});
     }
@@ -43,7 +43,7 @@ export default class MetricService {
         const data = metric.toJson()
         const isCreating = !data[Widget.ID_KEY];
         const method = isCreating ? 'post' : 'put';
-        const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
+        const url = isCreating ? '/cards' : '/cards/' + data[Widget.ID_KEY];
         return this.client[method](url, data)
             .then(fetchErrorCheck)
             .then((response: { data: any; }) => response.data || {})
@@ -55,7 +55,7 @@ export default class MetricService {
      * @returns {Promise<any>}
      */
     deleteMetric(metricId: string): Promise<any> {
-        return this.client.delete('/metrics/' + metricId)
+        return this.client.delete('/cards/' + metricId)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data);
     }
@@ -66,13 +66,13 @@ export default class MetricService {
      * @returns {Promise<any>}
      */
     getTemplates(): Promise<any> {
-        return this.client.get('/metrics/templates')
+        return this.client.get('/cards/templates')
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || []);
     }
 
     getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
-        const path = isWidget ? `/metrics/${metric.metricId}/chart` : `/metrics/try`;
+        const path = isWidget ? `/cards/${metric.metricId}/chart` : `/cards/try`;
         return this.client.post(path, data)
             .then(fetchErrorCheck)
             .then((response: { data: any; }) => response.data || {});
@@ -84,13 +84,13 @@ export default class MetricService {
      * @returns 
      */
      fetchSessions(metricId: string, filter: any): Promise<any> {
-        return this.client.post(metricId ? `/metrics/${metricId}/sessions` : '/metrics/try/sessions', filter)
+        return this.client.post(metricId ? `/cards/${metricId}/sessions` : '/cards/try/sessions', filter)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || []);
     }
 
     fetchIssues(filter: string): Promise<any> {
-        return this.client.post(`/metrics/try/issues`, filter)
+        return this.client.post(`/cards/try/issues`, filter)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || {});
     }

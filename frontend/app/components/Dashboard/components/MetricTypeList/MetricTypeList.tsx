@@ -4,7 +4,7 @@ import MetricsLibraryModal from '../MetricsLibraryModal';
 import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
 import { TYPES, LIBRARY } from 'App/constants/card';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { dashboardMetricCreate, withSiteId } from 'App/routes';
+import { dashboardMetricCreate, metricCreate, withSiteId } from 'App/routes';
 
 interface Props extends RouteComponentProps {
   dashboardId: number;
@@ -23,7 +23,11 @@ function MetricTypeList(props: Props) {
 
     // TODO redirect to card builder with metricType query param
     const path = withSiteId(dashboardMetricCreate(dashboardId + ''), siteId);
-    history.push(path);
+    const queryString = new URLSearchParams({ type: slug }).toString();
+    history.push({
+      pathname: path,
+      search: `?${queryString}`
+    });
   };
 
   return (

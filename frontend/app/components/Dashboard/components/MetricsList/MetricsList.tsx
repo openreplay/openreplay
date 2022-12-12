@@ -1,4 +1,4 @@
-import { observer } from 'mobx-react-lite';
+import { observer, useObserver } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { NoContent, Pagination, Icon, Checkbox } from 'UI';
 import { useStore } from 'App/mstore';
@@ -6,6 +6,8 @@ import { filterList } from 'App/utils';
 import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
 import Widget from 'App/mstore/types/widget';
+import GridView from './GridView';
+import ListView from './ListView';
 
 function MetricsList({
   siteId,
@@ -17,6 +19,7 @@ function MetricsList({
   const { metricStore } = useStore();
   const metrics = metricStore.sortedWidgets;
   const metricsSearch = metricStore.metricsSearch;
+  const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
 
   useEffect(() => {
@@ -61,6 +64,22 @@ function MetricsList({
         </div>
       }
     >
+      {listView ? (
+        <ListView
+          siteId={siteId}
+          list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
+          selectedList={selectedMetrics}
+          toggleSelection={toggleMetricSelection}
+        />
+      ) : (
+        <GridView
+          siteId={siteId}
+          list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
+          selectedList={selectedMetrics}
+          toggleSelection={toggleMetricSelection}
+        />
+      )}
+      {/*
       <div className="mt-3 rounded bg-white">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-4 flex items-center">
@@ -78,20 +97,21 @@ function MetricsList({
           <div className="col-span-2 text-right">Last Modified</div>
         </div>
 
-        {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
-          <React.Fragment key={metric.metricId}>
-            <MetricListItem
-              metric={metric}
-              siteId={siteId}
-              selected={selectedMetrics.includes(parseInt(metric.metricId))}
-              toggleSelection={(e: any) => {
-                e.stopPropagation();
-                toggleMetricSelection(parseInt(metric.metricId));
-              }}
-            />
-          </React.Fragment>
-        ))}
+         {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => ( 
+          // <React.Fragment key={metric.metricId}>
+          //   <MetricListItem
+          //     metric={metric}
+          //     siteId={siteId}
+          //     selected={selectedMetrics.includes(parseInt(metric.metricId))}
+          //     toggleSelection={(e: any) => {
+          //       e.stopPropagation();
+          //       toggleMetricSelection(parseInt(metric.metricId));
+          //     }}
+          //   />
+          // </React.Fragment>
+        ))} 
       </div>
+      */}
 
       <div className="w-full flex items-center justify-between py-4 px-6 border-t">
         <div className="text-disabled-text">
