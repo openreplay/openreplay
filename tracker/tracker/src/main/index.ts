@@ -1,7 +1,7 @@
 import App, { DEFAULT_INGEST_POINT } from './app/index.js'
 export { default as App } from './app/index.js'
 
-import { UserAnonymousID, RawCustomEvent, CustomIssue } from './app/messages.gen.js'
+import { UserAnonymousID, CustomEvent, CustomIssue } from './app/messages.gen.js'
 import * as _Messages from './app/messages.gen.js'
 export const Messages = _Messages
 export { SanitizeLevel } from './app/sanitizer.js'
@@ -22,6 +22,7 @@ import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
 import Focus from './modules/focus.js'
 import Fonts from './modules/fonts.js'
+import Network from './modules/network.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
@@ -31,6 +32,7 @@ import type { Options as ExceptionOptions } from './modules/exception.js'
 import type { Options as InputOptions } from './modules/input.js'
 import type { Options as PerformanceOptions } from './modules/performance.js'
 import type { Options as TimingOptions } from './modules/timing.js'
+import type { Options as NetworkOptions } from './modules/network.js'
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
 import type { StartPromiseReturn } from './app/index.js'
@@ -43,6 +45,7 @@ export type Options = Partial<
   sessionToken?: string
   respectDoNotTrack?: boolean
   autoResetOnWindowOpen?: boolean
+  network?: NetworkOptions
   // dev only
   __DISABLE_SECURE_MODE?: boolean
 }
@@ -127,6 +130,7 @@ export default class API {
       Scroll(app)
       Focus(app)
       Fonts(app)
+      Network(app, options.network)
       ;(window as any).__OPENREPLAY__ = this
 
       if (options.autoResetOnWindowOpen) {
@@ -259,7 +263,7 @@ export default class API {
         } catch (e) {
           return
         }
-        this.app.send(RawCustomEvent(key, payload))
+        this.app.send(CustomEvent(key, payload))
       }
     }
   }
