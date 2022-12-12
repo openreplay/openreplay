@@ -90,7 +90,7 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	return newStorage, nil
 }
 
-func (s *Storage) Upload(msg *messages.SessionEnd) error {
+func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 	// Generate file path
 	sessionID := strconv.FormatUint(msg.SessionID(), 10)
 	filePath := s.cfg.FSDir + "/" + sessionID
@@ -102,20 +102,20 @@ func (s *Storage) Upload(msg *messages.SessionEnd) error {
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 	go func() {
-		if err := s.prepareSession(filePath, DOM, newTask); err != nil {
-			log.Printf("prepare session err: %s", err)
+		if prepErr := s.prepareSession(filePath, DOM, newTask); prepErr != nil {
+			err = fmt.Errorf("prepare session err: %s", prepErr)
 		}
 		wg.Done()
 	}()
 	go func() {
-		if err := s.prepareSession(filePath, DEV, newTask); err != nil {
-			log.Printf("prepare session err: %s", err)
+		if prepErr := s.prepareSession(filePath, DOM, newTask); prepErr != nil {
+			err = fmt.Errorf("prepare session err: %s", prepErr)
 		}
 		wg.Done()
 	}()
 	wg.Wait()
 	s.tasks <- newTask
-	return nil
+	return err
 }
 
 func (s *Storage) openSession(filePath string) ([]byte, error) {
