@@ -244,9 +244,9 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
                         RETURNING metric_id;"""
 
         query = cur.mogrify(query, params)
-        print("-------")
-        print(query)
-        print("-------")
+        # print("-------")
+        # print(query)
+        # print("-------")
         cur.execute(query)
         r = cur.fetchone()
         if dashboard:

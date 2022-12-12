@@ -92,27 +92,30 @@ def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/try', tags=["cards"])
 @app.post('/{projectId}/metrics/try', tags=["dashboard"])
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_custom_metric(projectId: int, data: schemas.CreateCardSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(OR_context)):
+def try_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
+             context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
 
 
+@app.post('/{projectId}/cards/try/sessions', tags=["cards"])
 @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
-def try_custom_metric_sessions(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
+def try_card_sessions(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
     return {"data": data}
 
 
+@app.post('/{projectId}/card/try/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
-def try_custom_metric_funnel_issues(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
-                                    context: schemas.CurrentContext = Depends(OR_context)):
+def try_card_funnel_issues(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                           context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.series) == 0:
         return {"data": []}
     data.series[0].filter.startDate = data.startTimestamp
@@ -151,7 +154,7 @@ def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
 @app.get('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = Depends(OR_context)):
-    if not isinstance(metric_id,int):
+    if not isinstance(metric_id, int):
         return {"errors": ["invalid card_id"]}
     data = custom_metrics.get_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
     if data is None:
@@ -159,22 +162,24 @@ def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = D
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}/sessions', tags=["cards"])
 @app.post('/{projectId}/metrics/{metric_id}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
-def get_custom_metric_sessions(projectId: int, metric_id: int,
-                               data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_sessions(projectId: int, metric_id: int,
+                      data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/{metric_id}/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues', tags=["customMetrics"])
-def get_custom_metric_funnel_issues(projectId: int, metric_id: int,
-                                    data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
-                                    context: schemas.CurrentContext = Depends(OR_context)):
+def get_card_funnel_issues(projectId: int, metric_id: int,
+                           data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                           context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                             data=data)
     if data is None:
