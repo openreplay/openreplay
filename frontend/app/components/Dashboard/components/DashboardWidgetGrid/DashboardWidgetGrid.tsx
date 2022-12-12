@@ -1,11 +1,11 @@
 import React from 'react';
-import { toJS } from 'mobx';
 import { useStore } from 'App/mstore';
 import WidgetWrapper from '../WidgetWrapper';
 import { NoContent, Loader, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import AddMetricContainer from './AddMetricContainer';
 import Widget from 'App/mstore/types/widget';
+import MetricTypeList from '../MetricTypeList';
 
 interface Props {
   siteId: string;
@@ -38,12 +38,21 @@ function DashboardWidgetGrid(props: Props) {
       <NoContent
         show={list.length === 0}
         icon="no-metrics-chart"
-        title={<EmptyDashboardGrid />}
-        // subtext={
-        //   <div className="w-4/5 m-auto mt-4">
-        //     <AddMetricContainer siteId={siteId} />
-        //   </div>
-        // }
+        title={
+          <div className="bg-white rounded">
+            <div className="border-b p-5">
+              <div className="text-2xl font-normal color-gray-darkest">
+                There are no cards in this dashboard
+              </div>
+              <div className="text-base font-normal">
+                Try the most commonly used metrics or graphs to begin.
+              </div>
+            </div>
+            <div className="grid grid-cols-4 p-8 gap-2">
+              <MetricTypeList />
+            </div>
+          </div>
+        }
       >
         <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>{smallWidgets.length > 0 ? (
           <>
@@ -105,122 +114,3 @@ function DashboardWidgetGrid(props: Props) {
 }
 
 export default DashboardWidgetGrid;
-
-interface MetricType {
-  title: string;
-  icon: string;
-  description: string;
-  slug: string;
-}
-const METRIC_TYPES: MetricType[] = [
-  {
-    title: 'Add From Library',
-    icon: 'grid',
-    description: 'Select a pre existing card from card library',
-    slug: 'library',
-  },
-  {
-    title: 'Timeseries',
-    icon: 'graph-up',
-    description: 'Trend of sessions count in over the time.',
-    slug: 'timeseries',
-  },
-  {
-    title: 'Table',
-    icon: 'list-alt',
-    description: 'See list of Users, Sessions, Errors, Issues, etc.,',
-    slug: 'table'
-  },
-  {
-    title: 'Funnel',
-    icon: 'funnel',
-    description: 'Uncover the issues impacting user journeys.',
-    slug: 'funnel'
-  },
-  {
-    title: 'Errors Tracking',
-    icon: 'exclamation-circle',
-    description: 'Discover user journeys between 2 points.',
-    slug: 'errors'
-  },
-  {
-    title: 'Performance Monitoring',
-    icon: 'speedometer2',
-    description: 'Retention graph of users / features over a period of time.',
-    slug: 'performance'
-  },
-  {
-    title: 'Resource Monitoring',
-    icon: 'files',
-    description: 'Find the adoption of your all features in your app.',
-    slug: 'resource-monitoring'
-  },
-  {
-    title: 'Web Vitals',
-    icon: 'activity',
-    description: 'Find the adoption of your all features in your app.',
-    slug: 'web-vitals'
-  },
-  {
-    title: 'User Path',
-    icon: 'signpost-split',
-    description: 'Discover user journeys between 2 points.',
-    slug: 'user-path'
-  },
-  {
-    title: 'Retention',
-    icon: 'arrow-repeat',
-    description: 'Retension graph of users / features over a period of time.',
-    slug: 'retention'
-  },
-  {
-    title: 'Feature Adoption',
-    icon: 'card-checklist',
-    description: 'Find the adoption of your all features in your app.',
-    slug: 'feature-adoption'
-  },
-];
-
-function MetricTypeItem({
-  icon,
-  title,
-  description,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-start hover:bg-active-blue p-4 cursor-pointer">
-      <div className="pr-4 pt-1">
-        <Icon name={icon} size="20" />
-      </div>
-      <div className="flex flex-col items-start text-left">
-        <div className="text-base color-gray-darkest">{title}</div>
-        <div className="text-xs">{description}</div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyDashboardGrid() {
-  return (
-    <div className="bg-white rounded">
-      <div className="border-b p-4">
-        <div className="text-lg font-medium color-gray-darkest">
-          There are no cards in this dashboard
-        </div>
-        <div className="text-sm">Try the most commonly used metrics or graphs to begin.</div>
-      </div>
-      <div className="grid grid-cols-4 p-8 gap-2">
-        {METRIC_TYPES.map((metric: MetricType) => (
-          <MetricTypeItem
-            icon={metric.icon}
-            title={metric.title}
-            description={metric.description}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}

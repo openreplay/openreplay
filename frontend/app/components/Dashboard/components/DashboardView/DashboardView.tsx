@@ -131,38 +131,17 @@ function DashboardView(props: Props) {
               }
               onDoubleClick={() => onEdit(true)}
               className="mr-3 select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
-              actionButton={
-                // <OutsideClickDetectingDiv onClickOutside={() => setShowTooltip(false)}>
-                  <Popover
-                    // open={showTooltip}
-                    // interactive
-                    // useContext
-                    // @ts-ignore
-                    // theme="nopadding"
-                    // hideDelay={0}
-                    // duration={0}
-                    // distance={20}
-                    placement="left"
-                    render={() => showTooltip && (
-                      <div style={{ padding: 0 }}>
-                        <AddMetricContainer
-                          onAction={() => setShowTooltip(false)}
-                          isPopup
-                          siteId={siteId}
-                        />
-                      </div>
-                    )}
-                  >
-                    <Button variant="primary" onClick={() => setShowTooltip(true)}>
-                      Add Metric
-                    </Button>
-                  </Popover>
-                // </OutsideClickDetectingDiv>
-              }
             />
           </div>
           <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
-            <div className="flex items-center flex-shrink-0 justify-end" style={{ width: '300px' }}>
+            <Button variant="primary" onClick={() => setShowTooltip(true)} icon="plus">
+              Add Card
+            </Button>
+            <div className="mx-4"></div>
+            <div
+              className="flex items-center flex-shrink-0 justify-end"
+              style={{ width: 'fit-content' }}
+            >
               <SelectDateRange
                 style={{ width: '300px' }}
                 period={period}
