@@ -916,7 +916,7 @@ class CreateCardSchema(CustomMetricChartPayloadSchema):
     MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
     metric_value: List[IssueType] = Field([])
     metric_format: Optional[MetricFormatType] = Field(None)
-    default_config: CustomMetricsConfigSchema = Field(...)
+    default_config: CustomMetricsConfigSchema = Field(..., alias="config")
 
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
@@ -929,6 +929,7 @@ class CreateCardSchema(CustomMetricChartPayloadSchema):
         if values.get("metric_type") == MetricType.funnel.value and \
                 values.get("series") is not None and len(values["series"]) > 1:
             values["series"] = [values["series"][0]]
+
         return values
 
     @root_validator

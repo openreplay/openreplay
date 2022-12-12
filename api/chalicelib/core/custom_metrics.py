@@ -59,7 +59,7 @@ def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
 
 def __is_errors_list(data):
     return data.metric_type == schemas.MetricType.table \
-        and data.metric_of == schemas.TableMetricOfType.errors
+        and data.metric_of == schemas.MetricOfTable.errors
 
 
 def __get_errors_list(project_id, user_id, data):
@@ -77,7 +77,7 @@ def __get_errors_list(project_id, user_id, data):
 
 def __is_sessions_list(data):
     return data.metric_type == schemas.MetricType.table \
-        and data.metric_of == schemas.TableMetricOfType.sessions
+        and data.metric_of == schemas.MetricOfTable.sessions
 
 
 def __get_sessions_list(project_id, user_id, data):
@@ -267,7 +267,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
               "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
               "metric_type": data.metric_type, "metric_of": data.metric_of,
               "metric_value": data.metric_value, "metric_format": data.metric_format,
-              "config": json.dumps(data.config.dict())}
+              "config": json.dumps(data.default_config.dict())}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.index is None:

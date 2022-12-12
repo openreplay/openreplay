@@ -201,6 +201,7 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}/chart', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}/chart', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
 def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
