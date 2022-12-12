@@ -369,7 +369,7 @@ export const compareJsonObjects = (obj1: any, obj2: any) => {
 
 export const getInitials = (name: any) => {
     const names = name.split(' ');
-    return names.slice(0, 2).map((n: any) => n[0]).join('');
+    return names.slice(0, 2).map((n: any) => n[0].toUpperCase()).join('');
 }
 export function getTimelinePosition(value: any, scale: any) {
     const pos = value * scale;
