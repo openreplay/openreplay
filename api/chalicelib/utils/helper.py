@@ -308,4 +308,7 @@ def is_saml2_available():
 
 
 def get_domain():
-    return urlparse(config("SITE_URL")).netloc
+    _url = config("SITE_URL")
+    if not _url.startswith("http"):
+        _url = "http://" + _url
+    return '.'.join(urlparse(_url).netloc.split(".")[-2:])

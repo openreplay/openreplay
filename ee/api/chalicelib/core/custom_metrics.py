@@ -143,7 +143,7 @@ schemas.CustomMetricSessionsPayloadSchema]) \
 
 def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema, metric=None):
     if metric is None:
-        metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+        metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -166,7 +166,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -185,7 +185,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
 
 
 def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -201,7 +201,7 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
 
 
 def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -240,35 +240,35 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
             _data[f"index_{i}"] = i
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
-        data.series = None
-        params = {"user_id": user_id, "project_id": project_id,
-                  "default_config": json.dumps(data.default_config.dict()),
-                  **data.dict(), **_data}
-        query = cur.mogrify(f"""\
-            WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
-                                    view_type, metric_type, metric_of, metric_value,
-                                    metric_format, default_config)
-                         VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                                    %(metric_format)s, %(default_config)s)
-                         RETURNING *)
-            INSERT
-            INTO metric_series(metric_id, index, name, filter)
-            VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(name_{i})s, %(filter_{i})s::jsonb)"
-                              for i in range(series_len)])}
-            RETURNING metric_id;""", params)
+        params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
+        params["default_config"] = json.dumps(data.default_config.dict())
+        query = """INSERT INTO metrics (project_id, user_id, name, is_public,
+                            view_type, metric_type, metric_of, metric_value,
+                            metric_format, default_config)
+                   VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
+                              %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
+                              %(metric_format)s, %(default_config)s)
+                   RETURNING metric_id"""
+        if len(data.series) > 0:
+            query = f"""WITH m AS ({query})
+                        INSERT INTO metric_series(metric_id, index, name, filter)
+                        VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(name_{i})s, %(filter_{i})s::jsonb)"
+                                          for i in range(series_len)])}
+                        RETURNING metric_id;"""
 
-        cur.execute(
-            query
-        )
+        query = cur.mogrify(query, params)
+        print("-------")
+        print(query)
+        print("-------")
+        cur.execute(query)
         r = cur.fetchone()
         if dashboard:
             return r["metric_id"]
-    return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
+    return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     series_ids = [r["seriesId"] for r in metric["series"]]
@@ -280,7 +280,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
               "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
               "metric_type": data.metric_type, "metric_of": data.metric_of,
               "metric_value": data.metric_value, "metric_format": data.metric_format,
-              "config": json.dumps(data.config.dict())}
+              "config": json.dumps(data.default_config.dict())}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.index is None:
@@ -337,10 +337,26 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
         cur.execute(query)
-    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def get_all(project_id, user_id, include_series=False):
+def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
+    constraints = ["metrics.project_id = %(project_id)s",
+                   "metrics.deleted_at ISNULL"]
+    params = {"project_id": project_id, "user_id": user_id,
+              "offset": (data.page - 1) * data.limit,
+              "limit": data.limit, }
+    if data.mine_only:
+        constraints.append("user_id = %(user_id)s")
+    else:
+        constraints.append("(user_id = %(user_id)s OR metrics.is_public)")
+    if data.shared_only:
+        constraints.append("is_public")
+
+    if data.query is not None and len(data.query) > 0:
+        constraints.append("(name ILIKE %(query)s OR owner.owner_email ILIKE %(query)s)")
+        params["query"] = helper.values_for_operator(value=data.query,
+                                                     op=schemas.SearchEventOperator._contains)
     with pg_client.PostgresClient() as cur:
         sub_join = ""
         if include_series:
@@ -349,31 +365,27 @@ def get_all(project_id, user_id, include_series=False):
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)"""
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT *
-                    FROM metrics
-                             {sub_join}
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT DISTINCT dashboard_id, name, is_public
-                                                      FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
-                                                      WHERE deleted_at ISNULL
-                                                        AND dashboard_widgets.metric_id = metrics.metric_id
-                                                        AND project_id = %(project_id)s
-                                                        AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
-                                                ) AS connected_dashboards ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT email AS owner_email
-                                                FROM users
-                                                WHERE deleted_at ISNULL
-                                                  AND users.user_id = metrics.user_id
-                                                ) AS owner ON (TRUE)
-                    WHERE metrics.project_id = %(project_id)s
-                      AND metrics.deleted_at ISNULL
-                      AND (user_id = %(user_id)s OR metrics.is_public)
-                    ORDER BY metrics.edited_at DESC, metrics.created_at DESC;""",
-                {"project_id": project_id, "user_id": user_id}
-            )
-        )
+        query = cur.mogrify(
+            f"""SELECT *
+                FROM metrics
+                         {sub_join}
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                            FROM (SELECT DISTINCT dashboard_id, name, is_public
+                                                  FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                  WHERE deleted_at ISNULL
+                                                    AND dashboard_widgets.metric_id = metrics.metric_id
+                                                    AND project_id = %(project_id)s
+                                                    AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                            ) AS connected_dashboards ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                                            FROM users
+                                            WHERE deleted_at ISNULL
+                                              AND users.user_id = metrics.user_id
+                                            ) AS owner ON (TRUE)
+                WHERE {" AND ".join(constraints)}
+                ORDER BY created_at {data.order}
+                LIMIT %(limit)s OFFSET %(offset)s;""", params)
+        cur.execute(query)
         rows = cur.fetchall()
         if include_series:
             for r in rows:
@@ -403,37 +415,37 @@ def delete(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
-def get(metric_id, project_id, user_id, flatten=True):
+def get_card(metric_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT *, default_config AS config
-                    FROM metrics
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
-                                                FROM metric_series
-                                                WHERE metric_series.metric_id = metrics.metric_id
-                                                  AND metric_series.deleted_at ISNULL 
-                                                ) AS metric_series ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT dashboard_id, name, is_public
-                                                      FROM dashboards
-                                                      WHERE deleted_at ISNULL
-                                                        AND project_id = %(project_id)s
-                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
-                                                ) AS connected_dashboards ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT email AS owner_email
-                                                FROM users
-                                                WHERE deleted_at ISNULL
-                                                AND users.user_id = metrics.user_id
-                                                ) AS owner ON (TRUE)
-                    WHERE metrics.project_id = %(project_id)s
-                      AND metrics.deleted_at ISNULL
-                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
-                      AND metrics.metric_id = %(metric_id)s
-                    ORDER BY created_at;""",
-                {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
-            )
+        query = cur.mogrify(
+            """SELECT *, default_config AS config
+                FROM metrics
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
+                                            FROM metric_series
+                                            WHERE metric_series.metric_id = metrics.metric_id
+                                              AND metric_series.deleted_at ISNULL 
+                                            ) AS metric_series ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                            FROM (SELECT dashboard_id, name, is_public
+                                                  FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                  WHERE deleted_at ISNULL
+                                                    AND project_id = %(project_id)s
+                                                    AND ((dashboards.user_id = %(user_id)s OR is_public))
+                                                    AND metric_id = %(metric_id)s) AS connected_dashboards
+                                            ) AS connected_dashboards ON (TRUE)
+                         LEFT JOIN LATERAL (SELECT email AS owner_email
+                                            FROM users
+                                            WHERE deleted_at ISNULL
+                                            AND users.user_id = metrics.user_id
+                                            ) AS owner ON (TRUE)
+                WHERE metrics.project_id = %(project_id)s
+                  AND metrics.deleted_at ISNULL
+                  AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                  AND metrics.metric_id = %(metric_id)s
+                ORDER BY created_at;""",
+            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
         )
+        cur.execute(query)
         row = cur.fetchone()
         if row is None:
             return None
@@ -456,9 +468,8 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                                                         AND project_id = %(project_id)s
                                                         AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)"""
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT *, default_config AS config
+        query = cur.mogrify(
+            f"""SELECT *, default_config AS config
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
@@ -471,9 +482,9 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                       AND (metrics.user_id = %(user_id)s OR metrics.is_public)
                       AND metrics.metric_id = %(metric_id)s
                     ORDER BY created_at;""",
-                {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
-            )
+            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
         )
+        cur.execute(query)
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
 
@@ -512,14 +523,14 @@ def change_state(project_id, metric_id, user_id, status):
               AND (user_id = %(user_id)s OR is_public);""",
                         {"metric_id": metric_id, "status": status, "user_id": user_id})
         )
-    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
 def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CustomMetricSessionsPayloadSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)

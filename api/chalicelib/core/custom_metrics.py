@@ -229,7 +229,7 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
         series_len = len(data.series)
         params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
         params["default_config"] = json.dumps(data.default_config.dict())
-        query = """INSERT INTO metrics_clone (project_id, user_id, name, is_public,
+        query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
                             metric_format, default_config)
                    VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
@@ -312,7 +312,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
                  RETURNING 1)""")
         query = cur.mogrify(f"""\
             {"WITH " if len(sub_queries) > 0 else ""}{",".join(sub_queries)}
-            UPDATE metrics_clone
+            UPDATE metrics
             SET name = %(name)s, is_public= %(is_public)s, 
                 view_type= %(view_type)s, metric_type= %(metric_type)s, 
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
@@ -328,15 +328,15 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
 
 
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
-    constraints = ["metrics_clone.project_id = %(project_id)s",
-                   "metrics_clone.deleted_at ISNULL"]
+    constraints = ["metrics.project_id = %(project_id)s",
+                   "metrics.deleted_at ISNULL"]
     params = {"project_id": project_id, "user_id": user_id,
               "offset": (data.page - 1) * data.limit,
               "limit": data.limit, }
     if data.mine_only:
         constraints.append("user_id = %(user_id)s")
     else:
-        constraints.append("(user_id = %(user_id)s OR metrics_clone.is_public)")
+        constraints.append("(user_id = %(user_id)s OR metrics.is_public)")
     if data.shared_only:
         constraints.append("is_public")
 
@@ -349,25 +349,25 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         if include_series:
             sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
-                                                WHERE metric_series.metric_id = metrics_clone.metric_id
+                                                WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)"""
         query = cur.mogrify(
             f"""SELECT *
-                FROM metrics_clone
+                FROM metrics
                          {sub_join}
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
                                             FROM (SELECT DISTINCT dashboard_id, name, is_public
                                                   FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
                                                   WHERE deleted_at ISNULL
-                                                    AND dashboard_widgets.metric_id = metrics_clone.metric_id
+                                                    AND dashboard_widgets.metric_id = metrics.metric_id
                                                     AND project_id = %(project_id)s
                                                     AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                             ) AS connected_dashboards ON (TRUE)
                          LEFT JOIN LATERAL (SELECT email AS owner_email
                                             FROM users
                                             WHERE deleted_at ISNULL
-                                              AND users.user_id = metrics_clone.user_id
+                                              AND users.user_id = metrics.user_id
                                             ) AS owner ON (TRUE)
                 WHERE {" AND ".join(constraints)}
                 ORDER BY created_at {data.order}
@@ -391,7 +391,7 @@ def delete(project_id, metric_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-            UPDATE public.metrics_clone 
+            UPDATE public.metrics 
             SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
@@ -406,10 +406,10 @@ def get_card(metric_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             """SELECT *, default_config AS config
-                FROM metrics_clone
+                FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                             FROM metric_series
-                                            WHERE metric_series.metric_id = metrics_clone.metric_id
+                                            WHERE metric_series.metric_id = metrics.metric_id
                                               AND metric_series.deleted_at ISNULL 
                                             ) AS metric_series ON (TRUE)
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
@@ -423,12 +423,12 @@ def get_card(metric_id, project_id, user_id, flatten=True):
                          LEFT JOIN LATERAL (SELECT email AS owner_email
                                             FROM users
                                             WHERE deleted_at ISNULL
-                                            AND users.user_id = metrics_clone.user_id
+                                            AND users.user_id = metrics.user_id
                                             ) AS owner ON (TRUE)
-                WHERE metrics_clone.project_id = %(project_id)s
-                  AND metrics_clone.deleted_at ISNULL
-                  AND (metrics_clone.user_id = %(user_id)s OR metrics_clone.is_public)
-                  AND metrics_clone.metric_id = %(metric_id)s
+                WHERE metrics.project_id = %(project_id)s
+                  AND metrics.deleted_at ISNULL
+                  AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                  AND metrics.metric_id = %(metric_id)s
                 ORDER BY created_at;""",
             {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
         )
@@ -455,24 +455,23 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                                                         AND project_id = %(project_id)s
                                                         AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)"""
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT *, default_config AS config
-                    FROM metrics_clone
+        query = cur.mogrify(
+            f"""SELECT *, default_config AS config
+                    FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
-                                                WHERE metric_series.metric_id = metrics_clone.metric_id
+                                                WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)
                              {sub_query}
-                    WHERE (metrics_clone.project_id = %(project_id)s OR metrics_clone.project_id ISNULL)
-                      AND metrics_clone.deleted_at ISNULL
-                      AND (metrics_clone.user_id = %(user_id)s OR metrics_clone.is_public)
-                      AND metrics_clone.metric_id = %(metric_id)s
+                    WHERE (metrics.project_id = %(project_id)s OR metrics.project_id ISNULL)
+                      AND metrics.deleted_at ISNULL
+                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                      AND metrics.metric_id = %(metric_id)s
                     ORDER BY created_at;""",
-                {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
-            )
+            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
         )
+        cur.execute(query)
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
 
@@ -482,16 +481,16 @@ def get_series_for_alert(project_id, user_id):
         cur.execute(
             cur.mogrify(
                 """SELECT series_id AS value,
-                       metrics_clone.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
+                       metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
                        'count' AS unit,
                        FALSE AS predefined,
                        metric_id,
                        series_id
                     FROM metric_series
-                             INNER JOIN metrics_clone USING (metric_id)
-                    WHERE metrics_clone.deleted_at ISNULL
-                      AND metrics_clone.project_id = %(project_id)s
-                      AND metrics_clone.metric_type = 'timeseries'
+                             INNER JOIN metrics USING (metric_id)
+                    WHERE metrics.deleted_at ISNULL
+                      AND metrics.project_id = %(project_id)s
+                      AND metrics.metric_type = 'timeseries'
                       AND (user_id = %(user_id)s OR is_public)
                     ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}
@@ -505,7 +504,7 @@ def change_state(project_id, metric_id, user_id, status):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-            UPDATE public.metrics_clone 
+            UPDATE public.metrics 
             SET active = %(status)s 
             WHERE metric_id = %(metric_id)s
               AND (user_id = %(user_id)s OR is_public);""",
