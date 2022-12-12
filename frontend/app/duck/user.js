@@ -57,6 +57,7 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('passwordErrors', List(action.errors))
     case DELETE:
       deleteCookie('jwt', '/', '.openreplay.com')
+      console.log('called')
       return initialState;
     case PUT_CLIENT.REQUEST:
       return state.mergeIn([ 'account' ], action.params);
