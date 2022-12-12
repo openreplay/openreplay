@@ -16,7 +16,16 @@ ON T1.session_id = T2.session_id AND T1.project_id = T2.project_id;"""
     return res
 
 
-def query_funnels(*kwargs):
+def get_features_postgres(**kwargs):
+    with PostgresClient() as conn:
+        funnels = query_funnels(conn, **kwargs)
+        metrics = query_metrics(conn, **kwargs)
+        filters = query_with_filters(conn, **kwargs)
+    return funnels, metrics, filters
+
+
+
+def query_funnels(conn, **kwargs):
     """Gets Funnels (PG database)"""
     # If public.funnel is empty
     funnels_query = f"""SELECT project_id, user_id, filter FROM (SELECT project_id, user_id, metric_id FROM public.metrics WHERE metric_type='funnel'
@@ -24,29 +33,26 @@ def query_funnels(*kwargs):
     # Else
     # funnels_query = "SELECT project_id, user_id, filter FROM public.funnels"
 
-    with PostgresClient() as conn:
-        conn.execute(funnels_query)
-        res = conn.fetchall()
+    conn.execute(funnels_query)
+    res = conn.fetchall()
     return res
 
 
-def query_metrics(*kwargs):
+def query_metrics(conn, **kwargs):
     """Gets Metrics (PG_database)"""
     metrics_query = """SELECT metric_type, metric_of, metric_value, metric_format FROM public.metrics"""
-    with PostgresClient() as conn:
-        conn.execute(metrics_query)
-        res = conn.fetchall()
+    conn.execute(metrics_query)
+    res = conn.fetchall()
     return res
 
 
-def query_with_filters(*kwargs):
+def query_with_filters(conn, **kwargs):
     """Gets Metrics with filters (PG database)"""
     filters_query = """SELECT T1.metric_id as metric_id, project_id, name, metric_type, metric_of, filter FROM (
     SELECT metric_id, project_id, name, metric_type, metric_of FROM metrics) as T1 INNER JOIN
     (SELECT metric_id, filter FROM metric_series WHERE filter != '{}') as T2 ON T1.metric_id = T2.metric_id"""
-    with PostgresClient() as conn:
-        conn.execute(filters_query)
-        res = conn.fetchall()
+    conn.execute(filters_query)
+    res = conn.fetchall()
     return res
 
 
@@ -81,10 +87,6 @@ def transform_with_filter(data, *kwargs):
         elif _type == 'table':
             res.append(['table', _tmp['metric_of'], _tmp['filter']['events']])
     return res
-
-
-def transform_data():
-    pass
 
 
 def transform(element):

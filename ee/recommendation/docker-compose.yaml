@@ -58,23 +58,24 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
-    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+    _PIP_ADDITIONAL_REQUIREMENTS: 'argcomplete'
     AIRFLOW__CODE_EDITOR__ENABLED: 'true'
     AIRFLOW__CODE_EDITOR__GIT_ENABLED: 'false'
     AIRFLOW__CODE_EDITOR__STRING_NORMALIZATION: 'true'
     AIRFLOW__CODE_EDITOR__MOUNT: '/opt/airflow/dags'
-    pg_user: airflow
-    pg_password: airflow
-    pg_dbname: airflow
-    pg_host: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    pg_port: 5432
-    PG_TIMEOUT: 30
-    PG_POOL: 'true'
+    pg_user: "${pg_user}"
+    pg_password: "${pg_password}"
+    pg_dbname: "${pg_dbname}"
+    pg_host: "${pg_host}"
+    pg_port: "${pg_port}"
+    PG_TIMEOUT: "${PG_TIMEOUT}"
+    PG_POOL: "${PG_POOL}"
   volumes:
     - ./dags:/opt/airflow/dags
     - ./logs:/opt/airflow/logs
     - ./plugins:/opt/airflow/plugins
     - ./scripts:/opt/airflow/scripts
+    - ./cache:/opt/airflow/cache
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on

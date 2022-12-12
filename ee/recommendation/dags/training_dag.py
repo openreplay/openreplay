@@ -36,7 +36,11 @@ with dag:
     )
     hello_world = BashOperator(
         task_id='OneTest',
-        bash_command=f'python {_work_dir}/scripts/task.py --mode train --kernel linear',
+        bash_command=f'python {_work_dir}/scripts/processing.py --batch_size 500',
         # provide_context=True
     )
-    first_world >> hello_world
+    this_world = BashOperator(
+        task_id='ThisTest',
+        bash_command=f'python {_work_dir}/scripts/task.py --mode train --kernel linear',
+    )
+    first_world >> hello_world >> this_world
