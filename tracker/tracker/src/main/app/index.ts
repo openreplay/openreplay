@@ -324,8 +324,8 @@ export default class App {
     return this.session.getInfo().sessionID || undefined
   }
 
-  getSessionURL(): string | undefined {
-    const { projectID, sessionID } = this.session.getInfo()
+  getSessionURL(options?: { withCurrentTime?: boolean }): string | undefined {
+    const { projectID, sessionID, timestamp } = this.session.getInfo()
     if (!projectID || !sessionID) {
       this.debug.error('OpenReplay error: Unable to build session URL')
       return undefined
@@ -335,7 +335,14 @@ export default class App {
 
     const projectPath = isSaas ? ingest.replace('api', 'app') : ingest
 
-    return projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+    const url = projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+
+    if (options?.withCurrentTime) {
+      const jumpTo = now() - timestamp
+      return `${url}?jumpto=${jumpTo}`
+    }
+
+    return url
   }
 
   getHost(): string {
