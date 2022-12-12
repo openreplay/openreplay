@@ -4,7 +4,7 @@ The main package of the [OpenReplay](https://openreplay.com/) tracker.
 
 ## Documentation
 
-For launch options and available public methods, (refer to the documentation)[https://docs.openreplay.com/installation/javascript-sdk#options]
+For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/installation/javascript-sdk#options)
 
 ## Installation
 

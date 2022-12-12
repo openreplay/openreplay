@@ -4,7 +4,7 @@ OpenReplay Assist Plugin allows you to support your users by seeing their live s
 
 ## Documentation
 
-For launch options and available public methods, (refer to the documentation)[https://docs.openreplay.com/plugins/assist]
+For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/plugins/assist)
 
 ## Installation
 
