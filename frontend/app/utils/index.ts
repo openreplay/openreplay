@@ -17,7 +17,7 @@ export function debounce(callback, wait, context = this) {
     };
 }
 
-export function getResourceName(url = '') {
+export function getResourceName(url: string) {
     return url
         .split('/')
         .filter((s) => s !== '')

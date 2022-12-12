@@ -22,15 +22,17 @@ function FetchTabs(props: Props) {
   const onTabClick = (tab: string) => setActiveTab(tab);
   const [jsonRequest, setJsonRequest] = useState<Object | string | null>(null);
   const [jsonResponse, setJsonResponse] = useState<Object | string | null>(null);
-  const [requestHeaders, setRequestHeaders] = useState(null);
-  const [responseHeaders, setResponseHeaders] = useState(null);
+  const [requestHeaders, setRequestHeaders] = useState<Record<string,string> | null>(null);
+  const [responseHeaders, setResponseHeaders] = useState<Record<string,string> | null>(null);
 
   useEffect(() => {
     const { request, response } = resource;
 
     try {
       let jRequest = JSON.parse(request)
-      setRequestHeaders(jRequest.headers);
+      if (typeof jRequest.headers === "object") {
+        setRequestHeaders(jRequest.headers);
+      }
       try {
         let jBody = JSON.parse(jRequest.body)
         jBody = isValidJSON(jBody) ? jBody : jRequest.body
@@ -42,7 +44,9 @@ function FetchTabs(props: Props) {
 
     try {
       let jResponse = JSON.parse(response)
-      setResponseHeaders(jResponse.headers);
+      if (typeof jResponse.headers === "object") {
+        setResponseHeaders(jResponse.headers);
+      }
       try {
         let jBody = JSON.parse(jResponse.body)
         jBody = isValidJSON(jBody) ? jBody : jResponse.body
@@ -66,13 +70,13 @@ function FetchTabs(props: Props) {
               </div>
             }
             size="small"
-            show={!request}
+            show={!jsonRequest}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
                 { !isValidJSON(jsonRequest) ? (
-                  <div className="ml-3 break-words my-3"> {jsonRequest || request} </div>
+                  <div className="ml-3 break-words my-3"> {jsonRequest} </div>
                 ) : (
                   <JSONTree src={jsonRequest} collapsed={false} enableClipboard />
                 )}
@@ -91,13 +95,13 @@ function FetchTabs(props: Props) {
               </div>
             }
             size="small"
-            show={!response}
+            show={!jsonResponse}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
                 { !isValidJSON(jsonResponse) ? (
-                  <div className="ml-3 break-words my-3"> {jsonResponse || response} </div>
+                  <div className="ml-3 break-words my-3"> {jsonResponse} </div>
                 ) : (
                   <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
                 )}

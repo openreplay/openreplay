@@ -228,9 +228,12 @@ export default class MessageManager {
 
     let fileReadPromise = this.session.domURL && this.session.domURL.length > 0
       ? loadFiles(this.session.domURL, createNewParser())
-      : requestEFSDom(this.session.sessionId)
-        .then(createNewParser(false))
-    fileReadPromise.catch(e => {
+      : Promise.reject()
+    fileReadPromise
+    // EFS fallback
+    .catch(() => requestEFSDom(this.session.sessionId).then(createNewParser(false)))
+    // old url fallback
+    .catch(e => {
       logger.error('Can not get normal session replay file:', e)
       // back compat fallback to an old mobsUrl
       return loadFiles(this.session.mobsUrl, createNewParser(false))

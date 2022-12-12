@@ -153,10 +153,12 @@ function NetworkPanel() {
   const activeTab = devTools[INDEX_KEY].activeTab;
   const activeIndex = devTools[INDEX_KEY].index;
 
-  const list = useMemo(() => 
+  const list = useMemo(() =>
+    // TODO: better merge (with body size info)
     resourceList.filter(res => !fetchList.some(ft => {
-      if (res.url !== ft.url) { return false }
-      if (Math.abs(res.time - ft.time) > 200) { return false } // TODO: find good epsilons
+      // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
+      if (res.name !== ft.name) { return false }
+      if (Math.abs(res.time - ft.time) > 150) { return false } // TODO: find good epsilons
       if (Math.abs(res.duration - ft.duration) > 100) { return false }
       return true
     }))
