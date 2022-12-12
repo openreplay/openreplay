@@ -52,7 +52,7 @@ export default class DashboardStore {
     page: number = 1
     pageSize: number = 10
     dashboardsSearch: string = ''
-    sort: any = {}
+    sort: any = { by: 'desc'}
 
     constructor() {
         makeAutoObservable(this);
