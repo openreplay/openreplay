@@ -1,5 +1,6 @@
-import { List, Map, Record } from 'immutable';
+import { List, Map } from 'immutable';
 import Client from 'Types/client';
+import { deleteCookie } from 'App/utils';
 import Account from 'Types/account';
 import { DELETE } from './jwt';
 import withRequestState, { RequestTypes } from './requestStateCreator';
@@ -55,6 +56,7 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
     case DELETE:
+      deleteCookie('jwt', '/', '.openreplay.com')
       return initialState;
     case PUT_CLIENT.REQUEST:
       return state.mergeIn([ 'account' ], action.params);
@@ -68,6 +70,7 @@ const reducer = (state = initialState, action = {}) => {
   }
   return state;
 };
+
 
 export default withRequestState({
   loginRequest: LOGIN,
@@ -164,4 +167,3 @@ export function setOnboarding(state = false) {
     state
   };
 }
-
