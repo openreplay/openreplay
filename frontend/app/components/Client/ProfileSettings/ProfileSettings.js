@@ -59,7 +59,7 @@ export default class ProfileSettings extends React.PureComponent {
                     </div>
                 </div>
 
-                {isEnterprise && (
+                {isEnterprise && (account.admin || account.superAdmin) && (
                     <>
                         <div className="border-b my-10" />
                         <div className="flex items-center">
