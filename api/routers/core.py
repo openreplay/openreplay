@@ -2,6 +2,7 @@ from typing import Union
 
 from decouple import config
 from fastapi import Depends, Body, HTTPException
+from fastapi.responses import JSONResponse
 from starlette import status
 
 import schemas
@@ -40,13 +41,18 @@ def login(data: schemas.UserLoginSchema = Body(...)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=r["errors"][0]
         )
+
     r["smtp"] = helper.has_smtp()
-    return {
+    content = {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r
         }
     }
+    response = JSONResponse(content=content)
+    response.set_cookie(key="jwt", value=content['jwt'], domain=helper.get_domain(),
+                        expires=config("JWT_EXPIRATION", cast=int))
+    return response
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
@@ -68,8 +74,8 @@ def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSc
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
-                              schemas.PerformanceEventType, schemas.FetchFilterType,
-                              schemas.GraphqlFilterType, str] = None,
+                  schemas.PerformanceEventType, schemas.FetchFilterType,
+                  schemas.GraphqlFilterType, str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
@@ -972,6 +978,7 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
             "projects": -1,
         }
     }
+
 
 @app.get('/integrations/msteams/channels', tags=["integrations"])
 def get_msteams_channels(context: schemas.CurrentContext = Depends(OR_context)):

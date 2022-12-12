@@ -38,13 +38,16 @@ def jwt_context(context):
     }
 
 
+def get_jwt_exp(iat):
+    return iat // 1000 + config("JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000
+
+
 def generate_jwt(id, tenant_id, iat, aud, exp=None):
     token = jwt.encode(
         payload={
             "userId": id,
             "tenantId": tenant_id,
-            "exp": exp + TimeUTC.get_utc_offset() // 1000 if exp is not None \
-                else iat // 1000 + config("JWT_EXPIRATION", cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "exp": exp + TimeUTC.get_utc_offset() // 1000 if exp is not None else get_jwt_exp(iat),
             "iss": config("JWT_ISSUER"),
             "iat": iat // 1000,
             "aud": aud
