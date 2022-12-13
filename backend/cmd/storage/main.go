@@ -54,7 +54,7 @@ func main() {
 			[]int{messages.MsgSessionEnd},
 			true,
 		),
-		true,
+		false,
 		cfg.MessageSizeLimit,
 	)
 
@@ -73,6 +73,9 @@ func main() {
 			os.Exit(0)
 		case <-counterTick:
 			go counter.Print()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:

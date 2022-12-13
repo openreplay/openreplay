@@ -26,7 +26,6 @@ const (
 
 type Task struct {
 	id   string
-	key  string
 	doms *bytes.Buffer
 	dome *bytes.Buffer
 	dev  *bytes.Buffer
@@ -96,8 +95,7 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 	filePath := s.cfg.FSDir + "/" + sessionID
 	// Prepare sessions
 	newTask := &Task{
-		id:  sessionID,
-		key: msg.EncryptionKey,
+		id: sessionID,
 	}
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
