@@ -5,11 +5,14 @@ import styles from './cursor.module.css';
 export default class Cursor {
   private readonly cursor: HTMLDivElement;
   private tagElement: HTMLDivElement;
+  private isMobile: boolean;
+
   constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
     this.cursor.className = styles.cursor;
     if (isMobile) this.cursor.style.backgroundImage = 'unset'
     overlay.appendChild(this.cursor);
+    this.isMobile = isMobile;
   }
 
   toggle(flag: boolean) {
@@ -52,9 +55,10 @@ export default class Cursor {
   }
 
   click() {
-    this.cursor.classList.add(styles.clicked)
+    const styleList = this.isMobile ? styles.clickedMobile : styles.clicked
+    this.cursor.classList.add(styleList)
     setTimeout(() => {
-      this.cursor.classList.remove(styles.clicked)
+      this.cursor.classList.remove(styleList)
     }, 600)
   }
 
