@@ -31,7 +31,6 @@ function PlayerBlockHeader(props: any) {
   const { assistMultiviewStore } = useStore();
 
   const { width, height, showEvents } = store.get();
-  const toggleEvents = player.toggleEvents;
 
   const {
     session,
@@ -147,10 +146,10 @@ function PlayerBlockHeader(props: any) {
             onClick={(tab) => {
               if (activeTab === tab) {
                 setActiveTab('');
-                toggleEvents();
+                player.toggleEvents();
               } else {
                 setActiveTab(tab);
-                !showEvents && toggleEvents();
+                !showEvents && player.toggleEvents();
               }
             }}
             border={false}

@@ -10,7 +10,7 @@ import { useModal } from 'App/components/Modal';
 import FetchDetailsModal from 'Shared/FetchDetailsModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { useStore } from 'App/mstore';
-
+import { connect } from 'react-redux'
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
@@ -128,7 +128,7 @@ export function renderDuration(r: any) {
   );
 }
 
-function NetworkPanel() {
+function NetworkPanel({ startedAt }: { startedAt: number }) {
   const { player, store } = React.useContext(PlayerContext)
 
   const {
@@ -231,7 +231,7 @@ function NetworkPanel() {
   const showDetailsModal = (item: any) => {
     setIsDetailsModalActive(true)
     showModal(
-      <FetchDetailsModal resource={item} rows={filteredList} fetchPresented={fetchList.length > 0} />,
+      <FetchDetailsModal time={item.time + startedAt} resource={item} rows={filteredList} fetchPresented={fetchList.length > 0} />,
       {
         right: true,
         onClose: () => {
@@ -369,7 +369,7 @@ function NetworkPanel() {
                   hidden: activeTab === XHR,
                 },
                 {
-                  label: 'Time',
+                  label: 'Duration',
                   width: 80,
                   dataKey: 'duration',
                   render: renderDuration,
@@ -383,4 +383,6 @@ function NetworkPanel() {
   );
 }
 
-export default observer(NetworkPanel);
+export default connect((state: any) => ({
+  startedAt: state.getIn(['sessions', 'current', 'startedAt']),
+}))(observer(NetworkPanel));

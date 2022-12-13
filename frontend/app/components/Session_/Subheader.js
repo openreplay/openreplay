@@ -11,6 +11,7 @@ import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { useStore } from 'App/mstore';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 
 function SubHeader(props) {
@@ -55,6 +56,7 @@ function SubHeader(props) {
 
   return (
     <div className="w-full px-4 py-2 flex items-center border-b">
+
       {location && (
         <div
           className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-gray-light-shade rounded-md"

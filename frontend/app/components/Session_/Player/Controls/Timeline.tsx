@@ -5,14 +5,13 @@ import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
 import { setTimelinePointer, setTimelineHoverTime } from 'Duck/sessions';
 import DraggableCircle from './components/DraggableCircle';
-import CustomDragLayer from './components/CustomDragLayer';
+import CustomDragLayer, { OnDragCallback } from './components/CustomDragLayer';
 import { debounce } from 'App/utils';
 import TooltipContainer from './components/TooltipContainer';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-
-const BOUNDRY = 0;
+import { DateTime, Duration } from 'luxon';
 
 function getTimelinePosition(value: number, scale: number) {
   const pos = value * scale;
@@ -23,7 +22,7 @@ function getTimelinePosition(value: number, scale: number) {
 function Timeline(props) {
   const { player, store } = useContext(PlayerContext)
   const [wasPlaying, setWasPlaying] = useState(false)
-  const { notesStore } = useStore();
+  const { notesStore, settingsStore } = useStore();
   const {
     playing,
     time,
@@ -38,8 +37,8 @@ function Timeline(props) {
   } = store.get()
   const notes = notesStore.sessionNotes
 
-  const progressRef = useRef()
-  const timelineRef = useRef()
+  const progressRef = useRef<HTMLDivElement>()
+  const timelineRef = useRef<HTMLDivElement>()
 
 
   const scale = 100 / endTime;
@@ -64,10 +63,10 @@ function Timeline(props) {
     }
   };
 
-  const onDrag = (offset) => {
+  const onDrag: OnDragCallback = (offset) => {
     if (live && !liveTimeTravel) return;
 
-    const p = (offset.x - BOUNDRY) / progressRef.current.offsetWidth;
+    const p = (offset.x) / progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
     debouncedJump(time);
     hideTimeTooltip();
@@ -90,20 +89,22 @@ function Timeline(props) {
       return props.tooltipVisible && hideTimeTooltip();
     }
 
-
     let timeLineTooltip;
 
     if (live) {
       const [time, duration] = getLiveTime(e);
       timeLineTooltip = {
-        time: duration - time,
+        time: Duration.fromMillis(duration - time).toFormat(`-mm:ss`),
         offset: e.nativeEvent.offsetX,
         isVisible: true,
       };
     } else {
       const time = getTime(e);
+      const tz = settingsStore.sessionSettings.timezone.value
+      const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
       timeLineTooltip = {
-        time: time,
+        time: Duration.fromMillis(time).toFormat(`mm:ss`),
+        timeStr,
         offset: e.nativeEvent.offsetX,
         isVisible: true,
       };
@@ -154,7 +155,6 @@ function Timeline(props) {
         style={{
           top: '-4px',
           zIndex: 100,
-          padding: `0 ${BOUNDRY}px`,
           maxWidth: 'calc(100% - 1rem)',
           left: '0.5rem',
         }}
@@ -177,8 +177,8 @@ function Timeline(props) {
           />
           <CustomDragLayer
             onDrag={onDrag}
-            minX={BOUNDRY}
-            maxX={progressRef.current && progressRef.current.offsetWidth + BOUNDRY}
+            minX={0}
+            maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
           />
           <TimeTracker scale={scale} live={live} left={time * scale} />
 

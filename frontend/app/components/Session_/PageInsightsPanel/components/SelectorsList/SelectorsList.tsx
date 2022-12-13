@@ -13,7 +13,7 @@ function SelectorsList() {
     return (
         <NoContent title="No data available." size="small" show={targets && targets.length === 0}>
             <div className={stl.wrapper}>
-                {targets && targets.map((target, index) => <SelectorCard target={target} index={index} showContent={activeTargetIndex === index} />)}
+                {targets && targets.map((target, index) => <React.Fragment key={index}><SelectorCard target={target} index={index} showContent={activeTargetIndex === index} /></React.Fragment>)}
             </div>
         </NoContent>
     );

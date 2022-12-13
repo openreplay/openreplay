@@ -3,6 +3,8 @@ import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
 import logger from 'App/logger';
 import RawMessageReader from './RawMessageReader.gen';
+import resolveURL from './urlBasedResolver'
+
 
 // TODO: composition instead of inheritance
 // needSkipMessage() and next() methods here use buf and p protected properties,
@@ -77,7 +79,7 @@ export default class MFileReader extends RawMessageReader {
     }
 
     const index = this.getLastMessageID()
-    const msg = Object.assign(rMsg, {
+    const msg = Object.assign(resolveURL(rMsg), {
       time: this.currentTime,
       _index: index,
     })

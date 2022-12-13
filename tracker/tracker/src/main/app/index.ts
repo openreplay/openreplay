@@ -464,7 +464,7 @@ export default class App {
           return Promise.reject('no worker found after start request (this might not happen)')
         }
         if (this.activityState === ActivityState.NotActive) {
-          return Promise.reject('Tracker stopped during authorisation')
+          return Promise.reject('Tracker stopped during authorization')
         }
         const {
           token,

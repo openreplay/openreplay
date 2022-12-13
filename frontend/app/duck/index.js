@@ -7,12 +7,8 @@ import issues from './issues';
 import assignments from './assignments';
 import target from './target';
 import targetCustom from './targetCustom';
-import runs from './runs';
 import filters from './filters';
 import funnelFilters from './funnelFilters';
-import tests from './tests';
-import steps from './steps';
-import schedules from './schedules';
 import events from './events';
 import environments from './environments';
 import variables from './variables';
@@ -46,12 +42,9 @@ export default combineReducers({
   assignments,
   target,
   targetCustom,
-  runs,
   filters,
   funnelFilters,
-  tests,
-  steps,
-  schedules,
+
   events,
   environments,
   variables,

@@ -1,98 +1,85 @@
-import React, { memo } from 'react';
-import { useDragLayer } from "react-dnd";
-import Circle from './Circle'
+import React, { memo, useEffect } from 'react';
 import type { CSSProperties, FC } from 'react'
+import { useDragLayer, XYCoord } from "react-dnd";
+import Circle from './Circle'
 
 const layerStyles: CSSProperties = {
-    position: "fixed",
-    pointerEvents: "none",
-    zIndex: 100,
-    left: 0,
-    top: 0,
-    width: "100%",
-    height: "100%"
-  };
-
-const ItemTypes = {
-    BOX: 'box',
+  position: "fixed",
+  pointerEvents: "none",
+  zIndex: 100,
+  left: 0,
+  top: 0,
+  width: "100%",
+  height: "100%"
 }
 
-function getItemStyles(initialOffset, currentOffset, maxX, minX) {
-    if (!initialOffset || !currentOffset) {
-      return {
-        display: "none"
-      };
-    }
-    let { x, y } = currentOffset;
-    // if (isSnapToGrid) {
-    //   x -= initialOffset.x;
-    //   y -= initialOffset.y;
-    //   [x, y] = [x, y];
-    //   x += initialOffset.x;
-    //   y += initialOffset.y;
-    // }
-    if (x > maxX) {
-      x = maxX;
-    }
 
-    if (x < minX) {
-      x = minX;
-    }
-    const transform = `translate(${x}px, ${initialOffset.y}px)`;
+function getItemStyles(
+  initialOffset: XYCoord | null,
+  currentOffset: XYCoord | null,
+  maxX: number,
+  minX: number,
+) {
+  if (!initialOffset || !currentOffset) {
     return {
-      transition: 'transform 0.1s ease-out',
-      transform,
-      WebkitTransform: transform
-    };
+      display: "none"
+    }
+  }
+  let { x, y } = currentOffset;
+  if (x > maxX) {
+    x = maxX;
+  }
+
+  if (x < minX) {
+    x = minX;
+  }
+  const transform = `translate(${x}px, ${initialOffset.y}px)`;
+  return {
+    transition: 'transform 0.1s ease-out',
+    transform,
+    WebkitTransform: transform
+  }
 }
+
+export type OnDragCallback = (offset: XYCoord) => void
 
 interface Props {
-  onDrag: (offset: { x: number, y: number } | null) => void;
-  maxX: number;
-  minX: number;
+  onDrag: OnDragCallback
+  maxX: number
+  minX: number
 }
 
-const  CustomDragLayer: FC<Props> = memo(function CustomDragLayer(props) {
-    const {
-        itemType,
-        isDragging,
-        item,
-        initialOffset,
-        currentOffset,
-      } = useDragLayer((monitor) => ({
-        item: monitor.getItem(),
-        itemType: monitor.getItemType(),
-        initialOffset: monitor.getInitialSourceClientOffset(),
-        currentOffset: monitor.getSourceClientOffset(),
-        isDragging: monitor.isDragging(),
-    }));
+const CustomDragLayer: FC<Props> = memo(function CustomDragLayer({ maxX, minX, onDrag }) {
+  const {
+      isDragging,
+      initialOffset,
+      currentOffset, // might be null (why is it not captured by types?)
+    } = useDragLayer((monitor) => ({
+      initialOffset: monitor.getInitialSourceClientOffset(),
+      currentOffset: monitor.getSourceClientOffset(),
+      isDragging: monitor.isDragging(),
+  }))
 
-    function renderItem() {
-        switch (itemType) {
-          case ItemTypes.BOX:
-            return <Circle />;
-          default:
-            return null;
-        }
-      }
-
-    if (!isDragging) {
-        return null;
+  useEffect(() => {
+    if (!isDragging || !currentOffset) {
+      return
     }
+    onDrag(currentOffset)
+  }, [isDragging, currentOffset])
 
-    if (isDragging) {
-      props.onDrag(currentOffset)
-    }
+  if (!isDragging || !currentOffset) {
+      return null;
+  }
 
-    return (
-        <div style={layerStyles}>
-          <div
-            style={getItemStyles(initialOffset, currentOffset, props.maxX, props.minX)}
-          >
-            {renderItem()}
-          </div>
+  return (
+      <div style={layerStyles}>
+        <div
+          style={getItemStyles(initialOffset, currentOffset, maxX, minX)}
+        >
+          <Circle />
         </div>
-    );
+      </div>
+  )
 })
 
 export default CustomDragLayer;

@@ -31,7 +31,6 @@ export default class WebPlayer extends Player {
   private targetMarker: TargetMarker
 
   constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
-
     let initialLists = live ? {} : {
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
@@ -46,7 +45,7 @@ export default class WebPlayer extends Player {
       ),
     }
 
-    const screen = new Screen()
+    const screen = new Screen(session.isMobile)
     const messageManager = new MessageManager(session, wpState, screen, initialLists)
     super(wpState, messageManager)
     this.screen = screen
