@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,10 +21,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("sink")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,10 +19,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("assets")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	cacher := cacher.NewCacher(cfg, metrics)
 

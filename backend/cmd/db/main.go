@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	types2 "openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
@@ -25,10 +26,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("db")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := db.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	// Init database
 	pg := cache.NewPGCache(
