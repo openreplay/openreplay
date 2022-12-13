@@ -15,21 +15,29 @@ class EventQueue():
 
     def flush(self, conn):
         events = list()
+        params = dict()
+        # while not self.events.empty():
+        #     project_id, user_id, element = self.events.get()
+        #     events.append("({project_id}, {user_id}, {timestamp}, '{action}', '{source}', '{category}', '{data}')".format(
+        #                    project_id=project_id, user_id=user_id, timestamp=element.timestamp, action=element.action, source=element.source, category=element.category, data=json.dumps(element.data)))
+        i = 0
         while not self.events.empty():
             project_id, user_id, element = self.events.get()
-            events.append("({project_id}, '{user_id}', {timestamp}, '{action}', '{source}', '{category}', '{data}')".format(
-                           project_id=project_id, user_id=user_id, timestamp=element.timestamp, action=element.action, source=element.source, category=element.category, data=json.dumps(element.data)))
-        if len(events)==0:
+            params[f'project_id_{i}'] = project_id
+            params[f'user_id_{i}'] = user_id
+            for _key, _val in element.dict().items():
+                params[f'{_key}_{i}'] = _val
+            events.append(f"(%(project_id_{i})s, %(user_id_{i})s, %(timestamp_{i})s, %(action_{i})s, %(source_{i})s, %(category_{i})s, %(data_{i})s::jsonb)")
+            i += 1
+        if i == 0:
             return 0
         if self.test:
             print(events)
             return 1
-        _base_query = 'INSERT INTO {database}.{table} (project_id, user_id, timestamp, action, source, category, data) VALUES {values_list}'
-        conn.execute(_base_query.format(database='public', table='frontend_signals', values_list=', '.join(events)))
-        # logging.info(_query)
-        # res = 'done'
-        # res = conn.fetchone()
-        # res = helper.dict_to_camel_case(conn.fetchone())
+        conn.execute(
+            conn.mogrify(f"""INSERT INTO public.frontend_signals (project_id, user_id, timestamp, action, source, category, data)
+                        VALUES {' , '.join(events)}""", params)
+        )
         return 1
 
     def force_flush(self):
@@ -61,4 +69,9 @@ async def terminate():
         global_queue.force_flush()
         logging.info('> queue fulshed')
 
-    
+# def __process_schema(trace):
+#     data = trace.dict()
+#     data["parameters"] = json.dumps(trace.parameters) if trace.parameters is not None and len(
+#         trace.parameters.keys()) > 0 else None
+#     data["payload"] = json.dumps(trace.payload) if trace.payload is not None and len(trace.payload.keys()) > 0 else None
+#     return data

@@ -1,7 +1,6 @@
 from chalicelib.core import telemetry, unlock
 from chalicelib.core import jobs
 from chalicelib.core import weekly_report as weekly_report_script
-from chalicelib.utils import events_queue
 from decouple import config
 
 
@@ -23,12 +22,8 @@ def unlock_cron() -> None:
     print(f"valid: {unlock.is_valid()}")
 
 
-def pg_events_queue() -> None:
-    events_queue.global_queue.force_flush()
-
 cron_jobs = [
     {"func": unlock_cron, "trigger": "cron", "hour": "*"},
-    {"func": pg_events_queue, "trigger": "interval", "seconds": 60*5, "misfire_grace_time": 20}
 ]
 
 SINGLE_CRONS = [{"func": telemetry_cron, "trigger": "cron", "day_of_week": "*"},

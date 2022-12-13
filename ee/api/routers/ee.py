@@ -1,5 +1,5 @@
 from chalicelib.core import roles, traces
-from chalicelib.core import unlock
+from chalicelib.core import unlock, signals
 from chalicelib.utils import assist_helper
 
 unlock.check()
@@ -71,3 +71,13 @@ def get_trails(data: schemas_ee.TrailSearchPayloadSchema = Body(...),
 @app.post('/trails/actions', tags=["traces", "trails"])
 def get_available_trail_actions(context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}
+
+
+@app.post('/{projectId}/signals', tags=['signals'])
+def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    data = signals.handle_frontend_signals_queued(project_id=projectId, user_id=context.user_id, data=data)
+
+    if "errors" in data:
+        return data
+    return {'data': data}

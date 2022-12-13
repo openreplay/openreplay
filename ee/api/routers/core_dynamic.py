@@ -8,7 +8,7 @@ import schemas
 import schemas_ee
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
     errors_favorite, sessions_notes
-from chalicelib.core import sessions_viewed, signals
+from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
@@ -436,12 +436,3 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
         return data
     return {'data': data}
 
-
-@app.post('/{projectId}/signals', tags=['signals'])
-def send_interactions(projectId:int, data: schemas_ee.SignalsSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
-    data = signals.handle_frontend_signals_queued(project_id=projectId, user_id=context.user_id, data=data)
-    
-    if "errors" in data:
-        return data
-    return {'data': data}
