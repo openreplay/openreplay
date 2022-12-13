@@ -9,11 +9,6 @@ const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
 const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({ text: tab, key: tab }));
 
-
-function isValidJSON(o: any): o is Object {
-  return typeof o === "object" && o != null
-}
-
 function parseRequestResponse(
   r: string,
   setHeaders: (hs: Record<string, string>) => void,
@@ -45,10 +40,9 @@ function parseRequestResponse(
 
 
 interface Props {
-  resource: any;
+  resource: { request: string, response: string };
 }
-function FetchTabs(props: Props) {
-  const { resource } = props;
+function FetchTabs({ resource }: Props) {
   const [activeTab, setActiveTab] = useState(HEADERS);
   const onTabClick = (tab: string) => setActiveTab(tab);
   const [jsonRequest, setJsonRequest] = useState<Object | null>(null);
