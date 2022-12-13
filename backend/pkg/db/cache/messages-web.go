@@ -99,7 +99,7 @@ func (c *PGCache) InsertSessionReferrer(sessionID uint64, referrer string) error
 	return c.Conn.InsertSessionReferrer(sessionID, referrer)
 }
 
-func (c *PGCache) InsertWebFetch(sessionID uint64, e *Fetch) error {
+func (c *PGCache) InsertWebNetworkRequest(sessionID uint64, e *NetworkRequest) error {
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -108,7 +108,7 @@ func (c *PGCache) InsertWebFetch(sessionID uint64, e *Fetch) error {
 	if err != nil {
 		return err
 	}
-	return c.Conn.InsertWebFetch(sessionID, session.ProjectID, project.SaveRequestPayloads, e)
+	return c.Conn.InsertWebNetworkRequest(sessionID, session.ProjectID, project.SaveRequestPayloads, e)
 }
 
 func (c *PGCache) InsertWebGraphQL(sessionID uint64, e *GraphQL) error {

@@ -1,5 +1,5 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID } from './messages.gen.js'
+import { Timestamp, Metadata, UserID, Type as MType } from './messages.gen.js'
 import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
@@ -199,10 +199,22 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
+  private _usingOldFetchPlugin = false
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
       return
     }
+    // === Back compatibility with Fetch/Axios plugins ===
+    if (message[0] === MType.Fetch) {
+      this._usingOldFetchPlugin = true
+      deprecationWarn('Fetch plugin', "'network' init option")
+      deprecationWarn('Axios plugin', "'network' init option")
+    }
+    if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
+      return
+    }
+    // ====================================================
+
     this.messages.push(message)
     // TODO: commit on start if there were `urgent` sends;
     // Clarify where urgent can be used for;

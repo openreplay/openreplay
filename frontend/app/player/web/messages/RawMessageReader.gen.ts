@@ -201,6 +201,28 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 21: {
+      const type = this.readString(); if (type === null) { return resetPointer() }
+      const method = this.readString(); if (method === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const request = this.readString(); if (request === null) { return resetPointer() }
+      const response = this.readString(); if (response === null) { return resetPointer() }
+      const status = this.readUint(); if (status === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      return {
+        tp: MType.NetworkRequest,
+        type,
+        method,
+        url,
+        request,
+        response,
+        status,
+        timestamp,
+        duration,
+      };
+    }
+
     case 22: {
       const level = this.readString(); if (level === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
@@ -346,6 +368,28 @@ export default class RawMessageReader extends PrimitiveReader {
         ticks,
         totalJSHeapSize,
         usedJSHeapSize,
+      };
+    }
+
+    case 53: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
+      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+      return {
+        tp: MType.ResourceTiming,
+        timestamp,
+        duration,
+        ttfb,
+        headerSize,
+        encodedBodySize,
+        decodedBodySize,
+        url,
+        initiator,
       };
     }
 

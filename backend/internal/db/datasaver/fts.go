@@ -6,7 +6,7 @@ import (
 	"openreplay/backend/pkg/messages"
 )
 
-type FetchFTS struct {
+type NetworkRequestFTS struct {
 	Method    string `json:"method"`
 	URL       string `json:"url"`
 	Request   string `json:"request"`
@@ -56,8 +56,8 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 
 	switch m := msg.(type) {
 	// Common
-	case *messages.Fetch:
-		event, err = json.Marshal(FetchFTS{
+	case *messages.NetworkRequest:
+		event, err = json.Marshal(NetworkRequestFTS{
 			Method:    m.Method,
 			URL:       m.URL,
 			Request:   m.Request,

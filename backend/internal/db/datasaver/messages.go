@@ -38,9 +38,9 @@ func (mi *Saver) InsertMessage(msg Message) error {
 	case *PageEvent:
 		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebPageEvent(sessionID, m)
-	case *Fetch:
+	case *NetworkRequest:
 		mi.sendToFTS(msg, sessionID)
-		return mi.pg.InsertWebFetch(sessionID, m)
+		return mi.pg.InsertWebNetworkRequest(sessionID, m)
 	case *GraphQL:
 		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebGraphQL(sessionID, m)

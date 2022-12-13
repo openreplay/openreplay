@@ -3,6 +3,7 @@ import Record from 'Types/Record';
 import { getResourceName } from 'App/utils';
 
 const XHR = 'xhr';
+const FETCH = 'fetch';
 const JS = 'script';
 const CSS = 'css';
 const IMG = 'img';
@@ -32,7 +33,6 @@ const OTHER = 'other';
 
 const TYPES_MAP = {
   "stylesheet": CSS,
-  "fetch": XHR,
 }
 
 function getResourceStatus(status, success) {
@@ -53,6 +53,7 @@ function getResourceSuccess(success, status) {
 
 export const TYPES = {
   XHR,
+  FETCH,
   JS,
   CSS,
   IMG,
@@ -85,7 +86,7 @@ export default Record({
   // initiator: "other",
   // pagePath: "",
   method: '',
-  payload:'',
+  request:'',
   response: '',
   headerSize: 0,
   encodedBodySize: 0,
@@ -93,14 +94,13 @@ export default Record({
   responseBodySize: 0,
   timings: List(),
 }, {
-  fromJS: ({ responseBody, response, type, initiator, status, success, time, datetime, timestamp, timings, ...resource }) => ({
+  fromJS: ({ type, initiator, status, success, time, datetime, timestamp, timings, ...resource }) => ({
     ...resource,
     type: TYPES_MAP[type] || type,
     name: getResourceName(resource.url),
     status: getResourceStatus(status, success),
     success: getResourceSuccess(success, status),
     time: typeof time === 'number' ? time : datetime || timestamp,    
-    response: responseBody || response,
     ttfb: timings && timings.ttfb,
     timewidth: timings && timings.timewidth,
     timings,    

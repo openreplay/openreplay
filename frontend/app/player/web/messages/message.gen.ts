@@ -21,6 +21,7 @@ import type {
   RawSetInputValue,
   RawSetInputChecked,
   RawMouseMove,
+  RawNetworkRequest,
   RawConsoleLog,
   RawCssInsertRule,
   RawCssDeleteRule,
@@ -33,6 +34,7 @@ import type {
   RawNgRx,
   RawGraphQl,
   RawPerformanceTrack,
+  RawResourceTiming,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLoadFontFace,
@@ -97,6 +99,8 @@ export type SetInputChecked = RawSetInputChecked & Timed
 
 export type MouseMove = RawMouseMove & Timed
 
+export type NetworkRequest = RawNetworkRequest & Timed
+
 export type ConsoleLog = RawConsoleLog & Timed
 
 export type CssInsertRule = RawCssInsertRule & Timed
@@ -120,6 +124,8 @@ export type NgRx = RawNgRx & Timed
 export type GraphQl = RawGraphQl & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
+
+export type ResourceTiming = RawResourceTiming & Timed
 
 export type ConnectionInformation = RawConnectionInformation & Timed
 

@@ -148,7 +148,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *typ
 	return
 }
 
-func (conn *Conn) InsertWebFetch(sessionID uint64, projectID uint32, savePayload bool, e *Fetch) error {
+func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, savePayload bool, e *NetworkRequest) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Request

@@ -7,7 +7,7 @@ import (
 /*
 	Handler name: NetworkIssue
 	Input events: ResourceTiming,
-				  Fetch
+				  NetworkRequest
 	Output event: IssueEvent
 */
 
@@ -33,7 +33,7 @@ func (f *NetworkIssueDetector) Handle(message Message, messageID uint64, timesta
 	// 			ContextString: msg.URL,
 	// 		}
 	// 	}
-	case *Fetch:
+	case *NetworkRequest:
 		if msg.Status >= 400 {
 			return &IssueEvent{
 				Type:          "bad_request",

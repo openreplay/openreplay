@@ -128,6 +128,18 @@ type TrMouseMove = [
   y: number,
 ]
 
+type TrNetworkRequest = [
+  type: 21,
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
+]
+
 type TrConsoleLog = [
   type: 22,
   level: string,
@@ -412,7 +424,7 @@ type TrJSException = [
 ]
 
 
-export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSExceptionDeprecated | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrJSException
+export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequest | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSExceptionDeprecated | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrJSException
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -551,6 +563,20 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
+    case 21: {
+      return {
+        tp: MType.NetworkRequest,
+        type: tMsg[1],
+        method: tMsg[2],
+        url: tMsg[3],
+        request: tMsg[4],
+        response: tMsg[5],
+        status: tMsg[6],
+        timestamp: tMsg[7],
+        duration: tMsg[8],
+      }
+    }
+    
     case 22: {
       return {
         tp: MType.ConsoleLog,
@@ -658,6 +684,20 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         ticks: tMsg[2],
         totalJSHeapSize: tMsg[3],
         usedJSHeapSize: tMsg[4],
+      }
+    }
+    
+    case 53: {
+      return {
+        tp: MType.ResourceTiming,
+        timestamp: tMsg[1],
+        duration: tMsg[2],
+        ttfb: tMsg[3],
+        headerSize: tMsg[4],
+        encodedBodySize: tMsg[5],
+        decodedBodySize: tMsg[6],
+        url: tMsg[7],
+        initiator: tMsg[8],
       }
     }
     

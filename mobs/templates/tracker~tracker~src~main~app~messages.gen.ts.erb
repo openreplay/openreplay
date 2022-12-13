@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import * as Messages from '../../common/messages.gen.js'
-export { default } from '../../common/messages.gen.js'
+export { default, Type } from '../../common/messages.gen.js'
 
 <% $messages.select { |msg| msg.tracker }.each do |msg| %>
 export function <%= msg.name %>(

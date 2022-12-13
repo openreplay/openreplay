@@ -2,7 +2,7 @@
 import { Decoder } from "syncod";
 import logger from 'App/logger';
 
-import Resource, { TYPES } from 'Types/session/resource';
+import Resource, { TYPES as RES_TYPES } from 'Types/session/resource';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import { Log } from './types';
 
@@ -187,13 +187,12 @@ export default class MessageManager {
     const stateToUpdate : Partial<State>= {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvaliability: this.performanceTrackManager.avaliability,
-      ...this.lists.getFullListsState()
+      ...this.lists.getFullListsState(),
     }
     if (this.activityManager) {
       this.activityManager.end()
       stateToUpdate.skipIntervals = this.activityManager.list
     }
-
     this.state.update(stateToUpdate)
   }
   private onFileReadFailed = (e: any) => {
@@ -227,26 +226,21 @@ export default class MessageManager {
     this.setMessagesLoading(true)
     this.waitingForFiles = true
 
-    try {
-      if (this.session.domURL && this.session.domURL.length > 0) {
-        await loadFiles(this.session.domURL, createNewParser())
-        this.onFileReadSuccess()
-      } else {
-        const file = await requestEFSDom(this.session.sessionId)
-        const parser = createNewParser(false)
-        await parser(file)
-      }
-    } catch (e) {
-        console.error('Cant get session replay file:', e)
-        try {
-          // back compat with old mobsUrl
-          await loadFiles(this.session.mobsUrl, createNewParser(false))
-        } catch (e) {
-          this.onFileReadFailed(e)
-        }
-    } finally {
-      this.onFileReadFinally()
-    }
+    let fileReadPromise = this.session.domURL && this.session.domURL.length > 0
+      ? loadFiles(this.session.domURL, createNewParser())
+      : Promise.reject()
+    fileReadPromise
+    // EFS fallback
+    .catch(() => requestEFSDom(this.session.sessionId).then(createNewParser(false)))
+    // old url fallback
+    .catch(e => {
+      logger.error('Can not get normal session replay file:', e)
+      // back compat fallback to an old mobsUrl
+      return loadFiles(this.session.mobsUrl, createNewParser(false))
+    })
+    .then(this.onFileReadSuccess)
+    .catch(this.onFileReadFailed)
+    .finally(this.onFileReadFinally)
 
     // load devtools
     if (this.session.devtoolsURL.length) {
@@ -256,7 +250,10 @@ export default class MessageManager {
         requestEFSDevtools(this.session.sessionId)
           .then(createNewParser(false))
       )
-      //.catch() // not able to download the devtools file
+      .then(() => {
+        this.state.update(this.lists.getFullListsState())
+      })
+      .catch(e => logger.error("Can not download the devtools file", e))
       .finally(() => this.state.update({ devtoolsLoading: false }))
     }
   }
@@ -439,15 +436,16 @@ export default class MessageManager {
         )
         break;
       case MType.Fetch:
+      case MType.NetworkRequest:
         // @ts-ignore burn immutable
-        this.lists.lists.fetch.append(Resource({
+        this.lists.lists.fetch.insert(Resource({
           method: msg.method,
           url: msg.url,
-          payload: msg.request,
+          request: msg.request,
           response: msg.response,
           status: msg.status,
           duration: msg.duration,
-          type: TYPES.XHR,
+          type: msg.type === "xhr" ? RES_TYPES.XHR : RES_TYPES.FETCH,
           time: Math.max(msg.timestamp - this.sessionStart, 0), // !!! doesn't look good. TODO: find solution to show negative timings
           index,
         }) as Timed)

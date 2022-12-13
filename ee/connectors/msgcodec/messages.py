@@ -213,6 +213,20 @@ class MouseMove(Message):
         self.y = y
 
 
+class NetworkRequest(Message):
+    __id__ = 21
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+
+
 class ConsoleLog(Message):
     __id__ = 22
 

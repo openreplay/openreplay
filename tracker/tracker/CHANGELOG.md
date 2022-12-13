@@ -2,6 +2,8 @@
 
 - Added "tel" to supported input types
 - Added `{ withCurrentTime: true }` to `tracker.getSessionURL` method which will return sessionURL with current session's timestamp
+- Added Network module that captures fetch/xhr by default (with no plugin required)
+- Use `timeOrigin()` instead of `performance.timing.navigationStart` in ResourceTiming messages
 
 ## 4.1.8
 

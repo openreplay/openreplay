@@ -348,6 +348,36 @@ func DecodeMouseMove(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &NetworkRequest{}
+	if msg.Type, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Method, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeConsoleLog(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &ConsoleLog{}
@@ -1710,6 +1740,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSetInputChecked(reader)
 	case 20:
 		return DecodeMouseMove(reader)
+	case 21:
+		return DecodeNetworkRequest(reader)
 	case 22:
 		return DecodeConsoleLog(reader)
 	case 23:
