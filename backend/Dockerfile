@@ -71,7 +71,8 @@ ENV TZ=UTC \
     BEACON_SIZE_LIMIT=1000000 \
     USE_FAILOVER=false \
     GROUP_STORAGE_FAILOVER=failover \
-    TOPIC_STORAGE_FAILOVER=storage-failover
+    TOPIC_STORAGE_FAILOVER=storage-failover \
+    PROFILER_ENABLED=false
 
 
 
