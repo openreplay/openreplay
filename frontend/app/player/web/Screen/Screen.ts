@@ -57,7 +57,7 @@ export default class Screen {
   private readonly screen: HTMLDivElement;
   private parentElement: HTMLElement | null = null;
 
-  constructor() {
+  constructor(isMobile: boolean) {
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
     this.iframe = iframe;
@@ -73,7 +73,7 @@ export default class Screen {
     screen.appendChild(overlay);
     this.screen = screen;
 
-    this.cursor = new Cursor(this.overlay) // TODO: move outside
+    this.cursor = new Cursor(this.overlay, isMobile) // TODO: move outside
   }
 
   attach(parentElement: HTMLElement) {

@@ -5,9 +5,10 @@ import styles from './cursor.module.css';
 export default class Cursor {
   private readonly cursor: HTMLDivElement;
   private tagElement: HTMLDivElement;
-  constructor(overlay: HTMLDivElement) {
+  constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
     this.cursor.className = styles.cursor;
+    if (isMobile) this.cursor.style.backgroundImage = 'unset'
     overlay.appendChild(this.cursor);
   }
 
