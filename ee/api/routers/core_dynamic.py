@@ -435,3 +435,4 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
     if "errors" in data:
         return data
     return {'data': data}
+
