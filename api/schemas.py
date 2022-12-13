@@ -803,7 +803,7 @@ class MetricType(str, Enum):
     errors = "errors"
     performance = "performance"
     resources = "resources"
-    web_vital = "webVital"
+    web_vital = "webVitals"
     pathAnalysis = "pathAnalysis"
     retention = "retention"
     stickiness = "stickiness"
@@ -886,7 +886,7 @@ class MetricOfTimeseries(str, Enum):
 class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
-    series: Optional[List[CustomMetricCreateSeriesSchema]] = Field(default=None)
+    series: List[CustomMetricCreateSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -907,20 +907,22 @@ class CardConfigSchema(BaseModel):
 
 class CreateCardSchema(CardChartSchema):
     name: Optional[str] = Field(...)
-    series: List[CustomMetricCreateSeriesSchema] = Field(default=[])
     is_public: bool = Field(default=True)
-    view_type: Union[MetricTimeseriesViewType, MetricTableViewType, MetricOtherViewType] \
-        = Field(MetricTimeseriesViewType.line_chart)
-    metric_type: Union[MetricType] = Field(default=MetricType.timeseries)
+    view_type: Union[MetricTimeseriesViewType, \
+        MetricTableViewType, MetricOtherViewType] = Field(MetricTimeseriesViewType.line_chart)
+    metric_type: MetricType = Field(default=MetricType.timeseries)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
         MetricOfPerformance, MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
     metric_value: List[IssueType] = Field([])
     metric_format: Optional[MetricFormatType] = Field(None)
     default_config: CardConfigSchema = Field(..., alias="config")
+    is_template: bool = Field(default=False)
 
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
     def transform(cls, values):
+        values["isTemplate"] = values["metricType"] in [MetricType.errors, MetricType.performance,
+                                                        MetricType.resources, MetricType.web_vital]
         if values.get("metricType") == MetricType.timeseries \
                 or values.get("metricType") == MetricType.table \
                 and values.get("metricOf") != MetricOfTable.issues:
@@ -1027,55 +1029,6 @@ class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
         alias_generator = attribute_to_camel_case
 
 
-# these values should match the keys in metrics table
-class TemplatePredefinedKeys(str, Enum):
-    count_sessions = "count_sessions"
-    avg_request_load_time = "avg_request_load_time"
-    avg_page_load_time = "avg_page_load_time"
-    avg_image_load_time = "avg_image_load_time"
-    avg_dom_content_load_start = "avg_dom_content_load_start"
-    avg_first_contentful_pixel = "avg_first_contentful_pixel"
-    avg_visited_pages = "avg_visited_pages"
-    avg_session_duration = "avg_session_duration"
-    avg_pages_dom_buildtime = "avg_pages_dom_buildtime"
-    avg_pages_response_time = "avg_pages_response_time"
-    avg_response_time = "avg_response_time"
-    avg_first_paint = "avg_first_paint"
-    avg_dom_content_loaded = "avg_dom_content_loaded"
-    avg_till_first_bit = "avg_till_first_byte"
-    avg_time_to_interactive = "avg_time_to_interactive"
-    count_requests = "count_requests"
-    avg_time_to_render = "avg_time_to_render"
-    avg_used_js_heap_size = "avg_used_js_heap_size"
-    avg_cpu = "avg_cpu"
-    avg_fps = "avg_fps"
-    impacted_sessions_by_js_errors = "impacted_sessions_by_js_errors"
-    domains_errors_4xx = "domains_errors_4xx"
-    domains_errors_5xx = "domains_errors_5xx"
-    errors_per_domains = "errors_per_domains"
-    calls_errors = "calls_errors"
-    errors_by_type = "errors_per_type"
-    errors_by_origin = "resources_by_party"
-    speed_index_by_location = "speed_location"
-    slowest_domains = "slowest_domains"
-    sessions_per_browser = "sessions_per_browser"
-    time_to_render = "time_to_render"
-    impacted_sessions_by_slow_pages = "impacted_sessions_by_slow_pages"
-    memory_consumption = "memory_consumption"
-    cpu_load = "cpu"
-    frame_rate = "fps"
-    crashes = "crashes"
-    resources_vs_visually_complete = "resources_vs_visually_complete"
-    pages_dom_buildtime = "pages_dom_buildtime"
-    pages_response_time = "pages_response_time"
-    pages_response_time_distribution = "pages_response_time_distribution"
-    missing_resources = "missing_resources"
-    slowest_resources = "slowest_resources"
-    resources_fetch_time = "resources_loading_time"
-    resource_type_vs_response_end = "resource_type_vs_response_end"
-    resources_count_by_type = "resources_count_by_type"
-
-
 class TemplatePredefinedUnits(str, Enum):
     millisecond = "ms"
     second = "s"
@@ -1084,21 +1037,6 @@ class TemplatePredefinedUnits(str, Enum):
     frame = "f/s"
     percentage = "%"
     count = "count"
-
-
-class CustomMetricAndTemplate(BaseModel):
-    is_template: bool = Field(...)
-    project_id: Optional[int] = Field(...)
-    predefined_key: Optional[TemplatePredefinedKeys] = Field(...)
-
-    @root_validator(pre=True)
-    def transform(cls, values):
-        values["isTemplate"] = values["metricType"] in [MetricType.errors, MetricType.performance,
-                                                        MetricType.resources, MetricType.web_vital]
-        return values
-
-    class Config:
-        alias_generator = attribute_to_camel_case
 
 
 class LiveFilterType(str, Enum):

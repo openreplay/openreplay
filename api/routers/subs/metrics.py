@@ -215,8 +215,8 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
 def get_card_chart(projectId: int, metric_id: int, data: schemas.CardChartSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = dashboards.make_chart_metrics(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                         data=data)
+    data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                               data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
