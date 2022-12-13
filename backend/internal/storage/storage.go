@@ -12,6 +12,7 @@ import (
 	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -105,22 +106,29 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 	wg.Add(2)
 	go func() {
 		if prepErr := s.prepareSession(filePath, DOM, newTask); prepErr != nil {
-			err = fmt.Errorf("prepare session err: %s", prepErr)
+			err = fmt.Errorf("prepareSession err: %s", prepErr)
 		}
 		wg.Done()
 	}()
 	go func() {
-		if prepErr := s.prepareSession(filePath, DOM, newTask); prepErr != nil {
-			err = fmt.Errorf("prepare session err: %s", prepErr)
+		if prepErr := s.prepareSession(filePath, DEV, newTask); prepErr != nil {
+			err = fmt.Errorf("prepareSession err: %s", prepErr)
 		}
 		wg.Done()
 	}()
 	wg.Wait()
+	if err != nil {
+		if strings.Contains(err.Error(), "big file") {
+			log.Printf("%s, sess: %d", err, msg.SessionID())
+			return nil
+		}
+		return err
+	}
 	// Send new task to worker
 	s.tasks <- newTask
 	// Unload worker
 	<-s.ready
-	return err
+	return nil
 }
 
 func (s *Storage) openSession(filePath string) ([]byte, error) {

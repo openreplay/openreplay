@@ -45,7 +45,7 @@ func main() {
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
 				if err := srv.Upload(sesEnd); err != nil {
-					log.Printf("can't find session: %d", msg.SessionID())
+					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 					sessionFinder.Find(msg.SessionID(), sesEnd.Timestamp)
 				}
 				// Log timestamp of last processed session
