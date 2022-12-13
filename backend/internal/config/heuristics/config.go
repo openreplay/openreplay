@@ -13,6 +13,7 @@ type Config struct {
 	TopicRawWeb     string `env:"TOPIC_RAW_WEB,required"`
 	TopicRawIOS     string `env:"TOPIC_RAW_IOS,required"`
 	ProducerTimeout int    `env:"PRODUCER_TIMEOUT,default=2000"`
+	UseProfiler     bool   `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New() *Config {

@@ -10,6 +10,7 @@ type Config struct {
 	TopicAnalytics string `env:"TOPIC_ANALYTICS,required"`
 	PostgresURI    string `env:"POSTGRES_STRING,required"`
 	TokenSecret    string `env:"TOKEN_SECRET,required"`
+	UseProfiler    bool   `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New() *Config {

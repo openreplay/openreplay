@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"strings"
@@ -21,9 +22,13 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	metrics := monitoring.New("ender")
+	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+
 	cfg := ender.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
