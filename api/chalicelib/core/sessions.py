@@ -353,18 +353,18 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             else:
                 sessions = cur.fetchone()["count"]
         elif metric_type == schemas.MetricType.table:
-            if isinstance(metric_of, schemas.TableMetricOfType):
+            if isinstance(metric_of, schemas.MetricOfTable):
                 main_col = "user_id"
                 extra_col = ""
                 extra_where = ""
                 pre_query = ""
-                if metric_of == schemas.TableMetricOfType.user_country:
+                if metric_of == schemas.MetricOfTable.user_country:
                     main_col = "user_country"
-                elif metric_of == schemas.TableMetricOfType.user_device:
+                elif metric_of == schemas.MetricOfTable.user_device:
                     main_col = "user_device"
-                elif metric_of == schemas.TableMetricOfType.user_browser:
+                elif metric_of == schemas.MetricOfTable.user_browser:
                     main_col = "user_browser"
-                elif metric_of == schemas.TableMetricOfType.issues:
+                elif metric_of == schemas.MetricOfTable.issues:
                     main_col = "issue"
                     extra_col = f", UNNEST(s.issue_types) AS {main_col}"
                     if len(metric_value) > 0:
@@ -374,7 +374,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             extra_where.append(f"{main_col} = %({arg_name})s")
                             full_args[arg_name] = metric_value[i]
                         extra_where = f"WHERE ({' OR '.join(extra_where)})"
-                elif metric_of == schemas.TableMetricOfType.visited_url:
+                elif metric_of == schemas.MetricOfTable.visited_url:
                     main_col = "path"
                     extra_col = ", path"
                 main_query = cur.mogrify(f"""{pre_query}

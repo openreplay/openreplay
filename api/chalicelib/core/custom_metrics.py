@@ -94,6 +94,11 @@ def __get_sessions_list(project_id, user_id, data):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
+def __is_predefined(data):
+    return data.metric_type in (schemas.MetricType.errors, schemas.MetricType.performance,
+                                schemas.MetricType.resources, schemas.MetricType.web_vital)
+
+
 def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
     if __is_funnel_chart(data):
         return __get_funnel_chart(project_id=project_id, data=data)
@@ -101,7 +106,9 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
         return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_sessions_list(data):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
-
+    elif __is_predefined(data):
+        pass
+    print(">>>>>>>nin")
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
@@ -113,8 +120,8 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
     return results
 
 
-def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
-schemas.CustomMetricSessionsPayloadSchema]) \
+def __merge_metric_with_data(metric, data: Union[schemas.CardChartSchema,
+schemas.CardSessionsSchema]) \
         -> Union[schemas.CreateCardSchema, None]:
     if data.series is not None and len(data.series) > 0:
         metric["series"] = data.series
@@ -128,7 +135,7 @@ schemas.CustomMetricSessionsPayloadSchema]) \
     return metric
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema, metric=None):
+def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema, metric=None):
     if metric is None:
         metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
@@ -136,23 +143,9 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
 
     return merged_live(project_id=project_id, data=metric, user_id=user_id)
-    # if __is_funnel_chart(metric):
-    #     return __get_funnel_chart(project_id=project_id, data=metric)
-    # elif __is_errors_list(metric):
-    #     return __get_errors_list(project_id=project_id, user_id=user_id, data=metric)
-    #
-    # series_charts = __try_live(project_id=project_id, data=metric)
-    # if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
-    #     return series_charts
-    # results = [{}] * len(series_charts[0])
-    # for i in range(len(results)):
-    #     for j, series_chart in enumerate(series_charts):
-    #         results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-    #                       metric.series[j].name: series_chart[i]["count"]}
-    # return results
 
 
-def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -171,7 +164,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     return results
 
 
-def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -187,7 +180,7 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
                 **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
 
-def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -203,7 +196,7 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSe
                 **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
 
-def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if data.series is None:
         return results
@@ -328,8 +321,6 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
 
 
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
-    print('>>>>')
-    print(data)
     constraints = ["metrics.project_id = %(project_id)s",
                    "metrics.deleted_at ISNULL"]
     params = {"project_id": project_id, "user_id": user_id,
@@ -387,6 +378,17 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                 r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
     return rows
+
+
+def get_all(project_id, user_id):
+    default_search = schemas.SearchCardsSchema()
+    result = rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    while len(rows) == default_search.limit:
+        default_search.page += 1
+        rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+        result += rows
+
+    return result
 
 
 def delete(project_id, metric_id, user_id):
@@ -516,7 +518,7 @@ def change_state(project_id, metric_id, user_id, status):
 
 
 def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
-                                 data: schemas.CustomMetricSessionsPayloadSchema
+                                 data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)

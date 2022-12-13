@@ -264,7 +264,7 @@ def get_predefined_metric(key: schemas.TemplatePredefinedKeys, project_id: int, 
     return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
 
 
-def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CardChartSchema):
     raw_metric = custom_metrics.get_with_template(metric_id=metric_id, project_id=project_id, user_id=user_id,
                                                   include_dashboard=False)
     if raw_metric is None:
@@ -279,13 +279,13 @@ def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetri
                                          metric=raw_metric)
 
 
-def make_chart_widget(dashboard_id, project_id, user_id, widget_id, data: schemas.CustomMetricChartPayloadSchema):
-    raw_metric = get_widget(widget_id=widget_id, project_id=project_id, user_id=user_id, dashboard_id=dashboard_id)
-    if raw_metric is None:
-        return None
-    metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate(**raw_metric)
-    if metric.is_template:
-        return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
-    else:
-        return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=raw_metric["metricId"],
-                                         data=data, metric=raw_metric)
+# def make_chart_widget(dashboard_id, project_id, user_id, widget_id, data: schemas.CardChartSchema):
+#     raw_metric = get_widget(widget_id=widget_id, project_id=project_id, user_id=user_id, dashboard_id=dashboard_id)
+#     if raw_metric is None:
+#         return None
+#     metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate(**raw_metric)
+#     if metric.is_template:
+#         return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
+#     else:
+#         return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=raw_metric["metricId"],
+#                                          data=data, metric=raw_metric)

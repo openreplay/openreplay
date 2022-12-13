@@ -81,15 +81,15 @@ def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int
                                     widget_id=widgetId)
 
 
-@app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}/chart', tags=["dashboard"])
-def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
-                     data: schemas.CustomMetricChartPayloadSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = dashboards.make_chart_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                        widget_id=widgetId, data=data)
-    if data is None:
-        return {"errors": ["widget not found"]}
-    return {"data": data}
+# @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}/chart', tags=["dashboard"])
+# def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
+#                      data: schemas.CardChartSchema = Body(...),
+#                      context: schemas.CurrentContext = Depends(OR_context)):
+#     data = dashboards.make_chart_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
+#                                         widget_id=widgetId, data=data)
+#     if data is None:
+#         return {"errors": ["widget not found"]}
+#     return {"data": data}
 
 
 @app.post('/{projectId}/cards/try', tags=["cards"])
@@ -105,7 +105,7 @@ def try_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
 @app.post('/{projectId}/cards/try/sessions', tags=["cards"])
 @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
-def try_card_sessions(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
     return {"data": data}
@@ -114,7 +114,7 @@ def try_card_sessions(projectId: int, data: schemas.CustomMetricSessionsPayloadS
 @app.post('/{projectId}/card/try/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
-def try_card_funnel_issues(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+def try_card_funnel_issues(projectId: int, data: schemas.CardSessionsSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.series) == 0:
         return {"data": []}
@@ -128,8 +128,7 @@ def try_card_funnel_issues(projectId: int, data: schemas.CustomMetricSessionsPay
 @app.get('/{projectId}/metrics', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
 def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.search_all(project_id=projectId, user_id=context.user_id,
-                                              data=schemas.SearchCardsSchema())}
+    return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/cards', tags=["cards"])
@@ -166,7 +165,7 @@ def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = D
 @app.post('/{projectId}/metrics/{metric_id}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
 def get_card_sessions(projectId: int, metric_id: int,
-                      data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                      data: schemas.CardSessionsSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
@@ -178,7 +177,7 @@ def get_card_sessions(projectId: int, metric_id: int,
 @app.post('/{projectId}/metrics/{metric_id}/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues', tags=["customMetrics"])
 def get_card_funnel_issues(projectId: int, metric_id: int,
-                           data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                           data: schemas.CardSessionsSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                             data=data)
@@ -190,7 +189,7 @@ def get_card_funnel_issues(projectId: int, metric_id: int,
 @app.post('/{projectId}/metrics/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues/{issueId}/sessions', tags=["customMetrics"])
 def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: str,
-                                     data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                                     data: schemas.CardSessionsSchema = Body(...),
                                      context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_funnel_sessions_by_issue(project_id=projectId, user_id=context.user_id,
                                                        metric_id=metric_id, issue_id=issueId, data=data)
@@ -202,7 +201,7 @@ def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: st
 @app.post('/{projectId}/metrics/{metric_id}/errors', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/errors', tags=["customMetrics"])
 def get_custom_metric_errors_list(projectId: int, metric_id: int,
-                                  data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                                  data: schemas.CardSessionsSchema = Body(...),
                                   context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_errors_list(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                           data=data)
@@ -214,7 +213,7 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
 @app.post('/{projectId}/metrics/{metric_id}/chart', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
-def get_card_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
+def get_card_chart(projectId: int, metric_id: int, data: schemas.CardChartSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = dashboards.make_chart_metrics(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                          data=data)

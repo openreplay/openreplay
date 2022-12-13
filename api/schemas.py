@@ -883,7 +883,7 @@ class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
 
 
-class CustomMetricSessionsPayloadSchema(FlatSessionsSearch, _PaginatedSchema):
+class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
     series: Optional[List[CustomMetricCreateSeriesSchema]] = Field(default=None)
@@ -892,31 +892,31 @@ class CustomMetricSessionsPayloadSchema(FlatSessionsSearch, _PaginatedSchema):
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema, _PaginatedSchema):
+class CardChartSchema(CardSessionsSchema):
     density: int = Field(7)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricsConfigSchema(BaseModel):
+class CardConfigSchema(BaseModel):
     col: Optional[int] = Field(...)
     row: Optional[int] = Field(default=2)
     position: Optional[int] = Field(default=0)
 
 
-class CreateCardSchema(CustomMetricChartPayloadSchema):
+class CreateCardSchema(CardChartSchema):
     name: Optional[str] = Field(...)
     series: List[CustomMetricCreateSeriesSchema] = Field(default=[])
     is_public: bool = Field(default=True)
     view_type: Union[MetricTimeseriesViewType, MetricTableViewType, MetricOtherViewType] \
         = Field(MetricTimeseriesViewType.line_chart)
     metric_type: Union[MetricType] = Field(default=MetricType.timeseries)
-    metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, MetricOfPerformance,
-    MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
+    metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
     metric_value: List[IssueType] = Field([])
     metric_format: Optional[MetricFormatType] = Field(None)
-    default_config: CustomMetricsConfigSchema = Field(..., alias="config")
+    default_config: CardConfigSchema = Field(..., alias="config")
 
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
@@ -934,19 +934,22 @@ class CreateCardSchema(CustomMetricChartPayloadSchema):
 
     @root_validator
     def validator(cls, values):
-        if values.get("metric_type") == MetricType.table:
-            assert isinstance(values.get("view_type"), MetricTableViewType), \
-                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
-            assert isinstance(values.get("metric_of"), MetricOfTable), \
-                f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
-            if values.get("metric_of") != MetricOfTable.issues:
-                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
-                    f"metricValue is only available for metricOf:{MetricOfTable.issues}"
-        elif values.get("metric_type") == MetricType.timeseries:
+        if values.get("metric_type") == MetricType.timeseries:
             assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
                 f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
             assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
                 f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.timeseries}"
+        elif values.get("metric_type") == MetricType.table:
+            assert isinstance(values.get("view_type"), MetricTableViewType), \
+                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
+            assert isinstance(values.get("metric_of"), MetricOfTable), \
+                f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
+            if values.get("metric_of") in (MetricOfTable.sessions, MetricOfTable.errors):
+                assert values.get("view_type") == MetricTableViewType.table, \
+                    f"viewType must be '{MetricTableViewType.table}' for metricOf:{values['metric_of']}"
+            if values.get("metric_of") != MetricOfTable.issues:
+                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
+                    f"metricValue is only available for metricOf:{MetricOfTable.issues}"
         elif values.get("metric_type") == MetricType.funnel:
             # assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
             #     f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
@@ -1090,7 +1093,8 @@ class CustomMetricAndTemplate(BaseModel):
 
     @root_validator(pre=True)
     def transform(cls, values):
-        values["isTemplate"] = values["metricType"] not in [MetricType.timeseries, MetricType.table, MetricType.funnel]
+        values["isTemplate"] = values["metricType"] in [MetricType.errors, MetricType.performance,
+                                                        MetricType.resources, MetricType.web_vital]
         return values
 
     class Config:
