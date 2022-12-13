@@ -26,7 +26,10 @@ class EventQueue():
             params[f'project_id_{i}'] = project_id
             params[f'user_id_{i}'] = user_id
             for _key, _val in element.dict().items():
-                params[f'{_key}_{i}'] = _val
+                if _key == 'data':
+                    params[f'{_key}_{i}'] = json.dumps(_val)
+                else:
+                    params[f'{_key}_{i}'] = _val
             events.append(f"(%(project_id_{i})s, %(user_id_{i})s, %(timestamp_{i})s, %(action_{i})s, %(source_{i})s, %(category_{i})s, %(data_{i})s::jsonb)")
             i += 1
         if i == 0:
