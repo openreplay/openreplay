@@ -8,16 +8,11 @@ export default class SettingsStore {
     sessionSettings: SessionSettings = new SessionSettings()
     captureRateFetched: boolean = false;
     limits: any = null;
-    isUniTs = false;
 
     constructor() {
         makeAutoObservable(this, {
             sessionSettings: observable,
         })
-    }
-
-    toggleTimeFormat = () => {
-        this.isUniTs = !this.isUniTs
     }
 
     saveCaptureRate(data: any) {

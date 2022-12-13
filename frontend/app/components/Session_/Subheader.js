@@ -13,7 +13,6 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import AutoplayToggle from 'Shared/AutoplayToggle';
-import { Toggler } from 'UI';
 
 function SubHeader(props) {
   const { player, store } = React.useContext(PlayerContext)
@@ -28,7 +27,6 @@ function SubHeader(props) {
     eventList: eventsList,
     endTime,
   } = store.get()
-  const { settingsStore } = useStore()
 
   const mappedResourceList = resourceList
     .filter((r) => r.isRed() || r.isYellow())
@@ -56,19 +54,9 @@ function SubHeader(props) {
     showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
   };
 
-  const timeStr = settingsStore.isUniTs ? 'Local Time' : 'Relative Timestamp'
-  const onFormatCh = (e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    settingsStore.toggleTimeFormat()
-  }
   return (
     <div className="w-full px-4 py-2 flex items-center border-b">
 
-    {!isAssist && (<div onClick={onFormatCh} className="cursor-pointer color-gray-medium text-sm p-1 flex items-center gap-2 mr-2 hover:bg-gray-light-shade rounded-md">
-      <Toggler plain name="sessionsLive" checked={settingsStore.isUniTs} />
-      <span>{timeStr}</span>
-    </div>)}
       {location && (
         <div
           className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-gray-light-shade rounded-md"

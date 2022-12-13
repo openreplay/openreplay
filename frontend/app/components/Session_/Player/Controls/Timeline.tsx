@@ -100,10 +100,11 @@ function Timeline(props) {
       };
     } else {
       const time = getTime(e);
+      const tz = settingsStore.sessionSettings.timezone.value
+      const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
       timeLineTooltip = {
-        time: !settingsStore.isUniTs
-          ? Duration.fromMillis(time).toFormat(`mm:ss`)
-          : DateTime.fromMillis(props.startedAt + time).toFormat(`hh:mm:ss a`),
+        time: Duration.fromMillis(time).toFormat(`mm:ss`),
+        timeStr,
         offset: e.nativeEvent.offsetX,
         isVisible: true,
       };

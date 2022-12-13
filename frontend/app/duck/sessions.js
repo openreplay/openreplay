@@ -70,7 +70,7 @@ const initialState = Map({
     timelinePointer: null,
     sessionPath: {},
     lastPlayedSessionId: null,
-    timeLineTooltip: { time: 0, offset: 0, isVisible: false },
+    timeLineTooltip: { time: 0, offset: 0, isVisible: false, timeStr: '' },
     createNoteTooltip: { time: 0, isVisible: false, isEdit: false, note: null },
 });
 

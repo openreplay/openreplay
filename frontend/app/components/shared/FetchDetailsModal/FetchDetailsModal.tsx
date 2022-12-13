@@ -21,6 +21,7 @@ function FetchDetailsModal(props: Props) {
   const isXHR = resource.type === TYPES.XHR
   const {
     sessionStore: { devTools },
+    settingsStore: { sessionSettings: { timezone }},
   } = useStore();
 
   useEffect(() => {
@@ -49,7 +50,7 @@ function FetchDetailsModal(props: Props) {
   return (
     <div className="bg-white p-5 h-screen overflow-y-auto" style={{ width: '500px' }}>
       <h5 className="mb-2 text-2xl">Network Request</h5>
-      <FetchBasicDetails resource={resource} timestamp={props.time ? DateTime.fromMillis(props.time).toFormat(`hh:mm:ss a`) : undefined} />
+      <FetchBasicDetails resource={resource} timestamp={props.time ? DateTime.fromMillis(props.time).setZone(timezone.value).toFormat(`hh:mm:ss a`) : undefined} />
 
       {isXHR && !fetchPresented && <FetchPluginMessage />}
       {isXHR && <FetchTabs resource={resource} />}
