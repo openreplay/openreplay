@@ -69,10 +69,12 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			sessionFinder.Stop()
+			srv.Wait()
 			consumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			go counter.Print()
+			srv.Wait()
 			if err := consumer.Commit(); err != nil {
 				log.Printf("can't commit messages: %s", err)
 			}

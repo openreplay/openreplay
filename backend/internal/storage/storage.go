@@ -3,18 +3,16 @@ package storage
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"os"
-	"strconv"
-	"sync"
-
 	gzip "github.com/klauspost/pgzip"
 	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
-
+	"log"
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/storage"
+	"os"
+	"strconv"
+	"sync"
 )
 
 type FileType string
@@ -44,6 +42,7 @@ type Storage struct {
 	archivingTime       syncfloat64.Histogram
 
 	tasks chan *Task
+	ready chan struct{}
 }
 
 func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Storage, error) {
@@ -84,9 +83,14 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 		readingTime:         readingTime,
 		archivingTime:       archivingTime,
 		tasks:               make(chan *Task, 1),
+		ready:               make(chan struct{}),
 	}
 	go newStorage.worker()
 	return newStorage, nil
+}
+
+func (s *Storage) Wait() {
+	<-s.ready
 }
 
 func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
@@ -112,7 +116,10 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 		wg.Done()
 	}()
 	wg.Wait()
+	// Send new task to worker
 	s.tasks <- newTask
+	// Unload worker
+	<-s.ready
 	return err
 }
 
@@ -216,7 +223,12 @@ func (s *Storage) uploadSession(task *Task) {
 
 func (s *Storage) worker() {
 	for {
-		task := <-s.tasks
-		s.uploadSession(task)
+		select {
+		case task := <-s.tasks:
+			s.uploadSession(task)
+		default:
+			// Signal that worker finished all tasks
+			s.ready <- struct{}{}
+		}
 	}
 }
