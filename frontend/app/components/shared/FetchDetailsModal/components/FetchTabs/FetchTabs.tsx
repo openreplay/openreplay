@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import logger from 'App/logger'
 import Headers from '../Headers';
 import { JSONTree, Tabs, NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -13,6 +14,36 @@ function isValidJSON(o: any): o is Object {
   return typeof o === "object" && o != null
 }
 
+function parseRequestResponse(
+  r: string,
+  setHeaders: (hs: Record<string, string>) => void,
+  setJSONBody: (body: Object) => void,
+  setStringBody: (body: string) => void,
+) {
+  try {
+    let json = JSON.parse(r)
+    const hs = json.headers
+    const bd = json.body as string
+    if (typeof hs === "object") {
+      setHeaders(hs);
+    }
+    if (typeof bd !== 'string') {
+      throw new Error(`body is not a string`)
+    }
+    try {
+      let jBody = JSON.parse(bd)
+      if (typeof jBody === "object" && jBody != null) {
+        setJSONBody(jBody)
+      } else {
+        setStringBody(bd)
+      }
+    } catch {
+      setStringBody(bd)
+    }
+  } catch(e) { logger.error("Error decoding payload json:", e, r)}
+}
+
+
 interface Props {
   resource: any;
 }
@@ -20,41 +51,27 @@ function FetchTabs(props: Props) {
   const { resource } = props;
   const [activeTab, setActiveTab] = useState(HEADERS);
   const onTabClick = (tab: string) => setActiveTab(tab);
-  const [jsonRequest, setJsonRequest] = useState<Object | string | null>(null);
-  const [jsonResponse, setJsonResponse] = useState<Object | string | null>(null);
+  const [jsonRequest, setJsonRequest] = useState<Object | null>(null);
+  const [jsonResponse, setJsonResponse] = useState<Object | null>(null);
+  const [stringRequest, setStringRequest] = useState<string>('');
+  const [stringResponse, setStringResponse ] = useState<string>('');
   const [requestHeaders, setRequestHeaders] = useState<Record<string,string> | null>(null);
   const [responseHeaders, setResponseHeaders] = useState<Record<string,string> | null>(null);
 
   useEffect(() => {
     const { request, response } = resource;
-
-    try {
-      let jRequest = JSON.parse(request)
-      if (typeof jRequest.headers === "object") {
-        setRequestHeaders(jRequest.headers);
-      }
-      try {
-        let jBody = JSON.parse(jRequest.body)
-        jBody = isValidJSON(jBody) ? jBody : jRequest.body
-        setJsonRequest(jBody)
-      } catch {
-        setJsonRequest(jRequest.body)
-      }
-    } catch {}
-
-    try {
-      let jResponse = JSON.parse(response)
-      if (typeof jResponse.headers === "object") {
-        setResponseHeaders(jResponse.headers);
-      }
-      try {
-        let jBody = JSON.parse(jResponse.body)
-        jBody = isValidJSON(jBody) ? jBody : jResponse.body
-        setJsonResponse(jBody)
-      } catch {
-        setJsonResponse(jResponse.body)
-      }
-    } catch {}
+    parseRequestResponse(
+      request,
+      setRequestHeaders,
+      setJsonRequest,
+      setStringRequest,
+    )
+    parseRequestResponse(
+      response,
+      setResponseHeaders,
+      setJsonResponse,
+      setStringResponse,
+    )
   }, [resource]);
 
   const renderActiveTab = () => {
@@ -70,16 +87,15 @@ function FetchTabs(props: Props) {
               </div>
             }
             size="small"
-            show={!jsonRequest}
+            show={!jsonRequest && !stringRequest}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                { !isValidJSON(jsonRequest) ? (
-                  <div className="ml-3 break-words my-3"> {jsonRequest} </div>
-                ) : (
-                  <JSONTree src={jsonRequest} collapsed={false} enableClipboard />
-                )}
+                { jsonRequest 
+                  ? <JSONTree src={jsonRequest} collapsed={false} enableClipboard />
+                  : <div className="ml-3 break-words my-3"> {stringRequest} </div>
+                }
               </div>
               <div className="divider" />
             </div>
@@ -95,16 +111,15 @@ function FetchTabs(props: Props) {
               </div>
             }
             size="small"
-            show={!jsonResponse}
+            show={!jsonResponse && !stringResponse}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                { !isValidJSON(jsonResponse) ? (
-                  <div className="ml-3 break-words my-3"> {jsonResponse} </div>
-                ) : (
-                  <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
-                )}
+                { jsonResponse 
+                  ? <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
+                  : <div className="ml-3 break-words my-3"> {stringResponse} </div>  
+                }
               </div>
               <div className="divider" />
             </div>
