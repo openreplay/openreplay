@@ -191,27 +191,41 @@ export default class Screen {
     this.iframe.style.display = flag ? '' : 'none';
   }
 
-  private s: number = 1;
+  private scaleRatio: number = 1;
   getScale() {
-    return this.s;
+    return this.scaleRatio;
   }
 
   scale({ height, width }: Dimensions) {
     if (!this.parentElement) return;
     const { offsetWidth, offsetHeight } = this.parentElement;
 
-    this.s = Math.min(offsetWidth / width, offsetHeight / height);
-    if (this.s > 1) {
-      this.s = 1;
+    this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height);
+    if (this.scaleRatio > 1) {
+      this.scaleRatio = 1;
     } else {
-      this.s = Math.round(this.s * 1e3) / 1e3;
+      this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
     }
-    this.screen.style.transform =  `scale(${ this.s }) translate(-50%, -50%)`;
+    this.screen.style.transform =  `scale(${ this.scaleRatio }) translate(-50%, -50%)`;
     this.screen.style.width = width + 'px';
     this.screen.style.height =  height + 'px';
     this.iframe.style.width = width + 'px';
     this.iframe.style.height = height + 'px';
 
     this.boundingRect = this.overlay.getBoundingClientRect();
+  }
+
+  scaleFullPage() {
+    const { height, width } = this.document.body.getBoundingClientRect();
+    const offsetHeight = this.parentElement.getBoundingClientRect().height
+    if (!this.parentElement) return;
+
+    console.log(height, width)
+    this.scaleRatio = 1
+    this.screen.style.transform =  `scale(1) translate(-50%, -50%)`;
+    this.screen.style.overflow = 'scroll';
+    this.screen.style.height = `${offsetHeight  - 50}px`;
+    this.iframe.style.width = width + 'px';
+    this.iframe.style.height = height + 'px';
   }
 }
