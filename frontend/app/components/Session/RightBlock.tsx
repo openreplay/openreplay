@@ -19,7 +19,7 @@ function RightBlock(props: any) {
     switch(tab) {
       case props.tabs.EVENTS:
         return <EventsBlockConnected />
-      case props.tabs.HEATMAPS:
+      case props.tabs.CLICKMAP:
         return <PageInsightsPanel setActiveTab={props.setActiveTab} />
     }
   }
