@@ -44,7 +44,7 @@ func main() {
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
-				if err := srv.UploadSessionFiles(sesEnd); err != nil {
+				if err := srv.Upload(sesEnd); err != nil {
 					log.Printf("can't find session: %d", msg.SessionID())
 					sessionFinder.Find(msg.SessionID(), sesEnd.Timestamp)
 				}
@@ -54,7 +54,7 @@ func main() {
 			[]int{messages.MsgSessionEnd},
 			true,
 		),
-		true,
+		false,
 		cfg.MessageSizeLimit,
 	)
 
@@ -69,10 +69,15 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			sessionFinder.Stop()
+			srv.Wait()
 			consumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			go counter.Print()
+			srv.Wait()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
