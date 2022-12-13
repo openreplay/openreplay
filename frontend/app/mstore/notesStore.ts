@@ -44,13 +44,17 @@ export default class NotesStore {
     this.loading = true
     try {
       const notes = await notesService.getNotesBySessionId(sessionId)
-      this.sessionNotes = notes
+      this.setNotes(notes)
       return notes;
     } catch (e) {
       console.error(e)
     } finally {
       this.loading = false
     }
+  }
+
+  setNotes(notes: Note[]) {
+    this.sessionNotes = notes
   }
 
   async addNote(sessionId: string, note: WriteNote) {

@@ -11,7 +11,7 @@ import TooltipContainer from './components/TooltipContainer';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-
+import { DateTime, Duration } from 'luxon';
 
 function getTimelinePosition(value: number, scale: number) {
   const pos = value * scale;
@@ -22,7 +22,7 @@ function getTimelinePosition(value: number, scale: number) {
 function Timeline(props) {
   const { player, store } = useContext(PlayerContext)
   const [wasPlaying, setWasPlaying] = useState(false)
-  const { notesStore } = useStore();
+  const { notesStore, settingsStore } = useStore();
   const {
     playing,
     time,
@@ -89,20 +89,21 @@ function Timeline(props) {
       return props.tooltipVisible && hideTimeTooltip();
     }
 
-
     let timeLineTooltip;
 
     if (live) {
       const [time, duration] = getLiveTime(e);
       timeLineTooltip = {
-        time: duration - time,
+        time: Duration.fromMillis(duration - time).toFormat(`-mm:ss`),
         offset: e.nativeEvent.offsetX,
         isVisible: true,
       };
     } else {
       const time = getTime(e);
       timeLineTooltip = {
-        time: time,
+        time: !settingsStore.isUniTs
+          ? Duration.fromMillis(time).toFormat(`mm:ss`)
+          : DateTime.fromMillis(props.startedAt + time).toFormat(`hh:mm:ss a`),
         offset: e.nativeEvent.offsetX,
         isVisible: true,
       };

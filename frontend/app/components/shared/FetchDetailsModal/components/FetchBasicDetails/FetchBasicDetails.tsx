@@ -5,8 +5,9 @@ import cn from 'classnames';
 
 interface Props {
   resource: any;
+  timestamp?: string;
 }
-function FetchBasicDetails({ resource }: Props) {
+function FetchBasicDetails({ resource, timestamp }: Props) {
   const _duration = parseInt(resource.duration);
   const text = useMemo(() => {
     if (resource.url.length > 50) {
@@ -69,11 +70,21 @@ function FetchBasicDetails({ resource }: Props) {
 
       {!!_duration && (
         <div className="flex items-center py-1">
-          <div className="font-medium">Time</div>
+          <div className="font-medium">Duration</div>
           <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
             {_duration} ms
           </div>
         </div>
+      )}
+
+      {timestamp && (
+        <div className="flex items-center py-1">
+        <div className="font-medium">Time</div>
+        <div className="rounded bg-active-blue px-2 py-1 ml-2 whitespace-nowrap overflow-hidden text-clip">
+          {timestamp}
+        </div>
+      </div>
+
       )}
     </div>
   );

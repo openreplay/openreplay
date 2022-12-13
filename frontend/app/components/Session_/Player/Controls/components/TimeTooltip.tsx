@@ -8,26 +8,25 @@ interface Props {
   time: number;
   offset: number;
   isVisible: boolean;
-  liveTimeTravel: boolean;
 }
 
 function TimeTooltip({
   time,
   offset,
   isVisible,
-  liveTimeTravel,
 }: Props) {
-  const duration = Duration.fromMillis(time).toFormat(`${liveTimeTravel ? '-' : ''}mm:ss`);
   return (
     <div
       className={stl.timeTooltip}
       style={{
         top: -30,
-        left: offset - 20,
+        left: offset,
         display: isVisible ? 'block' : 'none',
+        transform: 'translateX(-50%)',
+        whiteSpace: 'nowrap',
       }}
     >
-      {!time ? 'Loading' : duration}
+      {!time ? 'Loading' : time}
     </div>
   );
 }
