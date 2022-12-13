@@ -76,6 +76,10 @@ export default class WebPlayer extends Player {
     // this.updateMarketTargets() ??
   }
 
+  scaleFullPage =() => {
+    return this.screen.scaleFullPage()
+  }
+
   // Inspector & marker
   mark(e: Element) {
     this.inspectorController.marker?.mark(e)

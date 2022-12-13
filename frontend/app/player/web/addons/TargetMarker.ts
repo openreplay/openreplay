@@ -36,6 +36,7 @@ export interface State {
 
 
 export default class TargetMarker {
+  private clickMapOverlay: HTMLDivElement
 	static INITIAL_STATE: State = {
 		markedTargets: null,
 		activeTargetIndex: 0
@@ -50,8 +51,8 @@ export default class TargetMarker {
     const { markedTargets } = this.store.get()
     if (markedTargets) {
       this.store.update({
-        markedTargets: markedTargets.map((mt: any) => ({ 
-          ...mt, 
+        markedTargets: markedTargets.map((mt: any) => ({
+          ...mt,
           boundingRect: this.calculateRelativeBoundingRect(mt.el),
         })),
       });
@@ -95,22 +96,48 @@ export default class TargetMarker {
           })
         }, 0)
       }
-     
+
     }
     this.store.update({ activeTargetIndex: index });
   }
 
   private actualScroll: Point | null = null
   markTargets(selections: { selector: string, count: number }[] | null) {
+
     if (selections) {
       const totalCount = selections.reduce((a, b) => {
         return a + b.count
       }, 0);
       const markedTargets: MarkedTarget[] = [];
       let index = 0;
+
+      const overlay = document.createElement("div")
+      overlay.style.position = "absolute"
+      overlay.style.top = "0px"
+      overlay.style.left = "0px"
+      overlay.style.width = '100%'
+      overlay.style.height = "100%"
+      overlay.style.background = 'rgba(0,0,0, 0.1)'
+      this.screen.document.body.appendChild(overlay)
+      this.clickMapOverlay = overlay
       selections.forEach((s) => {
         const el = this.screen.getElementBySelector(s.selector);
         if (!el) return;
+        const test = document.createElement("div")
+        const top = el.getBoundingClientRect().top
+        const left = el.getBoundingClientRect().left
+        test.innerHTML = '' + s.count + 'Clicks'
+        Object.assign(test.style, {
+          position: 'absolute',
+          top: top + 'px',
+          left: left + 'px',
+          padding: '10px',
+          borderRadius: '12px',
+          background: 'white',
+          boxShadow: '0px 2px 10px 2px rgba(0,0,0,0.5)',
+        })
+
+        overlay.appendChild(test)
         markedTargets.push({
           ...s,
           el,
@@ -120,7 +147,7 @@ export default class TargetMarker {
           count: s.count,
         })
       });
-      this.actualScroll = this.screen.getCurrentScroll() 
+      this.actualScroll = this.screen.getCurrentScroll()
       this.store.update({ markedTargets });
     } else {
       if (this.actualScroll) {
@@ -128,7 +155,10 @@ export default class TargetMarker {
         this.actualScroll = null
       }
       this.store.update({ markedTargets: null });
+      this.clickMapOverlay.remove()
     }
   }
+
+
 
 }

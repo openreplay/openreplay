@@ -19,11 +19,13 @@ import { observer } from 'mobx-react-lite';
 interface Props {
   nextId: string,
   closedLive?: boolean,
+  isClickmap?: boolean,
 }
 
 function Overlay({
   nextId,
   closedLive,
+  isClickmap,
 }: Props) {
   const { player, store } = React.useContext(PlayerContext)
 
@@ -49,7 +51,7 @@ function Overlay({
   const concetionStatus = peerConnectionStatus
 
   const showAutoplayTimer = !live && completed && autoplay && nextId
-  const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
+  const showPlayIconLayer = !isClickmap && !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
   const showLiveStatusText = live && livePlay && liveStatusText && !loading;
 
   const showRequestWindow =

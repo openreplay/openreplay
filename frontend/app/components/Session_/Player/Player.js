@@ -44,7 +44,7 @@ function Player(props) {
     activeTab,
     fullView,
     isMultiview,
-    isClickmap,
+    isClickmap = true,
   } = props;
   const playerContext = React.useContext(PlayerContext);
   const screenWrapper = React.useRef();
@@ -56,6 +56,8 @@ function Player(props) {
       const parentElement = findDOMNode(screenWrapper.current); //TODO: good architecture
       playerContext.player.attach(parentElement);
       playerContext.player.play();
+
+      setInterval(() => playerContext.player.scaleFullPage(), 4000)
     }
   }, []);
 
@@ -73,7 +75,7 @@ function Player(props) {
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
       <div className="relative flex-1 overflow-hidden">
-        <Overlay nextId={nextId} closedLive={closedLive} />
+        <Overlay nextId={nextId} closedLive={closedLive} isClickmap={isClickmap} />
         <div className={stl.screenWrapper} ref={screenWrapper} />
       </div>
       {!fullscreen && !!bottomBlock && (
