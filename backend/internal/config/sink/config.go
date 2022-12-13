@@ -21,6 +21,7 @@ type Config struct {
 	ProducerCloseTimeout int    `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	CacheThreshold       int64  `env:"CACHE_THRESHOLD,default=5"`
 	CacheExpiration      int64  `env:"CACHE_EXPIRATION,default=120"`
+	UseProfiler          bool   `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New() *Config {
