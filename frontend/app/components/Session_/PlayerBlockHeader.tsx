@@ -74,7 +74,7 @@ function PlayerBlockHeader(props: any) {
       return { label: key, value };
     });
 
-  const TABS = [props.tabs.EVENTS, props.tabs.HEATMAPS].map((tab) => ({
+  const TABS = [props.tabs.EVENTS, props.tabs.CLICKMAP].map((tab) => ({
     text: tab,
     key: tab,
   }));

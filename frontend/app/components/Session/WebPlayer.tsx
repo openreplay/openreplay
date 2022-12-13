@@ -15,7 +15,7 @@ import { IPlayerContext, PlayerContext, defaultContextValue } from './playerCont
 
 const TABS = {
   EVENTS: 'User Steps',
-  HEATMAPS: 'Click Map',
+  CLICKMAP: 'Click Map',
 };
 
 function WebPlayer(props: any) {
@@ -23,10 +23,11 @@ function WebPlayer(props: any) {
     session,
     toggleFullscreen,
     closeBottomBlock,
-     live,
-     fullscreen,
-     jwt,
-     fetchList
+    live,
+    fullscreen,
+    fetchList,
+    isClickmap,
+    customSession,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
@@ -35,22 +36,28 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
-    fetchList('issues');
-    const [WebPlayerInst, PlayerStore] = createWebPlayer(session, (state) =>
+    if (!isClickmap) {
+      fetchList('issues');
+    }
+    const usedSession = isClickmap ? customSession : session;
+
+    const [WebPlayerInst, PlayerStore] = createWebPlayer(usedSession, (state) =>
       makeAutoObservable(state)
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
     props.fetchMembers();
 
-    notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-      const note = props.query.get('note');
-      if (note) {
-        WebPlayerInst.pause();
-        setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
-        setShowNote(true);
-      }
-    });
+    if (!isClickmap) {
+      notesStore.fetchSessionNotes(session.sessionId).then((r) => {
+        const note = props.query.get('note');
+        if (note) {
+          WebPlayerInst.pause();
+          setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
+          setShowNote(true);
+        }
+      });
+    }
 
     const jumptTime = props.query.get('jumpto');
     if (jumptTime) {
@@ -78,36 +85,39 @@ function WebPlayer(props: any) {
 
   return (
     <PlayerContext.Provider value={contextValue}>
-        <>
+      <>
+        {!isClickmap ? (
           <PlayerBlockHeader
-          // @ts-ignore TODO?
+            // @ts-ignore TODO?
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             tabs={TABS}
             fullscreen={fullscreen}
           />
-          {/* @ts-ignore  */}
-          <PlayerContent
-            activeTab={activeTab}
-            fullscreen={fullscreen}
-            live={live}
-            setActiveTab={setActiveTab}
-            session={session}
-          />
-          <Modal open={showNoteModal} onClose={onNoteClose}>
-            {showNoteModal ? (
-              <ReadNote
-                userEmail={
-                  props.members.find((m: Record<string, any>) => m.id === noteItem?.userId)
-                    ?.email || ''
-                }
-                note={noteItem}
-                onClose={onNoteClose}
-                notFound={!noteItem}
-              />
-            ) : null}
-          </Modal>
-        </>
+        ) : null}
+        {/* @ts-ignore  */}
+        <PlayerContent
+          activeTab={activeTab}
+          fullscreen={fullscreen}
+          live={live}
+          setActiveTab={setActiveTab}
+          session={session}
+          isClickmap={isClickmap}
+        />
+        <Modal open={showNoteModal} onClose={onNoteClose}>
+          {showNoteModal ? (
+            <ReadNote
+              userEmail={
+                props.members.find((m: Record<string, any>) => m.id === noteItem?.userId)?.email
+                || ''
+              }
+              note={noteItem}
+              onClose={onNoteClose}
+              notFound={!noteItem}
+            />
+          ) : null}
+        </Modal>
+      </>
     </PlayerContext.Provider>
   );
 }
@@ -115,7 +125,6 @@ function WebPlayer(props: any) {
 export default connect(
   (state: any) => ({
     session: state.getIn(['sessions', 'current']),
-    jwt: state.getIn(['user', 'jwt']),
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
     showEvents: state.get('showEvents'),
     members: state.getIn(['members', 'list']),

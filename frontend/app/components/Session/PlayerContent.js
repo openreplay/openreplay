@@ -9,10 +9,10 @@ import { observer } from 'mobx-react-lite';
 
 const TABS = {
   EVENTS: 'User Steps',
-  HEATMAPS: 'Click Map',
+  CLICKMAP: 'Click Map',
 };
 
-function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab }) {
+function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, isClickmap }) {
   const { store } = React.useContext(PlayerContext)
 
   const {
@@ -51,7 +51,7 @@ function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab }) {
             style={activeTab && !fullscreen ? { maxWidth: 'calc(100% - 270px)' } : undefined}
           >
             <div className={cn(styles.session, 'relative')} data-fullscreen={fullscreen}>
-              <PlayerBlock activeTab={activeTab} />
+              <PlayerBlock activeTab={activeTab} isClickmap={isClickmap} />
             </div>
           </div>
           {activeTab !== '' && (
