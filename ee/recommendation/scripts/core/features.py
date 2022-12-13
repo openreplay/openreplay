@@ -21,7 +21,9 @@ def get_features_postgres(**kwargs):
         funnels = query_funnels(conn, **kwargs)
         metrics = query_metrics(conn, **kwargs)
         filters = query_with_filters(conn, **kwargs)
-    return funnels, metrics, filters
+    #clean_filters(funnels)
+    #clean_filters(filters)
+    return clean_filters_split(funnels, isfunnel=True), metrics, clean_filters_split(filters)
 
 
 
@@ -109,6 +111,46 @@ def get_by_user(data, user_id):
     index_ = [k for k in range(len(head_)) if head_[k] == user_id]
     return [data[k] for k in index_]
 
+
+def clean_filters(data):
+    for j in range(len(data)):
+        _filter = data[j]['filter']
+        _tmp = list()
+        for i in range(len(_filter['filters'])):
+            if 'value' in _filter['filters'][i].keys():
+                _tmp.append({'type': _filter['filters'][i]['type'],
+                                                   'value': _filter['filters'][i]['value'],
+                                                   'operator': _filter['filters'][i]['operator']})
+        data[j]['filter'] = _tmp
+
+
+def clean_filters_split(data, isfunnel=False):
+    _data = list()
+    for j in range(len(data)):
+        _filter = data[j]['filter']
+        _tmp = list()
+        for i in range(len(_filter['filters'])):
+            if 'value' in _filter['filters'][i].keys():
+                _type = _filter['filters'][i]['type']
+                _value = _filter['filters'][i]['value']
+                if isinstance(_value, str):
+                    _value = [_value]
+                _operator = _filter['filters'][i]['operator']
+                if isfunnel:
+                    _data.append({'project_id': data[j]['project_id'], 'user_id': data[j]['user_id'],
+                                  'type': _type,
+                                  'value': _value,
+                                  'operator': _operator
+                                  })
+                else:
+                    _data.append({'metric_id': data[j]['metric_id'], 'project_id': data[j]['project_id'],
+                                  'name': data[j]['name'], 'metric_type': data[j]['metric_type'],
+                                  'metric_of': data[j]['metric_of'],
+                                  'type': _type,
+                                  'value': _value,
+                                  'operator': _operator
+                                  })
+    return _data
 
 def test():
     print('One test')
