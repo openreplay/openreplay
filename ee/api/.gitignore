@@ -183,6 +183,7 @@ Pipfile
 #exp /chalicelib/core/alerts_processor.py
 /chalicelib/core/announcements.py
 /chalicelib/core/autocomplete.py
+/chalicelib/core/click_maps.py
 /chalicelib/core/collaboration_base.py
 /chalicelib/core/collaboration_msteams.py
 /chalicelib/core/collaboration_slack.py

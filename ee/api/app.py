@@ -15,7 +15,7 @@ from chalicelib.utils import pg_client
 from routers import core, core_dynamic, ee, saml
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
-from routers.subs import dashboard, insights, metrics, v1_api_ee
+from routers.subs import insights, metrics, v1_api_ee
 from routers.subs import v1_api
 
 app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
@@ -62,7 +62,6 @@ app.include_router(ee.app_apikey)
 app.include_router(saml.public_app)
 app.include_router(saml.app)
 app.include_router(saml.app_apikey)
-app.include_router(dashboard.app)
 app.include_router(metrics.app)
 app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
@@ -105,4 +104,3 @@ async def stop_server():
     await shutdown()
     import os, signal
     os.kill(1, signal.SIGTERM)
-

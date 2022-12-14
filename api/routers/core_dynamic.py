@@ -410,7 +410,8 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
         return data
     return {'data': data}
 
-@app.post('/{projectId}/click_maps/search', tags=["savedSearch"])
+
+@app.post('/{projectId}/click_maps/search', tags=["click maps"])
 def click_map_search(projectId: int, data: schemas.FlatClickMapSessionsSearch = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
