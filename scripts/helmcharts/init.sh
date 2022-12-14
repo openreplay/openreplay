@@ -113,7 +113,7 @@ function sed_i_wrapper(){
 
 function create_passwords() {
   # Error out only if the domain name is empty in vars.yaml
-  existing_domain_name=`grep domainName vars.yaml | awk '{print $2}' | xargs`
+  existing_domain_name=`awk '/domainName/ {print $2}' vars.yaml | xargs`
   [[ -z $existing_domain_name ]] && {
     [[ -z $DOMAIN_NAME ]] && {
       fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
