@@ -913,7 +913,7 @@ class CreateCardSchema(CardChartSchema):
     metric_type: MetricType = Field(default=MetricType.timeseries)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
         MetricOfPerformance, MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
-    metric_value: List[IssueType] = Field([])
+    metric_value: List[IssueType] = Field(default=[])
     metric_format: Optional[MetricFormatType] = Field(None)
     default_config: CardConfigSchema = Field(..., alias="config")
     is_template: bool = Field(default=False)
@@ -1168,3 +1168,25 @@ class SearchCardsSchema(_PaginatedSchema):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class _ClickMapSearchEventRaw(_SessionSearchEventRaw):
+    type: Literal[EventType.location] = Field(...)
+
+
+class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
+    events: Optional[List[_ClickMapSearchEventRaw]] = Field([])
+    filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field([])
+
+    @root_validator()
+    def flat_to_original(cls, values):
+        n_filters = []
+        n_events = []
+        for v in values.get("filters", []):
+            if isinstance(v, _ClickMapSearchEventRaw):
+                n_events.append(v)
+            else:
+                n_filters.append(v)
+        values["events"] = n_events
+        values["filters"] = n_filters
+        return values

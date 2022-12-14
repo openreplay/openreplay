@@ -6,7 +6,7 @@ from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
-    sessions_favorite, assist, sessions_notes
+    sessions_favorite, assist, sessions_notes, click_maps
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -409,3 +409,8 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
     if "errors" in data:
         return data
     return {'data': data}
+
+@app.post('/{projectId}/click_maps/search', tags=["savedSearch"])
+def click_map_search(projectId: int, data: schemas.FlatClickMapSessionsSearch = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}
