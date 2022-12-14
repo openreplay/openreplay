@@ -32,7 +32,7 @@ function install_k8s() {
 # Checking whether the app exists or we do have to upgade.
 function exists() {
   install_status=Upgrading
-  [[ UPGRADE_TOOLS -eq 1 ]] && {
+  [[ $UPGRADE_TOOLS -eq 1 ]] && {
     install_status=Upgrading
     return 100
   }
@@ -112,8 +112,12 @@ function sed_i_wrapper(){
 }
 
 function create_passwords() {
-  [[ -z $DOMAIN_NAME ]] && {
-  fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
+  # Error out only if the domain name is empty in vars.yaml
+  existing_domain_name=`grep domainName vars.yaml | awk '{print $2}' | xargs`
+  [[ -z $existing_domain_name ]] && {
+    [[ -z $DOMAIN_NAME ]] && {
+      fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
+    }
   }
 
   info "Creating dynamic passwords"
