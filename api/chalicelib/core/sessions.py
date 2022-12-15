@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
@@ -114,7 +114,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             return None
 
 
-def __get_sql_operator(op: schemas.SearchEventOperator):
+def __get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
     return {
         schemas.SearchEventOperator._is: "=",
         schemas.SearchEventOperator._is_any: "IN",
@@ -684,9 +684,13 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             if event_type == events.event_type.CLICK.ui_type:
                 event_from = event_from % f"{events.event_type.CLICK.table} AS main "
                 if not is_any:
-                    event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.CLICK.column} {op} %({e_k})s", event.value,
-                                             value_key=e_k))
+                    if event.operator == schemas.ClickEventExtraOperator._on_selector:
+                        event_where.append(
+                            _multiple_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
+                    else:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.CLICK.column} {op} %({e_k})s", event.value,
+                                                 value_key=e_k))
 
             elif event_type == events.event_type.INPUT.ui_type:
                 event_from = event_from % f"{events.event_type.INPUT.table} AS main "

@@ -446,6 +446,11 @@ class SearchEventOperator(str, Enum):
     _ends_with = "endsWith"
 
 
+class ClickEventExtraOperator(str, Enum):
+    _on_selector = "onSelector"
+    _on_text = "onText"
+
+
 class PlatformType(str, Enum):
     mobile = "mobile"
     desktop = "desktop"
@@ -531,7 +536,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     is_event: bool = Field(default=True, const=True)
     value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
-    operator: SearchEventOperator = Field(...)
+    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
     sourceOperator: Optional[MathOperator] = Field(None)
     filters: Optional[List[RequestGraphqlFilterSchema]] = Field(None)
@@ -570,6 +575,9 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
                 f"filters should be defined for {EventType.graphql.value}"
 
+        if isinstance(values.get("operator"), ClickEventExtraOperator):
+            assert values.get("type") == EventType.click, \
+                f"operator:{values['operator']} is only available for event-type: {EventType.click}"
         return values
 
 
