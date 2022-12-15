@@ -1,9 +1,11 @@
 import json
 from typing import Union
 
+from decouple import config
+
 import schemas
 from chalicelib.core import sessions, funnels, errors, issues, metrics
-from chalicelib.utils import helper, pg_client
+from chalicelib.utils import helper, pg_client, s3
 from chalicelib.utils.TimeUTC import TimeUTC
 
 PIE_CHART_GROUP = 5
@@ -319,6 +321,15 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
+def __presign_thumbnail(card):
+    if card["thumbnail_url"]:
+        card["thumbnail_url"] = s3.client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': config('THUMBNAILS_BUCKET'), 'Key': card["thumbnail_url"]},
+            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        )
+
+
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
     constraints = ["metrics.project_id = %(project_id)s",
                    "metrics.deleted_at ISNULL"]
@@ -368,11 +379,13 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         rows = cur.fetchall()
         if include_series:
             for r in rows:
+                __presign_thumbnail(r)
                 # r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 for s in r["series"]:
                     s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         else:
             for r in rows:
+                __presign_thumbnail(r)
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
@@ -616,3 +629,28 @@ PREDEFINED = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_se
 def get_predefined_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
         schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
     return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
+
+
+def add_thumbnail(metric_id, user_id, project_id):
+    key = generate_file_key(project_id=project_id, key=f"{metric_id}.png")
+    params = {"metric_id": metric_id, "user_id": user_id, "project_id": project_id, "key": key}
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+            UPDATE metrics
+            SET thumbnail_url = %(key)s
+            WHERE metric_id = %(metric_id)s
+            AND project_id = %(project_id)s 
+            AND (user_id = %(user_id)s OR is_public) 
+            RETURNING metric_id;""", params)
+        cur.execute(query)
+        row = cur.fetchone()
+        if row is None:
+            return {"errors": ["Card not found"]}
+    return {"data": s3.get_presigned_url_for_upload(bucket=config('THUMBNAILS_BUCKET'), expires_in=180, key=key,
+                                                    # content-length-range is in bytes
+                                                    conditions=["content-length-range", 1, 1 * 1024 * 1024],
+                                                    content_type="image/png")}
+
+
+def generate_file_key(project_id, key):
+    return f"{project_id}/cards/{key}"

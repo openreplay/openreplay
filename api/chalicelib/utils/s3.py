@@ -54,14 +54,19 @@ def get_presigned_url_for_sharing(bucket, expires_in, key, check_exists=False):
     )
 
 
-def get_presigned_url_for_upload(bucket, expires_in, key):
-    return client.generate_presigned_url(
-        'put_object',
-        Params={
-            'Bucket': bucket,
-            'Key': key
-        },
-        ExpiresIn=expires_in
+def get_presigned_url_for_upload(bucket, expires_in, key, conditions=None, public=False, content_type=None):
+    acl = 'private'
+    if public:
+        acl = 'public-read'
+    fields = {"acl": acl}
+    if content_type:
+        fields["Content-Type"] = content_type
+    return client.generate_presigned_post(
+        Bucket=bucket,
+        Key=key,
+        ExpiresIn=expires_in,
+        Fields=fields,
+        Conditions=conditions,
     )
 
 

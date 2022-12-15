@@ -34,8 +34,9 @@ $$
                 ALTER COLUMN metric_type SET DEFAULT 'timeseries',
                 ALTER COLUMN view_type TYPE text,
                 ALTER COLUMN view_type SET DEFAULT 'lineChart',
-                ADD COLUMN IF NOT EXISTS o_metric_id INTEGER,
-                ADD COLUMN IF NOT EXISTS o_widget_id INTEGER;
+                ADD COLUMN IF NOT EXISTS thumbnail_url text,
+                ADD COLUMN IF NOT EXISTS o_metric_id   INTEGER,
+                ADD COLUMN IF NOT EXISTS o_widget_id   INTEGER;
 
             -- 2. insert predefined metrics related to dashboards as custom metrics
             INSERT INTO metrics(project_id, user_id, name, metric_type, view_type, metric_of, metric_value,

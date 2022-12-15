@@ -1,12 +1,12 @@
 import json
 from typing import Union
 
-import schemas
-from chalicelib.core import funnels, issues
-from chalicelib.utils import helper, pg_client
-from chalicelib.utils.TimeUTC import TimeUTC
-
 from decouple import config
+
+import schemas
+from chalicelib.core import funnels, errors, issues, metrics
+from chalicelib.utils import helper, pg_client, s3
+from chalicelib.utils.TimeUTC import TimeUTC
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
     print(">>> Using experimental error search")
@@ -107,8 +107,14 @@ def __get_sessions_list(project_id, user_id, data):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
+def __is_predefined(data):
+    return data.is_template
+
+
 def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
-    if __is_funnel_chart(data):
+    if data.is_template:
+        return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.dict())
+    elif __is_funnel_chart(data):
         return __get_funnel_chart(project_id=project_id, data=data)
     elif __is_errors_list(data):
         return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
@@ -126,12 +132,12 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
     return results
 
 
-def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
-schemas.CustomMetricSessionsPayloadSchema]) \
+def __merge_metric_with_data(metric, data: Union[schemas.CardChartSchema,
+schemas.CardSessionsSchema]) \
         -> Union[schemas.CreateCardSchema, None]:
     if data.series is not None and len(data.series) > 0:
         metric["series"] = data.series
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema.parse_obj({**data.dict(), **metric})
+    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**{**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
             if len(data.filters) > 0:
@@ -141,7 +147,7 @@ schemas.CustomMetricSessionsPayloadSchema]) \
     return metric
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema, metric=None):
+def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema, metric=None):
     if metric is None:
         metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
@@ -149,23 +155,9 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
 
     return merged_live(project_id=project_id, data=metric, user_id=user_id)
-    # if __is_funnel_chart(metric):
-    #     return __get_funnel_chart(project_id=project_id, data=metric)
-    # elif __is_errors_list(metric):
-    #     return __get_errors_list(project_id=project_id, user_id=user_id, data=metric)
-    #
-    # series_charts = __try_live(project_id=project_id, data=metric)
-    # if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
-    #     return series_charts
-    # results = [{}] * len(series_charts[0])
-    # for i in range(len(results)):
-    #     for j, series_chart in enumerate(series_charts):
-    #         results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-    #                       metric.series[j].name: series_chart[i]["count"]}
-    # return results
 
 
-def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -184,7 +176,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     return results
 
 
-def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -200,7 +192,7 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
                 **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
 
-def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
@@ -216,7 +208,7 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSe
                 **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
 
-def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadSchema):
+def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     results = []
     if data.series is None:
         return results
@@ -257,9 +249,9 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
                         RETURNING metric_id;"""
 
         query = cur.mogrify(query, params)
-        print("-------")
-        print(query)
-        print("-------")
+        # print("-------")
+        # print(query)
+        # print("-------")
         cur.execute(query)
         r = cur.fetchone()
         if dashboard:
@@ -340,6 +332,15 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
+def __presign_thumbnail(card):
+    if card["thumbnail_url"]:
+        card["thumbnail_url"] = s3.client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': config('THUMBNAILS_BUCKET'), 'Key': card["thumbnail_url"]},
+            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+        )
+
+
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
     constraints = ["metrics.project_id = %(project_id)s",
                    "metrics.deleted_at ISNULL"]
@@ -389,15 +390,28 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         rows = cur.fetchall()
         if include_series:
             for r in rows:
+                __presign_thumbnail(r)
                 # r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 for s in r["series"]:
                     s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         else:
             for r in rows:
+                __presign_thumbnail(r)
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
     return rows
+
+
+def get_all(project_id, user_id):
+    default_search = schemas.SearchCardsSchema()
+    result = rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+    while len(rows) == default_search.limit:
+        default_search.page += 1
+        rows = search_all(project_id=project_id, user_id=user_id, data=default_search)
+        result += rows
+
+    return result
 
 
 def delete(project_id, metric_id, user_id):
@@ -527,7 +541,7 @@ def change_state(project_id, metric_id, user_id, status):
 
 
 def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
-                                 data: schemas.CustomMetricSessionsPayloadSchema
+                                 data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
@@ -562,3 +576,92 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                                      issue=issue, data=s.filter)
                 if issue is not None else {"total": 0, "sessions": []},
                 "issue": issue}
+
+
+def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema):
+    raw_metric = get_with_template(metric_id=metric_id, project_id=project_id, user_id=user_id,
+                                   include_dashboard=False)
+    if raw_metric is None:
+        return None
+    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
+    if metric.is_template:
+        return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
+    else:
+        return make_chart(project_id=project_id, user_id=user_id, metric_id=metric_id, data=data, metric=raw_metric)
+
+
+PREDEFINED = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
+              schemas.MetricOfWebVitals.avg_image_load_time: metrics.get_application_activity_avg_image_load_time,
+              schemas.MetricOfWebVitals.avg_page_load_time: metrics.get_application_activity_avg_page_load_time,
+              schemas.MetricOfWebVitals.avg_request_load_time: metrics.get_application_activity_avg_request_load_time,
+              schemas.MetricOfWebVitals.avg_dom_content_load_start: metrics.get_page_metrics_avg_dom_content_load_start,
+              schemas.MetricOfWebVitals.avg_first_contentful_pixel: metrics.get_page_metrics_avg_first_contentful_pixel,
+              schemas.MetricOfWebVitals.avg_visited_pages: metrics.get_user_activity_avg_visited_pages,
+              schemas.MetricOfWebVitals.avg_session_duration: metrics.get_user_activity_avg_session_duration,
+              schemas.MetricOfWebVitals.avg_pages_dom_buildtime: metrics.get_pages_dom_build_time,
+              schemas.MetricOfWebVitals.avg_pages_response_time: metrics.get_pages_response_time,
+              schemas.MetricOfWebVitals.avg_response_time: metrics.get_top_metrics_avg_response_time,
+              schemas.MetricOfWebVitals.avg_first_paint: metrics.get_top_metrics_avg_first_paint,
+              schemas.MetricOfWebVitals.avg_dom_content_loaded: metrics.get_top_metrics_avg_dom_content_loaded,
+              schemas.MetricOfWebVitals.avg_till_first_byte: metrics.get_top_metrics_avg_till_first_bit,
+              schemas.MetricOfWebVitals.avg_time_to_interactive: metrics.get_top_metrics_avg_time_to_interactive,
+              schemas.MetricOfWebVitals.count_requests: metrics.get_top_metrics_count_requests,
+              schemas.MetricOfWebVitals.avg_time_to_render: metrics.get_time_to_render,
+              schemas.MetricOfWebVitals.avg_used_js_heap_size: metrics.get_memory_consumption,
+              schemas.MetricOfWebVitals.avg_cpu: metrics.get_avg_cpu,
+              schemas.MetricOfWebVitals.avg_fps: metrics.get_avg_fps,
+              schemas.MetricOfErrors.impacted_sessions_by_js_errors: metrics.get_impacted_sessions_by_js_errors,
+              schemas.MetricOfErrors.domains_errors_4xx: metrics.get_domains_errors_4xx,
+              schemas.MetricOfErrors.domains_errors_5xx: metrics.get_domains_errors_5xx,
+              schemas.MetricOfErrors.errors_per_domains: metrics.get_errors_per_domains,
+              schemas.MetricOfErrors.calls_errors: metrics.get_calls_errors,
+              schemas.MetricOfErrors.errors_per_type: metrics.get_errors_per_type,
+              schemas.MetricOfErrors.resources_by_party: metrics.get_resources_by_party,
+              schemas.MetricOfPerformance.speed_location: metrics.get_speed_index_location,
+              schemas.MetricOfPerformance.slowest_domains: metrics.get_slowest_domains,
+              schemas.MetricOfPerformance.sessions_per_browser: metrics.get_sessions_per_browser,
+              schemas.MetricOfPerformance.time_to_render: metrics.get_time_to_render,
+              schemas.MetricOfPerformance.impacted_sessions_by_slow_pages: metrics.get_impacted_sessions_by_slow_pages,
+              schemas.MetricOfPerformance.memory_consumption: metrics.get_memory_consumption,
+              schemas.MetricOfPerformance.cpu: metrics.get_avg_cpu,
+              schemas.MetricOfPerformance.fps: metrics.get_avg_fps,
+              schemas.MetricOfPerformance.crashes: metrics.get_crashes,
+              schemas.MetricOfPerformance.resources_vs_visually_complete: metrics.get_resources_vs_visually_complete,
+              schemas.MetricOfPerformance.pages_dom_buildtime: metrics.get_pages_dom_build_time,
+              schemas.MetricOfPerformance.pages_response_time: metrics.get_pages_response_time,
+              schemas.MetricOfPerformance.pages_response_time_distribution: metrics.get_pages_response_time_distribution,
+              schemas.MetricOfResources.missing_resources: metrics.get_missing_resources_trend,
+              schemas.MetricOfResources.slowest_resources: metrics.get_slowest_resources,
+              schemas.MetricOfResources.resources_loading_time: metrics.get_resources_loading_time,
+              schemas.MetricOfResources.resource_type_vs_response_end: metrics.resource_type_vs_response_end,
+              schemas.MetricOfResources.resources_count_by_type: metrics.get_resources_count_by_type, }
+
+
+def get_predefined_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
+        schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
+    return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
+
+
+def add_thumbnail(metric_id, user_id, project_id):
+    key = generate_file_key(project_id=project_id, key=f"{metric_id}.png")
+    params = {"metric_id": metric_id, "user_id": user_id, "project_id": project_id, "key": key}
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+            UPDATE metrics
+            SET thumbnail_url = %(key)s
+            WHERE metric_id = %(metric_id)s
+            AND project_id = %(project_id)s 
+            AND (user_id = %(user_id)s OR is_public) 
+            RETURNING metric_id;""", params)
+        cur.execute(query)
+        row = cur.fetchone()
+        if row is None:
+            return {"errors": ["Card not found"]}
+    return {"data": s3.get_presigned_url_for_upload(bucket=config('THUMBNAILS_BUCKET'), expires_in=180, key=key,
+                                                    # content-length-range is in bytes
+                                                    conditions=["content-length-range", 1, 1 * 1024 * 1024],
+                                                    content_type="image/png")}
+
+
+def generate_file_key(project_id, key):
+    return f"{project_id}/cards/{key}"

@@ -891,6 +891,10 @@ class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
 
 
+class MetricOfClickMap(str, Enum):
+    click_map_url = "clickMapUrl"
+
+
 class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
@@ -920,7 +924,8 @@ class CreateCardSchema(CardChartSchema):
         MetricTableViewType, MetricOtherViewType] = Field(MetricTimeseriesViewType.line_chart)
     metric_type: MetricType = Field(default=MetricType.timeseries)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
-        MetricOfPerformance, MetricOfResources, MetricOfWebVitals] = Field(MetricOfTable.user_id)
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+        MetricOfClickMap] = Field(MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
     metric_format: Optional[MetricFormatType] = Field(None)
     default_config: CardConfigSchema = Field(..., alias="config")
@@ -978,6 +983,9 @@ class CreateCardSchema(CardChartSchema):
             elif values.get("metric_type") == MetricType.web_vital:
                 assert isinstance(values.get("metric_of"), MetricOfWebVitals), \
                     f"metricOf must be of type {MetricOfWebVitals} for metricType:{MetricType.web_vital}"
+            elif values.get("metric_type") == MetricType.click_map:
+                assert isinstance(values.get("metric_of"), MetricOfClickMap), \
+                    f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
 
             assert isinstance(values.get("view_type"), MetricOtherViewType), \
                 f"viewType must be 'chart' for metricOf:{values.get('metric_of')}"
@@ -1198,3 +1206,4 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
         values["events"] = n_events
         values["filters"] = n_filters
         return values
+

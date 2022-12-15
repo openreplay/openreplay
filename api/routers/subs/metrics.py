@@ -161,6 +161,12 @@ def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = D
     return {"data": data}
 
 
+@app.get('/{projectId}/cards/{metric_id}/thumbnail', tags=["cards"])
+def sign_thumbnail_for_upload(projectId: int, metric_id: int,
+                              context: schemas.CurrentContext = Depends(OR_context)):
+    return custom_metrics.add_thumbnail(metric_id=metric_id, user_id=context.user_id, project_id=projectId)
+
+
 @app.post('/{projectId}/cards/{metric_id}/sessions', tags=["cards"])
 @app.post('/{projectId}/metrics/{metric_id}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
