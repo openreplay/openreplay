@@ -1,12 +1,13 @@
 import hashlib
+from datetime import datetime, timedelta
 from urllib.parse import urlparse
 
-from botocore.exceptions import ClientError
-from decouple import config
-from datetime import datetime, timedelta
 import boto3
 import botocore
 from botocore.client import Config
+from botocore.exceptions import ClientError
+from decouple import config
+from requests.models import PreparedRequest
 
 if not config("S3_HOST", default=False):
     client = boto3.client('s3')
@@ -54,6 +55,20 @@ def get_presigned_url_for_sharing(bucket, expires_in, key, check_exists=False):
     )
 
 
+def get_presigned_url_for_upload_deprecated(bucket, expires_in, key, **args):
+    return client.generate_presigned_url(
+        'put_object',
+        Params={
+            'Bucket': bucket,
+            'Key': key
+        },
+        ExpiresIn=expires_in
+    )
+
+
+
+
+
 def get_presigned_url_for_upload(bucket, expires_in, key, conditions=None, public=False, content_type=None):
     acl = 'private'
     if public:
@@ -61,13 +76,16 @@ def get_presigned_url_for_upload(bucket, expires_in, key, conditions=None, publi
     fields = {"acl": acl}
     if content_type:
         fields["Content-Type"] = content_type
-    return client.generate_presigned_post(
+    url_parts = client.generate_presigned_post(
         Bucket=bucket,
         Key=key,
         ExpiresIn=expires_in,
         Fields=fields,
         Conditions=conditions,
     )
+    req = PreparedRequest()
+    req.prepare_url(f"{url_parts['url']}/{url_parts['fields']['key']}", url_parts['fields'])
+    return req.url
 
 
 def get_file(source_bucket, source_key):

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import schemas
 from chalicelib.core import issues
 from chalicelib.core import metadata
@@ -53,44 +55,47 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
-def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
+def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
-            SELECT 
-                c.*,
-                'CLICK' AS type
-            FROM events.clicks AS c
-            WHERE 
-              c.session_id = %(session_id)s
-            ORDER BY c.timestamp;""",
-                                {"project_id": project_id, "session_id": session_id})
-                    )
-        rows = cur.fetchall()
-        if group_clickrage:
-            rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
-
-        cur.execute(cur.mogrify("""
-            SELECT 
-                i.*,
-                'INPUT' AS type
-            FROM events.inputs AS i
-            WHERE 
-              i.session_id = %(session_id)s
-            ORDER BY i.timestamp;""",
-                                {"project_id": project_id, "session_id": session_id})
-                    )
-        rows += cur.fetchall()
-        cur.execute(cur.mogrify("""\
-            SELECT 
-                l.*,
-                l.path AS value,
-                l.path AS url,
-                'LOCATION' AS type
-            FROM events.pages AS l
-            WHERE 
-              l.session_id = %(session_id)s
-            ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
-        rows += cur.fetchall()
+        rows = []
+        if event_type is None or event_type == schemas.EventType.click:
+            cur.execute(cur.mogrify("""\
+                SELECT 
+                    c.*,
+                    'CLICK' AS type
+                FROM events.clicks AS c
+                WHERE 
+                  c.session_id = %(session_id)s
+                ORDER BY c.timestamp;""",
+                                    {"project_id": project_id, "session_id": session_id})
+                        )
+            rows += cur.fetchall()
+            if group_clickrage:
+                rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
+        if event_type is None or event_type == schemas.EventType.input:
+            cur.execute(cur.mogrify("""
+                SELECT 
+                    i.*,
+                    'INPUT' AS type
+                FROM events.inputs AS i
+                WHERE 
+                  i.session_id = %(session_id)s
+                ORDER BY i.timestamp;""",
+                                    {"project_id": project_id, "session_id": session_id})
+                        )
+            rows += cur.fetchall()
+        if event_type is None or event_type == schemas.EventType.location:
+            cur.execute(cur.mogrify("""\
+                SELECT 
+                    l.*,
+                    l.path AS value,
+                    l.path AS url,
+                    'LOCATION' AS type
+                FROM events.pages AS l
+                WHERE 
+                  l.session_id = %(session_id)s
+                ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
+            rows += cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: (k["timestamp"], k["messageId"]))
     return rows
