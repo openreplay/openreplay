@@ -275,5 +275,5 @@ export enum FilterKey {
   RESOURCE_FETCH_TIME = 'resourceFetchTime',
   SLOWEST_RESOURCES = 'slowestResources',
 
-  CLICKMAP_URL = 'clickmapUrl'
+  CLICKMAP_URL = 'clickMapUrl'
 }
