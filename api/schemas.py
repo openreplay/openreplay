@@ -639,7 +639,12 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
 
     @root_validator(pre=True)
     def transform_order(cls, values):
-        if values.get("order") is not None:
+        if values.get("sort") is None:
+            values["sort"] = "startTs"
+
+        if values.get("order") is None:
+            values["order"] = SortOrderType.desc
+        else:
             values["order"] = values["order"].upper()
         return values
 
@@ -1206,4 +1211,3 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
         values["events"] = n_events
         values["filters"] = n_filters
         return values
-
