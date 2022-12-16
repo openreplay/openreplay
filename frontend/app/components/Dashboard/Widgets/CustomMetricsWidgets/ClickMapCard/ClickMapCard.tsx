@@ -2,11 +2,11 @@ import React from 'react'
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
 import WebPlayer from 'App/components/Session/WebPlayer'
-// inject mob file from chalice
 import { connect } from 'react-redux'
 import { setCustomSession } from 'App/duck/sessions'
 
-function ClickMapCard({ setCustomSession, visitedEvents }) {
+// TODO session type ???
+function ClickMapCard({ setCustomSession, visitedEvents }: any) {
   const { metricStore } = useStore()
   React.useEffect(() => {
     if (metricStore.instance.data.mobsUrl) {
@@ -14,10 +14,10 @@ function ClickMapCard({ setCustomSession, visitedEvents }) {
     }
   }, [metricStore.instance.data.mobsUrl])
 
-  if (!metricStore.instance.data.mobsUrl) return <div>looking for session</div>
+  if (!metricStore.instance.data.mobsUrl) return <div className="p-4">looking for session</div>
   console.log(visitedEvents, metricStore.instance.data.events)
   if (!visitedEvents || !visitedEvents.length) {
-    return <div>loading</div>
+    return <div className="p-4">loading</div>
   }
   return (
     <div>
