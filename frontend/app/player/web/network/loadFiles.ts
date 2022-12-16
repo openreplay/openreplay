@@ -39,30 +39,30 @@ export const loadFiles = (
 
 
 export async function requestEFSDom(sessionId: string) {
-  return await requestEFSMobFile(sessionId, "dom.mob")
+  return await requestEFSMobFile(sessionId)
 }
 
 export async function requestEFSDevtools(sessionId: string) {
-  return await requestEFSMobFile(sessionId, "devtools.mob")
+  return await requestEFSMobFile(sessionId + "devtools")
 }
 
-async function requestEFSMobFile(sessionId: string, filename: string) {
+async function requestEFSMobFile(filename: string) {
   const api = new APIClient()
-  const res = await api.fetch('/unprocessed/' + sessionId + '/' + filename)
+  const res = await api.fetch('/unprocessed/' + filename)
   if (res.status >= 400) {
     throw NO_UNPROCESSED_FILES
   }
   return await processAPIStreamResponse(res, false)
 }
 
-const processAPIStreamResponse = (response: Response, isMainFile: boolean) => {
+const processAPIStreamResponse = (response: Response, isFirstFile: boolean) => {
   return new Promise<ArrayBuffer>((res, rej) => {
-    if (response.status === 404 && !isMainFile) {
+    if (response.status === 404 && !isFirstFile) {
       return rej(NO_NTH_FILE)
     }
     if (response.status >= 400) {
       return rej(
-        isMainFile ? `no start file. status code ${ response.status }`
+        isFirstFile ? `no start file. status code ${ response.status }`
         : `Bad endfile status code ${response.status}`
       )
     }
