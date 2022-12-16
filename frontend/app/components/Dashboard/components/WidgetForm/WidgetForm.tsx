@@ -1,15 +1,20 @@
 import React from 'react';
-import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
+import { metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Button, Icon, SegmentSelection } from 'UI'
+import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { confirm, Tooltip } from 'UI';
+import { confirm, Tooltip, Input } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
+import { TIMESERIES, TABLE, CLICKMAP } from 'App/constants/card'
+import { pageUrlOperators } from 'App/constants/filterOptions'
+import FilterAutoComplete from 'Shared/Filters/FilterAutoComplete';
+import { clickmapFilter } from 'App/types/filter/newFilter';
+import { toJS } from 'mobx'
 
 interface Props {
     history: any;
@@ -27,7 +32,6 @@ function WidgetForm(props: Props) {
 
     const { history, match: { params: { siteId, dashboardId } } } = props;
     const { metricStore, dashboardStore } = useStore();
-    const dashboards = dashboardStore.dashboards;
     const isSaving = metricStore.isSaving;
     const metric: any = metricStore.instance
 
@@ -35,7 +39,6 @@ function WidgetForm(props: Props) {
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
     const isFunnel = metric.metricType === 'funnel';
-    const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
     const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length
     const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
@@ -60,12 +63,15 @@ function WidgetForm(props: Props) {
         }
 
         if (name === 'metricType') {
-            if (value === 'timeseries') {
+            if (value === TIMESERIES) {
                 obj['metricOf'] = timeseriesOptions[0].value;
                 obj['viewType'] = 'lineChart';
-            } else if (value === 'table') {
+            } else if (value === TABLE) {
                 obj['metricOf'] = tableOptions[0].value;
                 obj['viewType'] = 'table';
+            }
+            if (value === CLICKMAP) {
+                obj['viewType'] = 'chart'
             }
         }
 
@@ -99,13 +105,21 @@ function WidgetForm(props: Props) {
             metricStore.delete(metric).then(props.onDelete);
         }
     }
-
+    const updateClickMapURL = (_, item) => {
+        console.log('updating filter', item)
+        const newValues = {
+            value: item
+        }
+        metric.series[0].filter.updateFilter(0, newValues)
+        console.log(toJS(metric.series))
+    }
+    console.log(metric.series, metric.series[0].filter)
     return (
         <div className="p-6">
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <MetricTypeDropdown />
+                    <MetricTypeDropdown onSelect={writeOption} />
                     <MetricSubtypeDropdown onSelect={writeOption} />
 
                     {/* {metric.metricType === 'timeseries' && (
@@ -160,6 +174,28 @@ function WidgetForm(props: Props) {
                     </>
                     )}
                 </div>
+                {metric.metricType === CLICKMAP && (
+                    <div className='flex items-center'>
+                        <div className="mx-3">Where Visited URL</div>
+                        <Select name="clickMapUrl"
+                            options={pageUrlOperators.reverse()}
+                            defaultValue={pageUrlOperators.reverse()[0].value}
+                            onChange={ () => null }
+                        />
+                        {/* <Input placeholder="Enter URL or path to select"
+                        /> */}
+                        <FilterAutoComplete
+                            value={metric.series[0].filter.filters[0]?.value || ''} //  ?
+                            endpoint="/events/search"
+                            params={{ type: clickmapFilter.key }}
+                            headerText={''}
+                            placeholder={clickmapFilter.placeholder}
+                            onSelect={updateClickMapURL}
+                            icon={clickmapFilter.icon}
+                            hideOrText
+                        />
+                    </div>
+                    )}
             </div>
 
             <div className="form-group">

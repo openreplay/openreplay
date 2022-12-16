@@ -12,6 +12,9 @@ import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import { fetchList as fetchMembers } from 'Duck/member';
 import PlayerContent from './PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
+import { fetchInsights } from 'Duck/sessions';
+import Period, { LAST_30_DAYS } from 'Types/app/period';
+import { observer } from 'mobx-react-lite';
 
 const TABS = {
   EVENTS: 'User Steps',
@@ -26,8 +29,13 @@ function WebPlayer(props: any) {
     live,
     fullscreen,
     fetchList,
-    isClickmap,
     customSession,
+    isClickmap = true,
+    fetchInsights,
+    host,
+    visitedEvents,
+    insightsFilters,
+    insights,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
@@ -36,10 +44,16 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
-    if (!isClickmap) {
+    if (isClickmap) {
+      const urlOptions = visitedEvents.map(({ url, host }: any) => ({ label: url, value: url, host }))
+      const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
+      // @ts-ignore
+      const { startDate, endDate, rangeValue } = new Period({ rangeName: LAST_30_DAYS })
+      fetchInsights({ ...insightsFilters, url, startDate, endDate, rangeValue })
+    } else {
       fetchList('issues');
     }
-    const usedSession = isClickmap ? customSession : session;
+    const usedSession = isClickmap && customSession ? customSession : session;
 
     const [WebPlayerInst, PlayerStore] = createWebPlayer(usedSession, (state) =>
       makeAutoObservable(state)
@@ -66,6 +80,23 @@ function WebPlayer(props: any) {
 
     return () => WebPlayerInst.clean();
   }, [session.sessionId]);
+
+  const isPlayerReady = contextValue.store?.get().ready
+
+  React.useEffect(() => {
+    contextValue.player && contextValue.player.play()
+    if (isClickmap && isPlayerReady && insights.size > 0) {
+      setTimeout(() => {
+        contextValue.player.jump(500)
+        contextValue.player.pause()
+        contextValue.player.scaleFullPage()
+        setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
+      }, 500)
+    }
+    return () => {
+      isPlayerReady && contextValue.player.showClickmap(null)
+    }
+  }, [insights, isPlayerReady])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(
@@ -125,6 +156,10 @@ function WebPlayer(props: any) {
 export default connect(
   (state: any) => ({
     session: state.getIn(['sessions', 'current']),
+    insightsFilters: state.getIn(['sessions', 'insightFilters']),
+    host: state.getIn(['sessions', 'host']),
+    insights: state.getIn(['sessions', 'insights']),
+    visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
     showEvents: state.get('showEvents'),
     members: state.getIn(['members', 'list']),
@@ -134,5 +169,6 @@ export default connect(
     closeBottomBlock,
     fetchList,
     fetchMembers,
+    fetchInsights,
   }
-)(withLocationHandlers()(WebPlayer));
+)(withLocationHandlers()(observer(WebPlayer)));

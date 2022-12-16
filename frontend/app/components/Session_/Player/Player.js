@@ -45,7 +45,7 @@ function Player(props) {
     activeTab,
     fullView,
     isMultiview,
-    isClickmap = true,
+    isClickmap,
   } = props;
   const playerContext = React.useContext(PlayerContext);
   const screenWrapper = React.useRef();
@@ -57,8 +57,6 @@ function Player(props) {
       const parentElement = findDOMNode(screenWrapper.current); //TODO: good architecture
       playerContext.player.attach(parentElement);
       playerContext.player.play();
-
-      setInterval(() => playerContext.player.scaleFullPage(), 4000)
     }
   }, []);
 

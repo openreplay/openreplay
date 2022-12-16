@@ -122,6 +122,11 @@ export default class WebPlayer extends Player {
     this.targetMarker.markTargets(...args)
   }
 
+  showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
+    this.pause()
+    this.targetMarker.injectTargets(...args)
+  }
+
 
   // TODO separate message receivers
   toggleTimetravel = async () => {

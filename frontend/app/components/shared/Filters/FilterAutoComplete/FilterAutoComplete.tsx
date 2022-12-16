@@ -115,6 +115,7 @@ interface Props {
     onSelect: (e: any, item: any) => void;
     value: any;
     icon?: string;
+    hideOrText?: boolean
 }
 
 function FilterAutoComplete(props: Props) {
@@ -128,6 +129,7 @@ function FilterAutoComplete(props: Props) {
         endpoint = '',
         params = {},
         value = '',
+        hideOrText = false,
     } = props;
     const [loading, setLoading] = useState(false);
     const [options, setOptions] = useState<any>([]);
@@ -240,7 +242,7 @@ function FilterAutoComplete(props: Props) {
                 </div>
             </div>
 
-            {!showOrButton && <div className="ml-3">or</div>}
+            {!showOrButton && !hideOrText && <div className="ml-3">or</div>}
         </div>
     );
 }

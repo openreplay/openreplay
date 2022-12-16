@@ -100,7 +100,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
 }
 
 export default connect(
-    (state) => {
+    (state: any) => {
         const events = state.getIn(['sessions', 'visitedEvents']);
         return {
             filters: state.getIn(['sessions', 'insightFilters']),

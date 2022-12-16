@@ -40,6 +40,7 @@ function FilterValue(props: Props) {
             }
             return _;
         });
+        console.log(item ,{ ...filter, value: newValues });
         props.onUpdate({ ...filter, value: newValues });
     };
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
-import { 
+import {
   edit,
   updateSeries,
   addSeriesFilterFilter,
@@ -21,7 +21,7 @@ interface Props {
   edit: typeof edit;
   updateSeries: typeof updateSeries;
   onRemoveSeries: (seriesIndex: any) => void;
-  canDelete?: boolean; 
+  canDelete?: boolean;
   addSeriesFilterFilter: typeof addSeriesFilterFilter;
   editSeriesFilterFilter: typeof editSeriesFilterFilter;
   editSeriesFilter: typeof editSeriesFilter;
@@ -43,6 +43,7 @@ function FilterSeries(props: Props) {
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter)
+    console.log('hi', filterIndex, filter)
     observeChanges()
   }
 
@@ -62,7 +63,7 @@ function FilterSeries(props: Props) {
         <div className="mr-auto">
           <SeriesName seriesIndex={seriesIndex} name={series.name} onUpdate={(name) => series.update('name', name) } />
         </div>
-    
+
         <div className="flex items-center cursor-pointer">
           <div onClick={props.onRemoveSeries} className={cn("ml-3", {'disabled': !canDelete})}>
             <Icon name="trash" size="16" />
@@ -103,7 +104,7 @@ function FilterSeries(props: Props) {
   );
 }
 
-export default connect(null, { 
+export default connect(null, {
   edit,
   updateSeries,
   addSeriesFilterFilter,
