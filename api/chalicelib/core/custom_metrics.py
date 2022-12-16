@@ -4,7 +4,7 @@ from typing import Union
 from decouple import config
 
 import schemas
-from chalicelib.core import sessions, funnels, errors, issues, metrics
+from chalicelib.core import sessions, funnels, errors, issues, metrics, click_maps
 from chalicelib.utils import helper, pg_client, s3
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -59,12 +59,12 @@ def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
-def __is_errors_list(data):
+def __is_errors_list(data: schemas.CreateCardSchema):
     return data.metric_type == schemas.MetricType.table \
         and data.metric_of == schemas.MetricOfTable.errors
 
 
-def __get_errors_list(project_id, user_id, data):
+def __get_errors_list(project_id, user_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
         return {
             "total": 0,
@@ -77,12 +77,12 @@ def __get_errors_list(project_id, user_id, data):
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_sessions_list(data):
+def __is_sessions_list(data: schemas.CreateCardSchema):
     return data.metric_type == schemas.MetricType.table \
         and data.metric_of == schemas.MetricOfTable.sessions
 
 
-def __get_sessions_list(project_id, user_id, data):
+def __get_sessions_list(project_id, user_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
         print("empty series")
         return {
@@ -96,8 +96,21 @@ def __get_sessions_list(project_id, user_id, data):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_predefined(data):
+def __is_predefined(data: schemas.CreateCardSchema):
     return data.is_template
+
+
+def __is_click_map(data: schemas.CreateCardSchema):
+    return data.metric_type == schemas.MetricType.click_map
+
+
+def __get_click_map_chat(project_id, user_id, data: schemas.CreateCardSchema):
+    if len(data.series) == 0:
+        return None
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
+    return click_maps.search_short_session(project_id=project_id, user_id=user_id,
+                                           data=schemas.FlatClickMapSessionsSearch(**data.series[0].filter.dict()))
 
 
 def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
@@ -109,6 +122,8 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
         return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_sessions_list(data):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+    elif __is_click_map(data):
+        return __get_click_map_chat(project_id=project_id, user_id=user_id, data=data)
 
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
