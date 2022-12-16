@@ -5,17 +5,15 @@ import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { Button, Icon } from 'UI';
 import FilterSeries from '../FilterSeries';
-import { confirm, Tooltip, Input } from 'UI';
+import { confirm, Tooltip } from 'UI';
 import Select from 'Shared/Select';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes';
 import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
 import { TIMESERIES, TABLE, CLICKMAP } from 'App/constants/card';
-import { pageUrlOperators } from 'App/constants/filterOptions';
-import FilterAutoComplete from 'Shared/Filters/FilterAutoComplete';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { toJS } from 'mobx';
-import { List } from 'immutable';
+import Period, { LAST_30_DAYS } from 'Types/app/period';
 
 interface Props {
   history: any;
@@ -43,6 +41,7 @@ function WidgetForm(props: Props) {
   const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
   const tableOptions = metricOf.filter((i) => i.type === 'table');
   const isTable = metric.metricType === 'table';
+  const isClickmap = metric.metricType === CLICKMAP
   const isFunnel = metric.metricType === 'funnel';
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
@@ -77,11 +76,16 @@ function WidgetForm(props: Props) {
       }
       if (value === CLICKMAP) {
         obj['viewType'] = 'chart';
+        // @ts-ignore
+        const { start, end } = Period({ rangeName: LAST_30_DAYS })
+        obj["startTimestamp"] = start;
+        obj["endTimestamp"] = end;
+
         if (metric.series[0].filter.filters.length < 1) {
             metric.series[0].filter.addFilter({
                 ...clickmapFilter,
                 value: [''],
-            },)
+            })
         }
       }
     }
@@ -179,8 +183,8 @@ function WidgetForm(props: Props) {
 
       <div className="form-group">
         <div className="flex items-center font-medium py-2">
-          {`${isTable || isFunnel ? 'Filter by' : 'Chart Series'}`}
-          {!isTable && !isFunnel && (
+          {`${isTable || isFunnel || isClickmap ? 'Filter by' : 'Chart Series'}`}
+          {!isTable && !isFunnel && !isClickmap && (
             <Button
               className="ml-2"
               variant="text-primary"
@@ -194,12 +198,12 @@ function WidgetForm(props: Props) {
 
         {metric.series.length > 0 &&
           metric.series
-            .slice(0, isTable || isFunnel ? 1 : metric.series.length)
+            .slice(0, isTable || isFunnel  || isClickmap? 1 : metric.series.length)
             .map((series: any, index: number) => (
               <div className="mb-2" key={series.name}>
                 <FilterSeries
                   observeChanges={() => metric.updateKey('hasChanged', true)}
-                  hideHeader={isTable}
+                  hideHeader={isTable || isClickmap}
                   seriesIndex={index}
                   series={series}
                   onRemoveSeries={() => metric.removeSeries(index)}

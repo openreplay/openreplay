@@ -32,6 +32,7 @@ export default class Widget {
     limit: number = 5
     params: any = { density: 70 }
 
+
     period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
     hasChanged: boolean = false
 
