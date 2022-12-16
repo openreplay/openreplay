@@ -318,6 +318,12 @@ export const fetch =
             filter: getState().getIn(['filters', 'appliedFilter']),
         });
     };
+export const setCustomSession = (session, filter) =>
+    (dispatch, getState) => { dispatch({
+    type: FETCH.SUCCESS,
+    filter: getState().getIn(['filters', 'appliedFilter']),
+    data: session,
+})}
 
 export function toggleFavorite(sessionId) {
     return {

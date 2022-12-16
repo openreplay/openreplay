@@ -57,7 +57,7 @@ export const clickmapFilter = {
   key: FilterKey.LOCATION,
   type: FilterType.MULTIPLE,
   category: FilterCategory.INTERACTIONS,
-  label: 'Visited URL', placeholder: 'Enter URL or path to select', operator: filterOptions.pageUrlOperators[0].value, operatorOptions: filterOptions.pageUrlOperators, icon: 'filters/location', isEvent: true }
+  label: 'Visited URL', placeholder: 'Enter URL or path', operator: filterOptions.pageUrlOperators[0].value, operatorOptions: filterOptions.pageUrlOperators, icon: 'filters/location', isEvent: true }
 
 const mapFilters = (list) => {
   return list.reduce((acc, filter) => {
