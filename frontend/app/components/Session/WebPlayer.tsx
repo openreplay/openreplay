@@ -30,7 +30,7 @@ function WebPlayer(props: any) {
     fullscreen,
     fetchList,
     customSession,
-    isClickmap = true,
+    isClickmap,
     fetchInsights,
     host,
     visitedEvents,
