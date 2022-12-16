@@ -12,7 +12,7 @@ export interface CardType {
 export const LIBRARY = 'library';
 export const TIMESERIES = 'timeseries';
 export const TABLE = 'table';
-export const CLICKMAP = 'clickmap'
+export const CLICKMAP = 'clickMap'
 
 export const TYPES: CardType[] = [
   {

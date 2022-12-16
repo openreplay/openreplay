@@ -217,10 +217,10 @@ export default class Screen {
 
   scaleFullPage() {
     const { height, width } = this.document.body.getBoundingClientRect();
+    this.cursor.toggle(false)
     const offsetHeight = this.parentElement.getBoundingClientRect().height
     if (!this.parentElement) return;
 
-    console.log(height, width)
     this.scaleRatio = 1
     this.screen.style.transform =  `scale(1) translate(-50%, -50%)`;
     this.screen.style.overflow = 'scroll';

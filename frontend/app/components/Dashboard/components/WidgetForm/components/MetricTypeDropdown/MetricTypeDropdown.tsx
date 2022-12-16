@@ -17,6 +17,7 @@ interface Options {
 
 interface Props {
   query: Record<string, (key: string) => any>;
+  onSelect: (arg: any) => void;
 }
 function MetricTypeDropdown(props: Props) {
   const { metricStore } = useStore();
@@ -48,7 +49,7 @@ function MetricTypeDropdown(props: Props) {
       placeholder="Select Card Type"
       options={options}
       value={options.find((i: any) => i.value === metric.metricType) || options[0]}
-      onChange={(selected) => onChange(selected.value.value as string)}
+      onChange={props.onSelect}
       // onSelect={onSelect}
       components={{
         MenuList: ({ children, ...props }: any) => {

@@ -8,7 +8,7 @@ import { toJS } from 'mobx'
 function ClickMapCard() {
   const { metricStore } = useStore()
 
-  console.log(toJS(metricStore.instance))
+  // console.log(toJS(metricStore.instance))
   return (
     <div>this is a card</div>
   )

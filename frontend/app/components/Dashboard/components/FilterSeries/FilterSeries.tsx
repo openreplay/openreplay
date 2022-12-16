@@ -11,6 +11,7 @@ interface Props {
   series: any;
   onRemoveSeries: (seriesIndex: any) => void;
   canDelete?: boolean;
+
   hideHeader?: boolean;
   emptyMessage?: any;
   observeChanges?: () => void;
@@ -34,6 +35,7 @@ function FilterSeries(props: Props) {
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter)
+    console.log('hi', filterIndex, filter)
     observeChanges()
   }
 
