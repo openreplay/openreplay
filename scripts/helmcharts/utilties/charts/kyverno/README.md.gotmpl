@@ -1,0 +1,110 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+{{ template "chart.description" . }}
+
+{{ template "chart.badgesSection" . }}
+
+## About
+
+[Kyverno](https://kyverno.io) is a Kubernetes Native Policy Management engine.
+
+It allows you to:
+- Manage policies as Kubernetes resources (no new language required.)
+- Validate, mutate, and generate resource configurations.
+- Select resources based on labels and wildcards.
+- View policy enforcement as events.
+- Scan existing resources for violations.
+
+This chart bootstraps a Kyverno deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+
+Access the complete user documentation and guides at: https://kyverno.io.
+
+## Installing the Chart
+
+**Add the Kyverno Helm repository:**
+
+```console
+$ helm repo add kyverno https://kyverno.github.io/kyverno/
+```
+
+**Create a namespace:**
+
+You can install Kyverno in any namespace. The examples use `kyverno` as the namespace.
+
+```console
+$ kubectl create namespace kyverno
+```
+
+**Install the Kyverno chart:**
+
+```console
+$ helm install kyverno --namespace kyverno kyverno/kyverno
+```
+
+The command deploys Kyverno on the Kubernetes cluster with default configuration. The [installation](https://kyverno.io/docs/installation/) guide lists the parameters that can be configured during installation.
+
+The Kyverno ClusterRole/ClusterRoleBinding that manages webhook configurations must have the suffix `:webhook`. Ex., `*:webhook` or `kyverno:webhook`.
+Other ClusterRole/ClusterRoleBinding names are configurable.
+
+## Uninstalling the Chart
+
+To uninstall/delete the `kyverno` deployment:
+
+```console
+$ helm delete -n kyverno kyverno
+```
+
+The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+{{ template "chart.valuesSection" . }}
+
+## TLS Configuration
+
+If `createSelfSignedCert` is `true`, Helm will take care of the steps of creating an external self-signed certificate described in option 2 of the [installation documentation](https://kyverno.io/docs/installation/#option-2-use-your-own-ca-signed-certificate)
+
+If `createSelfSignedCert` is `false`, Kyverno will generate a self-signed CA and a certificate, or you can provide your own TLS CA and signed-key pair and create the secret yourself as described in the [documentation](https://kyverno.io/docs/installation/#customize-the-installation-of-kyverno).
+
+## Default resource filters
+
+[Kyverno resource filters](https://kyverno.io/docs/installation/#resource-filters) are a used to exclude resources from the Kyverno engine rules processing.
+
+This chart comes with default resource filters that apply exclusions on a couple of namespaces and resource kinds:
+- all resources in `kube-system`, `kube-public` and `kube-node-lease` namespaces
+- all resources in all namespaces for the following resource kinds:
+  - `Event`
+  - `Node`
+  - `APIService`
+  - `TokenReview`
+  - `SubjectAccessReview`
+  - `SelfSubjectAccessReview`
+  - `Binding`
+  - `ReplicaSet`
+  - `ReportChangeRequest`
+  - `ClusterReportChangeRequest`
+- all resources created by this chart itself
+
+Those default exclusions are there to prevent disruptions as much as possible.
+Under the hood, Kyverno installs an admission controller for critical cluster resources.
+A cluster can become unresponsive if Kyverno is not up and running, ultimately preventing pods to be scheduled in the cluster.
+
+You can however override the default resource filters by setting the `config.resourceFilters` stanza.
+It contains an array of string templates that are passed through the `tpl` Helm function and joined together to produce the final `resourceFilters` written in the Kyverno config map.
+
+Please consult the [values.yaml](./values.yaml) file before overriding `config.resourceFilters` and use the apropriate templates to build your desired exclusions list.
+
+## High availability
+
+Running a highly-available Kyverno installation is crucial in a production environment.
+
+In order to run Kyverno in high availability mode, you should set `replicaCount` to `3` or more.
+You should also pay attention to anti affinity rules, spreading pods across nodes and availability zones.
+
+Please see https://kyverno.io/docs/installation/#security-vs-operability for more informations.
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "helm-docs.versionFooter" . }}

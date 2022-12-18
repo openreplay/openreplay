@@ -1,0 +1,30 @@
+{{- if (not .Values.config.existingConfig) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    app: kyverno
+  name: {{ template "kyverno.configMapName" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+data:
+  # resource types to be skipped by kyverno policy engine
+  {{- if .Values.config.resourceFilters }}
+  resourceFilters: {{ include "kyverno.resourceFilters" . | quote }}
+  {{- end -}}
+  {{- if .Values.config.excludeGroupRole }}
+  excludeGroupRole: {{ join "," .Values.config.excludeGroupRole | quote }}
+  {{- end -}}
+  {{- if .Values.config.excludeUsername }}
+  excludeUsername: {{ join "," .Values.config.excludeUsername | quote }}
+  {{- end -}}
+  {{- if and .Values.config.webhooks .Values.excludeKyvernoNamespace }}
+  webhooks: {{ include "kyverno.webhooks" . | quote }}
+  {{- else if .Values.config.webhooks }}
+  webhooks: {{ .Values.config.webhooks | toJson | quote }}
+  {{- else if .Values.excludeKyvernoNamespace }}
+  webhooks: '[{"namespaceSelector": {"matchExpressions": [{"key":"kubernetes.io/metadata.name","operator":"NotIn","values":["{{ include "kyverno.namespace" . }}"]}]}}]'
+  {{- end -}}
+  {{- if .Values.config.generateSuccessEvents }}
+  generateSuccessEvents: {{ .Values.config.generateSuccessEvents | quote }}
+  {{- end -}}
+{{- end -}}

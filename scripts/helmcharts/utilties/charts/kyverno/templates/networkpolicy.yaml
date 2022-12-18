@@ -1,0 +1,33 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    app: kyverno
+  name: {{ template "kyverno.fullname" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+spec:
+  podSelector:
+    matchLabels:
+      app: kyverno
+  policyTypes:
+  - Ingress
+  {{- if .Values.networkPolicy.ingressFrom }}
+  ingress:
+  - from:
+    {{- with .Values.networkPolicy.ingressFrom }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    ports:
+    - protocol: TCP
+      port: 9443 # webhook access
+  # Allow prometheus scrapes for metrics
+  {{- if .Values.metricsService.create }}
+    - protocol: TCP
+      port: {{ .Values.metricsService.port }}
+  {{- end }}
+  {{- else }}
+  ingress:
+    - {}
+  {{- end }}
+{{- end }}
