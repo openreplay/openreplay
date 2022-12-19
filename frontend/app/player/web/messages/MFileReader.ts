@@ -1,7 +1,6 @@
 import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
-import logger from 'App/logger';
 import RawMessageReader from './RawMessageReader.gen';
 import resolveURL from './urlBasedResolver'
 
@@ -13,7 +12,7 @@ export default class MFileReader extends RawMessageReader {
   private pLastMessageID: number = 0
   private currentTime: number
   public error: boolean = false
-  constructor(data: Uint8Array, private startTime?: number) {
+  constructor(data: Uint8Array, private startTime?: number, private logger=console) {
     super(data)
   }
 
@@ -45,7 +44,7 @@ export default class MFileReader extends RawMessageReader {
       return msg
     } catch (e) {
       this.error = true
-      logger.error("Read message error:", e)
+      this.logger.error("Read message error:", e)
       return null
     }
   }
@@ -60,7 +59,7 @@ export default class MFileReader extends RawMessageReader {
       if (!skippedMessage) {
         return null
       }
-      logger.group("Openreplay: Skipping messages ", skippedMessage)
+      this.logger.group("Openreplay: Skipping messages ", skippedMessage)
     }
 
     this.pLastMessageID = this.p
