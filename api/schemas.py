@@ -935,6 +935,7 @@ class CreateCardSchema(CardChartSchema):
     metric_format: Optional[MetricFormatType] = Field(None)
     default_config: CardConfigSchema = Field(..., alias="config")
     is_template: bool = Field(default=False)
+    thumbnail: Optional[str] = Field(default=None)
 
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)

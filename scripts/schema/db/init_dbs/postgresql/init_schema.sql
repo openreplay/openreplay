@@ -889,7 +889,7 @@ $$
                 metric_of      text      NOT NULL DEFAULT 'sessionCount',
                 metric_value   text[]    NOT NULL DEFAULT '{}'::text[],
                 metric_format  text,
-                thumbnail_url  text,
+                thumbnail      text,
                 default_config jsonb     NOT NULL DEFAULT '{
                   "col": 2,
                   "row": 2,

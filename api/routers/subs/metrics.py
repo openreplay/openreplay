@@ -163,12 +163,12 @@ def get_card(projectId: int, metric_id: Union[int, str], context: schemas.Curren
     return {"data": data}
 
 
-@app.get('/{projectId}/cards/{metric_id}/thumbnail', tags=["cards"])
-def sign_thumbnail_for_upload(projectId: int, metric_id: Union[int, str],
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    if not isinstance(metric_id, int):
-        return {"errors": ["invalid card_id"]}
-    return custom_metrics.add_thumbnail(metric_id=metric_id, user_id=context.user_id, project_id=projectId)
+# @app.get('/{projectId}/cards/{metric_id}/thumbnail', tags=["cards"])
+# def sign_thumbnail_for_upload(projectId: int, metric_id: Union[int, str],
+#                               context: schemas.CurrentContext = Depends(OR_context)):
+#     if not isinstance(metric_id, int):
+#         return {"errors": ["invalid card_id"]}
+#     return custom_metrics.add_thumbnail(metric_id=metric_id, user_id=context.user_id, project_id=projectId)
 
 
 @app.post('/{projectId}/cards/{metric_id}/sessions', tags=["cards"])

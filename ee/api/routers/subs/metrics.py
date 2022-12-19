@@ -1,3 +1,5 @@
+from typing import Union
+
 from fastapi import Body, Depends
 
 import schemas
@@ -153,7 +155,7 @@ def search_cards(projectId: int, data: schemas.SearchCardsSchema = Body(...),
 @app.get('/{projectId}/cards/{metric_id}', tags=["cards"])
 @app.get('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = Depends(OR_context)):
+def get_card(projectId: int, metric_id: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if not isinstance(metric_id, int):
         return {"errors": ["invalid card_id"]}
     data = custom_metrics.get_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
@@ -162,10 +164,12 @@ def get_card(projectId: int, metric_id: str, context: schemas.CurrentContext = D
     return {"data": data}
 
 
-@app.get('/{projectId}/cards/{metric_id}/thumbnail', tags=["cards"])
-def sign_thumbnail_for_upload(projectId: int, metric_id: int,
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    return custom_metrics.add_thumbnail(metric_id=metric_id, user_id=context.user_id, project_id=projectId)
+# @app.get('/{projectId}/cards/{metric_id}/thumbnail', tags=["cards"])
+# def sign_thumbnail_for_upload(projectId: int, metric_id: Union[int, str],
+#                               context: schemas.CurrentContext = Depends(OR_context)):
+#     if not isinstance(metric_id, int):
+#         return {"errors": ["invalid card_id"]}
+#     return custom_metrics.add_thumbnail(metric_id=metric_id, user_id=context.user_id, project_id=projectId)
 
 
 @app.post('/{projectId}/cards/{metric_id}/sessions', tags=["cards"])

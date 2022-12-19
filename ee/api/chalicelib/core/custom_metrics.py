@@ -4,8 +4,8 @@ from typing import Union
 from decouple import config
 
 import schemas
-from chalicelib.core import funnels, errors, issues, metrics
-from chalicelib.utils import helper, pg_client, s3
+from chalicelib.core import funnels, issues, metrics
+from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
@@ -70,12 +70,12 @@ def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
-def __is_errors_list(data):
+def __is_errors_list(data: schemas.CreateCardSchema):
     return data.metric_type == schemas.MetricType.table \
         and data.metric_of == schemas.MetricOfTable.errors
 
 
-def __get_errors_list(project_id, user_id, data):
+def __get_errors_list(project_id, user_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
         return {
             "total": 0,
@@ -88,12 +88,12 @@ def __get_errors_list(project_id, user_id, data):
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_sessions_list(data):
+def __is_sessions_list(data: schemas.CreateCardSchema):
     return data.metric_type == schemas.MetricType.table \
         and data.metric_of == schemas.MetricOfTable.sessions
 
 
-def __get_sessions_list(project_id, user_id, data):
+def __get_sessions_list(project_id, user_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
         print("empty series")
         return {
@@ -107,8 +107,21 @@ def __get_sessions_list(project_id, user_id, data):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_predefined(data):
+def __is_predefined(data: schemas.CreateCardSchema):
     return data.is_template
+
+
+def __is_click_map(data: schemas.CreateCardSchema):
+    return data.metric_type == schemas.MetricType.click_map
+
+
+def __get_click_map_chat(project_id, user_id, data: schemas.CreateCardSchema):
+    if len(data.series) == 0:
+        return None
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
+    return click_maps.search_short_session(project_id=project_id, user_id=user_id,
+                                           data=schemas.FlatClickMapSessionsSearch(**data.series[0].filter.dict()))
 
 
 def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
@@ -120,6 +133,8 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
         return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_sessions_list(data):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+    elif __is_click_map(data):
+        return __get_click_map_chat(project_id=project_id, user_id=user_id, data=data)
 
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
@@ -236,10 +251,10 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
         params["default_config"] = json.dumps(data.default_config.dict())
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
-                            metric_format, default_config)
+                            metric_format, default_config, thumbnail)
                    VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
                               %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                              %(metric_format)s, %(default_config)s)
+                              %(metric_format)s, %(default_config)s, %(thumbnail)s)
                    RETURNING metric_id"""
         if len(data.series) > 0:
             query = f"""WITH m AS ({query})
@@ -272,7 +287,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
               "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
               "metric_type": data.metric_type, "metric_of": data.metric_of,
               "metric_value": data.metric_value, "metric_format": data.metric_format,
-              "config": json.dumps(data.default_config.dict())}
+              "config": json.dumps(data.default_config.dict()), "thumbnail": data.thumbnail}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.index is None:
@@ -323,7 +338,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
                 metric_format= %(metric_format)s,
                 edited_at = timezone('utc'::text, now()),
-                default_config = %(config)s
+                default_config = %(config)s,
+                thumbnail = %(thumbnail)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -332,13 +348,13 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def __presign_thumbnail(card):
-    if card["thumbnail_url"]:
-        card["thumbnail_url"] = s3.client.generate_presigned_url(
-            'get_object',
-            Params={'Bucket': config('THUMBNAILS_BUCKET'), 'Key': card["thumbnail_url"]},
-            ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
-        )
+# def __presign_thumbnail(card):
+#     if card["thumbnail_url"]:
+#         card["thumbnail_url"] = s3.client.generate_presigned_url(
+#             'get_object',
+#             Params={'Bucket': config('THUMBNAILS_BUCKET'), 'Key': card["thumbnail_url"]},
+#             ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
+#         )
 
 
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
@@ -390,13 +406,12 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         rows = cur.fetchall()
         if include_series:
             for r in rows:
-                __presign_thumbnail(r)
-                # r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                # __presign_thumbnail(r)
                 for s in r["series"]:
                     s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         else:
             for r in rows:
-                __presign_thumbnail(r)
+                # __presign_thumbnail(r)
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
@@ -641,27 +656,26 @@ def get_predefined_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOf
         schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
     return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
 
-
-def add_thumbnail(metric_id, user_id, project_id):
-    key = generate_file_key(project_id=project_id, key=f"{metric_id}.png")
-    params = {"metric_id": metric_id, "user_id": user_id, "project_id": project_id, "key": key}
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""\
-            UPDATE metrics
-            SET thumbnail_url = %(key)s
-            WHERE metric_id = %(metric_id)s
-            AND project_id = %(project_id)s 
-            AND (user_id = %(user_id)s OR is_public) 
-            RETURNING metric_id;""", params)
-        cur.execute(query)
-        row = cur.fetchone()
-        if row is None:
-            return {"errors": ["Card not found"]}
-    return {"data": s3.get_presigned_url_for_upload(bucket=config('THUMBNAILS_BUCKET'), expires_in=180, key=key,
-                                                    # content-length-range is in bytes
-                                                    conditions=["content-length-range", 1, 1 * 1024 * 1024],
-                                                    content_type="image/png")}
-
-
-def generate_file_key(project_id, key):
-    return f"{project_id}/cards/{key}"
+# def add_thumbnail(metric_id, user_id, project_id):
+#     key = generate_file_key(project_id=project_id, key=f"{metric_id}.png")
+#     params = {"metric_id": metric_id, "user_id": user_id, "project_id": project_id, "key": key}
+#     with pg_client.PostgresClient() as cur:
+#         query = cur.mogrify(f"""\
+#             UPDATE metrics
+#             SET thumbnail_url = %(key)s
+#             WHERE metric_id = %(metric_id)s
+#             AND project_id = %(project_id)s
+#             AND (user_id = %(user_id)s OR is_public)
+#             RETURNING metric_id;""", params)
+#         cur.execute(query)
+#         row = cur.fetchone()
+#         if row is None:
+#             return {"errors": ["Card not found"]}
+#     return {"data": s3.get_presigned_url_for_upload(bucket=config('THUMBNAILS_BUCKET'), expires_in=180, key=key,
+#                                                     # content-length-range is in bytes
+#                                                     conditions=["content-length-range", 1, 1 * 1024 * 1024],
+#                                                     content_type="image/png")}
+#
+#
+# def generate_file_key(project_id, key):
+#     return f"{project_id}/cards/{key}"

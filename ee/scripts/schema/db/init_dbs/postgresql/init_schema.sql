@@ -752,7 +752,7 @@ $$
                 metric_value   text[]    NOT NULL DEFAULT '{}'::text[],
                 metric_format  text,
                 is_pinned      boolean   NOT NULL DEFAULT FALSE,
-                thumbnail_url  text,
+                thumbnail      text,
                 default_config jsonb     NOT NULL DEFAULT '{
                   "col": 2,
                   "row": 2,
