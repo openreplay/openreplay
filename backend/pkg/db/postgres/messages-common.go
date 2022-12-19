@@ -146,70 +146,24 @@ func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) err
 	return conn.c.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
 }
 
-func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) (err error) {
-	tx, err := conn.c.Begin()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if rollbackErr := tx.rollback(); rollbackErr != nil {
-				log.Printf("rollback err: %s", rollbackErr)
-			}
-		}
-	}()
+func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {
 	issueID := hashid.IssueID(projectID, e)
-
-	// TEMP. TODO: nullable & json message field type
 	payload := &e.Payload
 	if *payload == "" || *payload == "{}" {
 		payload = nil
 	}
 
-	if err = tx.exec(`
-		INSERT INTO issues (
-			project_id, issue_id, type, context_string
-		) (SELECT
-			project_id, $2, $3, $4
-			FROM sessions
-			WHERE session_id = $1
-		)ON CONFLICT DO NOTHING`,
-		sessionID, issueID, e.Type, e.ContextString,
-	); err != nil {
-		return err
+	if err := conn.webIssues.Append(projectID, issueID, e.Type, e.ContextString); err != nil {
+		log.Printf("insert web issue err: %s", err)
 	}
-	if err = tx.exec(`
-		INSERT INTO events_common.issues (
-			session_id, issue_id, timestamp, seq_index, payload
-		) VALUES (
-			$1, $2, $3, $4, CAST($5 AS jsonb)
-		)`,
-		sessionID, issueID, e.Timestamp,
-		truncSqIdx(e.MessageID),
-		payload,
-	); err != nil {
-		return err
+	if err := conn.webIssueEvents.Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
+		log.Printf("insert web issue event err: %s", err)
 	}
-	if err = tx.exec(`
-		UPDATE sessions SET issue_score = issue_score + $2
-		WHERE session_id = $1`,
-		sessionID, getIssueScore(e),
-	); err != nil {
-		return err
-	}
-	// TODO: no redundancy. Deliver to UI in a different way
+	conn.sessionUpdates[sessionID].addIssues(0, getIssueScore(e))
 	if e.Type == "custom" {
-		if err = tx.exec(`
-			INSERT INTO events_common.customs
-				(session_id, seq_index, timestamp, name, payload, level)
-			VALUES
-				($1, $2, $3, left($4, 2700), $5, 'error')
-			`,
-			sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload,
-		); err != nil {
-			return err
+		if err := conn.webCustomEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload); err != nil {
+			log.Printf("insert web issue event err: %s", err)
 		}
 	}
-	err = tx.commit()
-	return
+	return nil
 }

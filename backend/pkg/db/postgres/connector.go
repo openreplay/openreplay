@@ -35,6 +35,12 @@ type Conn struct {
 	webPageEvents     Bulk
 	webInputEvents    Bulk
 	webGraphQL        Bulk
+	webErrors         Bulk
+	webErrorEvents    Bulk
+	webErrorTags      Bulk
+	webIssues         Bulk
+	webIssueEvents    Bulk
+	webCustomEvents   Bulk
 	sessionUpdates    map[uint64]*sessionUpdates
 	batchQueueLimit   int
 	batchSizeLimit    int
@@ -152,6 +158,54 @@ func (conn *Conn) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk")
 	}
+	conn.webErrors, err = NewBulk(conn.c,
+		"errors",
+		"(error_id, project_id, source, name, message, payload)",
+		"($%d, $%d, $%d, $%d, $%d, $%d::jsonb)",
+		6, 100)
+	if err != nil {
+		log.Fatalf("can't create webErrors bulk")
+	}
+	conn.webErrorEvents, err = NewBulk(conn.c,
+		"events.errors",
+		"(session_id, message_id, timestamp, error_id)",
+		"($%d, $%d, $%d, $%d)",
+		4, 100)
+	if err != nil {
+		log.Fatalf("can't create webErrorEvents bulk")
+	}
+	conn.webErrorTags, err = NewBulk(conn.c,
+		"public.errors_tags",
+		"(session_id, message_id, error_id, key, value)",
+		"($%d, $%d, $%d, $%d, $%d)",
+		5, 100)
+	if err != nil {
+		log.Fatalf("can't create webErrorEvents bulk")
+	}
+	conn.webIssues, err = NewBulk(conn.c,
+		"issues",
+		"(project_id, issue_id, type, context_string)",
+		"($%d, $%d, $%d, $%d)",
+		4, 100)
+	if err != nil {
+		log.Fatalf("can't create webIssues bulk")
+	}
+	conn.webIssueEvents, err = NewBulk(conn.c,
+		"events_common.issues",
+		"(session_id, issue_id, timestamp, seq_index, payload)",
+		"($%d, $%d, $%d, $%d, CAST($%d AS jsonb))",
+		5, 100)
+	if err != nil {
+		log.Fatalf("can't create webIssueEvents bulk")
+	}
+	conn.webCustomEvents, err = NewBulk(conn.c,
+		"events_common.customs",
+		"(session_id, seq_index, timestamp, name, payload, level)",
+		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d)",
+		6, 100)
+	if err != nil {
+		log.Fatalf("can't create webCustomEvents bulk")
+	}
 }
 
 func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp string, value string) {
@@ -195,7 +249,14 @@ func (conn *Conn) updateSessionEvents(sessionID uint64, events, pages int) {
 	if _, ok := conn.sessionUpdates[sessionID]; !ok {
 		conn.sessionUpdates[sessionID] = NewSessionUpdates(sessionID)
 	}
-	conn.sessionUpdates[sessionID].add(pages, events)
+	conn.sessionUpdates[sessionID].addEvents(pages, events)
+}
+
+func (conn *Conn) updateSessionIssues(sessionID uint64, errors, issueScore int) {
+	if _, ok := conn.sessionUpdates[sessionID]; !ok {
+		conn.sessionUpdates[sessionID] = NewSessionUpdates(sessionID)
+	}
+	conn.sessionUpdates[sessionID].addIssues(errors, issueScore)
 }
 
 func (conn *Conn) sendBulks() {
@@ -216,6 +277,24 @@ func (conn *Conn) sendBulks() {
 	}
 	if err := conn.webGraphQL.Send(); err != nil {
 		log.Printf("webGraphQL bulk send err: %s", err)
+	}
+	if err := conn.webErrors.Send(); err != nil {
+		log.Printf("webErrors bulk send err: %s", err)
+	}
+	if err := conn.webErrorEvents.Send(); err != nil {
+		log.Printf("webErrorEvents bulk send err: %s", err)
+	}
+	if err := conn.webErrorTags.Send(); err != nil {
+		log.Printf("webErrorTags bulk send err: %s", err)
+	}
+	if err := conn.webIssues.Send(); err != nil {
+		log.Printf("webIssues bulk send err: %s", err)
+	}
+	if err := conn.webIssueEvents.Send(); err != nil {
+		log.Printf("webIssueEvents bulk send err: %s", err)
+	}
+	if err := conn.webCustomEvents.Send(); err != nil {
+		log.Printf("webCustomEvents bulk send err: %s", err)
 	}
 }
 
