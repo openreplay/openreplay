@@ -14,7 +14,7 @@ function ClickMapCard({ setCustomSession, visitedEvents }: any) {
     }
   }, [metricStore.instance.data.mobsUrl])
 
-  if (!metricStore.instance.data.mobsUrl) return <div className="p-4">looking for session</div>
+  if (!metricStore.instance.data?.mobsUrl) return <div className="p-4">looking for session</div>
   console.log(visitedEvents, metricStore.instance.data.events)
   if (!visitedEvents || !visitedEvents.length) {
     return <div className="p-4">loading</div>
