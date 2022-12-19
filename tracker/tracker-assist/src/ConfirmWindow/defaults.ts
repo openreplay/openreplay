@@ -5,7 +5,7 @@ import type { ButtonOptions, ConfirmWindowOptions, } from './ConfirmWindow.js'
 const TEXT_GRANT_REMORTE_ACCESS = 'Grant Remote Control'
 const TEXT_REJECT = 'Reject'
 const TEXT_ANSWER_CALL = `${acceptCall} &#xa0 Answer`
-const TEXT_ACCEPT_RECORDING = 'Accept recording'
+const TEXT_ACCEPT_RECORDING = 'Allow Recording'
 
 export type Options = string | Partial<ConfirmWindowOptions>;
 
@@ -47,5 +47,5 @@ export const recordRequestDefault = (opts: Options) =>
       opts,
       TEXT_ACCEPT_RECORDING,
       TEXT_REJECT,
-      'Agent requested to record the video of this session. Allow?'
+      'Agent requested to record activity in this browser tab.'
     )

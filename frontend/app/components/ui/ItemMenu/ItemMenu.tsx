@@ -16,6 +16,7 @@ interface Props {
   flat?: boolean;
   items: Item[];
   label?: React.ReactNode;
+  sm?: boolean;
   onToggle?: (args: any) => void;
 }
 
@@ -52,7 +53,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
   };
 
   render() {
-    const { items, label = '', bold } = this.props;
+    const { items, label = '', bold, sm } = this.props;
     const { displayed } = this.state;
     const parentStyles = label ? 'rounded px-2 py-2 hover:bg-gray-light' : '';
 
@@ -61,9 +62,6 @@ export default class ItemMenu extends React.PureComponent<Props> {
         render={() => (
           <div
             className={cn(styles.menu, { [styles.menuDim]: !bold })}
-            // style={{
-            //   top: this.props.flat ? 24 : undefined,
-            // }}
             // data-displayed={displayed}
           >
             {items
@@ -111,7 +109,8 @@ export default class ItemMenu extends React.PureComponent<Props> {
               }}
               className={cn('rounded-full flex items-center justify-center', {
                 'bg-gray-light': displayed,
-                'w-10 h-10': !label,
+                'w-10 h-10': !label && !sm,
+                'w-8 h-8': sm,
               })}
               role="button"
             >

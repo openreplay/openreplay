@@ -30,7 +30,7 @@ function Assist(props: Props) {
               active={isAssist}
               id="menu-assist"
               title="Live Sessions"
-              iconName="play-circle-light"
+              iconName="play-circle-bold"
               onClick={() => redirect(assist())}
             />
             <SideMenuitem

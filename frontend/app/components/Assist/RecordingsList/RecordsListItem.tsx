@@ -5,6 +5,7 @@ import { IRecord } from 'App/services/RecordingsService';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
+import EditRecordingModal from './EditRecordingModal'
 
 interface Props {
   record: IRecord;
@@ -39,12 +40,13 @@ function RecordsListItem(props: Props) {
     });
   };
 
-  const menuItems = [{ icon: 'trash', text: 'Delete', onClick: onDelete }];
+  const menuItems = [{ icon: 'pencil', text: 'Rename', onClick: () => setEdit(true) }, { icon: 'trash', text: 'Delete', onClick: onDelete }];
 
-  const onSave = () => {
+  const onSave = (title: string) => {
     recordingsStore
-      .updateRecordingName(record.recordId, recordingTitle)
+      .updateRecordingName(record.recordId, title)
       .then(() => {
+        setRecordingTitle(title)
         toast.success('Recording name updated');
       })
       .catch(() => toast.error("Couldn't update recording name"));
@@ -53,45 +55,26 @@ function RecordsListItem(props: Props) {
 
   return (
     <div className="hover:bg-active-blue border-t px-6">
+      <EditRecordingModal show={isEdit} title={record.name} onSave={onSave} />
       <div className="grid grid-cols-12 py-4 select-none items-center">
-        <div className="col-span-8 flex items-start">
+        <div className="col-span-8 flex items-start" onClick={onRecordClick}>
           <div className="flex items-center capitalize-first">
             <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
               <Icon name="camera-video" size="16" color="tealx" />
             </div>
             <div className="flex flex-col">
-              {isEdit ? (
-                <input
-                  ref={inputRef}
-                  name="recordName"
-                  placeholder="Recording name"
-                  autoFocus
-                  style={{ minWidth: 200 }}
-                  className="rounded fluid border-0 -mx-2 px-2 -mt-1"
-                  value={recordingTitle}
-                  onChange={(e) => setRecordingTitle(e.target.value)}
-                  onBlur={onSave}
-                  onFocus={() => setEdit(true)}
-                />
-              ) : (
-                <Tooltip delay={200} title="Double click to rename">
-                  <div
-                    onDoubleClick={() => setEdit(true)}
-                    className={cn(
-                      'border-dotted border-gray-medium',
-                      'pt-1 w-fit -mt-2',
-                      'cursor-pointer select-none border-b'
-                    )}
-                  >
-                    {recordingTitle}
-                  </div>
-                </Tooltip>
-              )}
+                <div
+                  className={cn(
+                    'pt-1 w-fit -mt-2',
+                  )}
+                >
+                  {recordingTitle}
+                </div>
               <div className="text-gray-medium text-sm">{durationFromMs(record.duration)}</div>
             </div>
           </div>
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2" onClick={onRecordClick}>
           <div className="flex flex-col">
             <div>{record.createdBy}</div>
             <div className="text-gray-medium text-sm">
@@ -113,7 +96,9 @@ function RecordsListItem(props: Props) {
             />
             <div>Play Video</div>
           </div>
-          <ItemMenu bold items={menuItems} />
+          <div className="hover:border-teal border border-transparent rounded-full">
+          <ItemMenu bold items={menuItems} sm />
+          </div>
         </div>
       </div>
     </div>

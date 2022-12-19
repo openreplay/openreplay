@@ -28,11 +28,11 @@ function RecordingsList() {
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="camera-video-off" size={80} color="figmaColors-accent-secondary" />
+          <Icon name="no-recordings" size={80} color="figmaColors-accent-secondary" />
           <div className="text-center text-gray-600 my-4">
             {recordsSearch !== ''
               ? 'No matching results'
-              : "You haven't created any recordings yet"}
+              : "No recordings available yet."}
           </div>
         </div>
       }
@@ -40,7 +40,7 @@ function RecordingsList() {
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-8">Name</div>
-          <div className="col-span-4">By</div>
+          <div className="col-span-4">Last Modified</div>
         </div>
 
         {sliceListPerPage(list, recordingsStore.page - 1, recordingsStore.pageSize).map(
