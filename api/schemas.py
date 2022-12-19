@@ -912,9 +912,6 @@ class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
 class CardChartSchema(CardSessionsSchema):
     density: int = Field(7)
 
-    class Config:
-        alias_generator = attribute_to_camel_case
-
 
 class CardConfigSchema(BaseModel):
     col: Optional[int] = Field(...)
@@ -1199,6 +1196,16 @@ class _ClickMapSearchEventRaw(_SessionSearchEventRaw):
 class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
     events: Optional[List[_ClickMapSearchEventRaw]] = Field([])
     filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field([])
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        for f in values.get("filters"):
+            if f.get("type") == FilterType.duration:
+                return values
+        values["filters"] = values.get("filters", [])
+        values["filters"].append({"value": [5000], "type": FilterType.duration,
+                                  "operator": SearchEventOperator._is, "filters": []})
+        return values
 
     @root_validator()
     def flat_to_original(cls, values):

@@ -113,7 +113,7 @@ def try_card_sessions(projectId: int, data: schemas.CardSessionsSchema = Body(..
     return {"data": data}
 
 
-@app.post('/{projectId}/card/try/issues', tags=["cards"])
+@app.post('/{projectId}/cards/try/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
 def try_card_funnel_issues(projectId: int, data: schemas.CardSessionsSchema = Body(...),
@@ -186,9 +186,12 @@ def get_card_sessions(projectId: int, metric_id: int,
 @app.post('/{projectId}/cards/{metric_id}/issues', tags=["cards"])
 @app.post('/{projectId}/metrics/{metric_id}/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues', tags=["customMetrics"])
-def get_card_funnel_issues(projectId: int, metric_id: int,
+def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
                            data: schemas.CardSessionsSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
+    if not isinstance(metric_id, int):
+        return {"errors": [f"invalid card_id: {metric_id}"]}
+
     data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                             data=data)
     if data is None:
@@ -227,8 +230,6 @@ def get_card_chart(projectId: int, metric_id: int, data: schemas.CardChartSchema
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
                                                data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
     return {"data": data}
 
 
