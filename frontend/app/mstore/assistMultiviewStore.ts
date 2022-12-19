@@ -115,5 +115,6 @@ export default class AssistMultiviewStore {
   reset() {
     this.sessions = [];
     this.activeSession = null;
+    this.onChangeCb = undefined
   }
 }

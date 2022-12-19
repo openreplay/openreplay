@@ -90,9 +90,9 @@ function PlayerBlockHeader(props: any) {
         {!hideBack && (
           <div
             className="flex items-center h-full cursor-pointer group"
-            onClick={() => (isMultiview ? openGrid() : backHandler())}
+            onClick={() => (assistMultiviewStore.sessions.length > 1 || isMultiview ? openGrid() : backHandler())}
           >
-            {isMultiview ? (
+            {assistMultiviewStore.sessions.length > 1 || isMultiview ? (
               <>
                 <div className="rounded-full border group-hover:border-teal group-hover:text-teal group-hover:fill-teal p-1 mr-2">
                   <Icon name="close" color="inherit" size={13} />

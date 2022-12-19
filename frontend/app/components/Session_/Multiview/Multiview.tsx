@@ -59,6 +59,7 @@ function Multiview({
   };
 
   const returnToList = () => {
+    assistMultiviewStore.reset()
     history.push(withSiteId(assist(), siteId));
   };
 
@@ -85,7 +86,7 @@ function Multiview({
       <div className="w-full p-4 flex justify-between items-center">
         <div>
           {/* @ts-ignore */}
-          <BackLink label="Back to sessions list" onClick={returnToList} />
+          <BackLink label="Exit to sessions list" onClick={returnToList} />
         </div>
         <div>{`Watching ${assistMultiviewStore.sessions.length} of ${total} Live Sessions`}</div>
       </div>
