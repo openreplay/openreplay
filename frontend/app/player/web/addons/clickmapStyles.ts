@@ -9,7 +9,6 @@ export const clickmapStyles = {
     background: 'rgba(0,0,0, 0.15)',
     zIndex: 9 * 10e3,
     transformOrigin: 'left top',
-    // pointerEvents: 'none',
   }),
   totalClicks: {
     fontSize: '16px',

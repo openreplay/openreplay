@@ -36,15 +36,14 @@ export default class MetricService {
 
     /**
      * Save a metric.
-     * @param metric 
+     * @param metric
      * @returns 
      */
-    saveMetric(metric: Widget, dashboardId?: string): Promise<any> {
+    saveMetric(metric: Widget): Promise<any> {
         const data = metric.toJson()
         const isCreating = !data[Widget.ID_KEY];
-        const method = isCreating ? 'post' : 'put';
         const url = isCreating ? '/cards' : '/cards/' + data[Widget.ID_KEY];
-        return this.client[method](url, data)
+        return this.client.post(url, data)
             .then(r => r.json())
             .then((response: { data: any; }) => response.data || {})
             .catch(e => Promise.reject(e))
@@ -82,7 +81,8 @@ export default class MetricService {
 
     /**
      * Fetch sessions from the server.
-     * @param filter 
+     * @param metricId {String}
+     * @param filter
      * @returns 
      */
      fetchSessions(metricId: string, filter: any): Promise<any> {

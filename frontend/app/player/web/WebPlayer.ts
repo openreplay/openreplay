@@ -76,7 +76,9 @@ export default class WebPlayer extends Player {
     // this.updateMarketTargets() ??
   }
 
-  scaleFullPage =() => {
+  scaleFullPage = () => {
+    window.removeEventListener('resize', this.scale)
+    window.addEventListener('resize', this.screen.scaleFullPage)
     return this.screen.scaleFullPage()
   }
 

@@ -35,7 +35,6 @@ function FilterSeries(props: Props) {
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter)
-    console.log('hi', filterIndex, filter)
     observeChanges()
   }
 

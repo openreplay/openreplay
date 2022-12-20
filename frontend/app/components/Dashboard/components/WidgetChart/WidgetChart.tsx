@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import CustomMetriLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetriLineChart';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
@@ -25,6 +25,7 @@ interface Props {
     metric: any;
     isWidget?: boolean;
     isTemplate?: boolean;
+    isPreview?: boolean;
 }
 
 function WidgetChart(props: Props) {
@@ -84,7 +85,7 @@ function WidgetChart(props: Props) {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
             prevMetricRef.current = metric;
             return
-        };
+        }
         prevMetricRef.current = metric;
         const timestmaps = drillDownPeriod.toTimestamps();
         const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
@@ -179,6 +180,14 @@ function WidgetChart(props: Props) {
             }
         }
         if (metricType === CLICKMAP) {
+            console.log(props.isPreview)
+            if (!props.isPreview) {
+                return (
+                    <div>
+                        <img src={metric.thumbnail} alt="clickmap thumbnail" />
+                    </div>
+                )
+            }
             return (
                 <ClickMapCard />
             )
