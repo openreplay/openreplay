@@ -199,6 +199,7 @@ def get_card_funnel_issues(projectId: int, metric_id: Union[int, str],
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}/issues/{issueId}/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues/{issueId}/sessions', tags=["customMetrics"])
 def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: str,
@@ -211,6 +212,7 @@ def get_metric_funnel_issue_sessions(projectId: int, metric_id: int, issueId: st
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}/errors', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}/errors', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/errors', tags=["customMetrics"])
 def get_custom_metric_errors_list(projectId: int, metric_id: int,
@@ -233,6 +235,7 @@ def get_card_chart(projectId: int, metric_id: int, data: schemas.CardChartSchema
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.put('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
@@ -245,6 +248,7 @@ def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCar
     return {"data": data}
 
 
+@app.post('/{projectId}/cards/{metric_id}/status', tags=["dashboard"])
 @app.post('/{projectId}/metrics/{metric_id}/status', tags=["dashboard"])
 @app.put('/{projectId}/metrics/{metric_id}/status', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
@@ -257,6 +261,7 @@ def update_custom_metric_state(projectId: int, metric_id: int,
                                             status=data.active)}
 
 
+@app.delete('/{projectId}/cards/{metric_id}', tags=["dashboard"])
 @app.delete('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):

@@ -107,7 +107,7 @@ def __is_click_map(data: schemas.CreateCardSchema):
 
 def __get_click_map_chat(project_id, user_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
-        return {}
+        return None
     data.series[0].filter.startDate = data.startTimestamp
     data.series[0].filter.endDate = data.endTimestamp
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
