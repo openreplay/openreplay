@@ -161,8 +161,8 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	}
 	conn.updateSessionIssues(sessionID, 0, getIssueScore(e))
 	if e.Type == "custom" {
-		if err := conn.webCustomEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload); err != nil {
-			log.Printf("insert web issue event err: %s", err)
+		if err := conn.webCustomEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
+			log.Printf("insert web custom event err: %s", err)
 		}
 	}
 	return nil
