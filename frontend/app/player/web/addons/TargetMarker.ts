@@ -66,12 +66,12 @@ export default class TargetMarker {
     if (!parentEl) return {top:0, left:0, width:0,height:0} //TODO: can be initialized(?) on mounted screen only
     const { top, left, width, height } = el.getBoundingClientRect()
     const s = this.screen.getScale()
-    const scrinRect = this.screen.overlay.getBoundingClientRect() //this.screen.getBoundingClientRect() (now private)
+    const screenRect = this.screen.overlay.getBoundingClientRect() //this.screen.getBoundingClientRect() (now private)
     const parentRect = parentEl.getBoundingClientRect()
 
     return {
-      top: top*s + scrinRect.top - parentRect.top,
-      left: left*s + scrinRect.left - parentRect.left,
+      top: top*s + screenRect.top - parentRect.top,
+      left: left*s + screenRect.left - parentRect.left,
       width: width*s,
       height: height*s,
     }
@@ -142,17 +142,21 @@ export default class TargetMarker {
         return a + b.count
       }, 0);
 
+      this.clickMapOverlay?.remove()
       const overlay = document.createElement("div")
-      Object.assign(overlay.style, clickmapStyles.overlayStyle)
+      const iframeSize = this.screen.iframeStylesRef
+      console.log(iframeSize)
+      const scaleRatio = this.screen.getScale()
+      Object.assign(overlay.style, clickmapStyles.overlayStyle({ height: iframeSize.height, width: iframeSize.width, scale: scaleRatio }))
 
       this.clickMapOverlay = overlay
       selections.forEach((s, i) => {
         const el = this.screen.getElementBySelector(s.selector);
+        console.log(el, s.selector)
         if (!el) return;
 
         const bubbleContainer = document.createElement("div")
         const {top, left, width, height} = el.getBoundingClientRect()
-
         const totalClicks = document.createElement("div")
         totalClicks.innerHTML = `${s.count} ${s.count !== 1 ? 'Clicks' : 'Click'}`
         Object.assign(totalClicks.style, clickmapStyles.totalClicks)
@@ -177,21 +181,32 @@ export default class TargetMarker {
         smallClicksBubble.id = smallClicksId
         this.smallClicks.push(smallClicksBubble)
 
-        border.onclick = () => {
-            this.clickContainers.forEach(container => {
-              if (container.id === containerId) {
-                container.style.visibility = "visible"
-              } else {
-                container.style.visibility = "hidden"
-              }
-            })
-            this.smallClicks.forEach(container => {
-              if (container.id !== smallClicksId) {
-                container.style.visibility = "visible"
-              } else {
-                container.style.visibility = "hidden"
-              }
-            })
+        border.onclick = (e) => {
+          e.stopPropagation()
+          this.clickContainers.forEach(container => {
+            if (container.id === containerId) {
+              container.style.visibility = "visible"
+            } else {
+              container.style.visibility = "hidden"
+            }
+          })
+          this.smallClicks.forEach(container => {
+            if (container.id !== smallClicksId) {
+              container.style.visibility = "visible"
+            } else {
+              container.style.visibility = "hidden"
+            }
+          })
+        }
+
+        overlay.onclick = (e) => {
+          e.stopPropagation()
+          this.clickContainers.forEach(container => {
+            container.style.visibility = "hidden"
+          })
+          this.smallClicks.forEach(container => {
+            container.style.visibility = "visible"
+          })
         }
 
         Object.assign(smallClicksBubble.style, clickmapStyles.clicks)
@@ -201,8 +216,7 @@ export default class TargetMarker {
         overlay.appendChild(border)
       });
 
-      this.screen.document.body.appendChild(overlay)
-      // this.store.update({ markedTargets });
+      this.screen.getParentElement().appendChild(overlay)
     } else {
       this.store.update({ markedTargets: null });
       this.clickMapOverlay?.remove()

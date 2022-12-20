@@ -18,7 +18,7 @@ export default class PlayerBlock extends React.PureComponent {
 
     const shouldShowSubHeader = !fullscreen && !fullView && !isMultiview && !isClickmap
     return (
-      <div className={cn(styles.playerBlock, 'flex flex-col overflow-x-hidden')} style={{ minWidth: isMultiview || isClickmap ? '100%' : undefined }}>
+      <div className={cn(styles.playerBlock, 'flex flex-col', !isClickmap ? 'overflow-x-hidden' : 'overflow-visible')} style={{ zIndex: isClickmap ? 1 : undefined, minWidth: isMultiview || isClickmap ? '100%' : undefined }}>
         {shouldShowSubHeader ? (
           <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
         ) : null}

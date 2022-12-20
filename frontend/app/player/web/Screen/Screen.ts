@@ -117,6 +117,10 @@ export default class Screen {
     return this.iframe.contentDocument;
   }
 
+  get iframeStylesRef(): CSSStyleDeclaration {
+    return this.iframe.style
+  }
+
   private boundingRect: DOMRect | null  = null;
   private getBoundingClientRect(): DOMRect {
      if (this.boundingRect === null) {
@@ -216,16 +220,25 @@ export default class Screen {
   }
 
   scaleFullPage() {
-    const { height, width } = this.document.body.getBoundingClientRect();
-    this.cursor.toggle(false)
-    const offsetHeight = this.parentElement.getBoundingClientRect().height
     if (!this.parentElement) return;
+    const { height: boxHeight, width: boxWidth } = this.parentElement.getBoundingClientRect();
+    const { height, width } = this.document.body.getBoundingClientRect();
+    this.overlay.remove()
 
-    this.scaleRatio = 1
-    this.screen.style.transform =  `scale(1) translate(-50%, -50%)`;
-    this.screen.style.overflow = 'scroll';
-    this.screen.style.height = `${offsetHeight  - 50}px`;
+    this.scaleRatio = boxWidth/width;
+    if (this.scaleRatio > 1) {
+      this.scaleRatio = 1;
+    } else {
+      this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
+    }
+
+    this.screen.style.transform =  `scale(${this.scaleRatio})`;
+    this.screen.style.width = width + 'px';
+    this.screen.style.height =  height + 'px';
+    this.screen.style.top = '0';
+    this.screen.style.left = '0';
     this.iframe.style.width = width + 'px';
     this.iframe.style.height = height + 'px';
   }
+
 }

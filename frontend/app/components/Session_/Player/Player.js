@@ -72,9 +72,9 @@ function Player(props) {
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className="relative flex-1 overflow-hidden">
+      <div className={cn("relative flex-1", isClickmap ? 'overflow-visible' : 'overflow-hidden')}>
         <Overlay nextId={nextId} closedLive={closedLive} isClickmap={isClickmap} />
-        <div className={stl.screenWrapper} ref={screenWrapper} />
+        <div className={cn(stl.screenWrapper, isClickmap && '!overflow-y-scroll')} ref={screenWrapper} />
       </div>
       {!fullscreen && !!bottomBlock && (
         <div style={{ maxWidth, width: '100%' }}>

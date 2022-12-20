@@ -112,7 +112,7 @@ function WidgetView(props: Props) {
                     <WidgetPreview className="mt-8" name={widget.name} />
                     {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                         <>
-                            {(widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" />}
+                            {(widget.metricType === 'table' || widget.metricType === 'timeseries' || widget.metricType === 'clickMap') && <WidgetSessions className="mt-8" />}
                             {widget.metricType === 'funnel' && <FunnelIssues />}
                         </>
                     )}

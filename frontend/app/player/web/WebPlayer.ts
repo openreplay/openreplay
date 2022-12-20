@@ -1,6 +1,6 @@
 import { Log, LogLevel } from './types'
 
-import type { Store } from '../common/types'
+import type { Store } from 'App/player'
 import Player, { State as PlayerState } from '../player/Player'
 
 import MessageManager from './MessageManager'
