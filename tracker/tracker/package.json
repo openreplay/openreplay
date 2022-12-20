@@ -21,10 +21,12 @@
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
     "build": "npm run clean && npm run tscRun && npm run rollup && npm run compile",
     "prepare": "cd ../../ && husky install tracker/.husky/",
-    "lint-front": "lint-staged"
+    "lint-front": "lint-staged",
+    "test": "jest"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
+    "@jest/globals": "^29.3.1",
     "@rollup/plugin-babel": "^5.0.3",
     "@rollup/plugin-node-resolve": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^5.30.0",
@@ -33,12 +35,15 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "husky": "^8.0.1",
+    "jest": "^29.3.1",
+    "jest-environment-jsdom": "^29.3.1",
     "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "replace-in-files": "^2.0.3",
     "rollup": "^2.17.0",
     "rollup-plugin-terser": "^6.1.0",
     "semver": "^6.3.0",
+    "ts-jest": "^29.0.3",
     "typescript": "4.6.0-dev.20211126"
   },
   "dependencies": {
