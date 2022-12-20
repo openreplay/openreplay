@@ -37,6 +37,7 @@ function WebPlayer(props: any) {
     insightsFilters,
     insights,
     jumpTimestamp,
+    onMarkerClick,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
@@ -72,11 +73,13 @@ function WebPlayer(props: any) {
           setShowNote(true);
         }
       });
+    } else {
+      WebPlayerInst.setMarkerClick(onMarkerClick)
     }
 
-    const jumptTime = props.query.get('jumpto');
-    if (jumptTime) {
-      WebPlayerInst.jump(parseInt(jumptTime));
+    const jumpToTime = props.query.get('jumpto');
+    if (jumpToTime) {
+      WebPlayerInst.jump(parseInt(jumpToTime));
     }
 
     return () => WebPlayerInst.clean();

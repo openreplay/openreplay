@@ -39,6 +39,7 @@ export default class TargetMarker {
   private clickMapOverlay: HTMLDivElement
   private clickContainers: HTMLDivElement[] = []
   private smallClicks: HTMLDivElement[] = []
+  private onMarkerClick: (selector: string) => void
 	static INITIAL_STATE: State = {
 		markedTargets: null,
 		activeTargetIndex: 0
@@ -145,14 +146,12 @@ export default class TargetMarker {
       this.clickMapOverlay?.remove()
       const overlay = document.createElement("div")
       const iframeSize = this.screen.iframeStylesRef
-      console.log(iframeSize)
       const scaleRatio = this.screen.getScale()
       Object.assign(overlay.style, clickmapStyles.overlayStyle({ height: iframeSize.height, width: iframeSize.width, scale: scaleRatio }))
 
       this.clickMapOverlay = overlay
       selections.forEach((s, i) => {
         const el = this.screen.getElementBySelector(s.selector);
-        console.log(el, s.selector)
         if (!el) return;
 
         const bubbleContainer = document.createElement("div")
@@ -183,6 +182,7 @@ export default class TargetMarker {
 
         border.onclick = (e) => {
           e.stopPropagation()
+          this.onMarkerClick?.(s.selector)
           this.clickContainers.forEach(container => {
             if (container.id === containerId) {
               container.style.visibility = "visible"
@@ -224,6 +224,10 @@ export default class TargetMarker {
       this.smallClicks = []
       this.clickContainers = []
     }
+  }
+
+  setOnMarkerClick(cb: (selector: string) => void) {
+    this.onMarkerClick = cb
   }
 
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import {
   edit,
@@ -43,7 +43,6 @@ function FilterSeries(props: Props) {
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter)
-    console.log('hi', filterIndex, filter)
     observeChanges()
   }
 

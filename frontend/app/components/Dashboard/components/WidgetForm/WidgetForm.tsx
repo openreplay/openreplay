@@ -12,20 +12,13 @@ import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
 import { TIMESERIES, TABLE, CLICKMAP } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
-import { toJS } from 'mobx';
-import Period, { LAST_30_DAYS } from 'Types/app/period';
+import { renderClickmapThumbnail } from './renderMap'
 
 interface Props {
   history: any;
   match: any;
   onDelete: () => void;
 }
-
-const metricIcons = {
-  timeseries: 'graph-up',
-  table: 'table',
-  funnel: 'funnel',
-};
 
 function WidgetForm(props: Props) {
   const {
@@ -88,8 +81,15 @@ function WidgetForm(props: Props) {
     metricStore.merge(obj);
   };
 
-  const onSave = () => {
+  const onSave = async () => {
     const wasCreating = !metric.exists();
+    if (isClickmap) {
+      try {
+        metric.thumbnail = await renderClickmapThumbnail()
+      } catch (e) {
+        console.error(e)
+      }
+    }
     metricStore.save(metric, dashboardId).then((metric: any) => {
       if (wasCreating) {
         if (parseInt(dashboardId) > 0) {
@@ -115,7 +115,6 @@ function WidgetForm(props: Props) {
     }
   };
 
-  console.log(toJS(metric));
   return (
     <div className="p-6">
       <div className="form-group">
@@ -194,7 +193,7 @@ function WidgetForm(props: Props) {
 
         {metric.series.length > 0 &&
           metric.series
-            .slice(0, isTable || isFunnel  || isClickmap? 1 : metric.series.length)
+            .slice(0, isTable || isFunnel  || isClickmap ? 1 : metric.series.length)
             .map((series: any, index: number) => (
               <div className="mb-2" key={series.name}>
                 <FilterSeries

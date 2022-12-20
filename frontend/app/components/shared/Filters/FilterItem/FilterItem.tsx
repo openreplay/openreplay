@@ -28,16 +28,15 @@ function FilterItem(props: Props) {
         });
     };
 
-    const onOperatorChange = (e: any, { name, value }: any) => {
+    const onOperatorChange = (e: any, { value }: any) => {
         props.onUpdate({ ...filter, operator: value });
     };
 
-    const onSourceOperatorChange = (e: any, { name, value }: any) => {
+    const onSourceOperatorChange = (e: any, { value }: any) => {
         props.onUpdate({ ...filter, sourceOperator: value });
     };
 
     const onUpdateSubFilter = (subFilter: any, subFilterIndex: any) => {
-        console.log(subFilter, subFilterIndex)
         props.onUpdate({
             ...filter,
             filters: filter.filters.map((i: any, index: any) => {
@@ -49,7 +48,6 @@ function FilterItem(props: Props) {
         });
     };
 
-    console.log('filterItem', filter)
     return (
         <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
             <div className="flex items-start w-full">

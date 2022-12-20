@@ -87,7 +87,9 @@ export default class WebPlayer extends Player {
     // this.updateMarketTargets() ??
   }
 
-  scaleFullPage =() => {
+  scaleFullPage = () => {
+    window.removeEventListener('resize', this.scale)
+    window.addEventListener('resize', this.screen.scaleFullPage)
     return this.screen.scaleFullPage()
   }
 
@@ -125,6 +127,10 @@ export default class WebPlayer extends Player {
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
     this.pause()
     this.targetMarker.injectTargets(...args)
+  }
+
+  setMarkerClick = (...args: Parameters<TargetMarker['setOnMarkerClick']>) => {
+    this.targetMarker.setOnMarkerClick(...args)
   }
 
 

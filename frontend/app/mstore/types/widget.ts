@@ -1,7 +1,6 @@
-import { makeAutoObservable, runInAction, observable, action } from "mobx"
+import { makeAutoObservable, runInAction } from "mobx"
 import FilterSeries from "./filterSeries";
 import { DateTime } from 'luxon';
-import { metricService, errorService } from "App/services";
 import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';
@@ -30,8 +29,8 @@ export default class Widget {
     config: any = {}
     page: number = 1
     limit: number = 5
+    thumbnail?: string
     params: any = { density: 70 }
-
 
     period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
     hasChanged: boolean = false
@@ -85,7 +84,7 @@ export default class Widget {
             this.metricFormat = json.metricFormat
             this.viewType = json.viewType
             this.name = json.name
-            this.series = json.series ? json.series.map((series: any) => new FilterSeries().fromJson(series)) : [],
+            this.series = json.series ? json.series.map((series: any) => new FilterSeries().fromJson(series)) : []
             this.dashboards = json.dashboards || []
             this.owner = json.ownerEmail
             this.lastModified = json.editedAt || json.createdAt ? DateTime.fromMillis(json.editedAt || json.createdAt) : null
@@ -93,6 +92,7 @@ export default class Widget {
             this.position = json.config.position
             this.predefinedKey = json.predefinedKey
             this.category = json.category
+            this.thumbnail = json.thumbnail
 
             if (period) {
                 this.period = period
@@ -130,6 +130,7 @@ export default class Widget {
             viewType: this.viewType,
             name: this.name,
             series: this.series.map((series: any) => series.toJson()),
+            thumbnail: this.thumbnail,
             config: {
                 ...this.config,
                 col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS) ? 4 : 2
@@ -156,7 +157,7 @@ export default class Widget {
     }
 
     fetchSessions(metricId: any, filter: any): Promise<any> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             metricService.fetchSessions(metricId, filter).then((response: any[]) => {
                 resolve(response.map((cat: { sessions: any[]; }) => {
                     return {
@@ -169,7 +170,7 @@ export default class Widget {
     }
 
     fetchIssues(filter: any): Promise<any> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             metricService.fetchIssues(filter).then((response: any) => {
                 const significantIssues = response.issues.significant ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue)) : []
                 const insignificantIssues = response.issues.insignificant ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue)) : []
