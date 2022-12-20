@@ -17,7 +17,6 @@ import (
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
-	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
@@ -59,7 +58,6 @@ func main() {
 	// Init modules
 	saver := datasaver.New(pg, producer)
 	saver.InitStats()
-	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
 		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
@@ -71,8 +69,6 @@ func main() {
 
 	// Handler logic
 	msgHandler := func(msg messages.Message) {
-		statsLogger.Collect(msg)
-
 		// Just save session data into db without additional checks
 		if err := saver.InsertMessage(msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
