@@ -244,7 +244,7 @@ export default class MessageManager {
     .finally(this.onFileReadFinally)
 
     // load devtools
-    if (this.session.devtoolsURL.length) {
+    if (this.session.devtoolsURL?.length) {
       this.state.update({ devtoolsLoading: true })
       loadFiles(this.session.devtoolsURL, createNewParser())
       .catch(() =>

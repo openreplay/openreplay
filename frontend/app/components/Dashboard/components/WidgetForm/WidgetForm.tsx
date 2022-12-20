@@ -76,10 +76,6 @@ function WidgetForm(props: Props) {
       }
       if (value === CLICKMAP) {
         obj['viewType'] = 'chart';
-        // @ts-ignore
-        const { start, end } = Period({ rangeName: LAST_30_DAYS })
-        obj["startTimestamp"] = start;
-        obj["endTimestamp"] = end;
 
         if (metric.series[0].filter.filters.length < 1) {
             metric.series[0].filter.addFilter({

@@ -19,9 +19,16 @@ function ClickMapCard({ setCustomSession, visitedEvents }: any) {
   if (!visitedEvents || !visitedEvents.length) {
     return <div className="p-4">loading</div>
   }
+  const searchUrl = metricStore.instance.series[0].filter.filters[0].value[0]
+  const jumpToEvent = metricStore.instance.data.events.find((evt: Record<string, any>) => {
+    if (searchUrl) return evt.path.includes(searchUrl)
+    return evt
+  })
+  const jumpTimestamp = (jumpToEvent.timestamp - metricStore.instance.data.startTs) + jumpToEvent.domBuildingTime
+  console.log(jumpTimestamp, jumpToEvent, searchUrl)
   return (
     <div>
-        <WebPlayer isClickmap customSession={metricStore.instance.data}/>
+        <WebPlayer isClickmap customSession={metricStore.instance.data} customTimestamp={jumpTimestamp} />
     </div>
   )
 }

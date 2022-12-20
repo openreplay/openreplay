@@ -36,6 +36,7 @@ function WebPlayer(props: any) {
     visitedEvents,
     insightsFilters,
     insights,
+    jumpTimestamp,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
@@ -87,7 +88,7 @@ function WebPlayer(props: any) {
     contextValue.player && contextValue.player.play()
     if (isClickmap && isPlayerReady && insights.size > 0) {
       setTimeout(() => {
-        contextValue.player.jump(500)
+        contextValue.player.jump(jumpTimestamp)
         contextValue.player.pause()
         contextValue.player.scaleFullPage()
         setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
@@ -96,7 +97,7 @@ function WebPlayer(props: any) {
     return () => {
       isPlayerReady && contextValue.player.showClickmap(null)
     }
-  }, [insights, isPlayerReady])
+  }, [insights, isPlayerReady, jumpTimestamp])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(

@@ -1,6 +1,6 @@
 import { Log, LogLevel } from './types'
 
-import type { Store } from '../common/types'
+import type { Store } from 'App/player'
 import Player, { State as PlayerState } from '../player/Player'
 
 import MessageManager from './MessageManager'
@@ -33,9 +33,9 @@ export default class WebPlayer extends Player {
   constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
     let initialLists = live ? {} : {
       event: session.events.toJSON(),
-      stack: session.stackEvents.toJSON(),
-      resource: session.resources.toJSON(), // MBTODO: put ResourceTiming in file
-      exceptions: session.errors.toJSON().map(({ time, errorId, name }: any) =>
+      stack: session.stackEvents?.toJSON() || [],
+      resource: session.resources?.toJSON() || [], // MBTODO: put ResourceTiming in file
+      exceptions: session.errors?.toJSON().map(({ time, errorId, name }: any) =>
         Log({
           level: LogLevel.ERROR,
           value: name,
