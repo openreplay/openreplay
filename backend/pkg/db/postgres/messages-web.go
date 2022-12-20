@@ -91,61 +91,21 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) (err error) {
-	tx, err := conn.c.Begin()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if rollbackErr := tx.rollback(); rollbackErr != nil {
-				log.Printf("rollback err: %s", rollbackErr)
-			}
-		}
-	}()
+func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) error {
 	errorID := e.ID(projectID)
-
-	if err = tx.exec(`
-		INSERT INTO errors
-			(error_id, project_id, source, name, message, payload)
-		VALUES
-			($1, $2, $3, $4, $5, $6::jsonb)
-		ON CONFLICT DO NOTHING`,
-		errorID, projectID, e.Source, e.Name, e.Message, e.Payload,
-	); err != nil {
-		return err
+	if err := conn.webErrors.Append(errorID, projectID, e.Source, e.Name, e.Message, e.Payload); err != nil {
+		log.Printf("insert web error err: %s", err)
 	}
-	if err = tx.exec(`
-		INSERT INTO events.errors
-			(session_id, message_id, timestamp, error_id)
-		VALUES
-			($1, $2, $3, $4)
-		`,
-		sessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID,
-	); err != nil {
-		return err
+	if err := conn.webErrorEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID); err != nil {
+		log.Printf("insert web error event err: %s", err)
 	}
-	if err = tx.exec(`
-		UPDATE sessions SET errors_count = errors_count + 1, issue_score = issue_score + 1000
-		WHERE session_id = $1`,
-		sessionID,
-	); err != nil {
-		return err
-	}
-	err = tx.commit()
-
-	// Insert tags
-	sqlRequest := `
-		INSERT INTO public.errors_tags (
-			session_id, message_id, error_id, key, value
-		) VALUES (
-			$1, $2, $3, $4, $5
-		) ON CONFLICT DO NOTHING`
+	conn.updateSessionIssues(sessionID, 1, 1000)
 	for key, value := range e.Tags {
-		conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), errorID, key, value)
+		if err := conn.webErrorTags.Append(sessionID, truncSqIdx(e.MessageID), errorID, key, value); err != nil {
+			log.Printf("insert web error token err: %s", err)
+		}
 	}
-
-	return
+	return nil
 }
 
 func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, savePayload bool, e *NetworkRequest) error {
