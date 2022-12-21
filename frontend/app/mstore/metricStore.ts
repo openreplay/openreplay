@@ -20,6 +20,9 @@ export default class MetricStore {
   sessionsPageSize: number = 10;
   listView?: boolean = false
 
+  clickMapSearch = ''
+  clickMapLabel = ''
+
   constructor() {
     makeAutoObservable(this);
   }
@@ -36,6 +39,11 @@ export default class MetricStore {
   updateKey(key: string, value: any) {
     // @ts-ignore
     this[key] = value;
+  }
+
+  changeClickMapSearch(val: string, label: string) {
+    this.clickMapSearch = val
+    this.clickMapLabel = label
   }
 
   merge(object: any) {
@@ -83,12 +91,12 @@ export default class MetricStore {
   }
 
   // API Communication
-  save(metric: Widget, dashboardId?: string): Promise<any> {
+  save(metric: Widget): Promise<any> {
     const wasCreating = !metric.exists();
     this.isSaving = true;
     return new Promise((resolve, reject) => {
       metricService
-        .saveMetric(metric, dashboardId)
+        .saveMetric(metric)
         .then((metric: any) => {
           const _metric = new Widget().fromJson(metric);
           if (wasCreating) {
