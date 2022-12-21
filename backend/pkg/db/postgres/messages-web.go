@@ -58,16 +58,19 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 }
 
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
-	sqlRequest := `
-		INSERT INTO events.clicks
-			(session_id, message_id, timestamp, label, selector, url)
-		(SELECT
-			$1, $2, $3, NULLIF($4, ''), $5, host || path
-			FROM events.pages
-			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
-		)
-		`
-	conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector)
+	url := e.Url
+	if url == "" {
+		// TODO: remove debug log
+		log.Printf("need to get url from db")
+		conn.c.QueryRow(`
+			SELECT host || path 
+			FROM events.pages 
+			WHERE session_id = $1 AND timestamp <= $2 ORDER BY timestamp DESC LIMIT 1`,
+			sessionID, e.Timestamp)
+	}
+	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, url); err != nil {
+		log.Printf("insert web click err: %s", err)
+	}
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 0)
 	// Add new value set to autocomplete bulk
