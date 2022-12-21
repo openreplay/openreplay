@@ -39,7 +39,7 @@ export default class TargetMarker {
   private clickMapOverlay: HTMLDivElement
   private clickContainers: HTMLDivElement[] = []
   private smallClicks: HTMLDivElement[] = []
-  private onMarkerClick: (selector: string) => void
+  private onMarkerClick: (selector: string, innerText: string) => void
 	static INITIAL_STATE: State = {
 		markedTargets: null,
 		activeTargetIndex: 0
@@ -182,7 +182,8 @@ export default class TargetMarker {
 
         border.onclick = (e) => {
           e.stopPropagation()
-          this.onMarkerClick?.(s.selector)
+          const innerText = el.innerText.length > 25 ? `${el.innerText.slice(0, 20)}...` : el.innerText
+          this.onMarkerClick?.(s.selector, innerText)
           this.clickContainers.forEach(container => {
             if (container.id === containerId) {
               container.style.visibility = "visible"
@@ -201,6 +202,7 @@ export default class TargetMarker {
 
         overlay.onclick = (e) => {
           e.stopPropagation()
+          this.onMarkerClick('', '')
           this.clickContainers.forEach(container => {
             container.style.visibility = "hidden"
           })

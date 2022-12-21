@@ -7,7 +7,9 @@ import { setCustomSession } from 'App/duck/sessions'
 
 function ClickMapCard({ setCustomSession, visitedEvents }: any) {
     const { metricStore } = useStore();
-    const onMarkerClick = (s: string) => console.log(s)
+    const onMarkerClick = (s: string, innerText: string) => {
+        metricStore.changeClickMapSearch(s, innerText)
+    }
 
     React.useEffect(() => {
         if (metricStore.instance.data.mobsUrl) {

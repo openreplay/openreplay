@@ -30,7 +30,7 @@ interface Props {
 
 function WidgetChart(props: Props) {
     const { isWidget = false, metric, isTemplate } = props;
-    const { dashboardStore, metricStore } = useStore();
+    const { dashboardStore, metricStore, sessionStore } = useStore();
     const _metric: any = metricStore.instance;
     const period = dashboardStore.period;
     const drillDownPeriod = dashboardStore.drillDownPeriod;
@@ -180,7 +180,6 @@ function WidgetChart(props: Props) {
             }
         }
         if (metricType === CLICKMAP) {
-            console.log(props.isPreview)
             if (!props.isPreview) {
                 return (
                     <div>

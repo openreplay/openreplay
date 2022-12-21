@@ -176,11 +176,11 @@ export default class Screen {
     return this.getElementsFromInternalPoint(this.getInternalViewportCoordinates(point));
   }
 
-  getElementBySelector(selector: string): Element | null {
+  getElementBySelector(selector: string) {
     if (!selector) return null;
     try {
       const safeSelector = selector.replace(/:/g, '\\\\3A ').replace(/\//g, '\\/');
-      return this.document?.querySelector(safeSelector) || null;
+      return this.document?.querySelector<HTMLElement>(safeSelector) || null;
     } catch (e) {
       console.error("Can not select element. ", e)
       return null
