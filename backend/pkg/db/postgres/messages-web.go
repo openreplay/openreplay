@@ -72,6 +72,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 			log.Printf("can't get url from db: %s", err)
 		}
 	}
+	log.Printf("click url: %s", url)
 	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, url); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
