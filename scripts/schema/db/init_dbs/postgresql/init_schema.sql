@@ -662,6 +662,7 @@ $$
                 timestamp  bigint          NOT NULL,
                 label      text DEFAULT NULL,
                 url        text DEFAULT '' NOT NULL,
+                path       text,
                 selector   text DEFAULT '' NOT NULL,
                 PRIMARY KEY (session_id, message_id)
             );
@@ -675,7 +676,8 @@ $$
             CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp, selector);
             CREATE INDEX clicks_session_id_timestamp_idx ON events.clicks (session_id, timestamp);
             CREATE INDEX clicks_selector_idx ON events.clicks (selector);
-
+            CREATE INDEX clicks_path_idx ON events.clicks (path);
+            CREATE INDEX clicks_path_gin_idx ON events.clicks USING GIN (path gin_trgm_ops);
 
             CREATE TABLE events.inputs
             (

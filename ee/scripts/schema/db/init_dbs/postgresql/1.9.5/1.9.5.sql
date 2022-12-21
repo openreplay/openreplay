@@ -88,6 +88,11 @@ LANGUAGE plpgsql;
 DROP TYPE IF EXISTS metric_type;
 DROP TYPE IF EXISTS metric_view_type;
 
+ALTER TABLE IF EXISTS events.clicks
+    ADD COLUMN IF NOT EXISTS path text;
+
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_selector_idx ON events.clicks (selector);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_path_idx ON events.clicks (path);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_path_gin_idx ON events.clicks USING GIN (path gin_trgm_ops);

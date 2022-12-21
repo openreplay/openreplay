@@ -176,12 +176,6 @@ class WeeklyReportConfigSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class GetHeatmapPayloadSchema(BaseModel):
-    startDate: int = Field(TimeUTC.now(delta_days=-30))
-    endDate: int = Field(TimeUTC.now())
-    url: str = Field(...)
-
-
 class DatadogSchema(BaseModel):
     apiKey: str = Field(...)
     applicationKey: str = Field(...)
@@ -1219,3 +1213,29 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
         values["events"] = n_events
         values["filters"] = n_filters
         return values
+
+
+class IssueFilterType(str, Enum):
+    _on_selector = ClickEventExtraOperator._on_selector.value
+
+
+class IssueAdvancedFilter(BaseModel):
+    type: IssueFilterType = Field(default=IssueFilterType._on_selector)
+    value: List[str] = Field(default=[])
+    operator: SearchEventOperator = Field(default=SearchEventOperator._is)
+
+
+class ClickMapFilterSchema(BaseModel):
+    value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
+    type: Literal[FilterType.issue] = Field(...)
+    operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
+    # source: Optional[Union[ErrorSource, str]] = Field(default=None)
+    filters: List[IssueAdvancedFilter] = Field(default=[])
+
+
+class GetHeatmapPayloadSchema(BaseModel):
+    startDate: int = Field(TimeUTC.now(delta_days=-30))
+    endDate: int = Field(TimeUTC.now())
+    url: str = Field(...)
+    # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
+    filters: List[ClickMapFilterSchema] = Field(default=[])
