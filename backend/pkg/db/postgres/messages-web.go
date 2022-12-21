@@ -49,6 +49,8 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
+	// TODO: delete debug log
+	log.Printf("page event, host: %s, path: %s", host, path)
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 1)
 	// Add new value set to autocomplete bulk
@@ -62,11 +64,13 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 	if url == "" {
 		// TODO: remove debug log
 		log.Printf("need to get url from db")
-		conn.c.QueryRow(`
+		if err := conn.c.QueryRow(`
 			SELECT host || path 
 			FROM events.pages 
 			WHERE session_id = $1 AND timestamp <= $2 ORDER BY timestamp DESC LIMIT 1`,
-			sessionID, e.Timestamp)
+			sessionID, e.Timestamp).Scan(&url); err != nil {
+			log.Printf("can't get url from db: %s", err)
+		}
 	}
 	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, url); err != nil {
 		log.Printf("insert web click err: %s", err)
