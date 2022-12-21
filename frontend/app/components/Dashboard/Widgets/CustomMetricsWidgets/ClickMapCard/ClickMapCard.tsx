@@ -17,9 +17,9 @@ function ClickMapCard({ setCustomSession, visitedEvents }: any) {
         }
     }, [metricStore.instance.data.mobsUrl])
 
-    if (!metricStore.instance.data?.mobsUrl) return <div className="p-2">No Data for selected period or URL.</div>
+    if (!metricStore.instance.data?.mobsUrl) return <div className="py-2">No Data for selected period or URL.</div>
     if (!visitedEvents || !visitedEvents.length) {
-        return <div className="p-2">Loading session</div>
+        return <div className="py-2">Loading session</div>
     }
 
     const searchUrl = metricStore.instance.series[0].filter.filters[0].value[0]
