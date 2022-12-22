@@ -42,6 +42,7 @@ type Conn struct {
 	webIssueEvents    Bulk
 	webCustomEvents   Bulk
 	webClickEvents    Bulk
+	webNetworkRequest Bulk
 	sessionUpdates    map[uint64]*sessionUpdates
 	batchQueueLimit   int
 	batchSizeLimit    int
@@ -217,6 +218,14 @@ func (conn *Conn) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webClickEvents bulk: %s", err)
 	}
+	conn.webNetworkRequest, err = NewBulk(conn.c,
+		"events_common.requests",
+		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success)",
+		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d, $%d, $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
+		13, 200)
+	if err != nil {
+		log.Fatalf("can't create webNetworkRequest bulk: %s", err)
+	}
 }
 
 func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp string, value string) {
@@ -309,6 +318,9 @@ func (conn *Conn) sendBulks() {
 	}
 	if err := conn.webClickEvents.Send(); err != nil {
 		log.Printf("webClickEvents bulk send err: %s", err)
+	}
+	if err := conn.webNetworkRequest.Send(); err != nil {
+		log.Printf("webNetworkRequest bulk send err: %s", err)
 	}
 }
 

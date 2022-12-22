@@ -49,8 +49,6 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
 	}
-	// TODO: delete debug log
-	log.Printf("page event, host: %s, path: %s", host, path)
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 1)
 	// Add new value set to autocomplete bulk
@@ -87,9 +85,6 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 		Label:     e.Label,
 		Selector:  e.Selector,
 	})
-	// TODO: debug log
-	log.Println("add new click event: ", e)
-	log.Println("clicks for current session: ", len(conn.clicks[sessionID]))
 	return nil
 }
 
@@ -149,29 +144,8 @@ func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, sa
 	if err != nil {
 		return err
 	}
-
-	sqlRequest := `
-		INSERT INTO events_common.requests (
-			session_id, timestamp, seq_index, 
-			url, host, path, query,
-			request_body, response_body, status_code, method,
-			duration, success
-		) VALUES (
-			$1, $2, $3, 
-			left($4, 2700), $5, $6, $7,
-			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
-			$12, $13
-		) ON CONFLICT DO NOTHING`
-	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index),
-		e.URL, host, path, query,
-		request, response, e.Status, url.EnsureMethod(e.Method),
-		e.Duration, e.Status < 400,
-	)
-
-	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.URL)+len(host)+len(path)+len(query)+
-		len(e.Request)+len(e.Response)+len(url.EnsureMethod(e.Method))+8*5+1)
+	conn.webNetworkRequest.Append(sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.URL, host, path, query,
+		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400)
 	return nil
 }
 
