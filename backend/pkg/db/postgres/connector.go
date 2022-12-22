@@ -50,6 +50,7 @@ type Conn struct {
 	sqlRequestTime    syncfloat64.Histogram
 	sqlRequestCounter syncfloat64.Counter
 	chConn            CH
+	clicks            map[uint64][]*Click
 }
 
 func (conn *Conn) SetClickHouse(ch CH) {
@@ -71,6 +72,7 @@ func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 		sessionUpdates:  make(map[uint64]*sessionUpdates),
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
+		clicks:          make(map[uint64][]*Click),
 	}
 	conn.initMetrics(metrics)
 	conn.c, err = NewPool(c, conn.sqlRequestTime, conn.sqlRequestCounter)

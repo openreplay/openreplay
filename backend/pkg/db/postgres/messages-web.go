@@ -57,14 +57,14 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 	conn.insertAutocompleteValue(sessionID, projectID, "LOCATION", url.DiscardURLQuery(path))
 	conn.insertAutocompleteValue(sessionID, projectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
 	// Insert collected click events for the current session into the database (bulk)
-	list, ok := clicks[sessionID]
+	list, ok := conn.clicks[sessionID]
 	if !ok {
 		return nil
 	}
 	for _, click := range list {
 		conn.insertWebClickEvent(sessionID, path, click)
 	}
-	delete(clicks, sessionID)
+	delete(conn.clicks, sessionID)
 	return nil
 }
 
@@ -76,13 +76,11 @@ type Click struct {
 	Selector  string
 }
 
-var clicks map[uint64][]*Click
-
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
-	if _, ok := clicks[sessionID]; !ok {
-		clicks[sessionID] = make([]*Click, 0, 1)
+	if _, ok := conn.clicks[sessionID]; !ok {
+		conn.clicks[sessionID] = make([]*Click, 0, 1)
 	}
-	clicks[sessionID] = append(clicks[sessionID], &Click{
+	conn.clicks[sessionID] = append(conn.clicks[sessionID], &Click{
 		ProjectID: projectID,
 		MessageID: e.MessageID,
 		Timestamp: e.Timestamp,
