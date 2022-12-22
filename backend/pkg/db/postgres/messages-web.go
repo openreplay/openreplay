@@ -89,8 +89,6 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 }
 
 func (conn *Conn) insertWebClickEvent(sessionID uint64, url string, e *Click) {
-	//TODO: debug log
-	log.Println("insert web click event:", sessionID, url, e)
 	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, url); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
