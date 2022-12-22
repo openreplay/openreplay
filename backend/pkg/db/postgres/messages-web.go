@@ -56,31 +56,52 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 	// Add new value set to autocomplete bulk
 	conn.insertAutocompleteValue(sessionID, projectID, "LOCATION", url.DiscardURLQuery(path))
 	conn.insertAutocompleteValue(sessionID, projectID, "REFERRER", url.DiscardURLQuery(e.Referrer))
+	// Insert collected click events for the current session into the database (bulk)
+	list, ok := clicks[sessionID]
+	if !ok {
+		return nil
+	}
+	for _, click := range list {
+		conn.insertWebClickEvent(sessionID, path, click)
+	}
+	delete(clicks, sessionID)
 	return nil
 }
 
+type Click struct {
+	ProjectID uint32
+	MessageID uint64
+	Timestamp uint64
+	Label     string
+	Selector  string
+}
+
+var clicks map[uint64][]*Click
+
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
-	url := e.Url
-	if url == "" {
-		// TODO: remove debug log
-		log.Printf("need to get url from db")
-		if err := conn.c.QueryRow(`
-			SELECT host || path 
-			FROM events.pages 
-			WHERE session_id = $1 AND timestamp <= $2 ORDER BY timestamp DESC LIMIT 1`,
-			sessionID, e.Timestamp).Scan(&url); err != nil {
-			log.Printf("can't get url from db: %s", err)
-		}
+	if _, ok := clicks[sessionID]; !ok {
+		clicks[sessionID] = make([]*Click, 0, 1)
 	}
-	log.Printf("click url: %s", url)
+	clicks[sessionID] = append(clicks[sessionID], &Click{
+		ProjectID: projectID,
+		MessageID: e.MessageID,
+		Timestamp: e.Timestamp,
+		Label:     e.Label,
+		Selector:  e.Selector,
+	})
+	return nil
+}
+
+func (conn *Conn) insertWebClickEvent(sessionID uint64, url string, e *Click) {
+	//TODO: debug log
+	log.Println("web click event:", sessionID, url, e)
 	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, url); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 0)
 	// Add new value set to autocomplete bulk
-	conn.insertAutocompleteValue(sessionID, projectID, "CLICK", e.Label)
-	return nil
+	conn.insertAutocompleteValue(sessionID, e.ProjectID, "CLICK", e.Label)
 }
 
 func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *InputEvent) error {
