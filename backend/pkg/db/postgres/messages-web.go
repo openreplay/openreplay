@@ -43,6 +43,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 	if err != nil {
 		return err
 	}
+	log.Println("insert page event:", host, path)
 	// base_path is deprecated
 	if err = conn.webPageEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
