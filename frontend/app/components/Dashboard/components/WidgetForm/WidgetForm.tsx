@@ -73,7 +73,6 @@ function WidgetForm(props: Props) {
       }
       if (value === CLICKMAP) {
         obj['viewType'] = 'chart';
-        obj['metricValue'] = 'clicks'
         if (metric.series[0].filter.filters.length < 1) {
             metric.series[0].filter.addFilter({
                 ...clickmapFilter,
@@ -99,7 +98,9 @@ function WidgetForm(props: Props) {
         if (parseInt(dashboardId) > 0) {
           history.replace(withSiteId(dashboardMetricDetails(dashboardId, metric.metricId), siteId));
           const dashboard = dashboardStore.getDashboard(parseInt(dashboardId));
-          dashboardStore.addWidgetToDashboard(dashboard, [metric.metricId]);
+          if (dashboard) {
+            dashboardStore.addWidgetToDashboard(dashboard, [metric.metricId]);
+          }
         } else {
           history.replace(withSiteId(metricDetails(metric.metricId), siteId));
         }
@@ -177,18 +178,6 @@ function WidgetForm(props: Props) {
                 />
               </>
             )}
-
-          {metric.metricType === CLICKMAP && (
-              <>
-                <span className="mx-3">showing</span>
-                <Select
-                    name="metricValue"
-                    options={[{ value: 'clicks', label: 'Clicks' }, { value: 'rage_clicks', label: 'Click Rages' }]}
-                    defaultValue={metric.metricValue}
-                    onChange={writeOption}
-                />
-              </>
-          )}
 
         </div>
       </div>

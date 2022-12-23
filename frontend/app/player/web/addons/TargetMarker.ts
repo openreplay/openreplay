@@ -36,7 +36,7 @@ export interface State {
 
 
 export default class TargetMarker {
-  private clickMapOverlay: HTMLDivElement
+  private clickMapOverlay: HTMLDivElement | null = null
   private clickContainers: HTMLDivElement[] = []
   private smallClicks: HTMLDivElement[] = []
   private onMarkerClick: (selector: string, innerText: string) => void
@@ -137,7 +137,7 @@ export default class TargetMarker {
   }
 
 
-  injectTargets(selections: { selector: string, count: number }[] | null) {
+  injectTargets(selections: { selector: string, count: number, clickRage?: boolean }[] | null) {
     if (selections) {
       const totalCount = selections.reduce((a, b) => {
         return a + b.count
@@ -169,13 +169,13 @@ export default class TargetMarker {
         const containerId = `clickmap-bubble-${i}`
         bubbleContainer.id = containerId
         this.clickContainers.push(bubbleContainer)
-        Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left }))
+        Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left, height }))
 
         const border = document.createElement("div")
         Object.assign(border.style, clickmapStyles.highlight({ width, height, top, left }))
 
         const smallClicksBubble = document.createElement("div")
-        smallClicksBubble.innerHTML = '' + s.count
+        smallClicksBubble.innerHTML = `${s.count}`
         const smallClicksId =  containerId + '-small'
         smallClicksBubble.id = smallClicksId
         this.smallClicks.push(smallClicksBubble)
@@ -211,14 +211,14 @@ export default class TargetMarker {
           })
         }
 
-        Object.assign(smallClicksBubble.style, clickmapStyles.clicks)
+        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage }))
 
         border.appendChild(smallClicksBubble)
         overlay.appendChild(bubbleContainer)
         overlay.appendChild(border)
       });
 
-      this.screen.getParentElement().appendChild(overlay)
+      this.screen.getParentElement()?.appendChild(overlay)
     } else {
       this.store.update({ markedTargets: null });
       this.clickMapOverlay?.remove()

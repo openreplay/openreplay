@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite'
 import WebPlayer from 'App/components/Session/WebPlayer'
 import { connect } from 'react-redux'
 import { setCustomSession } from 'App/duck/sessions'
-import Period, { LAST_30_DAYS } from "Types/app/period";
 import { fetchInsights } from 'Duck/sessions';
 
 function ClickMapCard({
@@ -30,14 +29,12 @@ function ClickMapCard({
         if (visitedEvents.length) {
             const urlOptions = visitedEvents.map(({ url, host }: any) => ({ label: url, value: url, host }))
             const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
-            // @ts-ignore
-            // const { startDate, endDate, rangeValue } = Period({ rangeName: LAST_30_DAYS }).toJSON()
             const rangeValue = dashboardStore.drillDownPeriod.rangeValue
             const startDate = dashboardStore.drillDownPeriod.start
             const endDate = dashboardStore.drillDownPeriod.end
-            fetchInsights({ ...insightsFilters, url, startDate, endDate, rangeValue })
+            fetchInsights({ ...insightsFilters, url, startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
         }
-    }, [visitedEvents])
+    }, [visitedEvents, metricStore.clickMapFilter])
 
     if (!metricStore.instance.data.mobsUrl || insights.size === 0) {
         return (
