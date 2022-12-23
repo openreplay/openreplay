@@ -76,6 +76,7 @@ type Click struct {
 }
 
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
+	log.Println("url from message:", e.Url)
 	if _, ok := conn.clicks[sessionID]; !ok {
 		conn.clicks[sessionID] = make([]*Click, 0, 1)
 	}
