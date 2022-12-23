@@ -6,8 +6,9 @@ import { SegmentSelection, Button, Icon } from 'UI';
 import { observer } from 'mobx-react-lite';
 import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
-// import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import ClickMapRagePicker from "Components/Dashboard/components/ClickMapRagePicker";
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
+import { CLICKMAP, TABLE, TIMESERIES } from "App/constants/card";
 
 interface Props {
     className?: string;
@@ -19,8 +20,8 @@ function WidgetPreview(props: Props) {
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
     const metric: any = metricStore.instance;
-    const isTimeSeries = metric.metricType === 'timeseries';
-    const isTable = metric.metricType === 'table';
+    const isTimeSeries = metric.metricType === TIMESERIES;
+    const isTable = metric.metricType === TABLE;
     const drillDownFilter = dashboardStore.drillDownFilter;
     const disableVisualization = metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS;
     // const period = dashboardStore.drillDownPeriod;
@@ -85,6 +86,9 @@ function WidgetPreview(props: Props) {
                         </>
                     )}
                     <div className="mx-4" />
+                    {metric.metricType === CLICKMAP ? (
+                        <ClickMapRagePicker />
+                    ) : null}
                     <WidgetDateRange />
                     {/* add to dashboard */}
                     {metric.exists() && (
