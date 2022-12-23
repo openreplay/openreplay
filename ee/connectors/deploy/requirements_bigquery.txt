@@ -5,3 +5,4 @@ google-cloud-bigquery
 pandas==1.5.1
 PyYAML
 pandas-gbq
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
