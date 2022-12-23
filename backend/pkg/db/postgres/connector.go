@@ -212,9 +212,9 @@ func (conn *Conn) initBulks() {
 	}
 	conn.webClickEvents, err = NewBulk(conn.c,
 		"events.clicks",
-		"(session_id, message_id, timestamp, label, selector, url)",
-		"($%d, $%d, $%d, NULLIF($%d, ''), $%d, $%d)",
-		6, 200)
+		"(session_id, message_id, timestamp, label, selector, url, path)",
+		"($%d, $%d, $%d, NULLIF($%d, ''), $%d, $%d, $%d)",
+		7, 200)
 	if err != nil {
 		log.Fatalf("can't create webClickEvents bulk: %s", err)
 	}

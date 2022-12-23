@@ -60,7 +60,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 		return nil
 	}
 	for _, click := range list {
-		conn.insertWebClickEvent(sessionID, path, click)
+		conn.insertWebClickEvent(sessionID, host, path, click)
 	}
 	delete(conn.clicks, sessionID)
 	return nil
@@ -88,8 +88,8 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 	return nil
 }
 
-func (conn *Conn) insertWebClickEvent(sessionID uint64, url string, e *Click) {
-	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, url); err != nil {
+func (conn *Conn) insertWebClickEvent(sessionID uint64, host, path string, e *Click) {
+	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
 	// Accumulate session updates and exec inside batch with another sql commands
