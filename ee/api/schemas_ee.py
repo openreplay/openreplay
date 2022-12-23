@@ -39,6 +39,13 @@ class SignalsSchema(BaseModel):
     data: dict = Field(default={})
 
 
+class GetInsightsPayloadSchema(BaseModel):
+    startDate: int = Field(TimeUTC.now(delta_days=-1))
+    endDate: int = Field(TimeUTC.now())
+    timestep: str = Field(...)
+    selectedEvents: List[str] = Field(...)
+
+
 class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(None)
 
