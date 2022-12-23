@@ -90,7 +90,7 @@ function WidgetChart(props: Props) {
         const timestmaps = drillDownPeriod.toTimestamps();
         const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget, !isWidget ? drillDownPeriod : period);
-    }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
+    }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue]);
 
 
     const renderChart = () => {

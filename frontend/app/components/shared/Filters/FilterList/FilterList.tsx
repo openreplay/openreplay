@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import FilterItem from '../FilterItem';
 import { SegmentSelection, Tooltip } from 'UI';
 import { List } from 'immutable';

@@ -41,6 +41,7 @@ function WidgetForm(props: Props) {
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
   const writeOption = ({ value, name }: any) => {
+    console.log(name, value)
     value = Array.isArray(value) ? value : value.value;
     const obj: any = { [name]: value };
 
@@ -67,9 +68,12 @@ function WidgetForm(props: Props) {
         obj['metricOf'] = tableOptions[0].value;
         obj['viewType'] = 'table';
       }
+      if (metric.metricType === CLICKMAP && value !== CLICKMAP) {
+        metric.series[0].filter.removeFilter(0)
+      }
       if (value === CLICKMAP) {
         obj['viewType'] = 'chart';
-
+        obj['metricValue'] = 'clicks'
         if (metric.series[0].filter.filters.length < 1) {
             metric.series[0].filter.addFilter({
                 ...clickmapFilter,
@@ -90,7 +94,7 @@ function WidgetForm(props: Props) {
         console.error(e)
       }
     }
-    metricStore.save(metric, dashboardId).then((metric: any) => {
+    metricStore.save(metric).then((metric: any) => {
       if (wasCreating) {
         if (parseInt(dashboardId) > 0) {
           history.replace(withSiteId(dashboardMetricDetails(dashboardId, metric.metricId), siteId));
@@ -173,6 +177,19 @@ function WidgetForm(props: Props) {
                 />
               </>
             )}
+
+          {metric.metricType === CLICKMAP && (
+              <>
+                <span className="mx-3">showing</span>
+                <Select
+                    name="metricValue"
+                    options={[{ value: 'clicks', label: 'Clicks' }, { value: 'rage_clicks', label: 'Click Rages' }]}
+                    defaultValue={metric.metricValue}
+                    onChange={writeOption}
+                />
+              </>
+          )}
+
         </div>
       </div>
 

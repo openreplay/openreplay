@@ -4,9 +4,18 @@ import { observer } from 'mobx-react-lite'
 import WebPlayer from 'App/components/Session/WebPlayer'
 import { connect } from 'react-redux'
 import { setCustomSession } from 'App/duck/sessions'
+import Period, { LAST_30_DAYS } from "Types/app/period";
+import { fetchInsights } from 'Duck/sessions';
 
-function ClickMapCard({ setCustomSession, visitedEvents }: any) {
-    const { metricStore } = useStore();
+function ClickMapCard({
+    setCustomSession,
+    visitedEvents,
+    insights,
+    fetchInsights,
+    insightsFilters,
+    host,
+}: any) {
+    const { metricStore, dashboardStore } = useStore();
     const onMarkerClick = (s: string, innerText: string) => {
         metricStore.changeClickMapSearch(s, innerText)
     }
@@ -15,9 +24,26 @@ function ClickMapCard({ setCustomSession, visitedEvents }: any) {
         if (metricStore.instance.data.mobsUrl) {
             setCustomSession(metricStore.instance.data)
         }
-    }, [metricStore.instance.data.mobsUrl])
+    }, [metricStore.instance])
 
-    if (!metricStore.instance.data?.mobsUrl) return <div className="py-2">No Data for selected period or URL.</div>
+    React.useEffect(() => {
+        if (visitedEvents.length) {
+            const urlOptions = visitedEvents.map(({ url, host }: any) => ({ label: url, value: url, host }))
+            const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
+            // @ts-ignore
+            // const { startDate, endDate, rangeValue } = Period({ rangeName: LAST_30_DAYS }).toJSON()
+            const rangeValue = dashboardStore.drillDownPeriod.rangeValue
+            const startDate = dashboardStore.drillDownPeriod.start
+            const endDate = dashboardStore.drillDownPeriod.end
+            fetchInsights({ ...insightsFilters, url, startDate, endDate, rangeValue })
+        }
+    }, [visitedEvents])
+
+    if (!metricStore.instance.data.mobsUrl || insights.size === 0) {
+        return (
+            <div className="py-2">No Data for selected period or URL.</div>
+        )
+    }
     if (!visitedEvents || !visitedEvents.length) {
         return <div className="py-2">Loading session</div>
     }
@@ -28,6 +54,7 @@ function ClickMapCard({ setCustomSession, visitedEvents }: any) {
         return evt
     })
     const jumpTimestamp = (jumpToEvent.timestamp - metricStore.instance.data.startTs) + jumpToEvent.domBuildingTime
+
     return (
         <div id="clickmap-render">
             <WebPlayer
@@ -41,6 +68,12 @@ function ClickMapCard({ setCustomSession, visitedEvents }: any) {
 }
 
 export default connect(
-    (state: any) => ({ visitedEvents: state.getIn(['sessions', 'visitedEvents']) }),
-    { setCustomSession })
+    (state: any) => ({
+        insightsFilters: state.getIn(['sessions', 'insightFilters']),
+        visitedEvents: state.getIn(['sessions', 'visitedEvents']),
+        insights: state.getIn(['sessions', 'insights']),
+        host: state.getIn(['sessions', 'host']),
+    }),
+    { setCustomSession, fetchInsights }
+)
 (observer(ClickMapCard))

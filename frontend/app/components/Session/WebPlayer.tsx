@@ -12,8 +12,6 @@ import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import { fetchList as fetchMembers } from 'Duck/member';
 import PlayerContent from './PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
-import { fetchInsights } from 'Duck/sessions';
-import Period, { LAST_30_DAYS } from 'Types/app/period';
 import { observer } from 'mobx-react-lite';
 
 const TABS = {
@@ -31,10 +29,6 @@ function WebPlayer(props: any) {
     fetchList,
     customSession,
     isClickmap,
-    fetchInsights,
-    host,
-    visitedEvents,
-    insightsFilters,
     insights,
     jumpTimestamp,
     onMarkerClick,
@@ -46,13 +40,7 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
-    if (isClickmap) {
-      const urlOptions = visitedEvents.map(({ url, host }: any) => ({ label: url, value: url, host }))
-      const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
-      // @ts-ignore
-      const { startDate, endDate, rangeValue } = new Period({ rangeName: LAST_30_DAYS })
-      fetchInsights({ ...insightsFilters, url, startDate, endDate, rangeValue })
-    } else {
+    if (!isClickmap) {
       fetchList('issues');
     }
     const usedSession = isClickmap && customSession ? customSession : session;
@@ -94,6 +82,7 @@ function WebPlayer(props: any) {
         contextValue.player.jump(jumpTimestamp)
         contextValue.player.pause()
         contextValue.player.scaleFullPage()
+        console.log(jumpTimestamp, insights)
         setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
       }, 500)
     }
@@ -160,8 +149,6 @@ function WebPlayer(props: any) {
 export default connect(
   (state: any) => ({
     session: state.getIn(['sessions', 'current']),
-    insightsFilters: state.getIn(['sessions', 'insightFilters']),
-    host: state.getIn(['sessions', 'host']),
     insights: state.getIn(['sessions', 'insights']),
     visitedEvents: state.getIn(['sessions', 'visitedEvents']),
     fullscreen: state.getIn(['components', 'player', 'fullscreen']),
@@ -173,6 +160,5 @@ export default connect(
     closeBottomBlock,
     fetchList,
     fetchMembers,
-    fetchInsights,
   }
 )(withLocationHandlers()(observer(WebPlayer)));
