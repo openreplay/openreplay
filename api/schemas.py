@@ -1239,3 +1239,7 @@ class GetHeatmapPayloadSchema(BaseModel):
     url: str = Field(...)
     # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
     filters: List[ClickMapFilterSchema] = Field(default=[])
+    click_rage: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case

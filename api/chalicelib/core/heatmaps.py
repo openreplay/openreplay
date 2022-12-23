@@ -1,5 +1,5 @@
+from chalicelib.utils import sql_helper as sh
 import schemas
-from chalicelib.core import sessions
 from chalicelib.utils import helper, pg_client
 
 
@@ -15,10 +15,12 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
                    "duration IS NOT NULL"]
     query_from = "events.clicks INNER JOIN sessions USING (session_id)"
     q_count = "count(1) AS count"
+    has_click_rage_filter = False
     if len(data.filters) > 0:
         for i, f in enumerate(data.filters):
             if f.type == schemas.FilterType.issue and len(f.value) > 0:
-                q_count = "max(real_count) AS count"
+                has_click_rage_filter = True
+                q_count = "max(real_count) AS count,TRUE AS click_rage"
                 query_from += """INNER JOIN events_common.issues USING (timestamp, session_id)
                                INNER JOIN issues AS mis USING (issue_id)
                                INNER JOIN LATERAL (
@@ -36,24 +38,34 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
                                 "issues.timestamp >= %(startDate)s",
                                 "issues.timestamp <= %(endDate)s"]
                 f_k = f"issue_value{i}"
-                args = {**args, **sessions._multiple_values(f.value, value_key=f_k)}
-                constraints.append(sessions._multiple_conditions(f"%({f_k})s = ANY (issue_types)",
-                                                                 f.value, value_key=f_k))
-                constraints.append(sessions._multiple_conditions(f"mis.type = %({f_k})s",
-                                                                 f.value, value_key=f_k))
+                args = {**args, **sh.multi_values(f.value, value_key=f_k)}
+                constraints.append(sh.multi_conditions(f"%({f_k})s = ANY (issue_types)",
+                                                       f.value, value_key=f_k))
+                constraints.append(sh.multi_conditions(f"mis.type = %({f_k})s",
+                                                       f.value, value_key=f_k))
                 if len(f.filters) > 0:
                     for j, sf in enumerate(f.filters):
                         f_k = f"issue_svalue{i}{j}"
-                        args = {**args, **sessions._multiple_values(sf.value, value_key=f_k)}
+                        args = {**args, **sh.multi_values(sf.value, value_key=f_k)}
                         if sf.type == schemas.IssueFilterType._on_selector and len(sf.value) > 0:
-                            constraints.append(sessions._multiple_conditions(f"clicks.selector = %({f_k})s",
-                                                                             sf.value, value_key=f_k))
+                            constraints.append(sh.multi_conditions(f"clicks.selector = %({f_k})s",
+                                                                   sf.value, value_key=f_k))
 
+    if data.click_rage and not has_click_rage_filter:
+        constraints.append("""(issues.session_id IS NULL 
+                                OR (issues.timestamp >= %(startDate)s
+                                    AND issues.timestamp <= %(endDate)s
+                                    AND mis.project_id = %(project_id)s
+                                    AND mis.type = 'click_rage'))""")
+        q_count += ",COALESCE(bool_or(mis.issue_id IS NOT NULL), FALSE) AS click_rage"
+        query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
+                       LEFT JOIN issues AS mis USING (issue_id)"""
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT selector, {q_count}
                                 FROM {query_from}
                                 WHERE {" AND ".join(constraints)}
-                                GROUP BY selector;""", args)
+                                GROUP BY selector
+                                LIMIT 500;""", args)
         # print("---------")
         # print(query.decode('UTF-8'))
         # print("---------")
@@ -67,4 +79,4 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
             print("--------------------")
             raise err
         rows = cur.fetchall()
-    return helper.dict_to_camel_case(rows)
+    return helper.list_to_camel_case(rows)
