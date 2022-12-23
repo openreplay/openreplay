@@ -221,7 +221,7 @@ export default class Screen {
 
   scaleFullPage() {
     if (!this.parentElement) return;
-    const { height: boxHeight, width: boxWidth } = this.parentElement.getBoundingClientRect();
+    const { width: boxWidth } = this.parentElement.getBoundingClientRect();
     const { height, width } = this.document.body.getBoundingClientRect();
     this.overlay.remove()
 
@@ -232,13 +232,17 @@ export default class Screen {
       this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
     }
 
-    this.screen.style.transform =  `scale(${this.scaleRatio})`;
-    this.screen.style.width = width + 'px';
-    this.screen.style.height =  height + 'px';
-    this.screen.style.top = '0';
-    this.screen.style.left = '0';
-    this.iframe.style.width = width + 'px';
-    this.iframe.style.height = height + 'px';
+    Object.assign(this.screen.style, {
+      top: '0',
+      left: '0',
+      height: height + 'px',
+      width: width + 'px',
+      transform: `scale(${this.scaleRatio})`,
+    })
+    Object.assign(this.iframe.style, {
+      width: width + 'px',
+      height: height + 'px',
+    })
   }
 
 }
