@@ -126,7 +126,6 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 			i.zeroTsLog("BatchMetadata")
 		}
 		i.messageInfo.Url = m.Location
-		log.Println("meta url:", i.messageInfo.Url)
 		i.version = m.Version
 		i.batchInfo.version = m.Version
 
