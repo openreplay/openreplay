@@ -28,6 +28,7 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 		"retries":                               3,
 		"retry.backoff.ms":                      100,
 		"max.in.flight.requests.per.connection": 1,
+		"compression.type":                     env.String("COMPRESSION_TYPE"),
 	}
 	// Apply ssl configuration
 	if env.Bool("KAFKA_USE_SSL") {
