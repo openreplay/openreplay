@@ -39,11 +39,11 @@ export const loadFiles = (
 
 
 export async function requestEFSDom(sessionId: string) {
-  return await requestEFSMobFile(sessionId)
+  return await requestEFSMobFile(sessionId + "/dom.mob")
 }
 
 export async function requestEFSDevtools(sessionId: string) {
-  return await requestEFSMobFile(sessionId + "devtools")
+  return await requestEFSMobFile(sessionId + "/devtools.mob")
 }
 
 async function requestEFSMobFile(filename: string) {
