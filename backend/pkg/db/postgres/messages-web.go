@@ -58,11 +58,11 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 }
 
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
-	log.Println("insert web click:", e)
 	host, path, _, err := url.GetURLParts(e.Url)
 	if err != nil {
 		return err
 	}
+	log.Println("insert web click:", host, path)
 	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
