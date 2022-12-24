@@ -289,7 +289,13 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *types.E
 		keys = append(keys, k)
 		values = append(values, v)
 	}
-
+	// Check error source before insert to avoid panic from clickhouse lib
+	switch msg.Source {
+	case "js_exception", "bugsnag", "cloudwatch", "datadog", "elasticsearch", "newrelic", "rollbar", "sentry", "stackdriver", "sumologic":
+	default:
+		return fmt.Errorf("unknown error source: %s", msg.Source)
+	}
+	// Insert event to batch
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
