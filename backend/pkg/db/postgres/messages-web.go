@@ -58,16 +58,12 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 }
 
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
-	sqlRequest := `
-		INSERT INTO events.clicks
-			(session_id, message_id, timestamp, label, selector, url)
-		(SELECT
-			$1, $2, $3, NULLIF($4, ''), $5, host || path
-			FROM events.pages
-			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
-		)
-		`
-	conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector)
+	var host, path string
+	host, path, _, _ = url.GetURLParts(e.Url)
+	log.Println("insert web click:", host, path)
+	if err := conn.webClickEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
+		log.Printf("insert web click err: %s", err)
+	}
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 0)
 	// Add new value set to autocomplete bulk
@@ -119,29 +115,8 @@ func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, sa
 	if err != nil {
 		return err
 	}
-
-	sqlRequest := `
-		INSERT INTO events_common.requests (
-			session_id, timestamp, seq_index, 
-			url, host, path, query,
-			request_body, response_body, status_code, method,
-			duration, success
-		) VALUES (
-			$1, $2, $3, 
-			left($4, 2700), $5, $6, $7,
-			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
-			$12, $13
-		) ON CONFLICT DO NOTHING`
-	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index),
-		e.URL, host, path, query,
-		request, response, e.Status, url.EnsureMethod(e.Method),
-		e.Duration, e.Status < 400,
-	)
-
-	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.URL)+len(host)+len(path)+len(query)+
-		len(e.Request)+len(e.Response)+len(url.EnsureMethod(e.Method))+8*5+1)
+	conn.webNetworkRequest.Append(sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.URL, host, path, query,
+		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400)
 	return nil
 }
 
