@@ -144,10 +144,8 @@ export default class MessageManager {
 
   private parseAndDistributeMessages(fileReader: MFileReader, onMessage?: (msg: Message) => void) {
     const msgs: Array<Message> = []
-    let next: ReturnType<MFileReader['next']>
-    while (next = fileReader.next()) {
-      const [msg, index] = next
-      this.distributeMessage(msg, index)
+    for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
+      this.distributeMessage(msg, msg._index)
       msgs.push(msg)
       onMessage?.(msg)
     }
