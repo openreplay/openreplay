@@ -1,7 +1,7 @@
 import type { Socket } from 'socket.io-client';
-import type MessageManager from '../MessageManager';
 import type Screen from '../Screen/Screen';
 import type { Store } from '../../common/types'
+import type { Message } from '../messages';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
 import appStore from 'App/store';
@@ -64,7 +64,8 @@ export default class AssistManager {
   // TODO: Session type
   constructor(
     private session: any,
-    private md: MessageManager,
+    private setMessagesLoading: (flag: boolean) => void,
+    private handleMessage: (m: Message, index: number) => void,
     private screen: Screen,
     private config: RTCIceServer[],
     private store: Store<typeof AssistManager.INITIAL_STATE>,
@@ -88,9 +89,9 @@ export default class AssistManager {
     }
 
     if (status === ConnectionStatus.Connecting) {
-      this.md.setMessagesLoading(true);
+      this.setMessagesLoading(true);
     } else {
-      this.md.setMessagesLoading(false);
+      this.setMessagesLoading(false);
     }
     if (status === ConnectionStatus.Connected) {
       this.screen.display(true);
@@ -174,8 +175,7 @@ export default class AssistManager {
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
-          // @ts-ignore TODO: make index a thing.
-          this.md.appendMessage(msg, msg._index)
+          this.handleMessage(msg, msg._index)
         }
       })
 
