@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-    "lib": ["es6", "webworker"]
+    "lib": ["es6"]
   },
   "references": [{ "path": "../common" }]
 }

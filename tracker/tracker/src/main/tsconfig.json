@@ -1,11 +1,8 @@
 {
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
-  	"allowSyntheticDefaultImports": true,
-    "lib": ["es6", "dom"],
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es6", "dom"]
   },
-  "references": [
-    { "path": "../common" }
-  ],
-  "exclude": ["app/observer"]
+  "references": [{ "path": "../common" }]
 }
