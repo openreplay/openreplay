@@ -21,7 +21,6 @@ const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
 
 const initialState = Map({
-  // client: Client(),
   account: Account(),
   siteId: null,
   passwordRequestError: false,
@@ -121,10 +120,6 @@ export const fetchUserInfo = () => dispatch => Promise.all([
     types: FETCH_ACCOUNT.toArray(),
     call: client => client.get('/account'),
   }),
-  // dispatch({
-  //   types: FETCH_CLIENT.toArray(),
-  //   call: client => client.get('/client'),
-  // }),
 ]);
 
 export function logout() {

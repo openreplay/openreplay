@@ -22,22 +22,11 @@ function WidgetPreview(props: Props) {
     const metric: any = metricStore.instance;
     const isTimeSeries = metric.metricType === TIMESERIES;
     const isTable = metric.metricType === TABLE;
-    const drillDownFilter = dashboardStore.drillDownFilter;
     const disableVisualization = metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS;
-    // const period = dashboardStore.drillDownPeriod;
 
-    const chagneViewType = (e, { name, value }: any) => {
+    const changeViewType = (_, { name, value }: any) => {
         metric.update({ [ name ]: value });
     }
-
-    // const onChangePeriod = (period: any) => {
-    //     dashboardStore.setDrillDownPeriod(period);
-    //     const periodTimestamps = period.toTimestamps();
-    //     drillDownFilter.merge({
-    //         startTimestamp: periodTimestamps.startTimestamp,
-    //         endTimestamp: periodTimestamps.endTimestamp,
-    //     })
-    // }
 
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
 
@@ -57,7 +46,7 @@ function WidgetPreview(props: Props) {
                                 className="my-3"
                                 primary
                                 icons={true}
-                                onSelect={ chagneViewType }
+                                onSelect={ changeViewType }
                                 value={{ value: metric.viewType }}
                                 list={ [
                                     { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
@@ -75,7 +64,7 @@ function WidgetPreview(props: Props) {
                                 className="my-3"
                                 primary={true}
                                 icons={true}
-                                onSelect={ chagneViewType }
+                                onSelect={ changeViewType }
                                 value={{ value: metric.viewType }}
                                 list={[
                                     { value: 'table', name: 'Table', icon: 'table' },

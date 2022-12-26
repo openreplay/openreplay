@@ -90,15 +90,13 @@ function WidgetSessions(props: Props) {
         }
     }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage, metricStore.clickMapSearch]);
 
-
-
     return (
         <div className={cn(className, "bg-white p-3 pb-0 rounded border")}>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline">
                     <h2 className="text-xl">{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
                     <div className="ml-2 color-gray-medium">
-                        {metricStore.clickMapLabel ?  `"${metricStore.clickMapLabel}" ` : null}
+                        {metricStore.clickMapLabel ?  `on "${metricStore.clickMapLabel}" ` : null}
                         between <span className="font-medium color-gray-darkest">{startTime}</span> and{' '}
                         <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
                     </div>
