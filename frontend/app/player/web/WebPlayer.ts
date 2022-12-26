@@ -6,7 +6,6 @@ import Player, { State as PlayerState } from '../player/Player'
 import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'
 import TargetMarker from './addons/TargetMarker'
-import AssistManager from './assist/AssistManager'
 import Screen from './Screen/Screen'
 
 // export type State = typeof WebPlayer.INITIAL_STATE
@@ -15,12 +14,9 @@ export default class WebPlayer extends Player {
   static readonly INITIAL_STATE = {
     ...Player.INITIAL_STATE,
     ...TargetMarker.INITIAL_STATE,
-
     ...MessageManager.INITIAL_STATE,
-    ...AssistManager.INITIAL_STATE,
 
     inspectorMode: false,
-    liveTimeTravel: false,
   }
 
   private readonly inspectorController: InspectorController
@@ -29,7 +25,7 @@ export default class WebPlayer extends Player {
 
   private targetMarker: TargetMarker
 
-  constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
+  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
     let initialLists = live ? {} : {
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
@@ -110,25 +106,12 @@ export default class WebPlayer extends Player {
     this.targetMarker.markTargets(...args)
   }
 
-
-  // TODO separate message receivers
-  toggleTimetravel = async () => {
-    if (!this.wpState.get().liveTimeTravel) {
-      await this.messageManager.reloadWithUnprocessedFile(() =>
-        this.wpState.update({
-          liveTimeTravel: true,
-        })
-      )
-    }
-  }
-
   toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name)
   }
 
   clean = () => {
     super.clean()
-    this.assistManager.clean()
     window.removeEventListener('resize', this.scale)
   }
 }

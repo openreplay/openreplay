@@ -4,11 +4,15 @@ import type { Store } from './common/types'
 import WebPlayer from './web/WebPlayer'
 import WebLivePlayer from './web/WebLivePlayer'
 
-type WebState = typeof WebPlayer.INITIAL_STATE //?
+type WebState = typeof WebPlayer.INITIAL_STATE
 type WebPlayerStore = Store<WebState>
 export type IWebPlayer = WebPlayer
-export type IWebLivePlayer = WebLivePlayer
 export type IWebPlayerStore = WebPlayerStore
+
+type WebLiveState = typeof WebLivePlayer.INITIAL_STATE
+type WebLivePlayerStore = Store<WebLiveState>
+export type IWebLivePlayer = WebLivePlayer
+export type IWebLivePlayerStore = WebLivePlayerStore
 
 export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebPlayer, IWebPlayerStore] {
 	let store: WebPlayerStore = new SimpleStore<WebState>({
@@ -23,9 +27,9 @@ export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWe
 }
 
 
-export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapStore?: (s:IWebPlayerStore) => IWebPlayerStore): [IWebLivePlayer, IWebPlayerStore] {
-	let store: WebPlayerStore = new SimpleStore<WebState>({
-		...WebPlayer.INITIAL_STATE,
+export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore): [IWebLivePlayer, IWebLivePlayerStore] {
+	let store: WebLivePlayerStore = new SimpleStore<WebLiveState>({
+		...WebLivePlayer.INITIAL_STATE,
 	})
 	if (wrapStore) {
 		store = wrapStore(store)
