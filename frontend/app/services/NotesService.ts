@@ -45,89 +45,61 @@ export interface NotesFilter {
 }
 
 export default class NotesService {
-    private client: APIClient;
+  private client: APIClient;
 
-    constructor(client?: APIClient) {
-        this.client = client ? client : new APIClient();
-    }
+  constructor(client?: APIClient) {
+    this.client = client ? client : new APIClient();
+  }
 
-    initClient(client?: APIClient) {
-        this.client = client || new APIClient();
-    }
+  initClient(client?: APIClient) {
+    this.client = client || new APIClient();
+  }
 
-    fetchNotes(filter: NotesFilter): Promise<Note[]> {
-      return this.client.post('/notes', filter).then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error getting notes: ' + r.status)
-        }
-      })
-    }
+  fetchNotes(filter: NotesFilter): Promise<Note[]> {
+    return this.client.post('/notes', filter).then(r => {
+      return r.json().then(r => r.data)
+    })
+  }
 
-    getNotesBySessionId(sessionID: string): Promise<Note[]> {
-      return this.client.get(`/sessions/${sessionID}/notes`)
+  getNotesBySessionId(sessionID: string): Promise<Note[]> {
+    return this.client.get(`/sessions/${sessionID}/notes`)
       .then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error getting notes for ' +sessionID + ' cuz: ' + r.status)
-        }
+        return r.json().then(r => r.data)
       })
-    }
+  }
 
-    addNote(sessionID: string, note: WriteNote): Promise<Note> {
-      return this.client.post(`/sessions/${sessionID}/notes`, note)
+  addNote(sessionID: string, note: WriteNote): Promise<Note> {
+    return this.client.post(`/sessions/${sessionID}/notes`, note)
       .then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error adding note: ' + r.status)
-        }
+        return r.json().then(r => r.data)
       })
-    }
+  }
 
-    updateNote(noteID: string, note: WriteNote): Promise<Note> {
-      return this.client.post(`/notes/${noteID}`, note)
+  updateNote(noteID: string, note: WriteNote): Promise<Note> {
+    return this.client.post(`/notes/${noteID}`, note)
       .then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error updating note: ' + r.status)
-        }
+        return r.json().then(r => r.data)
       })
-    }
+  }
 
-    deleteNote(noteID: number) {
-      return this.client.delete(`/notes/${noteID}`)
+  deleteNote(noteID: number) {
+    return this.client.delete(`/notes/${noteID}`)
       .then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error deleting note: ' + r.status)
-        }
+        return r.json().then(r => r.data)
       })
-    }
+  }
 
-    sendSlackNotification(noteId: string, webhook: string) {
-      return this.client.get(`/notes/${noteId}/slack/${webhook}`)
+  sendSlackNotification(noteId: string, webhook: string) {
+    return this.client.get(`/notes/${noteId}/slack/${webhook}`)
       .then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error sending slack notif: ' + r.status)
-        }
+        return r.json().then(r => r.data)
       })
-    }
+  }
 
-    sendMsTeamsNotification(noteId: string, webhook: string) {
-      return this.client.get(`/notes/${noteId}/msteams/${webhook}`)
+  sendMsTeamsNotification(noteId: string, webhook: string) {
+    return this.client.get(`/notes/${noteId}/msteams/${webhook}`)
       .then(r => {
-        if (r.ok) {
-          return r.json().then(r => r.data)
-        } else {
-          throw new Error('Error sending slack notif: ' + r.status)
-        }
+        return r.json().then(r => r.data)
       })
-    }
+  }
 }

@@ -346,13 +346,6 @@ export const exportCSVFile = (headers, items, fileTitle) => {
   }
 };
 
-export const fetchErrorCheck = async (response: any) => {
-  if (!response.ok) {
-    return Promise.reject(response);
-  }
-  return response.json();
-};
-
 export const cleanSessionFilters = (data: any) => {
   const { filters, ...rest } = data;
   const _fitlers = filters.filter((f: any) => {

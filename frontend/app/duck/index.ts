@@ -3,7 +3,6 @@ import { combineReducers } from 'redux-immutable';
 import jwt from './jwt';
 import user from './user';
 import sessions from './sessions';
-import issues from './issues';
 import assignments from './assignments';
 import target from './target';
 import targetCustom from './targetCustom';
@@ -34,11 +33,10 @@ import customMetrics from './customMetrics';
 import search from './search';
 import liveSearch from './liveSearch';
 
-export default combineReducers({
+const rootReducer = combineReducers({
   jwt,
   user,
   sessions,
-  issues,
   assignments,
   target,
   targetCustom,
@@ -70,3 +68,7 @@ export default combineReducers({
   ...integrations,
   ...sources,
 });
+
+export type RootStore = ReturnType<typeof rootReducer>
+
+export default rootReducer

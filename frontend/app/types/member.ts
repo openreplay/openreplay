@@ -2,6 +2,20 @@ import Record from 'Types/Record';
 import { DateTime } from 'luxon';
 import { validateEmail, validateName } from 'App/validate';
 
+export interface IMember {
+  id: string
+  name: string
+  email: string
+  createdAt: DateTime
+  admin: boolean
+  superAdmin: boolean
+  joined: boolean
+  expiredInvitation: boolean
+  roleId: string
+  roleName: string
+  invitationLink: string
+}
+
 export default Record({
   id: undefined,
   name: '',

@@ -21,7 +21,6 @@ const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
 
 const initialState = Map({
-  // client: Client(),
   account: Account(),
   siteId: null,
   passwordRequestError: false,
