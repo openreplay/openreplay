@@ -132,7 +132,7 @@ export function fetchTenants() {
 export const fetchUserInfo = () => ({
     types: FETCH_ACCOUNT.toArray(),
     call: client => client.get('/account'),
-  });
+});
 
 export function logout() {
   return {
