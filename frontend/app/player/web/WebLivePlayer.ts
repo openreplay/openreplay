@@ -1,23 +1,15 @@
-// import WebPlayer from './WebPlayer'
-// import AssistManager from './assist/AssistManager'
+import type { Store } from '../common/types'
+
+import WebPlayer from './WebPlayer'
+import AssistManager from './assist/AssistManager'
 
 
-// export default class WebLivePlayer extends WebPlayer {
-//   assistManager: AssistManager // public so far
-//   constructor(private wpState: Store<MMState & PlayerState>, session, config: RTCIceServer[]) {
-//     super(wpState)
-//     this.assistManager = new AssistManager(session, this.messageManager, config, wpState)
-//     const endTime = !live && session.duration.valueOf()
-//     wpState.update({
-//       //@ts-ignore
-//       initialized: true,
-//       //@ts-ignore
-//       session,
-      
-//       live: true,
-//       livePlay: true,
-//     })
+export default class WebLivePlayer extends WebPlayer {
+  assistManager: AssistManager // public so far
+  constructor(wpState: Store<typeof WebPlayer.INITIAL_STATE>, session:any, config: RTCIceServer[]) {
+    super(wpState, session, true)
 
-//     this.assistManager.connect(session.agentToken)
-//   }
-// }
+    this.assistManager = new AssistManager(session, this.messageManager, this.screen, config, wpState)
+    this.assistManager.connect(session.agentToken)
+  }
+}

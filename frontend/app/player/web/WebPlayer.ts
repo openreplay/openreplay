@@ -23,14 +23,13 @@ export default class WebPlayer extends Player {
     liveTimeTravel: false,
   }
 
-  private readonly screen: Screen
   private readonly inspectorController: InspectorController
+  protected readonly screen: Screen
   protected readonly messageManager: MessageManager
 
-  assistManager: AssistManager // public so far
   private targetMarker: TargetMarker
 
-  constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
+  constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
     let initialLists = live ? {} : {
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
@@ -55,10 +54,8 @@ export default class WebPlayer extends Player {
     this.inspectorController = new InspectorController(screen)
 
 
-    const endTime = !live && session.duration.valueOf()
+    const endTime = session.duration?.valueOf() || 0
     wpState.update({
-      //@ts-ignore
-      initialized: true,
       //@ts-ignore
       session,
 
@@ -67,11 +64,6 @@ export default class WebPlayer extends Player {
       endTime, // : 0,
     })
 
-    // TODO: separate LiveWebPlayer
-    this.assistManager = new AssistManager(session, this.messageManager, screen, config, wpState)
-    if (live) {
-      this.assistManager.connect(session.agentToken)
-    }
   }
 
   attach = (parent: HTMLElement) => {
