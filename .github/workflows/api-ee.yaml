@@ -67,7 +67,7 @@ jobs:
         } && {
           echo "Skipping Security Checks"
         }
-        PUSH_IMAGE=1 bash -x ./build.sh ee
+        docker push $DOCKER_REPO/$image:$IMAGE_TAG 
     - name: Creating old image input
       run: |
         #

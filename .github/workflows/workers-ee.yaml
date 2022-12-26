@@ -95,6 +95,7 @@ jobs:
         # Pushing image to registry
         #
         cd backend
+        cat /tmp/images_to_build.txt
         for image in $(cat /tmp/images_to_build.txt);
         do
           echo "Bulding $image"
@@ -109,7 +110,7 @@ jobs:
           } && {
             echo "Skipping Security Checks"
           }
-          PUSH_IMAGE=1 bash -x ./build.sh ee $image
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
 
@@ -155,8 +156,6 @@ jobs:
         ls openreplay/charts
         mv /tmp/helmcharts/* openreplay/charts/
         ls openreplay/charts
-
-        cat /tmp/image_override.yaml
 
         # Deploy command
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
