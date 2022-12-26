@@ -5,6 +5,30 @@ import (
 	"log"
 )
 
+type pageLocations struct {
+	urls map[uint64]string
+}
+
+func NewPageLocations() *pageLocations {
+	return &pageLocations{urls: make(map[uint64]string)}
+}
+
+func (p *pageLocations) Set(sessID uint64, url string) {
+	log.Printf("setPageUrl, sess: %d, url: %s", sessID, url)
+	p.urls[sessID] = url
+}
+
+func (p *pageLocations) Get(sessID uint64) string {
+	url := p.urls[sessID]
+	log.Printf("getPageUrl, sess: %d, url: %s", sessID, url)
+	return url
+}
+
+func (p *pageLocations) Delete(sessID uint64) {
+	log.Printf("deletePageUrl, sess: %d", sessID)
+	delete(p.urls, sessID)
+}
+
 // MessageHandler processes one message using service logic
 type MessageHandler func(Message)
 
@@ -24,10 +48,15 @@ type messageIteratorImpl struct {
 	broken      bool
 	messageInfo *message
 	batchInfo   *BatchInfo
+	urls        *pageLocations
 }
 
 func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
-	iter := &messageIteratorImpl{handler: messageHandler, autoDecode: autoDecode}
+	iter := &messageIteratorImpl{
+		handler:    messageHandler,
+		autoDecode: autoDecode,
+		urls:       NewPageLocations(),
+	}
 	if len(messageFilter) != 0 {
 		filter := make(map[int]struct{}, len(messageFilter))
 		for _, msgType := range messageFilter {
@@ -138,6 +167,10 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMeta")
 		}
+		// Try to get saved session's page url
+		if savedURL := i.urls.Get(i.messageInfo.batch.sessionID); savedURL != "" {
+			i.messageInfo.Url = savedURL
+		}
 
 	case *Timestamp:
 		i.messageInfo.Timestamp = int64(m.Timestamp)
@@ -158,9 +191,13 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionEnd")
 		}
+		// Delete session from urls cache layer
+		i.urls.Delete(i.messageInfo.batch.sessionID)
 
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
+		// Save session page url in cache for using in next batches
+		i.urls.Set(i.messageInfo.batch.sessionID, m.Url)
 	}
 	return nil
 }
