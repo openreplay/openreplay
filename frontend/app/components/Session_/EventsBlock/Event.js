@@ -147,14 +147,6 @@ export default class Event extends React.PureComponent {
           </button>
         }
         <div className={ cls.topBlock }>
-          {/* <div className={ cls.checkbox }>
-            <Checkbox
-              className="customCheckbox"
-              name={ event.key }
-              checked={ selected }
-              onClick={ onCheckboxClick }
-            />
-          </div> */}
           <div className={ cls.firstLine }>
             { this.renderBody() }
           </div>

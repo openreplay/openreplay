@@ -1,3 +1,4 @@
+// @ts-ignore
 import { combineReducers } from 'redux-immutable';
 
 import jwt from './jwt';
@@ -8,12 +9,8 @@ import target from './target';
 import targetCustom from './targetCustom';
 import filters from './filters';
 import funnelFilters from './funnelFilters';
-import events from './events';
-import environments from './environments';
-import variables from './variables';
 import templates from './templates';
 import alerts from './alerts';
-import notifications from './notifications';
 import dashboard from './dashboard';
 import components from './components';
 import sources from './sources';
@@ -43,12 +40,8 @@ const rootReducer = combineReducers({
   filters,
   funnelFilters,
 
-  events,
-  environments,
-  variables,
   templates,
   alerts,
-  notifications,
   dashboard,
   components,
   members,  

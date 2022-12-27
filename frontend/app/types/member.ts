@@ -16,6 +16,20 @@ export interface IMember {
   invitationLink: string
 }
 
+export interface IMemberApiRes {
+  userId: string
+  name: string
+  email: string
+  createdAt: string
+  admin: boolean
+  superAdmin: boolean
+  joined: boolean
+  expiredInvitation: boolean
+  roleId: string
+  roleName: string
+  invitationLink: string
+}
+
 export default Record({
   id: undefined,
   name: '',
@@ -42,9 +56,9 @@ export default Record({
       return js;
     },
   },
-  fromJS: ({ createdAt, ...rest }) => ({
+  fromJS: ({ createdAt, ...rest }: IMemberApiRes) => ({
     ...rest,
-    createdAt: createdAt && DateTime.fromISO(createdAt || 0),
+    createdAt: createdAt && DateTime.fromISO(createdAt || '0'),
     id: rest.userId,
   }),
 });
