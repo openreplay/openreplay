@@ -56,7 +56,7 @@ function SessionList(props: Props) {
                                             <span className="ml-2 font-medium">{session.pageTitle}</span>
                                         </div>
                                     )}
-                                    <SessionItem onClick={() => hideModal()} key={session.sessionId} session={session} />
+                                    <SessionItem compact={true} onClick={() => hideModal()} key={session.sessionId} session={session} />
                                 </div>
                             ))}
                         </div>
