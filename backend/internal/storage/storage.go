@@ -44,6 +44,8 @@ type Storage struct {
 	readingDEVTime   syncfloat64.Histogram
 	archivingDOMTime syncfloat64.Histogram
 	archivingDEVTime syncfloat64.Histogram
+	uploadingDOMTime syncfloat64.Histogram
+	uploadingDEVTime syncfloat64.Histogram
 
 	tasks chan *Task
 	ready chan struct{}
@@ -85,6 +87,14 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	if err != nil {
 		log.Printf("can't create archiving_duration metric: %s", err)
 	}
+	uploadingDOMTime, err := metrics.RegisterHistogram("uploading_duration")
+	if err != nil {
+		log.Printf("can't create uploading_duration metric: %s", err)
+	}
+	uploadingDEVTime, err := metrics.RegisterHistogram("uploading_dt_duration")
+	if err != nil {
+		log.Printf("can't create uploading_duration metric: %s", err)
+	}
 	newStorage := &Storage{
 		cfg:              cfg,
 		s3:               s3,
@@ -96,6 +106,8 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 		readingDEVTime:   readingDEVTime,
 		archivingDOMTime: archivingDOMTime,
 		archivingDEVTime: archivingDEVTime,
+		uploadingDOMTime: uploadingDOMTime,
+		uploadingDEVTime: uploadingDEVTime,
 		tasks:            make(chan *Task, 1),
 		ready:            make(chan struct{}),
 	}
@@ -119,13 +131,13 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 	wg.Add(2)
 	go func() {
 		if prepErr := s.prepareSession(filePath, DOM, newTask); prepErr != nil {
-			err = fmt.Errorf("prepareSession err: %s", prepErr)
+			err = fmt.Errorf("prepareSession DOM err: %s", prepErr)
 		}
 		wg.Done()
 	}()
 	go func() {
 		if prepErr := s.prepareSession(filePath, DEV, newTask); prepErr != nil {
-			err = fmt.Errorf("prepareSession err: %s", prepErr)
+			err = fmt.Errorf("prepareSession DEV err: %s", prepErr)
 		}
 		wg.Done()
 	}()
@@ -237,33 +249,46 @@ func (s *Storage) compressSession(data []byte) *bytes.Buffer {
 func (s *Storage) uploadSession(task *Task) {
 	wg := &sync.WaitGroup{}
 	wg.Add(3)
+	var (
+		uploadDoms int64 = 0
+		uploadDome int64 = 0
+		uploadDev  int64 = 0
+	)
 	go func() {
 		if task.doms != nil {
+			start := time.Now()
 			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
+			uploadDoms = time.Now().Sub(start).Milliseconds()
 		}
 		wg.Done()
 	}()
 	go func() {
 		if task.dome != nil {
+			start := time.Now()
 			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
+			uploadDome = time.Now().Sub(start).Milliseconds()
 		}
 		wg.Done()
 	}()
 	go func() {
 		if task.dev != nil {
+			start := time.Now()
 			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
+			uploadDev = time.Now().Sub(start).Milliseconds()
 		}
 		wg.Done()
 	}()
 	wg.Wait()
 	// Record metrics
 	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
+	s.uploadingDOMTime.Record(ctx, float64(uploadDoms+uploadDome))
+	s.uploadingDEVTime.Record(ctx, float64(uploadDev))
 	s.totalSessions.Add(ctx, 1)
 }
 

@@ -38,7 +38,7 @@ func New(name string) *Metrics {
 // initPrometheusDataExporter allows to use collected metrics in prometheus
 func (m *Metrics) initPrometheusDataExporter() {
 	config := prometheus.Config{
-		DefaultHistogramBoundaries: []float64{1, 2, 5, 10, 20, 50},
+		DefaultHistogramBoundaries: []float64{1, 2, 5, 10, 20, 50, 100, 250, 500, 1000},
 	}
 	c := controller.New(
 		processor.NewFactory(
