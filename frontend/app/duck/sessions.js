@@ -60,6 +60,7 @@ const initialState = Map({
     eventsIndex: [],
     sourcemapUploaded: true,
     filteredEvents: null,
+    eventsQuery: '',
     showChatWindow: false,
     liveSessions: List(),
     visitedEvents: List(),
@@ -110,14 +111,17 @@ const reducer = (state = initialState, action = {}) => {
         case SET_EVENT_QUERY: {
             const events = state.get('current').events;
             const query = action.filter.query;
-            // const filter = action.filter.filter;
             const searchRe = getRE(query, 'i');
-            let filteredEvents = query ? events.filter((e) => searchRe.test(e.url) || searchRe.test(e.value) || searchRe.test(e.label)) : null;
 
-            // if (filter) {
-            //   filteredEvents = filteredEvents ? filteredEvents.filter(e => e.type === filter) : events.filter(e => e.type === filter);
-            // }
-            return state.set('filteredEvents', filteredEvents);
+            const filteredEvents = query ? events.filter(
+                (e) => searchRe.test(e.url)
+                    || searchRe.test(e.value)
+                    || searchRe.test(e.label)
+                    || searchRe.test(e.type)
+                    || (e.type === 'LOCATION' && searchRe.test('visited'))
+            ) : null;
+
+            return state.set('filteredEvents', filteredEvents).set('eventsQuery', query);
         }
         case FETCH.SUCCESS: {
             // TODO: more common.. or TEMP
