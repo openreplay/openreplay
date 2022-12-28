@@ -37,7 +37,7 @@ function FilterSeries(props: Props) {
     observeChanges()
   }
 
-  const onChangeEventsOrder = (e: any, { name, value }: any) => {
+  const onChangeEventsOrder = (_: any, { name, value }: any) => {
     series.filter.updateKey(name, value)
     observeChanges()
   }
