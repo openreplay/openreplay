@@ -1,9 +1,7 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
-import { fetchList as fetchMemberList } from 'Duck/member';
 
 import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
@@ -18,7 +16,6 @@ import PreferencesMenu from './PreferencesMenu';
 import Notifications from './Notifications';
 import Roles from './Roles';
 
-@connect(null, { fetchMemberList, })
 @withRouter
 export default class Client extends React.PureComponent {
   constructor(props){

@@ -37,12 +37,4 @@ export function save(instance) {
   };
 }
 
-export function generateInviteLink(instance) {
-  return {
-    types: GENERATE_LINK.toArray(),
-    call: client => client.get(`/client/members/${ instance.id }/reset`),
-    id: instance.id
-  };
-}
-
 export default reduceDucks(crudDuck, { initialState, reducer }).reducer;

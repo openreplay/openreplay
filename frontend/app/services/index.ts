@@ -7,6 +7,7 @@ import AuditService from './AuditService';
 import ErrorService from "./ErrorService";
 import NotesService from "./NotesService";
 import RecordingsService from "./RecordingsService";
+import ConfigService from './ConfigService'
 
 export const dashboardService  = new DashboardService();
 export const metricService = new MetricService();
@@ -17,3 +18,4 @@ export const auditService = new AuditService();
 export const errorService = new ErrorService();
 export const notesService = new NotesService();
 export const recordingsService = new RecordingsService();
+export const configService = new ConfigService();
