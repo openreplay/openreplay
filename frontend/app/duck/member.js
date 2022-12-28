@@ -1,7 +1,7 @@
 import { Map } from 'immutable';
 import Member from 'Types/member';
 import crudDuckGenerator from './tools/crudDuck';
-import withRequestState, { RequestTypes } from 'Duck/requestStateCreator';
+import { RequestTypes } from 'Duck/requestStateCreator';
 import { reduceDucks } from 'Duck/tools';
 
 const GENERATE_LINK = new RequestTypes('member/GENERATE_LINK');

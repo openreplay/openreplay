@@ -8,7 +8,6 @@ import { fetchUserInfo } from 'Duck/user';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
 import Header from 'Components/Header/Header';
 import { fetchList as fetchSiteList } from 'Duck/site';
-import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
 import { withStore } from 'App/mstore';
 
@@ -115,7 +114,6 @@ const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
         fetchTenants,
         setSessionPath,
         fetchSiteList,
-        fetchAnnouncements,
         fetchAlerts,
     }
 )

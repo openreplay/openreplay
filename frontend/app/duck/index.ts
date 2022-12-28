@@ -18,7 +18,6 @@ import customFields from './customField';
 import webhooks from './webhook';
 import integrations from './integrations';
 import rehydrate from './rehydrate';
-import announcements from './announcements';
 import errors from './errors';
 import funnels from './funnels';
 import roles from './roles';
@@ -43,7 +42,6 @@ const rootReducer = combineReducers({
   customFields,
   webhooks,
   rehydrate,
-  announcements,
   errors,
   funnels,
   roles,
