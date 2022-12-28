@@ -29,7 +29,7 @@ const LiveSessionPure = lazy(() => import('Components/Session/LiveSession'));
 const OnboardingPure = lazy(() => import('Components/Onboarding/Onboarding'));
 const ClientPure = lazy(() => import('Components/Client/Client'));
 const AssistPure = lazy(() => import('Components/Assist'));
-const BugFinderPure = lazy(() => import('Components/Overview'));
+const SessionsOverviewPure = lazy(() => import('Components/Overview'));
 const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
 const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
 const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
@@ -37,7 +37,7 @@ const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDeta
 const FunnelPagePure = lazy(() => import('Components/Funnels/FunnelPage'));
 const MultiviewPure = lazy(() => import('Components/Session_/Multiview/Multiview.tsx'));
 
-const BugFinder = withSiteIdUpdater(BugFinderPure);
+const SessionsOverview = withSiteIdUpdater(SessionsOverviewPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
 const Session = withSiteIdUpdater(SessionPure);
 const LiveSession = withSiteIdUpdater(LiveSessionPure);
@@ -235,7 +235,7 @@ class Router extends React.Component {
                             <Route exact strict path={withSiteId(FUNNEL_PATH, siteIdList)} component={FunnelPage} />
                             <Route exact strict path={withSiteId(FUNNEL_CREATE_PATH, siteIdList)} component={FunnelsDetails} />
                             <Route exact strict path={withSiteId(FUNNEL_ISSUE_PATH, siteIdList)} component={FunnelIssue} />
-                            <Route exact strict path={withSiteId(SESSIONS_PATH, siteIdList)} component={BugFinder} />
+                            <Route exact strict path={withSiteId(SESSIONS_PATH, siteIdList)} component={SessionsOverview} />
                             <Route exact strict path={withSiteId(SESSION_PATH, siteIdList)} component={Session} />
                             <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} component={LiveSession} />
                             <Route exact strict path={withSiteId(LIVE_SESSION_PATH, siteIdList)} render={(props) => <Session {...props} live />} />

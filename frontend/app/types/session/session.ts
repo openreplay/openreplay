@@ -66,7 +66,6 @@ export default Record(
     returningLocation: undefined,
     returningLocationTime: undefined,
     errorsCount: 0,
-    watchdogs: [],
     issueTypes: [],
     issues: [],
     userDeviceHeapSize: 0,
@@ -145,7 +144,6 @@ export default Record(
       return {
         ...session,
         isIOS: session.platform === 'ios',
-        watchdogs: session.watchdogs || [],
         errors: exceptions,
         siteId: projectId,
         events,
