@@ -3,7 +3,7 @@ from chalicelib.utils import ch_client
 from chalicelib.utils import helper
 from chalicelib.utils.event_filter_definition import Event
 
-TABLE = "final.autocomplete"
+TABLE = "experimental.autocomplete"
 
 
 def __get_autocomplete_table(value, project_id):
