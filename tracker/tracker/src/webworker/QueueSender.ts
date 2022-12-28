@@ -2,24 +2,6 @@ const INGEST_PATH = '/v1/web/i'
 
 const KEEPALIVE_SIZE_LIMIT = 64 << 10 // 64 kB
 
-// function sendXHR(url: string, token: string, batch: Uint8Array): Promise<XMLHttpRequest> {
-//   const req = new XMLHttpRequest()
-//   req.open("POST", url)
-//   req.setRequestHeader("Authorization", "Bearer " + token)
-//   return new Promise((res, rej) => {
-//     req.onreadystatechange = function() {
-//       if (this.readyState === 4) {
-//         if (this.status == 0) {
-//           return; // happens simultaneously with onerror
-//         }
-//         res(this)
-//       }
-//     }
-//     req.onerror = rej
-//     req.send(batch.buffer)
-//   })
-// }
-
 export default class QueueSender {
   private attemptsCount = 0
   private busy = false
@@ -38,6 +20,10 @@ export default class QueueSender {
 
   authorise(token: string): void {
     this.token = token
+    if (!this.busy) {
+      // TODO: transparent busy/send logic
+      this.sendNext()
+    }
   }
 
   push(batch: Uint8Array): void {
@@ -48,9 +34,19 @@ export default class QueueSender {
     }
   }
 
+  private sendNext() {
+    const nextBatch = this.queue.shift()
+    if (nextBatch) {
+      this.sendBatch(nextBatch)
+    } else {
+      this.busy = false
+    }
+  }
+
   private retry(batch: Uint8Array): void {
     if (this.attemptsCount >= this.MAX_ATTEMPTS_COUNT) {
       this.onFailure(`Failed to send batch after ${this.attemptsCount} attempts.`)
+      // remains this.busy === true
       return
     }
     this.attemptsCount++
@@ -83,12 +79,7 @@ export default class QueueSender {
 
         // Success
         this.attemptsCount = 0
-        const nextBatch = this.queue.shift()
-        if (nextBatch) {
-          this.sendBatch(nextBatch)
-        } else {
-          this.busy = false
-        }
+        this.sendNext()
       })
       .catch((e) => {
         console.warn('OpenReplay:', e)
@@ -98,5 +89,6 @@ export default class QueueSender {
 
   clean() {
     this.queue.length = 0
+    this.token = null
   }
 }

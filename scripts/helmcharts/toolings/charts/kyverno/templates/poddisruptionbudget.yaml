@@ -1,0 +1,18 @@
+{{- if (gt (int .Values.replicaCount) 1) }}
+{{- if .Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget" }}
+apiVersion: policy/v1
+{{- else }}
+apiVersion: policy/v1beta1
+{{- end }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "kyverno.fullname" . }}
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    app: kyverno
+  namespace: {{ template "kyverno.namespace" . }}
+spec:
+{{- include "podDisruptionBudget.spec" . | indent 2 }}
+  selector:
+    matchLabels:  {{ include "kyverno.matchLabels" . | nindent 6 }}
+      app: kyverno
+{{- end }}

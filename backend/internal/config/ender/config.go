@@ -15,6 +15,7 @@ type Config struct {
 	ProducerTimeout            int    `env:"PRODUCER_TIMEOUT,default=2000"`
 	PartitionsNumber           int    `env:"PARTITIONS_NUMBER,required"`
 	UseEncryption              bool   `env:"USE_ENCRYPTION,default=false"`
+	UseProfiler                bool   `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New() *Config {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
-import { tagProps, iTag, Note } from 'App/services/NotesService';
+import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -9,7 +9,6 @@ import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
 import { confirm } from 'UI';
-import { filterOutNote as filterOutTimelineNote } from 'Player';
 import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 
 interface Props {
@@ -24,7 +23,6 @@ function NoteEvent(props: Props) {
   const { settingsStore, notesStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
-  console.log(props.noEdit);
   const onEdit = () => {
     props.onEdit({
       isVisible: true,
@@ -60,7 +58,6 @@ function NoteEvent(props: Props) {
     ) {
       notesStore.deleteNote(props.note.noteId).then((r) => {
         props.filterOutNote(props.note.noteId);
-        filterOutTimelineNote(props.note.noteId);
         toast.success('Note deleted');
       });
     }

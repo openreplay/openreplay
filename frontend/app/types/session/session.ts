@@ -2,7 +2,6 @@ import Record from 'Types/Record';
 import { List, Map } from 'immutable';
 import { Duration } from 'luxon';
 import SessionEvent, { TYPES } from './event';
-import Log from './log';
 import StackEvent from './stackEvent';
 import Resource from './resource';
 import SessionError from './error';
@@ -32,7 +31,6 @@ export default Record(
     startedAt: 0,
     duration: 0,
     events: List(),
-    logs: List(),
     stackEvents: List(),
     resources: List(),
     missedResources: List(),
@@ -117,15 +115,10 @@ export default Record(
         .filter(({ type, time }) => type !== TYPES.CONSOLE && time <= durationSeconds);
 
       let resources = List(session.resources).map(Resource);
-      // this code shoud die.
-      const firstResourceTime = resources
-        .map((r) => r.time)
-        .reduce((a, b) => Math.min(a, b), Number.MAX_SAFE_INTEGER);
       resources = resources
-        .map((r) => r.set('time', r.time - firstResourceTime))
+        .map((r) => r.set('time', Math.max(0, r.time - startedAt)))
         .sort((r1, r2) => r1.time - r2.time);
       const missedResources = resources.filter(({ success }) => !success);
-      const logs = List(session.logs).map(Log);
 
       const stackEventsList = List(stackEvents)
         .concat(List(session.userEvents))
@@ -156,7 +149,6 @@ export default Record(
         errors: exceptions,
         siteId: projectId,
         events,
-        logs,
         stackEvents: stackEventsList,
         resources,
         missedResources,
@@ -175,7 +167,6 @@ export default Record(
         ),
         userDisplayName:
           session.userId || session.userAnonymousId || session.userID || 'Anonymous User',
-        firstResourceTime,
         issues: issuesList,
         sessionId: sessionId || sessionID,
         userId: session.userId || session.userID,

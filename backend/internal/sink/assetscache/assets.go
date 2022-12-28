@@ -12,6 +12,7 @@ import (
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
+	"strings"
 	"sync"
 	"time"
 )
@@ -27,6 +28,7 @@ type AssetsCache struct {
 	rewriter      *assets.Rewriter
 	producer      types.Producer
 	cache         map[string]*CachedAsset
+	blackList     []string // use "example.com" to filter all domains or ".example.com" to filter only third-level domain
 	totalAssets   syncfloat64.Counter
 	cachedAssets  syncfloat64.Counter
 	skippedAssets syncfloat64.Counter
@@ -61,11 +63,21 @@ func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer, m
 		rewriter:      rewriter,
 		producer:      producer,
 		cache:         make(map[string]*CachedAsset, 64),
+		blackList:     make([]string, 0),
 		totalAssets:   totalAssets,
 		cachedAssets:  cachedAssets,
 		skippedAssets: skippedAssets,
 		assetSize:     assetSize,
 		assetDuration: assetDuration,
+	}
+	// Parse black list for cache layer
+	if len(cfg.CacheBlackList) > 0 {
+		blackList := strings.Split(cfg.CacheBlackList, ",")
+		for _, domain := range blackList {
+			if len(domain) > 0 {
+				assetsCache.blackList = append(assetsCache.blackList, domain)
+			}
+		}
 	}
 	go assetsCache.cleaner()
 	return assetsCache
@@ -98,6 +110,22 @@ func (e *AssetsCache) clearCache() {
 	log.Printf("cache cleaner: deleted %d/%d assets", deleted, cacheSize)
 }
 
+func (e *AssetsCache) shouldSkipAsset(baseURL string) bool {
+	if len(e.blackList) == 0 {
+		return false
+	}
+	host, err := parseHost(baseURL)
+	if err != nil {
+		return false
+	}
+	for _, blackHost := range e.blackList {
+		if strings.Contains(host, blackHost) {
+			return true
+		}
+	}
+	return false
+}
+
 func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 	switch m := msg.(type) {
 	case *messages.SetNodeAttributeURLBased:
@@ -110,6 +138,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 			newMsg.SetMeta(msg.Meta())
 			return newMsg
 		} else if m.Name == "style" {
+			if e.shouldSkipAsset(m.BaseURL) {
+				return msg
+			}
 			newMsg := &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,
@@ -119,6 +150,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 			return newMsg
 		}
 	case *messages.SetCSSDataURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.SetCSSData{
 			ID:   m.ID,
 			Data: e.handleCSS(m.SessionID(), m.BaseURL, m.Data),
@@ -126,6 +160,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.CSSInsertRuleURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.CSSInsertRule{
 			ID:    m.ID,
 			Index: m.Index,
@@ -134,6 +171,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.AdoptedSSReplaceURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.AdoptedSSReplace{
 			SheetID: m.SheetID,
 			Text:    e.handleCSS(m.SessionID(), m.BaseURL, m.Text),
@@ -141,6 +181,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.AdoptedSSInsertRuleURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.AdoptedSSInsertRule{
 			SheetID: m.SheetID,
 			Index:   m.Index,
@@ -180,13 +223,21 @@ func (e *AssetsCache) handleURL(sessionID uint64, baseURL string, urlVal string)
 	}
 }
 
+func parseHost(baseURL string) (string, error) {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+	return u.Scheme + "://" + u.Host + "/", nil
+}
+
 func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) string {
 	ctx := context.Background()
 	e.totalAssets.Add(ctx, 1)
 	// Try to find asset in cache
 	h := md5.New()
 	// Cut first part of url (scheme + host)
-	u, err := url.Parse(baseURL)
+	justUrl, err := parseHost(baseURL)
 	if err != nil {
 		log.Printf("can't parse url: %s, err: %s", baseURL, err)
 		if e.cfg.CacheAssets {
@@ -194,7 +245,6 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 		}
 		return e.getRewrittenCSS(sessionID, baseURL, css)
 	}
-	justUrl := u.Scheme + "://" + u.Host + "/"
 	// Calculate hash sum of url + css
 	io.WriteString(h, justUrl)
 	io.WriteString(h, css)

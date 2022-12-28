@@ -26,11 +26,12 @@ import FetchDoc from './FetchDoc';
 import ProfilerDoc from './ProfilerDoc';
 import AxiosDoc from './AxiosDoc';
 import AssistDoc from './AssistDoc';
-import { PageTitle, Loader } from 'UI';
+import { PageTitle } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import withPageTitle from 'HOCs/withPageTitle';
 import PiniaDoc from './PiniaDoc'
 import ZustandDoc from './ZustandDoc'
+import MSTeams from './Teams'
 
 interface Props {
     fetch: (name: string, siteId: string) => void;
@@ -133,6 +134,7 @@ const integrations = [
             { title: 'Jira', slug: 'jira', category: 'Errors', icon: 'integrations/jira', component: <JiraForm /> },
             { title: 'Github', slug: 'github', category: 'Errors', icon: 'integrations/github', component: <GithubForm /> },
             { title: 'Slack', category: 'Errors', icon: 'integrations/slack', component: <SlackForm /> },
+            { title: 'MS Teams', category: 'Errors', icon: 'integrations/teams', component: <MSTeams /> },
         ],
     },
     {

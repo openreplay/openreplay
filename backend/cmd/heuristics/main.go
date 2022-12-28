@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,7 +12,6 @@ import (
 	"openreplay/backend/pkg/handlers"
 	web2 "openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/intervals"
-	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/sessions"
@@ -20,8 +20,10 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	// Load service configuration
 	cfg := heuristics.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
@@ -41,14 +43,10 @@ func main() {
 	// Create handler's aggregator
 	builderMap := sessions.NewBuilderMap(handlersFabric)
 
-	// Init logger
-	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-
 	// Init producer and consumer for data bus
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 
 	msgHandler := func(msg messages.Message) {
-		statsLogger.Collect(msg)
 		builderMap.HandleMessage(msg)
 	}
 

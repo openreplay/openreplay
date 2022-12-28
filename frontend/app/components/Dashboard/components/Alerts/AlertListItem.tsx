@@ -29,7 +29,20 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
         .map((channelId: number) => {
           return (
             '#' +
-            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack').name
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack')?.name
+          );
+        })
+        .join(', ') +
+      ')'
+    );
+  };
+  const getMsTeamsChannels = () => {
+    return (
+      ' (' +
+      alert.msteamsInput
+        .map((channelId: number) => {
+          return (
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')?.name
           );
         })
         .join(', ') +
@@ -39,7 +52,15 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
   let str = '';
   if (alert.slack) {
     str = 'Slack';
-    str += alert.slackInput.length > 0 ? getSlackChannels() : '';
+    if (alert.slackInput.length > 0) {
+      str += getSlackChannels();
+    }
+  }
+  if (alert.msteams) {
+    str += (str === '' ? '' : ' and ') + 'MS Teams'
+    if (alert.msteamsInput.length > 0) {
+      str += getMsTeamsChannels();
+    }
   }
   if (alert.email) {
     str += (str === '' ? '' : ' and ') + (alert.emailInput.length > 1 ? 'Emails' : 'Email');

@@ -1,23 +1,24 @@
-import React, { useState } from 'react'
+import React from 'react'
 import EventsBlock from '../Session_/EventsBlock';
 import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel'
-import { Controls as PlayerControls } from 'Player';
-import { connectPlayer } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
+
 import cn from 'classnames';
 import stl from './rightblock.module.css';
 
-const EventsBlockConnected = connectPlayer(state => ({
-  currentTimeEventIndex: state.eventListNow.length > 0 ? state.eventListNow.length - 1 : 0,
-  playing: state.playing,
-}))(EventsBlock)
-
-function RightBlock(props) {
+function RightBlock(props: any) {
   const { activeTab } = props;
+  const { player, store } = React.useContext(PlayerContext)
 
-  const renderActiveTab = (tab) => {
+  const { eventListNow, playing } = store.get()
+  const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0
+
+  const EventsBlockConnected = () => <EventsBlock playing={playing} player={player} setActiveTab={props.setActiveTab} currentTimeEventIndex={currentTimeEventIndex} />
+  const renderActiveTab = (tab: string) => {
     switch(tab) {
       case props.tabs.EVENTS:
-        return <EventsBlockConnected setActiveTab={props.setActiveTab} player={PlayerControls}/>
+        return <EventsBlockConnected />
       case props.tabs.HEATMAPS:
         return <PageInsightsPanel setActiveTab={props.setActiveTab} />
     }
@@ -29,4 +30,4 @@ function RightBlock(props) {
   )
 }
 
-export default React.memo(RightBlock)
+export default observer(RightBlock)

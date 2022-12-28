@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Controls as Player } from 'Player';
 import { Tooltip } from 'UI';
 import { INDEXES } from 'App/constants/zindex';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 export const FEATURE_KEYS = {
   XRAY: 'featureViewed',
@@ -16,6 +16,8 @@ interface IProps {
 }
 
 export default function GuidePopup({ children, title, description }: IProps) {
+  const { player: Player } = React.useContext(PlayerContext)
+
   const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.NOTES));
   useEffect(() => {
     if (!showGuide) {

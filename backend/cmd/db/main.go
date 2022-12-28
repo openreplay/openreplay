@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	types2 "openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
@@ -16,7 +17,6 @@ import (
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
-	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
@@ -25,10 +25,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("db")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := db.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	// Init database
 	pg := cache.NewPGCache(
@@ -56,20 +58,17 @@ func main() {
 	// Init modules
 	saver := datasaver.New(pg, producer)
 	saver.InitStats()
-	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
 		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
 		messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
 		messages.MsgJSException, messages.MsgResourceTiming,
-		messages.MsgRawCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgGraphQL,
+		messages.MsgCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL,
 		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
 		messages.MsgMouseClick, messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming}
 
 	// Handler logic
 	msgHandler := func(msg messages.Message) {
-		statsLogger.Collect(msg)
-
 		// Just save session data into db without additional checks
 		if err := saver.InsertMessage(msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {

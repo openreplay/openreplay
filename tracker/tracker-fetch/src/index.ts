@@ -37,7 +37,7 @@ export default function(opts: Partial<Options> = {}): (app: App | null) => Windo
   if (typeof window === 'undefined') {
     // not in browser (SSR)
     return () => opts.fetch || null 
-  } 
+  }
 
   const options: Options = Object.assign(
     {
@@ -53,9 +53,14 @@ export default function(opts: Partial<Options> = {}): (app: App | null) => Windo
   }
 
   return (app: App | null) => {
-    if (app === null) {
+    if (app === null ||
+      // @ts-ignore - a catch for the developers who apply a plugin several times
+      app.__fetchInstalled__
+    ) {
       return options.fetch
     }
+    // @ts-ignore
+    app.__fetchInstalled__ = true
 
     const ihOpt = options.ignoreHeaders
     const isHIgnoring = Array.isArray(ihOpt)

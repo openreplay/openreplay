@@ -5,7 +5,7 @@ import { validateEmail } from 'App/validate';
 import { fetchTriggerOptions, init, edit, save, remove, fetchList } from 'Duck/alerts';
 import { confirm } from 'UI';
 import { toast } from 'react-toastify';
-import { SLACK, WEBHOOK } from 'App/constants/schedule';
+import { SLACK, WEBHOOK, TEAMS } from 'App/constants/schedule';
 import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { withSiteId, alerts } from 'App/routes';
@@ -47,6 +47,11 @@ const Section = ({ index, title, description, content }: ISection) => (
     <div className="ml-6">{content}</div>
   </div>
 );
+
+interface Select {
+  label: string;
+  value: string | number
+}
 
 interface IProps extends RouteComponentProps {
   siteId: string;
@@ -143,17 +148,22 @@ const NewAlert = (props: IProps) => {
     });
   };
 
-  const slackChannels = webhooks
-    .filter((hook) => hook.type === SLACK)
-    .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
-    // @ts-ignore
-    .toJS();
+  const slackChannels: Select[] = []
+  const hooks: Select[] = []
+  const msTeamsChannels: Select[] = []
 
-  const hooks = webhooks
-    .filter((hook) => hook.type === WEBHOOK)
-    .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
-    // @ts-ignore
-    .toJS();
+  webhooks.forEach((hook) => {
+    const option = { value: hook.webhookId, label: hook.name }
+    if (hook.type === SLACK) {
+      slackChannels.push(option)
+    }
+    if (hook.type === WEBHOOK) {
+      hooks.push(option)
+    }
+    if (hook.type === TEAMS) {
+      msTeamsChannels.push(option)
+    }
+  })
 
   const writeQueryOption = (
     e: React.ChangeEvent,
@@ -253,6 +263,7 @@ const NewAlert = (props: IProps) => {
                 instance={instance}
                 onChangeCheck={onChangeCheck}
                 slackChannels={slackChannels}
+                msTeamsChannels={msTeamsChannels}
                 validateEmail={validateEmail}
                 hooks={hooks}
                 edit={edit}

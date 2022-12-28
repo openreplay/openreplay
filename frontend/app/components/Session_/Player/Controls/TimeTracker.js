@@ -1,19 +1,22 @@
 import React from 'react';
-import { connectPlayer } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 import styles from './timeTracker.module.css';
 import cn from 'classnames'
 
-const TimeTracker = ({ time, scale, live, left }) => (
+const TimeTracker = ({ scale, live, left }) => {
+	const { store } = React.useContext(PlayerContext)
+	const time = store.get().time
+
+  return (
 	<React.Fragment>
     <span
     	className={ cn(styles.playedTimeline, live && left > 99 ? styles.liveTime : null) }
     	style={ { width: `${ time * scale }%` } }
     />
 	</React.Fragment>
-);
+);}
 
 TimeTracker.displayName = 'TimeTracker';
 
-export default connectPlayer(state => ({
-  time: state.time,
-}))(TimeTracker);
+export default observer(TimeTracker);

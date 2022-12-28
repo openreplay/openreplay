@@ -5,7 +5,7 @@ import { CircularLoader, Icon, Tooltip } from 'UI';
 interface Props {
   className?: string;
   children?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'default' | 'primary' | 'text' | 'text-primary' | 'text-red' | 'outline' | 'green';

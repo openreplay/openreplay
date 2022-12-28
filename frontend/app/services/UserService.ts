@@ -1,6 +1,5 @@
 import APIClient from 'App/api_client';
 import { IUser } from 'App/mstore/types/user'
-import { fetchErrorCheck } from 'App/utils'
 
 export default class UserService {
     private client: APIClient;
@@ -29,12 +28,14 @@ export default class UserService {
         const data = user.toSave();
         if (user.userId) {
             return this.client.put('/client/members/' + user.userId, data)
-                .then(fetchErrorCheck)
+                .then(r => r.json())
                 .then((response: { data: any; }) => response.data || {})
+                .catch(e => Promise.reject(e))
         } else {
             return this.client.post('/client/members', data)
-                .then(fetchErrorCheck)
-                .then((response: { data: any; }) => response.data || {});
+                .then(r => r.json())
+                .then((response: { data: any; }) => response.data || {})
+                .catch(e => Promise.reject(e))
         }
     }
 
@@ -46,8 +47,9 @@ export default class UserService {
 
     delete(userId: string) {
         return this.client.delete('/client/members/' + userId)
-            .then(fetchErrorCheck)
-            .then((response: { data: any; }) => response.data || {});
+            .then(r => r.json())
+            .then((response: { data: any; }) => response.data || {})
+            .catch(e => Promise.reject(e))
     }
 
     getRoles() {

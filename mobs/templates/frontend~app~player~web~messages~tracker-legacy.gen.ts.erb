@@ -1,0 +1,7 @@
+// Auto-generated, do not edit
+
+import { MType } from './raw.gen'
+
+export const TP_MAP = {
+<%= $messages.select { |msg| msg.replayer != false  }.map { |msg| "  #{msg.id}: MType.#{msg.name.snake_case.pascal_case}," }.join "\n" %>
+} as const

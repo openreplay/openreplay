@@ -1,0 +1,14 @@
+// Auto-generated, do not edit
+/* eslint-disable */
+
+import type { Timed } from './timed'
+import type { RawMessage } from './raw.gen'
+import type {
+<%= $messages.select { |msg| msg.replayer != false }.map { |msg| "  Raw#{msg.name.snake_case.pascal_case}," }.join "\n" %>
+} from './raw.gen'
+
+export type Message = RawMessage & Timed
+
+<% $messages.select { |msg| msg.replayer != false }.each do |msg| %>
+export type <%= msg.name.snake_case.pascal_case %> = Raw<%= msg.name.snake_case.pascal_case %> & Timed
+<% end %>

@@ -11,6 +11,7 @@ const siteIdRequiredPaths = [
   '/metadata',
   '/integrations/sentry/events',
   '/integrations/slack/notify',
+  '/integrations/msteams/notify',
   '/assignments',
   '/integration/sources',
   '/issue_types',
@@ -94,7 +95,16 @@ export default class APIClient {
     ) {
       edp = `${ edp }/${ this.siteId }`
     }
-    return fetch(edp + path, this.init);
+    return fetch(edp + path, this.init)
+        .then(response => {
+          if (response.ok) {
+            return response
+          } else {
+            throw new Error(
+                `! ${this.init.method} error on ${path}; ${response.status}`
+            )
+          }
+        })
   }
 
   get(path, params, options) {

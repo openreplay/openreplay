@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import * as Messages from '../../common/messages.gen.js'
-export { default } from '../../common/messages.gen.js'
+export { default, Type } from '../../common/messages.gen.js'
 
 
 export function BatchMetadata(
@@ -232,6 +232,29 @@ export function MouseMove(
   ]
 }
 
+export function NetworkRequest(
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
+): Messages.NetworkRequest {
+  return [
+    Messages.Type.NetworkRequest,
+    type,
+    method,
+    url,
+    request,
+    response,
+    status,
+    timestamp,
+    duration,
+  ]
+}
+
 export function ConsoleLog(
   level: string,
   value: string,
@@ -294,12 +317,12 @@ export function JSExceptionDeprecated(
   ]
 }
 
-export function RawCustomEvent(
+export function CustomEvent(
   name: string,
   payload: string,
-): Messages.RawCustomEvent {
+): Messages.CustomEvent {
   return [
-    Messages.Type.RawCustomEvent,
+    Messages.Type.CustomEvent,
     name,
     payload,
   ]

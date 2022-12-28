@@ -1,6 +1,5 @@
 import React from 'react';
 import cn from 'classnames';
-// import { connectPlayer } from 'Player';
 import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
@@ -12,7 +11,6 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import stl from './network.module.css';
 import { Duration } from 'luxon';
-import { jump } from 'Player';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -112,8 +110,6 @@ function renderSize(r) {
     content = 'Not captured';
   } else {
     const headerSize = r.headerSize || 0;
-    const encodedSize = r.encodedBodySize || 0;
-    const transferred = headerSize + encodedSize;
     const showTransferred = r.headerSize != null;
 
     triggerText = formatBytes(r.decodedBodySize);
@@ -234,7 +230,6 @@ export default class NetworkContent extends React.PureComponent {
               className="input-small"
               placeholder="Filter by name"
               icon="search"
-              iconPosition="left"
               name="filter"
               onChange={this.onFilterChange}
               height={28}

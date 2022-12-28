@@ -14,6 +14,7 @@ import {
   funnelService,
   errorService,
   notesService,
+  recordingsService,
 } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
@@ -22,6 +23,8 @@ import ErrorStore from './errorStore';
 import SessionStore from './sessionStore';
 import NotesStore from './notesStore';
 import BugReportStore from './bugReportStore'
+import RecordingsStore from './recordingsStore'
+import AssistMultiviewStore from './assistMultiviewStore';
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -35,7 +38,9 @@ export class RootStore {
   notificationStore: NotificationStore;
   sessionStore: SessionStore;
   notesStore: NotesStore;
-  bugReportStore: BugReportStore
+  bugReportStore: BugReportStore;
+  recordingsStore: RecordingsStore;
+  assistMultiviewStore: AssistMultiviewStore;
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -50,6 +55,8 @@ export class RootStore {
     this.sessionStore = new SessionStore();
     this.notesStore = new NotesStore();
     this.bugReportStore = new BugReportStore();
+    this.recordingsStore = new RecordingsStore();
+    this.assistMultiviewStore = new AssistMultiviewStore();
   }
 
   initClient() {
@@ -62,6 +69,7 @@ export class RootStore {
     auditService.initClient(client);
     errorService.initClient(client);
     notesService.initClient(client)
+    recordingsService.initClient(client);
   }
 }
 

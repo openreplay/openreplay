@@ -29,6 +29,8 @@ export default Record({
   webhookInput: [],
   email: false,
   emailInput: [],
+  msteams: false,
+  msteamsInput: [],
   hasNotification: false,
   metric: '',
   condition: '',
@@ -40,6 +42,7 @@ export default Record({
         this.query.left && this.query.right && validateNumber(this.query.right) && this.query.right > 0 && this.query.operator &&
         (this.slack ? this.slackInput.length > 0 : true) &&
         (this.email ? this.emailInput.length > 0 : true) &&
+        (this.msteams ? this.msteamsInput.length > 0 : true) &&
         (this.webhook ? this.webhookInput.length > 0 : true);
     },
     toData() {
@@ -55,6 +58,8 @@ export default Record({
       if (js.webhook && js.webhookInput)
         options.message = options.message.concat(js.webhookInput.map(i => ({ type: 'webhook', value: i })))
         // options.message.push({ type: 'webhook', value: js.webhookInput })
+      if (js.msteams && js.msteamsInput)
+        options.message = options.message.concat(js.msteamsInput.map(i => ({ type: 'msteams', value: i })))
 
       options.previousPeriod = js.previousPeriod
       options.currentPeriod = js.currentPeriod
@@ -66,24 +71,27 @@ export default Record({
       delete js.slackInput;
       delete js.webhookInput;
       delete js.emailInput;
+      delete js.msteams;
+      delete js.msteamsInput;
       delete js.hasNotification;
       delete js.metric;
       delete js.condition;
       delete js.currentPeriod;
       delete js.previousPeriod;
-      
+
       return { ...js, options: options };
     },
   },
   fromJS: (item) => {
     const options = item.options || { currentPeriod: 15, previousPeriod: 15, message: [] };
     const query = item.query || { left: '', operator: '', right: ''};
-    
+
     const slack = List(options.message).filter(i => i.type === 'slack');
     const email = List(options.message).filter(i => i.type === 'email');
     const webhook = List(options.message).filter(i => i.type === 'webhook');
+    const msteams = List(options.message).filter(i => i.type === 'msteams');
 
-    return { 
+    return {
       ...item,
       metric: metricsMap[query.left],
       condition: item.query ? conditionsMap[item.query.operator] : {},
@@ -92,16 +100,19 @@ export default Record({
       options: options,
       previousPeriod: options.previousPeriod,
       currentPeriod: options.currentPeriod,
-      
+
       slack: slack.size > 0,
       slackInput: slack.map(i => parseInt(i.value)).toJS(),
-      
+
+      msteams: msteams.size > 0,
+      msteamsInput: msteams.map(i => parseInt(i.value)).toJS(),
+
       email: email.size > 0,
       emailInput: email.map(i => i.value).toJS(),
-      
+
       webhook: webhook.size > 0,
       webhookInput: webhook.map(i => parseInt(i.value)).toJS(),
-      
+
       hasNotification: !!slack || !!email || !!webhook
     }
   },

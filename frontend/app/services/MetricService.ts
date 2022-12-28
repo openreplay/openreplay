@@ -1,6 +1,5 @@
 import Widget from "App/mstore/types/widget";
 import APIClient from 'App/api_client';
-import { fetchErrorCheck } from "App/utils";
 
 export default class MetricService {
     private client: APIClient;
@@ -30,8 +29,9 @@ export default class MetricService {
      */
     getMetric(metricId: string): Promise<any> {
         return this.client.get('/metrics/' + metricId)
-            .then(fetchErrorCheck)
-            .then((response: { data: any; }) => response.data || {});
+            .then(r => r.json())
+            .then((response: { data: any; }) => response.data || {})
+            .catch(e => Promise.reject(e))
     }
 
     /**
@@ -45,8 +45,9 @@ export default class MetricService {
         const method = isCreating ? 'post' : 'put';
         const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
         return this.client[method](url, data)
-            .then(fetchErrorCheck)
+            .then(r => r.json())
             .then((response: { data: any; }) => response.data || {})
+            .catch(e => Promise.reject(e))
     }
 
     /**
@@ -74,8 +75,9 @@ export default class MetricService {
     getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
         const path = isWidget ? `/metrics/${metric.metricId}/chart` : `/metrics/try`;
         return this.client.post(path, data)
-            .then(fetchErrorCheck)
-            .then((response: { data: any; }) => response.data || {});
+            .then(r => r.json())
+            .then((response: { data: any; }) => response.data || {})
+            .catch(e => Promise.reject(e))
     }
 
     /**

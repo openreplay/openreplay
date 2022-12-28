@@ -1,7 +1,7 @@
 from typing import Union
 
 from chalicelib.core import roles, traces, projects, sourcemaps, assist_records, sessions
-from chalicelib.core import unlock
+from chalicelib.core import unlock, signals
 from chalicelib.utils import assist_helper
 
 unlock.check()
@@ -116,3 +116,13 @@ def delete_record(projectId: int, recordId: int, context: schemas_ee.CurrentCont
     if "errors" in result:
         return result
     return {"data": result}
+
+
+@app.post('/{projectId}/signals', tags=['signals'])
+def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    data = signals.handle_frontend_signals_queued(project_id=projectId, user_id=context.user_id, data=data)
+
+    if "errors" in data:
+        return data
+    return {'data': data}

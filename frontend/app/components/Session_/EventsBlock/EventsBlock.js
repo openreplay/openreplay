@@ -141,6 +141,7 @@ export default class EventsBlock extends React.Component {
       eventsIndex,
       filterOutNote,
     } = this.props;
+
     const { query } = this.state;
     const _events = this.eventsList
     const isLastEvent = index === _events.size - 1;

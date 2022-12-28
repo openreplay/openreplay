@@ -81,7 +81,6 @@
   display: flex;
   align-items: center;
   transition: all 0.2s;
-  cursor: pointer;
   &[data-viewed=true] {
     opacity: 1;
   }

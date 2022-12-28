@@ -1,0 +1,37 @@
+// Auto-generated, do not edit
+/* eslint-disable */
+
+import PrimitiveReader from './PrimitiveReader'
+import { MType } from './raw.gen'
+import type { RawMessage } from './raw.gen'
+
+
+export default class RawMessageReader extends PrimitiveReader {
+  readMessage(): RawMessage | null {
+    const p = this.p
+    const resetPointer = () => {
+      this.p = p
+      return null
+    }
+
+    const tp = this.readUint()
+    if (tp === null) { return resetPointer() }
+
+    switch (tp) {
+<% $messages.select { |msg| msg.replayer != false }.each do |msg| %>
+    case <%= msg.id %>: {
+<%= msg.attributes.map { |attr|
+"      const #{attr.name.camel_case} = this.read#{attr.type.to_s.pascal_case}(); if (#{attr.name.camel_case} === null) { return resetPointer() }" }.join "\n" %>
+      return {
+        tp: MType.<%= msg.name.snake_case.pascal_case %>,
+<%= msg.attributes.map { |attr|
+"        #{attr.name.camel_case}," }.join "\n" %>
+      };
+    }
+<% end %>
+    default:
+      throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
+      return null;
+    }
+  }
+}

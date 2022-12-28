@@ -1,27 +1,27 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { toggleInspectorMode, markElement } from 'Player';
 import ElementView from './ElementView';
 import BottomBlock from '../BottomBlock';
-import stl from './inspector.module.css'
+import stl from './inspector.module.css';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 // TODO: refactor: use Layout from the Sessions and put everything there under the WebPlayer folder
 
-// function onMount(element, setOpen) {  // TODO: through the MobX
-//   element.setOpen = setOpen;
-// }
+export default function Inspector() {
+  const { player } = React.useContext(PlayerContext);
 
+  const toggleInspectorMode = player.toggleInspectorMode;
+  const markElement = player.mark;
 
-export default function Inspector () {
   const [doc, setDoc] = useState(null);
   const [openChain, setOpenChain] = useState([]);
   const [selectedElement, _setSelectedElement] = useState(null);
   const selectedElementRef = useRef(selectedElement);
-  const setSelectedElement = elem => {
+  const setSelectedElement = (elem) => {
     selectedElementRef.current = elem;
     _setSelectedElement(elem);
-  }
+  };
 
-	useEffect(() => {
+  useEffect(() => {
     const doc = toggleInspectorMode(true, ({ target }) => {
       const openChain = [];
       let currentTarget = target;
@@ -33,9 +33,9 @@ export default function Inspector () {
       setSelectedElement(target);
     });
     setDoc(doc);
-    setOpenChain([ doc.documentElement ]);
+    setOpenChain([doc.documentElement]);
 
-    const onKeyPress = e => {
+    const onKeyPress = (e) => {
       if (e.key === 'Backspace' || e.key === 'Delete') {
         const elem = selectedElementRef.current;
         if (elem !== null && elem.parentElement !== null) {
@@ -43,30 +43,30 @@ export default function Inspector () {
           setSelectedElement(null);
         }
       }
-    }
-    window.addEventListener("keydown", onKeyPress);
+    };
+    window.addEventListener('keydown', onKeyPress);
     return () => {
       toggleInspectorMode(false);
-      window.removeEventListener("keydown", onKeyPress);
-    }
+      window.removeEventListener('keydown', onKeyPress);
+    };
   }, []);
 
-	if  (!doc) return null;
-	return (
-		<BottomBlock>      
+  if (!doc) return null;
+  return (
+    <BottomBlock>
       <BottomBlock.Content>
-        <div onMouseLeave={ () => markElement(null) } className={stl.wrapper}>
-        	<ElementView 
-            element={ doc.documentElement }
+        <div onMouseLeave={() => markElement(null)} className={stl.wrapper}>
+          <ElementView
+            element={doc.documentElement}
             level={0}
             context={doc.defaultView}
-            openChain={ openChain }
-            selectedElement={ selectedElement }
-            setSelectedElement={ setSelectedElement }
-            onHover={ markElement }
+            openChain={openChain}
+            selectedElement={selectedElement}
+            setSelectedElement={setSelectedElement}
+            onHover={(e) => markElement(e)}
           />
         </div>
       </BottomBlock.Content>
     </BottomBlock>
-	);
+  );
 }

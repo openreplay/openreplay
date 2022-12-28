@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -13,21 +15,24 @@ import (
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
-	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	metrics := monitoring.New("ender")
+	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+
 	cfg := ender.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber, logger.NewQueueStats(cfg.LoggerTimeout))
+	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
@@ -62,6 +67,9 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
+			failedSessionEnds := make(map[uint64]int64)
+			duplicatedSessionEnds := make(map[uint64]uint64)
+
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
@@ -71,12 +79,17 @@ func main() {
 				}
 				newDuration, err := pg.InsertSessionEnd(sessionID, msg.Timestamp)
 				if err != nil {
+					if strings.Contains(err.Error(), "integer out of range") {
+						// Skip session with broken duration
+						failedSessionEnds[sessionID] = timestamp
+						return true
+					}
 					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
 					return false
 				}
 				if currDuration == newDuration {
-					log.Printf("sessionEnd duplicate, sessID: %d, prevDur: %d, newDur: %d", sessionID,
-						currDuration, newDuration)
+					// Skip session end duplicate
+					duplicatedSessionEnds[sessionID] = currDuration
 					return true
 				}
 				if cfg.UseEncryption {
@@ -94,6 +107,12 @@ func main() {
 				}
 				return true
 			})
+			if len(failedSessionEnds) > 0 {
+				log.Println("sessions with wrong duration:", failedSessionEnds)
+			}
+			if len(duplicatedSessionEnds) > 0 {
+				log.Println("session end duplicates:", duplicatedSessionEnds)
+			}
 			producer.Flush(cfg.ProducerTimeout)
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Printf("can't commit messages with offset: %s", err)

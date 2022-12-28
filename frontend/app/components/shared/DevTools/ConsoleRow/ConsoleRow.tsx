@@ -15,7 +15,7 @@ interface Props {
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL, style, recalcHeight } = props;
   const [expanded, setExpanded] = useState(false);
-  const lines = log.value.split('\n').filter((l: any) => !!l);
+  const lines = log.value?.split('\n').filter((l: any) => !!l) || [];
   const canExpand = lines.length > 1;
 
   const clickable = canExpand || !!log.errorId;
@@ -37,7 +37,7 @@ function ConsoleRow(props: Props) {
           'cursor-pointer underline decoration-dotted decoration-gray-200': !!log.errorId,
         }
       )}
-      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : () => {}}
+      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : undefined}
     >
       <div className="mr-2">
         <Icon size="14" {...iconProps} />

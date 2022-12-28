@@ -1,6 +1,5 @@
 import React from 'react';
-import DateRangePicker from 'react-daterange-picker'; // TODO replace with other date range pickers
-// import { DateRangePicker } from 'react-date-range';
+import DateRangePicker from 'react-daterange-picker'
 import TimePicker from 'rc-time-picker';
 import { Button } from 'UI';
 import { getDateRangeFromValue, getDateRangeLabel, dateRangeValues, CUSTOM_RANGE, moment, DATE_RANGE_VALUES } from 'App/dateRange';
@@ -81,12 +80,6 @@ export default class DateRangePopup extends React.PureComponent {
               ))
             }
           </div>
-          {/* <DateRangePicker
-            ranges={[selectionRange]}
-            onChange={(e) => console.log(e)}
-            showMonthAndYearPickers={false}
-            scroll={{ enabled: true }}
-          /> */}
           <DateRangePicker
             name="dateRangePicker"
             onSelect={ this.selectCustomRange }

@@ -1,6 +1,6 @@
 import type App from '../app/index.js'
 import { hasTag } from '../app/guards.js'
-import { isURL } from '../utils.js'
+import { isURL, getTimeOrigin } from '../utils.js'
 import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../app/messages.gen.js'
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
@@ -110,7 +110,7 @@ export default function (app: App, opts: Partial<Options>): void {
     }
     app.send(
       ResourceTiming(
-        entry.startTime + performance.timing.navigationStart,
+        entry.startTime + getTimeOrigin(),
         entry.duration,
         entry.responseStart && entry.startTime ? entry.responseStart - entry.startTime : 0,
         entry.transferSize > entry.encodedBodySize ? entry.transferSize - entry.encodedBodySize : 0,
@@ -122,9 +122,7 @@ export default function (app: App, opts: Partial<Options>): void {
     )
   }
 
-  const observer: PerformanceObserver = new PerformanceObserver((list) =>
-    list.getEntries().forEach(resourceTiming),
-  )
+  const observer = new PerformanceObserver((list) => list.getEntries().forEach(resourceTiming))
 
   let prevSessionID: string | undefined
   app.attachStartCallback(function ({ sessionID }) {
@@ -165,6 +163,9 @@ export default function (app: App, opts: Partial<Options>): void {
       if (performance.timing.loadEventEnd || performance.now() > 30000) {
         pageLoadTimingSent = true
         const {
+          // should be ok to use here, (https://github.com/mdn/content/issues/4713)
+          // since it is compared with the values obtained on the page load (before any possible sleep state)
+          // deprecated though
           navigationStart,
           requestStart,
           responseStart,

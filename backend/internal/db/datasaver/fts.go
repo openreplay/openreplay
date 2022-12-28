@@ -6,7 +6,7 @@ import (
 	"openreplay/backend/pkg/messages"
 )
 
-type FetchEventFTS struct {
+type NetworkRequestFTS struct {
 	Method    string `json:"method"`
 	URL       string `json:"url"`
 	Request   string `json:"request"`
@@ -36,7 +36,7 @@ type PageEventFTS struct {
 	TimeToInteractive          uint64 `json:"time_to_interactive"`
 }
 
-type GraphQLEventFTS struct {
+type GraphQLFTS struct {
 	OperationKind string `json:"operation_kind"`
 	OperationName string `json:"operation_name"`
 	Variables     string `json:"variables"`
@@ -56,18 +56,8 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 
 	switch m := msg.(type) {
 	// Common
-	case *messages.Fetch:
-		event, err = json.Marshal(FetchEventFTS{
-			Method:    m.Method,
-			URL:       m.URL,
-			Request:   m.Request,
-			Response:  m.Response,
-			Status:    m.Status,
-			Timestamp: m.Timestamp,
-			Duration:  m.Duration,
-		})
-	case *messages.FetchEvent:
-		event, err = json.Marshal(FetchEventFTS{
+	case *messages.NetworkRequest:
+		event, err = json.Marshal(NetworkRequestFTS{
 			Method:    m.Method,
 			URL:       m.URL,
 			Request:   m.Request,
@@ -97,14 +87,7 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 			TimeToInteractive:          m.TimeToInteractive,
 		})
 	case *messages.GraphQL:
-		event, err = json.Marshal(GraphQLEventFTS{
-			OperationKind: m.OperationKind,
-			OperationName: m.OperationName,
-			Variables:     m.Variables,
-			Response:      m.Response,
-		})
-	case *messages.GraphQLEvent:
-		event, err = json.Marshal(GraphQLEventFTS{
+		event, err = json.Marshal(GraphQLFTS{
 			OperationKind: m.OperationKind,
 			OperationName: m.OperationName,
 			Variables:     m.Variables,

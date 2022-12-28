@@ -213,6 +213,20 @@ class MouseMove(Message):
         self.y = y
 
 
+class NetworkRequest(Message):
+    __id__ = 21
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+
+
 class ConsoleLog(Message):
     __id__ = 22
 
@@ -265,7 +279,7 @@ class IntegrationEvent(Message):
         self.payload = payload
 
 
-class RawCustomEvent(Message):
+class CustomEvent(Message):
     __id__ = 27
 
     def __init__(self, name, payload):
@@ -358,16 +372,6 @@ class ResourceEvent(Message):
         self.status = status
 
 
-class CustomEvent(Message):
-    __id__ = 36
-
-    def __init__(self, message_id, timestamp, name, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.name = name
-        self.payload = payload
-
-
 class CSSInsertRule(Message):
     __id__ = 37
 
@@ -423,15 +427,6 @@ class StateAction(Message):
         self.type = type
 
 
-class StateActionEvent(Message):
-    __id__ = 43
-
-    def __init__(self, message_id, timestamp, type):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.type = type
-
-
 class Redux(Message):
     __id__ = 44
 
@@ -484,32 +479,6 @@ class PerformanceTrack(Message):
         self.ticks = ticks
         self.total_js_heap_size = total_js_heap_size
         self.used_js_heap_size = used_js_heap_size
-
-
-class GraphQLEvent(Message):
-    __id__ = 50
-
-    def __init__(self, message_id, timestamp, operation_kind, operation_name, variables, response):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.operation_kind = operation_kind
-        self.operation_name = operation_name
-        self.variables = variables
-        self.response = response
-
-
-class FetchEvent(Message):
-    __id__ = 51
-
-    def __init__(self, message_id, timestamp, method, url, request, response, status, duration):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.duration = duration
 
 
 class DOMDrop(Message):

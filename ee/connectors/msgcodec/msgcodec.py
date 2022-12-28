@@ -237,6 +237,18 @@ class MessageCodec(Codec):
                 y=self.read_uint(reader)
             )
 
+        if message_id == 21:
+            return NetworkRequest(
+                type=self.read_string(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader)
+            )
+
         if message_id == 22:
             return ConsoleLog(
                 level=self.read_string(reader),
@@ -280,7 +292,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 27:
-            return RawCustomEvent(
+            return CustomEvent(
                 name=self.read_string(reader),
                 payload=self.read_string(reader)
             )
@@ -356,14 +368,6 @@ class MessageCodec(Codec):
                 status=self.read_uint(reader)
             )
 
-        if message_id == 36:
-            return CustomEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                name=self.read_string(reader),
-                payload=self.read_string(reader)
-            )
-
         if message_id == 37:
             return CSSInsertRule(
                 id=self.read_uint(reader),
@@ -407,13 +411,6 @@ class MessageCodec(Codec):
                 type=self.read_string(reader)
             )
 
-        if message_id == 43:
-            return StateActionEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                type=self.read_string(reader)
-            )
-
         if message_id == 44:
             return Redux(
                 action=self.read_string(reader),
@@ -454,28 +451,6 @@ class MessageCodec(Codec):
                 ticks=self.read_int(reader),
                 total_js_heap_size=self.read_uint(reader),
                 used_js_heap_size=self.read_uint(reader)
-            )
-
-        if message_id == 50:
-            return GraphQLEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                operation_kind=self.read_string(reader),
-                operation_name=self.read_string(reader),
-                variables=self.read_string(reader),
-                response=self.read_string(reader)
-            )
-
-        if message_id == 51:
-            return FetchEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                method=self.read_string(reader),
-                url=self.read_string(reader),
-                request=self.read_string(reader),
-                response=self.read_string(reader),
-                status=self.read_uint(reader),
-                duration=self.read_uint(reader)
             )
 
         if message_id == 52:
