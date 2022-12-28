@@ -58,6 +58,7 @@ rm -rf ./chalicelib/utils/metrics_helper.py
 rm -rf ./chalicelib/utils/pg_client.py
 rm -rf ./chalicelib/utils/s3.py
 rm -rf ./chalicelib/utils/smtp.py
+rm -rf ./chalicelib/utils/sql_helper.py
 rm -rf ./chalicelib/utils/strings.py
 rm -rf ./chalicelib/utils/TimeUTC.py
 rm -rf ./routers/app/__init__.py

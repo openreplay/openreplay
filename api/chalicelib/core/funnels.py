@@ -2,6 +2,7 @@ import json
 from typing import List
 
 import chalicelib.utils.helper
+import chalicelib.utils.sql_helper
 import schemas
 from chalicelib.core import significance, sessions
 from chalicelib.utils import dev
@@ -39,7 +40,7 @@ def __fix_stages(f_events: List[schemas._SessionSearchEventSchema]):
 
         if not isinstance(e.value, list):
             e.value = [e.value]
-        is_any = sessions._isAny_opreator(e.operator)
+        is_any = chalicelib.utils.sessions_helper._isAny_opreator(e.operator)
         if not is_any and isinstance(e.value, list) and len(e.value) == 0:
             continue
         events.append(e)

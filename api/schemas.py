@@ -445,6 +445,10 @@ class ClickEventExtraOperator(str, Enum):
     _on_text = "onText"
 
 
+class IssueFilterOperator(str, Enum):
+    _on_selector = ClickEventExtraOperator._on_selector.value
+
+
 class PlatformType(str, Enum):
     mobile = "mobile"
     desktop = "desktop"
@@ -520,10 +524,20 @@ class GraphqlFilterType(str, Enum):
     _response_body = "GRAPHQL_RESPONSE_BODY"
 
 
+class IssueFilterType(str, Enum):
+    _selector = "CLICK_SELECTOR"
+
+
 class RequestGraphqlFilterSchema(BaseModel):
     type: Union[FetchFilterType, GraphqlFilterType] = Field(...)
     value: List[Union[int, str]] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
+
+
+class IssueFilterSchema(BaseModel):
+    type: IssueFilterType = Field(...)
+    value: List[str] = Field(...)
+    operator: IssueFilterOperator = Field(...)
 
 
 class _SessionSearchEventRaw(__MixedSearchFilter):
@@ -531,9 +545,9 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
-    source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
-    sourceOperator: Optional[MathOperator] = Field(None)
-    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(None)
+    source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
+    sourceOperator: Optional[MathOperator] = Field(default=None)
+    filters: Optional[List[Union[RequestGraphqlFilterSchema, IssueFilterSchema]]] = Field(default=None)
 
     @root_validator
     def event_validator(cls, values):
@@ -581,11 +595,14 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
 
 class SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
-    value: Union[Optional[Union[IssueType, PlatformType, int, str]],
-    Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+    # TODO: remove this if there nothing broken from the UI
+    # value: Union[Optional[Union[IssueType, PlatformType, int, str]],
+    # Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+    value: List[Union[IssueType, PlatformType, int, str]] = Field(default=[])
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
+    filters: List[IssueFilterSchema] = Field(default=[])
 
     @root_validator
     def filter_validator(cls, values):
@@ -1215,12 +1232,8 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
         return values
 
 
-class IssueFilterType(str, Enum):
-    _on_selector = ClickEventExtraOperator._on_selector.value
-
-
 class IssueAdvancedFilter(BaseModel):
-    type: IssueFilterType = Field(default=IssueFilterType._on_selector)
+    type: IssueFilterType = Field(default=IssueFilterType._selector)
     value: List[str] = Field(default=[])
     operator: SearchEventOperator = Field(default=SearchEventOperator._is)
 

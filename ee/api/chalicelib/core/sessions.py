@@ -6,6 +6,7 @@ from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite, \
     sessions_devtool, sessions_notes
 from chalicelib.utils import pg_client, helper, metrics_helper
+from chalicelib.utils import sql_helper as sh
 
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
@@ -115,67 +116,6 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
             return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
         else:
             return None
-
-
-def __get_sql_operator(op: Union[schemas.SearchEventOperator, schemas.ClickEventExtraOperator]):
-    return {
-        schemas.SearchEventOperator._is: "=",
-        schemas.SearchEventOperator._is_any: "IN",
-        schemas.SearchEventOperator._on: "=",
-        schemas.SearchEventOperator._on_any: "IN",
-        schemas.SearchEventOperator._is_not: "!=",
-        schemas.SearchEventOperator._not_on: "!=",
-        schemas.SearchEventOperator._contains: "ILIKE",
-        schemas.SearchEventOperator._not_contains: "NOT ILIKE",
-        schemas.SearchEventOperator._starts_with: "ILIKE",
-        schemas.SearchEventOperator._ends_with: "ILIKE",
-    }.get(op, "=")
-
-
-def __is_negation_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_not,
-                  schemas.SearchEventOperator._not_on,
-                  schemas.SearchEventOperator._not_contains]
-
-
-def __reverse_sql_operator(op):
-    return "=" if op == "!=" else "!=" if op == "=" else "ILIKE" if op == "NOT ILIKE" else "NOT ILIKE"
-
-
-def __get_sql_operator_multiple(op: schemas.SearchEventOperator):
-    return " IN " if op not in [schemas.SearchEventOperator._is_not, schemas.SearchEventOperator._not_on,
-                                schemas.SearchEventOperator._not_contains] else " NOT IN "
-
-
-def __get_sql_value_multiple(values):
-    if isinstance(values, tuple):
-        return values
-    return tuple(values) if isinstance(values, list) else (values,)
-
-
-def _multiple_conditions(condition, values, value_key="value", is_not=False):
-    query = []
-    for i in range(len(values)):
-        k = f"{value_key}_{i}"
-        query.append(condition.replace(value_key, k))
-    return "(" + (" AND " if is_not else " OR ").join(query) + ")"
-
-
-def _multiple_values(values, value_key="value"):
-    query_values = {}
-    if values is not None and isinstance(values, list):
-        for i in range(len(values)):
-            k = f"{value_key}_{i}"
-            query_values[k] = values[i]
-    return query_values
-
-
-def _isAny_opreator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
-
-
-def _isUndefined_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_undefined]
 
 
 # This function executes the query and return result
@@ -441,15 +381,15 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             filter_type = f.type
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
-            full_args = {**full_args, **_multiple_values(f.value, value_key=f_k)}
-            op = __get_sql_operator(f.operator) \
+            full_args = {**full_args, **sh.multi_values(f.value, value_key=f_k)}
+            op = sh.get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.events_count] else f.operator
-            is_any = _isAny_opreator(f.operator)
-            is_undefined = _isUndefined_operator(f.operator)
+            is_any = sh.isAny_opreator(f.operator)
+            is_undefined = sh.isUndefined_operator(f.operator)
             if not is_any and not is_undefined and len(f.value) == 0:
                 continue
             is_not = False
-            if __is_negation_operator(f.operator):
+            if sh.is_negation_operator(f.operator):
                 is_not = True
             if filter_type == schemas.FilterType.user_browser:
                 if is_any:
@@ -457,9 +397,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_browser IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not,
+                                            value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
                 if is_any:
@@ -467,9 +408,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_os IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
                 if is_any:
@@ -477,9 +418,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_device IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
                 if is_any:
@@ -487,9 +428,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_country IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not,
+                                            value_key=f_k))
 
             elif filter_type in [schemas.FilterType.utm_source]:
                 if is_any:
@@ -500,11 +442,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_source  IS NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f'ms.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.utm_medium]:
                 if is_any:
                     extra_constraints.append('s.utm_medium IS NOT NULL')
@@ -514,11 +456,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_medium IS NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f'ms.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.utm_campaign]:
                 if is_any:
                     extra_constraints.append('s.utm_campaign IS NOT NULL')
@@ -528,11 +470,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_campaign IS NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f's.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f'ms.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
+                                            value_key=f_k))
 
             elif filter_type == schemas.FilterType.duration:
                 if len(f.value) > 0 and f.value[0] is not None:
@@ -549,7 +491,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     extra_constraints.append('s.base_referrer IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type == events.event_type.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
@@ -564,11 +507,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         ss_constraints.append(f"ms.{metadata.index_to_colname(meta_keys[f.source])} IS NULL")
                     else:
                         extra_constraints.append(
-                            _multiple_conditions(
+                            sh.multi_conditions(
                                 f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                                 f.value, is_not=is_not, value_key=f_k))
                         ss_constraints.append(
-                            _multiple_conditions(
+                            sh.multi_conditions(
                                 f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                                 f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
@@ -580,9 +523,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_id IS NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.user_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f"ms.user_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
                                  schemas.FilterType.user_anonymous_id_ios]:
                 if is_any:
@@ -593,11 +538,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_anonymous_id IS NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"s.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"ms.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                 if is_any:
                     extra_constraints.append('s.rev_id IS NOT NULL')
@@ -607,40 +552,41 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.rev_id IS NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f"s.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
+                        sh.multi_conditions(f"ms.rev_id {op} %({f_k})s::text", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type == schemas.FilterType.platform:
-                # op = __get_sql_operator(f.operator)
+                # op = __ sh.get_sql_operator(f.operator)
                 extra_constraints.append(
-                    _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
                 ss_constraints.append(
-                    _multiple_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
             elif filter_type == schemas.FilterType.issue:
                 if is_any:
                     extra_constraints.append("array_length(s.issue_types, 1) > 0")
                     ss_constraints.append("array_length(ms.issue_types, 1) > 0")
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                                            value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
-                                             value_key=f_k))
+                        sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                                            value_key=f_k))
             elif filter_type == schemas.FilterType.events_count:
                 extra_constraints.append(
-                    _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
                 ss_constraints.append(
-                    _multiple_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                    sh.multi_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                        value_key=f_k))
     # ---------------------------------------------------------------------------
     if len(data.events) > 0:
         valid_events_count = 0
         for event in data.events:
-            is_any = _isAny_opreator(event.operator)
+            is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
             if __is_valid_event(is_any=is_any, event=event):
@@ -652,16 +598,16 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
         events_joiner = " UNION " if or_events else " INNER JOIN LATERAL "
         for i, event in enumerate(data.events):
             event_type = event.type
-            is_any = _isAny_opreator(event.operator)
+            is_any = sh.isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
             if not __is_valid_event(is_any=is_any, event=event):
                 continue
-            op = __get_sql_operator(event.operator)
+            op = sh.get_sql_operator(event.operator)
             is_not = False
-            if __is_negation_operator(event.operator):
+            if sh.is_negation_operator(event.operator):
                 is_not = True
-                op = __reverse_sql_operator(op)
+                op = sh.reverse_sql_operator(op)
             if event_index == 0 or or_events:
                 event_from = "%s INNER JOIN public.sessions AS ms USING (session_id)"
                 event_where = ["ms.project_id = %(projectId)s", "main.timestamp >= %(startDate)s",
@@ -681,49 +627,49 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             if event.type != schemas.PerformanceEventType.time_between_events:
                 event.value = helper.values_for_operator(value=event.value, op=event.operator)
                 full_args = {**full_args,
-                             **_multiple_values(event.value, value_key=e_k),
-                             **_multiple_values(event.source, value_key=s_k)}
+                             **sh.multi_values(event.value, value_key=e_k),
+                             **sh.multi_values(event.source, value_key=s_k)}
 
             if event_type == events.event_type.CLICK.ui_type:
                 event_from = event_from % f"{events.event_type.CLICK.table} AS main "
                 if not is_any:
                     if event.operator == schemas.ClickEventExtraOperator._on_selector:
                         event_where.append(
-                            _multiple_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
+                            sh.multi_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
                     else:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.event_type.CLICK.column} {op} %({e_k})s", event.value,
-                                                 value_key=e_k))
+                            sh.multi_conditions(f"main.{events.event_type.CLICK.column} {op} %({e_k})s", event.value,
+                                                value_key=e_k))
 
             elif event_type == events.event_type.INPUT.ui_type:
                 event_from = event_from % f"{events.event_type.INPUT.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.INPUT.column} {op} %({e_k})s", event.value,
-                                             value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.INPUT.column} {op} %({e_k})s", event.value,
+                                            value_key=e_k))
                 if event.source is not None and len(event.source) > 0:
-                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
-                                                            value_key=f"custom{i}"))
-                    full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
+                    event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
+                                                           value_key=f"custom{i}"))
+                    full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
 
             elif event_type == events.event_type.LOCATION.ui_type:
                 event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
             elif event_type == events.event_type.CUSTOM.ui_type:
                 event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.CUSTOM.column} {op} %({e_k})s", event.value,
-                                             value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.CUSTOM.column} {op} %({e_k})s", event.value,
+                                            value_key=e_k))
             elif event_type == events.event_type.REQUEST.ui_type:
                 event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value,
-                                             value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value,
+                                            value_key=e_k))
             # elif event_type == events.event_type.GRAPHQL.ui_type:
             #     event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
             #     if not is_any:
@@ -734,17 +680,17 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 event_from = event_from % f"{events.event_type.STATEACTION.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.STATEACTION.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.STATEACTION.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
             elif event_type == events.event_type.ERROR.ui_type:
                 event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
                 event.source = list(set(event.source))
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
-                        _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                                            event.value, value_key=e_k))
                 if len(event.source) > 0 and event.source[0] not in [None, "*", ""]:
-                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
+                    event_where.append(sh.multi_conditions(f"main1.source = %({s_k})s", event.source, value_key=s_k))
 
 
             # ----- IOS
@@ -752,49 +698,49 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 event_from = event_from % f"{events.event_type.CLICK_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.CLICK_IOS.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.CLICK_IOS.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
 
             elif event_type == events.event_type.INPUT_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.INPUT_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
                 if event.source is not None and len(event.source) > 0:
-                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
-                                                            value_key="custom{i}"))
-                    full_args = {**full_args, **_multiple_values(event.source, f"custom{i}")}
+                    event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
+                                                           value_key="custom{i}"))
+                    full_args = {**full_args, **sh.multi_values(event.source, f"custom{i}")}
             elif event_type == events.event_type.VIEW_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.VIEW_IOS.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.VIEW_IOS.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
             elif event_type == events.event_type.CUSTOM_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.CUSTOM_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.CUSTOM_IOS.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.CUSTOM_IOS.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
             elif event_type == events.event_type.REQUEST_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.REQUEST_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.REQUEST_IOS.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.REQUEST_IOS.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
             elif event_type == events.event_type.ERROR_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
-                        _multiple_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                                            event.value, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.fetch_failed:
                 event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
                 event_where.append(f"main.{colname} = FALSE")
@@ -808,7 +754,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             #     colname = col["column"]
             #     tname = "main"
             #     e_k += "_custom"
-            #     full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+            #     full_args = {**full_args, **_ sh.multiple_values(event.source, value_key=e_k)}
             #     event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
             #                        _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
             #                                             event.source, value_key=e_k))
@@ -829,14 +775,14 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                     f"{tname}.timestamp <= %(endDate)s"]
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
-                                             event.value, value_key=e_k))
+                        sh.multi_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                                            event.value, value_key=e_k))
                 e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
                 event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
-                                                        event.source, value_key=e_k))
+                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                       event.source, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
                 if not isinstance(event.value[0].value, list):
@@ -850,70 +796,71 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 e_k1 = e_k + "_e1"
                 e_k2 = e_k + "_e2"
                 full_args = {**full_args,
-                             **_multiple_values(event.value[0].value, value_key=e_k1),
-                             **_multiple_values(event.value[1].value, value_key=e_k2)}
-                s_op = __get_sql_operator(event.value[0].operator)
+                             **sh.multi_values(event.value[0].value, value_key=e_k1),
+                             **sh.multi_values(event.value[1].value, value_key=e_k2)}
+                s_op = sh.get_sql_operator(event.value[0].operator)
                 event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
                 if event_index > 0 and not or_events:
                     event_where.append("main2.session_id=event_0.session_id")
-                is_any = _isAny_opreator(event.value[0].operator)
+                is_any = sh.isAny_opreator(event.value[0].operator)
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(
+                        sh.multi_conditions(
                             f"main.{getattr(events.event_type, event.value[0].type).column} {s_op} %({e_k1})s",
                             event.value[0].value, value_key=e_k1))
-                s_op = __get_sql_operator(event.value[1].operator)
-                is_any = _isAny_opreator(event.value[1].operator)
+                s_op = sh.get_sql_operator(event.value[1].operator)
+                is_any = sh.isAny_opreator(event.value[1].operator)
                 if not is_any:
                     event_where.append(
-                        _multiple_conditions(
+                        sh.multi_conditions(
                             f"main2.{getattr(events.event_type, event.value[1].type).column} {s_op} %({e_k2})s",
                             event.value[1].value, value_key=e_k2))
 
                 e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
+                full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
                 event_where.append(
-                    _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
-                                         event.source, value_key=e_k))
+                    sh.multi_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
+                                        event.source, value_key=e_k))
 
             elif event_type == schemas.EventType.request_details:
                 event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
                 apply = False
                 for j, f in enumerate(event.filters):
-                    is_any = _isAny_opreator(f.operator)
+                    is_any = sh.isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                    op = __get_sql_operator(f.operator)
+                    op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_fetch{j}"
-                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType._url:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s::text",
-                                                 f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s::text",
+                                                f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
-                            _multiple_conditions(f"main.status_code {f.operator} %({e_k_f})s::integer", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.status_code {f.operator} %({e_k_f})s::integer", f.value,
+                                                value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._method:
                         event_where.append(
-                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s::integer", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.duration {f.operator} %({e_k_f})s::integer", f.value,
+                                                value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._request_body:
                         event_where.append(
-                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s::text", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.request_body {op} %({e_k_f})s::text", f.value,
+                                                value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._response_body:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s::text", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.response_body {op} %({e_k_f})s::text", f.value,
+                                                value_key=e_k_f))
                         apply = True
                     else:
                         print(f"undefined FETCH filter: {f.type}")
@@ -922,26 +869,26 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             elif event_type == schemas.EventType.graphql:
                 event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
                 for j, f in enumerate(event.filters):
-                    is_any = _isAny_opreator(f.operator)
+                    is_any = sh.isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
                         continue
                     f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                    op = __get_sql_operator(f.operator)
+                    op = sh.get_sql_operator(f.operator)
                     e_k_f = e_k + f"_graphql{j}"
-                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType._name:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
-                                                 value_key=e_k_f))
+                            sh.multi_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                                                value_key=e_k_f))
                     elif f.type == schemas.GraphqlFilterType._method:
                         event_where.append(
-                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     elif f.type == schemas.GraphqlFilterType._request_body:
                         event_where.append(
-                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     elif f.type == schemas.GraphqlFilterType._response_body:
                         event_where.append(
-                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                            sh.multi_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     else:
                         print(f"undefined GRAPHQL filter: {f.type}")
             else:

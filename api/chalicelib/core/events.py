@@ -42,7 +42,7 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     for c in click_rage_issues:
         merge_count = c.get("payload")
         if merge_count is not None:
-            merge_count = merge_count.get("count", 3)
+            merge_count = merge_count.get("Count", 3)
         else:
             merge_count = 3
         for i in range(len(rows)):
