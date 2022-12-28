@@ -83,11 +83,11 @@ function EventsBlock(props: IProps) {
     }
   }, [currentTimeEventIndex])
 
-  const onEventClick = (_: React.MouseEvent, event: any) => player.jump(event.time)
+  const onEventClick = (_: React.MouseEvent, event: { time: number }) => player.jump(event.time)
   const onMouseOver = () => setMouseOver(true)
   const onMouseLeave = () => setMouseOver(false)
 
-  const renderGroup = ({ index, key, style, parent }: { index: number; key: string; style: any; parent: any }) => {
+  const renderGroup = ({ index, key, style, parent }: { index: number; key: string; style: React.CSSProperties; parent: any }) => {
     const isLastEvent = index === usedEvents.size - 1;
     const isLastInGroup = isLastEvent || usedEvents.get(index + 1)?.type === TYPES.LOCATION;
     const event = usedEvents.get(index);
