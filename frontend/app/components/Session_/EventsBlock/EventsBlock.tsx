@@ -13,7 +13,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { RootStore } from 'App/duck'
 import { List as ImmList } from 'immutable'
-import useCellMeasurerCache from 'Components/shared/DevTools/useCellMeasurerCache'
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void

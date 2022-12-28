@@ -12,7 +12,7 @@ import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorD
 import { useModal } from 'App/components/Modal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
-import useCellMeasurerCache from '../useCellMeasurerCache'
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
 
 const ALL = 'ALL';
 const INFO = 'INFO';

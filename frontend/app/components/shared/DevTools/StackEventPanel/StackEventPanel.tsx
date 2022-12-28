@@ -12,7 +12,7 @@ import StackEventRow from 'Shared/DevTools/StackEventRow';
 import StackEventModal from '../StackEventModal';
 import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
 import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
-import useCellMeasurerCache from '../useCellMeasurerCache'
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
 
 const INDEX_KEY = 'stackEvent';
 const ALL = 'ALL';
