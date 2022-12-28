@@ -71,12 +71,10 @@ jobs:
         case ${build_param} in
           false)
             {
-              git diff --name-only HEAD HEAD~1 | grep -E "backend/cmd|backend/services" | grep -vE ^ee/ | cut -d '/' -f3
-            
               git diff --name-only HEAD HEAD~1 | grep -E "backend/pkg|backend/internal" | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
                 grep -rl "pkg/$pkg_name" backend/services backend/cmd | cut -d '/' -f3 
               done
-            } | uniq > /tmp/images_to_build.txt
+            } | awk '!seen[$0]++' > /tmp/images_to_build.txt
           ;;
           all)
             ls backend/cmd > /tmp/images_to_build.txt
