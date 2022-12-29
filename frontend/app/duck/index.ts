@@ -5,7 +5,6 @@ import jwt from './jwt';
 import user from './user';
 import sessions from './sessions';
 import assignments from './assignments';
-import targetCustom from './targetCustom';
 import filters from './filters';
 import funnelFilters from './funnelFilters';
 import templates from './templates';
@@ -31,7 +30,6 @@ const rootReducer = combineReducers({
   user,
   sessions,
   assignments,
-  targetCustom,
   filters,
   funnelFilters,
 
