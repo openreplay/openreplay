@@ -371,31 +371,31 @@ class ErrorSource(str, Enum):
 
 
 class EventType(str, Enum):
-    click = "CLICK"
-    input = "INPUT"
-    location = "LOCATION"
-    custom = "CUSTOM"
-    request = "REQUEST"
-    request_details = "FETCH"
-    graphql = "GRAPHQL"
-    state_action = "STATEACTION"
-    error = "ERROR"
-    click_ios = "CLICK_IOS"
-    input_ios = "INPUT_IOS"
-    view_ios = "VIEW_IOS"
-    custom_ios = "CUSTOM_IOS"
-    request_ios = "REQUEST_IOS"
-    error_ios = "ERROR_IOS"
+    click = "click"
+    input = "input"
+    location = "location"
+    custom = "custom"
+    request = "request"
+    request_details = "fetch"
+    graphql = "graphql"
+    state_action = "stateAction"
+    error = "error"
+    click_ios = "clickIos"
+    input_ios = "inputIos"
+    view_ios = "viewIos"
+    custom_ios = "customIos"
+    request_ios = "requestIos"
+    error_ios = "errorIos"
 
 
 class PerformanceEventType(str, Enum):
-    location_dom_complete = "DOM_COMPLETE"
-    location_largest_contentful_paint_time = "LARGEST_CONTENTFUL_PAINT_TIME"
-    time_between_events = "TIME_BETWEEN_EVENTS"
-    location_ttfb = "TTFB"
-    location_avg_cpu_load = "AVG_CPU_LOAD"
-    location_avg_memory_usage = "AVG_MEMORY_USAGE"
-    fetch_failed = "FETCH_FAILED"
+    location_dom_complete = "domComplete"
+    location_largest_contentful_paint_time = "largestContentfulPaintTime"
+    time_between_events = "timeBetweenEvents"
+    location_ttfb = "ttfb"
+    location_avg_cpu_load = "avgCpuLoad"
+    location_avg_memory_usage = "avgMemoryUsage"
+    fetch_failed = "fetchFailed"
     # fetch_duration = "FETCH_DURATION"
 
 
@@ -548,6 +548,34 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
     sourceOperator: Optional[MathOperator] = Field(default=None)
     filters: Optional[List[Union[RequestGraphqlFilterSchema, IssueFilterSchema]]] = Field(default=None)
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        values["type"] = {
+            "CLICK": EventType.click.value,
+            "INPUT": EventType.input.value,
+            "LOCATION": EventType.location.value,
+            "CUSTOM": EventType.custom.value,
+            "REQUEST": EventType.request.value,
+            "FETCH": EventType.request_details.value,
+            "GRAPHQL": EventType.graphql.value,
+            "STATEACTION": EventType.state_action.value,
+            "ERROR": EventType.error.value,
+            "CLICK_IOS": EventType.click_ios.value,
+            "INPUT_IOS": EventType.input_ios.value,
+            "VIEW_IOS": EventType.view_ios.value,
+            "CUSTOM_IOS": EventType.custom_ios.value,
+            "REQUEST_IOS": EventType.request_ios.value,
+            "ERROR_IOS": EventType.error_ios.value,
+            "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
+            "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
+            "TIME_BETWEEN_EVENTS": PerformanceEventType.time_between_events.value,
+            "TTFB": PerformanceEventType.location_ttfb.value,
+            "AVG_CPU_LOAD": PerformanceEventType.location_avg_cpu_load.value,
+            "AVG_MEMORY_USAGE": PerformanceEventType.location_avg_memory_usage.value,
+            "FETCH_FAILED": PerformanceEventType.fetch_failed.value,
+        }.get(values["type"], values["type"])
+        return values
 
     @root_validator
     def event_validator(cls, values):
