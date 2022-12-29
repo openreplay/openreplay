@@ -400,30 +400,30 @@ class PerformanceEventType(str, Enum):
 
 
 class FilterType(str, Enum):
-    user_os = "USEROS"
-    user_browser = "USERBROWSER"
-    user_device = "USERDEVICE"
-    user_country = "USERCOUNTRY"
-    user_id = "USERID"
-    user_anonymous_id = "USERANONYMOUSID"
-    referrer = "REFERRER"
-    rev_id = "REVID"
+    user_os = "userOs"
+    user_browser = "userBrowser"
+    user_device = "userDevice"
+    user_country = "userCountry"
+    user_id = "userId"
+    user_anonymous_id = "userAnonymousId"
+    referrer = "referrer"
+    rev_id = "revId"
     # IOS
-    user_os_ios = "USEROS_IOS"
-    user_device_ios = "USERDEVICE_IOS"
-    user_country_ios = "USERCOUNTRY_IOS"
-    user_id_ios = "USERID_IOS"
-    user_anonymous_id_ios = "USERANONYMOUSID_IOS"
-    rev_id_ios = "REVID_IOS"
+    user_os_ios = "userOsIos"
+    user_device_ios = "userDeviceIos"
+    user_country_ios = "userCountryIos"
+    user_id_ios = "userIdIos"
+    user_anonymous_id_ios = "userAnonymousIdIos"
+    rev_id_ios = "revIdIos"
     #
-    duration = "DURATION"
-    platform = "PLATFORM"
-    metadata = "METADATA"
-    issue = "ISSUE"
-    events_count = "EVENTS_COUNT"
-    utm_source = "UTM_SOURCE"
-    utm_medium = "UTM_MEDIUM"
-    utm_campaign = "UTM_CAMPAIGN"
+    duration = "duration"
+    platform = "platform"
+    metadata = "metadata"
+    issue = "issue"
+    events_count = "eventsCount"
+    utm_source = "utmSource"
+    utm_medium = "utmMedium"
+    utm_campaign = "utmCampaign"
 
 
 class SearchEventOperator(str, Enum):
@@ -446,7 +446,7 @@ class ClickEventExtraOperator(str, Enum):
 
 
 class IssueFilterOperator(str, Enum):
-    _on_selector = ClickEventExtraOperator._on_selector.value
+    _on_selector = ClickEventExtraOperator._on_selector
 
 
 class PlatformType(str, Enum):
@@ -603,6 +603,34 @@ class SessionSearchFilterSchema(__MixedSearchFilter):
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
     filters: List[IssueFilterSchema] = Field(default=[])
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        values["type"] = {
+            "USEROS": FilterType.user_os.value,
+            "USERBROWSER": FilterType.user_browser.value,
+            "USERDEVICE": FilterType.user_device.value,
+            "USERCOUNTRY": FilterType.user_country.value,
+            "USERID": FilterType.user_id.value,
+            "USERANONYMOUSID": FilterType.user_anonymous_id.value,
+            "REFERRER": FilterType.referrer.value,
+            "REVID": FilterType.rev_id.value,
+            "USEROS_IOS": FilterType.user_os_ios.value,
+            "USERDEVICE_IOS": FilterType.user_device_ios.value,
+            "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
+            "USERID_IOS": FilterType.user_id_ios.value,
+            "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
+            "REVID_IOS": FilterType.rev_id_ios.value,
+            "DURATION": FilterType.duration.value,
+            "PLATFORM": FilterType.platform.value,
+            "METADATA": FilterType.metadata.value,
+            "ISSUE": FilterType.issue.value,
+            "EVENTS_COUNT": FilterType.events_count.value,
+            "UTM_SOURCE": FilterType.utm_source.value,
+            "UTM_MEDIUM": FilterType.utm_medium.value,
+            "UTM_CAMPAIGN": FilterType.utm_campaign.value
+        }.get(values["type"], values["type"])
+        return values
 
     @root_validator
     def filter_validator(cls, values):
@@ -892,15 +920,15 @@ class MetricOfWebVitals(str, Enum):
 
 
 class MetricOfTable(str, Enum):
-    user_os = "userOS"  # USEROS
-    user_browser = "userBrowser"  # USERBROWSER
-    user_device = "userDevice"  # USERDEVICE
-    user_country = "userCountry"  # USERCOUNTRY
-    user_id = "userId"  # USERID
-    issues = "issue"  # ISSUE
-    visited_url = "location"  # LOCATION
-    sessions = "sessions"  # SESSIONS
-    errors = "jsException"  # js_exception
+    user_os = FilterType.user_os
+    user_browser = FilterType.user_browser
+    user_device = FilterType.user_device
+    user_country = FilterType.user_country
+    user_id = FilterType.user_id
+    issues = FilterType.issue
+    visited_url = "location"
+    sessions = "sessions"
+    errors = "jsException"
 
 
 class MetricOfTimeseries(str, Enum):
@@ -1070,14 +1098,14 @@ class TemplatePredefinedUnits(str, Enum):
 
 
 class LiveFilterType(str, Enum):
-    user_os = FilterType.user_os.value
-    user_browser = FilterType.user_browser.value
-    user_device = FilterType.user_device.value
-    user_country = FilterType.user_country.value
-    user_id = FilterType.user_id.value
-    user_anonymous_id = FilterType.user_anonymous_id.value
-    rev_id = FilterType.rev_id.value
-    platform = FilterType.platform.value
+    user_os = FilterType.user_os
+    user_browser = FilterType.user_browser
+    user_device = FilterType.user_device
+    user_country = FilterType.user_country
+    user_id = FilterType.user_id
+    user_anonymous_id = FilterType.user_anonymous_id
+    rev_id = FilterType.rev_id
+    platform = FilterType.platform
     page_title = "PAGETITLE"
     session_id = "SESSIONID"
     metadata = "METADATA"
@@ -1090,9 +1118,9 @@ class LiveFilterType(str, Enum):
 class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
-    source: Optional[str] = Field(None)
-    operator: Literal[SearchEventOperator._is.value, SearchEventOperator._contains.value] = Field(
-        SearchEventOperator._contains.value)
+    source: Optional[str] = Field(default=None)
+    operator: Literal[SearchEventOperator._is, \
+        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     @root_validator
     def validator(cls, values):
