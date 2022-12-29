@@ -4,7 +4,7 @@ import { Duration } from 'luxon';
 import SessionEvent, { TYPES } from './event';
 import StackEvent from './stackEvent';
 import Resource from './resource';
-import SessionError from './error';
+import SessionError, { IError } from './error';
 import Issue, { IIssue } from './issue';
 
 const HASH_MOD = 1610612741;
@@ -90,7 +90,7 @@ export default Record(
       backendErrors = 0,
       consoleErrors = 0,
       projectId,
-      errors,
+      errors = [],
       stackEvents = [],
       issues = [],
       sessionId,
@@ -124,7 +124,7 @@ export default Record(
         .concat(List(session.userEvents))
         .sortBy((se) => se.timestamp)
         .map((se) => StackEvent({ ...se, time: se.timestamp - startedAt }));
-      const exceptions = List(errors).map(SessionError);
+      const exceptions = (errors as IError[]).map(e => new SessionError(e));
 
       const issuesList = (issues as IIssue[]).map((i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k }));
 
