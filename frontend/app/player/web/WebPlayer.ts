@@ -26,11 +26,12 @@ export default class WebPlayer extends Player {
   private targetMarker: TargetMarker
 
   constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
+    console.log(session.events, session.resources, session.errors)
     let initialLists = live ? {} : {
       event: session.events.toJSON(),
       stack: session.stackEvents.toJSON(),
       resource: session.resources.toJSON(), // MBTODO: put ResourceTiming in file
-      exceptions: session.errors.toJSON().map(({ time, errorId, name }: any) =>
+      exceptions: session.errors.map(({ time, errorId, name }: any) =>
         Log({
           level: LogLevel.ERROR,
           value: name,
