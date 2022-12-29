@@ -223,7 +223,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         {columns
           .filter((i: any) => !i.hidden)
           .map(({ dataKey, render, width, label }) => (
-            <div key={parseInt(label, 36)} className={stl.cell} style={{ width: `${width}px` }}>
+            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={stl.cell} style={{ width: `${width}px` }}>
               {render
                 ? render(row)
                 : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
@@ -327,7 +327,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width, dataKey, onClick = null }) => (
               <div
-                key={parseInt(label, 36)}
+                key={parseInt(label.replace(' ', ''), 36)}
                 className={cn(stl.headerCell, 'flex items-center select-none', {
                   'cursor-pointer': typeof onClick === 'function',
                 })}
@@ -355,6 +355,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
               ))}
               {visibleRefLines.map(({ time, color, onClick }) => (
                 <div
+                  key={time}
                   className={cn(stl.refLine, `bg-${color}`)}
                   style={{
                     left: `${percentOf(time - timestart, timewidth)}%`,

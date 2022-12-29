@@ -5,7 +5,7 @@ import SessionEvent, { TYPES } from './event';
 import StackEvent from './stackEvent';
 import Resource from './resource';
 import SessionError from './error';
-import Issue from './issue';
+import Issue, { IIssue } from './issue';
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
@@ -32,8 +32,8 @@ export default Record(
     duration: 0,
     events: List(),
     stackEvents: List(),
-    resources: List(),
-    missedResources: List(),
+    resources: [],
+    missedResources: [],
     metadata: Map(),
     favorite: false,
     filterId: '',
@@ -113,10 +113,11 @@ export default Record(
         .map((e) => SessionEvent({ ...e, time: e.timestamp - startedAt }))
         .filter(({ type, time }) => type !== TYPES.CONSOLE && time <= durationSeconds);
 
-      let resources = List(session.resources).map(Resource);
-      resources = resources
-        .map((r) => r.set('time', Math.max(0, r.time - startedAt)))
-        .sort((r1, r2) => r1.time - r2.time);
+      let resources = List(session.resources).map((r) => new Resource(r as any));
+      resources.forEach((r: Resource) => {
+          r.time = Math.max(0, r.time - startedAt)
+        })
+      resources = resources.sort((r1, r2) => r1.time - r2.time);
       const missedResources = resources.filter(({ success }) => !success);
 
       const stackEventsList = List(stackEvents)
@@ -125,7 +126,7 @@ export default Record(
         .map((se) => StackEvent({ ...se, time: se.timestamp - startedAt }));
       const exceptions = List(errors).map(SessionError);
 
-      const issuesList = List(issues).map((e) => Issue({ ...e, time: e.timestamp - startedAt }));
+      const issuesList = (issues as IIssue[]).map((i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k }));
 
       const rawEvents = !session.events
         ? []

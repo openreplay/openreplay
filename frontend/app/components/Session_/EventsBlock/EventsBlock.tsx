@@ -5,7 +5,6 @@ import { Icon } from 'UI';
 import { List, AutoSizer, CellMeasurer } from "react-virtualized";
 import { TYPES } from 'Types/session/event';
 import { setEventFilter, filterOutNote } from 'Duck/sessions';
-import { show as showTargetDefiner } from 'Duck/components/targetDefiner';
 import EventGroupWrapper from './EventGroupWrapper';
 import styles from './eventsBlock.module.css';
 import EventSearch from './EventSearch/EventSearch';
@@ -179,9 +178,7 @@ export default connect((state: RootStore) => ({
   filteredEvents: state.getIn([ 'sessions', 'filteredEvents' ]),
   query: state.getIn(['sessions', 'eventsQuery']),
   eventsIndex: state.getIn([ 'sessions', 'eventsIndex' ]),
-  targetDefinerDisplayed: state.getIn([ 'components', 'targetDefiner', 'isDisplayed' ]),
 }), {
-  showTargetDefiner,
   setEventFilter,
   filterOutNote
 })(observer(EventsBlock))

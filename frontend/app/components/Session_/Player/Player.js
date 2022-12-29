@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import { EscapeButton } from 'UI';
-import { hide as hideTargetDefiner } from 'Duck/components/targetDefiner';
 import {
   NONE,
   CONSOLE,
@@ -116,7 +115,6 @@ export default connect((state) => {
     };
   },
   {
-    hideTargetDefiner,
     fullscreenOff,
     updateLastPlayedSession,
   }
