@@ -920,12 +920,12 @@ class MetricOfWebVitals(str, Enum):
 
 
 class MetricOfTable(str, Enum):
-    user_os = FilterType.user_os
-    user_browser = FilterType.user_browser
-    user_device = FilterType.user_device
-    user_country = FilterType.user_country
-    user_id = FilterType.user_id
-    issues = FilterType.issue
+    user_os = FilterType.user_os.value
+    user_browser = FilterType.user_browser.value
+    user_device = FilterType.user_device.value
+    user_country = FilterType.user_country.value
+    user_id = FilterType.user_id.value
+    issues = FilterType.issue.value
     visited_url = "location"
     sessions = "sessions"
     errors = "jsException"
