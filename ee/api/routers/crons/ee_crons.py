@@ -1,10 +1,12 @@
+from apscheduler.triggers.interval import IntervalTrigger
+
 from chalicelib.utils import events_queue
 
 
-def pg_events_queue() -> None:
+async def pg_events_queue() -> None:
     events_queue.global_queue.force_flush()
 
 
 ee_cron_jobs = [
-    {"func": pg_events_queue, "trigger": "interval", "seconds": 60*5, "misfire_grace_time": 20},
+    {"func": pg_events_queue, "trigger": IntervalTrigger(minutes=5), "misfire_grace_time": 20, "max_instances": 1},
 ]
