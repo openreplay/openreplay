@@ -3,7 +3,7 @@ from typing import List, Union
 import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite, \
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_favorite, \
     sessions_devtool, sessions_notes
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
@@ -63,7 +63,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                 (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key,
                 encode(file_key,'hex') AS file_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
-                {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata._get_column_names()]) + ") AS project_metadata") if group_metadata else ''}
+                {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata.column_names()]) + ") AS project_metadata") if group_metadata else ''}
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
             WHERE s.project_id = %(project_id)s
                 AND s.session_id = %(session_id)s;""",
@@ -575,6 +575,23 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append(
                         sh.multi_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
                                             value_key=f_k))
+                    # search sessions with click_rage on a specific selector
+                    if len(f.filters) > 0 and schemas.IssueType.click_rage in f.value:
+                        for j, sf in enumerate(f.filters):
+                            if sf.operator == schemas.IssueFilterOperator._on_selector:
+                                f_k = f"f_value{i}_{j}"
+                                full_args = {**full_args, **sh.multi_values(sf.value, value_key=f_k)}
+                                extra_constraints += ["mc.timestamp>=%(startDate)s",
+                                                      "mc.timestamp<=%(endDate)s",
+                                                      "mis.type='click_rage'",
+                                                      sh.multi_conditions(f"mc.selector=%({f_k})s",
+                                                                          sf.value, is_not=is_not,
+                                                                          value_key=f_k)]
+
+                            extra_from += """INNER JOIN events.clicks AS mc USING(session_id)
+                                                                     INNER JOIN events_common.issues USING (session_id,timestamp)
+                                                                     INNER JOIN public.issues AS mis USING (issue_id)\n"""
+
             elif filter_type == schemas.FilterType.events_count:
                 extra_constraints.append(
                     sh.multi_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,

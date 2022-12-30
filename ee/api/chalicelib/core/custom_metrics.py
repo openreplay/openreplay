@@ -137,7 +137,8 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_click_map(data):
         return __get_click_map_chat(project_id=project_id, user_id=user_id, data=data)
-
+    elif len(data.series) == 0:
+        return []
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
@@ -388,7 +389,9 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)"""
         query = cur.mogrify(
-            f"""SELECT *
+            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, edited_at,
+                        metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
+                        predefined_key, dashboards, owner_email, default_config AS config, thumbnail
                 FROM metrics
                          {sub_join}
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
