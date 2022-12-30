@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.9.0'
+SELECT 'v1.10.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -343,7 +343,7 @@ $$
                 context        jsonb DEFAULT NULL
             );
             CREATE INDEX issues_issue_id_type_idx ON issues (issue_id, type);
-            CREATE INDEX issues_context_string_gin_idx ON public.issues USING GIN (context_string gin_trgm_ops);
+            CREATE INDEX issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
             CREATE INDEX issues_project_id_idx ON issues (project_id);
 
 
@@ -468,12 +468,9 @@ $$
             CREATE INDEX sessions_metadata8_gin_idx ON public.sessions USING GIN (metadata_8 gin_trgm_ops);
             CREATE INDEX sessions_metadata9_gin_idx ON public.sessions USING GIN (metadata_9 gin_trgm_ops);
             CREATE INDEX sessions_metadata10_gin_idx ON public.sessions USING GIN (metadata_10 gin_trgm_ops);
-            CREATE INDEX sessions_user_os_gin_idx ON public.sessions USING GIN (user_os gin_trgm_ops);
-            CREATE INDEX sessions_user_browser_gin_idx ON public.sessions USING GIN (user_browser gin_trgm_ops);
             CREATE INDEX sessions_user_device_gin_idx ON public.sessions USING GIN (user_device gin_trgm_ops);
             CREATE INDEX sessions_user_id_gin_idx ON public.sessions USING GIN (user_id gin_trgm_ops);
             CREATE INDEX sessions_user_anonymous_id_gin_idx ON public.sessions USING GIN (user_anonymous_id gin_trgm_ops);
-            CREATE INDEX sessions_user_country_gin_idx ON public.sessions (project_id, user_country);
             CREATE INDEX sessions_start_ts_idx ON public.sessions (start_ts) WHERE duration > 0;
             CREATE INDEX sessions_project_id_idx ON public.sessions (project_id) WHERE duration > 0;
             CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions (session_id, project_id, start_ts) WHERE duration > 0;
@@ -584,11 +581,9 @@ $$
             CREATE INDEX requests_response_body_nn_gin_idx ON events_common.requests USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
             CREATE INDEX requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
             CREATE INDEX requests_session_id_status_code_nn_idx ON events_common.requests (session_id, status_code) WHERE status_code IS NOT NULL;
-            CREATE INDEX requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
             CREATE INDEX requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
             CREATE INDEX requests_path_nn_idx ON events_common.requests (path) WHERE path IS NOT NULL;
             CREATE INDEX requests_path_nn_gin_idx ON events_common.requests USING GIN (path gin_trgm_ops) WHERE path IS NOT NULL;
-            CREATE INDEX requests_query_nn_idx ON events_common.requests (query) WHERE query IS NOT NULL;
             CREATE INDEX requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 
 
@@ -620,14 +615,6 @@ $$
             CREATE INDEX pages_timestamp_idx ON events.pages (timestamp);
             CREATE INDEX pages_session_id_timestamp_idx ON events.pages (session_id, timestamp);
             CREATE INDEX pages_base_referrer_idx ON events.pages (base_referrer);
-            CREATE INDEX pages_base_referrer_gin_idx2 ON events.pages USING GIN (RIGHT(base_referrer,
-                                                                                       length(base_referrer) - (CASE
-                                                                                                                    WHEN base_referrer LIKE 'http://%'
-                                                                                                                        THEN 7
-                                                                                                                    WHEN base_referrer LIKE 'https://%'
-                                                                                                                        THEN 8
-                                                                                                                    ELSE 0 END))
-                                                                                 gin_trgm_ops);
             CREATE INDEX pages_response_time_idx ON events.pages (response_time);
             CREATE INDEX pages_response_end_idx ON events.pages (response_end);
             CREATE INDEX pages_path_gin_idx ON events.pages USING GIN (path gin_trgm_ops);
@@ -672,7 +659,6 @@ $$
             CREATE INDEX clicks_timestamp_idx ON events.clicks (timestamp);
             CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label, session_id, timestamp);
             CREATE INDEX clicks_url_idx ON events.clicks (url);
-            CREATE INDEX clicks_url_gin_idx ON events.clicks USING GIN (url gin_trgm_ops);
             CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp, selector);
             CREATE INDEX clicks_session_id_timestamp_idx ON events.clicks (session_id, timestamp);
             CREATE INDEX clicks_selector_idx ON events.clicks (selector);
@@ -689,9 +675,7 @@ $$
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX inputs_session_id_idx ON events.inputs (session_id);
-            CREATE INDEX inputs_label_value_idx ON events.inputs (label, value);
             CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops);
-            CREATE INDEX inputs_label_idx ON events.inputs (label);
             CREATE INDEX inputs_timestamp_idx ON events.inputs (timestamp);
             CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label, session_id, timestamp);
 
@@ -753,7 +737,6 @@ $$
                 name       text   NOT NULL,
                 PRIMARY KEY (session_id, message_id)
             );
-            CREATE INDEX state_actions_name_idx ON events.state_actions (name);
             CREATE INDEX state_actions_name_gin_idx ON events.state_actions USING GIN (name gin_trgm_ops);
             CREATE INDEX state_actions_timestamp_idx ON events.state_actions (timestamp);
 
@@ -781,17 +764,12 @@ $$
             CREATE INDEX resources_session_id_idx ON events.resources (session_id);
             CREATE INDEX resources_status_idx ON events.resources (status);
             CREATE INDEX resources_type_idx ON events.resources (type);
-            CREATE INDEX resources_duration_durationgt0_idx ON events.resources (duration) WHERE duration > 0;
             CREATE INDEX resources_url_host_idx ON events.resources (url_host);
             CREATE INDEX resources_timestamp_idx ON events.resources (timestamp);
             CREATE INDEX resources_success_idx ON events.resources (success);
 
-            CREATE INDEX resources_url_gin_idx ON events.resources USING GIN (url gin_trgm_ops);
-            CREATE INDEX resources_url_idx ON events.resources (url);
             CREATE INDEX resources_url_hostpath_gin_idx ON events.resources USING GIN (url_hostpath gin_trgm_ops);
-            CREATE INDEX resources_url_hostpath_idx ON events.resources (url_hostpath);
             CREATE INDEX resources_timestamp_type_durationgt0NN_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL;
-            CREATE INDEX resources_session_id_timestamp_idx ON events.resources (session_id, timestamp);
             CREATE INDEX resources_session_id_timestamp_type_idx ON events.resources (session_id, timestamp, type);
             CREATE INDEX resources_timestamp_type_durationgt0NN_noFetch_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL AND type != 'fetch';
             CREATE INDEX resources_session_id_timestamp_url_host_fail_idx ON events.resources (session_id, timestamp, url_host) WHERE success = FALSE;

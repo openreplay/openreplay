@@ -91,9 +91,13 @@ DROP TYPE IF EXISTS metric_view_type;
 ALTER TABLE IF EXISTS events.clicks
     ADD COLUMN IF NOT EXISTS path text;
 
+DROP INDEX IF EXISTS events.clicks_url_gin_idx;
 DROP INDEX IF EXISTS events.inputs_label_value_idx;
 DROP INDEX IF EXISTS events.inputs_label_idx;
+DROP INDEX IF EXISTS events.pages_base_path_idx;
+DROP INDEX IF EXISTS events.pages_base_path_idx1;
 DROP INDEX IF EXISTS events.pages_base_path_idx2;
+DROP INDEX IF EXISTS events.pages_base_referrer_gin_idx1;
 DROP INDEX IF EXISTS events.pages_base_referrer_gin_idx2;
 DROP INDEX IF EXISTS events.resources_url_gin_idx;
 DROP INDEX IF EXISTS events.resources_url_idx;
@@ -103,12 +107,15 @@ DROP INDEX IF EXISTS events.resources_duration_durationgt0_idx;
 DROP INDEX IF EXISTS events.state_actions_name_idx;
 DROP INDEX IF EXISTS events_common.requests_query_nn_idx;
 DROP INDEX IF EXISTS events_common.requests_host_nn_idx;
+DROP INDEX IF EXISTS events_common.issues_context_string_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_country_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_browser_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_os_gin_idx;
+DROP INDEX IF EXISTS public.issues_context_string_gin_idx;
 
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_selector_idx ON events.clicks (selector);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_path_idx ON events.clicks (path);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_path_gin_idx ON events.clicks USING GIN (path gin_trgm_ops);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
