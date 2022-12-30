@@ -1,12 +1,10 @@
 import json
 from typing import List
 
-import chalicelib.utils.helper
-import chalicelib.utils.sql_helper
 import schemas
 from chalicelib.core import significance, sessions
-from chalicelib.utils import dev
 from chalicelib.utils import helper, pg_client
+from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
 
 REMOVE_KEYS = ["key", "_key", "startDate", "endDate"]
@@ -40,7 +38,7 @@ def __fix_stages(f_events: List[schemas._SessionSearchEventSchema]):
 
         if not isinstance(e.value, list):
             e.value = [e.value]
-        is_any = chalicelib.utils.sessions_helper._isAny_opreator(e.operator)
+        is_any = sh.isAny_opreator(e.operator)
         if not is_any and isinstance(e.value, list) and len(e.value) == 0:
             continue
         events.append(e)
@@ -157,7 +155,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
 
 
 def get_possible_issue_types(project_id):
-    return [{"type": t, "title": chalicelib.utils.helper.get_issue_title(t)} for t in
+    return [{"type": t, "title": helper.get_issue_title(t)} for t in
             ['click_rage', 'dead_click', 'excessive_scrolling',
              'bad_request', 'missing_resource', 'memory', 'cpu',
              'slow_resource', 'slow_page_load', 'crash', 'custom_event_error',
@@ -194,7 +192,8 @@ def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=No
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
-    return sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.parse_obj(f["filter"]), project_id=project_id,
+    return sessions.search_sessions(data=schemas.SessionsSearchPayloadSchema.parse_obj(f["filter"]),
+                                    project_id=project_id,
                                     user_id=user_id)
 
 
