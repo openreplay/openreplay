@@ -67,7 +67,10 @@ jobs:
         } && {
           echo "Skipping Security Checks"
         }
-        docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+        images=("chalice" "alerts")
+        for image in ${images[*]};do
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+        done
     - name: Creating old image input
       run: |
         #
