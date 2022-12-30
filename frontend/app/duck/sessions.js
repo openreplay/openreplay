@@ -49,7 +49,7 @@ const defaultDateFilters = {
 const initialState = Map({
     list: List(),
     sessionIds: [],
-    current: Session(),
+    current: new Session(),
     total: 0,
     keyMap: Map(),
     wdTypeCount: Map(),
@@ -127,8 +127,8 @@ const reducer = (state = initialState, action = {}) => {
             // TODO: more common.. or TEMP
             const events = action.filter.events;
             // const filters = action.filter.filters;
-            const current = state.get('list').find(({ sessionId }) => sessionId === action.data.sessionId) || Session();
-            const session = Session(action.data);
+            const current = state.get('list').find(({ sessionId }) => sessionId === action.data.sessionId) || new Session();
+            const session = new Session(action.data);
 
             const matching = [];
 
@@ -155,7 +155,7 @@ const reducer = (state = initialState, action = {}) => {
                 });
             });
             return state
-                .set('current', current.merge(session))
+                .set('current', session)
                 .set('eventsIndex', matching)
                 .set('visitedEvents', visitedEvents)
                 .set('host', visitedEvents[0] && visitedEvents[0].host);
@@ -167,11 +167,15 @@ const reducer = (state = initialState, action = {}) => {
             const session = state.get('list').find(({ sessionId }) => sessionId === id);
             const wasInFavorite = state.get('favoriteList').findIndex(({ sessionId }) => sessionId === id) > -1;
 
+            if (session && !wasInFavorite) {
+                session.favorite = true
+            }
             return state
-                .update('current', (currentSession) => (currentSession.sessionId === id ? currentSession.set('favorite', !wasInFavorite) : currentSession))
-                .update('list', (list) => list.map((listSession) => (listSession.sessionId === id ? listSession.set('favorite', !wasInFavorite) : listSession)))
+                // TODO returns bool here???
+                .update('current', (currentSession) => (currentSession.sessionId === id ? (currentSession.favorite = !wasInFavorite) : currentSession))
+                .update('list', (list) => list.map((listSession) => (listSession.sessionId === id ? (listSession.favorite = !wasInFavorite) : listSession)))
                 .update('favoriteList', (list) => session ?
-                    wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session.set('favorite', true)) : list
+                    wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session) : list
                 );
         }
         case SORT: {

@@ -241,8 +241,8 @@ function Timeline(props: IProps) {
 
 export default connect(
   (state: any) => ({
-    issues: state.getIn(['sessions', 'current', 'issues']),
-    startedAt: state.getIn(['sessions', 'current', 'startedAt']),
+    issues: state.getIn(['sessions', 'current']).issues || [],
+    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
   }),
   { setTimelinePointer, setTimelineHoverTime }

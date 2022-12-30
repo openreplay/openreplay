@@ -298,7 +298,7 @@ export default connect(
     } = state.getIn(['sessions', 'createNoteTooltip']);
     const slackChannels = state.getIn(['slack', 'list']);
     const teamsChannels = state.getIn(['teams', 'list']);
-    const sessionId = state.getIn(['sessions', 'current', 'sessionId']);
+    const sessionId = state.getIn(['sessions', 'current']).sessionId;
     return { isVisible, time, sessionId, isEdit, editNote, slackChannels, teamsChannels };
   },
   { setCreateNoteTooltip, addNote, updateNote, fetchSlack, fetchTeams }

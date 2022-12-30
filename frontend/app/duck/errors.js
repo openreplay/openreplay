@@ -56,7 +56,6 @@ const initialState = Map({
 
 function reducer(state = initialState, action = {}) {
 	let updError;
-	console.log(action)
 	switch (action.type) {
 		case EDIT_OPTIONS:
 			return state.mergeIn(["options"], action.instance).set('currentPage', 1);

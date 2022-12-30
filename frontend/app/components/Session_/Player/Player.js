@@ -107,11 +107,11 @@ export default connect((state) => {
     return {
       fullscreen: state.getIn(['components', 'player', 'fullscreen']),
       nextId: state.getIn(['sessions', 'nextId']),
-      sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+      sessionId: state.getIn(['sessions', 'current']).sessionId,
       bottomBlock: state.getIn(['components', 'player', 'bottomBlock']),
       closedLive:
         !!state.getIn(['sessions', 'errors']) ||
-        (isAssist && !state.getIn(['sessions', 'current', 'live'])),
+        (isAssist && !state.getIn(['sessions', 'current']).live),
     };
   },
   {

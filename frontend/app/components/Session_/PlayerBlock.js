@@ -8,7 +8,7 @@ import styles from './playerBlock.module.css';
 
 @connect((state) => ({
   fullscreen: state.getIn(['components', 'player', 'fullscreen']),
-  sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+  sessionId: state.getIn(['sessions', 'current']).sessionId,
   disabled: state.getIn(['components', 'targetDefiner', 'inspectorMode']),
   jiraConfig: state.getIn(['issues', 'list']).first(),
 }))

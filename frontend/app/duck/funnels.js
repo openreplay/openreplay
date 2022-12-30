@@ -99,12 +99,12 @@ const reducer = (state = initialState, action = {}) => {
         .set('criticalIssuesCount', action.data.issues.criticalIssuesCount)
 		case FETCH_SESSIONS_SUCCESS:      
       return state
-        .set('sessions', List(action.data.sessions).map(Session))
+        .set('sessions', List(action.data.sessions).map(s => new Session(s)))
         .set('total', action.data.total)
     case FETCH_ISSUE_SUCCESS:      
       return state
         .set('issue', FunnelIssue(action.data.issue))
-        .set('sessions', List(action.data.sessions.sessions).map(Session))
+        .set('sessions', List(action.data.sessions.sessions).map(s => new Session(s)))
         .set('sessionsTotal', action.data.sessions.total)
     case RESET_ISSUE:
       return state.set('isses', FunnelIssue())
