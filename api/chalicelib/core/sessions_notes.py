@@ -2,12 +2,11 @@ from urllib.parse import urljoin
 
 from decouple import config
 
-import chalicelib.utils.sql_helper
 import schemas
-from chalicelib.core import sessions
-from chalicelib.core.collaboration_slack import Slack
 from chalicelib.core.collaboration_msteams import MSTeams
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper
+from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -59,8 +58,8 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
         if data.tags and len(data.tags) > 0:
             k = "tag_value"
             conditions.append(
-                chalicelib.utils.sql_helper.multi_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
-            extra_params = chalicelib.utils.sql_helper.multi_values(data.tags, value_key=k)
+                sh.multi_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
+            extra_params = sh.multi_values(data.tags, value_key=k)
         if data.shared_only:
             conditions.append("sessions_notes.is_public")
         elif data.mine_only:
