@@ -446,7 +446,7 @@ class ClickEventExtraOperator(str, Enum):
 
 
 class IssueFilterOperator(str, Enum):
-    _on_selector = ClickEventExtraOperator._on_selector
+    _on_selector = ClickEventExtraOperator._on_selector.value
 
 
 class PlatformType(str, Enum):
@@ -843,19 +843,19 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(SearchErrorsSchema):
-    startDate: Optional[int] = Field(None)
-    endDate: Optional[int] = Field(None)
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
+class CardSeriesFilterSchema(SearchErrorsSchema):
+    startDate: Optional[int] = Field(default=None)
+    endDate: Optional[int] = Field(default=None)
+    sort: Optional[str] = Field(default=None)
+    order: Optional[str] = Field(default=None)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
-class CustomMetricCreateSeriesSchema(BaseModel):
+class CardCreateSeriesSchema(BaseModel):
     series_id: Optional[int] = Field(None)
     name: Optional[str] = Field(None)
     index: Optional[int] = Field(None)
-    filter: Optional[CustomMetricSeriesFilterSchema] = Field([])
+    filter: Optional[CardSeriesFilterSchema] = Field([])
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -970,7 +970,7 @@ class MetricOfClickMap(str, Enum):
 class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
-    series: List[CustomMetricCreateSeriesSchema] = Field(default=[])
+    series: List[CardCreateSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -1036,10 +1036,10 @@ class CreateCardSchema(CardChartSchema):
                 assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
                     f"metricValue is only available for metricOf:{MetricOfTable.issues}"
         elif values.get("metric_type") == MetricType.funnel:
-            # assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
-            #     f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
-            assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
-                f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
+            pass
+            # ignore this for now, let the UI send whatever he wants for metric_of
+            # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
+            #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
         else:
             if values.get("metric_type") == MetricType.errors:
                 assert isinstance(values.get("metric_of"), MetricOfErrors), \
@@ -1056,6 +1056,10 @@ class CreateCardSchema(CardChartSchema):
             elif values.get("metric_type") == MetricType.click_map:
                 assert isinstance(values.get("metric_of"), MetricOfClickMap), \
                     f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
+                # Allow only LOCATION events for clickMap
+                for s in values.get("series", []):
+                    for f in s.filter.events:
+                        assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
 
             assert isinstance(values.get("view_type"), MetricOtherViewType), \
                 f"viewType must be 'chart' for metricOf:{values.get('metric_of')}"
@@ -1066,7 +1070,7 @@ class CreateCardSchema(CardChartSchema):
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
+class CardUpdateSeriesSchema(CardCreateSeriesSchema):
     series_id: Optional[int] = Field(None)
 
     class Config:
@@ -1074,7 +1078,7 @@ class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
 
 
 class UpdateCardSchema(CreateCardSchema):
-    series: List[CustomMetricUpdateSeriesSchema] = Field(...)
+    series: List[CardUpdateSeriesSchema] = Field(...)
 
 
 class UpdateCustomMetricsStatusSchema(BaseModel):

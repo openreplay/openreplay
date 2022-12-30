@@ -253,7 +253,7 @@ def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data: schemas.Fu
 
 
 # def get_top_insights_on_the_fly_widget(project_id, data: schemas.FunnelInsightsPayloadSchema):
-def get_top_insights_on_the_fly_widget(project_id, data: schemas.CustomMetricSeriesFilterSchema):
+def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema):
     data.events = filter_stages(__parse_events(data.events))
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
@@ -302,7 +302,7 @@ def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSe
 
 
 # def get_issues_on_the_fly_widget(project_id, data: schemas.FunnelSearchPayloadSchema):
-def get_issues_on_the_fly_widget(project_id, data: schemas.CustomMetricSeriesFilterSchema):
+def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema):
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
     if len(data.events) < 0:
