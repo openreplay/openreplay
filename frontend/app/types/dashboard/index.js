@@ -97,14 +97,14 @@ export const WIDGET_LIST = [{
 		name: "Recent Frustrations",
 		description: "List of recent sessions where users experienced some kind of frustrations, such as click rage.",
 		thumb: 'recent_frustrations.png',
-		dataWrapper: list => List(list).map(Session),
+		dataWrapper: list => List(list).map(s => new Session(s)),
 	},
 	{
 		key: "sessionsFeedback",
 		name: "Recent Negative Feedback",
 		description: "List of recent sessions where users reported an issue or a bad experience.",
 		thumb: 'negative_feedback.png',
-		dataWrapper: list => List(list).map(Session),
+		dataWrapper: list => List(list).map(s => new Session(s)),
 	},
 	{
 		key: "missingResources",

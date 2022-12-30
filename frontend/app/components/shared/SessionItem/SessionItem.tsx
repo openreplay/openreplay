@@ -38,7 +38,6 @@ interface Props {
     userNumericHash: number;
     live: boolean;
     metadata: Record<string, any>;
-    userSessionsCount: number;
     issueTypes: [];
     active: boolean;
     isCallActive?: boolean;

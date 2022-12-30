@@ -1,5 +1,3 @@
-import Record from 'Types/Record';
-
 export const OPENREPLAY = 'openreplay';
 export const SENTRY = 'sentry';
 export const DATADOG = 'datadog';
@@ -37,23 +35,36 @@ export function isRed(event) {
 	}
 }
 
-export default Record({
-	time: undefined,
-	index: undefined,
-  name: '',
-  message: "",
-  payload: null,
-  source: null,
-  level: "",
-}, {
-	fromJS: ue => ({ 
-		...ue,
-		source: ue.source || OPENREPLAY, 
-	}),
-	methods: {
-		isRed() {
-			return isRed(this);
-		}
-	}
-});
+export interface IStackEvent {
+	time: number;
+	timestamp: number;
+	index: number;
+	name: string;
+	message: string;
+	payload: any;
+	source: any;
+	level: string;
 
+	isRed: () => boolean;
+}
+
+export default class StackEvent {
+	time: IStackEvent["time"]
+	index: IStackEvent["index"];
+	name: IStackEvent["name"];
+	message: IStackEvent["message"];
+	payload: IStackEvent["payload"];
+	source: IStackEvent["source"];
+	level: IStackEvent["level"];
+
+	constructor(evt: IStackEvent) {
+		Object.assign(this, {
+			...evt,
+			source: evt.source || OPENREPLAY
+		});
+	}
+
+	isRed() {
+		return isRed(this);
+	}
+}

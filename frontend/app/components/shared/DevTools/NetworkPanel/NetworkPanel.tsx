@@ -384,5 +384,5 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
 }
 
 export default connect((state: any) => ({
-  startedAt: state.getIn(['sessions', 'current', 'startedAt']),
+  startedAt: state.getIn(['sessions', 'current']).startedAt,
 }))(observer(NetworkPanel));

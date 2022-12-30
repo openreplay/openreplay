@@ -21,6 +21,7 @@ function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab }) {
 
   const hasError = !!error
 
+  console.log(session, 'hi')
   const sessionDays = countDaysFrom(session.startedAt);
   return (
     <div className="relative">

@@ -80,7 +80,7 @@ export default connect(
     (state: any) => ({
         // errorStack: state.getIn(['sessions', 'errorStack']),
         errorStack: state.getIn(['errors', 'instanceTrace']),
-        sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+        sessionId: state.getIn(['sessions', 'current']).sessionId,
     }),
     { fetchErrorStackList }
 )(ErrorDetails);
