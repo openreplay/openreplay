@@ -14,7 +14,7 @@ function MetricSubtypeDropdown(props: Props) {
   const { metricStore } = useStore();
   const metric: any =  metricStore.instance;
 
-  const options = React.useMemo(() => {
+  const options: any = React.useMemo(() => {
     const type = TYPES.find((i: MetricType) => i.slug === metric.metricType);
     if (type && type.subTypes) {
       const options = type.subTypes.map((i: MetricType) => ({
@@ -30,7 +30,9 @@ function MetricSubtypeDropdown(props: Props) {
 
   React.useEffect(() => {
     // @ts-ignore
-    setTimeout(() => props.onSelect({ name: 'metricOf', value: { value: options[0].value }}), 0)
+    if (options && !options.map(i => i.value).includes(metric.metricOf)) {
+      setTimeout(() => props.onSelect({ name: 'metricOf', value: { value: options[0].value }}), 0)
+    }
   }, [metric.metricType])
 
   return options ? (
