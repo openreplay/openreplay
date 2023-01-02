@@ -76,7 +76,6 @@ function WebPlayer(props: any) {
 
   if (!contextValue.player || !session) return null;
 
-  console.log(session)
   return (
     <PlayerContext.Provider value={contextValue}>
         <>

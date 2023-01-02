@@ -60,7 +60,7 @@ const reducer = (state = initialState, action = {}) => {
       return listUpdater(state, instance);
     case ADD_MESSAGE.SUCCESS:
       const user = users.filter(user => user.id === action.data.author).first();
-      const activity = Activity({ type: 'message', user, ...action.data,});
+      const activity = new Activity({ type: 'message', user, ...action.data,});
       return state.updateIn([ 'activeIssue', 'activities' ], list => list.push(activity));
     default:
       return state;
