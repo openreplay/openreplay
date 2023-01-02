@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon, Checkbox, Tooltip } from 'UI';
 import { checkForRecent } from 'App/date';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
+import { TYPES, TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING } from 'App/constants/card';
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -13,21 +14,16 @@ interface Props extends RouteComponentProps {
 }
 
 function MetricTypeIcon({ type }: any) {
-  const getIcon = () => {
-    switch (type) {
-      case 'funnel':
-        return 'filter';
-      case 'table':
-        return 'list-alt';
-      case 'timeseries':
-        return 'bar-chart-line';
-    }
-  };
+  const [card, setCard] = useState<any>('');
+  useEffect(() => {
+    const t = TYPES.find(i => i.slug === type);
+    setCard(t)
+  }, [type])
 
   return (
-    <Tooltip title={<div className="capitalize">{type}</div>} >
+    <Tooltip title={<div className="capitalize">{card.title}</div>} >
       <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
-        <Icon name={getIcon()} size="16" color="tealx" />
+        { card.icon && <Icon name={card.icon} size="16" color="tealx" /> }
       </div>
     </Tooltip>
   );
