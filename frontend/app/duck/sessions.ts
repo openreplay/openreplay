@@ -9,7 +9,6 @@ import { LAST_7_DAYS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
 
 const name = 'sessions';
-const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH_AUTOPLAY_LIST = new RequestTypes('sessions/FETCH_AUTOPLAY_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
@@ -46,7 +45,7 @@ const defaultDateFilters = {
     endDate: range.end.unix() * 1000,
 };
 
-const initialState = Map({
+const initObj = {
     list: List(),
     sessionIds: [],
     current: new Session(),
@@ -73,22 +72,20 @@ const initialState = Map({
     lastPlayedSessionId: null,
     timeLineTooltip: { time: 0, offset: 0, isVisible: false, timeStr: '' },
     createNoteTooltip: { time: 0, isVisible: false, isEdit: false, note: null },
-});
+}
+
+const initialState = Map(initObj);
 
 const reducer = (state = initialState, action = {}) => {
     switch (action.type) {
-        case INIT:
-            return state.set('current', Session(action.session));
-        // case FETCH_LIST.REQUEST:
-        //     return action.clear ? state.set('list', List()) : state;
         case FETCH_ERROR_STACK.SUCCESS:
-            return state.set('errorStack', List(action.data.trace).map(ErrorStack)).set('sourcemapUploaded', action.data.sourcemapUploaded);
+            return state.set('errorStack', List(action.data.trace).map(es => new ErrorStack(es))).set('sourcemapUploaded', action.data.sourcemapUploaded);
         case FETCH_LIVE_LIST.SUCCESS:
-            const liveList = List(action.data.sessions).map((s) => new Session({ ...s, live: true }));
+            const liveList = action.data.sessions.map((s) => new Session({ ...s, live: true }));
             return state.set('liveSessions', liveList);
         case FETCH_LIST.SUCCESS:
             const { sessions, total } = action.data;
-            const list = List(sessions).map(Session);
+            const list = sessions.map(s => new Session(s));
 
             return state
                 .set('list', list)
@@ -126,8 +123,6 @@ const reducer = (state = initialState, action = {}) => {
         case FETCH.SUCCESS: {
             // TODO: more common.. or TEMP
             const events = action.filter.events;
-            // const filters = action.filter.filters;
-            const current = state.get('list').find(({ sessionId }) => sessionId === action.data.sessionId) || new Session();
             const session = new Session(action.data);
 
             const matching = [];
@@ -161,20 +156,27 @@ const reducer = (state = initialState, action = {}) => {
                 .set('host', visitedEvents[0] && visitedEvents[0].host);
         }
         case FETCH_FAVORITE_LIST.SUCCESS:
-            return state.set('favoriteList', List(action.data).map(Session));
+            return state.set('favoriteList', List(action.data).map(s => new Session(s)));
         case TOGGLE_FAVORITE.SUCCESS: {
             const id = action.sessionId;
-            const session = state.get('list').find(({ sessionId }) => sessionId === id);
+            let mutableState = state
+            const list = state.get('list') as unknown as Session[]
+            const sessionIdx = list.findIndex(({ sessionId }) => sessionId === id);
+            const session = list[sessionIdx]
+            const current = state.get('current') as unknown as Session;
             const wasInFavorite = state.get('favoriteList').findIndex(({ sessionId }) => sessionId === id) > -1;
 
             if (session && !wasInFavorite) {
                 session.favorite = true
+                mutableState = mutableState.updateIn(['list', sessionIdx], () => session)
             }
-            return state
-                // TODO returns bool here???
-                .update('current', (currentSession) => (currentSession.sessionId === id ? (currentSession.favorite = !wasInFavorite) : currentSession))
-                .update('list', (list) => list.map((listSession) => (listSession.sessionId === id ? (listSession.favorite = !wasInFavorite) : listSession)))
-                .update('favoriteList', (list) => session ?
+            if (current.sessionId === id) {
+                mutableState = mutableState.update('current',
+                  (s: Session) => ({ ...s, favorite: !wasInFavorite})
+                )
+            }
+            return mutableState
+                .update('favoriteList', (list: Session[]) => session ?
                     wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session) : list
                 );
         }
@@ -217,8 +219,16 @@ const reducer = (state = initialState, action = {}) => {
         case SET_EDIT_NOTE_TOOLTIP:
             return state.set('createNoteTooltip', action.noteTooltip);
         case FILTER_OUT_NOTE:
-            return state.updateIn(['current', 'notesWithEvents'], (list) =>
-                list.filter(evt => !evt.noteId || evt.noteId !== action.noteId)
+            return state.updateIn(['current'],
+              (session: Session) => ({
+                ...session,
+                notesWithEvents: session.notesWithEvents.filter(item => {
+                    if ('noteId' in item) {
+                        return item.noteId !== action.noteId
+                    }
+                    return true
+                })
+              })
             )
         case ADD_NOTE:
             return state.updateIn(['current', 'notesWithEvents'], (list) =>
@@ -230,24 +240,20 @@ const reducer = (state = initialState, action = {}) => {
                   })
             )
         case UPDATE_NOTE:
-            const index = state.getIn(['current', 'notesWithEvents']).findIndex(item => item.noteId === action.note.noteId)
-            return state.setIn(['current', 'notesWithEvents', index], action.note)
+            const noteIndex = state.getIn(['current']).notesWithEvents.findIndex(item => item.noteId === action.note.noteId)
+            return state.setIn(['current', 'notesWithEvents', noteIndex], action.note)
         case SET_SESSION_PATH:
             return state.set('sessionPath', action.path);
         case LAST_PLAYED_SESSION_ID:
-            return updateListItem(state, action.sessionId, { viewed: true }).set('lastPlayedSessionId', action.sessionId);
+            const sessionList = state.get('list') as unknown as Session[];
+            const sIndex = sessionList.findIndex(({ sessionId }) => sessionId === action.sessionId);
+            if (sIndex === -1) return state;
+
+            return state.updateIn(['list', sIndex], (session: Session) => ({ ...session, viewed: true }));
         default:
             return state;
     }
 };
-
-function updateListItem(state, sourceSessionId, instance) {
-    const list = state.get('list');
-    const index = list.findIndex(({ sessionId }) => sessionId === sourceSessionId);
-    if (index === -1) return state;
-
-    return state.updateIn(['list', index], (session) => session.merge(instance));
-}
 
 export default withRequestState(
     {
@@ -260,13 +266,6 @@ export default withRequestState(
     },
     reducer
 );
-
-function init(session) {
-    return {
-        type: INIT,
-        session,
-    };
-}
 
 export const fetchList =
     (params = {}, force = false) =>
@@ -324,13 +323,6 @@ export function toggleFavorite(sessionId) {
     };
 }
 
-export function fetchFavoriteList() {
-    return {
-        types: FETCH_FAVORITE_LIST.toArray(),
-        call: (client) => client.get('/sessions/favorite'),
-    };
-}
-
 export function fetchInsights(params) {
     return {
         types: FETCH_INSIGHTS.toArray(),
@@ -358,13 +350,6 @@ export function sort(sortKey, sign = 1, listName = 'list') {
         sortKey,
         sign,
         listName,
-    };
-}
-
-export function redefineTarget(target) {
-    return {
-        type: REDEFINE_TARGET,
-        target,
     };
 }
 

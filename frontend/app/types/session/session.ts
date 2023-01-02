@@ -38,7 +38,10 @@ export interface ISession {
   filterId?: string,
   domURL: string[],
   devtoolsURL: string[],
-  mobsUrl: string[], // @depricated
+  /**
+   * @deprecated
+   */
+  mobsUrl: string[],
   userBrowser: string,
   userBrowserVersion: string,
   userCountry: string,
@@ -71,7 +74,7 @@ export interface ISession {
   isCallActive?: boolean,
   agentToken: string,
   notes: Note[],
-  notesWithEvents: Note[] | InjectedEvent[],
+  notesWithEvents: Array<Note | InjectedEvent>,
   fileKey: string,
   platform: string,
   projectId: string,
@@ -103,6 +106,7 @@ const emptyValues = {
   metadata: {},
   startedAt: 0,
 }
+
 export default class Session {
   sessionId: ISession["sessionId"]
   pageTitle: ISession["pageTitle"]
@@ -116,13 +120,15 @@ export default class Session {
   events: ISession["events"]
   stackEvents: ISession["stackEvents"]
   resources: ISession["resources"]
-  missedResources: ISession["missedResources"]
   metadata: ISession["metadata"]
   favorite: ISession["favorite"]
   filterId?: ISession["filterId"]
   domURL: ISession["domURL"]
   devtoolsURL: ISession["devtoolsURL"]
-  mobsUrl: ISession["mobsUrl"] // @depricated
+  /**
+   * @deprecated
+   */
+  mobsUrl: ISession["mobsUrl"]
   userBrowser: ISession["userBrowser"]
   userBrowserVersion: ISession["userBrowserVersion"]
   userCountry: ISession["userCountry"]
@@ -222,8 +228,10 @@ export default class Session {
 
     const rawNotes = notes;
     const notesWithEvents = [...rawEvents, ...rawNotes].sort((a, b) => {
-      const aTs = a.time || a.timestamp;
-      const bTs = b.time || b.timestamp;
+      // @ts-ignore just in case
+      const aTs =  a.timestamp || a.time;
+      // @ts-ignore
+      const bTs = b.timestamp || b.time;
 
       return aTs - bTs;
     }) || [];

@@ -58,7 +58,7 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('activeIssue', Assignment());
     case ADD_MESSAGE.SUCCESS:
       const user = users.filter(user => user.id === action.data.author).first();
-      const activity = Activity({ type: 'message', user, ...action.data,});
+      const activity = new Activity({ type: 'message', user, ...action.data,});
       return state.updateIn([ 'activeIssue', 'activities' ], list => list.push(activity));
     case INIT:
       action.instance.issueType = issueTypes.length > 0 ? issueTypes[0].id : '';

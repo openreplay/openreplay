@@ -27,7 +27,7 @@ export default Record({
       if (assignment.users) {
         activity.user = assignment.users.filter(user => user.id === activity.author).first();
       }
-      return Activity(activity)
+      return new Activity(activity)
     }) : List()
   }),
   methods: {

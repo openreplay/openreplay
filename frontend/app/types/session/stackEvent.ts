@@ -11,7 +11,7 @@ export const SUMOLOGIC = 'sumologic';
 
 export const typeList = [ OPENREPLAY, SENTRY, DATADOG, STACKDRIVER, ROLLBAR, BUGSNAG, CLOUDWATCH, ELASTICSEARCH, SUMOLOGIC ];
 
-export function isRed(event) {
+export function isRed(event: StackEvent) {
 	if (!event.payload) return false;
 	switch(event.source) {
 		case SENTRY:
@@ -31,7 +31,7 @@ export function isRed(event) {
 		case SUMOLOGIC:
 			return false;
 		default: 
-			return event.level==='error';
+			return event.level === 'error';
 	}
 }
 
