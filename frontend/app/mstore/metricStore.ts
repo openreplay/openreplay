@@ -30,7 +30,7 @@ export default class MetricStore {
   }
 
   get sortedWidgets() {
-    return [...this.metrics].sort((a, b) => b.lastModified - a.lastModified);
+    return [...this.metrics].sort((a, b) => this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified)
   }
 
   // State Actions

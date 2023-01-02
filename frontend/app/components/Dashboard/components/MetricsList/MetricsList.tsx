@@ -53,18 +53,6 @@ function MetricsList({
 
   const lenth = list.length;
 
-  const sortList = () => {
-    list.sort((a, b) => {
-      const aDate = new Date(a.lastModified);
-      const bDate = new Date(b.lastModified);
-      return sortBy === 'asc'
-        ? aDate.getTime() - bDate.getTime()
-        : bDate.getTime() - aDate.getTime();
-    });
-  };
-
-  sortList();
-
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
   }, []);
