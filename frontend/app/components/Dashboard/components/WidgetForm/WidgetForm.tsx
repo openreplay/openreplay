@@ -40,49 +40,50 @@ function WidgetForm(props: Props) {
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
   const isPredefined = metric.metricType === ERRORS || metric.metricType === PERFORMANCE || metric.metricType === RESOURCE_MONITORING || metric.metricType === WEB_VITALS;
 
-  const writeOption = ({ value, name }: any) => {
+  const writeOption = ({ value, name }: { value: any; name: any }) => {
     value = Array.isArray(value) ? value : value.value;
     const obj: any = { [name]: value };
-
+  
     if (name === 'metricValue') {
-      obj['metricValue'] = value;
-
-      // handle issues (remove all when other option is selected)
-      if (Array.isArray(obj['metricValue']) && obj['metricValue'].length > 1) {
-        obj['metricValue'] = obj['metricValue'].filter((i) => i.value !== 'all');
+      obj.metricValue = value;
+  
+      if (Array.isArray(obj.metricValue) && obj.metricValue.length > 1) {
+        obj.metricValue = obj.metricValue.filter((i: any) => i.value !== 'all');
       }
     }
-
-    if (name === 'metricOf') {
-      // if (value === FilterKey.ISSUE) {
-      //     obj['metricValue'] = [{ value: 'all', label: 'All' }];
-      // }
-    }
-
+  
     if (name === 'metricType') {
-      if (value === TIMESERIES) {
-        obj['metricOf'] = timeseriesOptions[0].value;
-        obj['viewType'] = 'lineChart';
-      } else if (value === TABLE) {
-        obj['metricOf'] = tableOptions[0].value;
-        obj['viewType'] = 'table';
-      } else if (value === FUNNEL) {
-        obj['metricOf'] = 'sessionCount';
-      } else if (value === ERRORS || value === RESOURCE_MONITORING || value === RESOURCE_MONITORING || value === WEB_VITALS) {
-        obj['viewType'] = 'chart';
-      } 
+      switch (value) {
+        case TIMESERIES:
+          obj.metricOf = timeseriesOptions[0].value;
+          obj.viewType = 'lineChart';
+          break;
+        case TABLE:
+          obj.metricOf = tableOptions[0].value;
+          obj.viewType = 'table';
+          break;
+        case FUNNEL:
+          obj.metricOf = 'sessionCount';
+          break;
+        case ERRORS:
+        case RESOURCE_MONITORING:
+        case WEB_VITALS:
+          obj.viewType = 'chart';
+          break;
+        case CLICKMAP:
+          obj.viewType = 'chart';
 
-      if (metric.metricType === CLICKMAP && value !== CLICKMAP) {
-        metric.series[0].filter.removeFilter(0)
-      }
-      if (value === CLICKMAP) {
-        obj['viewType'] = 'chart';
-        if (metric.series[0].filter.filters.length < 1) {
+          if (value !== CLICKMAP) {
+            metric.series[0].filter.removeFilter(0)
+          }
+
+          if (metric.series[0].filter.filters.length < 1) {
             metric.series[0].filter.addFilter({
-                ...clickmapFilter,
-                value: [''],
-            })
-        }
+              ...clickmapFilter,
+              value: [''],
+            });
+          }
+          break;
       }
     }
     metricStore.merge(obj);
