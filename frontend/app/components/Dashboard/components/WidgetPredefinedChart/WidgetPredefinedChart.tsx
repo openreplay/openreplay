@@ -27,6 +27,7 @@ import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
 import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
 import SlowestResources from '../../Widgets/PredefinedWidgets/SlowestResources';
 import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
+import { FilterKey } from 'Types/filter/filterType';
 
 interface Props {
     data: any;
@@ -40,59 +41,59 @@ function WidgetPredefinedChart(props: Props) {
     const renderWidget = () => {
         switch (predefinedKey) {
             // ERRORS
-            case 'errors_per_type':
+            case FilterKey.ERRORS_PER_TYPE:
                 return <ErrorsByType data={data} metric={metric} />
-            case 'errors_per_domains':
+            case FilterKey.ERRORS_PER_DOMAINS:
                 return <ErrorsPerDomain data={data} metric={metric} />
-            case 'resources_by_party':
+            case FilterKey.RESOURCES_BY_PARTY:
                 return <ErrorsByOrigin data={data} metric={metric} />
-            case 'impacted_sessions_by_js_errors':
+            case FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS:
                 return <SessionsAffectedByJSErrors data={data} metric={metric} />
-            case 'domains_errors_4xx':
+            case FilterKey.DOMAINS_ERRORS_4XX:
                 return <CallsErrors4xx data={data} metric={metric} />
-            case 'domains_errors_5xx':
+            case FilterKey.DOMAINS_ERRORS_5XX:
                 return <CallsErrors5xx data={data} metric={metric} />
-            case 'calls_errors':
+            case FilterKey.CALLS_ERRORS:
                 return <CallWithErrors isTemplate={isTemplate} data={data} metric={metric} />
 
             // PERFORMANCE
-            case 'impacted_sessions_by_slow_pages':
+            case FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES:
                 return <SessionsImpactedBySlowRequests data={data} metric={metric} />
-            case 'pages_response_time_distribution':
+            case FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION:
                 return <ResponseTimeDistribution data={data} metric={metric} />
-            case 'speed_location':
+            case FilterKey.SPEED_LOCATION:
                 return <SpeedIndexByLocation metric={metric} />
-            case 'cpu':
+            case FilterKey.CPU:
                 return <CPULoad data={data} metric={metric} />
-            case 'crashes':
+            case FilterKey.CRASHES:
                 return <Crashes data={data} metric={metric} />
-            case 'pages_dom_buildtime':
+            case FilterKey.PAGES_DOM_BUILD_TIME:
                 return <DomBuildingTime data={data} metric={metric} />
-            case 'fps':
+            case FilterKey.FPS:
                 return <FPS data={data} metric={metric} />
-            case 'memory_consumption':
+            case FilterKey.MEMORY_CONSUMPTION:
                 return <MemoryConsumption data={data} metric={metric} />
-            case 'pages_response_time':
+            case FilterKey.PAGES_RESPONSE_TIME:
                 return <ResponseTime data={data} metric={metric} />
-            case 'resources_vs_visually_complete':
+            case FilterKey.RESOURCES_VS_VISUALLY_COMPLETE:
                 return <ResourceLoadedVsVisuallyComplete data={data} metric={metric} />
-            case 'sessions_per_browser':
+            case FilterKey.SESSIONS_PER_BROWSER:
                 return <SessionsPerBrowser data={data} metric={metric} />
-            case 'slowest_domains':
+            case FilterKey.SLOWEST_DOMAINS:
                 return <SlowestDomains data={data} metric={metric} />
-            case 'time_to_render':
+            case FilterKey.TIME_TO_RENDER:
                 return <TimeToRender data={data} metric={metric} />
 
             // Resources
-            case 'resources_count_by_type':
+            case FilterKey.BREAKDOWN_OF_LOADED_RESOURCES:
                 return <BreakdownOfLoadedResources data={data} metric={metric} />
-            case 'missing_resources':
+            case FilterKey.MISSING_RESOURCES:
                 return <MissingResources isTemplate={isTemplate} data={data} metric={metric} />
-            case 'resource_type_vs_response_end':
+            case FilterKey.RESOURCE_TYPE_VS_RESPONSE_END:
                 return <ResourceLoadedVsResponseEnd data={data} metric={metric} />
-            case 'resources_loading_time':
+            case FilterKey.RESOURCES_LOADING_TIME:
                 return <ResourceLoadingTime data={data} metric={metric} />
-            case 'slowest_resources':
+            case FilterKey.SLOWEST_RESOURCES:
                 return <SlowestResources isTemplate={isTemplate} data={data} metric={metric} />
 
             default:

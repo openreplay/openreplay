@@ -38,9 +38,9 @@ class SegmentSelection extends React.Component {
             className
           )}
         >
-          {list.map((item) => (
+          {list.map((item, i) => (
             <div
-              key={item.name}
+              key={`${item.name}-${i}`}
               className={cn(styles.item, 'w-full', { 'opacity-25 cursor-default': item.disabled })}
               data-active={this.props.value && this.props.value.value === item.value}
               onClick={() => !item.disabled && this.setActiveItem(item)}
