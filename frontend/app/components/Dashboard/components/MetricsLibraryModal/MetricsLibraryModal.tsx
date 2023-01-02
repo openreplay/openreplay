@@ -16,8 +16,8 @@ function MetricsLibraryModal(props: Props) {
   const [selectedList, setSelectedList] = useState([]);
 
   useEffect(() => {
-    metricStore.updateKey('listView', true)
-  }, [])
+    metricStore.updateKey('listView', true);
+  }, []);
 
   const onSelectionChange = (list: any) => {
     setSelectedList(list);
@@ -26,7 +26,7 @@ function MetricsLibraryModal(props: Props) {
   return (
     <>
       <Modal.Header title="Cards Library" />
-      <Modal.Content className='p-4 pb-20'>
+      <Modal.Content className="p-4 pb-20">
         <div className="border">
           <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} />
         </div>
@@ -47,7 +47,11 @@ function SelectedContent({ dashboardId, selected }: any) {
   const dashboard = useMemo(() => dashboardStore.getDashboard(dashboardId), [dashboardId]);
 
   const addSelectedToDashboard = () => {
-    dashboardStore.addWidgetToDashboard(dashboard, selected).then(hideModal);
+    if (!dashboard || !dashboard.dashboardId) return;
+    dashboardStore.addWidgetToDashboard(dashboard, selected).then(() => {
+      hideModal();
+      dashboardStore.fetch(dashboard.dashboardId);
+    });
   };
 
   return (
