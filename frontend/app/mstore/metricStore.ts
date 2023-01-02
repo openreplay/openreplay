@@ -111,33 +111,27 @@ export default class MetricStore {
   }
 
   // API Communication
-  save(metric: Widget): Promise<any> {
-    const wasCreating = !metric.exists();
+  async save(metric: Widget): Promise<Widget> {
     this.isSaving = true;
-    return new Promise((resolve, reject) => {
-      metricService
-        .saveMetric(metric)
-        .then((metric: any) => {
-          const _metric = new Widget().fromJson(metric);
-          if (wasCreating) {
-            toast.success('Metric created successfully');
-            this.addToList(_metric);
-            this.instance = _metric;
-          } else {
-            toast.success('Metric updated successfully');
-            this.updateInList(_metric);
-          }
-          resolve(_metric);
-        })
-        .catch(() => {
-          toast.error('Error saving metric');
-          reject();
-        })
-        .finally(() => {
-          this.instance.updateKey('hasChanged', false);
-          this.isSaving = false;
-        });
-    });
+    try {
+      const metricData = await metricService.saveMetric(metric);
+      const _metric = new Widget().fromJson(metricData);
+      if (!metric.exists()) {
+        toast.success('Metric created successfully');
+        this.addToList(_metric);
+      } else {
+        toast.success('Metric updated successfully');
+        this.updateInList(_metric);
+      }
+      this.instance = _metric;
+      this.instance.updateKey('hasChanged', false);
+      return _metric;
+    } catch (error) {
+      toast.error('Error saving metric');
+      throw error;
+    } finally {
+      this.isSaving = false;
+    }
   }
 
   fetchList() {
