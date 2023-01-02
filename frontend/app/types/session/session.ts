@@ -8,6 +8,7 @@ import { Note } from 'App/services/NotesService'
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
+
 function hashString(s: string): number {
   let mul = 1;
   let hash = 0;
@@ -192,7 +193,7 @@ export default class Session {
     const isMobile = ['console', 'mobile', 'tablet'].includes(userDeviceType);
 
     const events: InjectedEvent[] = []
-    const rawEvents: (EventData & { key: number})[] = []
+    const rawEvents: (EventData & { key: number })[] = []
 
     if (session.events?.length) {
       (session.events as EventData[]).forEach((event: EventData, k) => {
@@ -224,12 +225,13 @@ export default class Session {
 
     const exceptions = (errors as IError[]).map(e => new SessionError(e)) || [];
 
-    const issuesList = (issues as IIssue[]).map((i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k })) || [];
+    const issuesList = (issues as IIssue[]).map(
+      (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k })) || [];
 
     const rawNotes = notes;
     const notesWithEvents = [...rawEvents, ...rawNotes].sort((a, b) => {
       // @ts-ignore just in case
-      const aTs =  a.timestamp || a.time;
+      const aTs = a.timestamp || a.time;
       // @ts-ignore
       const bTs = b.timestamp || b.time;
 

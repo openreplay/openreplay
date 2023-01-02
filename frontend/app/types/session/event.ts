@@ -111,7 +111,7 @@ class Input extends Event {
 }
 
 
-class Location extends Event {
+export class Location extends Event {
   readonly name = 'Location';
   readonly type = LOCATION;
   url: LocationEvent["url"]
