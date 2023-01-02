@@ -135,8 +135,8 @@ function WidgetForm(props: Props) {
   return (
     <div className="p-6">
       <div className="form-group">
-        <label className="font-medium">Metric Type</label>
         <div className="flex items-center">
+          <span className="mr-2">Card showing</span>
           <MetricTypeDropdown onSelect={writeOption} />
           <MetricSubtypeDropdown onSelect={writeOption} />
 

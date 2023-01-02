@@ -22,15 +22,6 @@ function GridView(props: Props) {
             isWidget={metric.metricType === 'predefined'}
             onClick={() => toggleSelection(parseInt(metric.metricId))}
           />
-          {/* <MetricListItem
-            metric={metric}
-            siteId={siteId}
-            selected={selectedList.includes(parseInt(metric.metricId))}
-            toggleSelection={(e: any) => {
-              e.stopPropagation();
-              toggleSelection(parseInt(metric.metricId));
-            }}
-          /> */}
         </React.Fragment>
       ))}
     </div>

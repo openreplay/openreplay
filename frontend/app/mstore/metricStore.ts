@@ -117,10 +117,10 @@ export default class MetricStore {
       const metricData = await metricService.saveMetric(metric);
       const _metric = new Widget().fromJson(metricData);
       if (!metric.exists()) {
-        toast.success('Metric created successfully');
+        toast.success('Card created successfully');
         this.addToList(_metric);
       } else {
-        toast.success('Metric updated successfully');
+        toast.success('Card updated successfully');
         this.updateInList(_metric);
       }
       this.instance = _metric;
@@ -166,7 +166,7 @@ export default class MetricStore {
       .then(() => {
         // @ts-ignore
         this.removeById(metric[Widget.ID_KEY]);
-        toast.success('Metric deleted successfully');
+        toast.success('Card deleted successfully');
       })
       .finally(() => {
         this.instance.updateKey('hasChanged', false);

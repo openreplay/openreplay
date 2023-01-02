@@ -7,7 +7,7 @@ import CustomDropdownOption from 'Shared/CustomDropdownOption';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
-
+import { Icon } from 'UI';
 interface Options {
   label: string;
   icon: string;
@@ -33,16 +33,16 @@ function MetricTypeDropdown(props: Props) {
   }, []);
 
   React.useEffect(() => {
-    const queryCardType = props.query.get('type')
+    const queryCardType = props.query.get('type');
     if (queryCardType && options.length > 0 && metric.metricType) {
-      const type = options.find((i) => i.value === queryCardType)
-      setTimeout(() => onChange(type.value), 0)
+      const type = options.find((i) => i.value === queryCardType);
+      setTimeout(() => onChange(type.value), 0);
     }
-  }, [])
+  }, []);
 
   const onChange = (type: string) => {
-    metricStore.changeType(type)
-  }
+    metricStore.changeType(type);
+  };
   return (
     <Select
       name="metricType"
@@ -52,6 +52,17 @@ function MetricTypeDropdown(props: Props) {
       onChange={props.onSelect}
       // onSelect={onSelect}
       components={{
+        SingleValue: ({ children, ...props }: any) => {
+          const { data: { icon, label } } = props;
+          return (
+            <components.SingleValue {...props}>
+              <div className="flex items-center">
+                <Icon name={icon} size="18" color="gray-medium" />
+                <div className="ml-2">{label}</div>
+              </div>
+            </components.SingleValue>
+          );
+        },
         MenuList: ({ children, ...props }: any) => {
           return (
             <components.MenuList {...props} className="!p-3">
