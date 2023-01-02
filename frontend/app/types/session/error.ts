@@ -10,7 +10,7 @@ function getStck0InfoString(stack: Stack) {
   return s;
 }
 
-type Stack = { function: string; url: string}[]
+type Stack = { function: string; url: string }[]
 
 export interface IError {
   sessionId: string

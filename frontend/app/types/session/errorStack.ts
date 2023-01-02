@@ -15,7 +15,7 @@ export default class ErrorStack {
   lineNo: IErrorStack["lineNo"]
   colNo: IErrorStack["colNo"]
   offset: IErrorStack["offset"]
-  context:IErrorStack["context"]
+  context: IErrorStack["context"]
 
   constructor(es: IErrorStack) {
     Object.assign(this, {

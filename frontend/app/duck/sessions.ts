@@ -1,6 +1,7 @@
 import { List, Map } from 'immutable';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
+import { Location, InjectedEvent } from 'Types/session/event'
 import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
@@ -46,7 +47,7 @@ const defaultDateFilters = {
 };
 
 const initObj = {
-    list: List(),
+    list: [],
     sessionIds: [],
     current: new Session(),
     total: 0,
@@ -61,7 +62,7 @@ const initObj = {
     filteredEvents: null,
     eventsQuery: '',
     showChatWindow: false,
-    liveSessions: List(),
+    liveSessions: [],
     visitedEvents: List(),
     insights: List(),
     insightFilters: defaultDateFilters,
@@ -76,7 +77,12 @@ const initObj = {
 
 const initialState = Map(initObj);
 
-const reducer = (state = initialState, action = {}) => {
+interface IAction extends Record<string, any>{
+    type: string;
+    data: any;
+}
+
+const reducer = (state = initialState, action: IAction) => {
     switch (action.type) {
         case FETCH_ERROR_STACK.SUCCESS:
             return state.set('errorStack', List(action.data.trace).map(es => new ErrorStack(es))).set('sourcemapUploaded', action.data.sourcemapUploaded);
@@ -87,13 +93,11 @@ const reducer = (state = initialState, action = {}) => {
             const { sessions, total } = action.data;
             const list = sessions.map(s => new Session(s));
 
+            console.log(sessions, list, action)
             return state
                 .set('list', list)
-                .set('sessionIds', list.map(({ sessionId }) => sessionId).toJS())
-                .set(
-                    'favoriteList',
-                    list.filter(({ favorite }) => favorite)
-                )
+                .set('sessionIds', list.map(({ sessionId }) => sessionId))
+                .set('favoriteList', list.filter(({ favorite }) => favorite))
                 .set('total', total);
         case FETCH_AUTOPLAY_LIST.SUCCESS:
             let sessionIds = state.get('sessionIds');
@@ -125,13 +129,13 @@ const reducer = (state = initialState, action = {}) => {
             const events = action.filter.events;
             const session = new Session(action.data);
 
-            const matching = [];
+            const matching: number[] = [];
 
-            const visitedEvents = [];
-            const tmpMap = {};
+            const visitedEvents: Location[] = [];
+            const tmpMap = new Set();
             session.events.forEach((event) => {
-                if (event.type === 'LOCATION' && !tmpMap.hasOwnProperty(event.url)) {
-                    tmpMap[event.url] = event.url;
+                if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
+                    tmpMap.add(event.url);
                     visitedEvents.push(event);
                 }
             });
@@ -156,7 +160,7 @@ const reducer = (state = initialState, action = {}) => {
                 .set('host', visitedEvents[0] && visitedEvents[0].host);
         }
         case FETCH_FAVORITE_LIST.SUCCESS:
-            return state.set('favoriteList', List(action.data).map(s => new Session(s)));
+            return state.set('favoriteList', action.data.map(s => new Session(s)));
         case TOGGLE_FAVORITE.SUCCESS: {
             const id = action.sessionId;
             let mutableState = state
@@ -186,7 +190,7 @@ const reducer = (state = initialState, action = {}) => {
                 diff = diff === 0 ? s1.startedAt - s2.startedAt : diff;
                 return action.sign * diff;
             };
-            return state.update('list', (list) => list.sort(comparator)).update('favoriteList', (list) => list.sort(comparator));
+            return state.update('list', (list: Session[]) => list.sort(comparator)).update('favoriteList', (list: Session[]) => list.sort(comparator));
         }
         case REDEFINE_TARGET: {
             // TODO: update for list

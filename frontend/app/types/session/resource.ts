@@ -12,7 +12,7 @@ const OTHER = 'other' as const;
 function getResourceStatus(status: number, success: boolean) {
   if (status != null) return String(status);
   if (typeof success === 'boolean' || typeof success === 'number') {
-    return !!success 
+    return !!success
       ? '2xx-3xx'
       : '4xx-5xx';
   }
@@ -20,8 +20,12 @@ function getResourceStatus(status: number, success: boolean) {
 }
 
 function getResourceSuccess(success: boolean, status: number) {
-  if (success != null) { return !!success }
-  if (status != null) { return status < 400 }
+  if (success != null) {
+    return !!success
+  }
+  if (status != null) {
+    return status < 400
+  }
   return true
 }
 
@@ -56,7 +60,7 @@ interface IResource {
   success: boolean,
   score: number,
   method: string,
-  request:string,
+  request: string,
   response: string,
   headerSize: number,
   encodedBodySize: number,

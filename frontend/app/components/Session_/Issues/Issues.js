@@ -1,9 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Icon, Popover, Button } from 'UI';
+import { Popover, Button } from 'UI';
 import IssuesModal from './IssuesModal';
 import { fetchProjects, fetchMeta } from 'Duck/assignments';
-import stl from './issues.module.css';
 
 @connect(
   (state) => ({
@@ -15,9 +14,7 @@ import stl from './issues.module.css';
     fetchIssueLoading: state.getIn(['assignments', 'fetchAssignment', 'loading']),
     fetchIssuesLoading: state.getIn(['assignments', 'fetchAssignments', 'loading']),
     projectsLoading: state.getIn(['assignments', 'fetchProjects', 'loading']),
-    issuesIntegration: state.getIn(['issues', 'list']).first() || {},
-
-    jiraConfig: state.getIn(['issues', 'list']).first(),
+    issuesIntegration: state.getIn(['issues', 'list']) || {},
     issuesFetched: state.getIn(['issues', 'issuesFetched']),
   }),
   { fetchMeta, fetchProjects }
@@ -58,13 +55,9 @@ class Issues extends React.Component {
   render() {
     const {
       sessionId,
-      isModalDisplayed,
-      projectsLoading,
-      metaLoading,
-      fetchIssuesLoading,
       issuesIntegration,
     } = this.props;
-    const provider = issuesIntegration.provider;
+    const provider = issuesIntegration.first()?.provider || '';
 
     return (
       <Popover
@@ -80,13 +73,6 @@ class Issues extends React.Component {
             Create Issue
           </Button>
         </div>
-        {/* <div
-        className="flex items-center cursor-pointer"
-        disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}
-      >
-        <Icon name={`integrations/${provider === 'jira' ? 'jira' : 'github'}`} size="16" />
-        <span className="ml-2 whitespace-nowrap">Create Issue</span>
-      </div> */}
       </Popover>
     );
   }
