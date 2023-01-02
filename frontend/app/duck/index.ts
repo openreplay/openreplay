@@ -1,6 +1,5 @@
 import { combineReducers } from 'redux-immutable';
 
-import jwt from './jwt';
 import user from './user';
 import sessions from './sessions';
 import assignments from './assignments';
@@ -34,7 +33,6 @@ import search from './search';
 import liveSearch from './liveSearch';
 
 const rootReducer = combineReducers({
-  jwt,
   user,
   sessions,
   assignments,
