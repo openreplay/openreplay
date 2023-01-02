@@ -26,12 +26,14 @@ function MetricsLibraryModal(props: Props) {
   return (
     <>
       <Modal.Header title="Cards Library" />
-      <Modal.Content>
+      <Modal.Content className='p-4 pb-20'>
         <div className="border">
           <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} />
         </div>
-        <SelectedContent dashboardId={dashboardId} selected={selectedList} />
       </Modal.Content>
+      <Modal.Footer>
+        <SelectedContent dashboardId={dashboardId} selected={selectedList} />
+      </Modal.Footer>
     </>
   );
 }
@@ -49,7 +51,7 @@ function SelectedContent({ dashboardId, selected }: any) {
   };
 
   return (
-    <div className="flex items-center rounded border bg-gray-light-shade absolute justify-between p-3 left-4 right-4 bottom-4">
+    <div className="flex items-center rounded border bg-gray-light-shade justify-between p-3">
       <div>
         Selected <span className="font-medium">{selected.length}</span> of{' '}
         <span className="font-medium">{total}</span>
