@@ -176,6 +176,7 @@ chalicelib/.config
 chalicelib/saas
 README/*
 Pipfile
+Pipfile.lock
 
 .local/*
 
