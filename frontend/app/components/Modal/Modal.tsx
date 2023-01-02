@@ -50,4 +50,8 @@ Modal.Content = ({ children, className = 'p-4' }: { children: any; className?: s
   return <div className={cn('overflow-y-auto relative', className)} style={{ height: 'calc(100vh - 52px)'}}>{children}</div>;
 };
 
+Modal.Footer = ({ children, className = ''} : any) => {
+  return <div className={cn('absolute bottom-0 w-full left-0 right-0', className)} style={{ }}>{children}</div>;
+}
+
 export default Modal;
