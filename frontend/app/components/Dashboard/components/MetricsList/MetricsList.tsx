@@ -20,6 +20,7 @@ function MetricsList({
   const metricsSearch = metricStore.metricsSearch;
   const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
+  const sortBy = useObserver(() => metricStore.sort.by);
 
   useEffect(() => {
     metricStore.fetchList();
@@ -44,11 +45,25 @@ function MetricsList({
     const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ');
     return searchRE.test(dashboardsStr);
   };
+
   const list =
     metricsSearch !== ''
       ? filterList(metrics, metricsSearch, ['name', 'metricType', 'owner'], filterByDashboard)
       : metrics;
+
   const lenth = list.length;
+
+  const sortList = () => {
+    list.sort((a, b) => {
+      const aDate = new Date(a.lastModified);
+      const bDate = new Date(b.lastModified);
+      return sortBy === 'asc'
+        ? aDate.getTime() - bDate.getTime()
+        : bDate.getTime() - aDate.getTime();
+    });
+  };
+
+  sortList();
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
@@ -85,39 +100,6 @@ function MetricsList({
           toggleSelection={toggleMetricSelection}
         />
       )}
-      {/*
-      <div className="mt-3 rounded bg-white">
-        <div className="grid grid-cols-12 py-2 font-medium px-6">
-          <div className="col-span-4 flex items-center">
-            <Checkbox
-              name="slack"
-              className="mr-4"
-              type="checkbox"
-              checked={false}
-              onClick={() => setSelectedMetrics(list.map((i: any) => i.metricId))}
-            />
-            <span>Title</span>
-          </div>
-          <div className="col-span-4">Owner</div>
-          <div className="col-span-2">Visibility</div>
-          <div className="col-span-2 text-right">Last Modified</div>
-        </div>
-
-         {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
-          // <React.Fragment key={metric.metricId}>
-          //   <MetricListItem
-          //     metric={metric}
-          //     siteId={siteId}
-          //     selected={selectedMetrics.includes(parseInt(metric.metricId))}
-          //     toggleSelection={(e: any) => {
-          //       e.stopPropagation();
-          //       toggleMetricSelection(parseInt(metric.metricId));
-          //     }}
-          //   />
-          // </React.Fragment>
-        ))}
-      </div>
-      */}
 
       <div className="w-full flex items-center justify-between py-4 px-6 border-t">
         <div className="text-disabled-text">
