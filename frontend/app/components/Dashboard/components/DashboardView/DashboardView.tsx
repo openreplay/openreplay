@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Loader, Tooltip, Popover } from 'UI';
+import { Loader } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
