@@ -14,7 +14,7 @@ export default class Widget {
     metricId: any = undefined
     widgetId: any = undefined
     category?: string = undefined
-    name: string = "Untitled Metric"
+    name: string = "Untitled Card"
     // metricType: string = "timeseries"
     metricType: string = "timeseries"
     metricOf: string = "sessionCount"
