@@ -214,7 +214,7 @@ function WidgetForm(props: Props) {
           disabled={!cannotSaveFunnel}
         >
           <Button variant="primary" onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
-            {metric.exists() ? 'Update' : 'Create'}
+            {metric.exists() ? 'Update' : (parseInt(dashboardId) > 0 ? 'Create & Add to Dashboard' : 'Create')}
           </Button>
         </Tooltip>
         <div className="flex items-center">
