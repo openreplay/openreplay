@@ -2,7 +2,6 @@ import { List, Map } from 'immutable';
 import Client from 'Types/client';
 import { deleteCookie } from 'App/utils';
 import Account from 'Types/account';
-import { DELETE } from './jwt';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 
 export const LOGIN = new RequestTypes('user/LOGIN');
@@ -38,6 +37,7 @@ const setClient = (state, data) => {
 }
 
 export const UPDATE_JWT = 'jwt/UPDATE';
+export const DELETE = 'jwt/DELETE'
 export function setJwt(data) {
   return {
     type: UPDATE_JWT,
