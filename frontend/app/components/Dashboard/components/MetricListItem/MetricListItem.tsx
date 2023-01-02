@@ -9,6 +9,7 @@ interface Props extends RouteComponentProps {
   siteId: string;
   selected?: boolean;
   toggleSelection?: any;
+  disableSelection?: boolean
 }
 
 function MetricTypeIcon({ type }: any) {
@@ -33,7 +34,7 @@ function MetricTypeIcon({ type }: any) {
 }
 
 function MetricListItem(props: Props) {
-  const { metric, history, siteId, selected, toggleSelection = () => {} } = props;
+  const { metric, history, siteId, selected, toggleSelection = () => {}, disableSelection = false } = props;
 
   const onItemClick = () => {
     const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
@@ -46,13 +47,16 @@ function MetricListItem(props: Props) {
       onClick={onItemClick}
     >
       <div className="col-span-4 flex items-center">
-        <Checkbox
-          name="slack"
-          className="mr-4"
-          type="checkbox"
-          checked={selected}
-          onClick={toggleSelection}
-        />
+        {!disableSelection && (
+          <Checkbox
+            name="slack"
+            className="mr-4"
+            type="checkbox"
+            checked={selected}
+            onClick={toggleSelection}
+          />
+        )}
+        
         <div className="flex items-center">
           <MetricTypeIcon type={metric.metricType} />
           <div className="link capitalize-first">{metric.name}</div>

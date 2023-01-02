@@ -10,7 +10,7 @@ import ListView from './ListView';
 
 function MetricsList({
   siteId,
-  onSelectionChange = () => {},
+  onSelectionChange,
 }: {
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
@@ -26,6 +26,9 @@ function MetricsList({
   }, []);
 
   useEffect(() => {
+    if (!onSelectionChange) {
+      return;
+    }
     onSelectionChange(selectedMetrics);
   }, [selectedMetrics]);
 
@@ -65,11 +68,14 @@ function MetricsList({
     >
       {listView ? (
         <ListView
+          disableSelection={!onSelectionChange}
           siteId={siteId}
           list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
           selectedList={selectedMetrics}
           toggleSelection={toggleMetricSelection}
-          toggleAll={({ target: { checked, name } }) => setSelectedMetrics(checked ? list.map((i: any) => i.metricId) : [])}
+          toggleAll={({ target: { checked, name } }) =>
+            setSelectedMetrics(checked ? list.map((i: any) => i.metricId) : [])
+          }
         />
       ) : (
         <GridView
