@@ -30,7 +30,7 @@ export default class WebPlayer extends Player {
     let initialLists = live ? {} : {
       event: session.events,
       stack: session.stackEvents,
-      resource: session.resources.toJSON(), // MBTODO: put ResourceTiming in file
+      resource: session.resources, // MBTODO: put ResourceTiming in file
       exceptions: session.errors.map(({ time, errorId, name }: any) =>
         Log({
           level: LogLevel.ERROR,

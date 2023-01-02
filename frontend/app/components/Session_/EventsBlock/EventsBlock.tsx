@@ -11,15 +11,16 @@ import EventSearch from './EventSearch/EventSearch';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { RootStore } from 'App/duck'
-import { List as ImmList } from 'immutable'
 import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
+import { InjectedEvent } from 'Types/session/event'
+import Session from 'Types/session'
 
 interface IProps {
   setEventFilter: (filter: { query: string }) => void
-  filteredEvents: ImmList<Record<string, any>>
+  filteredEvents: InjectedEvent[]
   setActiveTab: (tab?: string) => void
   query: string
-  session: Record<string, any>
+  session: Session
   filterOutNote: (id: string) => void
   eventsIndex: number[]
 }
@@ -87,13 +88,13 @@ function EventsBlock(props: IProps) {
   const onMouseLeave = () => setMouseOver(false)
 
   const renderGroup = ({ index, key, style, parent }: { index: number; key: string; style: React.CSSProperties; parent: any }) => {
-    const isLastEvent = index === usedEvents.size - 1;
-    const isLastInGroup = isLastEvent || usedEvents.get(index + 1)?.type === TYPES.LOCATION;
-    const event = usedEvents.get(index);
-    const isNote = !!event?.noteId
+    const isLastEvent = index === usedEvents.length - 1;
+    const isLastInGroup = isLastEvent || usedEvents[index + 1]?.type === TYPES.LOCATION;
+    const event = usedEvents[index];
+    const isNote = 'noteId' in event
     const isCurrent = index === currentTimeEventIndex;
 
-    const heightBug = index === 0 && event?.type === TYPES.LOCATION && event.referrer ? { top: 2 } : {}
+    const heightBug = index === 0 && event?.type === TYPES.LOCATION && 'referrer' in event ? { top: 2 } : {}
     return (
       <CellMeasurer
         key={key}
@@ -123,7 +124,7 @@ function EventsBlock(props: IProps) {
     );
   }
 
-  const isEmptySearch = query && (usedEvents.size === 0 || !usedEvents)
+  const isEmptySearch = query && (usedEvents.length === 0 || !usedEvents)
   return (
     <>
       <div className={ cn(styles.header, 'p-4') }>
@@ -133,7 +134,7 @@ function EventsBlock(props: IProps) {
             setActiveTab={setActiveTab}
             value={query}
             header={
-              <div className="text-xl">User Steps <span className="color-gray-medium">{ events.size }</span></div>
+              <div className="text-xl">User Steps <span className="color-gray-medium">{ events.length }</span></div>
             }
           />
         </div>
@@ -160,7 +161,7 @@ function EventsBlock(props: IProps) {
               width={248}
               overscanRowCount={6}
               itemSize={230}
-              rowCount={usedEvents.size}
+              rowCount={usedEvents.length}
               deferredMeasurementCache={cache}
               rowHeight={cache.rowHeight}
               rowRenderer={renderGroup}

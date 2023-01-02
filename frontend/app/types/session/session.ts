@@ -1,4 +1,3 @@
-import { List } from 'immutable';
 import { Duration } from 'luxon';
 import SessionEvent, { TYPES, EventData, InjectedEvent } from './event';
 import StackEvent from './stackEvent';
@@ -181,6 +180,7 @@ export default class Session {
       devtoolsURL = [],
       mobsUrl = [],
       notes = [],
+      resources = [],
       ...session
     } = sessionData
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -207,12 +207,12 @@ export default class Session {
       })
     }
 
-    let resources = List(session.resources).map((r) => new Resource(r as any));
-    resources.forEach((r: Resource) => {
+    let resourcesList = resources.map((r) => new Resource(r as any));
+    resourcesList.forEach((r: Resource) => {
       r.time = Math.max(0, r.time - startedAt)
     })
-    resources = resources.sort((r1, r2) => r1.time - r2.time);
-    const missedResources = resources.filter(({ success }) => !success);
+    resourcesList = resourcesList.sort((r1, r2) => r1.time - r2.time);
+    const missedResources = resourcesList.filter(({ success }) => !success);
 
     const stackEventsList: StackEvent[] = []
     if (stackEvents?.length || session.userEvents?.length) {
@@ -243,7 +243,7 @@ export default class Session {
       siteId: projectId,
       events,
       stackEvents: stackEventsList,
-      resources,
+      resources: resourcesList,
       missedResources,
       userDevice,
       userDeviceType,
@@ -267,7 +267,7 @@ export default class Session {
       domURL,
       devtoolsURL,
       notes,
-      notesWithEvents: List(notesWithEvents),
+      notesWithEvents: notesWithEvents,
     })
   }
 }
