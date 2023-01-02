@@ -109,19 +109,15 @@ function WidgetForm(props: Props) {
         console.error(e);
       }
     }
-    metricStore.save(metric).then((metric: any) => {
-      if (wasCreating) {
-        if (parseInt(dashboardId) > 0) {
-          history.replace(withSiteId(dashboardMetricDetails(dashboardId, metric.metricId), siteId));
-          const dashboard = dashboardStore.getDashboard(parseInt(dashboardId));
-          if (dashboard) {
-            dashboardStore.addWidgetToDashboard(dashboard, [metric.metricId]);
-          }
-        } else {
-          history.replace(withSiteId(metricDetails(metric.metricId), siteId));
-        }
+    const savedMetric = await metricStore.save(metric);
+    if (wasCreating) {
+      if (parseInt(dashboardId, 10) > 0) {
+        history.replace(withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId));
+        dashboardStore.addWidgetToDashboard(dashboardStore.getDashboard(parseInt(dashboardId, 10))!, [savedMetric.metricId]);
+      } else {
+        history.replace(withSiteId(metricDetails(savedMetric.metricId), siteId));
       }
-    });
+    }
   };
 
   const onDelete = async () => {
