@@ -182,7 +182,7 @@ export enum FilterKey {
   USER_DEVICE = 'userDevice',
   PLATFORM = 'platform',
   DURATION = 'duration',
-  REFERRER = 'preferrer',
+  REFERRER = 'referrer',
   USER_COUNTRY = 'userCountry',
   JOURNEY = 'journey',
   REQUEST = 'request',
@@ -249,8 +249,8 @@ export enum FilterKey {
   ERRORS_PER_DOMAINS = 'errorsPerDomains',
   ERRORS_PER_TYPE = 'errorsPerType',
   CALLS_ERRORS = 'callsErrors',
-  DOMAINS_ERRORS_4XX = 'domainsErrors4xx',
-  DOMAINS_ERRORS_5XX = 'domainsErrors5xx',
+  DOMAINS_ERRORS_4XX = 'domainsErrors4Xx',
+  DOMAINS_ERRORS_5XX = 'domainsErrors5Xx',
   IMPACTED_SESSIONS_BY_JS_ERRORS = 'impactedSessionsByJsErrors',
 
   // Performance
@@ -272,7 +272,7 @@ export enum FilterKey {
   BREAKDOWN_OF_LOADED_RESOURCES = 'resourcesCountByType',
   MISSING_RESOURCES = 'missingResources',
   RESOURCE_TYPE_VS_RESPONSE_END = 'resourceTypeVsResponseEnd',
-  RESOURCE_FETCH_TIME = 'resourceFetchTime',
+  RESOURCE_FETCH_TIME = 'resourcesLoadingTime',
   SLOWEST_RESOURCES = 'slowestResources',
 
   CLICKMAP_URL = 'clickMapUrl',

@@ -39,7 +39,6 @@ export default class MetricStore {
   }
 
   updateKey(key: string, value: any) {
-    console.log('up');
     // @ts-ignore
     this[key] = value;
   }
@@ -60,9 +59,19 @@ export default class MetricStore {
 
   changeType(value: string) {
     const obj: any = { metricType: value};
+    if (value === TABLE || value === TIMESERIES) {
+      obj['viewType'] = 'table';
+    }
+    if (value === TIMESERIES) {
+      obj['viewType'] = 'lineChart';
+    }
     if (value === ERRORS || value === RESOURCE_MONITORING || value === PERFORMANCE || value === WEB_VITALS) {
       obj['viewType'] = 'chart';
     } 
+
+    if (value === FUNNEL) {
+      obj['metricOf'] = 'sessionCount';
+    }
     this.instance.update(obj)
   }
 
