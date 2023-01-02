@@ -3,14 +3,13 @@ import { metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
-import { Button, Icon } from 'UI';
+import { Button, Icon, confirm, Tooltip } from 'UI';
 import FilterSeries from '../FilterSeries';
-import { confirm, Tooltip } from 'UI';
 import Select from 'Shared/Select';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes';
 import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
-import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING } from 'App/constants/card';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING, PERFORMANCE, WEB_VITALS } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap'
 
@@ -39,6 +38,7 @@ function WidgetForm(props: Props) {
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
+  const isPredefined = metric.metricType === ERRORS || metric.metricType === PERFORMANCE || metric.metricType === RESOURCE_MONITORING || metric.metricType === WEB_VITALS;
 
   const writeOption = ({ value, name }: any) => {
     value = Array.isArray(value) ? value : value.value;
@@ -68,7 +68,7 @@ function WidgetForm(props: Props) {
         obj['viewType'] = 'table';
       } else if (value === FUNNEL) {
         obj['metricOf'] = 'sessionCount';
-      } else if (value === ERRORS || value === RESOURCE_MONITORING) {
+      } else if (value === ERRORS || value === RESOURCE_MONITORING || value === RESOURCE_MONITORING || value === WEB_VITALS) {
         obj['viewType'] = 'chart';
       } 
 
@@ -132,30 +132,6 @@ function WidgetForm(props: Props) {
           <MetricTypeDropdown onSelect={writeOption} />
           <MetricSubtypeDropdown onSelect={writeOption} />
 
-          {/* {metric.metricType === 'timeseries' && (
-                        <>
-                            <span className="mx-3">of</span>
-                            <Select
-                                name="metricOf"
-                                options={timeseriesOptions}
-                                defaultValue={metric.metricOf}
-                                onChange={ writeOption }
-                            />
-                        </>
-                    )} */}
-
-          {/* {metric.metricType === 'table' && (
-                        <>
-                            <span className="mx-3">of</span>
-                            <Select
-                                name="metricOf"
-                                options={tableOptions}
-                                defaultValue={metric.metricOf}
-                                onChange={ writeOption }
-                            />
-                        </>
-                    )} */}
-
           {metric.metricOf === FilterKey.ISSUE && (
             <>
               <span className="mx-3">issue type</span>
@@ -186,6 +162,14 @@ function WidgetForm(props: Props) {
         </div>
       </div>
 
+      {isPredefined && (
+        <div className="flex items-center my-6 justify-center">
+          <Icon name="info-circle" size="18" color="gray-medium" />
+          <div className="ml-2">Filtering or modification of OpenReplay provided metrics isn't supported at the moment.</div>
+        </div>
+      )}
+
+      {!isPredefined && (
       <div className="form-group">
         <div className="flex items-center font-medium py-2">
           {`${isTable || isFunnel || isClickmap ? 'Filter by' : 'Chart Series'}`}
@@ -221,7 +205,8 @@ function WidgetForm(props: Props) {
                 />
               </div>
             ))}
-      </div>
+        </div>
+      )}
 
       <div className="form-groups flex items-center justify-between">
         <Tooltip
