@@ -18,7 +18,7 @@ export default class MetricStore {
 
   sessionsPage: number = 1;
   sessionsPageSize: number = 10;
-  listView?: boolean = false
+  listView?: boolean = true
   clickMapFilter: boolean = false
 
   clickMapSearch = ''
@@ -38,6 +38,7 @@ export default class MetricStore {
   }
 
   updateKey(key: string, value: any) {
+    console.log('up');
     // @ts-ignore
     this[key] = value;
   }

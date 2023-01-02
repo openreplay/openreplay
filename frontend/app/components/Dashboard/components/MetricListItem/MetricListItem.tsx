@@ -46,13 +46,13 @@ function MetricListItem(props: Props) {
       onClick={onItemClick}
     >
       <div className="col-span-4 flex items-center">
-        {/* <Checkbox
+        <Checkbox
           name="slack"
           className="mr-4"
           type="checkbox"
           checked={selected}
           onClick={toggleSelection}
-        /> */}
+        />
         <div className="flex items-center">
           <MetricTypeIcon type={metric.metricType} />
           <div className="link capitalize-first">{metric.name}</div>

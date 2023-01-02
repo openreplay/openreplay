@@ -10,7 +10,7 @@ import Select from 'Shared/Select';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes';
 import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
-import { TIMESERIES, TABLE, CLICKMAP } from 'App/constants/card';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap'
 
@@ -67,6 +67,10 @@ function WidgetForm(props: Props) {
       } else if (value === TABLE) {
         obj['metricOf'] = tableOptions[0].value;
         obj['viewType'] = 'table';
+      } else if (value === FUNNEL) {
+        obj['metricOf'] = 'sessionCount';
+      } else if (value === ERRORS) {
+        obj['viewType'] = 'chart';
       }
       if (metric.metricType === CLICKMAP && value !== CLICKMAP) {
         metric.series[0].filter.removeFilter(0)

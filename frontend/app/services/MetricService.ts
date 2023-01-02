@@ -18,7 +18,7 @@ export default class MetricService {
      * @returns {Promise<any>}
      */
     getMetrics(): Promise<any> {
-        return this.client.post('/cards/search', { limit: 100 })
+        return this.client.get('/cards')
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || []);
     }

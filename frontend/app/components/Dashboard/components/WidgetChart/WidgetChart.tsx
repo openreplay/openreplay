@@ -13,7 +13,7 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
 import { FilterKey } from 'Types/filter/filterType';
-import { CLICKMAP } from 'App/constants/card';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
@@ -101,23 +101,25 @@ function WidgetChart(props: Props) {
             return <SessionWidget metric={metric} data={data} />
         }
 
-        if (metricType === 'errors') {
-            return <ErrorsWidget metric={metric} data={data} />
-        }
+        // if (metricType === ERRORS) {
+        //     return <ErrorsWidget metric={metric} data={data} />
+        // }
 
-        if (metricType === 'funnel') {
+        if (metricType === FUNNEL) {
             return <FunnelWidget metric={metric} data={data} isWidget={isWidget || isTemplate} />
         }
 
-        if (metricType === 'predefined') {
+        if (metricType === 'predefined' || metricType === ERRORS || metricType === PERFORMANCE || metricType === RESOURCE_MONITORING || metricType === WEB_VITALS) {
             const defaultMetric = metric.data.chart.length === 0 ? metricWithData : metric
             if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
-            return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data} predefinedKey={metric.predefinedKey} />
+            return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data} predefinedKey={metric.metricOf} />
         }
 
-        if (metricType === 'timeseries') {
+        // TODO add USER_PATH, RETENTION, FEATUER_ADOPTION
+
+        if (metricType === TIMESERIES) {
             if (viewType === 'lineChart') {
                 return (
                     <CustomMetriLineChart
@@ -138,7 +140,7 @@ function WidgetChart(props: Props) {
             }
         }
 
-        if (metricType === 'table') {
+        if (metricType === TABLE) {
             if (metricOf === FilterKey.SESSIONS) {
                 return (
                     <CustomMetricTableSessions
@@ -159,7 +161,7 @@ function WidgetChart(props: Props) {
                     />
                 )
             }
-            if (viewType === 'table') {
+            if (viewType === TABLE) {
                 return (
                     <CustomMetricTable
                         metric={metric} data={data[0]}

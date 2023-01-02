@@ -13,7 +13,7 @@ function ListView(props: Props) {
   return (
     <div>
       <div className="grid grid-cols-12 py-2 font-medium px-6">
-        {/* <div className="col-span-4 flex items-center">
+        <div className="col-span-4 flex items-center">
           <Checkbox
             name="slack"
             className="mr-4"
@@ -22,7 +22,7 @@ function ListView(props: Props) {
             onClick={() => selectedList(list.map((i: any) => i.metricId))}
           />
           <span>Title</span>
-        </div> */}
+        </div>
         <div className="col-span-4">Owner</div>
         <div className="col-span-2">Visibility</div>
         <div className="col-span-2 text-right">Last Modified</div>

@@ -1,20 +1,23 @@
 import Modal from 'App/components/Modal/Modal';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MetricsList from '../MetricsList';
 import { Button } from 'UI';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { observer, useObserver } from 'mobx-react-lite';
 
 interface Props {
   dashboardId: number;
   siteId: string;
 }
 function MetricsLibraryModal(props: Props) {
+  const { metricStore } = useStore();
   const { siteId, dashboardId } = props;
   const [selectedList, setSelectedList] = useState([]);
 
-  console.log('dashboardId', dashboardId);
+  useEffect(() => {
+    metricStore.updateKey('listView', true)
+  }, [])
 
   const onSelectionChange = (list: any) => {
     setSelectedList(list);
@@ -34,7 +37,7 @@ function MetricsLibraryModal(props: Props) {
   );
 }
 
-export default MetricsLibraryModal;
+export default observer(MetricsLibraryModal);
 
 function SelectedContent({ dashboardId, selected }: any) {
   const { hideModal } = useModal();
