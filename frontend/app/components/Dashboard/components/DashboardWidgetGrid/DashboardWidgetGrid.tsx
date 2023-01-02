@@ -3,7 +3,6 @@ import { useStore } from 'App/mstore';
 import WidgetWrapper from '../WidgetWrapper';
 import { NoContent, Loader, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-import AddMetricContainer from './AddMetricContainer';
 import Widget from 'App/mstore/types/widget';
 import MetricTypeList from '../MetricTypeList';
 
@@ -104,9 +103,6 @@ function DashboardWidgetGrid(props: Props) {
                 />
               </React.Fragment>
             ))}
-          <div className="col-span-2"id="no-print">
-            <AddMetricContainer siteId={siteId} />
-          </div>
         </div>
       </NoContent>
     </Loader>

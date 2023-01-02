@@ -69,6 +69,7 @@ function MetricsList({
           list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
           selectedList={selectedMetrics}
           toggleSelection={toggleMetricSelection}
+          toggleAll={({ target: { checked, name } }) => setSelectedMetrics(checked ? list.map((i: any) => i.metricId) : [])}
         />
       ) : (
         <GridView
