@@ -9,9 +9,18 @@ import Select from 'Shared/Select';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes';
 import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
-import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING, PERFORMANCE, WEB_VITALS } from 'App/constants/card';
+import {
+  TIMESERIES,
+  TABLE,
+  CLICKMAP,
+  FUNNEL,
+  ERRORS,
+  RESOURCE_MONITORING,
+  PERFORMANCE,
+  WEB_VITALS,
+} from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
-import { renderClickmapThumbnail } from './renderMap'
+import { renderClickmapThumbnail } from './renderMap';
 
 interface Props {
   history: any;
@@ -33,25 +42,27 @@ function WidgetForm(props: Props) {
   const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
   const tableOptions = metricOf.filter((i) => i.type === 'table');
   const isTable = metric.metricType === 'table';
-  const isClickmap = metric.metricType === CLICKMAP
+  const isClickmap = metric.metricType === CLICKMAP;
   const isFunnel = metric.metricType === 'funnel';
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
-  const isPredefined = metric.metricType === ERRORS || metric.metricType === PERFORMANCE || metric.metricType === RESOURCE_MONITORING || metric.metricType === WEB_VITALS;
+  const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(
+    metric.metricType
+  );
 
   const writeOption = ({ value, name }: { value: any; name: any }) => {
     value = Array.isArray(value) ? value : value.value;
     const obj: any = { [name]: value };
-  
+
     if (name === 'metricValue') {
       obj.metricValue = value;
-  
+
       if (Array.isArray(obj.metricValue) && obj.metricValue.length > 1) {
         obj.metricValue = obj.metricValue.filter((i: any) => i.value !== 'all');
       }
     }
-  
+
     if (name === 'metricType') {
       switch (value) {
         case TIMESERIES:
@@ -74,7 +85,7 @@ function WidgetForm(props: Props) {
           obj.viewType = 'chart';
 
           if (value !== CLICKMAP) {
-            metric.series[0].filter.removeFilter(0)
+            metric.series[0].filter.removeFilter(0);
           }
 
           if (metric.series[0].filter.filters.length < 1) {
@@ -93,9 +104,9 @@ function WidgetForm(props: Props) {
     const wasCreating = !metric.exists();
     if (isClickmap) {
       try {
-        metric.thumbnail = await renderClickmapThumbnail()
+        metric.thumbnail = await renderClickmapThumbnail();
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
     }
     metricStore.save(metric).then((metric: any) => {
@@ -159,53 +170,54 @@ function WidgetForm(props: Props) {
                 />
               </>
             )}
-
         </div>
       </div>
 
       {isPredefined && (
         <div className="flex items-center my-6 justify-center">
           <Icon name="info-circle" size="18" color="gray-medium" />
-          <div className="ml-2">Filtering or modification of OpenReplay provided metrics isn't supported at the moment.</div>
+          <div className="ml-2">
+            Filtering or modification of OpenReplay provided metrics isn't supported at the moment.
+          </div>
         </div>
       )}
 
       {!isPredefined && (
-      <div className="form-group">
-        <div className="flex items-center font-medium py-2">
-          {`${isTable || isFunnel || isClickmap ? 'Filter by' : 'Chart Series'}`}
-          {!isTable && !isFunnel && !isClickmap && (
-            <Button
-              className="ml-2"
-              variant="text-primary"
-              onClick={() => metric.addSeries()}
-              disabled={!canAddSeries}
-            >
-              ADD
-            </Button>
-          )}
-        </div>
+        <div className="form-group">
+          <div className="flex items-center font-medium py-2">
+            {`${isTable || isFunnel || isClickmap ? 'Filter by' : 'Chart Series'}`}
+            {!isTable && !isFunnel && !isClickmap && (
+              <Button
+                className="ml-2"
+                variant="text-primary"
+                onClick={() => metric.addSeries()}
+                disabled={!canAddSeries}
+              >
+                ADD
+              </Button>
+            )}
+          </div>
 
-        {metric.series.length > 0 &&
-          metric.series
-            .slice(0, isTable || isFunnel  || isClickmap ? 1 : metric.series.length)
-            .map((series: any, index: number) => (
-              <div className="mb-2" key={series.name}>
-                <FilterSeries
-                  observeChanges={() => metric.updateKey('hasChanged', true)}
-                  hideHeader={isTable || isClickmap}
-                  seriesIndex={index}
-                  series={series}
-                  onRemoveSeries={() => metric.removeSeries(index)}
-                  canDelete={metric.series.length > 1}
-                  emptyMessage={
-                    isTable
-                      ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
-                      : 'Add user event or filter to define the series by clicking Add Step.'
-                  }
-                />
-              </div>
-            ))}
+          {metric.series.length > 0 &&
+            metric.series
+              .slice(0, isTable || isFunnel || isClickmap ? 1 : metric.series.length)
+              .map((series: any, index: number) => (
+                <div className="mb-2" key={series.name}>
+                  <FilterSeries
+                    observeChanges={() => metric.updateKey('hasChanged', true)}
+                    hideHeader={isTable || isClickmap}
+                    seriesIndex={index}
+                    series={series}
+                    onRemoveSeries={() => metric.removeSeries(index)}
+                    canDelete={metric.series.length > 1}
+                    emptyMessage={
+                      isTable
+                        ? 'Filter data using any event or attribute. Use Add Step button below to do so.'
+                        : 'Add user event or filter to define the series by clicking Add Step.'
+                    }
+                  />
+                </div>
+              ))}
         </div>
       )}
 
@@ -215,7 +227,11 @@ function WidgetForm(props: Props) {
           disabled={!cannotSaveFunnel}
         >
           <Button variant="primary" onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
-            {metric.exists() ? 'Update' : (parseInt(dashboardId) > 0 ? 'Create & Add to Dashboard' : 'Create')}
+            {metric.exists()
+              ? 'Update'
+              : parseInt(dashboardId) > 0
+              ? 'Create & Add to Dashboard'
+              : 'Create'}
           </Button>
         </Tooltip>
         <div className="flex items-center">
