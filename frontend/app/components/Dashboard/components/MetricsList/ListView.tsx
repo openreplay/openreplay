@@ -7,6 +7,7 @@ interface Props {
   siteId: any;
   selectedList: any;
   toggleSelection?: (metricId: any) => void;
+  toggleAll?: (e: any) => void;
 }
 function ListView(props: Props) {
   const { siteId, list, selectedList, toggleSelection } = props;
@@ -18,8 +19,9 @@ function ListView(props: Props) {
             name="slack"
             className="mr-4"
             type="checkbox"
-            checked={false}
-            onClick={() => selectedList(list.map((i: any) => i.metricId))}
+            checked={selectedList.length === list.length}
+            // onClick={() => selectedList(list.map((i: any) => i.metricId))}
+            onClick={props.toggleAll}
           />
           <span>Title</span>
         </div>
@@ -34,7 +36,7 @@ function ListView(props: Props) {
           selected={selectedList.includes(parseInt(metric.metricId))}
           toggleSelection={(e: any) => {
             e.stopPropagation();
-            toggleSelection(parseInt(metric.metricId));
+            toggleSelection && toggleSelection(parseInt(metric.metricId));
           }}
         />
       ))}

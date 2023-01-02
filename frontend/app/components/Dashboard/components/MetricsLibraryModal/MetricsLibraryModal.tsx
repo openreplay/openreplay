@@ -30,7 +30,6 @@ function MetricsLibraryModal(props: Props) {
         <div className="border">
           <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} />
         </div>
-        {/* TODO should show the dynamic values */}
         <SelectedContent dashboardId={dashboardId} selected={selectedList} />
       </Modal.Content>
     </>
