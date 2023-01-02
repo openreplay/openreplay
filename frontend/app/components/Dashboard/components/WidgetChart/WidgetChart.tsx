@@ -110,7 +110,7 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'predefined' || metricType === ERRORS || metricType === PERFORMANCE || metricType === RESOURCE_MONITORING || metricType === WEB_VITALS) {
-            const defaultMetric = metric.data.chart.length === 0 ? metricWithData : metric
+            const defaultMetric = metric.data.chart && metric.data.chart.length === 0 ? metricWithData : metric
             if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
