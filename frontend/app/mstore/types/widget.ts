@@ -7,6 +7,7 @@ import { issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { metricService } from "App/services";
+import { WEB_VITALS } from "App/constants/card";
 
 export default class Widget {
     public static get ID_KEY():string { return "metricId" }
@@ -134,7 +135,7 @@ export default class Widget {
             thumbnail: this.thumbnail,
             config: {
                 ...this.config,
-                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS) ? 4 : 2
+                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS) ? 4 : (this.metricType === WEB_VITALS ? 1 : 2)
             },
         }
     }

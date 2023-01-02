@@ -10,7 +10,7 @@ import Select from 'Shared/Select';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes';
 import MetricTypeDropdown from './components/MetricTypeDropdown';
 import MetricSubtypeDropdown from './components/MetricSubtypeDropdown';
-import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS } from 'App/constants/card';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap'
 
@@ -41,7 +41,6 @@ function WidgetForm(props: Props) {
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
   const writeOption = ({ value, name }: any) => {
-    console.log(name, value)
     value = Array.isArray(value) ? value : value.value;
     const obj: any = { [name]: value };
 
@@ -69,9 +68,10 @@ function WidgetForm(props: Props) {
         obj['viewType'] = 'table';
       } else if (value === FUNNEL) {
         obj['metricOf'] = 'sessionCount';
-      } else if (value === ERRORS) {
+      } else if (value === ERRORS || value === RESOURCE_MONITORING) {
         obj['viewType'] = 'chart';
-      }
+      } 
+
       if (metric.metricType === CLICKMAP && value !== CLICKMAP) {
         metric.series[0].filter.removeFilter(0)
       }
