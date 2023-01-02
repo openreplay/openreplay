@@ -3,6 +3,7 @@ import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
 import Error from './types/error';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING, PERFORMANCE, WEB_VITALS } from 'App/constants/card';
 
 export default class MetricStore {
   isLoading: boolean = false;
@@ -58,7 +59,11 @@ export default class MetricStore {
   }
 
   changeType(value: string) {
-    this.instance.update({ metricType: value})
+    const obj: any = { metricType: value};
+    if (value === ERRORS || value === RESOURCE_MONITORING || value === PERFORMANCE || value === WEB_VITALS) {
+      obj['viewType'] = 'chart';
+    } 
+    this.instance.update(obj)
   }
 
   reset(id: string) {

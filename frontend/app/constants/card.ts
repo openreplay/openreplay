@@ -147,12 +147,6 @@ export const TYPES: CardType[] = [
     slug: WEB_VITALS,
     subTypes: [
       {
-        title: 'Resources Count By Type',
-        slug: FilterKey.RESOURCES_COUNT_BY_TYPE,
-        description: '',
-      },
-      { title: 'Resources Loading Time', slug: FilterKey.RESOURCES_LOADING_TIME, description: '' },
-      {
         title: 'CPU Load',
         slug: FilterKey.AVG_CPU,
         description: 'Uncover the issues impacting user journeys',

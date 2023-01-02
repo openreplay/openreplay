@@ -37,7 +37,7 @@ function WidgetChart(props: Props) {
     const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
-    const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
+    const isOverviewWidget = metric.metricType === WEB_VITALS;
     const params = { density: isOverviewWidget ? 7 : 70 }
     const metricParams = { ...params }
     const prevMetricRef = useRef<any>();

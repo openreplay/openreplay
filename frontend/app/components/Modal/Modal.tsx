@@ -21,7 +21,9 @@ function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
         document.querySelector('body').style.overflow = 'visible';
       }
     });
-  });return component ? (
+  });
+
+  return component ? (
     ReactDOM.createPortal(
       <ModalOverlay hideModal={hideModal} left={!props.right} right={props.right}>
         <div
@@ -38,8 +40,12 @@ function Modal({ component, className = 'bg-white', props, hideModal }: Props) {
   );
 }
 
-Modal.Header = ({ title }: { title: string }) => {
-  return (
+Modal.Header = ({ title, children }: { title?: string, children?: any }) => {
+  return !!children ? (
+    <div>
+      {children}
+    </div>
+  ): (
     <div className="text-lg flex items-center p-4 font-medium">
       <div>{title}</div>
     </div>
@@ -47,11 +53,22 @@ Modal.Header = ({ title }: { title: string }) => {
 };
 
 Modal.Content = ({ children, className = 'p-4' }: { children: any; className?: string }) => {
-  return <div className={cn('overflow-y-auto relative', className)} style={{ height: 'calc(100vh - 52px)'}}>{children}</div>;
+  return (
+    <div
+      className={cn('overflow-y-auto relative', className)}
+      style={{ height: 'calc(100vh - 52px)' }}
+    >
+      {children}
+    </div>
+  );
 };
 
-Modal.Footer = ({ children, className = ''} : any) => {
-  return <div className={cn('absolute bottom-0 w-full left-0 right-0', className)} style={{ }}>{children}</div>;
-}
+Modal.Footer = ({ children, className = '' }: any) => {
+  return (
+    <div className={cn('absolute bottom-0 w-full left-0 right-0', className)} style={{}}>
+      {children}
+    </div>
+  );
+};
 
 export default Modal;

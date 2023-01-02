@@ -1,7 +1,7 @@
 import Modal from 'App/components/Modal/Modal';
 import React, { useEffect, useMemo, useState } from 'react';
 import MetricsList from '../MetricsList';
-import { Button } from 'UI';
+import { Button, Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
@@ -23,9 +23,22 @@ function MetricsLibraryModal(props: Props) {
     setSelectedList(list);
   };
 
+  const onChange = ({ target: { value } }: any) => {
+    metricStore.updateKey('metricsSearch', value)
+  };
+
   return (
     <>
-      <Modal.Header title="Cards Library" />
+      <Modal.Header title="Cards Library">
+        <div className="flex items-center justify-between px-4 pt-4">
+          <div className="text-lg flex items-center font-medium">
+            <div>Cards Library</div>
+          </div>
+          <div>
+            <MetricSearch onChange={onChange} />
+          </div>
+        </div>
+      </Modal.Header>
       <Modal.Content className="p-4 pb-20">
         <div className="border">
           <MetricsList siteId={siteId} onSelectionChange={onSelectionChange} />
@@ -39,6 +52,20 @@ function MetricsLibraryModal(props: Props) {
 }
 
 export default observer(MetricsLibraryModal);
+
+function MetricSearch({ onChange }: any) {
+  return (
+    <div className="relative">
+      <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
+      <input
+        name="dashboardsSearch"
+        className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
+        placeholder="Filter by title or owner"
+        onChange={onChange}
+      />
+    </div>
+  );
+}
 
 function SelectedContent({ dashboardId, selected }: any) {
   const { hideModal } = useModal();

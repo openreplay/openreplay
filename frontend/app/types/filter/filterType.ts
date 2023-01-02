@@ -269,7 +269,7 @@ export enum FilterKey {
   IMPACTED_SESSIONS_BY_SLOW_PAGES = 'impactedSessionsBySlowPages',
 
   // Resources
-  BREAKDOWN_OF_LOADED_RESOURCES = 'breakdownOfLoadedResources',
+  BREAKDOWN_OF_LOADED_RESOURCES = 'resourcesCountByType',
   MISSING_RESOURCES = 'missingResources',
   RESOURCE_TYPE_VS_RESPONSE_END = 'resourceTypeVsResponseEnd',
   RESOURCE_FETCH_TIME = 'resourceFetchTime',
