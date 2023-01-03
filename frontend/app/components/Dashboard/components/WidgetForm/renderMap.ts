@@ -4,7 +4,6 @@ export const renderClickmapThumbnail = () => {
         // @ts-ignore
         window.html2canvas = html2canvas;
         const element = document.querySelector<HTMLIFrameElement>('#clickmap-render  * iframe').contentDocument.body
-        console.log(element)
         if (element) {
             const dimensions = element.getBoundingClientRect()
             return html2canvas(

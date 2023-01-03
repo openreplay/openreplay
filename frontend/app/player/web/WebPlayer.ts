@@ -26,7 +26,6 @@ export default class WebPlayer extends Player {
   private targetMarker: TargetMarker
 
   constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
-    console.log(session.events, session.stackEvents, session.resources, session.errors)
     let initialLists = live ? {} : {
       event: session.events,
       stack: session.stackEvents,

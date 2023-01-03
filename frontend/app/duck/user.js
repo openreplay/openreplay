@@ -69,7 +69,6 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_ACCOUNT.FAILURE:
     case LOGIN.FAILURE:
     case DELETE:
-      console.log('hi')
       deleteCookie('jwt', '/', '.openreplay.com')
       return initialState;
     case PUT_CLIENT.REQUEST:

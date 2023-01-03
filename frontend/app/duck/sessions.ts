@@ -93,7 +93,6 @@ const reducer = (state = initialState, action: IAction) => {
             const { sessions, total } = action.data;
             const list = sessions.map(s => new Session(s));
 
-            console.log(sessions, list, action)
             return state
                 .set('list', list)
                 .set('sessionIds', list.map(({ sessionId }) => sessionId))
