@@ -61,8 +61,6 @@ const AlertForm = (props) => {
   const write = ({ target: { value, name } }) => props.edit({ [name]: value });
   const writeOption = (e, { name, value }) => props.edit({ [name]: value.value });
   const onChangeCheck = ({ target: { checked, name } }) => props.edit({ [name]: checked });
-  // const onChangeOption = ({ checked, name }) => props.edit({ [ name ]: checked })
-  // const onChangeCheck = (e) => { console.log(e) }
 
   useEffect(() => {
     props.fetchTriggerOptions();

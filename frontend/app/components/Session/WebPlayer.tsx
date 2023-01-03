@@ -82,7 +82,6 @@ function WebPlayer(props: any) {
         contextValue.player.jump(jumpTimestamp)
         contextValue.player.pause()
         contextValue.player.scaleFullPage()
-        console.log(jumpTimestamp, insights)
         setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
       }, 500)
     }
