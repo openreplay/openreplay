@@ -86,11 +86,11 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                     values["maxDuration"] = f["value"][1]
             elif filter_type == schemas.FilterType.referrer:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
-                filter_extra_from = [f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"]
+                filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
                     sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f["value"], value_key=f_k))
-            elif filter_type == events.event_type.METADATA.ui_type:
+            elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
@@ -135,31 +135,31 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             extra_from = []
         op = sh.get_sql_operator(s["operator"])
         event_type = s["type"].upper()
-        if event_type == events.event_type.CLICK.ui_type:
-            next_table = events.event_type.CLICK.table
-            next_col_name = events.event_type.CLICK.column
-        elif event_type == events.event_type.INPUT.ui_type:
-            next_table = events.event_type.INPUT.table
-            next_col_name = events.event_type.INPUT.column
-        elif event_type == events.event_type.LOCATION.ui_type:
-            next_table = events.event_type.LOCATION.table
-            next_col_name = events.event_type.LOCATION.column
-        elif event_type == events.event_type.CUSTOM.ui_type:
-            next_table = events.event_type.CUSTOM.table
-            next_col_name = events.event_type.CUSTOM.column
+        if event_type == events.EventType.CLICK.ui_type:
+            next_table = events.EventType.CLICK.table
+            next_col_name = events.EventType.CLICK.column
+        elif event_type == events.EventType.INPUT.ui_type:
+            next_table = events.EventType.INPUT.table
+            next_col_name = events.EventType.INPUT.column
+        elif event_type == events.EventType.LOCATION.ui_type:
+            next_table = events.EventType.LOCATION.table
+            next_col_name = events.EventType.LOCATION.column
+        elif event_type == events.EventType.CUSTOM.ui_type:
+            next_table = events.EventType.CUSTOM.table
+            next_col_name = events.EventType.CUSTOM.column
         #     IOS --------------
-        elif event_type == events.event_type.CLICK_IOS.ui_type:
-            next_table = events.event_type.CLICK_IOS.table
-            next_col_name = events.event_type.CLICK_IOS.column
-        elif event_type == events.event_type.INPUT_IOS.ui_type:
-            next_table = events.event_type.INPUT_IOS.table
-            next_col_name = events.event_type.INPUT_IOS.column
-        elif event_type == events.event_type.VIEW_IOS.ui_type:
-            next_table = events.event_type.VIEW_IOS.table
-            next_col_name = events.event_type.VIEW_IOS.column
-        elif event_type == events.event_type.CUSTOM_IOS.ui_type:
-            next_table = events.event_type.CUSTOM_IOS.table
-            next_col_name = events.event_type.CUSTOM_IOS.column
+        elif event_type == events.EventType.CLICK_IOS.ui_type:
+            next_table = events.EventType.CLICK_IOS.table
+            next_col_name = events.EventType.CLICK_IOS.column
+        elif event_type == events.EventType.INPUT_IOS.ui_type:
+            next_table = events.EventType.INPUT_IOS.table
+            next_col_name = events.EventType.INPUT_IOS.column
+        elif event_type == events.EventType.VIEW_IOS.ui_type:
+            next_table = events.EventType.VIEW_IOS.table
+            next_col_name = events.EventType.VIEW_IOS.column
+        elif event_type == events.EventType.CUSTOM_IOS.ui_type:
+            next_table = events.EventType.CUSTOM_IOS.table
+            next_col_name = events.EventType.CUSTOM_IOS.column
         else:
             print("=================UNDEFINED")
             continue

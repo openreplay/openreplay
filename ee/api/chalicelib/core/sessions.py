@@ -493,7 +493,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     extra_constraints.append(
                         sh.multi_conditions(f"s.base_referrer {op} %({f_k})s", f.value, is_not=is_not,
                                             value_key=f_k))
-            elif filter_type == events.event_type.METADATA.ui_type:
+            elif filter_type == events.EventType.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -647,45 +647,45 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                              **sh.multi_values(event.value, value_key=e_k),
                              **sh.multi_values(event.source, value_key=s_k)}
 
-            if event_type == events.event_type.CLICK.ui_type:
-                event_from = event_from % f"{events.event_type.CLICK.table} AS main "
+            if event_type == events.EventType.CLICK.ui_type:
+                event_from = event_from % f"{events.EventType.CLICK.table} AS main "
                 if not is_any:
                     if event.operator == schemas.ClickEventExtraOperator._on_selector:
                         event_where.append(
                             sh.multi_conditions(f"main.selector = %({e_k})s", event.value, value_key=e_k))
                     else:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.event_type.CLICK.column} {op} %({e_k})s", event.value,
+                            sh.multi_conditions(f"main.{events.EventType.CLICK.column} {op} %({e_k})s", event.value,
                                                 value_key=e_k))
 
-            elif event_type == events.event_type.INPUT.ui_type:
-                event_from = event_from % f"{events.event_type.INPUT.table} AS main "
+            elif event_type == events.EventType.INPUT.ui_type:
+                event_from = event_from % f"{events.EventType.INPUT.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.INPUT.column} {op} %({e_k})s", event.value,
+                        sh.multi_conditions(f"main.{events.EventType.INPUT.column} {op} %({e_k})s", event.value,
                                             value_key=e_k))
                 if event.source is not None and len(event.source) > 0:
                     event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
                                                            value_key=f"custom{i}"))
                     full_args = {**full_args, **sh.multi_values(event.source, value_key=f"custom{i}")}
 
-            elif event_type == events.event_type.LOCATION.ui_type:
-                event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
+            elif event_type == events.EventType.LOCATION.ui_type:
+                event_from = event_from % f"{events.EventType.LOCATION.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.LOCATION.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.event_type.CUSTOM.ui_type:
-                event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
+            elif event_type == events.EventType.CUSTOM.ui_type:
+                event_from = event_from % f"{events.EventType.CUSTOM.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.CUSTOM.column} {op} %({e_k})s", event.value,
+                        sh.multi_conditions(f"main.{events.EventType.CUSTOM.column} {op} %({e_k})s", event.value,
                                             value_key=e_k))
-            elif event_type == events.event_type.REQUEST.ui_type:
-                event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+            elif event_type == events.EventType.REQUEST.ui_type:
+                event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value,
+                        sh.multi_conditions(f"main.{events.EventType.REQUEST.column} {op} %({e_k})s", event.value,
                                             value_key=e_k))
             # elif event_type == events.event_type.GRAPHQL.ui_type:
             #     event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
@@ -693,14 +693,14 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             #         event_where.append(
             #             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
             #                                  value_key=e_k))
-            elif event_type == events.event_type.STATEACTION.ui_type:
-                event_from = event_from % f"{events.event_type.STATEACTION.table} AS main "
+            elif event_type == events.EventType.STATEACTION.ui_type:
+                event_from = event_from % f"{events.EventType.STATEACTION.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.STATEACTION.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.STATEACTION.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.event_type.ERROR.ui_type:
-                event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
+            elif event_type == events.EventType.ERROR.ui_type:
+                event_from = event_from % f"{events.EventType.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
                 event.source = list(set(event.source))
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
@@ -711,52 +711,52 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
 
 
             # ----- IOS
-            elif event_type == events.event_type.CLICK_IOS.ui_type:
-                event_from = event_from % f"{events.event_type.CLICK_IOS.table} AS main "
+            elif event_type == events.EventType.CLICK_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.CLICK_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.CLICK_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.CLICK_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
 
-            elif event_type == events.event_type.INPUT_IOS.ui_type:
-                event_from = event_from % f"{events.event_type.INPUT_IOS.table} AS main "
+            elif event_type == events.EventType.INPUT_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.INPUT_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.INPUT_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
                 if event.source is not None and len(event.source) > 0:
                     event_where.append(sh.multi_conditions(f"main.value ILIKE %(custom{i})s", event.source,
                                                            value_key="custom{i}"))
                     full_args = {**full_args, **sh.multi_values(event.source, f"custom{i}")}
-            elif event_type == events.event_type.VIEW_IOS.ui_type:
-                event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "
+            elif event_type == events.EventType.VIEW_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.VIEW_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.VIEW_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.VIEW_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.event_type.CUSTOM_IOS.ui_type:
-                event_from = event_from % f"{events.event_type.CUSTOM_IOS.table} AS main "
+            elif event_type == events.EventType.CUSTOM_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.CUSTOM_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.CUSTOM_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.CUSTOM_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.event_type.REQUEST_IOS.ui_type:
-                event_from = event_from % f"{events.event_type.REQUEST_IOS.table} AS main "
+            elif event_type == events.EventType.REQUEST_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.REQUEST_IOS.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.REQUEST_IOS.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.REQUEST_IOS.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
-            elif event_type == events.event_type.ERROR_IOS.ui_type:
-                event_from = event_from % f"{events.event_type.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
+            elif event_type == events.EventType.ERROR_IOS.ui_type:
+                event_from = event_from % f"{events.EventType.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                 if not is_any and event.value not in [None, "*", ""]:
                     event_where.append(
                         sh.multi_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                             event.value, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.fetch_failed:
-                event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.REQUEST.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
@@ -781,7 +781,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                 schemas.PerformanceEventType.location_avg_cpu_load,
                                 schemas.PerformanceEventType.location_avg_memory_usage
                                 ]:
-                event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
+                event_from = event_from % f"{events.EventType.LOCATION.table} AS main "
                 col = performance_event.get_col(event_type)
                 colname = col["column"]
                 tname = "main"
@@ -792,7 +792,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                     f"{tname}.timestamp <= %(endDate)s"]
                 if not is_any:
                     event_where.append(
-                        sh.multi_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                        sh.multi_conditions(f"main.{events.EventType.LOCATION.column} {op} %({e_k})s",
                                             event.value, value_key=e_k))
                 e_k += "_custom"
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
@@ -801,7 +801,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                    sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
                                                        event.source, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.time_between_events:
-                event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
+                event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
                 if not isinstance(event.value[0].value, list):
                     event.value[0].value = [event.value[0].value]
                 if not isinstance(event.value[1].value, list):
@@ -823,14 +823,14 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if not is_any:
                     event_where.append(
                         sh.multi_conditions(
-                            f"main.{getattr(events.event_type, event.value[0].type).column} {s_op} %({e_k1})s",
+                            f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
                             event.value[0].value, value_key=e_k1))
                 s_op = sh.get_sql_operator(event.value[1].operator)
                 is_any = sh.isAny_opreator(event.value[1].operator)
                 if not is_any:
                     event_where.append(
                         sh.multi_conditions(
-                            f"main2.{getattr(events.event_type, event.value[1].type).column} {s_op} %({e_k2})s",
+                            f"main2.{getattr(events.EventType, event.value[1].type).column} {s_op} %({e_k2})s",
                             event.value[1].value, value_key=e_k2))
 
                 e_k += "_custom"
@@ -840,7 +840,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                         event.source, value_key=e_k))
 
             elif event_type == schemas.EventType.request_details:
-                event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
                 apply = False
                 for j, f in enumerate(event.filters):
                     is_any = sh.isAny_opreator(f.operator)
@@ -852,7 +852,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.FetchFilterType._url:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s::text",
+                            sh.multi_conditions(f"main.{events.EventType.REQUEST.column} {op} %({e_k_f})s::text",
                                                 f.value, value_key=e_k_f))
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
@@ -884,7 +884,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if not apply:
                     continue
             elif event_type == schemas.EventType.graphql:
-                event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
+                event_from = event_from % f"{events.EventType.GRAPHQL.table} AS main "
                 for j, f in enumerate(event.filters):
                     is_any = sh.isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
@@ -895,7 +895,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     full_args = {**full_args, **sh.multi_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType._name:
                         event_where.append(
-                            sh.multi_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                            sh.multi_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k_f})s", f.value,
                                                 value_key=e_k_f))
                     elif f.type == schemas.GraphqlFilterType._method:
                         event_where.append(
@@ -976,7 +976,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
     #             b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
 
     if errors_only:
-        extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
+        extra_from += f" INNER JOIN {events.EventType.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
         extra_constraints.append("ser.source = 'js_exception'")
         extra_constraints.append("ser.project_id = %(project_id)s")
         # if error_status != schemas.ErrorStatus.all:
