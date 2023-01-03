@@ -22,7 +22,7 @@ function MetricTypeIcon({ type }: any) {
   }, [type])
 
   return (
-    <Tooltip title={<div className="capitalize">{card.title}</div>} >
+    <Tooltip delay={0} title={<div className="capitalize">{card.title}</div>} >
       <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
         { card.icon && <Icon name={card.icon} size="16" color="tealx" /> }
       </div>
