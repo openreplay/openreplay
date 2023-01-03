@@ -24,7 +24,7 @@ export const FEATURE_ADOPTION = 'featureAdoption';
 
 export const TYPES: CardType[] = [
   {
-    title: 'Add From Library',
+    title: 'Add from Library',
     icon: 'grid',
     description: 'Select a pre existing card from card library',
     slug: LIBRARY,
@@ -92,9 +92,9 @@ export const TYPES: CardType[] = [
     description: 'Retention graph of users / features over a period of time.',
     slug: PERFORMANCE,
     subTypes: [
-      { title: 'Cpu', slug: FilterKey.CPU, description: '' },
+      { title: 'CPU', slug: FilterKey.CPU, description: '' },
       { title: 'Crashes', slug: FilterKey.CRASHES, description: '' },
-      { title: 'Fps', slug: FilterKey.FPS, description: '' },
+      { title: 'FPS', slug: FilterKey.FPS, description: '' },
       { title: 'Pages Dom Build Time', slug: FilterKey.PAGES_DOM_BUILD_TIME, description: '' },
       { title: 'Memory Consumption', slug: FilterKey.MEMORY_CONSUMPTION, description: '' },
       { title: 'Pages Response Time', slug: FilterKey.PAGES_RESPONSE_TIME, description: '' },
@@ -104,16 +104,16 @@ export const TYPES: CardType[] = [
         description: '',
       },
       {
-        title: 'Resources Vs Visually Complete',
+        title: 'Resources vs Visually Complete',
         slug: FilterKey.RESOURCES_VS_VISUALLY_COMPLETE,
         description: '',
       },
-      { title: 'Sessions Per Browser', slug: FilterKey.SESSIONS_PER_BROWSER, description: '' },
+      { title: 'Sessions per Browser', slug: FilterKey.SESSIONS_PER_BROWSER, description: '' },
       { title: 'Slowest Domains', slug: FilterKey.SLOWEST_DOMAINS, description: '' },
       { title: 'Speed Location', slug: FilterKey.SPEED_LOCATION, description: '' },
-      { title: 'Time To Render', slug: FilterKey.TIME_TO_RENDER, description: '' },
+      { title: 'Time to Render', slug: FilterKey.TIME_TO_RENDER, description: '' },
       {
-        title: 'Impacted Sessions By Slow Pages',
+        title: 'Impacted Sessions by Slow Pages',
         slug: FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES,
         description: '',
       },
@@ -152,7 +152,7 @@ export const TYPES: CardType[] = [
         description: 'Uncover the issues impacting user journeys',
       },
       {
-        title: 'DOM Build Time',
+        title: 'DOM Content Loaded',
         slug: FilterKey.AVG_DOM_CONTENT_LOADED,
         description: 'Keep a close eye on errors and track their type, origin and domain.',
       },
@@ -163,7 +163,7 @@ export const TYPES: CardType[] = [
           'FInd out which resources are missing and those that may be slowign your web app.',
       },
       {
-        title: 'DOM Content Loaded',
+        title: 'First Meaningful Paint',
         slug: FilterKey.AVG_FIRST_CONTENTFUL_PIXEL,
         description:
           "Optimize your app's performance by tracking slow domains, page resposne times, memory consumption, CPU usage and more.",

@@ -135,7 +135,7 @@ export default class Widget {
             thumbnail: this.thumbnail,
             config: {
                 ...this.config,
-                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS) ? 4 : (this.metricType === WEB_VITALS ? 1 : 2)
+                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS || this.metricOf === FilterKey.SLOWEST_RESOURCES || this.metricOf === FilterKey.MISSING_RESOURCES || this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION) ? 4 : (this.metricType === WEB_VITALS ? 1 : 2)
             },
         }
     }

@@ -73,7 +73,7 @@ function WidgetView(props: Props) {
                 <Breadcrumb
                     items={[
                         {
-                            label: dashboardName ? dashboardName : 'Metrics',
+                            label: dashboardName ? dashboardName : 'Cards',
                             to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId),
                         },
                         { label: widget.name },

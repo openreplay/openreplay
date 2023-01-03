@@ -48,7 +48,7 @@ function FilterList(props: Props) {
                 <SegmentSelection
                   primary
                   name="eventsOrder"
-                  extraSmall={true}
+                  size="small"
                   onSelect={props.onChangeEventsOrder}
                   value={{ value: filter.eventsOrder }}
                   list={[

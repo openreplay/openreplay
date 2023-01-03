@@ -78,6 +78,7 @@ function WidgetForm(props: Props) {
           break;
         case ERRORS:
         case RESOURCE_MONITORING:
+        case PERFORMANCE:
         case WEB_VITALS:
           obj.viewType = 'chart';
           break;

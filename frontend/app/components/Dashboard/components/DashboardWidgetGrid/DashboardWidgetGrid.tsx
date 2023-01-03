@@ -83,7 +83,7 @@ function DashboardWidgetGrid(props: Props) {
         {smallWidgets.length > 0 && regularWidgets.length > 0 ? (
           <div className="font-semibold text-xl py-4 flex items-center gap-2 col-span-4">
             <Icon name="grid-horizontal" size={26} />
-            All Metrics
+            All Cards
           </div>
         ) : null}
 
