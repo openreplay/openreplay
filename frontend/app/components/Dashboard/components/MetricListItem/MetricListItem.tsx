@@ -39,19 +39,20 @@ function MetricListItem(props: Props) {
     const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
     history.push(path);
   };
+  
   return (
     <div
       className="grid grid-cols-12 py-4 border-t select-none items-center hover:bg-active-blue cursor-pointer px-6"
       onClick={onItemClick}
     >
       <div className="col-span-4 flex items-center">
-        <Checkbox
+        {/* <Checkbox
           name="slack"
           className="mr-4"
           type="checkbox"
           checked={selected}
           onClick={toggleSelection}
-        />
+        /> */}
         <div className="flex items-center">
           <MetricTypeIcon type={metric.metricType} />
           <div className="link capitalize-first">{metric.name}</div>

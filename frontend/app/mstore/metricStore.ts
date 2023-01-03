@@ -18,6 +18,7 @@ export default class MetricStore {
 
   sessionsPage: number = 1;
   sessionsPageSize: number = 10;
+  listView?: boolean = false
 
   constructor() {
     makeAutoObservable(this);
