@@ -21,15 +21,16 @@ function MetricTypeItem(props: Props) {
   } = props;
   return (
     <div
-      className="flex items-start p-4 hover:bg-active-blue cursor-pointer group hover-color-teal"
+      className="rounded color-gray-darkest flex items-start border border-transparent p-4 hover:bg-active-blue hover:!border-active-blue-border cursor-pointer group hover-color-teal"
       onClick={onClick}
     >
       <div className="pr-4 pt-1">
-        <Icon name={icon} size="20" />
+        {/* @ts-ignore */}
+        <Icon name={icon} size="20" color="gray-dark" />
       </div>
       <div className="flex flex-col items-start text-left">
-        <div className="text-base group-hover:color-teal">{title}</div>
-        <div className="text-xs">{description}</div>
+        <div className="text-base">{title}</div>
+        <div className="text-sm color-gray-medium font-normal">{description}</div>
       </div>
     </div>
   );

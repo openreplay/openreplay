@@ -10,8 +10,8 @@ function AddCardModal(props: Props) {
   return (
     <>
       <Modal.Header title="Add Card" />
-      <Modal.Content className="p-0">
-        <MetricTypeList siteId={props.siteId} dashboardId={props.dashboardId} />
+      <Modal.Content className="px-3 pb-6">
+        <MetricTypeList siteId={props.siteId} dashboardId={parseInt(props.dashboardId)} />
       </Modal.Content>
     </>
   );

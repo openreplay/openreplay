@@ -3,7 +3,8 @@ import { Icon, Checkbox, Tooltip } from 'UI';
 import { checkForRecent } from 'App/date';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
-import { TYPES, TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, RESOURCE_MONITORING } from 'App/constants/card';
+import { TYPES } from 'App/constants/card';
+import cn from 'classnames';
 
 interface Props extends RouteComponentProps {
   metric: any;
@@ -32,7 +33,10 @@ function MetricTypeIcon({ type }: any) {
 function MetricListItem(props: Props) {
   const { metric, history, siteId, selected, toggleSelection = () => {}, disableSelection = false } = props;
 
-  const onItemClick = () => {
+  const onItemClick = (e: React.MouseEvent) => {
+    if (!disableSelection) {
+      return toggleSelection(e);
+    }
     const path = withSiteId(`/metrics/${metric.metricId}`, siteId);
     history.push(path);
   };
@@ -55,7 +59,7 @@ function MetricListItem(props: Props) {
         
         <div className="flex items-center">
           <MetricTypeIcon type={metric.metricType} />
-          <div className="link capitalize-first">{metric.name}</div>
+          <div className={ cn("capitalize-first", { "link" : disableSelection })}>{metric.name}</div>
         </div>
       </div>
       <div className="col-span-4">{metric.owner}</div>

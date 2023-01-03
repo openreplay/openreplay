@@ -76,6 +76,7 @@ function MetricsList({
           list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
           selectedList={selectedMetrics}
           toggleSelection={toggleMetricSelection}
+          allSelected={list.length === selectedMetrics.length}
           toggleAll={({ target: { checked, name } }) =>
             setSelectedMetrics(checked ? list.map((i: any) => i.metricId) : [])
           }
@@ -93,7 +94,7 @@ function MetricsList({
         <div className="text-disabled-text">
           Showing{' '}
           <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out
-          of <span className="font-semibold">{list.length}</span> metrics
+          of <span className="font-semibold">{list.length}</span> cards
         </div>
         <Pagination
           page={metricStore.page}
