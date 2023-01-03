@@ -48,7 +48,7 @@ class SegmentSelection extends React.Component {
               {item.icon && (
                 <Icon
                   name={item.icon}
-                  size={size === 'extraSmall' || icons ? 14 : 20}
+                  size={size === 'extraSmall' || size === 'small'  || icons  ? 14 : 20}
                   marginRight={item.name ? '6' : ''}
                 />
               )}

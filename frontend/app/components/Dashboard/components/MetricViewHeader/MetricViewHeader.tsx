@@ -15,17 +15,16 @@ function MetricViewHeader() {
     <div>
       <div className="flex items-center mb-4 justify-between px-6">
         <div className="flex items-baseline mr-3">
-          <PageTitle title="Metrics" className="" />
+          <PageTitle title="Cards" className="" />
         </div>
         <div className="ml-auto flex items-center">
-          {/* <Link to={'/metrics/create'}>
-            <Button variant="primary">Create</Button>
-          </Link> */}
+          <Link to={'/metrics/create'}>
+            <Button variant="primary">New Card</Button>
+          </Link>
           <SegmentSelection
               name="viewType"
-              className="my-3"
-              primary
-              icons={true}
+              className="mx-3"
+              primary              
               onSelect={ () => metricStore.updateKey('listView', !listView) }
               value={{ value: listView ? 'list' : 'grid' }}
               list={ [

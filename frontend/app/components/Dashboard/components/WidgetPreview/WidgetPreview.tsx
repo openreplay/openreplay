@@ -45,7 +45,7 @@ function WidgetPreview(props: Props) {
                                 name="viewType"
                                 className="my-3"
                                 primary
-                                icons={true}
+                                size="small"
                                 onSelect={ changeViewType }
                                 value={{ value: metric.viewType }}
                                 list={ [
@@ -63,7 +63,7 @@ function WidgetPreview(props: Props) {
                                 name="viewType"
                                 className="my-3"
                                 primary={true}
-                                icons={true}
+                                size="small"
                                 onSelect={ changeViewType }
                                 value={{ value: metric.viewType }}
                                 list={[
