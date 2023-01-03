@@ -9,7 +9,7 @@ import { observer } from 'mobx-react-lite';
 
 const TABS = {
   EVENTS: 'User Steps',
-  CLICKMAP: 'Click Map',
+  HEATMAPS: 'Click Map',
 };
 
 function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, isClickmap }) {
