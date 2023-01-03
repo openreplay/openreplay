@@ -36,6 +36,9 @@ function build_api(){
         docker tag ${DOCKER_REPO:-'local'}/assist:${image_tag} ${DOCKER_REPO:-'local'}/assist:latest
         docker push ${DOCKER_REPO:-'local'}/assist:latest
     }
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/assist:${image_tag}
+    }
     echo "build completed for assist"
 }
 

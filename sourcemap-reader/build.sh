@@ -46,6 +46,9 @@ function build_api(){
         docker tag ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
     }
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/$image_name:${image_tag}
+    }
     echo "${image_name} docker build completed"
 }
 
