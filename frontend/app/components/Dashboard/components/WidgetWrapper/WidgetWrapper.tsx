@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import cn from 'classnames';
-import { ItemMenu, Tooltip } from 'UI';
+import { ItemMenu, Tooltip, TextEllipsis } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { observer } from 'mobx-react-lite';
@@ -127,7 +127,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
           })}
         >
           {!props.hideName ? (
-            <div className="capitalize-first w-full font-medium">{widget.name}</div>
+            <div className="capitalize-first w-full font-medium"><TextEllipsis text={widget.name} /></div>
           ) : null}
           {isWidget && (
             <div className="flex items-center" id="no-print">

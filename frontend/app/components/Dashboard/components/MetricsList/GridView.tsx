@@ -11,7 +11,7 @@ interface Props {
 function GridView(props: Props) {
   const { siteId, list, selectedList, toggleSelection } = props;
   return (
-    <div className="grid grid-cols-4 gap-4 m-4">
+    <div className="grid grid-cols-4 gap-4 m-4 items-start">
       {list.map((metric: any) => (
         <React.Fragment key={metric.metricId}>
           <WidgetWrapper
