@@ -1,12 +1,15 @@
 import { createContext } from 'react';
 import {
   IWebPlayer,
-  IWebPlayerStore
+  IWebPlayerStore,
+  IWebLivePlayer,
+  IWebLivePlayerStore,
 } from 'Player'
 
 export interface IPlayerContext {
-  player: IWebPlayer
-  store: IWebPlayerStore,
+  player: IWebPlayer | IWebLivePlayer
+  store: IWebPlayerStore | IWebLivePlayerStore,
 }
-export const defaultContextValue: IPlayerContext = { player: undefined, store: undefined}
+export const defaultContextValue = { player: undefined, store: undefined}
+// @ts-ignore
 export const PlayerContext = createContext<IPlayerContext>(defaultContextValue);

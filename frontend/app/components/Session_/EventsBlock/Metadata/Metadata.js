@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import MetadataItem from './MetadataItem';
 
 export default connect(state => ({
-  metadata: state.getIn([ 'sessions', 'current', 'metadata' ]),
+  metadata: state.getIn([ 'sessions', 'current' ]).metadata,
 }))(function Metadata ({ metadata }) {
 
   const metaLenth = Object.keys(metadata).length;

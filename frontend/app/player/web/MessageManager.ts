@@ -116,7 +116,6 @@ export default class MessageManager {
   private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
-  private lastMessageInFileTime: number = 0;
 
   constructor(
     private readonly session: any /*Session*/,
@@ -142,19 +141,7 @@ export default class MessageManager {
     this.loadMessages()
   }
 
-  private parseAndDistributeMessages(fileReader: MFileReader, onMessage?: (msg: Message) => void) {
-    const msgs: Array<Message> = []
-    let next: ReturnType<MFileReader['next']>
-    while (next = fileReader.next()) {
-      const [msg, index] = next
-      this.distributeMessage(msg, index)
-      msgs.push(msg)
-      onMessage?.(msg)
-    }
-
-    logger.info("Messages count: ", msgs.length, msgs)
-
-
+  private _sortMessagesHack(msgs: Message[]) {
     // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
     const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
     this.pagesManager.sortPages((m1, m2) => {
@@ -181,7 +168,6 @@ export default class MessageManager {
     })
   }
 
-
   private waitingForFiles: boolean = false
   private onFileReadSuccess = () => {
     const stateToUpdate : Partial<State>= {
@@ -201,10 +187,6 @@ export default class MessageManager {
     toast.error('Error requesting a session file')
   }
   private onFileReadFinally = () => {
-    this.incomingMessages
-      .filter(msg => msg.time >= this.lastMessageInFileTime)
-      .forEach(msg => this.distributeMessage(msg, 0))
-
     this.waitingForFiles = false
     this.setMessagesLoading(false)
     // this.state.update({ filesLoaded: true })
@@ -220,7 +202,14 @@ export default class MessageManager {
       const fileReader = new MFileReader(new Uint8Array(), this.sessionStart)
       return (b: Uint8Array) => decrypt(b).then(b => {
         fileReader.append(b)
-        this.parseAndDistributeMessages(fileReader)
+        const msgs: Array<Message> = []
+        for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
+          this.distributeMessage(msg, msg._index)
+          msgs.push(msg)
+        }
+
+        logger.info("Messages count: ", msgs.length, msgs)
+        this._sortMessagesHack(msgs)
         this.setMessagesLoading(false)
       })
     }
@@ -252,35 +241,14 @@ export default class MessageManager {
           .then(createNewParser(false))
       )
       .then(() => {
-        this.state.update(this.lists.getFullListsState())
+        this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
       })
       .catch(e => logger.error("Can not download the devtools file", e))
       .finally(() => this.state.update({ devtoolsLoading: false }))
     }
   }
 
-  reloadWithUnprocessedFile(onSuccess: () => void) {
-    const onData = (byteArray: Uint8Array) => {
-      const onMessage = (msg: Message) => { this.lastMessageInFileTime = msg.time }
-      this.parseAndDistributeMessages(new MFileReader(byteArray, this.sessionStart), onMessage)
-    }
-
-    // assist will pause and skip messages to prevent timestamp related errors
-    this.reloadMessageManagers()
-    this.windowNodeCounter.reset()
-
-    this.setMessagesLoading(true)
-    this.waitingForFiles = true
-
-    return requestEFSDom(this.session.sessionId)
-      .then(onData)
-      .then(onSuccess)
-      .then(this.onFileReadSuccess)
-      .catch(this.onFileReadFailed)
-      .finally(this.onFileReadFinally)
-  }
-
-  private reloadMessageManagers() {
+  resetMessageManagers() {
     this.locationEventManager = new ListWalker();
     this.locationManager = new ListWalker();
     this.loadedLocationManager = new ListWalker();
@@ -379,16 +347,7 @@ export default class MessageManager {
     return { ...msg, ...decoded };
   }
 
-  private readonly incomingMessages: Message[] = []
-  appendMessage(msg: Message, index: number) {
-     //TODO: put index in message type
-    this.incomingMessages.push(msg)
-    if (!this.waitingForFiles) {
-      this.distributeMessage(msg, index)
-    }
-  }
-
-  private distributeMessage(msg: Message, index: number): void {
+  distributeMessage(msg: Message, index: number): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     this.state.update({ lastMessageTime })
@@ -532,14 +491,11 @@ export default class MessageManager {
   private setSize({ height, width }: { height: number, width: number }) {
     this.screen.scale({ height, width });
     this.state.update({ width, height });
-
-    //this.updateMarketTargets()
   }
 
   // TODO: clean managers?
   clean() {
     this.state.update(MessageManager.INITIAL_STATE);
-    this.incomingMessages.length = 0
   }
 
 }

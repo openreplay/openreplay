@@ -24,10 +24,15 @@ type messageIteratorImpl struct {
 	broken      bool
 	messageInfo *message
 	batchInfo   *BatchInfo
+	urls        *pageLocations
 }
 
 func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, autoDecode bool) MessageIterator {
-	iter := &messageIteratorImpl{handler: messageHandler, autoDecode: autoDecode}
+	iter := &messageIteratorImpl{
+		handler:    messageHandler,
+		autoDecode: autoDecode,
+		urls:       NewPageLocations(),
+	}
 	if len(messageFilter) != 0 {
 		filter := make(map[int]struct{}, len(messageFilter))
 		for _, msgType := range messageFilter {
@@ -125,7 +130,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMetadata")
 		}
-		i.messageInfo.Url = m.Url
+		i.messageInfo.Url = m.Location
 		i.version = m.Version
 		i.batchInfo.version = m.Version
 
@@ -137,6 +142,10 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMeta")
+		}
+		// Try to get saved session's page url
+		if savedURL := i.urls.Get(i.messageInfo.batch.sessionID); savedURL != "" {
+			i.messageInfo.Url = savedURL
 		}
 
 	case *Timestamp:
@@ -158,9 +167,13 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionEnd")
 		}
+		// Delete session from urls cache layer
+		i.urls.Delete(i.messageInfo.batch.sessionID)
 
 	case *SetPageLocation:
 		i.messageInfo.Url = m.URL
+		// Save session page url in cache for using in next batches
+		i.urls.Set(i.messageInfo.batch.sessionID, m.URL)
 	}
 	return nil
 }

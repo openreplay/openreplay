@@ -49,7 +49,7 @@ export default class MFileReader extends RawMessageReader {
     }
   }
 
-  next(): [ Message, number] | null {
+  readNext(): Message & { _index: number } | null {
     if (this.error || !this.hasNextByte()) {
       return null
     }
@@ -74,7 +74,7 @@ export default class MFileReader extends RawMessageReader {
         this.startTime = rMsg.timestamp
       }
       this.currentTime = rMsg.timestamp - this.startTime
-      return this.next()
+      return this.readNext()
     }
 
     const index = this.getLastMessageID()
@@ -83,6 +83,6 @@ export default class MFileReader extends RawMessageReader {
       _index: index,
     })
 
-    return [msg, index]
+    return msg
   }
 }

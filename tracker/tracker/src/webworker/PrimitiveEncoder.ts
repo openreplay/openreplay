@@ -66,7 +66,7 @@ export default class PrimitiveEncoder {
   checkpoint() {
     this.checkpointOffset = this.offset
   }
-  isEmpty(): boolean {
+  get isEmpty(): boolean {
     return this.offset === 0
   }
   skip(n: number): boolean {

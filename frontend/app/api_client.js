@@ -88,14 +88,22 @@ export default class APIClient {
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
-      !path.includes('/watchdogs/rules') &&
       !path.includes('/assist/credentials') &&
       !!this.siteId &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
     ) {
       edp = `${ edp }/${ this.siteId }`
     }
-    return fetch(edp + path, this.init);
+    return fetch(edp + path, this.init)
+        .then(response => {
+          if (response.ok) {
+            return response
+          } else {
+            throw new Error(
+                `! ${this.init.method} error on ${path}; ${response.status}`
+            )
+          }
+        })
   }
 
   get(path, params, options) {

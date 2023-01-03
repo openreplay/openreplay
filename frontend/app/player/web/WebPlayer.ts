@@ -6,7 +6,6 @@ import Player, { State as PlayerState } from '../player/Player'
 import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'
 import TargetMarker from './addons/TargetMarker'
-import AssistManager from './assist/AssistManager'
 import Screen from './Screen/Screen'
 
 // export type State = typeof WebPlayer.INITIAL_STATE
@@ -15,27 +14,24 @@ export default class WebPlayer extends Player {
   static readonly INITIAL_STATE = {
     ...Player.INITIAL_STATE,
     ...TargetMarker.INITIAL_STATE,
-
     ...MessageManager.INITIAL_STATE,
-    ...AssistManager.INITIAL_STATE,
 
     inspectorMode: false,
-    liveTimeTravel: false,
   }
 
-  private readonly screen: Screen
   private readonly inspectorController: InspectorController
+  protected readonly screen: Screen
   protected readonly messageManager: MessageManager
 
-  assistManager: AssistManager // public so far
   private targetMarker: TargetMarker
 
-  constructor(private wpState: Store<typeof WebPlayer.INITIAL_STATE>, session, config: RTCIceServer[], live: boolean) {
+  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
+    console.log(session.events, session.stackEvents, session.resources, session.errors)
     let initialLists = live ? {} : {
-      event: session.events.toJSON(),
-      stack: session.stackEvents?.toJSON() || [],
-      resource: session.resources?.toJSON() || [], // MBTODO: put ResourceTiming in file
-      exceptions: session.errors?.toJSON().map(({ time, errorId, name }: any) =>
+      event: session.events,
+      stack: session.stackEvents || [],
+      resource: session.resources || [], // MBTODO: put ResourceTiming in file
+      exceptions: session.errors.map(({ time, errorId, name }: any) =>
         Log({
           level: LogLevel.ERROR,
           value: name,
@@ -55,10 +51,8 @@ export default class WebPlayer extends Player {
     this.inspectorController = new InspectorController(screen)
 
 
-    const endTime = !live && session.duration.valueOf()
+    const endTime = session.duration?.valueOf() || 0
     wpState.update({
-      //@ts-ignore
-      initialized: true,
       //@ts-ignore
       session,
 
@@ -67,11 +61,6 @@ export default class WebPlayer extends Player {
       endTime, // : 0,
     })
 
-    // TODO: separate LiveWebPlayer
-    this.assistManager = new AssistManager(session, this.messageManager, screen, config, wpState)
-    if (live) {
-      this.assistManager.connect(session.agentToken)
-    }
   }
 
   attach = (parent: HTMLElement) => {
@@ -151,7 +140,6 @@ export default class WebPlayer extends Player {
 
   clean = () => {
     super.clean()
-    this.assistManager.clean()
     window.removeEventListener('resize', this.scale)
   }
 }

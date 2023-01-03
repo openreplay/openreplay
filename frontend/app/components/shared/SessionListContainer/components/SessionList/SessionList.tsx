@@ -169,7 +169,7 @@ function SessionList(props: Props) {
             </Button>
           </div>
         }
-        show={!loading && list.size === 0}
+        show={!loading && list.length === 0}
       >
         {list.map((session: any) => (
           <div key={session.sessionId} className="border-b">
@@ -188,7 +188,7 @@ function SessionList(props: Props) {
         <div className="flex items-center justify-between p-5">
           <div>
             Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
-            <span className="font-medium">{(currentPage - 1) * pageSize + list.size}</span> of{' '}
+            <span className="font-medium">{(currentPage - 1) * pageSize + list.length}</span> of{' '}
             <span className="font-medium">{numberWithCommas(total)}</span> sessions.
           </div>
           <Pagination

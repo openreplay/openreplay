@@ -147,17 +147,17 @@ function FilterAutoComplete(props: Props) {
         new APIClient()
             [method?.toLocaleLowerCase()](endpoint, { ...params, q: inputValue })
             .then((response: any) => {
-                if (response.ok) {
                     return response.json();
-                }
-                throw new Error(response.statusText);
             })
             .then(({ data }: any) => {
                 const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
                 setOptions(_options);
                 callback(_options);
                 setLoading(false);
-            });
+            })
+          .catch((e) => {
+              throw new Error(e);
+          })
     };
 
     const debouncedLoadOptions = React.useCallback(debounce(loadOptions, 1000), [params]);

@@ -1,3 +1,8 @@
+// Do strong type WebWorker as soon as it is possible:
+// https://github.com/microsoft/TypeScript/issues/14877
+// At the moment "webworker" lib conflicts with  jest-environment-jsdom that uses "dom" lib
+//
+
 import type Message from '../common/messages.gen.js'
 import { Type as MType } from '../common/messages.gen.js'
 import { ToWorkerData, FromWorkerData } from '../common/interaction.js'

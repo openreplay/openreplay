@@ -36,7 +36,7 @@ export default class BatchWriter {
   }
 
   private prepare(): void {
-    if (!this.encoder.isEmpty()) {
+    if (!this.encoder.isEmpty) {
       return
     }
 
@@ -94,19 +94,20 @@ export default class BatchWriter {
     if (this.writeWithSize(message)) {
       return
     }
+    // buffer overflow, send already written data first then try again
     this.finaliseBatch()
-    while (!this.writeWithSize(message)) {
-      if (this.beaconSize === this.beaconSizeLimit) {
-        console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
-        this.encoder.reset()
-        this.prepare()
-        return
-      }
-      // MBTODO: tempWriter for one message?
-      this.beaconSize = Math.min(this.beaconSize * 2, this.beaconSizeLimit)
-      this.encoder = new MessageEncoder(this.beaconSize)
-      this.prepare()
+    if (this.writeWithSize(message)) {
+      return
     }
+    // buffer is too small. Create one with maximal capacity
+    this.encoder = new MessageEncoder(this.beaconSizeLimit)
+    this.prepare()
+    if (!this.writeWithSize(message)) {
+      console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
+    }
+    // reset encoder to normal size
+    this.encoder = new MessageEncoder(this.beaconSize)
+    this.prepare()
   }
 
   finaliseBatch() {

@@ -1,5 +1,4 @@
 import APIClient from 'App/api_client';
-import { fetchErrorCheck } from 'App/utils';
 
 export default class SettingsService {
   private client: APIClient;
@@ -26,8 +25,9 @@ export default class SettingsService {
   getSessions(filter: any) {
     return this.client
       .post('/sessions/search', filter)
-      .then(fetchErrorCheck)
-      .then((response) => response.data || []);
+      .then(r => r.json())
+      .then((response) => response.data || [])
+      .catch(e => Promise.reject(e))
   }
 
   getSessionInfo(sessionId: string, isLive?: boolean): Promise<Record<string, any>> {
@@ -41,7 +41,8 @@ export default class SettingsService {
   getLiveSessions(filter: any) {
     return this.client
       .post('/assist/sessions', filter)
-      .then(fetchErrorCheck)
-      .then((response) => response.data || []);
+      .then(r => r.json())
+      .then((response) => response.data || [])
+      .catch(e => Promise.reject(e))
   }
 }

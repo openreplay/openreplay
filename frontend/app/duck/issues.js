@@ -9,7 +9,6 @@ import { createInit, createEdit } from './funcTools/crud';
 const idKey = 'id';
 const name = 'assignment';
 const listUpdater = createListUpdater(idKey);
-const itemInListUpdater = createItemInListUpdater(idKey);
 
 const FETCH_ASSIGNMENTS = new RequestTypes('asignment/FETCH_ASSIGNMENTS');
 const FETCH_ISSUE = new RequestTypes('asignment/FETCH_ISSUE');
@@ -23,8 +22,8 @@ const RESET_ACTIVE_ISSUE = 'assignment/RESET_ACTIVE_ISSUE';
 
 const initialState = Map({
   list: List(),
-  instance: Assignment(),
-  activeIssue: Assignment(),
+  instance: new Assignment(),
+  activeIssue: new Assignment(),
   issueTypes: List(),
   issueTypeIcons: Set(),
   users: List(),
@@ -39,9 +38,9 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_PROJECTS.SUCCESS:
       return state.set('projects', List(action.data));
     case FETCH_ASSIGNMENTS.SUCCESS:
-      return state.set('list', List(action.data).map(Assignment));
+      return state.set('list', action.data.map(as => new Assignment(as)));
     case ADD_ACTIVITY.SUCCESS:
-      const instance = Assignment(action.data);
+      const instance = new Assignment(action.data);
       return listUpdater(state, instance);
     case FETCH_META.SUCCESS:
       issueTypes = action.data.issueTypes;
@@ -53,16 +52,16 @@ const reducer = (state = initialState, action = {}) => {
         .set('users', List(action.data.users))
         .set('issueTypeIcons', issueTypeIcons)
     case FETCH_ISSUE.SUCCESS:
-      return state.set('activeIssue', Assignment({ ...action.data, users}));
+      return state.set('activeIssue', new Assignment({ ...action.data, users}));
     case RESET_ACTIVE_ISSUE:
-      return state.set('activeIssue', Assignment());
+      return state.set('activeIssue', new Assignment());
     case ADD_MESSAGE.SUCCESS:
       const user = users.filter(user => user.id === action.data.author).first();
-      const activity = Activity({ type: 'message', user, ...action.data,});
+      const activity = new Activity({ type: 'message', user, ...action.data,});
       return state.updateIn([ 'activeIssue', 'activities' ], list => list.push(activity));
     case INIT:
       action.instance.issueType = issueTypes.length > 0 ? issueTypes[0].id : '';
-      return state.set('instance', Assignment(action.instance));
+      return state.set('instance', new Assignment(action.instance));
     case EDIT:
       return state.mergeIn([ 'instance' ], action.instance);
     default:
@@ -98,13 +97,6 @@ export function fetchProjects() {
   return {
     types: FETCH_PROJECTS.toArray(),
     call: client => client.get(`/integrations/issues/list_projects`)
-  }
-}
-
-export function fetchIssue(sessionId, id) {
-  return {
-    types: FETCH_ISSUE.toArray(),
-    call: client => client.get(`/sessions/${ sessionId }/assign/jira/${ id }`)
   }
 }
 

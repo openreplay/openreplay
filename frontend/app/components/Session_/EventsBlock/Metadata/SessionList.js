@@ -7,7 +7,7 @@ import stl from './sessionList.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 @connect((state) => ({
-    currentSessionId: state.getIn(['sessions', 'current', 'sessionId']),
+    currentSessionId: state.getIn(['sessions', 'current']).sessionId,
 }))
 class SessionList extends React.PureComponent {
     render() {
@@ -17,7 +17,7 @@ class SessionList extends React.PureComponent {
             .map(({ sessions, ...rest }) => {
                 return {
                     ...rest,
-                    sessions: sessions.map(Session).filter(({ sessionId }) => sessionId !== currentSessionId),
+                    sessions: sessions.map(s => new Session(s)).filter(({ sessionId }) => sessionId !== currentSessionId),
                 };
             })
             .filter((site) => site.sessions.length > 0);
