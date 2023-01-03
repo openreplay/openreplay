@@ -93,14 +93,13 @@ const reducer = (state = initialState, action: IAction) => {
             const { sessions, total } = action.data;
             const list = sessions.map(s => new Session(s));
 
-            console.log(sessions, list, action)
             return state
                 .set('list', list)
                 .set('sessionIds', list.map(({ sessionId }) => sessionId))
                 .set('favoriteList', list.filter(({ favorite }) => favorite))
                 .set('total', total);
         case FETCH_AUTOPLAY_LIST.SUCCESS:
-            let sessionIds = state.get('sessionIds');
+            let sessionIds = state.get('sessionIds') as [];
             sessionIds = sessionIds.concat(action.data.map(i => i.sessionId + ''))
             return state.set('sessionIds', sessionIds.filter((i, index) => sessionIds.indexOf(i) === index ))
         case SET_AUTOPLAY_VALUES: {

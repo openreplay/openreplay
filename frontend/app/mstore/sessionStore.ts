@@ -1,8 +1,13 @@
 import { makeAutoObservable, observable, action } from 'mobx';
 import { sessionService } from 'App/services';
 import { filterMap } from 'Duck/search';
-import Session from './types/session';
+import Session from 'Types/session';
 import Record, { LAST_7_DAYS } from 'Types/app/period';
+import Watchdog from "Types/watchdog";
+import ErrorStack from 'Types/session/errorStack';
+import { Location, InjectedEvent } from 'Types/session/event'
+import { getDateRangeFromValue } from "App/dateRange";
+import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects, cleanSessionFilters } from 'App/utils';
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -76,9 +81,46 @@ class DevTools {
   }
 }
 
+const range = getDateRangeFromValue(LAST_7_DAYS);
+const defaultDateFilters = {
+  url: '',
+  rangeValue: LAST_7_DAYS,
+  startDate: range.start.unix() * 1000,
+  endDate: range.end.unix() * 1000,
+};
+
 export default class SessionStore {
   userFilter: UserFilter = new UserFilter();
   devTools: DevTools = new DevTools();
+
+  list: Session[] = []
+  sessionIds: string[] = []
+  current = new Session()
+  total = 0
+  keyMap = {}
+  wdTypeCount = {}
+  favoriteList: Session[] = []
+  activeTab = Watchdog({ name: 'All', type: 'all' })
+  timezone = 'local'
+  errorStack: ErrorStack[] = []
+  eventsIndex = []
+  sourcemapUploaded = true
+  filteredEvents: InjectedEvent[] | null = null
+  eventsQuery = ''
+  showChatWindow = false
+  liveSessions: Session[] = []
+  visitedEvents = []
+  insights = []
+  insightFilters = defaultDateFilters
+  host = ''
+  funnelPage = {}
+  timelinePointer = null
+  sessionPath =  {}
+  lastPlayedSessionId: string
+  timeLineTooltip = { time: 0, offset: 0, isVisible: false, timeStr: '' }
+  createNoteTooltip = { time: 0, isVisible: false, isEdit: false, note: null }
+  previousId = ''
+  nextId = ''
 
   constructor() {
     makeAutoObservable(this, {
@@ -105,5 +147,80 @@ export default class SessionStore {
           reject(error);
         });
     });
+  }
+
+  async fetchLiveSessions(params = {}) {
+    try {
+      const data = await sessionService.getLiveSessions(params);
+      this.liveSessions = data.map(session => new Session({ ...session, live: true }));
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  async fetchSessions(params = {}, force = false) {
+    try {
+      if (!force) {
+        const oldFilters = getSessionFilter();
+        if (compareJsonObjects(oldFilters, cleanSessionFilters(params))) {
+          return;
+        }
+      }
+      setSessionFilter(cleanSessionFilters(params));
+      const data = await sessionService.getSessions(params);
+      const list = data.sessions.map(s => new Session(s))
+
+      this.list = list;
+      this.total = data.total;
+      this.sessionIds = data.sessions.map(s => s.sessionId);
+      this.favoriteList = list.filter(s => s.favorite);
+    } catch(e) {
+      console.error(e)
+    }
+  }
+
+  async fetchErrorStack(sessionId: string, errorId: string) {
+    try {
+      const data = await sessionService.getErrorStack(sessionId, errorId);
+      this.errorStack = data.trace.map(es => new ErrorStack(es))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  async fetchAutoplayList(params = {}) {
+    try {
+      setSessionFilter(cleanSessionFilters(params));
+      const data = await sessionService.getAutoplayList(params);
+      const list = [...this.sessionIds, ...data.map(s => s.sessionId)]
+      this.sessionIds = list.filter((id, ind) => list.indexOf(id) === ind);
+    } catch(e) {
+      console.error(e)
+    }
+  }
+
+  setAutoplayValues() {
+    const currentId = this.current.sessionId
+    const currentIndex = this.sessionIds.indexOf(currentId)
+
+    this.previousId = this.sessionIds[currentIndex - 1]
+    this.nextId = this.sessionIds[currentIndex + 1]
+  }
+
+  setEventQuery(filter: { query: string }) {
+    const events = this.current.events
+    const query = filter.query;
+    const searchRe = getRE(query, 'i')
+
+    const filteredEvents = query ? events.filter(
+      (e) => searchRe.test(e.url)
+        || searchRe.test(e.value)
+        || searchRe.test(e.label)
+        || searchRe.test(e.type)
+        || (e.type === 'LOCATION' && searchRe.test('visited'))
+    ) : null;
+
+    this.filteredEvents = filteredEvents
+   this.eventsQuery = query
   }
 }

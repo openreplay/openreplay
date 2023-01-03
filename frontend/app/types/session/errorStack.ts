@@ -1,4 +1,4 @@
-interface IErrorStack {
+export interface IErrorStack {
   absPath?: string,
   filename?: string,
   function?: string,
