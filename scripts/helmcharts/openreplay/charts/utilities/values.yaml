@@ -85,6 +85,9 @@ cron: "5 3 */3 * *"
 
 # Pod configurations
 
+podAnnotations:
+  linkerd.io/inject: disabled
+
 securityContext:
   runAsUser: 1001
   runAsGroup: 1001

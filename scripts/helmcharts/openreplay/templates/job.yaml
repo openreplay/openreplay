@@ -30,7 +30,6 @@ spec:
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-    annotations:
     spec:
       initContainers:
       - name: git
