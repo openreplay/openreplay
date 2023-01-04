@@ -40,7 +40,7 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     for c in click_rage_issues:
         merge_count = c.get("payload")
         if merge_count is not None:
-            merge_count = merge_count.get("count", 3)
+            merge_count = merge_count.get("Count", 3)
         else:
             merge_count = 3
         for i in range(len(rows)):
@@ -96,202 +96,6 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
     return rows
 
 
-def __pg_errors_query(source=None, value_length=None):
-    if value_length is None or value_length > 2:
-        return f"""((SELECT DISTINCT ON(lg.message)
-                        lg.message AS value,
-                        source,
-                        '{event_type.ERROR.ui_type}' AS type
-                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.message ILIKE %(svalue)s
-                      AND lg.project_id = %(project_id)s
-                      {"AND source = %(source)s" if source is not None else ""}
-                    LIMIT 5)
-                    UNION DISTINCT
-                    (SELECT DISTINCT ON(lg.name)
-                        lg.name AS value,
-                        source,
-                        '{event_type.ERROR.ui_type}' AS type
-                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.name ILIKE %(svalue)s
-                      AND lg.project_id = %(project_id)s
-                      {"AND source = %(source)s" if source is not None else ""}
-                    LIMIT 5)
-                    UNION DISTINCT
-                    (SELECT DISTINCT ON(lg.message)
-                        lg.message AS value,
-                        source,
-                        '{event_type.ERROR.ui_type}' AS type
-                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.message ILIKE %(value)s
-                      AND lg.project_id = %(project_id)s
-                      {"AND source = %(source)s" if source is not None else ""}
-                    LIMIT 5)
-                    UNION DISTINCT
-                    (SELECT DISTINCT ON(lg.name)
-                        lg.name AS value,
-                        source,
-                        '{event_type.ERROR.ui_type}' AS type
-                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.name ILIKE %(value)s
-                      AND lg.project_id = %(project_id)s
-                      {"AND source = %(source)s" if source is not None else ""}
-                    LIMIT 5));"""
-    return f"""((SELECT DISTINCT ON(lg.message)
-                    lg.message AS value,
-                    source,
-                    '{event_type.ERROR.ui_type}' AS type
-                FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                WHERE
-                  s.project_id = %(project_id)s
-                  AND lg.message ILIKE %(svalue)s
-                  AND lg.project_id = %(project_id)s
-                  {"AND source = %(source)s" if source is not None else ""}
-                LIMIT 5)
-                UNION DISTINCT
-                (SELECT DISTINCT ON(lg.name)
-                    lg.name AS value,
-                    source,
-                    '{event_type.ERROR.ui_type}' AS type
-                FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                WHERE
-                  s.project_id = %(project_id)s
-                  AND lg.name ILIKE %(svalue)s
-                  AND lg.project_id = %(project_id)s
-                  {"AND source = %(source)s" if source is not None else ""}
-                LIMIT 5));"""
-
-
-def __search_pg_errors(project_id, value, key=None, source=None):
-    now = TimeUTC.now()
-
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(__pg_errors_query(source,
-                                          value_length=len(value)),
-                        {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                         "svalue": helper.string_to_sql_like("^" + value),
-                         "source": source}))
-        results = helper.list_to_camel_case(cur.fetchall())
-    print(f"{TimeUTC.now() - now} : errors")
-    return results
-
-
-def __search_pg_errors_ios(project_id, value, key=None, source=None):
-    now = TimeUTC.now()
-    if len(value) > 2:
-        query = f"""(SELECT DISTINCT ON(lg.reason)
-                        lg.reason AS value,
-                        '{event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.project_id = %(project_id)s
-                      AND lg.reason ILIKE %(svalue)s
-                    LIMIT 5)
-                    UNION ALL
-                    (SELECT DISTINCT ON(lg.name)
-                        lg.name AS value,
-                        '{event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.project_id = %(project_id)s
-                      AND lg.name ILIKE %(svalue)s
-                    LIMIT 5)
-                    UNION ALL
-                    (SELECT DISTINCT ON(lg.reason)
-                        lg.reason AS value,
-                        '{event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.project_id = %(project_id)s
-                      AND lg.reason ILIKE %(value)s
-                    LIMIT 5)
-                    UNION ALL
-                    (SELECT DISTINCT ON(lg.name)
-                        lg.name AS value,
-                        '{event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                    WHERE
-                      s.project_id = %(project_id)s
-                      AND lg.project_id = %(project_id)s
-                      AND lg.name ILIKE %(value)s
-                    LIMIT 5);"""
-    else:
-        query = f"""(SELECT DISTINCT ON(lg.reason)
-                            lg.reason AS value,
-                            '{event_type.ERROR_IOS.ui_type}' AS type
-                        FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                        WHERE
-                          s.project_id = %(project_id)s
-                          AND lg.project_id = %(project_id)s
-                          AND lg.reason ILIKE %(svalue)s
-                        LIMIT 5)
-                        UNION ALL
-                        (SELECT DISTINCT ON(lg.name)
-                            lg.name AS value,
-                            '{event_type.ERROR_IOS.ui_type}' AS type
-                        FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                        WHERE
-                          s.project_id = %(project_id)s
-                          AND lg.project_id = %(project_id)s
-                          AND lg.name ILIKE %(svalue)s
-                        LIMIT 5);"""
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(query, {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                        "svalue": helper.string_to_sql_like("^" + value)}))
-        results = helper.list_to_camel_case(cur.fetchall())
-    print(f"{TimeUTC.now() - now} : errors")
-    return results
-
-
-def __search_pg_metadata(project_id, value, key=None, source=None):
-    meta_keys = metadata.get(project_id=project_id)
-    meta_keys = {m["key"]: m["index"] for m in meta_keys}
-    if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():
-        return []
-    sub_from = []
-    if key is not None:
-        meta_keys = {key: meta_keys[key]}
-
-    for k in meta_keys.keys():
-        colname = metadata.index_to_colname(meta_keys[k])
-        if len(value) > 2:
-            sub_from.append(f"""((SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
-                                FROM public.sessions 
-                                WHERE project_id = %(project_id)s 
-                                AND {colname} ILIKE %(svalue)s LIMIT 5)
-                                UNION
-                                (SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
-                                FROM public.sessions 
-                                WHERE project_id = %(project_id)s 
-                                AND {colname} ILIKE %(value)s LIMIT 5))
-                                """)
-        else:
-            sub_from.append(f"""(SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
-                                FROM public.sessions 
-                                WHERE project_id = %(project_id)s 
-                                AND {colname} ILIKE %(svalue)s LIMIT 5)""")
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify(f"""\
-                    SELECT key, value, 'METADATA' AS TYPE
-                    FROM({" UNION ALL ".join(sub_from)}) AS all_metas
-                    LIMIT 5;""", {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                  "svalue": helper.string_to_sql_like("^" + value)}))
-        results = helper.list_to_camel_case(cur.fetchall())
-    return results
-
-
 class event_type:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
@@ -332,9 +136,9 @@ SUPPORTED_TYPES = {
     event_type.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.STATEACTION),
                                                     query=autocomplete.__generic_query(
                                                         typename=event_type.STATEACTION.ui_type)),
-    event_type.ERROR.ui_type: SupportedFilter(get=__search_pg_errors,
+    event_type.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors,
                                               query=None),
-    event_type.METADATA.ui_type: SupportedFilter(get=__search_pg_metadata,
+    event_type.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_pg_metadata,
                                                  query=None),
     #     IOS
     event_type.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CLICK_IOS),
@@ -352,7 +156,7 @@ SUPPORTED_TYPES = {
     event_type.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.REQUEST_IOS),
                                                     query=autocomplete.__generic_query(
                                                         typename=event_type.REQUEST_IOS.ui_type)),
-    event_type.ERROR_IOS.ui_type: SupportedFilter(get=__search_pg_errors_ios,
+    event_type.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors_ios,
                                                   query=None),
 }
 
