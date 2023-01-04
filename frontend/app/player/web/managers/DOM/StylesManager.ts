@@ -24,7 +24,7 @@ export default class StylesManager {
   private linkLoadPromises: Array<Promise<void>> = [];
   private skipCSSLinks: Array<string> = []; // should be common for all pages
 
-  constructor(private readonly screen: Screen, private readonly mm: MessageManager) {}
+  constructor(private readonly screen: Screen, private readonly setLoading: (flag: boolean) => void) {}
 
   reset():void {
     this.linkLoadingCount = 0;
@@ -38,7 +38,7 @@ export default class StylesManager {
     const promise = new Promise<void>((resolve) => {
       if (this.skipCSSLinks.includes(value)) resolve();
       this.linkLoadingCount++;
-      this.mm.setCSSLoading(true);
+      this.setLoading(true);
       const addSkipAndResolve = () => {
         this.skipCSSLinks.push(value); // watch out
         resolve()
@@ -57,7 +57,7 @@ export default class StylesManager {
       clearTimeout(timeoutId);
       this.linkLoadingCount--;
       if (this.linkLoadingCount === 0) {
-        this.mm.setCSSLoading(false);
+        this.setLoading(false);
       }
     });
     this.linkLoadPromises.push(promise);

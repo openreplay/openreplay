@@ -56,10 +56,10 @@ export default class DOMManager extends ListWalker<Message> {
     private readonly screen: Screen,
     private readonly isMobile: boolean,
     public readonly time: number,
-    mm: MessageManager,
+    setCssLoading: ConstructorParameters<typeof StylesManager>[1],
   ) {
     super()
-    this.stylesManager = new StylesManager(screen, mm)
+    this.stylesManager = new StylesManager(screen, setCssLoading)
   }
 
   append(m: Message): void {
