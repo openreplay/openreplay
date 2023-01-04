@@ -26,6 +26,11 @@ spec:
   template:
     metadata:
       name: postgresqlMigrate
+      {{- with .Values.migrationJob.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    annotations:
     spec:
       initContainers:
       - name: git
