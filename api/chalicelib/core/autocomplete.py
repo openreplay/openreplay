@@ -135,7 +135,7 @@ def __generic_autocomplete_metas(typename):
     return f
 
 
-def __pg_errors_query(source=None, value_length=None):
+def __errors_query(source=None, value_length=None):
     if value_length is None or value_length > 2:
         return f"""((SELECT DISTINCT ON(lg.message)
                         lg.message AS value,
@@ -209,11 +209,11 @@ def __pg_errors_query(source=None, value_length=None):
                 LIMIT 5));"""
 
 
-def __search_pg_errors(project_id, value, key=None, source=None):
+def __search_errors(project_id, value, key=None, source=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(__pg_errors_query(source,
-                                          value_length=len(value)),
+            cur.mogrify(__errors_query(source,
+                                       value_length=len(value)),
                         {"project_id": project_id, "value": helper.string_to_sql_like(value),
                          "svalue": helper.string_to_sql_like("^" + value),
                          "source": source}))
@@ -221,7 +221,7 @@ def __search_pg_errors(project_id, value, key=None, source=None):
     return results
 
 
-def __search_pg_errors_ios(project_id, value, key=None, source=None):
+def __search_errors_ios(project_id, value, key=None, source=None):
     if len(value) > 2:
         query = f"""(SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
@@ -289,7 +289,7 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
     return results
 
 
-def __search_pg_metadata(project_id, value, key=None, source=None):
+def __search_metadata(project_id, value, key=None, source=None):
     meta_keys = metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
     if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():

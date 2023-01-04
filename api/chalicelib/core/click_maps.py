@@ -70,7 +70,7 @@ def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, u
     if session:
         session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
         session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
-        session['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session["session_id"],
-                                                        event_type=schemas.EventType.location)
+        session['events'] = events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
+                                                     event_type=schemas.EventType.location)
 
     return helper.dict_to_camel_case(session)

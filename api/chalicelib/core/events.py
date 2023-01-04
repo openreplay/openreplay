@@ -9,7 +9,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter, Event
 
 
-def get_customs_by_sessionId2_pg(session_id, project_id):
+def get_customs_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
             SELECT 
@@ -52,7 +52,7 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
-def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
+def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with pg_client.PostgresClient() as cur:
         rows = []
         if event_type is None or event_type == schemas.EventType.click:
@@ -138,9 +138,9 @@ SUPPORTED_TYPES = {
     EventType.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.STATEACTION),
                                                    query=autocomplete.__generic_query(
                                                        typename=EventType.STATEACTION.ui_type)),
-    EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors,
+    EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_errors,
                                              query=None),
-    EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_pg_metadata,
+    EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
                                                 query=None),
     #     IOS
     EventType.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_IOS),
@@ -158,7 +158,7 @@ SUPPORTED_TYPES = {
     EventType.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_IOS),
                                                    query=autocomplete.__generic_query(
                                                        typename=EventType.REQUEST_IOS.ui_type)),
-    EventType.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors_ios,
+    EventType.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_errors_ios,
                                                  query=None),
 }
 

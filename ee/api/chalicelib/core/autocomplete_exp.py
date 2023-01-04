@@ -36,7 +36,7 @@ def __get_autocomplete_table(value, project_id):
                                 WHERE project_id = %(project_id)s
                                     AND type= '{e}' 
                                     AND value ILIKE %(svalue)s
-                                    ORDER BY value
+                                ORDER BY value
                                 LIMIT 5)""")
         if len(value) > 2:
             sub_queries.append(f"""(SELECT type, value
@@ -44,7 +44,7 @@ def __get_autocomplete_table(value, project_id):
                                     WHERE project_id = %(project_id)s
                                         AND type= '{e}' 
                                         AND value ILIKE %(value)s
-                                        ORDER BY value
+                                    ORDER BY value
                                     LIMIT 5)""")
     with ch_client.ClickHouseClient() as cur:
         query = " UNION DISTINCT ".join(sub_queries) + ";"
@@ -120,11 +120,17 @@ def __generic_autocomplete(event: Event):
 def __generic_autocomplete_metas(typename):
     def f(project_id, text):
         with ch_client.ClickHouseClient() as cur:
-            query = __generic_query(typename, value_length=len(text))
             params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
                       "svalue": helper.string_to_sql_like("^" + text)}
-            results = cur.execute(query=query, params=params)
-        return results
+
+            if typename == schemas.FilterType.user_country:
+                params["value"] = tuple(countries.get_country_code_autocomplete(text))
+                if len(params["value"]) == 0:
+                    return []
+
+            query = __generic_query(typename, value_length=len(text))
+            rows = cur.execute(query=query, params=params)
+        return rows
 
     return f
 
@@ -199,7 +205,7 @@ def __pg_errors_query(source=None, value_length=None):
                 LIMIT 5));"""
 
 
-def __search_pg_errors(project_id, value, key=None, source=None):
+def __search_errors(project_id, value, key=None, source=None):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(__pg_errors_query(source, value_length=len(value)),
                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
@@ -209,12 +215,12 @@ def __search_pg_errors(project_id, value, key=None, source=None):
     return helper.list_to_camel_case(results)
 
 
-def __search_pg_errors_ios(project_id, value, key=None, source=None):
+def __search_errors_ios(project_id, value, key=None, source=None):
     # TODO: define this when ios events are supported in CH
     return []
 
 
-def __search_pg_metadata(project_id, value, key=None, source=None):
+def __search_metadata(project_id, value, key=None, source=None):
     meta_keys = metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
     if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():

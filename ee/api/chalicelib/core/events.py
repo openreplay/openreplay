@@ -14,8 +14,7 @@ if config("EXP_AUTOCOMPLETE", cast=bool, default=False):
 else:
     from . import autocomplete as autocomplete
 
-
-def get_customs_by_sessionId2_pg(session_id, project_id):
+def get_customs_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
             SELECT 
@@ -58,7 +57,7 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
-def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
+def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with pg_client.PostgresClient() as cur:
         rows = []
         if event_type is None or event_type == schemas.EventType.click:
