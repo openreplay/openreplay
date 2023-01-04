@@ -43,6 +43,8 @@ def get_user_viewed_errors_table(timestamp=0):
 
 
 def get_main_js_errors_sessions_table(timestamp=0):
-    return "experimental.js_errors_sessions_mv"  # \
+    return get_main_events_table(timestamp=timestamp)
+    # enable this when js_errors_sessions_mv is fixed
+    # return "experimental.js_errors_sessions_mv"  # \
     # if config("EXP_7D_MV", cast=bool, default=True) \
     #    and timestamp >= TimeUTC.now(delta_days=-7) else "experimental.events"
