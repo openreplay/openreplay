@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import DashboardListItem from './DashboardListItem';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function DashboardList() {
   const { dashboardStore } = useStore();
@@ -36,9 +37,10 @@ function DashboardList() {
               </div>
             )}
           </div>
-          <div className="my-2 bg-active-blue rounded flex items-center justify-center px-80 py-20">
+          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
+          {/* <div className="my-2 bg-active-blue rounded flex items-center justify-center px-80 py-20">
             <Icon name="grid-1x2" size={40} color="figmaColors-accent-secondary" />
-          </div>
+          </div> */}
         </div>
       }
     >

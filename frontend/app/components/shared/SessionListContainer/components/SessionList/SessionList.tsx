@@ -137,13 +137,13 @@ function SessionList(props: Props) {
       <NoContent
         title={
           <div className="flex items-center justify-center flex-col">
-            <AnimatedSVG name={NO_CONTENT.icon} size={170} />
+            <AnimatedSVG name={NO_CONTENT.icon} size={180} />
             <div className="mt-2" />
             <div className="text-center text-gray-600 relative">
               {NO_CONTENT.message}
               {noContentType === NoContentType.ToDate ? (
-                <div style={{ position: 'absolute', right: -170, top: -110 }}>
-                  <Icon name="list-arrow" size={130} width={150} />
+                <div style={{ position: 'absolute', right: -200, top: -170 }}>
+                  <Icon name="pointer-sessions-search" size={250} width={240} />
                 </div>
               ) : null}
             </div>

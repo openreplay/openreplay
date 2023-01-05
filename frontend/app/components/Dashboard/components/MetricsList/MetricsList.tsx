@@ -7,6 +7,7 @@ import { sliceListPerPage } from 'App/utils';
 import Widget from 'App/mstore/types/widget';
 import GridView from './GridView';
 import ListView from './ListView';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function MetricsList({
   siteId,
@@ -62,9 +63,9 @@ function MetricsList({
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="no-metrics" size={80} color="figmaColors-accent-secondary" />
+          <AnimatedSVG name={ICONS.NO_CARDS} size={180} />
           <div className="text-center text-gray-600 my-4">
-            {metricsSearch !== '' ? 'No matching results' : "You haven't created any metrics yet"}
+            {metricsSearch !== '' ? 'No matching results' : "You haven't created any cards yet"}
           </div>
         </div>
       }
