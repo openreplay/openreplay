@@ -85,7 +85,10 @@ async def prepare_request(request: Request):
         extracted_cookies = {}
         for key, morsel in cookie.items():
             extracted_cookies[key] = morsel.value
-        session = extracted_cookies["session"]
+        if "session" not in extracted_cookies:
+            print("!!! session not found in extracted_cookies")
+            print(extracted_cookies)
+        session = extracted_cookies.get("session", {})
     else:
         session = {}
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
