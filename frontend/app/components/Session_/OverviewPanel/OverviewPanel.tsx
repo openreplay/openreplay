@@ -132,7 +132,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
 
 export default connect(
   (state: any) => ({
-    issuesList: state.getIn(['sessions', 'current', 'issues']),
+    issuesList: state.getIn(['sessions', 'current']).issues,
   }),
   {
     toggleBottomBlock,

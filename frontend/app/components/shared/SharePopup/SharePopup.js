@@ -12,7 +12,7 @@ import { fetchList as fetchTeams, sendMsTeamsMsg } from 'Duck/integrations/teams
 
 @connect(
   (state) => ({
-    sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+    sessionId: state.getIn(['sessions', 'current']).sessionId,
     channels: state.getIn(['slack', 'list']),
     msTeamsChannels: state.getIn(['teams', 'list']),
     tenantId: state.getIn(['user', 'account', 'tenantId']),

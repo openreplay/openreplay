@@ -123,7 +123,10 @@ export default class MessageManager {
     private readonly screen: Screen,
     initialLists?: Partial<InitialLists>
   ) {
-    this.pagesManager = new PagesManager(screen, this.session.isMobile,  this)
+    this.pagesManager = new PagesManager(screen, this.session.isMobile, cssLoading => {
+      screen.displayFrame(!cssLoading)
+      state.update({ cssLoading })
+    })
     this.mouseMoveManager = new MouseMoveManager(screen)
 
     this.sessionStart = this.session.startedAt
@@ -480,11 +483,6 @@ export default class MessageManager {
   setMessagesLoading(messagesLoading: boolean) {
     this.screen.display(!messagesLoading);
     this.state.update({ messagesLoading });
-  }
-
-  setCSSLoading(cssLoading: boolean) {
-    this.screen.displayFrame(!cssLoading);
-    this.state.update({ cssLoading });
   }
 
   private setSize({ height, width }: { height: number, width: number }) {

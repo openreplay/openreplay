@@ -9,7 +9,6 @@ import {
   init,
   edit,
   remove,
-  setAlertMetricId,
   setActiveWidget,
   updateActiveState,
 } from 'Duck/customMetrics';
@@ -181,7 +180,6 @@ export default connect(
   {
     remove,
     setShowAlerts,
-    setAlertMetricId,
     edit,
     setActiveWidget,
     updateActiveState,

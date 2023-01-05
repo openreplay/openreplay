@@ -13,7 +13,6 @@ const JUMP_OFFSET = 1000;
 interface Props {
     filters: any;
     fetchInsights: (filters: Record<string, any>) => void;
-    urls: [];
     insights: any;
     events: Array<any>;
     urlOptions: Array<any>;

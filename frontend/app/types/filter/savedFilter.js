@@ -11,7 +11,6 @@ export default Record({
   filter: Filter(),
   createdAt: undefined,
   count: 0,
-  watchdogs: List(),
   isPublic: false,
 }, {
   idKey: 'searchId',

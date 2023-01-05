@@ -95,7 +95,7 @@ export default class AssistMultiviewStore {
     const matchingSessions = data.sessions.filter(
       (s: Record<string, any>) => ids.includes(s.sessionID) || ids.includes(s.sessionId)
     );
-    const immutMatchingSessions = List(matchingSessions).map(Session);
+    const immutMatchingSessions = List(matchingSessions).map(s => new Session(s));
     immutMatchingSessions.forEach((session: Record<string, any>) => {
       this.addSession(session);
       this.fetchAgentTokenInfo(session.sessionId);

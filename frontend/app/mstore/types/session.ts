@@ -1,6 +1,6 @@
 import { runInAction, makeAutoObservable, observable } from 'mobx'
-import { List, Map } from 'immutable';
-import { DateTime, Duration } from 'luxon';
+import { Map } from 'immutable';
+import { Duration } from 'luxon';
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;

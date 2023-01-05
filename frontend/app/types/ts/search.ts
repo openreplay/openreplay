@@ -10,5 +10,4 @@ export interface SavedSearch {
     projectId: number;
     searchId: number;
     userId: number;
-    watchdogs: List<any>
 }

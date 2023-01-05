@@ -12,6 +12,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import { DateTime, Duration } from 'luxon';
+import Issue from "Types/session/issue";
 
 function getTimelinePosition(value: number, scale: number) {
   const pos = value * scale;
@@ -19,7 +20,14 @@ function getTimelinePosition(value: number, scale: number) {
   return pos > 100 ? 99 : pos;
 }
 
-function Timeline(props) {
+interface IProps {
+  issues: Issue[]
+  setTimelineHoverTime: (t: number) => void
+  startedAt: number
+  tooltipVisible: boolean
+}
+
+function Timeline(props: IProps) {
   const { player, store } = useContext(PlayerContext)
   const [wasPlaying, setWasPlaying] = useState(false)
   const { notesStore, settingsStore } = useStore();
@@ -35,17 +43,17 @@ function Timeline(props) {
     live,
     liveTimeTravel,
   } = store.get()
+  const { issues } = props;
   const notes = notesStore.sessionNotes
 
-  const progressRef = useRef<HTMLDivElement>()
-  const timelineRef = useRef<HTMLDivElement>()
+  const progressRef = useRef<HTMLDivElement>(null)
+  const timelineRef = useRef<HTMLDivElement>(null)
 
 
   const scale = 100 / endTime;
 
   useEffect(() => {
-    const { issues } = props;
-    const firstIssue = issues.get(0);
+    const firstIssue = issues[0];
 
     if (firstIssue && skipToIssue) {
       player.jump(firstIssue.time);
@@ -64,7 +72,7 @@ function Timeline(props) {
   };
 
   const onDrag: OnDragCallback = (offset) => {
-    if (live && !liveTimeTravel) return;
+    if ((live && !liveTimeTravel) || !progressRef.current) return;
 
     const p = (offset.x) / progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
@@ -76,7 +84,7 @@ function Timeline(props) {
     }
   };
 
-  const getLiveTime = (e) => {
+  const getLiveTime = (e: React.MouseEvent) => {
     const duration = new Date().getTime() - props.startedAt;
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * duration), 0);
@@ -84,7 +92,7 @@ function Timeline(props) {
     return [time, duration];
   };
 
-  const showTimeTooltip = (e) => {
+  const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target !== progressRef.current && e.target !== timelineRef.current) {
       return props.tooltipVisible && hideTimeTooltip();
     }
@@ -118,13 +126,13 @@ function Timeline(props) {
     debouncedTooltipChange(timeLineTooltip);
   };
 
-  const seekProgress = (e) => {
+  const seekProgress = (e: React.MouseEvent<HTMLDivElement>) => {
     const time = getTime(e);
     player.jump(time);
     hideTimeTooltip();
   };
 
-  const loadAndSeek = async (e) => {
+  const loadAndSeek = async (e: React.MouseEvent<HTMLDivElement>) => {
     e.persist();
     await player.toggleTimetravel();
 
@@ -133,7 +141,7 @@ function Timeline(props) {
     });
   };
 
-  const jumpToTime: React.MouseEventHandler = (e) => {
+  const jumpToTime = (e: React.MouseEvent<HTMLDivElement>) => {
     if (live && !liveTimeTravel) {
       loadAndSeek(e);
     } else {
@@ -141,7 +149,7 @@ function Timeline(props) {
     }
   };
 
-  const getTime = (e: React.MouseEvent, customEndTime?: number) => {
+  const getTime = (e: React.MouseEvent<HTMLDivElement>, customEndTime?: number) => {
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const targetTime = customEndTime || endTime;
     const time = Math.max(Math.round(p * targetTime), 0);
@@ -161,7 +169,7 @@ function Timeline(props) {
       >
         <div
           className={stl.progress}
-          onClick={ready ? jumpToTime : null }
+          onClick={ready ? jumpToTime : undefined }
           ref={progressRef}
           role="button"
           onMouseMoveCapture={showTimeTooltip}
@@ -197,9 +205,17 @@ function Timeline(props) {
 
           {events.map((e) => (
             <div
+              /*@ts-ignore TODO */
               key={e.key}
               className={stl.event}
               style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
+            />
+          ))}
+          {issues.map((i: Issue) => (
+            <div
+              key={i.key}
+              className={stl.redEvent}
+              style={{ left: `${getTimelinePosition(i.time, scale)}%` }}
             />
           ))}
           {notes.map((note) => note.timestamp > 0 ? (
@@ -224,9 +240,9 @@ function Timeline(props) {
 }
 
 export default connect(
-  (state) => ({
-    issues: state.getIn(['sessions', 'current', 'issues']),
-    startedAt: state.getIn(['sessions', 'current', 'startedAt']),
+  (state: any) => ({
+    issues: state.getIn(['sessions', 'current']).issues || [],
+    startedAt: state.getIn(['sessions', 'current']).startedAt || 0,
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
   }),
   { setTimelinePointer, setTimelineHoverTime }

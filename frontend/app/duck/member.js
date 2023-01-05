@@ -1,7 +1,7 @@
 import { Map } from 'immutable';
 import Member from 'Types/member';
 import crudDuckGenerator from './tools/crudDuck';
-import withRequestState, { RequestTypes } from 'Duck/requestStateCreator';
+import { RequestTypes } from 'Duck/requestStateCreator';
 import { reduceDucks } from 'Duck/tools';
 
 const GENERATE_LINK = new RequestTypes('member/GENERATE_LINK');
@@ -34,14 +34,6 @@ export function save(instance) {
   return {
     types: crudDuck.actionTypes.SAVE.toArray(),
     call: client => client.put( instance.id ? `/client/members/${ instance.id }` : '/client/members', instance.toData()),    
-  };
-}
-
-export function generateInviteLink(instance) {
-  return {
-    types: GENERATE_LINK.toArray(),
-    call: client => client.get(`/client/members/${ instance.id }/reset`),
-    id: instance.id
   };
 }
 

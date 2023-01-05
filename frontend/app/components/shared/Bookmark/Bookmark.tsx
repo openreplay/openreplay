@@ -65,7 +65,7 @@ function Bookmark(props: Props) {
 export default connect(
   (state: any) => ({
     isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    favorite: state.getIn(['sessions', 'current', 'favorite']),
+    favorite: state.getIn(['sessions', 'current']).favorite,
   }),
   { toggleFavorite }
 )(Bookmark);

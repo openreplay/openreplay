@@ -26,7 +26,10 @@ function build(){
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/frontend:${image_tag}
     }
-    echo "frotend build completed"
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/frontend:${image_tag}
+    }
+    echo "frontend build completed"
 }
 
 check_prereq

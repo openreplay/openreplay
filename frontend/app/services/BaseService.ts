@@ -1,4 +1,5 @@
 import APIClient from 'App/api_client';
+
 export default class BaseService {
     client: APIClient;
 

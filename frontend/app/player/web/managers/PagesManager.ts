@@ -10,14 +10,18 @@ import DOMManager from './DOM/DOMManager';
 export default class PagesManager extends ListWalker<DOMManager> {
 	private currentPage: DOMManager | null = null
 
-	constructor(private screen: Screen, private isMobile: boolean, private mm: MessageManager) { super() }
+	constructor(
+		private screen: Screen,
+		private isMobile: boolean,
+		private setCssLoading: ConstructorParameters<typeof DOMManager>[3],
+) { super() }
 
 	/*
 		Assumed that messages added in a correct time sequence.
 	*/
 	appendMessage(m: Message): void {
 		if (m.tp === MType.CreateDocument) {
-			super.append(new DOMManager(this.screen, this.isMobile, m.time, this.mm))
+			super.append(new DOMManager(this.screen, this.isMobile, m.time, this.setCssLoading))
 		}
 		if (this.last === null) {
 			// Log wrong

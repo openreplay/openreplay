@@ -36,7 +36,7 @@ function SessionList(props: Props) {
                 </div>
                 <Loader loading={props.loading}>
                     <NoContent
-                        show={!props.loading && props.list.size === 0}
+                        show={!props.loading && props.list.length === 0}
                         title={
                             <div className="flex items-center justify-center flex-col">
                                 <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />

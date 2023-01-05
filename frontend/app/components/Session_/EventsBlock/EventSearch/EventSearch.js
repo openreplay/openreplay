@@ -5,15 +5,9 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 function EventSearch(props) {
   const { player } = React.useContext(PlayerContext)
 
-  const { onChange, clearSearch, value, header, setActiveTab } = props;
+  const { onChange, value, header, setActiveTab } = props;
 
   const toggleEvents = () => player.toggleEvents()
-
-  useEffect(() => {
-    return () => {
-      clearSearch()
-    }
-  }, [])
 
   return (
     <div className="flex items-center w-full relative">

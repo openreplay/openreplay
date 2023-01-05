@@ -43,7 +43,7 @@ jobs:
         PUSH_IMAGE=1 bash build.sh
     - name: Deploy to kubernetes
       run: |
-        cd scripts/helm/
+        cd scripts/helmcharts/
         sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
         sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\" #g" vars.yaml
         sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\" #g" vars.yaml

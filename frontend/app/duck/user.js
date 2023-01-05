@@ -2,7 +2,6 @@ import { List, Map } from 'immutable';
 import Client from 'Types/client';
 import { deleteCookie } from 'App/utils';
 import Account from 'Types/account';
-import { DELETE } from './jwt';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 
 export const LOGIN = new RequestTypes('user/LOGIN');
@@ -20,7 +19,7 @@ const PUT_CLIENT = new RequestTypes('user/PUT_CLIENT');
 const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
 
-const initialState = Map({
+export const initialState = Map({
   account: Account(),
   siteId: null,
   passwordRequestError: false,
@@ -28,7 +27,8 @@ const initialState = Map({
   tenants: [],
   authDetails: {},
   onboarding: false,
-  sites: List()
+  sites: List(),
+  jwt: null
 });
 
 const setClient = (state, data) => {
@@ -36,8 +36,20 @@ const setClient = (state, data) => {
   return state.set('client', client)
 }
 
+export const UPDATE_JWT = 'jwt/UPDATE';
+export const DELETE = 'jwt/DELETE'
+export function setJwt(data) {
+  return {
+    type: UPDATE_JWT,
+    data,
+  };
+}
+
+
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
+    case UPDATE_JWT:
+      return state.set('jwt', action.data);
     case RESET_PASSWORD.SUCCESS:
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
@@ -54,9 +66,11 @@ const reducer = (state = initialState, action = {}) => {
       // return state.set('tenants', action.data.map(i => ({ text: i.name, value: i.tenantId})));
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
+    case FETCH_ACCOUNT.FAILURE:
+    case LOGIN.FAILURE:
     case DELETE:
+      console.log('hi')
       deleteCookie('jwt', '/', '.openreplay.com')
-      console.log('called')
       return initialState;
     case PUT_CLIENT.REQUEST:
       return state.mergeIn([ 'account' ], action.params);
@@ -115,16 +129,10 @@ export function fetchTenants() {
   }
 }
 
-export const fetchUserInfo = () => dispatch => Promise.all([
-  dispatch({
+export const fetchUserInfo = () => ({
     types: FETCH_ACCOUNT.toArray(),
     call: client => client.get('/account'),
-  }),
-  // dispatch({
-  //   types: FETCH_CLIENT.toArray(),
-  //   call: client => client.get('/client'),
-  // }),
-]);
+  });
 
 export function logout() {
   return {

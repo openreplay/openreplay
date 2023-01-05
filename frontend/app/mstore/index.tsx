@@ -15,6 +15,7 @@ import {
   errorService,
   notesService,
   recordingsService,
+  configService,
 } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
@@ -25,6 +26,7 @@ import NotesStore from './notesStore';
 import BugReportStore from './bugReportStore'
 import RecordingsStore from './recordingsStore'
 import AssistMultiviewStore from './assistMultiviewStore';
+import WeeklyReportStore from './weeklyReportConfigStore'
 
 export class RootStore {
   dashboardStore: DashboardStore;
@@ -41,6 +43,7 @@ export class RootStore {
   bugReportStore: BugReportStore;
   recordingsStore: RecordingsStore;
   assistMultiviewStore: AssistMultiviewStore;
+  weeklyReportStore: WeeklyReportStore
 
   constructor() {
     this.dashboardStore = new DashboardStore();
@@ -57,6 +60,7 @@ export class RootStore {
     this.bugReportStore = new BugReportStore();
     this.recordingsStore = new RecordingsStore();
     this.assistMultiviewStore = new AssistMultiviewStore();
+    this.weeklyReportStore = new WeeklyReportStore();
   }
 
   initClient() {
@@ -70,6 +74,7 @@ export class RootStore {
     errorService.initClient(client);
     notesService.initClient(client)
     recordingsService.initClient(client);
+    configService.initClient(client);
   }
 }
 

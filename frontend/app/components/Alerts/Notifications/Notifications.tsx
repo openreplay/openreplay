@@ -1,34 +1,27 @@
 import React, { useEffect } from 'react';
 import stl from './notifications.module.css';
-import { connect } from 'react-redux';
 import { Icon, Tooltip } from 'UI';
-import { fetchList, setViewed, clearAll } from 'Duck/notifications';
-import { setLastRead } from 'Duck/announcements';
 import { useModal } from 'App/components/Modal';
 import AlertTriggersModal from 'Shared/AlertTriggersModal';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 
-interface Props {
-  notifications: any;
-  fetchList: any;
-}
-function Notifications(props: Props) {
+function Notifications() {
   const { showModal } = useModal();
   const { notificationStore } = useStore();
-  const count = useObserver(() => notificationStore.notificationsCount);
+  const count = notificationStore.notificationsCount;
 
   useEffect(() => {
     const interval = setInterval(() => {
-      notificationStore.fetchNotificationsCount();
+      void notificationStore.fetchNotificationsCount();
     }, AUTOREFRESH_INTERVAL);
 
     return () => clearInterval(interval);
   }, []);
 
-  return useObserver(() => (
+  return (
     <Tooltip title={`Alerts`}>
       <div
         className={stl.button}
@@ -40,12 +33,7 @@ function Notifications(props: Props) {
         <Icon name="bell" size="18" color="gray-dark" />
       </div>
     </Tooltip>
-  ));
+  );
 }
 
-export default connect(
-  (state: any) => ({
-    notifications: state.getIn(['notifications', 'list']),
-  }),
-  { fetchList, setLastRead, setViewed, clearAll }
-)(Notifications);
+export default observer(Notifications)

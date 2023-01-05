@@ -82,5 +82,5 @@ function RequestingWindow({ userDisplayName, getWindowType }: Props) {
 }
 
 export default connect((state: any) => ({
-  userDisplayName: state.getIn(['sessions', 'current', 'userDisplayName']),
+  userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
 }))(RequestingWindow);

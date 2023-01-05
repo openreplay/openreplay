@@ -255,7 +255,7 @@ const con = connect(
     return {
       hasPermission: permissions.includes('ASSIST_CALL'),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-      userDisplayName: state.getIn(['sessions', 'current', 'userDisplayName']),
+      userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
     };
   },
   { toggleChatWindow }

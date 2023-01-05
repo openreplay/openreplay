@@ -27,6 +27,9 @@ function build_service() {
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/$image:${image_tag}
     }
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/$image:${image_tag}
+    }
     echo "Build completed for $image"
     return
 }

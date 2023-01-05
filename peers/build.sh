@@ -35,6 +35,9 @@ function build_api(){
         docker tag ${DOCKER_REPO:-'local'}/peers:${image_tag} ${DOCKER_REPO:-'local'}/peers:latest
         docker push ${DOCKER_REPO:-'local'}/peers:latest
     }
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/peers:${image_tag}
+    }
     echo "peer docker build complted"
 }
 

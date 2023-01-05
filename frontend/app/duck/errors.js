@@ -66,6 +66,8 @@ function reducer(state = initialState, action = {}) {
 			} else {
 				return state.set("instance", ErrorInfo(action.data));
 			}
+		case failure(FETCH):
+			return state.set("instance", ErrorInfo());
 		case success(FETCH_TRACE):
 			return state.set("instanceTrace", List(action.data.trace)).set('sourcemapUploaded', action.data.sourcemapUploaded);
 		case success(FETCH_LIST):

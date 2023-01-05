@@ -386,7 +386,7 @@ export default connect(
       session: state.getIn(['sessions', 'current']),
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
       closedLive:
-        !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current', 'live']),
+        !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current']).live,
       skipInterval: state.getIn(['components', 'player', 'skipInterval']),
     };
   },
