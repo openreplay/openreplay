@@ -1,7 +1,7 @@
 import json
 
 import schemas
-from chalicelib.core import custom_metrics, metrics
+from chalicelib.core import custom_metrics
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC

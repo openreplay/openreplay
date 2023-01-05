@@ -1,6 +1,7 @@
+import schemas_ee
 from chalicelib.utils import ch_client
 from datetime import datetime, timedelta
-
+from chalicelib.utils.TimeUTC import TimeUTC
 def _table_slice(table, index):
     col = list()
     for row in table:
@@ -137,12 +138,16 @@ SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.success) as success_rate,
 def query_most_errors_by_period(project_id, start_time=(datetime.now()-timedelta(days=1)).strftime('%Y-%m-%d'),
                         end_time=datetime.now().strftime('%Y-%m-%d'), time_step=3600, conn=None):
     function, steps = __handle_timestep(time_step)
-    query = f"""WITH
-  {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-  {function.format(f"toDateTime64('{end_time}', 0)")} as end
-SELECT T1.hh, count(T2.session_id) as sessions, T2.name as names, groupUniqArray(T2.source) as sources FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-    LEFT JOIN (SELECT session_id, name, source, message, {function.format('datetime')} as dtime FROM experimental.events WHERE project_id = {project_id} AND event_type = 'ERROR') AS T2 ON T2.dtime = T1.hh GROUP BY T1.hh, T2.name ORDER BY T1.hh DESC;
-    """
+    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
+                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+                SELECT T1.hh, count(T2.session_id) as sessions, T2.name as names, 
+                        groupUniqArray(T2.source) as sources 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
+                    LEFT JOIN (SELECT session_id, name, source, message, {function.format('datetime')} as dtime 
+                               FROM experimental.events 
+                               WHERE project_id = {project_id} AND event_type = 'ERROR') AS T2 ON T2.dtime = T1.hh 
+                GROUP BY T1.hh, T2.name 
+                ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
             res = conn.execute(query=query)
@@ -242,40 +247,39 @@ def query_click_rage_by_period(project_id, start_time=(datetime.now()-timedelta(
             }
 
 
-def fetch_selected(selectedEvents, project_id, start_time=(datetime.now()-timedelta(days=1)).strftime('%Y-%m-%d'),
-                        end_time=datetime.now().strftime('%Y-%m-%d'), time_step=3600):
-    assert len(selectedEvents) > 0, """'list of selected events must be non empty. Available events are 'errors',
-    'network', 'rage' and 'resources''"""
+def fetch_selected(project_id, data: schemas_ee.GetInsightsPayloadSchema, time_step=3600, ):
+    # NO need for assertion here, you should validate it in the schema definition
+    # assert len(selectedEvents) > 0, """'list of selected events must be non empty. Available events are 'errors', 'network', 'rage' and 'resources''"""
     output = {}
     with ch_client.ClickHouseClient() as conn:
-        if 'errors' in selectedEvents:
-            output['errors'] = query_most_errors_by_period(project_id, start_time, end_time, time_step, conn=conn)
-        if 'network' in selectedEvents:
+        if 'errors' in data.selected_events:
+            output['errors'] = query_most_errors_by_period(project_id, data.startDate, end_time, time_step, conn=conn)
+        if 'network' in data.selected_events:
             output['network'] = query_requests_by_period(project_id, start_time, end_time, time_step, conn=conn)
-        if 'rage' in selectedEvents:
+        if 'rage' in data.selected_events:
             output['rage'] = query_click_rage_by_period(project_id, start_time, end_time, time_step, conn=conn)
-        if 'resources' in selectedEvents:
+        if 'resources' in data.selected_events:
             output['resources'] = query_cpu_memory_by_period(project_id, start_time, end_time, time_step, conn=conn)
     return output
 
 
-if __name__ == '__main__':
-    # configs
-    start = '2022-04-19'
-    end = '2022-04-21'
-    projectId = 1307
-    time_step = 'hour'
-
-    # Errors widget
-    print('Errors example')
-    res = query_most_errors_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
-    print(res)
-
-    # Resources widgets
-    print('resources example')
-    res = query_cpu_memory_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
-
-    # Network widgets
-    print('Network example')
-    res = query_requests_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
-    print(res)
+# if __name__ == '__main__':
+#     # configs
+#     start = '2022-04-19'
+#     end = '2022-04-21'
+#     projectId = 1307
+#     time_step = 'hour'
+#
+#     # Errors widget
+#     print('Errors example')
+#     res = query_most_errors_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
+#     print(res)
+#
+#     # Resources widgets
+#     print('resources example')
+#     res = query_cpu_memory_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
+#
+#     # Network widgets
+#     print('Network example')
+#     res = query_requests_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
+#     print(res)

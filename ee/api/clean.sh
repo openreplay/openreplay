@@ -13,7 +13,7 @@ rm -rf ./chalicelib/core/countries.py
 rm -rf ./chalicelib/core/errors_favorite.py
 #exp rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_ios.py
-#exp rm -rf ./chalicelib/core/dashboards.py
+rm -rf ./chalicelib/core/dashboards.py
 #exp rm -rf ./chalicelib/core/funnels.py
 rm -rf ./chalicelib/core/integration_base.py
 rm -rf ./chalicelib/core/integration_base_issue.py

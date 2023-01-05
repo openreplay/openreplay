@@ -43,7 +43,11 @@ class GetInsightsPayloadSchema(BaseModel):
     startDate: int = Field(TimeUTC.now(delta_days=-1))
     endDate: int = Field(TimeUTC.now())
     timestep: str = Field(...)
-    selectedEvents: List[str] = Field(...)
+    # list of selected events must be non empty. Available events are 'errors', 'network', 'rage' and 'resources'
+    selected_events: List[str] = Field(..., min_items=1)
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
+
 
 
 class CreateMemberSchema(schemas.CreateMemberSchema):
