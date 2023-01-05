@@ -143,9 +143,9 @@ SUPPORTED_TYPES = {
     EventType.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.STATEACTION),
                                                    query=autocomplete.__generic_query(
                                                        typename=EventType.STATEACTION.ui_type)),
-    EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors,
+    EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_errors,
                                              query=None),
-    EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_pg_metadata,
+    EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
                                                 query=None),
     #     IOS
     EventType.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_IOS),
@@ -163,7 +163,7 @@ SUPPORTED_TYPES = {
     EventType.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_IOS),
                                                    query=autocomplete.__generic_query(
                                                        typename=EventType.REQUEST_IOS.ui_type)),
-    EventType.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors_ios,
+    EventType.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_errors_ios,
                                                  query=None),
 }
 
