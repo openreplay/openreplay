@@ -7,12 +7,7 @@ set -eE -o pipefail  # same as: `set -o errexit -o errtrace`
 trap err EXIT
 
 err() {
-    case "$?" in
-        0)
-            ;;
-        *)
-            ;;
-    esac
+  exit $1
 }
 
 # make all stderr red
@@ -144,4 +139,4 @@ do
   esac
 done
 
-[[ $VERBOSE -eq 1 ]] && set -x
+[[ $VERBOSE -eq 1 ]] && set -x || true
