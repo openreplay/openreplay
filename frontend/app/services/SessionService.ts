@@ -57,11 +57,25 @@ export default class SettingsService {
       .catch(e => Promise.reject(e))
   }
 
-  getAutoplayList(params = {}): Promise<{ sessionId: string}[]> {
+  getAutoplayList(params = {}): Promise<{ sessionId: string }[]> {
     return this.client
       .post('/sessions/search/ids', cleanParams(params))
       .then(r => r.json())
       .then(j => j.data || [])
       .catch(e => Promise.reject(e))
+  }
+
+  toggleFavorite(sessionId: string): Promise<any> {
+    return this.client
+      .get(`/sessions/${sessionId}/favorite`)
+      .catch(Promise.reject)
+  }
+
+  getClickMap(params = {}): Promise<any[]> {
+    return this.client
+      .post('/heatmaps/url', params)
+      .then(r => r.json())
+      .then(j => j.data || [])
+      .catch(Promise.reject)
   }
 }

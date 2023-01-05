@@ -124,7 +124,7 @@ const reducer = (state = initialState, action: IAction) => {
             return state.set('filteredEvents', filteredEvents).set('eventsQuery', query);
         }
         case FETCH.SUCCESS: {
-            // TODO: more common.. or TEMP
+            // TODO: more common.. or TEMP filters', 'appliedFilter
             const events = action.filter.events;
             const session = new Session(action.data);
 
@@ -191,17 +191,10 @@ const reducer = (state = initialState, action: IAction) => {
             };
             return state.update('list', (list: Session[]) => list.sort(comparator)).update('favoriteList', (list: Session[]) => list.sort(comparator));
         }
-        case REDEFINE_TARGET: {
-            // TODO: update for list
-            const { label, path } = action.target;
-            return state.updateIn(['current', 'events'], (list) =>
-                list.map((event) => (event.target && event.target.path === path ? event.setIn(['target', 'label'], label) : event))
-            );
-        }
         case SET_ACTIVE_TAB:
             const allList = action.tab.type === 'all' ? state.get('list') : state.get('list').filter((s) => s.issueTypes.includes(action.tab.type));
 
-            return state.set('activeTab', action.tab).set('sessionIds', allList.map(({ sessionId }) => sessionId).toJS());
+            return state.set('activeTab', action.tab).set('sessionIds', allList.map(({ sessionId }) => sessionId));
         case SET_TIMEZONE:
             return state.set('timezone', action.timezone);
         case TOGGLE_CHAT_WINDOW:

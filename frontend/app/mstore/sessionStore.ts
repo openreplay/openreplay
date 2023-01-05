@@ -8,6 +8,8 @@ import ErrorStack from 'Types/session/errorStack';
 import { Location, InjectedEvent } from 'Types/session/event'
 import { getDateRangeFromValue } from "App/dateRange";
 import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects, cleanSessionFilters } from 'App/utils';
+import store from 'App/store'
+import { Note } from "App/services/NotesService";
 
 class UserFilter {
   endDate: number = new Date().getTime();
@@ -110,12 +112,13 @@ export default class SessionStore {
   showChatWindow = false
   liveSessions: Session[] = []
   visitedEvents = []
-  insights = []
+  insights: any[] = []
   insightFilters = defaultDateFilters
   host = ''
   funnelPage = {}
-  timelinePointer = null
-  sessionPath =  {}
+  /** @Deprecated */
+  timelinePointer = {}
+  sessionPath = {}
   lastPlayedSessionId: string
   timeLineTooltip = { time: 0, offset: 0, isVisible: false, timeStr: '' }
   createNoteTooltip = { time: 0, isVisible: false, isEdit: false, note: null }
@@ -174,7 +177,43 @@ export default class SessionStore {
       this.total = data.total;
       this.sessionIds = data.sessions.map(s => s.sessionId);
       this.favoriteList = list.filter(s => s.favorite);
-    } catch(e) {
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  async fetchSessionInfo(sessionId: string, isLive = false) {
+    try {
+      const { events } = store.getState().getIn(['filters', 'appliedFilter']);
+      const data = await sessionService.getSessionInfo(sessionId, isLive)
+      const session = new Session(data)
+
+      const matching: number[] = [];
+      const visitedEvents: Location[] = [];
+      const tmpMap: Set<string> = new Set();
+
+      session.events.forEach((event) => {
+        if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
+          tmpMap.add(event.url);
+          visitedEvents.push(event);
+        }
+      });
+
+
+      (events as {}[]).forEach(({ key, operator, value }: any) => {
+        session.events.forEach((e, index) => {
+          if (key === e.type) {
+            const val = e.type === 'LOCATION' ? e.url : e.value;
+            if (operator === 'is' && value === val) {
+              matching.push(index);
+            }
+            if (operator === 'contains' && val.includes(value)) {
+              matching.push(index);
+            }
+          }
+        });
+      });
+    } catch (e) {
       console.error(e)
     }
   }
@@ -194,7 +233,7 @@ export default class SessionStore {
       const data = await sessionService.getAutoplayList(params);
       const list = [...this.sessionIds, ...data.map(s => s.sessionId)]
       this.sessionIds = list.filter((id, ind) => list.indexOf(id) === ind);
-    } catch(e) {
+    } catch (e) {
       console.error(e)
     }
   }
@@ -221,6 +260,147 @@ export default class SessionStore {
     ) : null;
 
     this.filteredEvents = filteredEvents
-   this.eventsQuery = query
+    this.eventsQuery = query
   }
+
+  async toggleFavorite(id: string) {
+    try {
+      const r = await sessionService.toggleFavorite(id)
+      if (r.success) {
+        const list = this.list;
+        const current = this.current;
+        const sessionIdx = list.findIndex(({ sessionId }) => sessionId === id);
+        const session = list[sessionIdx]
+        const wasInFavorite = this.favoriteList.findIndex(({ sessionId }) => sessionId === id) > -1;
+
+        if (session && !wasInFavorite) {
+          session.favorite = true
+          this.list[sessionIdx] = session
+        }
+        if (current.sessionId === id) {
+          this.current.favorite = !wasInFavorite
+        }
+
+        if (session) {
+          if (wasInFavorite) {
+            this.favoriteList = this.favoriteList.filter(({ sessionId }) => sessionId !== id)
+          } else {
+            this.favoriteList.push(session)
+          }
+        }
+      } else {
+        console.error(r)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  sortSessions(sortKey: string, sign: number) {
+    const comparator = (s1: Session, s2: Session) => {
+      // @ts-ignore
+      let diff = s1[sortKey] - s2[sortKey];
+      diff = diff === 0 ? s1.startedAt - s2.startedAt : diff;
+      return sign * diff;
+    };
+
+    this.list = this.list.sort(comparator)
+    this.favoriteList = this.favoriteList.sort(comparator)
+    return;
+  }
+
+  setActiveTab(tab: { type: string }) {
+    const list = tab.type === 'all'
+      ? this.list : this.list.filter(s => s.issueTypes.includes(tab.type))
+
+    // @ts-ignore
+    this.activeTab = tab
+    this.sessionIds = list.map(s => s.sessionId)
+  }
+
+  setTimezone(tz: string) {
+    this.timezone = tz;
+  }
+
+  toggleChatWindow(isActive: boolean) {
+    this.showChatWindow = isActive
+  }
+
+  async fetchInsights(filters = {}) {
+    try {
+      const data = await sessionService.getClickMap(filters)
+
+      this.insights = data
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  setFunnelPage(page = {}) {
+    this.funnelPage = page || false
+  }
+
+  /* @deprecated */
+  setTimelinePointer(pointer: {}) {
+    this.timelinePointer = pointer
+  }
+
+  setTimelineTooltip(tp: { time: number, offset: number, isVisible: boolean, timeStr: string }) {
+    this.timeLineTooltip = tp
+  }
+
+  setEditNoteTooltip(tp: { time: number, isVisible: boolean, isEdit: boolean, note: any }) {
+    this.createNoteTooltip = tp
+  }
+
+  filterOutNote(noteId: string) {
+    const current = this.current
+
+    current.notesWithEvents = current.notesWithEvents.filter(n => {
+      if ('noteId' in item) {
+        return item.noteId !== noteId
+      }
+      return true
+    })
+
+    this.current = current
+  }
+
+  addNote(note: Note) {
+    const current = this.current
+
+    current.notesWithEvents.push(note)
+    current.notesWithEvents.sort((a,b) => {
+      const aTs = a.time || a.timestamp
+      const bTs = b.time || b.timestamp
+
+      return aTs - bTs
+    })
+
+    this.current = current
+  }
+
+  updateNote(note: Note) {
+    const noteIndex = this.current.notesWithEvents.findIndex(item => {
+        if ('noteId' in item) {
+          return item.noteId === note.noteId
+        }
+        return false
+      })
+
+    this.current.notesWithEvents[noteIndex] = note
+  }
+
+  setSessionPath(path = {}) {
+    this.sessionPath = path
+  }
+
+  setLastPlayed(sessionId: string) {
+    const list = this.list
+    const sIndex = list.findIndex((s) => s.sessionId === sessionId)
+    if (sIndex !== -1) {
+      this.list[sIndex].viewed = true
+    }
+  }
+
 }

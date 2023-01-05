@@ -1,4 +1,4 @@
-import { Map, List } from 'immutable';
+import { List } from 'immutable';
 import Session from 'Types/session';
 import { camelCased } from 'App/utils';
 
@@ -29,7 +29,6 @@ import SlowestDomains from './slowestDomains';
 import ResourceLoadingTime from './resourceLoadingTime';
 
 import Image from './image';
-import Resource from './resource';
 import Err from './err';
 import MissingResource from './missingResource';
 
@@ -58,7 +57,7 @@ export const WIDGET_LIST = [{
 		name: "User Activity",
 		description: 'The average user feedback score, average number of visited pages per session and average session duration.',
 		thumb: 'user_activity.png',
-		dataWrapper: UserActivity,
+		dataWrapper: data => new UserActivity(data),
 	}, {
 		key: "pageMetrics",
 		name: "Page Metrics",
@@ -85,13 +84,6 @@ export const WIDGET_LIST = [{
       return i2.avgDuration - i1.avgDuration;
     }),
 	},
-	// {
-	// 	key: "errorsTrend",
-	// 	name: "Most Impactful Errors",
-	// 	description: 'List of errors and exceptions, sorted by the number of impacted sessions.',
-	// 	thumb: 'most_Impactful_errors.png',
-	// 	dataWrapper: list => List(list).map(Err),
-	// },
 	{
 		key: "sessionsFrustration",
 		name: "Recent Frustrations",
@@ -114,19 +106,13 @@ export const WIDGET_LIST = [{
 		type: 'resources',
 		dataWrapper: list => List(list).map(MissingResource),
 	},
-	// {
-	// 	key: "sessionsPerformance",
-	// 	name: "Recent Performance Issues",
-	// 	description: "",
-	// 	dataWrapper: list => List(list).map(Session),
-	// }
 	{
 		key: "slowestResources",
 		name: "Slowest Resources",
 		description: 'List of resources that are slowing down your website, sorted by the number of impacted sessions.',
 		thumb: 'na.png',
 		type: 'resources',
-		dataWrapper: list => List(list).map(SlowestResources)
+		dataWrapper: list => list.map(res => new SlowestResources(res))
 	},
 	{
 		key: "overview",
@@ -138,8 +124,6 @@ export const WIDGET_LIST = [{
 				.map(item => OverviewWidget({ key: camelCased(item.key), ...item.data}))
 				.map(widget => widget.update("chart", getChartFormatter(period)))
 		}
-		// dataWrapper: (p, period) => List(p)
-		// 	.update("chart", getChartFormatter(period))
 	},
 	{
 		key: "speedLocation",

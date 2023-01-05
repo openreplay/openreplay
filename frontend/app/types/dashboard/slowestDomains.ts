@@ -1,9 +1,18 @@
 import { Record } from 'immutable';
 
-const SlowestDomains = Record({
-  partition: [],
-  avg: undefined,
-});
+interface ISlowestDomains {
+  partition?: string[];
+  avg: number;
+}
+
+class SlowestDomains {
+  partition: ISlowestDomains["partition"] = [];
+  avg: ISlowestDomains["avg"];
+
+  constructor(data: ISlowestDomains) {
+    Object.assign(this, data)
+  }
+}
 
 function fromJS(slowestDomains = {}) {
   if (slowestDomains instanceof SlowestDomains) return slowestDomains;

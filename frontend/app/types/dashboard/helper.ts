@@ -1,30 +1,9 @@
-export const getDayStartAndEndTimestamps = (date) => {
-  const start = moment(date).startOf('day').valueOf();
-  const end = moment(date).endOf('day').valueOf();
-  return { start, end };
-};
-
-// const getPerformanceDensity = (period) => {
-//   switch (period) {
-//     case HALF_AN_HOUR:
-//       return 30;
-//     case WEEK:
-//       return 84;
-//     case MONTH:
-//       return 90;
-//     case DAY:
-//       return 48;
-//     default:
-//       return 48;
-//   }
-// };
-
 const DAY = 1000 * 60 * 60 * 24;
 const WEEK = DAY * 8;
 
-const startWithZero = num => (num < 10 ? `0${ num }` : `${ num }`);
+const startWithZero = (num: number) => (num < 10 ? `0${ num }` : `${ num }`);
 const weekdays = [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ];
-// const months = [ "January", "February" ];
+
 export const getTimeString = (ts, period) => {
   const date = new Date(ts);
   const diff = period.endTimestamp - period.startTimestamp;
@@ -41,11 +20,11 @@ export const getTimeString = (ts, period) => {
 export const getChartFormatter = period => (data = []) =>
   data.map(({ timestamp, ...rest }) => ({ time: getTimeString(timestamp, period), ...rest, timestamp }));
 
-export const getStartAndEndTimestampsByDensity = (current, start, end, density) => {
+export const getStartAndEndTimestampsByDensity = (current: number, start: number, end: number, density: number) => {
   const diff = end - start;
   const step = Math.floor(diff / density);
   const currentIndex = Math.floor((current - start) / step);
-  const startTimestamp = parseInt(start + currentIndex * step);
-  const endTimestamp = parseInt(startTimestamp + step);
+  const startTimestamp = start + currentIndex * step;
+  const endTimestamp = startTimestamp + step;
   return { startTimestamp, endTimestamp };
 };
