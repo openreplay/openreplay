@@ -28,7 +28,7 @@ export default class WebLivePlayer extends WebPlayer {
 
     this.assistManager = new AssistManager(
       session,
-      f => this.messageManager.setCSSLoading(f),
+      f => this.messageManager.setMessagesLoading(f),
       (msg, idx) => {
         this.incomingMessages.push(msg)
         if (!this.historyFileIsLoading) {

@@ -19,10 +19,14 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic open
 
 
 FROM alpine AS entrypoint
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
+
 RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
 ENV TZ=UTC \
+    GIT_SHA=$GIT_SHA \
     FS_ULIMIT=1000 \
     FS_DIR=/mnt/efs \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \

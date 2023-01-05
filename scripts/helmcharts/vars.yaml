@@ -110,7 +110,7 @@ global:
   assistJWTSecret: "SetARandomStringHere"
   s3:
     region: "us-east-1"
-    endpoint: "http://minio.db.svc.cluster.local:9000"
+    endpoint: "http://minio.openreplay.svc.cluster.local:9000"
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"

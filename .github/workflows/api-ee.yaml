@@ -67,7 +67,10 @@ jobs:
         } && {
           echo "Skipping Security Checks"
         }
-        docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+        images=("chalice" "alerts")
+        for image in ${images[*]};do
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+        done
     - name: Creating old image input
       run: |
         #
@@ -107,7 +110,7 @@ jobs:
 
         cat /tmp/image_override.yaml
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true --no-hooks
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         # We're not passing -ee flag, because helm will add that.

@@ -7,12 +7,7 @@ set -eE -o pipefail  # same as: `set -o errexit -o errtrace`
 trap err EXIT
 
 err() {
-    case "$?" in
-        0)
-            ;;
-        *)
-            ;;
-    esac
+  exit $1
 }
 
 # make all stderr red
@@ -47,7 +42,7 @@ cat <<"EOF"
 
 EOF
 
-  echo -e "${green}Usage: openreplay-cli [ -h | --help ]
+  echo -e "${green}Usage: [DEBUG=1|SKIP_MIGRAION=1] openreplay-cli [ -h | --help ]
                   [ -d | --status ]
                   [ -v | --verbose ]
                   [ -l | --logs SERVICE ] 
@@ -96,11 +91,10 @@ restart() {
 
 
 helmInstall() {
-    [[ FORCE_UPGRADE_FRONTENT -eq 1 ]] && {
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml --set forceUpgradeFrontend=true
-    } || {
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml
-    }
+  # Adding variables
+  [[ $SKIP_MIGRATION -eq 1 ]] && ARGS="--set skipMigration=true"
+  [[ $DEBUG -eq 1 ]] && ARGS="$ARGS --debug"
+  helm upgrade --install openreplay -n app openreplay -f vars.yaml $ARGS
 }
 
 upgrade() {
@@ -145,4 +139,4 @@ do
   esac
 done
 
-[[ $VERBOSE -eq 1 ]] && set -x
+[[ $VERBOSE -eq 1 ]] && set -x || true

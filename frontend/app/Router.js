@@ -89,7 +89,7 @@ const MULTIVIEW_INDEX_PATH = routes.multiviewIndex();
 @connect(
     (state) => {
         const siteId = state.getIn(['site', 'siteId']);
-        const jwt = state.get('jwt');
+        const jwt = state.getIn(['user', 'jwt']);
         const changePassword = state.getIn(['user', 'account', 'changePassword']);
         const userInfoLoading = state.getIn(['user', 'fetchUserInfoRequest', 'loading']);
         return {
