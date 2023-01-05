@@ -44,65 +44,66 @@ function Player(props) {
     activeTab,
     fullView,
     isMultiview,
+    isClickmap,
   } = props;
-  const playerContext = React.useContext(PlayerContext)
+  const playerContext = React.useContext(PlayerContext);
   const screenWrapper = React.useRef();
-  const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE
+  const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE;
 
   React.useEffect(() => {
     props.updateLastPlayedSession(props.sessionId);
     if (!props.closedLive || isMultiview) {
       const parentElement = findDOMNode(screenWrapper.current); //TODO: good architecture
-      playerContext.player.attach(parentElement)
+      playerContext.player.attach(parentElement);
       playerContext.player.play();
     }
-
-  }, [])
+  }, []);
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [props.bottomBlock, props.fullscreen, playerContext.player])
+  }, [props.bottomBlock, props.fullscreen, playerContext.player]);
 
   if (!playerContext.player) return null;
 
   const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw';
   return (
     <div
-        className={cn(className, stl.playerBody, 'flex flex-col relative', fullscreen && 'pb-2')}
-        data-bottom-block={bottomBlockIsActive}
-      >
-        {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-        <div className="relative flex-1 overflow-hidden">
-          <Overlay nextId={nextId} closedLive={closedLive} />
-          <div className={stl.screenWrapper} ref={screenWrapper} />
+      className={cn(className, stl.playerBody, 'flex flex-col relative', fullscreen && 'pb-2')}
+      data-bottom-block={bottomBlockIsActive}
+    >
+      {fullscreen && <EscapeButton onClose={fullscreenOff} />}
+      <div className={cn("relative flex-1", isClickmap ? 'overflow-visible' : 'overflow-hidden')}>
+        <Overlay nextId={nextId} closedLive={closedLive} isClickmap={isClickmap} />
+        <div className={cn(stl.screenWrapper, isClickmap && '!overflow-y-scroll')} ref={screenWrapper} />
+      </div>
+      {!fullscreen && !!bottomBlock && (
+        <div style={{ maxWidth, width: '100%' }}>
+          {bottomBlock === OVERVIEW && <OverviewPanel />}
+          {bottomBlock === CONSOLE && <ConsolePanel />}
+          {bottomBlock === NETWORK && <NetworkPanel />}
+          {/* {bottomBlock === STACKEVENTS && <StackEvents />} */}
+          {bottomBlock === STACKEVENTS && <StackEventPanel />}
+          {bottomBlock === STORAGE && <Storage />}
+          {bottomBlock === PROFILER && <ProfilerPanel />}
+          {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
+          {bottomBlock === GRAPHQL && <GraphQL />}
+          {bottomBlock === EXCEPTIONS && <Exceptions />}
+          {bottomBlock === INSPECTOR && <Inspector />}
         </div>
-        {!fullscreen && !!bottomBlock && (
-          <div style={{ maxWidth, width: '100%' }}>
-            {bottomBlock === OVERVIEW && <OverviewPanel />}
-            {bottomBlock === CONSOLE && <ConsolePanel />}
-            {bottomBlock === NETWORK && (
-              <NetworkPanel />
-            )}
-            {/* {bottomBlock === STACKEVENTS && <StackEvents />} */}
-            {bottomBlock === STACKEVENTS && <StackEventPanel />}
-            {bottomBlock === STORAGE && <Storage />}
-            {bottomBlock === PROFILER && <ProfilerPanel />}
-            {bottomBlock === PERFORMANCE && <ConnectedPerformance />}
-            {bottomBlock === GRAPHQL && <GraphQL />}
-            {bottomBlock === EXCEPTIONS && <Exceptions />}
-            {bottomBlock === INSPECTOR && <Inspector />}
-          </div>
-        )}
-        {!fullView && !isMultiview && <Controls
+      )}
+      {!fullView && !isMultiview && !isClickmap ? (
+        <Controls
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
           jump={playerContext.player.jump}
-         />}
-      </div>
-  )
+        />
+      ) : null}
+    </div>
+  );
 }
 
-export default connect((state) => {
+export default connect(
+  (state) => {
     const isAssist = window.location.pathname.includes('/assist/');
     return {
       fullscreen: state.getIn(['components', 'player', 'fullscreen']),
@@ -118,4 +119,4 @@ export default connect((state) => {
     fullscreenOff,
     updateLastPlayedSession,
   }
-)(Player)
+)(Player);

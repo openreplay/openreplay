@@ -28,11 +28,11 @@ function FilterItem(props: Props) {
         });
     };
 
-    const onOperatorChange = (e: any, { name, value }: any) => {
+    const onOperatorChange = (e: any, { value }: any) => {
         props.onUpdate({ ...filter, operator: value });
     };
 
-    const onSourceOperatorChange = (e: any, { name, value }: any) => {
+    const onSourceOperatorChange = (e: any, { value }: any) => {
         props.onUpdate({ ...filter, sourceOperator: value });
     };
 

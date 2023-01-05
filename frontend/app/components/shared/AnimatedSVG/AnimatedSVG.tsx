@@ -16,6 +16,10 @@ import NoIssues from '../../../svg/ca-no-issues.svg';
 import NoAuditTrail from '../../../svg/ca-no-audit-trail.svg';
 import NoAnnouncements from '../../../svg/ca-no-announcements.svg';
 import NoAlerts from '../../../svg/ca-no-alerts.svg';
+import NoNotes from '../../../svg/ca-no-notes.svg';
+import NoCards from '../../../svg/ca-no-cards.svg';
+import NoSearchResults from '../../../svg/ca-no-search-results.svg';
+import NoDashboards from '../../../svg/ca-no-dashboards.svg';
 
 export enum ICONS {
     DASHBOARD_ICON = 'dashboard-icn',
@@ -35,6 +39,10 @@ export enum ICONS {
     NO_AUDIT_TRAIL = 'ca-no-audit-trail',
     NO_ANNOUNCEMENTS = 'ca-no-announcements',
     NO_ALERTS = 'ca-no-alerts',
+    NO_NOTES = 'ca-no-notes',
+    NO_CARDS = 'ca-no-cards',
+    NO_SEARCH_RESULTS = 'ca-no-search-results',
+    NO_DASHBOARDS = 'ca-no-dashboards',
 }
 
 interface Props {
@@ -79,6 +87,14 @@ function AnimatedSVG(props: Props) {
                 return <img style={{ width: size + 'px' }} src={NoAnnouncements} />;
             case ICONS.NO_ALERTS:
                 return <img style={{ width: size + 'px' }} src={NoAlerts} />;
+            case ICONS.NO_NOTES:
+                return <img style={{ width: size + 'px' }} src={NoNotes} />;
+            case ICONS.NO_CARDS:
+                return <img style={{ width: size + 'px' }} src={NoCards} />;
+            case ICONS.NO_SEARCH_RESULTS:
+                return <img style={{ width: size + 'px' }} src={NoSearchResults} />;
+            case ICONS.NO_DASHBOARDS:
+                return <img style={{ width: size + 'px' }} src={NoDashboards} />;
             default:
                 return null;
         }

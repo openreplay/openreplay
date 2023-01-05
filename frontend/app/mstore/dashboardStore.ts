@@ -1,7 +1,6 @@
 import {
     makeAutoObservable,
     runInAction,
-    computed,
 } from "mobx";
 import Dashboard from "./types/dashboard";
 import Widget from "./types/widget";
@@ -52,7 +51,7 @@ export default class DashboardStore {
     page: number = 1
     pageSize: number = 10
     dashboardsSearch: string = ''
-    sort: any = {}
+    sort: any = { by: 'desc'}
 
     constructor() {
         makeAutoObservable(this);
@@ -66,9 +65,9 @@ export default class DashboardStore {
         this.drillDownFilter.updateKey("endTimestamp", timeStamps.endTimestamp);
     }
 
-    @computed
     get sortedDashboards() {
-        return [...this.dashboards].sort((a, b) => b.createdAt - a.createdAt)
+        const sortOrder = this.sort.by
+        return [...this.dashboards].sort((a, b) => sortOrder === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt)
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {
@@ -119,7 +118,7 @@ export default class DashboardStore {
         return this.dashboards.filter((d) => ids.includes(d.dashboardId));
     }
 
-    initDashboard(dashboard: Dashboard) {
+    initDashboard(dashboard?: Dashboard) {
         this.dashboardInstance = dashboard
             ? new Dashboard().fromJson(dashboard)
             : new Dashboard();
@@ -277,9 +276,9 @@ export default class DashboardStore {
         );
     }
 
-    getDashboard(dashboardId: string): Dashboard | null {
+    getDashboard(dashboardId: string|number): Dashboard | null {
         return (
-            this.dashboards.find((d) => d.dashboardId === dashboardId) || null
+            this.dashboards.find((d) => d.dashboardId == dashboardId) || null
         );
     }
 
@@ -380,10 +379,10 @@ export default class DashboardStore {
         return dashboardService
             .addWidget(dashboard, metricIds)
             .then((response) => {
-                toast.success("Metric added to dashboard.");
+                toast.success("Card added to dashboard.");
             })
             .catch(() => {
-                toast.error("Metric could not be added.");
+                toast.error("Card could not be added.");
             })
             .finally(() => {
                 this.isSaving = false;

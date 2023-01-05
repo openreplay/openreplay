@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import FilterItem from '../FilterItem';
 import { SegmentSelection, Tooltip } from 'UI';
 import { List } from 'immutable';
@@ -48,7 +48,7 @@ function FilterList(props: Props) {
                 <SegmentSelection
                   primary
                   name="eventsOrder"
-                  extraSmall={true}
+                  size="small"
                   onSelect={props.onChangeEventsOrder}
                   value={{ value: filter.eventsOrder }}
                   list={[

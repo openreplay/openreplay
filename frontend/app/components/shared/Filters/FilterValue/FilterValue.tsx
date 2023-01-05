@@ -49,9 +49,9 @@ function FilterValue(props: Props) {
         setDurationValues({ ...durationValues, ...newValues });
     };
 
-    const handleBlur = (e: any) => {
+    const handleBlur = () => {
         if (filter.type === FilterType.DURATION) {
-            const { maxDuration, minDuration, key } = filter;
+            const { maxDuration, minDuration } = filter;
             if (maxDuration || minDuration) return;
             if (maxDuration !== durationValues.maxDuration || minDuration !== durationValues.minDuration) {
                 props.onUpdate({ ...filter, value: [durationValues.minDuration, durationValues.maxDuration] });

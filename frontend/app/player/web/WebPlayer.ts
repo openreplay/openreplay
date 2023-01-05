@@ -1,6 +1,6 @@
 import { Log, LogLevel } from './types'
 
-import type { Store } from '../common/types'
+import type { Store } from 'App/player'
 import Player, { State as PlayerState } from '../player/Player'
 
 import MessageManager from './MessageManager'
@@ -29,8 +29,8 @@ export default class WebPlayer extends Player {
     console.log(session.events, session.stackEvents, session.resources, session.errors)
     let initialLists = live ? {} : {
       event: session.events,
-      stack: session.stackEvents,
-      resource: session.resources, // MBTODO: put ResourceTiming in file
+      stack: session.stackEvents || [],
+      resource: session.resources || [], // MBTODO: put ResourceTiming in file
       exceptions: session.errors.map(({ time, errorId, name }: any) =>
         Log({
           level: LogLevel.ERROR,
@@ -76,6 +76,12 @@ export default class WebPlayer extends Player {
     // this.updateMarketTargets() ??
   }
 
+  scaleFullPage = () => {
+    window.removeEventListener('resize', this.scale)
+    window.addEventListener('resize', this.screen.scaleFullPage)
+    return this.screen.scaleFullPage()
+  }
+
   // Inspector & marker
   mark(e: Element) {
     this.inspectorController.marker?.mark(e)
@@ -105,6 +111,27 @@ export default class WebPlayer extends Player {
   markTargets = (...args: Parameters<TargetMarker['markTargets']>) => {
     this.pause()
     this.targetMarker.markTargets(...args)
+  }
+
+  showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
+    this.pause()
+    this.targetMarker.injectTargets(...args)
+  }
+
+  setMarkerClick = (...args: Parameters<TargetMarker['setOnMarkerClick']>) => {
+    this.targetMarker.setOnMarkerClick(...args)
+  }
+
+
+  // TODO separate message receivers
+  toggleTimetravel = async () => {
+    if (!this.wpState.get().liveTimeTravel) {
+      await this.messageManager.reloadWithUnprocessedFile(() =>
+        this.wpState.update({
+          liveTimeTravel: true,
+        })
+      )
+    }
   }
 
   toggleUserName = (name?: string) => {

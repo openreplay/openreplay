@@ -117,6 +117,10 @@ export default class Screen {
     return this.iframe.contentDocument;
   }
 
+  get iframeStylesRef(): CSSStyleDeclaration {
+    return this.iframe.style
+  }
+
   private boundingRect: DOMRect | null  = null;
   private getBoundingClientRect(): DOMRect {
      if (this.boundingRect === null) {
@@ -172,11 +176,11 @@ export default class Screen {
     return this.getElementsFromInternalPoint(this.getInternalViewportCoordinates(point));
   }
 
-  getElementBySelector(selector: string): Element | null {
+  getElementBySelector(selector: string) {
     if (!selector) return null;
     try {
       const safeSelector = selector.replace(/:/g, '\\\\3A ').replace(/\//g, '\\/');
-      return this.document?.querySelector(safeSelector) || null;
+      return this.document?.querySelector<HTMLElement>(safeSelector) || null;
     } catch (e) {
       console.error("Can not select element. ", e)
       return null
@@ -191,22 +195,22 @@ export default class Screen {
     this.iframe.style.display = flag ? '' : 'none';
   }
 
-  private s: number = 1;
+  private scaleRatio: number = 1;
   getScale() {
-    return this.s;
+    return this.scaleRatio;
   }
 
   scale({ height, width }: Dimensions) {
     if (!this.parentElement) return;
     const { offsetWidth, offsetHeight } = this.parentElement;
 
-    this.s = Math.min(offsetWidth / width, offsetHeight / height);
-    if (this.s > 1) {
-      this.s = 1;
+    this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height);
+    if (this.scaleRatio > 1) {
+      this.scaleRatio = 1;
     } else {
-      this.s = Math.round(this.s * 1e3) / 1e3;
+      this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
     }
-    this.screen.style.transform =  `scale(${ this.s }) translate(-50%, -50%)`;
+    this.screen.style.transform =  `scale(${ this.scaleRatio }) translate(-50%, -50%)`;
     this.screen.style.width = width + 'px';
     this.screen.style.height =  height + 'px';
     this.iframe.style.width = width + 'px';
@@ -214,4 +218,31 @@ export default class Screen {
 
     this.boundingRect = this.overlay.getBoundingClientRect();
   }
+
+  scaleFullPage() {
+    if (!this.parentElement) return;
+    const { width: boxWidth } = this.parentElement.getBoundingClientRect();
+    const { height, width } = this.document.body.getBoundingClientRect();
+    this.overlay.remove()
+
+    this.scaleRatio = boxWidth/width;
+    if (this.scaleRatio > 1) {
+      this.scaleRatio = 1;
+    } else {
+      this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
+    }
+
+    Object.assign(this.screen.style, {
+      top: '0',
+      left: '0',
+      height: height + 'px',
+      width: width + 'px',
+      transform: `scale(${this.scaleRatio})`,
+    })
+    Object.assign(this.iframe.style, {
+      width: width + 'px',
+      height: height + 'px',
+    })
+  }
+
 }

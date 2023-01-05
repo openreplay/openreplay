@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import DashboardListItem from './DashboardListItem';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function DashboardList() {
   const { dashboardStore } = useStore();
@@ -24,12 +25,22 @@ function DashboardList() {
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" />
-          <div className="text-center text-gray-600 my-4">
-            {dashboardsSearch !== ''
-              ? 'No matching results'
-              : "You haven't created any dashboards yet"}
+          <div className="text-center my-4">
+            {dashboardsSearch !== '' ? (
+              'No matching results'
+            ) : (
+              <div>
+                <div>Create your first Dashboard</div>
+                <div className="text-sm color-gray-medium font-normal">
+                  A dashboard lets you visualize trends and insights of data captured by OpenReplay.
+                </div>
+              </div>
+            )}
           </div>
+          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
+          {/* <div className="my-2 bg-active-blue rounded flex items-center justify-center px-80 py-20">
+            <Icon name="grid-1x2" size={40} color="figmaColors-accent-secondary" />
+          </div> */}
         </div>
       }
     >

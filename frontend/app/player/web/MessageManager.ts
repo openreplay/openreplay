@@ -192,6 +192,7 @@ export default class MessageManager {
   private onFileReadFinally = () => {
     this.waitingForFiles = false
     this.setMessagesLoading(false)
+    // this.state.update({ filesLoaded: true })
   }
 
   private async loadMessages() {
@@ -235,7 +236,7 @@ export default class MessageManager {
     .finally(this.onFileReadFinally)
 
     // load devtools
-    if (this.session.devtoolsURL.length) {
+    if (this.session.devtoolsURL?.length) {
       this.state.update({ devtoolsLoading: true })
       loadFiles(this.session.devtoolsURL, createNewParser())
       .catch(() =>

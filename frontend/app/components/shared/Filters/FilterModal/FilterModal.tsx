@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './FilterModal.module.css';
 import { filtersMap } from 'Types/filter/newFilter';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
   const matchingCategories: string[] = [];
@@ -61,7 +62,6 @@ function FilterModal(props: Props) {
   const isResultEmpty = (!filterSearchList || Object.keys(filterSearchList).length === 0)
     && matchingCategories.length === 0 && Object.keys(matchingFilters).length === 0
 
-    // console.log(matchingFilters)
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
       <div className={searchQuery && !isResultEmpty ? 'mb-6' : ''} style={{ columns: matchingCategories.length > 1 ? 'auto 200px' : 1 }}>
@@ -86,8 +86,8 @@ function FilterModal(props: Props) {
         <Loader size="small" loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">
             {isResultEmpty && !fetchingFilterSearchList ? (
-              <div className="flex items-center">
-                <Icon className="color-gray-medium" name="binoculars" size="24" />
+              <div className="flex items-center flex-col">
+                <AnimatedSVG name={ICONS.NO_SEARCH_RESULTS} size={180} />
                 <div className="color-gray-medium font-medium px-3"> No Suggestions Found </div>
               </div>
             ) : Object.keys(filterSearchList).map((key, index) => {
