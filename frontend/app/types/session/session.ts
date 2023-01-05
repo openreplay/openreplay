@@ -60,7 +60,7 @@ export interface ISession {
   eventsCount: number,
   pagesCount: number,
   errorsCount: number,
-  issueTypes: [],
+  issueTypes: string[],
   issues: [],
   referrer: string | null,
   userDeviceHeapSize: number,
