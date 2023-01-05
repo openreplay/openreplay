@@ -1,5 +1,6 @@
 from chalicelib.core import roles, traces, assist_records, sessions
 from chalicelib.core import unlock, signals
+from chalicelib.core import sessions_insights
 from chalicelib.utils import assist_helper
 
 unlock.check()
@@ -124,3 +125,12 @@ def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...)
     if "errors" in data:
         return data
     return {'data': data}
+
+
+@app.post('/{projectId}/dashboard/insights', tags=["insights"])
+@app.post('/{projectId}/dashboard/insights', tags=["insights"])
+def sessions_search(projectId: int, data: schemas_ee.GetInsightsPayloadSchema = Body(...),
+                    context: schemas.CurrentContext = Depends(OR_context)):
+    return {'data': sessions_insights.fetch_selected(selectedEvents=data.selectedEvents, project_id=projectId,
+                                             start_time=data.startDate,
+                                             end_time=data.endDate, time_step=data.timestep)}
