@@ -74,7 +74,7 @@ function WebPlayer(props: any) {
     contextValue.player.togglePlay();
   };
 
-  if (!contextValue.player) return null;
+  if (!contextValue.player || !session) return null;
 
   return (
     <PlayerContext.Provider value={contextValue}>

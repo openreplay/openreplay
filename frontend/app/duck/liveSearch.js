@@ -36,7 +36,7 @@ function reducer(state = initialState, action = {}) {
       return state.set('currentPage', action.page);
     case success(FETCH_SESSION_LIST):
       const { sessions, total } = action.data;
-      const list = List(sessions).map(Session);
+      const list = List(sessions).map(s => new Session(s));
       return state
         .set('list', list)
         .set('total', total);

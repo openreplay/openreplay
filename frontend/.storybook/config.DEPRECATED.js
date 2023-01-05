@@ -11,14 +11,12 @@ const withProvider = (story) => (
 
 // const req = require.context('../app/components/ui', true, /\.stories\.js$/);
 // const issues = require.context('../app/components/Session/Issues', true, /\.stories\.js$/);
-// const bugFinder = require.context('../app/components/BugFinder', true, /\.stories\.js$/);
 
 addDecorator(withProvider);
 addDecorator(story => <MemoryRouter initialEntries={['/']}>{story()}</MemoryRouter>);
 
 // function loadStories() {
 // 	req.keys().forEach(filename => req(filename));
-// 	bugFinder.keys().forEach(filename => bugFinder(filename));
 // }
 
 // configure(loadStories, module);

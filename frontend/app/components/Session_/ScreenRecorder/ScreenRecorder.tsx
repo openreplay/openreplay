@@ -120,5 +120,5 @@ function ScreenRecorder({
 
 export default connect((state: any) => ({
     siteId: state.getIn(['site', 'siteId']),
-    sessionId: state.getIn(['sessions', 'current', 'sessionId']),
+    sessionId: state.getIn(['sessions', 'current']).sessionId,
   }))(observer(ScreenRecorder))

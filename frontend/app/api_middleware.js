@@ -41,9 +41,9 @@ export default () => (next) => (action) => {
 
 function parseError(e) {
   try {
-    return JSON.parse(e).errors || [];
+    return [...JSON.parse(e).errors] || [];
   } catch {
-    return e;
+    return Array.isArray(e) ? e : [e];
   }
 }
 

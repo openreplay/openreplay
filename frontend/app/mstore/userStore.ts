@@ -44,7 +44,7 @@ export default class UserStore {
     }
 
     initUser(user?: any ): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (user) {
                 this.instance = new User().fromJson(user.toJson());
             } else {
@@ -54,7 +54,7 @@ export default class UserStore {
         })
     }
 
-    updateKey(key: string, value: any) {
+    updateKey(key: keyof this, value: any) {
         this[key] = value
 
         if (key === 'searchQuery') {

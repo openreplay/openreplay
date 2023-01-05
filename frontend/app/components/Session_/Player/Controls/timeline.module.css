@@ -73,6 +73,22 @@
 .event.location {
   background: $blue;
 } */
+.redEvent {
+  position: absolute;
+  width: 2px;
+  height: 10px;
+  background: $red;
+  z-index: 3;
+  pointer-events: none;
+  /* top: 0; */
+  /* bottom: 0; */
+  /*  &:hover {
+     width: 10px;
+     height: 10px;
+     margin-left: -6px;
+     z-index: 1;
+   };*/
+}
 
 .markup {
   position: absolute;

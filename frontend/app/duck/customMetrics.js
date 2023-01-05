@@ -1,8 +1,8 @@
 import { List, Map } from 'immutable'; 
 import CustomMetric, { FilterSeries } from 'Types/customMetric'
-import { createFetch, fetchListType, fetchType, saveType, removeType, editType, createRemove, createEdit } from './funcTools/crud';
+import { fetchListType, fetchType, saveType, removeType, editType, createRemove, createEdit } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
-import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
+import { array, success, createListUpdater, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
 import Session from 'Types/session';
 
@@ -28,11 +28,6 @@ const INIT = `${name}/INIT`;
 const SET_ACTIVE_WIDGET = `${name}/SET_ACTIVE_WIDGET`;
 const REMOVE = removeType(name);
 const UPDATE_SERIES = `${name}/UPDATE_SERIES`;
-const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
-
-function chartWrapper(chart = []) {
-  return chart.map(point => ({ ...point, count: Math.max(point.count, 0) }));
-}
 
 const updateItemInList = createListUpdater(idKey);
 const updateInstance = (state, instance) => state.getIn([ "instance", idKey ]) === instance[ idKey ]
@@ -97,7 +92,7 @@ function reducer(state = initialState, action = {}) {
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));
     case success(FETCH_SESSION_LIST):
-      return state.set("sessionList", List(action.data.map(item => ({ ...item, sessions: item.sessions.map(Session) }))));
+      return state.set("sessionList", List(action.data.map(item => ({ ...item, sessions: item.sessions.map(s => new Session(s)) }))));
     case SET_ACTIVE_WIDGET:
       return state.set("activeWidget", action.widget).set('sessionList', List());
 	}
@@ -116,12 +111,6 @@ export default mergeReducers(
 
 export const edit = createEdit(name);
 export const remove = createRemove(name);
-
-export const updateSeries = (index, series) => ({
-  type: UPDATE_SERIES,
-  index,
-  series,
-});
 
 export function fetch(id) {
 	return {
@@ -145,34 +134,6 @@ export function fetchList() {
     types: array(FETCH_LIST),
     call: client => client.get(`/${name}s`),
   };
-}
-
-export function setAlertMetricId(id) {
-  return {
-    type: SET_ALERT_METRIC_ID,
-    id,
-  };
-}
-
-export const addSeries = (series = null) => (dispatch, getState) => {
-  const instance = getState().getIn([ 'customMetrics', 'instance' ]);
-  const seriesIndex = instance.series.size;
-  const newSeries = series || {
-    name: `Series ${seriesIndex + 1}`,
-    filter: new Filter({ filters: [], eventsOrder: 'then' }),
-  };
-
-  dispatch({
-    type: ADD_SERIES,
-    series: newSeries,
-  });
-}
-
-export const removeSeries = (index) => (dispatch, getState) => {
-  dispatch({
-    type: REMOVE_SERIES,
-    index,
-  });
 }
 
 export const init = (instance = null, forceNull = false) => (dispatch, getState) => {

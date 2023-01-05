@@ -88,7 +88,6 @@ export default class APIClient {
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
-      !path.includes('/watchdogs/rules') &&
       !path.includes('/assist/credentials') &&
       !!this.siteId &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
