@@ -12,13 +12,15 @@ interface Props {
   hideEventsOrder?: boolean;
   observeChanges?: () => void;
   saveRequestPayloads?: boolean;
+  supportsEmpty?: boolean
 }
 function FilterList(props: Props) {
-  const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads } = props;
+  const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads, supportsEmpty = true } = props;
   const filters = List(filter.filters);
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
   let rowIndex = 0;
+  const cannotDeleteFilter = filters.size === 1 && !supportsEmpty;
 
   useEffect(observeChanges, [filters]);
 
@@ -69,6 +71,7 @@ function FilterList(props: Props) {
                 onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
                 onRemoveFilter={() => onRemoveFilter(filterIndex)}
                 saveRequestPayloads={saveRequestPayloads}
+                disableDelete={cannotDeleteFilter}
               />
             ) : null
           )}

@@ -201,6 +201,7 @@ function WidgetForm(props: Props) {
               .map((series: any, index: number) => (
                 <div className="mb-2" key={series.name}>
                   <FilterSeries
+                    supportsEmpty={!isClickmap}
                     observeChanges={() => metric.updateKey('hasChanged', true)}
                     hideHeader={isTable || isClickmap}
                     seriesIndex={index}

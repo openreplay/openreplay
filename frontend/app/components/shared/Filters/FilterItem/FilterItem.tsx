@@ -2,7 +2,7 @@ import React from 'react';
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
-import { Icon } from 'UI';
+import { Icon, Button } from 'UI';
 import FilterSource from '../FilterSource';
 import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';
@@ -14,9 +14,10 @@ interface Props {
     onRemoveFilter: () => void;
     isFilter?: boolean;
     saveRequestPayloads?: boolean;
+    disableDelete?: boolean
 }
 function FilterItem(props: Props) {
-    const { isFilter = false, filterIndex, filter, saveRequestPayloads } = props;
+    const { isFilter = false, filterIndex, filter, saveRequestPayloads, disableDelete = false } = props;
     const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
     const isSubFilter = filter.type === FilterType.SUB_FILTERS;
 
@@ -49,7 +50,7 @@ function FilterItem(props: Props) {
     };
 
     return (
-        <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
+        <div className="flex items-center hover:bg-active-blue -mx-5 px-5">
             <div className="flex items-start w-full">
                 {!isFilter && (
                     <div className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-light-shade mr-2">
@@ -102,10 +103,8 @@ function FilterItem(props: Props) {
                     </div>
                 )}
             </div>
-            <div className="flex flex-shrink-0 self-start mt-1 ml-auto px-2">
-                <div className="cursor-pointer p-1" onClick={props.onRemoveFilter}>
-                    <Icon name="trash" size="14" />
-                </div>
+            <div className="flex flex-shrink-0 self-start ml-auto">
+                <Button disabled={disableDelete} variant="text" icon="trash" onClick={props.onRemoveFilter} size="small" iconSize={14} />
             </div>
         </div>
     );

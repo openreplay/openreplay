@@ -11,7 +11,7 @@ interface Props {
   series: any;
   onRemoveSeries: (seriesIndex: any) => void;
   canDelete?: boolean;
-
+  supportsEmpty?: boolean;
   hideHeader?: boolean;
   emptyMessage?: any;
   observeChanges?: () => void;
@@ -23,7 +23,8 @@ function FilterSeries(props: Props) {
     },
     canDelete,
     hideHeader = false,
-    emptyMessage = 'Add user event or filter to define the series by clicking Add Step.'
+    emptyMessage = 'Add user event or filter to define the series by clicking Add Step.',
+    supportsEmpty = true,
   } = props;
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
@@ -74,6 +75,7 @@ function FilterSeries(props: Props) {
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}
                 onChangeEventsOrder={onChangeEventsOrder}
+                supportsEmpty={supportsEmpty}
               />
             ) : (
               <div className="color-gray-medium">{emptyMessage}</div>
