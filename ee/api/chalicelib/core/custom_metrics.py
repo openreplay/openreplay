@@ -6,7 +6,8 @@ from starlette import status
 from decouple import config
 
 import schemas
-from chalicelib.core import funnels, issues, metrics, click_maps
+import schemas_ee
+from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -24,7 +25,7 @@ else:
 PIE_CHART_GROUP = 5
 
 
-def __try_live(project_id, data: schemas.CreateCardSchema):
+def __try_live(project_id, data: schemas_ee.CreateCardSchema):
     results = []
     for i, s in enumerate(data.series):
         s.filter.startDate = data.startTimestamp
@@ -57,11 +58,11 @@ def __try_live(project_id, data: schemas.CreateCardSchema):
     return results
 
 
-def __is_funnel_chart(data: schemas.CreateCardSchema):
+def __is_funnel_chart(data: schemas_ee.CreateCardSchema):
     return data.metric_type == schemas.MetricType.funnel
 
 
-def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
+def __get_funnel_chart(project_id, data: schemas_ee.CreateCardSchema):
     if len(data.series) == 0:
         return {
             "stages": [],
@@ -72,12 +73,12 @@ def __get_funnel_chart(project_id, data: schemas.CreateCardSchema):
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
-def __is_errors_list(data: schemas.CreateCardSchema):
+def __is_errors_list(data: schemas_ee.CreateCardSchema):
     return data.metric_type == schemas.MetricType.table \
         and data.metric_of == schemas.MetricOfTable.errors
 
 
-def __get_errors_list(project_id, user_id, data: schemas.CreateCardSchema):
+def __get_errors_list(project_id, user_id, data: schemas_ee.CreateCardSchema):
     if len(data.series) == 0:
         return {
             "total": 0,
@@ -90,12 +91,12 @@ def __get_errors_list(project_id, user_id, data: schemas.CreateCardSchema):
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_sessions_list(data: schemas.CreateCardSchema):
+def __is_sessions_list(data: schemas_ee.CreateCardSchema):
     return data.metric_type == schemas.MetricType.table \
         and data.metric_of == schemas.MetricOfTable.sessions
 
 
-def __get_sessions_list(project_id, user_id, data: schemas.CreateCardSchema):
+def __get_sessions_list(project_id, user_id, data: schemas_ee.CreateCardSchema):
     if len(data.series) == 0:
         print("empty series")
         return {
@@ -109,15 +110,15 @@ def __get_sessions_list(project_id, user_id, data: schemas.CreateCardSchema):
     return sessions.search_sessions(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
-def __is_predefined(data: schemas.CreateCardSchema):
+def __is_predefined(data: schemas_ee.CreateCardSchema):
     return data.is_template
 
 
-def __is_click_map(data: schemas.CreateCardSchema):
+def __is_click_map(data: schemas_ee.CreateCardSchema):
     return data.metric_type == schemas.MetricType.click_map
 
 
-def __get_click_map_chat(project_id, user_id, data: schemas.CreateCardSchema):
+def __get_click_map_chat(project_id, user_id, data: schemas_ee.CreateCardSchema):
     if len(data.series) == 0:
         return None
     data.series[0].filter.startDate = data.startTimestamp
@@ -126,7 +127,20 @@ def __get_click_map_chat(project_id, user_id, data: schemas.CreateCardSchema):
                                            data=schemas.FlatClickMapSessionsSearch(**data.series[0].filter.dict()))
 
 
-def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
+# EE only
+def __is_insights(data: schemas_ee.CreateCardSchema):
+    return data.metric_type == schemas.MetricType.insights
+
+
+# EE only
+def __get_insights_chat(project_id, user_id, data: schemas_ee.CreateCardSchema):
+    return sessions_insights.fetch_selected(project_id=project_id,
+                                            data=schemas_ee.GetInsightsSchema(startTimestamp=data.startTimestamp,
+                                                                              endTimestamp=data.endTimestamp,
+                                                                              categories=data.metric_value))
+
+
+def merged_live(project_id, data: schemas_ee.CreateCardSchema, user_id=None):
     if data.is_template:
         return get_predefined_metric(key=data.metric_of, project_id=project_id, data=data.dict())
     elif __is_funnel_chart(data):
@@ -137,6 +151,9 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_click_map(data):
         return __get_click_map_chat(project_id=project_id, user_id=user_id, data=data)
+    # EE only
+    elif __is_insights(data):
+        return __get_insights_chat(project_id=project_id, user_id=user_id, data=data)
     elif len(data.series) == 0:
         return []
     series_charts = __try_live(project_id=project_id, data=data)
@@ -150,11 +167,11 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
     return results
 
 
-def __merge_metric_with_data(metric: schemas.CreateCardSchema,
-                             data: schemas.CardChartSchema) -> schemas.CreateCardSchema:
+def __merge_metric_with_data(metric: schemas_ee.CreateCardSchema,
+                             data: schemas.CardChartSchema) -> schemas_ee.CreateCardSchema:
     if data.series is not None and len(data.series) > 0:
         metric.series = data.series
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(
+    metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(
         **{**data.dict(by_alias=True), **metric.dict(by_alias=True)})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
@@ -165,12 +182,13 @@ def __merge_metric_with_data(metric: schemas.CreateCardSchema,
     return metric
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema, metric: schemas.CreateCardSchema = None):
+def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
+               metric: schemas_ee.CreateCardSchema = None):
     if metric is None:
         metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
 
     return merged_live(project_id=project_id, data=metric, user_id=user_id)
 
@@ -179,8 +197,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
-    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
+    metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     results = []
@@ -199,8 +217,8 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessions
     raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
-    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
+    metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     for s in metric.series:
@@ -216,8 +234,8 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSc
     raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
-    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
+    metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     for s in metric.series:
@@ -244,7 +262,7 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
     return results
 
 
-def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False):
+def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         _data = {}
         for i, s in enumerate(data.series):
@@ -570,7 +588,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
+    metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     for s in metric.series:
@@ -606,7 +624,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
                                    include_dashboard=False)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
-    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
+    metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
     else:

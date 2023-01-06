@@ -874,6 +874,7 @@ class MetricTableViewType(str, Enum):
 
 class MetricOtherViewType(str, Enum):
     other_chart = "chart"
+    list_chart = "list"
 
 
 class MetricType(str, Enum):
@@ -888,6 +889,7 @@ class MetricType(str, Enum):
     retention = "retention"
     stickiness = "stickiness"
     click_map = "clickMap"
+    insights = "insights"
 
 
 class MetricOfErrors(str, Enum):
@@ -1018,6 +1020,11 @@ class CreateCardSchema(CardChartSchema):
         return values
 
     @root_validator
+    def restrictions(cls, values):
+        assert values.get("metric_type") != MetricType.insights, f"metricType:{MetricType.insights} not supported yet"
+        return values
+
+    @root_validator
     def validator(cls, values):
         if values.get("metric_type") == MetricType.timeseries:
             assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
@@ -1062,7 +1069,7 @@ class CreateCardSchema(CardChartSchema):
                         assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
 
             assert isinstance(values.get("view_type"), MetricOtherViewType), \
-                f"viewType must be 'chart' for metricOf:{values.get('metric_of')}"
+                f"viewType must be 'chart|list' for metricOf:{values.get('metric_of')}"
 
         return values
 

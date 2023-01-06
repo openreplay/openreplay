@@ -1,10 +1,11 @@
-from typing import Optional, List, Literal
+from enum import Enum
+from typing import Optional, List, Union, Literal
 
 from pydantic import BaseModel, Field, EmailStr
+from pydantic import root_validator
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
-from enum import Enum
 
 
 class Permissions(str, Enum):
@@ -134,3 +135,35 @@ class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema):
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
+
+
+# TODO: move these to schema when Insights is supported on PG
+class MetricOfInsights(str, Enum):
+    issue_categories = "issueCategories"
+
+
+class CreateCardSchema(schemas.CreateCardSchema):
+    metric_of: Union[schemas.MetricOfTimeseries, schemas.MetricOfTable, \
+        schemas.MetricOfErrors, schemas.MetricOfPerformance, \
+        schemas.MetricOfResources, schemas.MetricOfWebVitals, \
+        schemas.MetricOfClickMap, MetricOfInsights] = Field(default=schemas.MetricOfTable.user_id)
+    metric_value: List[Union[schemas.IssueType, InsightCategories]] = Field(default=[])
+
+    @root_validator
+    def restrictions(cls, values):
+        return values
+
+    @root_validator
+    def validator(cls, values):
+        values = super().validator(values)
+        if values.get("metric_type") == schemas.MetricType.insights:
+            assert values.get("view_type") == schemas.MetricOtherViewType.list_chart, \
+                f"viewType must be 'list' for metricOf:{values.get('metric_of')}"
+            assert isinstance(values.get("metric_of"), MetricOfInsights), \
+                f"metricOf must be of type {MetricOfInsights} for metricType:{schemas.MetricType.insights}"
+            if values.get("metric_value") is not None and len(values.get("metric_value")) > 0:
+                for i in values.get("metric_value"):
+                    assert isinstance(i, InsightCategories), \
+                        f"metricValue should be of type [InsightCategories] for metricType:{schemas.MetricType.insights}"
+
+        return values

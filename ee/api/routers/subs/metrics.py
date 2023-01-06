@@ -3,6 +3,7 @@ from typing import Union
 from fastapi import Body, Depends
 
 import schemas
+import schemas_ee
 from chalicelib.core import dashboards, custom_metrics, funnels
 from or_dependencies import OR_context, OR_scope
 from routers.base import get_routers
@@ -62,7 +63,7 @@ def add_card_to_dashboard(projectId: int, dashboardId: int,
 @app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
 def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
-                                       data: schemas.CreateCardSchema = Body(...),
+                                       data: schemas_ee.CreateCardSchema = Body(...),
                                        context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.create_metric_add_widget(project_id=projectId, user_id=context.user_id,
                                                         dashboard_id=dashboardId, data=data)}
@@ -100,7 +101,7 @@ def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
+def try_card(projectId: int, data: schemas_ee.CreateCardSchema = Body(...),
              context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
 
@@ -139,7 +140,7 @@ def get_cards(projectId: int, context: schemas.CurrentContext = Depends(OR_conte
 @app.put('/{projectId}/metrics', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
-def create_card(projectId: int, data: schemas.CreateCardSchema = Body(...),
+def create_card(projectId: int, data: schemas_ee.CreateCardSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
     return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 

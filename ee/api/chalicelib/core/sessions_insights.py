@@ -147,8 +147,6 @@ def query_requests_by_period(project_id, start_time, end_time, time_step, conn=N
 
 def query_most_errors_by_period(project_id, start_time, end_time, time_step, conn=None):
     function, steps = __handle_timestep(time_step)
-    print(function)
-    print(steps)
     query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
                      {function.format(f"toDateTime64('{end_time}', 0)")} as end
                 SELECT T1.hh, count(T2.session_id) as sessions, T2.name as names, 
