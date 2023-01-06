@@ -5,6 +5,7 @@
         "@babel/preset-typescript"
     ],
     "plugins": [
+        "babel-plugin-react-require",
         [ "@babel/plugin-proposal-private-property-in-object", { "loose": true } ],
         [ "@babel/plugin-transform-runtime", { "regenerator": true } ],
         [ "@babel/plugin-proposal-decorators", { "legacy":true } ],

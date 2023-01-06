@@ -87,7 +87,7 @@ function ResponseTimeDistribution(props: Props) {
                   />
                   <Bar minPointSize={1} name="Calls" dataKey="count" stackId="a" fill={colors[2]} label="Backend" />
                   <Tooltip {...Styles.tooltip} labelFormatter={val => 'Page Response Time: ' + val} />
-                  { metric.data.percentiles.map((item, i) => (
+                  { metric.data.percentiles && metric.data.percentiles.map((item: any, i: number) => (
                     <ReferenceLine
                       key={i}
                       label={

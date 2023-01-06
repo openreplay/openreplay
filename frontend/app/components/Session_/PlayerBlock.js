@@ -14,19 +14,21 @@ import styles from './playerBlock.module.css';
 }))
 export default class PlayerBlock extends React.PureComponent {
   render() {
-    const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false, isMultiview } = this.props;
+    const { fullscreen, sessionId, disabled, activeTab, jiraConfig, fullView = false, isMultiview, isClickmap } = this.props;
 
+    const shouldShowSubHeader = !fullscreen && !fullView && !isMultiview && !isClickmap
     return (
-      <div className={cn(styles.playerBlock, 'flex flex-col overflow-x-hidden')} style={{ minWidth: isMultiview ? '100%' : undefined }}>
-        {!fullscreen && !fullView && !isMultiview && (
+      <div className={cn(styles.playerBlock, 'flex flex-col', !isClickmap ? 'overflow-x-hidden' : 'overflow-visible')} style={{ zIndex: isClickmap ? 1 : undefined, minWidth: isMultiview || isClickmap ? '100%' : undefined }}>
+        {shouldShowSubHeader ? (
           <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
-        )}
+        ) : null}
         <Player
           className="flex-1"
           fullscreen={fullscreen}
           activeTab={activeTab}
           fullView={fullView}
           isMultiview={isMultiview}
+          isClickmap={isClickmap}
         />
       </div>
     );

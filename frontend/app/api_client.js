@@ -25,7 +25,7 @@ const siteIdRequiredPaths = [
   '/heatmaps',
   '/custom_metrics',
   '/dashboards',
-  '/metrics',
+  '/cards',
   '/unprocessed',
   '/notes',
   // '/custom_metrics/sessions',

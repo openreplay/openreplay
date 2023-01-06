@@ -94,7 +94,7 @@ export default class SessionStore {
   getSessions(filter: any): Promise<any> {
     return new Promise((resolve, reject) => {
       sessionService
-        .getSessions(filter.toJson())
+        .getSessions(filter.toJson?.() || filter)
         .then((response: any) => {
           resolve({
             sessions: response.sessions.map((session: any) => new Session().fromJson(session)),

@@ -11,6 +11,7 @@ interface Props {
   series: any;
   onRemoveSeries: (seriesIndex: any) => void;
   canDelete?: boolean;
+
   hideHeader?: boolean;
   emptyMessage?: any;
   observeChanges?: () => void;

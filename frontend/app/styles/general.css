@@ -360,3 +360,13 @@ p {
 .dev-row  {
   transition: all 0.5s;
 }
+
+.hover-color-teal:hover {
+  color: $teal !important;
+  & div {
+    color: $teal !important;
+  }
+  & svg {
+    fill: $teal !important;
+  }
+}

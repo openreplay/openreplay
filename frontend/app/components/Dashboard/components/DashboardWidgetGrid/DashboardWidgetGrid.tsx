@@ -3,8 +3,8 @@ import { useStore } from 'App/mstore';
 import WidgetWrapper from '../WidgetWrapper';
 import { NoContent, Loader, Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-import AddMetricContainer from './AddMetricContainer';
 import Widget from 'App/mstore/types/widget';
+import MetricTypeList from '../MetricTypeList';
 
 interface Props {
   siteId: string;
@@ -38,23 +38,28 @@ function DashboardWidgetGrid(props: Props) {
         show={list.length === 0}
         icon="no-metrics-chart"
         title={
-          <span className="text-2xl capitalize-first text-figmaColors-text-primary">
-            Build your dashboard
-          </span>
-        }
-        subtext={
-          <div className="w-4/5 m-auto mt-4">
-            <AddMetricContainer siteId={siteId} />
+          <div className="bg-white rounded">
+            <div className="border-b p-5">
+              <div className="text-2xl font-normal color-gray-darkest">
+                There are no cards in this dashboard
+              </div>
+              <div className="text-base font-normal">
+                Try the most commonly used metrics or graphs to begin.
+              </div>
+            </div>
+            <div className="grid grid-cols-4 p-8 gap-2">
+              <MetricTypeList dashboardId={parseInt(dashboardId)} siteId={siteId} />
+            </div>
           </div>
         }
       >
-        <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
-          {smallWidgets.length > 0 ? (
-            <>
-              <div className="font-semibold text-xl py-4 flex items-center gap-2 col-span-4">
-                <Icon name="grid-horizontal" size={26} />
-                Web Vitals
-              </div>
+        <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>{smallWidgets.length > 0 ? (
+          <>
+            <div className="font-semibold text-xl py-4 flex items-center gap-2 col-span-4">
+              <Icon name="grid-horizontal" size={26} />
+              Web Vitals
+            </div>
+
               {smallWidgets &&
                 smallWidgets.map((item: any, index: any) => (
                   <React.Fragment key={item.widgetId}>
@@ -63,23 +68,24 @@ function DashboardWidgetGrid(props: Props) {
                       widget={item}
                       moveListItem={(dragIndex: any, hoverIndex: any) =>
                         dashboard.swapWidgetPosition(dragIndex, hoverIndex)
-                      }
-                      dashboardId={dashboardId}
+
+                      }dashboardId={dashboardId}
                       siteId={siteId}
                       isWidget={true}
                       grid="vitals"
                     />
                   </React.Fragment>
                 ))}
-            </>
-          ) : null}
 
-          {smallWidgets.length > 0 && regularWidgets.length > 0 ? (
-            <div className="font-semibold text-xl py-4 flex items-center gap-2 col-span-4">
-              <Icon name="grid-horizontal" size={26} />
-              All Metrics
-            </div>
-          ) : null}
+          </>
+        ) : null}
+
+        {smallWidgets.length > 0 && regularWidgets.length > 0 ? (
+          <div className="font-semibold text-xl py-4 flex items-center gap-2 col-span-4">
+            <Icon name="grid-horizontal" size={26} />
+            All Cards
+          </div>
+        ) : null}
 
           {regularWidgets &&
             regularWidgets.map((item: any, index: any) => (
@@ -97,10 +103,6 @@ function DashboardWidgetGrid(props: Props) {
                 />
               </React.Fragment>
             ))}
-
-          <div className="col-span-2" id="no-print">
-            <AddMetricContainer siteId={siteId} />
-          </div>
         </div>
       </NoContent>
     </Loader>

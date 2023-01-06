@@ -97,10 +97,6 @@ helmInstall() {
   helm upgrade --install openreplay -n app openreplay -f vars.yaml $ARGS
 }
 
-upgrade() {
-    sed -i "s/tag:.*/  tag: 'latest'/g" ./app/$1.yaml
-}
-
 logs() {
     check
     kubectl logs --timestamps -n app -l app.kubernetes.io/name=$1 -f

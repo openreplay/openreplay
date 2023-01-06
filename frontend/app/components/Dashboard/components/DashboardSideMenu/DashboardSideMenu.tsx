@@ -38,7 +38,7 @@ function DashboardSideMenu(props: Props) {
         <SideMenuitem
           active={isMetric}
           id="menu-manage-alerts"
-          title="Metrics"
+          title="Cards"
           iconName="bar-chart-line"
           onClick={() => redirect(withSiteId(metrics(), siteId))}
         />

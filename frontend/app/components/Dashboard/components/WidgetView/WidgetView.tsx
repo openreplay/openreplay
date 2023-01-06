@@ -73,7 +73,7 @@ function WidgetView(props: Props) {
                 <Breadcrumb
                     items={[
                         {
-                            label: dashboardName ? dashboardName : 'Metrics',
+                            label: dashboardName ? dashboardName : 'Cards',
                             to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId),
                         },
                         { label: widget.name },
@@ -100,7 +100,7 @@ function WidgetView(props: Props) {
                             </h1>
                             <div className="text-gray-600 w-full cursor-pointer" onClick={() => setExpanded(!expanded)}>
                                 <div className="flex items-center select-none w-fit ml-auto">
-                                    <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
+                                    <span className="mr-2 color-teal">{expanded ? 'Collapse' : 'Edit'}</span>
                                     <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
                                 </div>
                             </div>
@@ -112,7 +112,7 @@ function WidgetView(props: Props) {
                     <WidgetPreview className="mt-8" name={widget.name} />
                     {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                         <>
-                            {(widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" />}
+                            {(widget.metricType === 'table' || widget.metricType === 'timeseries' || widget.metricType === 'clickMap') && <WidgetSessions className="mt-8" />}
                             {widget.metricType === 'funnel' && <FunnelIssues />}
                         </>
                     )}

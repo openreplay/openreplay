@@ -1,7 +1,7 @@
 import type Screen from '../Screen/Screen'
 import type { Point } from '../Screen/types'
 import type { Store } from '../../common/types'
-
+import { clickmapStyles } from './clickmapStyles'
 
 function getOffset(el: Element, innerWindow: Window) {
 	const rect = el.getBoundingClientRect();
@@ -36,6 +36,10 @@ export interface State {
 
 
 export default class TargetMarker {
+  private clickMapOverlay: HTMLDivElement | null = null
+  private clickContainers: HTMLDivElement[] = []
+  private smallClicks: HTMLDivElement[] = []
+  private onMarkerClick: (selector: string, innerText: string) => void
 	static INITIAL_STATE: State = {
 		markedTargets: null,
 		activeTargetIndex: 0
@@ -50,8 +54,8 @@ export default class TargetMarker {
     const { markedTargets } = this.store.get()
     if (markedTargets) {
       this.store.update({
-        markedTargets: markedTargets.map((mt: any) => ({ 
-          ...mt, 
+        markedTargets: markedTargets.map((mt: any) => ({
+          ...mt,
           boundingRect: this.calculateRelativeBoundingRect(mt.el),
         })),
       });
@@ -63,12 +67,12 @@ export default class TargetMarker {
     if (!parentEl) return {top:0, left:0, width:0,height:0} //TODO: can be initialized(?) on mounted screen only
     const { top, left, width, height } = el.getBoundingClientRect()
     const s = this.screen.getScale()
-    const scrinRect = this.screen.overlay.getBoundingClientRect() //this.screen.getBoundingClientRect() (now private)
+    const screenRect = this.screen.overlay.getBoundingClientRect() //this.screen.getBoundingClientRect() (now private)
     const parentRect = parentEl.getBoundingClientRect()
 
     return {
-      top: top*s + scrinRect.top - parentRect.top,
-      left: left*s + scrinRect.left - parentRect.left,
+      top: top*s + screenRect.top - parentRect.top,
+      left: left*s + screenRect.left - parentRect.left,
       width: width*s,
       height: height*s,
     }
@@ -95,7 +99,7 @@ export default class TargetMarker {
           })
         }, 0)
       }
-     
+
     }
     this.store.update({ activeTargetIndex: index });
   }
@@ -111,6 +115,7 @@ export default class TargetMarker {
       selections.forEach((s) => {
         const el = this.screen.getElementBySelector(s.selector);
         if (!el) return;
+
         markedTargets.push({
           ...s,
           el,
@@ -120,7 +125,7 @@ export default class TargetMarker {
           count: s.count,
         })
       });
-      this.actualScroll = this.screen.getCurrentScroll() 
+      this.actualScroll = this.screen.getCurrentScroll()
       this.store.update({ markedTargets });
     } else {
       if (this.actualScroll) {
@@ -129,6 +134,102 @@ export default class TargetMarker {
       }
       this.store.update({ markedTargets: null });
     }
+  }
+
+
+  injectTargets(selections: { selector: string, count: number, clickRage?: boolean }[] | null) {
+    if (selections) {
+      const totalCount = selections.reduce((a, b) => {
+        return a + b.count
+      }, 0);
+
+      this.clickMapOverlay?.remove()
+      const overlay = document.createElement("div")
+      const iframeSize = this.screen.iframeStylesRef
+      const scaleRatio = this.screen.getScale()
+      Object.assign(overlay.style, clickmapStyles.overlayStyle({ height: iframeSize.height, width: iframeSize.width, scale: scaleRatio }))
+
+      this.clickMapOverlay = overlay
+      selections.forEach((s, i) => {
+        const el = this.screen.getElementBySelector(s.selector);
+        if (!el) return;
+
+        const bubbleContainer = document.createElement("div")
+        const {top, left, width, height} = el.getBoundingClientRect()
+        const totalClicks = document.createElement("div")
+        totalClicks.innerHTML = `${s.count} ${s.count !== 1 ? 'Clicks' : 'Click'}`
+        Object.assign(totalClicks.style, clickmapStyles.totalClicks)
+
+        const percent = document.createElement("div")
+        percent.style.fontSize = "14px"
+        percent.innerHTML = `${Math.round((s.count * 100) / totalCount)}% of the clicks recorded in this page`
+
+        bubbleContainer.appendChild(totalClicks)
+        bubbleContainer.appendChild(percent)
+        const containerId = `clickmap-bubble-${i}`
+        bubbleContainer.id = containerId
+        this.clickContainers.push(bubbleContainer)
+        Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left, height }))
+
+        const border = document.createElement("div")
+        Object.assign(border.style, clickmapStyles.highlight({ width, height, top, left }))
+
+        const smallClicksBubble = document.createElement("div")
+        smallClicksBubble.innerHTML = `${s.count}`
+        const smallClicksId =  containerId + '-small'
+        smallClicksBubble.id = smallClicksId
+        this.smallClicks.push(smallClicksBubble)
+
+        border.onclick = (e) => {
+          e.stopPropagation()
+          const innerText = el.innerText.length > 25 ? `${el.innerText.slice(0, 20)}...` : el.innerText
+          this.onMarkerClick?.(s.selector, innerText)
+          this.clickContainers.forEach(container => {
+            if (container.id === containerId) {
+              container.style.visibility = "visible"
+            } else {
+              container.style.visibility = "hidden"
+            }
+          })
+          this.smallClicks.forEach(container => {
+            if (container.id !== smallClicksId) {
+              container.style.visibility = "visible"
+            } else {
+              container.style.visibility = "hidden"
+            }
+          })
+        }
+
+        overlay.onclick = (e) => {
+          e.stopPropagation()
+          this.onMarkerClick('', '')
+          this.clickContainers.forEach(container => {
+            container.style.visibility = "hidden"
+          })
+          this.smallClicks.forEach(container => {
+            container.style.visibility = "visible"
+          })
+        }
+
+        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage }))
+
+        border.appendChild(smallClicksBubble)
+        overlay.appendChild(bubbleContainer)
+        overlay.appendChild(border)
+      });
+
+      this.screen.getParentElement()?.appendChild(overlay)
+    } else {
+      this.store.update({ markedTargets: null });
+      this.clickMapOverlay?.remove()
+      this.clickMapOverlay = null
+      this.smallClicks = []
+      this.clickContainers = []
+    }
+  }
+
+  setOnMarkerClick(cb: (selector: string) => void) {
+    this.onMarkerClick = cb
   }
 
 }
