@@ -14,7 +14,7 @@ export default () => (next) => (action) => {
   return call(client)
     .then(async (response) => {
       if (response.status === 403) {
-        next({ type: LOGIN.FAILURE, data: null });
+        next({ type: LOGIN.FAILURE });
       }
       if (!response.ok) {
         const text = await response.text();
