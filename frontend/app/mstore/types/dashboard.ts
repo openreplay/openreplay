@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action, runInAction } from "mobx"
+import { makeAutoObservable, runInAction } from "mobx"
 import Widget from "./widget"
 import { dashboardService  } from "App/services"
 import { toast } from 'react-toastify';
@@ -6,7 +6,7 @@ import { DateTime } from 'luxon';
 
 export default class Dashboard {
     public static get ID_KEY():string { return "dashboardId" }
-    dashboardId: any = undefined
+    dashboardId?: string = undefined
     name: string = "Untitled Dashboard"
     description: string = ""
     isPublic: boolean = true

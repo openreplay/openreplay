@@ -15,7 +15,6 @@ export default class Widget {
     widgetId: any = undefined
     category?: string = undefined
     name: string = "Untitled Card"
-    // metricType: string = "timeseries"
     metricType: string = "timeseries"
     metricOf: string = "sessionCount"
     metricValue: string = ""
@@ -37,8 +36,6 @@ export default class Widget {
     period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
     hasChanged: boolean = false
 
-    sessionsLoading: boolean = false
-
     position: number = 0
     data: any = {
         sessions: [],
@@ -51,7 +48,6 @@ export default class Widget {
     isLoading: boolean = false
     isValid: boolean = false
     dashboardId: any = undefined
-    colSpan: number = 2
     predefinedKey: string = ''
 
     constructor() {
@@ -103,10 +99,6 @@ export default class Widget {
         return this
     }
 
-    setPeriod(period: any) {
-        this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
-    }
-
     toWidget(): any {
         return {
             config: {
@@ -115,10 +107,6 @@ export default class Widget {
                 row: this.config.row,
             }
         }
-    }
-
-    toJsonDrilldown() {
-        return this.series.map((series: any) => series.toJson())
     }
 
     toJson() {
@@ -167,18 +155,6 @@ export default class Widget {
                         sessions: cat.sessions.map((s: any) => new Session().fromJson(s))
                     }
                 }))
-            })
-        })
-    }
-
-    fetchIssues(filter: any): Promise<any> {
-        return new Promise((resolve) => {
-            metricService.fetchIssues(filter).then((response: any) => {
-                const significantIssues = response.issues.significant ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue)) : []
-                const insignificantIssues = response.issues.insignificant ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue)) : []
-                resolve({
-                    issues: significantIssues.length > 0 ? significantIssues : insignificantIssues,
-                })
             })
         })
     }

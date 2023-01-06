@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 import { Button, Form, Input, SegmentSelection, Checkbox, Icon } from 'UI';
 import { alertConditions as conditions } from 'App/constants';
-import { client, CLIENT_TABS } from 'App/routes';
-import { connect } from 'react-redux';
 import stl from './alertForm.module.css';
 import DropdownChips from './DropdownChips';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
-import { fetchTriggerOptions } from 'Duck/alerts';
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite'
 import Select from 'Shared/Select';
 
 const thresholdOptions = [
@@ -44,26 +43,28 @@ const Section = ({ index, title, description, content }) => (
   </div>
 );
 
-const integrationsRoute = client(CLIENT_TABS.INTEGRATIONS);
-
 const AlertForm = (props) => {
   const {
-    instance,
     slackChannels,
     msTeamsChannels,
     webhooks,
-    loading,
     onDelete,
-    deleting,
-    triggerOptions,
     style = { width: '580px', height: '100vh' },
   } = props;
+  const { alertsStore } = useStore()
+  const {
+    instance,
+    triggerOptions,
+    loading,
+  } = alertsStore
+  const deleting = loading
+
   const write = ({ target: { value, name } }) => props.edit({ [name]: value });
   const writeOption = (e, { name, value }) => props.edit({ [name]: value.value });
   const onChangeCheck = ({ target: { checked, name } }) => props.edit({ [name]: checked });
 
   useEffect(() => {
-    props.fetchTriggerOptions();
+    alertsStore.fetchTriggerOptions();
   }, []);
 
   const writeQueryOption = (e, { name, value }) => {
@@ -378,12 +379,4 @@ const AlertForm = (props) => {
   );
 };
 
-export default connect(
-  (state) => ({
-    instance: state.getIn(['alerts', 'instance']),
-    triggerOptions: state.getIn(['alerts', 'triggerOptions']),
-    loading: state.getIn(['alerts', 'saveRequest', 'loading']),
-    deleting: state.getIn(['alerts', 'removeRequest', 'loading']),
-  }),
-  { fetchTriggerOptions }
-)(AlertForm);
+export default observer(AlertForm);

@@ -1,16 +1,16 @@
 import Alert from 'Types/alert';
 import { Map } from 'immutable';
 import crudDuckGenerator from './tools/crudDuck';
-import withRequestState, { RequestTypes } from 'Duck/requestStateCreator';
+import { RequestTypes } from 'Duck/requestStateCreator';
 import { reduceDucks } from 'Duck/tools';
 
 const name = 'alert'
 const idKey = 'alertId';
-const crudDuck = crudDuckGenerator(name, Alert, { idKey: idKey });
+const crudDuck = crudDuckGenerator(name, (d) => new Alert(d), { idKey: idKey });
 export const { fetchList, init, edit, remove } = crudDuck.actions;
 const FETCH_TRIGGER_OPTIONS = new RequestTypes(`${name}/FETCH_TRIGGER_OPTIONS`);
 const CHANGE_SEARCH = `${name}/CHANGE_SEARCH`
-
+console.log(fetchList(), init(), edit(), remove())
 const initialState = Map({
   definedPercent: 0,
   triggerOptions: [],

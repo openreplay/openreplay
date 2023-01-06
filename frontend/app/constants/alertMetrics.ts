@@ -18,4 +18,4 @@ export default [
   { value: 'performance.crashes.count', label: 'performance.crashes.count', unit: '' },
   { value: 'errors.javascript.count', label: 'errors.javascript.count', unit: '' },
   { value: 'errors.backend.count', label: 'errors.backend.count', unit: '' },
-];
+] as const;
