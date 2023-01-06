@@ -1,7 +1,7 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body, HTTPException
+from fastapi import Depends, Body, HTTPException, Response
 from fastapi.responses import JSONResponse
 from starlette import status
 
@@ -53,6 +53,12 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     response.set_cookie(key="jwt", value=content['jwt'], domain=helper.get_domain(),
                         expires=config("JWT_EXPIRATION", cast=int))
     return response
+
+
+@app.get('/logout', tags=["login", "logout"])
+def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
+    response.delete_cookie("jwt")
+    return {"data": "success"}
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
