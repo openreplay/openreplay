@@ -132,5 +132,6 @@ def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...)
 def sessions_search(projectId: int, data: schemas_ee.GetInsightsPayloadSchema = Body(...),
                     context: schemas_ee.CurrentContext = Depends(OR_context)):
     return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId,
-                                                     start_time=data.startDate,
-                                                     end_time=data.endDate, time_step=data.timestep)}
+                                                     # start_time=data.startDate,
+                                                     # end_time=data.endDate
+                                                     )}

@@ -39,15 +39,21 @@ class SignalsSchema(BaseModel):
     data: dict = Field(default={})
 
 
+class InsightEvents(str, Enum):
+    errors = "errors"
+    network = "network"
+    rage = "rage"
+    resources = "resources"
+
+
 class GetInsightsPayloadSchema(BaseModel):
-    startDate: int = Field(TimeUTC.now(delta_days=-1))
-    endDate: int = Field(TimeUTC.now())
-    timestep: str = Field(...)
-    # list of selected events must be non empty. Available events are 'errors', 'network', 'rage' and 'resources'
-    selected_events: List[str] = Field(..., min_items=1)
+    startTimestamp: int = Field(TimeUTC.now(-7))
+    endTimestamp: int = Field(TimeUTC.now())
+    time_step: int = Field(default=3600)
+    selected_events: List[InsightEvents] = Field(..., min_items=1)
+
     class Config:
         alias_generator = schemas.attribute_to_camel_case
-
 
 
 class CreateMemberSchema(schemas.CreateMemberSchema):
