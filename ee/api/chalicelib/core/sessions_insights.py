@@ -210,8 +210,9 @@ SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.avg_cpu) as cpu_used, avg
 
     _tmp = _mean_table_index(table_hh2, memory_idx)
     # _tmp = table_hh2[:, memory_idx].mean()
-    return {'cpu_increase': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
-            'memory_increase': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp}
+    # TODO: what if _tmp=0 ?
+    return {'cpuIncrease': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
+            'memoryIncrease': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp}
 
 
 def query_click_rage_by_period(project_id, start_time, end_time, time_step, conn=None):
