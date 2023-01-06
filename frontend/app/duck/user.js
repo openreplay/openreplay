@@ -37,7 +37,7 @@ const setClient = (state, data) => {
 }
 
 export const UPDATE_JWT = 'jwt/UPDATE';
-export const DELETE = 'jwt/DELETE'
+export const DELETE = new RequestTypes('jwt/DELETE')
 export function setJwt(data) {
   return {
     type: UPDATE_JWT,
@@ -63,14 +63,13 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('account', Account(action.data)).set('passwordErrors', List());
     case FETCH_TENANTS.SUCCESS:
       return state.set('authDetails', action.data);
-      // return state.set('tenants', action.data.map(i => ({ text: i.name, value: i.tenantId})));
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
     case FETCH_ACCOUNT.FAILURE:
     case LOGIN.FAILURE:
-    case DELETE:
-      console.log('hi')
-      deleteCookie('jwt', '/', '.openreplay.com')
+    case DELETE.SUCCESS:
+    case DELETE.FAILURE:
+      deleteCookie('jwt', '/', 'openreplay.com')
       return initialState;
     case PUT_CLIENT.REQUEST:
       return state.mergeIn([ 'account' ], action.params);
@@ -136,7 +135,8 @@ export const fetchUserInfo = () => ({
 
 export function logout() {
   return {
-    type: DELETE,
+    types: DELETE.toArray(),
+    call: client => client.post('/logout')
   };
 }
 
