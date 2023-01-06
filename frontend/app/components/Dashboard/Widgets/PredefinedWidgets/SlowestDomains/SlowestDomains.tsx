@@ -2,7 +2,7 @@ import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { numberWithCommas } from 'App/utils';
-import Bar from 'App/components/Dashboard/Widgets/SlowestDomains/Bar';
+import Bar from './Bar';
 import { NO_METRIC_DATA } from 'App/constants/messages'
 
 interface Props {

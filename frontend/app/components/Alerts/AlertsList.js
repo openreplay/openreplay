@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader, NoContent, Input, Button } from 'UI';
 import AlertItem from './AlertItem';
-import { fetchList, init } from 'Duck/alerts';
+import { fetchList } from 'Duck/alerts';
 import { connect } from 'react-redux';
 import { getRE } from 'App/utils';
 
@@ -54,5 +54,5 @@ export default connect(
         instance: state.getIn(['alerts', 'instance']),
         loading: state.getIn(['alerts', 'loading']),
     }),
-    { fetchList, init }
+    { fetchList }
 )(AlertsList);

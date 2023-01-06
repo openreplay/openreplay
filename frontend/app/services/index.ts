@@ -8,7 +8,7 @@ import ErrorService from "./ErrorService";
 import NotesService from "./NotesService";
 import RecordingsService from "./RecordingsService";
 import ConfigService from './ConfigService'
-
+import AlertsService from './AlertsService'
 export const dashboardService  = new DashboardService();
 export const metricService = new MetricService();
 export const sessionService = new SessionSerivce();
@@ -19,3 +19,4 @@ export const errorService = new ErrorService();
 export const notesService = new NotesService();
 export const recordingsService = new RecordingsService();
 export const configService = new ConfigService();
+export const alertsService = new AlertsService();

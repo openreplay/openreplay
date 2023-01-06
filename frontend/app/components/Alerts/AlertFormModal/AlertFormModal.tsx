@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { SlideModal, IconButton } from 'UI';
-import { init, edit, save, remove } from 'Duck/alerts';
+import { SlideModal } from 'UI';
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite'
 import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import AlertForm from '../AlertForm';
 import { connect } from 'react-redux';
 import { setShowAlerts } from 'Duck/dashboard';
-import { EMAIL, SLACK, WEBHOOK } from 'App/constants/schedule';
+import { SLACK, WEBHOOK } from 'App/constants/schedule';
 import { confirm } from 'UI';
 
 interface Props {
@@ -14,12 +15,9 @@ interface Props {
     onClose?: () => void;
     webhooks: any;
     fetchWebhooks: Function;
-    save: Function;
-    remove: Function;
-    init: Function;
-    edit: Function;
 }
 function AlertFormModal(props: Props) {
+    const { alertsStore } = useStore()
     const { metricId = null, showModal = false, webhooks } = props;
     const [showForm, setShowForm] = useState(false);
 
@@ -38,7 +36,7 @@ function AlertFormModal(props: Props) {
 
     const saveAlert = (instance) => {
         const wasUpdating = instance.exists();
-        props.save(instance).then(() => {
+        alertsStore.save(instance).then(() => {
             if (!wasUpdating) {
                 toggleForm(null, false);
             }
@@ -56,7 +54,7 @@ function AlertFormModal(props: Props) {
                 confirmation: `Are you sure you want to permanently delete this alert?`,
             })
         ) {
-            props.remove(instance.alertId).then(() => {
+            alertsStore.remove(instance.alertId).then(() => {
                 toggleForm(null, false);
             });
         }
@@ -64,7 +62,7 @@ function AlertFormModal(props: Props) {
 
     const toggleForm = (instance, state) => {
         if (instance) {
-            props.init(instance);
+            alertsStore.init(instance);
         }
         return setShowForm(state ? state : !showForm);
     };
@@ -83,7 +81,7 @@ function AlertFormModal(props: Props) {
                 showModal && (
                     <AlertForm
                         metricId={metricId}
-                        edit={props.edit}
+                        edit={alertsStore.edit}
                         slackChannels={slackChannels}
                         webhooks={hooks}
                         onSubmit={saveAlert}
@@ -100,7 +98,6 @@ function AlertFormModal(props: Props) {
 export default connect(
     (state) => ({
         webhooks: state.getIn(['webhooks', 'list']),
-        instance: state.getIn(['alerts', 'instance']),
     }),
-    { init, edit, save, remove, fetchWebhooks, setShowAlerts }
-)(AlertFormModal);
+    { fetchWebhooks, setShowAlerts }
+)(observer(AlertFormModal));
