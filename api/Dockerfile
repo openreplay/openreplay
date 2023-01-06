@@ -1,4 +1,4 @@
-FROM python:3.10-alpine
+FROM python:3.12.0a1-alpine
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apk add --no-cache build-base tini
