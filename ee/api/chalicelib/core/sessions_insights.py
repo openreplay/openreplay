@@ -100,12 +100,16 @@ def __handle_timestep(time_step):
 
 def query_requests_by_period(project_id, start_time, end_time, time_step, conn=None):
     function, steps = __handle_timestep(time_step)
-    query = f"""WITH
-  {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-  {function.format(f"toDateTime64('{end_time}', 0)")} as end
-SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.success) as success_rate, T2.url_host as names, T2.url_path as source, avg(T2.duration) as avg_duration FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-    LEFT JOIN (SELECT session_id, url_host, url_path, success, message, duration, {function.format('datetime')} as dtime FROM experimental.events WHERE project_id = {project_id} AND event_type = 'REQUEST') AS T2 ON T2.dtime = T1.hh GROUP BY T1.hh, T2.url_host, T2.url_path ORDER BY T1.hh DESC;
-    """
+    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
+                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+                SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.success) as success_rate, T2.url_host as names, 
+                        T2.url_path as source, avg(T2.duration) as avg_duration 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
+                LEFT JOIN (SELECT session_id, url_host, url_path, success, message, duration, {function.format('datetime')} as dtime 
+                           FROM experimental.events 
+                           WHERE project_id = {project_id} AND event_type = 'REQUEST') AS T2 ON T2.dtime = T1.hh 
+                GROUP BY T1.hh, T2.url_host, T2.url_path 
+                ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
             res = conn.execute(query=query)
@@ -191,11 +195,16 @@ def query_most_errors_by_period(project_id, start_time, end_time, time_step, con
 
 def query_cpu_memory_by_period(project_id, start_time, end_time, time_step, conn=None):
     function, steps = __handle_timestep(time_step)
-    query = f"""WITH
-  {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-  {function.format(f"toDateTime64('{end_time}', 0)")} as end
-SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.avg_cpu) as cpu_used, avg(T2.avg_used_js_heap_size) as memory_used, T2.url_host as names, groupUniqArray(T2.url_path) as sources FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-    LEFT JOIN (SELECT session_id, url_host, url_path, avg_used_js_heap_size, avg_cpu, {function.format('datetime')} as dtime FROM experimental.events WHERE project_id = {project_id} AND event_type = 'PERFORMANCE') AS T2 ON T2.dtime = T1.hh GROUP BY T1.hh, T2.url_host ORDER BY T1.hh DESC;"""
+    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
+                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+                SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.avg_cpu) as cpu_used, 
+                        avg(T2.avg_used_js_heap_size) as memory_used, T2.url_host as names, groupUniqArray(T2.url_path) as sources 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
+                LEFT JOIN (SELECT session_id, url_host, url_path, avg_used_js_heap_size, avg_cpu, {function.format('datetime')} as dtime 
+                           FROM experimental.events 
+                           WHERE project_id = {project_id} AND event_type = 'PERFORMANCE') AS T2 ON T2.dtime = T1.hh 
+                GROUP BY T1.hh, T2.url_host 
+                ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
             res = conn.execute(query=query)
@@ -218,11 +227,15 @@ SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.avg_cpu) as cpu_used, avg
 def query_click_rage_by_period(project_id, start_time, end_time, time_step, conn=None):
     function, steps = __handle_timestep(time_step)
     click_rage_condition = "issue_type = 'click_rage'"
-    query = f"""WITH
-      {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-      {function.format(f"toDateTime64('{end_time}', 0)")} as end
-    SELECT T1.hh, count(T2.session_id) as sessions, T2.url_host as names, groupUniqArray(T2.url_path) as sources FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-        LEFT JOIN (SELECT session_id, url_host, url_path, {function.format('datetime')} as dtime FROM experimental.events WHERE project_id = {project_id} AND event_type = 'ISSUE' AND {click_rage_condition}) AS T2 ON T2.dtime = T1.hh GROUP BY T1.hh, T2.url_host ORDER BY T1.hh DESC;"""
+    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
+                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+                SELECT T1.hh, count(T2.session_id) as sessions, T2.url_host as names, groupUniqArray(T2.url_path) as sources 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
+                LEFT JOIN (SELECT session_id, url_host, url_path, {function.format('datetime')} as dtime 
+                           FROM experimental.events 
+                           WHERE project_id = {project_id} AND event_type = 'ISSUE' AND {click_rage_condition}) AS T2 ON T2.dtime = T1.hh 
+                GROUP BY T1.hh, T2.url_host 
+                ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
             res = conn.execute(query=query)
@@ -258,32 +271,32 @@ def query_click_rage_by_period(project_id, start_time, end_time, time_step, conn
     }
 
 
-def fetch_selected(project_id, data: schemas_ee.GetInsightsPayloadSchema):
+def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
     output = {}
     with ch_client.ClickHouseClient() as conn:
-        if schemas_ee.InsightEvents.errors in data.selected_events:
-            output[schemas_ee.InsightEvents.errors] = query_most_errors_by_period(project_id=project_id,
-                                                                                  start_time=data.startTimestamp,
-                                                                                  end_time=data.endTimestamp,
-                                                                                  time_step=data.time_step,
-                                                                                  conn=conn)
-        if schemas_ee.InsightEvents.network in data.selected_events:
-            output[schemas_ee.InsightEvents.network] = query_requests_by_period(project_id=project_id,
-                                                                                start_time=data.startTimestamp,
-                                                                                end_time=data.endTimestamp,
-                                                                                time_step=data.time_step,
-                                                                                conn=conn)
-        if schemas_ee.InsightEvents.rage in data.selected_events:
-            output[schemas_ee.InsightEvents.rage] = query_click_rage_by_period(project_id=project_id,
-                                                                               start_time=data.startTimestamp,
-                                                                               end_time=data.endTimestamp,
-                                                                               time_step=data.time_step, conn=conn)
-        if schemas_ee.InsightEvents.resources in data.selected_events:
-            output[schemas_ee.InsightEvents.resources] = query_cpu_memory_by_period(project_id=project_id,
+        if schemas_ee.InsightCategories.errors in data.categories:
+            output[schemas_ee.InsightCategories.errors] = query_most_errors_by_period(project_id=project_id,
+                                                                                      start_time=data.startTimestamp,
+                                                                                      end_time=data.endTimestamp,
+                                                                                      time_step=data.time_step,
+                                                                                      conn=conn)
+        if schemas_ee.InsightCategories.network in data.categories:
+            output[schemas_ee.InsightCategories.network] = query_requests_by_period(project_id=project_id,
                                                                                     start_time=data.startTimestamp,
                                                                                     end_time=data.endTimestamp,
                                                                                     time_step=data.time_step,
                                                                                     conn=conn)
+        if schemas_ee.InsightCategories.rage in data.categories:
+            output[schemas_ee.InsightCategories.rage] = query_click_rage_by_period(project_id=project_id,
+                                                                                   start_time=data.startTimestamp,
+                                                                                   end_time=data.endTimestamp,
+                                                                                   time_step=data.time_step, conn=conn)
+        if schemas_ee.InsightCategories.resources in data.categories:
+            output[schemas_ee.InsightCategories.resources] = query_cpu_memory_by_period(project_id=project_id,
+                                                                                        start_time=data.startTimestamp,
+                                                                                        end_time=data.endTimestamp,
+                                                                                        time_step=data.time_step,
+                                                                                        conn=conn)
     return output
 
 # if __name__ == '__main__':
