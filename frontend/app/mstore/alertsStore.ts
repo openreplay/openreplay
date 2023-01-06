@@ -14,11 +14,11 @@ export default class AlertsStore {
     makeAutoObservable(this);
   }
 
-  changeSearch(value: string) {
+  changeSearch = (value: string) => {
     this.alertsSearch = value;
   }
 
-  async fetchList() {
+  fetchList = async () => {
     this.loading = true
     try {
       const list = await alertsService.fetchList();
@@ -30,7 +30,7 @@ export default class AlertsStore {
     }
   }
 
-  async save(inst: Alert) {
+  save = async (inst: Alert) => {
     this.loading = true
     try {
       await alertsService.save(inst ? inst : this.instance)
@@ -42,7 +42,7 @@ export default class AlertsStore {
     }
   }
 
-  async remove(id: string) {
+  remove = async (id: string) => {
     this.loading = true
     try {
       await alertsService.remove(id)
@@ -53,7 +53,7 @@ export default class AlertsStore {
     }
   }
 
-  async fetchTriggerOptions() {
+  fetchTriggerOptions = async () => {
     this.loading = true
     try {
       const options = await alertsService.fetchTriggerOptions();
@@ -65,11 +65,11 @@ export default class AlertsStore {
     }
   }
 
-  init(inst: Partial<IAlert> | Alert) {
+  init = (inst: Partial<IAlert> | Alert) => {
     this.instance = inst instanceof Alert ? inst : new Alert(inst, false)
   }
 
-  edit(diff: Partial<Alert>) {
+  edit = (diff: Partial<Alert>) => {
     Object.assign(this.instance, diff)
   }
 }
