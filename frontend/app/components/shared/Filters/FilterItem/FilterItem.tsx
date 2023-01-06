@@ -14,10 +14,11 @@ interface Props {
     onRemoveFilter: () => void;
     isFilter?: boolean;
     saveRequestPayloads?: boolean;
-    disableDelete?: boolean
+    disableDelete?: boolean;
+    excludeFilterKeys?: Array<string>;
 }
 function FilterItem(props: Props) {
-    const { isFilter = false, filterIndex, filter, saveRequestPayloads, disableDelete = false } = props;
+    const { isFilter = false, filterIndex, filter, saveRequestPayloads, disableDelete = false, excludeFilterKeys = [] } = props;
     const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
     const isSubFilter = filter.type === FilterType.SUB_FILTERS;
 
@@ -57,7 +58,7 @@ function FilterItem(props: Props) {
                         <span>{filterIndex + 1}</span>
                     </div>
                 )}
-                <FilterSelection filter={filter} onFilterClick={replaceFilter} />
+                <FilterSelection filter={filter} onFilterClick={replaceFilter} excludeFilterKeys={excludeFilterKeys} disabled={disableDelete} />
 
                 {/* Filter with Source */}
                 {filter.hasSource && (
