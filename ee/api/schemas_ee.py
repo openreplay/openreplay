@@ -50,7 +50,7 @@ class InsightCategories(str, Enum):
 class GetInsightsSchema(BaseModel):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
-    time_step: int = Field(default=3600)
+    # time_step: int = Field(default=3600)
     categories: List[InsightCategories] = Field(..., min_items=1)
 
     class Config:

@@ -1,4 +1,5 @@
 import schemas_ee
+from chalicelib.core import metrics
 from chalicelib.utils import ch_client
 
 
@@ -218,26 +219,41 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, time_step, conn
     _tmp = _mean_table_index(table_hh2, memory_idx)
     # _tmp = table_hh2[:, memory_idx].mean()
     # TODO: what if _tmp=0 ?
+    _tmp = 1 if _tmp == 0 else _tmp
     return {'cpuIncrease': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
             'memoryIncrease': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp}
 
 
-def query_click_rage_by_period(project_id, start_time, end_time, time_step, conn=None):
-    function, steps = __handle_timestep(time_step)
-    click_rage_condition = "issue_type = 'click_rage'"
-    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
+    params = {
+        "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
+        "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)}
+
+    conditions = ["issue_type = 'click_rage'", "event_type = 'ISSUE'"]
+    query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
+                     toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
                 SELECT T1.hh, count(T2.session_id) as sessions, T2.url_host as names, groupUniqArray(T2.url_path) as sources 
-                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-                LEFT JOIN (SELECT session_id, url_host, url_path, {function.format('datetime')} as dtime 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
+                LEFT JOIN (SELECT session_id, url_host, url_path, toStartOfInterval(datetime, INTERVAL %(step_size)s second ) as dtime 
                            FROM experimental.events 
-                           WHERE project_id = {project_id} AND event_type = 'ISSUE' AND {click_rage_condition}) AS T2 ON T2.dtime = T1.hh 
+                           WHERE project_id = %(project_id)s 
+                                AND datetime >= toDateTime(%(startTimestamp)s/1000)
+                                AND datetime < toDateTime(%(endTimestamp)s/1000)
+                                AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host 
                 ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
+            query = conn.format(query=query, params=params)
+            print("--------------------")
+            print(query)
+            print("--------------------")
             res = conn.execute(query=query)
     else:
+        query = conn.format(query=query, params=params)
+        print("--------------------")
+        print(query)
+        print("--------------------")
         res = conn.execute(query=query)
 
     table_hh1, table_hh2, columns, this_period_rage, last_period_rage = __get_two_values(res, time_index='hh',
@@ -288,7 +304,7 @@ def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
             output[schemas_ee.InsightCategories.rage] = query_click_rage_by_period(project_id=project_id,
                                                                                    start_time=data.startTimestamp,
                                                                                    end_time=data.endTimestamp,
-                                                                                   time_step=data.time_step, conn=conn)
+                                                                                   conn=conn)
         if schemas_ee.InsightCategories.resources in data.categories:
             output[schemas_ee.InsightCategories.resources] = query_cpu_memory_by_period(project_id=project_id,
                                                                                         start_time=data.startTimestamp,

@@ -131,7 +131,4 @@ def send_interactions(projectId: int, data: schemas_ee.SignalsSchema = Body(...)
 @app.post('/{projectId}/dashboard/insights', tags=["insights"])
 def sessions_search(projectId: int, data: schemas_ee.GetInsightsSchema = Body(...),
                     context: schemas_ee.CurrentContext = Depends(OR_context)):
-    return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId,
-                                                     # start_time=data.startDate,
-                                                     # end_time=data.endDate
-                                                     )}
+    return {'data': sessions_insights.fetch_selected(data=data, project_id=projectId)}
