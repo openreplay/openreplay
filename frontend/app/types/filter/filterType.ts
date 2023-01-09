@@ -149,6 +149,13 @@ export enum IssueType {
   JS_EXCEPTION = 'js_exception',
 }
 
+export enum IssueCategory {
+  RESOURCES = 'resources',
+  NETWORK = 'network',
+  CLICK_RAGE = 'click_rage',
+  ERRORS = 'errors'
+}
+
 export enum FilterType {
   STRING = 'STRING',
   ISSUE = 'ISSUE',

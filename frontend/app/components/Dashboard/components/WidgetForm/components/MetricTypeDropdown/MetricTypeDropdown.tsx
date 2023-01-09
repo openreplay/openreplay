@@ -43,6 +43,7 @@ function MetricTypeDropdown(props: Props) {
   const onChange = (type: string) => {
     metricStore.changeType(type);
   };
+
   return (
     <Select
       name="metricType"

@@ -21,6 +21,7 @@ export const WEB_VITALS = 'webVitals';
 export const USER_PATH = 'userPath';
 export const RETENTION = 'retention';
 export const FEATURE_ADOPTION = 'featureAdoption';
+export const INSIGHTS = 'insights';
 
 export const TYPES: CardType[] = [
   {
@@ -221,5 +222,11 @@ export const TYPES: CardType[] = [
     icon: 'card-checklist',
     description: 'Find the adoption of your all features in your app.',
     slug: FEATURE_ADOPTION,
+  },
+  {
+    title: 'Insights',
+    icon: 'lightbulb',
+    description: 'Find the adoption of your all features in your app.',
+    slug: INSIGHTS,
   },
 ];

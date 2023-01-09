@@ -1,5 +1,5 @@
-import React from 'react';
-import { metricOf, issueOptions } from 'App/constants/filterOptions';
+import React, { useEffect, useState } from 'react';
+import { metricOf, issueOptions, issueCategories } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
@@ -18,9 +18,11 @@ import {
   RESOURCE_MONITORING,
   PERFORMANCE,
   WEB_VITALS,
+  INSIGHTS,
 } from 'App/constants/card';
-import { clickmapFilter, eventKeys } from 'App/types/filter/newFilter';
+import { eventKeys } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
+import Widget from 'App/mstore/types/widget';
 interface Props {
   history: any;
   match: any;
@@ -37,68 +39,45 @@ function WidgetForm(props: Props) {
   const { metricStore, dashboardStore } = useStore();
   const isSaving = metricStore.isSaving;
   const metric: any = metricStore.instance;
+  const [initialInstance, setInitialInstance] = useState();
 
   const timeseriesOptions = metricOf.filter((i) => i.type === 'timeseries');
   const tableOptions = metricOf.filter((i) => i.type === 'table');
-  const isTable = metric.metricType === 'table';
+  const isTable = metric.metricType === TABLE;
   const isClickmap = metric.metricType === CLICKMAP;
-  const isFunnel = metric.metricType === 'funnel';
+  const isFunnel = metric.metricType === FUNNEL;
+  const isInsights = metric.metricType === INSIGHTS;
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
+
   const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(
     metric.metricType
   );
 
-  const excludeFilterKeys = isClickmap ? eventKeys : []
+  const excludeFilterKeys = isClickmap ? eventKeys : [];
+
+  useEffect(() => {
+    if (!!metric && !initialInstance) {
+      setInitialInstance(metric.toJson());
+    }
+  }, [metric]);
 
   const writeOption = ({ value, name }: { value: any; name: any }) => {
     value = Array.isArray(value) ? value : value.value;
     const obj: any = { [name]: value };
 
-    if (name === 'metricValue') {
-      obj.metricValue = value;
-
-      if (Array.isArray(obj.metricValue) && obj.metricValue.length > 1) {
-        obj.metricValue = obj.metricValue.filter((i: any) => i.value !== 'all');
-      }
-    }
-
     if (name === 'metricType') {
       switch (value) {
         case TIMESERIES:
           obj.metricOf = timeseriesOptions[0].value;
-          obj.viewType = 'lineChart';
           break;
         case TABLE:
           obj.metricOf = tableOptions[0].value;
-          obj.viewType = 'table';
-          break;
-        case FUNNEL:
-          obj.metricOf = 'sessionCount';
-          break;
-        case ERRORS:
-        case RESOURCE_MONITORING:
-        case PERFORMANCE:
-        case WEB_VITALS:
-          obj.viewType = 'chart';
-          break;
-        case CLICKMAP:
-          obj.viewType = 'chart';
-
-          if (value !== CLICKMAP) {
-            metric.series[0].filter.removeFilter(0);
-          }
-
-          if (metric.series[0].filter.filters.length < 1) {
-            metric.series[0].filter.addFilter({
-              ...clickmapFilter,
-              value: [''],
-            });
-          }
           break;
       }
     }
+
     metricStore.merge(obj);
   };
 
@@ -112,10 +91,16 @@ function WidgetForm(props: Props) {
       }
     }
     const savedMetric = await metricStore.save(metric);
+    setInitialInstance(metric.toJson())
     if (wasCreating) {
       if (parseInt(dashboardId, 10) > 0) {
-        history.replace(withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId));
-        dashboardStore.addWidgetToDashboard(dashboardStore.getDashboard(parseInt(dashboardId, 10))!, [savedMetric.metricId]);
+        history.replace(
+          withSiteId(dashboardMetricDetails(dashboardId, savedMetric.metricId), siteId)
+        );
+        dashboardStore.addWidgetToDashboard(
+          dashboardStore.getDashboard(parseInt(dashboardId, 10))!,
+          [savedMetric.metricId]
+        );
       } else {
         history.replace(withSiteId(metricDetails(savedMetric.metricId), siteId));
       }
@@ -134,6 +119,11 @@ function WidgetForm(props: Props) {
     }
   };
 
+  const undoChnages = () => {
+    const w = new Widget();
+    metricStore.merge(w.fromJson(initialInstance), false);
+  };
+
   return (
     <div className="p-6">
       <div className="form-group">
@@ -142,7 +132,7 @@ function WidgetForm(props: Props) {
           <MetricTypeDropdown onSelect={writeOption} />
           <MetricSubtypeDropdown onSelect={writeOption} />
 
-          {metric.metricOf === FilterKey.ISSUE && (
+          {metric.metricOf === FilterKey.ISSUE && metric.metricType === TABLE && (
             <>
               <span className="mx-3">issue type</span>
               <Select
@@ -152,6 +142,20 @@ function WidgetForm(props: Props) {
                 onChange={writeOption}
                 isMulti={true}
                 placeholder="All Issues"
+              />
+            </>
+          )}
+
+          {metric.metricType === INSIGHTS && (
+            <>
+              <span className="mx-3">issue category</span>
+              <Select
+                name="metricValue"
+                options={issueCategories}
+                value={metric.metricValue}
+                onChange={writeOption}
+                isMulti={true}
+                placeholder="All Categories"
               />
             </>
           )}
@@ -183,8 +187,8 @@ function WidgetForm(props: Props) {
       {!isPredefined && (
         <div className="form-group">
           <div className="flex items-center font-medium py-2">
-            {`${isTable || isFunnel || isClickmap ? 'Filter by' : 'Chart Series'}`}
-            {!isTable && !isFunnel && !isClickmap && (
+            {`${isTable || isFunnel || isClickmap || isInsights ? 'Filter by' : 'Chart Series'}`}
+            {!isTable && !isFunnel && !isClickmap && !isInsights && (
               <Button
                 className="ml-2"
                 variant="text-primary"
@@ -198,14 +202,14 @@ function WidgetForm(props: Props) {
 
           {metric.series.length > 0 &&
             metric.series
-              .slice(0, isTable || isFunnel || isClickmap ? 1 : metric.series.length)
+              .slice(0, isTable || isFunnel || isClickmap || isInsights ? 1 : metric.series.length)
               .map((series: any, index: number) => (
                 <div className="mb-2" key={series.name}>
                   <FilterSeries
                     supportsEmpty={!isClickmap}
                     excludeFilterKeys={excludeFilterKeys}
                     observeChanges={() => metric.updateKey('hasChanged', true)}
-                    hideHeader={isTable || isClickmap}
+                    hideHeader={isTable || isClickmap || isInsights}
                     seriesIndex={index}
                     series={series}
                     onRemoveSeries={() => metric.removeSeries(index)}
@@ -226,13 +230,20 @@ function WidgetForm(props: Props) {
           title="Cannot save funnel metric without at least 2 events"
           disabled={!cannotSaveFunnel}
         >
-          <Button variant="primary" onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
-            {metric.exists()
-              ? 'Update'
-              : parseInt(dashboardId) > 0
-              ? 'Create & Add to Dashboard'
-              : 'Create'}
-          </Button>
+          <div className="flex items-center">
+            <Button variant="primary" onClick={onSave} disabled={isSaving || cannotSaveFunnel}>
+              {metric.exists()
+                ? 'Update'
+                : parseInt(dashboardId) > 0
+                ? 'Create & Add to Dashboard'
+                : 'Create'}
+            </Button>
+            {metric.exists() && metric.hasChanged && (
+              <Button onClick={undoChnages} variant="text" icon="arrow-counterclockwise" className="ml-2">
+                Undo
+              </Button>
+            )}
+          </div>
         </Tooltip>
         <div className="flex items-center">
           {metric.exists() && (
