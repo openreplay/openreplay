@@ -43,7 +43,7 @@ const Section = ({ index, title, description, content }) => (
   </div>
 );
 
-const AlertForm = (props) => {
+function AlertForm(props) {
   const {
     slackChannels,
     msTeamsChannels,
@@ -53,28 +53,28 @@ const AlertForm = (props) => {
   } = props;
   const { alertsStore } = useStore()
   const {
-    instance,
     triggerOptions,
     loading,
   } = alertsStore
+  const instance = alertsStore.instance
   const deleting = loading
 
-  const write = ({ target: { value, name } }) => props.edit({ [name]: value });
-  const writeOption = (e, { name, value }) => props.edit({ [name]: value.value });
-  const onChangeCheck = ({ target: { checked, name } }) => props.edit({ [name]: checked });
+  const write = ({ target: { value, name } }) => alertsStore.edit({ [name]: value });
+  const writeOption = (e, { name, value }) => alertsStore.edit({ [name]: value.value });
+  const onChangeCheck = ({ target: { checked, name } }) => alertsStore.edit({ [name]: checked });
 
   useEffect(() => {
-    alertsStore.fetchTriggerOptions();
+    void alertsStore.fetchTriggerOptions();
   }, []);
 
   const writeQueryOption = (e, { name, value }) => {
     const { query } = instance;
-    props.edit({ query: { ...query, [name]: value } });
+    alertsStore.edit({ query: { ...query, [name]: value } });
   };
 
   const writeQuery = ({ target: { value, name } }) => {
     const { query } = instance;
-    props.edit({ query: { ...query, [name]: value } });
+    alertsStore.edit({ query: { ...query, [name]: value } });
   };
 
   const metric =
@@ -112,7 +112,7 @@ const AlertForm = (props) => {
                 primary
                 name="detectionMethod"
                 className="my-3"
-                onSelect={(e, { name, value }) => props.edit({ [name]: value })}
+                onSelect={(e, { name, value }) => alertsStore.edit({ [name]: value })}
                 value={{ value: instance.detectionMethod }}
                 list={[
                   { name: 'Threshold', value: 'threshold' },
@@ -294,7 +294,7 @@ const AlertForm = (props) => {
                       selected={instance.slackInput}
                       options={slackChannels}
                       placeholder="Select Channel"
-                      onChange={(selected) => props.edit({ slackInput: selected })}
+                      onChange={(selected) => alertsStore.edit({ slackInput: selected })}
                     />
                   </div>
                 </div>
@@ -308,7 +308,7 @@ const AlertForm = (props) => {
                       selected={instance.msteamsInput}
                       options={msTeamsChannels}
                       placeholder="Select Channel"
-                      onChange={(selected) => props.edit({ msteamsInput: selected })}
+                      onChange={(selected) => alertsStore.edit({ msteamsInput: selected })}
                     />
                   </div>
                 </div>
@@ -323,7 +323,7 @@ const AlertForm = (props) => {
                       validate={validateEmail}
                       selected={instance.emailInput}
                       placeholder="Type and press Enter key"
-                      onChange={(selected) => props.edit({ emailInput: selected })}
+                      onChange={(selected) => alertsStore.edit({ emailInput: selected })}
                     />
                   </div>
                 </div>
@@ -337,7 +337,7 @@ const AlertForm = (props) => {
                     selected={instance.webhookInput}
                     options={webhooks}
                     placeholder="Select Webhook"
-                    onChange={(selected) => props.edit({ webhookInput: selected })}
+                    onChange={(selected) => alertsStore.edit({ webhookInput: selected })}
                   />
                 </div>
               )}

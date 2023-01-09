@@ -6,7 +6,7 @@ export default class AlertsStore {
   alerts: Alert[] = [];
   triggerOptions: { label: string, value: string | number, unit?: string }[] = [];
   alertsSearch = '';
-  // @ts-ignore
+    // @ts-ignore
   instance: Alert = new Alert({}, false);
   loading = false
 
@@ -70,6 +70,8 @@ export default class AlertsStore {
   }
 
   edit = (diff: Partial<Alert>) => {
-    Object.assign(this.instance, diff)
+    const key = Object.keys(diff)[0]
+    // @ts-ignore
+    this.instance[key] = diff[key]
   }
 }

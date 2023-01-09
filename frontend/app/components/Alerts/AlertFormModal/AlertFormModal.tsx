@@ -5,9 +5,14 @@ import { observer } from 'mobx-react-lite'
 import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import AlertForm from '../AlertForm';
 import { connect } from 'react-redux';
-import { setShowAlerts } from 'Duck/dashboard';
-import { SLACK, WEBHOOK } from 'App/constants/schedule';
+import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
 import { confirm } from 'UI';
+
+interface Select {
+    label: string;
+    value: string | number
+}
+
 
 interface Props {
     showModal?: boolean;
@@ -25,14 +30,23 @@ function AlertFormModal(props: Props) {
         props.fetchWebhooks();
     }, []);
 
-    const slackChannels = webhooks
-        .filter((hook) => hook.type === SLACK)
-        .map(({ webhookId, name }) => ({ value: webhookId, text: name }))
-        .toJS();
-    const hooks = webhooks
-        .filter((hook) => hook.type === WEBHOOK)
-        .map(({ webhookId, name }) => ({ value: webhookId, text: name }))
-        .toJS();
+
+    const slackChannels: Select[] = []
+    const hooks: Select[] = []
+    const msTeamsChannels: Select[] = []
+
+    webhooks.forEach((hook) => {
+        const option = { value: hook.webhookId, label: hook.name }
+        if (hook.type === SLACK) {
+            slackChannels.push(option)
+        }
+        if (hook.type === WEBHOOK) {
+            hooks.push(option)
+        }
+        if (hook.type === TEAMS) {
+            msTeamsChannels.push(option)
+        }
+    })
 
     const saveAlert = (instance) => {
         const wasUpdating = instance.exists();
@@ -71,7 +85,7 @@ function AlertFormModal(props: Props) {
         <SlideModal
             title={
                 <div className="flex items-center">
-                    <span className="mr-3">{'Create Alert'}</span>
+                    <span className="m-3">{'Create Alert'}</span>
                 </div>
             }
             isDisplayed={showModal}
@@ -83,6 +97,7 @@ function AlertFormModal(props: Props) {
                         metricId={metricId}
                         edit={alertsStore.edit}
                         slackChannels={slackChannels}
+                        msTeamsChannels={msTeamsChannels}
                         webhooks={hooks}
                         onSubmit={saveAlert}
                         onClose={props.onClose}
@@ -99,5 +114,5 @@ export default connect(
     (state) => ({
         webhooks: state.getIn(['webhooks', 'list']),
     }),
-    { fetchWebhooks, setShowAlerts }
+    { fetchWebhooks }
 )(observer(AlertFormModal));

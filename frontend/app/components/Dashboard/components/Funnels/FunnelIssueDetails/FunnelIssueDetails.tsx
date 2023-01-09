@@ -19,7 +19,7 @@ function FunnelIssueDetails(props: Props) {
 
     useEffect(() => {
         setLoading(true);
-        const _filters = { ...filter, series: widget.data.stages ? widget.toJsonDrilldown().map((item: any) => {
+        const _filters = { ...filter, series: widget.data.stages ? widget.series.map((item: any) => {
             return {
                 ...item,
                 filter: {
