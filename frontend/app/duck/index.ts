@@ -7,7 +7,6 @@ import assignments from './assignments';
 import filters from './filters';
 import funnelFilters from './funnelFilters';
 import templates from './templates';
-import alerts from './alerts';
 import dashboard from './dashboard';
 import components from './components';
 import sources from './sources';
@@ -32,7 +31,6 @@ const rootReducer = combineReducers({
   funnelFilters,
 
   templates,
-  alerts,
   dashboard,
   components,
   members,  

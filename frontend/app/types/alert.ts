@@ -1,5 +1,6 @@
 import { notEmptyString, validateNumber } from 'App/validate';
 import { alertMetrics as metrics, alertConditions as conditions } from 'App/constants';
+import { makeAutoObservable } from 'mobx'
 
 const metricsMap = {}
 const conditionsMap = {}
@@ -73,7 +74,7 @@ export default class Alert {
   detectionMethod: IAlert["detectionMethod"]
   detection_method: IAlert["detection_method"]
   change: IAlert["change"]
-  query:IAlert["query"]
+  query: IAlert["query"]
   options: IAlert["options"]
   createdAt?: IAlert["createdAt"]
   slack: IAlert["slack"]
@@ -128,6 +129,8 @@ export default class Alert {
       hasNotification: !!slack || !!email || !!webhook,
       isExists,
     })
+
+    makeAutoObservable(this)
   }
 
   validate() {

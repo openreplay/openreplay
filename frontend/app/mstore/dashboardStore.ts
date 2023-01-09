@@ -405,6 +405,10 @@ export default class DashboardStore {
         });
     }
 
+    toggleAlertModal(val: boolean) {
+        this.showAlertModal = val
+    }
+
     fetchMetricChartData(
         metric: Widget,
         data: any,

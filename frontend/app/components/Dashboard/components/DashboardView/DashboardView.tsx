@@ -87,7 +87,7 @@ function DashboardView(props: Props) {
         />
         <AlertFormModal
           showModal={showAlertModal}
-          onClose={() => dashboardStore.updateKey('showAlertModal', false)}
+          onClose={() => dashboardStore.toggleAlertModal(false)}
         />
       </div>
     </Loader>
