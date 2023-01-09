@@ -71,7 +71,10 @@ export default class AlertsStore {
 
   edit = (diff: Partial<Alert>) => {
     const key = Object.keys(diff)[0]
+    const oldInst = this.instance
     // @ts-ignore
-    this.instance[key] = diff[key]
+    oldInst[key] = diff[key]
+
+    this.instance = oldInst
   }
 }
