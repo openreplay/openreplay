@@ -12,11 +12,20 @@ const data = [
 ];
 interface Props {}
 function InsightsCard(props: Props) {
-  const { metricStore } = useStore();
+  const { metricStore, dashboardStore } = useStore();
   const metric = metricStore.instance;
+  const drillDownFilter = dashboardStore.drillDownFilter;
+  const period = dashboardStore.period;
 
   const clickHanddler = (e: React.MouseEvent<HTMLDivElement>) => {
     console.log(e);
+    // TODO update drillDownFilter
+    // const periodTimestamps = period.toTimestamps();
+    // drillDownFilter.merge({
+    //   filters: event,
+    //   startTimestamp: periodTimestamps.startTimestamp,
+    //   endTimestamp: periodTimestamps.endTimestamp,
+    // });
   };
 
   return (

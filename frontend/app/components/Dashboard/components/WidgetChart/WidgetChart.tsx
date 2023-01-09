@@ -95,15 +95,7 @@ function WidgetChart(props: Props) {
 
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;
-
         const metricWithData = { ...metric, data };
-        if (metricType === 'sessions') {
-            return <SessionWidget metric={metric} data={data} />
-        }
-
-        // if (metricType === ERRORS) {
-        //     return <ErrorsWidget metric={metric} data={data} />
-        // }
 
         if (metricType === FUNNEL) {
             return <FunnelWidget metric={metric} data={data} isWidget={isWidget || isTemplate} />
