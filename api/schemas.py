@@ -992,13 +992,13 @@ class CreateCardSchema(CardChartSchema):
     name: Optional[str] = Field(...)
     is_public: bool = Field(default=True)
     view_type: Union[MetricTimeseriesViewType, \
-        MetricTableViewType, MetricOtherViewType] = Field(MetricTimeseriesViewType.line_chart)
-    metric_type: MetricType = Field(default=MetricType.timeseries)
+        MetricTableViewType, MetricOtherViewType] = Field(...)
+    metric_type: MetricType = Field(...)
     metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
         MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
         MetricOfClickMap] = Field(MetricOfTable.user_id)
     metric_value: List[IssueType] = Field(default=[])
-    metric_format: Optional[MetricFormatType] = Field(None)
+    metric_format: Optional[MetricFormatType] = Field(default=None)
     default_config: CardConfigSchema = Field(..., alias="config")
     is_template: bool = Field(default=False)
     thumbnail: Optional[str] = Field(default=None)
@@ -1006,14 +1006,14 @@ class CreateCardSchema(CardChartSchema):
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
     def transform(cls, values):
-        values["isTemplate"] = values["metricType"] in [MetricType.errors, MetricType.performance,
-                                                        MetricType.resources, MetricType.web_vital]
+        values["isTemplate"] = values.get("metricType") in [MetricType.errors, MetricType.performance,
+                                                            MetricType.resources, MetricType.web_vital]
         if values.get("metricType") == MetricType.timeseries \
                 or values.get("metricType") == MetricType.table \
                 and values.get("metricOf") != MetricOfTable.issues:
             values["metricValue"] = []
 
-        if values.get("metric_type") == MetricType.funnel.value and \
+        if values.get("metricType") == MetricType.funnel.value and \
                 values.get("series") is not None and len(values["series"]) > 1:
             values["series"] = [values["series"][0]]
 
@@ -1043,7 +1043,7 @@ class CreateCardSchema(CardChartSchema):
                 assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
                     f"metricValue is only available for metricOf:{MetricOfTable.issues}"
         elif values.get("metric_type") == MetricType.funnel:
-            pass
+            assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
             # ignore this for now, let the UI send whatever he wants for metric_of
             # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
             #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
