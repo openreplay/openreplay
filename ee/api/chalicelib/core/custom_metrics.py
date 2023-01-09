@@ -298,7 +298,7 @@ def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=Fal
     return {"data": get_card(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
+def update(metric_id, user_id, project_id, data: schemas_ee.UpdateCardSchema):
     metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None

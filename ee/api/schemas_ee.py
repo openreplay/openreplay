@@ -167,3 +167,7 @@ class CreateCardSchema(schemas.CreateCardSchema):
                         f"metricValue should be of type [InsightCategories] for metricType:{schemas.MetricType.insights}"
 
         return values
+
+
+class UpdateCardSchema(CreateCardSchema):
+    series: List[schemas.CardUpdateSeriesSchema] = Field(...)

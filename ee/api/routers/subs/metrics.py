@@ -242,7 +242,7 @@ def get_card_chart(projectId: int, metric_id: int, data: schemas.CardChartSchema
 @app.put('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCardSchema = Body(...),
+def update_custom_metric(projectId: int, metric_id: int, data: schemas_ee.UpdateCardSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
