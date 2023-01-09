@@ -99,22 +99,29 @@ def __handle_timestep(time_step):
         return f"toStartOfInterval({base}, INTERVAL {time_step} minute)", int(time_step) * 60
 
 
-def query_requests_by_period(project_id, start_time, end_time, time_step, conn=None):
-    function, steps = __handle_timestep(time_step)
-    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+def query_requests_by_period(project_id, start_time, end_time, conn=None):
+    params = {
+        "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
+        "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
+    }
+    conditions = ["event_type = 'REQUEST'"]
+    query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
+                     toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
                 SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.success) as success_rate, T2.url_host as names, 
                         T2.url_path as source, avg(T2.duration) as avg_duration 
-                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-                LEFT JOIN (SELECT session_id, url_host, url_path, success, message, duration, {function.format('datetime')} as dtime 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
+                LEFT JOIN (SELECT session_id, url_host, url_path, success, message, duration, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime 
                            FROM experimental.events 
-                           WHERE project_id = {project_id} AND event_type = 'REQUEST') AS T2 ON T2.dtime = T1.hh 
+                           WHERE project_id = {project_id} 
+                                AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host, T2.url_path 
                 ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
+            query = conn.format(query=query, params=params)
             res = conn.execute(query=query)
     else:
+        query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
     table_hh1, table_hh2, columns, this_period_hosts, last_period_hosts = __get_two_values(res, time_index='hh',
                                                                                            name_index='source')
@@ -146,16 +153,21 @@ def query_requests_by_period(project_id, start_time, end_time, time_step, conn=N
             'newEvents': new_hosts}
 
 
-def query_most_errors_by_period(project_id, start_time, end_time, time_step, conn=None):
-    function, steps = __handle_timestep(time_step)
-    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
+    params = {
+        "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
+        "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
+    }
+    conditions = ["event_type = 'ERROR'"]
+    query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
+                     toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
                 SELECT T1.hh, count(T2.session_id) as sessions, T2.name as names, 
                         groupUniqArray(T2.source) as sources 
-                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-                    LEFT JOIN (SELECT session_id, name, source, message, {function.format('datetime')} as dtime 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
+                    LEFT JOIN (SELECT session_id, name, source, message, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime
                                FROM experimental.events 
-                               WHERE project_id = {project_id} AND event_type = 'ERROR') AS T2 ON T2.dtime = T1.hh 
+                               WHERE project_id = {project_id} 
+                                    AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.name 
                 ORDER BY T1.hh DESC;"""
     # print("----------------------------------")
@@ -163,8 +175,10 @@ def query_most_errors_by_period(project_id, start_time, end_time, time_step, con
     # print("----------------------------------")
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
+            query = conn.format(query=query, params=params)
             res = conn.execute(query=query)
     else:
+        query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
 
     table_hh1, table_hh2, columns, this_period_errors, last_period_errors = __get_two_values(res, time_index='hh',
@@ -192,22 +206,29 @@ def query_most_errors_by_period(project_id, start_time, end_time, time_step, con
             'newEvents': new_errors}
 
 
-def query_cpu_memory_by_period(project_id, start_time, end_time, time_step, conn=None):
-    function, steps = __handle_timestep(time_step)
-    query = f"""WITH {function.format(f"toDateTime64('{start_time}', 0)")} as start,
-                     {function.format(f"toDateTime64('{end_time}', 0)")} as end
+def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
+    params = {
+        "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
+        "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
+    }
+    conditions = ["event_type = 'PERFORMANCE'"]
+    query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
+                     toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
                 SELECT T1.hh, count(T2.session_id) as sessions, avg(T2.avg_cpu) as cpu_used, 
                         avg(T2.avg_used_js_heap_size) as memory_used, T2.url_host as names, groupUniqArray(T2.url_path) as sources 
-                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {steps}))) as hh) AS T1
-                LEFT JOIN (SELECT session_id, url_host, url_path, avg_used_js_heap_size, avg_cpu, {function.format('datetime')} as dtime 
+                FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
+                LEFT JOIN (SELECT session_id, url_host, url_path, avg_used_js_heap_size, avg_cpu, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime 
                            FROM experimental.events 
-                           WHERE project_id = {project_id} AND event_type = 'PERFORMANCE') AS T2 ON T2.dtime = T1.hh 
+                           WHERE project_id = {project_id} 
+                                AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host 
                 ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
+            query = conn.format(query=query, params=params)
             res = conn.execute(query=query)
     else:
+        query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
     table_hh1, table_hh2, columns, this_period_resources, last_period_resources = __get_two_values(res, time_index='hh',
                                                                                                    name_index='names')
@@ -292,13 +313,11 @@ def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
             output[schemas_ee.InsightCategories.errors] = query_most_errors_by_period(project_id=project_id,
                                                                                       start_time=data.startTimestamp,
                                                                                       end_time=data.endTimestamp,
-                                                                                      time_step=data.time_step,
                                                                                       conn=conn)
         if schemas_ee.InsightCategories.network in data.categories:
             output[schemas_ee.InsightCategories.network] = query_requests_by_period(project_id=project_id,
                                                                                     start_time=data.startTimestamp,
                                                                                     end_time=data.endTimestamp,
-                                                                                    time_step=data.time_step,
                                                                                     conn=conn)
         if schemas_ee.InsightCategories.rage in data.categories:
             output[schemas_ee.InsightCategories.rage] = query_click_rage_by_period(project_id=project_id,
@@ -309,7 +328,6 @@ def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
             output[schemas_ee.InsightCategories.resources] = query_cpu_memory_by_period(project_id=project_id,
                                                                                         start_time=data.startTimestamp,
                                                                                         end_time=data.endTimestamp,
-                                                                                        time_step=data.time_step,
                                                                                         conn=conn)
     return output
 
