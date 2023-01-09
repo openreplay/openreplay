@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { SlideModal } from 'UI';
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
-import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import AlertForm from '../AlertForm';
-import { connect } from 'react-redux';
 import { SLACK, TEAMS, WEBHOOK } from 'App/constants/schedule';
 import { confirm } from 'UI';
 
@@ -18,16 +16,14 @@ interface Props {
     showModal?: boolean;
     metricId?: number;
     onClose?: () => void;
-    webhooks: any;
-    fetchWebhooks: Function;
 }
 function AlertFormModal(props: Props) {
-    const { alertsStore } = useStore()
-    const { metricId = null, showModal = false, webhooks } = props;
+    const { alertsStore, settingsStore } = useStore()
+    const { metricId = null, showModal = false } = props;
     const [showForm, setShowForm] = useState(false);
-
+    const webhooks = settingsStore.webhooks
     useEffect(() => {
-        props.fetchWebhooks();
+        settingsStore.fetchWebhooks();
     }, []);
 
 
@@ -110,9 +106,4 @@ function AlertFormModal(props: Props) {
     );
 }
 
-export default connect(
-    (state) => ({
-        webhooks: state.getIn(['webhooks', 'list']),
-    }),
-    { fetchWebhooks }
-)(observer(AlertFormModal));
+export default observer(AlertFormModal);

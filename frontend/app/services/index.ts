@@ -9,6 +9,8 @@ import NotesService from "./NotesService";
 import RecordingsService from "./RecordingsService";
 import ConfigService from './ConfigService'
 import AlertsService from './AlertsService'
+import WebhookService from './WebhookService'
+
 export const dashboardService  = new DashboardService();
 export const metricService = new MetricService();
 export const sessionService = new SessionSerivce();
@@ -20,3 +22,19 @@ export const notesService = new NotesService();
 export const recordingsService = new RecordingsService();
 export const configService = new ConfigService();
 export const alertsService = new AlertsService();
+export const webhookService = new WebhookService();
+
+export const services = [
+  dashboardService,
+  metricService,
+  sessionService,
+  userService,
+  funnelService,
+  auditService,
+  errorService,
+  notesService,
+  recordingsService,
+  configService,
+  alertsService,
+  webhookService,
+]

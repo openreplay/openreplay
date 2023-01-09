@@ -5,7 +5,6 @@ import { validateEmail } from 'App/validate';
 import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import { SLACK, WEBHOOK, TEAMS } from 'App/constants/schedule';
-import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { withSiteId, alerts } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
@@ -57,17 +56,15 @@ interface Select {
 interface IProps extends RouteComponentProps {
   siteId: string;
   slackChannels: any[];
-  webhooks: any[];
   loading: boolean;
   deleting: boolean;
   triggerOptions: any[];
   list: any;
   onSubmit: (instance: Alert) => void;
-  fetchWebhooks: () => void;
 }
 
 const NewAlert = (props: IProps) => {
-  const { alertsStore } = useStore();
+  const { alertsStore, settingsStore } = useStore();
   const {
     fetchTriggerOptions,
     init,
@@ -81,11 +78,10 @@ const NewAlert = (props: IProps) => {
     loading,
   } = alertsStore
   const deleting = loading
-
+  const webhooks = settingsStore.webhooks
+  const fetchWebhooks = settingsStore.fetchWebhooks
   const {
     siteId,
-    webhooks,
-    fetchWebhooks,
   } = props;
 
   useEffect(() => {
@@ -288,12 +284,4 @@ const NewAlert = (props: IProps) => {
   );
 };
 
-export default withRouter(
-  connect(
-    (state) => ({
-      // @ts-ignore
-      webhooks: state.getIn(['webhooks', 'list']),
-    }),
-    { fetchWebhooks }
-  )(observer(NewAlert))
-);
+export default withRouter(observer(NewAlert))

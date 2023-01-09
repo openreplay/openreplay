@@ -13,7 +13,6 @@ import sources from './sources';
 import members from './member';
 import site from './site';
 import customFields from './customField';
-import webhooks from './webhook';
 import integrations from './integrations';
 import rehydrate from './rehydrate';
 import errors from './errors';
@@ -36,7 +35,6 @@ const rootReducer = combineReducers({
   members,  
   site,
   customFields,
-  webhooks,
   rehydrate,
   errors,
   funnels,

@@ -1,25 +1,21 @@
 import React from 'react';
-import { NoContent, Pagination, Icon } from 'UI';
+import { NoContent, Pagination } from 'UI';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
-import { connect } from 'react-redux';
-import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import AlertListItem from './AlertListItem'
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
-import Alert from 'Types/alert'
 
 const pageSize = 10;
 
 interface Props {
   siteId: string;
-  webhooks: Array<any>;
-  fetchWebhooks: () => void;
 }
 
-function AlertsList({ siteId, fetchWebhooks, webhooks }: Props) {
-  const { alertsStore } = useStore();
+function AlertsList({ siteId }: Props) {
+  const { alertsStore, settingsStore } = useStore();
+  const { fetchWebhooks, webhooks } = settingsStore
   const { alerts: alertsList, alertsSearch, fetchList, init } = alertsStore
 
   React.useEffect(() => { fetchList(); fetchWebhooks() }, []);
@@ -72,10 +68,4 @@ function AlertsList({ siteId, fetchWebhooks, webhooks }: Props) {
   );
 }
 
-export default connect(
-  (state) => ({
-    // @ts-ignore
-    webhooks: state.getIn(['webhooks', 'list']),
-  }),
-  { fetchWebhooks }
-)(observer(AlertsList));
+export default observer(AlertsList);

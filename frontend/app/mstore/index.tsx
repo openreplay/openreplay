@@ -6,17 +6,7 @@ import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
 import FunnelStore from './funnelStore';
 import {
-  dashboardService,
-  metricService,
-  sessionService,
-  userService,
-  auditService,
-  funnelService,
-  errorService,
-  notesService,
-  recordingsService,
-  configService,
-  alertsService,
+  services
 } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
@@ -69,17 +59,9 @@ export class RootStore {
 
   initClient() {
     const client = new APIClient();
-    dashboardService.initClient(client);
-    metricService.initClient(client);
-    funnelService.initClient(client);
-    sessionService.initClient(client);
-    userService.initClient(client);
-    auditService.initClient(client);
-    errorService.initClient(client);
-    notesService.initClient(client)
-    recordingsService.initClient(client);
-    configService.initClient(client);
-    alertsService.initClient(client)
+    services.forEach(service => {
+      service.initClient(client);
+    })
   }
 }
 
