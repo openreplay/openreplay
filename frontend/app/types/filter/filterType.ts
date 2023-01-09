@@ -152,7 +152,7 @@ export enum IssueType {
 export enum IssueCategory {
   RESOURCES = 'resources',
   NETWORK = 'network',
-  CLICK_RAGE = 'click_rage',
+  RAGE = 'rage',
   ERRORS = 'errors'
 }
 

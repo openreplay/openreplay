@@ -3,11 +3,11 @@ import FilterSeries from "./filterSeries";
 import { DateTime } from 'luxon';
 import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
-import { issueOptions } from 'App/constants/filterOptions';
+import { issueOptions, issueCategories } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { metricService } from "App/services";
-import { WEB_VITALS } from "App/constants/card";
+import { INSIGHTS, TABLE, WEB_VITALS } from "App/constants/card";
 
 export default class Widget {
     public static get ID_KEY():string { return "metricId" }
@@ -76,7 +76,7 @@ export default class Widget {
         runInAction(() => {
             this.metricId = json.metricId
             this.widgetId = json.widgetId
-            this.metricValue = this.metricValueFromArray(json.metricValue)
+            this.metricValue = this.metricValueFromArray(json.metricValue, json.metricType)
             this.metricOf = json.metricOf
             this.metricType = json.metricType
             this.metricFormat = json.metricFormat
@@ -172,9 +172,13 @@ export default class Widget {
         })
     }
 
-    private metricValueFromArray(metricValue: any) {
+    private metricValueFromArray(metricValue: any, metricType: string) {
         if (!Array.isArray(metricValue)) return metricValue;
-        return issueOptions.filter((i: any) => metricValue.includes(i.value))
+        if (metricType === TABLE) {
+            return issueOptions.filter((i: any) => metricValue.includes(i.value))
+        } else if (metricType === INSIGHTS) {
+            return issueCategories.filter((i: any) => metricValue.includes(i.value))
+        }
     }
 
     private metricValueToArray(metricValue: any) {

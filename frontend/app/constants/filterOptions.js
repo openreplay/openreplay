@@ -121,7 +121,7 @@ export const issueOptions = [
 export const issueCategories = [
   { label: 'Resources', value: IssueCategory.RESOURCES },
   { label: 'Network', value: IssueCategory.NETWORK },
-  { label: 'Click Rage', value: IssueCategory.CLICK_RAGE },
+  { label: 'Rage', value: IssueCategory.RAGE },
   { label: 'Errors', value: IssueCategory.ERRORS },
 ]
 
