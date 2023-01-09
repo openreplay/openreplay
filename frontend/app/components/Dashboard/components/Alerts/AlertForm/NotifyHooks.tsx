@@ -1,6 +1,7 @@
 import React from 'react';
 import { Checkbox } from 'UI';
 import DropdownChips from '../DropdownChips';
+import { observer } from 'mobx-react-lite'
 
 interface INotifyHooks {
   instance: Alert;
@@ -128,4 +129,4 @@ function NotifyHooks({
   );
 }
 
-export default NotifyHooks;
+export default observer(NotifyHooks);

@@ -88,7 +88,7 @@ const NewAlert = (props: IProps) => {
     init({});
     if (list.length === 0) fetchList();
     fetchTriggerOptions();
-    fetchWebhooks();
+    void fetchWebhooks();
   }, []);
 
   useEffect(() => {
