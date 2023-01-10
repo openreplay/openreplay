@@ -1351,7 +1351,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("performance.EventType='PERFORMANCE'")
+    ch_sub_query_chart.append("event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -1384,7 +1384,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("performance.EventType='PERFORMANCE'")
+    ch_sub_query_chart.append("event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -1417,7 +1417,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("performance.EventType='PERFORMANCE'")
+    ch_sub_query_chart.append("event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 

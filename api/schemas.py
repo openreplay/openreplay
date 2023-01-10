@@ -777,16 +777,16 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
 class FunnelSchema(BaseModel):
     name: str = Field(...)
     filter: FunnelSearchPayloadSchema = Field([])
-    is_public: bool = Field(False)
+    is_public: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
 class UpdateFunnelSchema(FunnelSchema):
-    name: Optional[str] = Field(None)
-    filter: Optional[FunnelSearchPayloadSchema] = Field(None)
-    is_public: Optional[bool] = Field(None)
+    name: Optional[str] = Field(default=None)
+    filter: Optional[FunnelSearchPayloadSchema] = Field(default=None)
+    is_public: Optional[bool] = Field(default=None)
 
 
 class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
