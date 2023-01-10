@@ -1,41 +1,34 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import withRequest from 'HOCs/withRequest';
 import withPermissions from 'HOCs/withPermissions';
-import { PlayerContext, defaultContextValue } from './playerContext';
+import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
 import { makeAutoObservable } from 'mobx';
 import { createLiveWebPlayer } from 'Player';
-import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
-import PlayerBlock from '../Session_/PlayerBlock';
+import PlayerBlockHeader from './Player/LivePlayer/LivePlayerBlockHeader';
+import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
 import styles from '../Session_/session.module.css';
 import Session from 'App/mstore/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 
 interface Props {
   session: Session;
-  fullscreen: boolean;
   loadingCredentials: boolean;
-  assistCredendials: RTCIceServer[];
+  assistCredentials: RTCIceServer[];
   isEnterprise: boolean;
   userEmail: string;
   userName: string;
   customSession?: Session;
   isMultiview?: boolean;
   query?: Record<string, (key: string) => any>;
-  toggleFullscreen: (isOn: boolean) => void;
-  closeBottomBlock: () => void;
   request: () => void;
 }
 
 function LivePlayer({
   session,
-  toggleFullscreen,
-  closeBottomBlock,
-  fullscreen,
   loadingCredentials,
-  assistCredendials,
+  assistCredentials,
   request,
   isEnterprise,
   userEmail,
@@ -44,11 +37,11 @@ function LivePlayer({
   customSession,
   query
 }: Props) {
-  const [contextValue, setContextValue] = useState(defaultContextValue);
+  // @ts-ignore
+  const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
   const [fullView, setFullView] = useState(false);
-  const openedFromMultiview = query.get('multi') === 'true'
-  // @ts-ignore burn immutable
-  const usedSession = isMultiview ? customSession : session.toJS();
+  const openedFromMultiview = query?.get('multi') === 'true'
+  const usedSession = isMultiview ? customSession! : session;
 
   useEffect(() => {
     if (loadingCredentials || !usedSession.sessionId) return;
@@ -59,13 +52,13 @@ function LivePlayer({
         name: userName,
       },
     };
-    const [player, store] = createLiveWebPlayer(sessionWithAgentData, assistCredendials, (state) =>
+    const [player, store] = createLiveWebPlayer(sessionWithAgentData, assistCredentials, (state) =>
       makeAutoObservable(state)
     );
     setContextValue({ player, store });
 
     return () => player.clean();
-  }, [session.sessionId, assistCredendials]);
+  }, [session.sessionId, assistCredentials]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
@@ -80,10 +73,6 @@ function LivePlayer({
     if (isEnterprise) {
       request();
     }
-    return () => {
-      toggleFullscreen(false);
-      closeBottomBlock();
-    };
   }, []);
 
   const TABS = {
@@ -102,7 +91,6 @@ function LivePlayer({
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           tabs={TABS}
-          fullscreen={fullscreen}
           isMultiview={openedFromMultiview}
         />
       )}
@@ -112,7 +100,6 @@ function LivePlayer({
           height: isMultiview ? '100%' : undefined,
           width: isMultiview ? '100%' : undefined,
         }}
-        data-fullscreen={fullscreen}
       >
         <PlayerBlock isMultiview={isMultiview} />
       </div>
@@ -123,7 +110,7 @@ function LivePlayer({
 export default withRequest({
   initialData: null,
   endpoint: '/assist/credentials',
-  dataName: 'assistCredendials',
+  dataName: 'assistCredentials',
   loadingName: 'loadingCredentials',
 })(
   withPermissions(
@@ -136,13 +123,11 @@ export default withRequest({
         return {
           session: state.getIn(['sessions', 'current']),
           showAssist: state.getIn(['sessions', 'showChatWindow']),
-          fullscreen: state.getIn(['components', 'player', 'fullscreen']),
           isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
           userEmail: state.getIn(['user', 'account', 'email']),
           userName: state.getIn(['user', 'account', 'name']),
         };
-      },
-      { toggleFullscreen, closeBottomBlock }
+      }
     )(withLocationHandlers()(LivePlayer))
   )
 );

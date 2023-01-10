@@ -1,0 +1,66 @@
+.eventsBlock {
+  width: 270px;
+  margin-bottom: 5px;
+}
+
+.header {
+  & .hAndProgress {
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    /* margin-bottom: 5px; */
+    /* height: 40px; */
+    & .progress {
+      flex: 1;
+      margin: 0 0 0 15px;
+      & :global(.bar) {
+        background: #ffcc99;
+      }
+      & :global(.progress) {
+        font-size: 9px;
+      }
+    }
+  }
+
+  & h5 {
+    margin: 0; /* get rid of semantic, please*/
+    font-size: 14px;
+    font-weight: 700;
+  }
+}
+
+.eventsList {
+  /* box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.1); */
+  /* border-top: solid thin $gray-light-shade; */
+  &::-webkit-scrollbar {
+    width: 2px;
+    background: transparent !important;
+    background: rgba(0,0,0,0);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent !important;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+  &:hover {
+    &::-webkit-scrollbar {
+      width: 2px;
+      background: rgba(0,0,0,0.1)
+    }
+    &::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.1)
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.1)
+    }
+  }
+}
+
+.sessionDetails {
+  display: flex;
+  font-size: 10px;
+  color: $gray-medium;
+  justify-content: space-between;
+}

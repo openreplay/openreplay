@@ -25,7 +25,6 @@ function WebPlayer(props: any) {
     session,
     toggleFullscreen,
     closeBottomBlock,
-    live,
     fullscreen,
     fetchList,
     customSession,
@@ -37,7 +36,8 @@ function WebPlayer(props: any) {
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [showNoteModal, setShowNote] = useState(false);
-  const [noteItem, setNoteItem] = useState<Note>();
+  const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
+  // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
@@ -55,11 +55,10 @@ function WebPlayer(props: any) {
 
     if (!isClickmap) {
       notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-        const noteId = props.query.get('note');
-        const note = notesStore.getNoteById(parseInt(noteId, 10), r)
+        const note = props.query.get('note');
         if (note) {
           WebPlayerInst.pause();
-          setNoteItem(note);
+          setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
           setShowNote(true);
         }
       });
@@ -124,7 +123,6 @@ function WebPlayer(props: any) {
         <PlayerContent
           activeTab={activeTab}
           fullscreen={fullscreen}
-          live={live}
           setActiveTab={setActiveTab}
           session={session}
           isClickmap={isClickmap}
