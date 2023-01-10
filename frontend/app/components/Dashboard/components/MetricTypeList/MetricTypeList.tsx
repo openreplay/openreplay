@@ -4,7 +4,7 @@ import MetricsLibraryModal from '../MetricsLibraryModal';
 import MetricTypeItem, { MetricType } from '../MetricTypeItem/MetricTypeItem';
 import { TYPES, LIBRARY } from 'App/constants/card';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { dashboardMetricCreate, metricCreate, withSiteId } from 'App/routes';
+import { dashboardMetricCreate, withSiteId } from 'App/routes';
 import { useStore } from 'App/mstore';
 
 interface Props extends RouteComponentProps {

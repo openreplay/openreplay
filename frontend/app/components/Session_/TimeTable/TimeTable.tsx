@@ -2,7 +2,7 @@ import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
 import { Duration } from "luxon";
-import { NoContent, IconButton, Button } from 'UI';
+import { NoContent, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';

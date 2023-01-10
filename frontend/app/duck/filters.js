@@ -2,12 +2,12 @@ import { List, Map, Set } from 'immutable';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
-import Event, { TYPES } from 'Types/filter/event';
+import Event from 'Types/filter/event';
 import CustomFilter, { KEYS } from 'Types/filter/customFilter';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
-import { fetchListType, fetchType, saveType, editType, initType, removeType } from './funcTools/crud/types';
+import { editType } from './funcTools/crud/types';
 
 const ERRORS_ROUTE = errorsRoute();
 

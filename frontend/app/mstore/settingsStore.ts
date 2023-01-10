@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action } from "mobx"
+import { makeAutoObservable, observable } from "mobx"
 import SessionSettings from "./types/sessionSettings"
 import { sessionService } from "App/services"
 import { toast } from 'react-toastify';

@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { NoContent, Pagination, Icon } from 'UI';
+import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';

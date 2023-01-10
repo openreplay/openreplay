@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, action } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import moment from 'moment';
 import { SKIP_TO_ISSUE, TIMEZONE, DURATION_FILTER } from 'App/constants/storageKeys';
 

@@ -1,11 +1,9 @@
 import React from 'react';
-import { Modal, Icon, Tabs } from 'UI';
-import styles from './trackingCodeModal.module.css';
+import { Tabs } from 'UI';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import { connect } from 'react-redux';
 import ProjectCodeSnippet from './ProjectCodeSnippet';
 import InstallDocs from './InstallDocs';
-import cn from 'classnames';
 
 const PROJECT = 'Using Script';
 const DOCUMENTATION = 'Using NPM';

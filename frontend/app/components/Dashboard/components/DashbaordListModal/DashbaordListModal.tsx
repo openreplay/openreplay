@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
-import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';
-import { withSiteId, dashboardSelected, metrics } from 'App/routes';
+import { SideMenuitem, Icon } from 'UI';
+import { withSiteId, dashboardSelected } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 

@@ -1,7 +1,6 @@
 import Record from 'Types/Record';
 import Filter from './filter';
-import { List } from 'immutable';
-import { notEmptyString, validateName } from 'App/validate';
+import { notEmptyString } from 'App/validate';
 
 export default Record({
   searchId: undefined,

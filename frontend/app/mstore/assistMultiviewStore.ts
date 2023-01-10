@@ -2,7 +2,7 @@ import { makeAutoObservable } from 'mobx';
 import { sessionService } from 'App/services';
 import Filter from 'Types/filter';
 import Session from 'Types/session';
-import { List, Map } from 'immutable';
+import { List } from 'immutable';
 
 type MultiSessions = [
   LiveSessionListItem?,

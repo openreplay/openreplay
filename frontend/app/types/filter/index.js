@@ -170,7 +170,6 @@ export const defaultOperator = (filter) => {
     case TYPES.USER_COUNTRY:
     case TYPES.METADATA:
     case 'metadata':
-    case TYPES.CUSTOM:
     case TYPES.LOCATION:
     case TYPES.VIEW:
       return 'is';

@@ -11,8 +11,6 @@ import {
 import { JSONTree, NoContent } from 'UI';
 import { formatMs } from 'App/date';
 import { diff } from 'deep-diff';
-import DiffTree from './DiffTree'
-import { setIn } from 'immutable';
 import { jump } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';

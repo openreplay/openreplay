@@ -2,7 +2,7 @@ import Assignment from 'Types/session/assignment';
 import Activity from 'Types/session/activity';
 import { List, Map, Set } from 'immutable';
 import withRequestState, { RequestTypes } from 'Duck/requestStateCreator';
-import { createListUpdater, createItemInListUpdater } from './funcTools/tools';
+import { createListUpdater } from './funcTools/tools';
 import { editType, initType } from './funcTools/crud/types';
 import { createInit, createEdit } from './funcTools/crud';
 

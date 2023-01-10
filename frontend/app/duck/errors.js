@@ -1,9 +1,9 @@
 import { List, Map } from 'immutable'; 
 import { clean as cleanParams } from 'App/api_client';
 import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED, BOOKMARK } from 'Types/errorInfo';
-import { createFetch, fetchListType, fetchType } from './funcTools/crud';
+import { fetchListType, fetchType } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
-import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
+import { array, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
 import { reduceThenFetchResource } from './search'
 
 const name = "error";

@@ -10,7 +10,6 @@ import {
 import { 
 	createCRUDReducer, 
 	getCRUDRequestTypes,
-	createFetchList,
 	createInit,
 	createEdit,
 	createRemove,

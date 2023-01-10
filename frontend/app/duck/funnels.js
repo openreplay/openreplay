@@ -145,10 +145,6 @@ const reducer = (state = initialState, action = {}) => {
       return state.update('list', itemInListUpdater(CustomField(action.data)))
     case REMOVE_SUCCESS:
       return state.update('list', list => list.filter(item => item.index !== action.index));
-    case INIT:
-      return state.set('instance', Funnel(action.instance));
-    case EDIT:
-      return state.mergeIn([ 'instance' ], action.instance);
     case APPLY_FILTER:      
       return state.mergeIn([ action.filterType ], Array.isArray(action.filter) ? action.filter : Map(action.filter));
     case APPLY_ISSUE_FILTER:      

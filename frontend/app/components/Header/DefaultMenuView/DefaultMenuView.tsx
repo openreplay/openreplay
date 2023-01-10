@@ -1,13 +1,12 @@
 import React from 'react';
-import { NavLink, withRouter } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   sessions,
   metrics,
   assist,
-  client,
   dashboard,
   withSiteId,
-  CLIENT_DEFAULT_TAB,
+
 } from 'App/routes';
 import SiteDropdown from '../SiteDropdown';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';

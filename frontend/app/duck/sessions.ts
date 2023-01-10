@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
-import { Location, InjectedEvent } from 'Types/session/event'
+import { Location } from 'Types/session/event'
 import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';

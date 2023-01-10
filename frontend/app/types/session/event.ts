@@ -1,6 +1,3 @@
-import Record from 'Types/Record';
-import Target from 'Types/target';
-
 const CONSOLE = 'CONSOLE';
 const CLICK = 'CLICK';
 const INPUT = 'INPUT';

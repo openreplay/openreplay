@@ -1,7 +1,7 @@
 import React,  { useState } from 'react'
 import { connect } from 'react-redux'
 import { fetchIssues, fetchIssuesFiltered } from 'Duck/funnels'
-import { LoadMoreButton, NoContent, Loader } from 'UI'
+import { LoadMoreButton, NoContent } from 'UI'
 import FunnelIssuesHeader from '../FunnelIssuesHeader'
 import IssueItem from '../IssueItem';
 import { funnelIssue as funnelIssueRoute, withSiteId } from 'App/routes'

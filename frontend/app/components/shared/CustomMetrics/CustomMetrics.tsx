@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { IconButton } from 'UI';
 import { connect } from 'react-redux';
 import { edit, init } from 'Duck/customMetrics';

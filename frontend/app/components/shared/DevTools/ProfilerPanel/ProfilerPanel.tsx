@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { TextEllipsis, Input } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';

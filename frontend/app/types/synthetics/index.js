@@ -1,10 +1,5 @@
-import { Map, List } from 'immutable';
-import Session from 'Types/session';
-import { camelCased } from 'App/utils';
-
-import { getChartFormatter } from './helper'; 
+import { getChartFormatter } from './helper';
 import DomBuildingTime from './domBuildingTime';
-import ResourceLoadingTime from './resourceLoadingTime';
 
 export const WIDGET_LIST = [
   {

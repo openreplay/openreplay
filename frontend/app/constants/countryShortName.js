@@ -63,8 +63,6 @@ export default (countryName) => {
       return 'ATG';
     case 'American Samoa':
       return 'ASM';
-    case 'Brunei Darussalam':
-      return 'BRN';
     case 'Palestine, State Of':
       return 'PSE';
     case 'Saint Kitts and Nevis':

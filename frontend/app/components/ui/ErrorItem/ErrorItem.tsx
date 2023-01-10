@@ -1,8 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { IconButton } from 'UI';
 import stl from './errorItem.module.css';
-import { Duration } from 'luxon';
 import { useModal } from 'App/components/Modal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import JumpButton from 'Shared/DevTools/JumpButton';

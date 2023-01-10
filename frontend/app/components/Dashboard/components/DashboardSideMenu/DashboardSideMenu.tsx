@@ -1,5 +1,5 @@
 import React from 'react';
-import { SideMenuitem, SideMenuHeader } from 'UI';
+import { SideMenuitem } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
 import { connect } from 'react-redux';

@@ -1,5 +1,4 @@
 import React from 'react';
-import MetricListItem from '../MetricListItem';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
 
 interface Props {

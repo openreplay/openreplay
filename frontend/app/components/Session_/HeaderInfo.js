@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from 'UI';
-import styles from './headerInfo.module.css';
 
 const HeaderInfo = ({ icon, label }) => {
   return (

@@ -1,7 +1,6 @@
 import type { Message } from './message.gen'
 import type { RawMessage } from './raw.gen'
 import { MType } from './raw.gen'
-import RawMessageReader from './RawMessageReader.gen'
 
 interface RawMessageReaderI {
   readMessage(): RawMessage | null

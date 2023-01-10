@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Input, Icon } from 'UI'
 import { PlayerContext } from 'App/components/Session/playerContext';
 

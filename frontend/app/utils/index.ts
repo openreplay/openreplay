@@ -2,7 +2,6 @@ import JSBI from 'jsbi';
 import chroma from 'chroma-js';
 import * as htmlToImage from 'html-to-image';
 import { SESSION_FILTER } from 'App/constants/storageKeys';
-import { useEffect, useRef, useState } from 'react';
 
 export function debounce(callback, wait, context = this) {
   let timeout = null;

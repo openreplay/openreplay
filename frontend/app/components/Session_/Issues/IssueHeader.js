@@ -1,7 +1,5 @@
 import React from 'react';
-import { Icon, Input } from 'UI';
-import ActiveIssueClose from './ActiveIssueClose';
-import stl from './issueHeader.module.css';
+import { Icon } from 'UI';
 
 const GotoSessionLink = props => (
   <a className="flex items-center absolute right-0 mr-3 cursor-pointer">

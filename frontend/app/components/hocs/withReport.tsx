@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { convertElementToImage } from 'App/utils';
 import { jsPDF } from 'jspdf';
 import { useStore } from 'App/mstore';
-import { observer, useObserver } from 'mobx-react-lite';
+import { useObserver } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import { fileNameFormat } from 'App/utils';
 import { toast } from 'react-toastify';

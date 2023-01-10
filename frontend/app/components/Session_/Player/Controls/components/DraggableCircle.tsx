@@ -1,4 +1,4 @@
-import React, { memo, FC, useEffect, useRef, CSSProperties } from 'react';
+import React, { memo, FC, useEffect, CSSProperties } from 'react';
 import type { DragSourceMonitor } from 'react-dnd'
 import { useDrag } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'

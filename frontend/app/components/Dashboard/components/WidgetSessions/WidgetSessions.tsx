@@ -4,7 +4,7 @@ import Select from 'Shared/Select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';

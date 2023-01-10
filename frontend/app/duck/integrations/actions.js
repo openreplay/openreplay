@@ -1,4 +1,3 @@
-import { array } from '../funcTools/tools';
 import { fetchListType, fetchType, saveType, editType, initType, removeType } from '../funcTools/types';
 
 export function fetchList(name) {

@@ -1,6 +1,5 @@
 import { useModal } from 'App/components/Modal';
-import React, { useEffect, useState } from 'react';
-import { SlideModal, Avatar, TextEllipsis, Icon } from 'UI';
+import React, { useState } from 'react';
 import SessionList from '../SessionList';
 import stl from './assistTabs.module.css'
 

@@ -1,6 +1,6 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
+import { Button, Modal, Form, Icon, Input } from 'UI';
 
 interface Props {
     show: boolean;

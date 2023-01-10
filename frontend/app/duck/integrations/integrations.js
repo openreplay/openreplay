@@ -1,5 +1,4 @@
 import { Map } from 'immutable';
-import withRequestState from 'Duck/requestStateCreator';
 import { fetchListType } from '../funcTools/types';
 import { createRequestReducer } from '../funcTools/request';
 

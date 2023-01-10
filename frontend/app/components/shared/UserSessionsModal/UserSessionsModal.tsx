@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
 import { useStore } from 'App/mstore';
-import Filter from 'Types/filter';
-import { filtersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'App/types/filter/filterType';
 import { NoContent, Pagination, Loader, Avatar } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import SelectDateRange from 'Shared/SelectDateRange';
-import Period from 'Types/app/period';
 import { useObserver, observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
