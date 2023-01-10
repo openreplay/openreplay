@@ -894,8 +894,8 @@ class MetricType(str, Enum):
 
 class MetricOfErrors(str, Enum):
     calls_errors = "callsErrors"  # calls_errors
-    domains_errors_4xx = "domainsErrors4Xx"  # domains_errors_4xx
-    domains_errors_5xx = "domainsErrors5Xx"  # domains_errors_5xx
+    domains_errors_4xx = "domainsErrors4xx"  # domains_errors_4xx
+    domains_errors_5xx = "domainsErrors5xx"  # domains_errors_5xx
     errors_per_domains = "errorsPerDomains"  # errors_per_domains
     errors_per_type = "errorsPerType"  # errors_per_type
     impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"  # impacted_sessions_by_js_errors
