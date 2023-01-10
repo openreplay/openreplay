@@ -51,17 +51,7 @@ class GetInsightsSchema(BaseModel):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
     # time_step: int = Field(default=3600)
-    categories: List[InsightCategories] = Field(..., min_items=1)
-
-    # This is used to handle wrong values sent by the UI
-    @root_validator(pre=True)
-    def transform(cls, values):
-        if values.get("categories") is None or len(values.get("categories")) == 0:
-            values["categories"] = []
-            for v in InsightCategories:
-                values["categories"].append(v.value)
-
-        return values
+    categories: List[InsightCategories] = Field(...)
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
@@ -161,17 +151,6 @@ class CreateCardSchema(schemas.CreateCardSchema):
 
     @root_validator
     def restrictions(cls, values):
-        return values
-
-    # This is used to handle wrong values sent by the UI
-    @root_validator(pre=True)
-    def transform_ee(cls, values):
-        if values.get("metricType") == schemas.MetricType.insights and (
-                values.get("metricValue") is None or len(values.get("metricValue")) == 0):
-            values["metricValue"] = []
-            for v in InsightCategories:
-                values["metricValue"].append(v.value)
-
         return values
 
     @root_validator
