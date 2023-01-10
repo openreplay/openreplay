@@ -429,77 +429,8 @@ export default class DashboardStore {
             return metricService
                 .getMetricChartData(metric, params, isWidget)
                 .then((data: any) => {
-                    if (
-                        metric.metricType === "predefined" &&
-                        metric.viewType === "overview"
-                    ) {
-                        const _data = {
-                            ...data,
-                            chart: getChartFormatter(period)(data.chart),
-                        };
-                        metric.setData(_data);
-                        resolve(_data);
-                    } else if (metric.metricType === "funnel") {
-                        const _data = { ...data };
-                        _data.funnel = new Funnel().fromJSON(data);
-                        metric.setData(_data);
-                        resolve(_data);
-                    } else {
-                        const _data = {
-                            ...data,
-                        };
-
-                        // TODO refactor to widget class
-                        if (metric.metricOf === FilterKey.SESSIONS) {
-                            _data["sessions"] = data.sessions.map((s: any) =>
-                                new Session().fromJson(s)
-                            );
-                        } else if (metric.metricOf === FilterKey.ERRORS) {
-                            _data["errors"] = data.errors.map((s: any) =>
-                                new Error().fromJSON(s)
-                            );
-                        } else {
-                            if (data.hasOwnProperty("chart")) {
-                                _data["chart"] = getChartFormatter(period)(
-                                    data.chart
-                                );
-                                _data["namesMap"] = data.chart
-                                    .map((i: any) => Object.keys(i))
-                                    .flat()
-                                    .filter(
-                                        (i: any) => i !== "time" && i !== "timestamp"
-                                    )
-                                    .reduce((unique: any, item: any) => {
-                                        if (!unique.includes(item)) {
-                                            unique.push(item);
-                                        }
-                                        return unique;
-                                    }, []);
-                            } else {
-                                _data["chart"] = getChartFormatter(period)(
-                                    Array.isArray(data) ? data : []
-                                );
-                                _data["namesMap"] = Array.isArray(data)
-                                    ? data
-                                          .map((i) => Object.keys(i))
-                                          .flat()
-                                          .filter(
-                                              (i) =>
-                                                  i !== "time" &&
-                                                  i !== "timestamp"
-                                          )
-                                          .reduce((unique: any, item: any) => {
-                                              if (!unique.includes(item)) {
-                                                  unique.push(item);
-                                              }
-                                              return unique;
-                                          }, [])
-                                    : [];
-                            }
-                        }
-                        metric.setData(_data);
-                        resolve(_data);
-                    }
+                    metric.setData(data, period);
+                    resolve(metric.data);
                 })
                 .catch((err: any) => {
                     reject(err);

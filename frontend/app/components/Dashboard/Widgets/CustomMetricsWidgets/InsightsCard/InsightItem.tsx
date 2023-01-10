@@ -8,6 +8,7 @@ interface Props {
 function InsightItem(props: Props) {
   const { item, onClick = () => {} } = props;
   return (
+    // TODO update according to the new response format
     <div
       className="flex items-center py-4 hover:bg-active-blue -mx-4 px-4 border-b last:border-transparent cursor-pointer"
       onClick={onClick}

@@ -1,15 +1,9 @@
+import { NoContent } from 'App/components/ui';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import InsightItem from './InsightItem';
 
-const data = [
-  { icon: 'dizzy', ratio: 'Click Rage', increase: 10, iconColor: 'red' },
-  { icon: 'dizzy', ratio: 'Click Rage', increase: 10, iconColor: 'yello' },
-  { icon: 'dizzy', ratio: 'Click Rage', increase: 10, iconColor: 'green' },
-  { icon: 'dizzy', ratio: 'Click Rage', increase: 10, iconColor: 'gray' },
-  { icon: 'dizzy', ratio: 'Click Rage', increase: 10, iconColor: 'red' },
-];
 interface Props {}
 function InsightsCard(props: Props) {
   const { metricStore, dashboardStore } = useStore();
@@ -29,11 +23,11 @@ function InsightsCard(props: Props) {
   };
 
   return (
-    <div>
-      {data.map((item) => (
+    <NoContent>
+      {metric.data.issues.map((item: any) => (
         <InsightItem item={item} onClick={clickHanddler} />
       ))}
-    </div>
+    </NoContent>
   );
 }
 

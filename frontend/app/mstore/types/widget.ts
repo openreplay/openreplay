@@ -1,13 +1,15 @@
-import { makeAutoObservable, runInAction } from "mobx"
-import FilterSeries from "./filterSeries";
+import { makeAutoObservable, runInAction } from 'mobx';
+import FilterSeries from './filterSeries';
 import { DateTime } from 'luxon';
-import Session from "App/mstore/types/session";
+import Session from 'App/mstore/types/session';
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions, issueCategories } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
-import { metricService } from "App/services";
-import { INSIGHTS, TABLE, WEB_VITALS } from "App/constants/card";
+import { metricService } from 'App/services';
+import { INSIGHTS, TABLE, WEB_VITALS } from 'App/constants/card';
+import Error from '../types/error';
+import { getChartFormatter } from 'Types/dashboard/helper';
 
 export default class Widget {
     public static get ID_KEY():string { return "metricId" }
@@ -33,12 +35,13 @@ export default class Widget {
     thumbnail?: string
     params: any = { density: 70 }
 
-    period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
-    hasChanged: boolean = false
+  period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
+  hasChanged: boolean = false;
 
     position: number = 0
     data: any = {
         sessions: [],
+        issues: [],
         total: 0,
         chart: [],
         namesMap: {},
@@ -50,54 +53,59 @@ export default class Widget {
     dashboardId: any = undefined
     predefinedKey: string = ''
 
-    constructor() {
-        makeAutoObservable(this)
+  constructor() {
+    makeAutoObservable(this);
 
-        const filterSeries = new FilterSeries()
-        this.series.push(filterSeries)
-    }
+    const filterSeries = new FilterSeries();
+    this.series.push(filterSeries);
+  }
 
-    updateKey(key: string, value: any) {
-        this[key] = value
-    }
+  updateKey(key: string, value: any) {
+    this[key] = value;
+  }
 
-    removeSeries(index: number) {
-        this.series.splice(index, 1)
-    }
+  removeSeries(index: number) {
+    this.series.splice(index, 1);
+  }
 
-    addSeries() {
-        const series = new FilterSeries()
-        series.name = "Series " + (this.series.length + 1)
-        this.series.push(series)
-    }
+  addSeries() {
+    const series = new FilterSeries();
+    series.name = 'Series ' + (this.series.length + 1);
+    this.series.push(series);
+  }
 
-    fromJson(json: any, period?: any) {
-        json.config = json.config || {}
-        runInAction(() => {
-            this.metricId = json.metricId
-            this.widgetId = json.widgetId
-            this.metricValue = this.metricValueFromArray(json.metricValue, json.metricType)
-            this.metricOf = json.metricOf
-            this.metricType = json.metricType
-            this.metricFormat = json.metricFormat
-            this.viewType = json.viewType
-            this.name = json.name
-            this.series = json.series ? json.series.map((series: any) => new FilterSeries().fromJson(series)) : []
-            this.dashboards = json.dashboards || []
-            this.owner = json.ownerEmail
-            this.lastModified = json.editedAt || json.createdAt ? DateTime.fromMillis(json.editedAt || json.createdAt) : null
-            this.config = json.config
-            this.position = json.config.position
-            this.predefinedKey = json.predefinedKey
-            this.category = json.category
-            this.thumbnail = json.thumbnail
+  fromJson(json: any, period?: any) {
+    json.config = json.config || {};
+    runInAction(() => {
+      this.metricId = json.metricId;
+      this.widgetId = json.widgetId;
+      this.metricValue = this.metricValueFromArray(json.metricValue, json.metricType);
+      this.metricOf = json.metricOf;
+      this.metricType = json.metricType;
+      this.metricFormat = json.metricFormat;
+      this.viewType = json.viewType;
+      this.name = json.name;
+      this.series = json.series
+        ? json.series.map((series: any) => new FilterSeries().fromJson(series))
+        : [];
+      this.dashboards = json.dashboards || [];
+      this.owner = json.ownerEmail;
+      this.lastModified =
+        json.editedAt || json.createdAt
+          ? DateTime.fromMillis(json.editedAt || json.createdAt)
+          : null;
+      this.config = json.config;
+      this.position = json.config.position;
+      this.predefinedKey = json.predefinedKey;
+      this.category = json.category;
+      this.thumbnail = json.thumbnail;
 
-            if (period) {
-                this.period = period
-            }
-        })
-        return this
-    }
+      if (period) {
+        this.period = period;
+      }
+    });
+    return this;
+  }
 
     toWidget(): any {
         return {
@@ -128,61 +136,124 @@ export default class Widget {
         }
     }
 
-    validate() {
-        this.isValid = this.name.length > 0
+  validate() {
+    this.isValid = this.name.length > 0;
+  }
+
+  update(data: any) {
+    runInAction(() => {
+      Object.assign(this, data);
+    });
+  }
+
+  exists() {
+    return this.metricId !== undefined;
+  }
+
+  setData(data: any, period: any) {
+    const _data: any = {};
+
+    if (this.metricOf === FilterKey.ERRORS) {
+      _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
+    } else if (this.metricType === INSIGHTS) {
+      // TODO read fromt the response
+      _data['issues'] = [1, 2, 3].map((i: any) => ({
+        icon: 'dizzy',
+        ratio: 'Click Rage',
+        increase: 10,
+        iconColor: 'red',
+      }));
+    } else {
+      if (data.hasOwnProperty('chart')) {
+        _data['chart'] = getChartFormatter(period)(data.chart);
+        _data['namesMap'] = data.chart
+          .map((i: any) => Object.keys(i))
+          .flat()
+          .filter((i: any) => i !== 'time' && i !== 'timestamp')
+          .reduce((unique: any, item: any) => {
+            if (!unique.includes(item)) {
+              unique.push(item);
+            }
+            return unique;
+          }, []);
+      } else {
+        _data['chart'] = getChartFormatter(period)(Array.isArray(data) ? data : []);
+        _data['namesMap'] = Array.isArray(data)
+          ? data
+              .map((i) => Object.keys(i))
+              .flat()
+              .filter((i) => i !== 'time' && i !== 'timestamp')
+              .reduce((unique: any, item: any) => {
+                if (!unique.includes(item)) {
+                  unique.push(item);
+                }
+                return unique;
+              }, [])
+          : [];
+      }
     }
 
-    update(data: any) {
-        runInAction(() => {
-            Object.assign(this, data)
+    this.data = _data;
+  }
+
+  fetchSessions(metricId: any, filter: any): Promise<any> {
+    return new Promise((resolve) => {
+      metricService.fetchSessions(metricId, filter).then((response: any[]) => {
+        resolve(
+          response.map((cat: { sessions: any[] }) => {
+            return {
+              ...cat,
+              sessions: cat.sessions.map((s: any) => new Session().fromJson(s)),
+            };
+          })
+        );
+      });
+    });
+  }
+
+  fetchIssues(filter: any): Promise<any> {
+    return new Promise((resolve) => {
+      metricService.fetchIssues(filter).then((response: any) => {
+        const significantIssues = response.issues.significant
+          ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue))
+          : [];
+        const insignificantIssues = response.issues.insignificant
+          ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue))
+          : [];
+        resolve({
+          issues: significantIssues.length > 0 ? significantIssues : insignificantIssues,
+        });
+      });
+    });
+  }
+
+  fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
+    return new Promise((resolve, reject) => {
+      metricService
+        .fetchIssue(funnelId, issueId, params)
+        .then((response: any) => {
+          resolve({
+            issue: new Funnelissue().fromJSON(response.issue),
+            sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s)),
+          });
         })
-    }
+        .catch((error: any) => {
+          reject(error);
+        });
+    });
+  }
 
-    exists() {
-        return this.metricId !== undefined
+  private metricValueFromArray(metricValue: any, metricType: string) {
+    if (!Array.isArray(metricValue)) return metricValue;
+    if (metricType === TABLE) {
+      return issueOptions.filter((i: any) => metricValue.includes(i.value));
+    } else if (metricType === INSIGHTS) {
+      return issueCategories.filter((i: any) => metricValue.includes(i.value));
     }
+  }
 
-    setData(data: any) {
-        this.data = data;
-    }
-
-    fetchSessions(metricId: any, filter: any): Promise<any> {
-        return new Promise((resolve) => {
-            metricService.fetchSessions(metricId, filter).then((response: any[]) => {
-                resolve(response.map((cat: { sessions: any[]; }) => {
-                    return {
-                        ...cat,
-                        sessions: cat.sessions.map((s: any) => new Session().fromJson(s))
-                    }
-                }))
-            })
-        })
-    }
-
-    fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
-        return new Promise((resolve, reject) => {
-            metricService.fetchIssue(funnelId, issueId, params).then((response: any) => {
-                resolve({
-                    issue: new Funnelissue().fromJSON(response.issue),
-                    sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s)),
-                })
-            }).catch((error: any) => {
-                reject(error)
-            })
-        })
-    }
-
-    private metricValueFromArray(metricValue: any, metricType: string) {
-        if (!Array.isArray(metricValue)) return metricValue;
-        if (metricType === TABLE) {
-            return issueOptions.filter((i: any) => metricValue.includes(i.value))
-        } else if (metricType === INSIGHTS) {
-            return issueCategories.filter((i: any) => metricValue.includes(i.value))
-        }
-    }
-
-    private metricValueToArray(metricValue: any) {
-        if (!Array.isArray(metricValue)) return metricValue;
-        return metricValue.map((i: any) => i.value)
-    }
+  private metricValueToArray(metricValue: any) {
+    if (!Array.isArray(metricValue)) return metricValue;
+    return metricValue.map((i: any) => i.value);
+  }
 }
