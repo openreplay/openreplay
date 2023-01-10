@@ -3,13 +3,54 @@ import FilterSeries from './filterSeries';
 import { DateTime } from 'luxon';
 import Session from 'App/mstore/types/session';
 import Funnelissue from 'App/mstore/types/funnelIssue';
-import { issueOptions, issueCategories } from 'App/constants/filterOptions';
+import { issueOptions, issueCategories, issueCategoriesMap } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
 import { metricService } from 'App/services';
 import { INSIGHTS, TABLE, WEB_VITALS } from 'App/constants/card';
 import Error from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
+
+export class InishtIssue {
+  icon: string;
+  iconColor: string;
+  increase: number;
+  isNew = false;
+  category: string;
+  label: string;
+
+  constructor(
+    category: string,
+    public name: string,
+    public ratio: number,
+    increase = 0,
+    isNew = false
+  ) {
+    this.category = category;
+    // @ts-ignore
+    this.label = issueCategoriesMap[category];
+    this.icon = `ic-${category}`;
+    this.iconColor = 'red';
+
+    this.increase = increase;
+    this.isNew = isNew;
+  }
+}
+
+function generateRandomString(stringArray: string[]): string {
+  const randomIndex = Math.floor(Math.random() * stringArray.length);
+  return stringArray[randomIndex];
+}
+
+function randomIssue() {
+  return new InishtIssue(
+    generateRandomString(['rage', 'resources', 'network', 'errors']),
+    generateRandomString(['Login', 'Update', '/sessions/data', 'Reload']),
+    Math.floor(Math.random() * 50),
+    Math.floor(Math.random() * 100),
+    false
+  );
+}
 
 export default class Widget {
     public static get ID_KEY():string { return "metricId" }
@@ -85,9 +126,9 @@ export default class Widget {
       this.metricFormat = json.metricFormat;
       this.viewType = json.viewType;
       this.name = json.name;
-      this.series = json.series
+      this.series = (json.series && json.series.length > 0)
         ? json.series.map((series: any) => new FilterSeries().fromJson(series))
-        : [];
+        : [new FilterSeries()];
       this.dashboards = json.dashboards || [];
       this.owner = json.ownerEmail;
       this.lastModified =
@@ -157,13 +198,9 @@ export default class Widget {
     if (this.metricOf === FilterKey.ERRORS) {
       _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
     } else if (this.metricType === INSIGHTS) {
-      // TODO read fromt the response
-      _data['issues'] = [1, 2, 3].map((i: any) => ({
-        icon: 'dizzy',
-        ratio: 'Click Rage',
-        increase: 10,
-        iconColor: 'red',
-      }));
+      // TODO read from the response
+      _data['issues'] = [1, 2, 3, 4].map((i: any) => randomIssue());
+      console.log('_data', _data);
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['chart'] = getChartFormatter(period)(data.chart);

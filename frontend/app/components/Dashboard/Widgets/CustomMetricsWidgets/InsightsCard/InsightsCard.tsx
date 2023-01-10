@@ -25,11 +25,11 @@ function InsightsCard(props: Props) {
 
   return (
     <NoContent
-      show={metric.data.issues.length === 0}
+      show={metric.data.issues && metric.data.issues.length === 0}
       title={NO_METRIC_DATA}
       style={{ padding: '100px 0' }}
     >
-      {metric.data.issues.map((item: any) => (
+      {metric.data.issues && metric.data.issues.map((item: any) => (
         <InsightItem item={item} onClick={clickHanddler} />
       ))}
     </NoContent>

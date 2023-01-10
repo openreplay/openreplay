@@ -1,3 +1,4 @@
+import { IssueCategory } from 'App/types/filter/filterType';
 import React from 'react';
 import { Icon } from 'UI';
 
@@ -8,17 +9,24 @@ interface Props {
 function InsightItem(props: Props) {
   const { item, onClick = () => {} } = props;
   return (
-    // TODO update according to the new response format
     <div
       className="flex items-center py-4 hover:bg-active-blue -mx-4 px-4 border-b last:border-transparent cursor-pointer"
       onClick={onClick}
     >
       <Icon name={item.icon} size={20} className="mr-2" color={item.iconColor} />
-      <div className="mx-1 font-medium">{item.ratio}</div>
-      <div className="mx-1">on</div>
-      <div className="mx-1 bg-gray-100 px-2 rounded">Update</div>
-      <div className="mx-1">increased by</div>
-      <div className="font-medium text-red">{item.increase}</div>
+      <div className="mx-1 font-medium">{item.label}</div>
+      {item.category === IssueCategory.RAGE && (
+        <>
+          <div className="mx-1">on</div>
+          <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
+        </>
+      )}
+      {item.increase && (
+        <>
+          <div className="mx-1">increased by</div>
+          <div className="font-medium text-red">{item.increase}%</div>
+        </>
+      )}
     </div>
   );
 }

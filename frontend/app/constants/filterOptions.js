@@ -125,6 +125,11 @@ export const issueCategories = [
   { label: 'Errors', value: IssueCategory.ERRORS },
 ]
 
+export const issueCategoriesMap = issueCategories.reduce((acc, {value, label}) => {
+  acc[value] = label;
+  return acc;
+}, {})
+
 export default {
   options,
   baseOperators,
