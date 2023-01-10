@@ -32,7 +32,7 @@ const ItemTypes = {
 
 interface Props {
     left: number
-    live: boolean
+    live?: boolean
     onDrop?: () => void
 }
 
