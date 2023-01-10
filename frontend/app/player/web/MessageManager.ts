@@ -401,7 +401,7 @@ export default class MessageManager {
       case MType.Fetch:
       case MType.NetworkRequest:
         // @ts-ignore burn immutable
-        this.lists.lists.fetch.insert(Resource({
+        this.lists.lists.fetch.insert(new Resource({
           method: msg.method,
           url: msg.url,
           request: msg.request,

@@ -8,7 +8,7 @@ import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 
 interface Props {
   userEmail: string;
-  note: Note;
+  note?: Note;
   notFound?: boolean;
   onClose: () => void;
 }
@@ -17,7 +17,7 @@ function ReadNote(props: Props) {
   const { settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
-  if (props.notFound) {
+  if (props.notFound || props.note === undefined) {
     return (
       <div style={{ position: 'absolute', top: '45%', left: 'calc(50% - 200px)' }}>
         <div
