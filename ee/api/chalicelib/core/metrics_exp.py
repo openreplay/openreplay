@@ -210,10 +210,10 @@ def get_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimesta
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
 
     ch_sub_query = __get_basic_constraints(table_name="errors", data=args)
-    ch_sub_query.append("errors.EventType = 'ERROR'")
+    ch_sub_query.append("errors.event_type = 'ERROR'")
     ch_sub_query.append("errors.source = 'js_exception'")
     ch_sub_query_chart = __get_basic_constraints(table_name="errors", round_start=True, data=args)
-    ch_sub_query_chart.append("errors.EventType = 'ERROR'")
+    ch_sub_query_chart.append("errors.event_type = 'ERROR'")
     ch_sub_query_chart.append("errors.source = 'js_exception'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -270,9 +270,9 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="errors", data=args)
-    ch_sub_query.append("errors.EventType='ERROR'")
+    ch_sub_query.append("errors.event_type='ERROR'")
     ch_sub_query_chart = __get_basic_constraints(table_name="errors", round_start=True, data=args)
-    ch_sub_query_chart.append("errors.EventType='ERROR'")
+    ch_sub_query_chart.append("errors.event_type='ERROR'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query_chart += meta_condition
@@ -290,7 +290,7 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                             toUnixTimestamp(MAX(datetime))*1000 AS lastOccurrenceAt, 
                                             toUnixTimestamp(MIN(datetime))*1000 AS firstOccurrenceAt
                              FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS errors
-                             WHERE EventType='ERROR' AND project_id=%(project_id)s
+                             WHERE event_type='ERROR' AND project_id=%(project_id)s
                              GROUP BY error_id) AS errors_time USING(error_id)
                         ORDER BY sessions DESC, count DESC LIMIT 10;"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
@@ -344,7 +344,7 @@ def get_page_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def __get_page_metrics(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("(pages.dom_content_loaded_event_end>0 OR pages.first_contentful_paint_time>0)")
@@ -377,7 +377,7 @@ def get_application_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-
 def __get_application_activity(ch, project_id, startTimestamp, endTimestamp, **args):
     result = {}
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
@@ -390,7 +390,7 @@ def __get_application_activity(ch, project_id, startTimestamp, endTimestamp, **a
     result = {**result, **row}
 
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    # ch_sub_query.append("events.EventType='RESOURCE'")
+    # ch_sub_query.append("events.event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("resources.type= %(type)s")
@@ -457,10 +457,10 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        density=7, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query = __get_basic_constraints(table_name="resources", data=args)
-    # ch_sub_query.append("events.EventType='RESOURCE'")
+    # ch_sub_query.append("events.event_type='RESOURCE'")
     ch_sub_query.append("resources.type = 'img'")
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
-    # ch_sub_query_chart.append("events.EventType='RESOURCE'")
+    # ch_sub_query_chart.append("events.event_type='RESOURCE'")
     ch_sub_query_chart.append("resources.type = 'img'")
     ch_sub_query_chart.append("resources.url_hostpath IN %(url)s")
     meta_condition = __get_meta_constraint(args)
@@ -527,7 +527,7 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
     img_constraints = []
     request_constraints = []
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
-    # ch_sub_query_chart.append("EventType='RESOURCE'")
+    # ch_sub_query_chart.append("event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -577,7 +577,7 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
                                              end_time=endTimestamp, density=density,
                                              neutral={"avg": 0})]
         ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-        ch_sub_query_chart.append("pages.EventType='LOCATION'")
+        ch_sub_query_chart.append("pages.event_type='LOCATION'")
         ch_sub_query_chart += meta_condition
 
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
@@ -835,7 +835,7 @@ def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
-    # ch_sub_query_chart.append("events.EventType='RESOURCE'")
+    # ch_sub_query_chart.append("events.event_type='RESOURCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -922,7 +922,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
                              endTimestamp=TimeUTC.now(), density=19, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     if url is not None:
         ch_sub_query_chart.append(f"pages.url_path = %(value)s")
     ch_sub_query_chart.append("isNotNull(pages.dom_building_time)")
@@ -1045,7 +1045,7 @@ def get_sessions_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query.append("isNotNull(pages.speed_index)")
     ch_sub_query.append("pages.speed_index>0")
     meta_condition = __get_meta_constraint(args)
@@ -1074,7 +1074,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                             endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     ch_sub_query_chart.append("isNotNull(pages.response_time)")
     ch_sub_query_chart.append("pages.response_time>0")
     meta_condition = __get_meta_constraint(args)
@@ -1110,7 +1110,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
 def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                          endTimestamp=TimeUTC.now(), density=20, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query.append("isNotNull(pages.response_time)")
     ch_sub_query.append("pages.response_time>0")
     meta_condition = __get_meta_constraint(args)
@@ -1249,7 +1249,7 @@ def get_busiest_time_of_day(project_id, startTimestamp=TimeUTC.now(delta_days=-1
 def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                     endTimestamp=TimeUTC.now(), value=None, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
@@ -1281,7 +1281,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     ch_sub_query_chart.append("isNotNull(pages.visually_complete)")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
@@ -1316,7 +1316,7 @@ def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(d
                                         endTimestamp=TimeUTC.now(), value=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query.append("isNotNull(pages.response_time)")
     ch_sub_query.append("pages.response_time>0")
     sch_sub_query = ch_sub_query[:]
@@ -1351,7 +1351,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("event_type='PERFORMANCE'")
+    ch_sub_query_chart.append("performance.event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -1384,7 +1384,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("event_type='PERFORMANCE'")
+    ch_sub_query_chart.append("performance.event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -1417,7 +1417,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="performance", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("event_type='PERFORMANCE'")
+    ch_sub_query_chart.append("performance.event_type='PERFORMANCE'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -1532,7 +1532,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
-    ch_sub_query.append("requests.EventType='REQUEST'")
+    ch_sub_query.append("requests.event_type='REQUEST'")
     ch_sub_query.append("intDiv(requests.status, 100) == %(status_code)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -1577,7 +1577,7 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
                                      endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
-    ch_sub_query.append("requests.EventType='REQUEST'")
+    ch_sub_query.append("requests.event_type='REQUEST'")
     ch_sub_query.append("intDiv(requests.status, 100) == %(status_code)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -1658,7 +1658,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
     ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
-    ch_sub_query.append("requests.EventType = 'REQUEST'")
+    ch_sub_query.append("requests.event_type = 'REQUEST'")
     ch_sub_query.append("requests.success = 0")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -1731,7 +1731,7 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
 def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                      platform=None, **args):
     ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
-    ch_sub_query.append("requests.EventType = 'REQUEST'")
+    ch_sub_query.append("requests.event_type = 'REQUEST'")
     ch_sub_query.append("intDiv(requests.status, 100) != 2")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -1758,7 +1758,7 @@ def __get_calls_errors_4xx_or_5xx(status, project_id, startTimestamp=TimeUTC.now
                                   endTimestamp=TimeUTC.now(),
                                   platform=None, **args):
     ch_sub_query = __get_basic_constraints(table_name="requests", data=args)
-    ch_sub_query.append("requests.EventType = 'REQUEST'")
+    ch_sub_query.append("requests.event_type = 'REQUEST'")
     ch_sub_query.append(f"intDiv(requests.status, 100) == {status}")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -1799,17 +1799,17 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="events", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("(events.EventType = 'REQUEST' OR events.EventType = 'ERROR')")
-    ch_sub_query_chart.append("(events.status>200 OR events.EventType = 'ERROR')")
+    ch_sub_query_chart.append("(events.event_type = 'REQUEST' OR events.event_type = 'ERROR')")
+    ch_sub_query_chart.append("(events.status>200 OR events.event_type = 'ERROR')")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
-                               SUM(events.EventType = 'REQUEST' AND intDiv(events.status, 100) == 4)     AS _4xx,
-                               SUM(events.EventType = 'REQUEST' AND intDiv(events.status, 100) == 5)     AS _5xx,
-                               SUM(events.EventType = 'ERROR' AND events.source == 'js_exception')       AS js,
-                               SUM(events.EventType = 'ERROR' AND events.source != 'js_exception')       AS integrations
+                               SUM(events.event_type = 'REQUEST' AND intDiv(events.status, 100) == 4)     AS _4xx,
+                               SUM(events.event_type = 'REQUEST' AND intDiv(events.status, 100) == 5)     AS _5xx,
+                               SUM(events.event_type = 'ERROR' AND events.source == 'js_exception')       AS js,
+                               SUM(events.event_type = 'ERROR' AND events.source != 'js_exception')       AS integrations
                         FROM {exp_ch_helper.get_main_events_table(startTimestamp)} AS events
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
@@ -1834,7 +1834,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query_chart_response_end = __get_basic_constraints(table_name="pages", round_start=True,
                                                               data=args)
-    ch_sub_query_chart_response_end.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart_response_end.append("pages.event_type='LOCATION'")
     ch_sub_query_chart_response_end.append("isNotNull(pages.response_end)")
     ch_sub_query_chart_response_end.append("pages.response_end>0")
     meta_condition = __get_meta_constraint(args)
@@ -1876,7 +1876,7 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="errors", round_start=True, data=args)
-    ch_sub_query_chart.append("errors.EventType='ERROR'")
+    ch_sub_query_chart.append("errors.event_type='ERROR'")
     ch_sub_query_chart.append("errors.source == 'js_exception'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
@@ -2012,9 +2012,9 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                            endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query = __get_basic_constraints(table_name="requests", round_start=True, data=args)
-    ch_sub_query.append("requests.EventType='REQUEST'")
+    ch_sub_query.append("requests.event_type='REQUEST'")
     ch_sub_query.append("requests.success = 0")
-    sch_sub_query = ["rs.project_id =toUInt16(%(project_id)s)", "rs.EventType='REQUEST'"]
+    sch_sub_query = ["rs.project_id =toUInt16(%(project_id)s)", "rs.event_type='REQUEST'"]
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     # sch_sub_query += meta_condition
@@ -2073,7 +2073,7 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
 
 def __get_application_activity_avg_page_load_time(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("pages.load_event_end>0")
@@ -2111,7 +2111,7 @@ def get_performance_avg_page_load_time(ch, project_id, startTimestamp=TimeUTC.no
 
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True,
                                                  data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     ch_sub_query_chart += meta_condition
     ch_sub_query_chart.append("pages.load_event_end>0")
 
@@ -2308,7 +2308,7 @@ def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeU
 
 def __get_page_metrics_avg_dom_content_load_start(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("pages.dom_content_loaded_event_end>0")
@@ -2325,7 +2325,7 @@ def __get_page_metrics_avg_dom_content_load_start_chart(ch, project_id, startTim
                                                         **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -2371,7 +2371,7 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
 
 def __get_page_metrics_avg_first_contentful_pixel(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("pages.first_contentful_paint_time>0")
@@ -2390,7 +2390,7 @@ def __get_page_metrics_avg_first_contentful_pixel_chart(ch, project_id, startTim
                                                         **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -2438,7 +2438,7 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
 
 def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
@@ -2459,7 +2459,7 @@ def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTim
 def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, endTimestamp, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
@@ -2553,11 +2553,11 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
                                       endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query += meta_condition
 
     if value is not None:
@@ -2592,11 +2592,11 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                                    endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query += meta_condition
 
     if value is not None:
@@ -2631,12 +2631,12 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
                                     endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query += meta_condition
 
     if value is not None:
@@ -2672,12 +2672,12 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
                                            endTimestamp=TimeUTC.now(), value=None, density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query += meta_condition
 
     if value is not None:
@@ -2716,12 +2716,12 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
                                        endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query += meta_condition
 
     if value is not None:
@@ -2760,12 +2760,12 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
                                             endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density)
     ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
-    ch_sub_query_chart.append("pages.EventType='LOCATION'")
+    ch_sub_query_chart.append("pages.event_type='LOCATION'")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
-    ch_sub_query.append("pages.EventType='LOCATION'")
+    ch_sub_query.append("pages.event_type='LOCATION'")
     ch_sub_query += meta_condition
 
     if value is not None:
