@@ -163,7 +163,35 @@ func (s *Storage) openSession(filePath string) ([]byte, error) {
 		return nil, fmt.Errorf("big file, size: %d", info.Size())
 	}
 	// Read file into memory
-	return os.ReadFile(filePath)
+	raw, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: removed session ID extraction for debug log
+	sessID := "unknown"
+	parts := strings.Split(filePath, "/")
+	if len(parts) > 0 {
+		sessID = parts[len(parts)-1]
+	}
+	return s.sortSessionMessages(sessID, raw)
+}
+
+func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, error) {
+	// Parse messages, sort by index and save result into slice of bytes
+	unsortedMessages, err := messages.SplitMessages(raw)
+	if err != nil {
+		log.Printf("can't sort session, err: %s", err)
+		return raw, nil
+	}
+	sortedMessages, wasSorted := messages.SortMessages(unsortedMessages)
+	if !wasSorted {
+		// Can skip merge operation
+		return raw, nil
+	} else {
+		log.Printf("successfully sorted session: %s", sessID)
+	}
+	sortedSession := messages.MergeMessages(raw, sortedMessages)
+	return sortedSession, nil
 }
 
 func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
