@@ -71,10 +71,10 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('authDetails', action.data);
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
-    case FETCH_ACCOUNT.FAILURE:
     case LOGIN.FAILURE:
       deleteCookie('jwt', '/', 'openreplay.com')
       return state.set('loginRequest', { loading: false, errors: ['Invalid username or password'] });
+    case FETCH_ACCOUNT.FAILURE:
     case DELETE.SUCCESS:
     case DELETE.FAILURE:
       deleteCookie('jwt', '/', 'openreplay.com')
