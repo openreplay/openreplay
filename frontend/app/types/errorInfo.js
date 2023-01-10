@@ -1,4 +1,3 @@
-import { List } from 'immutable';
 import Record from './Record';
 import Session from './session';
 

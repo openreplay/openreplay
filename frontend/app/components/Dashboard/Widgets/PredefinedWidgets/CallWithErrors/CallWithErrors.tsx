@@ -1,6 +1,6 @@
 import React from 'react';
-import { Loader, NoContent } from 'UI';
-import { Styles, Table } from '../../common';
+import { NoContent } from 'UI';
+import { Table } from '../../common';
 import { getRE } from 'App/utils';
 import ImageInfo from './ImageInfo';
 import MethodType from './MethodType';

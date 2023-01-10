@@ -1,6 +1,5 @@
 import type Screen from '../Screen/Screen';
 import type { Message } from '../messages';
-import type MessageManager from '../MessageManager';
 
 import { MType } from '../messages';
 import ListWalker from '../../common/ListWalker';

@@ -1,5 +1,4 @@
 import type { Store, Moveable, Interval } from '../common/types';
-import * as localStorage from './localStorage';
 
 const fps = 60
 const performance: { now: () => number } = window.performance || { now: Date.now.bind(Date) }

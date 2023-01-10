@@ -1,5 +1,4 @@
 import React from 'react';
-import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
 import { Button, Input, Form } from 'UI';
 import { updateAccount, updateClient } from 'Duck/user';

@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, observable, action, reaction } from 'mobx';
+import { makeAutoObservable, observable, action } from 'mobx';
 import { FilterKey, FilterType, FilterCategory } from 'Types/filter/filterType';
 import { filtersMap } from 'Types/filter/newFilter';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import JsonViewer from './components/JsonViewer';
 import Sentry from './components/Sentry';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
 
 interface Props {
     event: any;

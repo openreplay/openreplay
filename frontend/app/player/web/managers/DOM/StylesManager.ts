@@ -1,5 +1,4 @@
 import type Screen from '../../Screen/Screen';
-import type MessageManager from '../../MessageManager'
 import type { CssInsertRule, CssDeleteRule } from '../../messages';
 
 type CSSRuleMessage = CssInsertRule | CssDeleteRule;

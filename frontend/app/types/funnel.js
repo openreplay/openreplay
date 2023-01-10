@@ -1,6 +1,5 @@
 import Record from 'Types/Record';
 import Filter from 'Types/filter';
-import { truncate } from 'App/utils';
 // import { validateURL, validateName } from 'App/validate';
 
 const getRedableName = ({ type, value, operator }) => {

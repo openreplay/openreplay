@@ -2,7 +2,7 @@ import React from 'react';
 import JumpButton from '../JumpButton';
 import { Icon } from 'UI';
 import cn from 'classnames';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { OPENREPLAY } from 'Types/session/stackEvent';
 
 interface Props {
   event: any;

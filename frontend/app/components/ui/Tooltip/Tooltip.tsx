@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTooltipState, TooltipAnchor, FloatingTooltip, FloatingArrow } from './FloatingTooltip';
+import { useTooltipState, TooltipAnchor, FloatingTooltip } from './FloatingTooltip';
 import type { Placement } from '@floating-ui/react-dom-interactions';
 import cn from 'classnames';
 

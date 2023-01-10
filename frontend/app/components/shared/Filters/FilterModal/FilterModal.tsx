@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';

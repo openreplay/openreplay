@@ -2,8 +2,6 @@ import React from 'react';
 import cn from 'classnames';
 import { Icon, TextEllipsis } from 'UI';
 import FunnelIssueGraph from '../FunnelIssueGraph';
-import { useModal } from 'App/components/Modal';
-import FunnelIssueModal from '../FunnelIssueModal';
 
 interface Props {
     issue: any;

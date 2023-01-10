@@ -5,7 +5,6 @@ import { TYPES } from 'Types/filter/event';
 import { 
   DATE_RANGE_VALUES,
   CUSTOM_RANGE,
-  dateRangeValues,
   getDateRangeFromValue
 } from 'App/dateRange';
 import Event from './event';

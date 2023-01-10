@@ -3,7 +3,7 @@ import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { 
     BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    Legend, ResponsiveContainer,
     XAxis, YAxis
   } from 'recharts';
   import { NO_METRIC_DATA } from 'App/constants/messages'

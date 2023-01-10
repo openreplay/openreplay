@@ -2,7 +2,7 @@ import React from 'react';
 import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
-import { Icon, Button } from 'UI';
+import { Button } from 'UI';
 import FilterSource from '../FilterSource';
 import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';

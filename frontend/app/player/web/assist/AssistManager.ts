@@ -4,7 +4,6 @@ import type { Store } from '../../common/types'
 import type { Message } from '../messages';
 import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
-import appStore from 'App/store';
 import Call, { CallingState } from './Call';
 import RemoteControl, { RemoteControlStatus } from './RemoteControl'
 import ScreenRecording,  { SessionRecordingStatus } from './ScreenRecording'

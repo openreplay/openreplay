@@ -1,5 +1,4 @@
 import { storiesOf } from '@storybook/react';
-import { List } from 'immutable';
 import SideMenuitem from './SideMenuitem';
 import { Avatar, ErrorItem, ErrorFrame, ErrorDetails, TimelinePointer } from 'UI';
 import Error from 'Types/session/error';

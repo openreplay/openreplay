@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
+import { makeAutoObservable, action } from "mobx"
 import { funnelService } from "App/services"
 import Funnel, { IFunnel } from "./types/funnel";
 import Session from './types/session';

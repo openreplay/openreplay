@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, ItemMenu, Tooltip } from 'UI';
+import { Icon, ItemMenu } from 'UI';
 import { durationFromMs, formatTimeOrDate } from 'App/date';
 import { IRecord } from 'App/services/RecordingsService';
 import { useStore } from 'App/mstore';

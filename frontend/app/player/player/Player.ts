@@ -2,7 +2,7 @@ import * as typedLocalStorage from './localStorage';
 
 import type { Moveable, Cleanable, Store } from '../common/types';
 import Animator from './Animator';
-import type { GetState as AnimatorGetState, SetState as AnimatorSetState } from './Animator';
+import type { GetState as AnimatorGetState } from './Animator';
 
 
 /* == separate this == */

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Popup } from 'UI';
 import cn from 'classnames';
 import MetaItem from '../MetaItem';
 import MetaMoreButton from '../MetaMoreButton';

@@ -1,5 +1,3 @@
-import Record from 'Types/Record';
-
 function getStck0InfoString(stack: Stack) {
   const stack0 = stack[0];
   if (!stack0) return "";

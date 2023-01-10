@@ -1,5 +1,5 @@
 import React from 'react';
-import { DATADOG, SENTRY, STACKDRIVER, typeList } from 'Types/session/stackEvent';
+import { DATADOG, SENTRY, STACKDRIVER } from 'Types/session/stackEvent';
 import JsonViewer from 'Components/Session_/StackEvents/UserEvent/JsonViewer';
 import Sentry from 'Components/Session_/StackEvents/UserEvent/Sentry';
 

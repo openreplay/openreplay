@@ -1,7 +1,7 @@
 import React from 'react';
 import { DATE_RANGE_OPTIONS, CUSTOM_RANGE } from 'App/dateRange';
 import Select from 'Shared/Select';
-import Period, { LAST_7_DAYS } from 'Types/app/period';
+import Period from 'Types/app/period';
 import { components } from 'react-select';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';

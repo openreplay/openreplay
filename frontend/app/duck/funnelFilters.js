@@ -1,14 +1,11 @@
-import { fromJS, List, Map, Set } from 'immutable';
-import { errors as errorsRoute, isRoute } from "App/routes";
+import { List, Map, Set } from 'immutable';
+import { errors as errorsRoute } from "App/routes";
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
-import Event, { TYPES } from 'Types/filter/event';
+import Event from 'Types/filter/event';
 import CustomFilter from 'Types/filter/customFilter';
 import withRequestState, { RequestTypes } from './requestStateCreator';
-import { fetchList as fetchSessionList } from './sessions';
-import { fetchList as fetchErrorsList } from './errors';
 import { fetch as fetchFunnel, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered }  from './funnels';
-import logger from 'App/logger';
 
 const ERRORS_ROUTE = errorsRoute();
 

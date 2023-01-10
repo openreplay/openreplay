@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Button } from 'UI';
+import { Button } from 'UI';
 import styles from './menu.module.css';
 import cn from 'classnames';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';

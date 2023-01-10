@@ -2,9 +2,8 @@ import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { 
-    AreaChart, Area,
     BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    Legend, ResponsiveContainer,
     XAxis, YAxis
   } from 'recharts';
 

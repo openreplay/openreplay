@@ -1,7 +1,7 @@
 import { Log, LogLevel } from './types'
 
 import type { Store } from 'App/player'
-import Player, { State as PlayerState } from '../player/Player'
+import Player from '../player/Player'
 
 import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'

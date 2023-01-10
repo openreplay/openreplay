@@ -1,5 +1,5 @@
 import { IconNames } from 'App/components/ui/SVG';
-import { FilterKey, IssueType } from 'Types/filter/filterType';
+import { FilterKey } from 'Types/filter/filterType';
 
 export interface CardType {
   title: string;

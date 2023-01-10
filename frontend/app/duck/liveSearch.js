@@ -3,7 +3,7 @@ import { fetchListType, fetchType, editType } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { mergeReducers, success } from './funcTools/tools';
 import Filter from 'Types/filter';
-import { liveFiltersMap, filtersMap } from 'Types/filter/newFilter';
+import { liveFiltersMap } from 'Types/filter/newFilter';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 import Session from 'Types/session';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Set, List as ImmutableList } from "immutable";
-import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain, Pagination } from 'UI';
+import { Set } from "immutable";
+import { NoContent, Loader, Checkbox, IconButton, Input, Pagination } from 'UI';
 import { merge, resolve, unresolve, ignore, updateCurrentPage, editOptions } from "Duck/errors";
 import { applyFilter } from 'Duck/filters';
 import { IGNORED, UNRESOLVED } from 'Types/errorInfo';

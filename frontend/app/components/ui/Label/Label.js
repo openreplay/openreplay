@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from './label.module.css';
 import cn from 'classnames';
 
 export default ({
