@@ -11,7 +11,6 @@ import LivePlayer from './LivePlayer';
 function LiveSession({
   sessionId,
   loading,
-  session,
   fetchSession,
   fetchSlackList,
   hasSessionsPath,

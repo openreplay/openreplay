@@ -16,9 +16,7 @@ function Session({
 	sessionId,
 	loading,
 	hasErrors,
-	session, 
 	fetchSession,
-	fetchSlackList,
  }) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)
