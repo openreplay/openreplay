@@ -7,8 +7,8 @@ $$ LANGUAGE sql IMMUTABLE;
 
 CREATE TABLE IF NOT EXISTS frontend_signals
 (
-    project_id bigint  NOT NULL,
-    user_id    integer NOT NULL references users (user_id) ON DELETE CASCADE,
+    project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+    user_id    integer NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
     timestamp  bigint  NOT NULL,
     action     text    NOT NULL,
     source     text    NOT NULL,
