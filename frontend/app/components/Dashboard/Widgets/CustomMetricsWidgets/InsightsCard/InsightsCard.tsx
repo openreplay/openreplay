@@ -1,8 +1,9 @@
-import { NoContent } from 'App/components/ui';
+import { NoContent } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import InsightItem from './InsightItem';
+import { NO_METRIC_DATA } from 'App/constants/messages';
 
 interface Props {}
 function InsightsCard(props: Props) {
@@ -23,7 +24,11 @@ function InsightsCard(props: Props) {
   };
 
   return (
-    <NoContent>
+    <NoContent
+      show={metric.data.issues.length === 0}
+      title={NO_METRIC_DATA}
+      style={{ padding: '100px 0' }}
+    >
       {metric.data.issues.map((item: any) => (
         <InsightItem item={item} onClick={clickHanddler} />
       ))}

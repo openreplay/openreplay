@@ -18,10 +18,6 @@ import {
     TABLE,
     CLICKMAP,
     FUNNEL,
-    ERRORS,
-    RESOURCE_MONITORING,
-    PERFORMANCE,
-    WEB_VITALS,
     INSIGHTS,
   } from 'App/constants/card';
 

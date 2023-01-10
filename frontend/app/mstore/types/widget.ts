@@ -99,6 +99,7 @@ export default class Widget {
       this.predefinedKey = json.predefinedKey;
       this.category = json.category;
       this.thumbnail = json.thumbnail;
+      this.isPublic = json.isPublic;
 
       if (period) {
         this.period = period;
