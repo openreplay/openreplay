@@ -1,18 +1,27 @@
 import React from 'react';
-import PlayerBlock from '../Session_/PlayerBlock';
-import styles from '../Session_/session.module.css';
-import { countDaysFrom } from 'App/date';
-import cn from 'classnames';
-import RightBlock from './RightBlock';
-import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import cn from 'classnames';
+import styles from 'Components/Session_/session.module.css';
+import { countDaysFrom } from 'App/date';
+import RightBlock from 'Components/Session/RightBlock';
+import { PlayerContext } from 'Components/Session/playerContext';
+import Session from 'Types/session'
+import PlayerBlock from './PlayerBlock';
 
 const TABS = {
   EVENTS: 'User Steps',
   HEATMAPS: 'Click Map',
 };
 
-function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, isClickmap }) {
+interface IProps {
+  fullscreen: boolean;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  isClickmap: boolean;
+  session: Session
+}
+
+function PlayerContent({ session, fullscreen, activeTab, setActiveTab, isClickmap }: IProps) {
   const { store } = React.useContext(PlayerContext)
 
   const {
@@ -60,7 +69,6 @@ function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, isC
               setActiveTab={setActiveTab}
               fullscreen={fullscreen}
               tabs={TABS}
-              live={live}
             />
           )}
         </div>
@@ -69,10 +77,9 @@ function PlayerContent({ session, live, fullscreen, activeTab, setActiveTab, isC
   );
 }
 
-function RightMenu({ live, tabs, activeTab, setActiveTab, fullscreen }) {
+function RightMenu({ tabs, activeTab, setActiveTab, fullscreen }: any) {
   return (
-    !live &&
-    !fullscreen && <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} />
+    !fullscreen ? <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} /> : null
   );
 }
 

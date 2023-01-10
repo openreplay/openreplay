@@ -28,9 +28,6 @@ function LiveSession({
     } else {
       console.error('No sessionID in route.');
     }
-    return () => {
-      if (!session.exists()) return;
-    };
   }, [sessionId, hasSessionsPath]);
 
   return (

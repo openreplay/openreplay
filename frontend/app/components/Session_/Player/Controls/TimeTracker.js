@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import styles from './timeTracker.module.css';
 import cn from 'classnames'
 
-const TimeTracker = ({ scale, live, left }) => {
+const TimeTracker = ({ scale, live = false, left }) => {
 	const { store } = React.useContext(PlayerContext)
 	const time = store.get().time
 
