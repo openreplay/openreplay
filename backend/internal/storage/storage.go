@@ -166,7 +166,7 @@ func (s *Storage) openSession(filePath string) ([]byte, error) {
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
-		return nil, fmt.Errorf("big file, name: %s, size: %d", sessID, info.Size())
+		return nil, fmt.Errorf("big file, size: %d", info.Size())
 	}
 	// Read file into memory
 	raw, err := os.ReadFile(filePath)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sort"
 )
 
 type msgInfo struct {
@@ -56,16 +57,10 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 
 func SortMessages(messages []*msgInfo) ([]*msgInfo, bool) {
 	wasSorted := false
-	for i := 1; i < len(messages); i++ {
-		j := i
-		for j > 0 {
-			if messages[j-1].index > messages[j].index {
-				messages[j-1], messages[j] = messages[j], messages[j-1]
-				wasSorted = true
-			}
-			j = j - 1
-		}
-	}
+	sort.SliceStable(messages, func(i, j int) bool {
+		wasSorted = true
+		return messages[i].index < messages[j].index
+	})
 	return messages, wasSorted
 }
 
