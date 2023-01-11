@@ -107,6 +107,135 @@ DROP INDEX IF EXISTS public.sessions_user_browser_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_os_gin_idx;
 DROP INDEX IF EXISTS public.issues_context_string_gin_idx;
 
+-- To migrate saved search data
+-- SET client_min_messages TO NOTICE;
+DO
+$$
+    DECLARE
+        row                  RECORD;
+        events_att           JSONB;
+        filters_att          JSONB;
+        element              JSONB;
+        new_value            TEXT;
+        new_array            JSONB[];
+        changed              BOOLEAN;
+        planned_update       JSONB[];
+        events_map  CONSTANT JSONB := '{
+          "CLICK": "click",
+          "INPUT": "input",
+          "LOCATION": "location",
+          "CUSTOM": "custom",
+          "REQUEST": "request",
+          "FETCH": "fetch",
+          "GRAPHQL": "graphql",
+          "STATEACTION": "stateAction",
+          "ERROR": "error",
+          "CLICK_IOS": "clickIos",
+          "INPUT_IOS": "inputIos",
+          "VIEW_IOS": "viewIos",
+          "CUSTOM_IOS": "customIos",
+          "REQUEST_IOS": "requestIos",
+          "ERROR_IOS": "errorIos",
+          "DOM_COMPLETE": "domComplete",
+          "LARGEST_CONTENTFUL_PAINT_TIME": "largestContentfulPaintTime",
+          "TIME_BETWEEN_EVENTS": "timeBetweenEvents",
+          "TTFB": "ttfb",
+          "AVG_CPU_LOAD": "avgCpuLoad",
+          "AVG_MEMORY_USAGE": "avgMemoryUsage",
+          "FETCH_FAILED": "fetchFailed"
+        }';
+        filters_map CONSTANT JSONB := '{
+          "USEROS": "userOs",
+          "USERBROWSER": "userBrowser",
+          "USERDEVICE": "userDevice",
+          "USERCOUNTRY": "userCountry",
+          "USERID": "userId",
+          "USERANONYMOUSID": "userAnonymousId",
+          "REFERRER": "referrer",
+          "REVID": "revId",
+          "USEROS_IOS": "userOsIos",
+          "USERDEVICE_IOS": "userDeviceIos",
+          "USERCOUNTRY_IOS": "userCountryIos",
+          "USERID_IOS": "userIdIos",
+          "USERANONYMOUSID_IOS": "userAnonymousIdIos",
+          "REVID_IOS": "revIdIos",
+          "DURATION": "duration",
+          "PLATFORM": "platform",
+          "METADATA": "metadata",
+          "ISSUE": "issue",
+          "EVENTS_COUNT": "eventsCount",
+          "UTM_SOURCE": "utmSource",
+          "UTM_MEDIUM": "utmMedium",
+          "UTM_CAMPAIGN": "utmCampaign"
+        }';
+    BEGIN
+        planned_update := '{}'::jsonb[];
+        FOR row IN SELECT * FROM _search
+            LOOP
+                raise notice 'original: %',row.filter -> 'events';
+                changed := FALSE;
+                -- Transform events attribute
+                events_att := row.filter -> 'events';
+                IF events_att IS NOT NULL THEN
+                    new_array := '{}'::jsonb[];
+                    FOR element IN SELECT jsonb_array_elements(events_att)
+                        LOOP
+                            new_value := jsonb_extract_path(events_map, element ->> 'type');
+                            if new_value IS NULL THEN
+                                raise exception 'event-type not found: %',element ->> 'type';
+                            END IF;
+                            new_value := replace(new_value, '"', '');
+                            element := element || jsonb_build_object('type', new_value);
+                            new_array := array_append(new_array, element);
+                        END LOOP;
+                    IF array_length(new_array, 1) > 0 THEN
+                        changed := TRUE;
+                        row.filter := row.filter || jsonb_build_object('events', new_array);
+                    END IF;
+                END IF;
+                raise notice 'new     : %',row.filter -> 'events';
+                raise notice 'original: %',row.filter -> 'filters';
+                -- Transform filters attribute
+                filters_att := row.filter -> 'filters';
+                IF filters_att IS NOT NULL THEN
+                    new_array := '{}'::jsonb;
+                    FOR element IN SELECT jsonb_array_elements(filters_att)
+                        LOOP
+                            new_value := jsonb_extract_path(filters_map, element ->> 'type');
+                            if new_value IS NULL THEN
+                                raise exception 'filter-type not found: %',element ->> 'type';
+                            END IF;
+                            new_value := replace(new_value, '"', '');
+                            element := element || jsonb_build_object('type', new_value);
+                            new_array := array_append(new_array, element);
+                        END LOOP;
+                    IF array_length(new_array, 1) > 0 THEN
+                        changed := TRUE;
+                        row.filter := row.filter || jsonb_build_object('filters', new_array);
+                    END IF;
+                END IF;
+                raise notice 'new     : %',row.filter -> 'filters';
+                raise notice 'changed: %',changed;
+                raise notice '-------------------';
+                IF changed THEN
+                    planned_update := array_append(planned_update,
+                                                   jsonb_build_object('id', row._search_id, 'change', row.filter));
+                END IF;
+            END LOOP;
+        IF array_length(planned_update, 1) > 0 THEN
+            raise notice 'must update % elements',array_length(planned_update, 1);
+--             raise notice 'must update %',planned_update;
+            UPDATE _search
+            SET n_filter=changes.change -> 'change'
+            FROM (SELECT unnest(planned_update)) AS changes(change)
+            WHERE _search_id = (changes.change -> 'id')::integer;
+            raise notice 'update done';
+        END IF;
+    END ;
+$$
+LANGUAGE plpgsql;
+
+
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_selector_idx ON events.clicks (selector);
