@@ -157,27 +157,31 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 }
 
 func (s *Storage) openSession(filePath string) ([]byte, error) {
+	// Get file name
+	sessID := "unknown"
+	parts := strings.Split(filePath, "/")
+	if len(parts) > 0 {
+		sessID = parts[len(parts)-1]
+	}
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
-		return nil, fmt.Errorf("big file, size: %d", info.Size())
+		return nil, fmt.Errorf("big file, name: %s, size: %d", sessID, info.Size())
 	}
 	// Read file into memory
 	raw, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: removed session ID extraction for debug log
-	sessID := "unknown"
-	parts := strings.Split(filePath, "/")
-	if len(parts) > 0 {
-		sessID = parts[len(parts)-1]
+	if !s.cfg.UseSort {
+		return raw, nil
 	}
 	return s.sortSessionMessages(sessID, raw)
 }
 
 func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, error) {
 	// Parse messages, sort by index and save result into slice of bytes
+	start := time.Now()
 	unsortedMessages, err := messages.SplitMessages(raw)
 	if err != nil {
 		log.Printf("can't sort session, err: %s", err)
@@ -187,10 +191,9 @@ func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, error)
 	if !wasSorted {
 		// Can skip merge operation
 		return raw, nil
-	} else {
-		log.Printf("successfully sorted session: %s", sessID)
 	}
 	sortedSession := messages.MergeMessages(raw, sortedMessages)
+	log.Printf("sorted session: %s, dur: %d", sessID, time.Now().Sub(start).Milliseconds())
 	return sortedSession, nil
 }
 
