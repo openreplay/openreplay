@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ type BytesReader interface {
 	ReadInt() (int64, error)
 	ReadBoolean() (bool, error)
 	ReadString() (string, error)
+	ReadIndex() (uint64, error)
 	Data() []byte
 	Pointer() int64
 	SetPointer(p int64)
@@ -104,6 +106,15 @@ func (m *bytesReaderImpl) ReadString() (string, error) {
 	str := string(m.data[m.curr : int(m.curr)+int(l)])
 	m.curr += int64(l)
 	return str, nil
+}
+
+func (m *bytesReaderImpl) ReadIndex() (uint64, error) {
+	if len(m.data)-int(m.curr) < 8 {
+		return 0, fmt.Errorf("out of range")
+	}
+	size := binary.LittleEndian.Uint64(m.data[m.curr : m.curr+8])
+	m.curr += 8
+	return size, nil
 }
 
 func (m *bytesReaderImpl) Data() []byte {
