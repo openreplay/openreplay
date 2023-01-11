@@ -777,16 +777,16 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
 class FunnelSchema(BaseModel):
     name: str = Field(...)
     filter: FunnelSearchPayloadSchema = Field([])
-    is_public: bool = Field(False)
+    is_public: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
 class UpdateFunnelSchema(FunnelSchema):
-    name: Optional[str] = Field(None)
-    filter: Optional[FunnelSearchPayloadSchema] = Field(None)
-    is_public: Optional[bool] = Field(None)
+    name: Optional[str] = Field(default=None)
+    filter: Optional[FunnelSearchPayloadSchema] = Field(default=None)
+    is_public: Optional[bool] = Field(default=None)
 
 
 class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
@@ -894,8 +894,8 @@ class MetricType(str, Enum):
 
 class MetricOfErrors(str, Enum):
     calls_errors = "callsErrors"  # calls_errors
-    domains_errors_4xx = "domainsErrors4Xx"  # domains_errors_4xx
-    domains_errors_5xx = "domainsErrors5Xx"  # domains_errors_5xx
+    domains_errors_4xx = "domainsErrors4xx"  # domains_errors_4xx
+    domains_errors_5xx = "domainsErrors5xx"  # domains_errors_5xx
     errors_per_domains = "errorsPerDomains"  # errors_per_domains
     errors_per_type = "errorsPerType"  # errors_per_type
     impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"  # impacted_sessions_by_js_errors
@@ -1016,6 +1016,11 @@ class CreateCardSchema(CardChartSchema):
         if values.get("metricType") == MetricType.funnel.value and \
                 values.get("series") is not None and len(values["series"]) > 1:
             values["series"] = [values["series"][0]]
+        elif values.get("metricType") not in (MetricType.table.value,
+                                              MetricType.timeseries.value,
+                                              MetricType.insights.value) \
+                and values.get("series") is not None and len(values["series"]) > 0:
+            values["series"] = []
 
         return values
 

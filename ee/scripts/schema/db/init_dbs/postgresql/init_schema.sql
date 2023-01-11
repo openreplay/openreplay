@@ -645,13 +645,13 @@ $$
 
             CREATE TABLE IF NOT EXISTS frontend_signals
             (
-                project_id    bigint                                         NOT NULL,
-                user_id       text                                           NOT NULL,
-                timestamp     bigint                                         NOT NULL,
-                action        text                                           NOT NULL,
-                source        text                                           NOT NULL,
-                category      text                                           NOT NULL,
-                data          json
+                project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+                user_id    integer NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+                timestamp  bigint  NOT NULL,
+                action     text    NOT NULL,
+                source     text    NOT NULL,
+                category   text    NOT NULL,
+                data       jsonb
             );
             CREATE INDEX IF NOT EXISTS frontend_signals_user_id_idx ON frontend_signals (user_id);
 
@@ -751,7 +751,7 @@ $$
                 project_id     integer   NULL REFERENCES projects (project_id) ON DELETE CASCADE,
                 user_id        integer   REFERENCES users (user_id) ON DELETE SET NULL,
                 name           text      NOT NULL,
-                is_public      boolean   NOT NULL DEFAULT FALSE,
+                is_public      boolean   NOT NULL DEFAULT TRUE,
                 created_at     timestamp NOT NULL DEFAULT timezone('utc'::text, now()),
                 deleted_at     timestamp,
                 edited_at      timestamp NOT NULL DEFAULT timezone('utc'::text, now()),
@@ -760,16 +760,12 @@ $$
                 metric_of      text      NOT NULL DEFAULT 'sessionCount',
                 metric_value   text[]    NOT NULL DEFAULT '{}'::text[],
                 metric_format  text,
-                is_pinned      boolean   NOT NULL DEFAULT FALSE,
                 thumbnail      text,
                 default_config jsonb     NOT NULL DEFAULT '{
                   "col": 2,
                   "row": 2,
                   "position": 0
-                }'::jsonb,
-                CONSTRAINT null_project_id_for_template_only
-                    CHECK ( (metrics.category != 'custom') != (metrics.project_id IS NOT NULL) ),
-                CONSTRAINT unique_key UNIQUE (predefined_key)
+                }'::jsonb
             );
             CREATE INDEX IF NOT EXISTS metrics_user_id_is_public_idx ON public.metrics (user_id, is_public);
             CREATE TABLE IF NOT EXISTS metric_series

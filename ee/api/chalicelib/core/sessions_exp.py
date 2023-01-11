@@ -105,16 +105,16 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
-                    data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
-                                                                 group_clickrage=True)
+                    data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
+                                                              group_clickrage=True)
                     all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     # limit the number of errors to reduce the response-body size
                     data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
                                       if e['source'] == "js_exception"][:500]
-                    data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
-                                                                             session_id=session_id)
+                    data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
+                                                                          session_id=session_id)
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,

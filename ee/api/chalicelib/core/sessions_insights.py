@@ -356,6 +356,10 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
 
 def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
     output = list()
+    if data.categories is None or len(data.categories) == 0:
+        data.categories = []
+        for v in schemas_ee.InsightCategories:
+            data.categories.append(v)
     with ch_client.ClickHouseClient() as conn:
         if schemas_ee.InsightCategories.errors in data.categories:
             output += query_most_errors_by_period(project_id=project_id,

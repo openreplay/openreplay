@@ -409,7 +409,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, edited_at,
                         metric_type, metric_of, metric_format, metric_value, view_type, is_pinned, 
-                        predefined_key, dashboards, owner_email, default_config AS config, thumbnail
+                        dashboards, owner_email, default_config AS config, thumbnail
                 FROM metrics
                          {sub_join}
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
