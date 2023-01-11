@@ -76,8 +76,8 @@ ENV TZ=UTC \
     USE_FAILOVER=false \
     GROUP_STORAGE_FAILOVER=failover \
     TOPIC_STORAGE_FAILOVER=storage-failover \
-    PROFILER_ENABLED=false
-
+    PROFILER_ENABLED=false \
+    COMPRESSION_TYPE=zstd
 
 
 ARG SERVICE_NAME
