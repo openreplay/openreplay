@@ -42,6 +42,8 @@ type Storage struct {
 	sessionDEVSize   syncfloat64.Histogram
 	readingDOMTime   syncfloat64.Histogram
 	readingDEVTime   syncfloat64.Histogram
+	sortingDOMTime   syncfloat64.Histogram
+	sortingDEVTime   syncfloat64.Histogram
 	archivingDOMTime syncfloat64.Histogram
 	archivingDEVTime syncfloat64.Histogram
 	uploadingDOMTime syncfloat64.Histogram
@@ -79,6 +81,14 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	if err != nil {
 		log.Printf("can't create reading_duration metric: %s", err)
 	}
+	sortingDOMTime, err := metrics.RegisterHistogram("sorting_duration")
+	if err != nil {
+		log.Printf("can't create reading_duration metric: %s", err)
+	}
+	sortingDEVTime, err := metrics.RegisterHistogram("sorting_dt_duration")
+	if err != nil {
+		log.Printf("can't create reading_duration metric: %s", err)
+	}
 	archivingDOMTime, err := metrics.RegisterHistogram("archiving_duration")
 	if err != nil {
 		log.Printf("can't create archiving_duration metric: %s", err)
@@ -104,6 +114,8 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 		sessionDEVSize:   sessionDevtoolsSize,
 		readingDOMTime:   readingDOMTime,
 		readingDEVTime:   readingDEVTime,
+		sortingDOMTime:   sortingDOMTime,
+		sortingDEVTime:   sortingDEVTime,
 		archivingDOMTime: archivingDOMTime,
 		archivingDEVTime: archivingDEVTime,
 		uploadingDOMTime: uploadingDOMTime,
@@ -156,13 +168,7 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 	return nil
 }
 
-func (s *Storage) openSession(filePath string) ([]byte, error) {
-	// Get file name
-	sessID := "unknown"
-	parts := strings.Split(filePath, "/")
-	if len(parts) > 0 {
-		sessID = parts[len(parts)-1]
-	}
+func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
@@ -176,25 +182,27 @@ func (s *Storage) openSession(filePath string) ([]byte, error) {
 	if !s.cfg.UseSort {
 		return raw, nil
 	}
-	return s.sortSessionMessages(sessID, raw)
+	start := time.Now()
+	res, err := s.sortSessionMessages(raw)
+	if err != nil {
+		return nil, fmt.Errorf("can't sort session, err: %s", err)
+	}
+	if tp == DOM {
+		s.sortingDOMTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
+	} else {
+		s.sortingDEVTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
+	}
+	return res, nil
 }
 
-func (s *Storage) sortSessionMessages(sessID string, raw []byte) ([]byte, error) {
+func (s *Storage) sortSessionMessages(raw []byte) ([]byte, error) {
 	// Parse messages, sort by index and save result into slice of bytes
-	start := time.Now()
 	unsortedMessages, err := messages.SplitMessages(raw)
 	if err != nil {
 		log.Printf("can't sort session, err: %s", err)
 		return raw, nil
 	}
-	sortedMessages, wasSorted := messages.SortMessages(unsortedMessages)
-	if !wasSorted {
-		// Can skip merge operation
-		return raw, nil
-	}
-	sortedSession := messages.MergeMessages(raw, sortedMessages)
-	log.Printf("sorted session: %s, dur: %d", sessID, time.Now().Sub(start).Milliseconds())
-	return sortedSession, nil
+	return messages.MergeMessages(raw, messages.SortMessages(unsortedMessages)), nil
 }
 
 func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
@@ -203,7 +211,7 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 		path += "devtools"
 	}
 	startRead := time.Now()
-	mob, err := s.openSession(path)
+	mob, err := s.openSession(path, tp)
 	if err != nil {
 		return err
 	}

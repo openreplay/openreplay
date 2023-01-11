@@ -55,13 +55,11 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 	}
 }
 
-func SortMessages(messages []*msgInfo) ([]*msgInfo, bool) {
-	wasSorted := false
+func SortMessages(messages []*msgInfo) []*msgInfo {
 	sort.SliceStable(messages, func(i, j int) bool {
-		wasSorted = true
 		return messages[i].index < messages[j].index
 	})
-	return messages, wasSorted
+	return messages
 }
 
 func MergeMessages(data []byte, messages []*msgInfo) []byte {
