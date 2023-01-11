@@ -1,22 +1,23 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { STORAGE_TYPES, selectStorageType } from 'Player';
+import { selectStorageType, STORAGE_TYPES } from 'Player';
+import { PlayButton, PlayingState, FullScreenButton } from 'Player/components'
 
 import { Icon, Tooltip } from 'UI';
 import {
-  fullscreenOn,
-  fullscreenOff,
-  toggleBottomBlock,
-  OVERVIEW,
   CONSOLE,
-  NETWORK,
-  STACKEVENTS,
-  STORAGE,
-  PROFILER,
-  PERFORMANCE,
+  fullscreenOff,
+  fullscreenOn,
   GRAPHQL,
   INSPECTOR,
+  NETWORK,
+  OVERVIEW,
+  PERFORMANCE,
+  PROFILER,
+  STACKEVENTS,
+  STORAGE,
+  toggleBottomBlock,
 } from 'Duck/components/player';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -138,52 +139,12 @@ function Controls(props: any) {
   };
 
   const renderPlayBtn = () => {
-    let label;
-    let icon;
-    if (completed) {
-      icon = 'arrow-clockwise' as const;
-      label = 'Replay this session';
-    } else if (playing) {
-      icon = 'pause-fill' as const;
-      label = 'Pause';
-    } else {
-      icon = 'play-fill-new' as const;
-      label = 'Pause';
-      label = 'Play';
-    }
+    const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
 
     return (
-      <Tooltip title={label} className="mr-4">
-        <div
-          onClick={() => player.togglePlay()}
-          className="hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
-        >
-          <Icon name={icon} size="36" color="inherit" />
-        </div>
-      </Tooltip>
+      <PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />
     );
   };
-
-  const controlIcon = (
-    icon: string,
-    size: number,
-    action: (args: any) => any,
-    isBackwards: boolean,
-    additionalClasses: string
-  ) => (
-    <div
-      onClick={action}
-      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
-      style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
-    >
-      <Icon
-        // @ts-ignore
-        name={icon}
-        size={size}
-        color="inherit"
-      />
-    </div>
-  );
 
   const toggleBottomTools = (blockName: number) => {
     if (blockName === INSPECTOR) {
@@ -210,7 +171,6 @@ function Controls(props: any) {
               toggleSpeed={() => player.toggleSpeed()}
               toggleSkip={() => player.toggleSkip()}
               playButton={renderPlayBtn()}
-              controlIcon={controlIcon}
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}
@@ -301,13 +261,11 @@ function Controls(props: any) {
             )}
 
             <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
-              {controlIcon(
-                'arrows-angle-extend',
-                16,
-                props.fullscreenOn,
-                false,
-                'rounded hover:bg-gray-light-shade color-gray-medium'
-              )}
+              <FullScreenButton
+                size={16}
+                onClick={props.fullscreenOn}
+                customClasses={'rounded hover:bg-gray-light-shade color-gray-medium'}
+              />
             </Tooltip>
           </div>
         </div>

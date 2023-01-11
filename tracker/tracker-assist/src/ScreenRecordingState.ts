@@ -15,7 +15,7 @@ const borderStyles = {
   left: 0,
   top: 0,
   position: 'fixed',
-  'pointer-events': 'none',
+  pointerEvents: 'none',
 }
 
 const buttonStyles = {
