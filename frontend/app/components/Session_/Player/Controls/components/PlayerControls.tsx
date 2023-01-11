@@ -4,6 +4,7 @@ import cn from 'classnames';
 import { ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
+import { SkipButton } from 'Player/components'
 
 interface Props {
   skip: boolean;
@@ -17,13 +18,6 @@ interface Props {
   forthTenSeconds: () => void;
   toggleSpeed: () => void;
   toggleSkip: () => void;
-  controlIcon: (
-    icon: string,
-    size: number,
-    action: () => void,
-    isBackwards: boolean,
-    additionalClasses: string
-  ) => JSX.Element;
 }
 
 function PlayerControls(props: Props) {
@@ -39,7 +33,6 @@ function PlayerControls(props: Props) {
     skipIntervals,
     setSkipInterval,
     currentInterval,
-    controlIcon,
   } = props;
   const [showTooltip, setShowTooltip] = React.useState(false);
   const speedRef = React.useRef<HTMLButtonElement>(null);
@@ -98,13 +91,12 @@ function PlayerControls(props: Props) {
             ref={arrowBackRef}
             className="h-full  bg-transparent"
           >
-            {controlIcon(
-              'skip-forward-fill',
-              18,
-              backTenSeconds,
-              true,
-              'hover:bg-active-blue-border color-main h-full flex items-center'
-            )}
+            <SkipButton
+              size={18}
+              onClick={backTenSeconds}
+              isBackwards={true}
+              customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
+            />
           </button>
         </Tooltip>
 
@@ -158,13 +150,11 @@ function PlayerControls(props: Props) {
             ref={arrowForwardRef}
             className="h-full bg-transparent"
           >
-            {controlIcon(
-              'skip-forward-fill',
-              18,
-              forthTenSeconds,
-              false,
-              'hover:bg-active-blue-border color-main h-full flex items-center'
-            )}
+            <SkipButton
+              size={18}
+              onClick={forthTenSeconds}
+              customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
+            />
           </button>
         </Tooltip>
       </div>
