@@ -158,6 +158,8 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
 
     results = list()
     for n in names_:
+        if n is None:
+            continue
         data_ = {'category': 'network', 'name': n, 'value': None, 'ratio': None, 'increase': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
@@ -225,6 +227,8 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
 
     results = list()
     for n in names_:
+        if n is None:
+            continue
         data_ = {'category': 'errors', 'name': n, 'value': None, 'ratio': None, 'increase': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
@@ -339,6 +343,8 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
 
     results = list()
     for n in names_:
+        if n is None:
+            continue
         data_ = {'category': 'rage', 'name': n, 'value': None, 'ratio': None, 'increase': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
