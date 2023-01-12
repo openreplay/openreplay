@@ -90,8 +90,8 @@ func (c *cacher) cacheURL(t *Task) {
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		printErr := true
-		// Retry 403 error
-		if res.StatusCode == 403 && t.retries > 0 {
+		// Retry 403/503 errors
+		if (res.StatusCode == 403 || res.StatusCode == 503) && t.retries > 0 {
 			c.workers.AddTask(t)
 			printErr = false
 		}

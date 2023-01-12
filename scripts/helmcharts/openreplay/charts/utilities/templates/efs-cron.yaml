@@ -11,6 +11,11 @@ spec:
     spec:
       backoffLimit: 0 # Don't restart the failed jobs
       template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         spec:
           restartPolicy: Never
           containers:

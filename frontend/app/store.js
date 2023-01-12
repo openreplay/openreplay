@@ -6,6 +6,9 @@ import apiMiddleware from './api_middleware';
 import LocalStorage from './local_storage';
 import { initialState as initUserState, UPDATE_JWT } from './duck/user'
 
+// TODO @remove after few days
+localStorage.removeItem('jwt')
+
 const storage = new LocalStorage({
   user: Object,
 });

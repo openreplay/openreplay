@@ -1,6 +1,6 @@
 import logger from 'App/logger';
 import APIClient from './api_client';
-import { UPDATE_JWT } from './duck/user';
+import { LOGIN, UPDATE_JWT } from './duck/user';
 
 export default () => (next) => (action) => {
   const { types, call, ...rest } = action;
@@ -14,7 +14,7 @@ export default () => (next) => (action) => {
   return call(client)
     .then(async (response) => {
       if (response.status === 403) {
-        next({ type: UPDATE_JWT, data: null });
+        next({ type: LOGIN.FAILURE });
       }
       if (!response.ok) {
         const text = await response.text();

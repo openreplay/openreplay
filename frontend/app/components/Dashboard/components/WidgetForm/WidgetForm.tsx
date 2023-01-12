@@ -19,9 +19,8 @@ import {
   PERFORMANCE,
   WEB_VITALS,
 } from 'App/constants/card';
-import { clickmapFilter } from 'App/types/filter/newFilter';
+import { clickmapFilter, eventKeys } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
-
 interface Props {
   history: any;
   match: any;
@@ -50,6 +49,8 @@ function WidgetForm(props: Props) {
   const isPredefined = [ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS].includes(
     metric.metricType
   );
+
+  const excludeFilterKeys = isClickmap ? eventKeys : []
 
   const writeOption = ({ value, name }: { value: any; name: any }) => {
     value = Array.isArray(value) ? value : value.value;
@@ -201,6 +202,8 @@ function WidgetForm(props: Props) {
               .map((series: any, index: number) => (
                 <div className="mb-2" key={series.name}>
                   <FilterSeries
+                    supportsEmpty={!isClickmap}
+                    excludeFilterKeys={excludeFilterKeys}
                     observeChanges={() => metric.updateKey('hasChanged', true)}
                     hideHeader={isTable || isClickmap}
                     seriesIndex={index}
