@@ -27,7 +27,7 @@ RUN adduser -u 1001 openreplay -D
 
 ENV TZ=UTC \
     GIT_SHA=$GIT_SHA \
-    FS_ULIMIT=1000 \
+    FS_ULIMIT=10000 \
     FS_DIR=/mnt/efs \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
