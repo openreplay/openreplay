@@ -57,22 +57,8 @@
     background: $main;
     z-index: 3;
     pointer-events: none;
-    /* top: 0; */
-    /* bottom: 0; */
-    /*  &:hover {
-       width: 10px;
-       height: 10px;
-       margin-left: -6px;
-       z-index: 1;
-     };*/
 }
 
-/* .event.click, .event.input {
-  background: $green;
-}
-.event.location {
-  background: $blue;
-} */
 .redEvent {
     position: absolute;
     width: 2px;
@@ -80,14 +66,6 @@
     background: $red;
     z-index: 3;
     pointer-events: none;
-    /* top: 0; */
-    /* bottom: 0; */
-    /*  &:hover {
-       width: 10px;
-       height: 10px;
-       margin-left: -6px;
-       z-index: 1;
-     };*/
 }
 
 .markup {
@@ -100,25 +78,12 @@
  }
 }
 
-/* .markup.log {
-  background: $blue;
-}
-
-.markup.error {
-  background: $red;
-}
-
-.markup.warning {
-  background: $orange;
-} */
-
 .markup.info {
     background: $blue2;
 }
 
 .popup {
     max-width: 300px !important;
-    /* max-height: 300px !important; */
     overflow: hidden;
     text-overflow: ellipsis;
 & span {
@@ -146,14 +111,12 @@
     width: 2px;
     height: 8px;
     margin-left: -1px;
-    /* background: $red; */
 }
 
 .returningLocation {
     position: absolute;
     height: 20%;
     border-radius: 50%;
-    /* background: $red; */
     width: 12px;
 }
 
