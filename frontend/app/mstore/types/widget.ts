@@ -14,42 +14,32 @@ import { getChartFormatter } from 'Types/dashboard/helper';
 export class InishtIssue {
   icon: string;
   iconColor: string;
-  increase: number;
+  change: number;
   isNew = false;
   category: string;
   label: string;
+  value: number;
+  isIncreased?: boolean;
 
   constructor(
     category: string,
     public name: string,
     public ratio: number,
-    increase = 0,
+    value = 0,
+    change = 0,
     isNew = false
   ) {
     this.category = category;
+    this.value = Math.round(value);
     // @ts-ignore
     this.label = issueCategoriesMap[category];
     this.icon = `ic-${category}`;
     this.iconColor = 'red';
 
-    this.increase = increase;
+    this.change = parseInt(change.toFixed(2));
+    this.isIncreased = this.change > 0;
     this.isNew = isNew;
   }
-}
-
-function generateRandomString(stringArray: string[]): string {
-  const randomIndex = Math.floor(Math.random() * stringArray.length);
-  return stringArray[randomIndex];
-}
-
-function randomIssue() {
-  return new InishtIssue(
-    generateRandomString(['rage', 'resources', 'network', 'errors']),
-    generateRandomString(['Login', 'Update', '/sessions/data', 'Reload']),
-    Math.floor(Math.random() * 50),
-    Math.floor(Math.random() * 100),
-    false
-  );
 }
 
 export default class Widget {
@@ -126,9 +116,10 @@ export default class Widget {
       this.metricFormat = json.metricFormat;
       this.viewType = json.viewType;
       this.name = json.name;
-      this.series = (json.series && json.series.length > 0)
-        ? json.series.map((series: any) => new FilterSeries().fromJson(series))
-        : [new FilterSeries()];
+      this.series =
+        json.series && json.series.length > 0
+          ? json.series.map((series: any) => new FilterSeries().fromJson(series))
+          : [new FilterSeries()];
       this.dashboards = json.dashboards || [];
       this.owner = json.ownerEmail;
       this.lastModified =
@@ -198,9 +189,9 @@ export default class Widget {
     if (this.metricOf === FilterKey.ERRORS) {
       _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
     } else if (this.metricType === INSIGHTS) {
-      // TODO read from the response
-      _data['issues'] = [1, 2, 3, 4].map((i: any) => randomIssue());
-      console.log('_data', _data);
+      _data['issues'] = data.filter((i: any) => i.change > 0 || i.change < 0).map(
+        (i: any) => new InishtIssue(i.category, i.name, i.ratio, i.value, i.change, i.isNew)
+      ); 
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['chart'] = getChartFormatter(period)(data.chart);

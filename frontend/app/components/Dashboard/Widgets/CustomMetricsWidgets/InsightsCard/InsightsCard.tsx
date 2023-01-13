@@ -29,9 +29,12 @@ function InsightsCard(props: Props) {
       title={NO_METRIC_DATA}
       style={{ padding: '100px 0' }}
     >
-      {metric.data.issues && metric.data.issues.map((item: any) => (
-        <InsightItem item={item} onClick={clickHanddler} />
-      ))}
+      <div className="overflow-y-auto" style={{ maxHeight: '240px' }}>
+        {metric.data.issues &&
+          metric.data.issues.map((item: any) => (
+            <InsightItem item={item} onClick={clickHanddler} />
+          ))}
+      </div>
     </NoContent>
   );
 }

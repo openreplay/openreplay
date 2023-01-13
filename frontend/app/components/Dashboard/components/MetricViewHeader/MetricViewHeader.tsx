@@ -4,7 +4,7 @@ import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
-import { DROPDOWN_OPTIONS, Option } from 'App/constants/card';
+import { DROPDOWN_OPTIONS } from 'App/constants/card';
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
