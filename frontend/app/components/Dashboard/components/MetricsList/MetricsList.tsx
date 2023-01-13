@@ -2,9 +2,7 @@ import { observer, useObserver } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
-import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
-import Widget from 'App/mstore/types/widget';
 import GridView from './GridView';
 import ListView from './ListView';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -21,7 +19,6 @@ function MetricsList({
   const metricsSearch = metricStore.metricsSearch;
   const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
-  // const sortBy = useObserver(() => metricStore.sort.by);
 
   useEffect(() => {
     metricStore.fetchList();
@@ -41,16 +38,6 @@ function MetricsList({
       setSelectedMetrics([...selectedMetrics, id]);
     }
   };
-
-  // const filterByDashboard = (item: Widget, searchRE: RegExp) => {
-  //   const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ');
-  //   return searchRE.test(dashboardsStr);
-  // };
-
-  // const list =
-  //   metricsSearch !== ''
-  //     ? filterList(metrics, metricsSearch, ['name', 'metricType', 'owner'], filterByDashboard)
-  //     : metrics;
 
   const lenth = cards.length;
 

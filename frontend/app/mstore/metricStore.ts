@@ -15,7 +15,7 @@ import {
   INSIGHTS,
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
-import { filterList, getRE } from 'App/utils';
+import { getRE } from 'App/utils';
 
 interface MetricFilter {
   query?: string;
