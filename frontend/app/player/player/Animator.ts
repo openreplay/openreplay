@@ -139,7 +139,7 @@ export default class Animator {
     this.store.update({ playing: false })
   }
 
-  togglePlay() {
+  togglePlay = () => {
     const { playing, completed } = this.store.get()
     if (playing) {
       this.pause()

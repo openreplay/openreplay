@@ -7,7 +7,7 @@ import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 
 interface Props {
-  nextId: string,
+  nextId?: string,
   closedLive?: boolean,
   isClickmap?: boolean,
 }

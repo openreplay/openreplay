@@ -17,7 +17,7 @@ const replayBg = '#d0d4f2' // active blue border
 const liveBg = 'rgba(66, 174, 94, 0.3)' // light green shade
 
 /** Playtime progress bar */
-export const ProgressBar = ({ scale, live = false, left, time }: IProps) => {
+export function ProgressBar ({ scale, live = false, left, time }: IProps) {
   return (
     <div
       style={{
@@ -26,6 +26,7 @@ export const ProgressBar = ({ scale, live = false, left, time }: IProps) => {
         backgroundColor: live && left > 99 ? liveBg : replayBg
       }}
     />
-  );}
+  )
+}
 
 ProgressBar.displayName = 'ProgressBar';
