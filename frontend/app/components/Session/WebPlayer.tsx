@@ -13,6 +13,7 @@ import { fetchList as fetchMembers } from 'Duck/member';
 import PlayerContent from './PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 import { observer } from 'mobx-react-lite';
+import { Note } from "App/services/NotesService";
 
 const TABS = {
   EVENTS: 'User Steps',
@@ -36,7 +37,7 @@ function WebPlayer(props: any) {
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [showNoteModal, setShowNote] = useState(false);
-  const [noteItem, setNoteItem] = useState(null);
+  const [noteItem, setNoteItem] = useState<Note>();
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
@@ -54,10 +55,11 @@ function WebPlayer(props: any) {
 
     if (!isClickmap) {
       notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-        const note = props.query.get('note');
+        const noteId = props.query.get('note');
+        const note = notesStore.getNoteById(parseInt(noteId, 10), r)
         if (note) {
           WebPlayerInst.pause();
-          setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
+          setNoteItem(note);
           setShowNote(true);
         }
       });
