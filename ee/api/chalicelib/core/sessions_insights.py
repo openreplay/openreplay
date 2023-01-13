@@ -160,7 +160,7 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'network', 'name': n, 'value': None, 'ratio': None, 'increase': None, 'isNew': True}
+        data_ = {'category': 'network', 'name': n, 'value': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 data_['value'] = v
@@ -168,7 +168,7 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
                 break
         for n_, v in increase:
             if n == n_:
-                data_['increase'] = v
+                data_['change'] = v
                 data_['isNew'] = False
                 break
         results.append(data_)
@@ -229,7 +229,7 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'errors', 'name': n, 'value': None, 'ratio': None, 'increase': None, 'isNew': True}
+        data_ = {'category': 'errors', 'name': n, 'value': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 data_['value'] = v
@@ -237,7 +237,7 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
                 break
         for n_, v in increase:
             if n == n_:
-                data_['increase'] = v
+                data_['change'] = v
                 data_['isNew'] = False
                 break
         results.append(data_)
@@ -281,12 +281,12 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
     return [{'category': 'resources',
              'name': 'cpu',
             'value': None,
-            'increase': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
+            'change': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
              'isNew': None},
             {'category': 'resources',
              'name': 'memory',
              'value': None,
-             'increase': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp,
+             'change': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp,
              'isNew': None}
             ]
 
@@ -353,7 +353,7 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'rage', 'name': n, 'value': None, 'ratio': None, 'increase': None, 'isNew': True}
+        data_ = {'category': 'rage', 'name': n, 'value': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 data_['value'] = v
@@ -361,7 +361,7 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
                 break
         for n_, v in increase:
             if n == n_:
-                data_['increase'] = v
+                data_['change'] = v
                 data_['isNew'] = False
                 break
         results.append(data_)
