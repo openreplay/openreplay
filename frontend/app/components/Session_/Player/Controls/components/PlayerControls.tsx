@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
-import { SkipButton } from 'Player/components'
+import { SkipButton } from 'App/player-ui'
 
 interface Props {
   skip: boolean;
