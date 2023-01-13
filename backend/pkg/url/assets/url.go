@@ -24,8 +24,9 @@ func ResolveURL(baseurl string, rawurl string) string {
 	if !isRelativeCachable(rawurl) {
 		return rawurl
 	}
-	base, _ := url.ParseRequestURI(baseurl) // fn Only for base urls
-	u, _ := url.Parse(rawurl)               // TODO: handle errors ?
+	baseurl = strings.Split(baseurl, "#")[0] // remove #fragment suffix if present
+	base, _ := url.ParseRequestURI(baseurl)  // fn Only for base urls
+	u, _ := url.Parse(rawurl)                // TODO: handle errors ?
 	if base == nil || u == nil {
 		return rawurl
 	}
@@ -48,6 +49,7 @@ func isCachable(rawurl string) bool {
 	}
 	ext := filepath.Ext(u.Path)
 	return ext == ".css" ||
+		ext == ".ashx" || // ASP .NET
 		ext == ".woff" ||
 		ext == ".woff2" ||
 		ext == ".ttf" ||
