@@ -279,8 +279,16 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
     # TODO: what if _tmp=0 ?
     _tmp = 1 if _tmp == 0 else _tmp
     return [{'category': 'resources',
-            'cpuIncrease': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
-            'memoryIncrease': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp}]
+             'name': 'cpu',
+            'value': None,
+            'increase': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
+             'isNew': None},
+            {'category': 'resources',
+             'name': 'memory',
+             'value': None,
+             'increase': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp,
+             'isNew': None}
+            ]
 
 
 def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
