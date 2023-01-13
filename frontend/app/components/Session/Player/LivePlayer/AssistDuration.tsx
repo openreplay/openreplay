@@ -13,7 +13,7 @@ const AssistDurationCont = () => {
     const interval = setInterval(() => {
         setAssistDuration(Duration.fromMillis(+new Date() - assistStart).toFormat('mm:ss'));
       }
-      , 1000);
+      , 500);
     return () => clearInterval(interval);
   }, [])
   return (

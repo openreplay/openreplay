@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import LiveTag from 'Shared/LiveTag';
+import LiveTag from './LiveTag';
 import AssistSessionsTabs from './AssistSessionsTabs';
 
 import {
