@@ -6,34 +6,6 @@ class Message(ABC):
     pass
 
 
-class BatchMeta(Message):
-    __id__ = 80
-
-    def __init__(self, page_no, first_index, timestamp):
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-
-
-class BatchMetadata(Message):
-    __id__ = 81
-
-    def __init__(self, version, page_no, first_index, timestamp, location):
-        self.version = version
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-        self.location = location
-
-
-class PartitionedMessage(Message):
-    __id__ = 82
-
-    def __init__(self, part_no, part_total):
-        self.part_no = part_no
-        self.part_total = part_total
-
-
 class Timestamp(Message):
     __id__ = 0
 
@@ -586,7 +558,7 @@ class SetCSSDataURLBased(Message):
         self.base_url = base_url
 
 
-class IssueEvent(Message):
+class IssueEventDeprecated(Message):
     __id__ = 62
 
     def __init__(self, message_id, timestamp, type, context_string, context, payload):
@@ -725,6 +697,47 @@ class JSException(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class BatchMeta(Message):
+    __id__ = 80
+
+    def __init__(self, page_no, first_index, timestamp):
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+
+
+class BatchMetadata(Message):
+    __id__ = 81
+
+    def __init__(self, version, page_no, first_index, timestamp, location):
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+        self.location = location
+
+
+class PartitionedMessage(Message):
+    __id__ = 82
+
+    def __init__(self, part_no, part_total):
+        self.part_no = part_no
+        self.part_total = part_total
+
+
+class IssueEvent(Message):
+    __id__ = 125
+
+    def __init__(self, message_id, timestamp, type, context_string, context, payload, url):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.type = type
+        self.context_string = context_string
+        self.context = context
+        self.payload = payload
+        self.url = url
 
 
 class SessionEnd(Message):
