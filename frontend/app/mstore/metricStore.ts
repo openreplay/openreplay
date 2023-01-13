@@ -57,13 +57,14 @@ export default class MetricStore {
 
   get filteredCards() {
     const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
-    const dbIds = this.filter.dashboard ? this.filter.dashboard.map((i) => i.value) : [];
+    const dbIds = this.filter.dashboard ? this.filter.dashboard.map((i: any) => i.value) : [];
     return this.metrics
       .filter(
         (card) =>
           (this.filter.type === 'all' || card.metricType === this.filter.type) &&
           (!dbIds.length ||
             card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id))) &&
+          // @ts-ignore
           (!filterRE || ['name', 'owner'].some((key) => filterRE.test(card[key])))
       )
       .sort((a, b) =>

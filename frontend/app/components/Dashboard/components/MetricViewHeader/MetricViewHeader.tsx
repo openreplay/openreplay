@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, PageTitle, Button, Link, SegmentSelection } from 'UI';
+import { Icon, PageTitle, Button, Link } from 'UI';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
@@ -8,11 +8,7 @@ import { DROPDOWN_OPTIONS, Option } from 'App/constants/card';
 
 function MetricViewHeader() {
   const { metricStore } = useStore();
-  const sort = metricStore.sort;
-  const listView = metricStore.listView;
   const filter = metricStore.filter;
-
-  const writeOption = (e: any, { name, value }: any) => {};
 
   return (
     <div>
@@ -24,28 +20,6 @@ function MetricViewHeader() {
           <Link to={'/metrics/create'}>
             <Button variant="primary">New Card</Button>
           </Link>
-          {/* <SegmentSelection
-            name="viewType"
-            className="mx-3"
-            primary
-            onSelect={() => metricStore.updateKey('listView', !listView)}
-            value={{ value: listView ? 'list' : 'grid' }}
-            list={[
-              { value: 'list', name: '', icon: 'graph-up-arrow' },
-              { value: 'grid', name: '', icon: 'hash' },
-            ]}
-          />
-          <div className="mx-2">
-            <Select
-              options={[
-                { label: 'Newest', value: 'desc' },
-                { label: 'Oldest', value: 'asc' },
-              ]}
-              defaultValue={sort.by}
-              plain
-              onChange={({ value }) => metricStore.updateKey('sort', { by: value.value })}
-            />
-          </div> */}
           <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
             <MetricsSearch />
           </div>
@@ -65,6 +39,7 @@ function MetricViewHeader() {
             defaultValue={filter.type}
             onChange={({ value }) => metricStore.updateKey('filter', { ...filter, type: value.value})}
             plain={true}
+            isSearchable={true}
           />
 
           <Select
