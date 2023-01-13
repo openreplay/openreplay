@@ -143,7 +143,10 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
     for n in common_names:
         d1_tmp = _table_where(table_hh1, source_idx, n)
         d2_tmp = _table_where(table_hh2, source_idx, n)
-        delta_duration[n] = _mean_table_index(d1_tmp, duration_idx) - _mean_table_index(d2_tmp, duration_idx)
+        _duration1 = _mean_table_index(d2_tmp, duration_idx)
+        if _duration1 == 0:
+            continue
+        delta_duration[n] = (_mean_table_index(d1_tmp, duration_idx) - _duration1) / _duration1
         delta_success[n] = _mean_table_index(d1_tmp, success_idx) - _mean_table_index(d2_tmp, success_idx)
 
     #names_idx = columns.index('names')
@@ -154,7 +157,8 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
 
     increase = sorted(delta_duration.items(), key=lambda k: k[1], reverse=True)
     ratio = sorted(zip(_tmp2, _tmp), key=lambda k: k[1], reverse=True)
-    names_ = set([k[0] for k in increase[:3]+ratio[:3]]+new_hosts[:3])
+    # names_ = set([k[0] for k in increase[:3]+ratio[:3]]+new_hosts[:3])
+    names_ = set([k[0] for k in increase[:3] + ratio[:3]]) # we took out new hosts since they dont give much info
 
     results = list()
     for n in names_:
@@ -219,8 +223,10 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
     for n in this_period_errors:
         percentage_errors[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
     for n in common_errors:
-        error_increase[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), names_idx) - _sum_table_index(
-            _table_where(table_hh2, names_idx, n), names_idx)
+        errors_ = _sum_table_index(_table_where(table_hh2, names_idx, n), names_idx)
+        if errors_ == 0:
+            continue
+        error_increase[n] = (_sum_table_index(_table_where(table_hh1, names_idx, n), names_idx) - errors_) / errors_
     ratio = sorted(percentage_errors.items(), key=lambda k: k[1], reverse=True)
     increase = sorted(error_increase.items(), key=lambda k: k[1], reverse=True)
     names_ = set([k[0] for k in increase[:3] + ratio[:3]] + new_errors[:3])
