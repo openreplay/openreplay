@@ -15,7 +15,14 @@ import {
   INSIGHTS,
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
+import { filterList, getRE } from 'App/utils';
 
+interface MetricFilter {
+  query?: string;
+  showMine?: boolean;
+  type?: string;
+  dashboard?: [];
+}
 export default class MetricStore {
   isLoading: boolean = false;
   isSaving: boolean = false;
@@ -27,6 +34,8 @@ export default class MetricStore {
   pageSize: number = 10;
   metricsSearch: string = '';
   sort: any = { by: 'desc' };
+
+  filter: MetricFilter = { type: 'all', dashboard: [], query: '' };
 
   sessionsPage: number = 1;
   sessionsPageSize: number = 10;
@@ -44,6 +53,22 @@ export default class MetricStore {
     return [...this.metrics].sort((a, b) =>
       this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified
     );
+  }
+
+  get filteredCards() {
+    const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
+    const dbIds = this.filter.dashboard ? this.filter.dashboard.map((i) => i.value) : [];
+    return this.metrics
+      .filter(
+        (card) =>
+          (this.filter.type === 'all' || card.metricType === this.filter.type) &&
+          (!dbIds.length ||
+            card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id))) &&
+          (!filterRE || ['name', 'owner'].some((key) => filterRE.test(card[key])))
+      )
+      .sort((a, b) =>
+        this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified
+      );
   }
 
   // State Actions
@@ -80,14 +105,13 @@ export default class MetricStore {
       }
     }
 
-
     Object.assign(this.instance, obj);
     this.instance.updateKey('hasChanged', updateChangeFlag);
   }
 
   changeType(value: string) {
     const obj: any = { metricType: value };
-    obj.series = this.instance.series
+    obj.series = this.instance.series;
 
     obj['metricValue'] = [];
 
@@ -117,7 +141,7 @@ export default class MetricStore {
     }
 
     if (value === CLICKMAP) {
-      obj.series = obj.series.slice(0, 1)
+      obj.series = obj.series.slice(0, 1);
       if (this.instance.metricType !== CLICKMAP) {
         obj.series[0].filter.removeFilter(0);
       }

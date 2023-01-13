@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
-import { TYPES, LIBRARY } from 'App/constants/card';
+import React from 'react';
+import { DROPDOWN_OPTIONS, Option } from 'App/constants/card';
 import Select from 'Shared/Select';
-import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
 import { observer } from 'mobx-react-lite';
@@ -22,20 +21,11 @@ interface Props {
 function MetricTypeDropdown(props: Props) {
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
-  const options: Options[] = useMemo(() => {
-    // TYPES.shift(); // remove "Add from library" item
-    return TYPES.filter((i: MetricType) => i.slug !== LIBRARY).map((i: MetricType) => ({
-      label: i.title,
-      icon: i.icon,
-      value: i.slug,
-      description: i.description,
-    }));
-  }, []);
 
   React.useEffect(() => {
     const queryCardType = props.query.get('type');
-    if (queryCardType && options.length > 0 && metric.metricType) {
-      const type = options.find((i) => i.value === queryCardType);
+    if (queryCardType && DROPDOWN_OPTIONS.length > 0 && metric.metricType) {
+      const type: Option = DROPDOWN_OPTIONS.find((i) => i.value === queryCardType) as Option;
       setTimeout(() => onChange(type.value), 0);
     }
   }, []);
@@ -48,13 +38,16 @@ function MetricTypeDropdown(props: Props) {
     <Select
       name="metricType"
       placeholder="Select Card Type"
-      options={options}
-      value={options.find((i: any) => i.value === metric.metricType) || options[0]}
+      options={DROPDOWN_OPTIONS}
+      value={
+        DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) || DROPDOWN_OPTIONS[0]
+      }
       onChange={props.onSelect}
-      // onSelect={onSelect}
       components={{
         SingleValue: ({ children, ...props }: any) => {
-          const { data: { icon, label } } = props;
+          const {
+            data: { icon, label },
+          } = props;
           return (
             <components.SingleValue {...props}>
               <div className="flex items-center">

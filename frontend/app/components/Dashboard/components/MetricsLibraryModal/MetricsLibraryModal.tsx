@@ -70,7 +70,7 @@ function MetricSearch({ onChange }: any) {
 function SelectedContent({ dashboardId, selected }: any) {
   const { hideModal } = useModal();
   const { metricStore, dashboardStore } = useStore();
-  const total = useObserver(() => metricStore.sortedWidgets.length);
+  const total = useObserver(() => metricStore.metrics.length);
   const dashboard = useMemo(() => dashboardStore.getDashboard(dashboardId), [dashboardId]);
 
   const addSelectedToDashboard = () => {

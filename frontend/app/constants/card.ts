@@ -1,5 +1,6 @@
 import { IconNames } from 'App/components/ui/SVG';
 import { FilterKey } from 'Types/filter/filterType';
+import { MetricType } from 'App/components/Dashboard/components/MetricTypeItem/MetricTypeItem';
 
 export interface CardType {
   title: string;
@@ -23,6 +24,13 @@ export const RETENTION = 'retention';
 export const FEATURE_ADOPTION = 'featureAdoption';
 export const INSIGHTS = 'insights';
 
+export interface Option {
+  label: string;
+  icon: string;
+  value: string;
+  description: string;
+}
+
 export const TYPES: CardType[] = [
   {
     title: 'Add from Library',
@@ -35,9 +43,7 @@ export const TYPES: CardType[] = [
     icon: 'puzzle-piece',
     description: 'Track the features that are being used the most.',
     slug: CLICKMAP,
-    subTypes: [
-      { title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: "" },
-    ]
+    subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
   },
   {
     title: 'Timeseries',
@@ -230,3 +236,12 @@ export const TYPES: CardType[] = [
     slug: INSIGHTS,
   },
 ];
+
+export const DROPDOWN_OPTIONS = TYPES.filter((i: MetricType) => i.slug !== LIBRARY).map(
+  (i: MetricType) => ({
+    label: i.title,
+    icon: i.icon,
+    value: i.slug,
+    description: i.description,
+  })
+);

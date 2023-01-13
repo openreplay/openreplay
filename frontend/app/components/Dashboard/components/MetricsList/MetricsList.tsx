@@ -17,11 +17,11 @@ function MetricsList({
   onSelectionChange?: (selected: any[]) => void;
 }) {
   const { metricStore } = useStore();
-  const metrics = metricStore.sortedWidgets;
+  const cards = metricStore.filteredCards;
   const metricsSearch = metricStore.metricsSearch;
   const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
-  const sortBy = useObserver(() => metricStore.sort.by);
+  // const sortBy = useObserver(() => metricStore.sort.by);
 
   useEffect(() => {
     metricStore.fetchList();
@@ -42,17 +42,17 @@ function MetricsList({
     }
   };
 
-  const filterByDashboard = (item: Widget, searchRE: RegExp) => {
-    const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ');
-    return searchRE.test(dashboardsStr);
-  };
+  // const filterByDashboard = (item: Widget, searchRE: RegExp) => {
+  //   const dashboardsStr = item.dashboards.map((d: any) => d.name).join(' ');
+  //   return searchRE.test(dashboardsStr);
+  // };
 
-  const list =
-    metricsSearch !== ''
-      ? filterList(metrics, metricsSearch, ['name', 'metricType', 'owner'], filterByDashboard)
-      : metrics;
+  // const list =
+  //   metricsSearch !== ''
+  //     ? filterList(metrics, metricsSearch, ['name', 'metricType', 'owner'], filterByDashboard)
+  //     : metrics;
 
-  const lenth = list.length;
+  const lenth = cards.length;
 
   useEffect(() => {
     metricStore.updateKey('sessionsPage', 1);
@@ -74,18 +74,18 @@ function MetricsList({
         <ListView
           disableSelection={!onSelectionChange}
           siteId={siteId}
-          list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
+          list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
           selectedList={selectedMetrics}
           toggleSelection={toggleMetricSelection}
-          allSelected={list.length === selectedMetrics.length}
+          allSelected={cards.length === selectedMetrics.length}
           toggleAll={({ target: { checked, name } }) =>
-            setSelectedMetrics(checked ? list.map((i: any) => i.metricId) : [])
+            setSelectedMetrics(checked ? cards.map((i: any) => i.metricId) : [])
           }
         />
       ) : (
         <GridView
           siteId={siteId}
-          list={sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize)}
+          list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
           selectedList={selectedMetrics}
           toggleSelection={toggleMetricSelection}
         />
@@ -94,8 +94,8 @@ function MetricsList({
       <div className="w-full flex items-center justify-between py-4 px-6 border-t">
         <div className="text-disabled-text">
           Showing{' '}
-          <span className="font-semibold">{Math.min(list.length, metricStore.pageSize)}</span> out
-          of <span className="font-semibold">{list.length}</span> cards
+          <span className="font-semibold">{Math.min(cards.length, metricStore.pageSize)}</span> out
+          of <span className="font-semibold">{cards.length}</span> cards
         </div>
         <Pagination
           page={metricStore.page}
