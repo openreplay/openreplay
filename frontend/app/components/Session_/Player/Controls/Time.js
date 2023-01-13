@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { PlayTime } from 'Player/components'
+import { PlayTime } from 'App/player-ui'
 
 const ReduxTime = observer(({ format, name, isCustom }) => {
   const { store } = React.useContext(PlayerContext)

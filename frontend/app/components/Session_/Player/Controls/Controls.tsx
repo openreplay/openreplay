@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { selectStorageType, STORAGE_TYPES } from 'Player';
-import { PlayButton, PlayingState, FullScreenButton } from 'Player/components'
+import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
 
 import { Icon, Tooltip } from 'UI';
 import {

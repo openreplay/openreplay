@@ -2,7 +2,7 @@ import React, { memo, FC, useEffect, CSSProperties } from 'react';
 import type { DragSourceMonitor } from 'react-dnd'
 import { useDrag } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import { ProgressCircle } from 'Player/components'
+import { ProgressCircle } from 'App/player-ui'
 
 function getStyles(
     left: number,
