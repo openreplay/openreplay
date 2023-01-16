@@ -318,9 +318,17 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    // const filter = getState().getIn(['search', 'instance']);
-    // dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ filters: [] })));
+    const instance = getState().getIn(['search', 'instance']);
+    dispatch(
+        edit(
+            new Filter({
+              rangeValue: instance.rangeValue,
+              startDate: instance.startDate,
+              endDate: instance.endDate,
+              filters: [],
+            })
+        )
+    );
     return dispatch({
         type: CLEAR_SEARCH,
     });
