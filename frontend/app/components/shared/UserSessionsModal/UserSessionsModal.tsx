@@ -46,7 +46,7 @@ function UserSessionsModal(props: Props) {
     useEffect(fetchData, [filter.page, filter.startDate, filter.endDate]);
 
     return (
-        <div className="h-screen overflow-y-auto bg-white" style={{ width: '700px' }}>
+        <div className="h-screen overflow-y-auto bg-white">
             <div className="flex items-center justify-between w-full px-5 py-3">
                 <div className="text-lg flex items-center">
                     <Avatar isActive={false} seed={hash} isAssist={false} className={''} />

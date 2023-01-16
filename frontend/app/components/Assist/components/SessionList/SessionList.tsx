@@ -24,45 +24,43 @@ function SessionList(props: Props) {
     }, []);
 
     return (
-        <div style={{ width: '50vw' }}>
-            <div
-                className="border-r shadow h-screen overflow-y-auto"
-                style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', minWidth: '700px' }}
-            >
-                <div className="p-4">
-                    <div className="text-2xl">
-                        {props.userId}'s <span className="color-gray-medium">Live Sessions</span>{' '}
-                    </div>
+        <div
+            className="border-r shadow h-screen overflow-y-auto"
+            style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%', minWidth: '700px' }}
+        >
+            <div className="p-4">
+                <div className="text-2xl">
+                    {props.userId}'s <span className="color-gray-medium">Live Sessions</span>{' '}
                 </div>
-                <Loader loading={props.loading}>
-                    <NoContent
-                        show={!props.loading && props.list.length === 0}
-                        title={
-                            <div className="flex items-center justify-center flex-col">
-                                <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />
-                                <div className="mt-2" />
-                                <div className="text-center text-gray-600">No live sessions found.</div>
-                            </div>
-                        }
-                    >
-                        <div className="p-4">
-                            {props.list.map((session: any) => (
-                                <div className="mb-6">
-                                    {session.pageTitle && session.pageTitle !== '' && (
-                                        <div className="flex items-center mb-2">
-                                            <Label size="small" className="p-1">
-                                                <span className="color-gray-medium">TAB</span>
-                                            </Label>
-                                            <span className="ml-2 font-medium">{session.pageTitle}</span>
-                                        </div>
-                                    )}
-                                    <SessionItem compact={true} onClick={() => hideModal()} key={session.sessionId} session={session} />
-                                </div>
-                            ))}
-                        </div>
-                    </NoContent>
-                </Loader>
             </div>
+            <Loader loading={props.loading}>
+                <NoContent
+                    show={!props.loading && props.list.length === 0}
+                    title={
+                        <div className="flex items-center justify-center flex-col">
+                            <AnimatedSVG name={ICONS.NO_LIVE_SESSIONS} size={170} />
+                            <div className="mt-2" />
+                            <div className="text-center text-gray-600">No live sessions found.</div>
+                        </div>
+                    }
+                >
+                    <div className="p-4">
+                        {props.list.map((session: any) => (
+                            <div className="mb-6">
+                                {session.pageTitle && session.pageTitle !== '' && (
+                                    <div className="flex items-center mb-2">
+                                        <Label size="small" className="p-1">
+                                            <span className="color-gray-medium">TAB</span>
+                                        </Label>
+                                        <span className="ml-2 font-medium">{session.pageTitle}</span>
+                                    </div>
+                                )}
+                                <SessionItem compact={true} onClick={() => hideModal()} key={session.sessionId} session={session} />
+                            </div>
+                        ))}
+                    </div>
+                </NoContent>
+            </Loader>
         </div>
     );
 }

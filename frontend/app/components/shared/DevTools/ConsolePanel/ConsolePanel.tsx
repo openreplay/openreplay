@@ -116,7 +116,8 @@ function ConsolePanel() {
     showModal(
       <ErrorDetailsModal errorId={log.errorId} />, 
       { 
-        right: true, 
+        right: true,
+        width: 1200,
         onClose: () => {
           setIsDetailsModalActive(false)
           timeoutStartAutoscroll()

@@ -64,12 +64,12 @@ function Multiview({
   };
 
   const openListModal = () => {
-    showModal(<AssistSessionsModal onAdd={hideModal} />, { right: true });
+    showModal(<AssistSessionsModal onAdd={hideModal} />, { right: true, width: 700 });
   };
 
   const replaceSession = (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    showModal(<AssistSessionsModal onAdd={hideModal} replaceTarget={sessionId} />, { right: true });
+    showModal(<AssistSessionsModal onAdd={hideModal} replaceTarget={sessionId} />, { right: true, width: 700 });
   };
 
   const deleteSession = (e: React.MouseEvent, sessionId: string) => {

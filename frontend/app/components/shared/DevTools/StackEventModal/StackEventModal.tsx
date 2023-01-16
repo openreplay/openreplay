@@ -22,7 +22,7 @@ function StackEventModal(props: Props) {
     }
   };
   return (
-    <div className="bg-white overflow-y-auto h-screen p-5" style={{ width: '500px' }}>
+    <div className="bg-white overflow-y-auto h-screen p-5">
       <h5 className="mb-2 text-2xl">Stack Event</h5>
       {renderPopupContent()}
     </div>

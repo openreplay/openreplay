@@ -7,7 +7,7 @@ function SessionSettingButton(props: any) {
     const { showModal } = useModal();
 
     const handleClick = () => {
-        showModal(<SessionSettings />, { right: true });
+        showModal(<SessionSettings />, { right: true, width: 450 });
     };
 
     return (

@@ -15,7 +15,7 @@ function ErrorItem({ error = {}, onJump, inactive, selected }: Props) {
   const { showModal } = useModal();
 
   const onErrorClick = () => {
-    showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true });
+    showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true, width: 1200 });
   };
   return (
     <div
