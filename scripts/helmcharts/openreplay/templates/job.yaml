@@ -70,9 +70,13 @@ spec:
               echo "Copying enterprise code"
               cp -rf ee/scripts/* scripts/
             fi
+            echo "Changing RWX to proper permission"
+            chown 1001:1001 /mnt/efs
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
+        - name: datadir
+          mountPath: /mnt/efs
       containers:
       - name: postgres
         env:
@@ -267,5 +271,16 @@ spec:
           name: db-migration-script
       - name: shared
         emptyDir: {}
+      {{- if eq .Values.global.pvcRWXName  "hostPath" }}
+      - name: datadir
+        hostPath:
+          # Ensure the file directory is created.
+          path: /mnt/efs
+          type: DirectoryOrCreate
+      {{- else }}
+      - name: datadir
+        persistentVolumeClaim:
+          claimName: "{{ .Values.global.pvcRWXName }}"
+      {{- end }}
       restartPolicy: Never
 {{- end}}
