@@ -61,11 +61,12 @@ const reducer = (state = initialState, action = {}) => {
 			return state.setIn([ 'instance', 'gdpr' ], gdpr);
 		case FETCH_LIST_SUCCESS:
 			let siteId = state.get("siteId");
-			const siteExists = action.data.map(s => s.projectId).includes(siteId);
-			if (action.siteIdFromPath) {
+			const siteIds = action.data.map(s => parseInt(s.projectId))
+			const siteExists = siteIds.includes(siteId);
+			if (action.siteIdFromPath && siteIds.includes(parseInt(action.siteIdFromPath))) {
 				siteId = action.siteIdFromPath;
 			} else if (!siteId || !siteExists) {
-				siteId = !!action.data.find(s => s.projectId === parseInt(storedSiteId))
+				siteId = siteIds.includes(parseInt(storedSiteId))
 				? storedSiteId 
 				: action.data[0].projectId;
 			}
