@@ -12,8 +12,14 @@ import (
 	http2 "openreplay/backend/internal/http/services"
 	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/monitoring"
+	"sync"
 	"time"
 )
+
+type BeaconSize struct {
+	size int64
+	time time.Time
+}
 
 type Router struct {
 	router          *mux.Router
@@ -22,6 +28,8 @@ type Router struct {
 	requestSize     syncfloat64.Histogram
 	requestDuration syncfloat64.Histogram
 	totalRequests   syncfloat64.Counter
+	mutex           *sync.RWMutex
+	beaconSizeCache map[uint64]*BeaconSize // Cache for session's beaconSize
 }
 
 func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder, metrics *monitoring.Metrics) (*Router, error) {
@@ -34,12 +42,48 @@ func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder, metrics *moni
 		return nil, fmt.Errorf("metrics is empty")
 	}
 	e := &Router{
-		cfg:      cfg,
-		services: services,
+		cfg:             cfg,
+		services:        services,
+		mutex:           &sync.RWMutex{},
+		beaconSizeCache: make(map[uint64]*BeaconSize),
 	}
 	e.initMetrics(metrics)
 	e.init()
+	go e.clearBeaconSizes()
 	return e, nil
+}
+
+func (e *Router) addBeaconSize(sessionID uint64, size int64) {
+	e.mutex.Lock()
+	defer e.mutex.Unlock()
+	e.beaconSizeCache[sessionID] = &BeaconSize{
+		size: size,
+		time: time.Now(),
+	}
+}
+
+func (e *Router) getBeaconSize(sessionID uint64) int64 {
+	e.mutex.RLock()
+	defer e.mutex.RUnlock()
+	if beaconSize, ok := e.beaconSizeCache[sessionID]; ok {
+		beaconSize.time = time.Now()
+		return beaconSize.size
+	}
+	return e.cfg.BeaconSizeLimit
+}
+
+func (e *Router) clearBeaconSizes() {
+	for {
+		time.Sleep(time.Minute * 2)
+		now := time.Now()
+		e.mutex.Lock()
+		for sid, bs := range e.beaconSizeCache {
+			if now.Sub(bs.time) > time.Minute*3 {
+				delete(e.beaconSizeCache, sid)
+			}
+		}
+		e.mutex.Unlock()
+	}
 }
 
 func (e *Router) init() {

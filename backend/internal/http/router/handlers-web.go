@@ -151,17 +151,13 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			log.Printf("can't send session start: %s", err)
 		}
 	}
-	beaconSize := e.cfg.BeaconSizeLimit
-	if p.BeaconSize != 0 {
-		beaconSize = p.BeaconSize
-	}
 
 	ResponseWithJSON(w, &StartSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
-		BeaconSizeLimit: beaconSize,
+		BeaconSizeLimit: e.getBeaconSize(tokenData.ID),
 		StartTimestamp:  int64(flakeid.ExtractTimestamp(tokenData.ID)),
 		Delay:           tokenData.Delay,
 	})
@@ -181,7 +177,7 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.BeaconSizeLimit)
+	bodyBytes, err := e.readBody(w, r, e.getBeaconSize(sessionData.ID))
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
 		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
