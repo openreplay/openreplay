@@ -42,7 +42,7 @@ func main() {
 	consumer := queue.NewConsumer(
 		cfg.GroupEnder,
 		[]string{cfg.TopicRawWeb},
-		messages.NewMessageIterator(
+		messages.NewEnderMessageIterator(
 			func(msg messages.Message) { sessions.UpdateSession(msg) },
 			[]int{messages.MsgTimestamp},
 			false),
