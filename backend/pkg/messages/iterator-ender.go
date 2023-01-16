@@ -105,8 +105,11 @@ func (i *enderMessageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInf
 		// Update last timestamp message
 		lastMessage = msg
 	}
+	
+	if lastMessage != nil {
+		i.handler(lastMessage)
+	}
 
-	i.handler(lastMessage)
 }
 
 func (i *enderMessageIteratorImpl) zeroTsLog(msgType string) {
