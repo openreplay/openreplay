@@ -144,7 +144,7 @@ export default abstract class Observer {
     }
     if (
       name === 'value' &&
-      hasTag(node, 'INPUT') &&
+      hasTag(node, 'input') &&
       node.type !== 'button' &&
       node.type !== 'reset' &&
       node.type !== 'submit'
@@ -155,7 +155,7 @@ export default abstract class Observer {
       this.app.send(RemoveNodeAttribute(id, name))
       return
     }
-    if (name === 'style' || (name === 'href' && hasTag(node, 'LINK'))) {
+    if (name === 'style' || (name === 'href' && hasTag(node, 'link'))) {
       this.app.send(SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()))
       return
     }
@@ -166,7 +166,7 @@ export default abstract class Observer {
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
-    if (hasTag(parentElement, 'STYLE') || hasTag(parentElement, 'style')) {
+    if (hasTag(parentElement, 'style')) {
       this.app.send(SetCSSDataURLBased(id, data, this.app.getBaseHref()))
       return
     }
@@ -242,7 +242,7 @@ export default abstract class Observer {
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
     // TODO: Clean the logic (though now it workd fine)
-    if (!hasTag(node, 'HTML') || !this.isTopContext) {
+    if (!hasTag(node, 'html') || !this.isTopContext) {
       if (parent === null) {
         // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
         // That shouldn't affect the visual rendering ( should it? maybe when transition applied? )

@@ -8,10 +8,10 @@ const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', '
 // TODO: take into consideration "contenteditable" attribute
 type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
 function isTextEditable(node: any): node is TextEditableElement {
-  if (hasTag(node, 'TEXTAREA')) {
+  if (hasTag(node, 'textarea')) {
     return true
   }
-  if (!hasTag(node, 'INPUT')) {
+  if (!hasTag(node, 'input')) {
     return false
   }
 
@@ -19,7 +19,7 @@ function isTextEditable(node: any): node is TextEditableElement {
 }
 
 function isCheckable(node: any): node is HTMLInputElement {
-  if (!hasTag(node, 'INPUT')) {
+  if (!hasTag(node, 'input')) {
     return false
   }
   const type = node.type
@@ -31,7 +31,7 @@ const labelElementFor: (element: TextEditableElement) => HTMLLabelElement | unde
     ? (node) => {
         let p: Node | null = node
         while ((p = p.parentNode) !== null) {
-          if (hasTag(p, 'LABEL')) {
+          if (hasTag(p, 'label')) {
             return p
           }
         }
@@ -43,7 +43,7 @@ const labelElementFor: (element: TextEditableElement) => HTMLLabelElement | unde
     : (node) => {
         let p: Node | null = node
         while ((p = p.parentNode) !== null) {
-          if (hasTag(p, 'LABEL')) {
+          if (hasTag(p, 'label')) {
             return p
           }
         }
@@ -142,12 +142,8 @@ export default function (app: App, opts: Partial<Options>): void {
 
   app.ticker.attach((): void => {
     inputValues.forEach((value, id) => {
-      const node = app.nodes.getNode(id)
-      if (!node) return
-      if (!isTextEditable(node)) {
-        inputValues.delete(id)
-        return
-      }
+      const node = app.nodes.getNode(id) as HTMLInputElement
+      if (!node) return inputValues.delete(id)
       if (value !== node.value) {
         inputValues.set(id, node.value)
         if (!registeredTargets.has(id)) {
@@ -158,12 +154,8 @@ export default function (app: App, opts: Partial<Options>): void {
       }
     })
     checkableValues.forEach((checked, id) => {
-      const node = app.nodes.getNode(id)
-      if (!node) return
-      if (!isCheckable(node)) {
-        checkableValues.delete(id)
-        return
-      }
+      const node = app.nodes.getNode(id) as HTMLInputElement
+      if (!node) return checkableValues.delete(id)
       if (checked !== node.checked) {
         checkableValues.set(id, node.checked)
         app.send(SetInputChecked(id, node.checked))
@@ -179,7 +171,7 @@ export default function (app: App, opts: Partial<Options>): void {
         return
       }
       // TODO: support multiple select (?): use selectedOptions; Need send target?
-      if (hasTag(node, 'SELECT')) {
+      if (hasTag(node, 'select')) {
         sendInputValue(id, node)
         app.attachEventListener(node, 'change', () => {
           sendInputValue(id, node)

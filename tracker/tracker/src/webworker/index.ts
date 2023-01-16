@@ -69,7 +69,8 @@ function initiateFailure(reason: string): void {
 let sendIntervalID: ReturnType<typeof setInterval> | null = null
 let restartTimeoutID: ReturnType<typeof setTimeout>
 
-self.onmessage = ({ data }: MessageEvent<ToWorkerData>): any => {
+// @ts-ignore
+self.onmessage = ({ data }: any): any => {
   if (data == null) {
     finalize()
     return

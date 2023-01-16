@@ -57,6 +57,7 @@ export default class QueueSender {
   private sendBatch(batch: Uint8Array): void {
     this.busy = true
 
+    // @ts-ignore
     fetch(this.ingestURL, {
       body: batch,
       method: 'POST',
@@ -66,7 +67,7 @@ export default class QueueSender {
       },
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
     })
-      .then((r) => {
+      .then((r: Record<string, any>) => {
         if (r.status === 401) {
           // TODO: continuous session ?
           this.busy = false
@@ -81,7 +82,7 @@ export default class QueueSender {
         this.attemptsCount = 0
         this.sendNext()
       })
-      .catch((e) => {
+      .catch((e: any) => {
         console.warn('OpenReplay:', e)
         this.retry(batch)
       })
