@@ -101,7 +101,7 @@ function ConsolePanel() {
     timeoutStartAutoscroll()
   }
   
-  const _list = useRef(); // TODO: fix react-virtualized types & incapsulate scrollToRow logic
+  const _list = useRef(null); // TODO: fix react-virtualized types & incapsulate scrollToRow logic
   useEffect(() => {
     if (_list.current) {
       // @ts-ignore
@@ -130,8 +130,7 @@ function ConsolePanel() {
     const item = filteredList[index];
 
     return (
-      <React.Fragment key={key}>
-        {/* @ts-ignore */}
+        // @ts-ignore
         <CellMeasurer cache={cache} columnIndex={0} key={key} rowIndex={index} parent={parent}>
           {({ measure }: any) => (
             <ConsoleRow
@@ -142,13 +141,12 @@ function ConsolePanel() {
               renderWithNL={renderWithNL}
               onClick={() => showDetails(item)}
               recalcHeight={() => {
-                measure();
                 (_list as any).current.recomputeRowHeights(index);
+                cache.clear(index, 0)
               }}
             />
           )}
         </CellMeasurer>
-      </React.Fragment>
     )
   }
 
@@ -195,6 +193,7 @@ function ConsolePanel() {
                 ref={_list}
                 deferredMeasurementCache={cache}
                 overscanRowCount={5}
+                estimatedRowSize={36}
                 rowCount={Math.ceil(filteredList.length || 1)}
                 rowHeight={cache.rowHeight}
                 rowRenderer={_rowRenderer}

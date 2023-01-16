@@ -11,12 +11,14 @@ interface ITab {
   onClick?: () => void;
   classNames?: string;
   children: React.ReactNode;
+  style?: Record<string, any>;
 }
 
 const Tab = (props: ITab) => (
   <div
     onClick={props.onClick}
     className={cn('p-1 rounded flex items-center justify-center cursor-pointer', props.classNames)}
+    style={props.style}
   >
     {props.children}
   </div>
@@ -29,7 +31,7 @@ export const InactiveTab = React.memo((props: Omit<ITab, 'children'>) => (
 ));
 
 const ActiveTab = React.memo((props: Omit<ITab, 'children'>) => (
-  <Tab onClick={props.onClick} classNames="hover:bg-teal bg-borderColor-primary">
+  <Tab onClick={props.onClick} classNames="hover:bg-teal" style={{ background: 'rgba(57, 78, 255, 0.5)' }}>
     <Icon name="play-fill-new" size="22" color="white" />
   </Tab>
 ));
