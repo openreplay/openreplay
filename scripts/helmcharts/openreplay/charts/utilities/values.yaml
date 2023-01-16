@@ -15,7 +15,7 @@ efsCleaner:
     # In case of pvc, you'll have to provide the pvc name.
     # For example
     # name: openreplay-efs
-    name: hostPath
+    name: "{{ .Values.global.pvcRWXName }}"
     hostMountPath: /openreplay/storage/nfs
 
 telemetry:
