@@ -9,6 +9,7 @@ import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 import WebPlayer from './WebPlayer';
 import { useStore } from 'App/mstore';
+import { clearLogs } from 'App/dev/console';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -31,6 +32,7 @@ function Session({
 	},[ sessionId ]);
 
 	useEffect(() => {
+		clearLogs()
 		sessionStore.resetUserFilter();
 	} ,[])
 

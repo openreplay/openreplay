@@ -7,7 +7,11 @@ export const options = {
 	},
 	enableCrash: false,
 	verbose: false,
-	exceptionsLogs: []
+	exceptionsLogs: [],
+}
+
+export const clearLogs = () => {
+	options.exceptionsLogs = []
 }
 
 const storedString = localStorage.getItem(KEY)
