@@ -129,9 +129,15 @@ export default class Animator {
   }
 
   play() {
-    cancelAnimationFrame(this.animationFrameRequestId)
-    this.store.update({ playing: true })
-    this.startAnimation()
+    if (!this.store.get().ready) {
+      cancelAnimationFrame(this.animationFrameRequestId)
+      this.store.update({ playing: true })
+      this.startAnimation()
+    } else {
+      setTimeout(() => {
+        this.play()
+      }, 250)
+    }
   }
 
   pause() {

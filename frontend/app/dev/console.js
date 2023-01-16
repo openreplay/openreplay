@@ -7,6 +7,7 @@ export const options = {
 	},
 	enableCrash: false,
 	verbose: false,
+	exceptionsLogs: []
 }
 
 const storedString = localStorage.getItem(KEY)

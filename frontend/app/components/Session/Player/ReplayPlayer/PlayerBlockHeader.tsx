@@ -15,6 +15,7 @@ import Tabs from 'Components/Session/Tabs';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import stl from './playerBlockHeader.module.css';
+import { fetchListActive as fetchMetadata } from 'Duck/customField';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -36,11 +37,14 @@ function PlayerBlockHeader(props: any) {
     location,
     history,
     sessionPath,
+    fetchMetadata,
   } = props;
 
   React.useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     setHideBack(queryParams.has('iframe') && queryParams.get('iframe') === 'true');
+
+    if (metaList.size === 0) fetchMetadata();
   }, []);
 
   const backHandler = () => {
@@ -139,6 +143,7 @@ const PlayerHeaderCont = connect(
   {
     toggleFavorite,
     setSessionPath,
+    fetchMetadata,
   }
 )(observer(PlayerBlockHeader));
 

@@ -58,17 +58,22 @@ function Player(props: IProps) {
     isClickmap,
   } = props;
   const playerContext = React.useContext(PlayerContext);
+  const isReady = playerContext.store.get().ready
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const bottomBlockIsActive = !fullscreen && bottomBlock !== NONE;
+  const [isAttached, setAttached] = React.useState(false);
 
   React.useEffect(() => {
     props.updateLastPlayedSession(props.sessionId);
     const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
-    if (parentElement) {
+    if (parentElement && !isAttached) {
       playerContext.player.attach(parentElement);
+      setAttached(true)
+    }
+    if (isAttached && isReady) {
       playerContext.player.play();
     }
-  }, []);
+  }, [isReady]);
 
   React.useEffect(() => {
     playerContext.player.scale();
