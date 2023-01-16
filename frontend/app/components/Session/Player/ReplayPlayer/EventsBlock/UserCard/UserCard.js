@@ -117,7 +117,7 @@ export default withRequest({
 function UserName({ name, userId, hash }) {
     const { showModal } = useModal();
     const onClick = () => {
-        showModal(<UserSessionsModal userId={userId} hash={hash} name={name} />, { right: true });
+        showModal(<UserSessionsModal userId={userId} hash={hash} name={name} />, { right: true, width: 700 });
     };
     return <div onClick={userId ? onClick : () => {}}>{name}</div>;
 }

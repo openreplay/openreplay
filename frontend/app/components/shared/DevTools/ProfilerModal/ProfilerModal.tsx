@@ -9,7 +9,7 @@ function ProfilerModal(props: Props) {
   } = props;
 
   return (
-    <div className="bg-white overflow-y-auto h-screen p-5" style={{ width: '500px' }}>
+    <div className="bg-white overflow-y-auto h-screen p-5">
       <h5 className="mb-2 text-2xl">{name}</h5>
       <h5 className="py-3">{'Arguments'}</h5>
       <ul className="color-gray-medium">

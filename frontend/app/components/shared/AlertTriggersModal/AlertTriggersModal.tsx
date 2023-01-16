@@ -31,7 +31,7 @@ function AlertTriggersModal(props: Props) {
     }, [])
 
     return useObserver(() => (
-        <div className="bg-white box-shadow h-screen overflow-y-auto" style={{ width: '350px'}}>
+        <div className="bg-white box-shadow h-screen overflow-y-auto">
             <div className="flex items-center justify-between p-5 text-2xl">
                 <div>Alerts</div>
                 { count > 0 && (

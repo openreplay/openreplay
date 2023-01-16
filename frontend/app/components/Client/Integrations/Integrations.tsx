@@ -63,11 +63,11 @@ function Integrations(props: Props) {
         }
     }, []);
 
-    const onClick = (integration: any) => {
+    const onClick = (integration: any, width: number) => {
         if (integration.slug) {
             props.fetch(integration.slug, props.siteId);
         }
-        showModal(integration.component, { right: true });
+        showModal(integration.component, { right: true, width });
     };
 
     const onChangeSelect = ({ value }: any) => {
@@ -100,7 +100,7 @@ function Integrations(props: Props) {
                                 integrated={integratedList.includes(integration.slug)}
                                 key={integration.name}
                                 integration={integration}
-                                onClick={() => onClick(integration)}
+                                onClick={() => onClick(integration, cat.title === "Plugins" ? 500 : 350)}
                                 hide={
                                     (integration.slug === 'github' && integratedList.includes('jira')) ||
                                     (integration.slug === 'jira' && integratedList.includes('github'))

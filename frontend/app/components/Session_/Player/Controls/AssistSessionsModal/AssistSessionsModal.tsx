@@ -73,7 +73,7 @@ function AssistSessionsModal(props: Props) {
   };
 
   return (
-    <div className="bg-gray-lightest box-shadow h-screen p-4" style={{ width: '1000px', maxWidth: '60vw' }}>
+    <div className="bg-gray-lightest box-shadow h-screen p-4">
       <div className="flex flex-col my-2 w-full gap-2 ">
         <div className="flex items-center gap-2 w-full">
           <Tooltip title="Refresh" placement="top" delay={200}>

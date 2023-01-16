@@ -49,7 +49,7 @@ function SubHeader(props) {
       eventsList: eventsList,
       endTime: endTime,
     }
-    showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
+    showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true, width: 620 });
   };
 
   return (

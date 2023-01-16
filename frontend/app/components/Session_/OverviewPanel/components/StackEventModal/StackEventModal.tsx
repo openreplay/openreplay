@@ -23,7 +23,7 @@ function StackEventModal(props: Props) {
         }
     };
     return (
-        <div className="bg-white h-screen overflow-y-auto" style={{ width: '450px' }}>
+        <div className="bg-white h-screen overflow-y-auto">
             {renderPopupContent()}
         </div>
     );

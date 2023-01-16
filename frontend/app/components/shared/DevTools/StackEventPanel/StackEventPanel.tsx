@@ -66,6 +66,7 @@ function StackEventPanel() {
       <StackEventModal event={item} />, 
       { 
         right: true,
+        width: 500,
         onClose: () => {
           setIsDetailsModalActive(false)
           timeoutStartAutoscroll()

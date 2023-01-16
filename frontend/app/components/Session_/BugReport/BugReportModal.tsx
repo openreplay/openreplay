@@ -184,7 +184,7 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
   return (
     <div
       className="bg-white overflow-y-scroll"
-      style={{ maxWidth: '70vw', width: 620, height: '100vh' }}
+      style={{ height: '100vh' }}
     >
       <div className="flex flex-col p-4 gap-8 bg-white relative" ref={reportRef}>
         <Title userName={account.name} />

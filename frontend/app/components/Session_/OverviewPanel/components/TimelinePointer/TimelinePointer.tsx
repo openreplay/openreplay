@@ -27,18 +27,18 @@ const TimelinePointer = React.memo((props: Props) => {
     }
 
     if (type === 'ERRORS') {
-      showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true });
+      showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true, width: 1200 });
     }
 
     if (type === 'EVENT') {
-      showModal(<StackEventModal event={pointer} />, { right: true });
+      showModal(<StackEventModal event={pointer} />, { right: true, width: 450 });
     }
 
     if (type === NETWORK) {
       if (pointer.tp === 'graph_ql') {
-        showModal(<GraphQLDetailsModal resource={pointer} />, { right: true });
+        showModal(<GraphQLDetailsModal resource={pointer} />, { right: true, width: 500 });
       } else {
-        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true });
+        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true, width: 500 });
       }
     }
     // props.toggleBottomBlock(type);

@@ -23,7 +23,7 @@ function ProfilerPanel() {
   const filtered = useRegExListFilterMemo(profiles, pr => pr.name, filter)
 
   const onRowClick = (profile: any) => {
-    showModal(<ProfilerModal profile={profile} />, { right: true });
+    showModal(<ProfilerModal profile={profile} />, { right: true, width: 500 });
   };
   return (
     <BottomBlock>

@@ -19,7 +19,7 @@ const AssistTabs = (props: Props) => {
           <>
             <div
               className={stl.btnLink}
-              onClick={() => showModal(<SessionList userId={props.userId} />, { right: true })}
+              onClick={() => showModal(<SessionList userId={props.userId} />, { right: true, width: 700 })}
             >
               Active Sessions
             </div>

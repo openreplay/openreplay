@@ -234,6 +234,7 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
       <FetchDetailsModal time={item.time + startedAt} resource={item} rows={filteredList} fetchPresented={fetchList.length > 0} />,
       {
         right: true,
+        width: 500,
         onClose: () => {
           setIsDetailsModalActive(false)
           timeoutStartAutoscroll()
