@@ -89,7 +89,7 @@ spec:
           {{- with .Values.persistence.mounts  }}
           {{- toYaml . | nindent 10 }}
           {{- end }}
-      {{- if eq .Values.pvc.name "hostPath" }}
+      {{- if eq (tpl .Values.pvc.name . ) "hostPath" }}
       volumes:
       - name: datadir
         hostPath:
@@ -104,7 +104,7 @@ spec:
       volumes:
       - name: datadir
         persistentVolumeClaim:
-          claimName: {{ .Values.pvc.name }}
+          claimName: "{{ tpl .Values.pvc.name . }}"
       {{- include "openreplay.volume.redis_ca_certificate" .Values.global.redis | nindent 6 }}
       {{- with .Values.persistence.volumes  }}
         {{- toYaml . | nindent 8 }}

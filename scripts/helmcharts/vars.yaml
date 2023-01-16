@@ -105,6 +105,10 @@ global:
   # secret key to inject to assist and peers service
   assistKey: "SetARandomStringHere"
   assistJWTSecret: "SetARandomStringHere"
+  # In case of multiple nodes in the kubernetes cluster,
+  # we'll have to create an RWX PVC for shared components.
+  # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
+  pvcRWXName: "hostPath"
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
@@ -128,25 +132,10 @@ global:
     emailSslKey: ''
     emailSslCert: ''
     emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
-
   enterpriseEditionLicense: ""
   domainName: ""
 
-# In case of multiple nodes in the kubernetes cluster,
-# we'll have to create an RWX PVC for shared components.
-# If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
-# Note: PVC names should be the same for sink, storage and chalice.
-# sink:
-#   pvc:
-#     name: mysharedpersistence
-# storage:
-#   pvc:
-#     name: mysharedpersistence
-
 chalice:
-# Note: PVC name should be the same as above for sink and storage.
-  # pvc:
-  #   name: mysharedpersistence
   env:
     jwt_secret: "SetARandomStringHere"
     # captcha_server: ''
