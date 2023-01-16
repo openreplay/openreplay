@@ -122,9 +122,6 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
             res = conn.execute(query=query)
     else:
         query = conn.format(query=query, params=params)
-        print("--------------------")
-        print(query)
-        print("--------------------")
         res = conn.execute(query=query)
     table_hh1, table_hh2, columns, this_period_hosts, last_period_hosts = __get_two_values(res, time_index='hh',
                                                                                 name_index='source')
@@ -164,7 +161,7 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'network', 'name': n, 'value': None, 'ratio': None, 'change': None, 'isNew': True}
+        data_ = {'category': 'network', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 data_['value'] = v
@@ -235,7 +232,7 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'errors', 'name': n, 'value': None, 'ratio': None, 'change': None, 'isNew': True}
+        data_ = {'category': 'errors', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 data_['value'] = v
@@ -281,18 +278,24 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
     memory_idx = columns.index('memory_used')
     cpu_idx = columns.index('cpu_used')
 
-    _tmp = _mean_table_index(table_hh2, memory_idx)
+    mem_newvalue = _mean_table_index(table_hh1, memory_idx)
+    mem_oldvalue = _mean_table_index(table_hh2, memory_idx)
+    cpu_newvalue = _mean_table_index(table_hh2, cpu_idx)
+    cpu_oldvalue = _mean_table_index(table_hh2, cpu_idx)
     # TODO: what if _tmp=0 ?
-    _tmp = 1 if _tmp == 0 else _tmp
+    mem_oldvalue = 1 if mem_oldvalue == 0 else mem_oldvalue
+    cpu_oldvalue = 1 if cpu_oldvalue == 0 else cpu_oldvalue
     return [{'category': 'resources',
              'name': 'cpu',
-            'value': None,
-            'change': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
+            'value': cpu_newvalue,
+             'oldValue': cpu_oldvalue,
+            'change': (cpu_newvalue - cpu_oldvalue)/cpu_oldvalue,
              'isNew': None},
             {'category': 'resources',
              'name': 'memory',
-             'value': None,
-             'change': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp,
+             'value': mem_newvalue,
+             'oldValue': mem_oldvalue,
+             'change': (mem_newvalue - mem_oldvalue)/mem_oldvalue,
              'isNew': None}
             ]
 
@@ -359,7 +362,7 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'rage', 'name': n, 'value': None, 'ratio': None, 'change': None, 'isNew': True}
+        data_ = {'category': 'rage', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 data_['value'] = v
