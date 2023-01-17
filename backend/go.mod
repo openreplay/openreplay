@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aws/aws-sdk-go v1.44.98
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/confluentinc/confluent-kafka-go v1.8.2
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.3.0
