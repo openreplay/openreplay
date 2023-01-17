@@ -257,7 +257,8 @@ $$
                   "defaultInputMode": "plain"
                 }'::jsonb,
                 first_recorded_session_at timestamp without time zone NULL            DEFAULT NULL,
-                sessions_last_check_at    timestamp without time zone NULL            DEFAULT NULL
+                sessions_last_check_at    timestamp without time zone NULL            DEFAULT NULL,
+                beacon_size               integer                     NOT NULL        DEFAULT 0
             );
 
 

@@ -509,19 +509,19 @@ class HttpMethod(str, Enum):
 
 
 class FetchFilterType(str, Enum):
-    _url = "FETCH_URL"
-    _status_code = "FETCH_STATUS_CODE"
-    _method = "FETCH_METHOD"
-    _duration = "FETCH_DURATION"
-    _request_body = "FETCH_REQUEST_BODY"
-    _response_body = "FETCH_RESPONSE_BODY"
+    _url = "fetchUrl"  # FETCH_URL
+    _status_code = "fetchStatusCode"  # FETCH_STATUS_CODE
+    _method = "fetchMethod"  # FETCH_METHOD
+    _duration = "fetchDuration"  # FETCH_DURATION
+    _request_body = "fetchRequestBody"  # FETCH_REQUEST_BODY
+    _response_body = "fetchResponseBody"  # FETCH_RESPONSE_BODY
 
 
 class GraphqlFilterType(str, Enum):
-    _name = "GRAPHQL_NAME"
-    _method = "GRAPHQL_METHOD"
-    _request_body = "GRAPHQL_REQUEST_BODY"
-    _response_body = "GRAPHQL_RESPONSE_BODY"
+    _name = "graphqlName"  # GRAPHQL_NAME
+    _method = "graphqlMethod"  # GRAPHQL_METHOD
+    _request_body = "graphqlRequestBody"  # GRAPHQL_REQUEST_BODY
+    _response_body = "graphqlResponseBody"  # GRAPHQL_RESPONSE_BODY
 
 
 class IssueFilterType(str, Enum):

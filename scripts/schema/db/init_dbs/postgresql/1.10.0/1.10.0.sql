@@ -107,20 +107,19 @@ DROP INDEX IF EXISTS public.sessions_user_browser_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_os_gin_idx;
 DROP INDEX IF EXISTS public.issues_context_string_gin_idx;
 
+
+ALTER TABLE IF EXISTS projects
+    ADD COLUMN IF NOT EXISTS beacon_size integer NOT NULL DEFAULT 0;
+
 -- To migrate saved search data
 -- SET client_min_messages TO NOTICE;
-DO
+
+-- SET client_min_messages TO NOTICE;
+CREATE OR REPLACE FUNCTION get_new_event_key(key text)
+    RETURNS text AS
 $$
-    DECLARE
-        row                  RECORD;
-        events_att           JSONB;
-        filters_att          JSONB;
-        element              JSONB;
-        new_value            TEXT;
-        new_array            JSONB[];
-        changed              BOOLEAN;
-        planned_update       JSONB[];
-        events_map  CONSTANT JSONB := '{
+DECLARE
+    events_map CONSTANT JSONB := '{
           "CLICK": "click",
           "INPUT": "input",
           "LOCATION": "location",
@@ -144,7 +143,38 @@ $$
           "AVG_MEMORY_USAGE": "avgMemoryUsage",
           "FETCH_FAILED": "fetchFailed"
         }';
-        filters_map CONSTANT JSONB := '{
+BEGIN
+    RETURN jsonb_extract_path(events_map, key);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+CREATE OR REPLACE FUNCTION get_new_event_filter_key(key text)
+    RETURNS text AS
+$$
+DECLARE
+    event_filters_map CONSTANT JSONB := '{
+          "FETCH_URL": "fetchUrl",
+          "FETCH_STATUS_CODE": "fetchStatusCode",
+          "FETCH_METHOD": "fetchMethod",
+          "FETCH_DURATION": "fetchDuration",
+          "FETCH_REQUEST_BODY": "fetchRequestBody",
+          "FETCH_RESPONSE_BODY": "fetchResponseBody",
+          "GRAPHQL_NAME": "graphqlName",
+          "GRAPHQL_METHOD": "graphqlMethod",
+          "GRAPHQL_REQUEST_BODY": "graphqlRequestBody",
+          "GRAPHQL_RESPONSE_BODY": "graphqlResponseBody"
+        }';
+BEGIN
+    RETURN jsonb_extract_path(event_filters_map, key);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION get_new_filter_key(key text)
+    RETURNS text AS
+$$
+DECLARE
+    filters_map CONSTANT JSONB := '{
           "USEROS": "userOs",
           "USERBROWSER": "userBrowser",
           "USERDEVICE": "userDevice",
@@ -168,73 +198,107 @@ $$
           "UTM_MEDIUM": "utmMedium",
           "UTM_CAMPAIGN": "utmCampaign"
         }';
+BEGIN
+    RETURN jsonb_extract_path(filters_map, key);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+DO
+$$
+    DECLARE
+        row               RECORD;
+        events_att        JSONB;
+        event_filters_att JSONB;
+        filters_att       JSONB;
+        element           JSONB;
+        s_element         JSONB;
+        new_value         TEXT;
+        new_events        JSONB[];
+        new_filters       JSONB[];
+        new_event_filters JSONB[];
+        changed           BOOLEAN;
+        planned_update    JSONB[];
     BEGIN
         planned_update := '{}'::jsonb[];
-        FOR row IN SELECT * FROM _search
+        FOR row IN SELECT * FROM searches
             LOOP
-                raise notice 'original: %',row.filter -> 'events';
-                changed := FALSE;
-                -- Transform events attribute
+                -- Transform events attributes
                 events_att := row.filter -> 'events';
                 IF events_att IS NOT NULL THEN
-                    new_array := '{}'::jsonb[];
+                    new_events := '{}'::jsonb[];
                     FOR element IN SELECT jsonb_array_elements(events_att)
                         LOOP
-                            new_value := jsonb_extract_path(events_map, element ->> 'type');
-                            if new_value IS NULL THEN
-                                raise exception 'event-type not found: %',element ->> 'type';
+                            changed := FALSE;
+                            new_value := get_new_event_key(element ->> 'type');
+                            if new_value IS NOT NULL THEN
+                                changed := TRUE;
+                                new_value := replace(new_value, '"', '');
+                                element := element || jsonb_build_object('type', new_value);
                             END IF;
-                            new_value := replace(new_value, '"', '');
-                            element := element || jsonb_build_object('type', new_value);
-                            new_array := array_append(new_array, element);
+                            -- Transform event's sub-filters attributes
+                            event_filters_att := element -> 'filters';
+                            new_event_filters := '{}'::jsonb[];
+                            IF event_filters_att IS NOT NULL AND jsonb_array_length(event_filters_att) > 0 THEN
+                                FOR s_element IN SELECT jsonb_array_elements(event_filters_att)
+                                    LOOP
+                                        new_value := get_new_event_filter_key(s_element ->> 'type');
+                                        if new_value IS NOT NULL THEN
+                                            changed := TRUE;
+                                            new_value := replace(new_value, '"', '');
+                                            s_element := s_element || jsonb_build_object('type', new_value);
+                                            new_event_filters := array_append(new_event_filters, s_element);
+                                        END IF;
+                                    END LOOP;
+                                element := element || jsonb_build_object('filters', new_event_filters);
+                            END IF;
+                            IF changed THEN
+                                new_events := array_append(new_events, element);
+                            END IF;
                         END LOOP;
-                    IF array_length(new_array, 1) > 0 THEN
-                        changed := TRUE;
-                        row.filter := row.filter || jsonb_build_object('events', new_array);
+                    IF array_length(new_events, 1) > 0 THEN
+                        row.filter := row.filter || jsonb_build_object('events', new_events);
                     END IF;
                 END IF;
-                raise notice 'new     : %',row.filter -> 'events';
-                raise notice 'original: %',row.filter -> 'filters';
-                -- Transform filters attribute
+
+                -- Transform filters attributes
                 filters_att := row.filter -> 'filters';
                 IF filters_att IS NOT NULL THEN
-                    new_array := '{}'::jsonb;
+                    new_filters := '{}'::jsonb;
                     FOR element IN SELECT jsonb_array_elements(filters_att)
                         LOOP
-                            new_value := jsonb_extract_path(filters_map, element ->> 'type');
-                            if new_value IS NULL THEN
-                                raise exception 'filter-type not found: %',element ->> 'type';
+                            new_value := get_new_filter_key(element ->> 'type');
+                            if new_value IS NOT NULL THEN
+                                new_value := replace(new_value, '"', '');
+                                element := element || jsonb_build_object('type', new_value);
+                                new_filters := array_append(new_filters, element);
                             END IF;
-                            new_value := replace(new_value, '"', '');
-                            element := element || jsonb_build_object('type', new_value);
-                            new_array := array_append(new_array, element);
                         END LOOP;
-                    IF array_length(new_array, 1) > 0 THEN
-                        changed := TRUE;
-                        row.filter := row.filter || jsonb_build_object('filters', new_array);
+                    IF array_length(new_filters, 1) > 0 THEN
+                        row.filter := row.filter || jsonb_build_object('filters', new_filters);
                     END IF;
                 END IF;
-                raise notice 'new     : %',row.filter -> 'filters';
-                raise notice 'changed: %',changed;
-                raise notice '-------------------';
-                IF changed THEN
+
+                IF array_length(new_events, 1) > 0 OR array_length(new_filters, 1) > 0 THEN
                     planned_update := array_append(planned_update,
-                                                   jsonb_build_object('id', row._search_id, 'change', row.filter));
+                                                   jsonb_build_object('id', row.search_id, 'change', row.filter));
                 END IF;
             END LOOP;
+
+        -- Update saved search
         IF array_length(planned_update, 1) > 0 THEN
             raise notice 'must update % elements',array_length(planned_update, 1);
---             raise notice 'must update %',planned_update;
-            UPDATE _search
-            SET n_filter=changes.change -> 'change'
+
+            UPDATE searches
+            SET filter=changes.change -> 'change'
             FROM (SELECT unnest(planned_update)) AS changes(change)
-            WHERE _search_id = (changes.change -> 'id')::integer;
+            WHERE search_id = (changes.change -> 'id')::integer;
             raise notice 'update done';
+        ELSE
+            raise notice 'nothing to update';
         END IF;
     END ;
 $$
 LANGUAGE plpgsql;
-
 
 COMMIT;
 
