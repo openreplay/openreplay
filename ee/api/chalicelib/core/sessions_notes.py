@@ -3,17 +3,17 @@ from urllib.parse import urljoin
 from decouple import config
 
 import schemas
-from chalicelib.core import sessions
-from chalicelib.core.collaboration_slack import Slack
 from chalicelib.core.collaboration_msteams import MSTeams
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper
+from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get_note(tenant_id, project_id, user_id, note_id, share=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS creator_name
-                                {",(SELECT name FROM users WHERE tenant_id=%(tenant_id)s AND user_id=%(share)s) AS share_name" if share else ""}
+                                {",(SELECT name FROM users WHERE tenant_id=%(tenant_id)s AND user_id=%(share)s AND deleted_at ISNULL) AS share_name" if share else ""}
                                 FROM sessions_notes INNER JOIN users USING (user_id)
                                 WHERE sessions_notes.project_id = %(project_id)s
                                   AND sessions_notes.note_id = %(note_id)s
@@ -60,8 +60,8 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
         if data.tags and len(data.tags) > 0:
             k = "tag_value"
             conditions.append(
-                sessions._multiple_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
-            extra_params = sessions._multiple_values(data.tags, value_key=k)
+                sh.multi_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
+            extra_params = sh.multi_values(data.tags, value_key=k)
         if data.shared_only:
             conditions.append("sessions_notes.is_public AND users.tenant_id = %(tenant_id)s")
         elif data.mine_only:
