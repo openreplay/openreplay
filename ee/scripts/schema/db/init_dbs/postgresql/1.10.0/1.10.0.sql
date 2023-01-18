@@ -7,13 +7,14 @@ $$ LANGUAGE sql IMMUTABLE;
 
 CREATE TABLE IF NOT EXISTS frontend_signals
 (
-    project_id integer NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-    user_id    integer NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-    timestamp  bigint  NOT NULL,
-    action     text    NOT NULL,
-    source     text    NOT NULL,
-    category   text    NOT NULL,
-    data       jsonb
+    project_id integer                                        NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
+    user_id    integer                                        NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    timestamp  bigint                                         NOT NULL,
+    action     text                                           NOT NULL,
+    source     text                                           NOT NULL,
+    category   text                                           NOT NULL,
+    data       jsonb,
+    created_at timestamp DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 CREATE INDEX IF NOT EXISTS frontend_signals_user_id_idx ON frontend_signals (user_id);
 
