@@ -19,18 +19,21 @@ export class InishtIssue {
   category: string;
   label: string;
   value: number;
+  oldValue: number;
   isIncreased?: boolean;
 
   constructor(
     category: string,
     public name: string,
     public ratio: number,
+    oldValue = 0,
     value = 0,
     change = 0,
     isNew = false
   ) {
     this.category = category;
     this.value = Math.round(value);
+    this.oldValue = Math.round(oldValue);
     // @ts-ignore
     this.label = issueCategoriesMap[category];
     this.icon = `ic-${category}`;
@@ -43,46 +46,48 @@ export class InishtIssue {
 }
 
 export default class Widget {
-    public static get ID_KEY():string { return "metricId" }
-    metricId: any = undefined
-    widgetId: any = undefined
-    category?: string = undefined
-    name: string = "Untitled Card"
-    metricType: string = "timeseries"
-    metricOf: string = "sessionCount"
-    metricValue: string = ""
-    viewType: string = "lineChart"
-    metricFormat: string = "sessionCount"
-    series: FilterSeries[] = []
-    sessions: [] = []
-    isPublic: boolean = true
-    owner: string = ""
-    lastModified: number = new Date().getTime()
-    dashboards: any[] = []
-    dashboardIds: any[] = []
-    config: any = {}
-    page: number = 1
-    limit: number = 5
-    thumbnail?: string
-    params: any = { density: 70 }
+  public static get ID_KEY(): string {
+    return 'metricId';
+  }
+  metricId: any = undefined;
+  widgetId: any = undefined;
+  category?: string = undefined;
+  name: string = 'Untitled Card';
+  metricType: string = 'timeseries';
+  metricOf: string = 'sessionCount';
+  metricValue: string = '';
+  viewType: string = 'lineChart';
+  metricFormat: string = 'sessionCount';
+  series: FilterSeries[] = [];
+  sessions: [] = [];
+  isPublic: boolean = true;
+  owner: string = '';
+  lastModified: number = new Date().getTime();
+  dashboards: any[] = [];
+  dashboardIds: any[] = [];
+  config: any = {};
+  page: number = 1;
+  limit: number = 5;
+  thumbnail?: string;
+  params: any = { density: 70 };
 
   period: Record<string, any> = Period({ rangeName: LAST_24_HOURS }); // temp value in detail view
   hasChanged: boolean = false;
 
-    position: number = 0
-    data: any = {
-        sessions: [],
-        issues: [],
-        total: 0,
-        chart: [],
-        namesMap: {},
-        avg: 0,
-        percentiles: [],
-    }
-    isLoading: boolean = false
-    isValid: boolean = false
-    dashboardId: any = undefined
-    predefinedKey: string = ''
+  position: number = 0;
+  data: any = {
+    sessions: [],
+    issues: [],
+    total: 0,
+    chart: [],
+    namesMap: {},
+    avg: 0,
+    percentiles: [],
+  };
+  isLoading: boolean = false;
+  isValid: boolean = false;
+  dashboardId: any = undefined;
+  predefinedKey: string = '';
 
   constructor() {
     makeAutoObservable(this);
@@ -140,34 +145,44 @@ export default class Widget {
     return this;
   }
 
-    toWidget(): any {
-        return {
-            config: {
-                position: this.position,
-                col: this.config.col,
-                row: this.config.row,
-            }
-        }
-    }
+  toWidget(): any {
+    return {
+      config: {
+        position: this.position,
+        col: this.config.col,
+        row: this.config.row,
+      },
+    };
+  }
 
-    toJson() {
-        return {
-            metricId: this.metricId,
-            widgetId: this.widgetId,
-            metricOf: this.metricOf,
-            metricValue: this.metricValueToArray(this.metricValue),
-            metricType: this.metricType,
-            metricFormat: this.metricFormat,
-            viewType: this.viewType,
-            name: this.name,
-            series: this.series.map((series: any) => series.toJson()),
-            thumbnail: this.thumbnail,
-            config: {
-                ...this.config,
-                col: (this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS || this.metricOf === FilterKey.SLOWEST_RESOURCES || this.metricOf === FilterKey.MISSING_RESOURCES || this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION) ? 4 : (this.metricType === WEB_VITALS ? 1 : 2)
-            },
-        }
-    }
+  toJson() {
+    return {
+      metricId: this.metricId,
+      widgetId: this.widgetId,
+      metricOf: this.metricOf,
+      metricValue: this.metricValueToArray(this.metricValue),
+      metricType: this.metricType,
+      metricFormat: this.metricFormat,
+      viewType: this.viewType,
+      name: this.name,
+      series: this.series.map((series: any) => series.toJson()),
+      thumbnail: this.thumbnail,
+      config: {
+        ...this.config,
+        col:
+          this.metricType === 'funnel' ||
+          this.metricOf === FilterKey.ERRORS ||
+          this.metricOf === FilterKey.SESSIONS ||
+          this.metricOf === FilterKey.SLOWEST_RESOURCES ||
+          this.metricOf === FilterKey.MISSING_RESOURCES ||
+          this.metricOf === FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION
+            ? 4
+            : this.metricType === WEB_VITALS
+            ? 1
+            : 2,
+      },
+    };
+  }
 
   validate() {
     this.isValid = this.name.length > 0;
@@ -189,9 +204,12 @@ export default class Widget {
     if (this.metricOf === FilterKey.ERRORS) {
       _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
     } else if (this.metricType === INSIGHTS) {
-      _data['issues'] = data.filter((i: any) => i.change > 0 || i.change < 0).map(
-        (i: any) => new InishtIssue(i.category, i.name, i.ratio, i.value, i.change, i.isNew)
-      ); 
+      _data['issues'] = data
+        .filter((i: any) => i.change > 0 || i.change < 0)
+        .map(
+          (i: any) =>
+            new InishtIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
+        );
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['chart'] = getChartFormatter(period)(data.chart);

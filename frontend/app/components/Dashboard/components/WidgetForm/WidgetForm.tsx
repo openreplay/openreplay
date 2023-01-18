@@ -112,7 +112,7 @@ function WidgetForm(props: Props) {
       await confirm({
         header: 'Confirm',
         confirmButton: 'Yes, delete',
-        confirmation: `Are you sure you want to permanently delete this metric?`,
+        confirmation: `Are you sure you want to permanently delete this card?`,
       })
     ) {
       metricStore.delete(metric).then(props.onDelete);

@@ -40,7 +40,7 @@ function Change({ change, isIncreased }: any) {
       <Icon
         name={isIncreased ? 'arrow-up-short' : 'arrow-down-short'}
         color={isIncreased ? 'red' : 'tealx'}
-        size={20}
+        size={18}
       />
       {change}%
     </div>
@@ -50,7 +50,7 @@ function Change({ change, isIncreased }: any) {
 function ErrorItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
-      <Icon name={item.icon} size={20} className="mr-2" color={item.iconColor} />
+      <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       {item.isNew ? (
         <>
           <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
@@ -73,7 +73,7 @@ function ErrorItem({ item, className, onClick }: any) {
 function NetworkItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
-      <Icon name={item.icon} size={20} className="mr-2" color={item.iconColor} />
+      <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       <div className="mx-1">Network request</div>
       <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
       <div className="mx-1">{item.change > 0 ? 'increased' : 'decreased'}</div>
@@ -85,7 +85,7 @@ function NetworkItem({ item, className, onClick }: any) {
 function ResourcesItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
-      <Icon name={item.icon} size={20} className="mr-2" color={item.iconColor} />
+      <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       <div className="mx-1">{item.change > 0 ? 'Inrease' : 'Decrease'}</div>
       <div className="mx-1">in</div>
       <div className="mx-1 bg-gray-100 px-2 rounded">{item.name}</div>
@@ -97,7 +97,7 @@ function ResourcesItem({ item, className, onClick }: any) {
 function RageItem({ item, className, onClick }: any) {
   return (
     <div className={className} onClick={onClick}>
-      <Icon name={item.icon} size={20} className="mr-2" color={item.iconColor} />
+      <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       <div className="mx-1 bg-gray-100 px-2 rounded">{item.isNew ? item.name : 'Click Rage'}</div>
       {item.isNew && <div className="mx-1">has</div>}
       {!item.isNew && <div className="mx-1">on</div>}
