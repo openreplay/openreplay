@@ -137,7 +137,7 @@ def __get_insights_chat(project_id, user_id, data: schemas_ee.CreateCardSchema):
     return sessions_insights.fetch_selected(project_id=project_id,
                                             data=schemas_ee.GetInsightsSchema(startTimestamp=data.startTimestamp,
                                                                               endTimestamp=data.endTimestamp,
-                                                                              categories=data.metric_value))
+                                                                              metricValue=data.metric_value))
 
 
 def merged_live(project_id, data: schemas_ee.CreateCardSchema, user_id=None):

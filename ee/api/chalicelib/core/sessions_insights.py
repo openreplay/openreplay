@@ -1,4 +1,5 @@
-import schemas_ee
+import schemas, schemas_ee
+from typing import List
 from chalicelib.core import metrics
 from chalicelib.utils import ch_client
 
@@ -401,27 +402,29 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
 
 def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
     output = list()
-    if data.categories is None or len(data.categories) == 0:
-        data.categories = []
+    #TODO: Handle filters of GetInsightsSchema
+    # data.series[0].filter.filters
+    if data.metricValue is None or len(data.metricValue) == 0:
+        data.metricValue = []
         for v in schemas_ee.InsightCategories:
-            data.categories.append(v)
+            data.metricValue.append(v)
     with ch_client.ClickHouseClient() as conn:
-        if schemas_ee.InsightCategories.errors in data.categories:
+        if schemas_ee.InsightCategories.errors in data.metricValue:
             output += query_most_errors_by_period(project_id=project_id,
                                                     start_time=data.startTimestamp,
                                                     end_time=data.endTimestamp,
                                                     conn=conn)
-        if schemas_ee.InsightCategories.network in data.categories:
+        if schemas_ee.InsightCategories.network in data.metricValue:
             output += query_requests_by_period(project_id=project_id,
                                                     start_time=data.startTimestamp,
                                                     end_time=data.endTimestamp,
                                                     conn=conn)
-        if schemas_ee.InsightCategories.rage in data.categories:
+        if schemas_ee.InsightCategories.rage in data.metricValue:
             output += query_click_rage_by_period(project_id=project_id,
                                                     start_time=data.startTimestamp,
                                                     end_time=data.endTimestamp,
                                                     conn=conn)
-        if schemas_ee.InsightCategories.resources in data.categories:
+        if schemas_ee.InsightCategories.resources in data.metricValue:
             output += query_cpu_memory_by_period(project_id=project_id,
                                                     start_time=data.startTimestamp,
                                                     end_time=data.endTimestamp,
