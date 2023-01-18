@@ -81,7 +81,6 @@ function WidgetSessions(props: Props) {
             const customFilter = { ...filter, ...timeRange, filters: [ ...sessionStore.userFilter.filters, clickFilter]}
             debounceClickMapSearch(customFilter)
         } else {
-            console.log(widget)
             debounceRequest(widget.metricId, {
                 ...filter,
                 series: widget.series,

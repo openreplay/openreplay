@@ -3,8 +3,25 @@ import Widget from './types/widget';
 import { metricService, errorService } from 'App/services';
 import { toast } from 'react-toastify';
 import Error from './types/error';
-import { TIMESERIES, TABLE, FUNNEL, ERRORS, RESOURCE_MONITORING, PERFORMANCE, WEB_VITALS } from 'App/constants/card';
+import {
+  TIMESERIES,
+  TABLE,
+  FUNNEL,
+  ERRORS,
+  RESOURCE_MONITORING,
+  PERFORMANCE,
+  WEB_VITALS,
+  INSIGHTS,
+} from 'App/constants/card';
+import { clickmapFilter } from 'App/types/filter/newFilter';
+import { getRE } from 'App/utils';
 
+interface MetricFilter {
+  query?: string;
+  showMine?: boolean;
+  type?: string;
+  dashboard?: [];
+}
 export default class MetricStore {
   isLoading: boolean = false;
   isSaving: boolean = false;
@@ -17,20 +34,44 @@ export default class MetricStore {
   metricsSearch: string = '';
   sort: any = { by: 'desc' };
 
+  filter: MetricFilter = { type: 'all', dashboard: [], query: '' };
+
   sessionsPage: number = 1;
   sessionsPageSize: number = 10;
-  listView?: boolean = true
-  clickMapFilter: boolean = false
+  listView?: boolean = true;
+  clickMapFilter: boolean = false;
 
-  clickMapSearch = ''
-  clickMapLabel = ''
+  clickMapSearch = '';
+  clickMapLabel = '';
 
   constructor() {
     makeAutoObservable(this);
   }
 
   get sortedWidgets() {
-    return [...this.metrics].sort((a, b) => this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified)
+    return [...this.metrics].sort((a, b) =>
+      this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified
+    );
+  }
+
+  get filteredCards() {
+    const filterRE = this.filter.query ? getRE(this.filter.query, 'i') : null;
+    const dbIds = this.filter.dashboard ? this.filter.dashboard.map((i: any) => i.value) : [];
+    return this.metrics
+      .filter(
+        (card) =>
+          (this.filter.showMine
+            ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
+            : true) &&
+          (this.filter.type === 'all' || card.metricType === this.filter.type) &&
+          (!dbIds.length ||
+            card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id))) &&
+          // @ts-ignore
+          (!filterRE || ['name', 'owner'].some((key) => filterRE.test(card[key])))
+      )
+      .sort((a, b) =>
+        this.sort.by === 'desc' ? b.lastModified - a.lastModified : a.lastModified - b.lastModified
+      );
   }
 
   // State Actions
@@ -44,35 +85,78 @@ export default class MetricStore {
   }
 
   setClickMaps(val: boolean) {
-    this.clickMapFilter = val
+    this.clickMapFilter = val;
   }
 
   changeClickMapSearch(val: string, label: string) {
-    this.clickMapSearch = val
-    this.clickMapLabel = label
+    this.clickMapSearch = val;
+    this.clickMapLabel = label;
   }
 
-  merge(object: any) {
-    Object.assign(this.instance, object);
-    this.instance.updateKey('hasChanged', true);
+  merge(obj: any, updateChangeFlag: boolean = true) {
+    const type = obj.metricType;
+
+    // handle metricType change
+    if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
+      this.changeType(type);
+    }
+
+    // handle metricValue change
+    if (obj.hasOwnProperty('metricValue') && obj.metricValue !== this.instance.metricValue) {
+      if (Array.isArray(obj.metricValue) && obj.metricValue.length > 1) {
+        obj.metricValue = obj.metricValue.filter((i: any) => i.value !== 'all');
+      }
+    }
+
+    Object.assign(this.instance, obj);
+    this.instance.updateKey('hasChanged', updateChangeFlag);
   }
 
   changeType(value: string) {
-    const obj: any = { metricType: value};
+    const obj: any = { metricType: value };
+    obj.series = this.instance.series;
+
+    obj['metricValue'] = [];
+
     if (value === TABLE || value === TIMESERIES) {
       obj['viewType'] = 'table';
     }
     if (value === TIMESERIES) {
       obj['viewType'] = 'lineChart';
     }
-    if (value === ERRORS || value === RESOURCE_MONITORING || value === PERFORMANCE || value === WEB_VITALS) {
+    if (
+      value === ERRORS ||
+      value === RESOURCE_MONITORING ||
+      value === PERFORMANCE ||
+      value === WEB_VITALS ||
+      value === CLICKMAP
+    ) {
       obj['viewType'] = 'chart';
-    } 
+    }
 
     if (value === FUNNEL) {
       obj['metricOf'] = 'sessionCount';
     }
-    this.instance.update(obj)
+
+    if (value === INSIGHTS) {
+      obj['metricOf'] = 'issueCategories';
+      obj['viewType'] = 'list';
+    }
+
+    if (value === CLICKMAP) {
+      obj.series = obj.series.slice(0, 1);
+      if (this.instance.metricType !== CLICKMAP) {
+        obj.series[0].filter.removeFilter(0);
+      }
+
+      if (obj.series[0] && obj.series[0].filter.filters.length < 1) {
+        obj.series[0].filter.addFilter({
+          ...clickmapFilter,
+          value: [''],
+        });
+      }
+    }
+    this.instance.update(obj);
   }
 
   reset(id: string) {

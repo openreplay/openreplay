@@ -149,6 +149,13 @@ export enum IssueType {
   JS_EXCEPTION = 'js_exception',
 }
 
+export enum IssueCategory {
+  RESOURCES = 'resources',
+  NETWORK = 'network',
+  RAGE = 'rage',
+  ERRORS = 'errors'
+}
+
 export enum FilterType {
   STRING = 'STRING',
   ISSUE = 'ISSUE',
@@ -249,8 +256,8 @@ export enum FilterKey {
   ERRORS_PER_DOMAINS = 'errorsPerDomains',
   ERRORS_PER_TYPE = 'errorsPerType',
   CALLS_ERRORS = 'callsErrors',
-  DOMAINS_ERRORS_4XX = 'domainsErrors4Xx',
-  DOMAINS_ERRORS_5XX = 'domainsErrors5Xx',
+  DOMAINS_ERRORS_4XX = 'domainsErrors4xx',
+  DOMAINS_ERRORS_5XX = 'domainsErrors5xx',
   IMPACTED_SESSIONS_BY_JS_ERRORS = 'impactedSessionsByJsErrors',
 
   // Performance
