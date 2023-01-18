@@ -18,3 +18,4 @@ app/components/ui/SVG.js
 *.env.json
 cypress.env.json
 cypress/snapshots/__diff_output__/
+cypress/videos/

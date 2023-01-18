@@ -17,7 +17,8 @@
     "postinstall": "yarn gen:icons && yarn gen:colors",
     "build-storybook": "build-storybook",
     "test": "jest",
-    "cy:open": "cypress open"
+    "cy:open": "cypress open",
+    "cy:test": "cypress run --browser chrome"
   },
   "dependencies": {
     "@floating-ui/react-dom-interactions": "^0.10.3",
