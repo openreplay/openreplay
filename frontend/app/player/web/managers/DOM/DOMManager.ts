@@ -1,8 +1,7 @@
 import logger from 'App/logger';
 
 import type Screen from '../../Screen/Screen';
-import type MessageManager from '../../MessageManager';
-import type { Message, SetNodeScroll, CreateElementNode } from '../../messages';
+import type { Message, SetNodeScroll } from '../../messages';
 
 import { MType } from '../../messages';
 import ListWalker from '../../../common/ListWalker';

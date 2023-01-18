@@ -1,6 +1,3 @@
-import Record from 'Types/Record';
-import Target from 'Types/target';
-
 const CONSOLE = 'CONSOLE';
 const CLICK = 'CLICK';
 const INPUT = 'INPUT';
@@ -87,15 +84,18 @@ class Console extends Event {
 }
 
 class Click extends Event {
-  readonly type = CLICK;
+  readonly type: typeof CLICKRAGE | typeof CLICK = CLICK;
   readonly name = 'Click'
   targetContent = '';
   count: number
 
-  constructor(evt: ClickEvent) {
+  constructor(evt: ClickEvent, isClickRage: boolean) {
     super(evt);
     this.targetContent = evt.targetContent
     this.count = evt.count
+    if (isClickRage) {
+      this.type = CLICKRAGE
+    }
   }
 }
 
@@ -151,7 +151,7 @@ export default function(event: EventData) {
     return new Location(event as LocationEvent)
   }
   if (event.type && event.type === CLICKRAGE) {
-    return new Click(event as ClickEvent)
+    return new Click(event as ClickEvent, true)
   }
   // not used right now?
   // if (event.type === CUSTOM || !event.type) {

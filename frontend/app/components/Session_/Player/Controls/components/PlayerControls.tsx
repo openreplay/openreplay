@@ -1,13 +1,12 @@
 import React from 'react';
 import { Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
-import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { ReduxTime } from '../Time';
 // @ts-ignore
 import styles from '../controls.module.css';
+import { SkipButton } from 'App/player-ui'
 
 interface Props {
-  live: boolean;
   skip: boolean;
   speed: number;
   disabled: boolean;
@@ -19,18 +18,10 @@ interface Props {
   forthTenSeconds: () => void;
   toggleSpeed: () => void;
   toggleSkip: () => void;
-  controlIcon: (
-    icon: string,
-    size: number,
-    action: () => void,
-    isBackwards: boolean,
-    additionalClasses: string
-  ) => JSX.Element;
 }
 
 function PlayerControls(props: Props) {
   const {
-    live,
     skip,
     speed,
     disabled,
@@ -42,13 +33,12 @@ function PlayerControls(props: Props) {
     skipIntervals,
     setSkipInterval,
     currentInterval,
-    controlIcon,
   } = props;
   const [showTooltip, setShowTooltip] = React.useState(false);
-  const speedRef = React.useRef(null);
-  const arrowBackRef = React.useRef(null);
-  const arrowForwardRef = React.useRef(null);
-  const skipRef = React.useRef<HTMLDivElement>();
+  const speedRef = React.useRef<HTMLButtonElement>(null);
+  const arrowBackRef = React.useRef<HTMLButtonElement>(null);
+  const arrowForwardRef = React.useRef<HTMLButtonElement>(null);
+  const skipRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
@@ -56,16 +46,16 @@ function PlayerControls(props: Props) {
         return;
       }
       if (e.key === 'ArrowRight') {
-        arrowForwardRef.current.focus();
+        arrowForwardRef.current?.focus();
       }
       if (e.key === 'ArrowLeft') {
-        arrowBackRef.current.focus();
+        arrowBackRef.current?.focus();
       }
       if (e.key === 'ArrowDown') {
-        speedRef.current.focus();
+        speedRef.current?.focus();
       }
       if (e.key === 'ArrowUp') {
-        speedRef.current.focus();
+        speedRef.current?.focus();
       }
     };
     document.addEventListener('keydown', handleKeyboard);
@@ -75,22 +65,20 @@ function PlayerControls(props: Props) {
   const toggleTooltip = () => {
     setShowTooltip(!showTooltip);
   };
-  const handleClickOutside = () => {
-    setShowTooltip(false);
-  };
+
   return (
     <div className="flex items-center">
       {playButton}
       <div className="mx-1" />
-      {!live && (
-        <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
-          {/* @ts-ignore */}
-          <ReduxTime isCustom name="time" format="mm:ss" />
-          <span className="px-1">/</span>
-          {/* @ts-ignore */}
-          <ReduxTime isCustom name="endTime" format="mm:ss" />
-        </div>
-      )}
+
+      <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
+        {/* @ts-ignore */}
+        <ReduxTime isCustom name="time" format="mm:ss" />
+        <span className="px-1">/</span>
+        {/* @ts-ignore */}
+        <ReduxTime isCustom name="endTime" format="mm:ss" />
+      </div>
+
 
       <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
         {/* @ts-ignore */}
@@ -103,20 +91,17 @@ function PlayerControls(props: Props) {
             ref={arrowBackRef}
             className="h-full  bg-transparent"
           >
-            {controlIcon(
-              'skip-forward-fill',
-              18,
-              backTenSeconds,
-              true,
-              'hover:bg-active-blue-border color-main h-full flex items-center'
-            )}
+            <SkipButton
+              size={18}
+              onClick={backTenSeconds}
+              isBackwards={true}
+              customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
+            />
           </button>
         </Tooltip>
 
         <div className="p-1 border-l border-r bg-active-blue-border border-active-blue-border flex items-center">
           <Popover
-            // open={showTooltip}
-            // interactive
             // @ts-ignore
             theme="nopadding"
             animation="none"
@@ -165,18 +150,16 @@ function PlayerControls(props: Props) {
             ref={arrowForwardRef}
             className="h-full bg-transparent"
           >
-            {controlIcon(
-              'skip-forward-fill',
-              18,
-              forthTenSeconds,
-              false,
-              'hover:bg-active-blue-border color-main h-full flex items-center'
-            )}
+            <SkipButton
+              size={18}
+              onClick={forthTenSeconds}
+              customClasses={'hover:bg-active-blue-border color-main h-full flex items-center'}
+            />
           </button>
         </Tooltip>
       </div>
 
-      {!live && (
+
         <div className="flex items-center">
           <div className="mx-2" />
           {/* @ts-ignore */}
@@ -203,7 +186,7 @@ function PlayerControls(props: Props) {
             {'Skip Inactivity'}
           </button>
         </div>
-      )}
+
     </div>
   );
 }

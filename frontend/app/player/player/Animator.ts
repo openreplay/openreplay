@@ -1,5 +1,4 @@
 import type { Store, Moveable, Interval } from '../common/types';
-import * as localStorage from './localStorage';
 
 const fps = 60
 const performance: { now: () => number } = window.performance || { now: Date.now.bind(Date) }
@@ -130,9 +129,15 @@ export default class Animator {
   }
 
   play() {
-    cancelAnimationFrame(this.animationFrameRequestId)
-    this.store.update({ playing: true })
-    this.startAnimation()
+    if (!this.store.get().ready) {
+      cancelAnimationFrame(this.animationFrameRequestId)
+      this.store.update({ playing: true })
+      this.startAnimation()
+    } else {
+      setTimeout(() => {
+        this.play()
+      }, 250)
+    }
   }
 
   pause() {
@@ -140,7 +145,7 @@ export default class Animator {
     this.store.update({ playing: false })
   }
 
-  togglePlay() {
+  togglePlay = () => {
     const { playing, completed } = this.store.get()
     if (playing) {
       this.pause()

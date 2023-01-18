@@ -2,7 +2,6 @@ import React from 'react';
 import cn from 'classnames';
 import { Icon, Tooltip } from 'UI';
 import stl from './integrationItem.module.css';
-import { connect } from 'react-redux';
 
 interface Props {
     integration: any;

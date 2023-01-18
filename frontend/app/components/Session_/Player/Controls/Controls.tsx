@@ -1,31 +1,28 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { STORAGE_TYPES, selectStorageType } from 'Player';
-import LiveTag from 'Shared/LiveTag';
-import AssistSessionsTabs from './AssistSessionsTabs';
+import { selectStorageType, STORAGE_TYPES } from 'Player';
+import { PlayButton, PlayingState, FullScreenButton } from 'App/player-ui'
 
 import { Icon, Tooltip } from 'UI';
 import {
-  fullscreenOn,
-  fullscreenOff,
-  toggleBottomBlock,
-  changeSkipInterval,
-  OVERVIEW,
   CONSOLE,
-  NETWORK,
-  STACKEVENTS,
-  STORAGE,
-  PROFILER,
-  PERFORMANCE,
+  fullscreenOff,
+  fullscreenOn,
   GRAPHQL,
   INSPECTOR,
+  NETWORK,
+  OVERVIEW,
+  PERFORMANCE,
+  PROFILER,
+  STACKEVENTS,
+  STORAGE,
+  toggleBottomBlock,
 } from 'Duck/components/player';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { fetchSessions } from 'Duck/liveSearch';
 
-import { AssistDuration } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 import PlayerControls from './components/PlayerControls';
@@ -63,47 +60,32 @@ function getStorageName(type: any) {
 function Controls(props: any) {
   const { player, store } = React.useContext(PlayerContext);
 
-  const { jumpToLive, toggleInspectorMode } = player;
   const {
-    live,
-    livePlay,
     playing,
     completed,
     skip,
-    // skipToIssue, UPDATE
     speed,
     cssLoading,
     messagesLoading,
     inspectorMode,
     markedTargets,
-    // messagesLoading: fullscreenDisabled, UPDATE
-    // stackList,
     exceptionsList,
     profilesList,
     graphqlList,
-    // fetchList,
-    liveTimeTravel,
     logMarkedCountNow: logRedCount,
     resourceMarkedCountNow: resourceRedCount,
     stackMarkedCountNow: stackRedCount,
   } = store.get();
-  // const storageCount = selectStorageListNow(store.get()).length UPDATE
   const {
     bottomBlock,
     toggleBottomBlock,
     fullscreen,
-    closedLive,
     changeSkipInterval,
     skipInterval,
     disabledRedux,
     showStorageRedux,
-    session,
-    // showStackRedux,
-    fetchSessions: fetchAssistSessions,
-    totalAssistSessions,
   } = props;
 
-  const isAssist = window.location.pathname.includes('/assist/');
   const storageType = selectStorageType(store.get());
   const disabled = disabledRedux || cssLoading || messagesLoading || inspectorMode || markedTargets;
   const profilesCount = profilesList.length;
@@ -112,10 +94,6 @@ function Controls(props: any) {
   const showProfiler = profilesCount > 0;
   const showExceptions = exceptionsList.length > 0;
   const showStorage = storageType !== STORAGE_TYPES.NONE || showStorageRedux;
-  // const fetchCount = fetchList.length;
-  // const stackCount = stackList.length;
-  // const showStack =  stackCount > 0 || showStackRedux UPDATE
-  // const showFetch = fetchCount > 0 UPDATE
 
   const onKeyDown = (e: any) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -145,9 +123,6 @@ function Controls(props: any) {
 
   React.useEffect(() => {
     document.addEventListener('keydown', onKeyDown.bind(this));
-    if (isAssist && totalAssistSessions === 0) {
-      fetchAssistSessions();
-    }
     return () => {
       document.removeEventListener('keydown', onKeyDown.bind(this));
     };
@@ -164,52 +139,12 @@ function Controls(props: any) {
   };
 
   const renderPlayBtn = () => {
-    let label;
-    let icon;
-    if (completed) {
-      icon = 'arrow-clockwise' as const;
-      label = 'Replay this session';
-    } else if (playing) {
-      icon = 'pause-fill' as const;
-      label = 'Pause';
-    } else {
-      icon = 'play-fill-new' as const;
-      label = 'Pause';
-      label = 'Play';
-    }
+    const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
 
     return (
-      <Tooltip title={label} className="mr-4">
-        <div
-          onClick={() => player.togglePlay()}
-          className="hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
-        >
-          <Icon name={icon} size="36" color="inherit" />
-        </div>
-      </Tooltip>
+      <PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />
     );
   };
-
-  const controlIcon = (
-    icon: string,
-    size: number,
-    action: (args: any) => any,
-    isBackwards: boolean,
-    additionalClasses: string
-  ) => (
-    <div
-      onClick={action}
-      className={cn('py-1 px-2 hover-main cursor-pointer bg-gray-lightest', additionalClasses)}
-      style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
-    >
-      <Icon
-        // @ts-ignore
-        name={icon}
-        size={size}
-        color="inherit"
-      />
-    </div>
-  );
 
   const toggleBottomTools = (blockName: number) => {
     if (blockName === INSPECTOR) {
@@ -223,56 +158,29 @@ function Controls(props: any) {
 
   return (
     <div className={styles.controls}>
-      <Timeline
-        live={live}
-        jump={(t: number) => player.jump(t)}
-        liveTimeTravel={liveTimeTravel}
-        pause={() => player.pause()}
-        togglePlay={() => player.togglePlay()}
-      />
+      <Timeline />
       {!fullscreen && (
-        <div className={cn(styles.buttons, live ? '!px-5 !pt-0' : '!px-2')} data-is-live={live}>
+        <div className={cn(styles.buttons, '!px-2')}>
           <div className="flex items-center">
-            {!live && (
-              <>
-                <PlayerControls
-                  live={live}
-                  skip={skip}
-                  speed={speed}
-                  disabled={disabled}
-                  backTenSeconds={backTenSeconds}
-                  forthTenSeconds={forthTenSeconds}
-                  toggleSpeed={() => player.toggleSpeed()}
-                  toggleSkip={() => player.toggleSkip()}
-                  playButton={renderPlayBtn()}
-                  controlIcon={controlIcon}
-                  skipIntervals={SKIP_INTERVALS}
-                  setSkipInterval={changeSkipInterval}
-                  currentInterval={skipInterval}
-                />
-                <div className={cn('mx-2')} />
-                <XRayButton
-                  isActive={bottomBlock === OVERVIEW && !inspectorMode}
-                  onClick={() => toggleBottomTools(OVERVIEW)}
-                />
-              </>
-            )}
-
-            {live && !closedLive && (
-              <div className={styles.buttonsLeft}>
-                <LiveTag isLive={livePlay} onClick={() => (livePlay ? null : jumpToLive())} />
-                <div className="font-semibold px-2">
-                  <AssistDuration />
-                </div>
-              </div>
-            )}
+            <PlayerControls
+              skip={skip}
+              speed={speed}
+              disabled={disabled}
+              backTenSeconds={backTenSeconds}
+              forthTenSeconds={forthTenSeconds}
+              toggleSpeed={() => player.toggleSpeed()}
+              toggleSkip={() => player.toggleSkip()}
+              playButton={renderPlayBtn()}
+              skipIntervals={SKIP_INTERVALS}
+              setSkipInterval={changeSkipInterval}
+              currentInterval={skipInterval}
+            />
+            <div className={cn('mx-2')} />
+            <XRayButton
+              isActive={bottomBlock === OVERVIEW && !inspectorMode}
+              onClick={() => toggleBottomTools(OVERVIEW)}
+            />
           </div>
-
-          {isAssist && totalAssistSessions > 1 ? (
-            <div>
-              <AssistSessionsTabs session={session} />
-            </div>
-          ) : null}
 
           <div className="flex items-center h-full">
             <ControlButton
@@ -285,30 +193,29 @@ function Controls(props: any) {
               hasErrors={logRedCount > 0 || showExceptions}
               containerClassName="mx-2"
             />
-            {!live && (
-              <ControlButton
-                disabled={disabled && !inspectorMode}
-                onClick={() => toggleBottomTools(NETWORK)}
-                active={bottomBlock === NETWORK && !inspectorMode}
-                label="NETWORK"
-                hasErrors={resourceRedCount > 0}
-                noIcon
-                labelClassName="!text-base font-semibold"
-                containerClassName="mx-2"
-              />
-            )}
-            {!live && (
-              <ControlButton
-                disabled={disabled && !inspectorMode}
-                onClick={() => toggleBottomTools(PERFORMANCE)}
-                active={bottomBlock === PERFORMANCE && !inspectorMode}
-                label="PERFORMANCE"
-                noIcon
-                labelClassName="!text-base font-semibold"
-                containerClassName="mx-2"
-              />
-            )}
-            {!live && showGraphql && (
+
+            <ControlButton
+              disabled={disabled && !inspectorMode}
+              onClick={() => toggleBottomTools(NETWORK)}
+              active={bottomBlock === NETWORK && !inspectorMode}
+              label="NETWORK"
+              hasErrors={resourceRedCount > 0}
+              noIcon
+              labelClassName="!text-base font-semibold"
+              containerClassName="mx-2"
+            />
+
+            <ControlButton
+              disabled={disabled && !inspectorMode}
+              onClick={() => toggleBottomTools(PERFORMANCE)}
+              active={bottomBlock === PERFORMANCE && !inspectorMode}
+              label="PERFORMANCE"
+              noIcon
+              labelClassName="!text-base font-semibold"
+              containerClassName="mx-2"
+            />
+
+            {showGraphql && (
               <ControlButton
                 disabled={disabled && !inspectorMode}
                 onClick={() => toggleBottomTools(GRAPHQL)}
@@ -319,7 +226,8 @@ function Controls(props: any) {
                 containerClassName="mx-2"
               />
             )}
-            {!live && showStorage && (
+
+            {showStorage && (
               <ControlButton
                 disabled={disabled && !inspectorMode}
                 onClick={() => toggleBottomTools(STORAGE)}
@@ -330,19 +238,17 @@ function Controls(props: any) {
                 containerClassName="mx-2"
               />
             )}
-            {!live && (
-              <ControlButton
-                disabled={disabled && !inspectorMode}
-                onClick={() => toggleBottomTools(STACKEVENTS)}
-                active={bottomBlock === STACKEVENTS && !inspectorMode}
-                label="EVENTS"
-                noIcon
-                labelClassName="!text-base font-semibold"
-                containerClassName="mx-2"
-                hasErrors={stackRedCount > 0}
-              />
-            )}
-            {!live && showProfiler && (
+            <ControlButton
+              disabled={disabled && !inspectorMode}
+              onClick={() => toggleBottomTools(STACKEVENTS)}
+              active={bottomBlock === STACKEVENTS && !inspectorMode}
+              label="EVENTS"
+              noIcon
+              labelClassName="!text-base font-semibold"
+              containerClassName="mx-2"
+              hasErrors={stackRedCount > 0}
+            />
+            {showProfiler && (
               <ControlButton
                 disabled={disabled && !inspectorMode}
                 onClick={() => toggleBottomTools(PROFILER)}
@@ -353,17 +259,14 @@ function Controls(props: any) {
                 containerClassName="mx-2"
               />
             )}
-            {!live && (
-              <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
-                {controlIcon(
-                  'arrows-angle-extend',
-                  16,
-                  props.fullscreenOn,
-                  false,
-                  'rounded hover:bg-gray-light-shade color-gray-medium'
-                )}
-              </Tooltip>
-            )}
+
+            <Tooltip title="Fullscreen" delay={0} placement="top-start" className="mx-4">
+              <FullScreenButton
+                size={16}
+                onClick={props.fullscreenOn}
+                customClasses={'rounded hover:bg-gray-light-shade color-gray-medium'}
+              />
+            </Tooltip>
           </div>
         </div>
       )}
@@ -385,8 +288,6 @@ export default connect(
       showStackRedux: !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
       session: state.getIn(['sessions', 'current']),
       totalAssistSessions: state.getIn(['liveSearch', 'total']),
-      closedLive:
-        !!state.getIn(['sessions', 'errors']) || !state.getIn(['sessions', 'current']).live,
       skipInterval: state.getIn(['components', 'player', 'skipInterval']),
     };
   },
@@ -394,7 +295,6 @@ export default connect(
     fullscreenOn,
     fullscreenOff,
     toggleBottomBlock,
-    changeSkipInterval,
     fetchSessions,
   }
 )(ControlPlayer);

@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import SessionItem from 'Shared/SessionItem'
 import { fetchSessions, fetchSessionsFiltered } from 'Duck/funnels'
 import { setFunnelPage } from 'Duck/sessions'
-import { LoadMoreButton, NoContent, Loader } from 'UI'
+import { LoadMoreButton, NoContent } from 'UI'
 import FunnelSessionsHeader from '../FunnelSessionsHeader'
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 

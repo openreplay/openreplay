@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from 'UI';
-import styles from './client.module.css';
 
 const TabItem = ({ active = false, onClick, icon, label }) => {
   return (

@@ -11,7 +11,6 @@ import { useModal } from 'App/components/Modal';
 import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
-import { useStore } from 'App/mstore';
 import AutoplayToggle from 'Shared/AutoplayToggle';
 
 function SubHeader(props) {
@@ -35,7 +34,6 @@ function SubHeader(props) {
 
   const [isCopied, setCopied] = React.useState(false);
   const { showModal, hideModal } = useModal();
-  const isAssist = window.location.pathname.includes('/assist/');
 
   const location =
     currentLocation && currentLocation.length > 60
@@ -51,7 +49,7 @@ function SubHeader(props) {
       eventsList: eventsList,
       endTime: endTime,
     }
-    showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true });
+    showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true, width: 620 });
   };
 
   return (
@@ -72,7 +70,6 @@ function SubHeader(props) {
           </Tooltip>
         </div>
       )}
-      {!isAssist ? (
         <div
           className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
@@ -111,7 +108,6 @@ function SubHeader(props) {
             <QueueControls />
           </div>
         </div>
-      ) : null}
     </div>
   );
 }

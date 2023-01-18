@@ -1,12 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { OPENREPLAY } from 'Types/session/stackEvent';
 import { Icon } from 'UI';
 import withToggle from 'HOCs/withToggle';
-import Sentry from './Sentry';
-import JsonViewer from './JsonViewer';
-import stl from './userEvent.module.css';
-import { Duration } from 'luxon';
 import JumpButton from 'Shared/DevTools/JumpButton';
 
 // const modalSources = [ SENTRY, DATADOG ];

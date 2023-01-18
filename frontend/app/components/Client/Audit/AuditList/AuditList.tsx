@@ -54,7 +54,7 @@ function AuditList(props: Props) {
                     <AuditListItem
                         key={index}
                         audit={item}
-                        onShowDetails={() => showModal(<AuditDetailModal audit={item} />, { right: true })}
+                        onShowDetails={() => showModal(<AuditDetailModal audit={item} />, { right: true, width: 500 })}
                     />
                 ))}
                 

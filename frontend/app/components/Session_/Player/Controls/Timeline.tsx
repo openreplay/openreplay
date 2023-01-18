@@ -40,8 +40,7 @@ function Timeline(props: IProps) {
     skipToIssue,
     ready,
     endTime,
-    live,
-    liveTimeTravel,
+    devtoolsLoading,
   } = store.get()
   const { issues } = props;
   const notes = notesStore.sessionNotes
@@ -64,16 +63,13 @@ function Timeline(props: IProps) {
   const debouncedTooltipChange = useMemo(() => debounce(props.setTimelineHoverTime, 50), [])
 
   const onDragEnd = () => {
-    if (live && !liveTimeTravel) return;
-
     if (wasPlaying) {
       player.togglePlay();
     }
   };
 
   const onDrag: OnDragCallback = (offset) => {
-    if ((live && !liveTimeTravel) || !progressRef.current) return;
-
+    // @ts-ignore react mismatch
     const p = (offset.x) / progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
     debouncedJump(time);
@@ -84,39 +80,20 @@ function Timeline(props: IProps) {
     }
   };
 
-  const getLiveTime = (e: React.MouseEvent) => {
-    const duration = new Date().getTime() - props.startedAt;
-    const p = e.nativeEvent.offsetX / e.target.offsetWidth;
-    const time = Math.max(Math.round(p * duration), 0);
-
-    return [time, duration];
-  };
-
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target !== progressRef.current && e.target !== timelineRef.current) {
       return props.tooltipVisible && hideTimeTooltip();
     }
 
-    let timeLineTooltip;
-
-    if (live) {
-      const [time, duration] = getLiveTime(e);
-      timeLineTooltip = {
-        time: Duration.fromMillis(duration - time).toFormat(`-mm:ss`),
-        offset: e.nativeEvent.offsetX,
-        isVisible: true,
-      };
-    } else {
-      const time = getTime(e);
-      const tz = settingsStore.sessionSettings.timezone.value
-      const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
-      timeLineTooltip = {
-        time: Duration.fromMillis(time).toFormat(`mm:ss`),
-        timeStr,
-        offset: e.nativeEvent.offsetX,
-        isVisible: true,
-      };
-    }
+    const time = getTime(e);
+    const tz = settingsStore.sessionSettings.timezone.value
+    const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
+    const timeLineTooltip = {
+      time: Duration.fromMillis(time).toFormat(`mm:ss`),
+      timeStr,
+      offset: e.nativeEvent.offsetX,
+      isVisible: true,
+    };
 
     debouncedTooltipChange(timeLineTooltip);
   }
@@ -132,29 +109,16 @@ function Timeline(props: IProps) {
     hideTimeTooltip();
   };
 
-  const loadAndSeek = async (e: React.MouseEvent<HTMLDivElement>) => {
-    e.persist();
-    await player.toggleTimetravel();
-
-    setTimeout(() => {
-      seekProgress(e);
-    });
-  };
-
   const jumpToTime = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (live && !liveTimeTravel) {
-      loadAndSeek(e);
-    } else {
-      seekProgress(e);
-    }
+    seekProgress(e);
   };
 
   const getTime = (e: React.MouseEvent<HTMLDivElement>, customEndTime?: number) => {
+    // @ts-ignore react mismatch
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const targetTime = customEndTime || endTime;
-    const time = Math.max(Math.round(p * targetTime), 0);
 
-    return time;
+    return Math.max(Math.round(p * targetTime), 0);
   };
 
   return (
@@ -176,21 +140,19 @@ function Timeline(props: IProps) {
           onMouseEnter={showTimeTooltip}
           onMouseLeave={hideTimeTooltip}
         >
-          <TooltipContainer live={live} />
-          {/* custo color is live */}
+          <TooltipContainer />
           <DraggableCircle
             left={time * scale}
             onDrop={onDragEnd}
-            live={live}
           />
           <CustomDragLayer
             onDrag={onDrag}
             minX={0}
             maxX={progressRef.current ? progressRef.current.offsetWidth : 0}
           />
-          <TimeTracker scale={scale} live={live} left={time * scale} />
+          <TimeTracker scale={scale} left={time * scale} />
 
-          {!live && skip ?
+          {skip ?
             skipIntervals.map((interval) => (
               <div
                 key={interval.start}
@@ -201,7 +163,9 @@ function Timeline(props: IProps) {
                 }}
               />
             )) : null}
-          <div className={stl.timeline} ref={timelineRef} />
+          <div className={stl.timeline} ref={timelineRef}>
+            {devtoolsLoading || !ready ? <div className={stl.stripes} /> : null}
+          </div>
 
           {events.map((e) => (
             <div

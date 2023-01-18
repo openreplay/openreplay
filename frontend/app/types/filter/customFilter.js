@@ -1,6 +1,5 @@
 import Record from 'Types/Record';
 import Target from 'Types/target';
-import { camelCased } from 'App/utils';
 import { getEventIcon } from 'Types/filter';
 
 const CLICK = 'CLICK';

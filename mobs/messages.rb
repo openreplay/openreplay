@@ -1,27 +1,4 @@
-# Special one for Batch Metadata. Message id could define the version
-
-# Deprecated since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :replayer => false, :tracker => false do
-  uint 'PageNo'
-  uint 'FirstIndex'
-  int 'Timestamp'
-end
-
-# since tracker 3.6.0   TODO: for webworker only
-message 81, 'BatchMetadata', :replayer => false do
-  uint 'Version'
-  uint 'PageNo'
-  uint 'FirstIndex'
-  int 'Timestamp'
-  string 'Location'
-end
-
-# since tracker 3.6.0
-message 82, 'PartitionedMessage', :replayer => false do
-  uint 'PartNo'
-  uint 'PartTotal'
-end
-
+# OpenReplay messages definition
 
 message 0, 'Timestamp' do
   uint 'Timestamp'
@@ -408,7 +385,7 @@ message 61, 'SetCSSDataURLBased' do
   string 'Data'
   string 'BaseURL'
 end
-message 62, 'IssueEvent', :replayer => false, :tracker => false do
+message 62, 'IssueEventDeprecated', :replayer => false, :tracker => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Type'
@@ -493,15 +470,48 @@ message 78, 'JSException', :replayer => false do
   string 'Metadata'
 end
 
+# 80 -- 90 reserved
+
+# Special one for Batch Metadata. Message id could define the version
+
+# Deprecated since tracker 3.6.0 in favor of BatchMetadata
+message 80, 'BatchMeta', :replayer => false, :tracker => false do
+  uint 'PageNo'
+  uint 'FirstIndex'
+  int 'Timestamp'
+end
+
+# since tracker 3.6.0   TODO: for webworker only
+message 81, 'BatchMetadata', :replayer => false do
+  uint 'Version'
+  uint 'PageNo'
+  uint 'FirstIndex'
+  int 'Timestamp'
+  string 'Location'
+end
+
+# since tracker 3.6.0
+message 82, 'PartitionedMessage', :replayer => false do
+  uint 'PartNo'
+  uint 'PartTotal'
+end
+
+message 125, 'IssueEvent', :replayer => false, :tracker => false do
+  uint 'MessageID'
+  uint 'Timestamp'
+  string 'Type'
+  string 'ContextString'
+  string 'Context'
+  string 'Payload'
+  string 'URL'
+end
 
 message 126, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'EncryptionKey'
 end
+
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
 end
-
-
-# 80 -- 90 reserved

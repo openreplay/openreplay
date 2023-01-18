@@ -1,7 +1,7 @@
 import { Log, LogLevel } from './types'
 
 import type { Store } from 'App/player'
-import Player, { State as PlayerState } from '../player/Player'
+import Player from '../player/Player'
 
 import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'
@@ -26,19 +26,18 @@ export default class WebPlayer extends Player {
   private targetMarker: TargetMarker
 
   constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
-    console.log(session.events, session.stackEvents, session.resources, session.errors)
     let initialLists = live ? {} : {
-      event: session.events,
+      event: session.events || [],
       stack: session.stackEvents || [],
       resource: session.resources || [], // MBTODO: put ResourceTiming in file
-      exceptions: session.errors.map(({ time, errorId, name }: any) =>
+      exceptions: session.errors?.map(({ time, errorId, name }: any) =>
         Log({
           level: LogLevel.ERROR,
           value: name,
           time,
           errorId,
         })
-      ),
+      ) || [],
     }
 
     const screen = new Screen(session.isMobile)

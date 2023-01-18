@@ -148,7 +148,7 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- if eq .Values.pvc.name "hostPath" }}
+      {{- if eq (tpl .Values.pvc.name . ) "hostPath" }}
       volumes:
       - name: datadir
         hostPath:
@@ -162,7 +162,7 @@ spec:
       volumes:
       - name: datadir
         persistentVolumeClaim:
-          claimName: {{ .Values.pvc.name }}
+          claimName: "{{ tpl .Values.pvc.name . }}"
       {{- with .Values.persistence.volumes  }}
         {{- toYaml . | nindent 8 }}
       {{- end }}

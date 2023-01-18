@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { TextEllipsis, Input } from 'UI';
 import { PlayerContext } from 'App/components/Session/playerContext';
@@ -23,7 +23,7 @@ function ProfilerPanel() {
   const filtered = useRegExListFilterMemo(profiles, pr => pr.name, filter)
 
   const onRowClick = (profile: any) => {
-    showModal(<ProfilerModal profile={profile} />, { right: true });
+    showModal(<ProfilerModal profile={profile} />, { right: true, width: 500 });
   };
   return (
     <BottomBlock>

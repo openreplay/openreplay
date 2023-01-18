@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine3.15 AS prepare
+FROM golang:1.18-alpine3.17 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 
@@ -27,7 +27,7 @@ RUN adduser -u 1001 openreplay -D
 
 ENV TZ=UTC \
     GIT_SHA=$GIT_SHA \
-    FS_ULIMIT=1000 \
+    FS_ULIMIT=10000 \
     FS_DIR=/mnt/efs \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
@@ -76,8 +76,8 @@ ENV TZ=UTC \
     USE_FAILOVER=false \
     GROUP_STORAGE_FAILOVER=failover \
     TOPIC_STORAGE_FAILOVER=storage-failover \
-    PROFILER_ENABLED=false
-
+    PROFILER_ENABLED=false \
+    COMPRESSION_TYPE=zstd
 
 
 ARG SERVICE_NAME

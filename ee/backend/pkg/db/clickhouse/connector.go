@@ -87,7 +87,7 @@ var batches = map[string]string{
 	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"issues":        "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 }
 
@@ -132,6 +132,7 @@ func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueE
 		issueID,
 		msg.Type,
 		"ISSUE",
+		msg.URL,
 	); err != nil {
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)

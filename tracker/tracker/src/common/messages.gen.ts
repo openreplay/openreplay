@@ -2,8 +2,6 @@
 /* eslint-disable */
 
 export declare const enum Type {
-  BatchMetadata = 81,
-  PartitionedMessage = 82,
   Timestamp = 0,
   SetPageLocation = 4,
   SetViewportSize = 5,
@@ -62,23 +60,10 @@ export declare const enum Type {
   AdoptedSSRemoveOwner = 77,
   Zustand = 79,
   JSException = 78,
+  BatchMetadata = 81,
+  PartitionedMessage = 82,
 }
 
-
-export type BatchMetadata = [
-  /*type:*/ Type.BatchMetadata,
-  /*version:*/ number,
-  /*pageNo:*/ number,
-  /*firstIndex:*/ number,
-  /*timestamp:*/ number,
-  /*location:*/ string,
-]
-
-export type PartitionedMessage = [
-  /*type:*/ Type.PartitionedMessage,
-  /*partNo:*/ number,
-  /*partTotal:*/ number,
-]
 
 export type Timestamp = [
   /*type:*/ Type.Timestamp,
@@ -483,6 +468,21 @@ export type JSException = [
   /*metadata:*/ string,
 ]
 
+export type BatchMetadata = [
+  /*type:*/ Type.BatchMetadata,
+  /*version:*/ number,
+  /*pageNo:*/ number,
+  /*firstIndex:*/ number,
+  /*timestamp:*/ number,
+  /*location:*/ string,
+]
 
-type Message =  BatchMetadata | PartitionedMessage | Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | JSExceptionDeprecated | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | Zustand | JSException
+export type PartitionedMessage = [
+  /*type:*/ Type.PartitionedMessage,
+  /*partNo:*/ number,
+  /*partTotal:*/ number,
+]
+
+
+type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | JSExceptionDeprecated | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | Zustand | JSException | BatchMetadata | PartitionedMessage
 export default Message

@@ -34,7 +34,7 @@ export default class TopObserver extends Observer {
     // IFrames
     this.app.nodes.attachNodeCallback((node) => {
       if (
-        hasTag(node, 'IFRAME') &&
+        hasTag(node, 'iframe') &&
         ((this.options.captureIFrames && !hasOpenreplayAttribute(node, 'obscured')) ||
           hasOpenreplayAttribute(node, 'capture'))
       ) {

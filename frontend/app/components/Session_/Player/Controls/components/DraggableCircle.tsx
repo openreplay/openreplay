@@ -1,8 +1,8 @@
-import React, { memo, FC, useEffect, useRef, CSSProperties } from 'react';
+import React, { memo, FC, useEffect, CSSProperties } from 'react';
 import type { DragSourceMonitor } from 'react-dnd'
 import { useDrag } from 'react-dnd'
 import { getEmptyImage } from 'react-dnd-html5-backend'
-import Circle from './Circle'
+import { ProgressCircle } from 'App/player-ui'
 
 function getStyles(
     left: number,
@@ -32,7 +32,7 @@ const ItemTypes = {
 
 interface Props {
     left: number
-    live: boolean
+    live?: boolean
     onDrop?: () => void
 }
 
@@ -41,7 +41,7 @@ const DraggableCircle: FC<Props> = memo(function DraggableCircle({
     live,
     onDrop,
 }) {
-    const [{ isDragging, item }, dragRef, preview] = useDrag(
+    const [{ isDragging }, dragRef, preview] = useDrag(
         () => ({
             type: ItemTypes.BOX,
             item: { left },
@@ -64,7 +64,7 @@ const DraggableCircle: FC<Props> = memo(function DraggableCircle({
             style={getStyles(left, isDragging)}
             role="DraggableBox"
         >
-            <Circle isGreen={left > 99 && live} />
+            <ProgressCircle isGreen={left > 99 && live} />
         </div>
     );
 })

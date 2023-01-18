@@ -8,7 +8,7 @@ export const LOGIN = new RequestTypes('user/LOGIN');
 export const SIGNUP = new RequestTypes('user/SIGNUP');
 export const RESET_PASSWORD = new RequestTypes('user/RESET_PASSWORD');
 export const REQUEST_RESET_PASSWORD = new RequestTypes('user/REQUEST_RESET_PASSWORD');
-const FETCH_ACCOUNT = new RequestTypes('user/FETCH_ACCOUNT');
+export const FETCH_ACCOUNT = new RequestTypes('user/FETCH_ACCOUNT');
 const FETCH_TENANTS = new RequestTypes('user/FETCH_TENANTS');
 const UPDATE_ACCOUNT = new RequestTypes('user/UPDATE_ACCOUNT');
 const RESEND_EMAIL_VERIFICATION = new RequestTypes('user/RESEND_EMAIL_VERIFICATION');
@@ -28,7 +28,11 @@ export const initialState = Map({
   authDetails: {},
   onboarding: false,
   sites: List(),
-  jwt: null
+  jwt: null,
+  loginRequest: {
+    loading: false,
+    errors: []
+  },
 });
 
 const setClient = (state, data) => {
@@ -50,10 +54,12 @@ const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
     case UPDATE_JWT:
       return state.set('jwt', action.data);
+    case LOGIN.REQUEST:
+      return state.set('loginRequest', { loading: true, errors: [] })
     case RESET_PASSWORD.SUCCESS:
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
-      state.set('account', Account({...action.data.user }))
+      state.set('account', Account({...action.data.user })).set('loginRequest', { loading: false, errors: [] })
     case SIGNUP.SUCCESS:
       state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
@@ -65,8 +71,10 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('authDetails', action.data);
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
-    case FETCH_ACCOUNT.FAILURE:
     case LOGIN.FAILURE:
+      deleteCookie('jwt', '/', 'openreplay.com')
+      return state.set('loginRequest', { loading: false, errors: ['Invalid username or password'] });
+    case FETCH_ACCOUNT.FAILURE:
     case DELETE.SUCCESS:
     case DELETE.FAILURE:
       deleteCookie('jwt', '/', 'openreplay.com')
@@ -86,7 +94,6 @@ const reducer = (state = initialState, action = {}) => {
 
 
 export default withRequestState({
-  loginRequest: LOGIN,
   signupRequest: SIGNUP,
   updatePasswordRequest: UPDATE_PASSWORD,
   requestResetPassowrd: REQUEST_RESET_PASSWORD,
@@ -96,7 +103,7 @@ export default withRequestState({
   updateAccountRequest: UPDATE_ACCOUNT,
 }, reducer);
 
-export const login = params => dispatch => dispatch({
+export const login = params => ({
   types: LOGIN.toArray(),
   call: client => client.post('/login', params),
 });

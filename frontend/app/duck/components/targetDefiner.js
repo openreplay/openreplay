@@ -1,7 +1,6 @@
 import { Map } from 'immutable';
 import Target from 'Types/target';
 import TargetCustom from 'Types/targetCustom';
-import withRequestState, { RequestTypes } from 'Duck/requestStateCreator';
 
 const EDIT = 'targetDefiner/EDIT';
 const SHOW = 'targetDefiner/SHOW';

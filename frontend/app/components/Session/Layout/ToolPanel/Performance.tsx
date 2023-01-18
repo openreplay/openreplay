@@ -9,10 +9,8 @@ import {
   Tooltip, 
   ResponsiveContainer,
   ReferenceLine,
-  CartesianGrid,
   Label,
 } from 'recharts';
-import { Checkbox } from 'UI';
 import { durationFromMsFormatted } from 'App/date';
 import { formatBytes } from 'App/utils';
 

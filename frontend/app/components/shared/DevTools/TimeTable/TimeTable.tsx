@@ -214,7 +214,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
             'error color-red': !!row.isRed && row.isRed(),
             'cursor-pointer': typeof onRowClick === 'function',
             [stl.activeRow]: activeIndex === index,
-            // [stl.inactiveRow]: !activeIndex || index > activeIndex,
+            [stl.inactiveRow]: !activeIndex || index > activeIndex,
           }
         )}
         onClick={typeof onRowClick === 'function' ? () => onRowClick(row, index) : undefined}

@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Input, Form, Button, Checkbox, Loader } from 'UI';
-import SiteDropdown from 'Shared/SiteDropdown';
 import { save, init, edit, remove } from 'Duck/integrations/actions';
 import { fetchIntegrationList } from 'Duck/integrations/integrations';
 

@@ -32,7 +32,6 @@ function DashboardListItem(props: Props) {
                         <div className="link capitalize-first">{dashboard.name}</div>
                     </div>
                 </div>
-                {/* <div><Label className="capitalize">{metric.metricType}</Label></div> */}
                 <div className="col-span-2">
                     <div className="flex items-center">
                         <Icon name={dashboard.isPublic ? 'user-friends' : 'person-fill'} className="mr-2" />

@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import stl from './xrayButton.module.css';
 import cn from 'classnames';
 import { Tooltip } from 'UI';
-import { FEATURE_KEYS } from 'Shared/GuidePopup';
 import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {

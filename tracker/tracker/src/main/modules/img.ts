@@ -104,7 +104,7 @@ export default function (app: App): void {
   })
 
   app.nodes.attachNodeCallback((node: Node): void => {
-    if (!hasTag(node, 'IMG')) {
+    if (!hasTag(node, 'img')) {
       return
     }
     app.nodes.attachNodeListener(node, 'error', () => sendImgError(node))

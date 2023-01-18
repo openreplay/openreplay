@@ -10,14 +10,6 @@ export default class MessageEncoder extends PrimitiveEncoder {
   encode(msg: Message): boolean {
     switch(msg[0]) {
     
-    case Messages.Type.BatchMetadata:
-      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5]) 
-    break
-    
-    case Messages.Type.PartitionedMessage:
-      return  this.uint(msg[1]) && this.uint(msg[2]) 
-    break
-    
     case Messages.Type.Timestamp:
       return  this.uint(msg[1]) 
     break
@@ -248,6 +240,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
     
     case Messages.Type.JSException:
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) 
+    break
+    
+    case Messages.Type.BatchMetadata:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5]) 
+    break
+    
+    case Messages.Type.PartitionedMessage:
+      return  this.uint(msg[1]) && this.uint(msg[2]) 
     break
     
     }

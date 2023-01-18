@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
+import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';

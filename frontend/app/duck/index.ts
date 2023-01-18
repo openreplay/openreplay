@@ -7,14 +7,12 @@ import assignments from './assignments';
 import filters from './filters';
 import funnelFilters from './funnelFilters';
 import templates from './templates';
-import alerts from './alerts';
 import dashboard from './dashboard';
 import components from './components';
 import sources from './sources';
 import members from './member';
 import site from './site';
 import customFields from './customField';
-import webhooks from './webhook';
 import integrations from './integrations';
 import rehydrate from './rehydrate';
 import errors from './errors';
@@ -32,13 +30,11 @@ const rootReducer = combineReducers({
   funnelFilters,
 
   templates,
-  alerts,
   dashboard,
   components,
   members,  
   site,
   customFields,
-  webhooks,
   rehydrate,
   errors,
   funnels,

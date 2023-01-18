@@ -1,7 +1,5 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import WidgetIcon from './WidgetIcon';
-import { init as initAlert } from 'Duck/alerts';
 import { useStore } from 'App/mstore';
 
 interface Props {
@@ -9,20 +7,21 @@ interface Props {
     initAlert: Function;
 }
 function AlertButton(props: Props) {
-    const { seriesId, initAlert } = props;
-    const { dashboardStore } = useStore();
+    const { seriesId } = props;
+    const { dashboardStore, alertsStore } = useStore();
     const onClick = () => {
-        initAlert({ query: { left: seriesId }})
-        dashboardStore.updateKey('showAlertModal', true);
+        dashboardStore.toggleAlertModal(true);
+        alertsStore.init({ query: { left: seriesId }})
     }
     return (
+      <div onClick={onClick}>
         <WidgetIcon
             className="cursor-pointer"
             icon="bell-plus"
             tooltip="Set Alert"
-            onClick={onClick}
         />
+      </div>
     );
 }
 
-export default connect(null, { initAlert })(AlertButton);
+export default AlertButton;

@@ -11,6 +11,11 @@ spec:
     spec:
       backoffLimit: 0 # Don't restart the failed jobs
       template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         spec:
           restartPolicy: Never
           containers:
@@ -35,7 +40,7 @@ spec:
             - mountPath: /mnt/efs
               name: datadir
           restartPolicy: Never
-          {{- if eq .Values.efsCleaner.pvc.name "hostPath" }}
+          {{- if eq (tpl .Values.efsCleaner.pvc.name . ) "hostPath" }}
           volumes:
           - name: datadir
             hostPath:
@@ -46,6 +51,6 @@ spec:
           volumes:
           - name: datadir
             persistentVolumeClaim:
-              claimName: {{ .Values.efsCleaner.pvc.name }}
+              claimName: {{ tpl .Values.efsCleaner.pvc.name . }}
           {{- end }}
 

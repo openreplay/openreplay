@@ -1,5 +1,5 @@
 import React from 'react';
-import { SideMenuitem, SideMenuHeader } from 'UI';
+import { SideMenuitem } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
 import { connect } from 'react-redux';
@@ -39,7 +39,7 @@ function DashboardSideMenu(props: Props) {
           active={isMetric}
           id="menu-manage-alerts"
           title="Cards"
-          iconName="bar-chart-line"
+          iconName="card-text"
           onClick={() => redirect(withSiteId(metrics(), siteId))}
         />
       </div>

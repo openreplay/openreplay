@@ -21,7 +21,7 @@ function getPaintBlocks(resources: ResourcesTimeMap): Array<PaintBlock> {
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i]
     let src = ''
-    if (hasTag(element, 'IMG')) {
+    if (hasTag(element, 'img')) {
       src = element.currentSrc || element.src
     }
     if (!src) {

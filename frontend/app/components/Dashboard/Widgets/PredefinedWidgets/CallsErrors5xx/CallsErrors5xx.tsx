@@ -2,7 +2,7 @@ import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { 
-    BarChart, Bar, CartesianGrid, Tooltip,
+    CartesianGrid, Tooltip,
     LineChart, Line, Legend, ResponsiveContainer, 
     XAxis, YAxis
   } from 'recharts';

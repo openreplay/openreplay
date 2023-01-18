@@ -13,7 +13,7 @@
 
   & span {
     padding-left: 10px;
-    color: $gray-medium;
+    /* color: $gray-dark; */
   }
 }
 .switch input {

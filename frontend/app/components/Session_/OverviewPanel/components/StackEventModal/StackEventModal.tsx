@@ -1,7 +1,7 @@
 import React from 'react';
 import JsonViewer from './components/JsonViewer';
 import Sentry from './components/Sentry';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
 
 interface Props {
     event: any;
@@ -23,7 +23,7 @@ function StackEventModal(props: Props) {
         }
     };
     return (
-        <div className="bg-white h-screen overflow-y-auto" style={{ width: '450px' }}>
+        <div className="bg-white h-screen overflow-y-auto">
             {renderPopupContent()}
         </div>
     );

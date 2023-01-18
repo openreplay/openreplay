@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
+import { Tabs, Input, NoContent, Icon } from 'UI';
 import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import BottomBlock from '../BottomBlock';
@@ -66,6 +66,7 @@ function StackEventPanel() {
       <StackEventModal event={item} />, 
       { 
         right: true,
+        width: 500,
         onClose: () => {
           setIsDetailsModalActive(false)
           timeoutStartAutoscroll()

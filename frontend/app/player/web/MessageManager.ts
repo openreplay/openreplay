@@ -88,9 +88,7 @@ export default class MessageManager {
 
     messagesLoading: false,
     cssLoading: false,
-    get ready() {
-      return !this.messagesLoading && !this.cssLoading
-    },
+    ready: false,
     lastMessageTime: 0,
   }
 
@@ -125,7 +123,7 @@ export default class MessageManager {
   ) {
     this.pagesManager = new PagesManager(screen, this.session.isMobile, cssLoading => {
       screen.displayFrame(!cssLoading)
-      state.update({ cssLoading })
+      state.update({ cssLoading, ready: !state.get().messagesLoading && !cssLoading })
     })
     this.mouseMoveManager = new MouseMoveManager(screen)
 
@@ -191,11 +189,12 @@ export default class MessageManager {
   }
   private onFileReadFinally = () => {
     this.waitingForFiles = false
-    this.setMessagesLoading(false)
+    // this.setMessagesLoading(false)
     // this.state.update({ filesLoaded: true })
   }
 
   private async loadMessages() {
+    this.setMessagesLoading(true)
     // TODO: reuseable decryptor instance
     const createNewParser = (shouldDecrypt=true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
@@ -216,7 +215,7 @@ export default class MessageManager {
         this.setMessagesLoading(false)
       })
     }
-    this.setMessagesLoading(true)
+
     this.waitingForFiles = true
 
     let fileReadPromise = this.session.domURL && this.session.domURL.length > 0
@@ -400,8 +399,7 @@ export default class MessageManager {
         break;
       case MType.Fetch:
       case MType.NetworkRequest:
-        // @ts-ignore burn immutable
-        this.lists.lists.fetch.insert(Resource({
+        this.lists.lists.fetch.insert(new Resource({
           method: msg.method,
           url: msg.url,
           request: msg.request,
@@ -483,7 +481,7 @@ export default class MessageManager {
 
   setMessagesLoading(messagesLoading: boolean) {
     this.screen.display(!messagesLoading);
-    this.state.update({ messagesLoading });
+    this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
   }
 
   private setSize({ height, width }: { height: number, width: number }) {

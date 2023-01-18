@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, Button, IconButton } from 'UI';
+import { Tooltip, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { init, remove, fetchGDPR } from 'Duck/site';

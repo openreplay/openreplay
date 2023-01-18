@@ -1,3 +1,7 @@
+migrationJob:
+  podAnnotations:
+    linkerd.io/inject: disabled
+
 redis: &redis
   tls:
     enabled: false
@@ -5,6 +9,10 @@ redis: &redis
 ingress-nginx:
   enabled: true
   controller:
+    admissionWebhooks:
+      patch:
+        podAnnotations:
+          linkerd.io/inject: disabled
     name: controller
     image:
       registry: k8s.gcr.io

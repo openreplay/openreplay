@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { toggleChatWindow } from 'Duck/sessions';
 import ChatWindow from '../../ChatWindow';
-// state enums
 import {
   CallingState,
   ConnectionStatus,
@@ -12,7 +10,7 @@ import {
   RequestLocalStream,
 } from 'Player';
 import type { LocalStream } from 'Player';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { confirm } from 'UI';
@@ -30,15 +28,10 @@ function onError(e: any) {
 
 interface Props {
   userId: string;
-  calling: CallingState;
-  annotating: boolean;
-  peerConnectionStatus: ConnectionStatus;
-  remoteControlStatus: RemoteControlStatus;
   hasPermission: boolean;
   isEnterprise: boolean;
   isCallActive: boolean;
   agentIds: string[];
-  livePlay: boolean;
   userDisplayName: string;
 }
 
@@ -50,7 +43,8 @@ function AssistActions({
   agentIds,
   userDisplayName,
 }: Props) {
-  const { player, store } = React.useContext(PlayerContext)
+  // @ts-ignore ???
+  const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext)
 
   const {
     assistManager: {
@@ -123,6 +117,7 @@ function AssistActions({
 
   const addIncomeStream = (stream: MediaStream) => {
     setIncomeStream((oldState) => {
+      if (oldState === null) return [stream]
       if (!oldState.find((existingStream) => existingStream.id === stream.id)) {
         return [...oldState, stream];
       }
@@ -257,8 +252,7 @@ const con = connect(
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
       userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
     };
-  },
-  { toggleChatWindow }
+  }
 );
 
 export default con(

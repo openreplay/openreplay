@@ -1,5 +1,5 @@
 import React from 'react';
-import { NoContent, Pagination, Loader, Icon } from 'UI';
+import { NoContent, Pagination, Loader } from 'UI';
 import { sliceListPerPage } from 'App/utils';
 import NoteItem from './NoteItem';
 import { observer } from 'mobx-react-lite';

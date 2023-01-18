@@ -6,10 +6,27 @@ import stl from './FilterModal.module.css';
 import { filtersMap } from 'Types/filter/newFilter';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
+function filterJson(
+  jsonObj: Record<string, any>,
+  excludeKeys: string[] = []
+): Record<string, any> {
+  let filtered: Record<string, any> = {};
+
+  for (const key in jsonObj) {
+    const arr = jsonObj[key].filter((i: any) => !excludeKeys.includes(i.key));
+    if (arr.length) {
+      filtered[key] = arr;
+    }
+  }
+
+  return filtered;
+}
+
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
   const matchingCategories: string[] = [];
   const matchingFilters: Record<string, any> = {};
   const lowerCaseQuery = searchQuery.toLowerCase();
+  
   if (lowerCaseQuery.length === 0) return {
     matchingCategories: Object.keys(filters),
     matchingFilters: filters,
@@ -33,12 +50,13 @@ export const getMatchingEntries = (searchQuery: string, filters: Record<string, 
 
 interface Props {
   filters: any,
-  onFilterClick?: (filter) => void,
+  onFilterClick?: (filter: any) => void,
   filterSearchList: any,
   // metaOptions: any,
   isMainSearch?: boolean,
   fetchingFilterSearchList: boolean,
   searchQuery?: string,
+  excludeFilterKeys?: Array<string>
 }
 function FilterModal(props: Props) {
   const {
@@ -48,6 +66,7 @@ function FilterModal(props: Props) {
     isMainSearch = false,
     fetchingFilterSearchList,
     searchQuery = '',
+    excludeFilterKeys = []
   } = props;
   const showSearchList = isMainSearch && searchQuery.length > 0;
 
@@ -57,7 +76,7 @@ function FilterModal(props: Props) {
     onFilterClick(_filter);
   }
 
-  const { matchingCategories, matchingFilters } = getMatchingEntries(searchQuery, filters);
+  const { matchingCategories, matchingFilters } = getMatchingEntries(searchQuery, filterJson(filters, excludeFilterKeys));
 
   const isResultEmpty = (!filterSearchList || Object.keys(filterSearchList).length === 0)
     && matchingCategories.length === 0 && Object.keys(matchingFilters).length === 0

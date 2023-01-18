@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Timed } from 'Player'
 import useLatestRef from 'App/hooks/useLatestRef'
 import useCancelableTimeout from 'App/hooks/useCancelableTimeout'

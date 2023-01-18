@@ -1,4 +1,4 @@
-import { FilterKey, IssueType } from 'Types/filter/filterType';
+import { FilterKey, IssueType, IssueCategory } from 'Types/filter/filterType';
 // TODO remove text property from options
 export const options = [
   { key: 'on', label: 'on', value: 'on' },
@@ -118,6 +118,18 @@ export const issueOptions = [
   { label: 'Error', value: IssueType.JS_EXCEPTION },
 ]
 
+export const issueCategories = [
+  { label: 'Resources', value: IssueCategory.RESOURCES },
+  { label: 'Network Request', value: IssueCategory.NETWORK },
+  { label: 'Click Rage', value: IssueCategory.RAGE },
+  { label: 'JS Errors', value: IssueCategory.ERRORS },
+]
+
+export const issueCategoriesMap = issueCategories.reduce((acc, {value, label}) => {
+  acc[value] = label;
+  return acc;
+}, {})
+
 export default {
   options,
   baseOperators,
@@ -130,6 +142,7 @@ export default {
   metricTypes,
   metricOf,
   issueOptions,
+  issueCategories,
   methodOptions,
   pageUrlOperators,
 }

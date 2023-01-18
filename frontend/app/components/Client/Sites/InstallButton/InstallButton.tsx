@@ -12,7 +12,7 @@ function InstallButton(props: Props) {
     const onClick = () => {
         showModal(
             <TrackingCodeModal title="Tracking Code" subTitle={`(Unique to ${site.host})`} onClose={hideModal} site={site} />,
-            { right: true }
+            { right: true, width: 700 }
         );
     };
     return (

@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IconButton } from 'UI';
-import FunnelSaveModal from 'App/components/Funnels/FunnelSaveModal';
 import { connect } from 'react-redux';
 import { save } from 'Duck/funnels';
 

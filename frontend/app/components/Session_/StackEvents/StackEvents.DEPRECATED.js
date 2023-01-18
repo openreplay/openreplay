@@ -11,7 +11,6 @@ import { DATADOG, SENTRY, STACKDRIVER, typeList } from 'Types/session/stackEvent
 import { NoContent, SlideModal, Tabs, Link } from 'UI';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
-import UserEvent from './UserEvent';
 
 const ALL = 'ALL';
 

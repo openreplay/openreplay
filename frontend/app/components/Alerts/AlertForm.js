@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
 import { Button, Form, Input, SegmentSelection, Checkbox, Icon } from 'UI';
 import { alertConditions as conditions } from 'App/constants';
-import { client, CLIENT_TABS } from 'App/routes';
-import { connect } from 'react-redux';
 import stl from './alertForm.module.css';
 import DropdownChips from './DropdownChips';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
-import { fetchTriggerOptions } from 'Duck/alerts';
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite'
 import Select from 'Shared/Select';
 
 const thresholdOptions = [
@@ -44,36 +43,38 @@ const Section = ({ index, title, description, content }) => (
   </div>
 );
 
-const integrationsRoute = client(CLIENT_TABS.INTEGRATIONS);
-
-const AlertForm = (props) => {
+function AlertForm(props) {
   const {
-    instance,
     slackChannels,
     msTeamsChannels,
     webhooks,
-    loading,
     onDelete,
-    deleting,
-    triggerOptions,
     style = { width: '580px', height: '100vh' },
   } = props;
-  const write = ({ target: { value, name } }) => props.edit({ [name]: value });
-  const writeOption = (e, { name, value }) => props.edit({ [name]: value.value });
-  const onChangeCheck = ({ target: { checked, name } }) => props.edit({ [name]: checked });
+  const { alertsStore } = useStore()
+  const {
+    triggerOptions,
+    loading,
+  } = alertsStore
+  const instance = alertsStore.instance
+  const deleting = loading
+
+  const write = ({ target: { value, name } }) => alertsStore.edit({ [name]: value });
+  const writeOption = (e, { name, value }) => alertsStore.edit({ [name]: value.value });
+  const onChangeCheck = ({ target: { checked, name } }) => alertsStore.edit({ [name]: checked });
 
   useEffect(() => {
-    props.fetchTriggerOptions();
+    void alertsStore.fetchTriggerOptions();
   }, []);
 
   const writeQueryOption = (e, { name, value }) => {
     const { query } = instance;
-    props.edit({ query: { ...query, [name]: value } });
+    alertsStore.edit({ query: { ...query, [name]: value } });
   };
 
   const writeQuery = ({ target: { value, name } }) => {
     const { query } = instance;
-    props.edit({ query: { ...query, [name]: value } });
+    alertsStore.edit({ query: { ...query, [name]: value } });
   };
 
   const metric =
@@ -111,7 +112,7 @@ const AlertForm = (props) => {
                 primary
                 name="detectionMethod"
                 className="my-3"
-                onSelect={(e, { name, value }) => props.edit({ [name]: value })}
+                onSelect={(e, { name, value }) => alertsStore.edit({ [name]: value })}
                 value={{ value: instance.detectionMethod }}
                 list={[
                   { name: 'Threshold', value: 'threshold' },
@@ -293,7 +294,7 @@ const AlertForm = (props) => {
                       selected={instance.slackInput}
                       options={slackChannels}
                       placeholder="Select Channel"
-                      onChange={(selected) => props.edit({ slackInput: selected })}
+                      onChange={(selected) => alertsStore.edit({ slackInput: selected })}
                     />
                   </div>
                 </div>
@@ -307,7 +308,7 @@ const AlertForm = (props) => {
                       selected={instance.msteamsInput}
                       options={msTeamsChannels}
                       placeholder="Select Channel"
-                      onChange={(selected) => props.edit({ msteamsInput: selected })}
+                      onChange={(selected) => alertsStore.edit({ msteamsInput: selected })}
                     />
                   </div>
                 </div>
@@ -322,7 +323,7 @@ const AlertForm = (props) => {
                       validate={validateEmail}
                       selected={instance.emailInput}
                       placeholder="Type and press Enter key"
-                      onChange={(selected) => props.edit({ emailInput: selected })}
+                      onChange={(selected) => alertsStore.edit({ emailInput: selected })}
                     />
                   </div>
                 </div>
@@ -336,7 +337,7 @@ const AlertForm = (props) => {
                     selected={instance.webhookInput}
                     options={webhooks}
                     placeholder="Select Webhook"
-                    onChange={(selected) => props.edit({ webhookInput: selected })}
+                    onChange={(selected) => alertsStore.edit({ webhookInput: selected })}
                   />
                 </div>
               )}
@@ -378,12 +379,4 @@ const AlertForm = (props) => {
   );
 };
 
-export default connect(
-  (state) => ({
-    instance: state.getIn(['alerts', 'instance']),
-    triggerOptions: state.getIn(['alerts', 'triggerOptions']),
-    loading: state.getIn(['alerts', 'saveRequest', 'loading']),
-    deleting: state.getIn(['alerts', 'removeRequest', 'loading']),
-  }),
-  { fetchTriggerOptions }
-)(AlertForm);
+export default observer(AlertForm);

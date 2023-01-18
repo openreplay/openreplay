@@ -49,7 +49,7 @@ function UserForm(props: Props) {
     }
     
     return useObserver(() => (
-        <div className="bg-white h-screen p-6" style={{ width: '400px'}}>
+        <div className="bg-white h-screen p-6">
             <div className="">
                 <h1 className="text-2xl mb-4">{`${user.exists() ? 'Update' : 'Invite'} User`}</h1>
             </div>

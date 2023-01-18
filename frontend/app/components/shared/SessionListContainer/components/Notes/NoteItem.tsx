@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Link } from 'UI';
+import { Link } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';

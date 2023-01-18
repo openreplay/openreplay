@@ -49,7 +49,7 @@ function FunnelIssues() {
     const depsString = JSON.stringify(widget.series);
 
     useEffect(() => {
-        debounceRequest({ ...filter, series: widget.toJsonDrilldown(), page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
+        debounceRequest({ ...filter, series: widget.series, page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
     }, [stages.length, drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage]);
 
     return useObserver(() => (

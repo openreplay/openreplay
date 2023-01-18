@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import { fetchListType, fetchType, saveType, removeType, editType } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
-import { array, success, createListUpdater, mergeReducers } from './funcTools/tools';
+import { array, success, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from 'App/routes';
@@ -318,9 +318,17 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    // const filter = getState().getIn(['search', 'instance']);
-    // dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ filters: [] })));
+    const instance = getState().getIn(['search', 'instance']);
+    dispatch(
+        edit(
+            new Filter({
+              rangeValue: instance.rangeValue,
+              startDate: instance.startDate,
+              endDate: instance.endDate,
+              filters: [],
+            })
+        )
+    );
     return dispatch({
         type: CLEAR_SEARCH,
     });

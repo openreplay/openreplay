@@ -39,7 +39,6 @@ function LiveFilterModal(props: Props) {
   const isResultEmpty = (!filterSearchList || Object.keys(filterSearchList).filter(i => filtersMap[i].isLive).length === 0)
    && matchingCategories.length === 0 && matchingFilters.length === 0
 
-  getMatchingEntries
   return (
     <div className={stl.wrapper} style={{ width: '490px', maxHeight: '400px', overflowY: 'auto'}}>
       <div className="">

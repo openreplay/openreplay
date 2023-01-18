@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { NoContent } from 'UI';
-import { Styles, Table } from '../../common';
+import { Table } from '../../common';
 import { List } from 'immutable';
 import { numberWithCommas } from 'App/utils';
 

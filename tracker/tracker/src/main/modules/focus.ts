@@ -12,7 +12,7 @@ export default function (app: App): void {
 
   let blurred = false
   app.nodes.attachNodeCallback((node) => {
-    if (!hasTag(node, 'BODY')) {
+    if (!hasTag(node, 'body')) {
       return
     }
     app.nodes.attachNodeListener(node, 'focus', (e: FocusEvent): void => {
@@ -35,7 +35,7 @@ export default function (app: App): void {
   })
   app.attachStartCallback(() => {
     let elem = document.activeElement
-    while (elem && hasTag(elem, 'IFRAME') && elem.contentDocument) {
+    while (elem && hasTag(elem, 'iframe') && elem.contentDocument) {
       elem = elem.contentDocument.activeElement
     }
     if (elem && elem !== elem.ownerDocument.body) {

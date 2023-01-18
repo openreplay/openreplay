@@ -108,6 +108,10 @@ global:
   # secret key to inject to assist and peers service
   assistKey: "SetARandomStringHere"
   assistJWTSecret: "SetARandomStringHere"
+  # In case of multiple nodes in the kubernetes cluster,
+  # we'll have to create an RWX PVC for shared components.
+  # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
+  pvcRWXName: "hostPath"
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
@@ -117,9 +121,6 @@ global:
     vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
-    # if you're using one node installation, where
-    # you're using local s3, make sure these variables
-    # are same as minio.global.minio.accesskey and  secretKey
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
@@ -135,20 +136,6 @@ global:
 
   enterpriseEditionLicense: ""
   domainName: ""
-
-# If there is multiple nodes in the kubernetes cluster,
-# we'll have to create a NFS share PVC for both the containers to share data.
-# If it's the single node, we'll use hostVolume, which is default for community installation.
-# Note: Both PVC name should be same.
-# sink:
-#   pvc:
-#     name: mysharedpersistence
-# storage:
-#   pvc:
-#     name: mysharedpersistence
-# chalice:
-#   pvc:
-#     name: mysharedpersistence
 
 chalice:
   env:

@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
-import { Location, InjectedEvent } from 'Types/session/event'
+import { Location } from 'Types/session/event'
 import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
@@ -93,14 +93,13 @@ const reducer = (state = initialState, action: IAction) => {
             const { sessions, total } = action.data;
             const list = sessions.map(s => new Session(s));
 
-            console.log(sessions, list, action)
             return state
                 .set('list', list)
                 .set('sessionIds', list.map(({ sessionId }) => sessionId))
                 .set('favoriteList', list.filter(({ favorite }) => favorite))
                 .set('total', total);
         case FETCH_AUTOPLAY_LIST.SUCCESS:
-            let sessionIds = state.get('sessionIds');
+            let sessionIds = state.get('sessionIds') as [];
             sessionIds = sessionIds.concat(action.data.map(i => i.sessionId + ''))
             return state.set('sessionIds', sessionIds.filter((i, index) => sessionIds.indexOf(i) === index ))
         case SET_AUTOPLAY_VALUES: {
@@ -125,7 +124,7 @@ const reducer = (state = initialState, action: IAction) => {
             return state.set('filteredEvents', filteredEvents).set('eventsQuery', query);
         }
         case FETCH.SUCCESS: {
-            // TODO: more common.. or TEMP
+            // TODO: more common.. or TEMP filters', 'appliedFilter
             const events = action.filter.events;
             const session = new Session(action.data);
 
@@ -192,17 +191,10 @@ const reducer = (state = initialState, action: IAction) => {
             };
             return state.update('list', (list: Session[]) => list.sort(comparator)).update('favoriteList', (list: Session[]) => list.sort(comparator));
         }
-        case REDEFINE_TARGET: {
-            // TODO: update for list
-            const { label, path } = action.target;
-            return state.updateIn(['current', 'events'], (list) =>
-                list.map((event) => (event.target && event.target.path === path ? event.setIn(['target', 'label'], label) : event))
-            );
-        }
         case SET_ACTIVE_TAB:
             const allList = action.tab.type === 'all' ? state.get('list') : state.get('list').filter((s) => s.issueTypes.includes(action.tab.type));
 
-            return state.set('activeTab', action.tab).set('sessionIds', allList.map(({ sessionId }) => sessionId).toJS());
+            return state.set('activeTab', action.tab).set('sessionIds', allList.map(({ sessionId }) => sessionId));
         case SET_TIMEZONE:
             return state.set('timezone', action.timezone);
         case TOGGLE_CHAT_WINDOW:

@@ -9,9 +9,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   LabelList,
-  Label,
+
 } from 'recharts';
 import { connect } from 'react-redux';
 import { setActiveStages } from 'Duck/funnels';

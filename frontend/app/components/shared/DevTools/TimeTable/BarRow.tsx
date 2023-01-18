@@ -1,4 +1,3 @@
-import { Tooltip } from 'UI';
 import { percentOf } from 'App/utils';
 import styles from './barRow.module.css';
 import tableStyles from './timeTable.module.css';

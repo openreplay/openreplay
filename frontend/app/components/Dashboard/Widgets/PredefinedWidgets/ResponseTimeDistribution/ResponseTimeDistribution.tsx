@@ -1,9 +1,9 @@
 import React from 'react';
-import { Loader, NoContent } from 'UI';
+import { NoContent } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import { 
   ComposedChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, 
-  XAxis, YAxis, ReferenceLine, Tooltip, Legend
+  XAxis, YAxis, ReferenceLine, Tooltip
 } from 'recharts';
 import { NO_METRIC_DATA } from 'App/constants/messages'
 

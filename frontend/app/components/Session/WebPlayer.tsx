@@ -7,12 +7,13 @@ import { createWebPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
-import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
+import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
 import { fetchList as fetchMembers } from 'Duck/member';
-import PlayerContent from './PlayerContent';
+import PlayerContent from './Player/ReplayPlayer/PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 import { observer } from 'mobx-react-lite';
+import { Note } from "App/services/NotesService";
 
 const TABS = {
   EVENTS: 'User Steps',
@@ -24,7 +25,6 @@ function WebPlayer(props: any) {
     session,
     toggleFullscreen,
     closeBottomBlock,
-    live,
     fullscreen,
     fetchList,
     customSession,
@@ -36,7 +36,8 @@ function WebPlayer(props: any) {
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
   const [showNoteModal, setShowNote] = useState(false);
-  const [noteItem, setNoteItem] = useState(null);
+  const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
+  // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
@@ -122,7 +123,6 @@ function WebPlayer(props: any) {
         <PlayerContent
           activeTab={activeTab}
           fullscreen={fullscreen}
-          live={live}
           setActiveTab={setActiveTab}
           session={session}
           isClickmap={isClickmap}

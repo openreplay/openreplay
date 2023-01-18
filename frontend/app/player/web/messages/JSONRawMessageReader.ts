@@ -1,6 +1,5 @@
 import type { RawMessage } from './raw.gen'
 import type { TrackerMessage } from './tracker.gen'
-import { MType } from './raw.gen'
 import  translate from './tracker.gen'
 import { TP_MAP } from './tracker-legacy.gen'
 import resolveURL from './urlBasedResolver'

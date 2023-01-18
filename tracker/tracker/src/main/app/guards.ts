@@ -24,21 +24,21 @@ export function isRootNode(node: Node): node is Document | DocumentFragment {
 }
 
 type TagTypeMap = {
-  HTML: HTMLHtmlElement
-  BODY: HTMLBodyElement
-  IMG: HTMLImageElement
-  INPUT: HTMLInputElement
-  TEXTAREA: HTMLTextAreaElement
-  SELECT: HTMLSelectElement
-  LABEL: HTMLLabelElement
-  IFRAME: HTMLIFrameElement
-  STYLE: HTMLStyleElement
-  style: SVGStyleElement
-  LINK: HTMLLinkElement
+  html: HTMLHtmlElement
+  body: HTMLBodyElement
+  img: HTMLImageElement
+  input: HTMLInputElement
+  textarea: HTMLTextAreaElement
+  select: HTMLSelectElement
+  label: HTMLLabelElement
+  iframe: HTMLIFrameElement
+  style: HTMLStyleElement | SVGStyleElement
+  link: HTMLLinkElement
 }
 export function hasTag<T extends keyof TagTypeMap>(
   el: Node,
   tagName: T,
 ): el is TagTypeMap[typeof tagName] {
-  return el.nodeName === tagName
+  // @ts-ignore
+  return el.localName === tagName
 }

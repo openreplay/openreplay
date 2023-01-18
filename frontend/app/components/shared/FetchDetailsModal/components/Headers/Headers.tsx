@@ -1,5 +1,5 @@
 import React from 'react';
-import { NoContent, TextEllipsis } from 'UI';
+import { NoContent } from 'UI';
 import stl from './headers.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 

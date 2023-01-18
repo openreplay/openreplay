@@ -1,6 +1,6 @@
 import React from "react";
 import stl from "./NoSessionPermission.module.css";
-import { Icon, Button, Link } from "UI";
+import { Icon, Button } from "UI";
 import { connect } from "react-redux";
 import {
     sessions as sessionsRoute,

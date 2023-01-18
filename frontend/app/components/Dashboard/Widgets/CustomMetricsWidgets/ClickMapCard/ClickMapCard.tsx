@@ -1,7 +1,7 @@
 import React from 'react'
 import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
-import WebPlayer from 'App/components/Session/WebPlayer'
+import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer'
 import { connect } from 'react-redux'
 import { setCustomSession } from 'App/duck/sessions'
 import { fetchInsights } from 'Duck/sessions';
@@ -54,10 +54,9 @@ function ClickMapCard({
 
     return (
         <div id="clickmap-render">
-            <WebPlayer
-                isClickmap
+            <ClickMapRenderer
                 customSession={metricStore.instance.data}
-                customTimestamp={jumpTimestamp}
+                jumpTimestamp={jumpTimestamp}
                 onMarkerClick={onMarkerClick}
             />
         </div>

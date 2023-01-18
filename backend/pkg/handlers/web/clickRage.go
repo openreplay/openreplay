@@ -22,6 +22,7 @@ type ClickRageDetector struct {
 	firstInARawTimestamp uint64
 	firstInARawMessageId uint64
 	countsInARow         int
+	url                  string
 }
 
 func (crd *ClickRageDetector) reset() {
@@ -30,6 +31,7 @@ func (crd *ClickRageDetector) reset() {
 	crd.firstInARawTimestamp = 0
 	crd.firstInARawMessageId = 0
 	crd.countsInARow = 0
+	crd.url = ""
 }
 
 func (crd *ClickRageDetector) Build() Message {
@@ -45,6 +47,7 @@ func (crd *ClickRageDetector) Build() Message {
 			Payload:       string(payload),
 			Timestamp:     crd.firstInARawTimestamp,
 			MessageID:     crd.firstInARawMessageId,
+			URL:           crd.url,
 		}
 		return event
 	}
@@ -54,6 +57,9 @@ func (crd *ClickRageDetector) Build() Message {
 func (crd *ClickRageDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *MouseClick:
+		if crd.url == "" && msg.Url != "" {
+			crd.url = msg.Url
+		}
 		// TODO: check if we it is ok to capture clickRage event without the connected ClickEvent in db.
 		if msg.Label == "" {
 			return crd.Build()
@@ -69,6 +75,9 @@ func (crd *ClickRageDetector) Handle(message Message, messageID uint64, timestam
 		crd.firstInARawTimestamp = timestamp
 		crd.firstInARawMessageId = messageID
 		crd.countsInARow = 1
+		if crd.url == "" && msg.Url != "" {
+			crd.url = msg.Url
+		}
 		return event
 	}
 	return nil

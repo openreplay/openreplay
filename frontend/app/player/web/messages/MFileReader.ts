@@ -60,6 +60,7 @@ export default class MFileReader extends RawMessageReader {
         return null
       }
       this.logger.group("Openreplay: Skipping messages ", skippedMessage)
+
     }
 
     this.pLastMessageID = this.p
