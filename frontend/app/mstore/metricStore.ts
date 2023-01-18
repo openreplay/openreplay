@@ -12,6 +12,7 @@ import {
   PERFORMANCE,
   WEB_VITALS,
   INSIGHTS,
+  CLICKMAP
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
