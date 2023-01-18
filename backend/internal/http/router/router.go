@@ -54,6 +54,9 @@ func NewRouter(cfg *http3.Config, services *http2.ServicesBuilder, metrics *moni
 }
 
 func (e *Router) addBeaconSize(sessionID uint64, size int64) {
+	if size <= 0 {
+		return
+	}
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
 	e.beaconSizeCache[sessionID] = &BeaconSize{
