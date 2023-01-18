@@ -25,6 +25,16 @@ func transformDeprecated(msg Message) Message {
 			Timestamp: m.Timestamp,
 			Duration:  m.Duration,
 		}
+	case *IssueEventDeprecated:
+		return &IssueEvent{
+			MessageID:     m.MessageID,
+			Timestamp:     m.Timestamp,
+			Type:          m.Type,
+			ContextString: m.ContextString,
+			Context:       m.Context,
+			Payload:       m.Payload,
+			URL:           "",
+		}
 	}
 	return msg
 }

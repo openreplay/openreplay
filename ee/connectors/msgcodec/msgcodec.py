@@ -76,28 +76,6 @@ class MessageCodec(Codec):
 
     def read_head_message(self, reader: io.BytesIO, message_id) -> Message:
 
-        if message_id == 80:
-            return BatchMeta(
-                page_no=self.read_uint(reader),
-                first_index=self.read_uint(reader),
-                timestamp=self.read_int(reader)
-            )
-
-        if message_id == 81:
-            return BatchMetadata(
-                version=self.read_uint(reader),
-                page_no=self.read_uint(reader),
-                first_index=self.read_uint(reader),
-                timestamp=self.read_int(reader),
-                location=self.read_string(reader)
-            )
-
-        if message_id == 82:
-            return PartitionedMessage(
-                part_no=self.read_uint(reader),
-                part_total=self.read_uint(reader)
-            )
-
         if message_id == 0:
             return Timestamp(
                 timestamp=self.read_uint(reader)
@@ -539,7 +517,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 62:
-            return IssueEvent(
+            return IssueEventDeprecated(
                 message_id=self.read_uint(reader),
                 timestamp=self.read_uint(reader),
                 type=self.read_string(reader),
@@ -645,6 +623,39 @@ class MessageCodec(Codec):
                 message=self.read_string(reader),
                 payload=self.read_string(reader),
                 metadata=self.read_string(reader)
+            )
+
+        if message_id == 80:
+            return BatchMeta(
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader)
+            )
+
+        if message_id == 81:
+            return BatchMetadata(
+                version=self.read_uint(reader),
+                page_no=self.read_uint(reader),
+                first_index=self.read_uint(reader),
+                timestamp=self.read_int(reader),
+                location=self.read_string(reader)
+            )
+
+        if message_id == 82:
+            return PartitionedMessage(
+                part_no=self.read_uint(reader),
+                part_total=self.read_uint(reader)
+            )
+
+        if message_id == 125:
+            return IssueEvent(
+                message_id=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                type=self.read_string(reader),
+                context_string=self.read_string(reader),
+                context=self.read_string(reader),
+                payload=self.read_string(reader),
+                url=self.read_string(reader)
             )
 
         if message_id == 126:

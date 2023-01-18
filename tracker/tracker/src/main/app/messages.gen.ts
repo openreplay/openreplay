@@ -5,34 +5,6 @@ import * as Messages from '../../common/messages.gen.js'
 export { default, Type } from '../../common/messages.gen.js'
 
 
-export function BatchMetadata(
-  version: number,
-  pageNo: number,
-  firstIndex: number,
-  timestamp: number,
-  location: string,
-): Messages.BatchMetadata {
-  return [
-    Messages.Type.BatchMetadata,
-    version,
-    pageNo,
-    firstIndex,
-    timestamp,
-    location,
-  ]
-}
-
-export function PartitionedMessage(
-  partNo: number,
-  partTotal: number,
-): Messages.PartitionedMessage {
-  return [
-    Messages.Type.PartitionedMessage,
-    partNo,
-    partTotal,
-  ]
-}
-
 export function Timestamp(
   timestamp: number,
 ): Messages.Timestamp {
@@ -778,6 +750,34 @@ export function JSException(
     message,
     payload,
     metadata,
+  ]
+}
+
+export function BatchMetadata(
+  version: number,
+  pageNo: number,
+  firstIndex: number,
+  timestamp: number,
+  location: string,
+): Messages.BatchMetadata {
+  return [
+    Messages.Type.BatchMetadata,
+    version,
+    pageNo,
+    firstIndex,
+    timestamp,
+    location,
+  ]
+}
+
+export function PartitionedMessage(
+  partNo: number,
+  partTotal: number,
+): Messages.PartitionedMessage {
+  return [
+    Messages.Type.PartitionedMessage,
+    partNo,
+    partTotal,
   ]
 }
 
