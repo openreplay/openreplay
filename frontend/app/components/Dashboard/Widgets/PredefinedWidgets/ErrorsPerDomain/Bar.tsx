@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './Bar.module.css'
+import stl from './bar.module.css'
 
 const Bar = ({ className = '', width = 0, avg, domain, color }) => {
   return (
