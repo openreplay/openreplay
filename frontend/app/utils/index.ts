@@ -1,3 +1,4 @@
+// @ts-nocheck
 import JSBI from 'jsbi';
 import chroma from 'chroma-js';
 import * as htmlToImage from 'html-to-image';

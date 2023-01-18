@@ -83,13 +83,13 @@ class Console extends Event {
   }
 }
 
-class Click extends Event {
+export class Click extends Event {
   readonly type: typeof CLICKRAGE | typeof CLICK = CLICK;
   readonly name = 'Click'
   targetContent = '';
   count: number
 
-  constructor(evt: ClickEvent, isClickRage: boolean) {
+  constructor(evt: ClickEvent, isClickRage?: boolean) {
     super(evt);
     this.targetContent = evt.targetContent
     this.count = evt.count
@@ -116,7 +116,6 @@ export class Location extends Event {
   readonly type = LOCATION;
   url: LocationEvent["url"]
   host: LocationEvent["host"];
-  pageLoad: LocationEvent["pageLoad"];
   fcpTime: LocationEvent["fcpTime"];
   loadTime: LocationEvent["loadTime"];
   domContentLoadedTime: LocationEvent["domContentLoadedTime"];

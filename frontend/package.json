@@ -15,7 +15,9 @@
     "storybook": "start-storybook -p 6006",
     "flow": "flow",
     "postinstall": "yarn gen:icons && yarn gen:colors",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook",
+    "test": "jest",
+    "cy:open": "cypress open"
   },
   "dependencies": {
     "@floating-ui/react-dom-interactions": "^0.10.3",
@@ -85,6 +87,7 @@
     "@babel/preset-react": "^7.17.12",
     "@babel/preset-typescript": "^7.17.12",
     "@babel/runtime": "^7.17.9",
+    "@jest/globals": "^29.3.1",
     "@mdx-js/react": "^1.6.22",
     "@openreplay/sourcemap-uploader": "^3.0.0",
     "@storybook/addon-actions": "^6.5.12",
@@ -114,6 +117,8 @@
     "country-data": "0.0.31",
     "css-loader": "^6.7.1",
     "cssnano": "^5.0.12",
+    "cypress": "^12.3.0",
+    "cypress-image-snapshot": "^4.0.1",
     "deasync-promise": "^1.0.1",
     "deploy-aws-s3-cloudfront": "^3.6.0",
     "dotenv": "^6.2.0",
@@ -124,6 +129,7 @@
     "file-loader": "^6.2.0",
     "flow-bin": "^0.115.0",
     "html-webpack-plugin": "^5.5.0",
+    "jest": "^29.3.1",
     "mini-css-extract-plugin": "^2.6.0",
     "minio": "^7.0.18",
     "moment-locales-webpack-plugin": "^1.2.0",
@@ -141,6 +147,7 @@
     "svg-inline-loader": "^0.8.2",
     "svgo": "^2.8.0",
     "tailwindcss": "^3.1.4",
+    "ts-jest": "^29.0.5",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4",
     "webpack": "^5.72.1",

@@ -119,7 +119,8 @@ export default class MessageManager {
     private readonly session: any /*Session*/,
     private readonly state: Store<State>,
     private readonly screen: Screen,
-    initialLists?: Partial<InitialLists>
+    initialLists?: Partial<InitialLists>,
+    coldStart?: boolean
   ) {
     this.pagesManager = new PagesManager(screen, this.session.isMobile, cssLoading => {
       screen.displayFrame(!cssLoading)
@@ -138,8 +139,9 @@ export default class MessageManager {
 
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
 
-
-    this.loadMessages()
+    if (!coldStart) {
+      this.loadMessages()
+    }
   }
 
   private _sortMessagesHack(msgs: Message[]) {

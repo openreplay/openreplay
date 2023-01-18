@@ -67,8 +67,12 @@ function WebPlayer(props: any) {
     }
 
     const jumpToTime = props.query.get('jumpto');
+    const freeze = props.query.get('freeze')
     if (jumpToTime) {
       WebPlayerInst.jump(parseInt(jumpToTime));
+    }
+    if (freeze) {
+      WebPlayerInst.freeze()
     }
 
     return () => WebPlayerInst.clean();
