@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, PageTitle, Button, Link } from 'UI';
+import { Icon, PageTitle, Button, Link, Toggler } from 'UI';
 import MetricsSearch from '../MetricsSearch';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
@@ -33,11 +33,22 @@ function MetricViewHeader() {
         <ListViewToggler />
 
         <div className="items-center flex gap-4">
+          <Toggler
+            label="My Cards"
+            checked={filter.showMine}
+            name="test"
+            className="font-medium mr-2"
+            onChange={() =>
+              metricStore.updateKey('filter', { ...filter, showMine: !filter.showMine })
+            }
+          />
           <Select
             options={[{ label: 'All Types', value: 'all' }, ...DROPDOWN_OPTIONS]}
             name="type"
             defaultValue={filter.type}
-            onChange={({ value }) => metricStore.updateKey('filter', { ...filter, type: value.value})}
+            onChange={({ value }) =>
+              metricStore.updateKey('filter', { ...filter, type: value.value })
+            }
             plain={true}
             isSearchable={true}
           />
@@ -55,7 +66,9 @@ function MetricViewHeader() {
 
           <DashboardDropdown
             plain={true}
-            onChange={(value: any) => metricStore.updateKey('filter', { ...filter, dashboard: value})}
+            onChange={(value: any) =>
+              metricStore.updateKey('filter', { ...filter, dashboard: value })
+            }
           />
         </div>
       </div>

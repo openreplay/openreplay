@@ -6,7 +6,6 @@ import Error from './types/error';
 import {
   TIMESERIES,
   TABLE,
-
   FUNNEL,
   ERRORS,
   RESOURCE_MONITORING,
@@ -61,6 +60,9 @@ export default class MetricStore {
     return this.metrics
       .filter(
         (card) =>
+          (this.filter.showMine
+            ? card.owner === JSON.parse(localStorage.getItem('user')!).account.email
+            : true) &&
           (this.filter.type === 'all' || card.metricType === this.filter.type) &&
           (!dbIds.length ||
             card.dashboards.map((i) => i.dashboardId).some((id) => dbIds.includes(id))) &&
