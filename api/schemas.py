@@ -588,7 +588,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             assert values.get("sourceOperator") is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
-                assert values["sourceOperator"] != MathOperator._equal.value, \
+                assert values["sourceOperator"] != MathOperator._equal, \
                     f"{MathOperator._equal} is not allowed for duration of {PerformanceEventType.time_between_events}"
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
@@ -606,10 +606,10 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             values["source"] = [ErrorSource.js_exception]
         elif values.get("type") == EventType.request_details:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.request_details.value}"
+                f"filters should be defined for {EventType.request_details}"
         elif values.get("type") == EventType.graphql:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.graphql.value}"
+                f"filters should be defined for {EventType.graphql}"
 
         if isinstance(values.get("operator"), ClickEventExtraOperator):
             assert values.get("type") == EventType.click, \
@@ -1013,12 +1013,13 @@ class CreateCardSchema(CardChartSchema):
                 and values.get("metricOf") != MetricOfTable.issues:
             values["metricValue"] = []
 
-        if values.get("metricType") == MetricType.funnel.value and \
+        if values.get("metricType") == MetricType.funnel and \
                 values.get("series") is not None and len(values["series"]) > 1:
             values["series"] = [values["series"][0]]
-        elif values.get("metricType") not in (MetricType.table.value,
-                                              MetricType.timeseries.value,
-                                              MetricType.insights.value) \
+        elif values.get("metricType") not in [MetricType.table,
+                                              MetricType.timeseries,
+                                              MetricType.insights,
+                                              MetricType.click_map] \
                 and values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = []
 
@@ -1168,7 +1169,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
 
     @root_validator
     def validator(cls, values):
-        if values.get("type") is not None and values["type"] == LiveFilterType.metadata.value:
+        if values.get("type") is not None and values["type"] == LiveFilterType.metadata:
             assert values.get("source") is not None, "source should not be null for METADATA type"
             assert len(values.get("source")) > 0, "source should not be empty for METADATA type"
         return values
@@ -1191,8 +1192,8 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
                 else:
                     i += 1
             for i in values["filters"]:
-                if i.get("type") == LiveFilterType.platform.value:
-                    i["type"] = LiveFilterType.user_device_type.value
+                if i.get("type") == LiveFilterType.platform:
+                    i["type"] = LiveFilterType.user_device_type
         if values.get("sort") is not None:
             if values["sort"].lower() == "startts":
                 values["sort"] = "TIMESTAMP"
