@@ -17,5 +17,6 @@ app/components/ui/SVG.js
 !.yarn/versions
 *.env.json
 cypress.env.json
-cypress/snapshots/__diff_output__/
+**/__diff_output__/*
+*.diff.png
 cypress/videos/
