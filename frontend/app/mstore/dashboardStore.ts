@@ -9,7 +9,7 @@ import { getRE } from 'App/utils';
 
 interface DashboardFilter {
   query?: string;
-  visibility?: string;
+  showMine?: boolean;
 }
 export default class DashboardStore {
   siteId: any = null;
@@ -27,7 +27,7 @@ export default class DashboardStore {
   endTimestamp: number = 0;
   pendingRequests: number = 0;
 
-  filter: DashboardFilter = { visibility: 'all', query: '' };
+  filter: DashboardFilter = { showMine: false, query: '' };
 
   // Metrics
   metricsPage: number = 1;
@@ -70,8 +70,7 @@ export default class DashboardStore {
     return this.dashboards
       .filter(
         (dashboard) =>
-          (this.filter.visibility === 'all' ||
-            (this.filter.visibility === 'team' ? dashboard.isPublic : !dashboard.isPublic)) &&
+          (this.filter.showMine ? !dashboard.isPublic : dashboard.isPublic) &&
           (!filterRE ||
             // @ts-ignore
             ['name', 'owner', 'description'].some((key) => filterRE.test(dashboard[key])))
@@ -394,7 +393,7 @@ export default class DashboardStore {
   }
 
   toggleAlertModal(val: boolean) {
-     this.showAlertModal = val
+    this.showAlertModal = val;
   }
 
   fetchMetricChartData(

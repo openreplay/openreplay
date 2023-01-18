@@ -120,9 +120,9 @@ export const issueOptions = [
 
 export const issueCategories = [
   { label: 'Resources', value: IssueCategory.RESOURCES },
-  { label: 'Network', value: IssueCategory.NETWORK },
-  { label: 'Rage', value: IssueCategory.RAGE },
-  { label: 'Errors', value: IssueCategory.ERRORS },
+  { label: 'Network Request', value: IssueCategory.NETWORK },
+  { label: 'Click Rage', value: IssueCategory.RAGE },
+  { label: 'JS Errors', value: IssueCategory.ERRORS },
 ]
 
 export const issueCategoriesMap = issueCategories.reduce((acc, {value, label}) => {
