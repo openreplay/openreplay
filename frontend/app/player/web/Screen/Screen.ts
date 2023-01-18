@@ -57,7 +57,9 @@ export default class Screen {
   private readonly screen: HTMLDivElement;
   private parentElement: HTMLElement | null = null;
 
-  constructor(isMobile: boolean) {
+  constructor(isMobile: boolean, coldStart?: boolean) {
+    if (coldStart) return;
+
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
     this.iframe = iframe;

@@ -26,6 +26,7 @@ export interface SetState {
   completed: boolean
   live: boolean
   livePlay: boolean
+  freeze: boolean
 
   endTime: number
 }
@@ -46,6 +47,7 @@ export default class Animator {
     completed: false,
     live: false,
     livePlay: false,
+    freeze: false,
 
     endTime: 0,
   } as const
@@ -129,6 +131,7 @@ export default class Animator {
   }
 
   play() {
+    if (this.store.get().freeze) return;
     if (!this.store.get().ready) {
       cancelAnimationFrame(this.animationFrameRequestId)
       this.store.update({ playing: true })
@@ -143,6 +146,18 @@ export default class Animator {
   pause() {
     cancelAnimationFrame(this.animationFrameRequestId)
     this.store.update({ playing: false })
+  }
+
+  freeze() {
+    if (this.store.get().ready) {
+      // making sure that replay is displayed completely
+      setTimeout(() => {
+        this.store.update({ freeze: true })
+        this.pause()
+      }, 500)
+    } else {
+      setTimeout(() => this.freeze(), 500)
+    }
   }
 
   togglePlay = () => {
@@ -189,14 +204,4 @@ export default class Animator {
       );
     }
   }
-
-  // TODO: clearify logic of live time-travel
-  jumpToLive = () => {
-    cancelAnimationFrame(this.animationFrameRequestId)
-    this.setTime(this.store.get().endTime)
-    this.startAnimation()
-    this.store.update({ livePlay: true })
-  }
-
-
 }
