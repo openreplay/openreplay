@@ -152,6 +152,9 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	// Save information about session beacon size
+	e.addBeaconSize(tokenData.ID, p.BeaconSize)
+
 	ResponseWithJSON(w, &StartSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
