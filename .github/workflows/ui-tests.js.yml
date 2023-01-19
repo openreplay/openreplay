@@ -69,7 +69,7 @@ jobs:
       - name: Run visual tests
         run: yarn cy:test
       - name: Upload Debug
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: 'Snapshots'
           path: |
