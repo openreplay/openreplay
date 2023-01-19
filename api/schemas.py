@@ -24,6 +24,12 @@ class UserLoginSchema(_Grecaptcha):
     password: str = Field(...)
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
+    @root_validator(pre=True)
+    def log_payload(cls, values):
+        print("login received:")
+        print(values)
+        return values
+
 
 class UserSignupSchema(UserLoginSchema):
     fullname: str = Field(...)
