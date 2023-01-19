@@ -1,7 +1,8 @@
 # Checking unit and visual tests locally on every merge rq to dev and main
-name: Node.js CI
+name: Frontend tests
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
     paths:
