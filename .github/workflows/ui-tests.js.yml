@@ -27,8 +27,9 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        
-    - run: npm i
+    - name: Setup yarn
+      run: npm install -g yarn
+    - run: yarn
     - name: unit tests
       run: npm test --if-resent
     - name: visual tests
