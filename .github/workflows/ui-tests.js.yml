@@ -56,7 +56,9 @@ jobs:
           echo '{ "account": "$CY_ACC", "password": "$CY_PASS" }' >> cypress.env.json
 
       - name: Setup packages
-        run: npm i -g yarn && yarn
+        run: |
+          npm i -g yarn
+          yarn
       - name: Run unit tests
         run: yarn test
       - name: Run Frontend
