@@ -1,5 +1,8 @@
-describe('Replayer visual match test', () => {
-  it('Teklogiks sessions on 3 and 20 seconds are same', () => {
+describe('Replayer visual match test', {
+  viewportHeight: 900,
+  viewportWidth: 1400,
+}, () => {
+  it('Checking Replayer at breakpoints, user events and console', () => {
     cy.intercept('/api/account').as('getAccount')
     cy.intercept('/mobs/*').as('getSession')
 
@@ -19,8 +22,14 @@ describe('Replayer visual match test', () => {
 
     cy.visit('3/session/7585361734083637?jumpto=20000&freeze=true')
     // adjusting because we have more messages to load
-    cy.wait(5000)
+    cy.wait(4000)
 
     cy.matchImageSnapshot('2nd-breakpoint');
+
+    cy.get('[data-openreplay-label="User Steps"]').click()
+    cy.matchImageSnapshot('User-Events');
+
+    cy.get('#control-button-network > .controlButton-module__label--YznMl').click()
+    cy.matchImageSnapshot('Network-Events');
   })
 })
