@@ -53,7 +53,7 @@ jobs:
           echo "VERSION = '1.9.0'" >> .env
           echo "TRACKER_VERSION = '4.0.0'" >> .env
           echo "COMMIT_HASH = 'dev'" >> .env
-          echo '{ "account": $CY_ACC, "password": $CY_PASS }' >> cypress.env.json
+          echo '{ "account": "$CY_ACC", "password": "$CY_PASS" }' >> cypress.env.json
 
       - name: Setup packages
         run: npm i --legacy-peer-deps
