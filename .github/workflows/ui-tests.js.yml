@@ -27,9 +27,8 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
         
-    - run: npm ci
+    - run: npm i
     - name: unit tests
       run: npm test --if-resent
     - name: visual tests
