@@ -164,7 +164,7 @@ func main() {
 			if err != nil {
 				log.Printf("domBuffer message write err: %s", err)
 			}
-			if n != len(messageIndex) {
+			if n != len(msg.Encode()) {
 				log.Printf("domBuffer message not full write: %d/%d", n, len(messageIndex))
 			}
 		}
@@ -184,7 +184,7 @@ func main() {
 			if err != nil {
 				log.Printf("devBuffer message write err: %s", err)
 			}
-			if n != len(messageIndex) {
+			if n != len(msg.Encode()) {
 				log.Printf("devBuffer message not full write: %d/%d", n, len(messageIndex))
 			}
 		}
