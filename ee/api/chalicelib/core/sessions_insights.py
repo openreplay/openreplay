@@ -1,4 +1,5 @@
-import schemas_ee
+import schemas, schemas_ee
+from typing import List
 from chalicelib.core import metrics
 from chalicelib.utils import ch_client
 
@@ -124,7 +125,9 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
         query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
     table_hh1, table_hh2, columns, this_period_hosts, last_period_hosts = __get_two_values(res, time_index='hh',
-                                                                                           name_index='source')
+                                                                                name_index='source')
+    test = [k[4] for k in table_hh1]
+    print(f'length {len(test)}, uniques {len(set(test))}')
     del res
 
     new_hosts = [x for x in this_period_hosts if x not in last_period_hosts]
@@ -132,25 +135,56 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
 
     source_idx = columns.index('source')
     duration_idx = columns.index('avg_duration')
-    success_idx = columns.index('success_rate')
-    delta_duration = dict()
-    delta_success = dict()
+    # success_idx = columns.index('success_rate')
+    # delta_duration = dict()
+    # delta_success = dict()
+    new_duration_values = dict()
+    duration_values = dict()
     for n in common_names:
         d1_tmp = _table_where(table_hh1, source_idx, n)
-        # d1_tmp = table_hh1[table_hh1[:, source_idx] == n]
         d2_tmp = _table_where(table_hh2, source_idx, n)
-        # d2_tmp = table_hh2[table_hh2[:, source_idx] == n]
-        delta_duration[n] = _mean_table_index(d1_tmp, duration_idx) - _mean_table_index(d2_tmp, duration_idx)
-        # delta_duration[n] = d1_tmp[:, duration_idx].mean() - d2_tmp[:, duration_idx].mean()
-        delta_success[n] = _mean_table_index(d1_tmp, success_idx) - _mean_table_index(d2_tmp, success_idx)
-        # delta_success[n] = d1_tmp[:, success_idx].mean() - d2_tmp[:, success_idx].mean()
+        old_duration = _mean_table_index(d2_tmp, duration_idx)
+        new_duration = _mean_table_index(d1_tmp, duration_idx)
+        if old_duration == 0:
+            continue
+        duration_values[n] = new_duration, old_duration, (new_duration-old_duration)/old_duration
+        # delta_duration[n] = (_mean_table_index(d1_tmp, duration_idx) - _duration1) / _duration1
+        # delta_success[n] = _mean_table_index(d1_tmp, success_idx) - _mean_table_index(d2_tmp, success_idx)
+    for n in new_hosts:
+        d1_tmp = _table_where(table_hh1, source_idx, n)
+        new_duration_values[n] = _mean_table_index(d1_tmp, duration_idx)
 
-    names_idx = columns.index('names')
-    d1_tmp = _sort_table_index(table_hh1, success_idx)
-    # d1_tmp = d1_tmp[d1_tmp[:, success_idx].argsort()]
-    return {'ratio': list(zip(_table_slice(d1_tmp, source_idx), _table_slice(d1_tmp, success_idx))),
-            'increase': sorted(delta_success.items(), key=lambda k: k[1], reverse=False),
-            'newEvents': new_hosts}
+        #names_idx = columns.index('names')
+    total = _sum_table_index(table_hh1, duration_idx)
+    d1_tmp = _sort_table_index(table_hh1, duration_idx, reverse=True)
+    _tmp = _table_slice(d1_tmp, duration_idx)
+    _tmp2 = _table_slice(d1_tmp, source_idx)
+
+    increase = sorted(duration_values.items(), key=lambda k: k[1][-1], reverse=True)
+    ratio = sorted(zip(_tmp2, _tmp), key=lambda k: k[1], reverse=True)
+    # names_ = set([k[0] for k in increase[:3]+ratio[:3]]+new_hosts[:3])
+    names_ = set([k[0] for k in increase[:3] + ratio[:3]]) # we took out new hosts since they dont give much info
+
+    results = list()
+    for n in names_:
+        if n is None:
+            continue
+        data_ = {'category': 'network', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
+        for n_, v in ratio:
+            if n == n_:
+                if n in new_hosts:
+                    data_['value'] = new_duration_values[n]
+                data_['ratio'] = v/total
+                break
+        for n_, v in increase:
+            if n == n_:
+                data_['value'] = v[0]
+                data_['oldValue'] = v[1]
+                data_['change'] = v[2]
+                data_['isNew'] = False
+                break
+        results.append(data_)
+    return results
 
 
 def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
@@ -166,13 +200,13 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
                     LEFT JOIN (SELECT session_id, name, source, message, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime
                                FROM experimental.events 
-                               WHERE project_id = {project_id} 
+                               WHERE project_id = {project_id}
+                                    AND datetime >= toDateTime(%(startTimestamp)s/1000)
+                                    AND datetime < toDateTime(%(endTimestamp)s/1000)
                                     AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.name 
                 ORDER BY T1.hh DESC;"""
-    # print("----------------------------------")
-    # print(query)
-    # print("----------------------------------")
+
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
             query = conn.format(query=query, params=params)
@@ -192,18 +226,43 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
     names_idx = columns.index('names')
     percentage_errors = dict()
     total = _sum_table_index(table_hh1, sessions_idx)
-    # total = table_hh1[:, sessions_idx].sum()
-    error_increase = dict()
+    # error_increase = dict()
+    new_error_values = dict()
+    error_values = dict()
     for n in this_period_errors:
-        percentage_errors[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx) / total
-        # percentage_errors[n] = (table_hh1[table_hh1[:, names_idx] == n][:, sessions_idx].sum())/total
+        percentage_errors[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
+        new_error_values[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), names_idx)
     for n in common_errors:
-        error_increase[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), names_idx) - _sum_table_index(
-            _table_where(table_hh2, names_idx, n), names_idx)
-        # error_increase[n] = table_hh1[table_hh1[:, names_idx] == n][:, names_idx].sum() - table_hh2[table_hh2[:, names_idx] == n][:, names_idx].sum()
-    return {'ratio': sorted(percentage_errors.items(), key=lambda k: k[1], reverse=True),
-            'increase': sorted(error_increase.items(), key=lambda k: k[1], reverse=True),
-            'newEvents': new_errors}
+        old_errors = _sum_table_index(_table_where(table_hh2, names_idx, n), names_idx)
+        if old_errors == 0:
+            continue
+        new_errors = _sum_table_index(_table_where(table_hh1, names_idx, n), names_idx)
+        # error_increase[n] = (new_errors - old_errors) / old_errors
+        error_values[n] = new_errors, old_errors, (new_errors - old_errors) / old_errors
+    ratio = sorted(percentage_errors.items(), key=lambda k: k[1], reverse=True)
+    increase = sorted(error_values.items(), key=lambda k: k[1][-1], reverse=True)
+    names_ = set([k[0] for k in increase[:3] + ratio[:3]] + new_errors[:3])
+
+    results = list()
+    for n in names_:
+        if n is None:
+            continue
+        data_ = {'category': 'errors', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
+        for n_, v in ratio:
+            if n == n_:
+                if n in new_errors:
+                    data_['value'] = new_error_values[n]
+                data_['ratio'] = v/total
+                break
+        for n_, v in increase:
+            if n == n_:
+                data_['value'] = v[0]
+                data_['oldValue'] = v[1]
+                data_['change'] = v[2]
+                data_['isNew'] = False
+                break
+        results.append(data_)
+    return results
 
 
 def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
@@ -237,12 +296,26 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
     memory_idx = columns.index('memory_used')
     cpu_idx = columns.index('cpu_used')
 
-    _tmp = _mean_table_index(table_hh2, memory_idx)
-    # _tmp = table_hh2[:, memory_idx].mean()
+    mem_newvalue = _mean_table_index(table_hh1, memory_idx)
+    mem_oldvalue = _mean_table_index(table_hh2, memory_idx)
+    cpu_newvalue = _mean_table_index(table_hh2, cpu_idx)
+    cpu_oldvalue = _mean_table_index(table_hh2, cpu_idx)
     # TODO: what if _tmp=0 ?
-    _tmp = 1 if _tmp == 0 else _tmp
-    return {'cpuIncrease': _mean_table_index(table_hh1, cpu_idx) - _mean_table_index(table_hh2, cpu_idx),
-            'memoryIncrease': (_mean_table_index(table_hh1, memory_idx) - _tmp) / _tmp}
+    mem_oldvalue = 1 if mem_oldvalue == 0 else mem_oldvalue
+    cpu_oldvalue = 1 if cpu_oldvalue == 0 else cpu_oldvalue
+    return [{'category': 'resources',
+             'name': 'cpu',
+            'value': cpu_newvalue,
+             'oldValue': cpu_oldvalue,
+            'change': (cpu_newvalue - cpu_oldvalue)/cpu_oldvalue,
+             'isNew': None},
+            {'category': 'resources',
+             'name': 'memory',
+             'value': mem_newvalue,
+             'oldValue': mem_oldvalue,
+             'change': (mem_newvalue - mem_oldvalue)/mem_oldvalue,
+             'isNew': None}
+            ]
 
 
 def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
@@ -253,7 +326,7 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
     conditions = ["issue_type = 'click_rage'", "event_type = 'ISSUE'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
-                SELECT T1.hh, count(T2.session_id) as sessions, T2.url_host as names, groupUniqArray(T2.url_path) as sources 
+                SELECT T1.hh, count(T2.session_id) as sessions, groupUniqArray(T2.url_host) as names, T2.url_path as sources 
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
                 LEFT JOIN (SELECT session_id, url_host, url_path, toStartOfInterval(datetime, INTERVAL %(step_size)s second ) as dtime 
                            FROM experimental.events 
@@ -261,97 +334,99 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
                                 AND datetime >= toDateTime(%(startTimestamp)s/1000)
                                 AND datetime < toDateTime(%(endTimestamp)s/1000)
                                 AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
-                GROUP BY T1.hh, T2.url_host 
+                GROUP BY T1.hh, T2.url_path 
                 ORDER BY T1.hh DESC;"""
     if conn is None:
         with ch_client.ClickHouseClient() as conn:
             query = conn.format(query=query, params=params)
-            print("--------------------")
-            print(query)
-            print("--------------------")
             res = conn.execute(query=query)
     else:
         query = conn.format(query=query, params=params)
-        print("--------------------")
-        print(query)
-        print("--------------------")
         res = conn.execute(query=query)
 
     table_hh1, table_hh2, columns, this_period_rage, last_period_rage = __get_two_values(res, time_index='hh',
-                                                                                         name_index='names')
+                                                                                         name_index='sources')
     del res
 
     new_names = [x for x in this_period_rage if x not in last_period_rage]
     common_names = [x for x in this_period_rage if x not in new_names]
 
     sessions_idx = columns.index('sessions')
-    names_idx = columns.index('names')
+    names_idx = columns.index('sources')
 
-    raged_increment = dict()
+    # raged_increment = dict()
+    raged_values = dict()
+    new_raged_values = dict()
     # TODO verify line (188) _tmp = table_hh2[:, sessions_idx][n].sum()
     for n in common_names:
         if n is None:
             continue
-        _tmp = _sum_table_index(_table_where(table_hh2, names_idx, n), sessions_idx)
-        # _tmp = table_hh2[:, sessions_idx][n].sum()
-        raged_increment[n] = (_sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx) - _tmp) / _tmp
-        # raged_increment[n] = (table_hh1[:, sessions_idx][n].sum()-_tmp)/_tmp
+        _oldvalue = _sum_table_index(_table_where(table_hh2, names_idx, n), sessions_idx)
+        _newvalue = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
+        # raged_increment[n] = (_newvalue - _oldvalue) / _oldvalue
+        raged_values[n] = _newvalue, _oldvalue, (_newvalue - _oldvalue) / _oldvalue
+
+    for n in new_names:
+        if n is None:
+            continue
+        _newvalue = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
+        new_raged_values[n] = _newvalue
 
     total = _sum_table_index(table_hh1, sessions_idx)
-    # total = table_hh1[:, sessions_idx].sum()
-    return {'ratio': list(
-        zip(_table_slice(table_hh1, names_idx), map(lambda k: k / total, _table_slice(table_hh1, sessions_idx)))),
-        'increase': sorted(raged_increment.items(), key=lambda k: k[1], reverse=True),
-        'newEvents': new_names,
-    }
+    names, ratio = _table_slice(table_hh1, names_idx), _table_slice(table_hh1, sessions_idx)
+    ratio = sorted(zip(names, ratio), key=lambda k: k[1], reverse=True)
+    increase = sorted(raged_values.items(), key=lambda k: k[1][-1], reverse=True)
+    names_ = set([k[0] for k in increase[:3] + ratio[:3]] + new_names[:3])
+
+    results = list()
+    for n in names_:
+        if n is None:
+            continue
+        data_ = {'category': 'rage', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
+        for n_, v in ratio:
+            if n == n_:
+                if n in new_names:
+                    data_['value'] = new_raged_values[n]
+                data_['ratio'] = v/total
+                break
+        for n_, v in increase:
+            if n == n_:
+                data_['value'] = v[0]
+                data_['oldValue'] = v[1]
+                data_['change'] = v[2]
+                data_['isNew'] = False
+                break
+        results.append(data_)
+    return results
 
 
 def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
-    output = {}
-    if data.categories is None or len(data.categories) == 0:
-        data.categories = []
+    output = list()
+    #TODO: Handle filters of GetInsightsSchema
+    # data.series[0].filter.filters
+    if data.metricValue is None or len(data.metricValue) == 0:
+        data.metricValue = []
         for v in schemas_ee.InsightCategories:
-            data.categories.append(v)
+            data.metricValue.append(v)
     with ch_client.ClickHouseClient() as conn:
-        if schemas_ee.InsightCategories.errors in data.categories:
-            output[schemas_ee.InsightCategories.errors] = query_most_errors_by_period(project_id=project_id,
-                                                                                      start_time=data.startTimestamp,
-                                                                                      end_time=data.endTimestamp,
-                                                                                      conn=conn)
-        if schemas_ee.InsightCategories.network in data.categories:
-            output[schemas_ee.InsightCategories.network] = query_requests_by_period(project_id=project_id,
-                                                                                    start_time=data.startTimestamp,
-                                                                                    end_time=data.endTimestamp,
-                                                                                    conn=conn)
-        if schemas_ee.InsightCategories.rage in data.categories:
-            output[schemas_ee.InsightCategories.rage] = query_click_rage_by_period(project_id=project_id,
-                                                                                   start_time=data.startTimestamp,
-                                                                                   end_time=data.endTimestamp,
-                                                                                   conn=conn)
-        if schemas_ee.InsightCategories.resources in data.categories:
-            output[schemas_ee.InsightCategories.resources] = query_cpu_memory_by_period(project_id=project_id,
-                                                                                        start_time=data.startTimestamp,
-                                                                                        end_time=data.endTimestamp,
-                                                                                        conn=conn)
+        if schemas_ee.InsightCategories.errors in data.metricValue:
+            output += query_most_errors_by_period(project_id=project_id,
+                                                    start_time=data.startTimestamp,
+                                                    end_time=data.endTimestamp,
+                                                    conn=conn)
+        if schemas_ee.InsightCategories.network in data.metricValue:
+            output += query_requests_by_period(project_id=project_id,
+                                                    start_time=data.startTimestamp,
+                                                    end_time=data.endTimestamp,
+                                                    conn=conn)
+        if schemas_ee.InsightCategories.rage in data.metricValue:
+            output += query_click_rage_by_period(project_id=project_id,
+                                                    start_time=data.startTimestamp,
+                                                    end_time=data.endTimestamp,
+                                                    conn=conn)
+        if schemas_ee.InsightCategories.resources in data.metricValue:
+            output += query_cpu_memory_by_period(project_id=project_id,
+                                                    start_time=data.startTimestamp,
+                                                    end_time=data.endTimestamp,
+                                                    conn=conn)
     return output
-
-# if __name__ == '__main__':
-#     # configs
-#     start = '2022-04-19'
-#     end = '2022-04-21'
-#     projectId = 1307
-#     time_step = 'hour'
-#
-#     # Errors widget
-#     print('Errors example')
-#     res = query_most_errors_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
-#     print(res)
-#
-#     # Resources widgets
-#     print('resources example')
-#     res = query_cpu_memory_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
-#
-#     # Network widgets
-#     print('Network example')
-#     res = query_requests_by_period(projectId, start_time=start, end_time=end, time_step=time_step)
-#     print(res)
