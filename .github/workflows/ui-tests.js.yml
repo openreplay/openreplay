@@ -20,6 +20,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    name: Visual Testing
     defaults:
       run:
         working-directory: ./frontend
