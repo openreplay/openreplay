@@ -73,5 +73,4 @@ jobs:
         with:
           name: 'Snapshots'
           path: |
-            cypress/snapshots/__diff_output__/
             cypress/snapshots/
