@@ -70,7 +70,7 @@ export default class DashboardStore {
     return this.dashboards
       .filter(
         (dashboard) =>
-          (this.filter.showMine ? !dashboard.isPublic : dashboard.isPublic) &&
+          (this.filter.showMine ? !dashboard.isPublic : true) &&
           (!filterRE ||
             // @ts-ignore
             ['name', 'owner', 'description'].some((key) => filterRE.test(dashboard[key])))
