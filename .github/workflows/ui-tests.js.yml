@@ -30,5 +30,7 @@ jobs:
         cache: 'npm'
         
     - run: npm ci
-    - run: npm test --if-resent
-    - run: npm run cy:test --if-present
+    - name: unit tests
+      run: npm test --if-resent
+    - name: visual tests
+      run: npm run cy:test --if-present
