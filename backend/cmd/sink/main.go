@@ -63,6 +63,10 @@ func main() {
 		devBuffer    = bytes.NewBuffer(make([]byte, 1024))
 	)
 
+	// Reset buffers
+	domBuffer.Reset()
+	devBuffer.Reset()
+
 	msgHandler := func(msg messages.Message) {
 		// Check batchEnd signal (nil message)
 		if msg == nil {
@@ -140,20 +144,49 @@ func main() {
 		// Encode message index
 		binary.LittleEndian.PutUint64(messageIndex, msg.Meta().Index)
 
+		var (
+			n   int
+			err error
+		)
+
 		// Add message to dom buffer
 		if messages.IsDOMType(msg.TypeID()) {
 			// Write message index
-			domBuffer.Write(messageIndex)
+			n, err = domBuffer.Write(messageIndex)
+			if err != nil {
+				log.Printf("domBuffer index write err: %s", err)
+			}
+			if n != len(messageIndex) {
+				log.Printf("domBuffer index not full write: %d/%d", n, len(messageIndex))
+			}
 			// Write message body
-			domBuffer.Write(msg.Encode())
+			n, err = domBuffer.Write(msg.Encode())
+			if err != nil {
+				log.Printf("domBuffer message write err: %s", err)
+			}
+			if n != len(messageIndex) {
+				log.Printf("domBuffer message not full write: %d/%d", n, len(messageIndex))
+			}
 		}
 
 		// Add message to dev buffer
 		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
 			// Write message index
-			devBuffer.Write(messageIndex)
+			n, err = devBuffer.Write(messageIndex)
+			if err != nil {
+				log.Printf("devBuffer index write err: %s", err)
+			}
+			if n != len(messageIndex) {
+				log.Printf("devBuffer index not full write: %d/%d", n, len(messageIndex))
+			}
 			// Write message body
-			devBuffer.Write(msg.Encode())
+			n, err = devBuffer.Write(msg.Encode())
+			if err != nil {
+				log.Printf("devBuffer message write err: %s", err)
+			}
+			if n != len(messageIndex) {
+				log.Printf("devBuffer message not full write: %d/%d", n, len(messageIndex))
+			}
 		}
 
 		// [METRICS] Increase the number of written to the files messages and the message size
