@@ -11,7 +11,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     defaults:
       run: 
@@ -28,8 +27,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - name: Setup yarn
-      run: npm install -g yarn
-    - run: yarn install --no-lockfile
+      run: npm i --legacy-peer-deps
     - name: unit tests
       run: npm test --if-resent
     - name: visual tests
