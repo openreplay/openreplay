@@ -165,6 +165,8 @@ export default class App {
         if (data === 'restart') {
           this.stop(false)
           this.start({}, true)
+        } else if (data === 'not_init') {
+          console.warn('WebWorker: writer not initialised. Restarting tracker')
         } else if (data.type === 'failure') {
           this.stop(false)
           this._debug('worker_failed', data.reason)

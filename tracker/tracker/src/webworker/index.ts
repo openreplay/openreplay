@@ -24,7 +24,7 @@ const AUTO_SEND_INTERVAL = 10 * 1000
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
-
+let afterSleepRestarts = 0
 function finalize(): void {
   if (!writer) {
     return
@@ -82,22 +82,27 @@ self.onmessage = ({ data }: any): any => {
   }
 
   if (Array.isArray(data)) {
-    // Message[]
-    if (!writer) {
-      throw new Error('WebWorker: writer not initialised. Service Should be Started.')
-    }
-    const w = writer
-    data.forEach((message) => {
-      if (message[0] === MType.SetPageVisibility) {
-        if (message[1]) {
-          // .hidden
-          restartTimeoutID = setTimeout(() => initiateRestart(), 30 * 60 * 1000)
-        } else {
-          clearTimeout(restartTimeoutID)
+    if (writer !== null) {
+      const w = writer
+      data.forEach((message) => {
+        if (message[0] === MType.SetPageVisibility) {
+          if (message[1]) {
+            // .hidden
+            restartTimeoutID = setTimeout(() => initiateRestart(), 30 * 60 * 1000)
+          } else {
+            clearTimeout(restartTimeoutID)
+          }
         }
+        w.writeMessage(message)
+      })
+    }
+    if (!writer) {
+      postMessage('not_init')
+      if (afterSleepRestarts === 0) {
+        afterSleepRestarts += 1
+        initiateRestart()
       }
-      w.writeMessage(message)
-    })
+    }
     return
   }
 
