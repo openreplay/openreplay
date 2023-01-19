@@ -105,7 +105,7 @@ def __is_click_map(data: schemas.CreateCardSchema):
     return data.metric_type == schemas.MetricType.click_map
 
 
-def __get_click_map_chat(project_id, user_id, data: schemas.CreateCardSchema):
+def __get_click_map_chart(project_id, user_id, data: schemas.CreateCardSchema):
     if len(data.series) == 0:
         return None
     data.series[0].filter.startDate = data.startTimestamp
@@ -124,7 +124,7 @@ def merged_live(project_id, data: schemas.CreateCardSchema, user_id=None):
     elif __is_sessions_list(data):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_click_map(data):
-        return __get_click_map_chat(project_id=project_id, user_id=user_id, data=data)
+        return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
     elif len(data.series) == 0:
         return []
     series_charts = __try_live(project_id=project_id, data=data)

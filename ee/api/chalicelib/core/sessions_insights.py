@@ -100,7 +100,7 @@ def __handle_timestep(time_step):
         return f"toStartOfInterval({base}, INTERVAL {time_step} minute)", int(time_step) * 60
 
 
-def query_requests_by_period(project_id, start_time, end_time, conn=None):
+def query_requests_by_period(project_id, start_time, end_time):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
@@ -117,15 +117,12 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
                                 AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host, T2.url_path 
                 ORDER BY T1.hh DESC;"""
-    if conn is None:
-        with ch_client.ClickHouseClient() as conn:
-            query = conn.format(query=query, params=params)
-            res = conn.execute(query=query)
-    else:
+    with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
+
     table_hh1, table_hh2, columns, this_period_hosts, last_period_hosts = __get_two_values(res, time_index='hh',
-                                                                                name_index='source')
+                                                                                           name_index='source')
     test = [k[4] for k in table_hh1]
     print(f'length {len(test)}, uniques {len(set(test))}')
     del res
@@ -147,14 +144,14 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
         new_duration = _mean_table_index(d1_tmp, duration_idx)
         if old_duration == 0:
             continue
-        duration_values[n] = new_duration, old_duration, (new_duration-old_duration)/old_duration
+        duration_values[n] = new_duration, old_duration, (new_duration - old_duration) / old_duration
         # delta_duration[n] = (_mean_table_index(d1_tmp, duration_idx) - _duration1) / _duration1
         # delta_success[n] = _mean_table_index(d1_tmp, success_idx) - _mean_table_index(d2_tmp, success_idx)
     for n in new_hosts:
         d1_tmp = _table_where(table_hh1, source_idx, n)
         new_duration_values[n] = _mean_table_index(d1_tmp, duration_idx)
 
-        #names_idx = columns.index('names')
+        # names_idx = columns.index('names')
     total = _sum_table_index(table_hh1, duration_idx)
     d1_tmp = _sort_table_index(table_hh1, duration_idx, reverse=True)
     _tmp = _table_slice(d1_tmp, duration_idx)
@@ -163,18 +160,19 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
     increase = sorted(duration_values.items(), key=lambda k: k[1][-1], reverse=True)
     ratio = sorted(zip(_tmp2, _tmp), key=lambda k: k[1], reverse=True)
     # names_ = set([k[0] for k in increase[:3]+ratio[:3]]+new_hosts[:3])
-    names_ = set([k[0] for k in increase[:3] + ratio[:3]]) # we took out new hosts since they dont give much info
+    names_ = set([k[0] for k in increase[:3] + ratio[:3]])  # we took out new hosts since they dont give much info
 
     results = list()
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'network', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
+        data_ = {'category': 'network', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None,
+                 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 if n in new_hosts:
                     data_['value'] = new_duration_values[n]
-                data_['ratio'] = v/total
+                data_['ratio'] = v / total
                 break
         for n_, v in increase:
             if n == n_:
@@ -187,7 +185,7 @@ def query_requests_by_period(project_id, start_time, end_time, conn=None):
     return results
 
 
-def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
+def query_most_errors_by_period(project_id, start_time, end_time):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
@@ -207,11 +205,7 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
                 GROUP BY T1.hh, T2.name 
                 ORDER BY T1.hh DESC;"""
 
-    if conn is None:
-        with ch_client.ClickHouseClient() as conn:
-            query = conn.format(query=query, params=params)
-            res = conn.execute(query=query)
-    else:
+    with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
 
@@ -247,12 +241,13 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'errors', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
+        data_ = {'category': 'errors', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None,
+                 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 if n in new_errors:
                     data_['value'] = new_error_values[n]
-                data_['ratio'] = v/total
+                data_['ratio'] = v / total
                 break
         for n_, v in increase:
             if n == n_:
@@ -265,7 +260,7 @@ def query_most_errors_by_period(project_id, start_time, end_time, conn=None):
     return results
 
 
-def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
+def query_cpu_memory_by_period(project_id, start_time, end_time):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
@@ -282,13 +277,10 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
                                 AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host 
                 ORDER BY T1.hh DESC;"""
-    if conn is None:
-        with ch_client.ClickHouseClient() as conn:
-            query = conn.format(query=query, params=params)
-            res = conn.execute(query=query)
-    else:
+    with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
+
     table_hh1, table_hh2, columns, this_period_resources, last_period_resources = __get_two_values(res, time_index='hh',
                                                                                                    name_index='names')
     del res
@@ -305,20 +297,20 @@ def query_cpu_memory_by_period(project_id, start_time, end_time, conn=None):
     cpu_oldvalue = 1 if cpu_oldvalue == 0 else cpu_oldvalue
     return [{'category': 'resources',
              'name': 'cpu',
-            'value': cpu_newvalue,
+             'value': cpu_newvalue,
              'oldValue': cpu_oldvalue,
-            'change': (cpu_newvalue - cpu_oldvalue)/cpu_oldvalue,
+             'change': (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue,
              'isNew': None},
             {'category': 'resources',
              'name': 'memory',
              'value': mem_newvalue,
              'oldValue': mem_oldvalue,
-             'change': (mem_newvalue - mem_oldvalue)/mem_oldvalue,
+             'change': (mem_newvalue - mem_oldvalue) / mem_oldvalue,
              'isNew': None}
             ]
 
 
-def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
+def query_click_rage_by_period(project_id, start_time, end_time):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)}
@@ -336,11 +328,7 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
                                 AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_path 
                 ORDER BY T1.hh DESC;"""
-    if conn is None:
-        with ch_client.ClickHouseClient() as conn:
-            query = conn.format(query=query, params=params)
-            res = conn.execute(query=query)
-    else:
+    with ch_client.ClickHouseClient() as conn:
         query = conn.format(query=query, params=params)
         res = conn.execute(query=query)
 
@@ -382,12 +370,13 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'rage', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
+        data_ = {'category': 'rage', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None,
+                 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 if n in new_names:
                     data_['value'] = new_raged_values[n]
-                data_['ratio'] = v/total
+                data_['ratio'] = v / total
                 break
         for n_, v in increase:
             if n == n_:
@@ -402,31 +391,26 @@ def query_click_rage_by_period(project_id, start_time, end_time, conn=None):
 
 def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
     output = list()
-    #TODO: Handle filters of GetInsightsSchema
+    # TODO: Handle filters of GetInsightsSchema
     # data.series[0].filter.filters
     if data.metricValue is None or len(data.metricValue) == 0:
         data.metricValue = []
         for v in schemas_ee.InsightCategories:
             data.metricValue.append(v)
-    with ch_client.ClickHouseClient() as conn:
-        if schemas_ee.InsightCategories.errors in data.metricValue:
-            output += query_most_errors_by_period(project_id=project_id,
-                                                    start_time=data.startTimestamp,
-                                                    end_time=data.endTimestamp,
-                                                    conn=conn)
-        if schemas_ee.InsightCategories.network in data.metricValue:
-            output += query_requests_by_period(project_id=project_id,
-                                                    start_time=data.startTimestamp,
-                                                    end_time=data.endTimestamp,
-                                                    conn=conn)
-        if schemas_ee.InsightCategories.rage in data.metricValue:
-            output += query_click_rage_by_period(project_id=project_id,
-                                                    start_time=data.startTimestamp,
-                                                    end_time=data.endTimestamp,
-                                                    conn=conn)
+    if schemas_ee.InsightCategories.errors in data.metricValue:
+        output += query_most_errors_by_period(project_id=project_id,
+                                              start_time=data.startTimestamp,
+                                              end_time=data.endTimestamp)
+    if schemas_ee.InsightCategories.network in data.metricValue:
+        output += query_requests_by_period(project_id=project_id,
+                                           start_time=data.startTimestamp,
+                                           end_time=data.endTimestamp)
+    if schemas_ee.InsightCategories.rage in data.metricValue:
+        output += query_click_rage_by_period(project_id=project_id,
+                                             start_time=data.startTimestamp,
+                                             end_time=data.endTimestamp)
         if schemas_ee.InsightCategories.resources in data.metricValue:
             output += query_cpu_memory_by_period(project_id=project_id,
-                                                    start_time=data.startTimestamp,
-                                                    end_time=data.endTimestamp,
-                                                    conn=conn)
+                                                 start_time=data.startTimestamp,
+                                                 end_time=data.endTimestamp)
     return output

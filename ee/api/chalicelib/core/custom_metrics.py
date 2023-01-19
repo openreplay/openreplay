@@ -118,7 +118,7 @@ def __is_click_map(data: schemas_ee.CreateCardSchema):
     return data.metric_type == schemas.MetricType.click_map
 
 
-def __get_click_map_chat(project_id, user_id, data: schemas_ee.CreateCardSchema):
+def __get_click_map_chart(project_id, user_id, data: schemas_ee.CreateCardSchema):
     if len(data.series) == 0:
         return None
     data.series[0].filter.startDate = data.startTimestamp
@@ -133,11 +133,12 @@ def __is_insights(data: schemas_ee.CreateCardSchema):
 
 
 # EE only
-def __get_insights_chat(project_id, user_id, data: schemas_ee.CreateCardSchema):
+def __get_insights_chart(project_id, user_id, data: schemas_ee.CreateCardSchema):
     return sessions_insights.fetch_selected(project_id=project_id,
                                             data=schemas_ee.GetInsightsSchema(startTimestamp=data.startTimestamp,
                                                                               endTimestamp=data.endTimestamp,
-                                                                              metricValue=data.metric_value))
+                                                                              metricValue=data.metric_value,
+                                                                              series=data.series))
 
 
 def merged_live(project_id, data: schemas_ee.CreateCardSchema, user_id=None):
@@ -150,10 +151,10 @@ def merged_live(project_id, data: schemas_ee.CreateCardSchema, user_id=None):
     elif __is_sessions_list(data):
         return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
     elif __is_click_map(data):
-        return __get_click_map_chat(project_id=project_id, user_id=user_id, data=data)
+        return __get_click_map_chart(project_id=project_id, user_id=user_id, data=data)
     # EE only
     elif __is_insights(data):
-        return __get_insights_chat(project_id=project_id, user_id=user_id, data=data)
+        return __get_insights_chart(project_id=project_id, user_id=user_id, data=data)
     elif len(data.series) == 0:
         return []
     series_charts = __try_live(project_id=project_id, data=data)
