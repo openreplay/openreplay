@@ -230,6 +230,7 @@ Pipfile.lock
 /chalicelib/utils/dev.py
 /chalicelib/utils/email_handler.py
 /chalicelib/utils/email_helper.py
+/chalicelib/utils/errors_helper.py
 /chalicelib/utils/event_filter_definition.py
 /chalicelib/utils/github_client_v3.py
 /chalicelib/utils/helper.py

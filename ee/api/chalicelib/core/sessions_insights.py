@@ -1,5 +1,5 @@
 import schemas, schemas_ee
-from typing import List
+from typing import List, Optional
 from chalicelib.core import metrics
 from chalicelib.utils import ch_client
 
@@ -86,25 +86,19 @@ def __get_two_values(response, time_index='hh', name_index='name'):
     return table_hh1, table_hh2, columns, names_hh1, names_hh2
 
 
-def __handle_timestep(time_step):
-    base = "{0}"
-    if time_step == 'hour':
-        return f"toStartOfHour({base})", 3600
-    elif time_step == 'day':
-        return f"toStartOfDay({base})", 24 * 3600
-    elif time_step == 'week':
-        return f"toStartOfWeek({base})", 7 * 24 * 3600
-    else:
-        assert type(
-            time_step) == int, "time_step must be {'hour', 'day', 'week'} or an integer representing the time step in minutes"
-        return f"toStartOfInterval({base}, INTERVAL {time_step} minute)", int(time_step) * 60
-
-
-def query_requests_by_period(project_id, start_time, end_time):
+def query_requests_by_period(project_id, start_time, end_time, filters: Optional[schemas.SessionsSearchPayloadSchema]):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
     }
+    sub_query = ""
+    if filters:
+        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
+                                                                  error_status=None,
+                                                                  errors_only=True, favorite_only=None,
+                                                                  issue=None, user_id=None)
+        params = {**params, **qp_params}
+        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
     conditions = ["event_type = 'REQUEST'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -113,6 +107,7 @@ def query_requests_by_period(project_id, start_time, end_time):
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
                 LEFT JOIN (SELECT session_id, url_host, url_path, success, message, duration, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime 
                            FROM experimental.events 
+                           {sub_query}
                            WHERE project_id = {project_id} 
                                 AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host, T2.url_path 
@@ -185,11 +180,20 @@ def query_requests_by_period(project_id, start_time, end_time):
     return results
 
 
-def query_most_errors_by_period(project_id, start_time, end_time):
+def query_most_errors_by_period(project_id, start_time, end_time,
+                                filters: Optional[schemas.SessionsSearchPayloadSchema]):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
     }
+    sub_query = ""
+    if filters:
+        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
+                                                                  error_status=None,
+                                                                  errors_only=True, favorite_only=None,
+                                                                  issue=None, user_id=None)
+        params = {**params, **qp_params}
+        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
     conditions = ["event_type = 'ERROR'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -198,6 +202,7 @@ def query_most_errors_by_period(project_id, start_time, end_time):
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
                     LEFT JOIN (SELECT session_id, name, source, message, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime
                                FROM experimental.events 
+                               {sub_query}
                                WHERE project_id = {project_id}
                                     AND datetime >= toDateTime(%(startTimestamp)s/1000)
                                     AND datetime < toDateTime(%(endTimestamp)s/1000)
@@ -260,11 +265,20 @@ def query_most_errors_by_period(project_id, start_time, end_time):
     return results
 
 
-def query_cpu_memory_by_period(project_id, start_time, end_time):
+def query_cpu_memory_by_period(project_id, start_time, end_time,
+                               filters: Optional[schemas.SessionsSearchPayloadSchema]):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
     }
+    sub_query = ""
+    if filters:
+        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
+                                                                  error_status=None,
+                                                                  errors_only=True, favorite_only=None,
+                                                                  issue=None, user_id=None)
+        params = {**params, **qp_params}
+        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
     conditions = ["event_type = 'PERFORMANCE'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -273,6 +287,7 @@ def query_cpu_memory_by_period(project_id, start_time, end_time):
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
                 LEFT JOIN (SELECT session_id, url_host, url_path, avg_used_js_heap_size, avg_cpu, toStartOfInterval(datetime, INTERVAL %(step_size)s second) as dtime 
                            FROM experimental.events 
+                           {sub_query}
                            WHERE project_id = {project_id} 
                                 AND {" AND ".join(conditions)}) AS T2 ON T2.dtime = T1.hh 
                 GROUP BY T1.hh, T2.url_host 
@@ -310,11 +325,22 @@ def query_cpu_memory_by_period(project_id, start_time, end_time):
             ]
 
 
-def query_click_rage_by_period(project_id, start_time, end_time):
+from chalicelib.core import sessions_exp
+
+
+def query_click_rage_by_period(project_id, start_time, end_time,
+                               filters: Optional[schemas.SessionsSearchPayloadSchema]):
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)}
-
+    sub_query = ""
+    if filters:
+        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
+                                                                  error_status=None,
+                                                                  errors_only=True, favorite_only=None,
+                                                                  issue=None, user_id=None)
+        params = {**params, **qp_params}
+        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
     conditions = ["issue_type = 'click_rage'", "event_type = 'ISSUE'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -322,6 +348,7 @@ def query_click_rage_by_period(project_id, start_time, end_time):
                 FROM (SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(start, end, %(step_size)s))) as hh) AS T1
                 LEFT JOIN (SELECT session_id, url_host, url_path, toStartOfInterval(datetime, INTERVAL %(step_size)s second ) as dtime 
                            FROM experimental.events 
+                           {sub_query}
                            WHERE project_id = %(project_id)s 
                                 AND datetime >= toDateTime(%(startTimestamp)s/1000)
                                 AND datetime < toDateTime(%(endTimestamp)s/1000)
@@ -391,26 +418,24 @@ def query_click_rage_by_period(project_id, start_time, end_time):
 
 def fetch_selected(project_id, data: schemas_ee.GetInsightsSchema):
     output = list()
-    # TODO: Handle filters of GetInsightsSchema
-    # data.series[0].filter.filters
     if data.metricValue is None or len(data.metricValue) == 0:
         data.metricValue = []
         for v in schemas_ee.InsightCategories:
             data.metricValue.append(v)
+    filters = None
+    if len(data.series) > 0:
+        filters = data.series[0].filter
+
     if schemas_ee.InsightCategories.errors in data.metricValue:
-        output += query_most_errors_by_period(project_id=project_id,
-                                              start_time=data.startTimestamp,
-                                              end_time=data.endTimestamp)
+        output += query_most_errors_by_period(project_id=project_id, start_time=data.startTimestamp,
+                                              end_time=data.endTimestamp, filters=filters)
     if schemas_ee.InsightCategories.network in data.metricValue:
-        output += query_requests_by_period(project_id=project_id,
-                                           start_time=data.startTimestamp,
-                                           end_time=data.endTimestamp)
+        output += query_requests_by_period(project_id=project_id, start_time=data.startTimestamp,
+                                           end_time=data.endTimestamp, filters=filters)
     if schemas_ee.InsightCategories.rage in data.metricValue:
-        output += query_click_rage_by_period(project_id=project_id,
-                                             start_time=data.startTimestamp,
-                                             end_time=data.endTimestamp)
-        if schemas_ee.InsightCategories.resources in data.metricValue:
-            output += query_cpu_memory_by_period(project_id=project_id,
-                                                 start_time=data.startTimestamp,
-                                                 end_time=data.endTimestamp)
+        output += query_click_rage_by_period(project_id=project_id, start_time=data.startTimestamp,
+                                             end_time=data.endTimestamp, filters=filters)
+    if schemas_ee.InsightCategories.resources in data.metricValue:
+        output += query_cpu_memory_by_period(project_id=project_id, start_time=data.startTimestamp,
+                                             end_time=data.endTimestamp, filters=filters)
     return output

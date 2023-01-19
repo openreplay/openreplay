@@ -2,6 +2,7 @@ import json
 
 import schemas
 from chalicelib.core import sourcemaps, sessions
+from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
@@ -277,7 +278,7 @@ def get_details(project_id, error_id, user_id, **data):
         status = cur.fetchone()
 
     if status is not None:
-        row["stack"] = format_first_stack_frame(status).pop("stack")
+        row["stack"] = errors_helper.format_first_stack_frame(status).pop("stack")
         row["status"] = status.pop("status")
         row["parent_error_id"] = status.pop("parent_error_id")
         row["favorite"] = status.pop("favorite")
@@ -719,19 +720,6 @@ def __status_rank(status):
         'ignored': MAX_RANK - 1,
         'resolved': MAX_RANK
     }.get(status)
-
-
-def format_first_stack_frame(error):
-    error["stack"] = sourcemaps.format_payload(error.pop("payload"), truncate_to_first=True)
-    for s in error["stack"]:
-        for c in s.get("context", []):
-            for sci, sc in enumerate(c):
-                if isinstance(sc, str) and len(sc) > 1000:
-                    c[sci] = sc[:1000]
-        # convert bytes to string:
-        if isinstance(s["filename"], bytes):
-            s["filename"] = s["filename"].decode("utf-8")
-    return error
 
 
 def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTimestamp=TimeUTC.now()):

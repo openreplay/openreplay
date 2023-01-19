@@ -3,9 +3,10 @@ from typing import List, Union
 import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics, sessions_devtool, \
+    sessions_mobs, issues, projects, resources, assist, performance_event, metrics, sessions_devtool, \
     sessions_notes
-from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
+from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper, errors_helper
+from chalicelib.utils import sql_helper as sh
 
 SESSION_PROJECTION_COLS_CH = """\
 s.project_id,
@@ -111,7 +112,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     # limit the number of errors to reduce the response-body size
-                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
+                    data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                       if e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
@@ -287,9 +288,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                         ORDER BY sort_key {data.order}
                                         LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
                                     full_args)
-        # print("--------------------")
-        # print(main_query)
-        # print("--------------------")
+        print("--------------------")
+        print(main_query)
+        print("--------------------")
         try:
             sessions = cur.execute(main_query)
         except Exception as err:
@@ -451,7 +452,7 @@ def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
                         event.filters is None or len(event.filters) == 0))
 
 
-def __get_event_type(EventType: Union[schemas.EventType, schemas.PerformanceEventType]):
+def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEventType]):
     defs = {
         schemas.EventType.click: "CLICK",
         schemas.EventType.input: "INPUT",
@@ -475,7 +476,8 @@ def __get_event_type(EventType: Union[schemas.EventType, schemas.PerformanceEven
 
 
 # this function generates the query and return the generated-query with the dict of query arguments
-def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
+def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
+                          project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
@@ -780,7 +782,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.CLICK.column
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
@@ -796,7 +798,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == events.EventType.INPUT.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.INPUT.column
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
@@ -816,7 +818,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == events.EventType.LOCATION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
@@ -831,7 +833,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.CUSTOM.column
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
@@ -846,7 +848,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == events.EventType.REQUEST.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
@@ -860,7 +862,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                         events_conditions[-1]["condition"] = event_where[-1]
             # elif EventType == events.EventType.GRAPHQL.ui_type:
             #     event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
-            #     event_where.append(f"main.EventType='GRAPHQL'")
+            #     event_where.append(f"main.event_type='GRAPHQL'")
             #     events_conditions.append({"type": event_where[-1]})
             #     if not is_any:
             #         event_where.append(
@@ -870,7 +872,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == events.EventType.STATEACTION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = events.EventType.STATEACTION.column
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
@@ -886,7 +888,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == events.EventType.ERROR.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
                 events_extra_join = f"SELECT * FROM {MAIN_EVENTS_TABLE} AS main1 WHERE main1.project_id=%(project_id)s"
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 event.source = tuple(event.source)
                 events_conditions[-1]["condition"] = []
@@ -906,7 +908,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == schemas.PerformanceEventType.fetch_failed:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 if not is_any:
@@ -944,7 +946,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                 schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                 schemas.PerformanceEventType.location_ttfb]:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 col = performance_event.get_col(event_type)
@@ -967,7 +969,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type in [schemas.PerformanceEventType.location_avg_cpu_load,
                                 schemas.PerformanceEventType.location_avg_memory_usage]:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 col = performance_event.get_col(event_type)
@@ -990,9 +992,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 # event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
-                event_where.append(f"main.EventType='{__get_event_type(event.value[0].type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event.value[0].type)}'")
                 events_conditions.append({"type": event_where[-1]})
-                event_where.append(f"main.EventType='{__get_event_type(event.value[0].type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event.value[0].type)}'")
                 events_conditions.append({"type": event_where[-1]})
 
                 if not isinstance(event.value[0].value, list):
@@ -1040,7 +1042,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             # TODO: no isNot for RequestDetails
             elif event_type == schemas.EventType.request_details:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(f"main.EventType='{__get_event_type(event_type)}'")
+                event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 apply = False
                 events_conditions[-1]["condition"] = []
@@ -1093,7 +1095,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             # TODO: no isNot for GraphQL
             elif event_type == schemas.EventType.graphql:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                event_where.append(f"main.EventType='GRAPHQL'")
+                event_where.append(f"main.event_type='GRAPHQL'")
                 events_conditions.append({"type": event_where[-1]})
                 events_conditions[-1]["condition"] = []
                 for j, f in enumerate(event.filters):

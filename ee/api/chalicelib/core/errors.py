@@ -1,12 +1,13 @@
 import json
 
+from decouple import config
+
 import schemas
 from chalicelib.core import sourcemaps
+from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
-
-from decouple import config
 
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     from chalicelib.core import sessions_legacy as sessions
@@ -90,13 +91,14 @@ def __process_tags(row):
 def get_details(project_id, error_id, user_id, **data):
     pg_sub_query24 = __get_basic_constraints(time_constraint=False, chart=True, step_size_name="step_size24")
     pg_sub_query24.append("error_id = %(error_id)s")
-    pg_sub_query30_session = __get_basic_constraints(time_constraint=True, chart=False, startTime_arg_name="startDate30",
-                                                 endTime_arg_name="endDate30",project_key="sessions.project_id")
+    pg_sub_query30_session = __get_basic_constraints(time_constraint=True, chart=False,
+                                                     startTime_arg_name="startDate30",
+                                                     endTime_arg_name="endDate30", project_key="sessions.project_id")
     pg_sub_query30_session.append("sessions.start_ts >= %(startDate30)s")
     pg_sub_query30_session.append("sessions.start_ts <= %(endDate30)s")
     pg_sub_query30_session.append("error_id = %(error_id)s")
     pg_sub_query30_err = __get_basic_constraints(time_constraint=True, chart=False, startTime_arg_name="startDate30",
-                                                 endTime_arg_name="endDate30",project_key="errors.project_id")
+                                                 endTime_arg_name="endDate30", project_key="errors.project_id")
     pg_sub_query30_err.append("sessions.project_id = %(project_id)s")
     pg_sub_query30_err.append("sessions.start_ts >= %(startDate30)s")
     pg_sub_query30_err.append("sessions.start_ts <= %(endDate30)s")
@@ -283,7 +285,7 @@ def get_details(project_id, error_id, user_id, **data):
         status = cur.fetchone()
 
     if status is not None:
-        row["stack"] = format_first_stack_frame(status).pop("stack")
+        row["stack"] = errors_helper.format_first_stack_frame(status).pop("stack")
         row["status"] = status.pop("status")
         row["parent_error_id"] = status.pop("parent_error_id")
         row["favorite"] = status.pop("favorite")
@@ -725,19 +727,6 @@ def __status_rank(status):
         'ignored': MAX_RANK - 1,
         'resolved': MAX_RANK
     }.get(status)
-
-
-def format_first_stack_frame(error):
-    error["stack"] = sourcemaps.format_payload(error.pop("payload"), truncate_to_first=True)
-    for s in error["stack"]:
-        for c in s.get("context", []):
-            for sci, sc in enumerate(c):
-                if isinstance(sc, str) and len(sc) > 1000:
-                    c[sci] = sc[:1000]
-        # convert bytes to string:
-        if isinstance(s["filename"], bytes):
-            s["filename"] = s["filename"].decode("utf-8")
-    return error
 
 
 def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTimestamp=TimeUTC.now()):

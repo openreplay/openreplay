@@ -48,11 +48,10 @@ class InsightCategories(str, Enum):
 
 
 class GetInsightsSchema(BaseModel):
-    startTimestamp: int = Field(TimeUTC.now(-7))
-    endTimestamp: int = Field(TimeUTC.now())
-    # time_step: int = Field(default=3600)
+    startTimestamp: int = Field(default=TimeUTC.now(-7))
+    endTimestamp: int = Field(default=TimeUTC.now())
     metricValue: List[InsightCategories] = Field(...)
-    series: List[schemas.CardCreateSeriesSchema] = Field([...])
+    series: List[schemas.CardCreateSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case

@@ -2,8 +2,9 @@ from typing import List
 
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_favorite, \
+    sessions_mobs, issues, projects, resources, assist, performance_event, sessions_favorite, \
     sessions_devtool, sessions_notes
+from chalicelib.utils import errors_helper
 from chalicelib.utils import pg_client, helper, metrics_helper
 from chalicelib.utils import sql_helper as sh
 
@@ -91,7 +92,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     # limit the number of errors to reduce the response-body size
-                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
+                    data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                       if e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
                                                                           session_id=session_id)
@@ -360,7 +361,8 @@ def __is_valid_event(is_any: bool, event: schemas._SessionSearchEventSchema):
 
 
 # this function generates the query and return the generated-query with the dict of query arguments
-def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
+def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
+                       project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}

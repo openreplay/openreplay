@@ -50,6 +50,7 @@ rm -rf ./chalicelib/utils/captcha.py
 rm -rf ./chalicelib/utils/dev.py
 rm -rf ./chalicelib/utils/email_handler.py
 rm -rf ./chalicelib/utils/email_helper.py
+rm -rf ./chalicelib/utils/errors_helper.py
 rm -rf ./chalicelib/utils/event_filter_definition.py
 rm -rf ./chalicelib/utils/github_client_v3.py
 rm -rf ./chalicelib/utils/helper.py
