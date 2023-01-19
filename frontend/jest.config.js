@@ -4,7 +4,7 @@ module.exports = {
   rootDir: './',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^Types/Session/(.+)$': '<rootDir>/app/types/session/$1',
+    '^Types/session/(.+)$': '<rootDir>/app/types/session/$1',
     '^App/(.+)$': '<rootDir>/app/$1',
   },
   transform: {
