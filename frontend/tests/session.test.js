@@ -1,8 +1,8 @@
 import { describe, expect, test } from '@jest/globals';
 
-import Session from 'Types/Session';
-import { Click, Location } from 'Types/Session/event';
-import Issue from 'Types/Session/issue';
+import Session from 'Types/session';
+import { Click, Location } from 'Types/session/event';
+import Issue from 'Types/session/issue';
 import { session } from './mocks/sessionResponse';
 import { issues, events } from "./mocks/sessionData";
 
