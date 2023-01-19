@@ -11,8 +11,8 @@ describe('Replayer visual match test', {
         window.localStorage.setItem('notesFeatureViewed', 'true');
       }
     })
-    cy.get(':nth-child(1) > .relative > .p-2').type(Cypress.env('account'))
-    cy.get(':nth-child(2) > .relative > .p-2').type(Cypress.env('password'))
+    cy.get(':nth-child(1) > .relative > .p-2').type(Cypress.env('account').replaceAll("\"", ''))
+    cy.get(':nth-child(2) > .relative > .p-2').type(Cypress.env('password').replaceAll("\"", ''))
     cy.get('.h-10').click()
     cy.wait(10000)
     cy.wait('@getAccount')
