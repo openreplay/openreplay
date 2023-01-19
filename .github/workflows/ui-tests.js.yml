@@ -11,6 +11,12 @@ on:
     branches: [ "dev", "main" ]
     paths:
       - frontend/**
+env:
+  API: ${{ secrets.E2E_API_ORIGIN }}
+  ASSETS: ${{ secrets.E2E_ASSETS_ORIGIN }}
+  APIEDP: ${{ secrets.E2E_EDP_ORIGIN }}
+  CY_ACC: ${{ secrets.CYPRESS_ACCOUNT }}
+  CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,6 +34,27 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Setup env
+        run: |
+          echo "NODE_ENV=development" >> .env
+          echo "SOURCEMAP=true" >> .env
+          echo "ORIGIN=$API" >> .env
+          echo "ASSETS_HOST=$ASSETS" >> .env
+          echo "API_EDP=$APIEDP" >> .env
+          echo "SENTRY_ENABLED = false" >> .env
+          echo "SENTRY_URL = ''" >> .env
+          echo "CAPTCHA_ENABLED = false" >> .env
+          echo "CAPTCHA_SITE_KEY = 'asdad'" >> .env
+          echo "MINIO_ENDPOINT = ''" >> .env
+          echo "MINIO_PORT = ''" >> .env
+          echo "MINIO_USE_SSL = ''" >> .env
+          echo "MINIO_ACCESS_KEY = ''" >> .env
+          echo "MINIO_SECRET_KEY = ''" >> .env
+          echo "VERSION = '1.9.0'" >> .env
+          echo "TRACKER_VERSION = '4.0.0'" >> .env
+          echo "COMMIT_HASH = 'dev'" >> .env
+          echo '{ "account": "$CY_ACC", "password": "$CY_PASS" }' >> cypress.env.json
+
       - name: Setup packages
         run: npm i --legacy-peer-deps
       - name: Run unit tests
