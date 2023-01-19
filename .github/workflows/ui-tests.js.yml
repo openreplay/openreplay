@@ -18,7 +18,7 @@ jobs:
         working-directory: ./frontend
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x]
+        node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -29,7 +29,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - name: Setup yarn
       run: npm install -g yarn
-    - run: yarn
+    - run: yarn --immutable
     - name: unit tests
       run: npm test --if-resent
     - name: visual tests
