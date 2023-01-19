@@ -72,5 +72,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: 'Snapshots'
-          path: |
-            cypress/snapshots/
+          path: ./cypress/snapshots/
