@@ -56,12 +56,12 @@ jobs:
           echo '{ "account": "$CY_ACC", "password": "$CY_PASS" }' >> cypress.env.json
 
       - name: Setup packages
-        run: npm i --legacy-peer-deps
+        run: npm i -g yarn && yarn
       - name: Run unit tests
-        run: npm test --if-resent
+        run: yarn test
       - name: Run Frontend
-        run: npm start &> server.log &
+        run: yarn start &> server.log &
       - name: Wait for frontend
         run: npx wait-on http://0.0.0.0:3333
       - name: Run visual tests
-        run: npm run cy:test --if-present
+        run: yarn cy:test
