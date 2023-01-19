@@ -33,7 +33,7 @@ jobs:
       - name: Run unit tests
         run: npm test --if-resent
       - name: Run Frontend
-        run: npm start
+        run: npm start &> server.log &
       - name: Wait for frontend
         run: npx wait-on http://0.0.0.0:3333
       - name: Run visual tests
