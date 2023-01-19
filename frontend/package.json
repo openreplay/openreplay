@@ -14,7 +14,7 @@
     "gen:colors": "node ./scripts/colors.js",
     "storybook": "start-storybook -p 6006",
     "flow": "flow",
-    "postinstall": "yarn gen:icons && yarn gen:colors",
+    "gen:static": "yarn gen:icons && yarn gen:colors",
     "build-storybook": "build-storybook",
     "test": "jest",
     "cy:open": "cypress open",

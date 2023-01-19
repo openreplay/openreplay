@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Setup packages
-        run: npm i --legacy-peer-deps --ignore-scripts
+        run: npm i --legacy-peer-deps
       - name: Run unit tests
         run: npm test --if-resent
       - name: Run Frontend
