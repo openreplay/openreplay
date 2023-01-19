@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"log"
 	"openreplay/backend/pkg/pprof"
 	"os"
@@ -54,7 +56,36 @@ func main() {
 		log.Printf("can't create messages_size metric: %s", err)
 	}
 
+	var (
+		sessionID    uint64
+		messageIndex = make([]byte, 8)
+		domBuffer    = bytes.NewBuffer(make([]byte, 1024))
+		devBuffer    = bytes.NewBuffer(make([]byte, 1024))
+	)
+
 	msgHandler := func(msg messages.Message) {
+		// Check batchEnd signal (nil message)
+		if msg == nil {
+			// Skip empty buffers
+			if domBuffer.Len() <= 0 && devBuffer.Len() <= 0 {
+				return
+			}
+			// TODO: remove debug log
+			log.Printf("domBufSize: %d, devBufSize: %d", domBuffer.Len(), devBuffer.Len())
+
+			// Write buffered batches to the session
+			if err := writer.Write(sessionID, domBuffer.Bytes(), devBuffer.Bytes()); err != nil {
+				log.Printf("writer error: %s", err)
+				return
+			}
+
+			// Prepare buffer for the next batch
+			domBuffer.Reset()
+			devBuffer.Reset()
+			sessionID = 0
+			return
+		}
+
 		// [METRICS] Increase the number of processed messages
 		totalMessages.Add(context.Background(), 1)
 
@@ -101,10 +132,28 @@ func main() {
 			return
 		}
 
-		// Write message to file
-		if err := writer.Write(msg); err != nil {
-			log.Printf("writer error: %s", err)
-			return
+		// Write message to the batch buffer
+		if sessionID == 0 {
+			sessionID = msg.SessionID()
+		}
+
+		// Encode message index
+		binary.LittleEndian.PutUint64(messageIndex, msg.Meta().Index)
+
+		// Add message to dom buffer
+		if messages.IsDOMType(msg.TypeID()) {
+			// Write message index
+			domBuffer.Write(messageIndex)
+			// Write message body
+			domBuffer.Write(msg.Encode())
+		}
+
+		// Add message to dev buffer
+		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
+			// Write message index
+			devBuffer.Write(messageIndex)
+			// Write message body
+			devBuffer.Write(msg.Encode())
 		}
 
 		// [METRICS] Increase the number of written to the files messages and the message size
@@ -117,7 +166,7 @@ func main() {
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		messages.NewMessageIterator(msgHandler, nil, false),
+		messages.NewSinkMessageIterator(msgHandler, nil, false),
 		false,
 		cfg.MessageSizeLimit,
 	)
