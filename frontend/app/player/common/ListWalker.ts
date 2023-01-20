@@ -6,7 +6,7 @@ export default class ListWalker<T extends Timed> {
 
 	append(m: T): void {
 		if (this.length > 0 && this.last && m.time < this.last.time) {
-			console.error("Trying to append message with the less time then the list tail:", m.time, 'vs', this.last.time, m)
+			console.error("Trying to append message with the less time then the list tail:", m.time, 'vs', this.last.time, m, this)
 			return
 		}
 		this.list.push(m);

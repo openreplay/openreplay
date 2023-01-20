@@ -20,6 +20,7 @@ import ActivityManager from './managers/ActivityManager';
 
 import MFileReader from './messages/MFileReader';
 import { MType } from './messages';
+import { isDOMType } from './messages/filters.gen';
 import type {
   Message,
   SetPageLocation,
@@ -473,7 +474,7 @@ export default class MessageManager {
             break;
         }
         this.performanceTrackManager.addNodeCountPointIfNeed(msg.time)
-        this.pagesManager.appendMessage(msg);
+        isDOMType(msg.tp) && this.pagesManager.appendMessage(msg)
         break;
     }
   }
