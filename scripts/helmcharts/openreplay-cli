@@ -19,9 +19,11 @@ tools=(
   mikefarah/yq
   )
 
+# Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
+BWHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
 # Checking whether the app exists or we do have to upgade.
@@ -46,9 +48,14 @@ function log () {
       echo -e "${YELLOW}[DEBUG]" "$@" "${NC}"
       return
     ;;
+    title)
+      shift
+      echo -e "\n${BWHITE}-" "$@" "${NC}"
+      return
+    ;;
     err)
       shift
-      echo -e "${RED}[INFO]" "$@" "${NC}"
+      echo -e "${RED}[ERROR]" "$@" "${NC}"
       exit 100
     ;;
     *)
@@ -73,7 +80,9 @@ function install_packages() {
     log info Installing "$(awk -F/ '{print $2}' <<< $package)"
     sudo /var/lib/openreplay/eget -q --upgrade-only --to /var/lib/openreplay "$package"
   done
+  log info Installing helm
   sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+  log info Installing kubectl
   sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
   date | sudo tee $OR_DIR/packages.lock &> /dev/null
 }
@@ -155,9 +164,8 @@ function upgrade() {
 }
 
 [[ -f $OR_DIR/packages.lock ]] || {
-  log info Installing packages "${NC}"
+  log title Installing packages "${NC}"
   install_packages
-  log info Packages installed "${NC}\n"
 }
 
 # Ref: https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
@@ -165,12 +173,12 @@ while getopts piuhsl: flag
 do
   case "$flag" in
     p)
-      log info "Installing Packages"
+      log title "Installing Packages"
       install_packages
       exit 0
     ;;
     i)
-      log info "Installing OpenReplay"
+      log title "Installing OpenReplay"
       sudo cp -f ./openreplay /bin/
       read -rp "Enter your domain name(openreplay.mycompany.com): " domain_name
       DOMAIN_NAME=$domain_name bash init.sh
@@ -178,7 +186,7 @@ do
       exit 0
     ;;
     u)
-      log info "Upgrading OpenReplay"
+      log title "Upgrading OpenReplay"
       upgrade
       log info Cleaning temporary directory
       [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
@@ -191,7 +199,7 @@ do
       exit 0
     ;;
     s)
-      log info "Checking OpenReplay Components Status\n"
+      log title "Checking OpenReplay Components Status"
       status
       exit 0
     ;;
