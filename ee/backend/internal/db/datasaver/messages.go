@@ -16,7 +16,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		}
 		return nil
 	case *IssueEvent:
-		session, err := mi.pg.GetSession(sessionID)
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -37,7 +37,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 	case *UserAnonymousID:
 		return mi.pg.InsertWebUserAnonymousID(sessionID, m)
 	case *CustomEvent:
-		session, err := mi.pg.GetSession(sessionID)
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -59,7 +59,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 	case *IntegrationEvent:
 		return mi.pg.InsertWebIntegrationEvent(m)
 	case *NetworkRequest:
-		session, err := mi.pg.GetSession(sessionID)
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -74,7 +74,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		}
 		return mi.pg.InsertWebNetworkRequest(sessionID, m)
 	case *GraphQL:
-		session, err := mi.pg.GetSession(sessionID)
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
