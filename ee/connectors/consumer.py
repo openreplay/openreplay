@@ -1,5 +1,5 @@
 import os
-from kafka import KafkaConsumer
+from confluent_kafka import Consumer
 from datetime import datetime
 from collections import defaultdict
 
@@ -29,17 +29,21 @@ def main():
     sessions_batch = []
 
     codec = MessageCodec()
-    consumer = KafkaConsumer(security_protocol="SSL",
-                             bootstrap_servers=[os.environ['KAFKA_SERVER_2'],
-                                                os.environ['KAFKA_SERVER_1']],
-                             group_id=f"my_test3_connector_{DATABASE}",
-                             auto_offset_reset="earliest",
-                             enable_auto_commit=False
-                             )
+    consumer = Consumer({
+        "security.protocol": "SSL",
+        "bootstrap.servers": ",".join([os.environ['KAFKA_SERVER_1'],
+                                        os.environ['KAFKA_SERVER_2']]),
+        "group.id": f"connector_{DATABASE}",
+        "auto.offset.reset": "earliest",
+        "enable.auto.commit": False
+        })
 
-    consumer.subscribe(topics=["raw", "raw_ios"])
+    consumer.subscribe(["raw", "raw_ios"])
     print("Kafka consumer subscribed")
-    for msg in consumer:
+    while True:
+        msg.consumer.poll(1.0)
+        if msg is None:
+            continue
         messages = codec.decode_detailed(msg.value)
         session_id = codec.decode_key(msg.key)
         if messages is None:

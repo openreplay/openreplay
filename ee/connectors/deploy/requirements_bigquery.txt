@@ -1,4 +1,4 @@
-kafka-python==2.0.2
+confluent-kafka
 psycopg2-binary==2.9.3
 SQLAlchemy==1.4.43
 google-cloud-bigquery
