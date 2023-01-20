@@ -23,7 +23,7 @@ func main() {
 	metrics := monitoring.New("ender")
 	cfg := ender.New()
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber, logger.NewQueueStats(cfg.LoggerTimeout))
