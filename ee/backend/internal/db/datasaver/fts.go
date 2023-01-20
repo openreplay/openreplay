@@ -7,6 +7,8 @@ import (
 )
 
 type NetworkRequestFTS struct {
+	SessionID uint64 `json:"session_id"`
+	ProjectID uint32 `json:"project_id"`
 	Method    string `json:"method"`
 	URL       string `json:"url"`
 	Request   string `json:"request"`
@@ -17,6 +19,8 @@ type NetworkRequestFTS struct {
 }
 
 type PageEventFTS struct {
+	SessionID                  uint64 `json:"session_id"`
+	ProjectID                  uint32 `json:"project_id"`
 	MessageID                  uint64 `json:"message_id"`
 	Timestamp                  uint64 `json:"timestamp"`
 	URL                        string `json:"url"`
@@ -37,13 +41,15 @@ type PageEventFTS struct {
 }
 
 type GraphQLFTS struct {
+	SessionID     uint64 `json:"session_id"`
+	ProjectID     uint32 `json:"project_id"`
 	OperationKind string `json:"operation_kind"`
 	OperationName string `json:"operation_name"`
 	Variables     string `json:"variables"`
 	Response      string `json:"response"`
 }
 
-func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
+func (s *Saver) SendToFTS(msg messages.Message, projID uint32) {
 	// Skip, if FTS is disabled
 	if s.producer == nil {
 		return
@@ -58,6 +64,8 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 	// Common
 	case *messages.NetworkRequest:
 		event, err = json.Marshal(NetworkRequestFTS{
+			SessionID: msg.SessionID(),
+			ProjectID: projID,
 			Method:    m.Method,
 			URL:       m.URL,
 			Request:   m.Request,
@@ -68,6 +76,8 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 		})
 	case *messages.PageEvent:
 		event, err = json.Marshal(PageEventFTS{
+			SessionID:                  msg.SessionID(),
+			ProjectID:                  projID,
 			MessageID:                  m.MessageID,
 			Timestamp:                  m.Timestamp,
 			URL:                        m.URL,
@@ -88,6 +98,8 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 		})
 	case *messages.GraphQL:
 		event, err = json.Marshal(GraphQLFTS{
+			SessionID:     msg.SessionID(),
+			ProjectID:     projID,
 			OperationKind: m.OperationKind,
 			OperationName: m.OperationName,
 			Variables:     m.Variables,
@@ -98,7 +110,7 @@ func (s *Saver) sendToFTS(msg messages.Message, sessionID uint64) {
 		log.Printf("can't marshal json for quickwit: %s", err)
 	} else {
 		if len(event) > 0 {
-			if err := s.producer.Produce("quickwit", sessionID, event); err != nil {
+			if err := s.producer.Produce("saas-quickwit", msg.SessionID(), event); err != nil {
 				log.Printf("can't send event to quickwit: %s", err)
 			}
 		}

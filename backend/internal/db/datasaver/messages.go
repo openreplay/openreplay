@@ -36,13 +36,10 @@ func (mi *Saver) InsertMessage(msg Message) error {
 
 	// Unique Web messages
 	case *PageEvent:
-		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebPageEvent(sessionID, m)
 	case *NetworkRequest:
-		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebNetworkRequest(sessionID, m)
 	case *GraphQL:
-		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebGraphQL(sessionID, m)
 	case *JSException:
 		return mi.pg.InsertWebJSException(m)
