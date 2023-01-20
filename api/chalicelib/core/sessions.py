@@ -153,7 +153,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             if data.order is None:
                 data.order = schemas.SortOrderType.desc.value
             else:
-                data.order = data.order.upper()
+                data.order = data.order.value
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
                 g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
@@ -187,6 +187,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         else:
             if data.order is None:
                 data.order = schemas.SortOrderType.desc.value
+            else:
+                data.order = data.order.value
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
