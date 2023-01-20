@@ -228,3 +228,9 @@ done
 shift $((OPTIND-1))
 
 [ $# -eq 0 ] && help
+
+# TODO:
+# 1. reload
+# 2. stop all
+# 3. start all
+# 4. full names
