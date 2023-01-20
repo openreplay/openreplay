@@ -56,8 +56,6 @@ def _select_rec(l, selector):
             return [_select_rec(L, selector[1:])]
 
 
-# TODO Deal with None values
-
 def __get_two_values(response, time_index='hh', name_index='name'):
     columns = list(response[0].keys())
     name_index_val = columns.index(name_index)
@@ -91,14 +89,7 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
     }
-    sub_query = ""
-    if filters:
-        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
-                                                                  error_status=None,
-                                                                  errors_only=True, favorite_only=None,
-                                                                  issue=None, user_id=None)
-        params = {**params, **qp_params}
-        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
+    params, sub_query = __filter_subquery(project_id=project_id, filters=filters, params=params)
     conditions = ["event_type = 'REQUEST'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -161,8 +152,8 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'network', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None,
-                 'isNew': True}
+        data_ = {'category': schemas_ee.InsightCategories.network, 'name': n,
+                 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 if n in new_hosts:
@@ -180,20 +171,25 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
     return results
 
 
-def query_most_errors_by_period(project_id, start_time, end_time,
-                                filters: Optional[schemas.SessionsSearchPayloadSchema]):
-    params = {
-        "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
-        "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
-    }
+def __filter_subquery(project_id: int, filters: Optional[schemas.SessionsSearchPayloadSchema], params: dict):
     sub_query = ""
-    if filters:
+    if filters and (len(filters.events) > 0 or len(filters.filters)) > 0:
         qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
                                                                   error_status=None,
                                                                   errors_only=True, favorite_only=None,
                                                                   issue=None, user_id=None)
         params = {**params, **qp_params}
         sub_query = f"INNER JOIN {sub_query} USING(session_id)"
+    return params, sub_query
+
+
+def query_most_errors_by_period(project_id, start_time, end_time,
+                                filters: Optional[schemas.SessionsSearchPayloadSchema]):
+    params = {
+        "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
+        "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
+    }
+    params, sub_query = __filter_subquery(project_id=project_id, filters=filters, params=params)
     conditions = ["event_type = 'ERROR'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -246,8 +242,8 @@ def query_most_errors_by_period(project_id, start_time, end_time,
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'errors', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None,
-                 'isNew': True}
+        data_ = {'category': schemas_ee.InsightCategories.errors, 'name': n,
+                 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 if n in new_errors:
@@ -271,14 +267,7 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)
     }
-    sub_query = ""
-    if filters:
-        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
-                                                                  error_status=None,
-                                                                  errors_only=True, favorite_only=None,
-                                                                  issue=None, user_id=None)
-        params = {**params, **qp_params}
-        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
+    params, sub_query = __filter_subquery(project_id=project_id, filters=filters, params=params)
     conditions = ["event_type = 'PERFORMANCE'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -310,13 +299,13 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
     # TODO: what if _tmp=0 ?
     mem_oldvalue = 1 if mem_oldvalue == 0 else mem_oldvalue
     cpu_oldvalue = 1 if cpu_oldvalue == 0 else cpu_oldvalue
-    return [{'category': 'resources',
+    return [{'category': schemas_ee.InsightCategories.resources,
              'name': 'cpu',
              'value': cpu_newvalue,
              'oldValue': cpu_oldvalue,
              'change': (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue,
              'isNew': None},
-            {'category': 'resources',
+            {'category': schemas_ee.InsightCategories.resources,
              'name': 'memory',
              'value': mem_newvalue,
              'oldValue': mem_oldvalue,
@@ -333,14 +322,7 @@ def query_click_rage_by_period(project_id, start_time, end_time,
     params = {
         "project_id": project_id, "startTimestamp": start_time, "endTimestamp": end_time,
         "step_size": metrics.__get_step_size(endTimestamp=end_time, startTimestamp=start_time, density=3)}
-    sub_query = ""
-    if filters:
-        qp_params, sub_query = sessions_exp.search_query_parts_ch(data=filters, project_id=project_id,
-                                                                  error_status=None,
-                                                                  errors_only=True, favorite_only=None,
-                                                                  issue=None, user_id=None)
-        params = {**params, **qp_params}
-        sub_query = f"INNER JOIN {sub_query} USING(session_id)"
+    params, sub_query = __filter_subquery(project_id=project_id, filters=filters, params=params)
     conditions = ["issue_type = 'click_rage'", "event_type = 'ISSUE'"]
     query = f"""WITH toUInt32(toStartOfInterval(toDateTime(%(startTimestamp)s/1000), INTERVAL %(step_size)s second)) AS start,
                      toUInt32(toStartOfInterval(toDateTime(%(endTimestamp)s/1000), INTERVAL %(step_size)s second)) AS end
@@ -397,8 +379,8 @@ def query_click_rage_by_period(project_id, start_time, end_time,
     for n in names_:
         if n is None:
             continue
-        data_ = {'category': 'rage', 'name': n, 'value': None, 'oldValue': None, 'ratio': None, 'change': None,
-                 'isNew': True}
+        data_ = {'category': schemas_ee.InsightCategories.rage, 'name': n,
+                 'value': None, 'oldValue': None, 'ratio': None, 'change': None, 'isNew': True}
         for n_, v in ratio:
             if n == n_:
                 if n in new_names:

@@ -50,7 +50,7 @@ class InsightCategories(str, Enum):
 class GetInsightsSchema(BaseModel):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
-    metricValue: List[InsightCategories] = Field(...)
+    metricValue: List[InsightCategories] = Field(default=[])
     series: List[schemas.CardCreateSeriesSchema] = Field(default=[])
 
     class Config:

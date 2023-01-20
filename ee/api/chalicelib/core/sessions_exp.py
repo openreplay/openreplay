@@ -288,9 +288,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                         ORDER BY sort_key {data.order}
                                         LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s) AS sorted_sessions;""",
                                     full_args)
-        print("--------------------")
-        print(main_query)
-        print("--------------------")
+        # print("--------------------")
+        # print(main_query)
+        # print("--------------------")
         try:
             sessions = cur.execute(main_query)
         except Exception as err:
