@@ -151,6 +151,8 @@ do
     u)
       log info "Upgrading OpenReplay"
       upgrade
+      log info Cleaning temporary directory
+      [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
       exit 0
     ;;
     l)
