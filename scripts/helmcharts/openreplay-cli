@@ -94,8 +94,8 @@ function help() {
   log debug 'USAGE: openreplay -p[ackages]
                           -u[pgrade]
                           -i[nstall]
-                          -s[status]
-                          -l[logs] [app name]
+                          -s[tatus]
+                          -l[ogs] [app name]
                App Names: alerts assets assist chalice 
                           db ender frontend heuristics 
                           http integrations nginx-controller 
