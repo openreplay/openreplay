@@ -105,7 +105,7 @@ class KafkaFilter():
             self.consumer = Consumer({
                 "security.protocol": "SSL",
                 "bootstrap.servers": kafka_sources,
-                "group.id":"saas-quickwit",
+                "group.id": config("group_id"),
                 "auto.offset.reset": "earliest",
                 "enable.auto.commit":False
             })
@@ -113,7 +113,7 @@ class KafkaFilter():
             self.consumer = Consumer({
                 "security.protocol": "SSL",
                 "bootstrap.servers": kafka_sources,
-                "group.id": "saas-quickwit",
+                "group.id": config("group_id"),
                 "auto.offset.reset": "earliest",
                 #value_deserializer=lambda m: json.loads(m.decode('utf-8')),
                 "enable.auto.commit": False

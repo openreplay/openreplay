@@ -12,6 +12,9 @@ RUN apt-get install python3 python3-pip -y
 RUN apt-get clean
 RUN pip install -r requirements.txt
 
+COPY env.default .env
+RUN source .env
+
 ENV filter="true" \
 	encrypted="false"
 
