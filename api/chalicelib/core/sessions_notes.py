@@ -69,7 +69,7 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
         query = cur.mogrify(f"""SELECT sessions_notes.*
                                 FROM sessions_notes
                                 WHERE {" AND ".join(conditions)}
-                                ORDER BY created_at {data.order}
+                                ORDER BY created_at {data.order.value}
                                 LIMIT {data.limit} OFFSET {data.limit * (data.page - 1)};""",
                             {"project_id": project_id, "user_id": user_id, "tenant_id": tenant_id, **extra_params})
 

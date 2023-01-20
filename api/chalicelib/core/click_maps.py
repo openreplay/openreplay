@@ -51,7 +51,7 @@ def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, u
         main_query = cur.mogrify(f"""SELECT {SESSION_PROJECTION_COLS}
                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                      {query_part}
-                                     ORDER BY {data.sort} {data.order}
+                                     ORDER BY {data.sort} {data.order.value}
                                      LIMIT 1;""", full_args)
         # print("--------------------")
         # print(main_query)
