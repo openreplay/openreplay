@@ -1,42 +1,32 @@
 import APIClient from 'App/api_client';
 
-const NO_NTH_FILE = "nnf"
-const NO_UNPROCESSED_FILES = "nuf"
+const NO_FILE_OK = "No-file-but-this-is-ok"
+const NO_BACKUP_FILE = "No-efs-file"
 
 export const loadFiles = (
   urls: string[],
   onData: (data: Uint8Array) => void,
 ): Promise<void> => {
-  const firstFileURL = urls[0]
-  urls = urls.slice(1)
-  if (!firstFileURL) {
+  if (!urls.length) {
     return Promise.reject("No urls provided")
   }
-  return window.fetch(firstFileURL)
-  .then(r => {
-    return processAPIStreamResponse(r, true)
-  })
-  .then(onData)
-  .then(() =>
-    urls.reduce((p, url) =>
-      p.then(() =>
-        window.fetch(url)
-        .then(r => {
-          return processAPIStreamResponse(r, false)
-        })
-        .then(onData)
-      ),
-      Promise.resolve(),
-    )
+  return urls.reduce((p, url, index) =>
+    p.then(() =>
+      window.fetch(url)
+      .then(r => {
+        return processAPIStreamResponse(r, index===0)
+      })
+      .then(onData)
+    ),
+    Promise.resolve(),
   )
   .catch(e => {
-    if (e === NO_NTH_FILE) {
+    if (e === NO_FILE_OK) {
       return
     }
     throw e
   })
 }
-
 
 export async function requestEFSDom(sessionId: string) {
   return await requestEFSMobFile(sessionId + "/dom.mob")
@@ -50,21 +40,18 @@ async function requestEFSMobFile(filename: string) {
   const api = new APIClient()
   const res = await api.fetch('/unprocessed/' + filename)
   if (res.status >= 400) {
-    throw NO_UNPROCESSED_FILES
+    throw NO_BACKUP_FILE
   }
   return await processAPIStreamResponse(res, false)
 }
 
-const processAPIStreamResponse = (response: Response, isFirstFile: boolean) => {
+const processAPIStreamResponse = (response: Response, canBeMissed: boolean) => {
   return new Promise<ArrayBuffer>((res, rej) => {
-    if (response.status === 404 && !isFirstFile) {
-      return rej(NO_NTH_FILE)
+    if (response.status === 404 && canBeMissed) {
+      return rej(NO_FILE_OK)
     }
     if (response.status >= 400) {
-      return rej(
-        isFirstFile ? `no start file. status code ${ response.status }`
-        : `Bad endfile status code ${response.status}`
-      )
+      return rej(`Bad file status code ${response.status}. Url: ${response.url}`)
     }
     res(response.arrayBuffer())
   }).then(buffer => new Uint8Array(buffer))
