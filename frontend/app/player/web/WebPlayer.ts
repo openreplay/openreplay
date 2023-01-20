@@ -25,7 +25,7 @@ export default class WebPlayer extends Player {
 
   private targetMarker: TargetMarker
 
-  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean, coldStart?: boolean) {
+  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
     let initialLists = live ? {} : {
       event: session.events || [],
       stack: session.stackEvents || [],
@@ -40,8 +40,8 @@ export default class WebPlayer extends Player {
       ) || [],
     }
 
-    const screen = new Screen(session.isMobile, coldStart)
-    const messageManager = new MessageManager(session, wpState, screen, initialLists, coldStart)
+    const screen = new Screen(session.isMobile)
+    const messageManager = new MessageManager(session, wpState, screen, initialLists)
     super(wpState, messageManager)
     this.screen = screen
     this.messageManager = messageManager
