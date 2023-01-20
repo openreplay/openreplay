@@ -151,7 +151,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = schemas.SortOrderType.desc
+                data.order = schemas.SortOrderType.desc.value
             else:
                 data.order = data.order.upper()
             if data.sort is not None and data.sort != 'sessionsCount':
@@ -168,8 +168,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
                                                  MIN(full_sessions.start_ts)                            AS first_session_ts,
-                                                 ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order.value}) AS rn
-                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY {sort} {data.order.value}) AS rn 
+                                                 ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order}) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY {sort} {data.order}) AS rn 
                                                 FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
                                                                     {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                                     {query_part}
@@ -186,7 +186,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                      full_args)
         else:
             if data.order is None:
-                data.order = schemas.SortOrderType.desc
+                data.order = schemas.SortOrderType.desc.value
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -195,12 +195,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order.value}, issue_score DESC) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY {sort} {data.order.value}, issue_score DESC) AS full_sessions;""",
+                                            ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
         # print("--------------------")
         # print(main_query)

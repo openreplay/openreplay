@@ -61,7 +61,7 @@ def search_records(project_id, data: schemas_ee.AssistRecordSearchPayloadSchema,
                                          INNER JOIN projects USING (project_id)
                                          LEFT JOIN users USING (user_id)
                                 WHERE {" AND ".join(conditions)}
-                                ORDER BY assist_records.created_at {data.order.value}
+                                ORDER BY assist_records.created_at {data.order}
                                 LIMIT %(p_limit)s OFFSET %(p_start)s;""",
                             params)
         cur.execute(query)
