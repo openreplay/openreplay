@@ -74,8 +74,6 @@ func main() {
 			if domBuffer.Len() <= 0 && devBuffer.Len() <= 0 {
 				return
 			}
-			// TODO: remove debug log
-			log.Printf("domBufSize: %d, devBufSize: %d", domBuffer.Len(), devBuffer.Len())
 
 			// Write buffered batches to the session
 			if err := writer.Write(sessionID, domBuffer.Bytes(), devBuffer.Bytes()); err != nil {
