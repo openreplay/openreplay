@@ -17,6 +17,13 @@ func (si *Saver) InitStats() {
 }
 
 func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error {
+	// Send data to quickwit
+	if sess, err := si.pg.Cache.GetSession(msg.SessionID()); err != nil {
+		si.SendToFTS(msg, 0)
+	} else {
+		si.SendToFTS(msg, sess.ProjectID)
+	}
+
 	switch m := msg.(type) {
 	// Web
 	case *messages.SessionEnd:

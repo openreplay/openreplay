@@ -5,7 +5,6 @@ import (
 	"log"
 	types2 "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/pprof"
-	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,14 +48,8 @@ func main() {
 	// Create handler's aggregator
 	builderMap := sessions.NewBuilderMap(handlersFabric)
 
-	var producer types.Producer = nil
-	if cfg.UseQuickwit {
-		producer = queue.NewProducer(cfg.MessageSizeLimit, true)
-		defer producer.Close(15000)
-	}
-
 	// Init modules
-	saver := datasaver.New(pg, producer)
+	saver := datasaver.New(pg, cfg)
 	saver.InitStats()
 
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
