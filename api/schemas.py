@@ -847,7 +847,7 @@ class CardSeriesFilterSchema(SearchErrorsSchema):
     startDate: Optional[int] = Field(default=None)
     endDate: Optional[int] = Field(default=None)
     sort: Optional[str] = Field(default=None)
-    order: Optional[str] = Field(default=None)
+    order: SortOrderType = Field(default=SortOrderType.desc)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
