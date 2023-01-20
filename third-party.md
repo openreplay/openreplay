@@ -49,6 +49,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | scikit-learn | BSD3 | Python |
 | sqlalchemy | MIT | Python |
 | pandas-redshift | MIT | Python |
+| confluent-kafka | Apache 2 | Python |
 | amplitude-js | MIT | JavaScript |
 | classnames | MIT | JavaScript |
 | codemirror | MIT | JavaScript |
