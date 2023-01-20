@@ -1,37 +1,98 @@
 #!/bin/bash
+# vim: set ft=sh:
 
-## This script is a helper for managing your OpenReplay instance
+OR_DIR="/var/lib/openreplay"
+APP_NS="${APP_NS:-app}"
+DB_NS="${DB_NS:-db}"
+OR_REPO="https://github.com/openreplay/openreplay"
+tmp_dir=$(mktemp -d)
 
-set -eE -o pipefail  # same as: `set -o errexit -o errtrace`
-# Trapping the error
-trap err EXIT
+[[ -d $OR_DIR ]] || {
+  sudo mkdir $OR_DIR
+}
+export PATH=$PATH:/var/lib/openreplay
 
-err() {
-  exit $1
+tools=(
+  zyedidia/eget
+  stern/stern
+  derailed/k9s
+  mikefarah/yq
+  hidetatz/kubecolor
+  )
+
+# Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BWHITE='\033[1;37m'
+NC='\033[0m' # No Color
+
+# Checking whether the app exists or we do have to upgade.
+function exists() {
+  which "${1}" &> /dev/null
+  return $?
 }
 
-# make all stderr red
-color()(set -o pipefail;"$@" 2>&1>&3|sed $'s,.*,\e[31m&\e[m,'>&2)3>&1
+function err_cd() {
+  cd "$1" &> /dev/null || (log err not able to cd to "$1" && exit 100)
+}
 
-# color schemes
-# Ansi color code variables
-red="\e[0;91m"
-blue="\e[0;94m"
-expand_bg="\e[K"
-blue_bg="\e[0;104m${expand_bg}"
-red_bg="\e[0;101m${expand_bg}"
-green_bg="\e[0;102m${expand_bg}"
-green="\e[0;92m"
-white="\e[0;97m"
-bold="\e[1m"
-uline="\e[4m"
-reset="\e[0m"
+function log () {
+  case "$1" in
+    info)
+      shift
+      echo -e "${GREEN}[INFO]" "$@" "${NC}"
+      return
+    ;;
+    debug)
+      shift
+      echo -e "${YELLOW}[DEBUG]" "$@" "${NC}"
+      return
+    ;;
+    title)
+      shift
+      echo -e "\n${BWHITE}-" "$@" "${NC}"
+      return
+    ;;
+    err)
+      shift
+      echo -e "${RED}[ERROR]" "$@" "${NC}"
+      exit 100
+    ;;
+    *)
+      echo "Not supported log format"
+    ;;
+  esac
+  echo "[Error]" "$@"
+  exit 100
+}
 
-CWD=$pwd
+function install_packages() {
 
-usage()
-{
-clear
+  [[ -e "$OR_DIR/eget" ]] || {
+    cd "$tmp_dir" || log err "Not able to cd to tmp dir $tmp_dir"
+    curl --version &> /dev/null || log err "curl not found. Please install"
+    curl https://zyedidia.github.io/eget.sh | sh
+    sudo mv eget $OR_DIR
+    err_cd -
+  }
+
+  for package in "${tools[@]}"; do
+    log info Installing "$(awk -F/ '{print $2}' <<< $package)"
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to /var/lib/openreplay "$package"
+  done
+  log info Installing helm
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+  log info Installing kubectl
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
+  log info Installing Busybox
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
+  date | sudo tee $OR_DIR/packages.lock &> /dev/null
+}
+
+function help() {
+
+echo -e ${BWHITE}
 cat <<"EOF"
   ___                   ____            _
  / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
@@ -39,79 +100,121 @@ cat <<"EOF"
 | |_| | |_) |  __/ | | |  _ <  __/ |_) | | (_| | |_| |
  \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
       |_|                        |_|            |___/
-
 EOF
+echo -e ${NC}
 
-  echo -e "${green}Usage: [DEBUG=1|SKIP_MIGRAION=1] openreplay-cli [ -h | --help ]
-                  [ -d | --status ]
-                  [ -v | --verbose ]
-                  [ -l | --logs SERVICE ] 
-                  [ -I | --helm-install SERVICE ]
-                  [ -s | --stop SERVICE|all ] 
-                  [ -S | --start SERVICE|all ]
-                  [ -r | --restart SERVICE|all ]"
-  echo -e "${reset}${blue}services: ${services[*]}${reset}"
-  exit 0
-}
-services=( alerts assets chalice clickhouse ender sink storage http integrations ios-proxy db pg redis postgresql )
-
-check() {
-    if ! command -v kubectl &> /dev/null
-    then
-        >&2 echo "Kubectl not found. Please refer https://kubernetes.io/docs/tasks/tools/install-kubectl/ "
-        exit 2
-    fi
-    kubectl cluster-info &> /dev/null
-    if [[ $? -ne 0 ]]; then
-        echo -e "${red}Kubernetes cluster is not accessible.\nPlease check ${bold}KUBECONFIG${reset}${red} env variable is set or ${bold}~/.kube/config exists.${reset}"
-        exit 1
-    fi
+log info '
+  Usage: openreplay [ -h | --help ]
+                    [ -s | --status ]
+                    [ -i | --install ]
+                    [ -u | --upgrade ]
+                    [ -r | --restart ]
+                    [ -R | --Reload ]
+                    [ -p | --install-packages ]
+                    [ -l | --logs SERVICE ] 
+         Services: alerts assets assist chalice 
+                   db ender frontend heuristics 
+                   http integrations nginx-controller 
+                   peers sink sourcemapreader storage 
+    '
+  return
 }
 
-stop() {
-    if [[ $1 == "all" ]]; then
-        kubectl scale deployment -n app --replicas=0 --all
-        return
-    fi
-    kubectl scale -n app deployment --replicas=0 $1-openreplay
+function status() {
+  log info OpenReplay Version
+  # awk '(NR<2)' < "$OR_DIR/vars.yaml"
+  awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml"
+  log info Disk
+  df -h /var
+  log info Memory
+  free -mh
+  log info CPU
+  uname -a
+  # Print only the fist line.
+  awk '(NR<2)' < /etc/os-release 
+  echo "CPU Count: $(nproc)"
+  log info Kubernetes
+  kubecolor version --short
+  log info Openreplay Component
+  kubecolor get po -n "${APP_NS}"
+  kubecolor get po -n "${DB_NS}"
+  return
 }
 
-start() {
-    helm upgrade --install openreplay -n app openreplay -f vars.yaml
+function or_helm_upgrade() {
+  set -o pipefail
+  log_file="${tmp_dir}/helm.log"
+  if ! helm upgrade --install openreplay ./openreplay -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug  2>&1 | tee -a "${log_file}"; then
+    set +o pipefail
+    log err "
+      Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
+
+      If logs aren't verbose, run ${BWHITE}openreplay --status${RED}
+
+      If pods are in failed state, run ${BWHITE}openreplay --logs <pod-name>${RED}
+      "
+  fi
+
 }
 
- 
-restart() {
-    if [[ $1 == "all" ]]; then
-        kubectl rollout restart deployment -n app
-        return
-    fi
-    kubectl rollout restart -n app deployment $1-openreplay
+function upgrade() {
+  # TODO:
+  # 1. store vars.yaml in central place.
+  # 3. In upgrade you'll have to clone the repo
+  # 3. How to update package. Because openreplay -u will be done from old update script
+  # 4. Update from Version
+  exists git || log err "Git not found. Please install"
+  log info "Working directory $tmp_dir"
+  err_cd "$tmp_dir"
+  or_version=$(awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+
+  # Creating backup dir of current installation
+  [[ -d "$OR_DIR/openreplay" ]] && sudo cp -b "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
+
+  git clone "${OR_REPO}" --depth 1
+  err_cd openreplay/scripts/helmcharts
+  install_packages
+  [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
+
+  # Merge prefrerences
+  cp $OR_DIR/vars.yaml old_vars.yaml
+  or_new_version=$(awk '/fromVersion/{print $2}' < "vars.yaml")
+  yq '(load("old_vars.yaml") | .. | select(tag != "!!map" and tag != "!!seq")) as $i ireduce(.; setpath($i | path; $i))' vars.yaml > new_vars.yaml
+  mv new_vars.yaml vars.yaml
+  or_helm_upgrade
+
+  # Update the version
+  busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
+  sudo mv ./openreplay-cli /bin/
+  sudo mv ./vars.yaml "$OR_DIR"
+  sudo cp -rf ../../../openreplay $OR_DIR/
+  log info All the configuration has been stored to $OR_DIR/vars.yaml file
+
+  err_cd -
+  return
 }
 
-
-helmInstall() {
-  # Adding variables
-  [[ $SKIP_MIGRATION -eq 1 ]] && ARGS="--set skipMigration=true"
-  [[ $DEBUG -eq 1 ]] && ARGS="$ARGS --debug"
-  helm upgrade --install openreplay -n app openreplay -f vars.yaml $ARGS
+function reload() {
+  err_cd $OR_DIR/openreplay/scripts/helmcharts
+  sudo cp -f $OR_DIR/vars.yaml .
+  or_helm_upgrade
+  return
 }
 
-logs() {
-    check
-    kubectl logs --timestamps -n app -l app.kubernetes.io/name=$1 -f
+function clean_tmp_dir() {
+  [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
 }
 
-status() {
-    kubectl get deployment.apps -n app
+[[ -f $OR_DIR/packages.lock ]] || {
+  log title Installing packages "${NC}"
+  install_packages
 }
 
-[[ $# -eq 0 ]] && usage && exit 1
-
-PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:I --long verbose,help,status,start:,stop:,logs:,restart:,helm-install -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrvpiuhsl: --long reload,restart,verbose,install-packages,install,upgrade,help,status,logs: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
-  usage
+  help
+  exit 100
 fi
 
 eval set -- "$PARSED_ARGUMENTS"
@@ -119,20 +222,62 @@ while :
 do
   case "$1" in
     -v | --verbose) VERBOSE=1    ; shift   ;;
-    -h | --help)    usage        ; shift   ;;
-    -d | --status)  status       ; shift   ;;
-    -I | --helm-install) helmInstall; shift ;;
-    -s | --stop)    stop $2      ; shift 2 ;;
-    -S | --start)   start $2     ; shift 2 ;;
-    -l | --logs)    logs "$2"    ; shift 2 ;;
-    -r | --restart) restart "$2" ; shift 2 ;;
+    -h | --help)
+      help 
+      clean_tmp_dir
+      exit 0
+      ;;
+    -u | --upgrade)
+      log title "Upgrading OpenReplay"
+      upgrade
+      clean_tmp_dir
+      exit 0
+    ;;
+    -i | --install)
+      log title "Installing OpenReplay"
+      sudo cp -f ./openreplay /bin/
+      read -rp "Enter your domain name(openreplay.mycompany.com): " domain_name
+      DOMAIN_NAME=$domain_name bash init.sh
+      sudo cp -f ./vars.yaml "$OR_DIR"
+      clean_tmp_dir
+      exit 0
+      ;;
+    -r | --restart)
+      log title "Restarting OpenReplay Components"
+      kubectl rollout restart deployment -n "${APP_NS}"
+      kubectl rollout status deployment -n "${APP_NS}"
+      clean_tmp_dir
+      exit 0
+      ;;
+    -R | --reload)
+      log title "Reloading OpenReplay Components"
+      reload
+      exit 0
+      ;;
+    -s | --status)
+      log title "Checking OpenReplay Components Status"
+      status
+      clean_tmp_dir
+      exit 0
+      ;;
+    -l | --logs)
+      # Skipping double quotes because we want globbing. For example
+      # ./openreplay -l "chalice --tail 10"
+      stern -A --container-state=running,terminated $2
+      clean_tmp_dir
+      exit 0
+      ;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break ;;
     # If invalid options were passed, then getopt should have reported an error,
     # which we checked as VALID_ARGUMENTS when getopt was called...
-    *) echo "Unexpected option: $1 - this should not happen."
-       usage ;;
+    *)
+      echo "Unexpected option: $1 - this should not happen."
+      help
+      clean_tmp_dir
+      ;;
   esac
 done
 
-[[ $VERBOSE -eq 1 ]] && set -x || true
+[ $# -eq 0 ] && help
+clean_tmp_dir

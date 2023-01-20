@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 set -e
 
 # --- helper functions for logs ---
@@ -16,8 +16,7 @@ fatal()
     exit 1
 }
 
-version="v1.9.0"
-usr=`whoami`
+usr=$(whoami)
 
 # Installing k3s
 function install_k8s() {
@@ -51,7 +50,7 @@ function install_tools() {
     ## $install_status GH package manager
     exists eget || {
         info "$install_status eget"
-        download_url=`curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4`
+        download_url=$(curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4)
         curl -SsL ${download_url} -o /tmp/eget.tar.gz
         tar -xf /tmp/eget.tar.gz --strip-components=1 -C /tmp/
         sudo mv /tmp/eget /usr/local/bin/eget
@@ -113,7 +112,7 @@ function sed_i_wrapper(){
 
 function create_passwords() {
   # Error out only if the domain name is empty in vars.yaml
-  existing_domain_name=`awk '/domainName/ {print $2}' vars.yaml | xargs`
+  existing_domain_name=$(awk '/domainName/ {print $2}' vars.yaml | xargs)
   [[ -z $existing_domain_name ]] && {
     [[ -z $DOMAIN_NAME ]] && {
       fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
@@ -157,6 +156,8 @@ function main() {
     install_tools
   }
   [[ x$SKIP_ROTATE_SECRETS == "x1" ]] && {
+      info "Skipping random password generation"
+  } || {
     create_passwords
   }
   [[ x$SKIP_OR_INSTALL == "x1" ]] && {
@@ -164,6 +165,10 @@ function main() {
   } || {
     set_permissions
     install_openreplay
+    sudo mkdir -p /var/lib/openreplay
+    sudo cp -f openreplay-cli /bin/openreplay
+    sudo cp -rf ../../../openreplay /var/lib/openreplay
+    sudo cp -f vars.yaml /var/lib/openreplay
   }
 }
 
