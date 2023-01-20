@@ -108,18 +108,18 @@ function status() {
   log info OpenReplay Version
   # awk '(NR<2)' < "$OR_DIR/vars.yaml"
   awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml"
-  log info Disk Status
+  log info Disk
   df -h /var
-  log info Memory Status
+  log info Memory
   free -mh
-  log info CPU Status
+  log info CPU
   uname -a
   # Print only the fist line.
   awk '(NR<2)' < /etc/os-release 
   echo "CPU Count: $(nproc)"
-  log info Kubernetes Status
+  log info Kubernetes
   kubecolor version --short
-  log info Openreplay Component Status
+  log info Openreplay Components
   kubecolor get po -n "${APP_NS}"
   kubecolor get po -n "${DB_NS}"
   return
