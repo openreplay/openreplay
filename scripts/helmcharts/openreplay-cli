@@ -4,6 +4,7 @@
 OR_DIR="/var/lib/openreplay"
 APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-app}"
+OR_REPO="https://github.com/openreplay/openreplay"
 tmp_dir=$(mktemp -d)
 
 [[ -d $OR_DIR ]] || {
@@ -27,6 +28,10 @@ NC='\033[0m' # No Color
 function exists() {
   which "${1}" &> /dev/null
   return $?
+}
+
+function err_cd() {
+  cd "$1" || log err not able to cd to "$1"
 }
 
 function log () {
@@ -111,8 +116,16 @@ function upgrade() {
   # TODO:
   # 1. store vars.yaml in central place.
   # 2. While install do we have to clone?
-  # 2. In upgrade you'll have to clone the repo
-  info
+  # 3. In upgrade you'll have to clone the repo
+  exists git || log err "Git not found. Please install"
+  err_cd "$tmp_dir"
+  or_version=$(awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+  [[ -d "$OR_DIR/openreplay" ]] && mv "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version}" 
+  git clone "${OR_REPO}"
+  err_cd openreplay/scripts/helmcharts
+
+  err_cd -
+  sudo mv ./openreplay-cli /bin/
 }
 
 # Ref: https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
@@ -134,7 +147,6 @@ do
     ;;
     u)
       log info "Upgrading OpenReplay"
-      sudo mv ./openreplay /bin/
       upgrade
       sudo mv ./vars.yaml "$OR_DIR"
       log info All the configuration has been stored to $OR_DIR/vars.yaml file
