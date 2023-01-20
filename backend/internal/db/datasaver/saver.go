@@ -1,6 +1,7 @@
 package datasaver
 
 import (
+	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/queue/types"
 )
@@ -10,6 +11,6 @@ type Saver struct {
 	producer types.Producer
 }
 
-func New(pg *cache.PGCache, producer types.Producer) *Saver {
-	return &Saver{pg: pg, producer: producer}
+func New(pg *cache.PGCache, _ *db.Config) *Saver {
+	return &Saver{pg: pg, producer: nil}
 }
