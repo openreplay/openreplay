@@ -10,7 +10,8 @@
   & .item {
     color: $gray-medium;
     font-weight: medium;
-    padding: 10px;
+    padding: 0 6px;
+    height: 33px;
     flex: 1;
     text-align: center;
     cursor: pointer;
@@ -70,6 +71,7 @@
 
 .small .item {
   padding: 4px 8px;
+  height: 26px;
 }
 
 .extraSmall .item {

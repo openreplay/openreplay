@@ -1,18 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import stl from './xrayButton.module.css';
 import cn from 'classnames';
-import { Popup } from 'UI';
-import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
-import { Controls as Player } from 'Player';
-import { INDEXES } from 'App/constants/zindex';
+import { Tooltip } from 'UI';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {
   onClick?: () => void;
   isActive?: boolean;
 }
 function XRayButton(props: Props) {
+  const { player: Player } = React.useContext(PlayerContext);
+
   const { isActive } = props;
-  const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.XRAY));
+  // const [showGuide, setShowGuide] = useState(!localStorage.getItem(FEATURE_KEYS.XRAY));
+  const showGuide = false;
+  const setShowGuide = (anyt: any) => anyt;
+
   useEffect(() => {
     if (!showGuide) {
       return;
@@ -38,40 +41,14 @@ function XRayButton(props: Props) {
         ></div>
       )}
       <div className="relative">
-        {showGuide ? (
-          <GuidePopup
-            title={<>Introducing <span className={stl.text}>X-Ray</span></>}
-            description={"Get a quick overview on the issues in this session."}
+        <Tooltip title="Get a quick overview on the issues in this session." disabled={isActive}>
+          <button
+            className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
+            onClick={onClick}
           >
-            <button
-              className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
-              onClick={onClick}
-              style={{ zIndex: INDEXES.POPUP_GUIDE_BTN, position: 'relative' }}
-            >
-              <span className="z-1">X-RAY</span>
-            </button>
-
-            <div
-              className="absolute bg-white top-0 left-0 z-0"
-              style={{
-                zIndex: INDEXES.POPUP_GUIDE_BG,
-                width: '100px',
-                height: '50px',
-                borderRadius: '30px',
-                margin: '-10px -16px',
-              }}
-            ></div>
-          </GuidePopup>
-        ) : (
-          <Popup content="Get a quick overview on the issues in this session." disabled={isActive}>
-            <button
-              className={cn(stl.wrapper, { [stl.default]: !isActive, [stl.active]: isActive })}
-              onClick={onClick}
-            >
-              <span className="z-1">X-RAY</span>
-            </button>
-          </Popup>
-        )}
+            <span className="z-1">X-RAY</span>
+          </button>
+        </Tooltip>
       </div>
     </>
   );

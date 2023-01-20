@@ -10,14 +10,6 @@ export default class MessageEncoder extends PrimitiveEncoder {
   encode(msg: Message): boolean {
     switch(msg[0]) {
     
-    case Messages.Type.BatchMetadata:
-      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5]) 
-    break
-    
-    case Messages.Type.PartitionedMessage:
-      return  this.uint(msg[1]) && this.uint(msg[2]) 
-    break
-    
     case Messages.Type.Timestamp:
       return  this.uint(msg[1]) 
     break
@@ -86,6 +78,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) 
     break
     
+    case Messages.Type.NetworkRequest:
+      return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) && this.string(msg[5]) && this.uint(msg[6]) && this.uint(msg[7]) && this.uint(msg[8]) 
+    break
+    
     case Messages.Type.ConsoleLog:
       return  this.string(msg[1]) && this.string(msg[2]) 
     break
@@ -102,7 +98,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) 
     break
     
-    case Messages.Type.RawCustomEvent:
+    case Messages.Type.CustomEvent:
       return  this.string(msg[1]) && this.string(msg[2]) 
     break
     
@@ -178,6 +174,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.boolean(msg[1]) 
     break
     
+    case Messages.Type.LoadFontFace:
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) 
+    break
+    
+    case Messages.Type.SetNodeFocus:
+      return  this.int(msg[1]) 
+    break
+    
     case Messages.Type.LongTask:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.string(msg[5]) && this.string(msg[6]) && this.string(msg[7]) 
     break
@@ -236,6 +240,14 @@ export default class MessageEncoder extends PrimitiveEncoder {
     
     case Messages.Type.JSException:
       return  this.string(msg[1]) && this.string(msg[2]) && this.string(msg[3]) && this.string(msg[4]) 
+    break
+    
+    case Messages.Type.BatchMetadata:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.int(msg[4]) && this.string(msg[5]) 
+    break
+    
+    case Messages.Type.PartitionedMessage:
+      return  this.uint(msg[1]) && this.uint(msg[2]) 
     break
     
     }

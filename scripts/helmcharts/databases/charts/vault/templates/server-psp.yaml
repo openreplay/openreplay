@@ -1,0 +1,49 @@
+{{ template "vault.mode" . }}
+{{- if .serverEnabled -}}
+{{- if and (ne .mode "") (eq (.Values.global.psp.enable | toString) "true") }}
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ template "vault.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- template "vault.psp.annotations" . }}
+spec:
+  privileged: false
+  # Required to prevent escalations to root.
+  allowPrivilegeEscalation: false
+  volumes:
+    - configMap
+    - emptyDir
+    - projected
+    - secret
+    - downwardAPI
+    {{- if eq (.Values.server.dataStorage.enabled | toString) "true" }}
+    - persistentVolumeClaim
+    {{- end }}
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    # Require the container to run without root privileges.
+    rule: MustRunAsNonRoot
+  seLinux:
+    # This policy assumes the nodes are using AppArmor rather than SELinux.
+    rule: RunAsAny
+  supplementalGroups:
+    rule: MustRunAs
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: MustRunAs
+    ranges:
+      # Forbid adding the root group.
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+{{- end }}
+{{- end }}

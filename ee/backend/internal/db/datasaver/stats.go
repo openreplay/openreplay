@@ -17,6 +17,13 @@ func (si *Saver) InitStats() {
 }
 
 func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error {
+	// Send data to quickwit
+	if sess, err := si.pg.Cache.GetSession(msg.SessionID()); err != nil {
+		si.SendToFTS(msg, 0)
+	} else {
+		si.SendToFTS(msg, sess.ProjectID)
+	}
+
 	switch m := msg.(type) {
 	// Web
 	case *messages.SessionEnd:
@@ -32,8 +39,10 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 		return si.ch.InsertWebPageEvent(session, m)
 	case *messages.ResourceEvent:
 		return si.ch.InsertWebResourceEvent(session, m)
-	case *messages.ErrorEvent:
-		return si.ch.InsertWebErrorEvent(session, m)
+	case *messages.JSException:
+		return si.ch.InsertWebErrorEvent(session, types.WrapJSException(m))
+	case *messages.IntegrationEvent:
+		return si.ch.InsertWebErrorEvent(session, types.WrapIntegrationEvent(m))
 	}
 	return nil
 }

@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import ErrorFrame from './ErrorFrame'
-import cn from 'classnames';
 import { IconButton, Icon } from 'UI';
-import { connect } from 'react-redux';
 
 const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
 

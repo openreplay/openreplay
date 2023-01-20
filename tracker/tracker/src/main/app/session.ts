@@ -37,7 +37,7 @@ export default class Session {
     this.callbacks.forEach((cb) => cb(newInfo))
   }
 
-  update(newInfo: Partial<SessionInfo>): void {
+  assign(newInfo: Partial<SessionInfo>): void {
     if (newInfo.userID !== undefined) {
       // TODO clear nullable/undefinable types
       this.userID = newInfo.userID

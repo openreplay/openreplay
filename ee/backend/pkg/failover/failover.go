@@ -89,7 +89,9 @@ func (s *sessionFinderImpl) worker() {
 }
 
 func (s *sessionFinderImpl) findSession(sessionID, timestamp, partition uint64) {
-	err := s.storage.UploadSessionFiles(sessionID)
+	sessEnd := &messages.SessionEnd{Timestamp: timestamp}
+	sessEnd.SetSessionID(sessionID)
+	err := s.storage.Upload(sessEnd)
 	if err == nil {
 		log.Printf("found session: %d in partition: %d, original: %d",
 			sessionID, partition, sessionID%numberOfPartitions)

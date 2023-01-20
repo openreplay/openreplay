@@ -1,11 +1,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Set, List as ImmutableList } from "immutable";
-import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain, Pagination } from 'UI';
+import { Set } from "immutable";
+import { NoContent, Loader, Checkbox, IconButton, Input, Pagination } from 'UI';
 import { merge, resolve, unresolve, ignore, updateCurrentPage, editOptions } from "Duck/errors";
 import { applyFilter } from 'Duck/filters';
-import { IGNORED, RESOLVED, UNRESOLVED } from 'Types/errorInfo';
-import SortDropdown from 'Components/BugFinder/Filters/SortDropdown';
+import { IGNORED, UNRESOLVED } from 'Types/errorInfo';
 import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
 import { debounce } from 'App/utils';
@@ -25,7 +24,7 @@ const sortOptions = Object.entries(sortOptionsMap)
 
 @connect(state => ({
 	loading: state.getIn([ "errors", "loading" ]),
-	resolveToggleLoading: state.getIn(["errors", "resolve", "loading"]) || 
+	resolveToggleLoading: state.getIn(["errors", "resolve", "loading"]) ||
 		state.getIn(["errors", "unresolve", "loading"]),
 	ignoreLoading: state.getIn([ "errors", "ignore", "loading" ]),
 	mergeLoading: state.getIn([ "errors", "merge", "loading" ]),
@@ -54,19 +53,19 @@ export default class List extends React.PureComponent {
 		}
 		this.debounceFetch = debounce(this.props.editOptions, 1000);
 	}
-	
+
 	componentDidMount() {
 		this.props.applyFilter({ });
 	}
 
 	check = ({ errorId }) => {
 		const { checkedIds } = this.state;
-		const newCheckedIds = checkedIds.contains(errorId) 
-			? checkedIds.remove(errorId) 
+		const newCheckedIds = checkedIds.contains(errorId)
+			? checkedIds.remove(errorId)
 			: checkedIds.add(errorId);
 		this.setState({
 			checkedAll: newCheckedIds.size === this.props.list.size,
-			checkedIds: newCheckedIds 
+			checkedIds: newCheckedIds
 		});
 	}
 
@@ -184,7 +183,7 @@ export default class List extends React.PureComponent {
 									onClick={ this.unresolve }
 									disabled={ someLoading || currentCheckedIds.size === 0}
 								/>
-						}	
+						}
 						{ status !== IGNORED &&
 							<IconButton
 								outline
@@ -196,10 +195,10 @@ export default class List extends React.PureComponent {
 								onClick={ this.ignore }
 								disabled={ someLoading || currentCheckedIds.size === 0}
 							/>
-						}							
+						}
 					</div>
 					<div className="flex items-center ml-6">
-						<span className="mr-2 color-gray-medium">Sort By</span>	          
+						<span className="mr-2 color-gray-medium">Sort By</span>
 						<Select
 							defaultValue={ `${sort}-${order}` }
 							name="sort"
@@ -212,7 +211,6 @@ export default class List extends React.PureComponent {
 							wrapperClassName="ml-3"
 							placeholder="Filter by name or message"
 							icon="search"
-							iconPosition="left"
 							name="filter"
 							onChange={ this.onQueryChange }
 							value={query}

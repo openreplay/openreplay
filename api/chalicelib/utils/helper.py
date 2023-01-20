@@ -3,53 +3,20 @@ import random
 import re
 import string
 from typing import Union
+from urllib.parse import urlparse
 
-import requests
+from decouple import config
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
 
-local_prefix = 'local-'
-from decouple import config
-
-
-def get_version_number():
-    return config("version")
-
 
 def get_stage_name():
-    stage = config("STAGE")
-    return stage[len(local_prefix):] if stage.startswith(local_prefix) else stage
+    return "OpenReplay"
 
 
-def is_production():
-    return get_stage_name() == "production"
-
-
-def is_staging():
-    return get_stage_name() == "staging"
-
-
-def is_onprem():
-    return not is_production() and not is_staging()
-
-
-def is_local():
-    return config("STAGE").startswith(local_prefix)
-
-
-def generate_salt():
-    return "".join(random.choices(string.hexdigits, k=36))
-
-
-def unique_ordered_list(array):
-    uniq = []
-    [uniq.append(x) for x in array if x not in uniq]
-    return uniq
-
-
-def unique_unordered_list(array):
-    return list(set(array))
+def random_string(length=36):
+    return "".join(random.choices(string.hexdigits, k=length))
 
 
 def list_to_camel_case(items, flatten=False):
@@ -130,15 +97,9 @@ def key_to_snake_case(name, delimiter='_', split_number=False):
 TRACK_TIME = True
 
 
-def __sbool_to_bool(value):
-    if value is None or not isinstance(value, str):
-        return False
-    return value.lower() in ["true", "yes", "1"]
-
-
 def allow_captcha():
     return config("captcha_server", default=None) is not None and config("captcha_key", default=None) is not None \
-           and len(config("captcha_server")) > 0 and len(config("captcha_key")) > 0
+        and len(config("captcha_server")) > 0 and len(config("captcha_key")) > 0
 
 
 def string_to_sql_like(value):
@@ -210,51 +171,8 @@ def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator
     return value
 
 
-def is_valid_email(email):
-    return re.match(r"[^@]+@[^@]+\.[^@]+", email) is not None
-
-
-def is_valid_http_url(url):
-    regex = re.compile(
-        r'^(?:http|ftp)s?://'  # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-        r'localhost|'  # localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-        r'(?::\d+)?'  # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-
-    return re.match(regex, url) is not None
-
-
-def is_valid_url(url):
-    regex = re.compile(
-        # r'^(?:http|ftp)s?://'  # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-        r'localhost|'  # localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-        r'(?::\d+)?'  # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-
-    return re.match(regex, url) is not None
-
-
-def is_alphabet_space(word):
-    r = re.compile("^[a-zA-Z ]*$")
-    return r.match(word) is not None
-
-
-def is_alphabet_latin_space(word):
-    r = re.compile("^[a-zA-Z\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\s ]*$")
-    return r.match(word) is not None
-
-
 def is_alphabet_space_dash(word):
     r = re.compile("^[a-zA-Z -]*$")
-    return r.match(word) is not None
-
-
-def is_alphanumeric_space(word):
-    r = re.compile("^[a-zA-Z0-9._\- ]*$")
     return r.match(word) is not None
 
 
@@ -308,9 +226,6 @@ def explode_widget(data, key=None):
             for c in data["chart"]:
                 result[-1]["data"]["chart"].append({"timestamp": c["timestamp"], "value": c[k]})
     return result
-
-
-TEMP_PATH = "./" if is_local() else "/tmp/"
 
 
 def get_issue_title(issue_type):
@@ -390,3 +305,10 @@ def __time_value(row):
 
 def is_saml2_available():
     return config("hastSAML2", default=False, cast=bool)
+
+
+def get_domain():
+    _url = config("SITE_URL")
+    if not _url.startswith("http"):
+        _url = "http://" + _url
+    return '.'.join(urlparse(_url).netloc.split(".")[-2:])

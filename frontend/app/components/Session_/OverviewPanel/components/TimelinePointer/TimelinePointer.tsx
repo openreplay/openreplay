@@ -1,41 +1,44 @@
 import React from 'react';
-import { connectPlayer, Controls } from 'App/player';
-import { toggleBottomBlock, NETWORK, EXCEPTIONS, PERFORMANCE } from 'Duck/components/player';
+import { NETWORK, EXCEPTIONS } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
-import { Icon, ErrorDetails, Popup } from 'UI';
-import { Tooltip } from 'react-tippy';
-import { TYPES as EVENT_TYPES } from 'Types/session/event';
+import { Icon, Tooltip } from 'UI';
 import StackEventModal from '../StackEventModal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import FetchDetails from 'Shared/FetchDetailsModal';
 import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {
   pointer: any;
   type: any;
+  noClick?: boolean;
+  fetchPresented?: boolean;
 }
 const TimelinePointer = React.memo((props: Props) => {
-  const { showModal, hideModal } = useModal();
+  const { player } = React.useContext(PlayerContext)
+
+  const { showModal } = useModal();
   const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
+    if (props.noClick) return;
     e.stopPropagation();
-    Controls.jump(pointer.time);
+    player.jump(pointer.time);
     if (!type) {
       return;
     }
 
     if (type === 'ERRORS') {
-      showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true });
+      showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true, width: 1200 });
     }
 
     if (type === 'EVENT') {
-      showModal(<StackEventModal event={pointer} />, { right: true });
+      showModal(<StackEventModal event={pointer} />, { right: true, width: 450 });
     }
 
     if (type === NETWORK) {
       if (pointer.tp === 'graph_ql') {
-        showModal(<GraphQLDetailsModal resource={pointer} />, { right: true });
+        showModal(<GraphQLDetailsModal resource={pointer} />, { right: true, width: 500 });
       } else {
-        showModal(<FetchDetails resource={pointer} />, { right: true });
+        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true, width: 500 });
       }
     }
     // props.toggleBottomBlock(type);
@@ -44,52 +47,58 @@ const TimelinePointer = React.memo((props: Props) => {
   const renderNetworkElement = (item: any) => {
     const name = item.name || '';
     return (
-      <Popup
-        content={
+      <Tooltip
+        title={
           <div className="">
-            <b>{item.success ? 'Slow resource: ' : 'Missing resource:'}</b>
+            <b>{item.success ? 'Slow resource: ' : '4xx/5xx Error:'}</b>
             <br />
-            {name.length > 200 ? name.slice(0, 100) + ' ... ' + name.slice(-50) : name.length > 200 ? (item.name.slice(0, 100) + ' ... ' + item.name.slice(-50)) : item.name}
+            {name.length > 200
+              ? name.slice(0, 100) + ' ... ' + name.slice(-50)
+              : name.length > 200
+              ? item.name.slice(0, 100) + ' ... ' + item.name.slice(-50)
+              : item.name}
           </div>
         }
         delay={0}
-        position="top"
+        placement="top"
       >
         <div onClick={createEventClickHandler(item, NETWORK)} className="cursor-pointer">
-          <div className="h-3 w-3 rounded-full bg-red" />
+          <div className="h-4 w-4 rounded-full bg-red text-white font-bold flex items-center justify-center text-sm">
+            <span>!</span>
+          </div>
         </div>
-      </Popup>
+      </Tooltip>
     );
   };
 
   const renderClickRageElement = (item: any) => {
     return (
-      <Popup
-        content={
+      <Tooltip
+        title={
           <div className="">
             <b>{'Click Rage'}</b>
           </div>
         }
         delay={0}
-        position="top"
+        placement="top"
       >
         <div onClick={createEventClickHandler(item, null)} className="cursor-pointer">
           <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" />
         </div>
-      </Popup>
+      </Tooltip>
     );
   };
 
   const renderStackEventElement = (item: any) => {
     return (
-      <Popup
-        content={
+      <Tooltip
+        title={
           <div className="">
             <b>{'Stack Event'}</b>
           </div>
         }
         delay={0}
-        position="top"
+        placement="top"
       >
         <div
           onClick={createEventClickHandler(item, 'EVENT')}
@@ -97,20 +106,20 @@ const TimelinePointer = React.memo((props: Props) => {
         >
           {/* <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" /> */}
         </div>
-      </Popup>
+      </Tooltip>
     );
   };
 
   const renderPerformanceElement = (item: any) => {
     return (
-      <Popup
-        content={
+      <Tooltip
+        title={
           <div className="">
             <b>{item.type}</b>
           </div>
         }
         delay={0}
-        position="top"
+        placement="top"
       >
         <div
           onClick={createEventClickHandler(item, EXCEPTIONS)}
@@ -118,14 +127,14 @@ const TimelinePointer = React.memo((props: Props) => {
         >
           {/* <Icon className="rounded-full bg-white" name="funnel/exclamation-circle-fill" color="red" size="16" /> */}
         </div>
-      </Popup>
+      </Tooltip>
     );
   };
 
   const renderExceptionElement = (item: any) => {
     return (
-      <Popup
-        content={
+      <Tooltip
+        title={
           <div className="">
             <b>{'Exception'}</b>
             <br />
@@ -133,17 +142,14 @@ const TimelinePointer = React.memo((props: Props) => {
           </div>
         }
         delay={0}
-        position="top"
+        placement="top"
       >
         <div onClick={createEventClickHandler(item, 'ERRORS')} className="cursor-pointer">
-          <Icon
-            className="rounded-full bg-white"
-            name="funnel/exclamation-circle-fill"
-            color="red"
-            size="16"
-          />
+          <div className="h-4 w-4 rounded-full bg-red text-white font-bold flex items-center justify-center text-sm">
+            <span>!</span>
+          </div>
         </div>
-      </Popup>
+      </Tooltip>
     );
   };
 

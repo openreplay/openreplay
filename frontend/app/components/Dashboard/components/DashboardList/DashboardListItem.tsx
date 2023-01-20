@@ -23,7 +23,7 @@ function DashboardListItem(props: Props) {
     };
     return (
         <div className="hover:bg-active-blue cursor-pointer border-t px-6" onClick={onItemClick}>
-            <div className="grid grid-cols-12 py-4 select-none">
+            <div className="grid grid-cols-12 py-4 select-none items-center">
                 <div className="col-span-8 flex items-start">
                     <div className="flex items-center capitalize-first">
                         <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
@@ -32,7 +32,6 @@ function DashboardListItem(props: Props) {
                         <div className="link capitalize-first">{dashboard.name}</div>
                     </div>
                 </div>
-                {/* <div><Label className="capitalize">{metric.metricType}</Label></div> */}
                 <div className="col-span-2">
                     <div className="flex items-center">
                         <Icon name={dashboard.isPublic ? 'user-friends' : 'person-fill'} className="mr-2" />

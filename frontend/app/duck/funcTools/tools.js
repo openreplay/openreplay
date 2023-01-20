@@ -27,11 +27,6 @@ export function createItemInListUpdater(idKey = 'id', shouldAdd = true) {
 	  }
 }
 
-export function createItemInListFilter(idKey = 'id') {
-  return id =>
-    list => list.filter(item => item[ idKey ] !== id)
-}
-
 export const request = type => `${ type }_REQUEST`;
 export const success = type => `${ type }_SUCCESS`;
 export const failure = type => `${ type }_FAILURE`;

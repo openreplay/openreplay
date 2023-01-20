@@ -3,7 +3,6 @@ node_modules/
 public/
 .idea
 drafts
-yarn.lock
 app/components/ui/SVG.js
 *.DS_Store
 .env
@@ -15,3 +14,8 @@ app/components/ui/SVG.js
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+*.env.json
+cypress.env.json
+**/__diff_output__/*
+*.diff.png
+cypress/videos/

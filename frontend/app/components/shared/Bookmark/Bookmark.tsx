@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react'
-import { Popup, Button, Icon } from 'UI'
-import { toggleFavorite } from 'Duck/sessions'
-import { connect } from 'react-redux'
+import React, { useEffect, useState } from 'react';
+import { Tooltip, Button, Icon } from 'UI';
+import { toggleFavorite } from 'Duck/sessions';
+import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
-import { Tooltip } from 'react-tippy';
-import cn from 'classnames';
 
 interface Props {
   toggleFavorite: (sessionId: string) => Promise<void>;
-  favorite: Boolean;
+  favorite: boolean;
   sessionId: any;
-  isEnterprise: Boolean;
+  isEnterprise: boolean;
   noMargin?: boolean;
 }
-function Bookmark(props : Props ) {
+function Bookmark(props: Props) {
   const { sessionId, favorite, isEnterprise, noMargin } = props;
   const [isFavorite, setIsFavorite] = useState(favorite);
   const ADDED_MESSAGE = isEnterprise ? 'Session added to vault' : 'Session added to your bookmarks';
-  const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your bookmarks';
+  const REMOVED_MESSAGE = isEnterprise
+    ? 'Session removed from vault'
+    : 'Session removed from your bookmarks';
   const TOOLTIP_TEXT_ADD = isEnterprise ? 'Add to vault' : 'Add to bookmarks';
   const TOOLTIP_TEXT_REMOVE = isEnterprise ? 'Remove from vault' : 'Remove from bookmarks';
 
@@ -33,34 +33,39 @@ function Bookmark(props : Props ) {
       toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
       setIsFavorite(!isFavorite);
     });
-  }
+  };
 
   return (
-    <Popup
-      delay={500}
-      content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
-      hideOnClick={true}
-      distance={20}
-    >
-      {noMargin ? (
-        <div onClick={ toggleFavorite } className="flex items-center cursor-pointer">
-          <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
-          <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
-        </div>
-      ) : (
-        <Button
-          onClick={ toggleFavorite }
-          data-favourite={ isFavorite }
-        >
-          <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
-          <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
-        </Button>
-      )}
-    </Popup>
-  )
+    <div onClick={toggleFavorite} className="w-full">
+      <Tooltip title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}>
+        {noMargin ? (
+          <div className="flex items-center cursor-pointer h-full w-full p-3">
+            <Icon
+              name={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
+              color={isFavorite ? 'teal' : undefined}
+              size="16"
+            />
+            <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+          </div>
+        ) : (
+          <Button data-favourite={isFavorite}>
+            <Icon
+              name={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
+              color={isFavorite ? 'teal' : undefined}
+              size="16"
+            />
+            <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+          </Button>
+        )}
+      </Tooltip>
+    </div>
+  );
 }
 
-export default connect(state => ({
-  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
-  favorite: state.getIn([ 'sessions', 'current', 'favorite']),
-}), { toggleFavorite })(Bookmark)
+export default connect(
+  (state: any) => ({
+    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+    favorite: state.getIn(['sessions', 'current']).favorite,
+  }),
+  { toggleFavorite }
+)(Bookmark);

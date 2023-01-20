@@ -7,59 +7,60 @@ const { version, description } = require('./package.json');
 const { uploadFile, uploadDir } = require('./index.js');
 
 const parser = new ArgumentParser({
-  version,
   description,
 });
-parser.addArgument(['-k', '--api-key'], {
+parser.add_argument('-v', '--version', { action: 'version', version });
+parser.add_argument('-k', '--api-key', {
   help: 'API key',
   required: true,
 });
-parser.addArgument(['-p', '-i', '--project-key'], {
+parser.add_argument('-p', '-i', '--project-key', {
   // -i is depricated
   help: 'Project Key',
   required: true,
 });
-parser.addArgument(['-s', '--server'], {
+parser.add_argument('-s', '--server', {
   help: 'OpenReplay API server URL for upload',
 });
 // Should be verbose, but conflicting on npm compilation into bin
-parser.addArgument(['-l', '--logs'], {
+parser.add_argument('-l', '--logs', {
   help: 'Log requests information',
-  action: 'storeTrue',
+  action: 'store_true',
 });
 
-const subparsers = parser.addSubparsers({
+const subparsers = parser.add_subparsers({
   title: 'commands',
   dest: 'command',
+  required: true,
 });
 
-const file = subparsers.addParser('file');
-file.addArgument(['-m', '--sourcemap-file-path'], {
+const file = subparsers.add_parser('file');
+file.add_argument('-m', '--sourcemap-file-path', {
   help: 'Local path to the sourcemap file',
   required: true,
 });
-file.addArgument(['-u', '--js-file-url'], {
+file.add_argument('-u', '--js-file-url', {
   help: 'URL to the minified js file',
   required: true,
 });
 
-const dir = subparsers.addParser('dir');
-dir.addArgument(['-m', '--sourcemap-dir-path'], {
+const dir = subparsers.add_parser('dir');
+dir.add_argument('-m', '--sourcemap-dir-path', {
   help: 'Dir with the sourcemap files',
   required: true,
 });
-dir.addArgument(['-u', '--js-dir-url'], {
+dir.add_argument('-u', '--js-dir-url', {
   help: 'Base URL where the corresponding dir will be placed',
   required: true,
 });
 
 // TODO: exclude in dir
 
-const { command, api_key, project_key, server, verbose, ...args } =
-  parser.parseArgs();
+const { command, api_key, project_key, server, logs, ...args } =
+  parser.parse_args();
 
-global._VERBOSE = !!verbose;
-
+global._VERBOSE = !!logs;
+console.log(command);
 (command === 'file'
   ? uploadFile(
       api_key,
@@ -76,7 +77,7 @@ global._VERBOSE = !!verbose;
       server,
     )
 )
-  .then((sourceFiles) =>
+  .then((sourceFiles) => console.log('asd') ||
     sourceFiles.length > 0
       ? console.log(
           `Successfully uploaded ${sourceFiles.length} sourcemap file${

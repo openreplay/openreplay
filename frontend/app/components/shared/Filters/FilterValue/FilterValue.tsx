@@ -49,9 +49,9 @@ function FilterValue(props: Props) {
         setDurationValues({ ...durationValues, ...newValues });
     };
 
-    const handleBlur = (e: any) => {
+    const handleBlur = () => {
         if (filter.type === FilterType.DURATION) {
-            const { maxDuration, minDuration, key } = filter;
+            const { maxDuration, minDuration } = filter;
             if (maxDuration || minDuration) return;
             if (maxDuration !== durationValues.maxDuration || minDuration !== durationValues.minDuration) {
                 props.onUpdate({ ...filter, value: [durationValues.minDuration, durationValues.maxDuration] });
@@ -175,8 +175,7 @@ function FilterValue(props: Props) {
     };
 
     return (
-        // 
-        <div className={cn("grid gap-3 w-full", { 'grid-cols-2': filter.hasSource, 'grid-cols-3' : !filter.hasSource })}>
+        <div className={cn("grid gap-3", { 'grid-cols-2': filter.hasSource, 'grid-cols-3' : !filter.hasSource })}>
             {filter.type === FilterType.DURATION
                 ? renderValueFiled(filter.value, 0)
                 : filter.value &&

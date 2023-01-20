@@ -62,7 +62,6 @@ export default {
   CX: 'Christmas Island',
   CY: 'Cyprus',
   CZ: 'Czech Republic',
-  DD: 'Germany',
   DE: 'Germany',
   DG: 'Diego Garcia',
   DJ: 'Djibouti',

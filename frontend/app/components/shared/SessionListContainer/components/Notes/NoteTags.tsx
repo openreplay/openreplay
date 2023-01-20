@@ -10,20 +10,22 @@ const sortOptionsMap = {
   'createdAt-ASC': 'Oldest',
 };
 const sortOptions = Object.entries(sortOptionsMap).map(([value, label]) => ({ value, label }));
-const notesOwner = [{ value: '0', label: 'All Notes'},{ value: '1', label: 'My Notes'}]
+const notesOwner = [
+  { value: '0', label: 'All Notes' },
+  { value: '1', label: 'My Notes' },
+];
 function NoteTags() {
-  const { notesStore } = useStore()
-
+  const { notesStore } = useStore();
 
   return (
     <div className="flex items-center">
-        <div>
-          <TagItem
-            onClick={() => notesStore.toggleTag()}
-            label="ALL"
-            isActive={notesStore.activeTags.length === 0}
-          />
-        </div>
+      <div>
+        <TagItem
+          onClick={() => notesStore.toggleTag()}
+          label="ALL"
+          isActive={notesStore.activeTags.length === 0}
+        />
+      </div>
       {TAGS.map((tag: iTag) => (
         <div key={tag}>
           <TagItem
@@ -34,9 +36,23 @@ function NoteTags() {
         </div>
       ))}
       <div className="ml-2" />
-      <Select name="sortNotes" plain right options={sortOptions} onChange={({ value }) => notesStore.toggleSort(value.value)} defaultValue={sortOptions[0].value} />
+      <Select
+        name="notesOwner"
+        plain
+        right
+        options={notesOwner}
+        onChange={({ value }) => notesStore.toggleShared(value.value === '1')}
+        defaultValue={notesOwner[0].value}
+      />
       <div className="ml-2" />
-      <Select name="notesOwner" plain right options={notesOwner} onChange={({ value }) => notesStore.toggleShared(value.value === '1')} defaultValue={notesOwner[0].value} />
+      <Select
+        name="sortNotes"
+        plain
+        right
+        options={sortOptions}
+        onChange={({ value }) => notesStore.toggleSort(value.value)}
+        defaultValue={sortOptions[0].value}
+      />
     </div>
   );
 }

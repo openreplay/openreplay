@@ -1,5 +1,7 @@
 const colors = require('./app/theme/colors');
+const defaultColors = require('tailwindcss/colors')
 
+console.log(defaultColors);
 module.exports = {
 	// important: true,
   	content: [
@@ -106,7 +108,10 @@ module.exports = {
 // 		'zIndex'
 //   	],
   	theme: {
-		colors,
+        colors: {
+            ...defaultColors,
+            ...colors,
+        },
 		// borderColor: {
 		// 	default: '#DDDDDD',
 		// 	"gray-light-shade": colors["gray-light-shade"],

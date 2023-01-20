@@ -1,24 +1,17 @@
-from decouple import config
-from chalicelib.utils import helper
-
-from chalicelib.utils import s3
-import hashlib
 from urllib.parse import urlparse
 
+import requests
+from decouple import config
+
 from chalicelib.core import sourcemaps_parser
-
-
-def __get_key(project_id, url):
-    u = urlparse(url)
-    new_url = u.scheme + "://" + u.netloc + u.path
-    return f"{project_id}/{hashlib.md5(new_url.encode()).hexdigest()}"
+from chalicelib.utils import s3
 
 
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
         results.append(s3.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
-                                                        key=__get_key(project_id, u),
+                                                        key=s3.generate_file_key_from_url(project_id, u),
                                                         check_exists=True))
     return results
 
@@ -28,7 +21,7 @@ def presign_upload_urls(project_id, urls):
     for u in urls:
         results.append(s3.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
                                                        expires_in=1800,
-                                                       key=__get_key(project_id, u)))
+                                                       key=s3.generate_file_key_from_url(project_id, u)))
     return results
 
 
@@ -54,7 +47,8 @@ def __frame_is_valid(f):
 
 def __format_frame(f):
     f["context"] = []  # no context by default
-    if "source" in f: f.pop("source")
+    if "source" in f:
+        f.pop("source")
     url = f.pop("fileName")
     f["absPath"] = url
     f["filename"] = urlparse(url).path
@@ -73,6 +67,16 @@ def format_payload(p, truncate_to_first=False):
     return []
 
 
+def url_exists(url):
+    try:
+        r = requests.head(url, allow_redirects=False)
+        return r.status_code == 200 and "text/html" not in r.headers.get("Content-Type", "")
+    except Exception as e:
+        print(f"!! Issue checking if URL exists: {url}")
+        print(e)
+        return False
+
+
 def get_traces_group(project_id, payload):
     frames = format_payload(payload)
 
@@ -80,25 +84,44 @@ def get_traces_group(project_id, payload):
     payloads = {}
     all_exists = True
     for i, u in enumerate(frames):
-        key = __get_key(project_id, u["absPath"])  # use filename instead?
+        file_exists_in_bucket = False
+        file_exists_in_server = False
+        file_url = u["absPath"]
+        key = s3.generate_file_key_from_url(project_id, file_url)  # use filename instead?
+        params_idx = file_url.find("?")
+        if file_url and len(file_url) > 0 \
+                and not (file_url[:params_idx] if params_idx > -1 else file_url).endswith(".js"):
+            print(f"{u['absPath']} sourcemap is not a JS file")
+            payloads[key] = None
+
         if key not in payloads:
-            file_exists = s3.exists(config('sourcemaps_bucket'), key)
-            all_exists = all_exists and file_exists
-            if not file_exists:
-                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3")
+            file_exists_in_bucket = len(file_url) > 0 and s3.exists(config('sourcemaps_bucket'), key)
+            if len(file_url) > 0 and not file_exists_in_bucket:
+                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 looking in server")
+                if not file_url.endswith(".map"):
+                    file_url += '.map'
+                file_exists_in_server = url_exists(file_url)
+                file_exists_in_bucket = file_exists_in_server
+            all_exists = all_exists and file_exists_in_bucket
+            if not file_exists_in_bucket and not file_exists_in_server:
+                print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3 nor server")
                 payloads[key] = None
             else:
                 payloads[key] = []
         results[i] = dict(u)
         results[i]["frame"] = dict(u)
         if payloads[key] is not None:
-            payloads[key].append({"resultIndex": i,
+            payloads[key].append({"resultIndex": i, "frame": dict(u), "URL": file_url,
                                   "position": {"line": u["lineNo"], "column": u["colNo"]},
-                                  "frame": dict(u)})
+                                  "isURL": file_exists_in_server})
+
     for key in payloads.keys():
         if payloads[key] is None:
             continue
-        key_results = sourcemaps_parser.get_original_trace(key=key, positions=[o["position"] for o in payloads[key]])
+        key_results = sourcemaps_parser.get_original_trace(
+            key=payloads[key][0]["URL"] if payloads[key][0]["isURL"] else key,
+            positions=[o["position"] for o in payloads[key]],
+            is_url=payloads[key][0]["isURL"])
         if key_results is None:
             all_exists = False
             continue
@@ -123,16 +146,17 @@ MAX_COLUMN_OFFSET = 60
 def fetch_missed_contexts(frames):
     source_cache = {}
     for i in range(len(frames)):
-        if len(frames[i]["context"]) != 0:
+        if frames[i] and frames[i].get("context") and len(frames[i]["context"]) > 0:
             continue
-        if frames[i]["frame"]["absPath"] in source_cache:
-            file = source_cache[frames[i]["frame"]["absPath"]]
+        file_abs_path = frames[i]["frame"]["absPath"]
+        if file_abs_path in source_cache:
+            file = source_cache[file_abs_path]
         else:
-            file = s3.get_file(config('js_cache_bucket'), get_js_cache_path(frames[i]["frame"]["absPath"]))
+            file_path = get_js_cache_path(file_abs_path)
+            file = s3.get_file(config('js_cache_bucket'), file_path)
             if file is None:
-                print(
-                    f"File {get_js_cache_path(frames[i]['frame']['absPath'])} not found in {config('js_cache_bucket')}")
-            source_cache[frames[i]["frame"]["absPath"]] = file
+                print(f"Missing abs_path: {file_abs_path}, file {file_path} not found in {config('js_cache_bucket')}")
+            source_cache[file_abs_path] = file
         if file is None:
             continue
         lines = file.split("\n")
@@ -154,7 +178,7 @@ def fetch_missed_contexts(frames):
 
         line = lines[l]
         offset = c - MAX_COLUMN_OFFSET
-        if offset < 0:  # if the line is shirt
+        if offset < 0:  # if the line is short
             offset = 0
         frames[i]["context"].append([frames[i]["lineNo"], line[offset: c + MAX_COLUMN_OFFSET + 1]])
     return frames

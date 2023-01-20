@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { List } from 'immutable';
 import { countries } from 'App/constants';
 import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { Avatar, TextEllipsis, CountryFlag, Icon } from 'UI';
+import { Avatar, TextEllipsis, CountryFlag, Icon, Tooltip, Popover } from 'UI';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
 import SessionInfoItem from '../../SessionInfoItem';
-import { Tooltip } from 'react-tippy';
 import { useModal } from 'App/components/Modal';
 import UserSessionsModal from 'Shared/UserSessionsModal';
 
@@ -76,14 +75,9 @@ function UserCard({ className, request, session, width, height, similarSessions,
                             {userBrowser}, {userOs}, {userDevice}
                         </span>
                         <span className="mx-1 font-bold text-xl">&#183;</span>
-                        <Tooltip
-                            theme="light"
-                            delay={0}
-                            hideOnClick="persistent"
-                            arrow
-                            interactive
-                            html={
-                                <div className="text-left">
+                        <Popover
+                            render={() => (
+                                <div className="text-left bg-white">
                                     <SessionInfoItem
                                         comp={<CountryFlag country={userCountry} />}
                                         label={countries[userCountry]}
@@ -99,24 +93,13 @@ function UserCard({ className, request, session, width, height, similarSessions,
                                     />
                                     {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
                                 </div>
-                            }
-                            position="bottom center"
-                            hoverable
-                            disabled={false}
-                            on="hover"
+                            )}
                         >
-                            <span className="color-teal cursor-pointer">More</span>
-                        </Tooltip>
+                            <span className="link">More</span>
+                        </Popover>
                     </div>
                 </div>
             </div>
-
-            {/* <SlideModal
-        title={ <div>User Sessions</div> }
-        isDisplayed={ showUserSessions }
-        content={ showUserSessions && <SessionList similarSessions={ similarSessions } loading={ loading } /> }
-        onClose={ () => showUserSessions ? setShowUserSessions(false) : null }
-      /> */}
         </div>
     );
 }

@@ -1,7 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-// import { connectPlayer } from 'Player';
-import { QuestionMarkHint, Popup, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
+import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
@@ -12,7 +11,6 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import stl from './network.module.css';
 import { Duration } from 'luxon';
-import { jump } from 'Player';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -40,17 +38,17 @@ const LOAD_TIME_COLOR = 'red';
 
 export function renderType(r) {
   return (
-    <Popup style={{ width: '100%' }} content={<div className={stl.popupNameContent}>{r.type}</div>}>
+    <Tooltip style={{ width: '100%' }} title={<div className={stl.popupNameContent}>{r.type}</div>}>
       <div className={stl.popupNameTrigger}>{r.type}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
 export function renderName(r) {
   return (
-    <Popup style={{ width: '100%' }} content={<div className={stl.popupNameContent}>{r.url}</div>}>
+    <Tooltip style={{ width: '100%' }} title={<div className={stl.popupNameContent}>{r.url}</div>}>
       <div className={stl.popupNameTrigger}>{r.name}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -76,7 +74,6 @@ const renderXHRText = () => (
   <span className="flex items-center">
     {XHR}
     <QuestionMarkHint
-      onHover={true}
       content={
         <>
           Use our{' '}
@@ -113,8 +110,6 @@ function renderSize(r) {
     content = 'Not captured';
   } else {
     const headerSize = r.headerSize || 0;
-    const encodedSize = r.encodedBodySize || 0;
-    const transferred = headerSize + encodedSize;
     const showTransferred = r.headerSize != null;
 
     triggerText = formatBytes(r.decodedBodySize);
@@ -129,9 +124,9 @@ function renderSize(r) {
   }
 
   return (
-    <Popup style={{ width: '100%' }} content={content}>
+    <Tooltip style={{ width: '100%' }} content={content}>
       <div>{triggerText}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -152,9 +147,9 @@ export function renderDuration(r) {
   }
 
   return (
-    <Popup style={{ width: '100%' }} content={tooltipText}>
+    <Tooltip style={{ width: '100%' }} content={tooltipText}>
       <div className={cn(className, stl.duration)}> {text} </div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -235,7 +230,6 @@ export default class NetworkContent extends React.PureComponent {
               className="input-small"
               placeholder="Filter by name"
               icon="search"
-              iconPosition="left"
               name="filter"
               onChange={this.onFilterChange}
               height={28}
@@ -244,7 +238,7 @@ export default class NetworkContent extends React.PureComponent {
           <BottomBlock.Content>
             <div className="flex items-center justify-between px-4">
               <div>
-              <Toggler checked={true} name="test" onChange={() => {}} label="4xx-5xx Only" />
+                <Toggler checked={true} name="test" onChange={() => {}} label="4xx-5xx Only" />
               </div>
               <InfoLine>
                 <InfoLine.Point label={filtered.length} value=" requests" />

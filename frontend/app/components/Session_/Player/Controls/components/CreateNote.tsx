@@ -7,10 +7,11 @@ import { setCreateNoteTooltip, addNote, updateNote } from 'Duck/sessions';
 import stl from './styles.module.css';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
-import { injectNotes } from 'Player';
 import { fetchList as fetchSlack } from 'Duck/integrations/slack';
+import { fetchList as fetchTeams } from 'Duck/integrations/teams';
+
 import Select from 'Shared/Select';
-import { TeamBadge } from 'Shared/SessionListContainer/components/Notes'
+import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 import { List } from 'immutable';
 
 interface Props {
@@ -23,7 +24,9 @@ interface Props {
   isEdit: string;
   editNote: WriteNote;
   slackChannels: List<Record<string, any>>;
+  teamsChannels: List<Record<string, any>>;
   fetchSlack: () => void;
+  fetchTeams: () => void;
 }
 
 function CreateNote({
@@ -37,12 +40,18 @@ function CreateNote({
   updateNote,
   slackChannels,
   fetchSlack,
+  teamsChannels,
+  fetchTeams,
 }: Props) {
   const [text, setText] = React.useState('');
-  const [channel, setChannel] = React.useState('');
+  const [slackChannel, setSlackChannel] = React.useState('');
+  const [teamsChannel, setTeamsChannel] = React.useState('');
   const [isPublic, setPublic] = React.useState(false);
   const [tag, setTag] = React.useState<iTag>(TAGS[0]);
   const [useTimestamp, setUseTs] = React.useState(true);
+  const [useSlack, setSlack] = React.useState(false);
+  const [useTeams, setTeams] = React.useState(false);
+
   const inputRef = React.createRef<HTMLTextAreaElement>();
   const { notesStore } = useStore();
 
@@ -60,6 +69,7 @@ function CreateNote({
   React.useEffect(() => {
     if (inputRef.current && isVisible) {
       fetchSlack();
+      fetchTeams();
       inputRef.current.focus();
     }
   }, [isVisible]);
@@ -76,18 +86,20 @@ function CreateNote({
       isPublic,
     };
     const onSuccess = (noteId: string) => {
-      if (channel) {
-        notesStore.sendSlackNotification(noteId, channel)
+      if (slackChannel) {
+        notesStore.sendSlackNotification(noteId, slackChannel);
       }
-    }
+      if (teamsChannel) {
+        notesStore.sendMsTeamsNotification(noteId, teamsChannel);
+      }
+    };
     if (isEdit) {
       return notesStore
         .updateNote(editNote.noteId, note)
         .then((r) => {
           toast.success('Note updated');
           notesStore.fetchSessionNotes(sessionId).then((notes) => {
-            injectNotes(notes);
-            onSuccess(editNote.noteId)
+            onSuccess(editNote.noteId);
             updateNote(r);
           });
         })
@@ -105,10 +117,9 @@ function CreateNote({
     return notesStore
       .addNote(sessionId, note)
       .then((r) => {
-        onSuccess(r.noteId as unknown as string)
+        onSuccess(r.noteId as unknown as string);
         toast.success('Note added');
         notesStore.fetchSessionNotes(sessionId).then((notes) => {
-          injectNotes(notes);
           addNote(r);
         });
       })
@@ -133,27 +144,41 @@ function CreateNote({
     setTag(tag);
   };
 
-  const slackChannelsOptions = slackChannels.map(({ webhookId, name }) => ({
-    value: webhookId,
-    label: name,
-  })).toJS() as unknown as { value: string, label: string }[]
+  const slackChannelsOptions = slackChannels
+    .map(({ webhookId, name }) => ({
+      value: webhookId,
+      label: name,
+    }))
+    .toJS() as unknown as { value: string; label: string }[];
+  const teamsChannelsOptions = teamsChannels
+    .map(({ webhookId, name }) => ({
+      value: webhookId,
+      label: name,
+    }))
+    .toJS() as unknown as { value: string; label: string }[];
 
-  slackChannelsOptions.unshift({ value: null, label: 'Share to slack?' })
+  slackChannelsOptions.unshift({ value: null, label: 'Pick a channel' });
+  teamsChannelsOptions.unshift({ value: null, label: 'Pick a channel' });
 
-  const changeChannel = ({ value, name }: { value: Record<string, string>; name: string }) => {
-    setChannel(value.value);
+  const changeSlackChannel = ({ value, name }: { value: Record<string, string>; name: string }) => {
+    setSlackChannel(value.value);
+  };
+
+  const changeTeamsChannel = ({ value, name }: { value: Record<string, string>; name: string }) => {
+    setTeamsChannel(value.value);
   };
 
   return (
     <div
       className={stl.noteTooltip}
       style={{
-        top: slackChannelsOptions.length > 0 ? -310 : 255,
         width: 350,
         left: 'calc(50% - 175px)',
         display: isVisible ? 'flex' : 'none',
         flexDirection: 'column',
         gap: '1rem',
+        bottom: '15vh',
+        zIndex: 110,
       }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -162,7 +187,7 @@ function CreateNote({
         <h3 className="text-xl ml-2 mr-4 font-semibold">Add Note</h3>
         <div className="flex items-center cursor-pointer" onClick={() => setUseTs(!useTimestamp)}>
           <Checkbox checked={useTimestamp} />
-          <span className="ml-1">{`at ${duration}`}</span>
+          <span className="ml-1"> {`at ${duration}`} </span>
         </div>
 
         <div className="ml-auto cursor-pointer" onClick={closeTooltip}>
@@ -209,15 +234,44 @@ function CreateNote({
       </div>
 
       {slackChannelsOptions.length > 0 ? (
-        <div>
-          <Select
-            options={slackChannelsOptions}
-            // @ts-ignore
-            defaultValue
-            // @ts-ignore
-            onChange={changeChannel}
-            className="mr-4"
-          />
+        <div className="flex flex-col">
+          <div className="flex items-center cursor-pointer" onClick={() => setSlack(!useSlack)}>
+            <Checkbox checked={useSlack} />
+            <span className="ml-1 mr-3"> Send to slack? </span>
+          </div>
+
+          {useSlack && (
+            <div>
+              <Select
+                options={slackChannelsOptions}
+                // @ts-ignore
+                defaultValue
+                // @ts-ignore
+                onChange={changeSlackChannel}
+              />
+            </div>
+          )}
+        </div>
+      ) : null}
+
+      {teamsChannelsOptions.length > 0 ? (
+        <div className="flex flex-col">
+          <div className="flex items-center cursor-pointer" onClick={() => setTeams(!useTeams)}>
+            <Checkbox checked={useTeams} />
+            <span className="ml-1 mr-3"> Send to teams? </span>
+          </div>
+
+          {useTeams && (
+            <div>
+              <Select
+                options={teamsChannelsOptions}
+                // @ts-ignore
+                defaultValue
+                // @ts-ignore
+                onChange={changeTeamsChannel}
+              />
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -235,19 +289,17 @@ function CreateNote({
 }
 
 export default connect(
-  (state) => {
+  (state: any) => {
     const {
       isVisible,
       time = 0,
       isEdit,
       note: editNote,
-      // @ts-ignore
     } = state.getIn(['sessions', 'createNoteTooltip']);
-    // @ts-ignore
     const slackChannels = state.getIn(['slack', 'list']);
-    // @ts-ignore
-    const sessionId = state.getIn(['sessions', 'current', 'sessionId']);
-    return { isVisible, time, sessionId, isEdit, editNote, slackChannels };
+    const teamsChannels = state.getIn(['teams', 'list']);
+    const sessionId = state.getIn(['sessions', 'current']).sessionId;
+    return { isVisible, time, sessionId, isEdit, editNote, slackChannels, teamsChannels };
   },
-  { setCreateNoteTooltip, addNote, updateNote, fetchSlack }
+  { setCreateNoteTooltip, addNote, updateNote, fetchSlack, fetchTeams }
 )(CreateNote);

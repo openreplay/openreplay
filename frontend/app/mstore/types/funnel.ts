@@ -10,6 +10,7 @@ export default class Funnel {
     isPublic: boolean = false
     stages: FunnelStage[] = []
     raw: any = null
+    totalDropDueToIssues: number = 0;
 
     constructor() {
     }
@@ -18,6 +19,7 @@ export default class Funnel {
         if (!this.raw) {
             this.raw = json
         }
+        this.totalDropDueToIssues = json.totalDropDueToIssues;
         
         if (json.stages.length >= 1) {
             const firstStage = json.stages[0]

@@ -1,7 +1,6 @@
 // @flow
 
 import { DateTime, Duration } from 'luxon'; // TODO
-import { toJS } from 'mobx';
 import { Timezone } from 'MOBX/types/sessionSettings';
 
 export const durationFormatted = (duration: Duration):string => {
@@ -22,6 +21,12 @@ export const durationFormatted = (duration: Duration):string => {
 
 export function durationFromMsFormatted(ms: number): string {
   return durationFormatted(Duration.fromMillis(ms || 0));
+}
+
+export function durationFromMs(ms: number): string {
+  const dur = Duration.fromMillis(ms)
+
+  return dur.toFormat('hh:mm:ss')
 }
 
 export const durationFormattedFull = (duration: Duration): string => {

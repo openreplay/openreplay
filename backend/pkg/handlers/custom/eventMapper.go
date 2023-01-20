@@ -56,15 +56,6 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 				Selector:       msg.Selector,
 			}
 		}
-	case *JSException:
-		return &ErrorEvent{
-			MessageID: messageID,
-			Timestamp: timestamp,
-			Source:    "js_exception",
-			Name:      msg.Name,
-			Message:   msg.Message,
-			Payload:   msg.Payload,
-		}
 	case *ResourceTiming:
 		return &ResourceEvent{
 			MessageID:       messageID,
@@ -78,13 +69,6 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 			Type:            getResourceType(msg.Initiator, msg.URL),
 			Success:         msg.Duration != 0,
 		}
-	case *RawCustomEvent:
-		return &CustomEvent{
-			MessageID: messageID,
-			Timestamp: timestamp,
-			Name:      msg.Name,
-			Payload:   msg.Payload,
-		}
 	case *CustomIssue:
 		return &IssueEvent{
 			Type:          "custom",
@@ -92,32 +76,6 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 			MessageID:     messageID,
 			ContextString: msg.Name,
 			Payload:       msg.Payload,
-		}
-	case *Fetch:
-		return &FetchEvent{
-			MessageID: messageID,
-			Timestamp: msg.Timestamp,
-			Method:    msg.Method,
-			URL:       msg.URL,
-			Request:   msg.Request,
-			Response:  msg.Response,
-			Status:    msg.Status,
-			Duration:  msg.Duration,
-		}
-	case *GraphQL:
-		return &GraphQLEvent{
-			MessageID:     messageID,
-			Timestamp:     timestamp,
-			OperationKind: msg.OperationKind,
-			OperationName: msg.OperationName,
-			Variables:     msg.Variables,
-			Response:      msg.Response,
-		}
-	case *StateAction:
-		return &StateActionEvent{
-			MessageID: messageID,
-			Timestamp: timestamp,
-			Type:      msg.Type,
 		}
 	}
 	return nil

@@ -19,7 +19,7 @@ export default (BaseComponent) => {
     }
     componentDidUpdate(prevProps) {
       const { urlSiteId, siteId, location: { pathname }, history } = this.props;
-      const shouldUrlUpdate = urlSiteId && urlSiteId !== siteId;
+      const shouldUrlUpdate = urlSiteId && parseInt(urlSiteId, 10) !== parseInt(siteId, 10);
       if (shouldUrlUpdate) {
         const path = ['', siteId].concat(pathname.split('/').slice(2)).join('/');
         history.push(path);

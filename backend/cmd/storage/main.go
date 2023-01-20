@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,10 +19,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("storage")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	s3 := s3storage.NewS3(cfg.S3Region, cfg.S3Bucket)
 	srv, err := storage.New(cfg, s3, metrics)
@@ -44,8 +47,8 @@ func main() {
 		messages.NewMessageIterator(
 			func(msg messages.Message) {
 				sesEnd := msg.(*messages.SessionEnd)
-				if err := srv.UploadSessionFiles(msg.SessionID()); err != nil {
-					log.Printf("can't find session: %d", msg.SessionID())
+				if err := srv.Upload(sesEnd); err != nil {
+					log.Printf("upload session err: %s, sessID: %d", err, msg.SessionID())
 					sessionFinder.Find(msg.SessionID(), sesEnd.Timestamp)
 				}
 				// Log timestamp of last processed session
@@ -54,7 +57,7 @@ func main() {
 			[]int{messages.MsgSessionEnd},
 			true,
 		),
-		true,
+		false,
 		cfg.MessageSizeLimit,
 	)
 
@@ -69,10 +72,17 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			sessionFinder.Stop()
+			srv.Wait()
 			consumer.Close()
 			os.Exit(0)
 		case <-counterTick:
 			go counter.Print()
+			srv.Wait()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {

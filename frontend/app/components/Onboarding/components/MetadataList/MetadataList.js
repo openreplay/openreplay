@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Button, SlideModal, TagBadge } from 'UI'
 import { connect } from 'react-redux'
-import { init, fetchList, save, remove } from 'Duck/customField';
+import { fetchList, save, remove } from 'Duck/customField';
 import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
 import { confirm } from 'UI';
 

@@ -1,7 +1,6 @@
 import Record from 'Types/Record';
 import Filter from './filter';
-import { List } from 'immutable';
-import { notEmptyString, validateName } from 'App/validate';
+import { notEmptyString } from 'App/validate';
 
 export default Record({
   searchId: undefined,
@@ -11,7 +10,6 @@ export default Record({
   filter: Filter(),
   createdAt: undefined,
   count: 0,
-  watchdogs: List(),
   isPublic: false,
 }, {
   idKey: 'searchId',

@@ -1,27 +1,4 @@
-# Special one for Batch Metadata. Message id could define the version
-
-# Depricated since tracker 3.6.0 in favor of BatchMetadata
-message 80, 'BatchMeta', :replayer => false, :tracker => false do
-  uint 'PageNo'
-  uint 'FirstIndex'
-  int 'Timestamp'
-end
-
-# since tracker 3.6.0   TODO: for webworker only
-message 81, 'BatchMetadata', :replayer => false do
-  uint 'Version'
-  uint 'PageNo'
-  uint 'FirstIndex'
-  int 'Timestamp'
-  string 'Location'
-end
-
-# since tracker 3.6.0
-message 82, 'PartitionedMessage', :replayer => false do
-  uint 'PartNo'
-  uint 'PartTotal'
-end
-
+# OpenReplay messages definition
 
 message 0, 'Timestamp' do
   uint 'Timestamp'
@@ -46,7 +23,7 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
 end
 ## message 2, 'CreateDocument', do
 # end
-message 3, 'SessionEnd', :tracker => false, :replayer => false do
+message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
 message 4, 'SetPageLocation' do
@@ -62,7 +39,7 @@ message 6, 'SetViewportScroll' do
   int 'X'
   int 'Y'
 end
-# (should be) Depricated sinse tracker ?.?.? in favor of  CreateDocument(id=2)
+# (should be) Deprecated sinse tracker ?.?.? in favor of  CreateDocument(id=2)
 # in order to use Document as a default root node instead of the documentElement
 message 7, 'CreateDocument' do
 end
@@ -125,7 +102,16 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
-# 21
+message 21, 'NetworkRequest', :replayer => :devtools do
+  string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
+  string 'Method'
+  string 'URL'
+  string 'Request'
+  string 'Response'
+  uint 'Status'
+  uint 'Timestamp'
+  uint 'Duration'
+end
 message 22, 'ConsoleLog', :replayer => :devtools do
   string 'Level'
   string 'Value'
@@ -159,7 +145,7 @@ message 26, 'IntegrationEvent', :tracker => false, :replayer => false do
   string 'Message'
   string 'Payload'
 end
-message 27, 'RawCustomEvent', :replayer => false do
+message 27, 'CustomEvent', :replayer => false do
   string 'Name'
   string 'Payload'
 end
@@ -206,14 +192,15 @@ message 33, 'ClickEvent', :tracker => false, :replayer => false do
   string 'Label'
   string 'Selector'
 end
-message 34, 'ErrorEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Source'
-  string 'Name'
-  string 'Message'
-  string 'Payload'
-end
+# removed (backend-only)
+# message 34, 'ErrorEvent', :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'Source'
+#   string 'Name'
+#   string 'Message'
+#   string 'Payload'
+# end
 message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -228,12 +215,14 @@ message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   string 'Method'
   uint 'Status'
 end
-message 36, 'CustomEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Name'
-  string 'Payload'
-end
+# removed (backend-only)
+# message 36, 'CustomEvent', :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'Name'
+#   string 'Payload'
+# end
+
 # deprecated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'
@@ -246,6 +235,7 @@ message 38, 'CSSDeleteRule' do
   uint 'Index'
 end
 
+# deprecated since 4.1.10 in favor of NetworkRequest
 message 39, 'Fetch', :replayer => :devtools do
   string 'Method'
   string 'URL'
@@ -265,15 +255,15 @@ message 41, 'OTable', :replayer => :devtools do
   string 'Key'
   string 'Value'
 end
-# Do we use that?
 message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
-message 43, 'StateActionEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Type'
-end
+# removed (backend-only)
+# message 43, 'StateActionEvent', :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'Type'
+# end
 message 44, 'Redux', :replayer => :devtools do
   string 'Action'
   string 'State'
@@ -304,29 +294,30 @@ message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
-# next 2 should be removed after refactoring backend/pkg/handlers/custom/eventMapper.go (move "wrapping" logic to pg connector insertion)
-message 50, 'GraphQLEvent',  :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'OperationKind'
-  string 'OperationName'
-  string 'Variables'
-  string 'Response'
-end
-message 51, 'FetchEvent',  :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Method'
-  string 'URL'
-  string 'Request'
-  string 'Response'
-  uint 'Status'
-  uint 'Duration'
-end
+# removed (backend-only)
+# message 50, 'GraphQLEvent',  :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'OperationKind'
+#   string 'OperationName'
+#   string 'Variables'
+#   string 'Response'
+# end
+# removed (backend-only)
+# message 51, 'FetchEvent',  :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'Method'
+#   string 'URL'
+#   string 'Request'
+#   string 'Response'
+#   uint 'Status'
+#   uint 'Duration'
+# end
 message 52, 'DOMDrop', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
-message 53, 'ResourceTiming', :replayer => false do
+message 53, 'ResourceTiming', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -359,8 +350,20 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
-## 57 58
-#Depricated (since 3.0.?)
+
+# Since 4.1.7 / 1.9.0
+message 57, 'LoadFontFace' do 
+  uint 'ParentID'
+  string 'Family'
+  string 'Source'
+  string 'Descriptors'
+end
+# Since 4.1.7 / 1.9.0
+message 58, 'SetNodeFocus' do
+  int 'ID'
+end
+
+#Deprecated (since 3.0.?)
 message 59, 'LongTask' do
   uint 'Timestamp'
   uint 'Duration'
@@ -382,7 +385,7 @@ message 61, 'SetCSSDataURLBased' do
   string 'Data'
   string 'BaseURL'
 end
-message 62, 'IssueEvent', :replayer => false, :tracker => false do
+message 62, 'IssueEventDeprecated', :replayer => false, :tracker => false do
   uint 'MessageID'
   uint 'Timestamp'
   string 'Type'
@@ -467,10 +470,48 @@ message 78, 'JSException', :replayer => false do
   string 'Metadata'
 end
 
+# 80 -- 90 reserved
+
+# Special one for Batch Metadata. Message id could define the version
+
+# Deprecated since tracker 3.6.0 in favor of BatchMetadata
+message 80, 'BatchMeta', :replayer => false, :tracker => false do
+  uint 'PageNo'
+  uint 'FirstIndex'
+  int 'Timestamp'
+end
+
+# since tracker 3.6.0   TODO: for webworker only
+message 81, 'BatchMetadata', :replayer => false do
+  uint 'Version'
+  uint 'PageNo'
+  uint 'FirstIndex'
+  int 'Timestamp'
+  string 'Location'
+end
+
+# since tracker 3.6.0
+message 82, 'PartitionedMessage', :replayer => false do
+  uint 'PartNo'
+  uint 'PartTotal'
+end
+
+message 125, 'IssueEvent', :replayer => false, :tracker => false do
+  uint 'MessageID'
+  uint 'Timestamp'
+  string 'Type'
+  string 'ContextString'
+  string 'Context'
+  string 'Payload'
+  string 'URL'
+end
+
+message 126, 'SessionEnd', :tracker => false, :replayer => false do
+  uint 'Timestamp'
+  string 'EncryptionKey'
+end
+
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
 end
-
-
-# 80 -- 90 reserved

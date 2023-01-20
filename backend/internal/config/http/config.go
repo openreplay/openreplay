@@ -23,6 +23,7 @@ type Config struct {
 	TokenSecret       string        `env:"TOKEN_SECRET,required"`
 	UAParserFile      string        `env:"UAPARSER_FILE,required"`
 	MaxMinDBFile      string        `env:"MAXMINDDB_FILE,required"`
+	UseProfiler       bool          `env:"PROFILER_ENABLED,default=false"`
 	WorkerID          uint16
 }
 

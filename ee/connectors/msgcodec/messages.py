@@ -6,34 +6,6 @@ class Message(ABC):
     pass
 
 
-class BatchMeta(Message):
-    __id__ = 80
-
-    def __init__(self, page_no, first_index, timestamp):
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-
-
-class BatchMetadata(Message):
-    __id__ = 81
-
-    def __init__(self, version, page_no, first_index, timestamp, location):
-        self.version = version
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-        self.location = location
-
-
-class PartitionedMessage(Message):
-    __id__ = 82
-
-    def __init__(self, part_no, part_total):
-        self.part_no = part_no
-        self.part_total = part_total
-
-
 class Timestamp(Message):
     __id__ = 0
 
@@ -63,7 +35,7 @@ class SessionStart(Message):
         self.user_id = user_id
 
 
-class SessionEnd(Message):
+class SessionEndDeprecated(Message):
     __id__ = 3
 
     def __init__(self, timestamp):
@@ -213,6 +185,20 @@ class MouseMove(Message):
         self.y = y
 
 
+class NetworkRequest(Message):
+    __id__ = 21
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+
+
 class ConsoleLog(Message):
     __id__ = 22
 
@@ -265,7 +251,7 @@ class IntegrationEvent(Message):
         self.payload = payload
 
 
-class RawCustomEvent(Message):
+class CustomEvent(Message):
     __id__ = 27
 
     def __init__(self, name, payload):
@@ -340,18 +326,6 @@ class ClickEvent(Message):
         self.selector = selector
 
 
-class ErrorEvent(Message):
-    __id__ = 34
-
-    def __init__(self, message_id, timestamp, source, name, message, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.source = source
-        self.name = name
-        self.message = message
-        self.payload = payload
-
-
 class ResourceEvent(Message):
     __id__ = 35
 
@@ -368,16 +342,6 @@ class ResourceEvent(Message):
         self.success = success
         self.method = method
         self.status = status
-
-
-class CustomEvent(Message):
-    __id__ = 36
-
-    def __init__(self, message_id, timestamp, name, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.name = name
-        self.payload = payload
 
 
 class CSSInsertRule(Message):
@@ -435,15 +399,6 @@ class StateAction(Message):
         self.type = type
 
 
-class StateActionEvent(Message):
-    __id__ = 43
-
-    def __init__(self, message_id, timestamp, type):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.type = type
-
-
 class Redux(Message):
     __id__ = 44
 
@@ -496,32 +451,6 @@ class PerformanceTrack(Message):
         self.ticks = ticks
         self.total_js_heap_size = total_js_heap_size
         self.used_js_heap_size = used_js_heap_size
-
-
-class GraphQLEvent(Message):
-    __id__ = 50
-
-    def __init__(self, message_id, timestamp, operation_kind, operation_name, variables, response):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.operation_kind = operation_kind
-        self.operation_name = operation_name
-        self.variables = variables
-        self.response = response
-
-
-class FetchEvent(Message):
-    __id__ = 51
-
-    def __init__(self, message_id, timestamp, method, url, request, response, status, duration):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.duration = duration
 
 
 class DOMDrop(Message):
@@ -580,6 +509,23 @@ class PerformanceTrackAggr(Message):
         self.max_used_js_heap_size = max_used_js_heap_size
 
 
+class LoadFontFace(Message):
+    __id__ = 57
+
+    def __init__(self, parent_id, family, source, descriptors):
+        self.parent_id = parent_id
+        self.family = family
+        self.source = source
+        self.descriptors = descriptors
+
+
+class SetNodeFocus(Message):
+    __id__ = 58
+
+    def __init__(self, id):
+        self.id = id
+
+
 class LongTask(Message):
     __id__ = 59
 
@@ -612,7 +558,7 @@ class SetCSSDataURLBased(Message):
         self.base_url = base_url
 
 
-class IssueEvent(Message):
+class IssueEventDeprecated(Message):
     __id__ = 62
 
     def __init__(self, message_id, timestamp, type, context_string, context, payload):
@@ -751,6 +697,55 @@ class JSException(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class BatchMeta(Message):
+    __id__ = 80
+
+    def __init__(self, page_no, first_index, timestamp):
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+
+
+class BatchMetadata(Message):
+    __id__ = 81
+
+    def __init__(self, version, page_no, first_index, timestamp, location):
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+        self.location = location
+
+
+class PartitionedMessage(Message):
+    __id__ = 82
+
+    def __init__(self, part_no, part_total):
+        self.part_no = part_no
+        self.part_total = part_total
+
+
+class IssueEvent(Message):
+    __id__ = 125
+
+    def __init__(self, message_id, timestamp, type, context_string, context, payload, url):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.type = type
+        self.context_string = context_string
+        self.context = context
+        self.payload = payload
+        self.url = url
+
+
+class SessionEnd(Message):
+    __id__ = 126
+
+    def __init__(self, timestamp, encryption_key):
+        self.timestamp = timestamp
+        self.encryption_key = encryption_key
 
 
 class SessionSearch(Message):

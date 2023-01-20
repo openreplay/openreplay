@@ -3,7 +3,8 @@ package main
 import (
 	"errors"
 	"log"
-	"openreplay/backend/pkg/queue/types"
+	types2 "openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,7 +16,6 @@ import (
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
-	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/queue"
@@ -24,13 +24,16 @@ import (
 
 func main() {
 	metrics := monitoring.New("db")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := db.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	// Init database
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(
+		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
@@ -45,30 +48,20 @@ func main() {
 	// Create handler's aggregator
 	builderMap := sessions.NewBuilderMap(handlersFabric)
 
-	var producer types.Producer = nil
-	if cfg.UseQuickwit {
-		producer = queue.NewProducer(cfg.MessageSizeLimit, true)
-		defer producer.Close(15000)
-	}
-
 	// Init modules
-	saver := datasaver.New(pg, producer)
+	saver := datasaver.New(pg, cfg)
 	saver.InitStats()
-	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
-		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgCustomEvent, messages.MsgClickEvent,
-		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgErrorEvent, messages.MsgFetchEvent,
-		messages.MsgGraphQLEvent, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
-		messages.MsgResourceEvent, messages.MsgLongTask, messages.MsgJSException, messages.MsgResourceTiming,
-		messages.MsgRawCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgGraphQL,
+		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
+		messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
+		messages.MsgJSException, messages.MsgResourceTiming,
+		messages.MsgCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL,
 		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
 		messages.MsgMouseClick, messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming}
 
 	// Handler logic
 	msgHandler := func(msg messages.Message) {
-		statsLogger.Collect(msg)
-
 		// Just save session data into db without additional checks
 		if err := saver.InsertMessage(msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
@@ -77,7 +70,15 @@ func main() {
 			return
 		}
 
-		session, err := pg.GetSession(msg.SessionID())
+		var (
+			session *types2.Session
+			err     error
+		)
+		if msg.TypeID() == messages.MsgSessionEnd {
+			session, err = pg.GetSession(msg.SessionID())
+		} else {
+			session, err = pg.Cache.GetSession(msg.SessionID())
+		}
 		if session == nil {
 			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
 				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
@@ -154,6 +155,8 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			commitDBUpdates()
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			// Handle new message from queue
 			if err := consumer.ConsumeNext(); err != nil {

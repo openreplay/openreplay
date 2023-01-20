@@ -1,10 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useCallback } from 'react';
-import { connect } from 'react-redux';
+import { useEffect } from 'react';
 import cn from 'classnames';
-
-import { Popup, Icon } from 'UI';
 
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
@@ -89,7 +86,7 @@ function Controls({
               icon="replay-10"
             />
           </div>
-          <div className="flex items-center"> 
+          <div className="flex items-center">
             <button
               className={ cn("text-gray-darkest hover:bg-gray-lightest", cls.speedButton) }
               onClick={ player.toggleSpeed }
@@ -119,7 +116,7 @@ function Controls({
                 hasErrors={ hasErrors }
               />
             )}
-            
+
             <ControlButton
               disabled={ disabled }
               onClick={ player.toggleFullscreen }

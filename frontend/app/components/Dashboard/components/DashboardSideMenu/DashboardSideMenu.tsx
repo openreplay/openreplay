@@ -1,5 +1,5 @@
 import React from 'react';
-import { SideMenuitem, SideMenuHeader } from 'UI';
+import { SideMenuitem } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, metrics, dashboard, alerts } from 'App/routes';
 import { connect } from 'react-redux';
@@ -23,7 +23,7 @@ function DashboardSideMenu(props: Props) {
 
   return (
     <div>
-      <SideMenuHeader className="mb-4 flex items-center" text="Preferences" />
+      {/* <SideMenuHeader className="mb-4 flex items-center" text="Dashboard" /> */}
       <div className="w-full">
         <SideMenuitem
           active={isDashboards}
@@ -33,17 +33,17 @@ function DashboardSideMenu(props: Props) {
           onClick={() => redirect(withSiteId(dashboard(), siteId))}
         />
       </div>
-      <div className="border-t w-full my-2" />
+      <div className="w-full my-2" />
       <div className="w-full">
         <SideMenuitem
           active={isMetric}
           id="menu-manage-alerts"
-          title="Metrics"
-          iconName="bar-chart-line"
+          title="Cards"
+          iconName="card-text"
           onClick={() => redirect(withSiteId(metrics(), siteId))}
         />
       </div>
-      <div className="border-t w-full my-2" />
+      <div className="w-full my-2" />
       <div className="w-full">
         <SideMenuitem
           active={isAlerts}

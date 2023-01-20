@@ -1,11 +1,12 @@
 import React from 'react'
-import { Form, Input, Icon, Button, Link, CircularLoader } from 'UI'
+import { Form, Input, Icon, Button, Link } from 'UI'
 import { login } from 'App/routes'
 import ReCAPTCHA from 'react-google-recaptcha'
 import stl from './signup.module.css'
 import { signup } from 'Duck/user';
 import { connect } from 'react-redux'
 import Select from 'Shared/Select'
+import { SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 
 const LOGIN_ROUTE = login()
 const recaptchaRef = React.createRef()
@@ -40,10 +41,10 @@ export default class SignupForm extends React.Component {
     } 
     return null;
   }
-  
 
   handleSubmit = (token) => {
     const { tenantId, fullname, password, email, projectName, organizationName, auth } = this.state;
+    localStorage.removeItem(SITE_ID_STORAGE_KEY)
     this.props.signup({ tenantId, fullname, password, email, projectName, organizationName, auth, 'g-recaptcha-response': token })
     this.setState({ reload: true })
   }

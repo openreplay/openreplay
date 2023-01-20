@@ -1,0 +1,110 @@
+.cursor {
+  display: block;
+  position: absolute;
+  width: 13px;
+  height: 20px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M302.189 329.126H196.105l55.831 135.993c3.889 9.428-.555 19.999-9.444 23.999l-49.165 21.427c-9.165 4-19.443-.571-23.332-9.714l-53.053-129.136-86.664 89.138C18.729 472.71 0 463.554 0 447.977V18.299C0 1.899 19.921-6.096 30.277 5.443l284.412 292.542c11.472 11.179 3.007 31.141-12.5 31.141z"/></svg>');
+  background-repeat: no-repeat;
+  transition: top .125s linear, left .125s linear;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ====== *
+  Source:  https://github.com/codrops/ClickEffects/blob/master/css/component.css
+* ======= */
+.cursor::after {
+  position: absolute;
+  margin: -35px 0 0 -35px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  box-shadow: inset 0 0 0 35px rgba(111,148,182,0);
+}
+
+.cursor.clicked::after {
+  -webkit-animation: click-animation 0.5s ease-out forwards;
+  animation: click-animation 0.5s ease-out forwards;
+}
+
+@-webkit-keyframes click-animation {
+  0% {
+    opacity: 1;
+    -webkit-transform: scale3d(0.4, 0.4, 1);
+    transform: scale3d(0.4, 0.4, 1);
+  }
+  80% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0.1;
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0;
+    -webkit-transform: scale3d(1.2, 1.2, 1);
+    transform: scale3d(1.2, 1.2, 1);
+  }
+}
+
+@keyframes click-animation {
+  0% {
+    opacity: 1;
+    -webkit-transform: scale3d(0.4, 0.4, 1);
+    transform: scale3d(0.4, 0.4, 1);
+  }
+  80% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0.1;
+  }
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(111,148,182,0.8);
+    opacity: 0;
+    -webkit-transform: scale3d(1.2, 1.2, 1);
+    transform: scale3d(1.2, 1.2, 1);
+  }
+}
+
+.cursor.clickedMobile::after {
+	-webkit-animation: anim-effect-sanja 1s ease-out forwards;
+	animation: anim-effect-sanja 1s ease-out forwards;
+}
+
+@-webkit-keyframes anim-effect-sanja {
+	0% {
+		opacity: 1;
+		-webkit-transform: scale3d(0.5, 0.5, 1);
+		transform: scale3d(0.5, 0.5, 1);
+	}
+	25% {
+		opacity: 1;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+	100% {
+		opacity: 0;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+}
+
+@keyframes anim-effect-sanja {
+	0% {
+		opacity: 1;
+		-webkit-transform: scale3d(0.5, 0.5, 1);
+		transform: scale3d(0.5, 0.5, 1);
+	}
+	25% {
+		opacity: 1;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+	100% {
+		opacity: 0;
+		-webkit-transform: scale3d(1, 1, 1);
+		transform: scale3d(1, 1, 1);
+	}
+}

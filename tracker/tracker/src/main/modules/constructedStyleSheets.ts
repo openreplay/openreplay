@@ -31,10 +31,6 @@ export default function (app: App | null) {
     return
   }
   if (!hasAdoptedSS(document)) {
-    app.attachStartCallback(() => {
-      // MBTODO: pre-start sendQueue app
-      app.send(TechnicalInfo('no_adopted_stylesheets', ''))
-    })
     return
   }
 

@@ -1,12 +1,9 @@
 import React, { useEffect } from 'react';
 import { useStore } from 'App/mstore';
-import Filter from 'Types/filter';
-import { filtersMap } from 'Types/filter/newFilter';
 import { FilterKey } from 'App/types/filter/filterType';
 import { NoContent, Pagination, Loader, Avatar } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import SelectDateRange from 'Shared/SelectDateRange';
-import Period from 'Types/app/period';
 import { useObserver, observer } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -49,7 +46,7 @@ function UserSessionsModal(props: Props) {
     useEffect(fetchData, [filter.page, filter.startDate, filter.endDate]);
 
     return (
-        <div className="h-screen overflow-y-auto bg-white" style={{ width: '700px' }}>
+        <div className="h-screen overflow-y-auto bg-white">
             <div className="flex items-center justify-between w-full px-5 py-3">
                 <div className="text-lg flex items-center">
                     <Avatar isActive={false} seed={hash} isAssist={false} className={''} />
@@ -72,7 +69,7 @@ function UserSessionsModal(props: Props) {
                 <div className="border rounded m-5">
                     <Loader loading={loading}>
                         {data.sessions.map((session: any) => (
-                            <div className="border-b last:border-none">
+                            <div className="border-b last:border-none" key={session.sessionId}>
                                 <SessionItem key={session.sessionId} session={session} compact={true} onClick={hideModal} />
                             </div>
                         ))}

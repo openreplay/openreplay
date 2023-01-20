@@ -3,7 +3,6 @@ import SlackChannelList from './SlackChannelList/SlackChannelList';
 import { fetchList, init } from 'Duck/integrations/slack';
 import { connect } from 'react-redux';
 import SlackAddForm from './SlackAddForm';
-import { useModal } from 'App/components/Modal';
 import { Button } from 'UI';
 
 interface Props {

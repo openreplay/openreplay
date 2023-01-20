@@ -2,10 +2,12 @@ import React from 'react';
 import { Icon } from 'UI';
 import { checkForRecent } from 'App/date';
 import { withSiteId, alertEdit } from 'App/routes';
+import { numberWithCommas } from 'App/utils';
 // @ts-ignore
 import { DateTime } from 'luxon';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
+import Alert from 'Types/alert';
 
 const getThreshold = (threshold: number) => {
   if (threshold === 15) return '15 Minutes';
@@ -28,7 +30,20 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
         .map((channelId: number) => {
           return (
             '#' +
-            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack').name
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'slack')?.name
+          );
+        })
+        .join(', ') +
+      ')'
+    );
+  };
+  const getMsTeamsChannels = () => {
+    return (
+      ' (' +
+      alert.msteamsInput
+        .map((channelId: number) => {
+          return (
+            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')?.name
           );
         })
         .join(', ') +
@@ -38,7 +53,15 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
   let str = '';
   if (alert.slack) {
     str = 'Slack';
-    str += alert.slackInput.length > 0 ? getSlackChannels() : '';
+    if (alert.slackInput.length > 0) {
+      str += getSlackChannels();
+    }
+  }
+  if (alert.msteams) {
+    str += (str === '' ? '' : ' and ') + 'MS Teams'
+    if (alert.msteamsInput.length > 0) {
+      str += getMsTeamsChannels();
+    }
   }
   if (alert.email) {
     str += (str === '' ? '' : ' and ') + (alert.emailInput.length > 1 ? 'Emails' : 'Email');
@@ -53,7 +76,7 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
 interface Props extends RouteComponentProps {
   alert: Alert;
   siteId: string;
-  init: (alert?: Alert) => void;
+  init: (alert: Alert) => void;
   demo?: boolean;
   webhooks: Array<any>;
 }
@@ -68,7 +91,7 @@ function AlertListItem(props: Props) {
   const onItemClick = () => {
     if (demo) return;
     const path = withSiteId(alertEdit(alert.alertId), siteId);
-    init(alert);
+    init(alert || {});
     history.push(path);
   };
 
@@ -77,7 +100,7 @@ function AlertListItem(props: Props) {
       className={cn('px-6', !demo ? 'hover:bg-active-blue cursor-pointer border-t' : '')}
       onClick={onItemClick}
     >
-      <div className="grid grid-cols-12 py-4 select-none">
+      <div className="grid grid-cols-12 py-4 select-none items-center">
         <div className="col-span-8 flex items-start">
           <div className="flex items-center capitalize-first">
             <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
@@ -95,9 +118,9 @@ function AlertListItem(props: Props) {
           {demo
             ? DateTime.fromMillis(+new Date()).toFormat('LLL dd, yyyy, hh:mm a')
             : checkForRecent(
-                DateTime.fromMillis(alert.createdAt || +new Date()),
-                'LLL dd, yyyy, hh:mm a'
-              )}
+              DateTime.fromMillis(alert.createdAt || +new Date()),
+              'LLL dd, yyyy, hh:mm a'
+            )}
         </div>
       </div>
       <div className="color-gray-medium px-2 pb-2">
@@ -108,14 +131,16 @@ function AlertListItem(props: Props) {
         {' is '}
         <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
           {alert.query.operator}
-          {alert.query.right} {alert.metric.unit}
+          {numberWithCommas(alert.query.right)} {alert.metric?.unit}
         </span>
         {' over the past '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{getThreshold(alert.currentPeriod)}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{getThreshold(
+          alert.currentPeriod)}</span>
         {alert.detectionMethod === 'change' ? (
           <>
             {' compared to the previous '}
-            <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas ' }}>{getThreshold(alert.previousPeriod)}</span>
+            <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas ' }}>{getThreshold(
+              alert.previousPeriod)}</span>
           </>
         ) : null}
         {', notify me on '}

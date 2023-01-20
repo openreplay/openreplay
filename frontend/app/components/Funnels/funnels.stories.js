@@ -1,5 +1,4 @@
 import { storiesOf } from '@storybook/react';
-import { List } from 'immutable';
 import Funnel from 'Types/funnel'
 import FunnelIssue from 'Types/funnelIssue'
 import FunnelList from './FunnelList';

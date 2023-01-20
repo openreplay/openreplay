@@ -2,10 +2,9 @@ import { List, Map, Set } from 'immutable';
 import Assignment from 'Types/session/assignment';
 import Activity from 'Types/session/activity';
 import withRequestState, { RequestTypes } from './requestStateCreator';
-import { createListUpdater, createItemInListUpdater } from './funcTools/tools';
+import { createListUpdater } from './funcTools/tools';
 import { editType, initType } from './funcTools/crud/types';
 import { createInit, createEdit } from './funcTools/crud';
-import IssuesType from 'Types/issue/issuesType'
 
 const idKey = 'id';
 const name = 'assignment';
@@ -22,8 +21,8 @@ const INIT = initType(name);
 
 const initialState = Map({
   list: List(),
-  instance: Assignment(),
-  activeIssue: Assignment(),
+  instance: new Assignment(),
+  activeIssue: new Assignment(),
   issueTypes: List(),
   issueTypeIcons: Set(),
   users: List(),
@@ -33,22 +32,23 @@ const initialState = Map({
 
 const reducer = (state = initialState, action = {}) => {
   const users = state.get('users');
-  var issueTypes = []
+  let issueTypes = []
   switch (action.type) {
     case INIT:
       action.instance.issueType = issueTypes.length > 0 ? issueTypes[0].id : '';
-      return state.set('instance', Assignment(action.instance));
+      return state.set('instance', new Assignment(action.instance));
     case EDIT:
-      return state.mergeIn([ 'instance' ], action.instance);
+        const inst = state.get('instance')
+      return state.set('instance', new Assignment({ ...inst, ...action.instance }));
     case FETCH_PROJECTS.SUCCESS:
       return state.set('projects', List(action.data)).set('projectsFetched', true);
     case FETCH_ASSIGNMENTS.SUCCESS:
-      return state.set('list', List(action.data).map(Assignment));
+      return state.set('list', List(action.data).map(as => new Assignment(as)));
     case FETCH_ASSIGNMENT.SUCCESS:
-      return state.set('activeIssue', Assignment({ ...action.data, users}));
+      return state.set('activeIssue', new Assignment({ ...action.data, users}));
     case FETCH_META.SUCCESS:
       issueTypes = action.data.issueTypes
-      var issueTypeIcons = {}
+      const issueTypeIcons = {}
       issueTypes.forEach(iss => {
         issueTypeIcons[iss.id] = iss.iconUrl
       })
@@ -56,12 +56,12 @@ const reducer = (state = initialState, action = {}) => {
         .set('users', List(action.data.users))
         .set('issueTypeIcons', issueTypeIcons)
     case ADD_ACTIVITY.SUCCESS:
-      const instance = Assignment(action.data);
+      const instance = new Assignment(action.data);
       return listUpdater(state, instance);
     case ADD_MESSAGE.SUCCESS:
       const user = users.filter(user => user.id === action.data.author).first();
-      const activity = Activity({ type: 'message', user, ...action.data,});
-      return state.updateIn([ 'activeIssue', 'activities' ], list => list.push(activity));
+      const activity = new Activity({ type: 'message', user, ...action.data,});
+      return state.update([ 'activeIssue' ], issue => issue.activities.push(activity));
     default:
       return state;
   }
@@ -79,7 +79,7 @@ export default withRequestState({
 export const init = createInit(name);
 export const edit = createEdit(name);
 
-export function fetchProjects(sessionId) {
+export function fetchProjects() {
   return {
     types: FETCH_PROJECTS.toArray(),
     call: client => client.get(`/integrations/issues/list_projects`)
@@ -100,18 +100,11 @@ export function fetchAssignments(sessionId) {
   }
 }
 
-export function fetchAssigment(sessionId, id) {
-  return {
-    types: FETCH_ASSIGNMENT.toArray(),
-    call: client => client.get(`/sessions/${ sessionId }/assign/${ id }`)
-  }
-}
-
 export function addActivity(sessionId, params) {
-  const data = { ...params, assignee: params.assignee.value, issueType: params.issueType.value }
+  const data = { ...params, assignee: params.assignee, issueType: params.issueType }
   return {
     types: ADD_ACTIVITY.toArray(),
-    call: client => client.post(`/sessions/${ sessionId }/assign/projects/${params.projectId.value}`, data),
+    call: client => client.post(`/sessions/${ sessionId }/assign/projects/${params.projectId}`, data),
   }
 }
 

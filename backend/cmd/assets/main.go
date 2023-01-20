@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,10 +19,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("assets")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	cacher := cacher.NewCacher(cfg, metrics)
 
@@ -35,10 +38,8 @@ func main() {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
 			totalAssets.Add(context.Background(), 1)
-		case *messages.ErrorEvent:
-			if m.Source != "js_exception" {
-				return
-			}
+		// TODO: connect to "raw" topic in order to listen for JSException
+		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)
 			if err != nil {
 				log.Printf("Error on source extraction: %v", err)
@@ -53,7 +54,7 @@ func main() {
 	msgConsumer := queue.NewConsumer(
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
-		messages.NewMessageIterator(msgHandler, []int{messages.MsgAssetCache, messages.MsgErrorEvent}, true),
+		messages.NewMessageIterator(msgHandler, []int{messages.MsgAssetCache, messages.MsgJSException}, true),
 		true,
 		cfg.MessageSizeLimit,
 	)
@@ -75,6 +76,8 @@ func main() {
 			log.Printf("Error while caching: %v", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
+		case msg := <-msgConsumer.Rebalanced():
+			log.Println(msg)
 		default:
 			if !cacher.CanCache() {
 				continue

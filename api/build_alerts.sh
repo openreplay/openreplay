@@ -7,7 +7,8 @@
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
-git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
+git_sha=$(git rev-parse --short HEAD)
+image_tag=${IMAGE_TAG:-git_sha}
 envarg="default-foss"
 check_prereq() {
     which docker || {
@@ -16,9 +17,13 @@ check_prereq() {
     }
 }
 
-function build_api(){
-    cp -R ../api ../_alerts
-    cd ../_alerts
+function build_alerts(){
+    destination="_alerts"
+    [[ $1 == "ee" ]] && {
+        destination="_alerts_ee"
+    }
+    cp -R ../api ../${destination}
+    cd ../${destination}
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
@@ -26,16 +31,17 @@ function build_api(){
         envarg="default-ee"
         tag="ee-"
     }
-    docker build -f ./Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
+    mv Dockerfile_alerts.dockerignore .dockerignore
+    docker build -f ./Dockerfile_alerts --build-arg envarg=$envarg --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/alerts:${image_tag} .
     cd ../api
-    rm -rf ../_alerts
+    rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/alerts:${git_sha1}
-        docker tag ${DOCKER_REPO:-'local'}/alerts:${git_sha1} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/alerts:${image_tag}
+        docker tag ${DOCKER_REPO:-'local'}/alerts:${image_tag} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/alerts:${tag}latest
     }
     echo "completed alerts build"
 }
 
 check_prereq
-build_api $1
+build_alerts $1

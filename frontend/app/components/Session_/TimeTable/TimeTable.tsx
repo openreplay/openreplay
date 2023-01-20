@@ -2,7 +2,7 @@ import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
 import { Duration } from "luxon";
-import { NoContent, IconButton, Button } from 'UI';
+import { NoContent, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';
@@ -179,9 +179,9 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         onClick={typeof onRowClick === 'function' ? () => onRowClick(row, index) : undefined}
         id="table-row"
       >
-        {columns.map(({ dataKey, render, width }) => (
-          <div className={stl.cell} style={{ width: `${width}px` }}>
-            {render ? render(row) : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
+        {columns.map((column, key) => (
+          <div key={column.label.replace(' ', '')} className={stl.cell} style={{ width: `${column.width}px` }}>
+            {column.render ? column.render(row) : row[column.dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
           </div>
         ))}
         <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
@@ -262,7 +262,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         <div className={stl.headers}>
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width }) => (
-              <div className={stl.headerCell} style={{ width: `${width}px` }}>
+              <div key={label.replace(' ', '')} className={stl.headerCell} style={{ width: `${width}px` }}>
                 {label}
               </div>
             ))}
@@ -282,14 +282,15 @@ export default class TimeTable extends React.PureComponent<Props, State> {
               {timeColumns.map((_, index) => (
                 <div key={`tc-${index}`} className={stl.timeCell} />
               ))}
-              {visibleRefLines.map(({ time, color, onClick }) => (
+              {visibleRefLines.map((line, key) => (
                 <div
-                  className={cn(stl.refLine, `bg-${color}`)}
+                  key={line.time+key}
+                  className={cn(stl.refLine, `bg-${line.color}`)}
                   style={{
-                    left: `${percentOf(time - timestart, timewidth)}%`,
-                    cursor: typeof onClick === 'function' ? 'click' : 'auto',
+                    left: `${percentOf(line.time - timestart, timewidth)}%`,
+                    cursor: typeof line.onClick === 'function' ? 'click' : 'auto',
                   }}
-                  onClick={onClick}
+                  onClick={line.onClick}
                 />
               ))}
             </div>

@@ -1,8 +1,13 @@
-FROM python:3.8-slim
+FROM python:3.11
 
 WORKDIR /usr/src/app
 
 COPY . .
+RUN apt update
+RUN apt-get install -y libc-dev libffi-dev gcc
+RUN apt update && apt -y install software-properties-common gcc
+RUN git clone https://github.com/edenhill/librdkafka
+RUN cd librdkafka && ./configure && make && make install && ldconfig
 
 RUN pip install -r ./deploy/requirements_pg.txt
 

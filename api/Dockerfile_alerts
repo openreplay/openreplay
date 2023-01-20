@@ -1,0 +1,27 @@
+FROM python:3.11-alpine
+LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
+LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
+
+RUN apk add --no-cache build-base tini
+ARG envarg
+ENV APP_NAME=alerts \
+    PG_MINCONN=1 \
+    PG_MAXCONN=10 \
+    LISTEN_PORT=8000 \
+    PRIVATE_ENDPOINTS=true \
+    GIT_SHA=$GIT_SHA \
+    ENTERPRISE_BUILD=${envarg}
+
+WORKDIR /work
+COPY requirements-alerts.txt ./requirements.txt
+RUN pip install --no-cache-dir --upgrade -r requirements.txt
+
+COPY . .
+RUN mv env.default .env && mv app_alerts.py app.py && mv entrypoint_alerts.sh entrypoint.sh
+
+RUN adduser -u 1001 openreplay -D
+USER 1001
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ./entrypoint.sh

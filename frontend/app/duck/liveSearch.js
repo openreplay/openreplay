@@ -1,9 +1,9 @@
-import { List, Map } from 'immutable'; 
+import { List, Map } from 'immutable';
 import { fetchListType, fetchType, editType } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { mergeReducers, success } from './funcTools/tools';
 import Filter from 'Types/filter';
-import { liveFiltersMap, filtersMap } from 'Types/filter/newFilter';
+import { liveFiltersMap } from 'Types/filter/newFilter';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 import Session from 'Types/session';
 
@@ -23,6 +23,7 @@ const initialState = Map({
 	instance: new Filter({ filters: [], sort: '' }),
   filterSearchList: {},
   currentPage: 1,
+  total: 0,
 });
 
 function reducer(state = initialState, action = {}) {
@@ -35,7 +36,7 @@ function reducer(state = initialState, action = {}) {
       return state.set('currentPage', action.page);
     case success(FETCH_SESSION_LIST):
       const { sessions, total } = action.data;
-      const list = List(sessions).map(Session);
+      const list = List(sessions).map(s => new Session(s));
       return state
         .set('list', list)
         .set('total', total);
@@ -62,6 +63,11 @@ export default mergeReducers(
     fetchFilterSearch: FETCH_FILTER_SEARCH
 	}),
 );
+
+export const customSetSessions = (data) => ({
+  type: success(FETCH_SESSION_LIST),
+  data
+})
 
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));

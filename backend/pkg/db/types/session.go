@@ -20,7 +20,7 @@ type Session struct {
 	IssueTypes  []string
 	IssueScore  int
 
-	UserID          *string // pointer??
+	UserID          *string
 	UserAnonymousID *string
 	Metadata1       *string
 	Metadata2       *string

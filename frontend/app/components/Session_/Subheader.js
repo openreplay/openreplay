@@ -1,85 +1,115 @@
 import React from 'react';
-import { Icon } from 'UI';
-import Autoplay from './Autoplay';
+import { Icon, Tooltip, Button } from 'UI';
+import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import copy from 'copy-to-clipboard';
-import { Tooltip } from 'react-tippy';
 import Issues from './Issues/Issues';
 import NotePopup from './components/NotePopup';
-import { connectPlayer } from 'Player';
+import ItemMenu from './components/HeaderMenu';
+import { useModal } from 'App/components/Modal';
+import BugReportModal from './BugReport/BugReportModal';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
+import AutoplayToggle from 'Shared/AutoplayToggle';
 
 function SubHeader(props) {
-  const [isCopied, setCopied] = React.useState(false);
+  const { player, store } = React.useContext(PlayerContext)
+  const {
+    width,
+    height,
+    location: currentLocation,
+    fetchList,
+    graphqlList,
+    resourceList,
+    exceptionsList,
+    eventList: eventsList,
+    endTime,
+  } = store.get()
 
-  const isAssist = window.location.pathname.includes('/assist/');
+  const mappedResourceList = resourceList
+    .filter((r) => r.isRed() || r.isYellow())
+    .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
+    .concat(graphqlList.filter((i) => parseInt(i.status) >= 400))
+
+  const [isCopied, setCopied] = React.useState(false);
+  const { showModal, hideModal } = useModal();
 
   const location =
-    props.currentLocation && props.currentLocation.length > 60
-      ? `${props.currentLocation.slice(0, 60)}...`
-      : props.currentLocation;
+    currentLocation && currentLocation.length > 60
+      ? `${currentLocation.slice(0, 60)}...`
+      : currentLocation;
+
+  const showReportModal = () => {
+    player.pause();
+    const xrayProps = {
+      currentLocation: currentLocation,
+      resourceList: mappedResourceList,
+      exceptionsList: exceptionsList,
+      eventsList: eventsList,
+      endTime: endTime,
+    }
+    showModal(<BugReportModal width={width} height={height} xrayProps={xrayProps} hideModal={hideModal} />, { right: true, width: 620 });
+  };
 
   return (
     <div className="w-full px-4 py-2 flex items-center border-b">
+
       {location && (
         <div
           className="flex items-center cursor-pointer color-gray-medium text-sm p-1 hover:bg-gray-light-shade rounded-md"
           onClick={() => {
-            copy(props.currentLocation);
+            copy(currentLocation);
             setCopied(true);
             setTimeout(() => setCopied(false), 5000);
           }}
         >
           <Icon size="20" name="event/link" className="mr-1" />
-          <Tooltip
-            delay={0}
-            arrow
-            animation="fade"
-            hideOnClick={false}
-            position="bottom center"
-            title={isCopied ? 'URL Copied to clipboard' : 'Click to copy'}
-          >
+          <Tooltip title={isCopied ? 'URL Copied to clipboard' : 'Click to copy'}>
             {location}
           </Tooltip>
         </div>
       )}
-      {!isAssist ? (
         <div
-          className="ml-auto text-sm flex items-center color-gray-medium"
+          className="ml-auto text-sm flex items-center color-gray-medium gap-2"
           style={{ width: 'max-content' }}
         >
+          <Button icon="file-pdf" variant="text" onClick={showReportModal}>
+            Create Bug Report
+          </Button>
           <NotePopup />
-          <div className="cursor-pointer mr-4 hover:bg-gray-light-shade rounded-md p-1">
-            {props.jiraConfig && props.jiraConfig.token && <Issues sessionId={props.sessionId} />}
-          </div>
-          <div className="cursor-pointer">
-            <SharePopup
-              entity="sessions"
-              id={props.sessionId}
-              showCopyLink={true}
-              trigger={
-                <div className="flex items-center hover:bg-gray-light-shade rounded-md p-1">
-                  <Icon className="mr-2" disabled={props.disabled} name="share-alt" size="16" />
-                  <span>Share</span>
-                </div>
-              }
-            />
-          </div>
-          <div className="mx-4 hover:bg-gray-light-shade rounded-md p-1">
-            <Bookmark noMargin sessionId={props.sessionId} />
-          </div>
+          <Issues sessionId={props.sessionId} />
+          <SharePopup
+            entity="sessions"
+            id={props.sessionId}
+            showCopyLink={true}
+            trigger={
+              <div className="relative">
+                <Button icon="share-alt" variant="text" className="relative">
+                  Share
+                </Button>
+              </div>
+            }
+          />
+          <ItemMenu
+            items={[
+              {
+                key: 1,
+                component: <AutoplayToggle />,
+              },
+              {
+                key: 2,
+                component: <Bookmark noMargin sessionId={props.sessionId} />,
+              },
+            ]}
+          />
+
           <div>
-            <Autoplay />
+            <QueueControls />
           </div>
-          <div></div>
         </div>
-      ) : null}
     </div>
   );
 }
 
-const SubH = connectPlayer(
-  (state) => ({ currentLocation: state.location })
-)(SubHeader);
-
-export default React.memo(SubH);
+export default observer(SubHeader);

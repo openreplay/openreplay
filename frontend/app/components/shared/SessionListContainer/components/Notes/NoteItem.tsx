@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Link } from 'UI';
+import { Link } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
@@ -9,7 +9,7 @@ import { ItemMenu } from 'UI';
 import copy from 'copy-to-clipboard';
 import { toast } from 'react-toastify';
 import { session } from 'App/routes';
-import TeamBadge from './TeamBadge'
+import TeamBadge from './TeamBadge';
 
 interface Props {
   note: Note;
@@ -24,7 +24,7 @@ function NoteItem(props: Props) {
     copy(
       `${window.location.origin}/${window.location.pathname.split('/')[1]}${session(
         props.note.sessionId
-      )}${props.note.timestamp > 0 ? '?jumpto=' + props.note.timestamp : ''}`
+      )}${props.note.timestamp > 0 ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}` : `?note=${props.note.noteId}`}`
     );
     toast.success('Note URL copied to clipboard');
   };
@@ -35,49 +35,44 @@ function NoteItem(props: Props) {
     });
   };
   const menuItems = [
-    { icon: 'link-45deg', text: 'Copy URL', onClick: onCopy },
+    { icon: 'link-45deg', text: 'Copy Note URL', onClick: onCopy },
     { icon: 'trash', text: 'Delete', onClick: onDelete },
   ];
 
-  const safeStrMessage = props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message
+  const safeStrMessage =
+    props.note.message.length > 150 ? props.note.message.slice(0, 150) + '...' : props.note.message;
   return (
-    <div
-      className="flex items-center p-4 border-b"
-      style={{ background: 'rgba(253, 243, 155, 0.1)' }}
-    >
+    <div className="flex items-center p-2 border-b">
       <Link
         style={{ width: '90%' }}
         to={
           session(props.note.sessionId) +
           (props.note.timestamp > 0
             ? `?jumpto=${props.note.timestamp}&note=${props.note.noteId}`
-            : '')
+            : `?note=${props.note.noteId}`)
         }
       >
-        <div className="flex flex-col gap-1 cursor-pointer">
-          <div className="text-xl py-3">{safeStrMessage}</div>
+        <div className="flex flex-col gap-1 p-2 rounded cursor-pointer note-hover">
+          <div className="py-1 capitalize-first text-lg">{safeStrMessage}</div>
           <div className="flex items-center gap-2">
             {props.note.tag ? (
               <div
                 style={{
                   // @ts-ignore
                   background: tagProps[props.note.tag],
-                  userSelect: 'none',
-                  width: 50,
-                  fontSize: 11,
+                  padding: '1px 6px',
                 }}
-                className="rounded-full px-2 py-1 text-white flex items-center justify-center"
+                className="rounded-full text-white text-xs select-none w-fit"
               >
                 {props.note.tag}
               </div>
             ) : null}
-            <div className="text-disabled-text flex items-center">
-              <span className="text-figmaColors-text-primary mr-1">By </span>
+            <div className="text-disabled-text flex items-center text-sm">
+              <span className="color-gray-darkest mr-1">By </span>
               {props.userEmail},{' '}
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
-              {!props.note.isPublic ? null : (
-                <TeamBadge />
-              )}
+              <div className="mx-2" />
+              {!props.note.isPublic ? null : <TeamBadge />}
             </div>
           </div>
         </div>

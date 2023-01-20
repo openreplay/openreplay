@@ -2,9 +2,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { useState } from 'react';
 import { NoContent, Tabs } from 'UI';
-import withEnumToggle from 'HOCs/withEnumToggle';
 import { hideHint } from 'Duck/components/player';
-import { typeList } from 'Types/session/stackEvent'; 
+import { typeList } from 'Types/session/stackEvent';
 import *  as PanelLayout from './PanelLayout';
 
 import UserEvent from 'Components/Session_/StackEvents/UserEvent';
@@ -14,7 +13,7 @@ const ALL = 'ALL';
 
 const TABS = [ ALL, ...typeList ].map(tab =>({ text: tab, key: tab }));
 
-function StackEvents({ 
+function StackEvents({
   stackEvents,
   hintIsHidden,
   hideHint,
@@ -28,10 +27,10 @@ function StackEvents({
   return (
     <>
       <PanelLayout.Header>
-        <Tabs 
+        <Tabs
           className="uppercase"
           tabs={ tabs }
-          active={ activeTab } 
+          active={ activeTab }
           onClick={ setTab }
           border={ false }
       />
@@ -39,12 +38,12 @@ function StackEvents({
       <PanelLayout.Body>
         <NoContent
           title="Nothing to display yet."
-          subtext={ !hintIsHidden 
-            ? 
+          subtext={ !hintIsHidden
+            ?
               <>
                 <a className="underline color-teal" href="https://docs.openreplay.com/integrations" target="_blank">Integrations</a>
                 {' and '}
-                <a className="underline color-teal" href="https://docs.openreplay.com/api#event" target="_blank">Events</a> 
+                <a className="underline color-teal" href="https://docs.openreplay.com/api#event" target="_blank">Events</a>
                 { ' make debugging easier. Sync your backend logs and custom events with session replay.' }
                 <br/><br/>
                 <button className="color-teal" onClick={() => hideHint("stack")}>Got It!</button>
@@ -66,7 +65,7 @@ function StackEvents({
 }
 
 export default connect(state => ({
-  hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'stack']) || 
+  hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'stack']) ||
     !state.getIn([ 'site', 'list' ]).some(s => s.stackIntegrations),
 }), {
   hideHint

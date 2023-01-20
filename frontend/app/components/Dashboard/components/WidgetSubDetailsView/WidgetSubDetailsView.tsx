@@ -30,7 +30,7 @@ function WidgetSubDetailsView(props: Props) {
         <div>
             <Breadcrumb
                 items={[
-                    { label: dashboardId ? 'Dashboard' : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
+                    { label: dashboardId ? 'Dashboard' : 'Cards', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
                     { label: widget.name, to: withSiteId(`/metrics/${widget.metricId}`, siteId) },
                     { label: issueInstance ? issueInstance.title : 'Sub Details' }
                 ]}

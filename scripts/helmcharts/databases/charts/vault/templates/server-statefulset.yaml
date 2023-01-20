@@ -1,0 +1,210 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- if ne .mode "" }}
+{{- if .serverEnabled -}}
+# StatefulSet to run the actual vault server cluster.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "vault.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{- template "vault.statefulSet.annotations" . }}
+spec:
+  serviceName: {{ template "vault.fullname" . }}-internal
+  podManagementPolicy: Parallel
+  replicas: {{ template "vault.replicas" . }}
+  updateStrategy:
+    type: {{ .Values.server.updateStrategyType }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "vault.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      component: server
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: {{ template "vault.chart" . }}
+        app.kubernetes.io/name: {{ template "vault.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        component: server
+        {{- if  .Values.server.extraLabels -}}
+          {{- toYaml .Values.server.extraLabels | nindent 8 -}}
+        {{- end -}}
+      {{ template "vault.annotations" . }}
+    spec:
+      {{ template "vault.affinity" . }}
+      {{ template "vault.topologySpreadConstraints" . }}
+      {{ template "vault.tolerations" . }}
+      {{ template "vault.nodeselector" . }}
+      {{- if .Values.server.priorityClassName }}
+      priorityClassName: {{ .Values.server.priorityClassName }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.server.terminationGracePeriodSeconds }}
+      serviceAccountName: {{ template "vault.serviceAccount.name" . }}
+      {{ if  .Values.server.shareProcessNamespace }}
+      shareProcessNamespace: true
+      {{ end }}
+      {{- template "server.statefulSet.securityContext.pod" . }}
+      {{- if not .Values.global.openshift }}
+      hostNetwork: {{ .Values.server.hostNetwork }}
+      {{- end }}
+
+      volumes:
+        {{ template "vault.volumes" . }}
+        - name: home
+          emptyDir: {}
+      {{- if .Values.server.extraInitContainers }}
+      initContainers:
+        {{ toYaml .Values.server.extraInitContainers | nindent 8}}
+      {{- end }}
+      containers:
+        - name: vault
+          {{ template "vault.resources" . }}
+          image: {{ .Values.server.image.repository }}:{{ .Values.server.image.tag | default "latest" }}
+          imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+          command:
+          - "/bin/sh"
+          - "-ec"
+          args: {{ template "vault.args" . }}
+          {{- template "server.statefulSet.securityContext.container" . }}
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VAULT_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: VAULT_ADDR
+              value: "{{ include "vault.scheme" . }}://127.0.0.1:8200"
+            - name: VAULT_API_ADDR
+              {{- if .Values.server.ha.apiAddr }}
+              value: {{ .Values.server.ha.apiAddr }}
+              {{- else }}
+              value: "{{ include "vault.scheme" . }}://$(POD_IP):8200"
+              {{- end }}
+            - name: SKIP_CHOWN
+              value: "true"
+            - name: SKIP_SETCAP
+              value: "true"
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: VAULT_CLUSTER_ADDR
+              {{- if .Values.server.ha.clusterAddr }}
+              value: {{ .Values.server.ha.clusterAddr }}
+              {{- else }}
+              value: "https://$(HOSTNAME).{{ template "vault.fullname" . }}-internal:8201"
+              {{- end }}
+            {{- if and (eq (.Values.server.ha.raft.enabled | toString) "true") (eq (.Values.server.ha.raft.setNodeId | toString) "true") }}
+            - name: VAULT_RAFT_NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- end }}
+            - name: HOME
+              value: "/home/vault"
+            {{- if .Values.server.logLevel }}
+            - name: VAULT_LOG_LEVEL
+              value: "{{ .Values.server.logLevel }}"
+            {{- end }}
+            {{- if .Values.server.logFormat }}
+            - name: VAULT_LOG_FORMAT
+              value: "{{ .Values.server.logFormat }}"
+            {{- end }}
+            {{- if (and .Values.server.enterpriseLicense.secretName .Values.server.enterpriseLicense.secretKey) }}
+            - name: VAULT_LICENSE_PATH
+              value: /vault/license/{{ .Values.server.enterpriseLicense.secretKey }}
+            {{- end }}
+            {{ template "vault.envs" . }}
+            {{- include "vault.extraEnvironmentVars" .Values.server | nindent 12 }}
+            {{- include "vault.extraSecretEnvironmentVars" .Values.server | nindent 12 }}
+          volumeMounts:
+          {{ template "vault.mounts" . }}
+            - name: home
+              mountPath: /home/vault
+          ports:
+            - containerPort: 8200
+              name: {{ include "vault.scheme" . }}
+            - containerPort: 8201
+              name: https-internal
+            - containerPort: 8202
+              name: {{ include "vault.scheme" . }}-rep
+          {{- if .Values.server.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.server.readinessProbe.path }}
+            httpGet:
+              path: {{ .Values.server.readinessProbe.path | quote }}
+              port: 8200
+              scheme: {{ include "vault.scheme" . | upper }}
+            {{- else }}
+            # Check status; unsealed vault servers return 0
+            # The exit code reflects the seal status:
+            #   0 - unsealed
+            #   1 - error
+            #   2 - sealed
+            exec:
+              command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+            {{- end }}
+            failureThreshold: {{ .Values.server.readinessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.server.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.server.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.server.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.server.readinessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.server.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.server.livenessProbe.path | quote }}
+              port: 8200
+              scheme: {{ include "vault.scheme" . | upper }}
+            failureThreshold: {{ .Values.server.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ .Values.server.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.server.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.server.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.server.livenessProbe.timeoutSeconds }}
+          {{- end }}
+          lifecycle:
+            # Vault container doesn't receive SIGTERM from Kubernetes
+            # and after the grace period ends, Kube sends SIGKILL.  This
+            # causes issues with graceful shutdowns such as deregistering itself
+            # from Consul (zombie services).
+            preStop:
+              exec:
+                command: [
+                  "/bin/sh", "-c",
+                  # Adding a sleep here to give the pod eviction a
+                  # chance to propagate, so requests will not be made
+                  # to this pod while it's terminating
+                  "sleep {{ .Values.server.preStopSleepSeconds }} && kill -SIGTERM $(pidof vault)",
+                ]
+            {{- if .Values.server.postStart }}
+            postStart:
+              exec:
+                command:
+                {{- range (.Values.server.postStart) }}
+                - {{ . | quote }}
+                {{- end }}
+            {{- end }}
+        {{- if .Values.server.extraContainers }}
+          {{ toYaml .Values.server.extraContainers | nindent 8}}
+        {{- end }}
+      {{- include "imagePullSecrets" . | nindent 6 }}
+  {{ template "vault.volumeclaims" . }}
+{{ end }}
+{{ end }}
+{{ end }}

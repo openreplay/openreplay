@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from 'UI';
-import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NoContent } from 'UI';
-import { Styles, Table } from '../../common';
+import { Table } from '../../common';
 import { List } from 'immutable';
 import { numberWithCommas } from 'App/utils';
 
@@ -8,12 +8,12 @@ import Chart from './Chart';
 import ImageInfo from './ImageInfo';
 import ResourceType from './ResourceType';
 import CopyPath from './CopyPath';
-import { NO_METRIC_DATA } from 'App/constants/messages'
+import { NO_METRIC_DATA } from 'App/constants/messages';
 
 export const RESOURCE_OPTIONS = [
-  { text: 'All', value: 'ALL', },
-  { text: 'CSS', value: 'STYLESHEET', },
-  { text: 'JS', value: 'SCRIPT', },
+  { text: 'All', value: 'ALL' },
+  { text: 'CSS', value: 'STYLESHEET' },
+  { text: 'JS', value: 'SCRIPT' },
 ];
 
 const cols: Array<Object> = [
@@ -35,7 +35,7 @@ const cols: Array<Object> = [
   {
     key: 'avg',
     title: 'Load Time',
-    toText: avg => `${ avg ? numberWithCommas(Math.trunc(avg)) : 0} ms`,
+    toText: (avg) => `${avg ? numberWithCommas(Math.trunc(avg)) : 0} ms`,
     className: 'justify-center',
     width: '15%',
   },
@@ -44,7 +44,7 @@ const cols: Array<Object> = [
     title: 'Trend',
     Component: Chart,
     width: '15%',
-  }
+  },
 ];
 
 const copyPathCol = {
@@ -53,38 +53,41 @@ const copyPathCol = {
   Component: CopyPath,
   cellClass: 'invisible group-hover:visible text-right',
   width: '15%',
-}
+};
 
 interface Props {
-    data: any
-    metric?: any
-    isTemplate?: boolean
+  data: any;
+  metric?: any;
+  isTemplate?: boolean;
 }
 function SlowestResources(props: Props) {
-    const { data, metric, isTemplate } = props;
+  const { data, metric, isTemplate } = props;
 
-    if (!isTemplate) {
+  useEffect(() => {
+    const lastCol: any = cols[cols.length - 1];
+    if (!isTemplate && lastCol && lastCol.key !== 'copy-path') {
       cols.push(copyPathCol);
     }
-    
-    return (
-        <NoContent
-          title={NO_METRIC_DATA}
-          size="small"
-          show={ metric.data.chart.length === 0 }
-          style={{ minHeight: 220 }}
-        >
-          <div style={{ height: '240px', marginBottom:'10px'}}>
-            <Table
-              small
-              cols={ cols }
-              rows={ List(metric.data.chart) }
-              rowClass="group"
-              isTemplate={isTemplate}
-            />
-          </div>
-        </NoContent>
-    );
+  }, []);
+
+  return (
+    <NoContent
+      title={NO_METRIC_DATA}
+      size="small"
+      show={metric.data.chart.length === 0}
+      style={{ minHeight: 220 }}
+    >
+      <div style={{ height: '240px', marginBottom: '10px' }}>
+        <Table
+          small
+          cols={cols}
+          rows={List(metric.data.chart)}
+          rowClass="group"
+          isTemplate={isTemplate}
+        />
+      </div>
+    </NoContent>
+  );
 }
 
 export default SlowestResources;

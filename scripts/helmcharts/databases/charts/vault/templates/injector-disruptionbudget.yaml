@@ -1,0 +1,20 @@
+{{- if .Values.injector.podDisruptionBudget }}
+apiVersion: {{ ge .Capabilities.KubeVersion.Minor "21" | ternary "policy/v1" "policy/v1beta1" }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ template "vault.fullname" . }}-agent-injector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}-agent-injector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    component: webhook
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "vault.name" . }}-agent-injector
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      component: webhook
+  {{- toYaml .Values.injector.podDisruptionBudget | nindent 2 }}
+{{- end -}}

@@ -7,7 +7,7 @@ class String
     self.sub('Id', 'ID').sub('Url', 'URL')
   end
 
-  # pascal_case
+  # PascalCase
   def pascal_case
     return self if self !~ /_/ && self =~ /[A-Z]+.*/
     split('_').map{|e| e.capitalize}.join.upperize_abbreviations

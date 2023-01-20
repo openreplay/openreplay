@@ -1,0 +1,51 @@
+
+@import 'mixins.css';
+
+/* .wrapper {
+  position: relative;
+} */
+
+.modal {
+  /* width: 288px; */
+  /* position: absolute; */
+  /* top: 50px; */
+  /* right: 0; */
+  /* background-color: white; */
+  /* border-radius: 3px; */
+  /* z-index: 99; */
+  /* padding: 10px; */
+  /* min-height: 90px; */
+  max-height: 300px;
+  overflow: auto;
+  /* @mixin shadow; */
+  /* border: solid thin $gray-light; */
+
+  /* & .tooltipArrow {
+    width: 50px;
+    height: 25px;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    transform: translateX(-50%);
+    overflow: hidden;
+    
+    &::after {
+      content: "";
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: white;
+      transform: translateX(-50%) translateY(50%) rotate(45deg);
+      bottom: 0;
+      left: 50%;
+      box-shadow: 2px 2px 6px 0px rgba(0,0,0,0.6);
+    }
+  } */
+}
+
+.header {
+  font-size: 18px;
+  font-weight: 500;
+  /* padding: 10px 20px; */
+  border-bottom: solid thin $gray-light;
+}

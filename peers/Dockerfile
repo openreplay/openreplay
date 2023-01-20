@@ -1,8 +1,12 @@
 FROM node:18-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
 RUN apk add --no-cache tini
 ARG envarg
-ENV ENTERPRISE_BUILD=${envarg}
+ENV PRIVATE_ENDPOINTS=false \
+    GIT_SHA=$GIT_SHA \
+    ENTERPRISE_BUILD=${envarg}
 
 WORKDIR /work
 COPY package.json .

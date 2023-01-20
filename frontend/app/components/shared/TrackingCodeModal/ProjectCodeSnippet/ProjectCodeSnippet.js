@@ -6,7 +6,6 @@ import { Checkbox } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
 import styles from './projectCodeSnippet.module.css'
-import Highlight from 'react-highlight'
 import Select from 'Shared/Select'
 import CodeSnippet from '../../CodeSnippet';
 

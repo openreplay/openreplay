@@ -5,6 +5,7 @@ import (
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/internal/integrations/clientManager"
 	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/pprof"
 	"time"
 
 	"os"
@@ -19,10 +20,12 @@ import (
 
 func main() {
 	metrics := monitoring.New("integrations")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0, metrics)
 	defer pg.Close()

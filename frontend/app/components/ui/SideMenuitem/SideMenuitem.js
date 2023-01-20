@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Popup } from 'UI';
+import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
 import stl from './sideMenuItem.module.css';
 
@@ -18,12 +18,10 @@ function SideMenuitem({
     ...props
   }) {
   return (
-    <Popup
+    <Tooltip
       disabled={ !disabled }
-      content={ 'No recordings' }
-      size="tiny"
-      inverted
-      position="left center"
+      title={ 'No recordings' }
+      placement="left"
     >
       <div
           className={ cn(
@@ -51,7 +49,7 @@ function SideMenuitem({
             <div onClick={deleteHandler} className={stl.actions}><Icon name="trash" size="14" /></div>
           }
         </div>
-    </Popup>
+    </Tooltip>
   )
 }
 

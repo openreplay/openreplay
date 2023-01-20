@@ -1,8 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { IconButton } from 'UI';
 import stl from './errorItem.module.css';
-import { Duration } from 'luxon';
 import { useModal } from 'App/components/Modal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import JumpButton from 'Shared/DevTools/JumpButton';
@@ -17,7 +15,7 @@ function ErrorItem({ error = {}, onJump, inactive, selected }: Props) {
   const { showModal } = useModal();
 
   const onErrorClick = () => {
-    showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true });
+    showModal(<ErrorDetailsModal errorId={error.errorId} />, { right: true, width: 1200 });
   };
   return (
     <div

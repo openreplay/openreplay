@@ -2,6 +2,7 @@ package redisstream
 
 import (
 	"log"
+	"regexp"
 
 	"github.com/go-redis/redis"
 
@@ -14,9 +15,20 @@ func getRedisClient() *redis.Client {
 	if redisClient != nil {
 		return redisClient
 	}
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: env.String("REDIS_STRING"),
-	})
+
+	connectionString := env.String("REDIS_STRING")
+
+	match, _ := regexp.MatchString("^[^:]+://", connectionString)
+	if !match {
+		connectionString = "redis://" + connectionString
+	}
+
+	options, err := redis.ParseURL(connectionString)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	redisClient = redis.NewClient(options)
 	if _, err := redisClient.Ping().Result(); err != nil {
 		log.Fatalln(err)
 	}

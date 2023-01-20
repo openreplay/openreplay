@@ -11,14 +11,14 @@ if '%s' in SMR_URL:
         SMR_URL = SMR_URL % "smr"
 
 
-def get_original_trace(key, positions):
+def get_original_trace(key, positions, is_url=False):
     payload = {
         "key": key,
         "positions": positions,
         "padding": 5,
-        "bucket": config('sourcemaps_bucket')
+        "bucket": config('sourcemaps_bucket'),
+        "isURL": is_url
     }
-
     try:
         r = requests.post(SMR_URL, json=payload, timeout=config("sourcemapTimeout", cast=int, default=5))
         if r.status_code != 200:

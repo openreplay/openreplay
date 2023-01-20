@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"openreplay/backend/pkg/env"
 )
 
@@ -15,13 +15,20 @@ type Producer struct {
 
 func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 	kafkaConfig := &kafka.ConfigMap{
-		"enable.idempotence":     true,
-		"bootstrap.servers":      env.String("KAFKA_SERVERS"),
-		"go.delivery.reports":    true,
-		"security.protocol":      "plaintext",
-		"go.batch.producer":      useBatch,
-		"queue.buffering.max.ms": 100,
-		"message.max.bytes":      messageSizeLimit,
+		"enable.idempotence":                    true,
+		"bootstrap.servers":                     env.String("KAFKA_SERVERS"),
+		"go.delivery.reports":                   true,
+		"security.protocol":                     "plaintext",
+		"go.batch.producer":                     useBatch,
+		"message.max.bytes":                     messageSizeLimit, // should be synced with broker config
+		"linger.ms":                             1000,
+		"queue.buffering.max.ms":                1000,
+		"batch.num.messages":                    1000,
+		"queue.buffering.max.messages":          1000,
+		"retries":                               3,
+		"retry.backoff.ms":                      100,
+		"max.in.flight.requests.per.connection": 1,
+		"compression.type":                      env.String("COMPRESSION_TYPE"),
 	}
 	// Apply ssl configuration
 	if env.Bool("KAFKA_USE_SSL") {
@@ -30,6 +37,15 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 		kafkaConfig.SetKey("ssl.key.location", os.Getenv("KAFKA_SSL_KEY"))
 		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
+	// Apply Kerberos configuration
+	if env.Bool("KAFKA_USE_KERBEROS") {
+		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
+		kafkaConfig.SetKey("sasl.mechanisms", "GSSAPI")
+		kafkaConfig.SetKey("sasl.kerberos.service.name", os.Getenv("KERBEROS_SERVICE_NAME"))
+		kafkaConfig.SetKey("sasl.kerberos.principal", os.Getenv("KERBEROS_PRINCIPAL"))
+		kafkaConfig.SetKey("sasl.kerberos.keytab", os.Getenv("KERBEROS_KEYTAB_LOCATION"))
+	}
+
 	producer, err := kafka.NewProducer(kafkaConfig)
 	if err != nil {
 		log.Fatalln(err)

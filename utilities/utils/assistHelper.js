@@ -134,7 +134,7 @@ function check(socket, next) {
                 debug && console.error(`projectKey:${projectKey}, sessionId:${sessionId}`);
                 return next(new Error('Authentication error'));
             }
-            if (projectKey !== decoded.projectKey || sessionId !== decoded.sessionId) {
+            if (String(projectKey) !== String(decoded.projectKey) || String(sessionId) !== String(decoded.sessionId)) {
                 debug && console.error(`Trying to access projectKey:${projectKey} instead of ${decoded.projectKey}\nor`);
                 debug && console.error(`Trying to access sessionId:${sessionId} instead of ${decoded.sessionId}`);
                 return next(new Error('Authorization error'));

@@ -1,8 +1,9 @@
 package messages
 
+import "fmt"
+
 type Message interface {
 	Encode() []byte
-	EncodeWithIndex() []byte
 	Decode() Message
 	TypeID() int
 	Meta() *message
@@ -14,14 +15,17 @@ type BatchInfo struct {
 	sessionID uint64
 	id        uint64
 	topic     string
+	partition uint64
 	timestamp int64
+	version   uint64
 }
 
-func NewBatchInfo(sessID uint64, topic string, id uint64, ts int64) *BatchInfo {
+func NewBatchInfo(sessID uint64, topic string, id, partition uint64, ts int64) *BatchInfo {
 	return &BatchInfo{
 		sessionID: sessID,
 		id:        id,
 		topic:     topic,
+		partition: partition,
 		timestamp: ts,
 	}
 }
@@ -36,6 +40,10 @@ func (b *BatchInfo) ID() uint64 {
 
 func (b *BatchInfo) Timestamp() int64 {
 	return b.timestamp
+}
+
+func (b *BatchInfo) Info() string {
+	return fmt.Sprintf("session: %d, partition: %d, offset: %d, ver: %d", b.sessionID, b.partition, b.id, b.version)
 }
 
 type message struct {

@@ -8,7 +8,7 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import { withRouter } from 'react-router-dom';
 import stl from './login.module.css';
 import cn from 'classnames';
-import { setJwt } from 'Duck/jwt';
+import { setJwt } from 'Duck/user';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -122,15 +122,15 @@ export default class Login extends React.Component {
                   </div>
                 </div>
               </Loader>
-              { errors &&
-                <div className={ stl.errors }>
+              { errors.length ?
+                (<div className={ stl.errors }>
                   { errors.map(error => (
                     <div className={stl.errorItem}>
                       <Icon name="info" color="red" size="20"/>
                       <span className="color-red ml-2">{ error }<br /></span>
                     </div>
                   )) }
-                </div>
+                </div>) : null
               }
               {/* <div className={ stl.formFooter }> */}
                 <Button className="mt-2" type="submit" variant="primary" >{ 'Login' }</Button>

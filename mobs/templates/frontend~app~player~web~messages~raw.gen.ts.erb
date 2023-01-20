@@ -1,0 +1,18 @@
+// Auto-generated, do not edit
+/* eslint-disable */
+
+export const enum MType {
+<%= $messages.select { |msg| msg.replayer != false  }
+  .map { |msg| "  #{msg.name.snake_case.pascal_case} = #{msg.id}," }
+  .join "\n"
+%>
+}
+
+<% $messages.select { |msg| msg.replayer != false  }.each do |msg| %>
+export interface Raw<%= msg.name.snake_case.pascal_case %> {
+  tp: MType.<%= msg.name.snake_case.pascal_case %>,
+<%= msg.attributes.map { |attr| "  #{attr.name.camel_case}: #{attr.type_js}," }.join "\n" %>
+}
+<% end %>
+
+export type RawMessage = <%= $messages.select { |msg| msg.replayer != false  }.map { |msg| "Raw#{msg.name.snake_case.pascal_case}" }.join " | " %>;

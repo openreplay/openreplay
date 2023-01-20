@@ -2,8 +2,6 @@
 /* eslint-disable */
 
 export declare const enum Type {
-  BatchMetadata = 81,
-  PartitionedMessage = 82,
   Timestamp = 0,
   SetPageLocation = 4,
   SetViewportSize = 5,
@@ -21,11 +19,12 @@ export declare const enum Type {
   SetInputValue = 18,
   SetInputChecked = 19,
   MouseMove = 20,
+  NetworkRequest = 21,
   ConsoleLog = 22,
   PageLoadTiming = 23,
   PageRenderTiming = 24,
   JSExceptionDeprecated = 25,
-  RawCustomEvent = 27,
+  CustomEvent = 27,
   UserID = 28,
   UserAnonymousID = 29,
   Metadata = 30,
@@ -44,6 +43,8 @@ export declare const enum Type {
   ResourceTiming = 53,
   ConnectionInformation = 54,
   SetPageVisibility = 55,
+  LoadFontFace = 57,
+  SetNodeFocus = 58,
   LongTask = 59,
   SetNodeAttributeURLBased = 60,
   SetCSSDataURLBased = 61,
@@ -59,23 +60,10 @@ export declare const enum Type {
   AdoptedSSRemoveOwner = 77,
   Zustand = 79,
   JSException = 78,
+  BatchMetadata = 81,
+  PartitionedMessage = 82,
 }
 
-
-export type BatchMetadata = [
-  /*type:*/ Type.BatchMetadata,
-  /*version:*/ number,
-  /*pageNo:*/ number,
-  /*firstIndex:*/ number,
-  /*timestamp:*/ number,
-  /*location:*/ string,
-]
-
-export type PartitionedMessage = [
-  /*type:*/ Type.PartitionedMessage,
-  /*partNo:*/ number,
-  /*partTotal:*/ number,
-]
 
 export type Timestamp = [
   /*type:*/ Type.Timestamp,
@@ -185,6 +173,18 @@ export type MouseMove = [
   /*y:*/ number,
 ]
 
+export type NetworkRequest = [
+  /*type:*/ Type.NetworkRequest,
+  /*type:*/ string,
+  /*method:*/ string,
+  /*url:*/ string,
+  /*request:*/ string,
+  /*response:*/ string,
+  /*status:*/ number,
+  /*timestamp:*/ number,
+  /*duration:*/ number,
+]
+
 export type ConsoleLog = [
   /*type:*/ Type.ConsoleLog,
   /*level:*/ string,
@@ -218,8 +218,8 @@ export type JSExceptionDeprecated = [
   /*payload:*/ string,
 ]
 
-export type RawCustomEvent = [
-  /*type:*/ Type.RawCustomEvent,
+export type CustomEvent = [
+  /*type:*/ Type.CustomEvent,
   /*name:*/ string,
   /*payload:*/ string,
 ]
@@ -348,6 +348,19 @@ export type SetPageVisibility = [
   /*hidden:*/ boolean,
 ]
 
+export type LoadFontFace = [
+  /*type:*/ Type.LoadFontFace,
+  /*parentID:*/ number,
+  /*family:*/ string,
+  /*source:*/ string,
+  /*descriptors:*/ string,
+]
+
+export type SetNodeFocus = [
+  /*type:*/ Type.SetNodeFocus,
+  /*id:*/ number,
+]
+
 export type LongTask = [
   /*type:*/ Type.LongTask,
   /*timestamp:*/ number,
@@ -455,6 +468,21 @@ export type JSException = [
   /*metadata:*/ string,
 ]
 
+export type BatchMetadata = [
+  /*type:*/ Type.BatchMetadata,
+  /*version:*/ number,
+  /*pageNo:*/ number,
+  /*firstIndex:*/ number,
+  /*timestamp:*/ number,
+  /*location:*/ string,
+]
 
-type Message =  BatchMetadata | PartitionedMessage | Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | PageLoadTiming | PageRenderTiming | JSExceptionDeprecated | RawCustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | Zustand | JSException
+export type PartitionedMessage = [
+  /*type:*/ Type.PartitionedMessage,
+  /*partNo:*/ number,
+  /*partTotal:*/ number,
+]
+
+
+type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | JSExceptionDeprecated | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | ResourceTiming | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | Zustand | JSException | BatchMetadata | PartitionedMessage
 export default Message

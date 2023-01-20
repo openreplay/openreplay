@@ -45,5 +45,6 @@ module.exports = {
     'no-unused-expressions': 'off',
     '@typescript-eslint/no-unused-expressions': 'warn',
     '@typescript-eslint/no-useless-constructor': 'warn',
+    'prefer-rest-params': 'off',
   },
 };

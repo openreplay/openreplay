@@ -1,13 +1,20 @@
-from chalicelib.utils.s3 import client
 from decouple import config
 
-def tag_file( session_id, tag_key='retention', tag_value='vault'):
-    return client.put_object_tagging(
-        Bucket=config("sessions_bucket"),
-        Key=session_id,
-        # VersionId='string',
-        # ContentMD5='string',
-        # ChecksumAlgorithm='CRC32'|'CRC32C'|'SHA1'|'SHA256',
+from chalicelib.utils import s3
+
+
+def tag_session(file_key, tag_key='retention', tag_value='vault'):
+    return tag_file(file_key=file_key, bucket=config("sessions_bucket"), tag_key=tag_key, tag_value=tag_value)
+
+
+def tag_record(file_key, tag_key='retention', tag_value='vault'):
+    return tag_file(file_key=file_key, bucket=config('ASSIST_RECORDS_BUCKET'), tag_key=tag_key, tag_value=tag_value)
+
+
+def tag_file(file_key, bucket, tag_key, tag_value):
+    return s3.client.put_object_tagging(
+        Bucket=bucket,
+        Key=file_key,
         Tagging={
             'TagSet': [
                 {
@@ -15,16 +22,5 @@ def tag_file( session_id, tag_key='retention', tag_value='vault'):
                     'Value': tag_value
                 },
             ]
-        },
-        # ExpectedBucketOwner='string',
-        # RequestPayer='requester'
+        }
     )
-
-    # generate_presigned_url(
-    #     'put_object',
-    #     Params={
-    #         'Bucket': bucket,
-    #         'Key': key
-    #     },
-    #     ExpiresIn=expires_in
-    # )

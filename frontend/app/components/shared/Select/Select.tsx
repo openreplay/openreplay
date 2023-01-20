@@ -6,7 +6,7 @@ const { ValueContainer } = components;
 
 type ValueObject = {
     value: string | number,
-    label: string,
+    label: React.ReactNode,
 }
 
 interface Props<Value extends ValueObject> {
@@ -15,14 +15,15 @@ interface Props<Value extends ValueObject> {
     defaultValue?: string | number;
     plain?: boolean;
     components?: any;
-    styles?: any;
+    styles?: Record<string, any>;
+    controlStyle?: Record<string, any>;
     onChange: (newValue: { name: string, value: Value }) => void;
     name?: string;
     placeholder?: string;
     [x:string]: any;
 }
 
-export default function<Value extends ValueObject>({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props<Value>) {
+export default function<Value extends ValueObject>({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', controlStyle = {}, ...rest }: Props<Value>) {
     const defaultSelected = defaultValue ? (options.find(o => o.value === defaultValue) || options[0]): null;
     const customStyles = {
         option: (provided: any, state: any) => ({
@@ -71,7 +72,8 @@ export default function<Value extends ValueObject>({ placeholder='Select', name 
                 ['&:hover']: {
                     backgroundColor: colors['gray-lightest'],
                     transition: 'all 0.2s ease-in-out'
-                }
+                },
+                ...controlStyle,
             }
             if (plain) {
                 obj['backgroundColor'] = 'transparent';

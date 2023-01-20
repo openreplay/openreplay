@@ -1,0 +1,37 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: clickhouse-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
+spec:
+  schedule: "5 11 * * */4"
+  jobTemplate:
+    spec:
+      backoffLimit: 0 # Don't restart the failed jobs
+      template:
+        spec:
+          containers:
+          - name: clickhouse-backup
+            image: alpine/curl
+            command:
+              - /bin/sh
+              - -c
+            args:
+              - |
+                set -x
+                BACKUP_NAME=openreplay_clickhouse_backup$(date -u +%Y-%m-%dT%H-%M-%S)
+                curl -XPOST http://clickhouse-openreplay-clickhouse:7171/backup/create?name=$BACKUP_NAME
+                sleep 10
+                # Upload backup
+                # curl -XPOST http://clickhouse-openreplay-clickhouse:7171/backup/upload/$BACKUP_NAME
+
+                # Get the backup status
+                echo "Backup Status:"
+                curl http://clickhouse-openreplay-clickhouse:7171/backup/status?name=$BACKUP_NAME
+                # List active backups
+                echo "Active backup in machine"
+                curl http://clickhouse-openreplay-clickhouse:7171/backup/list
+          restartPolicy: Never

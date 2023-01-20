@@ -38,6 +38,7 @@ input:focus {
 * {
   &::-webkit-scrollbar {
     width: 2px;
+    height: 0;
   }
 
   &::-webkit-scrollbar-thumb {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { DATE_RANGE_OPTIONS, CUSTOM_RANGE } from 'App/dateRange';
 import Select from 'Shared/Select';
-import Period, { LAST_7_DAYS } from 'Types/app/period';
+import Period from 'Types/app/period';
 import { components } from 'react-select';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
@@ -40,6 +40,7 @@ function SelectDateRange(props: Props) {
 
     const isCustomRange = period.rangeName === CUSTOM_RANGE;
     const customRange = isCustomRange ? period.rangeFormatted() : '';
+
     return (
         <div className="relative">
             <Select
@@ -63,7 +64,7 @@ function SelectDateRange(props: Props) {
             {isCustom && (
                 <OutsideClickDetectingDiv
                     onClickOutside={(e: any) => {
-                        if (e.target.parentElement.parentElement.classList.contains('rc-time-picker-panel-select')) {
+                        if (e.target.parentElement.parentElement.classList.contains('rc-time-picker-panel-select') || e.target.parentElement.parentElement.classList[0].includes('-menu')) {
                             return false;
                         }
                         setIsCustom(false);

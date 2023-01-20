@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, Button, Popup, TextLink, NoContent } from 'UI';
+import { Loader, Button, Tooltip, TextLink, NoContent } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
 import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
 import stl from './sites.module.css';
@@ -101,7 +101,7 @@ class Sites extends React.PureComponent {
                             >
                                 <div className="col-span-4">
                                     <div className="flex items-center">
-                                        <Popup content={STATUS_MESSAGE_MAP[_site.status]} inverted>
+                                        <Tooltip title={STATUS_MESSAGE_MAP[_site.status]}>
                                             <div className="relative flex items-center justify-center w-10 h-10">
                                                 <div
                                                     className="absolute left-0 right-0 top-0 bottom-0 mx-auto w-10 h-10 rounded-full opacity-10"
@@ -111,7 +111,7 @@ class Sites extends React.PureComponent {
                                                     {getInitials(_site.name)}
                                                 </div>
                                             </div>
-                                        </Popup>
+                                        </Tooltip>
                                         <span className="ml-2">{_site.host}</span>
                                     </div>
                                 </div>

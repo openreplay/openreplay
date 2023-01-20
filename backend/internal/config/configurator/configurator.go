@@ -30,7 +30,13 @@ func readFile(path string) (map[string]string, error) {
 	res := make(map[string]string)
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
+		if len(line) == 0 {
+			continue
+		}
 		env := strings.Split(line, "=")
+		if len(env) < 2 {
+			continue
+		}
 		res[env[0]] = env[1]
 	}
 	return res, nil

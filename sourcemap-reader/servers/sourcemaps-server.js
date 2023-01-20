@@ -9,7 +9,7 @@ router.post('/', (req, res) => {
     });
     req.on('end', function () {
         data = JSON.parse(data);
-        console.log("[SR] Starting parser for: " + data.key);
+        console.log(`[SR] Starting parser for ${data.isURL ? "URL: " : "file: "}${data.key}`);
         // process.env = {...process.env, ...data.bucket_config};
         handler.sourcemapReader(data)
             .then((results) => {
@@ -20,8 +20,8 @@ router.post('/', (req, res) => {
             .catch((e) => {
                 console.error("[SR] Something went wrong");
                 console.error(e);
-                res.statusCode(500);
-                res.end(e);
+                res.statusCode = 500;
+                res.end(e.toString());
             });
     })
 

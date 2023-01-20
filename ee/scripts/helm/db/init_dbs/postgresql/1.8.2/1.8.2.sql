@@ -1,5 +1,0 @@
-BEGIN;
-
-ALTER TABLE sessions ADD file_key BYTEA NULL;
-
-COMMIT;

@@ -32,16 +32,16 @@ const RoleForm = (props: Props) => {
         });
     };
 
-    const write = ({ target: { value, name } }) => edit({ [name]: value });
+    const write = ({ target: { value, name } }: any) => edit({ [name]: value });
 
-    const onChangePermissions = (e) => {
+    const onChangePermissions = (e: any) => {
         const { permissions } = role;
         const index = permissions.indexOf(e);
         const _perms = permissions.contains(e) ? permissions.remove(index) : permissions.push(e);
         edit({ permissions: _perms });
     };
 
-    const onChangeProjects = (e) => {
+    const onChangeProjects = (e: any) => {
         const { projects } = role;
         const index = projects.indexOf(e);
         const _projects = index === -1 ? projects.push(e) : projects.remove(index);
@@ -111,7 +111,7 @@ const RoleForm = (props: Props) => {
                                 />
                                 {role.projects.size > 0 && (
                                     <div className="flex flex-row items-start flex-wrap mt-4">
-                                        {role.projects.map((p) => OptionLabel(projectsMap, p, onChangeProjects))}
+                                        {role.projects.map((p: any) => OptionLabel(projectsMap, p, onChangeProjects))}
                                     </div>
                                 )}
                             </>
@@ -129,7 +129,7 @@ const RoleForm = (props: Props) => {
                         />
                         {role.permissions.size > 0 && (
                             <div className="flex flex-row items-start flex-wrap mt-4">
-                                {role.permissions.map((p) => OptionLabel(permissionsMap, p, onChangePermissions))}
+                                {role.permissions.map((p: any) => OptionLabel(permissionsMap, p, onChangePermissions))}
                             </div>
                         )}
                     </Form.Field>
@@ -185,7 +185,7 @@ export default connect(
 
 function OptionLabel(nameMap: any, p: any, onChangeOption: (e: any) => void) {
     return (
-        <div className="px-2 py-1 rounded bg-gray-lightest mr-2 mb-2 border flex items-center justify-between">
+        <div className="px-2 py-1 rounded bg-gray-lightest mr-2 mb-2 border flex items-center justify-between" key={p.roleId}>
             <div>{nameMap[p]}</div>
             <div className="cursor-pointer ml-2" onClick={() => onChangeOption(p)}>
                 <Icon name="close" size="12" />

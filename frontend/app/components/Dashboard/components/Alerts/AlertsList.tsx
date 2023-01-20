@@ -1,41 +1,36 @@
 import React from 'react';
-import { NoContent, Pagination, Icon } from 'UI';
+import { NoContent, Pagination } from 'UI';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
-import { fetchList } from 'Duck/alerts';
-import { connect } from 'react-redux';
-import { fetchList as fetchWebhooks } from 'Duck/webhook';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import AlertListItem from './AlertListItem'
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite'
 
 const pageSize = 10;
 
 interface Props {
-  fetchList: () => void;
-  list: any;
-  alertsSearch: any;
   siteId: string;
-  webhooks: Array<any>;
-  init: (instance?: Alert) => void
-  fetchWebhooks: () => void;
 }
 
-function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, fetchWebhooks, webhooks }: Props) {
-  React.useEffect(() => { fetchList(); fetchWebhooks() }, []);
+function AlertsList({ siteId }: Props) {
+  const { alertsStore, settingsStore } = useStore();
+  const { fetchWebhooks, webhooks } = settingsStore
+  const { alerts: alertsList, alertsSearch, fetchList, init } = alertsStore
 
-  const alertsArray = alertsList.toJS();
+  React.useEffect(() => { fetchList(); fetchWebhooks() }, []);
+  const alertsArray = alertsList
   const [page, setPage] = React.useState(1);
 
   const filteredAlerts = filterList(alertsArray, alertsSearch, ['name'], (item, query) => query.test(item.query.left))
   const list = alertsSearch !== '' ? filteredAlerts : alertsArray;
-  const lenth = list.length;
 
   return (
     <NoContent
-      show={lenth === 0}
+      show={list.length === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <AnimatedSVG name={ICONS.NO_ALERTS} size={80} />
+          <AnimatedSVG name={ICONS.NO_ALERTS} size={180} />
           <div className="text-center text-gray-600 my-4">
             {alertsSearch !== '' ? 'No matching results' : "You haven't created any alerts yet"}
           </div>
@@ -63,7 +58,7 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, f
         </div>
         <Pagination
           page={page}
-          totalPages={Math.ceil(lenth / pageSize)}
+          totalPages={Math.ceil(list.length / pageSize)}
           onPageChange={(page) => setPage(page)}
           limit={pageSize}
           debounceRequest={100}
@@ -73,14 +68,4 @@ function AlertsList({ fetchList, list: alertsList, alertsSearch, siteId, init, f
   );
 }
 
-export default connect(
-  (state) => ({
-    // @ts-ignore
-    list: state.getIn(['alerts', 'list']).sort((a, b) => b.createdAt - a.createdAt),
-    // @ts-ignore
-    alertsSearch: state.getIn(['alerts', 'alertsSearch']),
-    // @ts-ignore
-    webhooks: state.getIn(['webhooks', 'list']),
-  }),
-  { fetchList, fetchWebhooks }
-)(AlertsList);
+export default observer(AlertsList);

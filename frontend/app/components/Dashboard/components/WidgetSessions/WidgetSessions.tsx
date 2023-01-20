@@ -4,12 +4,13 @@ import Select from 'Shared/Select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { numberWithCommas } from 'App/utils';
+import { CLICKMAP } from "App/constants/card";
 
 interface Props {
     className?: string;
@@ -21,9 +22,9 @@ function WidgetSessions(props: Props) {
     const isMounted = useIsMounted();
     const [loading, setLoading] = useState(false);
     const filteredSessions = getListSessionsBySeries(data, activeSeries);
-    const { dashboardStore, metricStore } = useStore();
-    const filter = useObserver(() => dashboardStore.drillDownFilter);
-    const widget: any = useObserver(() => metricStore.instance);
+    const { dashboardStore, metricStore, sessionStore } = useStore();
+    const filter = dashboardStore.drillDownFilter;
+    const widget = metricStore.instance;
     const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm');
     const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm');
     const [seriesOptions, setSeriesOptions] = useState([{ label: 'All', value: 'all' }]);
@@ -50,30 +51,58 @@ function WidgetSessions(props: Props) {
                 setLoading(false);
             });
     };
+    const fetchClickmapSessions = (customFilters: Record<string, any>) => {
+        sessionStore.getSessions(customFilters)
+            .then(data => {
+                setData([{ ...data, seriesId: 1 , seriesName: "Clicks" }])
+            })
+    }
     const debounceRequest: any = React.useCallback(debounce(fetchSessions, 1000), []);
+    const debounceClickMapSearch = React.useCallback(debounce(fetchClickmapSessions, 1000), [])
 
     const depsString = JSON.stringify(widget.series);
     useEffect(() => {
-        debounceRequest(widget.metricId, {
-            ...filter,
-            series: widget.toJsonDrilldown(),
-            page: metricStore.sessionsPage,
-            limit: metricStore.sessionsPageSize,
-        });
-    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage]);
+        if (widget.metricType === CLICKMAP && metricStore.clickMapSearch) {
+            const clickFilter = {
+                value: [
+                    metricStore.clickMapSearch
+                ],
+                type: "CLICK",
+                operator: "onSelector",
+                isEvent: true,
+                // @ts-ignore
+                "filters": []
+            }
+            const timeRange = {
+                rangeValue: dashboardStore.drillDownPeriod.rangeValue,
+                startDate: dashboardStore.drillDownPeriod.start,
+                endDate: dashboardStore.drillDownPeriod.end,
+            }
+            const customFilter = { ...filter, ...timeRange, filters: [ ...sessionStore.userFilter.filters, clickFilter]}
+            debounceClickMapSearch(customFilter)
+        } else {
+            debounceRequest(widget.metricId, {
+                ...filter,
+                series: widget.series,
+                page: metricStore.sessionsPage,
+                limit: metricStore.sessionsPageSize,
+            });
+        }
+    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage, metricStore.clickMapSearch]);
 
-    return useObserver(() => (
+    return (
         <div className={cn(className, "bg-white p-3 pb-0 rounded border")}>
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline">
-                    <h2 className="text-2xl">Sessions</h2>
+                    <h2 className="text-xl">{metricStore.clickMapSearch ? 'Clicks' : 'Sessions'}</h2>
                     <div className="ml-2 color-gray-medium">
+                        {metricStore.clickMapLabel ?  `on "${metricStore.clickMapLabel}" ` : null}
                         between <span className="font-medium color-gray-darkest">{startTime}</span> and{' '}
                         <span className="font-medium color-gray-darkest">{endTime}</span>{' '}
                     </div>
                 </div>
 
-                {widget.metricType !== 'table' && (
+                {widget.metricType !== 'table' && widget.metricType !== CLICKMAP && (
                     <div className="flex items-center ml-6">
                         <span className="mr-2 color-gray-medium">Filter by Series</span>
                         <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />
@@ -118,7 +147,7 @@ function WidgetSessions(props: Props) {
                 </Loader>
             </div>
         </div>
-    ));
+    );
 }
 
 const getListSessionsBySeries = (data: any, seriesId: any) => {

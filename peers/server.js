@@ -1,5 +1,6 @@
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
+const assert = require('assert').strict;
 const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 const express = require('express');
 const {ExpressPeerServer} = require('peer');
@@ -41,3 +42,11 @@ process.on('uncaughtException', err => {
     debug && console.log(err.stack);
     // process.exit(1);
 });
+
+app.get('/private/shutdown', (req, res) => {
+        console.log("Requested shutdown");
+        res.statusCode = 200;
+        res.end("ok!");
+        process.kill(1, "SIGTERM");
+    }
+);

@@ -4,13 +4,16 @@ rm -rf ./chalicelib/core/alerts.py
 #exp rm -rf ./chalicelib/core/alerts_processor.py
 rm -rf ./chalicelib/core/announcements.py
 rm -rf ./chalicelib/core/autocomplete.py
+rm -rf ./chalicelib/core/click_maps.py
+rm -rf ./chalicelib/core/collaboration_base.py
+rm -rf ./chalicelib/core/collaboration_msteams.py
 rm -rf ./chalicelib/core/collaboration_slack.py
 rm -rf ./chalicelib/core/countries.py
 #exp rm -rf ./chalicelib/core/errors.py
 rm -rf ./chalicelib/core/errors_favorite.py
 #exp rm -rf ./chalicelib/core/events.py
 rm -rf ./chalicelib/core/events_ios.py
-#exp rm -rf ./chalicelib/core/dashboards.py
+rm -rf ./chalicelib/core/dashboards.py
 #exp rm -rf ./chalicelib/core/funnels.py
 rm -rf ./chalicelib/core/integration_base.py
 rm -rf ./chalicelib/core/integration_base_issue.py
@@ -33,10 +36,9 @@ rm -rf ./chalicelib/core/log_tool_sumologic.py
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/sessions_assignments.py
-rm -rf ./chalicelib/core/sessions_metas.py
+#exp rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
 #exp rm -rf ./chalicelib/core/significance.py
-rm -rf ./chalicelib/core/slack.py
 rm -rf ./chalicelib/core/socket_ios.py
 rm -rf ./chalicelib/core/sourcemaps.py
 rm -rf ./chalicelib/core/sourcemaps_parser.py
@@ -48,6 +50,7 @@ rm -rf ./chalicelib/utils/captcha.py
 rm -rf ./chalicelib/utils/dev.py
 rm -rf ./chalicelib/utils/email_handler.py
 rm -rf ./chalicelib/utils/email_helper.py
+rm -rf ./chalicelib/utils/errors_helper.py
 rm -rf ./chalicelib/utils/event_filter_definition.py
 rm -rf ./chalicelib/utils/github_client_v3.py
 rm -rf ./chalicelib/utils/helper.py
@@ -56,6 +59,7 @@ rm -rf ./chalicelib/utils/metrics_helper.py
 rm -rf ./chalicelib/utils/pg_client.py
 rm -rf ./chalicelib/utils/s3.py
 rm -rf ./chalicelib/utils/smtp.py
+rm -rf ./chalicelib/utils/sql_helper.py
 rm -rf ./chalicelib/utils/strings.py
 rm -rf ./chalicelib/utils/TimeUTC.py
 rm -rf ./routers/app/__init__.py
@@ -63,13 +67,14 @@ rm -rf ./routers/crons/__init__.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
+rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
 rm -rf ./build.sh
 rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py
 rm -rf ./db_changes.sql
-rm -rf ./Dockerfile.bundle
+rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./schemas.py

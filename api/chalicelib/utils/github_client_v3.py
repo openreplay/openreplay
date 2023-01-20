@@ -1,6 +1,9 @@
 import requests
 from datetime import datetime
 
+from fastapi import HTTPException
+from starlette import status
+
 
 class github_formatters:
 
@@ -120,9 +123,9 @@ class githubV3Request:
             pages = get_response_links(response)
             result = response.json()
             if response.status_code != 200:
-                print("!-------- error")
+                print(f"=>GITHUB Exception")
                 print(result)
-                raise Exception(result["message"])
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"GITHUB: {result['message']}")
             if isinstance(result, dict):
                 return result
             results += result

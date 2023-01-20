@@ -1,26 +1,22 @@
 import React from 'react';
 import { NoContent } from 'UI';
-import { connectPlayer } from 'Player/store';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 import SelectorCard from '../SelectorCard/SelectorCard';
-import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
 import stl from './selectorList.module.css';
 
-interface Props {
-    targets: Array<MarkedTarget>;
-    activeTargetIndex: number;
-}
+function SelectorsList() {
+    const { store } = React.useContext(PlayerContext)
 
-function SelectorsList({ targets, activeTargetIndex }: Props) {
+    const { markedTargets: targets, activeTargetIndex } = store.get()
+
     return (
         <NoContent title="No data available." size="small" show={targets && targets.length === 0}>
             <div className={stl.wrapper}>
-                {targets && targets.map((target, index) => <SelectorCard target={target} index={index} showContent={activeTargetIndex === index} />)}
+                {targets && targets.map((target, index) => <React.Fragment key={index}><SelectorCard target={target} index={index} showContent={activeTargetIndex === index} /></React.Fragment>)}
             </div>
         </NoContent>
     );
 }
 
-export default connectPlayer((state: any) => ({
-    targets: state.markedTargets,
-    activeTargetIndex: state.activeTargetIndex,
-}))(SelectorsList);
+export default observer(SelectorsList);

@@ -1,0 +1,78 @@
+# Checking unit and visual tests locally on every merge rq to dev and main
+name: Frontend tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - frontend/**
+  pull_request:
+    branches: [ "dev", "main" ]
+    paths:
+      - frontend/**
+env:
+  API: ${{ secrets.E2E_API_ORIGIN }}
+  ASSETS: ${{ secrets.E2E_ASSETS_ORIGIN }}
+  APIEDP: ${{ secrets.E2E_EDP_ORIGIN }}
+  CY_ACC: ${{ secrets.CYPRESS_ACCOUNT }}
+  CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Visual Testing
+    defaults:
+      run:
+        working-directory: ./frontend
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Setup env
+        run: |
+          echo "NODE_ENV=development" >> .env
+          echo "SOURCEMAP=true" >> .env
+          echo "ORIGIN=$API" >> .env
+          echo "ASSETS_HOST=$ASSETS" >> .env
+          echo "API_EDP=$APIEDP" >> .env
+          echo "SENTRY_ENABLED = false" >> .env
+          echo "SENTRY_URL = ''" >> .env
+          echo "CAPTCHA_ENABLED = false" >> .env
+          echo "CAPTCHA_SITE_KEY = 'asdad'" >> .env
+          echo "MINIO_ENDPOINT = ''" >> .env
+          echo "MINIO_PORT = ''" >> .env
+          echo "MINIO_USE_SSL = ''" >> .env
+          echo "MINIO_ACCESS_KEY = ''" >> .env
+          echo "MINIO_SECRET_KEY = ''" >> .env
+          echo "VERSION = '1.9.0'" >> .env
+          echo "TRACKER_VERSION = '4.0.0'" >> .env
+          echo "COMMIT_HASH = 'dev'" >> .env
+          echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
+
+      - name: Setup packages
+        run: |
+          npm i -g yarn
+          yarn
+      - name: Run unit tests
+        run: yarn test
+      - name: Run Frontend
+        run: yarn start &> server.log &
+      - name: Wait for frontend
+        run: npx wait-on http://0.0.0.0:3333
+      - name: Run visual tests
+        run: yarn cy:test
+      - name: Upload Debug
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'Snapshots'
+          path: |
+            frontend/cypress/snapshots
+            frontend/cypress/video
+            frontend/cypress/screenshots

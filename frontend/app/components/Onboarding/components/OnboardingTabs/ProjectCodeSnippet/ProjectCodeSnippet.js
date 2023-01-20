@@ -7,7 +7,6 @@ import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
 import stl from './projectCodeSnippet.module.css'
 import CircleNumber from '../../CircleNumber';
-import Highlight from 'react-highlight'
 import Select from 'Shared/Select'
 import CodeSnippet from 'Shared/CodeSnippet';
 

@@ -1,1 +1,1 @@
-export { default } from './LongTasks';
+export { default } from './LongTasks.DEPRECATED';

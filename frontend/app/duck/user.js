@@ -1,14 +1,14 @@
-import { List, Map, Record } from 'immutable';
+import { List, Map } from 'immutable';
 import Client from 'Types/client';
+import { deleteCookie } from 'App/utils';
 import Account from 'Types/account';
-import { DELETE } from './jwt';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 
 export const LOGIN = new RequestTypes('user/LOGIN');
 export const SIGNUP = new RequestTypes('user/SIGNUP');
 export const RESET_PASSWORD = new RequestTypes('user/RESET_PASSWORD');
 export const REQUEST_RESET_PASSWORD = new RequestTypes('user/REQUEST_RESET_PASSWORD');
-const FETCH_ACCOUNT = new RequestTypes('user/FETCH_ACCOUNT');
+export const FETCH_ACCOUNT = new RequestTypes('user/FETCH_ACCOUNT');
 const FETCH_TENANTS = new RequestTypes('user/FETCH_TENANTS');
 const UPDATE_ACCOUNT = new RequestTypes('user/UPDATE_ACCOUNT');
 const RESEND_EMAIL_VERIFICATION = new RequestTypes('user/RESEND_EMAIL_VERIFICATION');
@@ -19,8 +19,7 @@ const PUT_CLIENT = new RequestTypes('user/PUT_CLIENT');
 const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
 
-const initialState = Map({
-  // client: Client(),
+export const initialState = Map({
   account: Account(),
   siteId: null,
   passwordRequestError: false,
@@ -28,7 +27,12 @@ const initialState = Map({
   tenants: [],
   authDetails: {},
   onboarding: false,
-  sites: List()
+  sites: List(),
+  jwt: null,
+  loginRequest: {
+    loading: false,
+    errors: []
+  },
 });
 
 const setClient = (state, data) => {
@@ -36,12 +40,26 @@ const setClient = (state, data) => {
   return state.set('client', client)
 }
 
+export const UPDATE_JWT = 'jwt/UPDATE';
+export const DELETE = new RequestTypes('jwt/DELETE')
+export function setJwt(data) {
+  return {
+    type: UPDATE_JWT,
+    data,
+  };
+}
+
+
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
+    case UPDATE_JWT:
+      return state.set('jwt', action.data);
+    case LOGIN.REQUEST:
+      return state.set('loginRequest', { loading: true, errors: [] })
     case RESET_PASSWORD.SUCCESS:
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
-      state.set('account', Account({...action.data.user }))
+      state.set('account', Account({...action.data.user })).set('loginRequest', { loading: false, errors: [] })
     case SIGNUP.SUCCESS:
       state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
@@ -51,10 +69,15 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('account', Account(action.data)).set('passwordErrors', List());
     case FETCH_TENANTS.SUCCESS:
       return state.set('authDetails', action.data);
-      // return state.set('tenants', action.data.map(i => ({ text: i.name, value: i.tenantId})));
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
-    case DELETE:
+    case LOGIN.FAILURE:
+      deleteCookie('jwt', '/', 'openreplay.com')
+      return state.set('loginRequest', { loading: false, errors: ['Invalid username or password'] });
+    case FETCH_ACCOUNT.FAILURE:
+    case DELETE.SUCCESS:
+    case DELETE.FAILURE:
+      deleteCookie('jwt', '/', 'openreplay.com')
       return initialState;
     case PUT_CLIENT.REQUEST:
       return state.mergeIn([ 'account' ], action.params);
@@ -69,8 +92,8 @@ const reducer = (state = initialState, action = {}) => {
   return state;
 };
 
+
 export default withRequestState({
-  loginRequest: LOGIN,
   signupRequest: SIGNUP,
   updatePasswordRequest: UPDATE_PASSWORD,
   requestResetPassowrd: REQUEST_RESET_PASSWORD,
@@ -80,7 +103,7 @@ export default withRequestState({
   updateAccountRequest: UPDATE_ACCOUNT,
 }, reducer);
 
-export const login = params => dispatch => dispatch({
+export const login = params => ({
   types: LOGIN.toArray(),
   call: client => client.post('/login', params),
 });
@@ -112,20 +135,15 @@ export function fetchTenants() {
   }
 }
 
-export const fetchUserInfo = () => dispatch => Promise.all([
-  dispatch({
+export const fetchUserInfo = () => ({
     types: FETCH_ACCOUNT.toArray(),
     call: client => client.get('/account'),
-  }),
-  // dispatch({
-  //   types: FETCH_CLIENT.toArray(),
-  //   call: client => client.get('/client'),
-  // }),
-]);
+  });
 
 export function logout() {
   return {
-    type: DELETE,
+    types: DELETE.toArray(),
+    call: client => client.post('/logout')
   };
 }
 
@@ -164,4 +182,3 @@ export function setOnboarding(state = false) {
     state
   };
 }
-

@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.core import users, license
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
@@ -13,7 +14,7 @@ def get_by_tenant_key(tenant_key):
                        t.api_key,
                        t.created_at,
                         '{license.EDITION}' AS edition,
-                        t.version_number,
+                        openreplay_version() AS version_number,
                         t.opt_out
                     FROM public.tenants AS t
                     WHERE t.tenant_key = %(tenant_key)s AND t.deleted_at ISNULL
@@ -33,7 +34,7 @@ def get_by_tenant_id(tenant_id):
                        t.api_key,
                        t.created_at,
                         '{license.EDITION}' AS edition,
-                        t.version_number,
+                        openreplay_version() AS version_number,
                         t.opt_out,
                         t.tenant_key
                     FROM public.tenants AS t
@@ -86,7 +87,7 @@ def edit_client(tenant_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update(tenant_id, user_id, data):
+def update(tenant_id, user_id, data: schemas.UpdateTenantSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
@@ -94,10 +95,10 @@ def update(tenant_id, user_id, data):
     if "name" not in data and "optOut" not in data:
         return {"errors": ["please provide 'name' of 'optOut' attribute for update"]}
     changes = {}
-    if "name" in data:
-        changes["name"] = data["name"]
-    if "optOut" in data:
-        changes["optOut"] = data["optOut"]
+    if data.name is not None and len(data.name) > 0:
+        changes["name"] = data.name
+    if data.opt_out is not None:
+        changes["optOut"] = data.opt_out
     return edit_client(tenant_id=tenant_id, changes=changes)
 
 

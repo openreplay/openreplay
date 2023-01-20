@@ -1,20 +1,22 @@
 import { List, Map } from 'immutable';
 import { fetchListType, fetchType, saveType, removeType, editType } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
-import { array, success, createListUpdater, mergeReducers } from './funcTools/tools';
+import { array, success, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from 'App/routes';
-import { fetchList as fetchSessionList } from './sessions';
+import { fetchList as fetchSessionList, fetchAutoplayList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import { filtersMap, liveFiltersMap, generateFilterOptions } from 'Types/filter/newFilter';
 import { DURATION_FILTER } from 'App/constants/storageKeys';
+import Period, { CUSTOM_RANGE } from 'Types/app/period';
 
 const ERRORS_ROUTE = errorsRoute();
 
 const name = 'search';
 const idKey = 'searchId';
+const PER_PAGE = 10;
 
 const FETCH_LIST = fetchListType(name);
 const FETCH_FILTER_SEARCH = fetchListType(`${name}/FILTER_SEARCH`);
@@ -33,25 +35,30 @@ const SET_ACTIVE_TAB = `${name}/SET_ACTIVE_TAB`;
 const SET_SCROLL_POSITION = `${name}/SET_SCROLL_POSITION`;
 
 const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
+const CHECK_LATEST = fetchListType(`${name}/CHECK_LATEST`);
+const UPDATE_LATEST_REQUEST_TIME = 'filters/UPDATE_LATEST_REQUEST_TIME'
 
-function chartWrapper(chart = []) {
-    return chart.map((point) => ({ ...point, count: Math.max(point.count, 0) }));
-}
+// function chartWrapper(chart = []) {
+//     return chart.map((point) => ({ ...point, count: Math.max(point.count, 0) }));
+// }
 
-const savedSearchIdKey = 'searchId';
-const updateItemInList = createListUpdater(savedSearchIdKey);
-const updateInstance = (state, instance) =>
-    state.getIn(['savedSearch', savedSearchIdKey]) === instance[savedSearchIdKey] ? state.mergeIn(['savedSearch'], SavedFilter(instance)) : state;
+// const savedSearchIdKey = 'searchId';
+// const updateItemInList = createListUpdater(savedSearchIdKey);
+// const updateInstance = (state, instance) =>
+//     state.getIn(['savedSearch', savedSearchIdKey]) === instance[savedSearchIdKey] ? state.mergeIn(['savedSearch'], SavedFilter(instance)) : state;
 
 const initialState = Map({
     filterList: generateFilterOptions(filtersMap),
     filterListLive: generateFilterOptions(liveFiltersMap),
     list: List(),
+    latestRequestTime: null,
+    latestList: List(),
     alertMetricId: null,
     instance: new Filter({ filters: [] }),
     savedSearch: new SavedFilter({}),
     filterSearchList: {},
     currentPage: 1,
+    pageSize: PER_PAGE,
     activeTab: { name: 'All', type: 'all' },
     scrollY: 0,
 });
@@ -73,6 +80,10 @@ function reducer(state = initialState, action = {}) {
                 'list',
                 List(data.map(SavedFilter)).sortBy((i) => i.searchId)
             );
+        case UPDATE_LATEST_REQUEST_TIME:
+            return state.set('latestRequestTime', Date.now()).set('latestList', [])
+        case success(CHECK_LATEST):
+            return state.set('latestList', action.data)
         case success(FETCH_FILTER_SEARCH):
             const groupedList = action.data.reduce((acc, item) => {
                 const { projectId, type, value } = item;
@@ -131,52 +142,69 @@ export const filterMap = ({ category, value, key, operator, sourceOperator, sour
     filters: filters ? filters.map(filterMap) : [],
 });
 
+
+const getFilters = (state) => {
+    const filter = state.getIn(['search', 'instance']).toData();
+    const activeTab = state.getIn(['search', 'activeTab']);
+    if (activeTab.type !== 'all' && activeTab.type !== 'bookmark' && activeTab.type !== 'vault') {
+        const tmpFilter = filtersMap[FilterKey.ISSUE];
+        tmpFilter.value = [activeTab.type];
+        filter.filters = filter.filters.concat(tmpFilter);
+    }
+
+    if (activeTab.type === 'bookmark' || activeTab.type === 'vault') {
+        filter.bookmarked = true;
+    }
+
+    filter.filters = filter.filters.map(filterMap);
+
+    // duration filter from local storage
+    if (!filter.filters.find((f) => f.type === FilterKey.DURATION)) {
+        const durationFilter = JSON.parse(localStorage.getItem(DURATION_FILTER) || '{"count": 0}');
+        let durationValue = parseInt(durationFilter.count);
+        if (durationValue > 0) {
+            const value = [0];
+            durationValue = durationFilter.countType === 'min' ? durationValue * 60 * 1000 : durationValue * 1000;
+            if (durationFilter.operator === '<') {
+                value[0] = durationValue;
+            } else if (durationFilter.operator === '>') {
+                value[1] = durationValue;
+            }
+
+            filter.filters = filter.filters.concat({
+                type: FilterKey.DURATION,
+                operator: 'is',
+                value,
+            });
+        }
+    }
+
+    return filter;
+}
+
 export const reduceThenFetchResource =
     (actionCreator) =>
     (...args) =>
     (dispatch, getState) => {
         dispatch(actionCreator(...args));
-        const filter = getState().getIn(['search', 'instance']).toData();
-
         const activeTab = getState().getIn(['search', 'activeTab']);
-
         if (activeTab.type === 'notes') return;
-        if (activeTab.type !== 'all' && activeTab.type !== 'bookmark' && activeTab.type !== 'vault') {
-            const tmpFilter = filtersMap[FilterKey.ISSUE];
-            tmpFilter.value = [activeTab.type];
-            filter.filters = filter.filters.concat(tmpFilter);
-        }
-
-        if (activeTab.type === 'bookmark' || activeTab.type === 'vault') {
-            filter.bookmarked = true;
-        }
-
-        filter.filters = filter.filters.map(filterMap);
-        filter.limit = 10;
+        
+        const filter = getFilters(getState());
+        filter.limit = PER_PAGE;
         filter.page = getState().getIn(['search', 'currentPage']);
+
         const forceFetch = filter.filters.length === 0 || args[1] === true;
 
-        // duration filter from local storage
-        if (!filter.filters.find((f) => f.type === FilterKey.DURATION)) {
-            const durationFilter = JSON.parse(localStorage.getItem(DURATION_FILTER) || '{"count": 0}');
-            let durationValue = parseInt(durationFilter.count);
-            if (durationValue > 0) {
-                const value = [0];
-                durationValue = durationFilter.countType === 'min' ? durationValue * 60 * 1000 : durationValue * 1000;
-                if (durationFilter.operator === '<') {
-                    value[0] = durationValue;
-                } else if (durationFilter.operator === '>') {
-                    value[1] = durationValue;
-                }
-
-                filter.filters = filter.filters.concat({
-                    type: FilterKey.DURATION,
-                    operator: 'is',
-                    value,
-                });
-            }
+        // reset the timestamps to latest
+        if (filter.rangeValue !== CUSTOM_RANGE) {
+            const period = new Period({ rangeName: filter.rangeValue })
+            const newTimestamps = period.toJSON();
+            filter.startDate = newTimestamps.startDate
+            filter.endDate = newTimestamps.endDate
         }
 
+        dispatch(updateLatestRequestTime())
         return isRoute(ERRORS_ROUTE, window.location.pathname) ? dispatch(fetchErrorsList(filter)) : dispatch(fetchSessionList(filter, forceFetch));
     };
 
@@ -290,9 +318,17 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    // const filter = getState().getIn(['search', 'instance']);
-    // dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ filters: [] })));
+    const instance = getState().getIn(['search', 'instance']);
+    dispatch(
+        edit(
+            new Filter({
+              rangeValue: instance.rangeValue,
+              startDate: instance.startDate,
+              endDate: instance.endDate,
+              filters: [],
+            })
+        )
+    );
     return dispatch({
         type: CLEAR_SEARCH,
     });
@@ -353,3 +389,33 @@ export const setScrollPosition = (scrollPosition) => {
         scrollPosition,
     };
 };
+
+export const updateLatestRequestTime = () => {
+    return {
+        type: UPDATE_LATEST_REQUEST_TIME
+    }
+}
+
+export const checkForLatestSessions = () => (dispatch, getState) => {
+    const state = getState();
+    const filter = getFilters(state);
+    const latestRequestTime = state.getIn(['search', 'latestRequestTime'])
+    if (!!latestRequestTime) {
+        const period = new Period({ rangeName: CUSTOM_RANGE, start: latestRequestTime, end: Date.now() })
+        const newTimestamps = period.toJSON();
+        filter.startDate = newTimestamps.startDate
+        filter.endDate = newTimestamps.endDate
+    }
+    
+    return dispatch({
+        types: array(CHECK_LATEST),
+        call: (client) => client.post(`/sessions/search/ids`, filter),
+    });
+}
+
+export const fetchAutoplaySessions = (page) => (dispatch, getState) => {
+    const filter = getFilters(getState());
+    filter.page = page;
+    filter.limit = PER_PAGE;
+    return dispatch(fetchAutoplayList(filter));
+}

@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action } from "mobx"
+import { makeAutoObservable, observable } from "mobx"
 import { userService } from "App/services";
 import Role, { IRole } from "./types/role";
 

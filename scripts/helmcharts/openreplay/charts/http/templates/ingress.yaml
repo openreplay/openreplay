@@ -36,7 +36,7 @@ spec:
             path: /ingest/(.*)
 {{- end }}
 
-{{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+{{- if contains "minio" .Values.global.s3.endpoint }}
 ## TODO:
 ## Frontend service from minio will be migrated to nginx atomic container.
 ## This ingress is just a workaround.
@@ -45,7 +45,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: minio
-  namespace: db
+  namespace: "{{(split "." .Values.global.s3.endpoint)._1}}"
 spec:
   ingressClassName: "{{ tpl .Values.ingress.className . }}" 
   rules:
@@ -58,7 +58,7 @@ spec:
                 name: minio
                 port:
                   number: 9000
-            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images)/
+            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images|records)/
   tls:
     - hosts:
       - {{ .Values.global.domainName }}

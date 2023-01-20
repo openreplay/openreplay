@@ -12,6 +12,7 @@ type Task struct {
 	urlContext string
 	isJS       bool
 	cachePath  string
+	retries    int
 }
 
 type WorkerPool struct {
@@ -62,8 +63,11 @@ func (p *WorkerPool) worker() {
 	}
 }
 
-func (p *WorkerPool) AddTask(newTask *Task) {
-	p.tasks <- newTask
+func (p *WorkerPool) AddTask(task *Task) {
+	if task.retries <= 0 {
+		return
+	}
+	p.tasks <- task
 }
 
 func (p *WorkerPool) Stop() {

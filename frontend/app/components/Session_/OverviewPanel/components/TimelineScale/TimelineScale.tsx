@@ -1,5 +1,4 @@
 import React from 'react';
-import { connectPlayer } from 'App/player';
 import { millisToMinutesAndSeconds } from 'App/utils';
 
 interface Props {
@@ -17,9 +16,6 @@ function TimelineScale(props: Props) {
         for (var i = 0; i < part; i++) {
             const txt = millisToMinutesAndSeconds(i * (endTime / part));
             const el = document.createElement('div');
-            // el.style.height = '10px';
-            // el.style.width = '1px';
-            // el.style.backgroundColor = '#ccc';
             el.style.position = 'absolute';
             el.style.left = `${i * gap}px`;
             el.style.paddingTop = '1px';
@@ -38,23 +34,11 @@ function TimelineScale(props: Props) {
         }
 
         drawScale(scaleRef.current);
-
-        // const resize = () => drawScale(scaleRef.current);
-
-        // window.addEventListener('resize', resize);
-        // return () => {
-        //     window.removeEventListener('resize', resize);
-        // };
     }, [scaleRef]);
     return (
         <div className="h-6 bg-gray-darkest w-full" ref={scaleRef}>
-            {/* <div ref={scaleRef} className="w-full h-10 bg-gray-300 relative"></div> */}
         </div>
     );
 }
 
 export default TimelineScale;
-
-// export default connectPlayer((state: any) => ({
-//     endTime: state.endTime,
-// }))(TimelineScale);

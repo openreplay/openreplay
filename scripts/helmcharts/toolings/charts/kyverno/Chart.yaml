@@ -1,0 +1,29 @@
+annotations:
+  artifacthub.io/changes: |
+    - kind: changed
+      description: Exclude Kyverno namespace by default
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://kyverno.io/docs
+  artifacthub.io/operator: "false"
+  artifacthub.io/prerelease: "false"
+apiVersion: v2
+appVersion: v1.7.5
+description: Kubernetes Native Policy Management
+home: https://kyverno.io/
+icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
+keywords:
+- kubernetes
+- nirmata
+- policy agent
+- validating webhook
+- admissions controller
+kubeVersion: '>=1.16.0-0'
+maintainers:
+- name: Nirmata
+  url: https://kyverno.io/
+name: kyverno
+sources:
+- https://github.com/kyverno/kyverno
+type: application
+version: v2.5.5

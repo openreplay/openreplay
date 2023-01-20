@@ -8,8 +8,8 @@ import { Link, NoContent, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 import WebPlayer from './WebPlayer';
-import IOSPlayer from './IOSPlayer';
 import { useStore } from 'App/mstore';
+import { clearLogs } from 'App/dev/console';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -17,9 +17,7 @@ function Session({
 	sessionId,
 	loading,
 	hasErrors,
-	session, 
 	fetchSession,
-	fetchSlackList,
  }) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)
@@ -34,6 +32,7 @@ function Session({
 	},[ sessionId ]);
 
 	useEffect(() => {
+		clearLogs()
 		sessionStore.resetUserFilter();
 	} ,[])
 
@@ -49,10 +48,7 @@ function Session({
 			}
 		>
 			<Loader className="flex-1" loading={ loading || initializing }> 
-				{ session.isIOS 
-					? <IOSPlayer session={session} />
-					: <WebPlayer />
-			}
+				<WebPlayer />
 			</Loader>
 		</NoContent>
 	);

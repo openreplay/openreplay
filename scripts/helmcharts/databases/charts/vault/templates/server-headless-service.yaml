@@ -1,0 +1,34 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- template "vault.serverServiceEnabled" . -}}
+{{- if .serverServiceEnabled -}}
+# Service for Vault cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.fullname" . }}-internal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    vault-internal: "true"
+  annotations:
+{{ template "vault.service.annotations" .}}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: {{ .Values.server.service.publishNotReadyAddresses }}
+  ports:
+    - name: "{{ include "vault.scheme" . }}"
+      port: {{ .Values.server.service.port }}
+      targetPort: {{ .Values.server.service.targetPort }}
+    - name: https-internal
+      port: 8201
+      targetPort: 8201
+  selector:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    component: server
+{{- end }}
+{{- end }}

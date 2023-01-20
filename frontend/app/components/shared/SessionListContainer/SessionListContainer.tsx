@@ -4,6 +4,7 @@ import SessionHeader from './components/SessionHeader';
 import NotesList from './components/Notes/NoteList';
 import { connect } from 'react-redux';
 import { fetchList as fetchMembers } from 'Duck/member';
+import LatestSessionsMessage from './components/LatestSessionsMessage';
 
 function SessionListContainer({
   activeTab,
@@ -21,6 +22,7 @@ function SessionListContainer({
     <div className="widget-wrapper">
       <SessionHeader />
       <div className="border-b" />
+      <LatestSessionsMessage />
       {activeTab !== 'notes' ? <SessionList /> : <NotesList members={members} />}
     </div>
   );

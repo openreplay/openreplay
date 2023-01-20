@@ -73,6 +73,22 @@
 .event.location {
   background: $blue;
 } */
+.redEvent {
+  position: absolute;
+  width: 2px;
+  height: 10px;
+  background: $red;
+  z-index: 3;
+  pointer-events: none;
+  /* top: 0; */
+  /* bottom: 0; */
+  /*  &:hover {
+     width: 10px;
+     height: 10px;
+     margin-left: -6px;
+     z-index: 1;
+   };*/
+}
 
 .markup {
   position: absolute;
@@ -124,6 +140,8 @@
   display: flex;
   align-items: center;
 }
+
+
 
 .clickRage {
   position: absolute;
@@ -193,5 +211,24 @@
     border-top: solid 5px black;
     border-left: solid 5px transparent;
     border-right: solid 5px transparent;
+  }
+}
+
+
+.stripes {
+  background-size: 30px 30px;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(135deg, rgba(0, 0, 0, 0.15) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0.15) 75%, transparent 75%, transparent);
+  animation: animate-stripes 1.5s linear infinite;
+  animation-direction: reverse;
+}
+
+@keyframes animate-stripes {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 60px 0;
   }
 }

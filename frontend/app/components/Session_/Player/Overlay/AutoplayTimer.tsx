@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import cn from 'classnames';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { Button, Link } from 'UI'
-import { session as sessionRoute, withSiteId } from 'App/routes'
+import { Button, Link, Icon } from 'UI';
+import { session as sessionRoute, withSiteId } from 'App/routes';
 import stl from './AutoplayTimer.module.css';
 import clsOv from './overlay.module.css';
 
@@ -13,49 +13,55 @@ interface IProps extends RouteComponentProps {
 }
 
 function AutoplayTimer({ nextId, siteId, history }: IProps) {
-  let timer: NodeJS.Timer
+  let timer: NodeJS.Timer;
   const [cancelled, setCancelled] = useState(false);
   const [counter, setCounter] = useState(5);
 
   useEffect(() => {
-    if(counter > 0) {
+    if (counter > 0) {
       timer = setTimeout(() => {
-        setCounter(counter - 1)
-      }, 1000)
+        setCounter(counter - 1);
+      }, 1000);
     }
 
     if (counter === 0) {
-      history.push(withSiteId(sessionRoute(nextId), siteId))
+      history.push(withSiteId(sessionRoute(nextId), siteId));
     }
 
     return () => clearTimeout(timer);
-  }, [counter])
+  }, [counter]);
 
   const cancel = () => {
-    clearTimeout(timer)
-    setCancelled(true)
-  }
+    clearTimeout(timer);
+    setCancelled(true);
+  };
 
-  if (cancelled)
-    return null
+  if (cancelled) return null;
 
   return (
-    <div className={ cn(clsOv.overlay, stl.overlayBg) } >
+    <div className={cn(clsOv.overlay, stl.overlayBg)}>
       <div className="border p-6 shadow-lg bg-white rounded">
         <div className="py-4">Next recording will be played in {counter}s</div>
         <div className="flex items-center">
-          <Button primary="outline" onClick={cancel}>Cancel</Button>
+          <Button primary="outline" onClick={cancel}>
+            Cancel
+          </Button>
           <div className="px-3" />
-          <Link to={ sessionRoute(nextId) } disabled={!nextId}>
+          <Link to={sessionRoute(nextId)} disabled={!nextId}>
             <Button variant="primary">Play Now</Button>
           </Link>
         </div>
+        <div className="mt-2 flex items-center color-gray-dark">
+          Turn on/off auto-replay in <Icon name="ellipsis-v" className="mx-1" /> More options
+        </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default withRouter(connect(state => ({
-  siteId: state.getIn([ 'site', 'siteId' ]),
-  nextId: parseInt(state.getIn([ 'sessions', 'nextId' ])),
-}))(AutoplayTimer))
+export default withRouter(
+  connect((state: any) => ({
+    siteId: state.getIn(['site', 'siteId']),
+    nextId: parseInt(state.getIn(['sessions', 'nextId'])),
+  }))(AutoplayTimer)
+);

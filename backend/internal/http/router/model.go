@@ -4,7 +4,7 @@ type StartSessionRequest struct {
 	Token           string  `json:"token"`
 	UserUUID        *string `json:"userUUID"`
 	RevID           string  `json:"revID"`
-	Timestamp       uint64  `json:"timestamp"`
+	Timestamp       int64   `json:"timestamp"`
 	TrackerVersion  string  `json:"trackerVersion"`
 	IsSnippet       bool    `json:"isSnippet"`
 	DeviceMemory    uint64  `json:"deviceMemory"`

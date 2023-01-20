@@ -66,12 +66,18 @@ func ResolveCSS(baseURL string, css string) string {
 	css = rewriteLinks(css, func(rawurl string) string {
 		return ResolveURL(baseURL, rawurl)
 	})
-	return strings.Replace(css, ":hover", ".-openreplay-hover", -1)
+	return rewritePseudoclasses(css)
 }
 
 func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) string {
 	css = rewriteLinks(css, func(rawurl string) string {
 		return r.RewriteURL(sessionID, baseurl, rawurl)
 	})
-	return strings.Replace(css, ":hover", ".-openreplay-hover", -1)
+	return rewritePseudoclasses(css)
+}
+
+func rewritePseudoclasses(css string) string {
+	css = strings.Replace(css, ":hover", ".-openreplay-hover", -1)
+	css = strings.Replace(css, ":focus", ".-openreplay-focus", -1)
+	return css
 }

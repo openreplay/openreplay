@@ -26,7 +26,7 @@ function PlayIconLayer({ playing, togglePlay, notesEdit }: Props) {
   const getIsEdit = React.useCallback(() => notesEdit, [notesEdit])
 
   const onKeyDown = (e: any) => {
-    if (getIsEdit()) return;
+    if (getIsEdit() || e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     if (e.key === ' ') {
       togglePlayAnimated();
     }

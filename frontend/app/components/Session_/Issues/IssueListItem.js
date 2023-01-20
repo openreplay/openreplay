@@ -1,29 +1,32 @@
 import React from 'react';
 import cn from 'classnames';
-import { Popup } from 'UI';
+import { Tooltip } from 'UI';
 import stl from './issueListItem.module.css';
 
 const IssueListItem = ({ issue, onClick, icon, user, active }) => {
   return (
     <div
-      onClick={ () => onClick(issue) }
-      className={ cn(stl.wrapper, active ? 'active-bg' : '', 'flex flex-col justify-between cursor-pointer text-base text-gray-800')}
+      onClick={() => onClick(issue)}
+      className={cn(
+        stl.wrapper,
+        active ? 'active-bg' : '',
+        'flex flex-col justify-between cursor-pointer text-base text-gray-800'
+      )}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          { icon }
-          {/* <img src={ icon } width="16" height="16" className="mr-3" /> */}
-          <span>{ issue.id }</span>
+          {icon}
+          <span>{issue.id}</span>
         </div>
         <div className="flex items-center">
-          { user && 
-            <Popup content={ 'Assignee ' + user.name } >
-              <img src={ user.avatarUrls['24x24'] } width="24" height="24" />
-            </Popup>
-          }
+          {user && (
+            <Tooltip title={'Assignee ' + user.name}>
+              <img src={user.avatarUrls['24x24']} width="24" height="24" />
+            </Tooltip>
+          )}
         </div>
       </div>
-      <div className={ stl.title }>{ issue.title  }</div>
+      <div className={stl.title}>{issue.title}</div>
     </div>
   );
 };

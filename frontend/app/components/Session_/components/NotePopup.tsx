@@ -1,23 +1,23 @@
 import React from 'react';
-import { Icon } from 'UI';
-import { connectPlayer, pause } from 'Player';
+import { Button } from 'UI';
 import { connect } from 'react-redux';
 import { setCreateNoteTooltip } from 'Duck/sessions';
-import cn from 'classnames'
+import GuidePopup from 'Shared/GuidePopup';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 function NotePopup({
   setCreateNoteTooltip,
-  time,
   tooltipActive,
 }: {
   setCreateNoteTooltip: (args: any) => void;
-  time: number;
   tooltipActive: boolean;
 }) {
+  const { player, store } = React.useContext(PlayerContext)
+
   const toggleNotePopup = () => {
     if (tooltipActive) return;
-    pause();
-    setCreateNoteTooltip({ time: time, isVisible: true });
+    player.pause();
+    setCreateNoteTooltip({ time: store.get().time, isVisible: true });
   };
 
   React.useEffect(() => {
@@ -25,28 +25,20 @@ function NotePopup({
   }, []);
 
   return (
-    <div
-      onClick={toggleNotePopup}
-      className={cn(
-        'mr-4 hover:bg-gray-light-shade rounded-md p-1 flex items-center', tooltipActive
-          ? 'cursor-not-allowed'
-          : 'cursor-pointer')
-      }
+    <GuidePopup
+      title="Introducing Notes"
+      description={'Annotate session replays and share your feedback with the rest of your team.'}
     >
-      <Icon name="quotes" size="16" className="mr-2" />
-      Add note
-    </div>
+      <Button icon="quotes" variant="text" disabled={tooltipActive} onClick={toggleNotePopup}>
+        Add Note
+      </Button>
+    </GuidePopup>
   );
 }
 
-const NotePopupPl = connectPlayer(
-  // @ts-ignore
-  (state) => ({ time: state.time })
-)(React.memo(NotePopup));
-
 const NotePopupComp = connect(
-  (state) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
+  (state: any) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
   { setCreateNoteTooltip }
-)(NotePopupPl);
+)(NotePopup);
 
 export default React.memo(NotePopupComp);

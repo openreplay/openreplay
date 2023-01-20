@@ -2,36 +2,8 @@
 /* eslint-disable */
 
 import * as Messages from '../../common/messages.gen.js'
-export { default } from '../../common/messages.gen.js'
+export { default, Type } from '../../common/messages.gen.js'
 
-
-export function BatchMetadata(
-  version: number,
-  pageNo: number,
-  firstIndex: number,
-  timestamp: number,
-  location: string,
-): Messages.BatchMetadata {
-  return [
-    Messages.Type.BatchMetadata,
-    version,
-    pageNo,
-    firstIndex,
-    timestamp,
-    location,
-  ]
-}
-
-export function PartitionedMessage(
-  partNo: number,
-  partTotal: number,
-): Messages.PartitionedMessage {
-  return [
-    Messages.Type.PartitionedMessage,
-    partNo,
-    partTotal,
-  ]
-}
 
 export function Timestamp(
   timestamp: number,
@@ -232,6 +204,29 @@ export function MouseMove(
   ]
 }
 
+export function NetworkRequest(
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
+): Messages.NetworkRequest {
+  return [
+    Messages.Type.NetworkRequest,
+    type,
+    method,
+    url,
+    request,
+    response,
+    status,
+    timestamp,
+    duration,
+  ]
+}
+
 export function ConsoleLog(
   level: string,
   value: string,
@@ -294,12 +289,12 @@ export function JSExceptionDeprecated(
   ]
 }
 
-export function RawCustomEvent(
+export function CustomEvent(
   name: string,
   payload: string,
-): Messages.RawCustomEvent {
+): Messages.CustomEvent {
   return [
-    Messages.Type.RawCustomEvent,
+    Messages.Type.CustomEvent,
     name,
     payload,
   ]
@@ -535,6 +530,30 @@ export function SetPageVisibility(
   ]
 }
 
+export function LoadFontFace(
+  parentID: number,
+  family: string,
+  source: string,
+  descriptors: string,
+): Messages.LoadFontFace {
+  return [
+    Messages.Type.LoadFontFace,
+    parentID,
+    family,
+    source,
+    descriptors,
+  ]
+}
+
+export function SetNodeFocus(
+  id: number,
+): Messages.SetNodeFocus {
+  return [
+    Messages.Type.SetNodeFocus,
+    id,
+  ]
+}
+
 export function LongTask(
   timestamp: number,
   duration: number,
@@ -731,6 +750,34 @@ export function JSException(
     message,
     payload,
     metadata,
+  ]
+}
+
+export function BatchMetadata(
+  version: number,
+  pageNo: number,
+  firstIndex: number,
+  timestamp: number,
+  location: string,
+): Messages.BatchMetadata {
+  return [
+    Messages.Type.BatchMetadata,
+    version,
+    pageNo,
+    firstIndex,
+    timestamp,
+    location,
+  ]
+}
+
+export function PartitionedMessage(
+  partNo: number,
+  partTotal: number,
+): Messages.PartitionedMessage {
+  return [
+    Messages.Type.PartitionedMessage,
+    partNo,
+    partTotal,
   ]
 }
 

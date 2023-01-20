@@ -2,7 +2,7 @@ import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
 import { Duration } from 'luxon';
-import { NoContent, Icon, Button } from 'UI';
+import { NoContent, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';
@@ -72,8 +72,6 @@ type Props = {
   hoverable?: boolean;
   onRowClick?: (row: any, index: number) => void;
   onJump?: (time: any) => void;
-  sortBy?: string;
-  sortAscending?: boolean;
 };
 
 type TimeLineInfo = {
@@ -145,8 +143,19 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   scroller = React.createRef<List>();
   autoScroll = true;
 
-  componentDidMount() {
-    if (this.scroller.current) {
+  // componentDidMount() {
+  //   if (this.scroller.current) {
+  //     this.scroller.current.scrollToRow(this.props.activeIndex);
+  //   }
+  // }
+
+  adjustScroll(prevActiveIndex: number) {
+    if (
+      this.props.activeIndex &&
+      this.props.activeIndex >= 0 &&
+      prevActiveIndex !== this.props.activeIndex &&
+      this.scroller.current
+    ) {
       this.scroller.current.scrollToRow(this.props.activeIndex);
     }
   }
@@ -161,14 +170,8 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
       });
     }
-    if (
-      this.props.activeIndex &&
-      this.props.activeIndex >= 0 &&
-      prevProps.activeIndex !== this.props.activeIndex &&
-      this.scroller.current
-    ) {
-      this.scroller.current.scrollToRow(this.props.activeIndex);
-    }
+
+    // this.adjustScroll(prevProps.activeIndex);
   }
 
   onScroll = ({
@@ -190,7 +193,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
 
   onJump = (index: any) => {
     if (this.props.onJump) {
-      this.props.onJump(this.props.rows[index].time);
+      this.props.onJump(this.props.rows[index]);
     }
   };
 
@@ -203,23 +206,29 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       <div
         style={rowStyle}
         key={key}
-        className={cn('border-b border-color-gray-light-shade group items-center', stl.row, {
-          [stl.hoverable]: hoverable,
-          'error color-red': !!row.isRed && row.isRed(),
-          'cursor-pointer': typeof onRowClick === 'function',
-          [stl.activeRow]: activeIndex === index,
-          // [stl.inactiveRow]: !activeIndex || index > activeIndex,
-        })}
+        className={cn(
+          'dev-row border-b border-color-gray-light-shade group items-center',
+          stl.row,
+          {
+            [stl.hoverable]: hoverable,
+            'error color-red': !!row.isRed && row.isRed(),
+            'cursor-pointer': typeof onRowClick === 'function',
+            [stl.activeRow]: activeIndex === index,
+            [stl.inactiveRow]: !activeIndex || index > activeIndex,
+          }
+        )}
         onClick={typeof onRowClick === 'function' ? () => onRowClick(row, index) : undefined}
         id="table-row"
       >
-        {columns.map(({ dataKey, render, width }) => (
-          <div className={stl.cell} style={{ width: `${width}px` }}>
-            {render
-              ? render(row)
-              : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
-          </div>
-        ))}
+        {columns
+          .filter((i: any) => !i.hidden)
+          .map(({ dataKey, render, width, label }) => (
+            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={stl.cell} style={{ width: `${width}px` }}>
+              {render
+                ? render(row)
+                : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
+            </div>
+          ))}
         <div className={cn('relative flex-1 flex', stl.timeBarWrapper)}>
           <BarRow resource={row} timestart={timestart} timewidth={timewidth} popup={renderPopup} />
         </div>
@@ -266,14 +275,12 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     const {
       className,
       rows,
-      children: columns,
       navigation = false,
       referenceLines = [],
       additionalHeight = 0,
       activeIndex,
-      sortBy = '',
-      sortAscending = true,
     } = this.props;
+    const columns = this.props.children.filter((i: any) => !i.hidden);
     const { timewidth, timestart } = this.state;
 
     _additionalHeight = additionalHeight;
@@ -320,14 +327,14 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width, dataKey, onClick = null }) => (
               <div
+                key={parseInt(label.replace(' ', ''), 36)}
                 className={cn(stl.headerCell, 'flex items-center select-none', {
                   'cursor-pointer': typeof onClick === 'function',
                 })}
                 style={{ width: `${width}px` }}
-                onClick={() => this.onColumnClick(dataKey, onClick)}
+                // onClick={() => this.onColumnClick(dataKey, onClick)}
               >
                 <span>{label}</span>
-                {!!sortBy && sortBy === dataKey && <Icon name={ sortAscending ? "caret-down-fill" : "caret-up-fill" } className="ml-1" />}
               </div>
             ))}
           </div>
@@ -348,6 +355,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
               ))}
               {visibleRefLines.map(({ time, color, onClick }) => (
                 <div
+                  key={time}
                   className={cn(stl.refLine, `bg-${color}`)}
                   style={{
                     left: `${percentOf(time - timestart, timewidth)}%`,
@@ -360,6 +368,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
             <AutoSizer disableHeight>
               {({ width }: { width: number }) => (
                 <List
+                  scrollToIndex={this.props.activeIndex || 0}
                   ref={this.scroller}
                   className={stl.list}
                   height={this.tableHeight + additionalHeight}
@@ -369,7 +378,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
                   rowHeight={ROW_HEIGHT}
                   rowRenderer={this.renderRow}
                   onScroll={this.onScroll}
-                  scrollToAlignment="start"
+                  scrollToAlignment="center"
                   forceUpdateProp={timestart | timewidth | (activeIndex || 0)}
                 />
               )}

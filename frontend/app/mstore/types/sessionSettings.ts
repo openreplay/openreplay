@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, action } from 'mobx';
+import { makeAutoObservable, runInAction } from 'mobx';
 import moment from 'moment';
 import { SKIP_TO_ISSUE, TIMEZONE, DURATION_FILTER } from 'App/constants/storageKeys';
 
@@ -13,27 +13,52 @@ const defaultDurationFilter = {
     countType: 'sec'
 }
 
+const negativeExceptions = {
+    4: ['-04:30'],
+    3: ['-03:30'],
+
+}
+const exceptions = {
+    3: ['+03:30'],
+    4: ['+04:30'],
+    5: ['+05:30', '+05:45'],
+    6: ['+06:30'],
+    9: ['+09:30']
+}
+
 export const generateGMTZones = (): Timezone[] => {
     const timezones: Timezone[] = [];
 
-    const positiveNumbers = [...Array(12).keys()];
-    const negativeNumbers = [...Array(12).keys()].reverse();
+    const positiveNumbers = [...Array(13).keys()];
+    const negativeNumbers = [...Array(13).keys()].reverse();
     negativeNumbers.pop(); // remove trailing zero since we have one in positive numbers array
 
     const combinedArray = [...negativeNumbers, ...positiveNumbers];
 
     for (let i = 0; i < combinedArray.length; i++) {
-        let symbol = i < 11 ? '-' : '+';
-        let isUTC = i === 11;
-        let value = String(combinedArray[i]).padStart(2, '0');
+        let symbol = i < 12 ? '-' : '+';
+        let isUTC = i === 12;
+        const item = combinedArray[i]
+        let value = String(item).padStart(2, '0');
 
-        let tz = `UTC ${symbol}${String(combinedArray[i]).padStart(2, '0')}:00`;
+        let tz = `UTC ${symbol}${String(item).padStart(2, '0')}:00`;
 
         let dropdownValue = `UTC${symbol}${value}`;
         timezones.push({ label: tz, value: isUTC ? 'UTC' : dropdownValue });
+
+        // @ts-ignore
+        const negativeMatch = negativeExceptions[item], positiveMatch = exceptions[item]
+        if (i < 11 && negativeMatch) {
+            negativeMatch.forEach((str: string) => {
+                timezones.push({ label: `UTC ${str}`, value: `UTC${str}`})
+            })
+        } else if (i > 11 && positiveMatch) {
+            positiveMatch.forEach((str: string) => {
+                timezones.push({ label: `UTC ${str}`, value: `UTC${str}`})
+            })
+        }
     }
 
-    timezones.splice(17, 0, { label: 'GMT +05:30', value: 'UTC+05:30' });
     return timezones;
 };
 

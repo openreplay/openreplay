@@ -28,7 +28,6 @@ class UserLoginSchema(_Grecaptcha):
 class UserSignupSchema(UserLoginSchema):
     fullname: str = Field(...)
     organizationName: str = Field(...)
-    projectName: str = Field(default="my first project")
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -79,14 +78,13 @@ class CurrentContext(CurrentAPIContext):
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
-class AddSlackSchema(BaseModel):
+class AddCollaborationSchema(BaseModel):
     name: str = Field(...)
     url: HttpUrl = Field(...)
 
 
-class EditSlackSchema(BaseModel):
+class EditCollaborationSchema(AddCollaborationSchema):
     name: Optional[str] = Field(None)
-    url: HttpUrl = Field(...)
 
 
 class CreateNotificationSchema(BaseModel):
@@ -176,12 +174,6 @@ class WeeklyReportConfigSchema(BaseModel):
 
     class Config:
         alias_generator = attribute_to_camel_case
-
-
-class GetHeatmapPayloadSchema(BaseModel):
-    startDate: int = Field(TimeUTC.now(delta_days=-30))
-    endDate: int = Field(TimeUTC.now())
-    url: str = Field(...)
 
 
 class DatadogSchema(BaseModel):
@@ -379,59 +371,59 @@ class ErrorSource(str, Enum):
 
 
 class EventType(str, Enum):
-    click = "CLICK"
-    input = "INPUT"
-    location = "LOCATION"
-    custom = "CUSTOM"
-    request = "REQUEST"
-    request_details = "FETCH"
-    graphql = "GRAPHQL"
-    state_action = "STATEACTION"
-    error = "ERROR"
-    click_ios = "CLICK_IOS"
-    input_ios = "INPUT_IOS"
-    view_ios = "VIEW_IOS"
-    custom_ios = "CUSTOM_IOS"
-    request_ios = "REQUEST_IOS"
-    error_ios = "ERROR_IOS"
+    click = "click"
+    input = "input"
+    location = "location"
+    custom = "custom"
+    request = "request"
+    request_details = "fetch"
+    graphql = "graphql"
+    state_action = "stateAction"
+    error = "error"
+    click_ios = "clickIos"
+    input_ios = "inputIos"
+    view_ios = "viewIos"
+    custom_ios = "customIos"
+    request_ios = "requestIos"
+    error_ios = "errorIos"
 
 
 class PerformanceEventType(str, Enum):
-    location_dom_complete = "DOM_COMPLETE"
-    location_largest_contentful_paint_time = "LARGEST_CONTENTFUL_PAINT_TIME"
-    time_between_events = "TIME_BETWEEN_EVENTS"
-    location_ttfb = "TTFB"
-    location_avg_cpu_load = "AVG_CPU_LOAD"
-    location_avg_memory_usage = "AVG_MEMORY_USAGE"
-    fetch_failed = "FETCH_FAILED"
+    location_dom_complete = "domComplete"
+    location_largest_contentful_paint_time = "largestContentfulPaintTime"
+    time_between_events = "timeBetweenEvents"
+    location_ttfb = "ttfb"
+    location_avg_cpu_load = "avgCpuLoad"
+    location_avg_memory_usage = "avgMemoryUsage"
+    fetch_failed = "fetchFailed"
     # fetch_duration = "FETCH_DURATION"
 
 
 class FilterType(str, Enum):
-    user_os = "USEROS"
-    user_browser = "USERBROWSER"
-    user_device = "USERDEVICE"
-    user_country = "USERCOUNTRY"
-    user_id = "USERID"
-    user_anonymous_id = "USERANONYMOUSID"
-    referrer = "REFERRER"
-    rev_id = "REVID"
+    user_os = "userOs"
+    user_browser = "userBrowser"
+    user_device = "userDevice"
+    user_country = "userCountry"
+    user_id = "userId"
+    user_anonymous_id = "userAnonymousId"
+    referrer = "referrer"
+    rev_id = "revId"
     # IOS
-    user_os_ios = "USEROS_IOS"
-    user_device_ios = "USERDEVICE_IOS"
-    user_country_ios = "USERCOUNTRY_IOS"
-    user_id_ios = "USERID_IOS"
-    user_anonymous_id_ios = "USERANONYMOUSID_IOS"
-    rev_id_ios = "REVID_IOS"
+    user_os_ios = "userOsIos"
+    user_device_ios = "userDeviceIos"
+    user_country_ios = "userCountryIos"
+    user_id_ios = "userIdIos"
+    user_anonymous_id_ios = "userAnonymousIdIos"
+    rev_id_ios = "revIdIos"
     #
-    duration = "DURATION"
-    platform = "PLATFORM"
-    metadata = "METADATA"
-    issue = "ISSUE"
-    events_count = "EVENTS_COUNT"
-    utm_source = "UTM_SOURCE"
-    utm_medium = "UTM_MEDIUM"
-    utm_campaign = "UTM_CAMPAIGN"
+    duration = "duration"
+    platform = "platform"
+    metadata = "metadata"
+    issue = "issue"
+    events_count = "eventsCount"
+    utm_source = "utmSource"
+    utm_medium = "utmMedium"
+    utm_campaign = "utmCampaign"
 
 
 class SearchEventOperator(str, Enum):
@@ -446,6 +438,15 @@ class SearchEventOperator(str, Enum):
     _not_contains = "notContains"
     _starts_with = "startsWith"
     _ends_with = "endsWith"
+
+
+class ClickEventExtraOperator(str, Enum):
+    _on_selector = "onSelector"
+    _on_text = "onText"
+
+
+class IssueFilterOperator(str, Enum):
+    _on_selector = ClickEventExtraOperator._on_selector.value
 
 
 class PlatformType(str, Enum):
@@ -508,19 +509,23 @@ class HttpMethod(str, Enum):
 
 
 class FetchFilterType(str, Enum):
-    _url = "FETCH_URL"
-    _status_code = "FETCH_STATUS_CODE"
-    _method = "FETCH_METHOD"
-    _duration = "FETCH_DURATION"
-    _request_body = "FETCH_REQUEST_BODY"
-    _response_body = "FETCH_RESPONSE_BODY"
+    _url = "fetchUrl"  # FETCH_URL
+    _status_code = "fetchStatusCode"  # FETCH_STATUS_CODE
+    _method = "fetchMethod"  # FETCH_METHOD
+    _duration = "fetchDuration"  # FETCH_DURATION
+    _request_body = "fetchRequestBody"  # FETCH_REQUEST_BODY
+    _response_body = "fetchResponseBody"  # FETCH_RESPONSE_BODY
 
 
 class GraphqlFilterType(str, Enum):
-    _name = "GRAPHQL_NAME"
-    _method = "GRAPHQL_METHOD"
-    _request_body = "GRAPHQL_REQUEST_BODY"
-    _response_body = "GRAPHQL_RESPONSE_BODY"
+    _name = "graphqlName"  # GRAPHQL_NAME
+    _method = "graphqlMethod"  # GRAPHQL_METHOD
+    _request_body = "graphqlRequestBody"  # GRAPHQL_REQUEST_BODY
+    _response_body = "graphqlResponseBody"  # GRAPHQL_RESPONSE_BODY
+
+
+class IssueFilterType(str, Enum):
+    _selector = "CLICK_SELECTOR"
 
 
 class RequestGraphqlFilterSchema(BaseModel):
@@ -529,14 +534,48 @@ class RequestGraphqlFilterSchema(BaseModel):
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
 
+class IssueFilterSchema(BaseModel):
+    type: IssueFilterType = Field(...)
+    value: List[str] = Field(...)
+    operator: IssueFilterOperator = Field(...)
+
+
 class _SessionSearchEventRaw(__MixedSearchFilter):
     is_event: bool = Field(default=True, const=True)
     value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
-    operator: SearchEventOperator = Field(...)
-    source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
-    sourceOperator: Optional[MathOperator] = Field(None)
-    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(None)
+    operator: Union[SearchEventOperator, ClickEventExtraOperator] = Field(...)
+    source: Optional[List[Union[ErrorSource, int, str]]] = Field(default=None)
+    sourceOperator: Optional[MathOperator] = Field(default=None)
+    filters: Optional[List[Union[RequestGraphqlFilterSchema, IssueFilterSchema]]] = Field(default=None)
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        values["type"] = {
+            "CLICK": EventType.click.value,
+            "INPUT": EventType.input.value,
+            "LOCATION": EventType.location.value,
+            "CUSTOM": EventType.custom.value,
+            "REQUEST": EventType.request.value,
+            "FETCH": EventType.request_details.value,
+            "GRAPHQL": EventType.graphql.value,
+            "STATEACTION": EventType.state_action.value,
+            "ERROR": EventType.error.value,
+            "CLICK_IOS": EventType.click_ios.value,
+            "INPUT_IOS": EventType.input_ios.value,
+            "VIEW_IOS": EventType.view_ios.value,
+            "CUSTOM_IOS": EventType.custom_ios.value,
+            "REQUEST_IOS": EventType.request_ios.value,
+            "ERROR_IOS": EventType.error_ios.value,
+            "DOM_COMPLETE": PerformanceEventType.location_dom_complete.value,
+            "LARGEST_CONTENTFUL_PAINT_TIME": PerformanceEventType.location_largest_contentful_paint_time.value,
+            "TIME_BETWEEN_EVENTS": PerformanceEventType.time_between_events.value,
+            "TTFB": PerformanceEventType.location_ttfb.value,
+            "AVG_CPU_LOAD": PerformanceEventType.location_avg_cpu_load.value,
+            "AVG_MEMORY_USAGE": PerformanceEventType.location_avg_memory_usage.value,
+            "FETCH_FAILED": PerformanceEventType.fetch_failed.value,
+        }.get(values["type"], values["type"])
+        return values
 
     @root_validator
     def event_validator(cls, values):
@@ -549,7 +588,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             assert values.get("sourceOperator") is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
-                assert values["sourceOperator"] != MathOperator._equal.value, \
+                assert values["sourceOperator"] != MathOperator._equal, \
                     f"{MathOperator._equal} is not allowed for duration of {PerformanceEventType.time_between_events}"
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
@@ -567,11 +606,14 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             values["source"] = [ErrorSource.js_exception]
         elif values.get("type") == EventType.request_details:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.request_details.value}"
+                f"filters should be defined for {EventType.request_details}"
         elif values.get("type") == EventType.graphql:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.graphql.value}"
+                f"filters should be defined for {EventType.graphql}"
 
+        if isinstance(values.get("operator"), ClickEventExtraOperator):
+            assert values.get("type") == EventType.click, \
+                f"operator:{values['operator']} is only available for event-type: {EventType.click}"
         return values
 
 
@@ -581,11 +623,42 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
 
 class SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
-    value: Union[Optional[Union[IssueType, PlatformType, int, str]],
-                 Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+    # TODO: remove this if there nothing broken from the UI
+    # value: Union[Optional[Union[IssueType, PlatformType, int, str]],
+    # Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+    value: List[Union[IssueType, PlatformType, int, str]] = Field(default=[])
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[Union[ErrorSource, str]] = Field(default=None)
+    filters: List[IssueFilterSchema] = Field(default=[])
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        values["type"] = {
+            "USEROS": FilterType.user_os.value,
+            "USERBROWSER": FilterType.user_browser.value,
+            "USERDEVICE": FilterType.user_device.value,
+            "USERCOUNTRY": FilterType.user_country.value,
+            "USERID": FilterType.user_id.value,
+            "USERANONYMOUSID": FilterType.user_anonymous_id.value,
+            "REFERRER": FilterType.referrer.value,
+            "REVID": FilterType.rev_id.value,
+            "USEROS_IOS": FilterType.user_os_ios.value,
+            "USERDEVICE_IOS": FilterType.user_device_ios.value,
+            "USERCOUNTRY_IOS": FilterType.user_country_ios.value,
+            "USERID_IOS": FilterType.user_id_ios.value,
+            "USERANONYMOUSID_IOS": FilterType.user_anonymous_id_ios.value,
+            "REVID_IOS": FilterType.rev_id_ios.value,
+            "DURATION": FilterType.duration.value,
+            "PLATFORM": FilterType.platform.value,
+            "METADATA": FilterType.metadata.value,
+            "ISSUE": FilterType.issue.value,
+            "EVENTS_COUNT": FilterType.events_count.value,
+            "UTM_SOURCE": FilterType.utm_source.value,
+            "UTM_MEDIUM": FilterType.utm_medium.value,
+            "UTM_CAMPAIGN": FilterType.utm_campaign.value
+        }.get(values["type"], values["type"])
+        return values
 
     @root_validator
     def filter_validator(cls, values):
@@ -633,7 +706,12 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
 
     @root_validator(pre=True)
     def transform_order(cls, values):
-        if values.get("order") is not None:
+        if values.get("sort") is None:
+            values["sort"] = "startTs"
+
+        if values.get("order") is None:
+            values["order"] = SortOrderType.desc
+        else:
             values["order"] = values["order"].upper()
         return values
 
@@ -699,16 +777,16 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
 class FunnelSchema(BaseModel):
     name: str = Field(...)
     filter: FunnelSearchPayloadSchema = Field([])
-    is_public: bool = Field(False)
+    is_public: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
 class UpdateFunnelSchema(FunnelSchema):
-    name: Optional[str] = Field(None)
-    filter: Optional[FunnelSearchPayloadSchema] = Field(None)
-    is_public: Optional[bool] = Field(None)
+    name: Optional[str] = Field(default=None)
+    filter: Optional[FunnelSearchPayloadSchema] = Field(default=None)
+    is_public: Optional[bool] = Field(default=None)
 
 
 class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
@@ -765,19 +843,19 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(SearchErrorsSchema):
-    startDate: Optional[int] = Field(None)
-    endDate: Optional[int] = Field(None)
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
+class CardSeriesFilterSchema(SearchErrorsSchema):
+    startDate: Optional[int] = Field(default=None)
+    endDate: Optional[int] = Field(default=None)
+    sort: Optional[str] = Field(default=None)
+    order: Optional[str] = Field(default=None)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
-class CustomMetricCreateSeriesSchema(BaseModel):
+class CardCreateSeriesSchema(BaseModel):
     series_id: Optional[int] = Field(None)
     name: Optional[str] = Field(None)
     index: Optional[int] = Field(None)
-    filter: Optional[CustomMetricSeriesFilterSchema] = Field([])
+    filter: Optional[CardSeriesFilterSchema] = Field([])
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -794,114 +872,226 @@ class MetricTableViewType(str, Enum):
     pie_chart = "pieChart"
 
 
+class MetricOtherViewType(str, Enum):
+    other_chart = "chart"
+    list_chart = "list"
+
+
 class MetricType(str, Enum):
     timeseries = "timeseries"
     table = "table"
-    predefined = "predefined"
     funnel = "funnel"
+    errors = "errors"
+    performance = "performance"
+    resources = "resources"
+    web_vital = "webVitals"
+    pathAnalysis = "pathAnalysis"
+    retention = "retention"
+    stickiness = "stickiness"
+    click_map = "clickMap"
+    insights = "insights"
 
 
-class TableMetricOfType(str, Enum):
+class MetricOfErrors(str, Enum):
+    calls_errors = "callsErrors"  # calls_errors
+    domains_errors_4xx = "domainsErrors4xx"  # domains_errors_4xx
+    domains_errors_5xx = "domainsErrors5xx"  # domains_errors_5xx
+    errors_per_domains = "errorsPerDomains"  # errors_per_domains
+    errors_per_type = "errorsPerType"  # errors_per_type
+    impacted_sessions_by_js_errors = "impactedSessionsByJsErrors"  # impacted_sessions_by_js_errors
+    resources_by_party = "resourcesByParty"  # resources_by_party
+
+
+class MetricOfPerformance(str, Enum):
+    cpu = "cpu"  # cpu
+    crashes = "crashes"  # crashes
+    fps = "fps"  # fps
+    impacted_sessions_by_slow_pages = "impactedSessionsBySlowPages"  # impacted_sessions_by_slow_pages
+    memory_consumption = "memoryConsumption"  # memory_consumption
+    pages_dom_buildtime = "pagesDomBuildtime"  # pages_dom_buildtime
+    pages_response_time = "pagesResponseTime"  # pages_response_time
+    pages_response_time_distribution = "pagesResponseTimeDistribution"  # pages_response_time_distribution
+    resources_vs_visually_complete = "resourcesVsVisuallyComplete"  # resources_vs_visually_complete
+    sessions_per_browser = "sessionsPerBrowser"  # sessions_per_browser
+    slowest_domains = "slowestDomains"  # slowest_domains
+    speed_location = "speedLocation"  # speed_location
+    time_to_render = "timeToRender"  # time_to_render
+
+
+class MetricOfResources(str, Enum):
+    missing_resources = "missingResources"  # missing_resources
+    resources_count_by_type = "resourcesCountByType"  # resources_count_by_type
+    resources_loading_time = "resourcesLoadingTime"  # resources_loading_time
+    resource_type_vs_response_end = "resourceTypeVsResponseEnd"  # resource_type_vs_response_end
+    slowest_resources = "slowestResources"  # slowest_resources
+
+
+class MetricOfWebVitals(str, Enum):
+    avg_cpu = "avgCpu"  # avg_cpu
+    avg_dom_content_loaded = "avgDomContentLoaded"  # avg_dom_content_loaded
+    avg_dom_content_load_start = "avgDomContentLoadStart"  # avg_dom_content_load_start
+    avg_first_contentful_pixel = "avgFirstContentfulPixel"  # avg_first_contentful_pixel
+    avg_first_paint = "avgFirstPaint"  # avg_first_paint
+    avg_fps = "avgFps"  # avg_fps
+    avg_image_load_time = "avgImageLoadTime"  # avg_image_load_time
+    avg_page_load_time = "avgPageLoadTime"  # avg_page_load_time
+    avg_pages_dom_buildtime = "avgPagesDomBuildtime"  # avg_pages_dom_buildtime
+    avg_pages_response_time = "avgPagesResponseTime"  # avg_pages_response_time
+    avg_request_load_time = "avgRequestLoadTime"  # avg_request_load_time
+    avg_response_time = "avgResponseTime"  # avg_response_time
+    avg_session_duration = "avgSessionDuration"  # avg_session_duration
+    avg_till_first_byte = "avgTillFirstByte"  # avg_till_first_byte
+    avg_time_to_interactive = "avgTimeToInteractive"  # avg_time_to_interactive
+    avg_time_to_render = "avgTimeToRender"  # avg_time_to_render
+    avg_used_js_heap_size = "avgUsedJsHeapSize"  # avg_used_js_heap_size
+    avg_visited_pages = "avgVisitedPages"  # avg_visited_pages
+    count_requests = "countRequests"  # count_requests
+    count_sessions = "countSessions"  # count_sessions
+
+
+class MetricOfTable(str, Enum):
     user_os = FilterType.user_os.value
     user_browser = FilterType.user_browser.value
     user_device = FilterType.user_device.value
     user_country = FilterType.user_country.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
-    visited_url = EventType.location.value
-    sessions = "SESSIONS"
-    errors = IssueType.js_exception.value
+    visited_url = "location"
+    sessions = "sessions"
+    errors = "jsException"
 
 
-class TimeseriesMetricOfType(str, Enum):
+class MetricOfTimeseries(str, Enum):
     session_count = "sessionCount"
 
 
-class CustomMetricSessionsPayloadSchema(FlatSessionsSearch, _PaginatedSchema):
+class MetricOfClickMap(str, Enum):
+    click_map_url = "clickMapUrl"
+
+
+class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
-    series: Optional[List[CustomMetricCreateSeriesSchema]] = Field(default=None)
+    series: List[CardCreateSeriesSchema] = Field(default=[])
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema, _PaginatedSchema):
+class CardChartSchema(CardSessionsSchema):
     density: int = Field(7)
 
-    class Config:
-        alias_generator = attribute_to_camel_case
 
-
-class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
-    name: str = Field(...)
-    series: List[CustomMetricCreateSeriesSchema] = Field(...)
-    is_public: bool = Field(default=True)
-    view_type: Union[MetricTimeseriesViewType, MetricTableViewType] = Field(MetricTimeseriesViewType.line_chart)
-    metric_type: MetricType = Field(MetricType.timeseries)
-    metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
-    metric_value: List[IssueType] = Field([])
-    metric_format: Optional[MetricFormatType] = Field(None)
-
-    # metricFraction: float = Field(None, gt=0, lt=1)
-    # This is used to handle wrong values sent by the UI
-    @root_validator(pre=True)
-    def remove_metric_value(cls, values):
-        if values.get("metricType") == MetricType.timeseries \
-                or values.get("metricType") == MetricType.table \
-                and values.get("metricOf") != TableMetricOfType.issues:
-            values["metricValue"] = []
-        return values
-
-    @root_validator
-    def validator(cls, values):
-        if values.get("metric_type") == MetricType.table:
-            assert isinstance(values.get("view_type"), MetricTableViewType), \
-                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table.value}"
-            assert isinstance(values.get("metric_of"), TableMetricOfType), \
-                f"metricOf must be of type {TableMetricOfType} for metricType:{MetricType.table.value}"
-            if values.get("metric_of") != TableMetricOfType.issues:
-                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
-                    f"metricValue is only available for metricOf:{TableMetricOfType.issues.value}"
-        elif values.get("metric_type") == MetricType.timeseries:
-            assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
-                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries.value}"
-            assert isinstance(values.get("metric_of"), TimeseriesMetricOfType), \
-                f"metricOf must be of type {TimeseriesMetricOfType} for metricType:{MetricType.timeseries.value}"
-        return values
-
-    class Config:
-        alias_generator = attribute_to_camel_case
-
-
-class CustomMetricsConfigSchema(BaseModel):
-    col: Optional[int] = Field(default=2)
+class CardConfigSchema(BaseModel):
+    col: Optional[int] = Field(...)
     row: Optional[int] = Field(default=2)
     position: Optional[int] = Field(default=0)
 
 
-class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
-    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    config: CustomMetricsConfigSchema = Field(default=CustomMetricsConfigSchema())
+class CreateCardSchema(CardChartSchema):
+    name: Optional[str] = Field(...)
+    is_public: bool = Field(default=True)
+    view_type: Union[MetricTimeseriesViewType, \
+        MetricTableViewType, MetricOtherViewType] = Field(...)
+    metric_type: MetricType = Field(...)
+    metric_of: Union[MetricOfTimeseries, MetricOfTable, MetricOfErrors, \
+        MetricOfPerformance, MetricOfResources, MetricOfWebVitals, \
+        MetricOfClickMap] = Field(MetricOfTable.user_id)
+    metric_value: List[IssueType] = Field(default=[])
+    metric_format: Optional[MetricFormatType] = Field(default=None)
+    default_config: CardConfigSchema = Field(..., alias="config")
+    is_template: bool = Field(default=False)
+    thumbnail: Optional[str] = Field(default=None)
 
+    # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
-    def transform_series(cls, values):
-        if values.get("series") is not None and len(values["series"]) > 1 and values.get(
-                "metric_type") == MetricType.funnel.value:
+    def transform(cls, values):
+        values["isTemplate"] = values.get("metricType") in [MetricType.errors, MetricType.performance,
+                                                            MetricType.resources, MetricType.web_vital]
+        if values.get("metricType") == MetricType.timeseries \
+                or values.get("metricType") == MetricType.table \
+                and values.get("metricOf") != MetricOfTable.issues:
+            values["metricValue"] = []
+
+        if values.get("metricType") == MetricType.funnel and \
+                values.get("series") is not None and len(values["series"]) > 1:
             values["series"] = [values["series"][0]]
+        elif values.get("metricType") not in [MetricType.table,
+                                              MetricType.timeseries,
+                                              MetricType.insights,
+                                              MetricType.click_map] \
+                and values.get("series") is not None and len(values["series"]) > 0:
+            values["series"] = []
 
         return values
 
+    @root_validator
+    def restrictions(cls, values):
+        assert values.get("metric_type") != MetricType.insights, f"metricType:{MetricType.insights} not supported yet"
+        return values
 
-class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
+    @root_validator
+    def validator(cls, values):
+        if values.get("metric_type") == MetricType.timeseries:
+            assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
+                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries}"
+            assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
+                f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.timeseries}"
+        elif values.get("metric_type") == MetricType.table:
+            assert isinstance(values.get("view_type"), MetricTableViewType), \
+                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table}"
+            assert isinstance(values.get("metric_of"), MetricOfTable), \
+                f"metricOf must be of type {MetricOfTable} for metricType:{MetricType.table}"
+            if values.get("metric_of") in (MetricOfTable.sessions, MetricOfTable.errors):
+                assert values.get("view_type") == MetricTableViewType.table, \
+                    f"viewType must be '{MetricTableViewType.table}' for metricOf:{values['metric_of']}"
+            if values.get("metric_of") != MetricOfTable.issues:
+                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
+                    f"metricValue is only available for metricOf:{MetricOfTable.issues}"
+        elif values.get("metric_type") == MetricType.funnel:
+            assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
+            # ignore this for now, let the UI send whatever he wants for metric_of
+            # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
+            #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
+        else:
+            if values.get("metric_type") == MetricType.errors:
+                assert isinstance(values.get("metric_of"), MetricOfErrors), \
+                    f"metricOf must be of type {MetricOfErrors} for metricType:{MetricType.errors}"
+            elif values.get("metric_type") == MetricType.performance:
+                assert isinstance(values.get("metric_of"), MetricOfPerformance), \
+                    f"metricOf must be of type {MetricOfPerformance} for metricType:{MetricType.performance}"
+            elif values.get("metric_type") == MetricType.resources:
+                assert isinstance(values.get("metric_of"), MetricOfResources), \
+                    f"metricOf must be of type {MetricOfResources} for metricType:{MetricType.resources}"
+            elif values.get("metric_type") == MetricType.web_vital:
+                assert isinstance(values.get("metric_of"), MetricOfWebVitals), \
+                    f"metricOf must be of type {MetricOfWebVitals} for metricType:{MetricType.web_vital}"
+            elif values.get("metric_type") == MetricType.click_map:
+                assert isinstance(values.get("metric_of"), MetricOfClickMap), \
+                    f"metricOf must be of type {MetricOfClickMap} for metricType:{MetricType.click_map}"
+                # Allow only LOCATION events for clickMap
+                for s in values.get("series", []):
+                    for f in s.filter.events:
+                        assert f.type == EventType.location, f"only events of type:{EventType.location} are allowed for metricOf:{MetricType.click_map}"
+
+            assert isinstance(values.get("view_type"), MetricOtherViewType), \
+                f"viewType must be 'chart|list' for metricOf:{values.get('metric_of')}"
+
+        return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class CardUpdateSeriesSchema(CardCreateSeriesSchema):
     series_id: Optional[int] = Field(None)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
-class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
-    series: List[CustomMetricUpdateSeriesSchema] = Field(..., min_items=1)
+class UpdateCardSchema(CreateCardSchema):
+    series: List[CardUpdateSeriesSchema] = Field(...)
 
 
 class UpdateCustomMetricsStatusSchema(BaseModel):
@@ -942,55 +1132,6 @@ class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
         alias_generator = attribute_to_camel_case
 
 
-# these values should match the keys in metrics table
-class TemplatePredefinedKeys(str, Enum):
-    count_sessions = "count_sessions"
-    avg_request_load_time = "avg_request_load_time"
-    avg_page_load_time = "avg_page_load_time"
-    avg_image_load_time = "avg_image_load_time"
-    avg_dom_content_load_start = "avg_dom_content_load_start"
-    avg_first_contentful_pixel = "avg_first_contentful_pixel"
-    avg_visited_pages = "avg_visited_pages"
-    avg_session_duration = "avg_session_duration"
-    avg_pages_dom_buildtime = "avg_pages_dom_buildtime"
-    avg_pages_response_time = "avg_pages_response_time"
-    avg_response_time = "avg_response_time"
-    avg_first_paint = "avg_first_paint"
-    avg_dom_content_loaded = "avg_dom_content_loaded"
-    avg_till_first_bit = "avg_till_first_byte"
-    avg_time_to_interactive = "avg_time_to_interactive"
-    count_requests = "count_requests"
-    avg_time_to_render = "avg_time_to_render"
-    avg_used_js_heap_size = "avg_used_js_heap_size"
-    avg_cpu = "avg_cpu"
-    avg_fps = "avg_fps"
-    impacted_sessions_by_js_errors = "impacted_sessions_by_js_errors"
-    domains_errors_4xx = "domains_errors_4xx"
-    domains_errors_5xx = "domains_errors_5xx"
-    errors_per_domains = "errors_per_domains"
-    calls_errors = "calls_errors"
-    errors_by_type = "errors_per_type"
-    errors_by_origin = "resources_by_party"
-    speed_index_by_location = "speed_location"
-    slowest_domains = "slowest_domains"
-    sessions_per_browser = "sessions_per_browser"
-    time_to_render = "time_to_render"
-    impacted_sessions_by_slow_pages = "impacted_sessions_by_slow_pages"
-    memory_consumption = "memory_consumption"
-    cpu_load = "cpu"
-    frame_rate = "fps"
-    crashes = "crashes"
-    resources_vs_visually_complete = "resources_vs_visually_complete"
-    pages_dom_buildtime = "pages_dom_buildtime"
-    pages_response_time = "pages_response_time"
-    pages_response_time_distribution = "pages_response_time_distribution"
-    missing_resources = "missing_resources"
-    slowest_resources = "slowest_resources"
-    resources_fetch_time = "resources_loading_time"
-    resource_type_vs_response_end = "resource_type_vs_response_end"
-    resources_count_by_type = "resources_count_by_type"
-
-
 class TemplatePredefinedUnits(str, Enum):
     millisecond = "ms"
     second = "s"
@@ -1001,24 +1142,15 @@ class TemplatePredefinedUnits(str, Enum):
     count = "count"
 
 
-class CustomMetricAndTemplate(BaseModel):
-    is_template: bool = Field(...)
-    project_id: Optional[int] = Field(...)
-    predefined_key: Optional[TemplatePredefinedKeys] = Field(...)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
-
-
 class LiveFilterType(str, Enum):
-    user_os = FilterType.user_os.value
-    user_browser = FilterType.user_browser.value
-    user_device = FilterType.user_device.value
-    user_country = FilterType.user_country.value
-    user_id = FilterType.user_id.value
-    user_anonymous_id = FilterType.user_anonymous_id.value
-    rev_id = FilterType.rev_id.value
-    platform = FilterType.platform.value
+    user_os = FilterType.user_os
+    user_browser = FilterType.user_browser
+    user_device = FilterType.user_device
+    user_country = FilterType.user_country
+    user_id = FilterType.user_id
+    user_anonymous_id = FilterType.user_anonymous_id
+    rev_id = FilterType.rev_id
+    platform = FilterType.platform
     page_title = "PAGETITLE"
     session_id = "SESSIONID"
     metadata = "METADATA"
@@ -1031,13 +1163,13 @@ class LiveFilterType(str, Enum):
 class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
-    source: Optional[str] = Field(None)
-    operator: Literal[SearchEventOperator._is.value,
-                      SearchEventOperator._contains.value] = Field(SearchEventOperator._contains.value)
+    source: Optional[str] = Field(default=None)
+    operator: Literal[SearchEventOperator._is, \
+        SearchEventOperator._contains] = Field(default=SearchEventOperator._contains)
 
     @root_validator
     def validator(cls, values):
-        if values.get("type") is not None and values["type"] == LiveFilterType.metadata.value:
+        if values.get("type") is not None and values["type"] == LiveFilterType.metadata:
             assert values.get("source") is not None, "source should not be null for METADATA type"
             assert len(values.get("source")) > 0, "source should not be empty for METADATA type"
         return values
@@ -1060,8 +1192,8 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
                 else:
                     i += 1
             for i in values["filters"]:
-                if i.get("type") == LiveFilterType.platform.value:
-                    i["type"] = LiveFilterType.user_device_type.value
+                if i.get("type") == LiveFilterType.platform:
+                    i["type"] = LiveFilterType.user_device_type
         if values.get("sort") is not None:
             if values["sort"].lower() == "startts":
                 values["sort"] = "TIMESTAMP"
@@ -1084,3 +1216,116 @@ class IntegrationType(str, Enum):
     stackdriver = "STACKDRIVER"
     cloudwatch = "CLOUDWATCH"
     newrelic = "NEWRELIC"
+
+
+class SearchNoteSchema(_PaginatedSchema):
+    sort: str = Field(default="createdAt")
+    order: SortOrderType = Field(default=SortOrderType.desc)
+    tags: Optional[List[str]] = Field(default=[])
+    shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class SessionNoteSchema(BaseModel):
+    message: str = Field(..., min_length=2)
+    tag: Optional[str] = Field(default=None)
+    timestamp: int = Field(default=-1)
+    is_public: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class SessionUpdateNoteSchema(SessionNoteSchema):
+    message: Optional[str] = Field(default=None, min_length=2)
+    timestamp: Optional[int] = Field(default=None, ge=-1)
+    is_public: Optional[bool] = Field(default=None)
+
+    @root_validator
+    def validator(cls, values):
+        assert len(values.keys()) > 0, "at least 1 attribute should be provided for update"
+        c = 0
+        for v in values.values():
+            if v is not None and (not isinstance(v, str) or len(v) > 0):
+                c += 1
+                break
+        assert c > 0, "at least 1 value should be provided for update"
+        return values
+
+
+class WebhookType(str, Enum):
+    webhook = "webhook"
+    slack = "slack"
+    email = "email"
+    msteams = "msteams"
+
+
+class SearchCardsSchema(_PaginatedSchema):
+    order: SortOrderType = Field(default=SortOrderType.desc)
+    shared_only: bool = Field(default=False)
+    mine_only: bool = Field(default=False)
+    query: Optional[str] = Field(default=None)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class _ClickMapSearchEventRaw(_SessionSearchEventRaw):
+    type: Literal[EventType.location] = Field(...)
+
+
+class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
+    events: Optional[List[_ClickMapSearchEventRaw]] = Field([])
+    filters: List[Union[SessionSearchFilterSchema, _ClickMapSearchEventRaw]] = Field([])
+
+    @root_validator(pre=True)
+    def transform(cls, values):
+        for f in values.get("filters"):
+            if f.get("type") == FilterType.duration:
+                return values
+        values["filters"] = values.get("filters", [])
+        values["filters"].append({"value": [5000], "type": FilterType.duration,
+                                  "operator": SearchEventOperator._is, "filters": []})
+        return values
+
+    @root_validator()
+    def flat_to_original(cls, values):
+        n_filters = []
+        n_events = []
+        for v in values.get("filters", []):
+            if isinstance(v, _ClickMapSearchEventRaw):
+                n_events.append(v)
+            else:
+                n_filters.append(v)
+        values["events"] = n_events
+        values["filters"] = n_filters
+        return values
+
+
+class IssueAdvancedFilter(BaseModel):
+    type: IssueFilterType = Field(default=IssueFilterType._selector)
+    value: List[str] = Field(default=[])
+    operator: SearchEventOperator = Field(default=SearchEventOperator._is)
+
+
+class ClickMapFilterSchema(BaseModel):
+    value: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
+    type: Literal[FilterType.issue] = Field(...)
+    operator: Literal[SearchEventOperator._is, MathOperator._equal] = Field(...)
+    # source: Optional[Union[ErrorSource, str]] = Field(default=None)
+    filters: List[IssueAdvancedFilter] = Field(default=[])
+
+
+class GetHeatmapPayloadSchema(BaseModel):
+    startDate: int = Field(TimeUTC.now(delta_days=-30))
+    endDate: int = Field(TimeUTC.now())
+    url: str = Field(...)
+    # issues: List[Literal[IssueType.click_rage, IssueType.dead_click]] = Field(default=[])
+    filters: List[ClickMapFilterSchema] = Field(default=[])
+    click_rage: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case

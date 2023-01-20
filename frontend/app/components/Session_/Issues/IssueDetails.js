@@ -53,5 +53,5 @@ export default connect(state => ({
   users: state.getIn(['assignments', 'users']),
   loading: state.getIn(['assignments', 'fetchAssignment', 'loading']),
   issueTypeIcons: state.getIn(['assignments', 'issueTypeIcons']),
-  issuesIntegration: state.getIn([ 'issues', 'list']).first() || {},
+  issuesIntegration: state.getIn([ 'issues', 'list'])[0] || {},
 }))(IssueDetails);

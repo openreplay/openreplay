@@ -1,9 +1,0 @@
----
-# defaults file for openreplay
-db_name: ""
-app_name: ""
-db_list:
-  - "minio"
-  - "postgresql"
-  - "redis"
-  # - "nfs-server-provisioner"

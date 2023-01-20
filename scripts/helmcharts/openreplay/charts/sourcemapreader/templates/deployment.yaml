@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sourcemapreader.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sourcemapreader.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "sourcemapreader.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sourcemapreader.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "sourcemapreader.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      shareProcessNamespace: true
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ tpl .Values.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.healthCheck}}
+          {{- .Values.healthCheck | toYaml | nindent 10}}
+          {{- end}}
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: {{ .Values.global.s3.accessKey }}
+            - name: AWS_SECRET_ACCESS_KEY
+              value: {{ .Values.global.s3.secretKey }}
+            - name: AWS_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
+            - name: REDIS_STRING
+              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
+            - name: KAFKA_SERVERS
+              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+            - name: KAFKA_USE_SSL
+              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: POSTGRES_STRING
+              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+            # We need to check what is the object store endpoint.
+            # There can be 4 options
+            # 1. Using minio inside kube clster
+            # 2. Using minio managed external cluster, like aws minio offering
+            # 3. Using GCP or other object stores compatible with s3 apis
+            # 4. Using AWS itself.
+            # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
+            - name: ASSETS_ORIGIN
+            {{- if contains "minio" .Values.global.s3.endpoint }}
+              # Local minio Installation
+              value: 'sourcemapreaders://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
+            {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
+              # AWS S3
+              # Ref: sourcemapreaders://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
+              # We need sourcemapreaders://bucketname.s3endpoint
+              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
+            {{- else }}
+              # S3 compatible storage
+              value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
+            {{- end }}
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+          ports:
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
+              protocol: TCP
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

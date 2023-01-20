@@ -1,6 +1,6 @@
 // import Filter from 'Types/filter';
 import Filter from './filter'
-import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
+import { makeAutoObservable, observable, action } from "mobx"
 
 export default class FilterSeries {
     public static get ID_KEY():string { return "seriesId" }

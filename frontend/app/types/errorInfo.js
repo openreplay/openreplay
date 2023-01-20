@@ -1,4 +1,3 @@
-import { List } from 'immutable';
 import Record from './Record';
 import Session from './session';
 
@@ -36,12 +35,13 @@ const ErrorInfo = Record({
   chart24: [],
   chart30: [],
   tags: [],
-  lastHydratedSession: Session(),
+  customTags: [],
+  lastHydratedSession: new Session(),
   disabled: false,
 }, {
   fromJS: ({ stack, lastHydratedSession, ...other }) => ({
     ...other,
-    lastHydratedSession: Session(lastHydratedSession),
+    lastHydratedSession: new Session(lastHydratedSession),
     stack0InfoString: getStck0InfoString(stack || []),
   })
 });

@@ -16,6 +16,7 @@ interface Props {
     sessionId: string;
     onClick?: () => void;
     queryParams?: any;
+    newTab?: boolean;
 }
 export default function PlayLink(props: Props) {
     const { isAssist, viewed, sessionId, onClick = null, queryParams } = props;
@@ -35,6 +36,7 @@ export default function PlayLink(props: Props) {
             to={isAssist ? liveSessionRoute(sessionId, queryParams) : sessionRoute(sessionId)}
             onMouseEnter={() => toggleHover(true)}
             onMouseLeave={() => toggleHover(false)}
+            target={props.newTab ? "_blank" : undefined} rel={props.newTab ? "noopener noreferrer" : undefined}
         >
             <Icon name={iconName} size={38} color={isAssist ? 'tealx' : 'teal'} />
         </Link>

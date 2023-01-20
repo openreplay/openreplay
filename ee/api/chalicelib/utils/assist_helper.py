@@ -6,7 +6,7 @@ from time import time
 from decouple import config
 
 from chalicelib.core import assist
-from chalicelib.utils import helper
+from chalicelib.utils import helper_ee
 
 
 def __get_secret():
@@ -18,7 +18,7 @@ def get_temporary_credentials():
     secret = __get_secret()
     if secret is None:
         return {"errors": ["secret not defined"]}
-    user = helper.generate_salt()
+    user = helper_ee.generate_salt()
     ttl = config("assist_ttl", cast=int, default=48) * 3600
     timestamp = int(time()) + ttl
     username = str(timestamp) + ':' + user

@@ -2,7 +2,7 @@ import json
 
 import schemas
 from chalicelib.core import users
-from chalicelib.utils import pg_client, helper, dev
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -48,7 +48,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         if gdpr:
             extra_projection += ',s.gdpr'
         if recorded:
-            extra_projection += """, COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
+            extra_projection += """,COALESCE(nullif(EXTRACT(EPOCH FROM s.first_recorded_session_at) * 1000, NULL)::BIGINT,
                                       (SELECT MIN(sessions.start_ts)
                                        FROM public.sessions
                                        WHERE sessions.project_id = s.project_id
@@ -76,19 +76,21 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         rows = cur.fetchall()
         # if recorded is requested, check if it was saved or computed
         if recorded:
-            for r in rows:
+            u_values = []
+            params = {}
+            for i, r in enumerate(rows):
                 if r["first_recorded_session_at"] is None:
-                    extra_update = ""
-                    if r["recorded"]:
-                        extra_update = ", first_recorded_session_at=to_timestamp(%(first_recorded)s/1000)"
-                    query = cur.mogrify(f"""UPDATE public.projects 
-                                               SET sessions_last_check_at=(now() at time zone 'utc')
-                                                {extra_update} 
-                                               WHERE project_id=%(project_id)s""",
-                                        {"project_id": r["project_id"], "first_recorded": r["first_recorded"]})
-                    cur.execute(query)
+                    u_values.append(f"(%(project_id_{i})s,to_timestamp(%(first_recorded_{i})s/1000))")
+                    params[f"project_id_{i}"] = r["project_id"]
+                    params[f"first_recorded_{i}"] = r["first_recorded"] if r["recorded"] else None
                 r.pop("first_recorded_session_at")
                 r.pop("first_recorded")
+            if len(u_values) > 0:
+                query = cur.mogrify(f"""UPDATE public.projects 
+                                        SET sessions_last_check_at=(now() at time zone 'utc'), first_recorded_session_at=u.first_recorded
+                                        FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
+                                        WHERE projects.project_id=u.project_id;""", params)
+                cur.execute(query)
 
         if recording_state and len(rows) > 0:
             project_ids = [f'({r["project_id"]})' for r in rows]
@@ -125,7 +127,7 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
                             {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_id = %(project_id)s) AS last_recorded_session_at" if include_last_session else ""}
                             {',s.gdpr' if include_gdpr else ''}
                     FROM public.projects AS s
-                    where s.project_id =%(project_id)s
+                    WHERE s.project_id =%(project_id)s
                         AND s.deleted_at IS NULL
                     LIMIT 1;""",
                             {"project_id": project_id})
@@ -146,7 +148,7 @@ def get_project_by_key(tenant_id, project_key, include_last_session=False, inclu
                             {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at" if include_last_session else ""}
                             {',s.gdpr' if include_gdpr else ''}
                     FROM public.projects AS s
-                    where s.project_key =%(project_key)s
+                    WHERE s.project_key =%(project_key)s
                         AND s.deleted_at IS NULL
                     LIMIT 1;""",
                             {"project_key": project_key})
@@ -199,7 +201,7 @@ def count_by_tenant(tenant_id):
                     SELECT
                            count(s.project_id)
                     FROM public.projects AS s
-                    where s.deleted_at IS NULL;""")
+                    WHERE s.deleted_at IS NULL;""")
         return cur.fetchone()["count"]
 
 
@@ -210,7 +212,7 @@ def get_gdpr(project_id):
                     SELECT
                            gdpr
                     FROM public.projects AS s
-                    where s.project_id =%(project_id)s
+                    WHERE s.project_id =%(project_id)s
                         AND s.deleted_at IS NULL;""",
                         {"project_id": project_id})
         )
@@ -239,7 +241,7 @@ def get_internal_project_id(project_key):
             cur.mogrify("""\
                     SELECT project_id
                     FROM public.projects 
-                    where project_key =%(project_key)s AND deleted_at ISNULL;""",
+                    WHERE project_key =%(project_key)s AND deleted_at ISNULL;""",
                         {"project_key": project_key})
         )
         row = cur.fetchone()
@@ -252,7 +254,7 @@ def get_project_key(project_id):
             cur.mogrify("""\
                     SELECT project_key
                     FROM public.projects 
-                    where project_id =%(project_id)s AND deleted_at ISNULL;""",
+                    WHERE project_id =%(project_id)s AND deleted_at ISNULL;""",
                         {"project_id": project_id})
         )
         project = cur.fetchone()
@@ -266,7 +268,7 @@ def get_capture_status(project_id):
                     SELECT 
                         sample_rate AS rate, sample_rate=100 AS capture_all
                     FROM public.projects 
-                    where project_id =%(project_id)s AND deleted_at ISNULL;""",
+                    WHERE project_id =%(project_id)s AND deleted_at ISNULL;""",
                         {"project_id": project_id})
         )
         return helper.dict_to_camel_case(cur.fetchone())

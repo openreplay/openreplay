@@ -1,0 +1,21 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- if .serverEnabled -}}
+{{- if eq .mode "ha" }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "vault.fullname" . }}-discovery-role
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list", "update", "patch"]
+{{ end }}
+{{ end }}
+{{ end }}

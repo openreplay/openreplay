@@ -30,7 +30,7 @@ def get_session_events(projectKey: str, sessionId: int):
     if projectId is None:
         return {"errors": ["invalid projectKey"]}
     return {
-        'data': events.get_by_sessionId2_pg(
+        'data': events.get_by_session_id(
             project_id=projectId,
             session_id=sessionId
         )

@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
+import { makeAutoObservable } from "mobx"
 import { errorService } from "App/services"
 import Error from "./types/error"
 

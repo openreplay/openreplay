@@ -12,7 +12,7 @@ const ControlButton = ({
   hasErrors = false,
   active = false,
   size = 20,
-  noLabel,
+  noLabel = false,
   labelClassName,
   containerClassName,
   noIcon,

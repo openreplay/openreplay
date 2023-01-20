@@ -1,0 +1,89 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "kyverno.fullname" . }}:admin-policies
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    app: kyverno
+rules:
+- apiGroups:
+  - kyverno.io
+  resources:
+  - policies
+  - clusterpolicies
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    app: kyverno
+  name: {{ template "kyverno.fullname" . }}:admin-policyreport
+rules:
+  - apiGroups:
+      - wgpolicyk8s.io
+    resources:
+      - policyreport
+      - clusterpolicyreport
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    app: kyverno
+  name: {{ template "kyverno.fullname" . }}:admin-reportchangerequest
+rules:
+- apiGroups:
+  - kyverno.io
+  resources:
+  - reportchangerequests
+  - clusterreportchangerequests
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+    app: kyverno
+  name: {{ template "kyverno.fullname" . }}:admin-generaterequest
+rules:
+- apiGroups:
+  - kyverno.io
+  resources:
+  - generaterequests
+  verbs:
+    - create
+    - delete
+    - get
+    - list
+    - patch
+    - update
+    - watch
+
+{{- end }}

@@ -293,9 +293,8 @@ def generate_new_api_key(user_id):
             cur.mogrify(
                 f"""UPDATE public.users
                     SET api_key=generate_api_key(20)
-                    WHERE
-                     users.user_id = %(userId)s
-                     AND deleted_at IS NULL
+                    WHERE users.user_id = %(userId)s
+                            AND deleted_at IS NULL
                     RETURNING api_key;""",
                 {"userId": user_id})
         )
@@ -341,6 +340,47 @@ def edit(user_id_to_update, tenant_id, changes: schemas_ee.EditUserSchema, edito
     if len(_changes.keys()) > 0:
         updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
         return {"data": updated_user}
+    return {"data": user}
+
+
+def edit_member(user_id_to_update, tenant_id, changes: schemas_ee.EditUserSchema, editor_id):
+    user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
+    if editor_id != user_id_to_update or changes.admin is not None and changes.admin != user["admin"]:
+        admin = get(tenant_id=tenant_id, user_id=editor_id)
+        if not admin["superAdmin"] and not admin["admin"]:
+            return {"errors": ["unauthorized"]}
+    _changes = {}
+    if editor_id == user_id_to_update:
+        if changes.admin is not None:
+            if user["superAdmin"]:
+                changes.admin = None
+            elif changes.admin != user["admin"]:
+                return {"errors": ["cannot change your own role"]}
+        if changes.roleId is not None:
+            if user["superAdmin"]:
+                changes.roleId = None
+            elif changes.roleId != user["roleId"]:
+                return {"errors": ["cannot change your own role"]}
+
+    if changes.email is not None and changes.email != user["email"]:
+        if email_exists(changes.email):
+            return {"errors": ["email already exists."]}
+        if get_deleted_user_by_email(changes.email) is not None:
+            return {"errors": ["email previously deleted."]}
+        _changes["email"] = changes.email
+
+    if changes.name is not None and len(changes.name) > 0:
+        _changes["name"] = changes.name
+
+    if changes.admin is not None:
+        _changes["role"] = "admin" if changes.admin else "member"
+
+    if changes.roleId is not None:
+        _changes["roleId"] = changes.roleId
+
+    if len(_changes.keys()) > 0:
+        update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
+        return {"data": get_member(tenant_id=tenant_id, user_id=user_id_to_update)}
     return {"data": user}
 
 
@@ -393,12 +433,49 @@ def get_by_email_reset(email, reset_token):
     return helper.dict_to_camel_case(r)
 
 
+def get_member(tenant_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        users.user_id,
+                        users.email, 
+                        users.role, 
+                        users.name, 
+                        users.created_at,
+                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        basic_authentication.password IS NOT NULL OR users.origin IS NOT NULL AS joined,
+                        invitation_token,
+                        role_id,
+                        roles.name AS role_name
+                    FROM public.users 
+                        LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
+                        LEFT JOIN public.roles USING (role_id)
+                    WHERE users.tenant_id = %(tenant_id)s AND users.deleted_at IS NULL AND users.user_id = %(user_id)s
+                    ORDER BY name, user_id""",
+                {"tenant_id": tenant_id, "user_id": user_id})
+        )
+        u = helper.dict_to_camel_case(cur.fetchone())
+        if u:
+            u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
+            if u["invitationToken"]:
+                u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+            else:
+                u["invitationLink"] = None
+
+    return u
+
+
 def get_members(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         users.email, 
                         users.role, 
                         users.name, 
@@ -416,7 +493,7 @@ def get_members(tenant_id):
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
                     WHERE users.tenant_id = %(tenant_id)s AND users.deleted_at IS NULL
-                    ORDER BY name, id""",
+                    ORDER BY name, user_id""",
                 {"tenant_id": tenant_id})
         )
         r = cur.fetchall()
@@ -450,8 +527,8 @@ def delete_member(user_id, tenant_id, id_to_delete):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(f"""UPDATE public.users 
-                           SET deleted_at = timezone('utc'::text, now()) 
+            cur.mogrify(f"""UPDATE public.users
+                           SET deleted_at = timezone('utc'::text, now()), role_id=NULL
                            WHERE user_id=%(user_id)s AND tenant_id=%(tenant_id)s;""",
                         {"user_id": id_to_delete, "tenant_id": tenant_id}))
         cur.execute(
@@ -601,12 +678,12 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
         )
         r = cur.fetchone()
     return r is not None \
-           and r.get("jwt_iat") is not None \
-           and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-                or (jwt_aud.startswith("plugin") \
-                    and (r["changed_at"] is None \
-                         or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-                )
+        and r.get("jwt_iat") is not None \
+        and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
+             or (jwt_aud.startswith("plugin") \
+                 and (r["changed_at"] is None \
+                      or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
+             )
 
 
 def change_jwt_iat(user_id):
@@ -665,9 +742,9 @@ def authenticate(email, password, for_change_password=False):
             return True
         r = helper.dict_to_camel_case(r)
         jwt_iat = change_jwt_iat(r['userId'])
+        iat = TimeUTC.datetime_to_timestamp(jwt_iat)
         return {
-            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                            TimeUTC.datetime_to_timestamp(jwt_iat),
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'], iat=iat,
                                             aud=f"front:{helper.get_stage_name()}"),
             "email": email,
             **r
@@ -699,7 +776,7 @@ def authenticate_sso(email, internal_id, exp=None):
         r = helper.dict_to_camel_case(r)
         jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
         return authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                        jwt_iat, aud=f"front:{helper.get_stage_name()}",
+                                        iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
     return None
 

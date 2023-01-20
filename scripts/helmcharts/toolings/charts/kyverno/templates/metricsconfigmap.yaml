@@ -1,0 +1,22 @@
+{{- if (not .Values.config.existingMetricsConfig) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    app: kyverno
+  name: {{ template "kyverno.metricsConfigMapName" . }}
+  namespace: {{ template "kyverno.namespace" . }}
+{{- if .Values.config.metricsConfig }}
+data:
+  {{- if .Values.config.metricsConfig.namespaces }}
+  namespaces: {{ .Values.config.metricsConfig.namespaces | toJson | quote }}
+  {{- end -}}
+  {{- if .Values.config.metricsConfig.metricsRefreshInterval }}
+  metricsRefreshInterval: {{ .Values.config.metricsConfig.metricsRefreshInterval }}
+  {{- end -}}
+{{- else }}
+data:
+  namespaces: '{"include": [], "exclude": []}'
+  metricsRefreshInterval: 0s
+{{- end }}
+{{- end -}}

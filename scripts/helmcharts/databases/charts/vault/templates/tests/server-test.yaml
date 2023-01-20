@@ -1,0 +1,51 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- if .serverEnabled -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-server-test"
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  {{- include "imagePullSecrets" . | nindent 2 }}
+  containers:
+    - name: {{ .Release.Name }}-server-test
+      image: {{ .Values.server.image.repository }}:{{ .Values.server.image.tag | default "latest" }}
+      imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+      env:
+        - name: VAULT_ADDR
+          value: {{ include "vault.scheme" . }}://{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc:{{ .Values.server.service.port }}
+        {{- include "vault.extraEnvironmentVars" .Values.server | nindent 8 }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Checking for sealed info in 'vault status' output"
+          ATTEMPTS=10
+          n=0
+          until [ "$n" -ge $ATTEMPTS ]
+          do
+            echo "Attempt" $n...
+            vault status -format yaml | grep -E '^sealed: (true|false)' && break
+            n=$((n+1))
+            sleep 5
+          done
+          if [ $n -ge $ATTEMPTS ]; then
+            echo "timed out looking for sealed info in 'vault status' output"
+            exit 1
+          fi
+
+          exit 0
+      volumeMounts:
+        {{- if .Values.server.volumeMounts }}
+          {{- toYaml .Values.server.volumeMounts | nindent 8}}
+        {{- end }}
+  volumes:
+    {{- if .Values.server.volumes }}
+      {{- toYaml .Values.server.volumes | nindent 4}}
+    {{- end }}
+  restartPolicy: Never
+{{- end }}
+{{- end }}

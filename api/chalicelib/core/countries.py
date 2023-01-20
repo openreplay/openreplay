@@ -257,6 +257,7 @@ COUNTRIES = {
     "UA": "Ukraine",
     "UG": "Uganda",
     "UM": "United States Minor Outlying Islands",
+    "UN": "United Nations",
     "US": "United States",
     "UY": "Uruguay",
     "UZ": "Uzbekistan",

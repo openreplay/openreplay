@@ -1,2 +1,2 @@
-export { default } from './Performance';
+export { ConnectedPerformance as default } from './Performance';
 export * from './Performance';

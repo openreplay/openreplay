@@ -1,21 +1,21 @@
 import React from 'react';
-import { Icon, Popup } from 'UI';
+import { Icon, Tooltip } from 'UI';
 
 interface Props {
-    className: string
-    onClick: () => void
-    icon: string
-    tooltip: string
+  className: string;
+  icon: string;
+  tooltip: string;
 }
 function WidgetIcon(props: Props) {
-    const { className, onClick, icon, tooltip } = props;
-    return (
-        <Popup title={tooltip} >
-            <div className={className} onClick={onClick}>
-                <Icon name={icon} size="14" />
-            </div>
-        </Popup>
-    );
+  const { className, icon, tooltip } = props;
+  return (
+    <Tooltip title={tooltip}>
+      <div className={className}>
+        {/* @ts-ignore */}
+        <Icon name={icon} size="14" />
+      </div>
+    </Tooltip>
+  );
 }
 
 export default WidgetIcon;

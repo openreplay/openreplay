@@ -25,14 +25,16 @@ serviceAccount:
 
 podAnnotations: {}
 
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
 podSecurityContext:
   runAsUser: 1001
   runAsGroup: 1001
   fsGroup: 1001
   fsGroupChangePolicy: "OnRootMismatch"
-  # fsGroup: 2000
 
-securityContext: {}
+#securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -100,7 +102,7 @@ pvc:
   # In case of pvc, you'll have to provide the pvc name.
   # For example
   # name: openreplay-efs
-  name: hostPath
+  name: "{{ .Values.global.pvcRWXName }}"
   hostMountPath: /openreplay/storage/nfs
 
 persistence: {}

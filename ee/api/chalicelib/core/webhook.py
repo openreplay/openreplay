@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from chalicelib.utils import pg_client, helper
@@ -8,10 +10,9 @@ def get_by_id(webhook_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT
-                          webhook_id AS integration_id, webhook_id AS id, w.*
+                    SELECT w.*
                     FROM public.webhooks AS w 
-                    where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
+                    WHERE w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
@@ -20,15 +21,14 @@ def get_by_id(webhook_id):
         return w
 
 
-def get(tenant_id, webhook_id):
+def get_webhook(tenant_id, webhook_id, webhook_type='webhook'):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT
-                          webhook_id AS integration_id, webhook_id AS id, w.*
-                    FROM public.webhooks AS w 
-                    where w.webhook_id =%(webhook_id)s AND w.tenant_id =%(tenant_id)s AND deleted_at ISNULL;""",
-                        {"webhook_id": webhook_id, "tenant_id": tenant_id})
+            cur.mogrify("""SELECT w.*
+                            FROM public.webhooks AS w 
+                            WHERE w.webhook_id =%(webhook_id)s AND w.tenant_id =%(tenant_id)s 
+                                 AND deleted_at ISNULL AND type=%(webhook_type)s;""",
+                        {"webhook_id": webhook_id, "webhook_type": webhook_type, "tenant_id": tenant_id})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
         if w:
@@ -39,12 +39,9 @@ def get(tenant_id, webhook_id):
 def get_by_type(tenant_id, webhook_type):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT
-                           w.webhook_id AS integration_id, w.webhook_id AS id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
+            cur.mogrify("""SELECT w.webhook_id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
                     FROM public.webhooks AS w 
-                    where 
-                        w.tenant_id =%(tenant_id)s 
+                    WHERE w.tenant_id =%(tenant_id)s 
                         AND w.type =%(type)s 
                         AND deleted_at ISNULL;""",
                         {"type": webhook_type, "tenant_id": tenant_id})
@@ -58,25 +55,15 @@ def get_by_type(tenant_id, webhook_type):
 def get_by_tenant(tenant_id, replace_none=False):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                    SELECT
-                           webhook_id AS integration_id, webhook_id AS id,w.*
-                    FROM public.webhooks AS w 
-                    where 
-                        w.tenant_id =%(tenant_id)s  
-                        AND deleted_at ISNULL;""",
+            cur.mogrify("""SELECT w.*
+                            FROM public.webhooks AS w 
+                            WHERE w.tenant_id =%(tenant_id)s 
+                                AND deleted_at ISNULL;""",
                         {"tenant_id": tenant_id})
         )
         all = helper.list_to_camel_case(cur.fetchall())
-        if replace_none:
-            for w in all:
-                w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
-                for k in w.keys():
-                    if w[k] is None:
-                        w[k] = ''
-        else:
-            for w in all:
-                w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
+        for w in all:
+            w["createdAt"] = TimeUTC.datetime_to_timestamp(w["createdAt"])
         return all
 
 
@@ -89,7 +76,7 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
                     UPDATE public.webhooks
                     SET {','.join(sub_query)}
                     WHERE tenant_id =%(tenant_id)s AND webhook_id =%(id)s AND deleted_at ISNULL
-                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
+                    RETURNING *;""",
                         {"tenant_id": tenant_id, "id": webhook_id, **changes})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
@@ -106,7 +93,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
         query = cur.mogrify("""\
                     INSERT INTO public.webhooks(tenant_id, endpoint,auth_header,type,name)
                     VALUES (%(tenant_id)s, %(endpoint)s, %(auth_header)s, %(type)s,%(name)s)
-                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
+                    RETURNING *;""",
                             {"tenant_id": tenant_id, "endpoint": endpoint, "auth_header": auth_header,
                              "type": webhook_type, "name": name})
         cur.execute(
@@ -152,28 +139,24 @@ def trigger_batch(data_list):
     for w in data_list:
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
-        __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
+        if webhooks_map[w["destination"]] is None:
+            logging.error(f"!!Error webhook not found: webhook_id={w['destination']}")
+        else:
+            __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
 
 def __trigger(hook, data):
-    if hook["type"] == 'webhook':
+    if hook is not None and hook["type"] == 'webhook':
         headers = {}
         if hook["authHeader"] is not None and len(hook["authHeader"]) > 0:
             headers = {"Authorization": hook["authHeader"]}
 
-        # body = {
-        #     "webhookId": hook["id"],
-        #     "createdAt": TimeUTC.now(),
-        #     "event": event,
-        #     "data": data
-        # }
-
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            print("=======> webhook: something went wrong")
-            print(r)
-            print(r.status_code)
-            print(r.text)
+            logging.error("=======> webhook: something went wrong for:")
+            logging.error(hook)
+            logging.error(r.status_code)
+            logging.error(r.text)
             return
         response = None
         try:
@@ -182,5 +165,5 @@ def __trigger(hook, data):
             try:
                 response = r.text
             except:
-                print("no response found")
+                logging.info("no response found")
         return response

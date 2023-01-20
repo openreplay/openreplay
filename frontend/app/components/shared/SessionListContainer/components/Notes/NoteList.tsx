@@ -1,9 +1,10 @@
 import React from 'react';
-import { NoContent, Pagination, Loader, Icon } from 'UI';
+import { NoContent, Pagination, Loader } from 'UI';
 import { sliceListPerPage } from 'App/utils';
 import NoteItem from './NoteItem';
 import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function NotesList({ members }: { members: Array<Record<string, any>> }) {
   const { notesStore } = useStore();
@@ -20,7 +21,8 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
         show={list.length === 0}
         title={
           <div className="flex flex-col items-center justify-center">
-            <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" />
+            {/* <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" /> */}
+            <AnimatedSVG name={ICONS.NO_NOTES} size={180} />
             <div className="text-center text-gray-600 my-4">No notes yet</div>
           </div>
         }

@@ -10,18 +10,16 @@ import {
 import { 
 	createCRUDReducer, 
 	getCRUDRequestTypes,
-	createFetchList,
 	createInit,
 	createEdit,
 	createRemove,
 	createUpdate,
-	createSave,
 	saveType,
 } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { Map, List, fromJS } from "immutable";
+import { GLOBAL_HAS_NO_RECORDINGS, SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 
-const SITE_ID_STORAGE_KEY = "__$user-siteId$__";
 const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
 
 const name = 'project';
@@ -54,7 +52,6 @@ const reducer = (state = initialState, action = {}) => {
 		case FETCH_GDPR_SUCCESS:
 			return state.mergeIn([ 'instance', 'gdpr' ], action.data);
 		case success(SAVE):
-			console.log(action)
 			const newSite = Site(action.data);
 			return updateItemInList(state, newSite)
 				.set('siteId', newSite.get('id'))
@@ -64,18 +61,29 @@ const reducer = (state = initialState, action = {}) => {
 			return state.setIn([ 'instance', 'gdpr' ], gdpr);
 		case FETCH_LIST_SUCCESS:
 			let siteId = state.get("siteId");
-			const siteExists = action.data.map(s => s.projectId).includes(siteId);
-			if (!siteId || !siteExists) {
-				siteId = !!action.data.find(s => s.projectId === parseInt(storedSiteId))
+			const siteIds = action.data.map(s => parseInt(s.projectId))
+			const siteExists = siteIds.includes(siteId);
+			if (action.siteIdFromPath && siteIds.includes(parseInt(action.siteIdFromPath))) {
+				siteId = action.siteIdFromPath;
+			} else if (!siteId || !siteExists) {
+				siteId = siteIds.includes(parseInt(storedSiteId))
 				? storedSiteId 
 				: action.data[0].projectId;
 			}
-			return state.set('list', List(action.data.map(Site)))
+			const list = List(action.data.map(Site));
+			const hasRecordings = list.some(s => s.recorded);
+			if (!hasRecordings) {
+				localStorage.setItem(GLOBAL_HAS_NO_RECORDINGS, true)
+			} else {
+				localStorage.removeItem(GLOBAL_HAS_NO_RECORDINGS)
+			}
+			
+			return state.set('list', list)
 				.set('siteId', siteId)
-				.set('active', List(action.data.map(Site)).find(s => s.id === parseInt(siteId)));
+				.set('active', list.find(s => s.id === parseInt(siteId)));
 		case SET_SITE_ID:
 			localStorage.setItem(SITE_ID_STORAGE_KEY, action.siteId)
-			const site = state.get('list').find(s => s.id === action.siteId);
+			const site = state.get('list').find(s => parseInt(s.id) == action.siteId);
 			return state.set('siteId', action.siteId).set('active', site);
 	}
 	return state;
@@ -102,10 +110,11 @@ export function saveGDPR(siteId, gdpr) {
   };
 }
 
-export function fetchList() {
+export function fetchList(siteId) {
 	return {
 		types: array(FETCH_LIST),
 		call: client => client.get('/projects'),
+		siteIdFromPath: siteId
 	};
 }
 

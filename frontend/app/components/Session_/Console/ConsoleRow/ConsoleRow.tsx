@@ -9,12 +9,14 @@ interface Props {
   iconProps: any;
   jump?: any;
   renderWithNL?: any;
+  style?: any;
 }
 function ConsoleRow(props: Props) {
-  const { log, iconProps, jump, renderWithNL } = props;
+  const { log, iconProps, jump, renderWithNL, style } = props;
   const [expanded, setExpanded] = useState(false);
   const lines = log.value.split('\n').filter((l: any) => !!l);
   const canExpand = lines.length > 1;
+
   return (
     <div
       className={cn(stl.line, 'flex py-2 px-4 overflow-hidden group relative select-none', {
@@ -23,6 +25,7 @@ function ConsoleRow(props: Props) {
         error: log.isRed(),
         'cursor-pointer': canExpand,
       })}
+      style={style}
       onClick={() => setExpanded(!expanded)}
     >
       <div className={cn(stl.timestamp)}>
@@ -38,7 +41,7 @@ function ConsoleRow(props: Props) {
           )}
           <span>{renderWithNL(lines.pop())}</span>
         </div>
-        {canExpand && expanded && lines.map((l: any) => <div className="ml-4 mb-1">{l}</div>)}
+        {/* {canExpand && expanded && lines.map((l: any, i: number) => <div key={l.slice(0,3)+i} className="ml-4 mb-1">{l}</div>)} */}
       </div>
       <JumpButton onClick={() => jump(log.time)} />
     </div>

@@ -26,6 +26,10 @@ spec:
   template:
     metadata:
       name: postgresqlMigrate
+      {{- with .Values.migrationJob.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       initContainers:
       - name: git
@@ -50,7 +54,7 @@ spec:
               error_connection=1
 
               while [ $exit_count -le 20 ];do
-                nc -zv clickhouse-openreplay-clickhouse.db.svc.cluster.local 9000 -w 1
+                nc -zv {{.Values.global.clickhouse.chHost}} 9000 -w 1
                 if [ $? -ne 0 ]; then
                   echo "[info] clickhouse is not up; retrying in 5 seconds"
                   sleep 4
@@ -91,7 +95,14 @@ spec:
           - name: PGUSER
             value: "{{ .Values.global.postgresql.postgresqlUser }}"
           - name: PGPASSWORD
-            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+            {{- if .Values.global.postgresql.existingSecret }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.global.postgresql.existingSecret }}
+                key: postgresql-postgres-password
+            {{- else }}
+            value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+            {{- end}}
         image: bitnami/postgresql:13.3.0-debian-10-r53
         command: 
         - /bin/bash
@@ -103,7 +114,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-      {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+      {{- if contains "minio" .Values.global.s3.endpoint }}
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
@@ -119,6 +130,8 @@ spec:
             value: "{{ .Values.minio.global.minio.accessKey }}"
           - name: MINIO_SECRET_KEY
             value: "{{ .Values.minio.global.minio.secretKey }}"
+          - name: MINIO_HOST
+            value: "{{ .Values.global.s3.endpoint }}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -132,6 +145,75 @@ spec:
       {{- end}}
       {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
+      {{- if .Values.vault.enabled }}
+      - name: vault
+        env:
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
+          - name: PGHOST
+            value: "{{ .Values.global.postgresql.postgresqlHost }}"
+          - name: PGPORT
+            value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: PGDATABASE
+            value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+          - name: PGUSER
+            value: "{{ .Values.global.postgresql.postgresqlUser }}"
+          - name: PGPASSWORD
+            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+          - name: VAULT_ADDR
+            value: "{{ .Values.global.vault.vaultHost }}"
+        image: hashicorp/vault:1.12.0
+        command: 
+        - /bin/sh
+        - /opt/migrations/vault.sh
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+      - name: vault-s3-upload
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            value: "{{ .Values.global.s3.accessKey }}"
+          - name: AWS_SECRET_ACCESS_KEY
+            value: "{{ .Values.global.s3.secretKey }}"
+          - name: AWS_DEFAULT_REGION
+            value: "{{ .Values.global.s3.region }}"
+          - name: AWS_ENDPOINT
+            value: "{{ .Values.global.s3.endpoint }}"
+          - name: VAULT_BUCKET
+            value: "{{ .Values.global.s3.vaultBucket }}"
+        image: amazon/aws-cli
+        command: 
+        - /bin/bash
+        - -c
+        args:
+        - |
+          while true; do
+          [[ -f /opt/openreplay/vault_creds.txt ]] && {
+            aws s3 cp --endpoint ${AWS_ENDPOINT} /opt/openreplay/vault_creds.txt s3://${VAULT_BUCKET}/vault/
+            exit 0
+          } || {
+            [[ -f /opt/openreplay/err.txt ]] && {
+              (cat /opt/openreplay/err.txt | grep -i "vault is already initialized") && { 
+                  cat /opt/openreplay/err.txt
+                  echo vault already initialized
+                  exit 0
+                } || {
+                  echo Unknown error
+                  cat /opt/openreplay/err.txt
+                  exit 2
+              }
+            }
+          } || {
+            echo vault not yet initialized;
+            sleep 2
+          };
+          done
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+      {{- end }}
       - name: clickhouse
         image: yandex/clickhouse-client:21.9.4.35
         env:
@@ -141,6 +223,10 @@ spec:
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
+          - name: CH_HOST
+            value: "{{.Values.global.clickhouse.chHost}}"
+          - name: CH_PORT
+            value: "{{.Values.global.clickhouse.service.webPort}}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

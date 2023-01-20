@@ -30,8 +30,8 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
   };
   return (
     <div
-      style={{ width: '150px' }}
-      className={cn(className, 'absolute right-0 top-0 bg-white border mt-14')}
+      style={{ width: '150px', marginTop: '35px' }}
+      className={cn(className, 'absolute right-0 top-0 bg-white border p-2')}
     >
       {isAdmin && (
         <>
@@ -56,7 +56,7 @@ export default withRouter(SettingsMenu);
 function MenuItem({ onClick, label, icon }: any) {
   return (
     <div
-      className="border-t p-3 cursor-pointer flex items-center hover:bg-active-blue"
+      className="rounded border border-transparent p-2 cursor-pointer flex items-center hover:bg-active-blue hover:!border-active-blue-border hover-teal"
       onClick={onClick}
     >
       <Icon name={icon} size="16" />

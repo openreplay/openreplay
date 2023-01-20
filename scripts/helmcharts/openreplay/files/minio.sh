@@ -5,9 +5,10 @@ set -e
 
 cd /tmp
 
-buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit")
+buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data" "records")
 
-mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
+
+mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
 function init() {
 echo "Initializing minio"
@@ -31,11 +32,14 @@ mc mb minio/${bucket} || true
 done
 mc ilm import minio/mobs < /tmp/lifecycle.json || true
 
-# Creating frontend bucket
+#####################################################
+# Creating frontend bucket; Do not change this block!
+# !! PUBLIC BUCKETS !!
+#####################################################
 mc mb minio/frontend || true
 mc policy set download minio/frontend || true
 mc policy set download minio/sessions-assets || true
-mc policy set download minio/static || true
+
 }
 
 # /bin/bash kafka.sh migrate $migration_versions

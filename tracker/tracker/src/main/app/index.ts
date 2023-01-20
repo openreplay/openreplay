@@ -1,6 +1,6 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID } from './messages.gen.js'
-import { timestamp as now, deprecationWarn } from '../utils.js'
+import { Timestamp, Metadata, UserID, Type as MType } from './messages.gen.js'
+import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
 import Sanitizer from './sanitizer.js'
@@ -122,13 +122,15 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        localStorage: window?.localStorage,
-        sessionStorage: window?.sessionStorage,
+        localStorage: null,
+        sessionStorage: null,
       },
       options,
     )
 
     this.revID = this.options.revID
+    this.localStorage = this.options.localStorage ?? window.localStorage
+    this.sessionStorage = this.options.sessionStorage ?? window.sessionStorage
     this.sanitizer = new Sanitizer(this, options)
     this.nodes = new Nodes(this.options.node_id)
     this.observer = new Observer(this, options)
@@ -136,8 +138,6 @@ export default class App {
     this.ticker.attach(() => this.commit())
     this.debug = new Logger(this.options.__debug__)
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
-    this.localStorage = this.options.localStorage || window.localStorage
-    this.sessionStorage = this.options.sessionStorage || window.sessionStorage
     this.session = new Session(this, this.options)
     this.session.attachUpdateCallback(({ userID, metadata }) => {
       if (userID != null) {
@@ -164,7 +164,9 @@ export default class App {
       this.worker.onmessage = ({ data }: MessageEvent<FromWorkerData>) => {
         if (data === 'restart') {
           this.stop(false)
-          this.start({ forceNew: true }) // TODO: keep userID & metadata (draw scenarios)
+          this.start({}, true)
+        } else if (data === 'not_init') {
+          console.warn('WebWorker: writer not initialised. Restarting tracker')
         } else if (data.type === 'failure') {
           this.stop(false)
           this._debug('worker_failed', data.reason)
@@ -187,7 +189,7 @@ export default class App {
 
   private _debug(context: string, e: any) {
     if (this.options.__debug_report_edp !== null) {
-      fetch(this.options.__debug_report_edp, {
+      void fetch(this.options.__debug_report_edp, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -199,26 +201,44 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
+  private _usingOldFetchPlugin = false
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
       return
     }
+    // === Back compatibility with Fetch/Axios plugins ===
+    if (message[0] === MType.Fetch) {
+      this._usingOldFetchPlugin = true
+      deprecationWarn('Fetch plugin', "'network' init option")
+      deprecationWarn('Axios plugin', "'network' init option")
+    }
+    if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
+      return
+    }
+    // ====================================================
+
     this.messages.push(message)
     // TODO: commit on start if there were `urgent` sends;
-    // Clearify where urgent can be used for;
-    // Clearify workflow for each type of message in case it was sent before start
+    // Clarify where urgent can be used for;
+    // Clarify workflow for each type of message in case it was sent before start
     //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
+    // Careful: `this.delay` is equal to zero before start hense all Timestamp-s will have to be updated on start
     if (this.activityState === ActivityState.Active && urgent) {
       this.commit()
     }
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(Timestamp(now()))
+      this.messages.unshift(Timestamp(this.timestamp()))
       this.worker.postMessage(this.messages)
       this.commitCallbacks.forEach((cb) => cb(this.messages))
       this.messages.length = 0
     }
+  }
+
+  private delay = 0
+  timestamp(): number {
+    return now() + this.delay
   }
 
   safe<T extends (this: any, ...args: any[]) => void>(fn: T): T {
@@ -228,7 +248,7 @@ export default class App {
         fn.apply(this, args)
       } catch (e) {
         app._debug('safe_fn_call', e)
-        // time: now(),
+        // time: this.timestamp(),
         // name: e.name,
         // message: e.message,
         // stack: e.stack
@@ -262,8 +282,8 @@ export default class App {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target.addEventListener(type, listener, useCapture), useSafe)
-    this.attachStopCallback(() => target.removeEventListener(type, listener, useCapture), useSafe)
+    this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
+    this.attachStopCallback(() => target?.removeEventListener(type, listener, useCapture), useSafe)
   }
 
   // TODO: full correct semantic
@@ -306,8 +326,8 @@ export default class App {
     return this.session.getInfo().sessionID || undefined
   }
 
-  getSessionURL(): string | undefined {
-    const { projectID, sessionID } = this.session.getInfo()
+  getSessionURL(options?: { withCurrentTime?: boolean }): string | undefined {
+    const { projectID, sessionID, timestamp } = this.session.getInfo()
     if (!projectID || !sessionID) {
       this.debug.error('OpenReplay error: Unable to build session URL')
       return undefined
@@ -317,7 +337,14 @@ export default class App {
 
     const projectPath = isSaas ? ingest.replace('api', 'app') : ingest
 
-    return projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+    const url = projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+
+    if (options?.withCurrentTime) {
+      const jumpTo = now() - timestamp
+      return `${url}?jumpto=${jumpTo}`
+    }
+
+    return url
   }
 
   getHost(): string {
@@ -363,7 +390,8 @@ export default class App {
       this.sessionStorage.removeItem(this.options.session_reset_key)
     }
   }
-  private _start(startOpts: StartOptions): Promise<StartPromiseReturn> {
+
+  private _start(startOpts: StartOptions = {}, resetByWorker = false): Promise<StartPromiseReturn> {
     if (!this.worker) {
       return Promise.resolve(UnsuccessfulStart('No worker found: perhaps, CSP is not set.'))
     }
@@ -375,9 +403,20 @@ export default class App {
       )
     }
     this.activityState = ActivityState.Starting
+    adjustTimeOrigin()
+
     if (startOpts.sessionHash) {
       this.session.applySessionHash(startOpts.sessionHash)
     }
+    if (startOpts.forceNew) {
+      // Reset session metadata only if requested directly
+      this.session.reset()
+    }
+    this.session.assign({
+      // MBTODO: maybe it would make sense to `forceNew` if the `userID` was changed
+      userID: startOpts.userID,
+      metadata: startOpts.metadata,
+    })
 
     const timestamp = now()
     this.worker.postMessage({
@@ -390,17 +429,9 @@ export default class App {
       connAttemptGap: this.options.connAttemptGap,
     })
 
-    this.session.update({
-      // TODO: transparent "session" module logic AND explicit internal api for plugins.
-      // "updating" with old metadata in order to trigger session's UpdateCallbacks.
-      // (for the case of internal .start() calls, like on "restart" webworker signal or assistent connection in tracker-assist )
-      metadata: startOpts.metadata || this.session.getInfo().metadata,
-      userID: startOpts.userID,
-    })
-
-    const sReset = this.sessionStorage.getItem(this.options.session_reset_key)
+    const lsReset = this.sessionStorage.getItem(this.options.session_reset_key) !== null
     this.sessionStorage.removeItem(this.options.session_reset_key)
-    const shouldReset = startOpts.forceNew || sReset !== null
+    const needNewSessionID = startOpts.forceNew || lsReset || resetByWorker
 
     return window
       .fetch(this.options.ingestPoint + '/v1/web/start', {
@@ -412,7 +443,7 @@ export default class App {
           ...this.getTrackerInfo(),
           timestamp,
           userID: this.session.getInfo().userID,
-          token: shouldReset ? undefined : this.session.getSessionToken(),
+          token: needNewSessionID ? undefined : this.session.getSessionToken(),
           deviceMemory,
           jsHeapSizeLimit,
         }),
@@ -435,31 +466,38 @@ export default class App {
           return Promise.reject('no worker found after start request (this might not happen)')
         }
         if (this.activityState === ActivityState.NotActive) {
-          return Promise.reject('Tracker stopped during authorisation')
+          return Promise.reject('Tracker stopped during authorization')
         }
         const {
           token,
           userUUID,
-          sessionID,
           projectID,
           beaconSizeLimit,
-          startTimestamp, // real startTS, derived from sessionID
+          delay, //  derived from token
+          sessionID, //  derived from token
+          startTimestamp, // real startTS (server time), derived from sessionID
         } = r
         if (
           typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
-          //typeof startTimestamp !== 'number' ||
-          //typeof sessionID !== 'string' ||
+          (typeof startTimestamp !== 'number' && typeof startTimestamp !== 'undefined') ||
+          typeof sessionID !== 'string' ||
+          typeof delay !== 'number' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')
         ) {
           return Promise.reject(`Incorrect server response: ${JSON.stringify(r)}`)
         }
-        const prevSessionID = this.session.getInfo().sessionID
-        if (prevSessionID && prevSessionID !== sessionID) {
-          this.session.reset()
-        }
+        this.delay = delay
         this.session.setSessionToken(token)
-        this.session.update({ sessionID, timestamp: startTimestamp || timestamp, projectID }) // TODO: no no-explicit 'any'
+        this.session.assign({
+          sessionID,
+          timestamp: startTimestamp || timestamp,
+          projectID,
+        })
+        // (Re)send Metadata for the case of a new session
+        Object.entries(this.session.getInfo().metadata).forEach(([key, value]) =>
+          this.send(Metadata(key, value)),
+        )
         this.localStorage.setItem(this.options.local_uuid_key, userUUID)
 
         this.worker.postMessage({
@@ -470,7 +508,8 @@ export default class App {
 
         const onStartInfo = { sessionToken: token, userUUID, sessionID }
 
-        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // TODO: start as early as possible (before receiving the token)
+        // TODO: start as early as possible (before receiving the token)
+        this.startCallbacks.forEach((cb) => cb(onStartInfo)) // MBTODO: callbacks after DOM "mounted" (observed)
         this.observer.observe()
         this.ticker.start()
         this.activityState = ActivityState.Active
@@ -495,15 +534,15 @@ export default class App {
       })
   }
 
-  start(options: StartOptions = {}): Promise<StartPromiseReturn> {
+  start(...args: Parameters<App['_start']>): Promise<StartPromiseReturn> {
     if (!document.hidden) {
-      return this._start(options)
+      return this._start(...args)
     } else {
       return new Promise((resolve) => {
         const onVisibilityChange = () => {
           if (!document.hidden) {
             document.removeEventListener('visibilitychange', onVisibilityChange)
-            resolve(this._start(options))
+            resolve(this._start(...args))
           }
         }
         document.addEventListener('visibilitychange', onVisibilityChange)
@@ -526,9 +565,5 @@ export default class App {
         this.activityState = ActivityState.NotActive
       }
     }
-  }
-  restart() {
-    this.stop(false)
-    this.start({ forceNew: false })
   }
 }

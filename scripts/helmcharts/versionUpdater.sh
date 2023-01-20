@@ -7,4 +7,4 @@ currentVersion=$1
 }
 find ./openreplay -type f -iname chart.yaml -exec sed -i "s/AppVersion.*/AppVersion: \"$currentVersion\"/g" {} \;
 sed -i "s/fromVersion.*/fromVersion: \"$currentVersion\"/g" vars.yaml
-sed -i "s/version.*/version=\"$currentVersion\"/g" init.sh
+sed -i "s/version=.*/version=\"$currentVersion\"/g" init.sh

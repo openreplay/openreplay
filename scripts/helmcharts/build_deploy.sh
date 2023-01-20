@@ -6,7 +6,13 @@ set -e
 # Usage: IMAGE_TAG=latest DOCKER_REPO=rg.fr-par.scw.cloud/foss bash build_deploy.sh
 
 # Removing local alpine:latest image
-docker rmi alpine
+docker rmi alpine || true
+
+# Signing image
+# cosign sign --key awskms:///alias/openreplay-container-sign image_url:tag
+export SIGN_IMAGE=1
+export PUSH_IMAGE=1
+export SIGN_KEY="awskms:///alias/openreplay-container-sign"
 
 echo $DOCKER_REPO
 [[ -z DOCKER_REPO ]] && {
@@ -15,13 +21,15 @@ echo $DOCKER_REPO
 } || {
     docker login $DOCKER_REPO
     cd ../../backend
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../utilities
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../peers
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../frontend
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
+    cd ../sourcemap-reader
+    bash build.sh $@
     cd ../api
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
 }

@@ -115,6 +115,7 @@ interface Props {
     onSelect: (e: any, item: any) => void;
     value: any;
     icon?: string;
+    hideOrText?: boolean
 }
 
 function FilterAutoComplete(props: Props) {
@@ -128,6 +129,7 @@ function FilterAutoComplete(props: Props) {
         endpoint = '',
         params = {},
         value = '',
+        hideOrText = false,
     } = props;
     const [loading, setLoading] = useState(false);
     const [options, setOptions] = useState<any>([]);
@@ -145,17 +147,17 @@ function FilterAutoComplete(props: Props) {
         new APIClient()
             [method?.toLocaleLowerCase()](endpoint, { ...params, q: inputValue })
             .then((response: any) => {
-                if (response.ok) {
                     return response.json();
-                }
-                throw new Error(response.statusText);
             })
             .then(({ data }: any) => {
                 const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
                 setOptions(_options);
                 callback(_options);
                 setLoading(false);
-            });
+            })
+          .catch((e) => {
+              throw new Error(e);
+          })
     };
 
     const debouncedLoadOptions = React.useCallback(debounce(loadOptions, 1000), [params]);
@@ -240,7 +242,7 @@ function FilterAutoComplete(props: Props) {
                 </div>
             </div>
 
-            {!showOrButton && <div className="ml-3">or</div>}
+            {!showOrButton && !hideOrText && <div className="ml-3">or</div>}
         </div>
     );
 }
