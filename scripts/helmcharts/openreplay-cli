@@ -126,20 +126,22 @@ function status() {
 }
 
 function or_helm_upgrade() {
+  set -o pipefail
   log_file="${tmp_dir}/helm.log"
-  if ! helm upgrade --install openreplay ./openreplay -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug | tee -a "${tmp_dir}/tmp/helm_err.log"; then
+  if ! helm upgrade --install openreplay ./openreplay -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug  2>&1 | tee -a "${log_file}"; then
+    set +o pipefail
     log err "
       Installation failed.
-      Please check ${tmp_dir}/helm.log for more info.
+      Please ${BWHITE}cat ${log_file}${RED} for more info.
 
       If the log doesn't contain enough info,
       You can check the status using
 
-      openreplay -s
+      ${BWHITE}openreplay -s${RED}
 
       If any pods are in failed state, please 
 
-      openreplay -l <pod-name>
+      ${BWHITE}openreplay -l <pod-name>${RED}
       "
   fi
 
@@ -156,7 +158,7 @@ function upgrade() {
   err_cd "$tmp_dir"
   or_version=$(awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -b "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
-  git clone "${OR_REPO}"
+  git clone "${OR_REPO}" --depth 1
   err_cd openreplay/scripts/helmcharts
   install_packages
   [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
