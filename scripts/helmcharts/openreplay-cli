@@ -73,8 +73,9 @@ function install_packages() {
     log info Installing "$(awk -F/ '{print $2}' <<< $package)"
     sudo /var/lib/openreplay/eget -q --upgrade-only --to /var/lib/openreplay "$package"
   done
-  sudo /var/lib/openreplay/eget -q --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
-  sudo /var/lib/openreplay/eget -q --to "$OR_DIR" https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
+  date | sudo tee $OR_DIR/packages.lock &> /dev/null
 }
 
 function help() {
@@ -151,6 +152,12 @@ function upgrade() {
   log info All the configuration has been stored to $OR_DIR/vars.yaml file
 
   err_cd -
+}
+
+[[ -f $OR_DIR/packages.lock ]] || {
+  log info Installing packages "${NC}"
+  install_packages
+  log info Packages installed "${NC}\n"
 }
 
 # Ref: https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
