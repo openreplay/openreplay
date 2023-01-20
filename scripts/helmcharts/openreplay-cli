@@ -84,6 +84,8 @@ function install_packages() {
   sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
   log info Installing kubectl
   sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl
+  log info Installing Busybox
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
   date | sudo tee $OR_DIR/packages.lock &> /dev/null
 }
 
@@ -159,8 +161,7 @@ function upgrade() {
   or_helm_upgrade
 
   # Update the version
-  # awk '{sub(/{OLD_TERM}/,{NEW_TERM}); print}' {file}
-  awk -i inplace  -v old_version="$or_version" -v new_version="$or_new_version" '{gsub(cuv1,cuv2); print;}' vars.yaml
+  busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
   sudo mv ./openreplay-cli /bin/
   sudo mv ./vars.yaml "$OR_DIR"
   log info All the configuration has been stored to $OR_DIR/vars.yaml file
