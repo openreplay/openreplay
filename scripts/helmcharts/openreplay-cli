@@ -17,6 +17,7 @@ tools=(
   stern/stern
   derailed/k9s
   mikefarah/yq
+  hidetatz/kubecolor
   )
 
 # Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
@@ -117,22 +118,29 @@ function status() {
   awk '(NR<2)' < /etc/os-release 
   echo "CPU Count: $(nproc)"
   log info Kubernetes Status
-  kubectl version --short
+  kubecolor version --short
   log info Openreplay Component Status
-  kubectl get po -n "${APP_NS}"
-  kubectl get po -n "${DB_NS}"
+  kubecolor get po -n "${APP_NS}"
+  kubecolor get po -n "${DB_NS}"
   return
 }
 
 function or_helm_upgrade() {
-  if ! helm upgrade --install openreplay ./openreplay -n $APP_NS --wait -f ./vars.yaml --atomic --debug; then
-    log err '
+  log_file="${tmp_dir}/helm.log"
+  if ! helm upgrade --install openreplay ./openreplay -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug | tee -a "${tmp_dir}/tmp/helm_err.log"; then
+    log err "
       Installation failed.
+      Please check ${tmp_dir}/helm.log for more info.
+
+      If the log doesn't contain enough info,
       You can check the status using
+
       openreplay -s
+
       If any pods are in failed state, please 
+
       openreplay -l <pod-name>
-      '
+      "
   fi
 
 }
