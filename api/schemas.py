@@ -1049,7 +1049,9 @@ class CreateCardSchema(CardChartSchema):
                 assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
                     f"metricValue is only available for metricOf:{MetricOfTable.issues}"
         elif values.get("metric_type") == MetricType.funnel:
-            assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
+            pass
+            # allow UI sot send empty series for funnel
+            # assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
             # ignore this for now, let the UI send whatever he wants for metric_of
             # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
             #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"
