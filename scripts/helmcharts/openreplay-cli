@@ -180,7 +180,7 @@ do
     l)
       # Skipping double quotes because we want globbing. For example
       # ./openreplay -l "chalice --tail 10"
-      stern -n "${LOG_NS:-$APP_NS}" ${OPTARG}
+      stern -A --container-state=running,terminated ${OPTARG}
       exit 0
     ;;
     s)
