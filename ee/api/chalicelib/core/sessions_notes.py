@@ -3,16 +3,17 @@ from urllib.parse import urljoin
 from decouple import config
 
 import schemas
-from chalicelib.core import sessions
+from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import pg_client, helper
+from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def get_note(tenant_id, project_id, user_id, note_id, share=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT sessions_notes.*, users.name AS creator_name
-                                {",(SELECT name FROM users WHERE tenant_id=%(tenant_id)s AND user_id=%(share)s) AS share_name" if share else ""}
+                                {",(SELECT name FROM users WHERE tenant_id=%(tenant_id)s AND user_id=%(share)s AND deleted_at ISNULL) AS share_name" if share else ""}
                                 FROM sessions_notes INNER JOIN users USING (user_id)
                                 WHERE sessions_notes.project_id = %(project_id)s
                                   AND sessions_notes.note_id = %(note_id)s
@@ -59,8 +60,8 @@ def get_all_notes_by_project_id(tenant_id, project_id, user_id, data: schemas.Se
         if data.tags and len(data.tags) > 0:
             k = "tag_value"
             conditions.append(
-                sessions._multiple_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
-            extra_params = sessions._multiple_values(data.tags, value_key=k)
+                sh.multi_conditions(f"%({k})s = sessions_notes.tag", data.tags, value_key=k))
+            extra_params = sh.multi_values(data.tags, value_key=k)
         if data.shared_only:
             conditions.append("sessions_notes.is_public AND users.tenant_id = %(tenant_id)s")
         elif data.mine_only:
@@ -170,3 +171,60 @@ def share_to_slack(tenant_id, user_id, project_id, note_id, webhook_id):
         webhook_id=webhook_id,
         body={"blocks": blocks}
     )
+
+
+def share_to_msteams(tenant_id, user_id, project_id, note_id, webhook_id):
+    note = get_note(tenant_id=tenant_id, project_id=project_id, user_id=user_id, note_id=note_id, share=user_id)
+    if note is None:
+        return {"errors": ["Note not found"]}
+    session_url = urljoin(config('SITE_URL'), f"{note['projectId']}/session/{note['sessionId']}?note={note['noteId']}")
+    if note["timestamp"] > 0:
+        session_url += f"&jumpto={note['timestamp']}"
+    title = f"[Note for session {note['sessionId']}]({session_url})"
+
+    blocks = [{
+        "type": "TextBlock",
+        "text": title,
+        "style": "heading",
+        "size": "Large"
+    },
+        {
+            "type": "TextBlock",
+            "spacing": "Small",
+            "text": note["message"]
+        }
+    ]
+    if note["tag"]:
+        blocks.append({"type": "TextBlock",
+                       "spacing": "Small",
+                       "text": f"Tag: *{note['tag']}*",
+                       "size": "Small"})
+    bottom = f"Created by {note['creatorName'].capitalize()}"
+    if user_id != note["userId"]:
+        bottom += f"\nSent by {note['shareName']}: "
+    blocks.append({"type": "TextBlock",
+                   "spacing": "Default",
+                   "text": bottom,
+                   "size": "Small",
+                   "fontType": "Monospace"})
+    return MSTeams.send_raw(
+        tenant_id=tenant_id,
+        webhook_id=webhook_id,
+        body={"type": "message",
+              "attachments": [
+                  {"contentType": "application/vnd.microsoft.card.adaptive",
+                   "contentUrl": None,
+                   "content": {
+                       "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                       "type": "AdaptiveCard",
+                       "version": "1.5",
+                       "body": [{
+                           "type": "ColumnSet",
+                           "style": "emphasis",
+                           "separator": True,
+                           "bleed": True,
+                           "columns": [{"width": "stretch",
+                                        "items": blocks,
+                                        "type": "Column"}]
+                       }]}}
+              ]})

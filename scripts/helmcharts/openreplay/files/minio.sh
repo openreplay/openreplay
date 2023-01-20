@@ -5,7 +5,7 @@ set -e
 
 cd /tmp
 
-buckets=("mobs" "sessions-assets" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data")
+buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets" "quickwit" "vault-data" "records")
 
 
 mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY

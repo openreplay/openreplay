@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, FileResponse
 import schemas
 import schemas_ee
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
-    errors_favorite, sessions_notes
+    errors_favorite, sessions_notes, click_maps
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -64,19 +64,10 @@ def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
     }}
 
 
-@app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
-                                include_gdpr=True)
-    if data is None:
-        return {"errors": ["project not found"]}
-    return {"data": data}
-
-
 @app.post('/integrations/slack', tags=['integrations'])
 @app.put('/integrations/slack', tags=['integrations'])
-def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
-    n = Slack.add_channel(tenant_id=context.tenant_id, url=data.url, name=data.name)
+def add_slack_client(data: schemas.AddCollaborationSchema, context: schemas.CurrentContext = Depends(OR_context)):
+    n = Slack.add(tenant_id=context.tenant_id, data=data)
     if n is None:
         return {
             "errors": ["We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
@@ -85,7 +76,7 @@ def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentConte
 
 
 @app.post('/integrations/slack/{integrationId}', tags=['integrations'])
-def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = Body(...),
+def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
         old = webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)
@@ -159,11 +150,6 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     return {
         "data": sessions.search_by_metadata(tenant_id=context.tenant_id, user_id=context.user_id, m_value=value,
                                             m_key=key, project_id=projectId)}
-
-
-@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
-def get_general_stats():
-    return {"data": {"sessions:": sessions.count_all()}}
 
 
 @app.get('/projects', tags=['projects'])
@@ -266,8 +252,8 @@ def get_live_session(projectId: int, sessionId: str, background_tasks: Backgroun
                      context: schemas_ee.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId, full_data=True,
-                                      include_fav_viewed=True, group_metadata=True, live=False)
+        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId,
+                                      full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
@@ -420,11 +406,19 @@ def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = D
     return data
 
 
-@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
+@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.session_replay)])
 def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
                         context: schemas.CurrentContext = Depends(OR_context)):
     return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
                                          note_id=noteId, webhook_id=webhookId)
+
+
+@app.get('/{projectId}/notes/{noteId}/msteams/{webhookId}', tags=["sessions", "notes"])
+def share_note_to_msteams(projectId: int, noteId: int, webhookId: int,
+                          context: schemas.CurrentContext = Depends(OR_context)):
+    return sessions_notes.share_to_msteams(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                           note_id=noteId, webhook_id=webhookId)
 
 
 @app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
@@ -436,3 +430,8 @@ def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
         return data
     return {'data': data}
 
+
+@app.post('/{projectId}/click_maps/search', tags=["click maps"], dependencies=[OR_scope(Permissions.session_replay)])
+def click_map_search(projectId: int, data: schemas.FlatClickMapSessionsSearch = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": click_maps.search_short_session(user_id=context.user_id, data=data, project_id=projectId)}

@@ -1,7 +1,8 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body, HTTPException
+from fastapi import Depends, Body, HTTPException, Response
+from fastapi.responses import JSONResponse
 from starlette import status
 
 import schemas
@@ -12,6 +13,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, mobile, signup, tenants, boarding, notifications, webhook, users, \
     custom_metrics, saved_search, integrations_global
+from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import helper, captcha
 from or_dependencies import OR_context
@@ -39,13 +41,24 @@ def login(data: schemas.UserLoginSchema = Body(...)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=r["errors"][0]
         )
+
     r["smtp"] = helper.has_smtp()
-    return {
+    content = {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r
         }
     }
+    response = JSONResponse(content=content)
+    response.set_cookie(key="jwt", value=content['jwt'], domain=helper.get_domain(),
+                        expires=config("JWT_EXPIRATION", cast=int))
+    return response
+
+
+@app.get('/logout', tags=["login", "logout"])
+def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
+    response.delete_cookie("jwt")
+    return {"data": "success"}
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
@@ -67,8 +80,8 @@ def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSc
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
-                              schemas.PerformanceEventType, schemas.FetchFilterType,
-                              schemas.GraphqlFilterType, str] = None,
+                  schemas.PerformanceEventType, schemas.FetchFilterType,
+                  schemas.GraphqlFilterType, str] = None,
                   key: str = None, source: str = None, live: bool = False,
                   context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
@@ -104,21 +117,27 @@ def get_integrations_status(projectId: int, context: schemas.CurrentContext = De
     return {"data": data}
 
 
-@app.post('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])
-def integration_notify(projectId: int, integration: str, integrationId: int, source: str, sourceId: str,
+@app.post('/{projectId}/integrations/{integration}/notify/{webhookId}/{source}/{sourceId}', tags=["integrations"])
+def integration_notify(projectId: int, integration: str, webhookId: int, source: str, sourceId: str,
                        data: schemas.IntegrationNotificationSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     comment = None
     if data.comment:
         comment = data.comment
-    if integration == "slack":
-        args = {"tenant_id": context.tenant_id,
-                "user": context.email, "comment": comment, "project_id": projectId,
-                "integration_id": integrationId}
+
+    args = {"tenant_id": context.tenant_id,
+            "user": context.email, "comment": comment, "project_id": projectId,
+            "integration_id": webhookId}
+    if integration == schemas.WebhookType.slack:
         if source == "sessions":
             return Slack.share_session(session_id=sourceId, **args)
         elif source == "errors":
             return Slack.share_error(error_id=sourceId, **args)
+    elif integration == schemas.WebhookType.msteams:
+        if source == "sessions":
+            return MSTeams.share_session(session_id=sourceId, **args)
+        elif source == "errors":
+            return MSTeams.share_error(error_id=sourceId, **args)
     return {"data": None}
 
 
@@ -786,6 +805,15 @@ def create_project(data: schemas.CreateProjectSchema = Body(...),
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
+@app.get('/projects/{projectId}', tags=['projects'])
+def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
+                                include_gdpr=True)
+    if data is None:
+        return {"errors": ["project not found"]}
+    return {"data": data}
+
+
 @app.put('/projects/{projectId}', tags=['projects'])
 def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
@@ -863,17 +891,18 @@ def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR
 
 @app.get('/integrations/slack/channels', tags=["integrations"])
 def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type='slack')}
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.slack)}
 
 
-@app.get('/integrations/slack/{integrationId}', tags=["integrations"])
-def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)}
+@app.get('/integrations/slack/{webhookId}', tags=["integrations"])
+def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": webhook.get_webhook(tenant_id=context.tenant_id, webhook_id=webhookId,
+                                        webhook_type=schemas.WebhookType.slack)}
 
 
-@app.delete('/integrations/slack/{integrationId}', tags=["integrations"])
-def delete_slack_integration(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return webhook.delete(context.tenant_id, integrationId)
+@app.delete('/integrations/slack/{webhookId}', tags=["integrations"])
+def delete_slack_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return webhook.delete(context.tenant_id, webhookId)
 
 
 @app.put('/webhooks', tags=["webhooks"])
@@ -955,6 +984,44 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
             "projects": -1,
         }
     }
+
+
+@app.get('/integrations/msteams/channels', tags=["integrations"])
+def get_msteams_channels(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.msteams)}
+
+
+@app.post('/integrations/msteams', tags=['integrations'])
+def add_msteams_integration(data: schemas.AddCollaborationSchema,
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    n = MSTeams.add(tenant_id=context.tenant_id, data=data)
+    if n is None:
+        return {
+            "errors": [
+                "We couldn't send you a test message on your Microsoft Teams channel. Please verify your webhook url."]
+        }
+    return {"data": n}
+
+
+@app.post('/integrations/msteams/{webhookId}', tags=['integrations'])
+def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSchema = Body(...),
+                             context: schemas.CurrentContext = Depends(OR_context)):
+    if len(data.url) > 0:
+        old = webhook.get_webhook(tenant_id=context.tenant_id, webhook_id=webhookId,
+                                  webhook_type=schemas.WebhookType.msteams)
+        if old["endpoint"] != data.url:
+            if not MSTeams.say_hello(data.url):
+                return {
+                    "errors": [
+                        "We couldn't send you a test message on your Microsoft Teams channel. Please verify your webhook url."]
+                }
+    return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=webhookId,
+                                   changes={"name": data.name, "endpoint": data.url})}
+
+
+@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
+def get_general_stats():
+    return {"data": {"sessions:": sessions.count_all()}}
 
 
 @public_app.get('/', tags=["health"])

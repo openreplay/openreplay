@@ -77,6 +77,13 @@ DROP INDEX IF EXISTS events_common.requests_url_gin_idx2;
 DROP INDEX IF EXISTS events.resources_url_gin_idx;
 DROP INDEX IF EXISTS events.resources_url_idx;
 
+UPDATE metrics
+SET default_config=default_config || '{
+  "col": 4
+}'::jsonb
+WHERE NOT is_predefined
+  AND (metric_type = 'funnel' OR (metric_type = 'table' AND metric_of IN ('SESSIONS', 'js_exception')));
+
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_session_id_status_code_nn_idx ON events_common.requests (session_id, status_code) WHERE status_code IS NOT NULL;

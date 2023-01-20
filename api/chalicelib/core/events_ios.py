@@ -7,8 +7,8 @@ def get_customs_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""\
             SELECT 
                 c.*,
-                '{events.event_type.CUSTOM_IOS.ui_type}' AS type
-            FROM {events.event_type.CUSTOM_IOS.table} AS c
+                '{events.EventType.CUSTOM_IOS.ui_type}' AS type
+            FROM {events.EventType.CUSTOM_IOS.table} AS c
             WHERE 
               c.session_id = %(session_id)s
             ORDER BY c.timestamp;""",
@@ -23,8 +23,8 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 c.*,
-                '{events.event_type.CLICK_IOS.ui_type}' AS type
-            FROM {events.event_type.CLICK_IOS.table} AS c
+                '{events.EventType.CLICK_IOS.ui_type}' AS type
+            FROM {events.EventType.CLICK_IOS.table} AS c
             WHERE 
               c.session_id = %(session_id)s
             ORDER BY c.timestamp;""",
@@ -35,8 +35,8 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 i.*,
-                '{events.event_type.INPUT_IOS.ui_type}' AS type
-            FROM {events.event_type.INPUT_IOS.table} AS i
+                '{events.EventType.INPUT_IOS.ui_type}' AS type
+            FROM {events.EventType.INPUT_IOS.table} AS i
             WHERE 
               i.session_id = %(session_id)s
             ORDER BY i.timestamp;""",
@@ -46,8 +46,8 @@ def get_by_sessionId(session_id, project_id):
         cur.execute(cur.mogrify(f"""
             SELECT 
                 v.*,
-                '{events.event_type.VIEW_IOS.ui_type}' AS type
-            FROM {events.event_type.VIEW_IOS.table} AS v
+                '{events.EventType.VIEW_IOS.ui_type}' AS type
+            FROM {events.EventType.VIEW_IOS.table} AS v
             WHERE 
               v.session_id = %(session_id)s
             ORDER BY v.timestamp;""", {"project_id": project_id, "session_id": session_id}))
@@ -61,7 +61,7 @@ def get_crashes_by_session_id(session_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""
                     SELECT cr.*,uc.*, cr.timestamp - s.start_ts AS time
-                    FROM {events.event_type.ERROR_IOS.table} AS cr INNER JOIN public.crashes_ios AS uc USING (crash_id) INNER JOIN public.sessions AS s USING (session_id)
+                    FROM {events.EventType.ERROR_IOS.table} AS cr INNER JOIN public.crashes_ios AS uc USING (crash_id) INNER JOIN public.sessions AS s USING (session_id)
                     WHERE
                       cr.session_id = %(session_id)s
                     ORDER BY timestamp;""", {"session_id": session_id}))

@@ -3,6 +3,7 @@ import random
 import re
 import string
 from typing import Union
+from urllib.parse import urlparse
 
 from decouple import config
 
@@ -98,7 +99,7 @@ TRACK_TIME = True
 
 def allow_captcha():
     return config("captcha_server", default=None) is not None and config("captcha_key", default=None) is not None \
-           and len(config("captcha_server")) > 0 and len(config("captcha_key")) > 0
+        and len(config("captcha_server")) > 0 and len(config("captcha_key")) > 0
 
 
 def string_to_sql_like(value):
@@ -304,3 +305,10 @@ def __time_value(row):
 
 def is_saml2_available():
     return config("hastSAML2", default=False, cast=bool)
+
+
+def get_domain():
+    _url = config("SITE_URL")
+    if not _url.startswith("http"):
+        _url = "http://" + _url
+    return '.'.join(urlparse(_url).netloc.split(".")[-2:])

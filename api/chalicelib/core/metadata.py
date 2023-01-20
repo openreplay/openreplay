@@ -6,7 +6,7 @@ from chalicelib.utils import pg_client
 MAX_INDEXES = 10
 
 
-def _get_column_names():
+def column_names():
     return [f"metadata_{i}" for i in range(1, MAX_INDEXES + 1)]
 
 
@@ -16,7 +16,7 @@ def get(project_id):
             cur.mogrify(
                 f"""\
             SELECT  
-                {",".join(_get_column_names())}
+                {",".join(column_names())}
             FROM public.projects
             WHERE project_id = %(project_id)s AND deleted_at ISNULL 
             LIMIT 1;""", {"project_id": project_id})
@@ -38,7 +38,7 @@ def get_batch(project_ids):
             cur.mogrify(
                 f"""\
             SELECT  
-                project_id, {",".join(_get_column_names())}
+                project_id, {",".join(column_names())}
             FROM public.projects
             WHERE project_id IN %(project_ids)s 
                 AND deleted_at ISNULL;""", {"project_ids": tuple(project_ids)})
@@ -140,7 +140,7 @@ def add(tenant_id, project_id, new_name):
 def search(tenant_id, project_id, key, value):
     value = value + "%"
     s_query = []
-    for f in _get_column_names():
+    for f in column_names():
         s_query.append(f"CASE WHEN {f}=%(key)s THEN TRUE ELSE FALSE END AS {f}")
 
     with pg_client.PostgresClient() as cur:
@@ -215,7 +215,7 @@ def get_keys_by_projects(project_ids):
             f"""\
             SELECT 
                 project_id,
-                {",".join(_get_column_names())}
+                {",".join(column_names())}
             FROM public.projects
             WHERE project_id IN %(project_ids)s AND deleted_at ISNULL;""",
             {"project_ids": tuple(project_ids)})

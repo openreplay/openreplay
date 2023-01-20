@@ -1,10 +1,11 @@
-from typing import Optional, List, Literal
+from enum import Enum
+from typing import Optional, List, Union, Literal
 
 from pydantic import BaseModel, Field, EmailStr
+from pydantic import root_validator
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
-from enum import Enum
 
 
 class Permissions(str, Enum):
@@ -37,6 +38,23 @@ class SignalsSchema(BaseModel):
     source: str = Field(...)
     category: str = Field(...)
     data: dict = Field(default={})
+
+
+class InsightCategories(str, Enum):
+    errors = "errors"
+    network = "network"
+    rage = "rage"
+    resources = "resources"
+
+
+class GetInsightsSchema(BaseModel):
+    startTimestamp: int = Field(default=TimeUTC.now(-7))
+    endTimestamp: int = Field(default=TimeUTC.now())
+    metricValue: List[InsightCategories] = Field(default=[])
+    series: List[schemas.CardCreateSeriesSchema] = Field(default=[])
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
 
 
 class CreateMemberSchema(schemas.CreateMemberSchema):
@@ -89,3 +107,67 @@ class SessionModel(BaseModel):
     userDeviceType: str
     userAnonymousId: Optional[str]
     metadata: dict = Field(default={})
+
+
+class AssistRecordUpdatePayloadSchema(BaseModel):
+    name: str = Field(..., min_length=1)
+
+
+class AssistRecordPayloadSchema(AssistRecordUpdatePayloadSchema):
+    duration: int = Field(...)
+    session_id: int = Field(...)
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
+
+
+class AssistRecordSavePayloadSchema(AssistRecordPayloadSchema):
+    key: str = Field(...)
+
+
+class AssistRecordSearchPayloadSchema(schemas._PaginatedSchema):
+    limit: int = Field(default=200, gt=0)
+    startDate: int = Field(default=TimeUTC.now(-7))
+    endDate: int = Field(default=TimeUTC.now(1))
+    user_id: Optional[int] = Field(default=None)
+    query: Optional[str] = Field(default=None)
+    order: Literal["asc", "desc"] = Field(default="desc")
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
+
+
+# TODO: move these to schema when Insights is supported on PG
+class MetricOfInsights(str, Enum):
+    issue_categories = "issueCategories"
+
+
+class CreateCardSchema(schemas.CreateCardSchema):
+    metric_of: Union[schemas.MetricOfTimeseries, schemas.MetricOfTable, \
+        schemas.MetricOfErrors, schemas.MetricOfPerformance, \
+        schemas.MetricOfResources, schemas.MetricOfWebVitals, \
+        schemas.MetricOfClickMap, MetricOfInsights] = Field(default=schemas.MetricOfTable.user_id)
+    metric_value: List[Union[schemas.IssueType, InsightCategories]] = Field(default=[])
+
+    @root_validator
+    def restrictions(cls, values):
+        return values
+
+    @root_validator
+    def validator(cls, values):
+        values = super().validator(values)
+        if values.get("metric_type") == schemas.MetricType.insights:
+            assert values.get("view_type") == schemas.MetricOtherViewType.list_chart, \
+                f"viewType must be 'list' for metricOf:{values.get('metric_of')}"
+            assert isinstance(values.get("metric_of"), MetricOfInsights), \
+                f"metricOf must be of type {MetricOfInsights} for metricType:{schemas.MetricType.insights}"
+            if values.get("metric_value") is not None and len(values.get("metric_value")) > 0:
+                for i in values.get("metric_value"):
+                    assert isinstance(i, InsightCategories), \
+                        f"metricValue should be of type [InsightCategories] for metricType:{schemas.MetricType.insights}"
+
+        return values
+
+
+class UpdateCardSchema(CreateCardSchema):
+    series: List[schemas.CardUpdateSeriesSchema] = Field(...)

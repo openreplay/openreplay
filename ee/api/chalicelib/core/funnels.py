@@ -4,8 +4,8 @@ from typing import List
 import chalicelib.utils.helper
 import schemas
 from chalicelib.core import significance
-from chalicelib.utils import dev
 from chalicelib.utils import helper, pg_client
+from chalicelib.utils import sql_helper as sh
 from chalicelib.utils.TimeUTC import TimeUTC
 
 from decouple import config
@@ -46,7 +46,7 @@ def __fix_stages(f_events: List[schemas._SessionSearchEventSchema]):
 
         if not isinstance(e.value, list):
             e.value = [e.value]
-        is_any = sessions._isAny_opreator(e.operator)
+        is_any = sh.isAny_opreator(e.operator)
         if not is_any and isinstance(e.value, list) and len(e.value) == 0:
             continue
         events.append(e)
@@ -163,7 +163,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
 
 
 def get_possible_issue_types(project_id):
-    return [{"type": t, "title": chalicelib.utils.helper.get_issue_title(t)} for t in
+    return [{"type": t, "title": helper.get_issue_title(t)} for t in
             ['click_rage', 'dead_click', 'excessive_scrolling',
              'bad_request', 'missing_resource', 'memory', 'cpu',
              'slow_resource', 'slow_page_load', 'crash', 'custom_event_error',
@@ -260,7 +260,7 @@ def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data: schemas.Fu
 
 
 # def get_top_insights_on_the_fly_widget(project_id, data: schemas.FunnelInsightsPayloadSchema):
-def get_top_insights_on_the_fly_widget(project_id, data: schemas.CustomMetricSeriesFilterSchema):
+def get_top_insights_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema):
     data.events = filter_stages(__parse_events(data.events))
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
@@ -309,7 +309,7 @@ def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSe
 
 
 # def get_issues_on_the_fly_widget(project_id, data: schemas.FunnelSearchPayloadSchema):
-def get_issues_on_the_fly_widget(project_id, data: schemas.CustomMetricSeriesFilterSchema):
+def get_issues_on_the_fly_widget(project_id, data: schemas.CardSeriesFilterSchema):
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
     if len(data.events) < 0:

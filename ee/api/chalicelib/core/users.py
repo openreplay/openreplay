@@ -678,12 +678,12 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
         )
         r = cur.fetchone()
     return r is not None \
-           and r.get("jwt_iat") is not None \
-           and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-                or (jwt_aud.startswith("plugin") \
-                    and (r["changed_at"] is None \
-                         or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-                )
+        and r.get("jwt_iat") is not None \
+        and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
+             or (jwt_aud.startswith("plugin") \
+                 and (r["changed_at"] is None \
+                      or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
+             )
 
 
 def change_jwt_iat(user_id):
@@ -742,9 +742,9 @@ def authenticate(email, password, for_change_password=False):
             return True
         r = helper.dict_to_camel_case(r)
         jwt_iat = change_jwt_iat(r['userId'])
+        iat = TimeUTC.datetime_to_timestamp(jwt_iat)
         return {
-            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                            TimeUTC.datetime_to_timestamp(jwt_iat),
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'], iat=iat,
                                             aud=f"front:{helper.get_stage_name()}"),
             "email": email,
             **r
@@ -776,7 +776,7 @@ def authenticate_sso(email, internal_id, exp=None):
         r = helper.dict_to_camel_case(r)
         jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
         return authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                        jwt_iat, aud=f"front:{helper.get_stage_name()}",
+                                        iat=jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
     return None
 

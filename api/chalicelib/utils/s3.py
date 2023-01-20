@@ -1,9 +1,13 @@
-from botocore.exceptions import ClientError
-from decouple import config
+import hashlib
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
+
 import boto3
 import botocore
 from botocore.client import Config
+from botocore.exceptions import ClientError
+from decouple import config
+from requests.models import PreparedRequest
 
 if not config("S3_HOST", default=False):
     client = boto3.client('s3')
@@ -51,7 +55,7 @@ def get_presigned_url_for_sharing(bucket, expires_in, key, check_exists=False):
     )
 
 
-def get_presigned_url_for_upload(bucket, expires_in, key):
+def get_presigned_url_for_upload_deprecated(bucket, expires_in, key, **args):
     return client.generate_presigned_url(
         'put_object',
         Params={
@@ -60,6 +64,28 @@ def get_presigned_url_for_upload(bucket, expires_in, key):
         },
         ExpiresIn=expires_in
     )
+
+
+
+
+
+def get_presigned_url_for_upload(bucket, expires_in, key, conditions=None, public=False, content_type=None):
+    acl = 'private'
+    if public:
+        acl = 'public-read'
+    fields = {"acl": acl}
+    if content_type:
+        fields["Content-Type"] = content_type
+    url_parts = client.generate_presigned_post(
+        Bucket=bucket,
+        Key=key,
+        ExpiresIn=expires_in,
+        Fields=fields,
+        Conditions=conditions,
+    )
+    req = PreparedRequest()
+    req.prepare_url(f"{url_parts['url']}/{url_parts['fields']['key']}", url_parts['fields'])
+    return req.url
 
 
 def get_file(source_bucket, source_key):
@@ -88,3 +114,13 @@ def schedule_for_deletion(bucket, key):
     s3_object.copy_from(CopySource={'Bucket': bucket, 'Key': key},
                         Expires=datetime.now() + timedelta(days=7),
                         MetadataDirective='REPLACE')
+
+
+def generate_file_key(project_id, key):
+    return f"{project_id}/{hashlib.md5(key.encode()).hexdigest()}"
+
+
+def generate_file_key_from_url(project_id, url):
+    u = urlparse(url)
+    new_url = u.scheme + "://" + u.netloc + u.path
+    return generate_file_key(project_id=project_id, key=new_url)

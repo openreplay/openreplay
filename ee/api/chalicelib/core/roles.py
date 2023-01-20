@@ -119,7 +119,7 @@ def get_role_by_name(tenant_id, name):
         cur.execute(
             cur.mogrify("""SELECT *
                             FROM public.roles
-                            where tenant_id =%(tenant_id)s
+                            WHERE tenant_id =%(tenant_id)s
                                 AND deleted_at IS NULL
                                 AND name ILIKE %(name)s;""",
                         {"tenant_id": tenant_id, "name": name})
