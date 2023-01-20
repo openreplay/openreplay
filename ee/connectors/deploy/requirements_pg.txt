@@ -1,7 +1,7 @@
 certifi==2022.09.24
 chardet==5.0.0
 idna==3.4
-kafka-python==2.0.2
+confluent-kafka
 pandas==1.5.1
 psycopg2-binary==2.9.3
 pytz==2022.6
