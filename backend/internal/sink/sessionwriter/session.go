@@ -1,19 +1,15 @@
 package sessionwriter
 
 import (
-	"encoding/binary"
 	"fmt"
 	"strconv"
 	"sync"
-
-	"openreplay/backend/pkg/messages"
 )
 
 type Session struct {
 	lock    *sync.Mutex
 	dom     *File
 	dev     *File
-	index   []byte
 	updated bool
 }
 
@@ -37,40 +33,22 @@ func NewSession(sessID uint64, workDir string, bufSize int) (*Session, error) {
 		lock:    &sync.Mutex{},
 		dom:     dom,
 		dev:     dev,
-		index:   make([]byte, 8),
 		updated: false,
 	}, nil
 }
 
-func (s *Session) Write(msg messages.Message) error {
+func (s *Session) Write(domBuffer, devBuffer []byte) error {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
-	// Encode message index
-	binary.LittleEndian.PutUint64(s.index, msg.Meta().Index)
-
-	// Write message to dom.mob file
-	if messages.IsDOMType(msg.TypeID()) {
-		// Write message index
-		if err := s.dom.Write(s.index); err != nil {
-			return err
-		}
-		// Write message body
-		if err := s.dom.Write(msg.Encode()); err != nil {
-			return err
-		}
+	// Write dom buffer to the file (file buffer)
+	if err := s.dom.Write(domBuffer); err != nil {
+		return err
 	}
-	s.updated = true
-	// Write message to dev.mob file
-	if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
-		// Write message index
-		if err := s.dev.Write(s.index); err != nil {
-			return err
-		}
-		// Write message body
-		if err := s.dev.Write(msg.Encode()); err != nil {
-			return err
-		}
+
+	// Write dev buffer to the file (file buffer)
+	if err := s.dev.Write(devBuffer); err != nil {
+		return err
 	}
 	return nil
 }
