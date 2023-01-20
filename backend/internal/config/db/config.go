@@ -18,7 +18,7 @@ type Config struct {
 	BatchQueueLimit            int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
 	BatchSizeLimit             int           `env:"DB_BATCH_SIZE_LIMIT,required"`
 	UseQuickwit                bool          `env:"QUICKWIT_ENABLED,default=false"`
-	QuickwitTopic              string        `env:"QUICKWIT_TOPIC,default=quickwit"`
+	QuickwitTopic              string        `env:"QUICKWIT_TOPIC,default=saas-quickwit"`
 	UseProfiler                bool          `env:"PROFILER_ENABLED,default=false"`
 }
 
