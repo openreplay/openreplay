@@ -122,10 +122,7 @@ export default class MessageManager {
     private readonly screen: Screen,
     initialLists?: Partial<InitialLists>
   ) {
-    this.pagesManager = new PagesManager(screen, this.session.isMobile, cssLoading => {
-      screen.displayFrame(!cssLoading)
-      state.update({ cssLoading, ready: !state.get().messagesLoading && !cssLoading })
-    })
+    this.pagesManager = new PagesManager(screen, this.session.isMobile, this.setCSSLoading)
     this.mouseMoveManager = new MouseMoveManager(screen)
 
     this.sessionStart = this.session.startedAt
@@ -140,6 +137,11 @@ export default class MessageManager {
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
 
     void this.loadMessages()
+  }
+
+  private setCSSLoading = (cssLoading: boolean) => {
+    this.screen.displayFrame(!cssLoading)
+    this.state.update({ cssLoading, ready: !this.state.get().messagesLoading && !cssLoading })
   }
 
   private _sortMessagesHack(msgs: Message[]) {
@@ -261,7 +263,7 @@ export default class MessageManager {
 
     this.performanceTrackManager = new PerformanceTrackManager()
     this.windowNodeCounter = new WindowNodeCounter();
-    this.pagesManager = new PagesManager(this.screen, this.session.isMobile, this)
+    this.pagesManager = new PagesManager(this.screen, this.session.isMobile, this.setCSSLoading)
     this.mouseMoveManager = new MouseMoveManager(this.screen);
     this.activityManager = new ActivityManager(this.session.duration.milliseconds);
   }
