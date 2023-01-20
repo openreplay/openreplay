@@ -31,7 +31,7 @@ function exists() {
 }
 
 function err_cd() {
-  cd "$1" || log err not able to cd to "$1"
+  cd "$1" || (log err not able to cd to "$1" && exit 100)
 }
 
 function log () {
@@ -118,14 +118,17 @@ function upgrade() {
   # 2. While install do we have to clone?
   # 3. In upgrade you'll have to clone the repo
   exists git || log err "Git not found. Please install"
+  log info "Working directory $tmp_dir"
   err_cd "$tmp_dir"
   or_version=$(awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
-  [[ -d "$OR_DIR/openreplay" ]] && mv "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version}" 
+  [[ -d "$OR_DIR/openreplay" ]] && sudo cp -b "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
   git clone "${OR_REPO}"
   err_cd openreplay/scripts/helmcharts
+  sudo mv ./openreplay-cli /bin/
+  sudo mv ./vars.yaml "$OR_DIR"
+  log info All the configuration has been stored to $OR_DIR/vars.yaml file
 
   err_cd -
-  sudo mv ./openreplay-cli /bin/
 }
 
 # Ref: https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
@@ -148,8 +151,6 @@ do
     u)
       log info "Upgrading OpenReplay"
       upgrade
-      sudo mv ./vars.yaml "$OR_DIR"
-      log info All the configuration has been stored to $OR_DIR/vars.yaml file
       exit 0
     ;;
     l)
