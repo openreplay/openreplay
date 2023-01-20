@@ -59,11 +59,11 @@ function build_api(){
 check_prereq
 build_api $environment
 echo buil_complete
-IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
-
-[[ $environment == "ee" ]] && {
-  cp ../ee/api/build_crons.sh .
-  IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
-  exit_err $?
-  rm build_crons.sh
-} || true
+#IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
+#
+#[[ $environment == "ee" ]] && {
+#  cp ../ee/api/build_crons.sh .
+#  IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_crons.sh $1
+#  exit_err $?
+#  rm build_crons.sh
+#} || true
