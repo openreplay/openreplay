@@ -20,12 +20,14 @@ def _table_where(table, index, value):
 
 
 def _sum_table_index(table, index):
+    print(f'index {index}')
     s = 0
     count = 0
     for row in table:
         v = row[index]
         if v is None:
             continue
+        print(v)
         s += v
         count += 1
     return s
@@ -213,21 +215,31 @@ def query_most_errors_by_period(project_id, start_time, end_time,
     table_hh1, table_hh2, columns, this_period_errors, last_period_errors = __get_two_values(res, time_index='hh',
                                                                                              name_index='names')
     del res
-
+    print(table_hh1)
+    print('\n')
+    print(table_hh2)
+    print('\n')
     new_errors = [x for x in this_period_errors if x not in last_period_errors]
     common_errors = [x for x in this_period_errors if x not in new_errors]
 
     sessions_idx = columns.index('sessions')
     names_idx = columns.index('names')
+
+    print(_table_where(table_hh1, names_idx, this_period_errors[0]))
+
     percentage_errors = dict()
     total = _sum_table_index(table_hh1, sessions_idx)
     # error_increase = dict()
     new_error_values = dict()
     error_values = dict()
     for n in this_period_errors:
+        if n is None:
+            continue
         percentage_errors[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
-        new_error_values[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), names_idx)
+        new_error_values[n] = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
     for n in common_errors:
+        if n is None:
+            continue
         old_errors = _sum_table_index(_table_where(table_hh2, names_idx, n), names_idx)
         if old_errors == 0:
             continue
