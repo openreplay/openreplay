@@ -68,6 +68,10 @@ jobs:
         run: npx wait-on http://0.0.0.0:3333
       - name: Run visual tests
         run: yarn cy:test
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'Snapshots'
+          path: ./cypress/snapshots/
       - name: Upload Debug
         uses: actions/upload-artifact@v3
         with:
