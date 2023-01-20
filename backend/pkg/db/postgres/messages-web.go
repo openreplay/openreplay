@@ -138,7 +138,7 @@ func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error
 	}
 	return conn.c.Exec(`
 		UPDATE sessions 
-		SET referrer = $1, base_referrer = $2
+		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
 		WHERE session_id = $3 AND referrer IS NULL`,
 		referrer, url.DiscardURLQuery(referrer), sessionID)
 }

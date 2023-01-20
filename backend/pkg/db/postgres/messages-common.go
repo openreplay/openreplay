@@ -37,7 +37,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			$11, $12,
 			$13,
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
-			NULLIF($19, '')
+			NULLIF(LEFT($19, 8000), '')
 		)`,
 		sessionID, s.ProjectID, s.Timestamp,
 		s.UserUUID, s.UserDevice, s.UserDeviceType, s.UserCountry,
@@ -119,7 +119,7 @@ func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index ui
 
 func (conn *Conn) InsertUserID(sessionID uint64, userID string) error {
 	sqlRequest := `
-		UPDATE sessions SET  user_id = $1
+		UPDATE sessions SET  user_id = LEFT($1, 8000)
 		WHERE session_id = $2`
 	conn.batchQueue(sessionID, sqlRequest, userID, sessionID)
 
@@ -141,7 +141,7 @@ func (conn *Conn) InsertUserAnonymousID(sessionID uint64, userAnonymousID string
 
 func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
 	sqlRequest := `
-		UPDATE sessions SET  metadata_%v = $1
+		UPDATE sessions SET  metadata_%v = LEFT($1, 8000)
 		WHERE session_id = $2`
 	return conn.c.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
 }

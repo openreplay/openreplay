@@ -120,7 +120,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.requests, err = NewBulk(conn.c, metrics,
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, duration, success)",
-		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d)",
+		"($%d, $%d, $%d, LEFT($%d, 8000), $%d, $%d)",
 		6, 200)
 	if err != nil {
 		log.Fatalf("can't create requests bulk: %s", err)
@@ -128,7 +128,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.customEvents, err = NewBulk(conn.c, metrics,
 		"events_common.customs",
 		"(session_id, timestamp, seq_index, name, payload)",
-		"($%d, $%d, $%d, left($%d, 2700), $%d)",
+		"($%d, $%d, $%d, LEFT($%d, 2000), $%d)",
 		5, 200)
 	if err != nil {
 		log.Fatalf("can't create customEvents bulk: %s", err)
@@ -138,7 +138,8 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 		"(session_id, message_id, timestamp, referrer, base_referrer, host, path, query, dom_content_loaded_time, "+
 			"load_time, response_end, first_paint_time, first_contentful_paint_time, speed_index, visually_complete, "+
 			"time_to_interactive, response_time, dom_building_time)",
-		"($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
+		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), "+
+			"NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0),"+
 			" NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0), NULLIF($%d, 0))",
 		18, 200)
 	if err != nil {
@@ -147,7 +148,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.webInputEvents, err = NewBulk(conn.c, metrics,
 		"events.inputs",
 		"(session_id, message_id, timestamp, value, label)",
-		"($%d, $%d, $%d, $%d, NULLIF($%d,''))",
+		"($%d, $%d, $%d, LEFT($%d, 2000), NULLIF(LEFT($%d, 2000),''))",
 		5, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
@@ -155,7 +156,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.webGraphQL, err = NewBulk(conn.c, metrics,
 		"events.graphql",
 		"(session_id, timestamp, message_id, name, request_body, response_body)",
-		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d)",
+		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
 		6, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
@@ -203,7 +204,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.webCustomEvents, err = NewBulk(conn.c, metrics,
 		"events_common.customs",
 		"(session_id, seq_index, timestamp, name, payload, level)",
-		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d)",
+		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
 		6, 200)
 	if err != nil {
 		log.Fatalf("can't create webCustomEvents bulk: %s", err)
@@ -211,7 +212,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.webClickEvents, err = NewBulk(conn.c, metrics,
 		"events.clicks",
 		"(session_id, message_id, timestamp, label, selector, url, path)",
-		"($%d, $%d, $%d, NULLIF($%d, ''), $%d, $%d, $%d)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000))",
 		7, 200)
 	if err != nil {
 		log.Fatalf("can't create webClickEvents bulk: %s", err)
@@ -219,7 +220,7 @@ func (conn *Conn) initBulks(metrics *monitoring.Metrics) {
 	conn.webNetworkRequest, err = NewBulk(conn.c, metrics,
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success)",
-		"($%d, $%d, $%d, left($%d, 2700), $%d, $%d, $%d, $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
+		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
 		13, 200)
 	if err != nil {
 		log.Fatalf("can't create webNetworkRequest bulk: %s", err)
