@@ -110,7 +110,7 @@ func (s *Saver) SendToFTS(msg messages.Message, projID uint32) {
 		log.Printf("can't marshal json for quickwit: %s", err)
 	} else {
 		if len(event) > 0 {
-			if err := s.producer.Produce("saas-quickwit", msg.SessionID(), event); err != nil {
+			if err := s.producer.Produce(s.topic, msg.SessionID(), event); err != nil {
 				log.Printf("can't send event to quickwit: %s", err)
 			}
 		}

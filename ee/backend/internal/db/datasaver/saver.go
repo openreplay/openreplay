@@ -12,6 +12,7 @@ type Saver struct {
 	pg       *cache.PGCache
 	ch       clickhouse.Connector
 	producer types.Producer
+	topic    string
 }
 
 func New(pg *cache.PGCache, cfg *db.Config) *Saver {
@@ -20,5 +21,5 @@ func New(pg *cache.PGCache, cfg *db.Config) *Saver {
 		producer = queue.NewProducer(cfg.MessageSizeLimit, true)
 		defer producer.Close(15000)
 	}
-	return &Saver{pg: pg, producer: producer}
+	return &Saver{pg: pg, producer: producer, topic: cfg.QuickwitTopic}
 }
