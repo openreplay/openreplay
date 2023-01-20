@@ -91,15 +91,31 @@ function install_packages() {
 }
 
 function help() {
-  log debug 'USAGE: openreplay -p[ackages]
-                          -u[pgrade]
-                          -i[nstall]
-                          -s[tatus]
-                          -l[ogs] [app name]
-               App Names: alerts assets assist chalice 
-                          db ender frontend heuristics 
-                          http integrations nginx-controller 
-                          peers sink sourcemapreader storage 
+
+echo -e ${BWHITE}
+cat <<"EOF"
+  ___                   ____            _
+ / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
+| | | | '_ \ / _ \ '_ \| |_) / _ \ '_ \| |/ _` | | | |
+| |_| | |_) |  __/ | | |  _ <  __/ |_) | | (_| | |_| |
+ \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
+      |_|                        |_|            |___/
+EOF
+echo -e ${NC}
+
+log info '
+  Usage: openreplay [ -h | --help ]
+                    [ -s | --status ]
+                    [ -i | --install ]
+                    [ -u | --upgrade ]
+                    [ -r | --restart ]
+                    [ -R | --Reload ]
+                    [ -p | --install-packages ]
+                    [ -l | --logs SERVICE ] 
+         Services: alerts assets assist chalice 
+                   db ender frontend heuristics 
+                   http integrations nginx-controller 
+                   peers sink sourcemapreader storage 
     '
   return
 }
@@ -119,7 +135,7 @@ function status() {
   echo "CPU Count: $(nproc)"
   log info Kubernetes
   kubecolor version --short
-  log info Openreplay Components
+  log info Openreplay Component
   kubecolor get po -n "${APP_NS}"
   kubecolor get po -n "${DB_NS}"
   return
@@ -131,17 +147,11 @@ function or_helm_upgrade() {
   if ! helm upgrade --install openreplay ./openreplay -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug  2>&1 | tee -a "${log_file}"; then
     set +o pipefail
     log err "
-      Installation failed.
-      Please ${BWHITE}cat ${log_file}${RED} for more info.
+      Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
 
-      If the log doesn't contain enough info,
-      You can check the status using
+      If logs aren't verbose, run ${BWHITE}openreplay --status${RED}
 
-      ${BWHITE}openreplay -s${RED}
-
-      If any pods are in failed state, please 
-
-      ${BWHITE}openreplay -l <pod-name>${RED}
+      If pods are in failed state, run ${BWHITE}openreplay --logs <pod-name>${RED}
       "
   fi
 
@@ -157,7 +167,10 @@ function upgrade() {
   log info "Working directory $tmp_dir"
   err_cd "$tmp_dir"
   or_version=$(awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+
+  # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -b "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
+
   git clone "${OR_REPO}" --depth 1
   err_cd openreplay/scripts/helmcharts
   install_packages
@@ -174,9 +187,22 @@ function upgrade() {
   busybox sed -i "s/fromVersion.*/fromVersion: ${or_new_version}/" vars.yaml
   sudo mv ./openreplay-cli /bin/
   sudo mv ./vars.yaml "$OR_DIR"
+  sudo cp -rf ../../../openreplay $OR_DIR/
   log info All the configuration has been stored to $OR_DIR/vars.yaml file
 
   err_cd -
+  return
+}
+
+function reload() {
+  err_cd $OR_DIR/openreplay/scripts/helmcharts
+  sudo cp -f $OR_DIR/vars.yaml .
+  or_helm_upgrade
+  return
+}
+
+function clean_tmp_dir() {
+  [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
 }
 
 [[ -f $OR_DIR/packages.lock ]] || {
@@ -184,53 +210,74 @@ function upgrade() {
   install_packages
 }
 
-# Ref: https://stackoverflow.com/questions/16483119/an-example-of-how-to-use-getopts-in-bash
-while getopts piuhsl: flag
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrvpiuhsl: --long reload,restart,verbose,install-packages,install,upgrade,help,status,logs: -- "$@")
+VALID_ARGUMENTS=$?
+if [[ "$VALID_ARGUMENTS" != "0" ]]; then
+  help
+  exit 100
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+while :
 do
-  case "$flag" in
-    p)
-      log title "Installing Packages"
-      install_packages
+  case "$1" in
+    -v | --verbose) VERBOSE=1    ; shift   ;;
+    -h | --help)
+      help 
+      clean_tmp_dir
+      exit 0
+      ;;
+    -u | --upgrade)
+      log title "Upgrading OpenReplay"
+      upgrade
+      clean_tmp_dir
       exit 0
     ;;
-    i)
+    -i | --install)
       log title "Installing OpenReplay"
       sudo cp -f ./openreplay /bin/
       read -rp "Enter your domain name(openreplay.mycompany.com): " domain_name
       DOMAIN_NAME=$domain_name bash init.sh
       sudo cp -f ./vars.yaml "$OR_DIR"
+      clean_tmp_dir
       exit 0
-    ;;
-    u)
-      log title "Upgrading OpenReplay"
-      upgrade
-      log info Cleaning temporary directory
-      [[ -z $SKIP_DELETE_TMP_DIR ]] && rm -rf "${tmp_dir}"
+      ;;
+    -r | --restart)
+      log title "Restarting OpenReplay Components"
+      kubectl rollout restart deployment -n "${APP_NS}"
+      kubectl rollout status deployment -n "${APP_NS}"
+      clean_tmp_dir
       exit 0
-    ;;
-    l)
-      # Skipping double quotes because we want globbing. For example
-      # ./openreplay -l "chalice --tail 10"
-      stern -A --container-state=running,terminated ${OPTARG}
+      ;;
+    -R | --reload)
+      log title "Reloading OpenReplay Components"
+      reload
       exit 0
-    ;;
-    s)
+      ;;
+    -s | --status)
       log title "Checking OpenReplay Components Status"
       status
+      clean_tmp_dir
       exit 0
-    ;;
-    h|*)
+      ;;
+    -l | --logs)
+      # Skipping double quotes because we want globbing. For example
+      # ./openreplay -l "chalice --tail 10"
+      stern -A --container-state=running,terminated $2
+      clean_tmp_dir
+      exit 0
+      ;;
+    # -- means the end of the arguments; drop this, and break out of the while loop
+    --) shift; break ;;
+    # If invalid options were passed, then getopt should have reported an error,
+    # which we checked as VALID_ARGUMENTS when getopt was called...
+    *)
+      echo "Unexpected option: $1 - this should not happen."
       help
-      exit 0
-    ;;
+      clean_tmp_dir
+      ;;
   esac
 done
-shift $((OPTIND-1))
 
 [ $# -eq 0 ] && help
-
-# TODO:
-# 1. reload
-# 2. stop all
-# 3. start all
-# 4. full names
+clean_tmp_dir
