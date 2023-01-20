@@ -16,7 +16,6 @@ tools=(
   zyedidia/eget
   stern/stern
   derailed/k9s
-  mikefarah/yq
   hidetatz/kubecolor
   )
 
@@ -79,8 +78,10 @@ function install_packages() {
 
   for package in "${tools[@]}"; do
     log info Installing "$(awk -F/ '{print $2}' <<< $package)"
-    sudo /var/lib/openreplay/eget -q --upgrade-only --to /var/lib/openreplay "$package"
+    sudo /var/lib/openreplay/eget -q --upgrade-only --to "${OR_DIR}" "$package"
   done
+  log info Installing yq
+  sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" mikefarah/yq --asset=^tar.gz
   log info Installing helm
   sudo /var/lib/openreplay/eget -q --upgrade-only --to "$OR_DIR" https://get.helm.sh/helm-v3.10.2-linux-amd64.tar.gz -f helm
   log info Installing kubectl
