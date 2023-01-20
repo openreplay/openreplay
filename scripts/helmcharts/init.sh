@@ -166,9 +166,9 @@ function main() {
     set_permissions
     install_openreplay
     sudo mkdir -p /var/lib/openreplay
-    sudo cp openreplay-cli /bin/openreplay
+    sudo cp -f openreplay-cli /bin/openreplay
     sudo cp -rf ../../../openreplay /var/lib/openreplay
-    sudo cp vars.yaml /var/lib/openreplay
+    sudo cp -f vars.yaml /var/lib/openreplay
   }
 }
 

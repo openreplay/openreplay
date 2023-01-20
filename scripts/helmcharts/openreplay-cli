@@ -31,7 +31,7 @@ function exists() {
 }
 
 function err_cd() {
-  cd "$1" || (log err not able to cd to "$1" && exit 100)
+  cd "$1" &> /dev/null || (log err not able to cd to "$1" && exit 100)
 }
 
 function log () {
@@ -66,7 +66,7 @@ function install_packages() {
     curl --version &> /dev/null || log err "curl not found. Please install"
     curl https://zyedidia.github.io/eget.sh | sh
     sudo mv eget $OR_DIR
-    cd - || log err "Can't cd to old dir"
+    err_cd -
   }
 
   for package in "${tools[@]}"; do
@@ -115,8 +115,8 @@ function status() {
 function upgrade() {
   # TODO:
   # 1. store vars.yaml in central place.
-  # 2. While install do we have to clone?
   # 3. In upgrade you'll have to clone the repo
+  # TODO: yq merge yaml
   exists git || log err "Git not found. Please install"
   log info "Working directory $tmp_dir"
   err_cd "$tmp_dir"
