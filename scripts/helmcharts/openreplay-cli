@@ -107,7 +107,6 @@ echo -e ${NC}
 log info '
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
-                    [ -i | --install ]
                     [ -u | --upgrade ]
                     [ -r | --restart ]
                     [ -R | --Reload ]
@@ -234,15 +233,6 @@ do
       clean_tmp_dir
       exit 0
     ;;
-    -i | --install)
-      log title "Installing OpenReplay"
-      sudo cp -f ./openreplay /bin/
-      read -rp "Enter your domain name(openreplay.mycompany.com): " domain_name
-      DOMAIN_NAME=$domain_name bash init.sh
-      sudo cp -f ./vars.yaml "$OR_DIR"
-      clean_tmp_dir
-      exit 0
-      ;;
     -r | --restart)
       log title "Restarting OpenReplay Components"
       kubectl rollout restart deployment -n "${APP_NS}"
