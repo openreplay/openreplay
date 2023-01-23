@@ -19,7 +19,7 @@ env:
   CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Visual Testing
     defaults:
       run:
