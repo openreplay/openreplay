@@ -181,4 +181,5 @@ function main() {
 main
 
 info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
-info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay"
+info "You can delete the directory $(echo $(cd ../.. && pwd)). Backup stored in /var/lib/openreplay"
+info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
