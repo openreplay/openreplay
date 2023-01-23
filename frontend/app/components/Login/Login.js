@@ -14,6 +14,7 @@ const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
 const recaptchaRef = React.createRef();
 
+export default
 @connect(
   (state, props) => ({
     errors: state.getIn(['user', 'loginRequest', 'errors']),
@@ -25,7 +26,7 @@ const recaptchaRef = React.createRef();
 )
 @withPageTitle('Login - OpenReplay')
 @withRouter
-export default class Login extends React.Component {
+class Login extends React.Component {
   state = {
     email: '',
     password: '',
@@ -157,25 +158,31 @@ export default class Login extends React.Component {
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
               <div className="mb-4">or</div>
 
-              <div>
+              {authDetails.sso ? (
+                <a href="/api/sso/saml2" rel="noopener noreferrer">
+                  <Button variant="outline" type="submit">
+                    {`Login with SSO ${
+                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+                    }`}
+                  </Button>
+                </a>
+              ) : (
                 <Tooltip
                   delay={0}
-                  disabled={authDetails.sso}
                   title={<div>This feature requires an enterprise license.</div>}
                   placement="top"
-                  // open={true}
                 >
-                  <a
-                    href="/api/sso/saml2"
-                    rel="noopener noreferrer"
-                    className={cn({ 'pointer-events-none opacity-30': !authDetails.sso })}
+                  <Button
+                    variant="outline"
+                    type="submit"
+                    className="pointer-events-none opacity-30"
                   >
-                    <Button variant="outline" type="submit">
-                      {`Login with SSO ${authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''}`}
-                    </Button>
-                  </a>
+                    {`Login with SSO ${
+                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+                    }`}
+                  </Button>
                 </Tooltip>
-              </div>
+              )}
             </div>
           </div>
         </div>
