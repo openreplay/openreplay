@@ -16,11 +16,13 @@ describe('Replayer visual match test', {
     cy.get('.justify-center > .h-10').click()
     cy.wait('@getAccount')
     cy.visit('3/session/7585361734083637?jumpto=5000&freeze=true')
+    cy.wait('@getSession')
     cy.wait(3000)
 
     cy.matchImageSnapshot('1st-breakpoint');
 
     cy.visit('3/session/7585361734083637?jumpto=20000&freeze=true')
+    cy.wait('@getSession')
     // adjusting because we have more messages to load
     cy.wait(4000)
 
