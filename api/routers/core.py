@@ -611,37 +611,6 @@ def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext =
     return alerts.delete(projectId, alertId)
 
 
-@app.post('/{projectId}/funnels', tags=["funnels"])
-def add_funnel(projectId: int, data: schemas.FunnelSchema = Body(...),
-               context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.create(project_id=projectId,
-                          user_id=context.user_id,
-                          name=data.name,
-                          filter=data.filter,
-                          is_public=data.is_public)
-
-
-@app.get('/{projectId}/funnels', tags=["funnels"])
-def get_funnels(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_by_user(project_id=projectId,
-                                        user_id=context.user_id,
-                                        range_value=None,
-                                        start_date=None,
-                                        end_date=None,
-                                        details=False)}
-
-
-@app.get('/{projectId}/funnels/details', tags=["funnels"])
-def get_funnels_with_details(projectId: int, rangeValue: str = None, startDate: int = None, endDate: int = None,
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_by_user(project_id=projectId,
-                                        user_id=context.user_id,
-                                        range_value=rangeValue,
-                                        start_date=startDate,
-                                        end_date=endDate,
-                                        details=True)}
-
-
 @app.get('/{projectId}/funnels/issue_types', tags=["funnels"])
 def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_possible_issue_types(project_id=projectId)}
@@ -701,45 +670,6 @@ def get_funnel_issue_sessions(projectId: int, issueId: str, startDate: int = Non
         "data": {"sessions": sessions.search_by_issue(user_id=context.user_id, project_id=projectId, issue=issue,
                                                       start_date=startDate, end_date=endDate),
                  "issue": issue}}
-
-
-@app.post('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
-def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
-                              data: schemas.FunnelSearchPayloadSchema = Body(...),
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
-                                   funnel_id=funnelId, data=data)
-    if "errors" in data:
-        return data
-    if data.get("issue") is None:
-        data["issue"] = issues.get(project_id=projectId, issue_id=issueId)
-    return {
-        "data": data
-    }
-
-
-@app.get('/{projectId}/funnels/{funnelId}', tags=["funnels"])
-def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = funnels.get(funnel_id=funnelId, project_id=projectId, user_id=context.user_id)
-    if data is None:
-        return {"errors": ["funnel not found"]}
-    return {"data": data}
-
-
-@app.post('/{projectId}/funnels/{funnelId}', tags=["funnels"])
-def edit_funnel(projectId: int, funnelId: int, data: schemas.UpdateFunnelSchema = Body(...),
-                context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.update(funnel_id=funnelId,
-                          user_id=context.user_id,
-                          name=data.name,
-                          filter=data.filter.dict(),
-                          is_public=data.is_public,
-                          project_id=projectId)
-
-
-@app.delete('/{projectId}/funnels/{funnelId}', tags=["funnels"])
-def delete_filter(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.delete(user_id=context.user_id, funnel_id=funnelId, project_id=projectId)
 
 
 @app_apikey.put('/{projectKey}/sourcemaps/', tags=["sourcemaps"])
