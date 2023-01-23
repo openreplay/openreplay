@@ -44,7 +44,7 @@ function DashboardWidgetGrid(props: Props) {
                 There are no cards in this dashboard
               </div>
               <div className="text-base font-normal">
-                Try the most commonly used metrics or graphs to begin.
+                Create a card from any of the below types or pick an existing one from your library.
               </div>
             </div>
             <div className="grid grid-cols-4 p-8 gap-2">

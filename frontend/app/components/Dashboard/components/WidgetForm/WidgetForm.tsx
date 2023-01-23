@@ -179,7 +179,7 @@ function WidgetForm(props: Props) {
         <div className="flex items-center my-6 justify-center">
           <Icon name="info-circle" size="18" color="gray-medium" />
           <div className="ml-2">
-            Filtering or modification of OpenReplay provided metrics isn't supported at the moment.
+            Filtering and drill-downs will be supported soon for this card type.
           </div>
         </div>
       )}

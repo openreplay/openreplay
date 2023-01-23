@@ -35,7 +35,7 @@ export const TYPES: CardType[] = [
   {
     title: 'Add from Library',
     icon: 'grid',
-    description: 'Select a pre existing card from card library',
+    description: 'Select an existing card from your library',
     slug: LIBRARY,
   },
   {
