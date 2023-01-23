@@ -25,6 +25,7 @@ LABEL GIT_SHA=$GIT_SHA
 RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
+ARG SERVICE_NAME
 ENV TZ=UTC \
     GIT_SHA=$GIT_SHA \
     FS_ULIMIT=10000 \
@@ -76,11 +77,11 @@ ENV TZ=UTC \
     USE_FAILOVER=false \
     GROUP_STORAGE_FAILOVER=failover \
     TOPIC_STORAGE_FAILOVER=storage-failover \
+    SERVICE_NAME=$SERVICE_NAME \
     PROFILER_ENABLED=false \
     COMPRESSION_TYPE=zstd
 
 
-ARG SERVICE_NAME
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
   wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi

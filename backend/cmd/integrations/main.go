@@ -27,7 +27,7 @@ func main() {
 		pprof.StartProfilingServer()
 	}
 
-	pg := postgres.NewConn(cfg.PostgresURI, 0, 0, metrics)
+	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0, metrics)
 	defer pg.Close()
 
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
@@ -50,7 +50,7 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	listener, err := postgres.NewIntegrationsListener(cfg.PostgresURI)
+	listener, err := postgres.NewIntegrationsListener(cfg.Postgres.String())
 	if err != nil {
 		log.Printf("Postgres listener error: %v\n", err)
 		log.Fatalf("Postgres listener error")

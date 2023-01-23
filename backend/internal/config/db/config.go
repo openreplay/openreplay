@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	common.Config
-	Postgres                   string        `env:"POSTGRES_STRING,required"`
+	common.Postgres
 	ProjectExpirationTimeoutMs int64         `env:"PROJECT_EXPIRATION_TIMEOUT_MS,default=1200000"`
 	LoggerTimeout              int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
 	GroupDB                    string        `env:"GROUP_DB,required"`

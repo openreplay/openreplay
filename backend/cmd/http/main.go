@@ -31,7 +31,7 @@ func main() {
 	defer producer.Close(15000)
 
 	// Connect to database
-	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), 1000*60*20)
+	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0, metrics), 1000*60*20)
 	defer dbConn.Close()
 
 	// Build all services

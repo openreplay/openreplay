@@ -7,8 +7,8 @@ import (
 
 type Config struct {
 	common.Config
+	common.Postgres
 	TopicAnalytics string `env:"TOPIC_ANALYTICS,required"`
-	PostgresURI    string `env:"POSTGRES_STRING,required"`
 	TokenSecret    string `env:"TOKEN_SECRET,required"`
 	UseProfiler    bool   `env:"PROFILER_ENABLED,default=false"`
 }
