@@ -799,7 +799,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
                 event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
                                                        event.source, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
@@ -837,7 +837,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 e_k += "_custom"
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
                 event_where.append(
-                    sh.multi_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
+                    sh.multi_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator.value} %({e_k})s",
                                         event.source, value_key=e_k))
 
             elif event_type == schemas.EventType.request_details:
