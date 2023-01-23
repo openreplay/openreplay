@@ -20,7 +20,7 @@ function ClickMapCard({
     }
 
     React.useEffect(() => {
-        if (metricStore.instance.data.mobsUrl) {
+        if (metricStore.instance.data.domURL) {
             setCustomSession(metricStore.instance.data)
         }
     }, [metricStore.instance])
@@ -36,7 +36,7 @@ function ClickMapCard({
         }
     }, [visitedEvents, metricStore.clickMapFilter])
 
-    if (!metricStore.instance.data.mobsUrl || insights.size === 0) {
+    if (!metricStore.instance.data.domURL || insights.size === 0) {
         return (
             <div className="py-2">No Data for selected period or URL.</div>
         )
