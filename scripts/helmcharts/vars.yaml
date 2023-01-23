@@ -149,6 +149,7 @@ chalice:
     # idp_sls_url: ''
     # idp_name: ''
     # idp_tenantKey: ''
+    # enforce_SSO: 'false'
 
 # If you want to override something
 # chartname:
