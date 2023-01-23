@@ -54,7 +54,11 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0
 
-  constructor(private store: Store<GetState>, private mm: Moveable) {}
+  constructor(private store: Store<GetState>, private mm: Moveable) {
+
+    // @ts-ignore
+    window.playerJump = this.jump.bind(this)
+  }
 
   private setTime(time: number) {
     this.store.update({
@@ -131,8 +135,8 @@ export default class Animator {
   }
 
   play() {
-    if (this.store.get().freeze) return;
-    if (!this.store.get().ready) {
+    if (this.store.get().freeze) return this.pause()
+    if (this.store.get().ready) {
       cancelAnimationFrame(this.animationFrameRequestId)
       this.store.update({ playing: true })
       this.startAnimation()
@@ -154,7 +158,7 @@ export default class Animator {
       setTimeout(() => {
         this.store.update({ freeze: true })
         this.pause()
-      }, 1000)
+      }, 250)
     } else {
       setTimeout(() => this.freeze(), 500)
     }
