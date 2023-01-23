@@ -43,10 +43,9 @@ kafka: &kafka
   extraEnvVars:
     - name: KAFKA_CFG_REPLICA_FETCH_MAX_BYTES
       value: "3145728"
-    # This value already exist in the kafka values.yaml file, so overriding in top
+    # This value already exists in the kafka values.yaml file, so overriding in top
     # - name: KAFKA_CFG_MESSAGE_MAX_BYTES
     #   value: "3000000"
-
 
 redis: &redis
   # enabled: false
@@ -54,8 +53,7 @@ redis: &redis
   redisPort: "6379"
 
 minio:
-  # If you have extrenal s3 storage, like AWS, or GCP
-  # Disable it.
+  # Disable this if you use an external object storage service (s3)
   enabled: true
   global:
     minio:
@@ -94,7 +92,6 @@ ingress-nginx: &ingress-nginx
       force-ssl-redirect: false
       proxy-body-size: 10m
 
-
 # Application specific variables
 global:
   ingress: *ingress-nginx
@@ -121,6 +118,9 @@ global:
     vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
@@ -133,7 +133,6 @@ global:
     emailSslKey: ''
     emailSslCert: ''
     emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
-
   enterpriseEditionLicense: ""
   domainName: ""
 
@@ -150,7 +149,7 @@ chalice:
     # idp_name: ''
     # idp_tenantKey: ''
 
-# If you want to override something
+# Below is an example on how to override values
 # chartname:
 #   filedFrom chart/Values.yaml:
 #     key: value

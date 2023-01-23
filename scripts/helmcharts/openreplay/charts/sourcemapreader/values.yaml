@@ -95,7 +95,8 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-env: {}
+env:
+  SMR_HOST: 0.0.0.0
 
 nodeSelector: {}
 
