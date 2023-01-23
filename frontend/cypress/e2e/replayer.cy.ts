@@ -20,17 +20,18 @@ describe('Replayer visual match test', {
     cy.visit('3/session/7585361734083637?jumpto=5000&freeze=true')
     cy.wait('@getFirstMob')
     cy.wait('@getSecondMob')
-    cy.wait(4000)
+    cy.wait(2000)
     cy.window().then(win => {
       win.playerJump(5000)
     })
+    cy.wait(4000)
 
     cy.matchImageSnapshot('1st-breakpoint');
 
     cy.window().then(win => {
       win.playerJump(21000)
     })
-    cy.wait(2000)
+    cy.wait(4000)
 
     cy.matchImageSnapshot('2nd-breakpoint');
 
