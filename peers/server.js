@@ -28,7 +28,8 @@ const peerServer = ExpressPeerServer(server, {
     debug: true,
     path: '/',
     proxied: true,
-    allow_discovery: false
+    allow_discovery: false,
+    concurrent_limit: 100000
 });
 peerServer.on('connection', peerConnection);
 peerServer.on('disconnect', peerDisconnect);

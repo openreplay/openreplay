@@ -216,7 +216,7 @@ Pipfile.lock
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
 /chalicelib/core/sessions_assignments.py
-#/chalicelib/core/sessions_metas.py
+#exp /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
 #exp /chalicelib/core/significance.py
 /chalicelib/core/socket_ios.py
