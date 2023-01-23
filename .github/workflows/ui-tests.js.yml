@@ -79,5 +79,5 @@ jobs:
           name: 'Snapshots'
           path: |
             frontend/cypress/snapshots
-            frontend/cypress/video
+            frontend/cypress/videos
             frontend/cypress/screenshots
