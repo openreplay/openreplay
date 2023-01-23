@@ -3,8 +3,9 @@ describe('Replayer visual match test', {
   viewportWidth: 1400,
 }, () => {
   it('Checking Replayer at breakpoints, user events and console', () => {
-    cy.intercept('/api/account').as('getAccount')
-    cy.intercept('/mobs/7585361734083637/*').as('getSession')
+    cy.intercept('**/api/account').as('getAccount')
+    cy.intercept('**/mobs/7585361734083637/dom.mobs?*').as('getFirstMob')
+    cy.intercept('**/mobs/7585361734083637/dom.mobe?*').as('getSecondMob')
 
     cy.visit('/', {
       onBeforeLoad: function (window) {
@@ -16,15 +17,16 @@ describe('Replayer visual match test', {
     cy.get('.justify-center > .h-10').click()
     cy.wait('@getAccount')
     cy.visit('3/session/7585361734083637?jumpto=5000&freeze=true')
-    cy.wait('@getSession')
-    cy.wait(3000)
+    cy.wait('@getFirstMob')
+    cy.wait('@getSecondMob')
+    cy.wait(5000)
 
     cy.matchImageSnapshot('1st-breakpoint');
 
     cy.visit('3/session/7585361734083637?jumpto=20000&freeze=true')
-    cy.wait('@getSession')
-    // adjusting because we have more messages to load
-    cy.wait(4000)
+    cy.wait('@getFirstMob')
+    cy.wait('@getSecondMob')
+    cy.wait(5000)
 
     cy.matchImageSnapshot('2nd-breakpoint');
 
