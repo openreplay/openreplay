@@ -20,7 +20,7 @@ function InsightsCard() {
       case IssueCategory.RESOURCES:
         filter = {
           ...filtersMap[
-            item.name === IssueType.MEMORY ? FilterKey.AVG_MEMORY_USAGE : FilterKey.AVG_CPU
+            item.name === IssueType.MEMORY ? FilterKey.AVG_MEMORY_USAGE : FilterKey.AVG_CPU_LOAD
           ],
         };
         filter.source = [item.oldValue];
