@@ -21,7 +21,7 @@ function Assist(props: Props) {
   const redirect = (path: string) => {
     history.push(withSiteId(path, siteId));
   };
-  if (isEnterprise) {
+  // if (isEnterprise) {
     return (
       <div className="page-margin container-90 flex relative">
         <div className="flex-1 flex">
@@ -39,6 +39,8 @@ function Assist(props: Props) {
               title="Recordings"
               iconName="record-circle"
               onClick={() => redirect(recordings())}
+              disabled={!isEnterprise}
+              tooltipTitle="This feature requires an enterprise license."
             />
           </div>
           <div className="side-menu-margined w-full">
@@ -47,13 +49,13 @@ function Assist(props: Props) {
         </div>
       </div>
     );
-  }
+  // }
 
-  return (
-    <div className="page-margin container-90 flex relative">
-      <AssistRouter />
-    </div>
-  )
+  // return (
+  //   <div className="page-margin container-90 flex relative">
+  //     <AssistRouter />
+  //   </div>
+  // )
 }
 
 const Cont = connect((state: any) => ({

@@ -16,10 +16,8 @@ function DashboardOptions(props: Props) {
         { icon: 'text-paragraph', text: `${!isTitlePresent ? 'Add' : 'Edit'} Description`, onClick: () => editHandler(false) },
         { icon: 'users', text: 'Visibility & Access', onClick: editHandler },
         { icon: 'trash', text: 'Delete', onClick: deleteHandler },
+        { icon: 'pdf-download', text: 'Download Report', onClick: renderReport, disabled: !isEnterprise, tooltipTitle: 'This feature requires an enterprise license.' }
     ]
-    if (isEnterprise) {
-        menuItems.unshift({ icon: 'pdf-download', text: 'Download Report', onClick: renderReport });
-    }
 
     return (
         <ItemMenu

@@ -12,6 +12,7 @@ function SideMenuitem({
     title,
     active = false,
     disabled = false,
+    tooltipTitle = '',
     onClick,
     deleteHandler = null,
     leading = null,
@@ -20,8 +21,8 @@ function SideMenuitem({
   return (
     <Tooltip
       disabled={ !disabled }
-      title={ 'No recordings' }
-      placement="left"
+      title={ tooltipTitle }
+      placement="top"
     >
       <div
           className={ cn(
