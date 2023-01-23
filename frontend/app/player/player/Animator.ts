@@ -154,7 +154,7 @@ export default class Animator {
       setTimeout(() => {
         this.store.update({ freeze: true })
         this.pause()
-      }, 1500)
+      }, 0)
     } else {
       setTimeout(() => this.freeze(), 500)
     }
