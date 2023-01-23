@@ -28,7 +28,7 @@ function StackEventRow(props: Props) {
   return (
     <div
       style={style}
-      data-scroll-item={event.isRed()}
+      data-scroll-item={event.isRed}
       onClick={props.onClick}
       className={cn(
         'group flex items-center py-2 px-4 border-b cursor-pointer relative',

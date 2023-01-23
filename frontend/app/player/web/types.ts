@@ -16,8 +16,8 @@ export interface ILog {
 }
 
 export const Log = (log: ILog) => ({
-  isRed: () => log.level === LogLevel.EXCEPTION || log.level === LogLevel.ERROR,
-  isYellow: () => log.level === LogLevel.WARN,
+  isRed: log.level === LogLevel.EXCEPTION || log.level === LogLevel.ERROR,
+  isYellow: log.level === LogLevel.WARN,
   ...log
 })
 

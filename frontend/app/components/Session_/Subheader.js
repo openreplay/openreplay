@@ -28,7 +28,7 @@ function SubHeader(props) {
   } = store.get()
 
   const mappedResourceList = resourceList
-    .filter((r) => r.isRed() || r.isYellow())
+    .filter((r) => r.isRed || r.isYellow)
     .concat(fetchList.filter((i) => parseInt(i.status) >= 400))
     .concat(graphqlList.filter((i) => parseInt(i.status) >= 400))
 

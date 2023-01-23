@@ -58,7 +58,7 @@ export default class Lists {
     }
     for (const name of MARKED_LIST_NAMES) {
       // TODO: provide types
-      lists[name] = new ListWalkerWithMarks((el) => el.isRed(), initialLists[name]) 
+      lists[name] = new ListWalkerWithMarks((el) => el.isRed, initialLists[name])
     }
     this.lists = lists as ListsObject
   }

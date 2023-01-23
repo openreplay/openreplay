@@ -37,7 +37,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
     const fetchPresented = fetchList.length > 0;
 
     const resourceList = resourceListUnmap
-      .filter((r: any) => r.isRed() || r.isYellow())
+      .filter((r: any) => r.isRed || r.isYellow)
       .concat(fetchList.filter((i: any) => parseInt(i.status) >= 400))
       .concat(graphqlList.filter((i: any) => parseInt(i.status) >= 400))
 

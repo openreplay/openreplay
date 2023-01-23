@@ -28,7 +28,10 @@ export interface INetworkReq extends Item {
 
 export type SubItem = INoteItem | IError | INetworkReq;
 
-const safeStr = (ogStr: string) => (ogStr.length > 60 ? ogStr.slice(0, 60) + '...' : ogStr);
+const safeStr = (ogStr: string) => {
+  if (!ogStr) return ''
+  return (ogStr.length > 80 ? ogStr.slice(0, 80) + '...' : ogStr)
+}
 
 export const NetworkComp = ({ item }: { item: INetworkReq }) => (
   <div className="flex items-start flex-col z-10">

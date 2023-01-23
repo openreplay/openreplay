@@ -11,7 +11,7 @@ export const SUMOLOGIC = 'sumologic';
 
 export const typeList = [OPENREPLAY, SENTRY, DATADOG, STACKDRIVER, ROLLBAR, BUGSNAG, CLOUDWATCH, ELASTICSEARCH, SUMOLOGIC];
 
-export function isRed(event: StackEvent) {
+export function isRed(event: IStackEvent) {
   if (!event.payload) return false;
   switch (event.source) {
     case SENTRY:
@@ -45,7 +45,7 @@ export interface IStackEvent {
   source: any;
   level: string;
 
-  isRed: () => boolean;
+  isRed: boolean;
 }
 
 export default class StackEvent {
@@ -58,13 +58,10 @@ export default class StackEvent {
   level: IStackEvent["level"];
 
   constructor(evt: IStackEvent) {
+    const event = { ...evt, source: evt.source || OPENREPLAY }
     Object.assign(this, {
-      ...evt,
-      source: evt.source || OPENREPLAY
+      ...event,
+      isRed: isRed(event),
     });
-  }
-
-  isRed() {
-    return isRed(this);
   }
 }

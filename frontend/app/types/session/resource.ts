@@ -103,15 +103,9 @@ export default class Resource {
       ttfb: timings && timings.ttfb,
       timewidth: timings && timings.timewidth,
       timings,
+      isRed: !success || resource.score >= RED_BOUND,
+      isYellow: resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
     })
-  }
-
-  isRed() {
-    return !this.success || this.score >= RED_BOUND;
-  }
-
-  isYellow() {
-    return this.score < RED_BOUND && this.score >= YELLOW_BOUND;
   }
 }
 

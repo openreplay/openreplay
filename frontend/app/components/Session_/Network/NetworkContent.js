@@ -134,11 +134,11 @@ export function renderDuration(r) {
   if (!r.success) return 'x';
 
   const text = `${Math.floor(r.duration)}ms`;
-  if (!r.isRed() && !r.isYellow()) return text;
+  if (!r.isRed && !r.isYellow) return text;
 
   let tooltipText;
   let className = 'w-full h-full flex items-center ';
-  if (r.isYellow()) {
+  if (r.isYellow) {
     tooltipText = 'Slower than average';
     className += 'warn color-orange';
   } else {

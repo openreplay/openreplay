@@ -20,7 +20,7 @@ type Durationed = {
 
 type CanBeRed = {
   //+isRed: boolean,
-  isRed: () => boolean;
+  isRed: boolean;
 };
 
 interface Row extends Timed, Durationed, CanBeRed {
@@ -171,7 +171,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         key={key}
         className={cn('border-b border-color-gray-light-shade', stl.row, {
           [stl.hoverable]: hoverable,
-          'error color-red': !!row.isRed && row.isRed(),
+          'error color-red': !!row.isRed && row.isRed,
           'cursor-pointer': typeof onRowClick === 'function',
           [stl.activeRow]: activeIndex === index,
           // [stl.inactiveRow]: !activeIndex || index > activeIndex,
@@ -194,7 +194,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   onPrevClick = () => {
     let prevRedIndex = -1;
     for (let i = this.state.firstVisibleRowIndex - 1; i >= 0; i--) {
-      if (this.props.rows[i].isRed()) {
+      if (this.props.rows[i].isRed) {
         prevRedIndex = i;
         break;
       }
@@ -207,7 +207,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   onNextClick = () => {
     let prevRedIndex = -1;
     for (let i = this.state.firstVisibleRowIndex + 1; i < this.props.rows.length; i++) {
-      if (this.props.rows[i].isRed()) {
+      if (this.props.rows[i].isRed) {
         prevRedIndex = i;
         break;
       }

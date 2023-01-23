@@ -7,9 +7,9 @@ import { filterList, debounce } from 'App/utils';
 import { useStore } from 'App/mstore';
 
 const Titles = {
-  note: 'Note',
-  network: 'Fetch/XHR',
-  error: 'Console Error',
+  note: 'Notes',
+  network: 'Fetch/XHR Errors',
+  error: 'Console Errors',
 };
 const Icons = {
   note: 'quotes' as const,
@@ -171,6 +171,7 @@ function SubModal(props: ModalProps) {
         zIndex: 999,
       }}
     >
+      {/* @ts-ignore */}
       <ModalContent type={props.type} items={items} />
     </div>
   );

@@ -20,7 +20,7 @@ export default class UserEvent extends React.PureComponent {
 
   getLevelClassname() {
     const { userEvent } = this.props;
-    if (userEvent.isRed()) return 'error color-red';
+    if (userEvent.isRed) return 'error color-red';
     return '';
   }
 
@@ -35,7 +35,7 @@ export default class UserEvent extends React.PureComponent {
     message = typeof message === 'string' ? message : JSON.stringify(message);
     return (
       <div
-        data-scroll-item={userEvent.isRed()}
+        data-scroll-item={userEvent.isRed}
         onClick={this.onClickDetails}
         className={cn(
           'group flex items-center py-2 px-4 border-b cursor-pointer relative',

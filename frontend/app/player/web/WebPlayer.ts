@@ -30,12 +30,11 @@ export default class WebPlayer extends Player {
       event: session.events || [],
       stack: session.stackEvents || [],
       resource: session.resources || [], // MBTODO: put ResourceTiming in file
-      exceptions: session.errors?.map(({ time, errorId, name }: any) =>
+      exceptions: session.errors?.map(({ name, ...rest }: any) =>
         Log({
           level: LogLevel.ERROR,
           value: name,
-          time,
-          errorId,
+          ...rest,
         })
       ) || [],
     }
