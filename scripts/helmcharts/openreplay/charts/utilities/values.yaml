@@ -81,7 +81,7 @@ fullnameOverride: "utilities-openreplay"
 
 # 5 3 * * 1 “At 03:05 on Monday.”
 # refer: https://crontab.guru/#5_3_*_*_1
-cron: "5 3 */3 * *"
+cron: "5 3 * * 1"
 
 # Pod configurations
 
