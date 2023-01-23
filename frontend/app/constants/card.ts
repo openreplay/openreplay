@@ -8,6 +8,7 @@ export interface CardType {
   description: string;
   slug: string;
   subTypes?: CardType[];
+  disabled?: boolean;
 }
 
 export const LIBRARY = 'library';
@@ -29,6 +30,7 @@ export interface Option {
   icon: string;
   value: string;
   description: string;
+  disabled?: boolean;
 }
 
 export const TYPES: CardType[] = [
@@ -41,21 +43,21 @@ export const TYPES: CardType[] = [
   {
     title: 'Clickmap',
     icon: 'puzzle-piece',
-    description: 'Track the features that are being used the most.',
+    description: 'See where users click and where they get frustrated.',
     slug: CLICKMAP,
     subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
   },
   {
     title: 'Timeseries',
     icon: 'graph-up',
-    description: 'Trend of sessions count in over the time.',
+    description: 'Combine captured events and filters to track trends over time.',
     slug: TIMESERIES,
     subTypes: [{ title: 'Session Count', slug: 'sessionCount', description: '' }],
   },
   {
     title: 'Table',
     icon: 'list-alt',
-    description: 'See list of Users, Sessions, Errors, Issues, etc.,',
+    description: 'Create custom tables of users, sessions, errors, issues and more.',
     slug: TABLE,
     subTypes: [
       { title: 'Users', slug: FilterKey.USERID, description: '' },
@@ -71,21 +73,21 @@ export const TYPES: CardType[] = [
   {
     title: 'Funnel',
     icon: 'funnel',
-    description: 'Uncover the issues impacting user journeys.',
+    description: 'Find out where users are dropping and understand why.',
     slug: FUNNEL,
   },
   {
-    title: 'Errors Tracking',
+    title: 'Error Tracking',
     icon: 'exclamation-circle',
-    description: 'Discover user journeys between 2 points.',
+    description: 'Track API errors across domains and origins.',
     slug: ERRORS,
     subTypes: [
-      { title: 'Resources by Party', slug: FilterKey.RESOURCES_BY_PARTY, description: '' },
-      { title: 'Errors per Domains', slug: FilterKey.ERRORS_PER_DOMAINS, description: '' },
-      { title: 'Errors per type', slug: FilterKey.ERRORS_PER_TYPE, description: '' },
-      { title: 'Calls Errors', slug: FilterKey.CALLS_ERRORS, description: '' },
-      { title: 'Domains Errors 4xx', slug: FilterKey.DOMAINS_ERRORS_4XX, description: '' },
-      { title: 'Domains Errors 5xx', slug: FilterKey.DOMAINS_ERRORS_5XX, description: '' },
+      { title: 'Errors by Origin', slug: FilterKey.RESOURCES_BY_PARTY, description: '' },
+      { title: 'Errors per Domain', slug: FilterKey.ERRORS_PER_DOMAINS, description: '' },
+      { title: 'Errors by type', slug: FilterKey.ERRORS_PER_TYPE, description: '' },
+      { title: 'Calls with Errors', slug: FilterKey.CALLS_ERRORS, description: '' },
+      { title: 'Top 4xx Domains', slug: FilterKey.DOMAINS_ERRORS_4XX, description: '' },
+      { title: 'Top 5xx Domains', slug: FilterKey.DOMAINS_ERRORS_5XX, description: '' },
       {
         title: 'Impacted Sessions by JS Errors',
         slug: FilterKey.IMPACTED_SESSIONS_BY_JS_ERRORS,
@@ -94,19 +96,19 @@ export const TYPES: CardType[] = [
     ],
   },
   {
-    title: 'Performance Monitoring',
+    title: 'Performance Tracking',
     icon: 'speedometer2',
-    description: 'Retention graph of users / features over a period of time.',
+    description: 'Uncover slowdowns and monitor CPU and memory consumption.',
     slug: PERFORMANCE,
     subTypes: [
-      { title: 'CPU', slug: FilterKey.CPU, description: '' },
+      { title: 'CPU Load', slug: FilterKey.CPU, description: '' },
       { title: 'Crashes', slug: FilterKey.CRASHES, description: '' },
-      { title: 'FPS', slug: FilterKey.FPS, description: '' },
-      { title: 'Pages Dom Build Time', slug: FilterKey.PAGES_DOM_BUILD_TIME, description: '' },
+      { title: 'Frame Rate', slug: FilterKey.FPS, description: '' },
+      { title: 'DOM Building Time', slug: FilterKey.PAGES_DOM_BUILD_TIME, description: '' },
       { title: 'Memory Consumption', slug: FilterKey.MEMORY_CONSUMPTION, description: '' },
-      { title: 'Pages Response Time', slug: FilterKey.PAGES_RESPONSE_TIME, description: '' },
+      { title: 'Page Response Time', slug: FilterKey.PAGES_RESPONSE_TIME, description: '' },
       {
-        title: 'Pages Response Time Distribution',
+        title: 'Page Response Time Distribution',
         slug: FilterKey.PAGES_RESPONSE_TIME_DISTRIBUTION,
         description: '',
       },
@@ -117,10 +119,10 @@ export const TYPES: CardType[] = [
       },
       { title: 'Sessions per Browser', slug: FilterKey.SESSIONS_PER_BROWSER, description: '' },
       { title: 'Slowest Domains', slug: FilterKey.SLOWEST_DOMAINS, description: '' },
-      { title: 'Speed Location', slug: FilterKey.SPEED_LOCATION, description: '' },
+      { title: 'Speed Index by Location', slug: FilterKey.SPEED_LOCATION, description: '' },
       { title: 'Time to Render', slug: FilterKey.TIME_TO_RENDER, description: '' },
       {
-        title: 'Impacted Sessions by Slow Pages',
+        title: 'Sessions Impacted by Slow Pages',
         slug: FilterKey.IMPACTED_SESSIONS_BY_SLOW_PAGES,
         description: '',
       },
@@ -129,7 +131,7 @@ export const TYPES: CardType[] = [
   {
     title: 'Resource Monitoring',
     icon: 'files',
-    description: 'Find the adoption of your all features in your app.',
+    description: 'Identify missing resources and those slowing down your app.',
     slug: RESOURCE_MONITORING,
     subTypes: [
       {
@@ -150,91 +152,69 @@ export const TYPES: CardType[] = [
   {
     title: 'Web Vitals',
     icon: 'activity',
-    description: 'Find the adoption of your all features in your app.',
+    description: 'Keep an eye on your web vitals and how they evolve over time.',
     slug: WEB_VITALS,
     subTypes: [
-      {
-        title: 'CPU Load',
-        slug: FilterKey.AVG_CPU,
-        description: 'Uncover the issues impacting user journeys',
-      },
-      {
-        title: 'DOM Content Loaded',
-        slug: FilterKey.AVG_DOM_CONTENT_LOADED,
-        description: 'Keep a close eye on errors and track their type, origin and domain.',
-      },
+      { title: 'CPU Load', slug: FilterKey.AVG_CPU, description: '' },
+      { title: 'DOM Content Loaded', slug: FilterKey.AVG_DOM_CONTENT_LOADED, description: '' },
       {
         title: 'DOM Content Loaded Start',
         slug: FilterKey.AVG_DOM_CONTENT_LOAD_START,
-        description:
-          'FInd out which resources are missing and those that may be slowign your web app.',
+        description: '',
       },
       {
         title: 'First Meaningful Paint',
         slug: FilterKey.AVG_FIRST_CONTENTFUL_PIXEL,
-        description:
-          "Optimize your app's performance by tracking slow domains, page resposne times, memory consumption, CPU usage and more.",
+        description: '',
       },
-      {
-        title: 'First Paint',
-        slug: FilterKey.AVG_FIRST_PAINT,
-        description:
-          'Find out which resources are missing and those that may be slowing your web app.',
-      },
+      { title: 'First Paint', slug: FilterKey.AVG_FIRST_PAINT, description: '' },
       { title: 'Frame Rate', slug: FilterKey.AVG_FPS, description: '' },
-      {
-        title: 'Image Load Time',
-        slug: FilterKey.AVG_IMAGE_LOAD_TIME,
-        description:
-          'Find out which resources are missing and those that may be slowing your web app.',
-      },
+      { title: 'Image Load Time', slug: FilterKey.AVG_IMAGE_LOAD_TIME, description: '' },
       { title: 'Page Load Time', slug: FilterKey.AVG_PAGE_LOAD_TIME, description: '' },
       { title: 'DOM Build Time', slug: FilterKey.AVG_PAGES_DOM_BUILD_TIME, description: '' },
       { title: 'Pages Response Time', slug: FilterKey.AVG_PAGES_RESPONSE_TIME, description: '' },
       { title: 'Request Load Time', slug: FilterKey.AVG_REQUEST_LOADT_IME, description: '' },
       { title: 'Response Time ', slug: FilterKey.AVG_RESPONSE_TIME, description: '' },
-      { title: 'Session Dueration', slug: FilterKey.AVG_SESSION_DURATION, description: '' },
+      { title: 'Session Duration', slug: FilterKey.AVG_SESSION_DURATION, description: '' },
       { title: 'Time Till First Byte', slug: FilterKey.AVG_TILL_FIRST_BYTE, description: '' },
       { title: 'Time to be Interactive', slug: FilterKey.AVG_TIME_TO_INTERACTIVE, description: '' },
       { title: 'Time to Render', slug: FilterKey.AVG_TIME_TO_RENDER, description: '' },
       { title: 'JS Heap Size', slug: FilterKey.AVG_USED_JS_HEAP_SIZE, description: '' },
       { title: 'Visited Pages', slug: FilterKey.AVG_VISITED_PAGES, description: '' },
-      {
-        title: 'Captured Requests',
-        slug: FilterKey.COUNT_REQUESTS,
-        description: 'Trend of sessions count in over the time.',
-      },
-      {
-        title: 'Captured Sessions',
-        slug: FilterKey.COUNT_SESSIONS,
-        description: 'See list of users, sessions, errors, issues, etc.,',
-      },
+      { title: 'Captured Requests', slug: FilterKey.COUNT_REQUESTS, description: '' },
+      { title: 'Captured Sessions', slug: FilterKey.COUNT_SESSIONS, description: '' },
     ],
   },
   // {
-  //   title: 'User Path',
+  //   title: 'Path Analysis',
   //   icon: 'signpost-split',
-  //   description: 'Discover user journeys between 2 points.',
+  //   description: 'See where users are flowing and explore their journeys.',
   //   slug: USER_PATH,
   // },
   // {
   //   title: 'Retention',
   //   icon: 'arrow-repeat',
-  //   description: 'Retension graph of users / features over a period of time.',
+  //   description: 'Get an understanding of how many users are returning.',
   //   slug: RETENTION,
   // },
   // {
   //   title: 'Feature Adoption',
   //   icon: 'card-checklist',
-  //   description: 'Find the adoption of your all features in your app.',
+  //   description: 'See which features are used the most and how often.',
   //   slug: FEATURE_ADOPTION,
   // },
   {
     title: 'Insights',
     icon: 'lightbulb',
-    description: 'Find the adoption of your all features in your app.',
+    description: 'Uncover new issues impacting user experience.',
     slug: INSIGHTS,
   },
+  // {
+  //   title: 'Form Analysis',
+  //   icon: 'card-checklist',
+  //   description: 'Understand why users are not completing forms.',
+  //   slug: FEATURE_ADOPTION,
+  // },
 ];
 
 export const DROPDOWN_OPTIONS = TYPES.filter((i: MetricType) => i.slug !== LIBRARY).map(

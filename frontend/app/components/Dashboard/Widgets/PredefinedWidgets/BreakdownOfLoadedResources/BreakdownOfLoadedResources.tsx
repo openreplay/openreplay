@@ -19,7 +19,7 @@ function BreakdownOfLoadedResources(props: Props) {
         <NoContent
           size="small"
           title="No data available"
-          show={ metric.data.chart.length === 0 }
+          show={ metric.data.chart && metric.data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">
               <BarChart

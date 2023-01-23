@@ -1,5 +1,5 @@
 import React from 'react';
-import { DROPDOWN_OPTIONS, Option } from 'App/constants/card';
+import { DROPDOWN_OPTIONS, INSIGHTS, Option } from 'App/constants/card';
 import Select from 'Shared/Select';
 import { components } from 'react-select';
 import CustomDropdownOption from 'Shared/CustomDropdownOption';
@@ -7,25 +7,34 @@ import { observer } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { Icon } from 'UI';
-interface Options {
-  label: string;
-  icon: string;
-  value: string;
-  description: string;
-}
+import { connect } from 'react-redux';
 
 interface Props {
   query: Record<string, (key: string) => any>;
   onSelect: (arg: any) => void;
+  isEnterprise?: boolean;
 }
 function MetricTypeDropdown(props: Props) {
+  const { isEnterprise } = props;
   const { metricStore } = useStore();
   const metric: any = metricStore.instance;
 
+  const options = React.useMemo(() => {
+    return DROPDOWN_OPTIONS.map((option: any) => {
+      return {
+        ...option,
+        disabled: !isEnterprise && option.value === INSIGHTS,
+      };
+    });
+  }, []);
+
   React.useEffect(() => {
     const queryCardType = props.query.get('type');
-    if (queryCardType && DROPDOWN_OPTIONS.length > 0 && metric.metricType) {
-      const type: Option = DROPDOWN_OPTIONS.find((i) => i.value === queryCardType) as Option;
+    if (queryCardType && options.length > 0 && metric.metricType) {
+      const type: Option = options.find((i) => i.value === queryCardType) as Option;
+      if (type.disabled) {
+        return;
+      }
       setTimeout(() => onChange(type.value), 0);
     }
   }, []);
@@ -38,7 +47,8 @@ function MetricTypeDropdown(props: Props) {
     <Select
       name="metricType"
       placeholder="Select Card Type"
-      options={DROPDOWN_OPTIONS}
+      options={options}
+      isOptionDisabled={(option: Option) => option.disabled}
       value={
         DROPDOWN_OPTIONS.find((i: any) => i.value === metric.metricType) || DROPDOWN_OPTIONS[0]
       }
@@ -73,4 +83,6 @@ function MetricTypeDropdown(props: Props) {
   );
 }
 
-export default withLocationHandlers()(observer(MetricTypeDropdown));
+export default connect((state: any) => ({
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+}))(withLocationHandlers()(observer(MetricTypeDropdown)));
