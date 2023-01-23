@@ -142,7 +142,7 @@ export default class SessionStore {
         .getSessions(filter.toJson?.() || filter)
         .then((response: any) => {
           resolve({
-            sessions: response.sessions.map((session: any) => new Session().fromJson(session)),
+            sessions: response.sessions.map((session: any) => new Session(session)),
             total: response.total,
           });
         })
