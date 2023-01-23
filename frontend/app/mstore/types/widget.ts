@@ -212,6 +212,8 @@ export default class Widget {
         );
     } else {
       if (data.hasOwnProperty('chart')) {
+        _data['value'] = data.value;
+        _data['unit'] = data.unit;
         _data['chart'] = getChartFormatter(period)(data.chart);
         _data['namesMap'] = data.chart
           .map((i: any) => Object.keys(i))

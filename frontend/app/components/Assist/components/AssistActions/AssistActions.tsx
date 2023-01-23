@@ -181,7 +181,7 @@ function AssistActions({
       )}
 
       {/* @ts-ignore wtf? */}
-      {isEnterprise ? <ScreenRecorder /> : null}
+      <ScreenRecorder />
       <div className={stl.divider} />
 
       {/* @ts-ignore */}

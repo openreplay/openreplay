@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Popover } from 'UI';
+import { Icon, Popover, Tooltip } from 'UI';
 import styles from './itemMenu.module.css';
 import cn from 'classnames';
 
@@ -9,6 +9,7 @@ interface Item {
   onClick: (args: any) => void;
   hidden?: boolean;
   disabled?: boolean;
+  tooltipTitle?: string;
 }
 
 interface Props {
@@ -66,23 +67,25 @@ export default class ItemMenu extends React.PureComponent<Props> {
           >
             {items
               .filter(({ hidden }) => !hidden)
-              .map(({ onClick, text, icon, disabled = false }) => (
-                <div
-                  key={text}
-                  onClick={!disabled ? this.onClick(onClick) : () => {}}
-                  className={disabled ? 'cursor-not-allowed' : ''}
-                  role="menuitem"
-                >
-                  <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
-                    {icon && (
-                      <div className={styles.iconWrapper}>
-                        {/* @ts-ignore */}
-                        <Icon name={icon} size="13" color="gray-dark" />
-                      </div>
-                    )}
-                    <div>{text}</div>
+              .map(({ onClick, text, icon, disabled = false, tooltipTitle = '' }) => (
+                <Tooltip disabled={!disabled} title={tooltipTitle}>
+                  <div
+                    key={text}
+                    onClick={!disabled ? this.onClick(onClick) : () => {}}
+                    className={disabled ? 'cursor-not-allowed' : ''}
+                    role="menuitem"
+                  >
+                    <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
+                      {icon && (
+                        <div className={styles.iconWrapper}>
+                          {/* @ts-ignore */}
+                          <Icon name={icon} size="13" color="gray-dark" />
+                        </div>
+                      )}
+                      <div>{text}</div>
+                    </div>
                   </div>
-                </div>
+                </Tooltip>
               ))}
           </div>
         )}
@@ -90,7 +93,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
         <div
           // onClick={this.toggleMenu}
           className={cn(
-            'flex items-center cursor-pointer select-none hover rounded-full',
+            'flex items-center cursor-pointer select-none hover',
             !this.props.flat ? parentStyles : '',
             { 'bg-gray-light': !this.props.flat && displayed && label }
           )}

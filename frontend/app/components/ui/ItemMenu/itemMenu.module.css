@@ -11,7 +11,7 @@
   }
   width: 36px;
   height: 36px;
-  border-radius: 18px;
+  /* border-radius: 18px; */
   border: 1px solid transparent;
   transition: all 0.2s;
   margin: 0 auto;

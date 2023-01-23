@@ -35,9 +35,11 @@ const supportedMessage = `Supported Browsers: ${supportedBrowsers.join(', ')}`;
 function ScreenRecorder({
   siteId,
   sessionId,
+  isEnterprise,
 }: {
   siteId: string;
   sessionId: string;
+  isEnterprise: boolean;
 }) {
   const { player, store } = React.useContext(PlayerContext)
   const recordingState = store.get().recordingState
@@ -93,11 +95,11 @@ function ScreenRecorder({
     player.assistManager.requestRecording()
   };
 
-  if (!isSupported()) {
+  if (!isSupported() || !isEnterprise) {
     return (
       <div className="p-2">
         {/* @ts-ignore */}
-        <Tooltip title={supportedMessage}>
+        <Tooltip title={isEnterprise ? supportedMessage : 'This feature requires an enterprise license.'}>
           <Button icon="record-circle" disabled variant="text-primary">
             Record Activity
           </Button>
@@ -119,6 +121,7 @@ function ScreenRecorder({
 }
 
 export default connect((state: any) => ({
+    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
     siteId: state.getIn(['site', 'siteId']),
     sessionId: state.getIn(['sessions', 'current']).sessionId,
   }))(observer(ScreenRecorder))

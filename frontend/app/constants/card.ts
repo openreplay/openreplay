@@ -211,24 +211,24 @@ export const TYPES: CardType[] = [
       },
     ],
   },
-  {
-    title: 'User Path',
-    icon: 'signpost-split',
-    description: 'Discover user journeys between 2 points.',
-    slug: USER_PATH,
-  },
-  {
-    title: 'Retention',
-    icon: 'arrow-repeat',
-    description: 'Retension graph of users / features over a period of time.',
-    slug: RETENTION,
-  },
-  {
-    title: 'Feature Adoption',
-    icon: 'card-checklist',
-    description: 'Find the adoption of your all features in your app.',
-    slug: FEATURE_ADOPTION,
-  },
+  // {
+  //   title: 'User Path',
+  //   icon: 'signpost-split',
+  //   description: 'Discover user journeys between 2 points.',
+  //   slug: USER_PATH,
+  // },
+  // {
+  //   title: 'Retention',
+  //   icon: 'arrow-repeat',
+  //   description: 'Retension graph of users / features over a period of time.',
+  //   slug: RETENTION,
+  // },
+  // {
+  //   title: 'Feature Adoption',
+  //   icon: 'card-checklist',
+  //   description: 'Find the adoption of your all features in your app.',
+  //   slug: FEATURE_ADOPTION,
+  // },
   {
     title: 'Insights',
     icon: 'lightbulb',
