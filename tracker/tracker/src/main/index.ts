@@ -50,7 +50,7 @@ export type Options = Partial<
   __DISABLE_SECURE_MODE?: boolean
 }
 
-const DOCS_SETUP = '/installation/setup-or'
+const DOCS_SETUP = '/installation/javascript-sdk'
 
 function processOptions(obj: any): obj is Options {
   if (obj == null) {

@@ -209,8 +209,8 @@ export default class App {
     // === Back compatibility with Fetch/Axios plugins ===
     if (message[0] === MType.Fetch) {
       this._usingOldFetchPlugin = true
-      deprecationWarn('Fetch plugin', "'network' init option")
-      deprecationWarn('Axios plugin', "'network' init option")
+      deprecationWarn('Fetch plugin', "'network' init option", '/installation/network-options')
+      deprecationWarn('Axios plugin', "'network' init option", '/installation/network-options')
     }
     if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
       return

@@ -352,7 +352,7 @@ export default abstract class Observer {
     this.clear()
   }
 
-  // ISSSUE (nodeToBinde should be the same as node. Look at the comment about 0-node at the beginning of the file.)
+  // ISSSUE (nodeToBinde should be the same as node in all cases. Look at the comment about 0-node at the beginning of the file.)
   // TODO: use one observer instance for all iframes/shadowRoots (composition instiad of inheritance)
   protected observeRoot(
     node: Node,
