@@ -66,11 +66,11 @@ jobs:
         run: yarn start &> server.log &
       - name: Wait for frontend
         run: npx wait-on http://0.0.0.0:3333
-      - name: \[Chrome\] Run visual tests
+      - name: [Chrome] Run visual tests
         run: yarn cy:test
-      - name: \[Firefox\] Run visual tests
+      - name: [Firefox] Run visual tests
         run: yarn cy:test-firefox
-      - name: \[Edge\] Run visual tests
+      - name: [Edge] Run visual tests
         run: yarn cy:test-edge
       - name: Upload Debug
         uses: actions/upload-artifact@v3
