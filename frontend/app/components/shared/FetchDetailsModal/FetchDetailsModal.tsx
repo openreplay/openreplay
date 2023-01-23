@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import FetchBasicDetails from './components/FetchBasicDetails';
 import { Button } from 'UI';
-import FetchPluginMessage from './components/FetchPluginMessage';
 import { TYPES } from 'Types/session/resource';
 import FetchTabs from './components/FetchTabs/FetchTabs';
 import { useStore } from 'App/mstore';
@@ -52,7 +51,6 @@ function FetchDetailsModal(props: Props) {
       <h5 className="mb-2 text-2xl">Network Request</h5>
       <FetchBasicDetails resource={resource} timestamp={props.time ? DateTime.fromMillis(props.time).setZone(timezone.value).toFormat(`hh:mm:ss a`) : undefined} />
 
-      {isXHR && !fetchPresented && <FetchPluginMessage />}
       {isXHR && <FetchTabs resource={resource} />}
 
       {rows && rows.length > 0 && (

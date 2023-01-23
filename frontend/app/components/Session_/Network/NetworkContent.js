@@ -76,15 +76,16 @@ const renderXHRText = () => (
     <QuestionMarkHint
       content={
         <>
-          Use our{' '}
+          Configure{' '}
           <a
             className="color-teal underline"
             target="_blank"
-            href="https://docs.openreplay.com/plugins/fetch"
+            href="https://docs.openreplay.com/installation/network-options"
           >
-            Fetch plugin
+            Configure
           </a>
-          {' to capture HTTP requests and responses, including status codes and bodies.'} <br />
+          network capturing
+          {' to see fetch/XHR requests and response payloads.'} <br />
           We also provide{' '}
           <a
             className="color-teal underline"

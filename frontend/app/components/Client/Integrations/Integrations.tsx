@@ -22,9 +22,7 @@ import VueDoc from './VueDoc';
 import GraphQLDoc from './GraphQLDoc';
 import NgRxDoc from './NgRxDoc';
 import MobxDoc from './MobxDoc';
-import FetchDoc from './FetchDoc';
 import ProfilerDoc from './ProfilerDoc';
-import AxiosDoc from './AxiosDoc';
 import AssistDoc from './AssistDoc';
 import { PageTitle } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -170,9 +168,7 @@ const integrations = [
             { title: 'GraphQL', slug: '', icon: 'integrations/graphql', component: <GraphQLDoc /> },
             { title: 'NgRx', slug: '', icon: 'integrations/ngrx', component: <NgRxDoc /> },
             { title: 'MobX', slug: '', icon: 'integrations/mobx', component: <MobxDoc /> },
-            { title: 'Fetch', slug: '', icon: 'integrations/openreplay', component: <FetchDoc /> },
             { title: 'Profiler', slug: '', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
-            { title: 'Axios', slug: '', icon: 'integrations/openreplay', component: <AxiosDoc /> },
             { title: 'Assist', slug: '', icon: 'integrations/openreplay', component: <AssistDoc /> },
             { title: 'Zustand', slug: '', icon: '', header: '🐻', component: <ZustandDoc /> }
         ],

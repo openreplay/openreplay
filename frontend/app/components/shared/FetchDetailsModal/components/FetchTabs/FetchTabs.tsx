@@ -101,7 +101,15 @@ function FetchTabs({ resource }: Props) {
             title={
               <div className="flex flex-col items-center justify-center">
                 <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-                <div className="mt-6 text-2xl">Body is Empty.</div>
+                <div className="mt-6 text-2xl">
+                  Body is Empty.
+                  {' '}
+                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                    Configure
+                  </a>
+                  {' '}
+                  network capturing to get more out of fetch/XHR requests.
+                </div>
               </div>
             }
             size="small"
