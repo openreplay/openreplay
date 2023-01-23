@@ -551,6 +551,8 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
 
     @root_validator(pre=True)
     def transform(cls, values):
+        if values.get("type") is None:
+            return values
         values["type"] = {
             "CLICK": EventType.click.value,
             "INPUT": EventType.input.value,
@@ -634,6 +636,8 @@ class SessionSearchFilterSchema(__MixedSearchFilter):
 
     @root_validator(pre=True)
     def transform(cls, values):
+        if values.get("type") is None:
+            return values
         values["type"] = {
             "USEROS": FilterType.user_os.value,
             "USERBROWSER": FilterType.user_browser.value,
