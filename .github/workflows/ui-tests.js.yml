@@ -78,6 +78,7 @@ jobs:
         with:
           name: 'Snapshots'
           path: |
-            frontend/cypress/snapshots
             frontend/cypress/videos
+            frontend/cypress/snapshots/replayer.cy.ts
             frontend/cypress/screenshots
+            frontend/cypress/snapshots/generalStability.cy.ts
