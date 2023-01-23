@@ -54,7 +54,11 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0
 
-  constructor(private store: Store<GetState>, private mm: Moveable) {}
+  constructor(private store: Store<GetState>, private mm: Moveable) {
+
+    // @ts-ignore
+    window.playerJump = this.jump.bind(this)
+  }
 
   private setTime(time: number) {
     this.store.update({
