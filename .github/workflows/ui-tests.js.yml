@@ -73,6 +73,7 @@ jobs:
       - name: [Edge] Run visual tests
         run: yarn cy:test-edge
       - name: Upload Debug
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v3
         with:
           name: 'Snapshots'
