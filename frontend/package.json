@@ -18,7 +18,9 @@
     "build-storybook": "build-storybook",
     "test": "jest",
     "cy:open": "cypress open",
-    "cy:test": "cypress run --browser chrome"
+    "cy:test": "cypress run --browser chrome",
+    "cy:test-firefox": "cypress run --browser firefox",
+    "cy:test-edge": "cypress run --browser edge"
   },
   "dependencies": {
     "@floating-ui/react-dom-interactions": "^0.10.3",

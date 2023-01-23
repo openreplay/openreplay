@@ -13,7 +13,7 @@ describe('Replayer visual match test', {
     })
     cy.get(':nth-child(1) > .relative > .p-2').type(Cypress.env('account').replaceAll("\"", ''))
     cy.get(':nth-child(2) > .relative > .p-2').type(Cypress.env('password').replaceAll("\"", ''))
-    cy.get('.h-10').click()
+    cy.get('.justify-center > .h-10').click()
     cy.wait('@getAccount')
     cy.visit('3/session/7585361734083637?jumpto=5000&freeze=true')
     cy.wait(3000)
