@@ -1086,39 +1086,6 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
     return results
 
 
-def search_by_issue(user_id, issue, project_id, start_date, end_date):
-    constraints = ["s.project_id = %(projectId)s",
-                   "p_issues.context_string = %(issueContextString)s",
-                   "p_issues.type = %(issueType)s"]
-    if start_date is not None:
-        constraints.append("start_ts >= %(startDate)s")
-    if end_date is not None:
-        constraints.append("start_ts <= %(endDate)s")
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS}
-            FROM public.sessions AS s
-                                INNER JOIN events_common.issues USING (session_id)
-                                INNER JOIN public.issues AS p_issues USING (issue_id)
-                                LEFT JOIN (SELECT user_id, session_id
-                                            FROM public.user_favorite_sessions
-                                            WHERE user_id = %(userId)s) AS favorite_sessions
-                                           USING (session_id)
-            WHERE {" AND ".join(constraints)}
-            ORDER BY s.session_id DESC;""",
-                {
-                    "issueContextString": issue["contextString"],
-                    "issueType": issue["type"], "userId": user_id,
-                    "projectId": project_id,
-                    "startDate": start_date,
-                    "endDate": end_date
-                }))
-
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
-
-
 def get_user_sessions(project_id, user_id, start_date, end_date):
     with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]

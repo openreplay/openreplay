@@ -194,7 +194,7 @@ Pipfile.lock
 /chalicelib/core/errors_favorite.py
 #exp /chalicelib/core/events.py
 /chalicelib/core/events_ios.py
-#exp /chalicelib/core/funnels.py
+/chalicelib/core/funnels.py
 /chalicelib/core/integration_base.py
 /chalicelib/core/integration_base_issue.py
 /chalicelib/core/integration_github.py

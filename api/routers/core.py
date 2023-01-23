@@ -611,67 +611,6 @@ def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext =
     return alerts.delete(projectId, alertId)
 
 
-@app.get('/{projectId}/funnels/issue_types', tags=["funnels"])
-def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_possible_issue_types(project_id=projectId)}
-
-
-@app.get('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
-def get_funnel_insights(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
-                        endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_top_insights(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                    range_value=rangeValue, start_date=startDate, end_date=endDate)
-
-
-@app.post('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
-def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelInsightsPayloadSchema = Body(...),
-                                   context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                               data=data)
-
-
-@app.get('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
-def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
-                      context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_issues(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                              range_value=rangeValue, start_date=startDate, end_date=endDate)
-
-
-@app.post('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
-def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
-                                 context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                                  data=data)}
-
-
-@app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
-def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
-                        endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_sessions(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                         range_value=rangeValue,
-                                         start_date=startDate,
-                                         end_date=endDate)}
-
-
-@app.post('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
-def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
-                                   context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_sessions_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                                    data=data)}
-
-
-@app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
-def get_funnel_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    issue = issues.get(project_id=projectId, issue_id=issueId)
-    if issue is None:
-        return {"errors": ["issue not found"]}
-    return {
-        "data": {"sessions": sessions.search_by_issue(user_id=context.user_id, project_id=projectId, issue=issue,
-                                                      start_date=startDate, end_date=endDate),
-                 "issue": issue}}
-
-
 @app_apikey.put('/{projectKey}/sourcemaps/', tags=["sourcemaps"])
 @app_apikey.put('/{projectKey}/sourcemaps', tags=["sourcemaps"])
 def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
