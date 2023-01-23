@@ -79,7 +79,15 @@ class TrailSearchPayloadSchema(schemas._PaginatedSchema):
     user_id: Optional[int] = Field(default=None)
     query: Optional[str] = Field(default=None)
     action: Optional[str] = Field(default=None)
-    order: Literal["asc", "desc"] = Field(default="desc")
+    order: schemas.SortOrderType = Field(default=schemas.SortOrderType.desc)
+
+    @root_validator(pre=True)
+    def transform_order(cls, values):
+        if values.get("order") is None:
+            values["order"] = schemas.SortOrderType.desc
+        else:
+            values["order"] = values["order"].upper()
+        return values
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
