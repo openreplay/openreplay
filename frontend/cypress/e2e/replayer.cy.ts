@@ -21,6 +21,9 @@ describe('Replayer visual match test', {
     cy.wait('@getFirstMob')
     cy.wait('@getSecondMob')
     cy.wait(4000)
+    cy.window().then(win => {
+      win.playerJump(5000)
+    })
 
     cy.matchImageSnapshot('1st-breakpoint');
 

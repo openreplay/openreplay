@@ -88,7 +88,7 @@ function WebPlayer(props: any) {
         contextValue.player.pause()
         contextValue.player.scaleFullPage()
         setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
-      }, 500)
+      }, 1500)
     }
     return () => {
       isPlayerReady && contextValue.player.showClickmap(null)
