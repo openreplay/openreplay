@@ -16,7 +16,7 @@ describe('Replayer visual match test', {
     cy.get(':nth-child(2) > .relative > .p-2').type(Cypress.env('password').replaceAll("\"", ''))
     cy.get('.justify-center > .h-10').click()
     cy.wait('@getAccount')
-    cy.wait(3000)
+    cy.wait(2000)
     cy.visit('3/session/7585361734083637?jumpto=5000&freeze=true')
     cy.wait('@getFirstMob')
     cy.wait('@getSecondMob')
@@ -24,7 +24,7 @@ describe('Replayer visual match test', {
 
     cy.matchImageSnapshot('1st-breakpoint');
 
-    cy.visit('3/session/7585361734083637?jumpto=20000&freeze=true')
+    cy.visit('3/session/7585361734083637?jumpto=20500&freeze=true')
     cy.wait('@getFirstMob')
     cy.wait('@getSecondMob')
     cy.wait(2000)
