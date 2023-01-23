@@ -49,7 +49,8 @@ function ClickMapCard({
     const jumpToEvent = metricStore.instance.data.events.find((evt: Record<string, any>) => {
         if (searchUrl) return evt.path.includes(searchUrl)
         return evt
-    })
+    }) || { timestamp: metricStore.instance.data.startTs }
+
     const jumpTimestamp = (jumpToEvent.timestamp - metricStore.instance.data.startTs) + jumpToEvent.domBuildingTime
 
     return (

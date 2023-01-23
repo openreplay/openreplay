@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
-import styles from 'Components/Session_/session.module.css';
+import styles from './styles.module.css';
 import Renderer from './Renderer';
 
 function PlayerContent() {
