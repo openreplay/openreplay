@@ -83,7 +83,7 @@ function WidgetSessions(props: Props) {
         } else {
             debounceRequest(widget.metricId, {
                 ...filter,
-                series: widget.series,
+                series: widget.series.map(s => s.toJson()),
                 page: metricStore.sessionsPage,
                 limit: metricStore.sessionsPageSize,
             });
