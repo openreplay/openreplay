@@ -199,7 +199,7 @@ export default class Widget {
   }
 
   setData(data: any, period: any) {
-    const _data: any = {};
+    const _data: any = { ...data };
 
     if (this.metricOf === FilterKey.ERRORS) {
       _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s));
