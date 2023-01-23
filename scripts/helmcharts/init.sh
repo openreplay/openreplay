@@ -1,18 +1,23 @@
 #!/bin/bash
 set -e
 
+# Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No Color
 # --- helper functions for logs ---
 info()
 {
-    echo '[INFO] ' "$@"
+    echo -e "${GREEN}[INFO] " "$@" "$NC"
 }
 warn()
 {
-    echo '[WARN] ' "$@" >&2
+    echo -e "${YELLOW}[INFO] " "$@" "$NC"
 }
 fatal()
 {
-    echo '[ERROR] ' "$@" >&2
+    echo -e "${RED}[INFO] " "$@" "$NC"
     exit 1
 }
 
@@ -173,3 +178,5 @@ function main() {
 }
 
 main
+
+info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
