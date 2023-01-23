@@ -4,7 +4,7 @@ describe('Replayer visual match test', {
 }, () => {
   it('Checking Replayer at breakpoints, user events and console', () => {
     cy.intercept('/api/account').as('getAccount')
-    cy.intercept('/mobs/*').as('getSession')
+    cy.intercept('/mobs/7585361734083637/*').as('getSession')
 
     cy.visit('/', {
       onBeforeLoad: function (window) {
