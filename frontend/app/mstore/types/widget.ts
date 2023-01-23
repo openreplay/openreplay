@@ -37,10 +37,10 @@ export class InishtIssue {
     // @ts-ignore
     this.label = issueCategoriesMap[category];
     this.icon = `ic-${category}`;
-    this.iconColor = 'red';
 
     this.change = parseInt(change.toFixed(2));
     this.isIncreased = this.change > 0;
+    this.iconColor = 'gray-dark';
     this.isNew = isNew;
   }
 }
