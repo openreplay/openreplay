@@ -1,5 +1,5 @@
 # https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
-{{- $kubeTargetVersion := .Capabilities.KubeVersion.Version }}
+{{- $kubeTargetVersion := .Capabilities.KubeVersion.GitVersion }}
 {{- if semverCompare ">=1.22.0-0" $kubeTargetVersion }}
 apiVersion: batch/v1
 {{- else }}
