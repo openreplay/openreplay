@@ -138,14 +138,6 @@ function Controls(props: any) {
     player.jumpInterval(-SKIP_INTERVALS[skipInterval]);
   };
 
-  const renderPlayBtn = () => {
-    const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
-
-    return (
-      <PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />
-    );
-  };
-
   const toggleBottomTools = (blockName: number) => {
     if (blockName === INSPECTOR) {
       // player.toggleInspectorMode(false);
@@ -155,6 +147,8 @@ function Controls(props: any) {
       toggleBottomBlock(blockName);
     }
   };
+
+  const state = completed ? PlayingState.Completed : playing ? PlayingState.Playing : PlayingState.Paused
 
   return (
     <div className={styles.controls}>
@@ -170,7 +164,7 @@ function Controls(props: any) {
               forthTenSeconds={forthTenSeconds}
               toggleSpeed={() => player.toggleSpeed()}
               toggleSkip={() => player.toggleSkip()}
-              playButton={renderPlayBtn()}
+              playButton={<PlayButton state={state} togglePlay={player.togglePlay} iconSize={36} />}
               skipIntervals={SKIP_INTERVALS}
               setSkipInterval={changeSkipInterval}
               currentInterval={skipInterval}

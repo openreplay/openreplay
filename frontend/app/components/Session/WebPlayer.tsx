@@ -72,6 +72,7 @@ function WebPlayer(props: any) {
       WebPlayerInst.jump(parseInt(jumpToTime));
     }
     if (freeze) {
+      console.log(freeze)
       WebPlayerInst.freeze()
     }
 
@@ -82,17 +83,6 @@ function WebPlayer(props: any) {
 
   React.useEffect(() => {
     contextValue.player && contextValue.player.play()
-    if (isClickmap && isPlayerReady && insights.size > 0) {
-      setTimeout(() => {
-        contextValue.player.jump(jumpTimestamp)
-        contextValue.player.pause()
-        contextValue.player.scaleFullPage()
-        setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
-      }, 1500)
-    }
-    return () => {
-      isPlayerReady && contextValue.player.showClickmap(null)
-    }
   }, [insights, isPlayerReady, jumpTimestamp])
 
   // LAYOUT (TODO: local layout state - useContext or something..)

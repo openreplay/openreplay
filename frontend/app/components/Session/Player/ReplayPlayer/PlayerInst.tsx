@@ -55,7 +55,6 @@ function Player(props: IProps) {
     bottomBlock,
     activeTab,
     fullView,
-    isClickmap,
   } = props;
   const playerContext = React.useContext(PlayerContext);
   const isReady = playerContext.store.get().ready
@@ -88,9 +87,9 @@ function Player(props: IProps) {
       data-bottom-block={bottomBlockIsActive}
     >
       {fullscreen && <EscapeButton onClose={fullscreenOff} />}
-      <div className={cn("relative flex-1", isClickmap ? 'overflow-visible' : 'overflow-hidden')}>
-        <Overlay nextId={nextId} isClickmap={isClickmap} />
-        <div className={cn(stl.screenWrapper, isClickmap && '!overflow-y-scroll')} ref={screenWrapper} />
+      <div className={cn("relative flex-1",'overflow-hidden')}>
+        <Overlay nextId={nextId} />
+        <div className={cn(stl.screenWrapper)} ref={screenWrapper} />
       </div>
       {!fullscreen && !!bottomBlock && (
         <div style={{ maxWidth, width: '100%' }}>
@@ -106,7 +105,7 @@ function Player(props: IProps) {
           {bottomBlock === INSPECTOR && <Inspector />}
         </div>
       )}
-      {!fullView && !isClickmap ? (
+      {!fullView ? (
         <Controls
           speedDown={playerContext.player.speedDown}
           speedUp={playerContext.player.speedUp}
