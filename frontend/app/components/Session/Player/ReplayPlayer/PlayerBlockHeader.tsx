@@ -61,7 +61,7 @@ function PlayerBlockHeader(props: any) {
   };
 
   const { sessionId, live, metadata } = session;
-  let _metaList = Object.keys(metadata)
+  let _metaList = Object.keys(metadata || {})
     .filter((i) => metaList.includes(i))
     .map((key) => {
       const value = metadata[key];
