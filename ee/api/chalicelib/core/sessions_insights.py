@@ -167,13 +167,13 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
             if n == n_:
                 if n in new_hosts:
                     data_['value'] = new_duration_values[n]
-                data_['ratio'] = v / total
+                data_['ratio'] = 100 * v / total
                 break
         for n_, v in increase:
             if n == n_:
                 data_['value'] = v[0]
                 data_['oldValue'] = v[1]
-                data_['change'] = v[2]
+                data_['change'] = 100* v[2]
                 data_['isNew'] = False
                 break
         results.append(data_)
@@ -272,13 +272,13 @@ def query_most_errors_by_period(project_id, start_time, end_time,
             if n == n_:
                 if n in new_errors:
                     data_['value'] = new_error_values[n]
-                data_['ratio'] = v / total
+                data_['ratio'] = 100 * v / total
                 break
         for n_, v in increase:
             if n == n_:
                 data_['value'] = v[0]
                 data_['oldValue'] = v[1]
-                data_['change'] = v[2]
+                data_['change'] = 100 * v[2]
                 data_['isNew'] = False
                 break
         results.append(data_)
@@ -332,13 +332,13 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
              'name': 'cpu',
              'value': cpu_newvalue,
              'oldValue': cpu_oldvalue,
-             'change': (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue,
+             'change': 100 * (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue,
              'isNew': None},
             {'category': schemas_ee.InsightCategories.resources,
              'name': 'memory',
              'value': mem_newvalue,
              'oldValue': mem_oldvalue,
-             'change': (mem_newvalue - mem_oldvalue) / mem_oldvalue,
+             'change': 100 * (mem_newvalue - mem_oldvalue) / mem_oldvalue,
              'isNew': None}
             ]
 
@@ -419,13 +419,13 @@ def query_click_rage_by_period(project_id, start_time, end_time,
             if n == n_:
                 if n in new_names:
                     data_['value'] = new_raged_values[n]
-                data_['ratio'] = v / total
+                data_['ratio'] = 100 * v / total
                 break
         for n_, v in increase:
             if n == n_:
                 data_['value'] = v[0]
                 data_['oldValue'] = v[1]
-                data_['change'] = v[2]
+                data_['change'] = 100 * v[2]
                 data_['isNew'] = False
                 break
         results.append(data_)
