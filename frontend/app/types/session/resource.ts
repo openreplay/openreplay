@@ -10,23 +10,13 @@ const MEDIA = 'media' as const;
 const OTHER = 'other' as const;
 
 function getResourceStatus(status: number, success: boolean) {
-  if (status != null) return String(status);
+  if (status !== undefined) return String(status);
   if (typeof success === 'boolean' || typeof success === 'number') {
     return !!success
       ? '2xx-3xx'
       : '4xx-5xx';
   }
   return '2xx-3xx';
-}
-
-function getResourceSuccess(success: boolean, status: number) {
-  if (success != null) {
-    return !!success
-  }
-  if (status != null) {
-    return status < 400
-  }
-  return true
 }
 
 export const TYPES = {
@@ -94,16 +84,18 @@ export default class Resource {
 
   constructor({ status, success, time, datetime, timestamp, timings, ...resource }: IResource) {
 
+    // adjusting for 201, 202 etc
+    const reqSuccess = 300 > status || success
     Object.assign(this, {
       ...resource,
       name: getResourceName(resource.url),
       status: getResourceStatus(status, success),
-      success: getResourceSuccess(success, status),
+      success: reqSuccess,
       time: typeof time === 'number' ? time : datetime || timestamp,
       ttfb: timings && timings.ttfb,
       timewidth: timings && timings.timewidth,
       timings,
-      isRed: !success || resource.score >= RED_BOUND,
+      isRed: !reqSuccess || resource.score >= RED_BOUND,
       isYellow: resource.score < RED_BOUND && resource.score >= YELLOW_BOUND,
     })
   }

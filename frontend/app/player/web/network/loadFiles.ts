@@ -1,31 +1,20 @@
 import APIClient from 'App/api_client';
 
-const NO_FILE_OK = "No-file-but-this-is-ok"
+export const NO_FILE_OK = "No-file-but-this-is-ok"
 const NO_BACKUP_FILE = "No-efs-file"
 
-export const loadFiles = (
+export const loadFiles = async (
   urls: string[],
   onData: (data: Uint8Array) => void,
 ): Promise<void> => {
   if (!urls.length) {
     return Promise.reject("No urls provided")
   }
-  return urls.reduce((p, url, index) =>
-    p.then(() =>
-      window.fetch(url)
-      .then(r => {
-        return processAPIStreamResponse(r, index===0)
-      })
-      .then(onData)
-    ),
-    Promise.resolve(),
-  )
-  .catch(e => {
-    if (e === NO_FILE_OK) {
-      return
-    }
-    throw e
-  })
+  for (let url of urls) {
+    const stream = await window.fetch(url)
+    const data = await processAPIStreamResponse(stream, url === urls[0])
+    onData(data)
+  }
 }
 
 export async function requestEFSDom(sessionId: string) {
@@ -47,8 +36,10 @@ async function requestEFSMobFile(filename: string) {
 
 const processAPIStreamResponse = (response: Response, canBeMissed: boolean) => {
   return new Promise<ArrayBuffer>((res, rej) => {
-    if (response.status === 404 && canBeMissed) {
-      return rej(NO_FILE_OK)
+    if (response.status === 404) {
+      if (canBeMissed) return rej(NO_FILE_OK)
+        // ignoring if 2nd mob file is missing
+      else return;
     }
     if (response.status >= 400) {
       return rej(`Bad file status code ${response.status}. Url: ${response.url}`)

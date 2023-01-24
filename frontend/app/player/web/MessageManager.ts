@@ -30,7 +30,7 @@ import type {
   MouseClick,
 } from './messages';
 
-import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
+import { loadFiles, requestEFSDom, requestEFSDevtools, NO_FILE_OK } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
@@ -220,20 +220,21 @@ export default class MessageManager {
 
     this.waitingForFiles = true
 
-    let fileReadPromise = this.session.domURL && this.session.domURL.length > 0
-      ? loadFiles(this.session.domURL, createNewParser())
-      : Promise.reject()
-    fileReadPromise
+    const loadMethod = this.session.domURL && this.session.domURL.length > 0
+      ? { url: this.session.domURL, parser: createNewParser }
+      : { url: this.session.mobsUrl, parser: () => createNewParser(false)}
+
+    loadFiles(loadMethod.url, loadMethod.parser())
     // EFS fallback
-    .catch(() => requestEFSDom(this.session.sessionId).then(createNewParser(false)))
-    // old url fallback
-    .catch(e => {
-      logger.error('Can not get normal session replay file:', e)
-      // back compat fallback to an old mobsUrl
-      return loadFiles(this.session.mobsUrl, createNewParser(false))
+    .catch((e) => {
+      if (e === NO_FILE_OK) {
+        console.log(e, 'getting unprocessed file')
+        requestEFSDom(this.session.sessionId).then(createNewParser(false))
+      } else {
+        this.onFileReadFailed(e)
+      }
     })
     .then(this.onFileReadSuccess)
-    .catch(this.onFileReadFailed)
     .finally(this.onFileReadFinally)
 
     // load devtools
