@@ -3,9 +3,10 @@ import logging
 
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
+from . import sessions as sessions_legacy
+
 if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
     print(">>> Using experimental sessions search")
-    from . import sessions as sessions_legacy
     from . import sessions_exp as sessions
 else:
     from . import sessions as sessions

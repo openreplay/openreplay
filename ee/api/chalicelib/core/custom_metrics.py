@@ -118,13 +118,14 @@ def __is_click_map(data: schemas_ee.CreateCardSchema):
     return data.metric_type == schemas.MetricType.click_map
 
 
-def __get_click_map_chart(project_id, user_id, data: schemas_ee.CreateCardSchema):
+def __get_click_map_chart(project_id, user_id, data: schemas_ee.CreateCardSchema, include_mobs: bool = True):
     if len(data.series) == 0:
         return None
     data.series[0].filter.startDate = data.startTimestamp
     data.series[0].filter.endDate = data.endTimestamp
     return click_maps.search_short_session(project_id=project_id, user_id=user_id,
-                                           data=schemas.FlatClickMapSessionsSearch(**data.series[0].filter.dict()))
+                                           data=schemas.FlatClickMapSessionsSearch(**data.series[0].filter.dict()),
+                                           include_mobs=include_mobs)
 
 
 # EE only
@@ -279,7 +280,6 @@ def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=Fal
             session_data = json.dumps(__get_click_map_chart(project_id=project_id, user_id=user_id,
                                                             data=data, include_mobs=False))
         _data = {"session_data": session_data}
-        _data = {}
         for i, s in enumerate(data.series):
             for k in s.dict().keys():
                 _data[f"{k}_{i}"] = s.__getattribute__(k)
