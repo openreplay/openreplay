@@ -27,7 +27,7 @@ COALESCE((SELECT TRUE
    AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed """
 
 
-def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, user_id):
+def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, user_id, include_mobs:bool=True):
     no_platform = True
     for f in data.filters:
         if f.type == schemas.FilterType.platform:
@@ -68,8 +68,9 @@ def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, u
 
         session = cur.fetchone()
     if session:
-        session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
-        session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
+        if include_mobs:
+            session['domURL'] = sessions_mobs.get_urls(session_id=session["session_id"], project_id=project_id)
+            session['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session["session_id"])
         session['events'] = events.get_by_session_id(project_id=project_id, session_id=session["session_id"],
                                                      event_type=schemas.EventType.location)
 

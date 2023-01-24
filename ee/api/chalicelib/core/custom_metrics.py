@@ -195,7 +195,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False, include_data=True)
     if raw_metric is None:
         return None
     metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
@@ -203,11 +203,18 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     if metric is None:
         return None
     results = []
+    is_click_map = False
+    if __is_click_map(metric) and raw_metric.get("data") is not None:
+        is_click_map = True
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
+        if is_click_map:
+            results.append(
+                {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
+            break
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -471,10 +478,13 @@ def delete(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
-def get_card(metric_id, project_id, user_id, flatten=True):
+def get_card(metric_id, project_id, user_id, flatten=True, include_data: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """SELECT *, default_config AS config
+            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
+                        view_type, metric_of, metric_value, metric_format, is_pinned, predefined_key, default_config, 
+                        thumbnail, default_config AS config,
+                        series, dashboards, owner_email, {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                             FROM metric_series
@@ -525,7 +535,10 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                                                         AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)"""
         query = cur.mogrify(
-            f"""SELECT *, default_config AS config
+            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
+                        view_type, metric_of, metric_value, metric_format, is_pinned, predefined_key, default_config, 
+                        thumbnail, default_config AS config,
+                        series
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
@@ -682,27 +695,3 @@ PREDEFINED = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_se
 def get_predefined_metric(key: Union[schemas.MetricOfWebVitals, schemas.MetricOfErrors, \
         schemas.MetricOfPerformance, schemas.MetricOfResources], project_id: int, data: dict):
     return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
-
-# def add_thumbnail(metric_id, user_id, project_id):
-#     key = generate_file_key(project_id=project_id, key=f"{metric_id}.png")
-#     params = {"metric_id": metric_id, "user_id": user_id, "project_id": project_id, "key": key}
-#     with pg_client.PostgresClient() as cur:
-#         query = cur.mogrify(f"""\
-#             UPDATE metrics
-#             SET thumbnail_url = %(key)s
-#             WHERE metric_id = %(metric_id)s
-#             AND project_id = %(project_id)s
-#             AND (user_id = %(user_id)s OR is_public)
-#             RETURNING metric_id;""", params)
-#         cur.execute(query)
-#         row = cur.fetchone()
-#         if row is None:
-#             return {"errors": ["Card not found"]}
-#     return {"data": s3.get_presigned_url_for_upload(bucket=config('THUMBNAILS_BUCKET'), expires_in=180, key=key,
-#                                                     # content-length-range is in bytes
-#                                                     conditions=["content-length-range", 1, 1 * 1024 * 1024],
-#                                                     content_type="image/png")}
-#
-#
-# def generate_file_key(project_id, key):
-#     return f"{project_id}/cards/{key}"
