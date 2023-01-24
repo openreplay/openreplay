@@ -176,7 +176,7 @@ function WidgetChart(props: Props) {
         if (metricType === CLICKMAP) {
             if (!props.isPreview) {
                 return (
-                    <div>
+                    <div style={{ height: '229px', overflow:'hidden', marginBottom: '10px'}}>
                         <img src={metric.thumbnail} alt="clickmap thumbnail" />
                     </div>
                 )
