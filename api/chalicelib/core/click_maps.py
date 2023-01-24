@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core import sessions_mobs, sessions as sessions_search, events
+from chalicelib.core import sessions_mobs, sessions_legacy as sessions_search, events
 from chalicelib.utils import pg_client, helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -27,7 +27,7 @@ COALESCE((SELECT TRUE
    AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed """
 
 
-def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, user_id, include_mobs:bool=True):
+def search_short_session(data: schemas.FlatClickMapSessionsSearch, project_id, user_id, include_mobs: bool = True):
     no_platform = True
     for f in data.filters:
         if f.type == schemas.FilterType.platform:
