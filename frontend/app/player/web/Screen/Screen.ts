@@ -217,6 +217,7 @@ export default class Screen {
 
   scaleFullPage() {
     if (!this.parentElement || !this.document) return;
+
     const { width: boxWidth } = this.parentElement.getBoundingClientRect();
     const { height, width } = this.document.body.getBoundingClientRect();
     this.overlay.remove()

@@ -76,8 +76,9 @@ export default class WebPlayer extends Player {
   }
 
   scaleFullPage = () => {
-    window.removeEventListener('resize', this.scale)
-    window.addEventListener('resize', this.screen.scaleFullPage)
+    window.removeEventListener('resize', this.scaleFullPage)
+    window.addEventListener('resize', this.scaleFullPage)
+
     const portHeight = this.screen.scaleFullPage()
     return this.wpState.update({ portHeight })
   }
@@ -115,7 +116,11 @@ export default class WebPlayer extends Player {
 
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
     this.freeze()
-    this.targetMarker.injectTargets(...args)
+    if (this.wpState.get().portHeight !== 0) {
+      this.targetMarker.injectTargets(...args)
+    } else {
+      setTimeout(() => this.showClickmap(...args), 500)
+    }
   }
 
   setMarkerClick = (...args: Parameters<TargetMarker['setOnMarkerClick']>) => {
