@@ -17,6 +17,7 @@ export default class WebPlayer extends Player {
     ...MessageManager.INITIAL_STATE,
 
     inspectorMode: false,
+    portHeight: 0,
   }
 
   private readonly inspectorController: InspectorController
@@ -77,7 +78,8 @@ export default class WebPlayer extends Player {
   scaleFullPage = () => {
     window.removeEventListener('resize', this.scale)
     window.addEventListener('resize', this.screen.scaleFullPage)
-    return this.screen.scaleFullPage()
+    const portHeight = this.screen.scaleFullPage()
+    return this.wpState.update({ portHeight })
   }
 
   // Inspector & marker
@@ -112,24 +114,12 @@ export default class WebPlayer extends Player {
   }
 
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
-    this.pause()
+    this.freeze()
     this.targetMarker.injectTargets(...args)
   }
 
   setMarkerClick = (...args: Parameters<TargetMarker['setOnMarkerClick']>) => {
     this.targetMarker.setOnMarkerClick(...args)
-  }
-
-
-  // TODO separate message receivers
-  toggleTimetravel = async () => {
-    if (!this.wpState.get().liveTimeTravel) {
-      await this.messageManager.reloadWithUnprocessedFile(() =>
-        this.wpState.update({
-          liveTimeTravel: true,
-        })
-      )
-    }
   }
 
   toggleUserName = (name?: string) => {

@@ -1,9 +1,9 @@
 export const clickmapStyles = {
   overlayStyle: ({ height, width, scale }: { height: string, width: string, scale: number }) => ({
-    transform: `scale(${scale})`,
+    transform: `scale(${scale}) translate(-50%, 0)`,
     position: 'absolute',
     top: '0px',
-    left: '0px',
+    left: '50%',
     width,
     height,
     background: 'rgba(0,0,0, 0.15)',

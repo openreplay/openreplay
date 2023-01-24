@@ -78,7 +78,7 @@ export default class Screen {
 
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
-      this.parentElement = undefined
+      this.parentElement = null
       console.error("BaseScreen: Trying to attach an attached screen.");
     }
 
@@ -172,10 +172,6 @@ export default class Screen {
     return this.getElementFromInternalPoint(this.getInternalViewportCoordinates(point));
   }
 
-  getElementsFromPoint(point: Point): Element[] {
-    return this.getElementsFromInternalPoint(this.getInternalViewportCoordinates(point));
-  }
-
   getElementBySelector(selector: string) {
     if (!selector) return null;
     try {
@@ -220,7 +216,7 @@ export default class Screen {
   }
 
   scaleFullPage() {
-    if (!this.parentElement) return;
+    if (!this.parentElement || !this.document) return;
     const { width: boxWidth } = this.parentElement.getBoundingClientRect();
     const { height, width } = this.document.body.getBoundingClientRect();
     this.overlay.remove()
@@ -234,15 +230,17 @@ export default class Screen {
 
     Object.assign(this.screen.style, {
       top: '0',
-      left: '0',
+      left: '50%',
       height: height + 'px',
       width: width + 'px',
-      transform: `scale(${this.scaleRatio})`,
+      transform: `scale(${this.scaleRatio}) translate(-50%, 0)`,
     })
     Object.assign(this.iframe.style, {
       width: width + 'px',
       height: height + 'px',
     })
+
+    return height
   }
 
 }
