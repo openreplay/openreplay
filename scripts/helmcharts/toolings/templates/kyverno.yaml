@@ -2,6 +2,10 @@ apiVersion: kyverno.io/v1
 kind: Policy
 metadata:
   name: cosign
+  namespace: "{{ .Release.Namespace }}"
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "4" # Higher precidence, so the first the config map will get created.
 spec:
   validationFailureAction: enforce
   background: false

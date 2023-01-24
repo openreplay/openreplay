@@ -1,0 +1,13 @@
+{{- if .Values.grafana.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kyverno.configMapName" . }}-grafana
+  namespace: {{ default (include "kyverno.namespace" .) .Values.grafana.namespace }}
+  annotations:
+    {{- toYaml .Values.grafana.annotations | nindent 4 }}
+  labels:
+    grafana_dashboard: "1"
+data:
+{{ (.Files.Glob "grafana/*").AsConfig | indent 2 }}
+{{- end -}}

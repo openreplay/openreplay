@@ -1,0 +1,3 @@
+kyverno:
+  fullnameOverride: kyverno
+  excludeKyvernoNamespace: false

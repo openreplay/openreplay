@@ -4,6 +4,10 @@ kind: ConfigMap
 metadata:
   labels: {{ include "kyverno.labels" . | nindent 4 }}
     app: kyverno
+  {{- with .Values.config.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   name: {{ template "kyverno.configMapName" . }}
   namespace: {{ template "kyverno.namespace" . }}
 data:

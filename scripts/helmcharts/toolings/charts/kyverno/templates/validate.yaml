@@ -7,3 +7,7 @@
     {{ fail "Kyverno does not support running with 2 replicas. For a highly-available deployment, select 3 replicas or for standalone select 1 replica." }}
   {{- end }}
 {{- end }}
+
+{{- if eq (include "kyverno.namespace" .) "kube-system" }}
+    {{ fail "Kyverno cannot be installed in namespace kube-system." }}
+{{- end }}
