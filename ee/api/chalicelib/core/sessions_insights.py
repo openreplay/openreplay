@@ -1,5 +1,7 @@
-import schemas, schemas_ee
-from typing import List, Optional
+from typing import Optional
+
+import schemas
+import schemas_ee
 from chalicelib.core import metrics
 from chalicelib.utils import ch_client
 

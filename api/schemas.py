@@ -92,7 +92,19 @@ class CreateNotificationSchema(BaseModel):
     notifications: List = Field(...)
 
 
-class NotificationsViewSchema(BaseModel):
+class _TimedSchema(BaseModel):
+    startTimestamp: int = Field(default=None)
+    endTimestamp: int = Field(default=None)
+
+    @root_validator
+    def time_validator(cls, values):
+        if values.get("startTimestamp") is not None and values.get("endTimestamp") is not None:
+            assert values.get("startTimestamp") < values.get("endTimestamp"), \
+                "endTimestamp must be greater than startTimestamp"
+        return values
+
+
+class NotificationsViewSchema(_TimedSchema):
     ids: Optional[List] = Field(default=[])
     startTimestamp: Optional[int] = Field(default=None)
     endTimestamp: Optional[int] = Field(default=None)
@@ -816,7 +828,7 @@ class SearchErrorsSchema(FlatSessionsSearchPayloadSchema):
     query: Optional[str] = Field(default=None)
 
 
-class MetricPayloadSchema(BaseModel):
+class MetricPayloadSchema(_TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(delta_days=-1))
     endTimestamp: int = Field(TimeUTC.now())
     density: int = Field(7)
@@ -967,7 +979,7 @@ class MetricOfClickMap(str, Enum):
     click_map_url = "clickMapUrl"
 
 
-class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema):
+class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema,_TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
     series: List[CardCreateSeriesSchema] = Field(default=[])
