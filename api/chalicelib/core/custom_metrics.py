@@ -457,7 +457,7 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
-                        view_type, metric_of, metric_value, metric_format, is_pinned, predefined_key, default_config, 
+                        view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
                         thumbnail, default_config AS config,
                         series, dashboards, owner_email {',data' if include_data else ''}
                 FROM metrics
@@ -511,7 +511,7 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                                                 ) AS connected_dashboards ON (TRUE)"""
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
-                        view_type, metric_of, metric_value, metric_format, is_pinned, predefined_key, default_config, 
+                        view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
                         thumbnail, default_config AS config,
                         series
                     FROM metrics

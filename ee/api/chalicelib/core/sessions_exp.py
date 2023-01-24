@@ -1064,7 +1064,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
-                            _multiple_conditions(f"main.status {f.operator} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.status {f.operator.value} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
@@ -1075,7 +1075,7 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.duration {f.operator.value} %({e_k_f})s", f.value, value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType._request_body:

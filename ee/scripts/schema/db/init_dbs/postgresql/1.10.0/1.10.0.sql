@@ -91,6 +91,7 @@ $$
             ALTER TABLE IF EXISTS metrics
                 DROP COLUMN IF EXISTS active,
                 DROP COLUMN IF EXISTS is_predefined,
+                DROP COLUMN IF EXISTS predefined_key,
                 DROP COLUMN IF EXISTS is_template,
                 DROP COLUMN IF EXISTS category,
                 DROP COLUMN IF EXISTS o_metric_id,
@@ -131,6 +132,7 @@ DROP INDEX IF EXISTS public.sessions_user_country_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_browser_gin_idx;
 DROP INDEX IF EXISTS public.sessions_user_os_gin_idx;
 DROP INDEX IF EXISTS public.issues_context_string_gin_idx;
+
 
 ALTER TABLE IF EXISTS projects
     ADD COLUMN IF NOT EXISTS beacon_size integer NOT NULL DEFAULT 0;
@@ -323,7 +325,6 @@ $$
     END ;
 $$
 LANGUAGE plpgsql;
-
 
 DROP FUNCTION get_new_filter_key;
 DROP FUNCTION get_new_event_filter_key;
