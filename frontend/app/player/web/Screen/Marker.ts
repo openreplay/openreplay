@@ -1,12 +1,27 @@
 import type Screen from './Screen'
 import styles from './marker.module.css';
 
-function escapeRegExp(string: string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const metaCharsMap = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '/': '&#x2F;',
+  '`': '&#x60;',
+  '=': '&#x3D;'
+};
+
+function escapeHtml(str: string) {
+  return String(str).replace(/[&<>"'`=\/]/g, function (s) {
+    // @ts-ignore
+    return metaCharsMap[s];
+  });
 }
 
-function escapeHtml(string: string) {
-  return string.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 function safeString(string: string) {
