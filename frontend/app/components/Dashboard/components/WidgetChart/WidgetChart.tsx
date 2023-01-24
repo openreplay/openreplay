@@ -187,7 +187,7 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === INSIGHTS) {
-            return <InsightsCard />
+            return <InsightsCard data={data} />
         }
 
         return <div>Unknown metric type</div>;

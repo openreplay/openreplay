@@ -243,6 +243,7 @@ export default class Widget {
     }
 
     this.data = _data;
+    return _data;
   }
 
   fetchSessions(metricId: any, filter: any): Promise<any> {

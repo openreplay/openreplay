@@ -415,8 +415,7 @@ export default class DashboardStore {
       return metricService
         .getMetricChartData(metric, params, isWidget)
         .then((data: any) => {
-          metric.setData(data, period);
-          resolve(metric.data);
+          resolve(metric.setData(data, period));
         })
         .catch((err: any) => {
           reject(err);

@@ -8,11 +8,9 @@ import { InishtIssue } from 'App/mstore/types/widget';
 import { FilterKey, IssueCategory, IssueType } from 'App/types/filter/filterType';
 import { filtersMap } from 'Types/filter/newFilter';
 
-function InsightsCard() {
-  const { metricStore, dashboardStore } = useStore();
-  const metric = metricStore.instance;
+function InsightsCard({ data }: any) {
+  const { dashboardStore } = useStore();
   const drillDownFilter = dashboardStore.drillDownFilter;
-  const period = dashboardStore.period;
 
   const clickHanddler = (e: React.MouseEvent<HTMLDivElement>, item: InishtIssue) => {
     let filter: any = {};
@@ -63,13 +61,13 @@ function InsightsCard() {
 
   return (
     <NoContent
-      show={metric.data.issues && metric.data.issues.length === 0}
+      show={data.issues && data.issues.length === 0}
       title={NO_METRIC_DATA}
       style={{ padding: '100px 0' }}
     >
       <div className="overflow-y-auto" style={{ maxHeight: '240px' }}>
-        {metric.data.issues &&
-          metric.data.issues.map((item: any) => (
+        {data.issues &&
+          data.issues.map((item: any) => (
             <InsightItem item={item} onClick={(e) => clickHanddler(e, item)} />
           ))}
       </div>
