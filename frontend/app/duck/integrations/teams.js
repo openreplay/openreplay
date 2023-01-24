@@ -41,6 +41,7 @@ export default withRequestState(
     {
         fetchRequest: FETCH_LIST,
         saveRequest: SAVE,
+        updateRequest: UPDATE,
         removeRequest: REMOVE,
     },
     reducer
@@ -63,7 +64,7 @@ export function save(instance) {
 export function update(instance) {
     return {
         types: UPDATE.toArray(),
-        call: (client) => client.put(`/integrations/msteams/${instance.webhookId}`, instance.toData()),
+        call: (client) => client.post(`/integrations/msteams/${instance.webhookId}`, instance.toData()),
     };
 }
 

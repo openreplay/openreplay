@@ -42,7 +42,8 @@ class TeamsAddForm extends React.PureComponent<Props> {
     }
   };
 
-  write = ({ target: { name, value } }: { target: { name: string, value: string }}) => this.props.edit({ [name]: value });
+  write = ({ target: { name, value } }: { target: { name: string; value: string } }) =>
+    this.props.edit({ [name]: value });
 
   render() {
     const { instance, saving, errors, onClose } = this.props;
@@ -107,7 +108,9 @@ class TeamsAddForm extends React.PureComponent<Props> {
 export default connect(
   (state: any) => ({
     instance: state.getIn(['teams', 'instance']),
-    saving: state.getIn(['teams', 'saveRequest', 'loading']),
+    saving:
+      state.getIn(['teams', 'saveRequest', 'loading']) ||
+      state.getIn(['teams', 'updateRequest', 'loading']),
     errors: state.getIn(['teams', 'saveRequest', 'errors']),
   }),
   { edit, save, init, remove, update }

@@ -20,7 +20,7 @@ function TeamsChannelList(props: { list: any, edit: (inst: any) => any, onEdit: 
                         <div className="text-base text-left">
                             Integrate MS Teams with OpenReplay and share insights with the rest of the team, directly from the recording page.
                         </div>
-                        <DocLink className="mt-4 text-base" label="Integrate MS Teams" url="https://docs.openreplay.com/integrations/ms-teams" />
+                        <DocLink className="mt-4 text-base" label="Integrate MS Teams" url="https://docs.openreplay.com/integrations/msteams" />
                     </div>
                 }
                 size="small"

@@ -40,6 +40,7 @@ export default withRequestState(
     {
         fetchRequest: FETCH_LIST,
         saveRequest: SAVE,
+        updateRequest: UPDATE,
         removeRequest: REMOVE,
     },
     reducer
