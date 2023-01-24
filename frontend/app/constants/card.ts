@@ -41,18 +41,18 @@ export const TYPES: CardType[] = [
     slug: LIBRARY,
   },
   {
-    title: 'Clickmap',
-    icon: 'puzzle-piece',
-    description: 'See where users click and where they get frustrated.',
-    slug: CLICKMAP,
-    subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
-  },
-  {
     title: 'Timeseries',
     icon: 'graph-up',
     description: 'Combine captured events and filters to track trends over time.',
     slug: TIMESERIES,
     subTypes: [{ title: 'Session Count', slug: 'sessionCount', description: '' }],
+  },
+  {
+    title: 'Clickmap',
+    icon: 'puzzle-piece',
+    description: 'See where users click and where they get frustrated.',
+    slug: CLICKMAP,
+    subTypes: [{ title: 'Visited URL', slug: FilterKey.CLICKMAP_URL, description: '' }],
   },
   {
     title: 'Table',
