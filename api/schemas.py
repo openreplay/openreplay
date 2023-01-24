@@ -551,6 +551,8 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
 
     @root_validator(pre=True)
     def transform(cls, values):
+        if values.get("type") is None:
+            return values
         values["type"] = {
             "CLICK": EventType.click.value,
             "INPUT": EventType.input.value,
@@ -634,6 +636,8 @@ class SessionSearchFilterSchema(__MixedSearchFilter):
 
     @root_validator(pre=True)
     def transform(cls, values):
+        if values.get("type") is None:
+            return values
         values["type"] = {
             "USEROS": FilterType.user_os.value,
             "USERBROWSER": FilterType.user_browser.value,
@@ -783,12 +787,6 @@ class FunnelSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class UpdateFunnelSchema(FunnelSchema):
-    name: Optional[str] = Field(default=None)
-    filter: Optional[FunnelSearchPayloadSchema] = Field(default=None)
-    is_public: Optional[bool] = Field(default=None)
-
-
 class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
@@ -847,7 +845,7 @@ class CardSeriesFilterSchema(SearchErrorsSchema):
     startDate: Optional[int] = Field(default=None)
     endDate: Optional[int] = Field(default=None)
     sort: Optional[str] = Field(default=None)
-    order: Optional[str] = Field(default=None)
+    order: SortOrderType = Field(default=SortOrderType.desc)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
@@ -1049,7 +1047,9 @@ class CreateCardSchema(CardChartSchema):
                 assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
                     f"metricValue is only available for metricOf:{MetricOfTable.issues}"
         elif values.get("metric_type") == MetricType.funnel:
-            assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
+            pass
+            # allow UI sot send empty series for funnel
+            # assert len(values["series"]) == 1, f"must have only 1 series for metricType:{MetricType.funnel}"
             # ignore this for now, let the UI send whatever he wants for metric_of
             # assert isinstance(values.get("metric_of"), MetricOfTimeseries), \
             #     f"metricOf must be of type {MetricOfTimeseries} for metricType:{MetricType.funnel}"

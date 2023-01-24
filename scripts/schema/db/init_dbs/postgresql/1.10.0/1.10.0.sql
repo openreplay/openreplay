@@ -300,6 +300,7 @@ $$
 $$
 LANGUAGE plpgsql;
 
+DROP TABLE IF EXISTS public.funnels;
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_selector_idx ON events.clicks (selector);

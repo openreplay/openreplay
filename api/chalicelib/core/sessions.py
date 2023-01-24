@@ -151,9 +151,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = schemas.SortOrderType.desc
+                data.order = schemas.SortOrderType.desc.value
             else:
-                data.order = data.order.upper()
+                data.order = data.order.value
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
                 g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
@@ -186,7 +186,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                      full_args)
         else:
             if data.order is None:
-                data.order = schemas.SortOrderType.desc
+                data.order = schemas.SortOrderType.desc.value
+            else:
+                data.order = data.order.value
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -202,9 +204,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
-        print("--------------------")
-        print(main_query)
-        print("--------------------")
+        # print("--------------------")
+        # print(main_query)
+        # print("--------------------")
         try:
             cur.execute(main_query)
         except Exception as err:
@@ -797,7 +799,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
 
                 event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                   sh.multi_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
                                                        event.source, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
@@ -835,7 +837,7 @@ def search_query_parts(data: schemas.SessionsSearchPayloadSchema, error_status, 
                 e_k += "_custom"
                 full_args = {**full_args, **sh.multi_values(event.source, value_key=e_k)}
                 event_where.append(
-                    sh.multi_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
+                    sh.multi_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator.value} %({e_k})s",
                                         event.source, value_key=e_k))
 
             elif event_type == schemas.EventType.request_details:
@@ -1082,39 +1084,6 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
                 for i in rows:
                     results[str(i["project_id"])]["sessions"].append(helper.dict_to_camel_case(i))
     return results
-
-
-def search_by_issue(user_id, issue, project_id, start_date, end_date):
-    constraints = ["s.project_id = %(projectId)s",
-                   "p_issues.context_string = %(issueContextString)s",
-                   "p_issues.type = %(issueType)s"]
-    if start_date is not None:
-        constraints.append("start_ts >= %(startDate)s")
-    if end_date is not None:
-        constraints.append("start_ts <= %(endDate)s")
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS}
-            FROM public.sessions AS s
-                                INNER JOIN events_common.issues USING (session_id)
-                                INNER JOIN public.issues AS p_issues USING (issue_id)
-                                LEFT JOIN (SELECT user_id, session_id
-                                            FROM public.user_favorite_sessions
-                                            WHERE user_id = %(userId)s) AS favorite_sessions
-                                           USING (session_id)
-            WHERE {" AND ".join(constraints)}
-            ORDER BY s.session_id DESC;""",
-                {
-                    "issueContextString": issue["contextString"],
-                    "issueType": issue["type"], "userId": user_id,
-                    "projectId": project_id,
-                    "startDate": start_date,
-                    "endDate": end_date
-                }))
-
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
 
 
 def get_user_sessions(project_id, user_id, start_date, end_date):

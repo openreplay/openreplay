@@ -396,7 +396,7 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
                                               AND users.user_id = metrics.user_id
                                             ) AS owner ON (TRUE)
                 WHERE {" AND ".join(constraints)}
-                ORDER BY created_at {data.order}
+                ORDER BY created_at {data.order.value}
                 LIMIT %(limit)s OFFSET %(offset)s;""", params)
         cur.execute(query)
         rows = cur.fetchall()
