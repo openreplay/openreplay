@@ -979,7 +979,7 @@ class MetricOfClickMap(str, Enum):
     click_map_url = "clickMapUrl"
 
 
-class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema,_TimedSchema):
+class CardSessionsSchema(FlatSessionsSearch, _PaginatedSchema, _TimedSchema):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
     series: List[CardCreateSeriesSchema] = Field(default=[])
@@ -1295,7 +1295,7 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
 
     @root_validator(pre=True)
     def transform(cls, values):
-        for f in values.get("filters"):
+        for f in values.get("filters", []):
             if f.get("type") == FilterType.duration:
                 return values
         values["filters"] = values.get("filters", [])
@@ -1305,6 +1305,8 @@ class FlatClickMapSessionsSearch(SessionsSearchPayloadSchema):
 
     @root_validator()
     def flat_to_original(cls, values):
+        if len(values["events"]) > 0:
+            return values
         n_filters = []
         n_events = []
         for v in values.get("filters", []):
