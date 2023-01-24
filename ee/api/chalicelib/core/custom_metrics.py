@@ -180,6 +180,8 @@ def __merge_metric_with_data(metric: schemas_ee.CreateCardSchema,
                 s.filter.filters += data.filters
             if len(data.events) > 0:
                 s.filter.events += data.events
+    metric.limit = data.limit
+    metric.page = data.page
     return metric
 
 
@@ -272,6 +274,11 @@ def try_sessions(project_id, user_id, data: schemas.CardSessionsSchema):
 
 def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
+        session_data = None
+        if __is_click_map(data):
+            session_data = json.dumps(__get_click_map_chart(project_id=project_id, user_id=user_id,
+                                                            data=data, include_mobs=False))
+        _data = {"session_data": session_data}
         _data = {}
         for i, s in enumerate(data.series):
             for k in s.dict().keys():
@@ -283,10 +290,10 @@ def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=Fal
         params["default_config"] = json.dumps(data.default_config.dict())
         query = """INSERT INTO metrics (project_id, user_id, name, is_public,
                             view_type, metric_type, metric_of, metric_value,
-                            metric_format, default_config, thumbnail)
+                            metric_format, default_config, thumbnail, data)
                    VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
                               %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
-                              %(metric_format)s, %(default_config)s, %(thumbnail)s)
+                              %(metric_format)s, %(default_config)s, %(thumbnail)s, %(session_data)s)
                    RETURNING metric_id"""
         if len(data.series) > 0:
             query = f"""WITH m AS ({query})
@@ -478,12 +485,12 @@ def delete(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
-def get_card(metric_id, project_id, user_id, flatten=True, include_data: bool = False):
+def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data: bool = False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        thumbnail, DEFAULT_CONFIG AS config,
+                        thumbnail, default_config AS config,
                         series, dashboards, owner_email {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series

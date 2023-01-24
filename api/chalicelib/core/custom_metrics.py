@@ -151,6 +151,8 @@ def __merge_metric_with_data(metric: schemas.CreateCardSchema,
                 s.filter.filters += data.filters
             if len(data.events) > 0:
                 s.filter.events += data.events
+    metric.limit = data.limit
+    metric.page = data.page
     return metric
 
 
