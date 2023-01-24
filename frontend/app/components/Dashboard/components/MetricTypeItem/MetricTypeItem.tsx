@@ -26,7 +26,7 @@ function MetricTypeItem(props: Props) {
     <Tooltip disabled={!disabled} title="This feature requires an enterprise license." delay={0}>
       <div
         className={cn(
-          'rounded color-gray-darkest flex items-start border border-transparent p-4 hover:bg-active-blue hover:!border-active-blue-border cursor-pointer group hover-color-teal',
+          'rounded color-gray-darkest flex items-start border border-transparent p-4 hover:bg-active-blue cursor-pointer group hover-color-teal',
           { 'opacity-30 pointer-events-none': disabled }
         )}
         onClick={onClick}

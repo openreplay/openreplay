@@ -37,6 +37,42 @@
 .fill-borderColor { fill: $borderColor }
 .fill-transparent { fill: $transparent }
 .fill-figmaColors { fill: $figmaColors }
+.hover-fill-main:hover svg { fill: $main }
+.hover-fill-gray-light-shade:hover svg { fill: $gray-light-shade }
+.hover-fill-gray-lightest:hover svg { fill: $gray-lightest }
+.hover-fill-gray-light:hover svg { fill: $gray-light }
+.hover-fill-gray-bg:hover svg { fill: $gray-bg }
+.hover-fill-gray-medium:hover svg { fill: $gray-medium }
+.hover-fill-gray-dark:hover svg { fill: $gray-dark }
+.hover-fill-gray-darkest:hover svg { fill: $gray-darkest }
+.hover-fill-teal:hover svg { fill: $teal }
+.hover-fill-teal-dark:hover svg { fill: $teal-dark }
+.hover-fill-teal-light:hover svg { fill: $teal-light }
+.hover-fill-tealx:hover svg { fill: $tealx }
+.hover-fill-tealx-light:hover svg { fill: $tealx-light }
+.hover-fill-tealx-light-border:hover svg { fill: $tealx-light-border }
+.hover-fill-tealx-lightest:hover svg { fill: $tealx-lightest }
+.hover-fill-orange:hover svg { fill: $orange }
+.hover-fill-yellow:hover svg { fill: $yellow }
+.hover-fill-yellow2:hover svg { fill: $yellow2 }
+.hover-fill-orange-dark:hover svg { fill: $orange-dark }
+.hover-fill-green:hover svg { fill: $green }
+.hover-fill-green2:hover svg { fill: $green2 }
+.hover-fill-green-dark:hover svg { fill: $green-dark }
+.hover-fill-red:hover svg { fill: $red }
+.hover-fill-red2:hover svg { fill: $red2 }
+.hover-fill-red-lightest:hover svg { fill: $red-lightest }
+.hover-fill-blue:hover svg { fill: $blue }
+.hover-fill-blue2:hover svg { fill: $blue2 }
+.hover-fill-active-blue:hover svg { fill: $active-blue }
+.hover-fill-bg-blue:hover svg { fill: $bg-blue }
+.hover-fill-active-blue-border:hover svg { fill: $active-blue-border }
+.hover-fill-pink:hover svg { fill: $pink }
+.hover-fill-light-blue-bg:hover svg { fill: $light-blue-bg }
+.hover-fill-white:hover svg { fill: $white }
+.hover-fill-borderColor:hover svg { fill: $borderColor }
+.hover-fill-transparent:hover svg { fill: $transparent }
+.hover-fill-figmaColors:hover svg { fill: $figmaColors }
 
 /* color */
 .color-main { color: $main }

@@ -148,7 +148,7 @@ function WidgetForm(props: Props) {
 
           {metric.metricType === INSIGHTS && (
             <>
-              <span className="mx-3">issue category</span>
+              <span className="mx-3">of</span>
               <Select
                 name="metricValue"
                 options={issueCategories}

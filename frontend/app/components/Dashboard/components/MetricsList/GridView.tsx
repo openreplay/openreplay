@@ -1,14 +1,19 @@
 import React from 'react';
 import WidgetWrapper from 'App/components/Dashboard/components/WidgetWrapper';
-
-interface Props {
+import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { withSiteId } from 'App/routes';
+interface Props extends RouteComponentProps {
   list: any;
   siteId: any;
   selectedList: any;
-  toggleSelection?: (metricId: any) => void;
 }
 function GridView(props: Props) {
-  const { siteId, list, selectedList, toggleSelection } = props;
+  const { siteId, list, selectedList, history } = props;
+
+  const onItemClick = (metricId: number) => {
+    const path = withSiteId(`/metrics/${metricId}`, siteId);
+    history.push(path);
+  };
   return (
     <div className="grid grid-cols-4 gap-4 m-4 items-start">
       {list.map((metric: any) => (
@@ -17,9 +22,9 @@ function GridView(props: Props) {
             key={metric.metricId}
             widget={metric}
             active={selectedList.includes(metric.metricId)}
-            // isTemplate={true}
+            isTemplate={true}
             isWidget={metric.metricType === 'predefined'}
-            // onClick={() => toggleSelection(parseInt(metric.metricId))}
+            onClick={() => onItemClick(parseInt(metric.metricId))}
           />
         </React.Fragment>
       ))}
@@ -27,4 +32,4 @@ function GridView(props: Props) {
   );
 }
 
-export default GridView;
+export default withRouter(GridView);

@@ -12,6 +12,7 @@ import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from 'App/routes';
 import { capitalize } from 'App/utils';
+import { Duration } from 'luxon';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -27,7 +28,7 @@ interface Props {
     userDisplayName: string;
     userCountry: string;
     startedAt: number;
-    duration: string;
+    duration: Duration;
     eventsCount: number;
     errorsCount: number;
     pagesCount: number;
@@ -98,8 +99,9 @@ function SessionItem(props: RouteComponentProps & Props) {
   const hasUserId = userId || userAnonymousId;
   const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
   const isAssist =
-    isRoute(ASSIST_ROUTE, location.pathname) || isRoute(ASSIST_LIVE_SESSION, location.pathname)
-    || location.pathname.includes('multiview');
+    isRoute(ASSIST_ROUTE, location.pathname) ||
+    isRoute(ASSIST_LIVE_SESSION, location.pathname) ||
+    location.pathname.includes('multiview');
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata)
@@ -213,7 +215,7 @@ function SessionItem(props: RouteComponentProps & Props) {
             id="play-button"
             data-viewed={viewed}
           >
-            {live && session.isCallActive && session.agentIds.length > 0 ? (
+            {live && session.isCallActive && session.agentIds!.length > 0 ? (
               <div className="mr-4">
                 <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
                   <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap' }}>

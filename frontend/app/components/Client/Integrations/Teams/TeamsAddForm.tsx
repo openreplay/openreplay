@@ -65,7 +65,7 @@ class TeamsAddForm extends React.PureComponent<Props> {
               name="endpoint"
               value={instance.endpoint}
               onChange={this.write}
-              placeholder="Slack webhook URL"
+              placeholder="Teams webhook URL"
               type="text"
             />
           </Form.Field>

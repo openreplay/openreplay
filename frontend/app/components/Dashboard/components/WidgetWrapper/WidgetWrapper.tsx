@@ -71,7 +71,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
   });
 
   const onDelete = async () => {
-    dashboardStore.deleteDashboardWidget(dashboard?.dashboardId, widget.widgetId);
+    dashboardStore.deleteDashboardWidget(dashboard?.dashboardId!, widget.widgetId);
   };
 
   const onChartClick = () => {
@@ -119,53 +119,59 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
           {'Cannot drill down system provided metrics'}
         </div>
       )}
-      <Tooltip disabled={!isTemplate} title="Click to select">
-        {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
-        <div
-          className={cn('p-3 pb-4 flex items-center justify-between', {
-            'cursor-move': !isTemplate && isWidget,
-          })}
-        >
-          {!props.hideName ? (
-            <div className="capitalize-first w-full font-medium"><TextEllipsis text={widget.name} /></div>
-          ) : null}
-          {isWidget && (
-            <div className="flex items-center" id="no-print">
-              {!isPredefined && isTimeSeries && (
-                <>
-                  <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
-                  <div className="mx-2" />
-                </>
-              )}
 
-              {!isTemplate && (
-                <ItemMenu
-                  items={[
-                    {
-                      text:
-                        widget.metricType === 'predefined'
-                          ? 'Cannot edit system generated metrics'
-                          : 'Edit',
-                      onClick: onChartClick,
-                      disabled: widget.metricType === 'predefined',
-                    },
-                    {
-                      text: 'Hide',
-                      onClick: onDelete,
-                    },
-                  ]}
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        <LazyLoad offset={!isTemplate ? 100 : 600}>
-          <div className="px-4" onClick={onChartClick}>
-            <WidgetChart isPreview={isPreview} metric={widget} isTemplate={isTemplate} isWidget={isWidget} />
+      {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
+      <div
+        className={cn('p-3 pb-4 flex items-center justify-between', {
+          'cursor-move': !isTemplate && isWidget,
+        })}
+      >
+        {!props.hideName ? (
+          <div className="capitalize-first w-full font-medium">
+            <TextEllipsis text={widget.name} />
           </div>
-        </LazyLoad>
-      </Tooltip>
+        ) : null}
+        {isWidget && (
+          <div className="flex items-center" id="no-print">
+            {!isPredefined && isTimeSeries && (
+              <>
+                <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
+                <div className="mx-2" />
+              </>
+            )}
+
+            {!isTemplate && (
+              <ItemMenu
+                items={[
+                  {
+                    text:
+                      widget.metricType === 'predefined'
+                        ? 'Cannot edit system generated metrics'
+                        : 'Edit',
+                    onClick: onChartClick,
+                    disabled: widget.metricType === 'predefined',
+                  },
+                  {
+                    text: 'Hide',
+                    onClick: onDelete,
+                  },
+                ]}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      <LazyLoad offset={!isTemplate ? 100 : 600}>
+        <div className="px-4" onClick={onChartClick}>
+          <WidgetChart
+            isPreview={isPreview}
+            metric={widget}
+            isTemplate={isTemplate}
+            isWidget={isWidget}
+          />
+        </div>
+      </LazyLoad>
     </div>
   );
 }

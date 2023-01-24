@@ -86,6 +86,7 @@ function DashboardHeader(props: Props) {
               showModal(<AddCardModal dashboardId={dashboardId} siteId={siteId} />, { right: true })
             }
             icon="plus"
+            iconSize={24}
           >
             Add Card
           </Button>

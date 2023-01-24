@@ -16,7 +16,7 @@ function CustomDropdownOption(props: Props) {
       <Tooltip disabled={!disabled} title="This feature requires an enterprise license." delay={0}>
         <div
           className={cn(
-            'group p-2 flex item-start border border-transparent rounded hover:border-teal hover:!bg-active-blue !leading-0',
+            'cursor-pointer group p-2 flex item-start border border-transparent rounded hover:!bg-active-blue !leading-0',
             { 'opacity-30': disabled }
           )}
         >
