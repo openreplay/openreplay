@@ -1,5 +1,10 @@
 # https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+{{- $kubeTargetVersion := .Capabilities.KubeVersion.GitVersion }}
+{{- if semverCompare ">=1.22.0-0" $kubeTargetVersion }}
 apiVersion: batch/v1
+{{- else }}
+apiVersion: batch/v1beta1
+{{- end }}
 kind: CronJob
 metadata:
   name: clickhouse-backup
