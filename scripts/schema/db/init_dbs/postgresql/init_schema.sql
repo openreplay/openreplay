@@ -859,7 +859,8 @@ $$
                   "col": 2,
                   "row": 2,
                   "position": 0
-                }'::jsonb
+                }'::jsonb,
+                data           jsonb     NULL
             );
 
             CREATE INDEX metrics_user_id_is_public_idx ON public.metrics (user_id, is_public);

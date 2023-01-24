@@ -47,7 +47,7 @@ class InsightCategories(str, Enum):
     resources = "resources"
 
 
-class GetInsightsSchema(BaseModel):
+class GetInsightsSchema(schemas._TimedSchema):
     startTimestamp: int = Field(default=TimeUTC.now(-7))
     endTimestamp: int = Field(default=TimeUTC.now())
     metricValue: List[InsightCategories] = Field(default=[])

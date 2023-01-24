@@ -300,7 +300,13 @@ $$
 $$
 LANGUAGE plpgsql;
 
+DROP FUNCTION get_new_filter_key;
+DROP FUNCTION get_new_event_filter_key;
+DROP FUNCTION get_new_event_key;
+
 DROP TABLE IF EXISTS public.funnels;
+ALTER TABLE IF EXISTS public.metrics
+    ADD COLUMN IF NOT EXISTS data jsonb NULL;
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS clicks_selector_idx ON events.clicks (selector);

@@ -543,6 +543,9 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     item = get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
+    if item["origin"] is not None and config("enforce_SSO", cast=bool, default=False) \
+            and not item["superAdmin"] and helper.is_saml2_available():
+        return {"errors": ["Please use your SSO to change your password, enforced by admin"]}
     if item["origin"] is not None and item["hasPassword"] is False:
         return {"errors": ["cannot change your password because you are logged-in from an SSO service"]}
     if old_password == new_password:
@@ -741,7 +744,7 @@ def authenticate(email, password, for_change_password=False):
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        if config("enforce_SSO", cast=bool, default=False) and not r["superAdmin"]:
+        if config("enforce_SSO", cast=bool, default=False) and not r["superAdmin"] and helper.is_saml2_available():
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
         jwt_iat = change_jwt_iat(r['userId'])
