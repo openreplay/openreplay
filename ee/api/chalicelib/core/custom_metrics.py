@@ -483,7 +483,7 @@ def get_card(metric_id, project_id, user_id, flatten=True, include_data: bool = 
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, predefined_key, default_config, 
-                        thumbnail, default_config AS config,
+                        thumbnail, DEFAULT_CONFIG AS config,
                         series, dashboards, owner_email {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
