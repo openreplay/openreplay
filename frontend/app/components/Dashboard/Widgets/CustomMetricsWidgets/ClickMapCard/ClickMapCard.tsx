@@ -5,6 +5,7 @@ import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer'
 import { connect } from 'react-redux'
 import { setCustomSession } from 'App/duck/sessions'
 import { fetchInsights } from 'Duck/sessions';
+import { NoContent, Icon } from 'App/components/ui'
 
 function ClickMapCard({
     setCustomSession,
@@ -38,7 +39,16 @@ function ClickMapCard({
 
     if (!metricStore.instance.data.domURL || insights.size === 0) {
         return (
-            <div className="py-2">No Data for selected period or URL.</div>
+            <NoContent
+                style={{ minHeight: 220 }}
+                title={
+                    <div className="flex items-center">
+                        <Icon name="info-circle" className="mr-2" size="18" />
+                        No data for selected period or URL.
+                    </div>
+                }
+                show={true}
+            />
         )
     }
     if (!visitedEvents || !visitedEvents.length) {

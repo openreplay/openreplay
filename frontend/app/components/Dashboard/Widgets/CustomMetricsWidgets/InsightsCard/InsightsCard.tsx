@@ -1,10 +1,10 @@
-import { NoContent } from 'UI';
+import { NoContent, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import InsightItem from './InsightItem';
-import { NO_METRIC_DATA } from 'App/constants/messages';
 import { InishtIssue } from 'App/mstore/types/widget';
+import FilterItem from 'App/mstore/types/filterItem';
 import { FilterKey, IssueCategory, IssueType } from 'App/types/filter/filterType';
 import { filtersMap } from 'Types/filter/newFilter';
 
@@ -29,41 +29,42 @@ function InsightsCard({ data }: any) {
         filter.value = [item.name];
         break;
       case IssueCategory.NETWORK:
-        filter = { ...filtersMap[FilterKey.FETCH_URL] };
-        filter.filters = [
-          { ...filtersMap[FilterKey.FETCH_URL], value: [item.name] },
-          { ...filtersMap[FilterKey.FETCH_DURATION], value: [item.oldValue] },
-        ];
+        filter = { ...filtersMap[FilterKey.FETCH] };
         filter.value = [];
+        filter.filters.forEach((f: any) => {
+          f.value = [];
+          if (f.key === FilterKey.FETCH_URL) {
+            f.value = [item.name];
+          }
+
+          if (f.key === FilterKey.FETCH_DURATION) {
+            f.operator = '>=';
+            f.value = [item.oldValue];
+          }
+        });
         break;
       case IssueCategory.ERRORS:
         filter = { ...filtersMap[FilterKey.ERROR] };
+        filter.value = [item.name];
         break;
     }
 
-    filter.type = filter.key;
-    delete filter.key;
-    delete filter.operatorOptions;
-    delete filter.sourceOperatorOptions;
-    delete filter.placeholder;
-    delete filter.sourcePlaceholder;
-    delete filter.sourceType;
-    delete filter.sourceUnit;
-    delete filter.category;
-    delete filter.icon;
-    delete filter.label;
-    delete filter.options;
-
+    filter = new FilterItem(filter);
     drillDownFilter.merge({
-      filters: [filter],
+      filters: [filter.toJson()],
     });
   };
 
   return (
     <NoContent
+      style={{ minHeight: 220 }}
+      title={
+        <div className="flex items-center">
+          <Icon name="info-circle" className="mr-2" size="18" />
+          No data for selected period.
+        </div>
+      }
       show={data.issues && data.issues.length === 0}
-      title={NO_METRIC_DATA}
-      style={{ padding: '100px 0' }}
     >
       <div className="overflow-y-auto" style={{ maxHeight: '240px' }}>
         {data.issues &&

@@ -30,7 +30,16 @@ function FunnelWidget(props: Props) {
     }, []);
 
     return useObserver(() => (
-        <NoContent show={!stages || stages.length === 0} title="No recordings found">
+        <NoContent
+            style={{ minHeight: 220 }}
+            title={
+                <div className="flex items-center">
+                    <Icon name="info-circle" className="mr-2" size="18" />
+                    No data for selected period.
+                </div>
+            }
+            show={!stages || stages.length === 0}
+        >
             <div className="w-full">
                 { !isWidget && (
                     stages.map((filter: any, index: any) => (
