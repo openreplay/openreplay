@@ -5,10 +5,11 @@ import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import RecordsListItem from './RecordsListItem';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function RecordingsList() {
   const { recordingsStore } = useStore();
-  const [shownRecordings, setRecordings] = React.useState([]);
+  const [shownRecordings, setRecordings] = React.useState<any[]>([]);
   const recordings = recordingsStore.recordings;
   const recordsSearch = recordingsStore.search;
 
@@ -21,14 +22,14 @@ function RecordingsList() {
   }, [recordsSearch]);
 
   const list = recordsSearch !== '' ? shownRecordings : recordings;
-  const lenth = list.length;
+  const length = list.length;
 
   return (
     <NoContent
-      show={lenth === 0}
+      show={length === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="no-recordings" size={80} color="figmaColors-accent-secondary" />
+          <AnimatedSVG name={ICONS.NO_RECORDINGS} size={180} />
           <div className="text-center text-gray-600 my-4">
             {recordsSearch !== ''
               ? 'No matching results'
@@ -40,7 +41,7 @@ function RecordingsList() {
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-8">Name</div>
-          <div className="col-span-4">Last Modified</div>
+          <div className="col-span-4">Recorded by</div>
         </div>
 
         {sliceListPerPage(list, recordingsStore.page - 1, recordingsStore.pageSize).map(
@@ -60,7 +61,7 @@ function RecordingsList() {
         </div>
         <Pagination
           page={recordingsStore.page}
-          totalPages={Math.ceil(lenth / recordingsStore.pageSize)}
+          totalPages={Math.ceil(length / recordingsStore.pageSize)}
           onPageChange={(page) => recordingsStore.updatePage(page)}
           limit={recordingsStore.pageSize}
           debounceRequest={100}

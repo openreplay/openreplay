@@ -28,7 +28,7 @@ function EditRecordingModal(props: Props) {
     return useObserver(() => (
         <Modal open={ show } onClose={closeHandler}>
             <Modal.Header className="flex items-center justify-between">
-                <div>{ 'Edit Recording' }</div>
+                <div>{ 'Rename' }</div>
                 <div onClick={ closeHandler }>
                   <Icon
                     color="gray-dark"
@@ -52,36 +52,6 @@ function EditRecordingModal(props: Props) {
                         autoFocus
                     />
                 </Form.Field>
-
-                {/* <Form.Field>
-                    <label>{'Description:'}</label>
-                    <Input
-                        className=""
-                        type="textarea"
-                        name="description"
-                        value={ dashboard.description }
-                        onChange={write}
-                        placeholder="Description"
-                        maxLength={300}
-                        autoFocus={!focusTitle}
-                    />
-                </Form.Field>
-
-                <Form.Field>
-                    <div className="flex items-center">
-                        <Checkbox
-                            name="isPublic"
-                            className="font-medium mr-3"
-                            type="checkbox"
-                            checked={ dashboard.isPublic }
-                            onClick={ () => dashboard.update({ 'isPublic': !dashboard.isPublic }) }
-                        />
-                        <div className="flex items-center cursor-pointer" onClick={ () => dashboard.update({ 'isPublic': !dashboard.isPublic }) }>
-                            <Icon name="user-friends" size="16" />
-                            <span className="ml-2"> Team can see and edit the dashboard.</span>
-                        </div>
-                    </div>
-                </Form.Field> */}
             </Form>
             </Modal.Content>
             <Modal.Footer>

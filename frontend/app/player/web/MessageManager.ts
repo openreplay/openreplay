@@ -30,7 +30,7 @@ import type {
   MouseClick,
 } from './messages';
 
-import { loadFiles, requestEFSDom, requestEFSDevtools, NO_FILE_OK } from './network/loadFiles';
+import { loadFiles, requestEFSDom, requestEFSDevtools, NO_FILE_OK, NO_URLS } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
@@ -198,7 +198,7 @@ export default class MessageManager {
   private async loadMessages() {
     this.setMessagesLoading(true)
     // TODO: reuseable decryptor instance
-    const createNewParser = (shouldDecrypt=true) => {
+    const createNewParser = (shouldDecrypt = true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
@@ -225,17 +225,18 @@ export default class MessageManager {
       : { url: this.session.mobsUrl, parser: () => createNewParser(false)}
 
     loadFiles(loadMethod.url, loadMethod.parser())
-    // EFS fallback
-    .catch((e) => {
-      if (e === NO_FILE_OK) {
-        console.log(e, 'getting unprocessed file')
-        requestEFSDom(this.session.sessionId).then(createNewParser(false))
-      } else {
-        this.onFileReadFailed(e)
-      }
-    })
-    .then(this.onFileReadSuccess)
-    .finally(this.onFileReadFinally)
+      // EFS fallback
+      .catch((e) => {
+        if (e === NO_FILE_OK || e === NO_URLS) {
+          requestEFSDom(this.session.sessionId)
+            .then(createNewParser(false))
+            .catch(this.onFileReadFailed);
+        } else {
+          this.onFileReadFailed(e);
+        }
+      })
+      .then(this.onFileReadSuccess)
+      .finally(this.onFileReadFinally);
 
     // load devtools
     if (this.session.devtoolsURL?.length) {

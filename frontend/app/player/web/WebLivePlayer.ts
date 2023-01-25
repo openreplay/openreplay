@@ -76,6 +76,10 @@ export default class WebLivePlayer extends WebPlayer {
     this.messageManager.setMessagesLoading(false)
   }
 
+  jumpToLive = () => {
+    this.jump(this.wpState.get().lastMessageTime)
+  }
+
   clean = () => {
     this.incomingMessages.length = 0
     this.assistManager.clean()

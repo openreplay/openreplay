@@ -93,7 +93,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
         <div
           // onClick={this.toggleMenu}
           className={cn(
-            'flex items-center cursor-pointer select-none hover',
+            'flex items-center cursor-pointer select-none',
             !this.props.flat ? parentStyles : '',
             { 'bg-gray-light': !this.props.flat && displayed && label }
           )}
