@@ -3,7 +3,7 @@ import APIClient from 'App/api_client';
 export const NO_FILE_OK = "No-file-but-this-is-ok"
 export const NO_SECOND_FILE = 'No-second-file-but-this-is-ok-too'
 const NO_BACKUP_FILE = "No-efs-file"
-
+export const NO_URLS = 'No-urls-provided'
 async function loadFile(url: string, onData: (d: Uint8Array) => void, skippable: boolean) {
   try {
     const stream = await window.fetch(url)
@@ -22,7 +22,7 @@ export const loadFiles = async (
   onData: (data: Uint8Array) => void,
 ): Promise<any> => {
   if (!urls.length) {
-    return Promise.reject("No urls provided")
+    return Promise.reject(NO_URLS)
   }
 
   return Promise.allSettled(urls.map(url =>
