@@ -5,7 +5,7 @@ import { IRecord } from 'App/services/RecordingsService';
 import { useStore } from 'App/mstore';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
-import EditRecordingModal from './EditRecordingModal'
+import EditRecordingModal from './EditRecordingModal';
 
 interface Props {
   record: IRecord;
@@ -40,22 +40,36 @@ function RecordsListItem(props: Props) {
     });
   };
 
-  const menuItems = [{ icon: 'pencil', text: 'Rename', onClick: () => setEdit(true) }, { icon: 'trash', text: 'Delete', onClick: onDelete }];
+  const menuItems = [
+    { icon: 'pencil', text: 'Rename', onClick: () => setEdit(true) },
+    {
+      icon: 'trash',
+      text: 'Delete',
+      onClick: onDelete,
+    },
+  ];
 
   const onSave = (title: string) => {
     recordingsStore
       .updateRecordingName(record.recordId, title)
       .then(() => {
-        setRecordingTitle(title)
+        setRecordingTitle(title);
         toast.success('Recording name updated');
       })
       .catch(() => toast.error("Couldn't update recording name"));
     setEdit(false);
   };
 
+  const onCancel = () => setEdit(false);
+
   return (
     <div className="hover:bg-active-blue border-t px-6">
-      <EditRecordingModal show={isEdit} title={record.name} onSave={onSave} />
+      <EditRecordingModal
+        show={isEdit}
+        title={record.name}
+        onSave={onSave}
+        closeHandler={onCancel}
+      />
       <div className="grid grid-cols-12 py-4 select-none items-center">
         <div className="col-span-8 flex items-start" onClick={onRecordClick}>
           <div className="flex items-center capitalize-first">
@@ -63,13 +77,7 @@ function RecordsListItem(props: Props) {
               <Icon name="camera-video" size="16" color="tealx" />
             </div>
             <div className="flex flex-col">
-                <div
-                  className={cn(
-                    'pt-1 w-fit -mt-2',
-                  )}
-                >
-                  {recordingTitle}
-                </div>
+              <div className={cn('pt-1 w-fit -mt-2')}>{recordingTitle}</div>
               <div className="text-gray-medium text-sm">{durationFromMs(record.duration)}</div>
             </div>
           </div>
@@ -97,7 +105,7 @@ function RecordsListItem(props: Props) {
             <div>Play Video</div>
           </div>
           <div className="hover:border-teal border border-transparent rounded-full">
-          <ItemMenu bold items={menuItems} sm />
+            <ItemMenu bold items={menuItems} sm />
           </div>
         </div>
       </div>

@@ -41,7 +41,7 @@ function RecordingsList() {
       <div className="mt-3 border-b">
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-8">Name</div>
-          <div className="col-span-4">Last Modified</div>
+          <div className="col-span-4">Recorded by</div>
         </div>
 
         {sliceListPerPage(list, recordingsStore.page - 1, recordingsStore.pageSize).map(
