@@ -173,7 +173,6 @@ export default class MessageManager {
 
   private waitingForFiles: boolean = false
   private onFileReadSuccess = () => {
-    console.log('success,', this.performanceTrackManager.avaliability)
     const stateToUpdate : Partial<State>= {
       performanceChartData: this.performanceTrackManager.chartData,
       performanceAvaliability: this.performanceTrackManager.avaliability,
