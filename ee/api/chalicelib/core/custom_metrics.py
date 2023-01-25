@@ -1,14 +1,14 @@
 import json
 from typing import Union
 
+from decouple import config
 from fastapi import HTTPException
 from starlette import status
-from decouple import config
 
 import schemas
 import schemas_ee
-from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights
-from chalicelib.utils import helper, pg_client
+from chalicelib.core import funnels, issues, metrics, click_maps, sessions_insights, sessions_mobs, sessions_favorite
+from chalicelib.utils import helper, pg_client, s3_extra, s3
 from chalicelib.utils.TimeUTC import TimeUTC
 
 if config("EXP_ERRORS_SEARCH", cast=bool, default=False):
@@ -277,8 +277,21 @@ def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=Fal
     with pg_client.PostgresClient() as cur:
         session_data = None
         if __is_click_map(data):
-            session_data = json.dumps(__get_click_map_chart(project_id=project_id, user_id=user_id,
-                                                            data=data, include_mobs=False))
+            session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
+                                                 data=data, include_mobs=False)
+            if session_data is not None:
+                keys = sessions_mobs. \
+                    __get_mob_keys(project_id=project_id, session_id=session_data["sessionId"])
+                keys += sessions_mobs. \
+                    __get_mob_keys_deprecated(session_id=session_data["sessionId"])  # To support old sessions
+                tag = config('RETENTION_L_VALUE', default='vault')
+                for k in keys:
+                    try:
+                        s3_extra.tag_session(file_key=k, tag_value=tag)
+                    except Exception as e:
+                        print(f"!!!Error while tagging: {k} to {tag} for clickMap")
+                        print(str(e))
+                session_data = json.dumps(session_data)
         _data = {"session_data": session_data}
         for i, s in enumerate(data.series):
             for k in s.dict().keys():
@@ -387,15 +400,6 @@ def update(metric_id, user_id, project_id, data: schemas_ee.UpdateCardSchema):
     return get_card(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-# def __presign_thumbnail(card):
-#     if card["thumbnail_url"]:
-#         card["thumbnail_url"] = s3.client.generate_presigned_url(
-#             'get_object',
-#             Params={'Bucket': config('THUMBNAILS_BUCKET'), 'Key': card["thumbnail_url"]},
-#             ExpiresIn=config("PRESIGNED_URL_EXPIRATION", cast=int, default=900)
-#         )
-
-
 def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_series=False):
     constraints = ["metrics.project_id = %(project_id)s",
                    "metrics.deleted_at ISNULL"]
@@ -447,12 +451,10 @@ def search_all(project_id, user_id, data: schemas.SearchCardsSchema, include_ser
         rows = cur.fetchall()
         if include_series:
             for r in rows:
-                # __presign_thumbnail(r)
                 for s in r["series"]:
                     s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         else:
             for r in rows:
-                # __presign_thumbnail(r)
                 r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
@@ -478,10 +480,24 @@ def delete(project_id, metric_id, user_id):
             SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
-              AND (user_id = %(user_id)s OR is_public);""",
+              AND (user_id = %(user_id)s OR is_public)
+            RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
-
+    row = cur.fetchone()
+    if row:
+        if row["data"] and not sessions_favorite.favorite_session_exists(session_id=row["data"]["sessionId"]):
+            keys = sessions_mobs. \
+                __get_mob_keys(project_id=project_id, session_id=row["data"]["sessionId"])
+            keys += sessions_mobs. \
+                __get_mob_keys_deprecated(session_id=row["data"]["sessionId"])  # To support old sessions
+            tag = config('RETENTION_D_VALUE', default='default')
+            for k in keys:
+                try:
+                    s3_extra.tag_session(file_key=k, tag_value=tag)
+                except Exception as e:
+                    print(f"!!!Error while tagging: {k} to {tag} for clickMap")
+                    print(str(e))
     return {"state": "success"}
 
 
@@ -527,41 +543,6 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         if flatten:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
-    return helper.dict_to_camel_case(row)
-
-
-def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
-    with pg_client.PostgresClient() as cur:
-        sub_query = ""
-        if include_dashboard:
-            sub_query = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT dashboard_id, name, is_public
-                                                      FROM dashboards
-                                                      WHERE deleted_at ISNULL
-                                                        AND project_id = %(project_id)s
-                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
-                                                ) AS connected_dashboards ON (TRUE)"""
-        query = cur.mogrify(
-            f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
-                        view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        thumbnail, default_config AS config,
-                        series
-                    FROM metrics
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
-                                                FROM metric_series
-                                                WHERE metric_series.metric_id = metrics.metric_id
-                                                  AND metric_series.deleted_at ISNULL 
-                                                ) AS metric_series ON (TRUE)
-                             {sub_query}
-                    WHERE (metrics.project_id = %(project_id)s OR metrics.project_id ISNULL)
-                      AND metrics.deleted_at ISNULL
-                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
-                      AND metrics.metric_id = %(metric_id)s
-                    ORDER BY created_at;""",
-            {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
-        )
-        cur.execute(query)
-        row = cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 
@@ -641,15 +622,28 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
 
 
 def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema):
-    raw_metric = get_with_template(metric_id=metric_id, project_id=project_id, user_id=user_id,
-                                   include_dashboard=False)
+    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
     metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
-    else:
-        return make_chart(project_id=project_id, user_id=user_id, metric_id=metric_id, data=data, metric=metric)
+    elif __is_click_map(raw_metric) and raw_metric["data"]:
+        keys = sessions_mobs. \
+            __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
+        mob_exists = False
+        for k in keys:
+            if s3.exists(bucket=config("sessions_bucket"), key=k):
+                mob_exists = True
+                break
+        if mob_exists:
+            raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
+                                                                  project_id=project_id)
+            raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
+                session_id=raw_metric["data"]["sessionId"])
+            return raw_metric["data"]
+
+    return make_chart(project_id=project_id, user_id=user_id, metric_id=metric_id, data=data, metric=metric)
 
 
 PREDEFINED = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
