@@ -189,6 +189,7 @@ function Performance({
     connBandwidth,
     performanceAvaliability: avaliability,
   } = store.get();
+  console.log(performanceChartTime, performanceChartData, avaliability)
 
   React.useState(() => {
     setTicks(generateTicks(performanceChartData));

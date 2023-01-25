@@ -20,6 +20,7 @@ import NoNotes from '../../../svg/ca-no-notes.svg';
 import NoCards from '../../../svg/ca-no-cards.svg';
 import NoSearchResults from '../../../svg/ca-no-search-results.svg';
 import NoDashboards from '../../../svg/ca-no-dashboards.svg';
+import NoRecordings from '../../../svg/ca-no-recordings.svg';
 
 export enum ICONS {
     DASHBOARD_ICON = 'dashboard-icn',
@@ -41,6 +42,7 @@ export enum ICONS {
     NO_ALERTS = 'ca-no-alerts',
     NO_NOTES = 'ca-no-notes',
     NO_CARDS = 'ca-no-cards',
+    NO_RECORDINGS = 'ca-no-recordings',
     NO_SEARCH_RESULTS = 'ca-no-search-results',
     NO_DASHBOARDS = 'ca-no-dashboards',
 }
@@ -95,6 +97,8 @@ function AnimatedSVG(props: Props) {
                 return <img style={{ width: size + 'px' }} src={NoSearchResults} />;
             case ICONS.NO_DASHBOARDS:
                 return <img style={{ width: size + 'px' }} src={NoDashboards} />;
+            case ICONS.NO_RECORDINGS:
+                return <img style={{ width: size + 'px' }} src={NoRecordings} />;
             default:
                 return null;
         }
