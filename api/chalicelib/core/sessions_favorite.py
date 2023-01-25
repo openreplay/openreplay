@@ -36,15 +36,15 @@ def favorite_session(context: schemas.CurrentContext, project_id, session_id):
     return add_favorite_session(context=context, project_id=project_id, session_id=session_id)
 
 
-def favorite_session_exists(user_id, session_id):
+def favorite_session_exists(session_id, user_id=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT session_id                                                
+                f"""SELECT session_id                                                
                     FROM public.user_favorite_sessions 
                     WHERE
-                     user_id = %(userId)s
-                     AND session_id = %(session_id)s""",
+                     session_id = %(session_id)s
+                     {'AND user_id = %(userId)s' if user_id else ''};""",
                 {"userId": user_id, "session_id": session_id})
         )
         r = cur.fetchone()

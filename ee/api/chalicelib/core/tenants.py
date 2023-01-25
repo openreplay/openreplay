@@ -9,15 +9,17 @@ def get_by_tenant_key(tenant_key):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                       t.tenant_id,
-                       t.name,
-                       t.api_key,
-                       t.created_at,
+                       tenants.tenant_id,
+                       tenants.name,
+                       tenants.api_key,
+                       tenants.created_at,
                         '{license.EDITION}' AS edition,
                         openreplay_version() AS version_number,
-                        t.opt_out
-                    FROM public.tenants AS t
-                    WHERE t.tenant_key = %(tenant_key)s AND t.deleted_at ISNULL
+                        tenants.opt_out,
+                        tenants.tenant_key
+                    FROM public.tenants
+                    WHERE tenants.tenant_key = %(tenant_key)s 
+                        AND tenants.deleted_at ISNULL
                     LIMIT 1;""",
                 {"tenant_key": tenant_key})
         )
@@ -29,16 +31,17 @@ def get_by_tenant_id(tenant_id):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                       t.tenant_id,
-                       t.name,
-                       t.api_key,
-                       t.created_at,
+                       tenants.tenant_id,
+                       tenants.name,
+                       tenants.api_key,
+                       tenants.created_at,
                         '{license.EDITION}' AS edition,
                         openreplay_version() AS version_number,
-                        t.opt_out,
-                        t.tenant_key
-                    FROM public.tenants AS t
-                    WHERE t.tenant_id = %(tenantId)s AND t.deleted_at ISNULL
+                        tenants.opt_out,
+                        tenants.tenant_key
+                    FROM public.tenants
+                    WHERE tenants.tenant_id = %(tenantId)s 
+                        AND tenants.deleted_at ISNULL
                     LIMIT 1;""",
                 {"tenantId": tenant_id})
         )
@@ -50,11 +53,12 @@ def get_by_api_key(api_key):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                       t.tenant_id,
-                       t.name,
-                       t.created_at                        
-                    FROM public.tenants AS t
-                    WHERE t.api_key = %(api_key)s AND t.deleted_at ISNULL
+                       tenants.tenant_id,
+                       tenants.name,
+                       tenants.created_at                        
+                    FROM public.tenants
+                    WHERE tenants.api_key = %(api_key)s 
+                        AND tenants.deleted_at ISNULL
                     LIMIT 1;""",
                 {"api_key": api_key})
         )
@@ -92,7 +96,7 @@ def update(tenant_id, user_id, data: schemas.UpdateTenantSchema):
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized, needs admin or owner"]}
-    if "name" not in data and "optOut" not in data:
+    if data.name is None and data.opt_out is None:
         return {"errors": ["please provide 'name' of 'optOut' attribute for update"]}
     changes = {}
     if data.name is not None and len(data.name) > 0:
