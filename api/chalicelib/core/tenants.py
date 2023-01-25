@@ -9,17 +9,16 @@ def get_by_tenant_id(tenant_id):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                       tenant_id,
-                       name,
-                       api_key,
-                       created_at,
-                        '{license.EDITION}' AS edition,
-                        openreplay_version() AS version_number,
-                        opt_out
+                       tenants.tenant_id,
+                       tenants.name,
+                       tenants.api_key,
+                       tenants.created_at,
+                       '{license.EDITION}' AS edition,
+                       openreplay_version() AS version_number,
+                       tenants.opt_out
                     FROM public.tenants
                     LIMIT 1;""",
-                {"tenantId": tenant_id})
-        )
+                {"tenantId": tenant_id}))
         return helper.dict_to_camel_case(cur.fetchone())
 
 
@@ -29,10 +28,10 @@ def get_by_api_key(api_key):
             cur.mogrify(
                 f"""SELECT 
                        1 AS tenant_id,
-                       name,
-                       created_at                       
+                       tenants.name,
+                       tenants.created_at                       
                     FROM public.tenants
-                    WHERE api_key = %(api_key)s
+                    WHERE tenants.api_key = %(api_key)s
                     LIMIT 1;""",
                 {"api_key": api_key})
         )
