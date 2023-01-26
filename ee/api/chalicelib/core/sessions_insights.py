@@ -316,6 +316,9 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
 
     table_hh1, table_hh2, columns, this_period_resources, last_period_resources = __get_two_values(res, time_index='hh',
                                                                                                    name_index='names')
+
+    print(f'TB1\n{table_hh1}')
+    print(f'TB2\n{table_hh2}')
     del res
 
     memory_idx = columns.index('memory_used')
@@ -326,21 +329,37 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
     cpu_newvalue = _mean_table_index(table_hh2, cpu_idx)
     cpu_oldvalue = _mean_table_index(table_hh2, cpu_idx)
 
-    mem_oldvalue = 1 if mem_oldvalue == 0 else mem_oldvalue
-    cpu_oldvalue = 1 if cpu_oldvalue == 0 else cpu_oldvalue
-    return [{'category': schemas_ee.InsightCategories.resources,
-             'name': 'cpu',
-             'value': cpu_newvalue,
-             'oldValue': cpu_oldvalue,
-             'change': 100 * (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue,
-             'isNew': None},
-            {'category': schemas_ee.InsightCategories.resources,
-             'name': 'memory',
-             'value': mem_newvalue,
-             'oldValue': mem_oldvalue,
-             'change': 100 * (mem_newvalue - mem_oldvalue) / mem_oldvalue,
-             'isNew': None}
-            ]
+    cpu_ratio = 0
+    mem_ratio = 0
+    if mem_newvalue == 0:
+        mem_newvalue = None
+        mem_ratio = None
+    if mem_oldvalue == 0:
+        mem_oldvalue = None
+        mem_ratio = None
+    if cpu_newvalue == 0:
+        cpu_newvalue = None
+        cpu_ratio = None
+    if cpu_oldvalue == 0:
+        cpu_oldvalue = None
+        cpu_ratio = None
+
+    output = list()
+    if cpu_oldvalue is not None or cpu_newvalue is not None:
+        output.append({'category': schemas_ee.InsightCategories.resources,
+                 'name': 'cpu',
+                 'value': cpu_newvalue,
+                 'oldValue': cpu_oldvalue,
+                 'change': 100 * (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue if cpu_ratio is not None else cpu_ratio,
+                 'isNew': True if cpu_newvalue is not None and cpu_oldvalue is None else False})
+    if mem_oldvalue is not None or mem_newvalue is not None:
+        output.append({'category': schemas_ee.InsightCategories.resources,
+                 'name': 'memory',
+                 'value': mem_newvalue,
+                 'oldValue': mem_oldvalue,
+                 'change': 100 * (mem_newvalue - mem_oldvalue) / mem_oldvalue if mem_ratio is not None else mem_ratio,
+                 'isNew': True if mem_newvalue is not None and mem_oldvalue is None else False})
+    return output
 
 
 from chalicelib.core import sessions_exp
