@@ -160,7 +160,9 @@ function or_helm_upgrade() {
 
 function upgrade_old() {
   old_vars_path="$1"
-  sudo cp -b "${old_vars_path}" "${OR_DIR}/vars.yaml" || log err "Not able to copy old vars.yaml"
+  or_version=$(busybox awk '/fromVersion/{print $2}' < "${old_vars_path}")
+  sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml.backup."${or_version//\"}"_"$(date +%Y%m%d-%H%M%S)" || log err "Not able to copy old vars.yaml"
+  sudo cp "${old_vars_path}" ${OR_DIR}/vars.yaml || log err "Not able to copy old vars.yaml"
   upgrade
 }
 
@@ -173,10 +175,10 @@ function upgrade() {
   exists git || log err "Git not found. Please install"
   log info "Working directory $tmp_dir"
   err_cd "$tmp_dir"
-  or_version=$(awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+  or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
 
   # Creating backup dir of current installation
-  [[ -d "$OR_DIR/openreplay" ]] && sudo cp -b "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
+  [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
 
   git clone "${OR_REPO}" --depth 1
   err_cd openreplay/scripts/helmcharts
