@@ -12,10 +12,11 @@ docker rmi alpine || true
 # cosign sign --key awskms:///alias/openreplay-container-sign image_url:tag
 export SIGN_IMAGE=1
 export PUSH_IMAGE=1
+export AWS_DEFAULT_REGION="eu-central-1"
 export SIGN_KEY="awskms:///alias/openreplay-container-sign"
 
 echo $DOCKER_REPO
-[[ -z DOCKER_REPO ]] && {
+[[ -z $DOCKER_REPO ]] && {
     echo Set DOCKER_REPO="your docker registry"
     exit 1
 } || {
