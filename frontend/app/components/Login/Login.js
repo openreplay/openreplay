@@ -9,6 +9,7 @@ import { withRouter } from 'react-router-dom';
 import stl from './login.module.css';
 import cn from 'classnames';
 import { setJwt } from 'Duck/user';
+import LoginBg from '../../svg/login-illustration.svg';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -67,17 +68,12 @@ class Login extends React.Component {
 
     return (
       <div className="flex flex-col md:flex-row" style={{ height: '100vh' }}>
-        <div className={cn('md:w-6/12', stl.left)}>
+        <div className={cn('md:w-6/12 relative', stl.left)}>
           <div className="px-6 pt-10">
             <img src="/assets/logo-white.svg" />
           </div>
           <div className="color-white text-lg flex items-center">
-            <div
-              className="flex items-center justify-center w-full"
-              style={{ height: 'calc(100vh - 130px)' }}
-            >
-              <div className="text-4xl">Welcome Back!</div>
-            </div>
+            <img style={{ width: '800px', position: 'absolute', bottom: 0, left: 0 }} src={LoginBg} />;
           </div>
         </div>
         <div className="md:w-6/12 flex items-center justify-center py-10">
