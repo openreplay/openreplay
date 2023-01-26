@@ -12,9 +12,14 @@ import BugReportModal from './BugReport/BugReportModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 import AutoplayToggle from 'Shared/AutoplayToggle';
+import { connect } from 'react-redux'
+
+const localhostWarn = (project) => project + '_localhost_warn'
 
 function SubHeader(props) {
-  const [showWarningModal, setWarning] = React.useState(true);
+  const localhostWarnKey = localhostWarn(props.siteId)
+  const defaultLocalhostWarn = localStorage.getItem(localhostWarnKey) !== '1'
+  const [showWarningModal, setWarning] = React.useState(defaultLocalhostWarn);
   const { player, store } = React.useContext(PlayerContext);
   const {
     width,
@@ -58,6 +63,10 @@ function SubHeader(props) {
 
   const showWarning =
     location && /(localhost)|(127.0.0.1)|(0.0.0.0)/.test(location) && showWarningModal;
+  const closeWarning = () => {
+    localStorage.setItem(localhostWarnKey, '1')
+    setWarning(false)
+  }
   return (
     <div className="w-full px-4 py-2 flex items-center border-b relative">
       {showWarning ? (
@@ -81,7 +90,7 @@ function SubHeader(props) {
           >
             Learn More
           </a>
-          <div className="py-1 ml-3 cursor-pointer" onClick={() => setWarning(false)}>
+          <div className="py-1 ml-3 cursor-pointer" onClick={closeWarning}>
             <Icon name="close" size={16} color="black" />
           </div>
         </div>
@@ -145,4 +154,4 @@ function SubHeader(props) {
   );
 }
 
-export default observer(SubHeader);
+export default connect((state) => ({ siteId: state.getIn(['site', 'siteId']) }))(observer(SubHeader));
