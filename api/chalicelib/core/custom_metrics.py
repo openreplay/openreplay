@@ -170,7 +170,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
     # raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False, include_data=True)
-    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
     metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
@@ -197,7 +197,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
 
 
 def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
     metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
@@ -214,7 +214,7 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CardSessions
 
 
 def get_errors_list(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
     metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
@@ -569,13 +569,13 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
 
 
 def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema):
-    raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
     metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
-    elif __is_click_map(raw_metric) and raw_metric["data"]:
+    elif __is_click_map(metric) and raw_metric["data"]:
         keys = sessions_mobs. \
             __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
         mob_exists = False
