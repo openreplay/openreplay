@@ -18,9 +18,11 @@ def __get_mob_keys_deprecated(session_id):
     return [str(session_id), str(session_id) + "e"]
 
 
-def get_urls(project_id, session_id):
+def get_urls(project_id, session_id, check_existence: bool = True):
     results = []
     for k in __get_mob_keys(project_id=project_id, session_id=session_id):
+        if check_existence and not s3.exists(bucket=config("sessions_bucket"), key=k):
+            continue
         results.append(s3.client.generate_presigned_url(
             'get_object',
             Params={'Bucket': config("sessions_bucket"), 'Key': k},
@@ -29,9 +31,11 @@ def get_urls(project_id, session_id):
     return results
 
 
-def get_urls_depercated(session_id):
+def get_urls_depercated(session_id, check_existence: bool = True):
     results = []
     for k in __get_mob_keys_deprecated(session_id=session_id):
+        if check_existence and not s3.exists(bucket=config("sessions_bucket"), key=k):
+            continue
         results.append(s3.client.generate_presigned_url(
             'get_object',
             Params={'Bucket': config("sessions_bucket"), 'Key': k},
