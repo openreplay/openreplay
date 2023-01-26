@@ -13,9 +13,11 @@ def __get_devtools_keys(project_id, session_id):
     ]
 
 
-def get_urls(session_id, project_id):
+def get_urls(session_id, project_id, check_existence: bool = True):
     results = []
     for k in __get_devtools_keys(project_id=project_id, session_id=session_id):
+        if check_existence and not s3.exists(bucket=config("sessions_bucket"), key=k):
+            continue
         results.append(s3.client.generate_presigned_url(
             'get_object',
             Params={'Bucket': config("sessions_bucket"), 'Key': k},
