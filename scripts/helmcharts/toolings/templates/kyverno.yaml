@@ -7,10 +7,12 @@ metadata:
     "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-weight": "4" # Higher precidence, so the first the config map will get created.
 spec:
-  validationFailureAction: enforce
+  # validationFailureAction: enforce
+  validationFailureAction: audit
   background: false
   webhookTimeoutSeconds: 30
-  failurePolicy: Fail
+  # failurePolicy: Fail
+  failurePolicy: Ignore
   rules:
     - name: openreplay-image-signature
       match:

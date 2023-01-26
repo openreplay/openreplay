@@ -66,8 +66,8 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                                             LIMIT 1) AS stack_integrations ON TRUE"""
 
         query = cur.mogrify(f"""{"SELECT *, first_recorded IS NOT NULL AS recorded FROM (" if recorded else ""}
-                                SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at
-                                       {extra_projection}
+                                SELECT s.project_id, s.name, s.project_key, s.save_request_payloads, s.first_recorded_session_at,
+                                       created_at {extra_projection}
                                 FROM public.projects AS s
                                         {extra_join}
                                 WHERE s.deleted_at IS NULL
@@ -79,6 +79,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
             u_values = []
             params = {}
             for i, r in enumerate(rows):
+                r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 if r["first_recorded_session_at"] is None:
                     u_values.append(f"(%(project_id_{i})s,to_timestamp(%(first_recorded_{i})s/1000))")
                     params[f"project_id_{i}"] = r["project_id"]
@@ -91,7 +92,9 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                                         FROM (VALUES {",".join(u_values)}) AS u(project_id,first_recorded)
                                         WHERE projects.project_id=u.project_id;""", params)
                 cur.execute(query)
-
+        else:
+            for r in rows:
+                r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         if recording_state and len(rows) > 0:
             project_ids = [f'({r["project_id"]})' for r in rows]
             query = cur.mogrify(f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
