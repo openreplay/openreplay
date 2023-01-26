@@ -40,6 +40,9 @@ function build_alerts(){
         docker tag ${DOCKER_REPO:-'local'}/alerts:${image_tag} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/alerts:${tag}latest
     }
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/alerts:${image_tag}
+    }
     echo "completed alerts build"
 }
 
