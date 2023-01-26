@@ -538,7 +538,6 @@ $$
             );
             CREATE INDEX issues_issue_id_timestamp_idx ON events_common.issues (issue_id, timestamp);
             CREATE INDEX issues_timestamp_idx ON events_common.issues (timestamp);
-            CREATE INDEX issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
 
             CREATE TYPE http_method AS ENUM ('GET','HEAD','POST','PUT','DELETE','CONNECT','OPTIONS','TRACE','PATCH');
             CREATE TABLE events_common.requests
