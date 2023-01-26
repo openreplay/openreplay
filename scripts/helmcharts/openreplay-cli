@@ -108,6 +108,7 @@ log info '
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
                     [ -u | --upgrade ]
+                    [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
                     [ -p | --install-packages ]
@@ -157,6 +158,12 @@ function or_helm_upgrade() {
 
 }
 
+function upgrade_old() {
+  old_vars_path="$1"
+  sudo cp -b "${old_vars_path}" "${OR_DIR}/vars.yaml" || log err "Not able to copy old vars.yaml"
+  upgrade
+}
+
 function upgrade() {
   # TODO:
   # 1. store vars.yaml in central place.
@@ -188,7 +195,8 @@ function upgrade() {
   sudo mv ./openreplay-cli /bin/
   sudo mv ./vars.yaml "$OR_DIR"
   sudo cp -rf ../../../openreplay $OR_DIR/
-  log info All the configuration has been stored to $OR_DIR/vars.yaml file
+  log info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
+  log info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."
 
   err_cd -
   return
@@ -210,7 +218,7 @@ function clean_tmp_dir() {
   install_packages
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrvpiuhsl: --long reload,restart,verbose,install-packages,install,upgrade,help,status,logs: -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrvpiuhsl:U: --long reload,restart,verbose,install-packages,install,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   help
@@ -230,6 +238,12 @@ do
     -u | --upgrade)
       log title "Upgrading OpenReplay"
       upgrade
+      clean_tmp_dir
+      exit 0
+    ;;
+    -U | --deprecated-upgrade)
+      log title "[Deprected] Upgrading OpenReplay"
+      upgrade_old "$2"
       clean_tmp_dir
       exit 0
     ;;
