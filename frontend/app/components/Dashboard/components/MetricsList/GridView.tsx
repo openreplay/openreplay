@@ -14,6 +14,7 @@ function GridView(props: Props) {
     const path = withSiteId(`/metrics/${metricId}`, siteId);
     history.push(path);
   };
+  
   return (
     <div className="grid grid-cols-4 gap-4 m-4 items-start">
       {list.map((metric: any) => (
@@ -22,8 +23,7 @@ function GridView(props: Props) {
             key={metric.metricId}
             widget={metric}
             active={selectedList.includes(metric.metricId)}
-            isTemplate={true}
-            isWidget={metric.metricType === 'predefined'}
+            isWidget={true}
             onClick={() => onItemClick(parseInt(metric.metricId))}
           />
         </React.Fragment>

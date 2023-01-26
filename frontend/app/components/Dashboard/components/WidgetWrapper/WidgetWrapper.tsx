@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import cn from 'classnames';
-import { ItemMenu, Tooltip, TextEllipsis } from 'UI';
+import { ItemMenu, TextEllipsis } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { observer } from 'mobx-react-lite';
