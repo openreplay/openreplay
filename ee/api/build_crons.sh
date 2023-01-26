@@ -37,7 +37,7 @@ function build_crons(){
         docker push ${DOCKER_REPO:-'local'}/crons:${tag}latest
     }
     [[ $SIGN_IMAGE -eq 1 ]] && {
-        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/crons:${image_tag}
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/crons:${git_sha1}
     }
     echo "completed crons build"
 }
