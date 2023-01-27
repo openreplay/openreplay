@@ -30,7 +30,7 @@ import type {
   MouseClick,
 } from './messages';
 
-import { loadFiles, requestEFSDom, requestEFSDevtools, NO_FILE_OK, NO_URLS } from './network/loadFiles';
+import { loadFiles, requestEFSDom, requestEFSDevtools } from './network/loadFiles';
 import { decryptSessionBytes } from './network/crypto';
 
 import Lists, { INITIAL_STATE as LISTS_INITIAL_STATE, State as ListsState } from './Lists';
@@ -226,22 +226,19 @@ export default class MessageManager {
 
     loadFiles(loadMethod.url, loadMethod.parser())
       // EFS fallback
-      .catch((e) => {
-        if (e === NO_FILE_OK || e === NO_URLS) {
-          requestEFSDom(this.session.sessionId)
-            .then(createNewParser(false))
-            .catch(this.onFileReadFailed);
-        } else {
-          this.onFileReadFailed(e);
-        }
-      })
+      .catch((e) =>
+        requestEFSDom(this.session.sessionId)
+          .then(createNewParser(false))
+      )
       .then(this.onFileReadSuccess)
+      .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally);
 
     // load devtools
     if (this.session.devtoolsURL?.length) {
       this.state.update({ devtoolsLoading: true })
       loadFiles(this.session.devtoolsURL, createNewParser())
+      // EFS fallback
       .catch(() =>
         requestEFSDevtools(this.session.sessionId)
           .then(createNewParser(false))
