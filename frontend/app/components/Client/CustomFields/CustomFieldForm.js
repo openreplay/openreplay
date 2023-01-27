@@ -39,16 +39,17 @@ class CustomFieldForm extends React.PureComponent {
                             placeholder="Field Name"
                         />
                     </Form.Field>
-
-                    {errors && (
+                    
+                    {/* TODO: errors state is not updating properly */}
+                    {/* {errors && (
                         <div className="mb-3">
-                            {errors.map((error) => (
-                                <Message visible={errors} size="mini" error key={error} className={styles.error}>
-                                    {error}
+                            {errors.map((error, i) => (
+                                <Message visible={errors} size="mini" error key={i} className={styles.error}>
+                                    {error.message}
                                 </Message>
                             ))}
                         </div>
-                    )}
+                    )} */}
 
                     <div className="flex justify-between">
                         <div className="flex items-center">
