@@ -32,6 +32,7 @@ export const options = [
 ];
 
 const filterKeys = ['is', 'isNot'];
+const stringFilterKeysLimited = ['is', 'isAny', 'isNot'];
 const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const stringFilterKeysPerformance = ['is', 'inAnyPage', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const targetFilterKeys = ['on', 'notOn', 'onAny', 'contains', 'startsWith', 'endsWith', 'notContains'];
@@ -44,6 +45,7 @@ const getOperatorsByKeys = (keys) => {
 };
 
 export const baseOperators = options.filter(({key}) => filterKeys.includes(key));
+export const stringOperatorsLimited = options.filter(({key}) => stringFilterKeysLimited.includes(key));
 export const stringOperators = options.filter(({key}) => stringFilterKeys.includes(key));
 export const stringOperatorsPerformance = options.filter(({key}) => stringFilterKeysPerformance.includes(key));
 export const targetOperators = options.filter(({key}) => targetFilterKeys.includes(key));
@@ -134,6 +136,7 @@ export default {
   options,
   baseOperators,
   stringOperators,
+  stringOperatorsLimited,
   targetOperators,
   booleanOperators,
   customOperators,
