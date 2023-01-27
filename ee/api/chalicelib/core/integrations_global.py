@@ -51,7 +51,10 @@ def get_global_integrations_status(tenant_id, user_id, project_id):
                                         AND provider='elasticsearch')) AS {schemas.IntegrationType.elasticsearch.value},
                            EXISTS((SELECT 1
                                    FROM public.webhooks
-                                   WHERE type='slack' AND tenant_id=%(tenant_id)s)) AS {schemas.IntegrationType.slack.value};""",
+                                   WHERE type='slack' AND tenant_id=%(tenant_id)s)) AS {schemas.IntegrationType.slack.value},
+                           EXISTS((SELECT 1
+                                   FROM public.webhooks
+                                   WHERE type='msteams' AND tenant_id=%(tenant_id)s)) AS {schemas.IntegrationType.ms_teams.value};""",
                         {"user_id": user_id, "tenant_id": tenant_id, "project_id": project_id})
         )
         current_integrations = cur.fetchone()

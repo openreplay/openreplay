@@ -768,8 +768,7 @@ def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/integrations/slack/{webhookId}', tags=["integrations"])
 def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_webhook(tenant_id=context.tenant_id, webhook_id=webhookId,
-                                        webhook_type=schemas.WebhookType.slack)}
+    return {"data": Slack.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)}
 
 
 @app.delete('/integrations/slack/{webhookId}', tags=["integrations"])
@@ -879,8 +878,9 @@ def add_msteams_integration(data: schemas.AddCollaborationSchema,
 def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
-        old = webhook.get_webhook(tenant_id=context.tenant_id, webhook_id=webhookId,
-                                  webhook_type=schemas.WebhookType.msteams)
+        old = MSTeams.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)
+        if not old:
+            return {"errors": ["MsTeams integration not found."]}
         if old["endpoint"] != data.url:
             if not MSTeams.say_hello(data.url):
                 return {

@@ -37,7 +37,7 @@ class Slack(BaseCollaboration):
 
     @classmethod
     def send_raw(cls, tenant_id, webhook_id, body):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
+        integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         try:
@@ -60,7 +60,7 @@ class Slack(BaseCollaboration):
 
     @classmethod
     def send_batch(cls, tenant_id, webhook_id, attachments):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
+        integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         print(f"====> sending slack batch notification: {len(attachments)}")
@@ -76,7 +76,7 @@ class Slack(BaseCollaboration):
 
     @classmethod
     def __share(cls, tenant_id, integration_id, attachement):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=integration_id)
+        integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         attachement["ts"] = datetime.now().timestamp()
@@ -108,7 +108,7 @@ class Slack(BaseCollaboration):
         return {"data": data}
 
     @classmethod
-    def __get(cls, tenant_id, integration_id=None):
+    def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
             return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
                                        webhook_type=schemas.WebhookType.slack)

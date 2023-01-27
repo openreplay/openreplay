@@ -75,7 +75,9 @@ def add_slack_integration(data: schemas.AddCollaborationSchema, context: schemas
 def edit_slack_integration(integrationId: int, data: schemas.EditCollaborationSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
-        old = webhook.get_webhook(tenant_id=context.tenant_id, webhook_id=integrationId)
+        old = Slack.get_integration(tenant_id=context.tenant_id, integration_id=integrationId)
+        if not old:
+            return {"errors": ["Slack integration not found."]}
         if old["endpoint"] != data.url:
             if not Slack.say_hello(data.url):
                 return {

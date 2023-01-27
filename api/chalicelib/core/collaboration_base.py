@@ -41,5 +41,5 @@ class BaseCollaboration(ABC):
 
     @classmethod
     @abstractmethod
-    def __get(cls, tenant_id, integration_id=None):
+    def get_integration(cls, tenant_id, integration_id=None):
         pass

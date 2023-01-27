@@ -1219,6 +1219,7 @@ class IntegrationType(str, Enum):
     github = "GITHUB"
     jira = "JIRA"
     slack = "SLACK"
+    ms_teams = "MSTEAMS"
     sentry = "SENTRY"
     bugsnag = "BUGSNAG"
     rollbar = "ROLLBAR"
