@@ -49,7 +49,10 @@ function AuditView(props) {
                             onChange={({ value }) => auditStore.updateKey('order', value.value)}
                         />
                     </div>
-                    <AuditSearchField onChange={(value) => auditStore.updateKey('searchQuery', value) }/>
+                    <AuditSearchField onChange={(value) => {
+                        auditStore.updateKey('searchQuery', value);
+                        auditStore.updateKey('page', 1)
+                    } }/>
                     <div>
                         <Button variant="text-primary" className="ml-3" onClick={exportToCsv}>
                             <Icon name="grid-3x3" color="teal" />
