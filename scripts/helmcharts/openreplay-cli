@@ -7,7 +7,9 @@ DB_NS="${DB_NS:-db}"
 OR_REPO="https://github.com/openreplay/openreplay"
 tmp_dir=$(mktemp -d)
 # For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
-HELM_OPTIONS=""
+#HELM_OPTIONS=""
+# If you want to install the dev version. It can be any branch or tag.
+#OR_VERSION="dev"
 
 [[ -d $OR_DIR ]] || {
   sudo mkdir $OR_DIR
@@ -156,6 +158,7 @@ function or_helm_upgrade() {
     openreplay
     )
   for chart in "${chart_names[@]}"; do
+    [[ -z $OR_VERSION ]] || HELM_OPTIONS="--set dbMigrationUpstreamBranch=${OR_VERSION}"
     if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"; then
       log err "
         Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
@@ -192,7 +195,8 @@ function upgrade() {
   # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
 
-  git clone "${OR_REPO}" --depth 1
+  git_options="-b ${OR_VERSION:-main}"
+  eval git clone "${OR_REPO}" --depth 1 $git_options
   err_cd openreplay/scripts/helmcharts
   install_packages
   [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
@@ -243,7 +247,7 @@ eval set -- "$PARSED_ARGUMENTS"
 while :
 do
   case "$1" in
-    -v | --verbose) VERBOSE=1    ; shift   ;;
+    -v | --verbose) VERBOSE=1; echo $VERBOSE; clean_tmp_dir ; shift   ;;
     -h | --help)
       help 
       clean_tmp_dir
