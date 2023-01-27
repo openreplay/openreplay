@@ -83,6 +83,10 @@ export default class MetricStore {
   updateKey(key: string, value: any) {
     // @ts-ignore
     this[key] = value;
+
+    if (key === 'filter') {
+      this.page = 1;
+    }
   }
 
   setClickMaps(val: boolean) {
