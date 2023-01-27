@@ -36,7 +36,7 @@ function Header({ history, siteId }: { history: any; siteId: string }) {
       </div>
       <div className="text-base text-disabled-text flex items-center px-6">
         <Icon name="info-circle-fill" className="mr-2" size={16} />
-        A Dashboard is a collection of Metrics that can be shared across teams.
+        A Dashboard is a collection of Cards that can be shared across teams.
       </div>
       <div className="border-y px-3 py-1 mt-2 flex items-center w-full justify-end gap-4">
         <Toggler

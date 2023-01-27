@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { NoContent, Pagination, Icon } from 'UI';
+import { NoContent, Pagination, Icon, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
@@ -30,11 +30,17 @@ function RecordingsList() {
       title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_RECORDINGS} size={180} />
-          <div className="text-center text-gray-600 my-4">
-            {recordsSearch !== ''
-              ? 'No matching results'
-              : "No recordings available yet."}
+          <div className="text-center text-gray-600 mt-4">
+            {recordsSearch !== '' ? 'No matching results' : 'No recordings available yet.'}
           </div>
+        </div>
+      }
+      subtext={
+        <div className="text-center flex justify-center items-center flex-col">
+          <span>
+            Record your co-browsing sessions and share them with your team for product feedback or
+            training purposes.
+          </span>
         </div>
       }
     >

@@ -154,7 +154,7 @@ function SessionList(props: Props) {
             {(isVault || isBookmark) && (
               <div>
                 {isVault
-                  ? 'Add a session to your vault from player screen to retain it for ever.'
+                  ? 'Add any session to your vault from the replay page and retain it longer.'
                   : 'Bookmark important sessions in player screen and quickly find them here.'}
               </div>
             )}

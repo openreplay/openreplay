@@ -23,7 +23,12 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
           <div className="flex flex-col items-center justify-center">
             {/* <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" /> */}
             <AnimatedSVG name={ICONS.NO_NOTES} size={180} />
-            <div className="text-center text-gray-600 my-4">No notes yet</div>
+            <div className="text-center text-gray-600 mt-4">No notes yet.</div>
+          </div>
+        }
+        subtext={
+          <div className="text-center flex justify-center items-center flex-col">
+            Create notes when replaying sessions and share your insights with the team.
           </div>
         }
       >
