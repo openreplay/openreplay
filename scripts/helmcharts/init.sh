@@ -144,6 +144,8 @@ function set_permissions() {
 
 ## Installing OpenReplay
 function install_openreplay() {
+  info "installing toolings"
+  helm upgrade --install toolings ./toolings -n app --create-namespace --wait -f ./vars.yaml --atomic
   info "installing databases"
   helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
   info "installing application"
