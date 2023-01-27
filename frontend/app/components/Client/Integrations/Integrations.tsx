@@ -131,8 +131,8 @@ const integrations = [
         integrations: [
             { title: 'Jira', slug: 'jira', category: 'Errors', icon: 'integrations/jira', component: <JiraForm /> },
             { title: 'Github', slug: 'github', category: 'Errors', icon: 'integrations/github', component: <GithubForm /> },
-            { title: 'Slack', category: 'Errors', icon: 'integrations/slack', component: <SlackForm /> },
-            { title: 'MS Teams', category: 'Errors', icon: 'integrations/teams', component: <MSTeams /> },
+            { title: 'Slack', slug: 'slack', category: 'Errors', icon: 'integrations/slack', component: <SlackForm /> },
+            { title: 'MS Teams', slug: 'msteams', category: 'Errors', icon: 'integrations/teams', component: <MSTeams /> },
         ],
     },
     {
