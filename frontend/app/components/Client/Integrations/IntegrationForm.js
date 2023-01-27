@@ -70,29 +70,18 @@ export default class IntegrationForm extends React.PureComponent {
 
     remove = () => {
         const { name, config, ignoreProject } = this.props;
-        this.props.remove(name, !ignoreProject ? config.projectId : null).then(
-            function () {
-                this.props.onClose();
-                this.fetchList();
-            }.bind(this)
-        );
+        this.props.remove(name, !ignoreProject ? config.projectId : null).then(() => {
+            this.props.onClose();
+            this.fetchList();
+        });
     };
 
     render() {
-        const { config, saving, removing, formFields, name, loading, ignoreProject } = this.props;
-        // const { currentSiteId } = this.state;
-
+        const { config, saving, removing, formFields, name, loading, integrated } = this.props;
         return (
             <Loader loading={loading}>
                 <div className="ph-20">
                     <Form>
-                        {/* {!ignoreProject && (
-                        <Form.Field>
-                            <label>{'OpenReplay Project'}</label>
-                            <SiteDropdown value={currentSiteId} onChange={this.onChangeSelect} />
-                        </Form.Field>
-                    )} */}
-
                         {formFields.map(
                             ({
                                 key,
@@ -140,7 +129,7 @@ export default class IntegrationForm extends React.PureComponent {
                             {config.exists() ? 'Update' : 'Add'}
                         </Button>
 
-                        {config.exists() && (
+                        {integrated && (
                             <Button loading={removing} onClick={this.remove}>
                                 {'Delete'}
                             </Button>
