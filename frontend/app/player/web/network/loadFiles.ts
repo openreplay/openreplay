@@ -1,41 +1,33 @@
 import APIClient from 'App/api_client';
 
-export const NO_FILE_OK = "No-file-but-this-is-ok"
-export const NO_SECOND_FILE = 'No-second-file-but-this-is-ok-too'
+const ALLOWED_404 = "No-file-and-this-is-ok"
 const NO_BACKUP_FILE = "No-efs-file"
 export const NO_URLS = 'No-urls-provided'
-async function loadFile(url: string, onData: (d: Uint8Array) => void, skippable: boolean) {
-  try {
-    const stream = await window.fetch(url)
-    const data = await processAPIStreamResponse(stream, skippable)
-    // Messages are being loaded and processed async, we can go on
-    onData(data)
 
-    return Promise.resolve('success')
-  } catch (e) {
-    throw e
-  }
-}
 
-export const loadFiles = async (
+export async function loadFiles(
   urls: string[],
   onData: (data: Uint8Array) => void,
-): Promise<any> => {
+): Promise<any> {
   if (!urls.length) {
-    return Promise.reject(NO_URLS)
+    throw NO_URLS
   }
-
-  return Promise.allSettled(urls.map(url =>
-    loadFile(url, onData, url === urls[0] && !url.match(/devtools/))
-  )).then(results => {
-    if (results[0].status === 'rejected') {
-      // if no 1st file, we should fall back to EFS storage or display error
-      return Promise.reject(results[0].reason)
-    } else {
-      // we don't care if second file is missing (expected)
-      return Promise.resolve()
+  const fileLoads = urls.map((url, index) =>
+    // loads can start simultaneously
+    window.fetch(url).then(r => processAPIStreamResponse(r, index === 0))
+  )
+  try {
+    for (let fileLoad of fileLoads) {
+      // binary data should be added sequentially
+      const data = await fileLoad
+      onData(data)
     }
-  })
+  } catch(e) {
+    if (e === ALLOWED_404) {
+      return
+    }
+    throw e
+  }
 }
 
 export async function requestEFSDom(sessionId: string) {
@@ -55,11 +47,10 @@ async function requestEFSMobFile(filename: string) {
   return await processAPIStreamResponse(res, false)
 }
 
-const processAPIStreamResponse = (response: Response, canBeMissed: boolean) => {
+const processAPIStreamResponse = (response: Response, skippable: boolean) => {
   return new Promise<ArrayBuffer>((res, rej) => {
-    if (response.status === 404) {
-      if (canBeMissed) return rej(NO_FILE_OK)
-      else return rej(NO_SECOND_FILE);
+    if (response.status === 404 && skippable) {
+      return rej(ALLOWED_404)
     }
     if (response.status >= 400) {
       return rej(`Bad file status code ${response.status}. Url: ${response.url}`)
