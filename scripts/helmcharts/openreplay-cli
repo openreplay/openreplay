@@ -142,20 +142,27 @@ function status() {
   return
 }
 
+# Function to upgrade helm openreplay app.
 function or_helm_upgrade() {
   set -o pipefail
   log_file="${tmp_dir}/helm.log"
-  if ! helm upgrade --install openreplay ./openreplay -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug  2>&1 | tee -a "${log_file}"; then
-    set +o pipefail
-    log err "
-      Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
+  chart_names=(
+    toolings
+    openreplay
+    )
+  for chart in "${chart_names[@]}"; do
+    if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug  2>&1 | tee -a "${log_file}"; then
+      log err "
+        Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
 
-      If logs aren't verbose, run ${BWHITE}openreplay --status${RED}
+        If logs aren't verbose, run ${BWHITE}openreplay --status${RED}
 
-      If pods are in failed state, run ${BWHITE}openreplay --logs <pod-name>${RED}
-      "
-  fi
-
+        If pods are in failed state, run ${BWHITE}openreplay --logs <pod-name>${RED}
+        "
+    fi
+  done
+  set +o pipefail
+  return
 }
 
 function upgrade_old() {
