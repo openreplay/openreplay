@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Loader, NoContent, Icon } from 'UI';
+import { Button, Loader, NoContent, Icon, Tooltip } from 'UI';
 import { init, fetchList, save, remove } from 'Duck/customField';
 import SiteDropdown from 'Shared/SiteDropdown';
 import styles from './customFields.module.css';
@@ -71,7 +71,11 @@ function CustomFields(props) {
                 <div style={{ marginRight: '15px' }}>
                     <SiteDropdown value={currentSite && currentSite.id} onChange={onChangeSelect} />
                 </div>
-                <Button className="ml-auto" variant="primary" onClick={() => init()}>Add Metadata</Button>
+                <div className="ml-auto">
+                <Tooltip title="You've reached the limit of 10 metadata." disabled={fields.size < 10}>
+                    <Button disabled={fields.size >= 10}  variant="primary" onClick={() => init()}>Add Metadata</Button>
+                </Tooltip>
+                </div>
             </div>
             <div className="text-base text-disabled-text flex px-5 items-center my-3">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />
