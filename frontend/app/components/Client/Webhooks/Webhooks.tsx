@@ -11,23 +11,24 @@ import { toast } from 'react-toastify';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite'
+import { IWebhook } from 'Types/webhook';
 
 function Webhooks() {
     const { settingsStore } = useStore()
     const { webhooks, hooksLoading: loading } = settingsStore;
     const { showModal, hideModal } = useModal();
 
-    const noSlackWebhooks = webhooks.filter((hook) => hook.type === 'webhook');
+    const customWebhooks = webhooks.filter((hook) => hook.type === 'webhook');
     useEffect(() => {
         void settingsStore.fetchWebhooks();
     }, []);
 
-    const init = (v) => {
-        settingsStore.initWebhook(v);
-        showModal(<WebhookForm onClose={hideModal} onDelete={removeWebhook} />);
+    const init = (webhookInst?: Partial<IWebhook>) => {
+        settingsStore.initWebhook(webhookInst);
+        showModal(<WebhookForm onClose={hideModal} onDelete={removeWebhook} />, { right: true });
     };
 
-    const removeWebhook = async (id) => {
+    const removeWebhook = async (id: string) => {
         if (
             await confirm({
                 header: 'Confirm',
@@ -63,11 +64,11 @@ function Webhooks() {
                         </div>
                     }
                     size="small"
-                    show={noSlackWebhooks.length === 0}
+                    show={customWebhooks.length === 0}
                 >
                     <div className="cursor-pointer">
-                        {noSlackWebhooks.map((webhook) => (
-                            <ListItem key={webhook.key} webhook={webhook} onEdit={() => init(webhook)} />
+                        {customWebhooks.map((webhook) => (
+                            <ListItem key={webhook.webhookId} webhook={webhook} onEdit={() => init(webhook)} />
                         ))}
                     </div>
                 </NoContent>

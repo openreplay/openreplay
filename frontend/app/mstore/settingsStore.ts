@@ -62,7 +62,7 @@ export default class SettingsStore {
       })
   }
 
-  initWebhook = (inst: Partial<IWebhook> | Webhook) => {
+  initWebhook = (inst?: Partial<IWebhook> | Webhook) => {
     this.webhookInst = inst instanceof Webhook ? inst : new Webhook(inst)
   }
 
@@ -71,6 +71,7 @@ export default class SettingsStore {
     return webhookService.saveWebhook(inst)
      .then(data => {
         this.webhookInst = new Webhook(data)
+        this.webhooks =  [...this.webhooks, this.webhookInst]
        this.hooksLoading = false
      })
   }
