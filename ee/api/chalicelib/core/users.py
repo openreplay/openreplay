@@ -25,7 +25,7 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                                             (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
-                            RETURNING tenant_id,user_id,email,role,name, role_id
+                            RETURNING tenant_id,user_id,email,role,name,created_at, role_id
                     ),
                     au AS (INSERT INTO public.basic_authentication (user_id, invitation_token, invited_at)
                              VALUES ((SELECT user_id FROM u), %(invitation_token)s, timezone('utc'::text, now()))
@@ -36,6 +36,7 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            u.email,
                            u.role,
                            u.name,
+                           u.created_at,
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -49,10 +50,11 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
                              "invitation_token": invitation_token, "role_id": role_id})
-        cur.execute(
-            query
-        )
-        return helper.dict_to_camel_case(cur.fetchone())
+        cur.execute(query)
+        row = helper.dict_to_camel_case(cur.fetchone())
+        if row:
+            row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+        return row
 
 
 def restore_member(tenant_id, user_id, email, invitation_token, admin, name, owner=False, role_id=None):
@@ -76,13 +78,11 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           role_id;""",
+                           created_at,role_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "role_id": role_id})
-        cur.execute(
-            query
-        )
+        cur.execute(query)
         result = cur.fetchone()
         query = cur.mogrify("""\
                     UPDATE public.basic_authentication
@@ -93,10 +93,9 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                     WHERE user_id=%(user_id)s
                     RETURNING invitation_token;""",
                             {"user_id": user_id, "invitation_token": invitation_token})
-        cur.execute(
-            query
-        )
+        cur.execute(query)
         result["invitation_token"] = cur.fetchone()["invitation_token"]
+        result["created_at"] = TimeUTC.datetime_to_timestamp(result["created_at"])
 
         return helper.dict_to_camel_case(result)
 
@@ -212,18 +211,20 @@ def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
     if user:
         return {"errors": ["user already exists"]}
     name = data.get("name", None)
-    if name is not None and len(name) == 0:
-        return {"errors": ["invalid user name"]}
-    if name is None:
+    if name is None or len(name) == 0:
         name = data["email"]
     role_id = data.get("roleId")
     if role_id is None:
         role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
     invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data["email"])
-    if user is not None:
+    if user is not None and user["tenantId"] == tenant_id:
         new_member = restore_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
                                     admin=data.get("admin", False), name=name, user_id=user["userId"], role_id=role_id)
+    elif user is not None:
+        __hard_delete_user(user_id=user["userId"])
+        new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
+                                       admin=data.get("admin", False), name=name, role_id=role_id)
     else:
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name, role_id=role_id)
@@ -870,3 +871,12 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
             query
         )
         return helper.dict_to_camel_case(cur.fetchone())
+
+
+def __hard_delete_user(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""DELETE FROM public.users
+                WHERE users.user_id = %(user_id)s AND users.deleted_at IS NOT NULL ;""",
+            {"user_id": user_id})
+        cur.execute(query)
