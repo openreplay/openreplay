@@ -7,7 +7,7 @@ from starlette import status
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
-    alerts, funnels, issues, integrations_manager, metadata, \
+    alerts, issues, integrations_manager, metadata, \
     log_tool_elasticsearch, log_tool_datadog, \
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
@@ -507,7 +507,7 @@ def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
 def reset_password_handler(data: schemas.ForgetPasswordPayloadSchema = Body(...)):
     if len(data.email) < 5:
         return {"errors": ["please provide a valid email address"]}
-    return reset_password.reset(data)
+    return reset_password.reset(data=data)
 
 
 @app.get('/{projectId}/metadata', tags=["metadata"])
@@ -568,7 +568,7 @@ def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(
 
 @app.get('/announcements', tags=["announcements"])
 def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": announcements.get_all(context.user_id)}
+    return {"data": announcements.get_all(user_id=context.user_id)}
 
 
 @app.get('/announcements/view', tags=["announcements"])
@@ -584,12 +584,12 @@ def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
 @app.post('/{projectId}/alerts', tags=["alerts"])
 def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.create(projectId, data)
+    return alerts.create(project_id=projectId, data=data)
 
 
 @app.get('/{projectId}/alerts', tags=["alerts"])
 def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get_all(projectId)}
+    return {"data": alerts.get_all(project_id=projectId)}
 
 
 @app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
@@ -600,18 +600,18 @@ def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depend
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": alerts.get(alertId)}
+    return {"data": alerts.get(id=alertId)}
 
 
 @app.post('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.update(alertId, data)
+    return alerts.update(id=alertId, data=data)
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.delete(projectId, alertId)
+    return alerts.delete(project_id=projectId, alert_id=alertId)
 
 
 @app_apikey.put('/{projectKey}/sourcemaps/', tags=["sourcemaps"])
@@ -773,7 +773,7 @@ def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = Depends(
 
 @app.delete('/integrations/slack/{webhookId}', tags=["integrations"])
 def delete_slack_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return webhook.delete(context.tenant_id, webhookId)
+    return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
 @app.put('/webhooks', tags=["webhooks"])
@@ -889,6 +889,11 @@ def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSche
                 }
     return {"data": webhook.update(tenant_id=context.tenant_id, webhook_id=webhookId,
                                    changes={"name": data.name, "endpoint": data.url})}
+
+
+@app.delete('/integrations/msteams/{webhookId}', tags=["integrations"])
+def delete_msteams_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
