@@ -24,7 +24,7 @@ import NgRxDoc from './NgRxDoc';
 import MobxDoc from './MobxDoc';
 import ProfilerDoc from './ProfilerDoc';
 import AssistDoc from './AssistDoc';
-import { PageTitle } from 'UI';
+import { PageTitle, Tooltip } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import withPageTitle from 'HOCs/withPageTitle';
 import PiniaDoc from './PiniaDoc'
@@ -77,7 +77,7 @@ function Integrations(props: Props) {
         <div className="mb-4 p-5">
             {!hideHeader && <PageTitle title={<div>Integrations</div>} />}
             {integrations.map((cat: any) => (
-                <div className="mb-2 border-b last:border-none py-3">
+                <div className="mb-2 border-b last:border-none py-3" key={cat.key}>
                     <div className="flex items-center">
                         <h2 className="font-medium text-lg">{cat.title}</h2>
                         {cat.isProject && (
@@ -92,20 +92,26 @@ function Integrations(props: Props) {
                     <div className="">{cat.description}</div>
 
                     <div className="flex flex-wrap mt-4">
-                        {/* <Loader loading={loading && cat.isProject}> */}
                         {cat.integrations.map((integration: any) => (
-                            <IntegrationItem
-                                integrated={integratedList.includes(integration.slug)}
-                                key={integration.name}
-                                integration={integration}
-                                onClick={() => onClick(integration, cat.title === "Plugins" ? 500 : 350)}
-                                hide={
-                                    (integration.slug === 'github' && integratedList.includes('jira')) ||
-                                    (integration.slug === 'jira' && integratedList.includes('github'))
-                                }
-                            />
+                          <React.Fragment key={integration.slug}>
+                              <Tooltip
+                                delay={50}
+                                title="Global configuration, available to all team members."
+                                disabled={!integration.shared}
+                                placement={"bottom"}
+                              >
+                                <IntegrationItem
+                                    integrated={integratedList.includes(integration.slug)}
+                                    integration={integration}
+                                    onClick={() => onClick(integration, cat.title === "Plugins" ? 500 : 350)}
+                                    hide={
+                                        (integration.slug === 'github' && integratedList.includes('jira')) ||
+                                        (integration.slug === 'jira' && integratedList.includes('github'))
+                                    }
+                                />
+                              </Tooltip>
+                          </React.Fragment>
                         ))}
-                        {/* </Loader> */}
                     </div>
                 </div>
             ))}
@@ -126,22 +132,24 @@ export default connect(
 const integrations = [
     {
         title: 'Issue Reporting and Collaborations',
+        key: 1,
         description: 'Seamlessly report issues or share issues with your team right from OpenReplay.',
         isProject: false,
         integrations: [
             { title: 'Jira', slug: 'jira', category: 'Errors', icon: 'integrations/jira', component: <JiraForm /> },
             { title: 'Github', slug: 'github', category: 'Errors', icon: 'integrations/github', component: <GithubForm /> },
-            { title: 'Slack', slug: 'slack', category: 'Errors', icon: 'integrations/slack', component: <SlackForm /> },
-            { title: 'MS Teams', slug: 'msteams', category: 'Errors', icon: 'integrations/teams', component: <MSTeams /> },
+            { title: 'Slack', slug: 'slack', category: 'Errors', icon: 'integrations/slack', component: <SlackForm />, shared: true },
+            { title: 'MS Teams', slug: 'msteams', category: 'Errors', icon: 'integrations/teams', component: <MSTeams />, shared: true },
         ],
     },
     {
         title: 'Backend Logging',
+        key: 2,
         isProject: true,
         description: 'Sync your backend errors with sessions replays and see what happened front-to-back.',
         integrations: [
             { title: 'Sentry', slug: 'sentry', icon: 'integrations/sentry', component: <SentryForm /> },
-            { title: 'Datadog', slug: 'datadog', icon: 'integrations/datadog', component: <BugsnagForm /> },
+            { title: 'Bugsnag', slug: 'bugsnag', icon: 'integrations/bugsnag', component: <BugsnagForm /> },
             { title: 'Rollbar', slug: 'rollbar', icon: 'integrations/rollbar', component: <RollbarForm /> },
             { title: 'Elasticsearch', slug: 'elasticsearch', icon: 'integrations/elasticsearch', component: <ElasticsearchForm /> },
             { title: 'Datadog', slug: 'datadog', icon: 'integrations/datadog', component: <DatadogForm /> },
@@ -158,19 +166,20 @@ const integrations = [
     },
     {
         title: 'Plugins',
+        key: 3,
         isProject: true,
         description:
             "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
         integrations: [
-            { title: 'Redux', slug: '', icon: 'integrations/redux', component: <ReduxDoc /> },
-            { title: 'VueX', slug: '', icon: 'integrations/vuejs', component: <VueDoc /> },
-            { title: 'Pinia', slug: '', icon: 'integrations/pinia', component: <PiniaDoc /> },
-            { title: 'GraphQL', slug: '', icon: 'integrations/graphql', component: <GraphQLDoc /> },
-            { title: 'NgRx', slug: '', icon: 'integrations/ngrx', component: <NgRxDoc /> },
-            { title: 'MobX', slug: '', icon: 'integrations/mobx', component: <MobxDoc /> },
-            { title: 'Profiler', slug: '', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
-            { title: 'Assist', slug: '', icon: 'integrations/openreplay', component: <AssistDoc /> },
-            { title: 'Zustand', slug: '', icon: '', header: '🐻', component: <ZustandDoc /> }
+            { title: 'Redux', slug: 'redux', icon: 'integrations/redux', component: <ReduxDoc /> },
+            { title: 'VueX', slug: 'vuex', icon: 'integrations/vuejs', component: <VueDoc /> },
+            { title: 'Pinia', slug: 'pinia', icon: 'integrations/pinia', component: <PiniaDoc /> },
+            { title: 'GraphQL', slug: 'graphql', icon: 'integrations/graphql', component: <GraphQLDoc /> },
+            { title: 'NgRx', slug: 'ngrx', icon: 'integrations/ngrx', component: <NgRxDoc /> },
+            { title: 'MobX', slug: 'mobx', icon: 'integrations/mobx', component: <MobxDoc /> },
+            { title: 'Profiler', slug: 'profiler', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
+            { title: 'Assist', slug: 'assist', icon: 'integrations/openreplay', component: <AssistDoc /> },
+            { title: 'Zustand', slug: 'zustand', icon: '', header: '🐻', component: <ZustandDoc /> }
         ],
     },
 ];
