@@ -279,7 +279,7 @@ spec:
       - name: datadir
         hostPath:
           # Ensure the file directory is created.
-          path: /mnt/efs
+          path: /openreplay/storage/nfs
           type: DirectoryOrCreate
       {{- else }}
       - name: datadir
