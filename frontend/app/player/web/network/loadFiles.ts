@@ -12,14 +12,10 @@ export async function loadFiles(
   if (!urls.length) {
     throw NO_URLS
   }
-  const fileLoads = urls.map((url, index) =>
-    // loads can start simultaneously
-    window.fetch(url).then(r => processAPIStreamResponse(r, index === 0))
-  )
   try {
-    for (let fileLoad of fileLoads) {
-      // binary data should be added sequentially
-      const data = await fileLoad
+    for (let url of urls) {
+      const response = await window.fetch(url)
+      const data = await processAPIStreamResponse(response, url !== url[0])
       onData(data)
     }
   } catch(e) {
