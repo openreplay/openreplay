@@ -6,6 +6,8 @@ APP_NS="${APP_NS:-app}"
 DB_NS="${DB_NS:-db}"
 OR_REPO="https://github.com/openreplay/openreplay"
 tmp_dir=$(mktemp -d)
+# For example HELM_OPTIONS="--set dbMigrationUpstreamBranch=dev"
+HELM_OPTIONS=""
 
 [[ -d $OR_DIR ]] || {
   sudo mkdir $OR_DIR
@@ -154,7 +156,7 @@ function or_helm_upgrade() {
     openreplay
     )
   for chart in "${chart_names[@]}"; do
-    if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug  2>&1 | tee -a "${log_file}"; then
+    if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"; then
       log err "
         Installation failed, run ${BWHITE}cat ${log_file}${RED} for more info
 
