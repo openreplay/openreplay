@@ -33,7 +33,10 @@ function exists() {
 }
 
 function err_cd() {
-  cd "$1" &> /dev/null || (log err not able to cd to "$1" && exit 100)
+  if ! cd "$1" &> /dev/null ; then
+    log err not able to cd to "$1"
+    exit 100
+  fi
 }
 
 function log () {
