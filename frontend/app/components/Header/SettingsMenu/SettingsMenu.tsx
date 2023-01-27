@@ -12,6 +12,7 @@ interface Props {
 function SettingsMenu(props: RouteComponentProps<Props>) {
   const { history, account, className }: any = props;
   const isAdmin = account.admin || account.superAdmin;
+  const isEnterprise = account.edition === 'ee';
   const navigateTo = (path: any) => {
     switch (path) {
       case 'projects':
@@ -26,12 +27,16 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
         return history.push(clientRoute(CLIENT_TABS.INTEGRATIONS));
       case 'notifications':
         return history.push(clientRoute(CLIENT_TABS.NOTIFICATIONS));
+      case 'roles':
+        return history.push(clientRoute(CLIENT_TABS.MANAGE_ROLES));
+      case 'audit':
+        return history.push(clientRoute(CLIENT_TABS.AUDIT));
     }
   };
   return (
     <div
-      style={{ width: '150px', marginTop: '35px' }}
-      className={cn(className, 'absolute right-0 top-0 bg-white border p-2')}
+      style={{ width: '160px', marginTop: '35px' }}
+      className={cn(className, 'absolute right-0 top-0 bg-white border p-2 text-left')}
     >
       {isAdmin && (
         <>
@@ -42,6 +47,12 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
       <MenuItem onClick={() => navigateTo('metadata')} label="Metadata" icon="tags" />
       <MenuItem onClick={() => navigateTo('webhooks')} label="Webhooks" icon="link-45deg" />
       <MenuItem onClick={() => navigateTo('integrations')} label="Integrations" icon="puzzle" />
+      {isEnterprise && (
+        <>
+          <MenuItem onClick={() => navigateTo('roles')} label="Roles & Access" icon="diagram-3" />
+          <MenuItem onClick={() => navigateTo('audit')} label="Audit" icon="list-ul" />
+        </>
+      )}
       <MenuItem
         onClick={() => navigateTo('notifications')}
         label="Notifications"

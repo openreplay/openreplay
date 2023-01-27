@@ -46,7 +46,7 @@ function AuditList(props: Props) {
             >
                 <div className="grid grid-cols-12 py-3 px-5 font-medium">
                     <div className="col-span-5">Name</div>
-                    <div className="col-span-4">Status</div>
+                    <div className="col-span-4">Action</div>
                     <div className="col-span-3">Time</div>
                 </div>
 
