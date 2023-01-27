@@ -333,7 +333,7 @@ export default class App {
       return undefined
     }
     const ingest = this.options.ingestPoint
-    const isSaas = /api.openreplay.com/.test(ingest)
+    const isSaas = /api\.openreplay\.com/.test(ingest)
 
     const projectPath = isSaas ? 'https://openreplay.com/ingest' : ingest
 

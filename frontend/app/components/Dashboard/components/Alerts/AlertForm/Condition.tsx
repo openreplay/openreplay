@@ -100,6 +100,7 @@ function Condition({
               value={instance.query.right}
               onChange={writeQuery}
               placeholder="Specify Value"
+              type={"number"}
             />
           )}
         </div>
