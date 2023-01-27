@@ -210,11 +210,13 @@ def get_gdpr(project_id):
                     SELECT
                            gdpr
                     FROM public.projects AS s
-                    where s.project_id =%(project_id)s
+                    WHERE s.project_id =%(project_id)s
                         AND s.deleted_at IS NULL;""",
                         {"project_id": project_id})
         )
-        return cur.fetchone()["gdpr"]
+        row = cur.fetchone()["gdpr"]
+        row["projectId"] = project_id
+        return row
 
 
 def edit_gdpr(project_id, gdpr):
@@ -230,7 +232,12 @@ def edit_gdpr(project_id, gdpr):
                             RETURNING gdpr;""",
                         {"project_id": project_id, "gdpr": json.dumps(gdpr)})
         )
-        return cur.fetchone()["gdpr"]
+        row = cur.fetchone()
+        if not row:
+            return {"errors": ["something went wrong"]}
+        row = row["gdpr"]
+        row["projectId"] = project_id
+        return row
 
 
 def get_internal_project_id(project_key):

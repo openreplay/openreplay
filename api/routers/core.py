@@ -497,7 +497,10 @@ def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_contex
 @app.post('/{projectId}/gdpr', tags=["projects", "gdpr"])
 def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.edit_gdpr(project_id=projectId, gdpr=data.dict())}
+    result = projects.edit_gdpr(project_id=projectId, gdpr=data.dict())
+    if "errors" in result:
+        return result
+    return {"data": result}
 
 
 @public_app.post('/password/reset-link', tags=["reset password"])
