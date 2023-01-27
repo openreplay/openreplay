@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PageTitle, Icon, Button } from 'UI';
 import AuditList from '../AuditList';
 import AuditSearchField from '../AuditSearchField';
@@ -8,10 +8,16 @@ import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { numberWithCommas } from 'App/utils';
 
-function AuditView(props) {
+function AuditView() {
     const { auditStore } = useStore();
     const order = useObserver(() => auditStore.order);
     const total = useObserver(() => numberWithCommas(auditStore.total));
+
+    useEffect(() => {
+        return () => {
+            auditStore.updateKey('searchQuery', '');
+        }
+    }, [])
 
     const exportToCsv = () => {
         auditStore.exportToCsv();
