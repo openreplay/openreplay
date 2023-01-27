@@ -312,3 +312,9 @@ def get_domain():
     if not _url.startswith("http"):
         _url = "http://" + _url
     return '.'.join(urlparse(_url).netloc.split(".")[-2:])
+
+
+def obfuscate(text, keep_last: int = 4):
+    if text is None or not isinstance(text, str):
+        return text
+    return "*" * (len(text) - keep_last) + text[-keep_last:]

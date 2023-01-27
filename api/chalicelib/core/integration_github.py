@@ -24,8 +24,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
         integration = self.get()
         if integration is None:
             return None
-        token = "*" * (len(integration["token"]) - 4) + integration["token"][-4:]
-        return {"token": token, "provider": self.provider.lower()}
+        return {"token": helper.obfuscate(text=integration["token"]), "provider": self.provider.lower()}
 
     def update(self, changes, obfuscate=False):
         with pg_client.PostgresClient() as cur:
@@ -40,12 +39,14 @@ class GitHubIntegration(integration_base.BaseIntegration):
                              **changes})
             )
             w = helper.dict_to_camel_case(cur.fetchone())
+            if w and w.get("token") and obfuscate:
+                w["token"] = helper.obfuscate(w["token"])
             return w
 
     def _add(self, data):
         pass
 
-    def add(self, token):
+    def add(self, token, obfuscate=False):
         with pg_client.PostgresClient() as cur:
             cur.execute(
                 cur.mogrify("""\
@@ -56,6 +57,8 @@ class GitHubIntegration(integration_base.BaseIntegration):
                              "token": token})
             )
             w = helper.dict_to_camel_case(cur.fetchone())
+            if w and w.get("token") and obfuscate:
+                w["token"] = helper.obfuscate(w["token"])
             return w
 
     # TODO: make a revoke token call
@@ -81,4 +84,4 @@ class GitHubIntegration(integration_base.BaseIntegration):
                 obfuscate=True
             )
         else:
-            return self.add(token=data["token"])
+            return self.add(token=data["token"], obfuscate=True)
