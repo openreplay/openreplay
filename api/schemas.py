@@ -1155,17 +1155,17 @@ class TemplatePredefinedUnits(str, Enum):
 
 
 class LiveFilterType(str, Enum):
-    user_os = FilterType.user_os
-    user_browser = FilterType.user_browser
-    user_device = FilterType.user_device
-    user_country = FilterType.user_country
-    user_id = FilterType.user_id
-    user_anonymous_id = FilterType.user_anonymous_id
-    rev_id = FilterType.rev_id
-    platform = FilterType.platform
+    user_os = FilterType.user_os.value
+    user_browser = FilterType.user_browser.value
+    user_device = FilterType.user_device.value
+    user_country = FilterType.user_country.value
+    user_id = FilterType.user_id.value
+    user_anonymous_id = FilterType.user_anonymous_id.value
+    rev_id = FilterType.rev_id.value
+    platform = FilterType.platform.value
     page_title = "pageTitle"
     session_id = "sessionId"
-    metadata = FilterType.metadata,
+    metadata = FilterType.metadata.value
     user_UUID = "userUuid"
     tracker_version = "trackerVersion"
     user_browser_version = "userBrowserVersion"
