@@ -8,16 +8,16 @@ TABLE = "public.autocomplete"
 
 
 def __get_autocomplete_table(value, project_id):
-    autocomplete_events = [schemas.FilterType.rev_id.value.upper(),
-                           schemas.EventType.click.value.upper(),
-                           schemas.FilterType.user_device.value.upper(),
-                           schemas.FilterType.user_id.value.upper(),
-                           schemas.FilterType.user_browser.value.upper(),
-                           schemas.FilterType.user_os.value.upper(),
-                           schemas.EventType.custom.value.upper(),
-                           schemas.FilterType.user_country.value.upper(),
-                           schemas.EventType.location.value.upper(),
-                           schemas.EventType.input.value.upper()]
+    autocomplete_events = [schemas.FilterType.rev_id,
+                           schemas.EventType.click,
+                           schemas.FilterType.user_device,
+                           schemas.FilterType.user_id,
+                           schemas.FilterType.user_browser,
+                           schemas.FilterType.user_os,
+                           schemas.EventType.custom,
+                           schemas.FilterType.user_country,
+                           schemas.EventType.location,
+                           schemas.EventType.input]
     autocomplete_events.sort()
     sub_queries = []
     c_list = []
@@ -25,24 +25,24 @@ def __get_autocomplete_table(value, project_id):
         if e == schemas.FilterType.user_country:
             c_list = countries.get_country_code_autocomplete(value)
             if len(c_list) > 0:
-                sub_queries.append(f"""(SELECT DISTINCT ON(value) type, value
+                sub_queries.append(f"""(SELECT DISTINCT ON(value) '{e.value}' AS _type, value
                                         FROM {TABLE}
                                         WHERE project_id = %(project_id)s
-                                            AND type= '{e}' 
+                                            AND type= '{e.value.upper()}' 
                                             AND value IN %(c_list)s)""")
             continue
-        sub_queries.append(f"""(SELECT type, value
+        sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                 FROM {TABLE}
                                 WHERE project_id = %(project_id)s
-                                    AND type= '{e}' 
+                                    AND type= '{e.value.upper()}' 
                                     AND value ILIKE %(svalue)s
                                 ORDER BY value
                                 LIMIT 5)""")
         if len(value) > 2:
-            sub_queries.append(f"""(SELECT type, value
+            sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                     FROM {TABLE}
                                     WHERE project_id = %(project_id)s
-                                        AND type= '{e}' 
+                                        AND type= '{e.value.upper()}' 
                                         AND value ILIKE %(value)s
                                     ORDER BY value
                                     LIMIT 5)""")
@@ -62,8 +62,11 @@ def __get_autocomplete_table(value, project_id):
             print(value)
             print("--------------------")
             raise err
-        results = helper.list_to_camel_case(cur.fetchall())
-        return results
+        results = cur.fetchall()
+    for r in results:
+        r["type"] = r.pop("_type")
+    results = helper.list_to_camel_case(results)
+    return results
 
 
 def __generic_query(typename, value_length=None):
