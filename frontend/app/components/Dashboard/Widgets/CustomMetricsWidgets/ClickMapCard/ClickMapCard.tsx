@@ -3,7 +3,7 @@ import { useStore } from 'App/mstore'
 import { observer } from 'mobx-react-lite'
 import ClickMapRenderer from 'App/components/Session/Player/ClickMapRenderer'
 import { connect } from 'react-redux'
-import { setCustomSession } from 'App/duck/sessions'
+import { setCustomSession, clearCurrentSession } from 'App/duck/sessions'
 import { fetchInsights } from 'Duck/sessions';
 import { NoContent, Icon } from 'App/components/ui'
 
@@ -14,12 +14,16 @@ function ClickMapCard({
     fetchInsights,
     insightsFilters,
     host,
+    clearCurrentSession,
 }: any) {
     const { metricStore, dashboardStore } = useStore();
     const onMarkerClick = (s: string, innerText: string) => {
         metricStore.changeClickMapSearch(s, innerText)
     }
 
+    React.useEffect(() => {
+        return () => clearCurrentSession()
+    }, [])
     React.useEffect(() => {
         if (metricStore.instance.data.domURL) {
             setCustomSession(metricStore.instance.data)
@@ -81,6 +85,6 @@ export default connect(
         insights: state.getIn(['sessions', 'insights']),
         host: state.getIn(['sessions', 'host']),
     }),
-    { setCustomSession, fetchInsights }
+    { setCustomSession, fetchInsights, clearCurrentSession }
 )
 (observer(ClickMapCard))

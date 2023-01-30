@@ -38,6 +38,8 @@ const SET_SESSION_PATH = 'sessions/SET_SESSION_PATH';
 const LAST_PLAYED_SESSION_ID = `${name}/LAST_PLAYED_SESSION_ID`;
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
+const CLEAR_CURRENT_SESSION = 'sessions/CLEAR_CURRENT_SESSION'
+
 const range = getDateRangeFromValue(LAST_7_DAYS);
 const defaultDateFilters = {
     url: '',
@@ -122,6 +124,12 @@ const reducer = (state = initialState, action: IAction) => {
             ) : null;
 
             return state.set('filteredEvents', filteredEvents).set('eventsQuery', query);
+        }
+        case CLEAR_CURRENT_SESSION: {
+            return state.set('current', new Session())
+              .set('eventsIndex', [])
+              .set('visitedEvents', List())
+              .set('host', '');
         }
         case FETCH.SUCCESS: {
             // TODO: more common.. or TEMP filters', 'appliedFilter
@@ -312,6 +320,13 @@ export const fetch =
             filter: getState().getIn(['filters', 'appliedFilter']),
         });
     };
+
+export function clearCurrentSession() {
+    return {
+        type: CLEAR_CURRENT_SESSION
+    }
+}
+
 export const setCustomSession = (session, filter) =>
     (dispatch, getState) => { dispatch({
     type: FETCH.SUCCESS,

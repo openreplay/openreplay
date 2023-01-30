@@ -77,6 +77,10 @@ export default class WebLivePlayer extends WebPlayer {
   }
 
   jumpToLive = () => {
+    this.wpState.update({
+      live: true,
+      livePlay: true,
+    })
     this.jump(this.wpState.get().lastMessageTime)
   }
 
