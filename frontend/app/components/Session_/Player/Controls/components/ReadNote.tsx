@@ -7,7 +7,6 @@ import { observer } from 'mobx-react-lite';
 import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 
 interface Props {
-  userEmail: string;
   note?: Note;
   notFound?: boolean;
   onClose: () => void;
