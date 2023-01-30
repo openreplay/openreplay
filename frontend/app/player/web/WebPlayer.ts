@@ -62,12 +62,16 @@ export default class WebPlayer extends Player {
 
   }
 
-  attach = (parent: HTMLElement) => {
+  attach = (parent: HTMLElement, isClickmap?: boolean) => {
     this.screen.attach(parent)
-    window.addEventListener('resize', this.scale)
-    this.scale()
+    if (!isClickmap) {
+      window.addEventListener('resize', this.scale)
+      this.scale()
+    }
   }
+
   scale = () => {
+    console.log('called scale')
     const { width, height } = this.wpState.get()
     this.screen.scale({ width, height })
     this.inspectorController.scale({ width, height })
@@ -76,7 +80,7 @@ export default class WebPlayer extends Player {
   }
 
   scaleFullPage = () => {
-    window.removeEventListener('resize', this.scaleFullPage)
+    window.removeEventListener('resize', this.scale)
     window.addEventListener('resize', this.scaleFullPage)
 
     const portHeight = this.screen.scaleFullPage()
