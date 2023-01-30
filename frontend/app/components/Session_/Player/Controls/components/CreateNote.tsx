@@ -258,7 +258,7 @@ function CreateNote({
         <div className="flex flex-col">
           <div className="flex items-center cursor-pointer" onClick={() => setTeams(!useTeams)}>
             <Checkbox checked={useTeams} />
-            <span className="ml-1 mr-3"> Send to teams? </span>
+            <span className="ml-1 mr-3"> Send to MSTeams? </span>
           </div>
 
           {useTeams && (
