@@ -64,7 +64,7 @@ function Integrations(props: Props) {
   }, []);
 
   const onClick = (integration: any, width: number) => {
-    if (integration.slug) {
+    if (integration.slug && integration.slug !== 'slack' && integration.slug !== 'msteams') {
       props.fetch(integration.slug, props.siteId);
     }
 
@@ -241,30 +241,15 @@ const integrations = [
     description:
       "Reproduce issues as if they happened in your own browser. Plugins help capture your application's store, HTTP requeets, GraphQL queries, and more.",
     integrations: [
-      { title: 'Redux', slug: 'redux', icon: 'integrations/redux', component: <ReduxDoc /> },
-      { title: 'VueX', slug: 'vuex', icon: 'integrations/vuejs', component: <VueDoc /> },
-      { title: 'Pinia', slug: 'pinia', icon: 'integrations/pinia', component: <PiniaDoc /> },
-      {
-        title: 'GraphQL',
-        slug: 'graphql',
-        icon: 'integrations/graphql',
-        component: <GraphQLDoc />,
-      },
-      { title: 'NgRx', slug: 'ngrx', icon: 'integrations/ngrx', component: <NgRxDoc /> },
-      { title: 'MobX', slug: 'mobx', icon: 'integrations/mobx', component: <MobxDoc /> },
-      {
-        title: 'Profiler',
-        slug: 'profiler',
-        icon: 'integrations/openreplay',
-        component: <ProfilerDoc />,
-      },
-      {
-        title: 'Assist',
-        slug: 'assist',
-        icon: 'integrations/openreplay',
-        component: <AssistDoc />,
-      },
-      { title: 'Zustand', slug: 'zustand', icon: '', header: '🐻', component: <ZustandDoc /> },
+      { title: 'Redux', icon: 'integrations/redux', component: <ReduxDoc /> },
+      { title: 'VueX', icon: 'integrations/vuejs', component: <VueDoc /> },
+      { title: 'Pinia', icon: 'integrations/pinia', component: <PiniaDoc /> },
+      { title: 'GraphQL', icon: 'integrations/graphql', component: <GraphQLDoc /> },
+      { title: 'NgRx', icon: 'integrations/ngrx', component: <NgRxDoc /> },
+      { title: 'MobX', icon: 'integrations/mobx', component: <MobxDoc /> },
+      { title: 'Profiler', icon: 'integrations/openreplay', component: <ProfilerDoc /> },
+      { title: 'Assist', icon: 'integrations/openreplay', component: <AssistDoc /> },
+      { title: 'Zustand', icon: '', header: '🐻', component: <ZustandDoc /> },
     ],
   },
 ];
