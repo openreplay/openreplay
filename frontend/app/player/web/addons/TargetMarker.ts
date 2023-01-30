@@ -50,7 +50,7 @@ export default class TargetMarker {
 		private readonly store: Store<State>,
 	) {}
 
-	updateMarketTargets() {
+	updateMarkedTargets() {
     const { markedTargets } = this.store.get()
     if (markedTargets) {
       this.store.update({

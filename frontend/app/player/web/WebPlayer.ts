@@ -6,7 +6,8 @@ import Player from '../player/Player'
 import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'
 import TargetMarker from './addons/TargetMarker'
-import Screen from './Screen/Screen'
+import Screen, { ScaleMode } from './Screen/Screen'
+
 
 // export type State = typeof WebPlayer.INITIAL_STATE
 
@@ -17,7 +18,6 @@ export default class WebPlayer extends Player {
     ...MessageManager.INITIAL_STATE,
 
     inspectorMode: false,
-    portHeight: 0,
   }
 
   private readonly inspectorController: InspectorController
@@ -26,7 +26,7 @@ export default class WebPlayer extends Player {
 
   private targetMarker: TargetMarker
 
-  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean) {
+  constructor(protected wpState: Store<typeof WebPlayer.INITIAL_STATE>, session: any, live: boolean, isClickMap = false) {
     let initialLists = live ? {} : {
       event: session.events || [],
       stack: session.stackEvents || [],
@@ -40,7 +40,7 @@ export default class WebPlayer extends Player {
       ) || [],
     }
 
-    const screen = new Screen(session.isMobile)
+    const screen = new Screen(session.isMobile, isClickMap ? ScaleMode.AdjustParentHeight : ScaleMode.Embed)
     const messageManager = new MessageManager(session, wpState, screen, initialLists)
     super(wpState, messageManager)
     this.screen = screen
@@ -71,20 +71,11 @@ export default class WebPlayer extends Player {
   }
 
   scale = () => {
-    console.log('called scale')
     const { width, height } = this.wpState.get()
     this.screen.scale({ width, height })
     this.inspectorController.scale({ width, height })
 
-    // this.updateMarketTargets() ??
-  }
-
-  scaleFullPage = () => {
-    window.removeEventListener('resize', this.scale)
-    window.addEventListener('resize', this.scaleFullPage)
-
-    const portHeight = this.screen.scaleFullPage()
-    return this.wpState.update({ portHeight })
+    this.targetMarker.updateMarkedTargets()
   }
 
   // Inspector & marker
@@ -119,12 +110,11 @@ export default class WebPlayer extends Player {
   }
 
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
-    this.freeze()
-    if (this.wpState.get().portHeight !== 0) {
-      this.targetMarker.injectTargets(...args)
-    } else {
-      setTimeout(() => this.showClickmap(...args), 500)
-    }
+    this.screen.overlay.remove() // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
+    this.targetMarker.injectTargets(...args)
+    this.freeze().then(() => {
+      this.targetMarker.updateMarkedTargets()
+    })
   }
 
   setMarkerClick = (...args: Parameters<TargetMarker['setOnMarkerClick']>) => {

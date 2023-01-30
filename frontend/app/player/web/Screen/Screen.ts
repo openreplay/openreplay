@@ -12,6 +12,13 @@ export const INITIAL_STATE: State = {
 }
 
 
+export enum ScaleMode {
+  Embed,
+  //AdjustParentWidth
+  AdjustParentHeight,
+}
+
+
 function getElementsFromInternalPoint(doc: Document, { x, y }: Point): Element[] {
   // @ts-ignore (IE, Edge)
   if (typeof doc.msElementsFromRect === 'function') {
@@ -55,9 +62,9 @@ export default class Screen {
 
   private readonly iframe: HTMLIFrameElement;
   private readonly screen: HTMLDivElement;
-  private parentElement: HTMLElement | null = null;
+  private parentElement: HTMLElement | null = null
 
-  constructor(isMobile: boolean) {
+  constructor(isMobile: boolean, private scaleMode: ScaleMode = ScaleMode.Embed) {
     const iframe = document.createElement('iframe');
     iframe.className = styles.iframe;
     this.iframe = iframe;
@@ -79,11 +86,10 @@ export default class Screen {
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
       this.parentElement = null
-      console.error("BaseScreen: Trying to attach an attached screen.");
+      console.warn("BaseScreen: reattaching the screen.");
     }
 
     parentElement.appendChild(this.screen);
-
     this.parentElement = parentElement;
 
     /* == For the Inspecting Document content  == */
@@ -124,6 +130,7 @@ export default class Screen {
   private boundingRect: DOMRect | null  = null;
   private getBoundingClientRect(): DOMRect {
      if (this.boundingRect === null) {
+       // TODO: use this.screen instead in order to separate overlay functionality
       return this.boundingRect = this.overlay.getBoundingClientRect() // expensive operation?
     }
     return this.boundingRect
@@ -200,48 +207,41 @@ export default class Screen {
     if (!this.parentElement) return;
     const { offsetWidth, offsetHeight } = this.parentElement;
 
-    this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height);
-    if (this.scaleRatio > 1) {
-      this.scaleRatio = 1;
-    } else {
-      this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
+    let translate = ""
+    let posStyles = {}
+    switch (this.scaleMode) {
+    case ScaleMode.Embed:
+      this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height)
+      translate = "translate(-50%, -50%)"
+      break;
+    case ScaleMode.AdjustParentHeight:
+      this.scaleRatio = offsetWidth / width
+      translate = "translate(-50%, 0)"
+      posStyles = { top: 0 }
+      break;
     }
-    this.screen.style.transform =  `scale(${ this.scaleRatio }) translate(-50%, -50%)`;
-    this.screen.style.width = width + 'px';
-    this.screen.style.height =  height + 'px';
-    this.iframe.style.width = width + 'px';
-    this.iframe.style.height = height + 'px';
 
-    this.boundingRect = this.overlay.getBoundingClientRect();
-  }
-
-  scaleFullPage() {
-    if (!this.parentElement || !this.document) return;
-
-    const { width: boxWidth } = this.parentElement.getBoundingClientRect();
-    const { height, width } = this.document.body.getBoundingClientRect();
-    this.overlay.remove()
-
-    this.scaleRatio = boxWidth/width;
     if (this.scaleRatio > 1) {
       this.scaleRatio = 1;
     } else {
       this.scaleRatio = Math.round(this.scaleRatio * 1e3) / 1e3;
     }
 
-    Object.assign(this.screen.style, {
-      top: '0',
-      left: '50%',
+    if (this.scaleMode === ScaleMode.AdjustParentHeight) {
+      this.parentElement.style.height = this.scaleRatio * height + 'px'
+    }
+
+    Object.assign(this.screen.style, posStyles, {
       height: height + 'px',
       width: width + 'px',
-      transform: `scale(${this.scaleRatio}) translate(-50%, 0)`,
+      transform: `scale(${this.scaleRatio}) ${translate}`,
     })
     Object.assign(this.iframe.style, {
       width: width + 'px',
       height: height + 'px',
     })
 
-    return height
+    this.boundingRect = this.overlay.getBoundingClientRect();
   }
 
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { createWebPlayer } from 'Player';
+import { createClickMapPlayer } from 'Player';
 import { makeAutoObservable } from 'mobx';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
 import PlayerContent from './ThinPlayerContent';
@@ -20,7 +20,7 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
-    const [WebPlayerInst, PlayerStore] = createWebPlayer(customSession, (state) =>
+    const [WebPlayerInst, PlayerStore] = createClickMapPlayer(customSession, (state) =>
       makeAutoObservable(state)
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
@@ -35,9 +35,9 @@ function WebPlayer(props: any) {
     contextValue.player && contextValue.player.play()
     if (isPlayerReady && insights.size > 0) {
       setTimeout(() => {
-        contextValue.player.jump(jumpTimestamp)
         contextValue.player.pause()
-        contextValue.player.scaleFullPage()
+        contextValue.player.jump(jumpTimestamp)
+        contextValue.player.scale()
         setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
       }, 500)
     }
