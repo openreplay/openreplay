@@ -33,9 +33,10 @@ export default () => (next) => (action) => {
         next({ type: UPDATE_JWT, data: jwt });
       }
     })
-    .catch((e) => {
+    .catch(async (e) => {
+      const data = await e.response.json();
       logger.error('Error during API request. ', e);
-      return next({ type: FAILURE, errors: parseError(e) });
+      return next({ type: FAILURE, errors: parseError(data.errors) });
     });
 };
 
