@@ -8,16 +8,16 @@ TABLE = "public.autocomplete"
 
 
 def __get_autocomplete_table(value, project_id):
-    autocomplete_events = [schemas.FilterType.rev_id,
-                           schemas.EventType.click,
-                           schemas.FilterType.user_device,
-                           schemas.FilterType.user_id,
-                           schemas.FilterType.user_browser,
-                           schemas.FilterType.user_os,
-                           schemas.EventType.custom,
-                           schemas.FilterType.user_country,
-                           schemas.EventType.location,
-                           schemas.EventType.input]
+    autocomplete_events = [schemas.FilterType.rev_id.value.upper(),
+                           schemas.EventType.click.value.upper(),
+                           schemas.FilterType.user_device.value.upper(),
+                           schemas.FilterType.user_id.value.upper(),
+                           schemas.FilterType.user_browser.value.upper(),
+                           schemas.FilterType.user_os.value.upper(),
+                           schemas.EventType.custom.value.upper(),
+                           schemas.FilterType.user_country.value.upper(),
+                           schemas.EventType.location.value.upper(),
+                           schemas.EventType.input.value.upper()]
     autocomplete_events.sort()
     sub_queries = []
     c_list = []
