@@ -71,9 +71,14 @@ export default class SettingsStore {
     return webhookService.saveWebhook(inst)
      .then(data => {
         this.webhookInst = new Webhook(data)
-        this.webhooks =  [...this.webhooks, this.webhookInst]
+       if (inst.webhookId === undefined) this.setWebhooks([...this.webhooks, this.webhookInst])
+       else this.setWebhooks([...this.webhooks.filter(hook => hook.webhookId !== data.webhookId), this.webhookInst])
        this.hooksLoading = false
      })
+  }
+
+  setWebhooks = (webhooks: Webhook[]) => {
+    this.webhooks = webhooks
   }
 
   removeWebhook = (hookId: string) => {
