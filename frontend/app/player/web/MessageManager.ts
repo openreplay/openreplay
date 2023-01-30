@@ -135,8 +135,6 @@ export default class MessageManager {
     })
 
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
-
-    void this.loadMessages()
   }
 
   private setCSSLoading = (cssLoading: boolean) => {
@@ -195,7 +193,7 @@ export default class MessageManager {
     // this.state.update({ filesLoaded: true })
   }
 
-  private async loadMessages() {
+  async loadMessages() {
     this.setMessagesLoading(true)
     // TODO: reuseable decryptor instance
     const createNewParser = (shouldDecrypt = true) => {
@@ -234,7 +232,7 @@ export default class MessageManager {
       .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally);
 
-    // load devtools
+    // load devtools (TODO: start after the first DOM file download)
     if (this.session.devtoolsURL?.length) {
       this.state.update({ devtoolsLoading: true })
       loadFiles(this.session.devtoolsURL, createNewParser())
