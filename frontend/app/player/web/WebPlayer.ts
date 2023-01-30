@@ -45,6 +45,9 @@ export default class WebPlayer extends Player {
     super(wpState, messageManager)
     this.screen = screen
     this.messageManager = messageManager
+    if (!live) { // hack. TODO: split OfflinePlayer class
+      messageManager.loadMessages()
+    }
 
     this.targetMarker = new TargetMarker(this.screen, wpState)
     this.inspectorController = new InspectorController(screen)
