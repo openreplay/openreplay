@@ -181,6 +181,8 @@ def autocomplete(project_id, q: str, key: str = None):
         except:
             print("couldn't get response")
         return {"errors": ["Something went wrong wile calling assist"]}
+    for r in results:
+        r["type"] = __change_keys(r["type"])
     return {"data": results}
 
 
@@ -262,3 +264,27 @@ def session_exists(project_id, session_id):
         except:
             print("couldn't get response")
         return False
+
+
+def __change_keys(key):
+    return {
+        "PAGETITLE": schemas.LiveFilterType.page_title,
+        "ACTIVE": "active",
+        "LIVE": "live",
+        "SESSIONID": schemas.LiveFilterType.session_id,
+        "METADATA": schemas.LiveFilterType.metadata,
+        "USERID": schemas.LiveFilterType.user_id,
+        "USERUUID": schemas.LiveFilterType.user_UUID,
+        "PROJECTKEY": "projectKey",
+        "REVID": schemas.LiveFilterType.rev_id,
+        "TIMESTAMP": "timestamp",
+        "TRACKERVERSION": schemas.LiveFilterType.tracker_version,
+        "ISSNIPPET": "isSnippet",
+        "USEROS": schemas.LiveFilterType.user_os,
+        "USERBROWSER": schemas.LiveFilterType.user_browser,
+        "USERBROWSERVERSION": schemas.LiveFilterType.user_browser_version,
+        "USERDEVICE": schemas.LiveFilterType.user_device,
+        "USERDEVICETYPE": schemas.LiveFilterType.user_device_type,
+        "USERCOUNTRY": schemas.LiveFilterType.user_country,
+        "PROJECTID": "projectId"
+    }.get(key.upper(), key)
