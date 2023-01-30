@@ -11,6 +11,7 @@ import ListItem from './ListItem';
 import { confirm } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
+import { toast } from 'react-toastify';
 
 function CustomFields(props) {
     const [currentSite, setCurrentSite] = React.useState(props.sites.get(0));
@@ -25,10 +26,11 @@ function CustomFields(props) {
     }, []);
 
     const save = (field) => {
-        props.save(currentSite.id, field).then(() => {
-            const { errors } = props;
-            if (!errors || errors.size === 0) {
+        props.save(currentSite.id, field).then((response) => {
+            if (!response || !response.errors || response.errors.size === 0) {
                 hideModal();
+            } else {
+                toast.error(response.errors[0]);
             }
         });
     };
@@ -73,7 +75,7 @@ function CustomFields(props) {
                 </div>
                 <div className="ml-auto">
                 <Tooltip title="You've reached the limit of 10 metadata." disabled={fields.size < 10}>
-                    <Button disabled={fields.size >= 10}  variant="primary" onClick={() => init()}>Add Metadata</Button>
+                    <Button disabled={fields.size >= 10} variant="primary" onClick={() => init()}>Add Metadata</Button>
                 </Tooltip>
                 </div>
             </div>
