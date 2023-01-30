@@ -26,10 +26,8 @@ function WebPlayer(props: any) {
     closeBottomBlock,
     fullscreen,
     fetchList,
-    customSession,
     insights,
     jumpTimestamp,
-    onMarkerClick,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
@@ -39,6 +37,7 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
+    if (!session.sessionId) return;
     fetchList('issues');
 
     const [WebPlayerInst, PlayerStore] = createWebPlayer(session, (state) =>
