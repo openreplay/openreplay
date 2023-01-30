@@ -9,7 +9,6 @@ import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-import { fetchList as fetchMembers } from 'Duck/member';
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 import { observer } from 'mobx-react-lite';
@@ -47,8 +46,6 @@ function WebPlayer(props: any) {
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
-    props.fetchMembers();
-
     notesStore.fetchSessionNotes(session.sessionId).then((r) => {
       const note = props.query.get('note');
       if (note) {
@@ -57,7 +54,6 @@ function WebPlayer(props: any) {
         setShowNote(true);
       }
     })
-
 
     const jumpToTime = props.query.get('jumpto');
     const freeze = props.query.get('freeze')
@@ -112,10 +108,6 @@ function WebPlayer(props: any) {
       <Modal open={showNoteModal} onClose={onNoteClose}>
         {showNoteModal ? (
           <ReadNote
-            userEmail={
-              props.members.find((m: Record<string, any>) => m.id === noteItem?.userId)?.email
-              || ''
-            }
             note={noteItem}
             onClose={onNoteClose}
             notFound={!noteItem}
@@ -140,6 +132,5 @@ export default connect(
     toggleFullscreen,
     closeBottomBlock,
     fetchList,
-    fetchMembers,
   }
 )(withLocationHandlers()(observer(WebPlayer)));

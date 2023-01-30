@@ -91,15 +91,13 @@ export default class SharePopup extends React.PureComponent {
     const { trigger, channels, msTeamsChannels, showCopyLink = false } = this.props;
     const { comment, channelId, teamsChannel, loading } = this.state;
 
-    // const slackOptions = channels
-    //   .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
-    //   .toJS();
+    const slackOptions = channels
+      .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
+      .toJS();
 
-    // const msTeamsOptions = msTeamsChannels
-    //   .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
-    //   .toJS();
-
-    const slackOptions = [], msTeamsOptions = [];
+    const msTeamsOptions = msTeamsChannels
+      .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
+      .toJS();
 
     return (
       <Popover

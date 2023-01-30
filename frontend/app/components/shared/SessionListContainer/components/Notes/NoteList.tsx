@@ -35,10 +35,7 @@ function NotesList({ members }: { members: Array<Record<string, any>> }) {
         <div className="border-b rounded bg-white">
           {sliceListPerPage(list, notesStore.page - 1, notesStore.pageSize).map((note) => (
             <React.Fragment key={note.noteId}>
-              <NoteItem
-                note={note}
-                userEmail={members.find((m) => m.id === note.userId)?.email || note.userId}
-              />
+              <NoteItem note={note} />
             </React.Fragment>
           ))}
         </div>

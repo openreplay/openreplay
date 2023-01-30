@@ -58,7 +58,7 @@ function ReadNote(props: Props) {
             <Icon name="quotes" color="main" size={16} />
           </div>
           <div className="ml-2">
-            <div className="text-base">{props.userEmail}</div>
+            <div className="text-base">{props.note.userName}</div>
             <div className="text-disabled-text text-sm">
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
             </div>

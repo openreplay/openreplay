@@ -32,6 +32,7 @@ export interface Note {
   tag: iTag
   timestamp: number
   userId: number
+  userName: string
 }
 
 export interface NotesFilter {

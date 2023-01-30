@@ -25,24 +25,24 @@ def __get_autocomplete_table(value, project_id):
         if e == schemas.FilterType.user_country:
             c_list = countries.get_country_code_autocomplete(value)
             if len(c_list) > 0:
-                sub_queries.append(f"""(SELECT DISTINCT ON(value) type, value
+                sub_queries.append(f"""(SELECT DISTINCT ON(value) '{e.value}' AS _type, value
                                         FROM {TABLE}
                                         WHERE project_id = %(project_id)s
-                                            AND type= '{e}' 
+                                            AND type= '{e.value.upper()}' 
                                             AND value IN %(c_list)s)""")
             continue
-        sub_queries.append(f"""(SELECT type, value
+        sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                 FROM {TABLE}
                                 WHERE project_id = %(project_id)s
-                                    AND type= '{e}' 
+                                    AND type= '{e.value.upper()}' 
                                     AND value ILIKE %(svalue)s
                                 ORDER BY value
                                 LIMIT 5)""")
         if len(value) > 2:
-            sub_queries.append(f"""(SELECT type, value
+            sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                     FROM {TABLE}
                                     WHERE project_id = %(project_id)s
-                                        AND type= '{e}' 
+                                        AND type= '{e.value.upper()}' 
                                         AND value ILIKE %(value)s
                                     ORDER BY value
                                     LIMIT 5)""")
@@ -64,7 +64,10 @@ def __get_autocomplete_table(value, project_id):
             print(value)
             print("--------------------")
             raise err
-        return results
+    for r in results:
+        r["type"] = r.pop("_type")
+    results = helper.list_to_camel_case(results)
+    return results
 
 
 def __generic_query(typename, value_length=None):

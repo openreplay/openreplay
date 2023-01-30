@@ -14,7 +14,6 @@ import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 interface Props {
   note: Note;
   noEdit: boolean;
-  userEmail: string;
   filterOutNote: (id: number) => void;
   onEdit: (noteTooltipObj: Record<string, any>) => void;
 }
@@ -86,7 +85,7 @@ function NoteEvent(props: Props) {
               whiteSpace: 'nowrap',
             }}
           >
-            {props.userEmail}, {props.userEmail}
+            {props.note.userName}
           </div>
           <div className="text-disabled-text text-sm">
             {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}

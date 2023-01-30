@@ -95,13 +95,11 @@ export default class APIClient {
       edp = `${ edp }/${ this.siteId }`
     }
     return fetch(edp + path, this.init)
-        .then(response => {
+        .then((response) => {
           if (response.ok) {
             return response
           } else {
-            throw new Error(
-                `! ${this.init.method} error on ${path}; ${response.status}`
-            )
+            return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
           }
         })
   }
