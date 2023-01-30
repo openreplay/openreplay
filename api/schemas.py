@@ -1163,13 +1163,13 @@ class LiveFilterType(str, Enum):
     user_anonymous_id = FilterType.user_anonymous_id
     rev_id = FilterType.rev_id
     platform = FilterType.platform
-    page_title = "PAGETITLE"
-    session_id = "SESSIONID"
-    metadata = "METADATA"
-    user_UUID = "USERUUID"
-    tracker_version = "TRACKERVERSION"
-    user_browser_version = "USERBROWSERVERSION"
-    user_device_type = "USERDEVICETYPE"
+    page_title = "pageTitle"
+    session_id = "sessionId"
+    metadata = FilterType.metadata,
+    user_UUID = "userUuid"
+    tracker_version = "trackerVersion"
+    user_browser_version = "userBrowserVersion"
+    user_device_type = "userDeviceType"
 
 
 class LiveSessionSearchFilterSchema(BaseModel):
