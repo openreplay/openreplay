@@ -24,7 +24,6 @@ function WebPlayer(props: any) {
       makeAutoObservable(state)
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
-    WebPlayerInst.setMarkerClick(onMarkerClick)
 
     return () => WebPlayerInst.clean();
   }, [session.sessionId]);
@@ -38,7 +37,7 @@ function WebPlayer(props: any) {
         contextValue.player.pause()
         contextValue.player.jump(jumpTimestamp)
         contextValue.player.scale()
-        setTimeout(() => { contextValue.player.showClickmap(insights) }, 250)
+        setTimeout(() => { contextValue.player.showClickmap(insights, onMarkerClick) }, 250)
       }, 500)
     }
     return () => {
