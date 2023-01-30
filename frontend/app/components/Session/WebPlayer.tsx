@@ -72,7 +72,6 @@ function WebPlayer(props: any) {
       WebPlayerInst.jump(parseInt(jumpToTime));
     }
     if (freeze) {
-      console.log(freeze)
       WebPlayerInst.freeze()
     }
 
