@@ -227,17 +227,19 @@ const reducer = (state = initialState, action: IAction) => {
               })
             )
         case ADD_NOTE:
-            return state.updateIn(['current', 'notesWithEvents'], (list) =>
-                list.push(action.note).sort((a, b) => {
-                    const aTs = a.time || a.timestamp
-                    const bTs = b.time || b.timestamp
+            const session = state.get('current') as Session;
+            session.notesWithEvents = [...session.notesWithEvents, action.note].sort((a, b) => {
+                const aTs = a.time || a.timestamp
+                const bTs = b.time || b.timestamp
 
-                    return aTs - bTs
-                  })
-            )
+                return aTs - bTs
+            });
+            return state.set('current', session);
         case UPDATE_NOTE:
-            const noteIndex = state.getIn(['current']).notesWithEvents.findIndex(item => item.noteId === action.note.noteId)
-            return state.setIn(['current', 'notesWithEvents', noteIndex], action.note)
+            const currSession = state.get('current') as Session;
+            const noteIndex = currSession.notesWithEvents.findIndex(item => item.noteId === action.note.noteId)
+            currSession.notesWithEvents[noteIndex] = action.note;
+            return state.set('current', currSession);
         case SET_SESSION_PATH:
             return state.set('sessionPath', action.path);
         case LAST_PLAYED_SESSION_ID:
