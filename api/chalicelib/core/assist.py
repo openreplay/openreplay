@@ -267,6 +267,8 @@ def session_exists(project_id, session_id):
 
 
 def __change_keys(key):
+    print(">>>looking for ")
+    print(key)
     return {
         "PAGETITLE": schemas.LiveFilterType.page_title.value,
         "ACTIVE": "active",
