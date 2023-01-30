@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { fetchInsights } from 'Duck/sessions';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { compareJsonObjects } from 'App/utils';
 
 import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
@@ -24,9 +25,9 @@ interface Props {
 function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab }: Props) {
     const { player: Player } = React.useContext(PlayerContext)
     const markTargets = (t: any) => Player.markTargets(t)
-
-    const [insightsFilters, setInsightsFilters] = useState(filters);
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
+    const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: host + defaultValue });
+    const prevInsights = React.useRef<any>();
 
     const period = Period({
         start: insightsFilters.startDate,
@@ -47,18 +48,22 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
     }, [insights]);
 
     useEffect(() => {
+        const changed = !compareJsonObjects(prevInsights.current, insightsFilters);
+        if (!changed) { return }
+
         if (urlOptions && urlOptions[0]) {
             const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
             Player.pause();
             fetchInsights({ ...insightsFilters, url });
+            markTargets([]);
         }
+        prevInsights.current = insightsFilters;
     }, [insightsFilters]);
 
     const onPageSelect = ({ value }: any) => {
         const event = events.find((item) => item.url === value.value);
         Player.jump(event.time + JUMP_OFFSET);
         setInsightsFilters({ ...insightsFilters, url: host + value.value });
-        markTargets([]);
     };
 
     return (
