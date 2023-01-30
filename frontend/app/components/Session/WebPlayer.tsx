@@ -51,8 +51,6 @@ function WebPlayer(props: any) {
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
-    props.fetchMembers();
-
     if (!isClickmap) {
       notesStore.fetchSessionNotes(session.sessionId).then((r) => {
         const note = props.query.get('note');
@@ -123,10 +121,6 @@ function WebPlayer(props: any) {
         <Modal open={showNoteModal} onClose={onNoteClose}>
           {showNoteModal ? (
             <ReadNote
-              userEmail={
-                props.members.find((m: Record<string, any>) => m.id === noteItem?.userId)?.email
-                || ''
-              }
               note={noteItem}
               onClose={onNoteClose}
               notFound={!noteItem}

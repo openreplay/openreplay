@@ -88,7 +88,6 @@ class EventGroupWrapper extends React.Component {
         )}
         {isNote ? (
           <NoteEvent
-            userEmail={this.props.members.find((m) => m.id === event.userId)?.email || event.userId}
             note={event}
             filterOutNote={filterOutNote}
             onEdit={this.props.setEditNoteTooltip}

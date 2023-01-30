@@ -15,9 +15,6 @@ function SessionListContainer({
   fetchMembers: () => void;
   members: object[];
 }) {
-  React.useEffect(() => {
-    fetchMembers();
-  }, []);
   return (
     <div className="widget-wrapper">
       <SessionHeader />
