@@ -43,7 +43,6 @@ interface IProps {
   nextId: string;
   sessionId: string;
   activeTab: string;
-  isClickmap?: boolean;
   updateLastPlayedSession: (id: string) => void
 }
 

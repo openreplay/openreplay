@@ -13,7 +13,6 @@ interface IProps {
   activeTab: string;
   jiraConfig: Record<string, any>
   fullView?: boolean
-  isClickmap?: boolean
 }
 
 function PlayerBlock(props: IProps) {
@@ -24,14 +23,12 @@ function PlayerBlock(props: IProps) {
     activeTab,
     jiraConfig,
     fullView = false,
-    isClickmap
   } = props;
 
-  const shouldShowSubHeader = !fullscreen && !fullView && !isClickmap
+  const shouldShowSubHeader = !fullscreen && !fullView 
   return (
     <div
-      className={cn(styles.playerBlock, 'flex flex-col', !isClickmap ? 'overflow-x-hidden' : 'overflow-visible')}
-      style={{ zIndex: isClickmap ? 1 : undefined, minWidth: isClickmap ? '100%' : undefined }}
+      className={cn(styles.playerBlock, 'flex flex-col', 'overflow-x-hidden')}
     >
       {shouldShowSubHeader ? (
         <SubHeader sessionId={sessionId} disabled={disabled} jiraConfig={jiraConfig} />
@@ -39,7 +36,6 @@ function PlayerBlock(props: IProps) {
       <Player
         activeTab={activeTab}
         fullView={fullView}
-        isClickmap={isClickmap}
       />
     </div>
   );

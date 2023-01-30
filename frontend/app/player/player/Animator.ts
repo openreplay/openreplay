@@ -153,15 +153,18 @@ export default class Animator {
   }
 
   freeze() {
-    if (this.store.get().ready) {
-      // making sure that replay is displayed completely
-      setTimeout(() => {
-        this.store.update({ freeze: true })
-        this.pause()
-      }, 250)
-    } else {
-      setTimeout(() => this.freeze(), 500)
-    }
+    return new Promise<void>(res => {
+      if (this.store.get().ready) {
+        // making sure that replay is displayed completely
+        setTimeout(() => {
+          this.store.update({ freeze: true })
+          this.pause()
+          res()
+        }, 250)
+      } else {
+        setTimeout(() => res(this.freeze()), 500)
+      }
+    })
   }
 
   togglePlay = () => {

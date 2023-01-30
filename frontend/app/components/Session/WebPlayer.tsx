@@ -9,7 +9,6 @@ import withLocationHandlers from 'HOCs/withLocationHandlers';
 import { useStore } from 'App/mstore';
 import PlayerBlockHeader from './Player/ReplayPlayer/PlayerBlockHeader';
 import ReadNote from '../Session_/Player/Controls/components/ReadNote';
-import { fetchList as fetchMembers } from 'Duck/member';
 import PlayerContent from './Player/ReplayPlayer/PlayerContent';
 import { IPlayerContext, PlayerContext, defaultContextValue } from './playerContext';
 import { observer } from 'mobx-react-lite';
@@ -28,7 +27,6 @@ function WebPlayer(props: any) {
     fullscreen,
     fetchList,
     customSession,
-    isClickmap,
     insights,
     jumpTimestamp,
     onMarkerClick,
@@ -41,28 +39,21 @@ function WebPlayer(props: any) {
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
   useEffect(() => {
-    if (!isClickmap) {
-      fetchList('issues');
-    }
-    const usedSession = isClickmap && customSession ? customSession : session;
+    fetchList('issues');
 
-    const [WebPlayerInst, PlayerStore] = createWebPlayer(usedSession, (state) =>
+    const [WebPlayerInst, PlayerStore] = createWebPlayer(session, (state) =>
       makeAutoObservable(state)
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
-    if (!isClickmap) {
-      notesStore.fetchSessionNotes(session.sessionId).then((r) => {
-        const note = props.query.get('note');
-        if (note) {
-          WebPlayerInst.pause();
-          setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
-          setShowNote(true);
-        }
-      });
-    } else {
-      WebPlayerInst.setMarkerClick(onMarkerClick)
-    }
+    notesStore.fetchSessionNotes(session.sessionId).then((r) => {
+      const note = props.query.get('note');
+      if (note) {
+        WebPlayerInst.pause();
+        setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
+        setShowNote(true);
+      }
+    })
 
     const jumpToTime = props.query.get('jumpto');
     const freeze = props.query.get('freeze')
@@ -100,34 +91,29 @@ function WebPlayer(props: any) {
 
   return (
     <PlayerContext.Provider value={contextValue}>
-      <>
-        {!isClickmap ? (
-          <PlayerBlockHeader
-            // @ts-ignore TODO?
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            tabs={TABS}
-            fullscreen={fullscreen}
+      <PlayerBlockHeader
+        // @ts-ignore TODO?
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        tabs={TABS}
+        fullscreen={fullscreen}
+      />
+      {/* @ts-ignore  */}
+      <PlayerContent
+        activeTab={activeTab}
+        fullscreen={fullscreen}
+        setActiveTab={setActiveTab}
+        session={session}
+      />
+      <Modal open={showNoteModal} onClose={onNoteClose}>
+        {showNoteModal ? (
+          <ReadNote
+            note={noteItem}
+            onClose={onNoteClose}
+            notFound={!noteItem}
           />
         ) : null}
-        {/* @ts-ignore  */}
-        <PlayerContent
-          activeTab={activeTab}
-          fullscreen={fullscreen}
-          setActiveTab={setActiveTab}
-          session={session}
-          isClickmap={isClickmap}
-        />
-        <Modal open={showNoteModal} onClose={onNoteClose}>
-          {showNoteModal ? (
-            <ReadNote
-              note={noteItem}
-              onClose={onNoteClose}
-              notFound={!noteItem}
-            />
-          ) : null}
-        </Modal>
-      </>
+      </Modal>
     </PlayerContext.Provider>
   );
 }
@@ -146,6 +132,5 @@ export default connect(
     toggleFullscreen,
     closeBottomBlock,
     fetchList,
-    fetchMembers,
   }
 )(withLocationHandlers()(observer(WebPlayer)));

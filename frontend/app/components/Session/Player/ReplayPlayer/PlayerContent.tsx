@@ -17,11 +17,10 @@ interface IProps {
   fullscreen: boolean;
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  isClickmap: boolean;
   session: Session
 }
 
-function PlayerContent({ session, fullscreen, activeTab, setActiveTab, isClickmap }: IProps) {
+function PlayerContent({ session, fullscreen, activeTab, setActiveTab }: IProps) {
   const { store } = React.useContext(PlayerContext)
 
   const {
@@ -60,7 +59,7 @@ function PlayerContent({ session, fullscreen, activeTab, setActiveTab, isClickma
             style={activeTab && !fullscreen ? { maxWidth: 'calc(100% - 270px)' } : undefined}
           >
             <div className={cn(styles.session, 'relative')} data-fullscreen={fullscreen}>
-              <PlayerBlock activeTab={activeTab} isClickmap={isClickmap} />
+              <PlayerBlock activeTab={activeTab} />
             </div>
           </div>
           {activeTab !== '' && (
