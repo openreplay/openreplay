@@ -47,6 +47,12 @@ function WidgetChart(props: Props) {
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
 
+    useEffect(() => {
+        return () => {
+            dashboardStore.resetDrillDownFilter();
+        }
+    }, [])
+
     const onChartClick = (event: any) => {
         if (event) {
             if (isTableWidget || isPieChart) { // get the filter of clicked row

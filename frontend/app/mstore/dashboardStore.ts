@@ -52,10 +52,7 @@ export default class DashboardStore {
   constructor() {
     makeAutoObservable(this);
 
-    this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
-    const timeStamps = this.drillDownPeriod.toTimestamps();
-    this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp);
-    this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp);
+    this.resetDrillDownFilter();
   }
 
   get sortedDashboards() {
@@ -63,6 +60,14 @@ export default class DashboardStore {
     return [...this.dashboards].sort((a, b) =>
       sortOrder === 'desc' ? b.createdAt - a.createdAt : a.createdAt - b.createdAt
     );
+  }
+
+  resetDrillDownFilter() {
+    this.drillDownFilter = new Filter();
+    this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
+    const timeStamps = this.drillDownPeriod.toTimestamps();
+    this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp);
+    this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp);
   }
 
   get filteredList() {
