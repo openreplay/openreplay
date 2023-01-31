@@ -1024,12 +1024,13 @@ class CreateCardSchema(CardChartSchema):
             values["metricValue"] = []
 
         if values.get("metricType") == MetricType.funnel and \
-                values.get("series") is not None and len(values["series"]) > 1:
+                values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = [values["series"][0]]
         elif values.get("metricType") not in [MetricType.table,
                                               MetricType.timeseries,
                                               MetricType.insights,
-                                              MetricType.click_map] \
+                                              MetricType.click_map,
+                                              MetricType.funnel] \
                 and values.get("series") is not None and len(values["series"]) > 0:
             values["series"] = []
 
