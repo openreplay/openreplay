@@ -1610,7 +1610,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "status_code": 4, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-        rows = __nested_array_to_dict_array(rows)
+        rows = __nested_array_to_dict_array(rows, key="host")
         neutral = __get_neutral(rows)
         rows = __merge_rows_with_neutral(rows, neutral)
 
@@ -1618,7 +1618,7 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         params["status_code"] = 5
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-        rows = __nested_array_to_dict_array(rows)
+        rows = __nested_array_to_dict_array(rows, key="host")
         neutral = __get_neutral(rows)
         rows = __merge_rows_with_neutral(rows, neutral)
         result["5xx"] = rows
@@ -1658,7 +1658,7 @@ def __get_domains_errors_4xx_and_5xx(status, project_id, startTimestamp=TimeUTC.
                   "status_code": status, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-        rows = __nested_array_to_dict_array(rows)
+        rows = __nested_array_to_dict_array(rows, key="host")
         neutral = __get_neutral(rows)
         rows = __merge_rows_with_neutral(rows, neutral)
 
