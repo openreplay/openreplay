@@ -304,6 +304,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 extra_col = ""
                 extra_where = ""
                 pre_query = ""
+                distinct_on="s.session_id"
                 if metric_of == schemas.MetricOfTable.user_country:
                     main_col = "user_country"
                 elif metric_of == schemas.MetricOfTable.user_device:
@@ -323,13 +324,14 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.MetricOfTable.visited_url:
                     main_col = "path"
                     extra_col = ", path"
+                    distinct_on+=",path"
                 main_query = cur.mogrify(f"""{pre_query}
                                              SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,
-                                                                 count(full_sessions)                                   AS session_count,
+                                                                 count(DISTINCT session_id)                                   AS session_count,
                                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                                             FROM (SELECT *
-                                                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id, s.user_uuid, 
+                                                            FROM (SELECT DISTINCT ON({distinct_on}) s.session_id, s.user_uuid, 
                                                                         s.user_id, s.user_os, 
                                                                         s.user_browser, s.user_device, 
                                                                         s.user_device_type, s.user_country, s.issue_types{extra_col}
