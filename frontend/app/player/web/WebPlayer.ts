@@ -114,7 +114,6 @@ export default class WebPlayer extends Player {
 
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
     this.screen.overlay.remove() // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
-    this.targetMarker.injectTargets(...args)
     this.freeze().then(() => {
       this.targetMarker.injectTargets(...args)
     })

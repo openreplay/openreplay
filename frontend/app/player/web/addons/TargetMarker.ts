@@ -3,6 +3,16 @@ import type { Point } from '../Screen/types'
 import type { Store } from '../../common/types'
 import { clickmapStyles } from './clickmapStyles'
 
+const zIndexMap = {
+  400: 3,
+  200: 4,
+  100: 5,
+  50: 6
+}
+const widths = Object.keys(zIndexMap)
+  .map(s => parseInt(s, 10))
+  .sort((a,b) => b - a) as [400, 200, 100, 50]
+
 function getOffset(el: Element, innerWindow: Window) {
 	const rect = el.getBoundingClientRect();
 	return {
@@ -151,6 +161,7 @@ export default class TargetMarker {
       const scaleRatio = this.screen.getScale()
       Object.assign(overlay.style, clickmapStyles.overlayStyle({ height: iframeSize.height, width: iframeSize.width, scale: scaleRatio }))
 
+      console.log(selections)
       this.clickMapOverlay = overlay
       selections.forEach((s, i) => {
         const el = this.screen.getElementBySelector(s.selector);
@@ -171,10 +182,28 @@ export default class TargetMarker {
         const containerId = `clickmap-bubble-${i}`
         bubbleContainer.id = containerId
         this.clickContainers.push(bubbleContainer)
-        Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left, height }))
+        const frameWidth = iframeSize.width.replace('px', '')
+
+        // @ts-ignore
+        Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left: Math.max(100, frameWidth - left > 250 ? left : frameWidth - 220), height }))
 
         const border = document.createElement("div")
-        Object.assign(border.style, clickmapStyles.highlight({ width, height, top, left }))
+
+
+        let key = 0
+
+        if (width > 50) {
+          let diff = widths[key] - width
+          while (diff > 0) {
+            key++
+            diff = widths[key] - width
+          }
+        } else {
+          key = 3
+        }
+        const borderZindex = zIndexMap[widths[key]]
+
+        Object.assign(border.style, clickmapStyles.highlight({ width, height, top, left, zIndex: borderZindex }))
 
         const smallClicksBubble = document.createElement("div")
         smallClicksBubble.innerHTML = `${s.count}`
