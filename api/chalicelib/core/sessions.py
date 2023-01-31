@@ -204,9 +204,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
-        print("--------------------")
-        print(main_query)
-        print("--------------------")
+        # print("--------------------")
+        # print(main_query)
+        # print("--------------------")
         try:
             cur.execute(main_query)
         except Exception as err:
