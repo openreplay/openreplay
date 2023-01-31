@@ -61,7 +61,8 @@ function WidgetSessions(props: Props) {
     const debounceClickMapSearch = React.useCallback(debounce(fetchClickmapSessions, 1000), [])
 
     const depsString = JSON.stringify(widget.series);
-    useEffect(() => {
+    
+    const loadData = () => {
         if (widget.metricType === CLICKMAP && metricStore.clickMapSearch) {
             const clickFilter = {
                 value: [
@@ -88,7 +89,12 @@ function WidgetSessions(props: Props) {
                 limit: metricStore.sessionsPageSize,
             });
         }
-    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage, metricStore.clickMapSearch]);
+    }
+    useEffect(() => {
+        metricStore.updateKey('sessionsPage', 1);
+        loadData();
+    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.clickMapSearch]);
+    useEffect(loadData, [metricStore.sessionsPage]);
 
     return (
         <div className={cn(className, "bg-white p-3 pb-0 rounded border")}>
