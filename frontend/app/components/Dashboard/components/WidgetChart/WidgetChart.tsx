@@ -50,7 +50,7 @@ function WidgetChart(props: Props) {
     const onChartClick = (event: any) => {
         if (event) {
             if (isTableWidget || isPieChart) { // get the filter of clicked row
-                const periodTimestamps = period.toTimestamps()
+                const periodTimestamps = drillDownPeriod.toTimestamps()
                 drillDownFilter.merge({
                     filters: event,
                     startTimestamp: periodTimestamps.startTimestamp,
