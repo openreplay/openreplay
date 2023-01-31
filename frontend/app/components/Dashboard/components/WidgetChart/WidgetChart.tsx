@@ -87,7 +87,7 @@ function WidgetChart(props: Props) {
     }
 
     const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
-    useEffect(() => {
+    const loadPage = () => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
             prevMetricRef.current = metric;
             return
@@ -96,7 +96,12 @@ function WidgetChart(props: Props) {
         const timestmaps = drillDownPeriod.toTimestamps();
         const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget, !isWidget ? drillDownPeriod : period);
-    }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue]);
+    }
+    useEffect(() => {
+        _metric.updateKey('page', 1)
+        loadPage();
+    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue]);
+    useEffect(loadPage, [_metric.page]);
 
 
     const renderChart = () => {
