@@ -572,9 +572,6 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
-    print("<<<<<<<<<<<<>")
-    print(raw_metric)
-    print("<<<<<<<<<<<<>")
     metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
