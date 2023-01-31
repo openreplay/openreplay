@@ -477,9 +477,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
-        order = schemas.SortOrderType.desc
+        order = schemas.SortOrderType.desc.value
         if data.order is not None:
-            order = data.order
+            order = data.order.value
         extra_join = ""
 
         params = {
