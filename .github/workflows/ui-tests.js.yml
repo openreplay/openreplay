@@ -139,7 +139,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Run Testing Frontend
-        run: cd tracker/tracker-testing-playground && yarn start &> server.log &
+        run: cd tracker/tracker-testing-playground && yarn start #&> server.log &
       - name: Wait for Testing Frontend
         run: |
           npx wait-on http://localhost:3000
