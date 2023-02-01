@@ -116,7 +116,7 @@ function WidgetView(props: Props) {
                         {expanded && <WidgetForm onDelete={onBackHandler} {...props} />}
                     </div>
 
-                    <WidgetPreview className="mt-8" name={widget.name} />
+                    <WidgetPreview className="mt-8" name={widget.name} isEditing={expanded} />
                     
                     {widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                         <>
