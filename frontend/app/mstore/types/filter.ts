@@ -7,6 +7,7 @@ export default class Filter {
     name: string = ''
     filters: FilterItem[] = []
     eventsOrder: string = 'then'
+    eventsOrderSupport: string[] = ['then', 'or', 'and']
     startTimestamp: number = 0
     endTimestamp: number = 0
 

@@ -27,7 +27,7 @@ function FunnelIssueDetails(props: Props) {
                     filters: item.filter.filters.filter((filter: any, index: any) => {
                         const stage = widget.data.funnel.stages[index];
                         return stage &&stage.isActive
-                    })
+                    }).map((f: any) => f.toJson())
                 }
             }
         }) : [], };

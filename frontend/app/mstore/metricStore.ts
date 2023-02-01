@@ -103,6 +103,9 @@ export default class MetricStore {
 
     // handle metricType change
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
+      this.instance.series.forEach((s: any, i: number) => {
+        this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and']
+      })
       this.changeType(type);
     }
 
@@ -141,6 +144,8 @@ export default class MetricStore {
 
     if (value === FUNNEL) {
       obj['metricOf'] = 'sessionCount';
+      obj.series[0].filter.eventsOrder = 'then'
+      obj.series[0].filter.eventsOrderSupport = ['then']
     }
 
     if (value === INSIGHTS) {
