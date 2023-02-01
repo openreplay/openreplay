@@ -7,10 +7,12 @@ on:
     branches: [ "main" ]
     paths:
       - frontend/**
+      - tracker/**
   pull_request:
     branches: [ "dev", "main" ]
     paths:
       - frontend/**
+      - tracker/**
 env:
   API: ${{ secrets.E2E_API_ORIGIN }}
   ASSETS: ${{ secrets.E2E_ASSETS_ORIGIN }}
@@ -18,7 +20,63 @@ env:
   CY_ACC: ${{ secrets.CYPRESS_ACCOUNT }}
   CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
 jobs:
-  build:
+  build-tracker:
+    runs-on: ubuntu-22.04
+    name: Build tracker inst
+    defaults:
+      run:
+        working-directory: tracker/tracker
+    strategy:
+      matrix:
+        node-version: [ 16.x ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache tracker modules
+        uses: actions/cache@v1
+        with:
+          path: tracker/tracker/node_modules
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            test_tracker_build{{ runner.OS }}-build-
+            test_tracker_build{{ runner.OS }}-
+      - name: Setup Testing packages
+        run: |
+          npm i -g yarn
+          yarn
+      - name: Jest tests
+        run: yarn test
+      - name: Build tracker inst
+        run: yarn build
+
+  build-test-ui:
+    runs-on: ubuntu-22.04
+    name: Create testing playground
+    needs: [build-tracker]
+    defaults:
+      run:
+        working-directory: tracker/tracker-testing-playground
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Setup Testing UI Env
+        run: |
+          echo "REACT_APP_KEY= SECRET KEY" >> .env
+          echo "REACT_APP_INGEST= SECRET KEY" >> .env
+      - name: Setup Testing packages
+        run: |
+          yarn
+
+  build-openreplay:
     runs-on: ubuntu-22.04
     name: Visual Testing
     defaults:
@@ -26,9 +84,8 @@ jobs:
         working-directory: ./frontend
     strategy:
       matrix:
-        node-version: [16.x]
+        node-version: [ 16.x ]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
@@ -66,7 +123,58 @@ jobs:
 
       - name: Setup packages
         run: |
-          npm i -g yarn
+          yarn
+
+  test-openreplay:
+    runs-on: ubuntu-22.04
+    name: Visual Testing
+    needs: [build-test-ui, build-openreplay]
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Run Testing Frontend
+        run: cd tracker/tracker-testing-playground && yarn start &> server.log &
+      - name: Wait for Testing Frontend
+        run: |
+          npx wait-on http://localhost:3000
+          cd ../../frontend
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-
+      - name: Setup env
+        run: |
+          echo "NODE_ENV=development" >> .env
+          echo "SOURCEMAP=true" >> .env
+          echo "ORIGIN=$API" >> .env
+          echo "ASSETS_HOST=$ASSETS" >> .env
+          echo "API_EDP=$APIEDP" >> .env
+          echo "SENTRY_ENABLED = false" >> .env
+          echo "SENTRY_URL = ''" >> .env
+          echo "CAPTCHA_ENABLED = false" >> .env
+          echo "CAPTCHA_SITE_KEY = 'asdad'" >> .env
+          echo "MINIO_ENDPOINT = ''" >> .env
+          echo "MINIO_PORT = ''" >> .env
+          echo "MINIO_USE_SSL = ''" >> .env
+          echo "MINIO_ACCESS_KEY = ''" >> .env
+          echo "MINIO_SECRET_KEY = ''" >> .env
+          echo "VERSION = '1.9.0'" >> .env
+          echo "TRACKER_VERSION = '4.0.0'" >> .env
+          echo "COMMIT_HASH = 'dev'" >> .env
+          echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
+
+      - name: Setup packages
+        run: |
           yarn
       - name: Run unit tests
         run: yarn test
