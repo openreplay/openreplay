@@ -13,6 +13,7 @@ import { CLICKMAP, TABLE, TIMESERIES } from "App/constants/card";
 interface Props {
     className?: string;
     name: string;
+    isEditing?: boolean;
 }
 function WidgetPreview(props: Props) {
     const [showDashboardSelectionModal, setShowDashboardSelectionModal] = React.useState(false);
@@ -94,7 +95,7 @@ function WidgetPreview(props: Props) {
                 </div>
             </div>
             <div className="p-4 pt-0">
-                <WidgetWrapper widget={metric} isPreview={true} isWidget={false} hideName />
+                <WidgetWrapper widget={metric} isPreview={true} isWidget={!props.isEditing} hideName />
             </div>
         </div>
         { canAddToDashboard && (
