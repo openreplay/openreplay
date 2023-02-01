@@ -78,7 +78,7 @@ jobs:
 
   build-openreplay:
     runs-on: ubuntu-22.04
-    name: Visual Testing
+    name: Build openreplay
     defaults:
       run:
         working-directory: ./frontend
