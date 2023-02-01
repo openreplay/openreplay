@@ -95,7 +95,7 @@ function WidgetPreview(props: Props) {
                 </div>
             </div>
             <div className="p-4 pt-0">
-                <WidgetWrapper widget={metric} isPreview={true} isWidget={false} hideName />
+                <WidgetWrapper widget={metric} isPreview={true} isWidget={!props.isEditing} hideName />
             </div>
         </div>
         { canAddToDashboard && (
