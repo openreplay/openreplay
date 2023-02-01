@@ -184,7 +184,7 @@ function CreateNote({
     >
       <div className="flex items-center bg-gray-lightest">
         <Icon name="quotes" size={20} />
-        <h3 className="text-xl ml-2 mr-4 font-semibold">Add Note</h3>
+        <h3 className="text-xl ml-2 mr-4 font-semibold">{isEdit ? 'Edit Note' : 'Add Note'}</h3>
         <div className="flex items-center cursor-pointer" onClick={() => setUseTs(!useTimestamp)}>
           <Checkbox checked={useTimestamp} />
           <span className="ml-1"> {`at ${duration}`} </span>
@@ -277,7 +277,7 @@ function CreateNote({
 
       <div className="flex">
         <Button variant="primary" className="mr-4" disabled={text === ''} onClick={onSubmit}>
-          Add Note
+          {isEdit ? 'Save Note' : 'Add Note'}
         </Button>
         <div className="flex items-center cursor-pointer" onClick={() => setPublic(!isPublic)}>
           <Checkbox checked={isPublic} />
