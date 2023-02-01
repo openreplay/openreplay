@@ -56,9 +56,9 @@ function FilterList(props: Props) {
                   onSelect={props.onChangeEventsOrder}
                   value={{ value: filter.eventsOrder }}
                   list={[
-                    { name: 'THEN', value: 'then', disabled: !eventsOrderSupport.includes('then') },
-                    { name: 'AND', value: 'and', disabled: !eventsOrderSupport.includes('and')},
-                    { name: 'OR', value: 'or', disabled: !eventsOrderSupport.includes('or')},
+                    { name: 'THEN', value: 'then', disabled: eventsOrderSupport && !eventsOrderSupport.includes('then') },
+                    { name: 'AND', value: 'and', disabled: eventsOrderSupport && !eventsOrderSupport.includes('and')},
+                    { name: 'OR', value: 'or', disabled: eventsOrderSupport && !eventsOrderSupport.includes('or')},
                   ]}
                 />
               </div>
