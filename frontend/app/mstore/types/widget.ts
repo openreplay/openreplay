@@ -6,8 +6,9 @@ import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions, issueCategories, issueCategoriesMap } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import Period, { LAST_24_HOURS } from 'Types/app/period';
+import Funnel from "../types/funnel";
 import { metricService } from 'App/services';
-import { INSIGHTS, TABLE, WEB_VITALS } from 'App/constants/card';
+import { FUNNEL, INSIGHTS, TABLE, WEB_VITALS } from 'App/constants/card';
 import Error from '../types/error';
 import { getChartFormatter } from 'Types/dashboard/helper';
 
@@ -210,6 +211,8 @@ export default class Widget {
           (i: any) =>
             new InishtIssue(i.category, i.name, i.ratio, i.oldValue, i.value, i.change, i.isNew)
         );
+    } else if (this.metricType === FUNNEL) {
+        _data.funnel = new Funnel().fromJSON(_data);
     } else {
       if (data.hasOwnProperty('chart')) {
         _data['value'] = data.value;
