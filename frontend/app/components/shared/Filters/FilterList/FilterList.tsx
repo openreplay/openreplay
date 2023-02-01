@@ -18,6 +18,7 @@ interface Props {
 function FilterList(props: Props) {
   const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads, supportsEmpty = true, excludeFilterKeys = [] } = props;
   const filters = List(filter.filters);
+  const eventsOrderSupport = filter.eventsOrderSupport;
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
   let rowIndex = 0;
@@ -55,9 +56,9 @@ function FilterList(props: Props) {
                   onSelect={props.onChangeEventsOrder}
                   value={{ value: filter.eventsOrder }}
                   list={[
-                    { name: 'THEN', value: 'then' },
-                    { name: 'AND', value: 'and' },
-                    { name: 'OR', value: 'or' },
+                    { name: 'THEN', value: 'then', disabled: !eventsOrderSupport.includes('then') },
+                    { name: 'AND', value: 'and', disabled: !eventsOrderSupport.includes('and')},
+                    { name: 'OR', value: 'or', disabled: !eventsOrderSupport.includes('or')},
                   ]}
                 />
               </div>

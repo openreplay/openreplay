@@ -139,6 +139,11 @@ export default class Widget {
       this.thumbnail = json.thumbnail;
       this.isPublic = json.isPublic;
 
+      if (this.metricType === FUNNEL) {
+        this.series[0].filter.eventsOrder = 'then';
+        this.series[0].filter.eventsOrderSupport = ['then'];
+      }
+
       if (period) {
         this.period = period;
       }

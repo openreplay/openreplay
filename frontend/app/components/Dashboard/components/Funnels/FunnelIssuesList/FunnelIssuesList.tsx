@@ -29,7 +29,7 @@ function FunnelIssuesList(props: RouteComponentProps<Props>) {
     useEffect(() => {
         if (!issueId) return;
 
-        showModal(<FunnelIssueModal issueId={issueId} />, { right: true, onClose: () => {
+        showModal(<FunnelIssueModal issueId={issueId} />, { right: true, width: 1000, onClose: () => {
             if (props.history.location.pathname.includes("/metric")) {
                 props.history.replace({search: ""});
             }
