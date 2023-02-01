@@ -7,6 +7,7 @@ import { useObserver } from 'mobx-react-lite';
 import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { numberWithCommas } from 'App/utils';
+import withPageTitle from 'HOCs/withPageTitle';
 
 function AuditView() {
     const { auditStore } = useStore();
@@ -73,4 +74,4 @@ function AuditView() {
     ));
 }
 
-export default AuditView;
+export default withPageTitle('Audit Trail - OpenReplay Preferences')(AuditView);
