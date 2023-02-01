@@ -160,7 +160,7 @@ def __merge_metric_with_data(metric: schemas.CreateCardSchema,
 def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
                metric: schemas.CreateCardSchema = None):
     if metric is None:
-        metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+        metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -292,7 +292,7 @@ def create(project_id, user_id, data: schemas.CreateCardSchema, dashboard=False)
 
 
 def update(metric_id, user_id, project_id, data: schemas.UpdateCardSchema):
-    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     series_ids = [r["seriesId"] for r in metric["series"]]
@@ -538,9 +538,10 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
+    metric: schemas.CreateCardSchema = schemas.CreateCardSchema(**metric)
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
