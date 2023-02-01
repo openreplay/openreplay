@@ -189,7 +189,7 @@ def __merge_metric_with_data(metric: schemas_ee.CreateCardSchema,
 def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
                metric: schemas_ee.CreateCardSchema = None):
     if metric is None:
-        metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+        metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -198,8 +198,8 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchema):
-    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False,
-                                include_data=True)
+    # raw_metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False, include_data=True)
+    raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if raw_metric is None:
         return None
     metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
@@ -285,6 +285,7 @@ def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=Fal
             session_data = __get_click_map_chart(project_id=project_id, user_id=user_id,
                                                  data=data, include_mobs=False)
             if session_data is not None:
+                # for EE only
                 keys = sessions_mobs. \
                     __get_mob_keys(project_id=project_id, session_id=session_data["sessionId"])
                 keys += sessions_mobs. \
@@ -332,7 +333,7 @@ def create(project_id, user_id, data: schemas_ee.CreateCardSchema, dashboard=Fal
 
 
 def update(metric_id, user_id, project_id, data: schemas_ee.UpdateCardSchema):
-    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     series_ids = [r["seriesId"] for r in metric["series"]]
@@ -489,6 +490,7 @@ def delete(project_id, metric_id, user_id):
             RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
+    # for EE only
     row = cur.fetchone()
     if row:
         if row["data"] and not sessions_favorite.favorite_session_exists(session_id=row["data"]["sessionId"]):
@@ -592,9 +594,10 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                                  data: schemas.CardSessionsSchema
                                  # , range_value=None, start_date=None, end_date=None
                                  ):
-    metric = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
+    metric: schemas_ee.CreateCardSchema = schemas.CreateCardSchema(**metric)
     metric: schemas_ee.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
