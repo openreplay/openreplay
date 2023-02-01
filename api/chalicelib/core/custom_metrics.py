@@ -154,13 +154,12 @@ def __merge_metric_with_data(metric: schemas.CreateCardSchema,
                 s.filter.events += data.events
     metric.limit = data.limit
     metric.page = data.page
+    metric.startTimestamp = data.startTimestamp
+    metric.endTimestamp = data.endTimestamp
     return metric
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CardChartSchema,
-               metric: schemas.CreateCardSchema = None):
-    if metric is None:
-        metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+def make_chart(project_id, user_id, data: schemas.CardChartSchema, metric: schemas.CreateCardSchema):
     if metric is None:
         return None
     metric: schemas.CreateCardSchema = __merge_metric_with_data(metric=metric, data=data)
@@ -595,7 +594,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
                 session_id=raw_metric["data"]["sessionId"])
             return raw_metric["data"]
 
-    return make_chart(project_id=project_id, user_id=user_id, metric_id=metric_id, data=data, metric=metric)
+    return make_chart(project_id=project_id, user_id=user_id, data=data, metric=metric)
 
 
 PREDEFINED = {schemas.MetricOfWebVitals.count_sessions: metrics.get_processed_sessions,
