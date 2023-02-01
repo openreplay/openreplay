@@ -134,7 +134,8 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         else:
             extra_from = []
         op = sh.get_sql_operator(s["operator"])
-        event_type = s["type"].upper()
+        # event_type = s["type"].upper()
+        event_type = s["type"]
         if event_type == events.EventType.CLICK.ui_type:
             next_table = events.EventType.CLICK.table
             next_col_name = events.EventType.CLICK.column
@@ -161,7 +162,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             next_table = events.EventType.CUSTOM_IOS.table
             next_col_name = events.EventType.CUSTOM_IOS.column
         else:
-            print("=================UNDEFINED")
+            print(f"=================UNDEFINED:{event_type}")
             continue
 
         values = {**values, **sh.multi_values(helper.values_for_operator(value=s["value"], op=s["operator"]),
