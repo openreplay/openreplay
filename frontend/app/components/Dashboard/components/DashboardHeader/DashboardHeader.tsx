@@ -1,9 +1,8 @@
 import React from 'react';
-import { Tooltip } from 'react-tippy';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { withSiteId } from 'App/routes';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
-import { Button, PageTitle, confirm } from 'UI';
+import { Button, PageTitle, confirm, Tooltip } from 'UI';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
@@ -20,7 +19,7 @@ interface IProps {
 }
 
 type Props = IProps & RouteComponentProps;
-
+const MAX_CARDS = 30
 function DashboardHeader(props: Props) {
   const { siteId, dashboardId } = props;
   const { dashboardStore } = useStore();
@@ -30,6 +29,7 @@ function DashboardHeader(props: Props) {
   const period = dashboardStore.period;
 
   const dashboard: any = dashboardStore.selectedDashboard;
+  const canAddMore: boolean = dashboard?.widgets?.length <= MAX_CARDS;
 
   const onEdit = (isTitle: boolean) => {
     dashboardStore.initDashboard(dashboard);
@@ -80,16 +80,19 @@ function DashboardHeader(props: Props) {
           />
         </div>
         <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
-          <Button
-            variant="primary"
-            onClick={() =>
-              showModal(<AddCardModal dashboardId={dashboardId} siteId={siteId} />, { right: true })
-            }
-            icon="plus"
-            iconSize={24}
-          >
-            Add Card
-          </Button>
+          <Tooltip delay={0} disabled={canAddMore} title="The number of cards in one dashboard is limited to 30.">
+            <Button
+              disabled={!canAddMore}
+              variant="primary"
+              onClick={() =>
+                showModal(<AddCardModal dashboardId={dashboardId} siteId={siteId} />, { right: true })
+              }
+              icon="plus"
+              iconSize={24}
+            >
+              Add Card
+            </Button>
+          </Tooltip>
           <div className="mx-4"></div>
           <div
             className="flex items-center flex-shrink-0 justify-end"

@@ -1,5 +1,5 @@
 import { observer, useObserver } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
@@ -14,11 +14,14 @@ function MetricsList({
   siteId: string;
   onSelectionChange?: (selected: any[]) => void;
 }) {
-  const { metricStore } = useStore();
-  const cards = metricStore.filteredCards;
+  const { metricStore, dashboardStore } = useStore();
   const metricsSearch = metricStore.metricsSearch;
   const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
+  
+  const dashboard = dashboardStore.selectedDashboard;
+  const existingCardIds = useMemo(() => dashboard?.widgets?.map(i => parseInt(i.metricId)), [dashboard]);
+  const cards = useMemo(() => metricStore.filteredCards.filter(i => !existingCardIds?.includes(parseInt(i.metricId))), [metricStore.filteredCards]);
 
   useEffect(() => {
     metricStore.fetchList();
@@ -63,6 +66,7 @@ function MetricsList({
           siteId={siteId}
           list={sliceListPerPage(cards, metricStore.page - 1, metricStore.pageSize)}
           selectedList={selectedMetrics}
+          existingCardIds={existingCardIds}
           toggleSelection={toggleMetricSelection}
           allSelected={cards.length === selectedMetrics.length}
           toggleAll={({ target: { checked, name } }) =>
