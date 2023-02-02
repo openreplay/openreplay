@@ -29,10 +29,13 @@ def get(id):
 def get_all(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
-                    SELECT *
-                    FROM public.alerts 
-                    WHERE project_id =%(project_id)s AND deleted_at ISNULL
-                    ORDER BY created_at;""",
+                    SELECT alerts.*,
+                           COALESCE(metric_series.name, query ->> 'left') AS lef_name
+                    FROM public.alerts
+                         LEFT JOIN metric_series USING (series_id)
+                    WHERE alerts.project_id =%(project_id)s 
+                        AND alerts.deleted_at ISNULL
+                    ORDER BY alerts.created_at;""",
                             {"project_id": project_id})
         cur.execute(query=query)
         all = helper.list_to_camel_case(cur.fetchall())
