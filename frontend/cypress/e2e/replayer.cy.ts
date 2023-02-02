@@ -38,8 +38,10 @@ describe(
           cy.task('setValue', { key: 'url', value: window.__OPENREPLAY__.app.getSessionURL() });
           console.log(window.__OPENREPLAY__.app.getSessionURL());
           cy.log(window.__OPENREPLAY__.app.getSessionURL());
+          cy.wait(SECOND * 3)
         });
       });
+
 
       cy.task('getValue', 'url').as('firstAlias');
 
