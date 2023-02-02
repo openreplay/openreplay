@@ -234,7 +234,7 @@ def get_card_chart(projectId: int, metric_id: int, request: Request, data: schem
     print(request.headers)
     import re
     pattern = re.compile("[0-9]+\/dashboard\/[0-9]+$")
-    from_dashboard = pattern.match(request.headers.get('HTTP_REFERER')) if request.headers.get('HTTP_REFERER') \
+    from_dashboard = pattern.match(request.headers.get('REFERER')) if request.headers.get('REFERER') \
         else False
     print(f"from_dashboard:{from_dashboard}")
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
