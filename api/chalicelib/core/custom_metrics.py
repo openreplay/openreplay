@@ -456,8 +456,8 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        thumbnail, default_config AS config,
-                        series, dashboards, owner_email {',data' if include_data else ''}
+                        default_config AS config,series, dashboards, owner_email
+                        {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                             FROM metric_series
@@ -580,6 +580,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
     elif __is_click_map(metric):
+        # TODO: remove this when UI is able to stop this endpoint calls for clickMap
         if from_dashboard:
             return None
         if raw_metric["data"]:

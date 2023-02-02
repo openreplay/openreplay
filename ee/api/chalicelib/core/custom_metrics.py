@@ -206,18 +206,18 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     if metric is None:
         return None
     results = []
-    is_click_map = False
-    if __is_click_map(metric) and raw_metric.get("data") is not None:
-        is_click_map = True
+    # is_click_map = False
+    # if __is_click_map(metric) and raw_metric.get("data") is not None:
+    #     is_click_map = True
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        if is_click_map:
-            results.append(
-                {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
-            break
+        # if is_click_map:
+        #     results.append(
+        #         {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
+        #     break
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -512,8 +512,8 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        thumbnail, default_config AS config,
-                        series, dashboards, owner_email {',data' if include_data else ''}
+                        default_config AS config,series, dashboards, owner_email
+                        {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                             FROM metric_series
@@ -628,27 +628,31 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema):
+def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema, from_dashboard=False):
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
     metric: schemas_ee.CreateCardSchema = schemas_ee.CreateCardSchema(**raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
-    elif __is_click_map(metric) and raw_metric["data"]:
-        keys = sessions_mobs. \
-            __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
-        mob_exists = False
-        for k in keys:
-            if s3.exists(bucket=config("sessions_bucket"), key=k):
-                mob_exists = True
-                break
-        if mob_exists:
-            raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
-                                                                  project_id=project_id)
-            raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
-                session_id=raw_metric["data"]["sessionId"])
-            return raw_metric["data"]
+    elif __is_click_map(metric):
+        # TODO: remove this when UI is able to stop this endpoint calls for clickMap
+        if from_dashboard:
+            return None
+        if raw_metric["data"]:
+            keys = sessions_mobs. \
+                __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])
+            mob_exists = False
+            for k in keys:
+                if s3.exists(bucket=config("sessions_bucket"), key=k):
+                    mob_exists = True
+                    break
+            if mob_exists:
+                raw_metric["data"]['domURL'] = sessions_mobs.get_urls(session_id=raw_metric["data"]["sessionId"],
+                                                                      project_id=project_id)
+                raw_metric["data"]['mobsUrl'] = sessions_mobs.get_urls_depercated(
+                    session_id=raw_metric["data"]["sessionId"])
+                return raw_metric["data"]
 
     return make_chart(project_id=project_id, user_id=user_id, data=data, metric=metric)
 
