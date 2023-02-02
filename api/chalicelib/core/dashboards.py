@@ -135,7 +135,7 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
 
         cur.execute(cur.mogrify(pg_query, params))
 
-    return get_dashboard(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id)
+    return {"success": True}
 
 
 def get_widget(project_id, user_id, dashboard_id, widget_id):
