@@ -1,3 +1,4 @@
 .env
 build
 node_modules
+!public
