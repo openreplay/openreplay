@@ -50,7 +50,7 @@ def get_dashboard(project_id, user_id, dashboard_id):
         pg_query = """SELECT dashboards.*, all_metric_widgets.widgets AS widgets
                         FROM dashboards
                                  LEFT JOIN LATERAL (SELECT COALESCE(JSONB_AGG(raw_metrics), '[]') AS widgets
-                                                    FROM (SELECT dashboard_widgets.*, metrics.*, metric_series.series
+                                                    FROM (SELECT dashboard_widgets.*, metrics.*
                                                           FROM metrics
                                                                    INNER JOIN dashboard_widgets USING (metric_id)
                                                                    LEFT JOIN LATERAL (SELECT COALESCE(JSONB_AGG(metric_series.* ORDER BY index),'[]') AS series
