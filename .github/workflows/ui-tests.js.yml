@@ -65,7 +65,7 @@ jobs:
       - name: Wait for Testing Frontend
         run: |
           cd tracker/tracker-testing-playground
-          yarn start &> ui.log &
+          yarn start 
           npx wait-on http://localhost:3000
           cd ../../frontend
       - name: Cache node modules
