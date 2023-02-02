@@ -35,7 +35,6 @@ export default class Dashboard {
             dashboardId: this.dashboardId,
             name: this.name,
             isPublic: this.isPublic,
-            createdAt: this.createdAt,
             metrics: this.metrics,
             description: this.description,
         }
