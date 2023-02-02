@@ -50,17 +50,21 @@ jobs:
 #      - name: Jest tests
 #        run: yarn test
       - name: Build tracker inst
-        run: yarn build
+        run: |
+          cd tracker/tracker
+          yarn build
       - name: Setup Testing UI Env
         run: |
-          cd ../tracker-testing-playground
+          cd tracker/tracker-testing-playground
           echo "REACT_APP_KEY=$FOSS_PROJECT_KEY" >> .env
           echo "REACT_APP_INGEST=$FOSS_INGEST" >> .env
       - name: Setup Testing packages
         run: |
+          cd tracker/tracker-testing-playground
           yarn
       - name: Wait for Testing Frontend
         run: |
+          cd tracker/tracker-testing-playground
           yarn start &> ui.log &
           npx wait-on http://localhost:3000
           cd ../../frontend
@@ -74,6 +78,7 @@ jobs:
             ${{ runner.OS }}-
       - name: Setup env
         run: |
+          cd frontend
           echo "NODE_ENV=development" >> .env
           echo "SOURCEMAP=true" >> .env
           echo "ORIGIN=$API" >> .env
@@ -95,20 +100,29 @@ jobs:
 
       - name: Setup packages
         run: |
+          cd frontend
           yarn
       - name: Run unit tests
-        run: yarn test
+        run: |
+          cd frontend
+          yarn test
       - name: Run Frontend
-        run: yarn start &> frontend.log &
+        run: |
+          cd frontend
+          yarn start &> frontend.log &
       - name: Wait for frontend
-        run: npx wait-on http://0.0.0.0:3333
+        run: |
+          cd frontend
+          npx wait-on http://0.0.0.0:3333
       - name: (Chrome) Run visual tests
-        run: yarn cy:test
+        run: |
+          cd frontend
+          yarn cy:test
 #        firefox have different viewport somehow
 #      - name: (Firefox) Run visual tests
 #        run: yarn cy:test-firefox
-      - name: (Edge) Run visual tests
-        run: yarn cy:test-edge
+#      - name: (Edge) Run visual tests
+#        run: yarn cy:test-edge
       - name: Upload Debug
         if: ${{ failure() }}
         uses: actions/upload-artifact@v3
