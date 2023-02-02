@@ -4,8 +4,8 @@ describe('Replayer visual match test', {
   viewportHeight: 900,
   viewportWidth: 1400,
 }, () => {
-  let sessionUrl;
   it('Generating tracker session...', () => {
+    let sessionUrl;
     cy.visit('http://localhost:3000/')
 
     cy.scrollTo('bottom', { duration: 500 })
