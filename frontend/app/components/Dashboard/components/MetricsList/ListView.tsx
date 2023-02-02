@@ -10,6 +10,7 @@ interface Props {
   toggleAll?: (e: any) => void;
   disableSelection?: boolean;
   allSelected?: boolean
+  existingCardIds?: number[];
 }
 function ListView(props: Props) {
   const { siteId, list, selectedList, toggleSelection, disableSelection = false, allSelected = false } = props;
