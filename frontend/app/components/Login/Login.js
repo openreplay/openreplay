@@ -103,6 +103,7 @@ class Login extends React.Component {
                   <div className="mb-6">
                     <label>Email</label>
                     <Input
+                      data-test-id={"login"}
                       autoFocus={true}
                       autoComplete="username"
                       type="text"
@@ -116,6 +117,7 @@ class Login extends React.Component {
                   <div className="mb-6">
                     <label className="mb-2">Password</label>
                     <Input
+                      data-test-id={"password"}
                       autoComplete="current-password"
                       type="password"
                       placeholder="Password"
@@ -141,7 +143,7 @@ class Login extends React.Component {
                 </div>
               ) : null}
               {/* <div className={ stl.formFooter }> */}
-              <Button className="mt-2" type="submit" variant="primary">
+              <Button data-test-id={"log-button"} className="mt-2" type="submit" variant="primary">
                 {'Login'}
               </Button>
 

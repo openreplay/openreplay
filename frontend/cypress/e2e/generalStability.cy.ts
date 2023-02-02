@@ -6,9 +6,9 @@ describe('Testing general stability', {
     cy.intercept('/api/account').as('getAccount')
 
     cy.visit('/')
-    cy.get(':nth-child(1) > .relative > .p-2').type(Cypress.env('account').replaceAll("\"", ''))
-    cy.get(':nth-child(2) > .relative > .p-2').type(Cypress.env('password').replaceAll("\"", ''))
-    cy.get('.justify-center > .h-10').click()
+    cy.get('[data-test-id=login]').type(Cypress.env('account').replaceAll('"', ''));
+    cy.get('[data-test-id=password]').type(Cypress.env('password').replaceAll('"', ''));
+    cy.get('[data-test-id=log-button]').click();
     cy.wait('@getAccount')
 
     cy.get('#search').should('be.visible')
