@@ -1,6 +1,6 @@
 from typing import Union
 
-from fastapi import Body, Depends
+from fastapi import Body, Depends, Request
 
 import schemas
 from chalicelib.core import dashboards, custom_metrics, funnels
@@ -228,10 +228,17 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/cards/{metric_id}/chart', tags=["card"])
 @app.post('/{projectId}/metrics/{metric_id}/chart', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
-def get_card_chart(projectId: int, metric_id: int, data: schemas.CardChartSchema = Body(...),
+def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardChartSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
+    print("--- headers ---")
+    print(request.headers)
+    import re
+    pattern = re.compile("[0-9]+\/dashboard\/[0-9]+$")
+    from_dashboard = pattern.match(request.headers.get('HTTP_REFERER')) if request.headers.get('HTTP_REFERER') \
+        else False
+    print(f"from_dashboard:{from_dashboard}")
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                               data=data)
+                                               data=data, from_dashboard=from_dashboard)
     return {"data": data}
 
 
