@@ -68,7 +68,7 @@ describe('Replayer visual match test', {
     cy.matchImageSnapshot('Network-Events');
 
     // checking real session
-    cy.wait(SECOND * 120)
+    cy.wait(SECOND * 100)
     cy.visit(sessionUrl.replace('https//foss.openreplay.com/', '') + '?jumpto=0&freeze=true')
     cy.wait(SECOND * 10)
 
