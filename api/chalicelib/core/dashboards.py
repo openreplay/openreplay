@@ -50,13 +50,23 @@ def get_dashboard(project_id, user_id, dashboard_id):
         pg_query = """SELECT dashboards.*, all_metric_widgets.widgets AS widgets
                         FROM dashboards
                                  LEFT JOIN LATERAL (SELECT COALESCE(JSONB_AGG(raw_metrics), '[]') AS widgets
-                                                    FROM (SELECT dashboard_widgets.*, metrics.*
+                                                    FROM (SELECT dashboard_widgets.*, 
+                                                                 metrics.name, metrics.edited_at,metrics.metric_of,
+                                                                 metrics.view_type,metrics.thumbnail,metrics.metric_type,
+                                                                 metrics.metric_format,metrics.metric_value,metrics.default_config,
+                                                                 metric_series.series
                                                           FROM metrics
-                                                                   INNER JOIN dashboard_widgets USING (metric_id)
-                                                                   LEFT JOIN LATERAL (SELECT COALESCE(JSONB_AGG(metric_series.* ORDER BY index),'[]') AS series
-                                                                                      FROM metric_series
-                                                                                      WHERE metric_series.metric_id = metrics.metric_id
-                                                                                        AND metric_series.deleted_at ISNULL
+                                                               INNER JOIN dashboard_widgets USING (metric_id)
+                                                               LEFT JOIN LATERAL (
+                                                                      SELECT COALESCE(JSONB_AGG(metric_series.* ORDER BY index),'[]') AS series
+                                                                      FROM (SELECT metric_series.name, 
+                                                                                   metric_series.index, 
+                                                                                   metric_series.metric_id,
+                                                                                   metric_series.series_id, 
+                                                                                   metric_series.created_at
+                                                                            FROM metric_series
+                                                                            WHERE metric_series.metric_id = metrics.metric_id
+                                                                              AND metric_series.deleted_at ISNULL) AS metric_series
                                                               ) AS metric_series ON (TRUE)
                                                           WHERE dashboard_widgets.dashboard_id = dashboards.dashboard_id
                                                             AND metrics.deleted_at ISNULL
@@ -76,8 +86,9 @@ def get_dashboard(project_id, user_id, dashboard_id):
                 w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
                 w["config"]["col"] = w["default_config"]["col"]
                 w["config"]["row"] = w["default_config"]["row"]
-                # for s in w["series"]:
-                #     s["created_at"] = TimeUTC.datetime_to_timestamp(s["created_at"])
+                w.pop("default_config")
+                for s in w["series"]:
+                    s["created_at"] = TimeUTC.datetime_to_timestamp(s["created_at"])
     return helper.dict_to_camel_case(row)
 
 
