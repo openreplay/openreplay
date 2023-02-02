@@ -580,6 +580,7 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
     elif __is_click_map(metric):
+        # TODO: remove this when UI is able to stop this endpoint calls for clickMap
         if from_dashboard:
             return None
         if raw_metric["data"]:

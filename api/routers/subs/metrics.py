@@ -230,8 +230,12 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
 def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardChartSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
+    # TODO: remove this when UI is able to stop this endpoint calls for clickMap
     print("--- headers ---")
     print(request.headers)
+    print(request.headers.get('REFERER'))
+    print(request.headers.get('referer'))
+    print(request.headers.get('Referer'))
     import re
     pattern = re.compile("[0-9]+\/dashboard\/[0-9]+$")
     from_dashboard = pattern.match(request.headers.get('REFERER')) if request.headers.get('REFERER') \
