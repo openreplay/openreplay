@@ -94,8 +94,7 @@ const NewAlert = (props: IProps) => {
   useEffect(() => {
     if (list.length > 0) {
       const alertId = location.pathname.split('/').pop();
-      const currentAlert = list
-        .find((alert: Alert) => alert.alertId === String(alertId));
+      const currentAlert = list.find((alert: Alert) => alert.alertId === String(alertId));
       if (currentAlert) {
         init(currentAlert)
       }

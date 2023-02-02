@@ -36,7 +36,7 @@ export interface IAlert {
   condition: string;
 }
 
-const defaults = {
+const getDefaults = () => ({
   alertId: '',
   projectId: undefined,
   name: 'Untitled Alert',
@@ -61,7 +61,7 @@ const defaults = {
   hasNotification: false,
   metric: '',
   condition: '',
-} as unknown as IAlert
+}) as unknown as IAlert
 
 export default class Alert {
   alertId: IAlert["alertId"]
@@ -90,7 +90,8 @@ export default class Alert {
   condition: IAlert["condition"]
   isExists = false
 
-  constructor(item: Partial<IAlert> = defaults, isExists: boolean) {
+  constructor(item: Partial<IAlert> = {}, isExists: boolean) {
+    const defaults = getDefaults()
     Object.assign(defaults, item)
 
     const options = defaults.options || { currentPeriod: 15, previousPeriod: 15, message: [] };
