@@ -16,7 +16,12 @@ function MetricsLibraryModal(props: Props) {
   const [selectedList, setSelectedList] = useState([]);
 
   useEffect(() => {
+    metricStore.updateKey('page', 1)
     metricStore.updateKey('listView', true);
+
+    return () => {
+      metricStore.updateKey('filter', { ...metricStore.filter, query: '' })
+    }
   }, []);
 
   const onSelectionChange = (list: any) => {
@@ -24,7 +29,7 @@ function MetricsLibraryModal(props: Props) {
   };
 
   const onChange = ({ target: { value } }: any) => {
-    metricStore.updateKey('metricsSearch', value)
+    metricStore.updateKey('filter', { ...metricStore.filter, query: value })
   };
 
   return (
