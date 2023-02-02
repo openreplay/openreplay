@@ -367,6 +367,7 @@ export const addFilterByKeyAndValue =
             defaultFilter.sourceOperator = sourceOperator;
             defaultFilter.source = source;
         }
+
         dispatch(addFilter(defaultFilter));
     };
 
