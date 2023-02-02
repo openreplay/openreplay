@@ -24,7 +24,7 @@ export default class FilterSeries {
     fromJson(json) {
         this.seriesId = json.seriesId
         this.name = json.name
-        this.filter = new Filter().fromJson(json.filter)
+        this.filter = new Filter().fromJson(json.filter || { filters: [] })
         return this
     }
 
