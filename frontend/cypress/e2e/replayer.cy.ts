@@ -57,28 +57,28 @@ describe(
         cy.window().then(win => {
           win.playerJump(SECOND * 1)
         })
-        cy.wait(SECOND * 2);
+        cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-1');
         cy.window().then(win => {
           win.playerJump(SECOND * 3)
         })
-        cy.wait(SECOND * 2);
+        cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-3');
         cy.window().then(win => {
           win.playerJump(SECOND * 5)
         })
-        cy.wait(SECOND * 2);
+        cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-5');
         cy.window().then(win => {
           win.playerJump(SECOND * 9)
         })
-        cy.wait(SECOND * 2);
+        cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-9');
 
         cy.window().then(win => {
           win.playerJump(SECOND * 13.5)
         })
-        cy.wait(SECOND * 2);
+        cy.wait(SECOND * 3);
         cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
         cy.wait(SECOND)
         cy.matchImageSnapshot('Tracker-13-redux');
