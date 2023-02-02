@@ -96,7 +96,9 @@ const NewAlert = (props: IProps) => {
       const alertId = location.pathname.split('/').pop();
       const currentAlert = list
         .find((alert: Alert) => alert.alertId === String(alertId));
-        init(currentAlert || {});
+      if (currentAlert) {
+        init(currentAlert)
+      }
     }
   }, [list]);
 
