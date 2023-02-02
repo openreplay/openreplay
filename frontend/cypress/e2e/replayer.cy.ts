@@ -1,5 +1,5 @@
 const SECOND = 1000
-let sessionUrl;
+let sessionUrl = 'test';
 
 describe('Replayer visual match test', {
   viewportHeight: 900,
@@ -25,9 +25,20 @@ describe('Replayer visual match test', {
 
     cy.window().then(win => {
       sessionUrl = win.__OPENREPLAY__.app.getSessionURL()
+      console.log(win.__OPENREPLAY__.app.getSessionURL())
+      cy.log(win.__OPENREPLAY__.app.getSessionURL())
+
+      // checking real session
+      cy.wait(SECOND * 125)
+      cy.visit(sessionUrl.replace('https//foss.openreplay.com/', '') + '?jumpto=0&freeze=true')
+      cy.wait(SECOND * 10)
     })
 
 
+
+  })
+
+  it('Checking Replayer at breakpoints, user events and console', () => {
     cy.intercept('**/api/account').as('getAccount')
     cy.intercept('**/mobs/7585361734083637/dom.mobs?*').as('getFirstMob')
     cy.intercept('**/mobs/7585361734083637/dom.mobe?*').as('getSecondMob')
@@ -65,15 +76,5 @@ describe('Replayer visual match test', {
 
     cy.get('#control-button-network > .controlButton-module__label--YznMl').click()
     cy.matchImageSnapshot('Network-Events');
-
-    // checking real session
-    cy.wait(SECOND * 100)
-    cy.visit(sessionUrl.replace('https//foss.openreplay.com/', '') + '?jumpto=0&freeze=true')
-    cy.wait(SECOND * 10)
-
   })
-
-  // it('Checking Replayer at breakpoints, user events and console', () => {
-  //
-  // })
 })
