@@ -143,7 +143,7 @@ export const fetchUserInfo = () => ({
 export function logout() {
   return {
     types: DELETE.toArray(),
-    call: client => client.post('/logout')
+    call: client => client.get('/logout')
   };
 }
 
