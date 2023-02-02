@@ -1,11 +1,11 @@
 const SECOND = 1000
+let sessionUrl;
 
 describe('Replayer visual match test', {
   viewportHeight: 900,
   viewportWidth: 1400,
 }, () => {
   it('Generating tracker session...', () => {
-    let sessionUrl;
     cy.visit('http://localhost:3000/')
 
     cy.scrollTo('bottom', { duration: 500 })
@@ -26,9 +26,8 @@ describe('Replayer visual match test', {
     cy.window().then(win => {
       sessionUrl = win.__OPENREPLAY__.app.getSessionURL()
     })
-  })
 
-  it('Checking Replayer at breakpoints, user events and console', () => {
+
     cy.intercept('**/api/account').as('getAccount')
     cy.intercept('**/mobs/7585361734083637/dom.mobs?*').as('getFirstMob')
     cy.intercept('**/mobs/7585361734083637/dom.mobe?*').as('getSecondMob')
@@ -73,4 +72,8 @@ describe('Replayer visual match test', {
     cy.wait(SECOND * 10)
 
   })
+
+  // it('Checking Replayer at breakpoints, user events and console', () => {
+  //
+  // })
 })
