@@ -206,18 +206,18 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CardSessionsSchem
     if metric is None:
         return None
     results = []
-    is_click_map = False
-    if __is_click_map(metric) and raw_metric.get("data") is not None:
-        is_click_map = True
+    # is_click_map = False
+    # if __is_click_map(metric) and raw_metric.get("data") is not None:
+    #     is_click_map = True
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        if is_click_map:
-            results.append(
-                {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
-            break
+        # if is_click_map:
+        #     results.append(
+        #         {"seriesId": s.series_id, "seriesName": s.name, "total": 1, "sessions": [raw_metric["data"]]})
+        #     break
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search_sessions(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -512,8 +512,8 @@ def get_card(metric_id, project_id, user_id, flatten: bool = True, include_data:
         query = cur.mogrify(
             f"""SELECT metric_id, project_id, user_id, name, is_public, created_at, deleted_at, edited_at, metric_type, 
                         view_type, metric_of, metric_value, metric_format, is_pinned, default_config, 
-                        thumbnail, default_config AS config,
-                        series, dashboards, owner_email {',data' if include_data else ''}
+                        default_config AS config,series, dashboards, owner_email
+                        {',data' if include_data else ''}
                 FROM metrics
                          LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                             FROM metric_series
