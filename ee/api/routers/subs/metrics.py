@@ -234,10 +234,11 @@ def get_card_chart(projectId: int, metric_id: int, request: Request, data: schem
                    context: schemas.CurrentContext = Depends(OR_context)):
     # TODO: remove this when UI is able to stop this endpoint calls for clickMap
     import re
-    from_dashboard = re.match(r".*\/[0-9]+\/dashboard\/[0-9]+$", request.headers.get('referer')) is not None \
+    ignore_click_map = re.match(r".*\/[0-9]+\/dashboard\/[0-9]+$", request.headers.get('referer')) is not None \
+                       or re.match(r".*\/[0-9]+\/metrics$", request.headers.get('referer')) is not None \
         if request.headers.get('referer') else False
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                               data=data, from_dashboard=from_dashboard)
+                                               data=data, ignore_click_map=ignore_click_map)
     return {"data": data}
 
 
