@@ -233,20 +233,18 @@ export default class MessageManager {
       .finally(this.onFileReadFinally);
 
     // load devtools (TODO: start after the first DOM file download)
-    if (this.session.devtoolsURL?.length) {
-      this.state.update({ devtoolsLoading: true })
-      loadFiles(this.session.devtoolsURL, createNewParser())
-      // EFS fallback
-      .catch(() =>
-        requestEFSDevtools(this.session.sessionId)
-          .then(createNewParser(false))
-      )
-      .then(() => {
-        this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
-      })
-      .catch(e => logger.error("Can not download the devtools file", e))
-      .finally(() => this.state.update({ devtoolsLoading: false }))
-    }
+    this.state.update({ devtoolsLoading: true })
+    loadFiles(this.session.devtoolsURL, createNewParser())
+    // EFS fallback
+    .catch(() =>
+      requestEFSDevtools(this.session.sessionId)
+        .then(createNewParser(false))
+    )
+    .then(() => {
+      this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
+    })
+    .catch(e => logger.error("Can not download the devtools file", e))
+    .finally(() => this.state.update({ devtoolsLoading: false }))
   }
 
   resetMessageManagers() {
