@@ -1,0 +1,135 @@
+# This action will push the alert changes to aws
+on:
+  workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        required: false
+        default: 'false'
+  push:
+    branches:
+      - dev
+    paths:
+      - api/app_alerts.py
+      - api/chalicelib/core/alerts*.py
+
+name: Build and Deploy Alerts
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        # We need to diff with old commit 
+        # to see which workers got changed.
+        fetch-depth: 2
+
+    - name: Docker login
+      run: |
+        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
+
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+    # Caching docker images
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      # Ignore the failure of a step and avoid terminating the job.
+      continue-on-error: true
+
+
+    - name: Building and Pusing api image
+      id: build-image
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        ENVIRONMENT: staging
+      run: |
+        skip_security_checks=${{ github.event.inputs.skip_security_checks }}
+        cd api
+        PUSH_IMAGE=0 bash -x ./build.sh
+        [[ "x$skip_security_checks" == "xtrue" ]]  || {
+          curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+          images=("alerts")
+          for image in ${images[*]};do
+            ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+          done
+          err_code=$?
+          [[ $err_code -ne 0 ]] && {
+            exit $err_code
+          }
+        } && {
+          echo "Skipping Security Checks"
+        }
+        PUSH_IMAGE=1 bash -x ./build.sh
+    - name: Creating old image input
+      run: |
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            tag: ${image_array[1]}
+        EOF
+        done
+
+    - name: Deploy to kubernetes
+      run: |
+        cd scripts/helmcharts/
+
+        ## Update secerts
+        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
+
+        # Update changed image tag
+        sed -i "/alerts/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
+        cat /tmp/image_override.yaml
+        # Deploy command
+        mv openreplay/charts/{ingress-nginx,chalice,quickwit,alerts} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,chalice,quickwit,alerts} openreplay/charts/
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
+        ENVIRONMENT: staging
+
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: foss
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging
+    #
