@@ -1,0 +1,51 @@
+{
+  "name": "with-create-react-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@openreplay/tracker": "file:../../../openreplay/tracker/tracker",
+    "@openreplay/tracker-axios": "3.6.1",
+    "@openreplay/tracker-fetch": "3.6.1",
+    "@openreplay/tracker-redux": "3.5.1",
+    "@openreplay/tracker-zustand": "1.0.2",
+    "@tanstack/react-table": "^8.2.6",
+    "@types/node": "^12.0.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@types/uuid": "^8.3.3",
+    "axios": "^0.27.2",
+    "react": "^17.0.2",
+    "react-bootstrap": "^2.5.0",
+    "react-dom": "^17.0.2",
+    "react-scripts": "4.0.3",
+    "react-table": "^7.8.0",
+    "redux": "^4.2.0",
+    "typescript": "^4.1.2",
+    "uuid": "^8.3.2",
+    "zustand": "^4.1.1"
+  },
+  "scripts": {
+    "start": "HOST=0.0.0.0 react-scripts start",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
