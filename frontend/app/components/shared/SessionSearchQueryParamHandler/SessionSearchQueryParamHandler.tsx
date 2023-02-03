@@ -44,7 +44,7 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
   };
 
   const applyFilterFromQuery = () => {
-    if (appliedFilter.filters.size > 0) {
+    if (appliedFilter.filters.size > 0 || history.location.search === "") {
       return;
     }
     const entires = getQueryObject(history.location.search);

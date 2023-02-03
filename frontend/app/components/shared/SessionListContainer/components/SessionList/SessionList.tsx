@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Button, Icon } from 'UI';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import {
   fetchSessions,
@@ -22,7 +23,7 @@ enum NoContentType {
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 let sessionTimeOut: any = null;
-interface Props {
+interface Props extends RouteComponentProps {
   loading: boolean;
   list: any;
   currentPage: number;
@@ -94,7 +95,7 @@ function SessionList(props: Props) {
     // handle scroll position
     const { scrollY } = props;
     window.scrollTo(0, scrollY);
-    if (total === 0) {
+    if (total === 0 && props.history.location.search === "") {
       props.fetchSessions(null, true);
     }
     props.fetchMetadata();
@@ -226,4 +227,4 @@ export default connect(
     fetchMetadata,
     checkForLatestSessions,
   }
-)(SessionList);
+)(withRouter(SessionList));
