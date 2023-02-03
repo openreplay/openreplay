@@ -69,7 +69,7 @@ describe(
         cy.matchImageSnapshot('Tracker-3');
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 5)
+          win.playerJump(SECOND * 4)
         })
         cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-5');
