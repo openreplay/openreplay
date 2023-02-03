@@ -65,7 +65,7 @@ class Login extends React.Component {
   render() {
     const { errors, loading, authDetails } = this.props;
     const { CAPTCHA_ENABLED } = this.state;
-  console.log(authDetails)
+
     return (
       <div className="flex flex-col md:flex-row" style={{ height: '100vh' }}>
         <div className={cn('md:w-6/12 relative', stl.left)}>
