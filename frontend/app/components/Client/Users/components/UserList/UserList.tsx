@@ -28,7 +28,6 @@ function UserList(props: Props) {
     //     });
     //     return _list;
     // };
-    console.log(users)
     const getList = (list) => filterList(list, searchQuery, ['email', 'roleName', 'name'])
 
     const list: any = searchQuery !== '' ? getList(users) : users;
