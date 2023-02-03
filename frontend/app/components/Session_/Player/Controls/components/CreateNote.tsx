@@ -76,6 +76,11 @@ function CreateNote({
 
   const duration = Duration.fromMillis(time).toFormat('mm:ss');
 
+  const cleanUp = () => {
+    setCreateNoteTooltip({ isVisible: false, time: 0 });
+    setText('');
+    setTag(undefined);
+  }
   const onSubmit = () => {
     if (text === '') return;
 
@@ -108,9 +113,7 @@ function CreateNote({
           console.error(e);
         })
         .finally(() => {
-          setCreateNoteTooltip({ isVisible: false, time: 0 });
-          setText('');
-          setTag(undefined);
+          cleanUp()
         });
     }
 
@@ -128,13 +131,12 @@ function CreateNote({
         console.error(e);
       })
       .finally(() => {
-        setCreateNoteTooltip({ isVisible: false, time: 0 });
-        setText('');
-        setTag(undefined);
+        cleanUp()
       });
   };
 
   const closeTooltip = () => {
+    cleanUp()
     setCreateNoteTooltip({ isVisible: false, time: 100 });
   };
 
