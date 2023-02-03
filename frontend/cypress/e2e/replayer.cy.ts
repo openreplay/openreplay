@@ -32,6 +32,8 @@ describe(
         cy.wait(SECOND * 3);
 
         cy.get('#redcounter').click().click().click();
+        cy.get('#test-api').click().click();
+        cy.get('#test-event').click().click();
         cy.wait(SECOND * 3);
 
         cy.log('finished generating a session')
@@ -83,8 +85,16 @@ describe(
         })
         cy.wait(SECOND * 3);
         cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
-        cy.wait(SECOND)
+        cy.wait(SECOND * 0.5)
         cy.matchImageSnapshot('Tracker-19-redux');
+
+        cy.get('#control-button-network').click()
+        cy.wait(SECOND * 0.5)
+        cy.matchImageSnapshot('Tracker-19-network');
+
+        cy.get('#control-button-events').click()
+        cy.wait(SECOND * 0.5)
+        cy.matchImageSnapshot('Tracker-19-events');
 
         cy.log('custom session test success')
       });

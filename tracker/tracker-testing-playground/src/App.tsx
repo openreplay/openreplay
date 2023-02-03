@@ -119,12 +119,12 @@ function App() {
       <button id="testrender" onClick={() => setRen(false)}>
         test rerender
       </button>
-      <button onClick={testAPI}>test api</button>
+      <button onClick={testAPI} id={"test-api"}>test api</button>
       <button onClick={testAPIError}>test api error</button>
       <button id="redcounter" onClick={incrementRedux}>
         test Redux {counter}
       </button>
-      <button onClick={customEvent}>test custom event</button>
+      <button onClick={customEvent} id={"test-event"}>test custom event</button>
       <button onClick={customError}>test custom tags error</button>
       <button onClick={addAxios}>add axios</button>
       <button onClick={testAxiosApi}>test axios</button>
