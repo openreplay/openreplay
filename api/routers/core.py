@@ -62,7 +62,6 @@ def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-@app.post('/{projectId}/sessions/search2', tags=["sessions"])
 def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
@@ -70,7 +69,6 @@ def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchem
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-@app.post('/{projectId}/sessions/search2/ids', tags=["sessions"])
 def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
