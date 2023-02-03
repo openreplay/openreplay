@@ -59,6 +59,7 @@ function UserForm(props: Props) {
                     <Input
                         name="name"
                         autoFocus
+                        maxLength="50"
                         value={ user.name }
                         onChange={ write }
                         className="w-full"
@@ -71,6 +72,7 @@ function UserForm(props: Props) {
                     <Input
                         disabled={user.exists()}
                         name="email"
+                        maxLength="320"
                         value={ user.email }
                         onChange={ write }
                         className="w-full"
