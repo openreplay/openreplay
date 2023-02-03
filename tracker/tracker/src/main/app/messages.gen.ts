@@ -276,19 +276,6 @@ export function PageRenderTiming(
   ]
 }
 
-export function JSExceptionDeprecated(
-  name: string,
-  message: string,
-  payload: string,
-): Messages.JSExceptionDeprecated {
-  return [
-    Messages.Type.JSExceptionDeprecated,
-    name,
-    message,
-    payload,
-  ]
-}
-
 export function CustomEvent(
   name: string,
   payload: string,
@@ -727,17 +714,6 @@ export function AdoptedSSRemoveOwner(
   ]
 }
 
-export function Zustand(
-  mutation: string,
-  state: string,
-): Messages.Zustand {
-  return [
-    Messages.Type.Zustand,
-    mutation,
-    state,
-  ]
-}
-
 export function JSException(
   name: string,
   message: string,
@@ -750,6 +726,17 @@ export function JSException(
     message,
     payload,
     metadata,
+  ]
+}
+
+export function Zustand(
+  mutation: string,
+  state: string,
+): Messages.Zustand {
+  return [
+    Messages.Type.Zustand,
+    mutation,
+    state,
   ]
 }
 

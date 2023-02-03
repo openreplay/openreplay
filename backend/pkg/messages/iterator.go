@@ -43,7 +43,7 @@ func NewMessageIterator(messageHandler MessageHandler, messageFilter []int, auto
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
-		MsgSessionEndDeprecated: {}}
+	}
 	return iter
 }
 

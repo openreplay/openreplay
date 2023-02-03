@@ -35,7 +35,7 @@ func NewSinkMessageIterator(messageHandler MessageHandler, messageFilter []int, 
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
-		MsgSessionEndDeprecated: {}}
+	}
 	return iter
 }
 

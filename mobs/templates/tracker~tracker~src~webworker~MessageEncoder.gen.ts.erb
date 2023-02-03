@@ -9,11 +9,11 @@ import PrimitiveEncoder from './PrimitiveEncoder.js'
 export default class MessageEncoder extends PrimitiveEncoder {
   encode(msg: Message): boolean {
     switch(msg[0]) {
-    <% $messages.select { |msg| msg.tracker }.each do |msg| %>
+<% $messages.select { |msg| msg.tracker }.each do |msg| %>
     case Messages.Type.<%= msg.name %>:
-      return <% if msg.attributes.size == 0 %> true <% else %> <%= msg.attributes.map.with_index { |attr, index| "this.#{attr.type}(msg[#{index+1}])" }.join " && " %> <% end %>
+      return <% if msg.attributes.size == 0 %> true <% else %> <%= msg.attributes.map.with_index { |attr, index| "this.#{attr.type}(msg[#{index+1}])" }.join " && " %><% end %>
     break
-    <% end %>
+<% end %>
     }
   }
 
