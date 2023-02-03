@@ -77,6 +77,7 @@ const RoleForm = (props: Props) => {
                             name="name"
                             value={role.name}
                             onChange={write}
+                            maxLength={40}
                             className={stl.input}
                             id="name-field"
                             placeholder="Ex. Admin"
