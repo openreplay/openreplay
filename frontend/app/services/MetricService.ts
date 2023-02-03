@@ -1,5 +1,6 @@
 import Widget from "App/mstore/types/widget";
 import APIClient from 'App/api_client';
+import { CLICKMAP } from "App/constants/card";
 
 export default class MetricService {
     private client: APIClient;
@@ -72,6 +73,13 @@ export default class MetricService {
     }
 
     getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
+        if (
+          metric.metricType === CLICKMAP
+          && document.location.pathname.split('/').pop() !== 'metrics'
+          && (document.location.pathname.indexOf('dashboard') !== -1 && document.location.pathname.indexOf('metric') === -1)
+        ) {
+            return Promise.resolve({})
+        }
         const path = isWidget ? `/cards/${metric.metricId}/chart` : `/cards/try`;
         return this.client.post(path, data)
             .then(r => r.json())
