@@ -42,6 +42,7 @@ function WidgetSessions(props: Props) {
     const fetchSessions = (metricId: any, filter: any) => {
         if (!isMounted()) return;
         setLoading(true);
+        delete filter.eventsOrderSupport;
         widget
             .fetchSessions(metricId, filter)
             .then((res: any) => {
