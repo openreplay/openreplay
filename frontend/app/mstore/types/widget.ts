@@ -250,7 +250,7 @@ export default class Widget {
       }
     }
 
-    this.data = _data;
+    Object.assign(this.data, _data)
     return _data;
   }
 
