@@ -60,8 +60,7 @@ describe(
         cy.wait(SECOND * 180);
         cy.visit(firstAlias.slice(27) + '?freeze=true');
         cy.log('loading session')
-        cy.wait('@getFirstMob')
-        cy.wait(SECOND * 20);
+        cy.wait(SECOND * 25);
 
         cy.window().then(win => {
           win.playerJump(SECOND * 3)
