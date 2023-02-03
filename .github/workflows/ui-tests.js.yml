@@ -23,7 +23,7 @@ env:
   FOSS_INGEST: ${{ secrets.FOSS_INGEST }}
 jobs:
   build-and-test:
-    runs-on: ubuntu-22.04
+    runs-on: macos-latest
     name: Build and test Tracker plus Replayer
     strategy:
       matrix:
