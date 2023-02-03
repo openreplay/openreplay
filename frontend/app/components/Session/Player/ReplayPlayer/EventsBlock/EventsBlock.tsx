@@ -20,7 +20,8 @@ interface IProps {
   filteredEvents: InjectedEvent[]
   setActiveTab: (tab?: string) => void
   query: string
-  session: Session
+  events: Session['events']
+  notesWithEvents: Session['notesWithEvents']
   filterOutNote: (id: string) => void
   eventsIndex: number[]
 }
@@ -37,12 +38,16 @@ function EventsBlock(props: IProps) {
 
   const { eventListNow, playing } = store.get()
 
-  const { session: { events, notesWithEvents }, filteredEvents,
+  const {
+    filteredEvents,
     eventsIndex,
     filterOutNote,
     query,
     setActiveTab,
+    events,
+    notesWithEvents,
   } = props
+
   const currentTimeEventIndex = eventListNow.length > 0 ? eventListNow.length - 1 : 0
   const usedEvents = filteredEvents || notesWithEvents
 
@@ -176,6 +181,8 @@ function EventsBlock(props: IProps) {
 
 export default connect((state: RootStore) => ({
   session: state.getIn([ 'sessions', 'current' ]),
+  notesWithEvents: state.getIn([ 'sessions', 'current' ]).notesWithEvents,
+  events: state.getIn([ 'sessions', 'current' ]).events,
   filteredEvents: state.getIn([ 'sessions', 'filteredEvents' ]),
   query: state.getIn(['sessions', 'eventsQuery']),
   eventsIndex: state.getIn([ 'sessions', 'eventsIndex' ]),
