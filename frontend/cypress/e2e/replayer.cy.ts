@@ -19,20 +19,20 @@ describe(
 
       cy.origin('http://localhost:3000/', { args: { SECOND } }, ({ SECOND }) => {
         cy.visit('/');
-        cy.scrollTo('bottom', { duration: 500 });
-        cy.wait(SECOND * 1.5);
-        cy.scrollTo('top', { duration: 500 });
-        cy.wait(SECOND * 1.5);
+        cy.wait(SECOND * 3);
+        cy.get('#get-table').click()
+        cy.wait(SECOND * 3);
         cy.get('#testrender').click();
         cy.wait(SECOND * 3);
         cy.get('#testrender').click();
+        cy.get('#get-main').click()
 
         cy.get('#obscured-text').type('testing typing in obscured input');
         cy.get('#visible-input').type('testing typing in visible input');
-        cy.wait(SECOND * 1.5);
+        cy.wait(SECOND * 3);
 
         cy.get('#redcounter').click().click().click();
-        cy.wait(SECOND * 1.5);
+        cy.wait(SECOND * 3);
 
         cy.window().then((window) => {
           cy.task('setValue', { key: 'url', value: window.__OPENREPLAY__.app.getSessionURL() });
@@ -57,11 +57,6 @@ describe(
         cy.visit(firstAlias.slice(27) + '?freeze=true');
         cy.wait(SECOND * 10);
         cy.window().then(win => {
-          win.playerJump(SECOND * 1)
-        })
-        cy.wait(SECOND * 3);
-        cy.matchImageSnapshot('Tracker-1');
-        cy.window().then(win => {
           win.playerJump(SECOND * 3)
         })
         cy.wait(SECOND * 3);
@@ -78,12 +73,12 @@ describe(
         cy.matchImageSnapshot('Tracker-9');
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 13.5)
+          win.playerJump(SECOND * 19)
         })
         cy.wait(SECOND * 3);
         cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
         cy.wait(SECOND)
-        cy.matchImageSnapshot('Tracker-13-redux');
+        cy.matchImageSnapshot('Tracker-19-redux');
       });
     });
 
@@ -106,6 +101,7 @@ describe(
       cy.wait('@getFirstMob')
       cy.wait('@getSecondMob')
       cy.wait(SECOND * 2)
+
       cy.window().then(win => {
         win.playerJump(SECOND * 5)
       })
