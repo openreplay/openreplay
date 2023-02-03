@@ -34,9 +34,10 @@ describe(
         cy.get('#redcounter').click().click().click();
         cy.wait(SECOND * 3);
 
+        cy.log('finished generating a session')
+
         cy.window().then((window) => {
           cy.task('setValue', { key: 'url', value: window.__OPENREPLAY__.app.getSessionURL() });
-          console.log(window.__OPENREPLAY__.app.getSessionURL());
           cy.log(window.__OPENREPLAY__.app.getSessionURL());
           cy.wait(SECOND * 3)
         });
@@ -53,19 +54,24 @@ describe(
       // checking real session
       cy.get('@firstAlias').then((firstAlias) => {
         cy.log(firstAlias);
+        cy.log('waiting for session to save')
         cy.wait(SECOND * 180);
         cy.visit(firstAlias.slice(27) + '?freeze=true');
-        cy.wait(SECOND * 10);
+        cy.log('loading session')
+        cy.wait(SECOND * 20);
+
         cy.window().then(win => {
           win.playerJump(SECOND * 3)
         })
         cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-3');
+
         cy.window().then(win => {
           win.playerJump(SECOND * 5)
         })
         cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-5');
+
         cy.window().then(win => {
           win.playerJump(SECOND * 9)
         })
@@ -79,6 +85,8 @@ describe(
         cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
         cy.wait(SECOND)
         cy.matchImageSnapshot('Tracker-19-redux');
+
+        cy.log('custom session test success')
       });
     });
 
@@ -86,6 +94,7 @@ describe(
       cy.intercept('**/api/account').as('getAccount')
       cy.intercept('**/mobs/7585361734083637/dom.mobs?*').as('getFirstMob')
       cy.intercept('**/mobs/7585361734083637/dom.mobe?*').as('getSecondMob')
+      cy.log('testing premade session')
 
       cy.visit('http://0.0.0.0:3333', {
         onBeforeLoad: function (window) {
@@ -106,20 +115,20 @@ describe(
         win.playerJump(SECOND * 5)
       })
       cy.wait(SECOND * 4)
-
       cy.matchImageSnapshot('1st-breakpoint');
 
       cy.window().then(win => {
         win.playerJump(SECOND * 21)
       })
       cy.wait(SECOND * 4)
-
       cy.matchImageSnapshot('2nd-breakpoint');
 
       cy.get('[data-openreplay-label="User Steps"]').click()
+      cy.wait(SECOND * 0.5)
       cy.matchImageSnapshot('User-Events');
 
       cy.get('#control-button-network > .controlButton-module__label--YznMl').click()
+      cy.wait(SECOND * 0.5)
       cy.matchImageSnapshot('Network-Events');
     })
   }
