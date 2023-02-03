@@ -27,6 +27,7 @@ function WebhookForm(props) {
                         value={webhook.name}
                         onChange={write}
                         placeholder="Name"
+                        maxLength={50}
                     />
                 </Form.Field>
 

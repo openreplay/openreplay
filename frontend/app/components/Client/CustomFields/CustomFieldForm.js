@@ -37,6 +37,7 @@ class CustomFieldForm extends React.PureComponent {
                             value={field.key}
                             onChange={this.write}
                             placeholder="Field Name"
+                            maxLength={50}
                         />
                     </Form.Field>
 

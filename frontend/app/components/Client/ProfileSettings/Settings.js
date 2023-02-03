@@ -51,6 +51,7 @@ export default class Settings extends React.PureComponent {
             type="text"
             onChange={ this.onChange }
             value={ accountName }
+            maxLength={50}
           />
         </Form.Field>
 
@@ -62,6 +63,7 @@ export default class Settings extends React.PureComponent {
             type="text"
             onChange={ this.onChange }
             value={ organizationName }
+            maxLength={50}
           />
         </Form.Field>
 
