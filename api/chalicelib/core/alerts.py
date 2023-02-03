@@ -30,9 +30,11 @@ def get_all(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
                     SELECT alerts.*,
-                           COALESCE(metric_series.name, query ->> 'left') AS lef_name
+                           COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count',
+                                    query ->> 'left') AS series_name
                     FROM public.alerts
                          LEFT JOIN metric_series USING (series_id)
+                         LEFT JOIN metrics USING (metric_id)
                     WHERE alerts.project_id =%(project_id)s 
                         AND alerts.deleted_at ISNULL
                     ORDER BY alerts.created_at;""",
