@@ -73,7 +73,7 @@ class Login extends React.Component {
             <img src="/assets/logo-white.svg" />
           </div>
           <div className="color-white text-lg flex items-center">
-            <img style={{ width: '800px', position: 'absolute', bottom: 0, left: 0 }} src={LoginBg} />;
+            <img style={{ width: '800px', position: 'absolute', bottom: 0, left: 0 }} src={LoginBg} />
           </div>
         </div>
         <div className="md:w-6/12 flex items-center justify-center py-10">
