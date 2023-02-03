@@ -63,7 +63,8 @@ describe(
         cy.wait(SECOND * 25);
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 3)
+          const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+          jumpMethod(SECOND * 3)
         })
         cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-3');
@@ -75,13 +76,15 @@ describe(
         cy.matchImageSnapshot('Tracker-5');
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 9)
+          const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+          jumpMethod(SECOND * 9)
         })
         cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-9');
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 20)
+          const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+          jumpMethod(SECOND * 20)
         })
         cy.wait(SECOND * 3);
         cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
@@ -122,13 +125,15 @@ describe(
       cy.wait(SECOND * 2)
 
       cy.window().then(win => {
-        win.playerJump(SECOND * 5)
+        const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+        jumpMethod(SECOND * 5)
       })
       cy.wait(SECOND * 4)
       cy.matchImageSnapshot('1st-breakpoint');
 
       cy.window().then(win => {
-        win.playerJump(SECOND * 21)
+        const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
+        jumpMethod(SECOND * 21)
       })
       cy.wait(SECOND * 4)
       cy.matchImageSnapshot('2nd-breakpoint');

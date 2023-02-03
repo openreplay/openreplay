@@ -63,6 +63,9 @@ export default class WebPlayer extends Player {
       endTime, // : 0,
     })
 
+    // @ts-ignore
+    window.playerJumpToTime = this.jump.bind(this)
+
   }
 
   attach = (parent: HTMLElement, isClickmap?: boolean) => {
