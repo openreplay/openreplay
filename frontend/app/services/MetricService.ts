@@ -98,7 +98,7 @@ export default class MetricService {
     }
 
     fetchIssue(metricId: string, issueId: string, params: any): Promise<any> {
-        return this.client.post(`/custom_metrics/${metricId}/issues/${issueId}/sessions`, params)
+        return this.client.post(`/cards/${metricId}/issues/${issueId}/sessions`, params)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || {});
     }
