@@ -47,7 +47,7 @@ function SettingsMenu(props: RouteComponentProps<Props>) {
       <MenuItem onClick={() => navigateTo('metadata')} label="Metadata" icon="tags" />
       <MenuItem onClick={() => navigateTo('webhooks')} label="Webhooks" icon="link-45deg" />
       <MenuItem onClick={() => navigateTo('integrations')} label="Integrations" icon="puzzle" />
-      {isEnterprise && (
+      {isEnterprise && isAdmin && (
         <>
           <MenuItem onClick={() => navigateTo('roles')} label="Roles & Access" icon="diagram-3" />
           <MenuItem onClick={() => navigateTo('audit')} label="Audit" icon="list-ul" />
