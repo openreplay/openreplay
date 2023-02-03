@@ -60,6 +60,7 @@ describe(
         cy.wait(SECOND * 180);
         cy.visit(firstAlias.slice(27) + '?freeze=true');
         cy.log('loading session')
+        cy.wait('@getFirstMob')
         cy.wait(SECOND * 20);
 
         cy.window().then(win => {
@@ -69,7 +70,7 @@ describe(
         cy.matchImageSnapshot('Tracker-3');
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 4)
+          win.playerJump(SECOND * 6)
         })
         cy.wait(SECOND * 3);
         cy.matchImageSnapshot('Tracker-5');
@@ -81,7 +82,7 @@ describe(
         cy.matchImageSnapshot('Tracker-9');
 
         cy.window().then(win => {
-          win.playerJump(SECOND * 19)
+          win.playerJump(SECOND * 20)
         })
         cy.wait(SECOND * 3);
         cy.get('#control-button-redux > .controlButton-module__label--YznMl').click()
