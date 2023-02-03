@@ -3,7 +3,7 @@ describe('Testing general stability', {
   viewportWidth: 1400,
 }, () => {
   it('Checking if app will crash', () => {
-    cy.intercept('/api/account').as('getAccount')
+    cy.intercept('**/api/account').as('getAccount');
 
     cy.visit('/')
     cy.get('[data-test-id=login]').type(Cypress.env('account').replaceAll('"', ''));
