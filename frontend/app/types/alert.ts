@@ -20,6 +20,7 @@ export interface IAlert {
   detectionMethod: string;
   detection_method?: string;
   change: string;
+  seriesName: string;
   query: { left: string, operator: string, right: string };
   options: { currentPeriod: number, previousPeriod: number, message: {type: string, value: string}[] };
   createdAt?: number;
@@ -74,6 +75,7 @@ export default class Alert {
   detectionMethod: IAlert["detectionMethod"]
   detection_method: IAlert["detection_method"]
   change: IAlert["change"]
+  seriesName: IAlert["seriesName"]
   query: IAlert["query"]
   options: IAlert["options"]
   createdAt?: IAlert["createdAt"]
