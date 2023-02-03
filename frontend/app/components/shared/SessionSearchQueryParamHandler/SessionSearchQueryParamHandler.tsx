@@ -53,35 +53,29 @@ const SessionSearchQueryParamHandler = React.memo((props: Props) => {
       const filters: any = [];
       entires.forEach((item: any) => {
         if (!item.key || !item.value) { return }
-        const filter: any = {}
+        let filter: any = {}
         const filterKey = getFilterKeyTypeByKey(item.key);
         const tmp = item.value.split('^');
         const valueArr = tmp[0].split('|');
         const operator = valueArr.shift();
         const sourceArr = tmp[1] ? tmp[1].split('|') : [];
-        const sourceOperator = decodeURI(sourceArr.shift());
-        
+        const sourceOperator = sourceArr.shift();
 
         if (filterKey) {
           filter.type = filterKey;
           filter.key = filterKey;
-          filter.value = valueArr;
-          filter.operator = operator;
-          filter.source = sourceArr;
-          filter.sourceOperator = sourceOperator;
-          filters.push(filter);
         } else {
-          const _filter = _filters[item.key];
-          
-          if (!!_filter) {
-            _filter.type = _filter.key;
-            _filter.key = _filter.key;
-            _filter.value = valueArr;
-            _filter.operator = operator;
-            _filter.source = sourceArr;
-            filter.sourceOperator = sourceOperator;
+          filter = _filters[item.key];
+          if (!!filter) {
+            filter.type = filter.key;
+            filter.key = filter.key;
           }
         }
+        filter.value = valueArr;
+        filter.operator = operator;
+        filter.source = sourceArr;
+        filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+        filters.push(filter);
       });
       const f = Filter({ filters })
       props.applyFilter(f);
