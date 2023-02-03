@@ -41,7 +41,7 @@ export default class User {
             this.userId = json.userId || json.id; // TODO api returning id
             this.name = json.name;
             this.email = json.email;
-            this.createdAt = json.createdAt && DateTime.fromMillis(json.createdAt || 0)
+            this.createdAt = json.createdAt && DateTime.fromMillis(new Date(json.createdAt).getTime())
             this.isAdmin = json.admin
             this.isSuperAdmin = json.superAdmin
             this.isJoined = json.joined
