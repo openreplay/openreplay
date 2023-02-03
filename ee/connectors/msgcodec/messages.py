@@ -681,14 +681,6 @@ class AdoptedSSRemoveOwner(Message):
         self.id = id
 
 
-class Zustand(Message):
-    __id__ = 79
-
-    def __init__(self, mutation, state):
-        self.mutation = mutation
-        self.state = state
-
-
 class JSException(Message):
     __id__ = 78
 
@@ -697,6 +689,14 @@ class JSException(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class Zustand(Message):
+    __id__ = 79
+
+    def __init__(self, mutation, state):
+        self.mutation = mutation
+        self.state = state
 
 
 class BatchMeta(Message):

@@ -23,6 +23,8 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
 end
 ## message 2, 'CreateDocument', do
 # end
+
+# DEPRECATED; backend only (TODO: remove in the next release)
 message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
@@ -132,8 +134,8 @@ message 24, 'PageRenderTiming', :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-# deprecated since 4.1.6 / 1.8.2 in favor of #78
-message 25, 'JSExceptionDeprecated', :replayer => false do
+# DEPRECATED since 4.1.6 / 1.8.2 in favor of #78
+message 25, 'JSExceptionDeprecated', :replayer => false, :tracker => false do
   string 'Name'
   string 'Message'
   string 'Payload'
@@ -192,15 +194,7 @@ message 33, 'ClickEvent', :tracker => false, :replayer => false do
   string 'Label'
   string 'Selector'
 end
-# removed (backend-only)
-# message 34, 'ErrorEvent', :tracker => false, :replayer => false do
-#   uint 'MessageID'
-#   uint 'Timestamp'
-#   string 'Source'
-#   string 'Name'
-#   string 'Message'
-#   string 'Payload'
-# end
+## 34
 message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -215,27 +209,21 @@ message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   string 'Method'
   uint 'Status'
 end
-# removed (backend-only)
-# message 36, 'CustomEvent', :tracker => false, :replayer => false do
-#   uint 'MessageID'
-#   uint 'Timestamp'
-#   string 'Name'
-#   string 'Payload'
-# end
+#36
 
-# deprecated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
+# DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
   uint 'Index'
 end
-# deprecated since 4.0.2
+# DEPRECATED since 4.0.2
 message 38, 'CSSDeleteRule' do
   uint 'ID'
   uint 'Index'
 end
 
-# deprecated since 4.1.10 in favor of NetworkRequest
+# DEPRECATED since 4.1.10 in favor of NetworkRequest
 message 39, 'Fetch', :replayer => :devtools do
   string 'Method'
   string 'URL'
@@ -258,12 +246,7 @@ end
 message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
-# removed (backend-only)
-# message 43, 'StateActionEvent', :tracker => false, :replayer => false do
-#   uint 'MessageID'
-#   uint 'Timestamp'
-#   string 'Type'
-# end
+## 43
 message 44, 'Redux', :replayer => :devtools do
   string 'Action'
   string 'State'
@@ -294,26 +277,8 @@ message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
-# removed (backend-only)
-# message 50, 'GraphQLEvent',  :tracker => false, :replayer => false do
-#   uint 'MessageID'
-#   uint 'Timestamp'
-#   string 'OperationKind'
-#   string 'OperationName'
-#   string 'Variables'
-#   string 'Response'
-# end
-# removed (backend-only)
-# message 51, 'FetchEvent',  :tracker => false, :replayer => false do
-#   uint 'MessageID'
-#   uint 'Timestamp'
-#   string 'Method'
-#   string 'URL'
-#   string 'Request'
-#   string 'Response'
-#   uint 'Status'
-#   uint 'Duration'
-# end
+## 50,51
+# Doesn't work properly. TODO: Make proper detections in tracker 
 message 52, 'DOMDrop', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
@@ -363,7 +328,7 @@ message 58, 'SetNodeFocus' do
   int 'ID'
 end
 
-#Deprecated (since 3.0.?)
+#DEPRECATED (since 3.0.?)
 message 59, 'LongTask' do
   uint 'Timestamp'
   uint 'Duration'
@@ -385,6 +350,7 @@ message 61, 'SetCSSDataURLBased' do
   string 'Data'
   string 'BaseURL'
 end
+# DEPRECATED; backend only (TODO: remove in the next release)
 message 62, 'IssueEventDeprecated', :replayer => false, :tracker => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -459,22 +425,23 @@ message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-message 79, 'Zustand', :replayer => :devtools do
-  string 'Mutation'
-  string 'State'
-end
 message 78, 'JSException', :replayer => false do
   string 'Name'
   string 'Message'
   string 'Payload'
   string 'Metadata'
 end
+message 79, 'Zustand', :replayer => :devtools do
+  string 'Mutation'
+  string 'State'
+end
+
 
 # 80 -- 90 reserved
 
 # Special one for Batch Metadata. Message id could define the version
 
-# Deprecated since tracker 3.6.0 in favor of BatchMetadata
+# DEPRECATED since tracker 3.6.0 in favor of BatchMetadata
 message 80, 'BatchMeta', :replayer => false, :tracker => false do
   uint 'PageNo'
   uint 'FirstIndex'
@@ -496,6 +463,8 @@ message 82, 'PartitionedMessage', :replayer => false do
   uint 'PartTotal'
 end
 
+
+## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -505,12 +474,10 @@ message 125, 'IssueEvent', :replayer => false, :tracker => false do
   string 'Payload'
   string 'URL'
 end
-
 message 126, 'SessionEnd', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'EncryptionKey'
 end
-
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'

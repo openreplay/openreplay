@@ -9,11 +9,6 @@ func transformDeprecated(msg Message) Message {
 			Payload:  m.Payload,
 			Metadata: "{}",
 		}
-	case *SessionEndDeprecated:
-		return &SessionEnd{
-			Timestamp:     m.Timestamp,
-			EncryptionKey: "",
-		}
 	case *Fetch:
 		return &NetworkRequest{
 			Type:      "fetch",

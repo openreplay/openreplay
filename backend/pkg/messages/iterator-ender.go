@@ -35,7 +35,7 @@ func NewEnderMessageIterator(messageHandler MessageHandler, messageFilter []int,
 	iter.preFilter = map[int]struct{}{
 		MsgBatchMetadata: {}, MsgBatchMeta: {}, MsgTimestamp: {},
 		MsgSessionStart: {}, MsgSessionEnd: {}, MsgSetPageLocation: {},
-		MsgSessionEndDeprecated: {}}
+	}
 	return iter
 }
 
@@ -105,7 +105,7 @@ func (i *enderMessageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInf
 		// Update last timestamp message
 		lastMessage = msg
 	}
-	
+
 	if lastMessage != nil {
 		i.handler(lastMessage)
 	}
