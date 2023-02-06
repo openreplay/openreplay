@@ -628,7 +628,7 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
                 "issue": issue}
 
 
-def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema, ignore_click_map=False):
+def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChartSchema):
     raw_metric: dict = get_card(metric_id=metric_id, project_id=project_id, user_id=user_id, include_data=True)
     if raw_metric is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="card not found")
@@ -636,9 +636,6 @@ def make_chart_from_card(project_id, user_id, metric_id, data: schemas.CardChart
     if metric.is_template:
         return get_predefined_metric(key=metric.metric_of, project_id=project_id, data=data.dict())
     elif __is_click_map(metric):
-        # TODO: remove this when UI is able to stop this endpoint calls for clickMap
-        if ignore_click_map:
-            return None
         if raw_metric["data"]:
             keys = sessions_mobs. \
                 __get_mob_keys(project_id=project_id, session_id=raw_metric["data"]["sessionId"])

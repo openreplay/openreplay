@@ -3,7 +3,7 @@ import smtplib
 from smtplib import SMTPAuthenticationError
 
 from decouple import config
-from starlette.exceptions import HTTPException
+from fastapi import HTTPException
 
 
 class EmptySMTP:

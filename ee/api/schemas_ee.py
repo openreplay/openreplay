@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional, List, Union, Literal
 
 from pydantic import BaseModel, Field, EmailStr
-from pydantic import root_validator
+from pydantic import root_validator, validator
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -27,6 +27,7 @@ class RolePayloadSchema(BaseModel):
     permissions: List[Permissions] = Field(...)
     all_projects: bool = Field(True)
     projects: List[int] = Field([])
+    _transform_name = validator('name', pre=True, allow_reuse=True)(schemas.remove_whitespace)
 
     class Config:
         alias_generator = schemas.attribute_to_camel_case
@@ -119,6 +120,7 @@ class SessionModel(BaseModel):
 
 class AssistRecordUpdatePayloadSchema(BaseModel):
     name: str = Field(..., min_length=1)
+    _transform_name = validator('name', pre=True, allow_reuse=True)(schemas.remove_whitespace)
 
 
 class AssistRecordPayloadSchema(AssistRecordUpdatePayloadSchema):

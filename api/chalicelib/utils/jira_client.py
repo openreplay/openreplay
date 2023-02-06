@@ -6,7 +6,7 @@ from jira import JIRA
 from jira.exceptions import JIRAError
 from requests.auth import HTTPBasicAuth
 from starlette import status
-from starlette.exceptions import HTTPException
+from fastapi import HTTPException
 
 fields = "id, summary, description, creator, reporter, created, assignee, status, updated, comment, issuetype, labels"
 

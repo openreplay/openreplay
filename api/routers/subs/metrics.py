@@ -230,13 +230,8 @@ def get_custom_metric_errors_list(projectId: int, metric_id: int,
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
 def get_card_chart(projectId: int, metric_id: int, request: Request, data: schemas.CardChartSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
-    # TODO: remove this when UI is able to stop this endpoint calls for clickMap
-    import re
-    ignore_click_map = re.match(r".*\/[0-9]+\/dashboard\/[0-9]+$", request.headers.get('referer')) is not None \
-                       or re.match(r".*\/[0-9]+\/metrics$", request.headers.get('referer')) is not None \
-        if request.headers.get('referer') else False
     data = custom_metrics.make_chart_from_card(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                               data=data, ignore_click_map=ignore_click_map)
+                                               data=data)
     return {"data": data}
 
 

@@ -4,7 +4,8 @@ from os.path import exists as path_exists, getsize
 import jwt
 import requests
 from decouple import config
-from starlette.exceptions import HTTPException
+from starlette import status
+from fastapi import HTTPException
 
 import schemas
 from chalicelib.core import projects
@@ -194,10 +195,11 @@ def get_ice_servers():
 def __get_efs_path():
     efs_path = config("FS_DIR")
     if not path_exists(efs_path):
-        raise HTTPException(400, f"EFS not found in path: {efs_path}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"EFS not found in path: {efs_path}")
 
     if not access(efs_path, R_OK):
-        raise HTTPException(400, f"EFS found under: {efs_path}; but it is not readable, please check permissions")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"EFS found under: {efs_path}; but it is not readable, please check permissions")
     return efs_path
 
 
@@ -211,11 +213,12 @@ def get_raw_mob_by_id(project_id, session_id):
     path_to_file = efs_path + "/" + __get_mob_path(project_id=project_id, session_id=session_id)
     if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
-            raise HTTPException(400, f"Replay file found under: {efs_path};" +
-                                f" but it is not readable, please check permissions")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Replay file found under: {efs_path};" +
+                                       " but it is not readable, please check permissions")
         # getsize return size in bytes, UNPROCESSED_MAX_SIZE is in Kb
         if (getsize(path_to_file) / 1000) >= config("UNPROCESSED_MAX_SIZE", cast=int, default=200 * 1000):
-            raise HTTPException(413, "Replay file too large")
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Replay file too large")
         return path_to_file
 
     return None
@@ -231,8 +234,9 @@ def get_raw_devtools_by_id(project_id, session_id):
     path_to_file = efs_path + "/" + __get_devtools_path(project_id=project_id, session_id=session_id)
     if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
-            raise HTTPException(400, f"Devtools file found under: {efs_path};"
-                                     f" but it is not readable, please check permissions")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Devtools file found under: {efs_path};"
+                                       " but it is not readable, please check permissions")
 
         return path_to_file
 

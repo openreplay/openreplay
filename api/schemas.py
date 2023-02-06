@@ -15,6 +15,10 @@ def transform_email(email: str) -> str:
     return email.lower().strip() if isinstance(email, str) else email
 
 
+def remove_whitespace(value: str) -> str:
+    return " ".join(value.split()) if isinstance(value, str) else value
+
+
 class _Grecaptcha(BaseModel):
     g_recaptcha_response: Optional[str] = Field(None, alias='g-recaptcha-response')
 
@@ -64,7 +68,8 @@ class UpdateTenantSchema(BaseModel):
 
 
 class CreateProjectSchema(BaseModel):
-    name: str = Field("my first project")
+    name: str = Field(default="my first project")
+    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class CurrentAPIContext(BaseModel):
@@ -81,6 +86,8 @@ class CurrentContext(CurrentAPIContext):
 class AddCollaborationSchema(BaseModel):
     name: str = Field(...)
     url: HttpUrl = Field(...)
+    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_url = validator('url', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class EditCollaborationSchema(AddCollaborationSchema):
@@ -128,6 +135,7 @@ class CreateEditWebhookSchema(BaseModel):
     endpoint: str = Field(...)
     authHeader: Optional[str] = Field(None)
     name: Optional[str] = Field(...)
+    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class CreateMemberSchema(BaseModel):
@@ -137,12 +145,15 @@ class CreateMemberSchema(BaseModel):
     admin: bool = Field(False)
 
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class EditMemberSchema(EditUserSchema):
     name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
+    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -156,6 +167,7 @@ class AssignmentSchema(BaseModel):
     description: str = Field(...)
     title: str = Field(...)
     issue_type: str = Field(...)
+    _transform_title = validator('title', pre=True, allow_reuse=True)(remove_whitespace)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -246,6 +258,7 @@ class SumologicSchema(BaseModel):
 class MetadataBasicSchema(BaseModel):
     index: Optional[int] = Field(None)
     key: str = Field(...)
+    _transform_key = validator('key', pre=True, allow_reuse=True)(remove_whitespace)
 
 
 class MetadataListSchema(BaseModel):
