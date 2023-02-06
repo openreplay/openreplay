@@ -1,5 +1,5 @@
 export default class StringDictionary {
-  private idx = 0
+  private idx = 1
   private backDict: Record<string, number> = {}
 
   getKey(str: string): [number, boolean] {
