@@ -15,6 +15,7 @@ const RESEND_EMAIL_VERIFICATION = new RequestTypes('user/RESEND_EMAIL_VERIFICATI
 const FETCH_CLIENT = new RequestTypes('user/FETCH_CLIENT');
 export const UPDATE_PASSWORD = new RequestTypes('user/UPDATE_PASSWORD');
 const PUT_CLIENT = new RequestTypes('user/PUT_CLIENT');
+const RESET_ERRORS = 'user/RESET_ERRORS';
 
 const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
@@ -52,6 +53,8 @@ export function setJwt(data) {
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
+    case RESET_ERRORS:
+      return state.set('requestResetPassowrd', List());
     case UPDATE_JWT:
       return state.set('jwt', action.data);
     case LOGIN.REQUEST:
@@ -182,5 +185,11 @@ export function setOnboarding(state = false) {
   return {
     type: SET_ONBOARDING,
     state
+  };
+}
+
+export function resetErrors() {
+  return {
+    type: RESET_ERRORS,
   };
 }
