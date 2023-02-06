@@ -47,8 +47,8 @@ jobs:
           cd tracker/tracker
           npm i -g yarn
           yarn
-#      - name: Jest tests
-#        run: yarn test
+      - name: Jest tests
+        run: yarn test
       - name: Build tracker inst
         run: |
           cd tracker/tracker
