@@ -474,6 +474,30 @@ export function PerformanceTrack(
   ]
 }
 
+export function StringDict(
+  key: string,
+  value: string,
+): Messages.StringDict {
+  return [
+    Messages.Type.StringDict,
+    key,
+    value,
+  ]
+}
+
+export function SetNodeAttributeDict(
+  id: number,
+  name: string,
+  value: string,
+): Messages.SetNodeAttributeDict {
+  return [
+    Messages.Type.SetNodeAttributeDict,
+    id,
+    name,
+    value,
+  ]
+}
+
 export function ResourceTiming(
   timestamp: number,
   duration: number,

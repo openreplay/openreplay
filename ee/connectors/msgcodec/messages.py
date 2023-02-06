@@ -453,6 +453,23 @@ class PerformanceTrack(Message):
         self.used_js_heap_size = used_js_heap_size
 
 
+class StringDict(Message):
+    __id__ = 50
+
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
+
+
+class SetNodeAttributeDict(Message):
+    __id__ = 51
+
+    def __init__(self, id, name, value):
+        self.id = id
+        self.name = name
+        self.value = value
+
+
 class DOMDrop(Message):
     __id__ = 52
 

@@ -277,6 +277,18 @@ message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
+# since 4.1.9
+message 50, "StringDict" do
+  string "Key"
+  string "Value"
+end
+# since 4.1.9
+message 51, "SetNodeAttributeDict" do
+  uint 'ID'
+  string 'Name'
+  string 'Value'
+end
+
 ## 50,51
 # Doesn't work properly. TODO: Make proper detections in tracker 
 message 52, 'DOMDrop', :tracker => false, :replayer => false do
