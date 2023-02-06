@@ -321,15 +321,15 @@ export type PerformanceTrack = [
 
 export type StringDict = [
   /*type:*/ Type.StringDict,
-  /*key:*/ string,
+  /*key:*/ number,
   /*value:*/ string,
 ]
 
 export type SetNodeAttributeDict = [
   /*type:*/ Type.SetNodeAttributeDict,
   /*id:*/ number,
-  /*name:*/ string,
-  /*value:*/ string,
+  /*nameKey:*/ number,
+  /*valueKey:*/ number,
 ]
 
 export type ResourceTiming = [

@@ -260,15 +260,15 @@ type TrPerformanceTrack = [
 
 type TrStringDict = [
   type: 50,
-  key: string,
+  key: number,
   value: string,
 ]
 
 type TrSetNodeAttributeDict = [
   type: 51,
   id: number,
-  name: string,
-  value: string,
+  nameKey: number,
+  valueKey: number,
 ]
 
 type TrResourceTiming = [
@@ -705,8 +705,8 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       return {
         tp: MType.SetNodeAttributeDict,
         id: tMsg[1],
-        name: tMsg[2],
-        value: tMsg[3],
+        nameKey: tMsg[2],
+        valueKey: tMsg[3],
       }
     }
     

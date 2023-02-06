@@ -271,15 +271,15 @@ export interface RawPerformanceTrack {
 
 export interface RawStringDict {
   tp: MType.StringDict,
-  key: string,
+  key: number,
   value: string,
 }
 
 export interface RawSetNodeAttributeDict {
   tp: MType.SetNodeAttributeDict,
   id: number,
-  name: string,
-  value: string,
+  nameKey: number,
+  valueKey: number,
 }
 
 export interface RawResourceTiming {

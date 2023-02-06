@@ -1320,15 +1320,15 @@ func (msg *PerformanceTrack) TypeID() int {
 
 type StringDict struct {
 	message
-	Key   string
+	Key   uint64
 	Value string
 }
 
 func (msg *StringDict) Encode() []byte {
-	buf := make([]byte, 21+len(msg.Key)+len(msg.Value))
+	buf := make([]byte, 21+len(msg.Value))
 	buf[0] = 50
 	p := 1
-	p = WriteString(msg.Key, buf, p)
+	p = WriteUint(msg.Key, buf, p)
 	p = WriteString(msg.Value, buf, p)
 	return buf[:p]
 }
@@ -1343,18 +1343,18 @@ func (msg *StringDict) TypeID() int {
 
 type SetNodeAttributeDict struct {
 	message
-	ID    uint64
-	Name  string
-	Value string
+	ID       uint64
+	NameKey  uint64
+	ValueKey uint64
 }
 
 func (msg *SetNodeAttributeDict) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Name)+len(msg.Value))
+	buf := make([]byte, 31)
 	buf[0] = 51
 	p := 1
 	p = WriteUint(msg.ID, buf, p)
-	p = WriteString(msg.Name, buf, p)
-	p = WriteString(msg.Value, buf, p)
+	p = WriteUint(msg.NameKey, buf, p)
+	p = WriteUint(msg.ValueKey, buf, p)
 	return buf[:p]
 }
 
