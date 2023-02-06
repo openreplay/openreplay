@@ -59,12 +59,12 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('jwt', action.data);
     case LOGIN.REQUEST:
       return state.set('loginRequest', { loading: true, errors: [] })
-    case UPDATE_PASSWORD.REQUEST:
-      return state.set('passwordErrors', List())
     case RESET_PASSWORD.SUCCESS:
-    case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
       return state.set('account', Account({...action.data.user })).set('loginRequest', { loading: false, errors: [] })
+    case UPDATE_PASSWORD.REQUEST:
+    case UPDATE_PASSWORD.SUCCESS:
+      return state.set('passwordErrors', List())
     case SIGNUP.SUCCESS:
       state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
