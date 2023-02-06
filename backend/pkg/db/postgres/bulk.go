@@ -21,6 +21,7 @@ const (
 type Bulk interface {
 	Append(args ...interface{}) error
 	Send() error
+	Table() string
 }
 
 type bulkImpl struct {
@@ -51,6 +52,10 @@ func (b *bulkImpl) Send() error {
 		return nil
 	}
 	return b.send()
+}
+
+func (b *bulkImpl) Table() string {
+	return b.table
 }
 
 func (b *bulkImpl) send() error {
