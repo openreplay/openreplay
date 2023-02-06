@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { connectPlayer, jump, pause } from 'Player';
-import { Popup, Button, TextEllipsis } from 'UI';
+import { Tooltip, Button, TextEllipsis } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
 import stl from './network.module.css';
@@ -29,12 +29,12 @@ const TAB_TO_TYPE_MAP = {
 export function renderName(r) {
   return (
     <div className="flex justify-between items-center grow-0 w-full">
-      <Popup
+      <Tooltip
         style={{ maxWidth: '75%' }}
-        content={<div className={stl.popupNameContent}>{r.url}</div>}
+        title={<div className={stl.popupNameContent}>{r.url}</div>}
       >
         <TextEllipsis>{r.name}</TextEllipsis>
-      </Popup>
+      </Tooltip>
     </div>
   );
 }
@@ -56,9 +56,9 @@ export function renderDuration(r) {
   }
 
   return (
-    <Popup content={tooltipText}>
+    <Tooltip title={tooltipText}>
       <div className={cn(className, stl.duration)}> {text} </div>
-    </Popup>
+    </Tooltip>
   );
 }
 

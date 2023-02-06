@@ -1,0 +1,29 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- if .serverEnabled -}}
+{{- if eq .mode "ha" }}
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1" -}}
+apiVersion: rbac.authorization.k8s.io/v1
+{{- else }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+{{- end }}
+kind: RoleBinding
+metadata:
+  name: {{ template "vault.fullname" . }}-discovery-rolebinding
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "vault.fullname" . }}-discovery-role
+subjects:
+- kind: ServiceAccount
+  name: {{ template "vault.serviceAccount.name" . }}
+  namespace: {{ .Release.Namespace }}
+{{ end }}
+{{ end }}
+{{ end }}

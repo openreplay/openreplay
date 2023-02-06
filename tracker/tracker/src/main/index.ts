@@ -20,6 +20,8 @@ import Performance from './modules/performance.js'
 import Scroll from './modules/scroll.js'
 import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
+import Focus from './modules/focus.js'
+import Fonts from './modules/fonts.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
@@ -123,6 +125,8 @@ export default class API {
       Timing(app, options)
       Performance(app, options)
       Scroll(app)
+      Focus(app)
+      Fonts(app)
       ;(window as any).__OPENREPLAY__ = this
 
       if (options.autoResetOnWindowOpen) {
@@ -245,7 +249,7 @@ export default class API {
     this.setMetadata(key, value)
   }
 
-  event(key: string, payload: any, issue = false): void {
+  event(key: string, payload: any = null, issue = false): void {
     if (typeof key === 'string' && this.app !== null) {
       if (issue) {
         return this.issue(key, payload)
@@ -260,7 +264,7 @@ export default class API {
     }
   }
 
-  issue(key: string, payload: any): void {
+  issue(key: string, payload: any = null): void {
     if (typeof key === 'string' && this.app !== null) {
       try {
         payload = JSON.stringify(payload)
@@ -271,17 +275,21 @@ export default class API {
     }
   }
 
-  handleError = (e: Error | ErrorEvent | PromiseRejectionEvent) => {
+  handleError = (
+    e: Error | ErrorEvent | PromiseRejectionEvent,
+    metadata: Record<string, any> = {},
+  ) => {
     if (this.app === null) {
       return
     }
     if (e instanceof Error) {
-      this.app.send(getExceptionMessage(e, []))
+      const msg = getExceptionMessage(e, [], metadata)
+      this.app.send(msg)
     } else if (
       e instanceof ErrorEvent ||
       ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
-      const msg = getExceptionMessageFromEvent(e)
+      const msg = getExceptionMessageFromEvent(e, undefined, metadata)
       if (msg != null) {
         this.app.send(msg)
       }

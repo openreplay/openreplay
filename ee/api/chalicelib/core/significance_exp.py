@@ -1,10 +1,15 @@
 __author__ = "AZNAUROV David"
 __maintainer__ = "KRAIEM Taha Yassine"
 
+from decouple import config
+
 import schemas
 from chalicelib.core import events, metadata
-from chalicelib.core import sessions_legacy as sessions
-from chalicelib.utils import dev
+
+if config("EXP_SESSIONS_SEARCH", cast=bool, default=False):
+    from chalicelib.core import sessions_legacy as sessions
+else:
+    from chalicelib.core import sessions
 
 """
 todo: remove LIMIT from the query

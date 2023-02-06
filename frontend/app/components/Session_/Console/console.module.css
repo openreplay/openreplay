@@ -15,6 +15,9 @@
   display: flex;
   align-items: flex-start;
   border-bottom: solid thin $gray-light-shade;
+  &:hover {
+    background-coor: $active-blue !important;
+  }
 }
 
 .timestamp {

@@ -15,3 +15,5 @@ servers/sourcemaps-server.js
 /utils/helper.js
 /utils/assistHelper.js
 .local
+run-dev.sh
+*.mmdb

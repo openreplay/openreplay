@@ -1,19 +1,23 @@
-from typing import Optional
+from typing import Optional, Union
 
 from decouple import config
 from fastapi import Body, Depends, BackgroundTasks
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
 import schemas_ee
-from chalicelib.core import sessions
+from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
+    errors_favorite, sessions_notes
+from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils import helper
-from or_dependencies import OR_context
+from chalicelib.utils.TimeUTC import TimeUTC
+from or_dependencies import OR_context, OR_scope
 from routers.base import get_routers
+from schemas_ee import Permissions
 
 public_app, app, app_apikey = get_routers()
 
@@ -46,7 +50,6 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.post('/account', tags=["account"])
-@app.put('/account', tags=["account"])
 def edit_account(data: schemas_ee.EditUserSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
@@ -70,8 +73,8 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_con
     return {"data": data}
 
 
-@app.put('/integrations/slack', tags=['integrations'])
 @app.post('/integrations/slack', tags=['integrations'])
+@app.put('/integrations/slack', tags=['integrations'])
 def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
     n = Slack.add_channel(tenant_id=context.tenant_id, url=data.url, name=data.name)
     if n is None:
@@ -81,7 +84,6 @@ def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentConte
     return {"data": n}
 
 
-@app.put('/integrations/slack/{integrationId}', tags=['integrations'])
 @app.post('/integrations/slack/{integrationId}', tags=['integrations'])
 def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
@@ -98,7 +100,6 @@ def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = B
 
 
 @app.post('/client/members', tags=["client"])
-@app.put('/client/members', tags=["client"])
 def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
@@ -123,7 +124,6 @@ def process_invitation_link(token: str):
 
 
 @public_app.post('/password/reset', tags=["users"])
-@public_app.put('/password/reset', tags=["users"])
 def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
@@ -137,11 +137,10 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 
 
 @app.put('/client/members/{memberId}', tags=["client"])
-@app.post('/client/members/{memberId}', tags=["client"])
 def edit_member(memberId: int, data: schemas_ee.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
-                      user_id_to_update=memberId)
+    return users.edit_member(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
+                             user_id_to_update=memberId)
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
@@ -171,3 +170,268 @@ def get_general_stats():
 def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
                                           stack_integrations=True, user_id=context.user_id)}
+
+
+@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"], dependencies=[OR_scope(Permissions.session_replay)])
+def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
+                context: schemas.CurrentContext = Depends(OR_context)):
+    if isinstance(sessionId, str):
+        return {"errors": ["session not found"]}
+    data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
+                                  include_fav_viewed=True, group_metadata=True, context=context)
+    if data is None:
+        return {"errors": ["session not found"]}
+    if data.get("inDB"):
+        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
+                                  session_id=sessionId)
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"],
+         dependencies=[OR_scope(Permissions.dev_tools)])
+def get_error_trace(projectId: int, sessionId: int, errorId: str,
+                    context: schemas.CurrentContext = Depends(OR_context)):
+    data = errors.get_trace(project_id=projectId, error_id=errorId)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/errors/search', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
+                  context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": errors.search(data, projectId, user_id=context.user_id)}
+
+
+@app.get('/{projectId}/errors/stats', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
+                 context: schemas.CurrentContext = Depends(OR_context)):
+    return errors.stats(projectId, user_id=context.user_id, startTimestamp=startTimestamp, endTimestamp=endTimestamp)
+
+
+@app.get('/{projectId}/errors/{errorId}', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
+                       density30: int = 30, context: schemas.CurrentContext = Depends(OR_context)):
+    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                              **{"density24": density24, "density30": density30})
+    if data.get("data") is not None:
+        background_tasks.add_task(errors_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
+                                  error_id=errorId)
+    return data
+
+
+@app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
+                                    endDate: int = TimeUTC.now(), density: int = 7,
+                                    context: schemas.CurrentContext = Depends(OR_context)):
+    data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                    **{"startDate": startDate, "endDate": endDate, "density": density})
+    return data
+
+
+@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'], dependencies=[OR_scope(Permissions.dev_tools)])
+def errors_get_details_sourcemaps(projectId: int, errorId: str,
+                                  context: schemas.CurrentContext = Depends(OR_context)):
+    data = errors.get_trace(project_id=projectId, error_id=errorId)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"], dependencies=[OR_scope(Permissions.dev_tools)])
+def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
+                              endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
+    if action == "favorite":
+        return errors_favorite.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
+    elif action == "sessions":
+        start_date = startDate
+        end_date = endDate
+        return {
+            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                        start_date=start_date, end_date=end_date)}
+    elif action in list(errors.ACTION_STATE.keys()):
+        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
+    else:
+        return {"errors": ["undefined action"]}
+
+
+@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"], dependencies=[OR_scope(Permissions.assist_live)])
+def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
+                     context: schemas_ee.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
+    if data is None:
+        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId, full_data=True,
+                                      include_fav_viewed=True, group_metadata=True, live=False)
+        if data is None:
+            return {"errors": ["session not found"]}
+        if data.get("inDB"):
+            background_tasks.add_task(sessions_viewed.view_session, project_id=projectId,
+                                      user_id=context.user_id, session_id=sessionId)
+    return {'data': data}
+
+
+@app.get('/{projectId}/unprocessed/{sessionId}/dom.mob', tags=["assist"],
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay)])
+def get_live_session_replay_file(projectId: int, sessionId: Union[int, str],
+                                 context: schemas.CurrentContext = Depends(OR_context)):
+    not_found = {"errors": ["Replay file not found"]}
+    if isinstance(sessionId, str):
+        print(f"{sessionId} not a valid number.")
+        return not_found
+    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        print(f"{projectId}/{sessionId} not found in DB.")
+        if not assist.session_exists(project_id=projectId, session_id=sessionId):
+            print(f"{projectId}/{sessionId} not found in Assist.")
+            return not_found
+
+    path = assist.get_raw_mob_by_id(project_id=projectId, session_id=sessionId)
+    if path is None:
+        return not_found
+
+    return FileResponse(path=path, media_type="application/octet-stream")
+
+
+@app.get('/{projectId}/unprocessed/{sessionId}/devtools.mob', tags=["assist"],
+         dependencies=[OR_scope(Permissions.assist_live, Permissions.session_replay, Permissions.dev_tools)])
+def get_live_session_devtools_file(projectId: int, sessionId: Union[int, str],
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    not_found = {"errors": ["Devtools file not found"]}
+    if isinstance(sessionId, str):
+        print(f"{sessionId} not a valid number.")
+        return not_found
+    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        print(f"{projectId}/{sessionId} not found in DB.")
+        if not assist.session_exists(project_id=projectId, session_id=sessionId):
+            print(f"{projectId}/{sessionId} not found in Assist.")
+            return not_found
+
+    path = assist.get_raw_devtools_by_id(project_id=projectId, session_id=sessionId)
+    if path is None:
+        return {"errors": ["Devtools file not found"]}
+
+    return FileResponse(path=path, media_type="application/octet-stream")
+
+
+@app.post('/{projectId}/heatmaps/url', tags=["heatmaps"], dependencies=[OR_scope(Permissions.session_replay)])
+def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": heatmaps.get_by_url(project_id=projectId, data=data.dict())}
+
+
+@app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"],
+         dependencies=[OR_scope(Permissions.session_replay)])
+def add_remove_favorite_session2(projectId: int, sessionId: int,
+                                 context: schemas_ee.CurrentContext = Depends(OR_context)):
+    return {
+        "data": sessions_favorite.favorite_session(context=context, project_id=projectId, session_id=sessionId)}
+
+
+@app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"],
+         dependencies=[OR_scope(Permissions.session_replay)])
+def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
+                                               tenant_id=context.tenant_id,
+                                               user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"],
+         dependencies=[OR_scope(Permissions.session_replay)])
+def assign_session(projectId: int, sessionId: int, issueId: str,
+                   context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
+                                    tenant_id=context.tenant_id, user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
+                                        session_id=sessionId, assignment_id=issueId,
+                                        user_id=context.user_id, message=data.message)
+    if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+def create_note(projectId: int, sessionId: int, data: schemas.SessionNoteSchema = Body(...),
+                context: schemas.CurrentContext = Depends(OR_context)):
+    if not sessions.session_exists(project_id=projectId, session_id=sessionId):
+        return {"errors": ["Session not found"]}
+    data = sessions_notes.create(tenant_id=context.tenant_id, project_id=projectId,
+                                 session_id=sessionId, user_id=context.user_id, data=data)
+    if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/notes', tags=["sessions", "notes"],
+         dependencies=[OR_scope(Permissions.session_replay)])
+def get_session_notes(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=projectId,
+                                            session_id=sessionId, user_id=context.user_id)
+    if "errors" in data:
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.post('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
+          dependencies=[OR_scope(Permissions.session_replay)])
+def edit_note(projectId: int, noteId: int, data: schemas.SessionUpdateNoteSchema = Body(...),
+              context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.edit(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                               note_id=noteId, data=data)
+    if "errors" in data.keys():
+        return data
+    return {
+        'data': data
+    }
+
+
+@app.delete('/{projectId}/notes/{noteId}', tags=["sessions", "notes"],
+            dependencies=[OR_scope(Permissions.session_replay)])
+def delete_note(projectId: int, noteId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.delete(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                 note_id=noteId)
+    return data
+
+
+@app.get('/{projectId}/notes/{noteId}/slack/{webhookId}', tags=["sessions", "notes"])
+def share_note_to_slack(projectId: int, noteId: int, webhookId: int,
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    return sessions_notes.share_to_slack(tenant_id=context.tenant_id, project_id=projectId, user_id=context.user_id,
+                                         note_id=noteId, webhook_id=webhookId)
+
+
+@app.post('/{projectId}/notes', tags=["sessions", "notes"], dependencies=[OR_scope(Permissions.session_replay)])
+def get_all_notes(projectId: int, data: schemas.SearchNoteSchema = Body(...),
+                  context: schemas.CurrentContext = Depends(OR_context)):
+    data = sessions_notes.get_all_notes_by_project_id(tenant_id=context.tenant_id, project_id=projectId,
+                                                      user_id=context.user_id, data=data)
+    if "errors" in data:
+        return data
+    return {'data': data}

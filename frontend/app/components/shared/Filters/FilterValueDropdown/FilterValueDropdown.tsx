@@ -71,6 +71,7 @@ const dropdownStyles = {
 interface Props {
   // filter: any; // event/filter
   // options: any[];
+  placeholder?: string
   value: string;
   onChange: (value: any) => void;
   className?: string;
@@ -84,7 +85,7 @@ interface Props {
   isMultilple?: boolean;
 }
 function FilterValueDropdown(props: Props) {
-  const { isMultilple = true, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
+  const { placeholder = 'Select', isMultilple = true, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
   // const options = []
 
   return (
@@ -97,7 +98,7 @@ function FilterValueDropdown(props: Props) {
           name="issue_type"
           defaultValue={ value }
           onChange={ (value: any) => onChange(value.value) }
-          placeholder="Select"
+          placeholder={placeholder}
           styles={dropdownStyles}
         />
         <div

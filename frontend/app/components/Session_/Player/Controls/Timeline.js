@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { Icon } from 'UI'
 import { connectPlayer, Controls, toggleTimetravel } from 'Player';
 import TimeTracker from './TimeTracker';
 import stl from './timeline.module.css';
@@ -25,27 +26,16 @@ let debounceTooltipChange = () => null;
   skipIntervals: state.skipIntervals,
   events: state.eventList,
   skip: state.skip,
-  // not updating properly rn
-  // skipToIssue: state.skipToIssue,
+  skipToIssue: state.skipToIssue,
   disabled: state.cssLoading || state.messagesLoading || state.markedTargets,
   endTime: state.endTime,
   live: state.live,
-  logList: state.logList,
-  exceptionsList: state.exceptionsList,
-  resourceList: state.resourceList,
-  stackList: state.stackList,
-  fetchList: state.fetchList,
+  notes: state.notes,
 }))
 @connect(
   (state) => ({
     issues: state.getIn(['sessions', 'current', 'issues']),
     startedAt: state.getIn(['sessions', 'current', 'startedAt']),
-    clickRageTime:
-      state.getIn(['sessions', 'current', 'clickRage']) &&
-      state.getIn(['sessions', 'current', 'clickRageTime']),
-    returningLocationTime:
-      state.getIn(['sessions', 'current', 'returningLocation']) &&
-      state.getIn(['sessions', 'current', 'returningLocationTime']),
     tooltipVisible: state.getIn(['sessions', 'timeLineTooltip', 'isVisible']),
   }),
   { setTimelinePointer, setTimelineHoverTime }
@@ -94,8 +84,7 @@ export default class Timeline extends React.PureComponent {
   };
 
   componentDidMount() {
-    const { issues } = this.props;
-    const skipToIssue = Controls.updateSkipToIssue();
+    const { issues, skipToIssue } = this.props;
     const firstIssue = issues.get(0);
     deboucneJump = debounce(this.props.jump, 500);
     debounceTooltipChange = debounce(this.props.setTimelineHoverTime, 50);
@@ -170,7 +159,7 @@ export default class Timeline extends React.PureComponent {
   };
 
   render() {
-    const { events, skip, skipIntervals, disabled, endTime, live } = this.props;
+    const { events, skip, skipIntervals, disabled, endTime, live, notes } = this.props;
 
     const scale = 100 / endTime;
 
@@ -228,6 +217,22 @@ export default class Timeline extends React.PureComponent {
               style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
             />
           ))}
+          {notes.map((note) => note.timestamp > 0 ? (
+            <div
+              key={note.noteId}
+              style={{
+                position: 'absolute',
+                background: 'white',
+                zIndex: 3,
+                pointerEvents: 'none',
+                height: 10,
+                width: 16,
+                left: `${getTimelinePosition(note.timestamp, scale)}%`,
+              }}
+            >
+              <Icon name="quotes" style={{ width: 16, height: 10 }} color="main" />
+            </div>
+          ) : null)}
         </div>
       </div>
     );

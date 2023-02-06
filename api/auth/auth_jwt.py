@@ -6,14 +6,14 @@ from starlette import status
 from starlette.exceptions import HTTPException
 
 from chalicelib.core import authorizers, users
-from schemas import CurrentContext
+import schemas
 
 
 class JWTAuth(HTTPBearer):
     def __init__(self, auto_error: bool = True):
         super(JWTAuth, self).__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request) -> Optional[CurrentContext]:
+    async def __call__(self, request: Request) -> Optional[schemas.CurrentContext]:
         credentials: HTTPAuthorizationCredentials = await super(JWTAuth, self).__call__(request)
         if credentials:
             if not credentials.scheme == "Bearer":
@@ -49,9 +49,9 @@ class JWTAuth(HTTPBearer):
             jwt_payload["authorizer_identity"] = "jwt"
             print(jwt_payload)
             request.state.authorizer_identity = "jwt"
-            request.state.currentContext = CurrentContext(tenant_id=jwt_payload.get("tenantId", -1),
-                                                          user_id=jwt_payload.get("userId", -1),
-                                                          email=user["email"])
+            request.state.currentContext = schemas.CurrentContext(tenant_id=jwt_payload.get("tenantId", -1),
+                                                                  user_id=jwt_payload.get("userId", -1),
+                                                                  email=user["email"])
             return request.state.currentContext
 
         else:

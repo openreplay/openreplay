@@ -689,7 +689,7 @@ This operation could take some time depending on the database size.
 - Once you have the backup file, you can restore it with a command like the one below:
 
 ```console
-$ psql -U postgres DATABASE_NAME < /tmp/backup.sql
+$ psql -v ON_ERROR_STOP=1 -U postgres DATABASE_NAME < /tmp/backup.sql
 ```
 
 In this case, you are accessing to the local postgresql, so the password should be the new one (you can find it in NOTES.txt).

@@ -1,9 +1,10 @@
 import type App from '../app/index.js'
+import { getTimeOrigin } from '../utils.js'
 import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/messages.gen.js'
 
 export default function (app: App): void {
   let url: string, width: number, height: number
-  let navigationStart = performance.timing.navigationStart
+  let navigationStart: number
 
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document
@@ -30,6 +31,7 @@ export default function (app: App): void {
 
   app.attachStartCallback(() => {
     url = ''
+    navigationStart = getTimeOrigin()
     width = height = -1
     sendSetPageLocation()
     sendSetViewportSize()

@@ -5,7 +5,7 @@ import { Icon } from 'UI';
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 import { TYPES } from 'Types/session/event';
 import { setSelected } from 'Duck/events';
-import { setEventFilter } from 'Duck/sessions';
+import { setEventFilter, filterOutNote } from 'Duck/sessions';
 import { show as showTargetDefiner } from 'Duck/components/targetDefiner';
 import EventGroupWrapper from './EventGroupWrapper';
 import styles from './eventsBlock.module.css';
@@ -21,9 +21,10 @@ import EventSearch from './EventSearch/EventSearch';
 }), {
   showTargetDefiner,
   setSelected,
-  setEventFilter
+  setEventFilter,
+  filterOutNote
 })
-export default class EventsBlock extends React.PureComponent {
+export default class EventsBlock extends React.Component {
   state = {
     editingEvent: null,
     mouseOver: false,
@@ -52,8 +53,9 @@ export default class EventsBlock extends React.PureComponent {
     const { filter } = this.state;
     this.setState({ query: '' })
     this.props.setEventFilter({ query: '', filter })
-
-    this.scroller.current.forceUpdateGrid();
+    if (this.scroller.current) {
+      this.scroller.current.forceUpdateGrid();
+    }
 
     setTimeout(() => {
       if (!this.scroller.current) return;
@@ -123,21 +125,28 @@ export default class EventsBlock extends React.PureComponent {
   onMouseOver = () => this.setState({ mouseOver: true })
   onMouseLeave = () => this.setState({ mouseOver: false })
 
+  get eventsList() {
+    const { session: { notesWithEvents }, filteredEvents } = this.props
+    const usedEvents = filteredEvents || notesWithEvents
+
+    return usedEvents
+  }
+
   renderGroup = ({ index, key, style, parent }) => {
     const {
-      session: { events },
       selectedEvents,
       currentTimeEventIndex,
       testsAvaliable,
       playing,
       eventsIndex,
-      filteredEvents
+      filterOutNote,
     } = this.props;
     const { query } = this.state;
-    const _events = filteredEvents || events;
+    const _events = this.eventsList
     const isLastEvent = index === _events.size - 1;
     const isLastInGroup = isLastEvent || _events.get(index + 1).type === TYPES.LOCATION;
     const event = _events.get(index);
+    const isNote = !!event.noteId
     const isSelected = selectedEvents.includes(event);
     const isCurrent = index === currentTimeEventIndex;
     const isEditing = this.state.editingEvent === event;
@@ -166,9 +175,11 @@ export default class EventsBlock extends React.PureComponent {
               isCurrent={ isCurrent }
               isEditing={ isEditing }
               showSelection={ testsAvaliable && !playing }
+              isNote={isNote}
+              filterOutNote={filterOutNote}
             />
-          </div>
-        )}
+           </div>
+         )}
       </CellMeasurer>
     );
   }
@@ -176,15 +187,13 @@ export default class EventsBlock extends React.PureComponent {
   render() {
     const { query } = this.state;
     const {
-      testsAvaliable,
       session: {
         events,
       },
-      filteredEvents,
       setActiveTab,
     } = this.props;
 
-    const _events = filteredEvents || events;
+    const _events = this.eventsList
 
     const isEmptySearch = query && (_events.size === 0 || !_events)
     return (
@@ -197,7 +206,7 @@ export default class EventsBlock extends React.PureComponent {
               setActiveTab={setActiveTab}
               value={query}
               header={
-                <div className="text-xl">User Actions <span className="color-gray-medium">{ events.size }</span></div>
+                <div className="text-xl">User Steps <span className="color-gray-medium">{ events.size }</span></div>
               }
             />
           </div>

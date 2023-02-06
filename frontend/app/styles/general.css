@@ -5,15 +5,24 @@
 
 
 .info.info.info.info.info { /* BAD HACK >:) */
-  background-color: #f2f8ff;
+  background-color: rgba(242, 248, 255, 0.6);
+  &:hover {
+    background-color: rgba(242, 248, 255, 1);
+  }
 }
 
 .warn.warn.warn.warn {
-  background-color: #fefaf4;
+  background-color: rgba(253, 248, 240, 0.6);
+  &:hover {
+    background-color: rgba(253, 248, 240, 1);
+  }
 }
 
 .error.error.error.error {
-  background-color:  #fcf2f2;
+  background-color:  rgba(252, 242, 242, 0.6);
+  &:hover {
+    background-color:  rgba(252, 242, 242, 1);
+  }
 }
 
 
@@ -315,4 +324,39 @@ p {
 
 .recharts-legend-item-text {
   white-space: nowrap !important;
+}
+
+.stripes {
+  background: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 2px,
+    #ccc 2px,
+    #ccc 4px
+  );
+}
+
+.animate-fade {
+  animation: fade 0.1s cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes fade {
+  100% {
+    opacity: 1;
+  }
+  0% {
+    opacity: 0;
+  }
+}
+
+#arrow {
+  position: absolute;
+  background: #333;
+  width: 80px;
+  height: 80px;
+  transform: rotate(45deg);
+}
+
+.dev-row  {
+  transition: all 0.5s;
 }

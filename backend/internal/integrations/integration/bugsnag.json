@@ -8718,7 +8718,7 @@
                 "timestamp": "2020-02-10T10:57:04.449Z",
                 "metaData": {
                     "status": 200,
-                    "request": "GET https://asayer-sessions-mobs.s3.amazonaws.com/72/521925111024389735.mob?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=ASIA6RAO3SOP7M3VQ76X%2F20200210%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20200210T105704Z&X-Amz-Expires=100000&X-Amz-SignedHeaders=host&X-Amz-Security-Token=IQoJb3JpZ2luX2VjEFoaDGV1LWNlbnRyYWwtMSJHMEUCIEVe1WqkCTz4KIsdtiy2gqovOU%2B0ob%2FnonddeM3rR%2BQsAiEA17YmEYbn1LyP3pTgvVkeOIf8rvzg%2FuDsmU6xeRhZ0YMqyQEIExAAGgw5OTg2MTEwNjM3MTEiDOKUXz48dwdOjJOn0SqmAdsMmXq3Iiwo6JQGrFVkAIbIEKNnmrx9LnqEKrUWNzOK%2FdIkpzcSU3%2BOmZv2bBPVWMOkSlE61niH7JDPknexq03YMHrX9c1rTNvmd0amnORfIHomk%2FnEm2mddbb0YTG%2FmEAXTRw4ihLki9G06Skhenx%2BVAW4RlJtsIjgxiCMks55V06VTuha%2B%2BF%2FirITPIC4MnxbmNtHKtlAmWjGvDeEwq2rxamMkfQw6tqE8gU64AH4kxvtNVO%2FOQIHhEvyhAvoh82pmOjx0L0HeH5%2BeN1YZKO5%2FbCbIBTcwr5%2B0X%2BugKTAet0ya9O%2F8t5y%2BKb5dfriLV7AEwdmyFztdzNiv95bY9UkwEtrTUyMprX%2BPojz3QAFxnrKR%2Bzpd7%2FBDlWI2cdoEHK9yukmyNS0Ln7NOilOhRFwO1edwVdbkM3vmARUu4TQBVSLn9wdhBm5Fc%2FUoOTYrZHstQ0w6fp5a4CMaf2OEx8oxKoaAthtEvSnI0ReTqWY0iQMrOUBHOAAj9PTva%2B4Iv95PaNklDkfWCEMtWleNg%3D%3D&X-Amz-Signature=5b97d72871d43a4a43bf3732149a4b17ced2f324db17c27d8dbea5a9dae0f2ec"
+                    "request": "GET https://asayer-sessions-mobs.s3.amazonaws.com/72/521925111024389735.mob"
                 }
             },
             {

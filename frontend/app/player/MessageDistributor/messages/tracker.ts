@@ -153,7 +153,7 @@ type TrPageRenderTiming = [
   timeToInteractive: number,
 ]
 
-type TrJSException = [
+type TrJSExceptionDeprecated = [
   type: 25,
   name: string,
   message: string,
@@ -290,6 +290,19 @@ type TrSetPageVisibility = [
   hidden: boolean,
 ]
 
+type TrLoadFontFace = [
+  type: 57,
+  parentID: number,
+  family: string,
+  source: string,
+  descriptors: string,
+]
+
+type TrSetNodeFocus = [
+  type: 58,
+  id: number,
+]
+
 type TrLongTask = [
   type: 59,
   timestamp: number,
@@ -389,8 +402,16 @@ type TrZustand = [
   state: string,
 ]
 
+type TrJSException = [
+  type: 78,
+  name: string,
+  message: string,
+  payload: string,
+  metadata: string,
+]
 
-export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSException | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand
+
+export type TrackerMessage = TrBatchMetadata | TrPartitionedMessage | TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrJSExceptionDeprecated | TrRawCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrZustand | TrJSException
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -651,6 +672,23 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       return {
         tp: "set_page_visibility",
         hidden: tMsg[1],
+      }
+    }
+    
+    case 57: {
+      return {
+        tp: "load_font_face",
+        parentID: tMsg[1],
+        family: tMsg[2],
+        source: tMsg[3],
+        descriptors: tMsg[4],
+      }
+    }
+    
+    case 58: {
+      return {
+        tp: "set_node_focus",
+        id: tMsg[1],
       }
     }
     

@@ -25,6 +25,7 @@ export function isRootNode(node: Node): node is Document | DocumentFragment {
 
 type TagTypeMap = {
   HTML: HTMLHtmlElement
+  BODY: HTMLBodyElement
   IMG: HTMLImageElement
   INPUT: HTMLInputElement
   TEXTAREA: HTMLTextAreaElement

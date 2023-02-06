@@ -27,7 +27,7 @@ const weekdays = [ 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' ];
 // const months = [ "January", "February" ];
 export const getTimeString = (ts, period) => {
   const date = new Date(ts);
-  const diff = period.end - period.start;
+  const diff = period.endTimestamp - period.startTimestamp;
   if (diff <= DAY) {
     var isPM = date.getHours() >= 12;
     return `${ isPM ? date.getHours() - 12 : date.getHours() }:${ startWithZero(date.getMinutes()) } ${isPM? 'pm' : 'am'}`;

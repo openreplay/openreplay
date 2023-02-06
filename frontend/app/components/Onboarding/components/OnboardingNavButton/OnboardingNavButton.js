@@ -31,7 +31,7 @@ const OnboardingNavButton = (props) => {
   }
 
   const onDone = () => {
-    props.setOnboarding(false);
+    props.setOnboarding(true);
     history.push(sessions());
   }
   

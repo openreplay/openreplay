@@ -2,7 +2,7 @@ import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
 import { Icon, Input } from 'UI';
 import { List } from 'immutable';
-import { confirm, Popup } from 'UI';
+import { confirm, Tooltip } from 'UI';
 import { applySavedSearch, remove, editSavedSearch } from 'Duck/search';
 import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
@@ -18,9 +18,10 @@ interface ITooltipIcon {
 function TooltipIcon(props: ITooltipIcon) {
     return (
         <div onClick={(e) => props.onClick(e)}>
-            <Popup content={props.title} hideOnClick={true}>
+            <Tooltip title={props.title}>
+                {/* @ts-ignore */}
                 <Icon size="16" name={props.name} color="main" />
-            </Popup>
+            </Tooltip>
         </div>
     );
 }

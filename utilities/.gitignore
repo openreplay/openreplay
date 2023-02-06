@@ -4,3 +4,5 @@ npm-debug.log
 .cache
 test.html
 .local
+
+*.mmdb

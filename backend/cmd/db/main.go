@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	types2 "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
@@ -30,7 +31,8 @@ func main() {
 	cfg := db.New()
 
 	// Init database
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(
+		postgres.NewConn(cfg.Postgres, cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
@@ -45,10 +47,6 @@ func main() {
 	// Create handler's aggregator
 	builderMap := sessions.NewBuilderMap(handlersFabric)
 
-	keepMessage := func(tp int) bool {
-		return tp == messages.MsgMetadata || tp == messages.MsgIssueEvent || tp == messages.MsgSessionStart || tp == messages.MsgSessionEnd || tp == messages.MsgUserID || tp == messages.MsgUserAnonymousID || tp == messages.MsgCustomEvent || tp == messages.MsgClickEvent || tp == messages.MsgInputEvent || tp == messages.MsgPageEvent || tp == messages.MsgErrorEvent || tp == messages.MsgFetchEvent || tp == messages.MsgGraphQLEvent || tp == messages.MsgIntegrationEvent || tp == messages.MsgPerformanceTrackAggr || tp == messages.MsgResourceEvent || tp == messages.MsgLongTask || tp == messages.MsgJSException || tp == messages.MsgResourceTiming || tp == messages.MsgRawCustomEvent || tp == messages.MsgCustomIssue || tp == messages.MsgFetch || tp == messages.MsgGraphQL || tp == messages.MsgStateAction || tp == messages.MsgSetInputTarget || tp == messages.MsgSetInputValue || tp == messages.MsgCreateDocument || tp == messages.MsgMouseClick || tp == messages.MsgSetPageLocation || tp == messages.MsgPageLoadTiming || tp == messages.MsgPageRenderTiming
-	}
-
 	var producer types.Producer = nil
 	if cfg.UseQuickwit {
 		producer = queue.NewProducer(cfg.MessageSizeLimit, true)
@@ -60,69 +58,74 @@ func main() {
 	saver.InitStats()
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
+	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
+		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
+		messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
+		messages.MsgJSException, messages.MsgResourceTiming,
+		messages.MsgRawCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgGraphQL,
+		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
+		messages.MsgMouseClick, messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming}
+
 	// Handler logic
-	handler := func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-		statsLogger.Collect(sessionID, meta)
+	msgHandler := func(msg messages.Message) {
+		statsLogger.Collect(msg)
 
-		for iter.Next() {
-			if !keepMessage(iter.Type()) {
-				continue
+		// Just save session data into db without additional checks
+		if err := saver.InsertMessage(msg); err != nil {
+			if !postgres.IsPkeyViolation(err) {
+				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 			}
-			msg := iter.Message().Decode()
-			if msg == nil {
-				return
-			}
-
-			// Just save session data into db without additional checks
-			if err := saver.InsertMessage(sessionID, msg); err != nil {
-				if !postgres.IsPkeyViolation(err) {
-					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			session, err := pg.GetSession(sessionID)
-			if session == nil {
-				if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
-					log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			// Save statistics to db
-			err = saver.InsertStats(session, msg)
-			if err != nil {
-				log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
-			}
-
-			// Handle heuristics and save to temporary queue in memory
-			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
-
-			// Process saved heuristics messages as usual messages above in the code
-			builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
-				if err := saver.InsertMessage(sessionID, msg); err != nil {
-					if !postgres.IsPkeyViolation(err) {
-						log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-					}
-					return
-				}
-
-				if err := saver.InsertStats(session, msg); err != nil {
-					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-				}
-			})
+			return
 		}
-		iter.Close()
+
+		var (
+			session *types2.Session
+			err     error
+		)
+		if msg.TypeID() == messages.MsgSessionEnd {
+			session, err = pg.GetSession(msg.SessionID())
+		} else {
+			session, err = pg.Cache.GetSession(msg.SessionID())
+		}
+		if session == nil {
+			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
+				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+			}
+			return
+		}
+
+		// Save statistics to db
+		err = saver.InsertStats(session, msg)
+		if err != nil {
+			log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
+		}
+
+		// Handle heuristics and save to temporary queue in memory
+		builderMap.HandleMessage(msg)
+
+		// Process saved heuristics messages as usual messages above in the code
+		builderMap.IterateSessionReadyMessages(msg.SessionID(), func(msg messages.Message) {
+			if err := saver.InsertMessage(msg); err != nil {
+				if !postgres.IsPkeyViolation(err) {
+					log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+				}
+				return
+			}
+
+			if err := saver.InsertStats(session, msg); err != nil {
+				log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+			}
+		})
 	}
 
 	// Init consumer
-	consumer := queue.NewMessageConsumer(
+	consumer := queue.NewConsumer(
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicAnalytics,
 		},
-		handler,
+		messages.NewMessageIterator(msgHandler, msgFilter, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -133,33 +136,38 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	commitTick := time.Tick(cfg.CommitBatchTimeout)
+
+	// Send collected batches to db
+	commitDBUpdates := func() {
+		start := time.Now()
+		pg.CommitBatches()
+		pgDur := time.Now().Sub(start).Milliseconds()
+
+		start = time.Now()
+		if err := saver.CommitStats(); err != nil {
+			log.Printf("Error on stats commit: %v", err)
+		}
+		chDur := time.Now().Sub(start).Milliseconds()
+		log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
+
+		if err := consumer.Commit(); err != nil {
+			log.Printf("Error on consumer commit: %v", err)
+		}
+	}
 	for {
 		select {
 		case sig := <-sigchan:
-			log.Printf("Caught signal %v: terminating\n", sig)
+			log.Printf("Caught signal %s: terminating\n", sig.String())
+			commitDBUpdates()
 			consumer.Close()
 			os.Exit(0)
 		case <-commitTick:
-			// Send collected batches to db
-			start := time.Now()
-			pg.CommitBatches()
-			pgDur := time.Now().Sub(start).Milliseconds()
-
-			start = time.Now()
-			if err := saver.CommitStats(consumer.HasFirstPartition()); err != nil {
-				log.Printf("Error on stats commit: %v", err)
-			}
-			chDur := time.Now().Sub(start).Milliseconds()
-			log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
-
-			// TODO: use commit worker to save time each tick
-			if err := consumer.Commit(); err != nil {
-				log.Printf("Error on consumer commit: %v", err)
-			}
+			commitDBUpdates()
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			// Handle new message from queue
-			err := consumer.ConsumeNext()
-			if err != nil {
+			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consumption: %v", err)
 			}
 		}

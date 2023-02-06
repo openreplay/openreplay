@@ -1,4 +1,4 @@
-fromVersion: "v1.8.1"
+fromVersion: "v1.9.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -17,9 +17,12 @@ postgresql: &postgres
   # asdf
   #     cpu: 2
 
-clickhouse:
+clickhouse: &clickhouse
   # For enterpriseEdition
   enabled: false
+  chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  service:
+    webPort: 9000
 
 quickwit: &quickwit
   # For enterpriseEdition
@@ -40,10 +43,9 @@ kafka: &kafka
   extraEnvVars:
     - name: KAFKA_CFG_REPLICA_FETCH_MAX_BYTES
       value: "3145728"
-    # This value already exist in the kafka values.yaml file, so overriding in top
+    # This value already exists in the kafka values.yaml file, so overriding in top
     # - name: KAFKA_CFG_MESSAGE_MAX_BYTES
     #   value: "3000000"
-
 
 redis: &redis
   # enabled: false
@@ -51,8 +53,7 @@ redis: &redis
   redisPort: "6379"
 
 minio:
-  # If you have extrenal s3 storage, like AWS, or GCP
-  # Disable it.
+  # Disable this if you use an external object storage service (s3)
   enabled: true
   global:
     minio:
@@ -98,20 +99,27 @@ global:
   kafka: *kafka
   redis: *redis
   quickwit: *quickwit
+  clickhouse: *clickhouse
+  # Registry URL from where the OR images should be pulled.
   openReplayContainerRegistry: "public.ecr.aws/p1t3u8a3"
   # secret key to inject to assist and peers service
   assistKey: "SetARandomStringHere"
+  assistJWTSecret: "SetARandomStringHere"
+  # In case of multiple nodes in the kubernetes cluster,
+  # we'll have to create an RWX PVC for shared components.
+  # If it's a single node, we'll use hostVolume, which is the default for the community/oss edition.
+  pvcRWXName: "hostPath"
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
     assetsBucket: "sessions-assets"
     recordingsBucket: "mobs"
     sourcemapsBucket: "sourcemaps"
+    vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
-    # if you're using one node installation, where
-    # you're using local s3, make sure these variables
-    # are same as minio.global.minio.accesskey and  secretKey
+    # If you're using minio, make sure these variables
+    # are the same as minio.global.minio.accesskey and secretKey
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
@@ -124,20 +132,8 @@ global:
     emailSslKey: ''
     emailSslCert: ''
     emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
-
   enterpriseEditionLicense: ""
   domainName: ""
-
-# If there is multiple nodes in the kubernetes cluster,
-# we'll have to create a NFS share PVC for both the containers to share data.
-# If it's the single node, we'll use hostVolume, which is default for community installation.
-# Note: Both PVC name should be same.
-# sink:
-#   pvc:
-#     name: mysharedpersistence
-# storage:
-#   pvc:
-#     name: mysharedpersistence
 
 chalice:
   env:
@@ -152,7 +148,7 @@ chalice:
     # idp_name: ''
     # idp_tenantKey: ''
 
-# If you want to override something
+# Below is an example on how to override values
 # chartname:
 #   filedFrom chart/Values.yaml:
 #     key: value
@@ -166,3 +162,4 @@ chalice:
 #     requests:
 #       cpu: 512m
 #       memory: 2056Mi
+

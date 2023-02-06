@@ -30,7 +30,9 @@ func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 	return b
 }
 
-func (m *builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint64) {
+func (m *builderMap) HandleMessage(msg Message) {
+	sessionID := msg.SessionID()
+	messageID := msg.Meta().Index
 	b := m.GetBuilder(sessionID)
 	b.handleMessage(msg, messageID)
 }
@@ -39,6 +41,7 @@ func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, i
 	if b.ended || b.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(time.Now()) {
 		for _, p := range b.processors {
 			if rm := p.Build(); rm != nil {
+				rm.Meta().SetSessionID(sessionID)
 				b.readyMsgs = append(b.readyMsgs, rm)
 			}
 		}

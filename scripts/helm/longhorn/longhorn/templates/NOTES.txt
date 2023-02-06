@@ -1,5 +1,0 @@
-Longhorn is now installed on the cluster!
-
-Please wait a few minutes for other Longhorn components such as CSI deployments, Engine Images, and Instance Managers to be initialized.
-
-Visit our documentation at https://longhorn.io/docs/

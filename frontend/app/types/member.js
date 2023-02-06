@@ -31,5 +31,6 @@ export default Record({
   fromJS: ({ createdAt, ...rest }) => ({
     ...rest,
     createdAt: createdAt && DateTime.fromISO(createdAt || 0),
+    id: rest.userId,
   }),
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import stl from './SelectorCard.module.css';
 import cn from 'classnames';
-import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
+import type { MarkedTarget } from 'Player';
 import { activeTarget } from 'Player';
 import { Tooltip } from 'react-tippy';
 

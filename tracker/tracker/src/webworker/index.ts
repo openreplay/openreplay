@@ -1,9 +1,11 @@
 import type Message from '../common/messages.gen.js'
 import { Type as MType } from '../common/messages.gen.js'
-import { WorkerMessageData } from '../common/interaction.js'
+import { ToWorkerData, FromWorkerData } from '../common/interaction.js'
 
 import QueueSender from './QueueSender.js'
 import BatchWriter from './BatchWriter.js'
+
+declare function postMessage(message: FromWorkerData): void
 
 enum WorkerStatus {
   NotActive,
@@ -51,18 +53,18 @@ function reset(): void {
 }
 
 function initiateRestart(): void {
-  self.postMessage('restart')
+  postMessage('restart')
   reset()
 }
-function initiateFailure(): void {
-  self.postMessage('failed')
+function initiateFailure(reason: string): void {
+  postMessage({ type: 'failure', reason })
   reset()
 }
 
 let sendIntervalID: ReturnType<typeof setInterval> | null = null
 let restartTimeoutID: ReturnType<typeof setTimeout>
 
-self.onmessage = ({ data }: MessageEvent<WorkerMessageData>): any => {
+self.onmessage = ({ data }: MessageEvent<ToWorkerData>): any => {
   if (data == null) {
     finalize()
     return
@@ -101,9 +103,9 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>): any => {
         // onUnauthorised
         initiateRestart()
       },
-      () => {
+      (reason) => {
         // onFailure
-        initiateFailure()
+        initiateFailure(reason)
       },
       data.connAttemptCount,
       data.connAttemptGap,

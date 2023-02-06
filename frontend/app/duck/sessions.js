@@ -11,6 +11,7 @@ import { getDateRangeFromValue } from 'App/dateRange';
 const name = 'sessions';
 const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
+const FETCH_AUTOPLAY_LIST = new RequestTypes('sessions/FETCH_AUTOPLAY_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
 const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
@@ -26,6 +27,12 @@ const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
 const SET_TIMELINE_HOVER_POINTER = 'sessions/SET_TIMELINE_HOVER_POINTER';
+
+const SET_CREATE_NOTE_TOOLTIP = 'sessions/SET_CREATE_NOTE_TOOLTIP'
+const SET_EDIT_NOTE_TOOLTIP = 'sessions/SET_EDIT_NOTE_TOOLTIP'
+const FILTER_OUT_NOTE = 'sessions/FILTER_OUT_NOTE'
+const ADD_NOTE = 'sessions/ADD_NOTE'
+const UPDATE_NOTE = 'sessions/UPDATE_NOTE'
 
 const SET_SESSION_PATH = 'sessions/SET_SESSION_PATH';
 const LAST_PLAYED_SESSION_ID = `${name}/LAST_PLAYED_SESSION_ID`;
@@ -63,7 +70,8 @@ const initialState = Map({
     timelinePointer: null,
     sessionPath: {},
     lastPlayedSessionId: null,
-    timeLineTooltip: { time: 0, offset: 0, isVisible: false }
+    timeLineTooltip: { time: 0, offset: 0, isVisible: false },
+    createNoteTooltip: { time: 0, isVisible: false, isEdit: false, note: null },
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -89,6 +97,10 @@ const reducer = (state = initialState, action = {}) => {
                     list.filter(({ favorite }) => favorite)
                 )
                 .set('total', total);
+        case FETCH_AUTOPLAY_LIST.SUCCESS:
+            let sessionIds = state.get('sessionIds');
+            sessionIds = sessionIds.concat(action.data.map(i => i.sessionId + ''))
+            return state.set('sessionIds', sessionIds.filter((i, index) => sessionIds.indexOf(i) === index ))
         case SET_AUTOPLAY_VALUES: {
             const sessionIds = state.get('sessionIds');
             const currentSessionId = state.get('current').sessionId;
@@ -152,11 +164,11 @@ const reducer = (state = initialState, action = {}) => {
             const wasInFavorite = state.get('favoriteList').findIndex(({ sessionId }) => sessionId === id) > -1;
 
             return state
-                .update('list', (list) => list.map((session) => (session.sessionId === id ? session.set('favorite', !wasInFavorite) : session)))
-                .update('favoriteList', (list) =>
-                    wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session.set('favorite', true))
-                )
-                .update('current', (session) => (session.sessionId === id ? session.set('favorite', !wasInFavorite) : session));
+                .update('current', (currentSession) => (currentSession.sessionId === id ? currentSession.set('favorite', !wasInFavorite) : currentSession))
+                .update('list', (list) => list.map((listSession) => (listSession.sessionId === id ? listSession.set('favorite', !wasInFavorite) : listSession)))
+                .update('favoriteList', (list) => session ?
+                    wasInFavorite ? list.filter(({ sessionId }) => sessionId !== id) : list.push(session.set('favorite', true)) : list
+                );
         }
         case SORT: {
             const comparator = (s1, s2) => {
@@ -192,6 +204,26 @@ const reducer = (state = initialState, action = {}) => {
             return state.set('timelinePointer', action.pointer);
         case SET_TIMELINE_HOVER_POINTER:
             return state.set('timeLineTooltip', action.timeLineTooltip);
+        case SET_CREATE_NOTE_TOOLTIP:
+            return state.set('createNoteTooltip', action.noteTooltip);
+        case SET_EDIT_NOTE_TOOLTIP:
+            return state.set('createNoteTooltip', action.noteTooltip);
+        case FILTER_OUT_NOTE:
+            return state.updateIn(['current', 'notesWithEvents'], (list) =>
+                list.filter(evt => !evt.noteId || evt.noteId !== action.noteId)
+            )
+        case ADD_NOTE:
+            return state.updateIn(['current', 'notesWithEvents'], (list) =>
+                list.push(action.note).sort((a, b) => {
+                    const aTs = a.time || a.timestamp
+                    const bTs = b.time || b.timestamp
+
+                    return aTs - bTs
+                  })
+            )
+        case UPDATE_NOTE:
+            const index = state.getIn(['current', 'notesWithEvents']).findIndex(item => item.noteId === action.note.noteId)
+            return state.setIn(['current', 'notesWithEvents', index], action.note)
         case SET_SESSION_PATH:
             return state.set('sessionPath', action.path);
         case LAST_PLAYED_SESSION_ID:
@@ -230,7 +262,7 @@ function init(session) {
 
 export const fetchList =
     (params = {}, force = false) =>
-    (dispatch, getState) => {
+    (dispatch) => {
         if (!force) { // compare with the last fetched filter
             const oldFilters = getSessionFilter();
             if (compareJsonObjects(oldFilters, cleanSessionFilters(params))) {
@@ -241,15 +273,28 @@ export const fetchList =
         setSessionFilter(cleanSessionFilters(params));
         return dispatch({
             types: FETCH_LIST.toArray(),
-            call: (client) => client.post('/sessions/search2', params),
+            call: (client) => client.post('/sessions/search', params),
             params: cleanParams(params),
         });
     };
 
+export const fetchAutoplayList =
+    (params = {}) =>
+    (dispatch) => {
+        setSessionFilter(cleanSessionFilters(params));
+        return dispatch({
+            types: FETCH_AUTOPLAY_LIST.toArray(),
+            call: (client) => client.post('/sessions/search/ids', params),
+            params: cleanParams(params),
+        });
+    };
+
+
+
 export function fetchErrorStackList(sessionId, errorId) {
     return {
         types: FETCH_ERROR_STACK.toArray(),
-        call: (client) => client.get(`/sessions2/${sessionId}/errors/${errorId}/sourcemaps`),
+        call: (client) => client.get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`),
     };
 }
 
@@ -258,7 +303,7 @@ export const fetch =
     (dispatch, getState) => {
         dispatch({
             types: FETCH.toArray(),
-            call: (client) => client.get(isLive ? `/assist/sessions/${sessionId}` : `/sessions2/${sessionId}`),
+            call: (client) => client.get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}`),
             filter: getState().getIn(['filters', 'appliedFilter']),
         });
     };
@@ -266,7 +311,7 @@ export const fetch =
 export function toggleFavorite(sessionId) {
     return {
         types: TOGGLE_FAVORITE.toArray(),
-        call: (client) => client.get(`/sessions2/${sessionId}/favorite`),
+        call: (client) => client.get(`/sessions/${sessionId}/favorite`),
         sessionId,
     };
 }
@@ -274,7 +319,7 @@ export function toggleFavorite(sessionId) {
 export function fetchFavoriteList() {
     return {
         types: FETCH_FAVORITE_LIST.toArray(),
-        call: (client) => client.get('/sessions2/favorite'),
+        call: (client) => client.get('/sessions/favorite'),
     };
 }
 
@@ -360,6 +405,41 @@ export function setTimelineHoverTime(timeLineTooltip) {
         type: SET_TIMELINE_HOVER_POINTER,
         timeLineTooltip
     };
+}
+
+export function setCreateNoteTooltip(noteTooltip) {
+    return {
+        type: SET_CREATE_NOTE_TOOLTIP,
+        noteTooltip
+    }
+}
+
+export function setEditNoteTooltip(noteTooltip) {
+    return {
+        type: SET_EDIT_NOTE_TOOLTIP,
+        noteTooltip
+    }
+}
+
+export function filterOutNote(noteId) {
+    return {
+        type: FILTER_OUT_NOTE,
+        noteId
+    }
+}
+
+export function addNote(note) {
+    return {
+        type: ADD_NOTE,
+        note
+    }
+}
+
+export function updateNote(note) {
+    return {
+        type: UPDATE_NOTE,
+        note
+    }
 }
 
 export function setSessionPath(path) {

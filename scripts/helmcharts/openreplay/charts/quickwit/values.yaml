@@ -43,10 +43,18 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+podSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  fsGroupChangePolicy: "OnRootMismatch"
+# podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+# securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -88,7 +96,6 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  REDIS_URL: "redis://redis-master.db.svc.cluster.local:6379"
   debug: 0
   uws: false
   redis: false

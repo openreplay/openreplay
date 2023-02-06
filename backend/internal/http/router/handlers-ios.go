@@ -69,12 +69,12 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
+		tokenData = &token.TokenData{sessionID, 0, expTime.UnixMilli()}
 
 		country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
 
 		// The difference with web is mostly here:
-		e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, Encode(&IOSSessionStart{
+		sessStart := &IOSSessionStart{
 			Timestamp:      req.Timestamp,
 			ProjectID:      uint64(p.ProjectID),
 			TrackerVersion: req.TrackerVersion,
@@ -85,7 +85,8 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			UserDevice:     ios.MapIOSDevice(req.UserDevice),
 			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
 			UserCountry:    country,
-		}))
+		}
+		e.services.Producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, sessStart.Encode())
 	}
 
 	ResponseWithJSON(w, &StartIOSSessionResponse{

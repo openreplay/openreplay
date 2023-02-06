@@ -5,8 +5,7 @@ import (
 	"log"
 	"time"
 
-	"openreplay/backend/pkg/queue/types"
-	//"openreplay/backend/pkg/env"
+	"openreplay/backend/pkg/messages"
 )
 
 type partitionStats struct {
@@ -18,21 +17,25 @@ type partitionStats struct {
 }
 
 // Update partition statistic
-func (prt *partitionStats) update(m *types.Meta) {
-	if prt.maxts < m.Timestamp {
-		prt.maxts = m.Timestamp
+func (prt *partitionStats) update(m *messages.BatchInfo) {
+	if prt.maxts < m.Timestamp() {
+		prt.maxts = m.Timestamp()
 	}
-	if prt.mints > m.Timestamp || prt.mints == 0 {
-		prt.mints = m.Timestamp
+	if prt.mints > m.Timestamp() || prt.mints == 0 {
+		prt.mints = m.Timestamp()
 	}
-	prt.lastts = m.Timestamp
-	prt.lastID = m.ID
+	prt.lastts = m.Timestamp()
+	prt.lastID = m.ID()
 	prt.count += 1
 }
 
 type queueStats struct {
 	prts map[int32]*partitionStats
 	tick <-chan time.Time
+}
+
+type QueueStats interface {
+	Collect(msg messages.Message)
 }
 
 func NewQueueStats(sec int) *queueStats {
@@ -43,14 +46,14 @@ func NewQueueStats(sec int) *queueStats {
 }
 
 // Collect writes new data to partition statistic
-func (qs *queueStats) Collect(sessionID uint64, m *types.Meta) {
-	prti := int32(sessionID % 16) // TODO use GetKeyPartition from kafka/key.go
+func (qs *queueStats) Collect(msg messages.Message) {
+	prti := int32(msg.SessionID() % 16) // TODO use GetKeyPartition from kafka/key.go
 	prt, ok := qs.prts[prti]
 	if !ok {
 		qs.prts[prti] = &partitionStats{}
 		prt = qs.prts[prti]
 	}
-	prt.update(m)
+	prt.update(msg.Meta().Batch())
 
 	select {
 	case <-qs.tick:

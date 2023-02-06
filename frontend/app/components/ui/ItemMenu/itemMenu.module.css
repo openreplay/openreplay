@@ -40,9 +40,9 @@
 
   white-space: nowrap;
   z-index: 20;
-  position: absolute;
-  right: 0px;
-  top: 37px;
+  /* position: absolute; */
+  /* right: 0px; */
+  /* top: 37px; */
   min-width: 150px;
   background-color: $white;
   border-radius: 3px;

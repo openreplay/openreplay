@@ -84,7 +84,7 @@ export const edit = createEdit(name);
 export function fetchAssignments(sessionId) {
   return {
     types: FETCH_ASSIGNMENTS.toArray(),
-    call: client => client.get(`/sessions2/${ sessionId }/assign`)
+    call: client => client.get(`/sessions/${ sessionId }/assign`)
   }
 }
 
@@ -104,7 +104,7 @@ export function fetchProjects() {
 export function fetchIssue(sessionId, id) {
   return {
     types: FETCH_ISSUE.toArray(),
-    call: client => client.get(`/sessions2/${ sessionId }/assign/jira/${ id }`)
+    call: client => client.get(`/sessions/${ sessionId }/assign/jira/${ id }`)
   }
 }
 
@@ -118,13 +118,13 @@ export function fetchMeta(projectId) {
 export function addActivity(sessionId, params) {
   return {
     types: ADD_ACTIVITY.toArray(),
-    call: client => client.post(`/sessions2/${ sessionId }/assign`, params.toCreate()),
+    call: client => client.post(`/sessions/${ sessionId }/assign`, params.toCreate()),
   }
 }
 
 export function addMessage(sessionId, assignmentId, params) {
   return {
     types: ADD_MESSAGE.toArray(),
-    call: client => client.post(`/sessions2/${ sessionId }/assign/${ assignmentId }/comment`, params),
+    call: client => client.post(`/sessions/${ sessionId }/assign/${ assignmentId }/comment`, params),
   }
 }

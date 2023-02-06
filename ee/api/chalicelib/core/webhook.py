@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from chalicelib.utils import pg_client, helper
@@ -8,8 +10,7 @@ def get_by_id(webhook_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT
-                          webhook_id AS integration_id, webhook_id AS id, w.*
+                    SELECT w.*
                     FROM public.webhooks AS w 
                     where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id})
@@ -43,8 +44,7 @@ def get_by_type(tenant_id, webhook_type):
                     SELECT
                            w.webhook_id AS integration_id, w.webhook_id AS id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
                     FROM public.webhooks AS w 
-                    where 
-                        w.tenant_id =%(tenant_id)s 
+                    WHERE w.tenant_id =%(tenant_id)s 
                         AND w.type =%(type)s 
                         AND deleted_at ISNULL;""",
                         {"type": webhook_type, "tenant_id": tenant_id})
@@ -152,28 +152,24 @@ def trigger_batch(data_list):
     for w in data_list:
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
-        __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
+        if webhooks_map[w["destination"]] is None:
+            logging.error(f"!!Error webhook not found: webhook_id={w['destination']}")
+        else:
+            __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
 
 def __trigger(hook, data):
-    if hook["type"] == 'webhook':
+    if hook is not None and hook["type"] == 'webhook':
         headers = {}
         if hook["authHeader"] is not None and len(hook["authHeader"]) > 0:
             headers = {"Authorization": hook["authHeader"]}
 
-        # body = {
-        #     "webhookId": hook["id"],
-        #     "createdAt": TimeUTC.now(),
-        #     "event": event,
-        #     "data": data
-        # }
-
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            print("=======> webhook: something went wrong")
-            print(r)
-            print(r.status_code)
-            print(r.text)
+            logging.error("=======> webhook: something went wrong for:")
+            logging.error(hook)
+            logging.error(r.status_code)
+            logging.error(r.text)
             return
         response = None
         try:
@@ -182,5 +178,5 @@ def __trigger(hook, data):
             try:
                 response = r.text
             except:
-                print("no response found")
+                logging.info("no response found")
         return response

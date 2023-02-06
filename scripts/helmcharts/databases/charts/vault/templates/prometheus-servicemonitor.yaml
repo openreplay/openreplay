@@ -1,0 +1,44 @@
+{{ template "vault.mode" . }}
+{{ if or (.Values.global.serverTelemetry.prometheusOperator) (.Values.serverTelemetry.serviceMonitor.enabled) }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "vault.fullname" . }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- /* update the selectors docs in values.yaml whenever the defaults below change. */ -}}
+    {{- $selectors := .Values.serverTelemetry.serviceMonitor.selectors }}
+    {{- if $selectors }}
+    {{- toYaml $selectors | nindent 4 }}
+    {{- else }}
+    release: prometheus
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "vault.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      {{- if eq .mode "ha" }}
+      vault-active: "true"
+      {{- else }}
+      vault-internal: "true"
+      {{- end }}
+  endpoints:
+  - port: {{ include "vault.scheme" . }}
+    interval: {{ .Values.serverTelemetry.serviceMonitor.interval }}
+    scrapeTimeout: {{ .Values.serverTelemetry.serviceMonitor.scrapeTimeout }}
+    scheme: {{ include "vault.scheme" . | lower }}
+    path: /v1/sys/metrics
+    params:
+      format:
+      - prometheus
+    tlsConfig:
+      insecureSkipVerify: true
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+{{ end }}

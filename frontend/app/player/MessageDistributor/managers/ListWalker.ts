@@ -9,7 +9,7 @@ export default class ListWalker<T extends Timed> {
 			console.error("Trying to append message with the less time then the list tail: ", m)
 			return
 		}
-		this._list.push(m);
+		this.list.push(m);
 	}
 
 	reset(): void {
@@ -18,53 +18,53 @@ export default class ListWalker<T extends Timed> {
 
 	sort(comparator: (a: T, b: T) => number): void {
 		// @ts-ignore
-		this._list.sort((m1,m2) => comparator(m1,m2) || (m1._index - m2._index) ); // indexes for sort stability (TODO: fix types???)
+		this.list.sort((m1,m2) => comparator(m1,m2) || (m1._index - m2._index) ); // indexes for sort stability (TODO: fix types???)
 	}
 
 	forEach(f: (item: T) => void):void {
-		this._list.forEach(f);
+		this.list.forEach(f);
 	}
 
 	get last(): T | null {
-		if (this._list.length === 0) {
+		if (this.list.length === 0) {
 			return null;
 		}
-		return this._list[ this._list.length - 1 ];
+		return this.list[ this.list.length - 1 ];
 	}
 
 	get current(): T | null {
 		if (this.p === 0) {
 			return null;
 		}
-		return this._list[ this.p - 1 ];
+		return this.list[ this.p - 1 ];
 	}
 
 	get timeNow(): number {
 		if (this.p === 0) {
 			return 0;
 		}
-		return this._list[ this.p - 1 ].time;
+		return this.list[ this.p - 1 ].time;
 	}
 
 	get length(): number {
-		return this._list.length;
+		return this.list.length;
 	}
 
 	get maxTime(): number {
 		if (this.length === 0) {
 			return 0;
 		}
-		return this._list[ this.length - 1 ].time;
+		return this.list[ this.length - 1 ].time;
 	}
 	get minTime(): number {
 		if (this.length === 0) {
 			return 0;
 		}
-		return this._list[ 0 ].time;
+		return this.list[ 0 ].time;
 	}
 
 	get listNow(): Array<T> {
-		return this._list.slice(0, this.p);
+		return this.list.slice(0, this.p);
 	}
 
 	get list(): Array<T> {
@@ -77,6 +77,23 @@ export default class ListWalker<T extends Timed> {
 
 	get countNow(): number {
 		return this.p;
+	}
+
+	private hasNext() {
+		return this.p < this.length
+	}
+	private hasPrev() {
+		return this.p > 0
+	}
+	protected moveNext(): T | null {
+		return this.hasNext()
+			? this.list[ this.p++ ]
+			: null
+	}
+	protected movePrev(): T | null {
+		return this.hasPrev()
+			? this.list[ --this.p ]
+			: null
 	}
 
 	/*
@@ -93,28 +110,42 @@ export default class ListWalker<T extends Timed> {
 		}
 
 		let changed = false;
-		while (this.p < this.length && this._list[this.p][key] <= val) {
-			this.p++;
+		while (this.p < this.length && this.list[this.p][key] <= val) {
+			this.moveNext()
 			changed = true;
 		}
-		while (this.p > 0 && this._list[ this.p - 1 ][key] > val) {
-			this.p--;
+		while (this.p > 0 && this.list[ this.p - 1 ][key] > val) {
+			this.movePrev()
 			changed = true;
 		}
-		return changed ? this._list[ this.p - 1 ] : null;
+		return changed ? this.list[ this.p - 1 ] : null;
 	}
 
-	moveApply(t: number, fn: (T) => void, fnBack?: (T) => void): void {
+	moveApply(t: number, fn: (msg: T) => void, fnBack?: (msg: T) => void): void {
 		// Applying only in increment order for now
 		if (t < this.timeNow) {
 			this.reset();
 		}
 
-		while (!!this._list[this.p] && this._list[this.p].time <= t) {
-			fn(this._list[ this.p++ ]);
+		const list = this.list
+		while (list[this.p] && list[this.p].time <= t) {
+			fn(this.moveNext())
 		}
-		while (fnBack && this.p > 0 && this._list[ this.p - 1 ].time > t) {
-			fnBack(this._list[ --this.p ]);
+		while (fnBack && this.p > 0 && list[ this.p - 1 ].time > t) {
+			fnBack(this.movePrev());
+		}
+	}
+
+	async moveWait(t: number, fn: (msg: T) => Promise<any> | undefined): Promise<void> {
+		// Applying only in increment order for now
+		if (t < this.timeNow) {
+			this.reset();
+		}
+
+		const list = this.list
+		while (list[this.p] && list[this.p].time <= t) {
+			const ret = fn(this.list[ this.p++ ]);
+			if (ret) { await ret }
 		}
 	}
 

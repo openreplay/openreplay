@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"errors"
+	"github.com/Masterminds/semver"
 	"go.opentelemetry.io/otel/attribute"
 	"io"
 	"log"
@@ -35,6 +36,22 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 		[]attribute.KeyValue{attribute.String("method", r.URL.Path)}...,
 	)
 	return bodyBytes, nil
+}
+
+func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint64) {
+	ts = uint64(req.Timestamp)
+	c, err := semver.NewConstraint(">=4.1.6")
+	if err != nil {
+		return
+	}
+	v, err := semver.NewVersion(req.TrackerVersion)
+	if err != nil {
+		return
+	}
+	if c.Check(v) {
+		return uint64(startTimeMili)
+	}
+	return
 }
 
 func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -91,17 +108,22 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
-		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
+		startTimeMili := startTime.UnixMilli()
+		sessionID, err := e.services.Flaker.Compose(uint64(startTimeMili))
 		if err != nil {
 			ResponseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixMilli()}
+		tokenData = &token.TokenData{
+			ID:      sessionID,
+			Delay:   startTimeMili - req.Timestamp,
+			ExpTime: expTime.UnixMilli(),
+		}
 
 		sessionStart := &SessionStart{
-			Timestamp:            req.Timestamp,
+			Timestamp:            getSessionTimestamp(req, startTimeMili),
 			ProjectID:            uint64(p.ProjectID),
 			TrackerVersion:       req.TrackerVersion,
 			RevID:                req.RevID,
@@ -125,7 +147,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Send sessionStart message to kafka
-		if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(sessionStart)); err != nil {
+		if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, sessionStart.Encode()); err != nil {
 			log.Printf("can't send session start: %s", err)
 		}
 	}
@@ -137,6 +159,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
 		StartTimestamp:  int64(flakeid.ExtractTimestamp(tokenData.ID)),
+		Delay:           tokenData.Delay,
 	})
 }
 

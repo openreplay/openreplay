@@ -16,7 +16,8 @@ const {
     EVENTS_DEFINITION,
     extractSessionInfo,
     socketConnexionTimeout,
-    errorHandler
+    errorHandler,
+    authorizer
 } = require('../utils/assistHelper');
 const wsRouter = express.Router();
 
@@ -241,6 +242,7 @@ module.exports = {
     wsRouter,
     start: (server, prefix) => {
         createSocketIOServer(server, prefix);
+        io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', async (socket) => {
             socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);

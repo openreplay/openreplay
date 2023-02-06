@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { timestamp, isURL, IS_FIREFOX, MAX_STR_LEN } from '../utils.js'
+import { isURL, IS_FIREFOX, MAX_STR_LEN } from '../utils.js'
 import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from '../app/messages.gen.js'
 import { hasTag } from '../app/guards.js'
 
@@ -59,7 +59,7 @@ export default function (app: App): void {
   const sendImgError = app.safe(function (img: HTMLImageElement): void {
     const resolvedSrc = resolveURL(img.src || '') // Src type is null sometimes. - is it true?
     if (isURL(resolvedSrc)) {
-      app.send(ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
+      app.send(ResourceTiming(app.timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'))
     }
   })
 

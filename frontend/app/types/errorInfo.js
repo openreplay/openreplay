@@ -36,6 +36,7 @@ const ErrorInfo = Record({
   chart24: [],
   chart30: [],
   tags: [],
+  customTags: [],
   lastHydratedSession: Session(),
   disabled: false,
 }, {

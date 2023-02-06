@@ -48,7 +48,7 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('activeIssue', Assignment({ ...action.data, users}));
     case FETCH_META.SUCCESS:
       issueTypes = action.data.issueTypes
-      var issueTypeIcons = {}      
+      var issueTypeIcons = {}
       issueTypes.forEach(iss => {
         issueTypeIcons[iss.id] = iss.iconUrl
       })
@@ -96,28 +96,28 @@ export function fetchMeta(projectId) {
 export function fetchAssignments(sessionId) {
   return {
     types: FETCH_ASSIGNMENTS.toArray(),
-    call: client => client.get(`/sessions2/${ sessionId }/assign`)
+    call: client => client.get(`/sessions/${ sessionId }/assign`)
   }
 }
 
 export function fetchAssigment(sessionId, id) {
   return {
     types: FETCH_ASSIGNMENT.toArray(),
-    call: client => client.get(`/sessions2/${ sessionId }/assign/${ id }`)
+    call: client => client.get(`/sessions/${ sessionId }/assign/${ id }`)
   }
 }
 
 export function addActivity(sessionId, params) {
-  const data = { ...params, assignee: params.assignee.value, issueType: params.issueType.value }
+  const data = { ...params, assignee: params.assignee, issueType: params.issueType }
   return {
     types: ADD_ACTIVITY.toArray(),
-    call: client => client.post(`/sessions2/${ sessionId }/assign/projects/${params.projectId.value}`, data),
+    call: client => client.post(`/sessions/${ sessionId }/assign/projects/${params.projectId}`, data),
   }
 }
 
 export function addMessage(sessionId, assignmentId, params) {
   return {
     types: ADD_MESSAGE.toArray(),
-    call: client => client.post(`/sessions2/${ sessionId }/assign/${ assignmentId }/comment`, params),
+    call: client => client.post(`/sessions/${ sessionId }/assign/${ assignmentId }/comment`, params),
   }
 }

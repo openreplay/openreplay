@@ -1,7 +1,7 @@
 # openreplay-ui
 OpenReplay prototype UI
 
-On new icon addition: 
+On new icon addition:
 `yarn gen:icons`
 
 ## Documentation
@@ -14,3 +14,7 @@ On new icon addition:
 Labels in comments:
 TEMP = temporary code
 TODO = things to implement
+
+## Contributing notes
+
+Please use `dev` branch as base and target branch.

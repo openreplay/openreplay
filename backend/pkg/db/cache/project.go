@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
+func (c *cacheImpl) GetProjectByKey(projectKey string) (*Project, error) {
 	pmInterface, found := c.projectsByKeys.Load(projectKey)
 	if found {
 		if pm, ok := pmInterface.(*ProjectMeta); ok {
@@ -15,7 +15,7 @@ func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
 		}
 	}
 
-	p, err := c.Conn.GetProjectByKey(projectKey)
+	p, err := c.conn.GetProjectByKey(projectKey)
 	if err != nil {
 		return nil, err
 	}
@@ -24,12 +24,12 @@ func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
 	return p, nil
 }
 
-func (c *PGCache) GetProject(projectID uint32) (*Project, error) {
+func (c *cacheImpl) GetProject(projectID uint32) (*Project, error) {
 	if c.projects[projectID] != nil &&
 		time.Now().Before(c.projects[projectID].expirationTime) {
 		return c.projects[projectID].Project, nil
 	}
-	p, err := c.Conn.GetProject(projectID)
+	p, err := c.conn.GetProject(projectID)
 	if err != nil {
 		return nil, err
 	}

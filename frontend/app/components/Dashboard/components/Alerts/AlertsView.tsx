@@ -21,7 +21,7 @@ function AlertsView({ siteId, init }: IAlertsView) {
                     <PageTitle title="Alerts" />
                 </div>
                 <div className="ml-auto flex items-center">
-                    <Link to={withSiteId(alertCreate(), siteId)}><Button variant="primary" onClick={null}>Create</Button></Link>
+                    <Link to={withSiteId(alertCreate(), siteId)}><Button variant="primary" onClick={null}>Create Alert</Button></Link>
                     <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
                         <AlertsSearch />
                     </div>

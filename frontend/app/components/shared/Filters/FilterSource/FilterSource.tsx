@@ -28,7 +28,7 @@ function FilterSource(props: Props) {
             case FilterType.NUMBER:
                 return (
                     <div className="relative">
-                        <input name="source" className={cn(stl.inputField, "rounded-l px-1 block")} value={value} onBlur={write} onChange={write} type="number" />
+                        <input name="source" placeholder={filter.sourcePlaceholder} className={cn(stl.inputField, "rounded-l px-1 block")} value={value} onBlur={write} onChange={write} type="number" />
                         <div className="absolute right-0 top-0 bottom-0 bg-gray-lightest rounded-r px-1 border-l border-color-gray-light flex items-center" style={{ margin: '1px', minWidth: '24px'}}>{filter.sourceUnit}</div>
                     </div>
                 );

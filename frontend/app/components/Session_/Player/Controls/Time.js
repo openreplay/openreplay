@@ -2,7 +2,6 @@ import React from 'react';
 import { Duration } from 'luxon';
 import { connectPlayer } from 'Player';
 import styles from './time.module.css';
-import { Tooltip } from 'react-tippy';
 
 const Time = ({ time, isCustom, format = 'm:ss', }) => (
   <div className={ !isCustom ? styles.time : undefined }>

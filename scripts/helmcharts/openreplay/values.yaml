@@ -1,124 +1,6 @@
-# Default values for openreplay.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-replicaCount: 1
-
-image:
-  repository: nginx
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
-
-imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
-
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-
-podAnnotations: {}
-
-podSecurityContext: {}
-  # fsGroup: 2000
-
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
-
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 100
-  targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}
-
-nginx-ingress:
-  fullnameOverride: nginx-ingress
-  image:
-    # Using openresty because we need lua support,
-    # and dynamic resolve config from local.
-    # Ref: https://serverfault.com/questions/638822/nginx-resolver-address-from-etc-resolv-conf
-    repository: rg.fr-par.scw.cloud/foss/openresty
-    pullPolicy: IfNotPresent
-    # Overrides the image tag whose default is the chart appVersion.
-    tag: "buster"
-
-# By default http listens to 80 port, and for v1.7.0 http listens in 80
-http:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-# Running sink and storage as non root users, because of existing volume permission change will take time
-sink:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-storage:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
-
-chalice:
-  podSecurityContext:
-    runAsUser: 0
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: "OnRootMismatch"
+redis: &redis
+  tls:
+    enabled: false
 
 ingress-nginx:
   enabled: true
@@ -132,3 +14,27 @@ ingress-nginx:
       ## repository:
       tag: "v1.3.0"
       digest: ""
+
+# For enterpriseEdition Only
+vault: &vault
+  vaultHost: databases-vault.db.svc.cluster.local:8200
+  annotations:
+    vault.hashicorp.com/agent-cache-enable: "true"
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/agent-inject-token: "true"
+    vault.hashicorp.com/template-static-secret-render-interval: 2m
+    # vault.hashicorp.com/log-level: debug
+    vault.hashicorp.com/agent-run-as-same-user: "true"
+    vault.hashicorp.com/agent-inject-command-processor.properties: |
+      pkill -TERM openreplay
+    vault.hashicorp.com/role: pgaccess
+    vault.hashicorp.com/agent-inject-secret-processor.properties: database/creds/db-app
+    vault.hashicorp.com/agent-inject-template-processor.properties: |
+      {{- with secret "database/creds/db-app" -}}
+      POSTGRES_STRING=postgres://{{.Data.username}}:{{.Data.password}}@postgresql.db.svc.cluster.local:5432/postgres
+      {{- end -}}
+
+global:
+  vault: *vault
+  redis: *redis
+  clusterDomain: "svc.cluster.local"

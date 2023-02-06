@@ -14,6 +14,7 @@ type Config struct {
 	TopicRawWeb                string `env:"TOPIC_RAW_WEB,required"`
 	ProducerTimeout            int    `env:"PRODUCER_TIMEOUT,default=2000"`
 	PartitionsNumber           int    `env:"PARTITIONS_NUMBER,required"`
+	UseEncryption              bool   `env:"USE_ENCRYPTION,default=false"`
 }
 
 func New() *Config {

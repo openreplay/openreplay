@@ -46,7 +46,7 @@ function AuditView(props) {
                             ]}
                             defaultValue={order}
                             plain
-                            onChange={({ value }) => auditStore.updateKey('order', value)}
+                            onChange={({ value }) => auditStore.updateKey('order', value.value)}
                         />
                     </div>
                     <AuditSearchField onChange={(value) => auditStore.updateKey('searchQuery', value) }/>

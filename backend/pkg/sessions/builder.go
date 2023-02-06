@@ -66,6 +66,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	b.lastSystemTime = time.Now()
 	for _, p := range b.processors {
 		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
+			rm.Meta().SetMeta(message.Meta())
 			b.readyMsgs = append(b.readyMsgs, rm)
 		}
 	}

@@ -27,7 +27,7 @@ function DashboardsView({ history, siteId }: { history: any, siteId: string }) {
                     <PageTitle title="Dashboards" />
                 </div>
                 <div className="ml-auto flex items-center">
-                    <Button variant="primary" onClick={onAddDashboardClick}>Create</Button>
+                    <Button variant="primary" onClick={onAddDashboardClick}>Create Dashboard</Button>
                     <div className="ml-4 w-1/4" style={{ minWidth: 300 }}>
                         <DashboardSearch />
                     </div>
@@ -35,7 +35,7 @@ function DashboardsView({ history, siteId }: { history: any, siteId: string }) {
             </div>
             <div className="text-base text-disabled-text flex items-center px-6">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />
-                A dashboard is a custom visualization using your OpenReplay data.
+                A Dashboard is a collection of Metrics that can be shared across teams.
             </div>
             <DashboardList />
         </div>

@@ -24,13 +24,17 @@ function NewProjectButton(props: Props) {
     };
 
     return (
-        <div
-            className={cn('flex items-center justify-center py-3 cursor-pointer hover:bg-active-blue ', { disabled: !canAddProject })}
-            onClick={onClick}
-        >
-            <Icon name="plus" size={12} className="mr-2" color="teal" />
-            <span className="color-teal">Add New Project</span>
-        </div>
+        <li onClick={onClick}>
+            <Icon name="folder-plus" size="16" color="teal" />
+            <span className="ml-3 color-teal">Add Project</span>
+        </li>
+        // <div
+        //     className={cn('flex items-center justify-center py-3 cursor-pointer hover:bg-active-blue ', { disabled: !canAddProject })}
+        //     onClick={onClick}
+        // >
+        //     <Icon name="plus" size={12} className="mr-2" color="teal" />
+        //     <span className="color-teal">Add New Project</span>
+        // </div>
     );
 }
 

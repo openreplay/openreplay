@@ -18,9 +18,11 @@ import NotifyHooks from './AlertForm/NotifyHooks';
 import AlertListItem from './AlertListItem';
 import Condition from './AlertForm/Condition';
 
-
 const Circle = ({ text }: { text: string }) => (
-  <div style={{ left: -14, height: 26, width: 26 }} className="circle rounded-full bg-gray-light flex items-center justify-center absolute top-0">
+  <div
+    style={{ left: -14, height: 26, width: 26 }}
+    className="circle rounded-full bg-gray-light flex items-center justify-center absolute top-0"
+  >
     {text}
   </div>
 );
@@ -54,7 +56,7 @@ interface IProps extends RouteComponentProps {
   loading: boolean;
   deleting: boolean;
   triggerOptions: any[];
-  list: any,
+  list: any;
   fetchTriggerOptions: () => void;
   edit: (query: any) => void;
   init: (alert?: Alert) => any;
@@ -83,6 +85,7 @@ const NewAlert = (props: IProps) => {
   } = props;
 
   useEffect(() => {
+    init({});
     if (list.size === 0) fetchList();
     props.fetchTriggerOptions();
     fetchWebhooks();
@@ -90,19 +93,22 @@ const NewAlert = (props: IProps) => {
 
   useEffect(() => {
     if (list.size > 0) {
-      const alertId = location.pathname.split('/').pop()
-      const currentAlert = list.toJS().find((alert: Alert) => alert.alertId === parseInt(alertId, 10));
+      const alertId = location.pathname.split('/').pop();
+      const currentAlert = list
+        .toJS()
+        .find((alert: Alert) => alert.alertId === parseInt(alertId, 10));
       init(currentAlert);
     }
-  }, [list])
-
+  }, [list]);
 
   const write = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) =>
     props.edit({ [name]: value });
+
   const writeOption = (
     _: React.ChangeEvent,
     { name, value }: { name: string; value: Record<string, any> }
   ) => props.edit({ [name]: value.value });
+
   const onChangeCheck = ({ target: { checked, name } }: React.ChangeEvent<HTMLInputElement>) =>
     props.edit({ [name]: checked });
 
@@ -115,38 +121,39 @@ const NewAlert = (props: IProps) => {
       })
     ) {
       remove(instance.alertId).then(() => {
-        props.history.push(withSiteId(alerts(), siteId))
+        props.history.push(withSiteId(alerts(), siteId));
+        toast.success('Alert deleted');
+      }).catch(() => {
+        toast.error('Failed to delete an alert');
       });
     }
   };
+
   const onSave = (instance: Alert) => {
     const wasUpdating = instance.exists();
     save(instance).then(() => {
       if (!wasUpdating) {
         toast.success('New alert saved');
-        props.history.push(withSiteId(alerts(), siteId))
+        props.history.push(withSiteId(alerts(), siteId));
       } else {
         toast.success('Alert updated');
       }
+    }).catch(() => {
+      toast.error('Failed to create an alert');
     });
   };
-
-  const onClose = () => {
-    props.history.push(withSiteId(alerts(), siteId))
-  }
 
   const slackChannels = webhooks
     .filter((hook) => hook.type === SLACK)
     .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
     // @ts-ignore
     .toJS();
+
   const hooks = webhooks
     .filter((hook) => hook.type === WEBHOOK)
     .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
     // @ts-ignore
     .toJS();
-
-  
 
   const writeQueryOption = (
     e: React.ChangeEvent,
@@ -184,87 +191,84 @@ const NewAlert = (props: IProps) => {
         onSubmit={() => onSave(instance)}
         id="alert-form"
       >
-        <div
-          className={cn('px-6 py-4 flex justify-between items-center',
-          )}
-        >
+        <div className={cn('px-6 py-4 flex justify-between items-center')}>
           <h1 className="mb-0 text-2xl mr-4 min-w-fit">
-            <WidgetName name={instance.name} onUpdate={(name) => write({ target: { value: name, name: 'name' }} as any)} canEdit />
+            <WidgetName
+              name={instance.name}
+              onUpdate={(name) => write({ target: { value: name, name: 'name' } } as any)}
+              canEdit
+            />
           </h1>
-          <div
-            className="text-gray-600 w-full cursor-pointer"
-          >
-          </div>
+          <div className="text-gray-600 w-full cursor-pointer"></div>
         </div>
-        
-            <div className="px-6 pb-3 flex flex-col">
-              <Section
-                index="1"
-                title={'Alert based on'}
-                content={
-                  <div className="">
-                    <SegmentSelection
-                      outline
-                      name="detectionMethod"
-                      className="my-3 w-1/4"
-                      onSelect={(e: any, { name, value }: any) => props.edit({ [name]: value })}
-                      value={{ value: instance.detectionMethod }}
-                      list={[
-                        { name: 'Threshold', value: 'threshold' },
-                        { name: 'Change', value: 'change' },
-                      ]}
-                    />
-                    <div className="text-sm color-gray-medium">
-                      {isThreshold &&
-                        'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
-                      {!isThreshold &&
-                        'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
-                    </div>
-                    <div className="my-4" />
-                  </div>
-                }
-              />
-              <Section
-                index="2"
-                title="Condition"
-                content={
-                  <Condition
-                    isThreshold={isThreshold}
-                    writeOption={writeOption}
-                    instance={instance}
-                    triggerOptions={triggerOptions}
-                    writeQueryOption={writeQueryOption}
-                    writeQuery={writeQuery}
-                    unit={unit}
-                  />
-                }
-              />
-              <Section
-                index="3"
-                title="Notify Through"
-                description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
-                content={
-                  <NotifyHooks 
-                    instance={instance}
-                    onChangeCheck={onChangeCheck}
-                    slackChannels={slackChannels}
-                    validateEmail={validateEmail}
-                    hooks={hooks}
-                    edit={edit}
-                  />
-                }
-              />
-            </div>
 
-            <div className="flex items-center justify-between p-6 border-t">
-              <BottomButtons 
-                loading={loading}
+        <div className="px-6 pb-3 flex flex-col">
+          <Section
+            index="1"
+            title={'Alert based on'}
+            content={
+              <div className="">
+                <SegmentSelection
+                  outline
+                  name="detectionMethod"
+                  className="my-3 w-1/4"
+                  onSelect={(e: any, { name, value }: any) => props.edit({ [name]: value })}
+                  value={{ value: instance.detectionMethod }}
+                  list={[
+                    { name: 'Threshold', value: 'threshold' },
+                    { name: 'Change', value: 'change' },
+                  ]}
+                />
+                <div className="text-sm color-gray-medium">
+                  {isThreshold &&
+                    'Eg. When Threshold is above 1ms over the past 15mins, notify me through Slack #foss-notifications.'}
+                  {!isThreshold &&
+                    'Eg. Alert me if % change of memory.avg is greater than 10% over the past 4 hours compared to the previous 4 hours.'}
+                </div>
+                <div className="my-4" />
+              </div>
+            }
+          />
+          <Section
+            index="2"
+            title="Condition"
+            content={
+              <Condition
+                isThreshold={isThreshold}
+                writeOption={writeOption}
                 instance={instance}
-                deleting={deleting}
-                onDelete={onDelete}
+                triggerOptions={triggerOptions}
+                writeQueryOption={writeQueryOption}
+                writeQuery={writeQuery}
+                unit={unit}
               />
-            </div>
-         
+            }
+          />
+          <Section
+            index="3"
+            title="Notify Through"
+            description="You'll be noticed in app notifications. Additionally opt in to receive alerts on:"
+            content={
+              <NotifyHooks
+                instance={instance}
+                onChangeCheck={onChangeCheck}
+                slackChannels={slackChannels}
+                validateEmail={validateEmail}
+                hooks={hooks}
+                edit={edit}
+              />
+            }
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-6 border-t">
+          <BottomButtons
+            loading={loading}
+            instance={instance}
+            deleting={deleting}
+            onDelete={onDelete}
+          />
+        </div>
       </Form>
 
       <div className="bg-white mt-4 border rounded mb-10">
@@ -276,21 +280,23 @@ const NewAlert = (props: IProps) => {
   );
 };
 
-export default withRouter(connect(
-  (state) => ({
+export default withRouter(
+  connect(
+    (state) => ({
+      // @ts-ignore
+      instance: state.getIn(['alerts', 'instance']),
+      //@ts-ignore
+      list: state.getIn(['alerts', 'list']),
+      // @ts-ignore
+      triggerOptions: state.getIn(['alerts', 'triggerOptions']),
+      // @ts-ignore
+      loading: state.getIn(['alerts', 'saveRequest', 'loading']),
+      // @ts-ignore
+      deleting: state.getIn(['alerts', 'removeRequest', 'loading']),
+      // @ts-ignore
+      webhooks: state.getIn(['webhooks', 'list']),
+    }),
+    { fetchTriggerOptions, init, edit, save, remove, fetchWebhooks, fetchList }
     // @ts-ignore
-    instance: state.getIn(['alerts', 'instance']),
-    //@ts-ignore
-    list: state.getIn(['alerts', 'list']),
-    // @ts-ignore
-    triggerOptions: state.getIn(['alerts', 'triggerOptions']),
-    // @ts-ignore
-    loading: state.getIn(['alerts', 'saveRequest', 'loading']),
-    // @ts-ignore
-    deleting: state.getIn(['alerts', 'removeRequest', 'loading']),
-    // @ts-ignore
-    webhooks: state.getIn(['webhooks', 'list']),
-  }),
-  { fetchTriggerOptions, init, edit, save, remove, fetchWebhooks, fetchList }
-  // @ts-ignore
-)(NewAlert));
+  )(NewAlert)
+);

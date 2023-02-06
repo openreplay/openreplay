@@ -40,7 +40,7 @@ const reducer = (state = initialState, action = {}) => {
       const test = state.get('list').find(({ testId }) => testId === action.testId);
       const run = Run({
         runId: action.data.id, state: RUNNING, testId: action.testId, name: test.name
-      });      
+      });
       return updateRun(state, action.testId, run);
     }
     case STOP_RUN.SUCCESS: {
@@ -73,7 +73,7 @@ export default reduceDucks({ reducer, initialState }, requestDuck);
 export function generateTest(sessionId, params) {
   return {
     types: GEN_TEST.toArray(),
-    call: client => client.post(`/sessions2/${ sessionId }/gentest`, params),
+    call: client => client.post(`/sessions/${ sessionId }/gentest`, params),
   };
 }
 

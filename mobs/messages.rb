@@ -46,7 +46,7 @@ message 1, 'SessionStart', :tracker => false, :replayer => false do
 end
 ## message 2, 'CreateDocument', do
 # end
-message 3, 'SessionEnd', :tracker => false, :replayer => false do
+message 3, 'SessionEndDeprecated', :tracker => false, :replayer => false do
   uint 'Timestamp'
 end
 message 4, 'SetPageLocation' do
@@ -125,13 +125,8 @@ message 20, 'MouseMove' do
   uint 'X'
   uint 'Y'
 end
-# Depricated since OpenReplay 1.2.0 (tracker version?)
-message 21, 'MouseClickDepricated', :tracker => false, :replayer => false do
-  uint 'ID'
-  uint 'HesitationTime'
-  string 'Label'
-end
-message 22, 'ConsoleLog' do
+# 21
+message 22, 'ConsoleLog', :replayer => :devtools do
   string 'Level'
   string 'Value'
 end
@@ -151,7 +146,8 @@ message 24, 'PageRenderTiming', :replayer => false do
   uint 'VisuallyComplete'
   uint 'TimeToInteractive'
 end
-message 25, 'JSException', :replayer => false do
+# deprecated since 4.1.6 / 1.8.2 in favor of #78
+message 25, 'JSExceptionDeprecated', :replayer => false do
   string 'Name'
   string 'Message'
   string 'Payload'
@@ -210,14 +206,14 @@ message 33, 'ClickEvent', :tracker => false, :replayer => false do
   string 'Label'
   string 'Selector'
 end
-message 34, 'ErrorEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  string 'Source'
-  string 'Name'
-  string 'Message'
-  string 'Payload'
-end
+# message 34, 'ErrorEvent', :tracker => false, :replayer => false do
+#   uint 'MessageID'
+#   uint 'Timestamp'
+#   string 'Source'
+#   string 'Name'
+#   string 'Message'
+#   string 'Payload'
+# end
 message 35, 'ResourceEvent', :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -238,19 +234,19 @@ message 36, 'CustomEvent', :tracker => false, :replayer => false do
   string 'Name'
   string 'Payload'
 end
-# depricated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner 
+# deprecated since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
   uint 'ID'
   string 'Rule'
   uint 'Index'
 end
-# depricated since 4.0.2
+# deprecated since 4.0.2
 message 38, 'CSSDeleteRule' do
   uint 'ID'
   uint 'Index'
 end
 
-message 39, 'Fetch' do
+message 39, 'Fetch', :replayer => :devtools do
   string 'Method'
   string 'URL'
   string 'Request'
@@ -259,16 +255,17 @@ message 39, 'Fetch' do
   uint 'Timestamp'
   uint 'Duration'
 end
-message 40, 'Profiler' do
+message 40, 'Profiler', :replayer => :devtools do
   string 'Name'
   uint   'Duration'
   string 'Args'
   string 'Result'
 end
-message 41, 'OTable' do
+message 41, 'OTable', :replayer => :devtools do
   string 'Key'
   string 'Value'
 end
+# Do we use that?
 message 42, 'StateAction', :replayer => false do
   string 'Type'
 end
@@ -277,36 +274,37 @@ message 43, 'StateActionEvent', :tracker => false, :replayer => false do
   uint 'Timestamp'
   string 'Type'
 end
-message 44, 'Redux' do
+message 44, 'Redux', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'
 end
-message 45, 'Vuex' do
+message 45, 'Vuex', :replayer => :devtools do
   string 'Mutation'
   string 'State'
 end
-message 46, 'MobX' do
+message 46, 'MobX', :replayer => :devtools do
   string 'Type'
   string 'Payload'
 end
-message 47, 'NgRx' do
+message 47, 'NgRx', :replayer => :devtools do
   string 'Action'
   string 'State'
   uint 'Duration'
 end
-message 48, 'GraphQL' do
+message 48, 'GraphQL', :replayer => :devtools do
   string 'OperationKind'
   string 'OperationName'
   string 'Variables'
   string 'Response'
 end
-message 49, 'PerformanceTrack' do
+message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player performance refactoring (now is tied with nodes counter)
   int 'Frames'
   int 'Ticks'
   uint 'TotalJSHeapSize'
   uint 'UsedJSHeapSize'
 end
+# next 2 should be removed after refactoring backend/pkg/handlers/custom/eventMapper.go (move "wrapping" logic to pg connector insertion)
 message 50, 'GraphQLEvent',  :tracker => false, :replayer => false do
   uint 'MessageID'
   uint 'Timestamp'
@@ -361,7 +359,20 @@ message 56, 'PerformanceTrackAggr', :tracker => false, :replayer => false do
   uint 'AvgUsedJSHeapSize'
   uint 'MaxUsedJSHeapSize'
 end
-## 57 58
+
+# Since 4.1.7 / 1.9.0
+message 57, 'LoadFontFace' do 
+  uint 'ParentID'
+  string 'Family'
+  string 'Source'
+  string 'Descriptors'
+end
+# Since 4.1.7 / 1.9.0
+message 58, 'SetNodeFocus' do
+  int 'ID'
+end
+
+#Depricated (since 3.0.?)
 message 59, 'LongTask' do
   uint 'Timestamp'
   uint 'Duration'
@@ -457,16 +468,26 @@ message 77, 'AdoptedSSRemoveOwner' do
   uint 'SheetID'
   uint 'ID'
 end
-#Since 4.0.1
-# message 78, 'ReplaceVCSSURLBased' do
-#   uint 'SheetID'
-#   uint 'Index'
-#   string 'Styles'
-#   string 'BaseURL'
-# end
-message 79, 'Zustand' do
+message 79, 'Zustand', :replayer => :devtools do
   string 'Mutation'
   string 'State'
 end
+message 78, 'JSException', :replayer => false do
+  string 'Name'
+  string 'Message'
+  string 'Payload'
+  string 'Metadata'
+end
+
+
+message 126, 'SessionEnd', :tracker => false, :replayer => false do
+  uint 'Timestamp'
+  string 'EncryptionKey'
+end
+message 127, 'SessionSearch', :tracker => false, :replayer => false  do
+  uint 'Timestamp'
+  uint 'Partition'
+end
+
 
 # 80 -- 90 reserved

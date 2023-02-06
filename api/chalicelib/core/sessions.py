@@ -2,7 +2,8 @@ from typing import List
 
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event, sessions_viewed, sessions_favorite, \
+    sessions_devtool, sessions_notes
 from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -39,8 +40,8 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False,
-                  live=True):
+def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
+                  group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
@@ -63,7 +64,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
             WHERE s.project_id = %(project_id)s
                 AND s.session_id = %(session_id)s;""",
-            {"project_id": project_id, "session_id": session_id, "userId": user_id}
+            {"project_id": project_id, "session_id": session_id, "userId": context.user_id}
         )
         # print("===============")
         # print(query)
@@ -81,27 +82,29 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['crashes'] = events_ios.get_crashes_by_session_id(session_id=session_id)
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
+                    data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)
                     all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
-                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors if
-                                      e['source'] == "js_exception"][
-                                     :500]  # limit the number of errors to reduce the response-body size
+                    # limit the number of errors to reduce the response-body size
+                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
+                                      if e['source'] == "js_exception"][:500]
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
-                    data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
+                    data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
+                    data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
+                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
-                                                                    start_ts=data["startTs"],
-                                                                    duration=data["duration"])
+                                                                    start_ts=data["startTs"], duration=data["duration"])
 
+                data['notes'] = sessions_notes.get_session_notes(tenant_id=context.tenant_id, project_id=project_id,
+                                                                 session_id=session_id, user_id=context.user_id)
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
-                data['live'] = live and assist.is_live(project_id=project_id,
-                                                       session_id=session_id,
+                data['live'] = live and assist.is_live(project_id=project_id, session_id=session_id,
                                                        project_key=data["projectKey"])
             data["inDB"] = True
             return data
@@ -174,7 +177,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
     if data.bookmarked:
         data.startDate, data.endDate = sessions_favorite.get_start_end_timestamp(project_id, user_id)
 
@@ -182,9 +185,11 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                user_id=user_id)
     if data.limit is not None and data.page is not None:
+        full_args["sessions_limit"] = data.limit
         full_args["sessions_limit_s"] = (data.page - 1) * data.limit
         full_args["sessions_limit_e"] = data.page * data.limit
     else:
+        full_args["sessions_limit"] = 200
         full_args["sessions_limit_s"] = 1
         full_args["sessions_limit_e"] = 200
 
@@ -232,6 +237,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 GROUP BY user_id
                                             ) AS users_sessions;""",
                                      full_args)
+        elif ids_only:
+            main_query = cur.mogrify(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                     full_args)
         else:
             if data.order is None:
                 data.order = schemas.SortOrderType.desc
@@ -239,7 +250,6 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
                 sort = helper.key_to_snake_case(data.sort)
-
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
@@ -263,7 +273,7 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print(data.json())
             print("--------------------")
             raise err
-        if errors_only:
+        if errors_only or ids_only:
             return helper.list_to_camel_case(cur.fetchall())
 
         sessions = cur.fetchone()
@@ -329,7 +339,15 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             # print("--------------------")
             # print(main_query)
             # print("--------------------")
-            cur.execute(main_query)
+            try:
+                cur.execute(main_query)
+            except Exception as err:
+                print("--------- SESSIONS-SERIES QUERY EXCEPTION -----------")
+                print(main_query.decode('UTF-8'))
+                print("--------- PAYLOAD -----------")
+                print(data.json())
+                print("--------------------")
+                raise err
             if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 sessions = cur.fetchall()
             else:
@@ -1237,3 +1255,15 @@ def count_all():
     with pg_client.PostgresClient(unlimited_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)
+
+
+def session_exists(project_id, session_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""SELECT 1 
+                             FROM public.sessions 
+                             WHERE session_id=%(session_id)s 
+                                AND project_id=%(project_id)s""",
+                            {"project_id": project_id, "session_id": session_id})
+        cur.execute(query)
+        row = cur.fetchone()
+    return row is not None

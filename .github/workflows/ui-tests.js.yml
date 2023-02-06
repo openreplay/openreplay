@@ -1,0 +1,40 @@
+# Checking unit and visual tests locally on every merge rq to dev and main
+name: Frontend tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+    paths:
+      - frontend/**
+  pull_request:
+    branches: [ "dev", "main" ]
+    paths:
+      - frontend/**
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run: 
+        working-directory: ./frontend
+    strategy:
+      matrix:
+        node-version: [16.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Setup packages
+      run: npm i --legacy-peer-deps --ignore-scripts
+    - name: Run unit tests
+      run: npm test --if-resent
+    - name: Run Frontend
+      run: npm start
+    - name: Wait for frontend
+      run: npx wait-on http://0.0.0.0:3333
+    - name: Run visual tests
+      run: npm run cy:test --if-present

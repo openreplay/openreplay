@@ -5,28 +5,28 @@ import (
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
-
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"openreplay/backend/pkg/env"
-	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/messages"
+
+	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/pkg/errors"
 )
 
 type Message = kafka.Message
 
 type Consumer struct {
-	c              *kafka.Consumer
-	messageHandler types.MessageHandler
-	commitTicker   *time.Ticker
-	pollTimeout    uint
-
+	c                 *kafka.Consumer
+	messageIterator   messages.MessageIterator
+	commitTicker      *time.Ticker
+	pollTimeout       uint
+	events            chan interface{}
 	lastReceivedPrtTs map[int32]int64
 }
 
 func NewConsumer(
 	group string,
 	topics []string,
-	messageHandler types.MessageHandler,
+	messageIterator messages.MessageIterator,
 	autoCommit bool,
 	messageSizeLimit int,
 ) *Consumer {
@@ -47,19 +47,18 @@ func NewConsumer(
 		kafkaConfig.SetKey("ssl.key.location", os.Getenv("KAFKA_SSL_KEY"))
 		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
+
+	// Apply Kerberos configuration
+	if env.Bool("KAFKA_USE_KERBEROS") {
+		kafkaConfig.SetKey("security.protocol", "sasl_plaintext")
+		kafkaConfig.SetKey("sasl.mechanisms", "GSSAPI")
+		kafkaConfig.SetKey("sasl.kerberos.service.name", os.Getenv("KERBEROS_SERVICE_NAME"))
+		kafkaConfig.SetKey("sasl.kerberos.principal", os.Getenv("KERBEROS_PRINCIPAL"))
+		kafkaConfig.SetKey("sasl.kerberos.keytab", os.Getenv("KERBEROS_KEYTAB_LOCATION"))
+	}
+
 	c, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
-		log.Fatalln(err)
-	}
-	subREx := "^("
-	for i, t := range topics {
-		if i != 0 {
-			subREx += "|"
-		}
-		subREx += t
-	}
-	subREx += ")$"
-	if err := c.Subscribe(subREx, nil); err != nil {
 		log.Fatalln(err)
 	}
 
@@ -68,13 +67,44 @@ func NewConsumer(
 		commitTicker = time.NewTicker(2 * time.Minute)
 	}
 
-	return &Consumer{
+	consumer := &Consumer{
 		c:                 c,
-		messageHandler:    messageHandler,
+		messageIterator:   messageIterator,
 		commitTicker:      commitTicker,
 		pollTimeout:       200,
-		lastReceivedPrtTs: make(map[int32]int64),
+		events:            make(chan interface{}, 4),
+		lastReceivedPrtTs: make(map[int32]int64, 16),
 	}
+
+	subREx := "^("
+	for i, t := range topics {
+		if i != 0 {
+			subREx += "|"
+		}
+		subREx += t
+	}
+	subREx += ")$"
+	if err := c.Subscribe(subREx, consumer.reBalanceCallback); err != nil {
+		log.Fatalln(err)
+	}
+
+	return consumer
+}
+
+func (consumer *Consumer) reBalanceCallback(_ *kafka.Consumer, e kafka.Event) error {
+	switch evt := e.(type) {
+	case kafka.RevokedPartitions:
+		// receive before re-balancing partitions; stop consuming messages and commit current state
+		consumer.events <- evt.String()
+	case kafka.AssignedPartitions:
+		// receive after re-balancing partitions; continue consuming messages
+		//consumer.events <- evt.String()
+	}
+	return nil
+}
+
+func (consumer *Consumer) Rebalanced() <-chan interface{} {
+	return consumer.events
 }
 
 func (consumer *Consumer) Commit() error {
@@ -171,11 +201,14 @@ func (consumer *Consumer) ConsumeNext() error {
 			return errors.Wrap(e.TopicPartition.Error, "Consumer Partition Error")
 		}
 		ts := e.Timestamp.UnixMilli()
-		consumer.messageHandler(decodeKey(e.Key), e.Value, &types.Meta{
-			Topic:     *(e.TopicPartition.Topic),
-			ID:        uint64(e.TopicPartition.Offset),
-			Timestamp: ts,
-		})
+		consumer.messageIterator.Iterate(
+			e.Value,
+			messages.NewBatchInfo(
+				decodeKey(e.Key),
+				*(e.TopicPartition.Topic),
+				uint64(e.TopicPartition.Offset),
+				uint64(e.TopicPartition.Partition),
+				ts))
 		consumer.lastReceivedPrtTs[e.TopicPartition.Partition] = ts
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
@@ -193,17 +226,4 @@ func (consumer *Consumer) Close() {
 	if err := consumer.c.Close(); err != nil {
 		log.Printf("Kafka consumer close error: %v", err)
 	}
-}
-
-func (consumer *Consumer) HasFirstPartition() bool {
-	assigned, err := consumer.c.Assignment()
-	if err != nil {
-		return false
-	}
-	for _, p := range assigned {
-		if p.Partition == 1 {
-			return true
-		}
-	}
-	return false
 }

@@ -15,12 +15,20 @@ check_prereq() {
 }
 
 function build_api(){
+    destination="_peers"
+    [[ $1 == "ee" ]] && {
+        destination="_peers_ee"
+    }
+    cp -R ../peers ../${destination}
+    cd ../${destination}
     cp -R ../utilities/utils .
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/peers/* ./
     }
     docker build -f ./Dockerfile -t ${DOCKER_REPO:-'local'}/peers:${git_sha1} .
+    cd ../peers
+    rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/peers:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/peers:${git_sha1} ${DOCKER_REPO:-'local'}/peers:latest

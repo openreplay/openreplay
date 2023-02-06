@@ -279,7 +279,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
     params = {"metric_id": metric_id, "is_public": data.is_public, "name": data.name,
               "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
               "metric_type": data.metric_type, "metric_of": data.metric_of,
-              "metric_value": data.metric_value, "metric_format": data.metric_format}
+              "metric_value": data.metric_value, "metric_format": data.metric_format,
+              "config": json.dumps(data.config.dict())}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.index is None:
@@ -329,7 +330,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
                 view_type= %(view_type)s, metric_type= %(metric_type)s, 
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
                 metric_format= %(metric_format)s,
-                edited_at = timezone('utc'::text, now())
+                edited_at = timezone('utc'::text, now()),
+                default_config = %(config)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -405,7 +407,7 @@ def get(metric_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT *
+                """SELECT *, default_config AS config
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
@@ -456,7 +458,7 @@ def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
                                                 ) AS connected_dashboards ON (TRUE)"""
         cur.execute(
             cur.mogrify(
-                f"""SELECT *
+                f"""SELECT *, default_config AS config
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series

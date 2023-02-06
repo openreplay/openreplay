@@ -1,5 +1,5 @@
 import React from 'react';
-import { connectPlayer } from 'App/player';
+import { connectPlayer } from 'Player';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Props {

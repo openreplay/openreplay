@@ -1,5 +1,0 @@
-{{- if .Values.extraDeploy }}
-apiVersion: v1
-kind: List
-items: {{- include "kafka.tplValue" (dict "value" .Values.extraDeploy "context" $) | nindent 2 }}
-{{- end }}

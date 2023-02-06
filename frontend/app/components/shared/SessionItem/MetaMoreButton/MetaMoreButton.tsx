@@ -1,32 +1,30 @@
-import React from 'react'
-import { Popup } from 'UI'
-import MetaItem from '../MetaItem'
+import React from 'react';
+import { Popover, Button } from 'UI';
+import MetaItem from '../MetaItem';
 
 interface Props {
-    list: any[],
-    maxLength: number,
+  list: any[];
+  maxLength: number;
 }
 export default function MetaMoreButton(props: Props) {
-    const { list, maxLength } = props
-    return (
-        <Popup
-            className="p-0"
-            theme="light"
-            content={ 
-                <div className="text-sm grid grid-col p-4 gap-3" style={{ maxHeight: '200px', overflowY: 'auto'}}>
-                    {list.slice(maxLength).map(({ label, value }, index) => (
-                        <MetaItem key={index} label={label} value={value} />
-                    ))}
-                </div>
-            }
-            on="click"
-            position="center center"
+  const { list, maxLength } = props;
+  return (
+    <Popover
+      render={() => (
+        <div
+          className="text-sm grid grid-col p-4 gap-3 bg-white"
+          style={{ maxHeight: '200px', overflowY: 'auto' }}
         >
-            <div className=" flex items-center">
-                    <span className="rounded bg-active-blue color-teal p-2 color-gray-dark cursor-pointer whitespace-nowrap">
-                        +{list.length - maxLength} More
-                    </span>
-                </div>
-        </Popup>
-    )
+          {list.slice(maxLength).map(({ label, value }, index) => (
+            <MetaItem key={index} label={label} value={value} />
+          ))}
+        </div>
+      )}
+      placement="bottom"
+    >
+      <div className="flex items-center">
+        <Button variant="text-primary">+{list.length - maxLength} More</Button>
+      </div>
+    </Popover>
+  );
 }

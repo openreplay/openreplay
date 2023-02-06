@@ -8,7 +8,6 @@ import { Link, NoContent, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
 import WebPlayer from './WebPlayer';
-import IOSPlayer from './IOSPlayer';
 import { useStore } from 'App/mstore';
 
 const SESSIONS_ROUTE = sessionsRoute();
@@ -49,10 +48,7 @@ function Session({
 			}
 		>
 			<Loader className="flex-1" loading={ loading || initializing }> 
-				{ session.isIOS 
-					? <IOSPlayer session={session} />
-					: <WebPlayer />
-			}
+				<WebPlayer />
 			</Loader>
 		</NoContent>
 	);

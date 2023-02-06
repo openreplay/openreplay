@@ -32,9 +32,8 @@ rm -rf ./chalicelib/core/log_tool_stackdriver.py
 rm -rf ./chalicelib/core/log_tool_sumologic.py
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
-rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
-rm -rf ./chalicelib/core/sessions_metas.py
+#exp rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
 #exp rm -rf ./chalicelib/core/significance.py
 rm -rf ./chalicelib/core/slack.py
@@ -64,20 +63,18 @@ rm -rf ./routers/crons/__init__.py
 rm -rf ./routers/subs/__init__.py
 rm -rf ./routers/__init__.py
 rm -rf ./chalicelib/core/assist.py
+rm -rf ./auth/__init__.py
 rm -rf ./auth/auth_apikey.py
-rm -rf ./auth/auth_jwt.py
 rm -rf ./build.sh
+rm -rf ./routers/base.py
 rm -rf ./routers/core.py
 rm -rf ./routers/crons/core_crons.py
-rm -rf ./routers/subs/dashboard.py
 rm -rf ./db_changes.sql
-rm -rf ./Dockerfile.bundle
+rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
-rm -rf ./routers/subs/insights.py
 rm -rf ./schemas.py
 rm -rf ./routers/subs/v1_api.py
-rm -rf ./routers/subs/metrics.py
 #exp rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/performance_event.py
 rm -rf ./chalicelib/core/saved_search.py

@@ -1,13 +1,13 @@
 import Record from 'Types/Record';
 import { List } from 'immutable';
 import Watchdog from 'Types/watchdog'
-
 export const issues_types = List([
   { 'type': 'all', 'visible': true, 'order': 0, 'name': 'All', 'icon': '' },
   { 'type': 'js_exception', 'visible': true, 'order': 1, 'name': 'Errors', 'icon': 'funnel/exclamation-circle' },
-  { 'type': 'click_rage', 'visible': true, 'order': 2, 'name': 'Click Rage', 'icon': 'funnel/emoji-angry' },
-  { 'type': 'crash', 'visible': true, 'order': 3, 'name': 'Crashes', 'icon': 'funnel/file-earmark-break' },
-  { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
+  { 'type': 'bad_request', 'visible': true, 'order': 2, 'name': 'Bad Requests', 'icon': 'funnel/file-medical-alt' },
+  { 'type': 'click_rage', 'visible': true, 'order': 3, 'name': 'Click Rage', 'icon': 'funnel/emoji-angry' },
+  { 'type': 'crash', 'visible': true, 'order': 4, 'name': 'Crashes', 'icon': 'funnel/file-earmark-break' },
+  // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
   // { 'type': 'bookmark', 'visible': true, 'order': 5, 'name': 'Bookmarks', 'icon': 'safe' },
   // { 'type': 'bad_request', 'visible': true, 'order': 1, 'name': 'Bad Requests', 'icon': 'funnel/file-medical-alt' },

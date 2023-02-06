@@ -9,6 +9,8 @@ type Config struct {
 	common.Config
 	FsDir                string `env:"FS_DIR,required"`
 	FsUlimit             uint16 `env:"FS_ULIMIT,required"`
+	FileBuffer           int    `env:"FILE_BUFFER,default=16384"`
+	SyncTimeout          int    `env:"SYNC_TIMEOUT,default=5"`
 	GroupSink            string `env:"GROUP_SINK,required"`
 	TopicRawWeb          string `env:"TOPIC_RAW_WEB,required"`
 	TopicRawIOS          string `env:"TOPIC_RAW_IOS,required"`
@@ -17,6 +19,8 @@ type Config struct {
 	CacheAssets          bool   `env:"CACHE_ASSETS,required"`
 	AssetsOrigin         string `env:"ASSETS_ORIGIN,required"`
 	ProducerCloseTimeout int    `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
+	CacheThreshold       int64  `env:"CACHE_THRESHOLD,default=5"`
+	CacheExpiration      int64  `env:"CACHE_EXPIRATION,default=120"`
 }
 
 func New() *Config {

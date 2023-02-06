@@ -8,7 +8,7 @@ const ControlButton = ({
   icon = '',
   disabled = false,
   onClick,
-  count = 0,
+  // count = 0,
   hasErrors = false,
   active = false,
   size = 20,
@@ -31,7 +31,7 @@ const ControlButton = ({
   >
     <div className={stl.labels}>
       {hasErrors && <div className={stl.errorSymbol} />}
-      {count > 0 && <div className={stl.countLabel}>{count}</div>}
+      {/* {count > 0 && <div className={stl.countLabel}>{count}</div>} */}
     </div>
     {!noIcon && <Icon name={icon} size={size} color="gray-dark" />}
     {!noLabel && (

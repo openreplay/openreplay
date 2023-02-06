@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/internal/storage"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,42 +20,27 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("ender")
-
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-
-	// Load service configuration
+	metrics := monitoring.New("ender")
 	cfg := ender.New()
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
-	// Init all modules
-	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber, logger.NewQueueStats(cfg.LoggerTimeout))
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
 	}
+
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-	consumer := queue.NewMessageConsumer(
+	consumer := queue.NewConsumer(
 		cfg.GroupEnder,
-		[]string{
-			cfg.TopicRawWeb,
-		},
-		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-			for iter.Next() {
-				if iter.Type() == messages.MsgSessionStart || iter.Type() == messages.MsgSessionEnd {
-					continue
-				}
-				if iter.Message().Meta().Timestamp == 0 {
-					log.Printf("ZERO TS, sessID: %d, msgType: %d", sessionID, iter.Type())
-				}
-				statsLogger.Collect(sessionID, meta)
-				sessions.UpdateSession(sessionID, meta.Timestamp, iter.Message().Meta().Timestamp)
-			}
-			iter.Close()
-		},
+		[]string{cfg.TopicRawWeb},
+		messages.NewMessageIterator(
+			func(msg messages.Message) { sessions.UpdateSession(msg) },
+			[]int{messages.MsgTimestamp},
+			false),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -94,7 +79,16 @@ func main() {
 						currDuration, newDuration)
 					return true
 				}
-				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
+				if cfg.UseEncryption {
+					if key := storage.GenerateEncryptionKey(); key != nil {
+						if err := pg.InsertSessionEncryptionKey(sessionID, key); err != nil {
+							log.Printf("can't save session encryption key: %s, session will not be encrypted", err)
+						} else {
+							msg.EncryptionKey = string(key)
+						}
+					}
+				}
+				if err := producer.Produce(cfg.TopicRawWeb, sessionID, msg.Encode()); err != nil {
 					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
 					return false
 				}
@@ -104,6 +98,8 @@ func main() {
 			if err := consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP); err != nil {
 				log.Printf("can't commit messages with offset: %s", err)
 			}
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)

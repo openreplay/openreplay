@@ -25,7 +25,7 @@ export default class SettingsService {
 
     getSessions(filter: any) {
         return this.client
-            .post('/sessions/search2', filter)
+            .post('/sessions/search', filter)
             .then(fetchErrorCheck)
             .then((response) => response.data || []);
     }

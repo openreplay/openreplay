@@ -1,7 +1,7 @@
 import math
 
 import schemas
-from chalicelib.utils import pg_client, exp_ch_helper
+from chalicelib.utils import exp_ch_helper
 from chalicelib.utils import args_transformer
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -462,18 +462,18 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     # ch_sub_query_chart.append("events.event_type='RESOURCE'")
     ch_sub_query_chart.append("resources.type = 'img'")
-    ch_sub_query_chart.append("resources.url IN %(url)s")
+    ch_sub_query_chart.append("resources.url_hostpath IN %(url)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query_chart += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT resources.url,
+        ch_query = f"""SELECT resources.url_hostpath AS url,
                               COALESCE(avgOrNull(resources.duration),0) AS avg,
                               COUNT(1) AS count 
                         FROM {exp_ch_helper.get_main_resources_table(startTimestamp)} AS resources 
                         WHERE {" AND ".join(ch_sub_query)} AND resources.duration>0
-                        GROUP BY resources.url ORDER BY avg DESC LIMIT 10;"""
+                        GROUP BY resources.url_hostpath ORDER BY avg DESC LIMIT 10;"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
@@ -484,13 +484,13 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         urls = [row["url"] for row in rows]
 
         charts = {}
-        ch_query = f"""SELECT url, 
+        ch_query = f"""SELECT url_hostpath AS url, 
                                toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
                                COALESCE(avgOrNull(resources.duration),0) AS avg
                         FROM {exp_ch_helper.get_main_resources_table(startTimestamp)} AS resources
                         WHERE {" AND ".join(ch_sub_query_chart)} AND resources.duration>0
-                        GROUP BY url, timestamp
-                        ORDER BY url, timestamp;"""
+                        GROUP BY url_hostpath, timestamp
+                        ORDER BY url_hostpath, timestamp;"""
         params["url"] = urls
         # print(ch.format(query=ch_query, params=params))
         u_rows = ch.execute(query=ch_query, params=params)
@@ -538,13 +538,13 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
     if resources and len(resources) > 0:
         for r in resources:
             if r["type"] == "IMG":
-                img_constraints.append(f"resources.url = %(val_{len(img_constraints)})s")
+                img_constraints.append(f"resources.url_hostpath = %(val_{len(img_constraints)})s")
                 img_constraints_vals["val_" + str(len(img_constraints) - 1)] = r['value']
             elif r["type"] == "LOCATION":
                 location_constraints.append(f"pages.url_path = %(val_{len(location_constraints)})s")
                 location_constraints_vals["val_" + str(len(location_constraints) - 1)] = r['value']
             else:
-                request_constraints.append(f"resources.url = %(val_{len(request_constraints)})s")
+                request_constraints.append(f"resources.url_hostpath = %(val_{len(request_constraints)})s")
                 request_constraints_vals["val_" + str(len(request_constraints) - 1)] = r['value']
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
@@ -891,7 +891,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
     if type is not None:
         ch_sub_query_chart.append(f"resources.type = '{__get_resource_db_type_from_type(type)}'")
     if url is not None:
-        ch_sub_query_chart.append(f"resources.url = %(value)s")
+        ch_sub_query_chart.append(f"resources.url_hostpath = %(value)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
     ch_sub_query_chart.append("resources.duration>0")
@@ -974,7 +974,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     ch_sub_query_chart.append("isNotNull(resources.duration)")
     ch_sub_query_chart.append("resources.duration>0")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT any(url) AS url, any(type) AS type, name,
+        ch_query = f"""SELECT any(url_hostpath) AS url, any(type) AS type, name,
                               COALESCE(avgOrNull(NULLIF(resources.duration,0)),0) AS avg 
                           FROM {exp_ch_helper.get_main_resources_table(startTimestamp)} AS resources 
                           WHERE {" AND ".join(ch_sub_query)}
@@ -2185,7 +2185,7 @@ def get_performance_avg_image_load_time(ch, project_id, startTimestamp=TimeUTC.n
     if resources and len(resources) > 0:
         for r in resources:
             if r["type"] == "IMG":
-                img_constraints.append(f"resources.url = %(val_{len(img_constraints)})s")
+                img_constraints.append(f"resources.url_hostpath = %(val_{len(img_constraints)})s")
                 img_constraints_vals["val_" + str(len(img_constraints) - 1)] = r['value']
 
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
@@ -2260,7 +2260,7 @@ def get_performance_avg_request_load_time(ch, project_id, startTimestamp=TimeUTC
     if resources and len(resources) > 0:
         for r in resources:
             if r["type"] != "IMG" and r["type"] == "LOCATION":
-                request_constraints.append(f"resources.url = %(val_{len(request_constraints)})s")
+                request_constraints.append(f"resources.url_hostpath = %(val_{len(request_constraints)})s")
                 request_constraints_vals["val_" + str(len(request_constraints) - 1)] = r['value']
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}

@@ -1,7 +1,7 @@
 import re
 
 from chalicelib.core import projects
-from chalicelib.utils import pg_client, dev
+from chalicelib.utils import pg_client
 
 MAX_INDEXES = 10
 

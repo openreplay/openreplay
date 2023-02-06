@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 // import { connectPlayer } from 'Player';
-import { QuestionMarkHint, Popup, Tabs, Input, NoContent, Icon, Button } from 'UI';
+import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
 import { formatBytes } from 'App/utils';
@@ -40,30 +40,25 @@ const LOAD_TIME_COLOR = 'red';
 
 export function renderType(r) {
   return (
-    <Popup style={{ width: '100%' }} content={<div className={stl.popupNameContent}>{r.type}</div>}>
+    <Tooltip style={{ width: '100%' }} title={<div className={stl.popupNameContent}>{r.type}</div>}>
       <div className={stl.popupNameTrigger}>{r.type}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
 export function renderName(r) {
   return (
-      <Popup
-        style={{ width: '100%' }}
-        content={<div className={stl.popupNameContent}>{r.url}</div>}
-      >
-        <div className={stl.popupNameTrigger}>{r.name}</div>
-      </Popup>
+    <Tooltip style={{ width: '100%' }} title={<div className={stl.popupNameContent}>{r.url}</div>}>
+      <div className={stl.popupNameTrigger}>{r.name}</div>
+    </Tooltip>
   );
 }
 
 export function renderStart(r) {
   return (
     <div className="flex justify-between items-center grow-0 w-full">
-      <span>
-        {Duration.fromMillis(r.time).toFormat('mm:ss.SSS')}
-      </span>
-      <Button
+      <span>{Duration.fromMillis(r.time).toFormat('mm:ss.SSS')}</span>
+      {/* <Button
         variant="text"
         className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
         onClick={(e) => {
@@ -72,16 +67,15 @@ export function renderStart(r) {
         }}
       >
         Jump
-    </Button>
-  </div>
-  )
+    </Button> */}
+    </div>
+  );
 }
 
 const renderXHRText = () => (
   <span className="flex items-center">
     {XHR}
     <QuestionMarkHint
-      onHover={true}
       content={
         <>
           Use our{' '}
@@ -134,9 +128,9 @@ function renderSize(r) {
   }
 
   return (
-    <Popup style={{ width: '100%' }} content={content}>
+    <Tooltip style={{ width: '100%' }} content={content}>
       <div>{triggerText}</div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -157,9 +151,9 @@ export function renderDuration(r) {
   }
 
   return (
-    <Popup style={{ width: '100%' }} content={tooltipText}>
+    <Tooltip style={{ width: '100%' }} content={tooltipText}>
       <div className={cn(className, stl.duration)}> {text} </div>
-    </Popup>
+    </Tooltip>
   );
 }
 
@@ -243,39 +237,45 @@ export default class NetworkContent extends React.PureComponent {
               iconPosition="left"
               name="filter"
               onChange={this.onFilterChange}
+              height={28}
             />
           </BottomBlock.Header>
           <BottomBlock.Content>
-            <InfoLine>
-              <InfoLine.Point label={filtered.length} value=" requests" />
-              <InfoLine.Point
-                label={formatBytes(transferredSize)}
-                value="transferred"
-                display={transferredSize > 0}
-              />
-              <InfoLine.Point
-                label={formatBytes(resourcesSize)}
-                value="resources"
-                display={resourcesSize > 0}
-              />
-              <InfoLine.Point
-                label={formatMs(domBuildingTime)}
-                value="DOM Building Time"
-                display={domBuildingTime != null}
-              />
-              <InfoLine.Point
-                label={domContentLoadedTime && formatMs(domContentLoadedTime.value)}
-                value="DOMContentLoaded"
-                display={domContentLoadedTime != null}
-                dotColor={DOM_LOADED_TIME_COLOR}
-              />
-              <InfoLine.Point
-                label={loadTime && formatMs(loadTime.value)}
-                value="Load"
-                display={loadTime != null}
-                dotColor={LOAD_TIME_COLOR}
-              />
-            </InfoLine>
+            <div className="flex items-center justify-between px-4">
+              <div>
+                <Toggler checked={true} name="test" onChange={() => {}} label="4xx-5xx Only" />
+              </div>
+              <InfoLine>
+                <InfoLine.Point label={filtered.length} value=" requests" />
+                <InfoLine.Point
+                  label={formatBytes(transferredSize)}
+                  value="transferred"
+                  display={transferredSize > 0}
+                />
+                <InfoLine.Point
+                  label={formatBytes(resourcesSize)}
+                  value="resources"
+                  display={resourcesSize > 0}
+                />
+                <InfoLine.Point
+                  label={formatMs(domBuildingTime)}
+                  value="DOM Building Time"
+                  display={domBuildingTime != null}
+                />
+                <InfoLine.Point
+                  label={domContentLoadedTime && formatMs(domContentLoadedTime.value)}
+                  value="DOMContentLoaded"
+                  display={domContentLoadedTime != null}
+                  dotColor={DOM_LOADED_TIME_COLOR}
+                />
+                <InfoLine.Point
+                  label={loadTime && formatMs(loadTime.value)}
+                  value="Load"
+                  display={loadTime != null}
+                  dotColor={LOAD_TIME_COLOR}
+                />
+              </InfoLine>
+            </div>
             <NoContent
               title={
                 <div className="capitalize flex items-center mt-16">
@@ -296,11 +296,11 @@ export default class NetworkContent extends React.PureComponent {
                 activeIndex={lastIndex}
               >
                 {[
-                  {
-                    label: 'Start',
-                    width: 120,
-                    render: renderStart,
-                  },
+                  // {
+                  //   label: 'Start',
+                  //   width: 120,
+                  //   render: renderStart,
+                  // },
                   {
                     label: 'Status',
                     dataKey: 'status',

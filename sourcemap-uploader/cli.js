@@ -55,10 +55,10 @@ dir.addArgument(['-u', '--js-dir-url'], {
 
 // TODO: exclude in dir
 
-const { command, api_key, project_key, server, verbose, ...args } =
+const { command, api_key, project_key, server, logs, ...args } =
   parser.parseArgs();
 
-global._VERBOSE = !!verbose;
+global._VERBOSE = !!logs;
 
 (command === 'file'
   ? uploadFile(

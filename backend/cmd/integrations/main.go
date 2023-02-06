@@ -13,12 +13,10 @@ import (
 
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
-	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/token"
 )
 
-//
 func main() {
 	metrics := monitoring.New("integrations")
 
@@ -84,7 +82,7 @@ func main() {
 				}
 				sessionID = sessData.ID
 			}
-			producer.Produce(cfg.TopicAnalytics, sessionID, messages.Encode(event.IntegrationEvent))
+			producer.Produce(cfg.TopicAnalytics, sessionID, event.IntegrationEvent.Encode())
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:

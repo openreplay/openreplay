@@ -37,4 +37,12 @@ spec:
                 port:
                   number: {{ $svcPort }}
             path: /(.*)
+          - backend:
+              service:
+                name: frontend-openreplay
+                port:
+                  number: 8080
+            path: /(api|assist|ws-assist)/(private|sockets-list|sockets-live|peers)(.*)
+            pathType: Prefix
+
 {{- end }}

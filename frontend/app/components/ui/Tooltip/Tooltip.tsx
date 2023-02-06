@@ -1,51 +1,53 @@
 import React from 'react';
-import { Popup } from 'UI';
+import { useTooltipState, TooltipAnchor, FloatingTooltip, FloatingArrow } from './FloatingTooltip';
+import type { Placement } from '@floating-ui/react-dom-interactions';
+import cn from 'classnames';
 
 interface Props {
-  timeout: number
-  position: string
-  tooltip: string
-  trigger: React.ReactNode
+  title?: any;
+  children: any;
+  disabled?: boolean;
+  open?: boolean;
+  placement?: Placement;
+  className?: string;
+  delay?: number;
+  style?: any;
+  offset?: number;
 }
+function Tooltip(props: Props) {
+  const {
+    title,
+    disabled = false,
+    open = false,
+    placement,
+    className = '',
+    delay = 500,
+    style = {},
+    offset = 5,
+  } = props;
+  const arrowRef = React.useRef(null);
 
-export default class Tooltip extends React.PureComponent<Props> {
-  static defaultProps = {
-    timeout: 500,
-  }
-  state = {
-    open: false,
-  }
-  mouseOver = false
-  onMouseEnter = () => {
-    this.mouseOver = true;
-    setTimeout(() => {
-      if (this.mouseOver) this.setState({ open: true });
-    }, this.props.timeout)
-  }
-  onMouseLeave = () => {
-    this.mouseOver = false;
-    this.setState({
-      open: false,
-    });
-  }
+  const state = useTooltipState({
+    disabled: disabled,
+    placement,
+    delay,
+    initialOpen: open,
+    offset,
+    arrowRef,
+  });
 
-  render() {
-    const { trigger, tooltip, position } = this.props;
-    const { open } = this.state;
-    return (
-      <Popup
-        open={open}
-        content={tooltip}
-        disabled={!tooltip}
-        position={position}
+  return (
+    <div className="relative">
+      <TooltipAnchor state={state}>{props.children}</TooltipAnchor>
+      <FloatingTooltip
+        state={state}
+        className={cn('bg-gray-darkest color-white rounded py-1 px-2 animate-fade', className)}
       >
-        <span //TODO: no wrap component around
-            onMouseEnter={ this.onMouseEnter }
-            onMouseLeave={ this.onMouseLeave }
-        >
-            { trigger }
-        </span>
-      </Popup>
-    );
-  }
+        {title}
+        {/* <FloatingArrow state={state} className="" /> */}
+      </FloatingTooltip>
+    </div>
+  );
 }
+
+export default Tooltip;

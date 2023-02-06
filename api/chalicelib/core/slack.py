@@ -4,17 +4,6 @@ from decouple import config
 from chalicelib.core.collaboration_slack import Slack
 
 
-def send(notification, destination):
-    if notification is None:
-        return
-    return Slack.send_text(tenant_id=notification["tenantId"],
-                           webhook_id=destination,
-                           text=notification["description"] \
-                                + f"\n<{config('SITE_URL')}{notification['buttonUrl']}|{notification['buttonText']}>",
-                           title=notification["title"],
-                           title_link=notification["buttonUrl"], )
-
-
 def send_batch(notifications_list):
     if notifications_list is None or len(notifications_list) == 0:
         return

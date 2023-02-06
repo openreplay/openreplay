@@ -1,6 +1,11 @@
 # This action will push the chalice changes to aws
 on:
   workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        required: false
+        default: 'false'
   push:
     branches:
       - dev
@@ -43,11 +48,26 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.sha }}-ee
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
         ENVIRONMENT: staging
       run: |
+        skip_security_checks=${{ github.event.inputs.skip_security_checks }}
         cd api
-        PUSH_IMAGE=1 bash build.sh ee
+        PUSH_IMAGE=0 bash -x ./build.sh ee
+        [[ "x$skip_security_checks" == "xtrue" ]]  || {
+          curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+          images=("chalice" "alerts")
+          for image in ${images[*]};do
+            ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+          done
+          err_code=$?
+          [[ $err_code -ne 0 ]] && {
+            exit $err_code
+          }
+        } && {
+          echo "Skipping Security Checks"
+        }
+        PUSH_IMAGE=1 bash -x ./build.sh ee
     - name: Creating old image input
       run: |
         #
@@ -91,8 +111,19 @@ jobs:
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         # We're not passing -ee flag, because helm will add that.
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
+
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ee
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
 
     # - name: Debug Job
     #   if: ${{ failure() }}

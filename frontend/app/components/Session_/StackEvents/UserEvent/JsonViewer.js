@@ -18,7 +18,9 @@ export default class JsonViewer extends React.PureComponent {
         {isObjectData && <JSONTree src={data} collapsed={false} />}
         {!isObjectData && Array.isArray(data) && (
           <div>
-            <div className="text-lg">{data[0]}</div>
+            <div className="code-font mb-2">
+              {typeof data[0] === 'string' ? data[0] : JSON.stringify(data[0])}
+            </div>
             <JSONTree src={data[1]} collapsed={false} />
           </div>
         )}

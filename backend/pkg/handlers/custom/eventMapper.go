@@ -56,15 +56,6 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 				Selector:       msg.Selector,
 			}
 		}
-	case *JSException:
-		return &ErrorEvent{
-			MessageID: messageID,
-			Timestamp: timestamp,
-			Source:    "js_exception",
-			Name:      msg.Name,
-			Message:   msg.Message,
-			Payload:   msg.Payload,
-		}
 	case *ResourceTiming:
 		return &ResourceEvent{
 			MessageID:       messageID,

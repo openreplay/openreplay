@@ -1,6 +1,5 @@
 import Player from './Player';
-import { update, clean as cleanStore, getState } from './store';
-import { clean as cleanLists } from './lists';
+import { update, cleanStore, getState } from './store';
 
 /** @type {Player} */
 let instance = null;
@@ -29,7 +28,6 @@ document.addEventListener("visibilitychange", function() {
 });
 
 export function init(session, config, live = false) {
-  // const live = session.live;
   const endTime = !live && session.duration.valueOf();
 
   instance = new Player(session, config, live);
@@ -50,7 +48,6 @@ export function clean() {
   if (instance === null) return;
   instance.clean();
   cleanStore();
-  cleanLists();
   instance = null;
 }
 export const jump = initCheck((...args) => instance.jump(...args));
@@ -59,7 +56,6 @@ export const togglePlay = initCheck((...args) => instance.togglePlay(...args));
 export const pause = initCheck((...args) => instance.pause(...args));
 export const toggleSkip = initCheck((...args) => instance.toggleSkip(...args));
 export const toggleSkipToIssue = initCheck((...args) => instance.toggleSkipToIssue(...args));
-export const updateSkipToIssue = initCheck((...args) => instance.updateSkipToIssue(...args));
 export const toggleAutoplay = initCheck((...args) => instance.toggleAutoplay(...args));
 export const toggleSpeed = initCheck((...args) => instance.toggleSpeed(...args));
 export const toggleEvents = initCheck((...args) => instance.toggleEvents(...args));
@@ -84,6 +80,10 @@ export const toggleAnnotation = initCheck((...args) => instance.assistManager.to
 export const toggleTimetravel = initCheck((...args) => instance.toggleTimetravel(...args))
 export const jumpToLive = initCheck((...args) => instance.jumpToLive(...args))
 export const toggleUserName = initCheck((...args) => instance.toggleUserName(...args))
+export const injectNotes = initCheck((...args) => instance.injectNotes(...args))
+export const filterOutNote = initCheck((...args) => instance.filterOutNote(...args))
+/** @type {Player.assistManager.toggleVideoLocalStream} */
+export const toggleVideoLocalStream = initCheck((...args) => instance.assistManager.toggleVideoLocalStream(...args))
 
 export const Controls = {
   jump,
@@ -91,7 +91,6 @@ export const Controls = {
   pause,
   toggleSkip,
   toggleSkipToIssue,
-  updateSkipToIssue,
   toggleAutoplay,
   toggleEvents,
   toggleSpeed,

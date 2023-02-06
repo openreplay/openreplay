@@ -29,7 +29,7 @@ export default class QueueSender {
   constructor(
     ingestBaseURL: string,
     private readonly onUnauthorised: () => any,
-    private readonly onFailure: () => any,
+    private readonly onFailure: (reason: string) => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
     private readonly ATTEMPT_TIMEOUT = 1000,
   ) {
@@ -50,7 +50,7 @@ export default class QueueSender {
 
   private retry(batch: Uint8Array): void {
     if (this.attemptsCount >= this.MAX_ATTEMPTS_COUNT) {
-      this.onFailure()
+      this.onFailure(`Failed to send batch after ${this.attemptsCount} attempts.`)
       return
     }
     this.attemptsCount++

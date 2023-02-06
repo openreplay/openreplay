@@ -1,8 +1,8 @@
 import React from 'react';
 import { connectPlayer } from 'Player';
-import { getStatusText } from 'Player/MessageDistributor/managers/AssistManager';
-import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
-import { CallingState, ConnectionStatus, RemoteControlStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import { getStatusText } from 'Player';
+import type { MarkedTarget } from 'Player';
+import { CallingState, ConnectionStatus, RemoteControlStatus } from 'Player';
 
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import PlayIconLayer from './Overlay/PlayIconLayer';

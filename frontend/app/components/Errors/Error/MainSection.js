@@ -19,155 +19,138 @@ import SessionBar from './SessionBar';
 
 @withSiteIdRouter
 @connect(
-    (state) => ({
-        error: state.getIn(['errors', 'instance']),
-        trace: state.getIn(['errors', 'instanceTrace']),
-        sourcemapUploaded: state.getIn(['errors', 'sourcemapUploaded']),
-        resolveToggleLoading: state.getIn(['errors', 'resolve', 'loading']) || state.getIn(['errors', 'unresolve', 'loading']),
-        ignoreLoading: state.getIn(['errors', 'ignore', 'loading']),
-        toggleFavoriteLoading: state.getIn(['errors', 'toggleFavorite', 'loading']),
-        traceLoading: state.getIn(['errors', 'fetchTrace', 'loading']),
-    }),
-    {
-        resolve,
-        unresolve,
-        ignore,
-        toggleFavorite,
-        addFilterByKeyAndValue,
-    }
+  (state) => ({
+    error: state.getIn(['errors', 'instance']),
+    trace: state.getIn(['errors', 'instanceTrace']),
+    sourcemapUploaded: state.getIn(['errors', 'sourcemapUploaded']),
+    resolveToggleLoading:
+      state.getIn(['errors', 'resolve', 'loading']) ||
+      state.getIn(['errors', 'unresolve', 'loading']),
+    ignoreLoading: state.getIn(['errors', 'ignore', 'loading']),
+    toggleFavoriteLoading: state.getIn(['errors', 'toggleFavorite', 'loading']),
+    traceLoading: state.getIn(['errors', 'fetchTrace', 'loading']),
+  }),
+  {
+    resolve,
+    unresolve,
+    ignore,
+    toggleFavorite,
+    addFilterByKeyAndValue,
+  }
 )
 export default class MainSection extends React.PureComponent {
-    resolve = () => {
-        const { error } = this.props;
-        this.props.resolve(error.errorId);
-    };
+  resolve = () => {
+    const { error } = this.props;
+    this.props.resolve(error.errorId);
+  };
 
-    unresolve = () => {
-        const { error } = this.props;
-        this.props.unresolve(error.errorId);
-    };
+  unresolve = () => {
+    const { error } = this.props;
+    this.props.unresolve(error.errorId);
+  };
 
-    ignore = () => {
-        const { error } = this.props;
-        this.props.ignore(error.errorId);
-    };
-    bookmark = () => {
-        const { error } = this.props;
-        this.props.toggleFavorite(error.errorId);
-    };
+  ignore = () => {
+    const { error } = this.props;
+    this.props.ignore(error.errorId);
+  };
+  bookmark = () => {
+    const { error } = this.props;
+    this.props.toggleFavorite(error.errorId);
+  };
 
-    findSessions = () => {
-        this.props.addFilterByKeyAndValue(FilterKey.ERROR, this.props.error.message);
-        this.props.history.push(sessionsRoute());
-    };
+  findSessions = () => {
+    this.props.addFilterByKeyAndValue(FilterKey.ERROR, this.props.error.message);
+    this.props.history.push(sessionsRoute());
+  };
 
-    render() {
-        const { error, trace, sourcemapUploaded, ignoreLoading, resolveToggleLoading, toggleFavoriteLoading, className, traceLoading } = this.props;
-        const isPlayer = window.location.pathname.includes('/session/')
+  render() {
+    const {
+      error,
+      trace,
+      sourcemapUploaded,
+      ignoreLoading,
+      resolveToggleLoading,
+      toggleFavoriteLoading,
+      className,
+      traceLoading,
+    } = this.props;
+    const isPlayer = window.location.pathname.includes('/session/');
 
-        return (
-            <div className={cn(className, 'bg-white border-radius-3 thin-gray-border mb-6')}>
-                <div className="m-4">
-                    <ErrorName
-                        className="text-lg leading-relaxed"
-                        name={error.name}
-                        message={error.stack0InfoString}
-                        lineThrough={error.status === RESOLVED}
-                    />
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center color-gray-dark" style={{ wordBreak: 'break-all' }}>
-                            {error.message}
-                        </div>
-                        <div className="text-center">
-                            <div className="flex">
-                                <Label topValue={error.sessions} topValueSize="text-lg" bottomValue="Sessions" />
-                                <Label topValue={error.users} topValueSize="text-lg" bottomValue="Users" />
-                            </div>
-                            <div className="text-xs color-gray-medium">Over the past 30 days</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* <Divider />
-				<div className="flex m-4">
-					{ error.status === UNRESOLVED 
-						? <IconButton
-								outline
-								className="mr-3"
-								label="Resolve"
-								size="small"
-								icon="check" 
-								loading={ resolveToggleLoading }
-								onClick={ this.resolve }
-							/>
-						: <IconButton
-								outline
-								className="mr-3"
-								label="Unresolve"
-								size="small"
-								icon="exclamation-circle" 
-								loading={ resolveToggleLoading }
-								onClick={ this.unresolve }
-							/>
-					}	
-					{ error.status !== IGNORED &&
-						<IconButton
-							outline
-							className="mr-3"
-							label="Ignore"
-							size="small"
-							icon="ban" 
-							loading={ ignoreLoading }
-							onClick={ this.ignore }
-						/>
-					}	
-					<IconButton						
-						primaryText
-						label="Bookmark"
-						size="small"
-						compact
-						icon={ error.favorite ? "star-solid" : "star" } 
-						loading={ toggleFavoriteLoading }
-						onClick={ this.bookmark }
-					/>
-					<SharePopup
-						entity="errors"
-						id={ error.errorId }
-						trigger={
-							<IconButton
-							primaryText
-							label="Share"
-							size="small"
-							icon="share-alt"
-							/>
-						}
-					/>
-				</div> */}
-                <Divider />
-                {!isPlayer && (
-                    <div className="m-4">
-                        <h3 className="text-xl inline-block mr-2">Last session with this error</h3>
-                        <span className="font-thin text-sm">{resentOrDate(error.lastOccurrence)}</span>
-                        <SessionBar className="my-4" session={error.lastHydratedSession} />
-                        <Button variant="text-primary" onClick={this.findSessions}>
-                            Find all sessions with this error
-                            <Icon className="ml-1" name="next1" color="teal" />
-                        </Button>    
-                    </div>
-                )}
-                <Divider />
-                <div className="m-4">
-                    <Loader loading={traceLoading}>
-                        <ErrorDetails
-                            name={error.name}
-                            message={error.message}
-                            errorStack={trace}
-                            error={error}
-                            sourcemapUploaded={sourcemapUploaded}
-                        />
-                    </Loader>
-                </div>
+    return (
+      <div className={cn(className, 'bg-white border-radius-3 thin-gray-border mb-6')}>
+        <div className="m-4">
+          <ErrorName
+            className="text-lg leading-relaxed"
+            name={error.name}
+            message={error.stack0InfoString}
+            lineThrough={error.status === RESOLVED}
+          />
+          <div className="flex flex-col">
+            <div
+              className="flex items-center color-gray-dark font-semibold"
+              style={{ wordBreak: 'break-all' }}
+            >
+              {error.message}
             </div>
-        );
-    }
+            <div className="flex items-center mt-2">
+              <div className="flex">
+                <Label
+                  topValue={error.sessions}
+                  horizontal
+                  topValueSize="text-lg"
+                  bottomValue="Sessions"
+                />
+                <Label
+                  topValue={error.users}
+                  horizontal
+                  topValueSize="text-lg"
+                  bottomValue="Users"
+                />
+              </div>
+              <div className="text-xs color-gray-medium">Over the past 30 days</div>
+            </div>
+          </div>
+        </div>
+
+        <Divider />
+        <div className="m-4">
+          <div className="flex items-center">
+            <h3 className="text-xl inline-block mr-2">Last session with this error</h3>
+            <span className="font-thin text-sm">{resentOrDate(error.lastOccurrence)}</span>
+            <Button className="ml-auto" variant="text-primary" onClick={this.findSessions}>
+              Find all sessions with this error
+              <Icon className="ml-1" name="next1" color="teal" />
+            </Button>
+          </div>
+          <SessionBar className="my-4" session={error.lastHydratedSession} />
+          {error.customTags.length > 0 ? (
+            <div className="flex items-start flex-col">
+              <div>
+                <span className="font-semibold">More Info</span> <span className="text-disabled-text">(most recent call)</span>
+              </div>
+              <div className="mt-4 flex items-center gap-3 w-full flex-wrap">
+              {error.customTags.map((tag) => (
+                <div className="flex items-center rounded overflow-hidden bg-gray-lightest">
+                  <div className="bg-gray-light-shade py-1 px-2 text-disabled-text">{Object.entries(tag)[0][0]}</div> <div className="py-1 px-2 text-gray-dark">{Object.entries(tag)[0][1]}</div>
+                </div>
+              ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+        <Divider />
+        <div className="m-4">
+          <Loader loading={traceLoading}>
+            <ErrorDetails
+              name={error.name}
+              message={error.message}
+              errorStack={trace}
+              error={error}
+              sourcemapUploaded={sourcemapUploaded}
+            />
+          </Loader>
+        </div>
+      </div>
+    );
+  }
 }

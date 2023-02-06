@@ -35,6 +35,8 @@ import type {
   RawPerformanceTrack,
   RawConnectionInformation,
   RawSetPageVisibility,
+  RawLoadFontFace,
+  RawSetNodeFocus,
   RawLongTask,
   RawSetNodeAttributeURLBased,
   RawSetCssDataURLBased,
@@ -122,6 +124,10 @@ export type PerformanceTrack = RawPerformanceTrack & Timed
 export type ConnectionInformation = RawConnectionInformation & Timed
 
 export type SetPageVisibility = RawSetPageVisibility & Timed
+
+export type LoadFontFace = RawLoadFontFace & Timed
+
+export type SetNodeFocus = RawSetNodeFocus & Timed
 
 export type LongTask = RawLongTask & Timed
 

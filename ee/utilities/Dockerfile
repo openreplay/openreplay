@@ -5,6 +5,7 @@ RUN apk add --no-cache tini git libc6-compat && ln -s /lib/libc.musl-x86_64.so.1
 ARG envarg
 ENV ENTERPRISE_BUILD=${envarg} \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
+    PRIVATE_ENDPOINTS=false \
     LISTEN_PORT=9001
 WORKDIR /work
 COPY package.json .

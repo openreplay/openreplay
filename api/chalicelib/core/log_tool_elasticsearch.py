@@ -1,7 +1,6 @@
 # from elasticsearch import Elasticsearch, RequestsHttpConnection
 from elasticsearch import Elasticsearch
 from chalicelib.core import log_tools
-import base64
 import logging
 
 logging.getLogger('elasticsearch').level = logging.ERROR

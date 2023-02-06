@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-openreplay-clickhouse
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.webPort }}
+      targetPort: web
+      protocol: TCP
+      name: web
+    - port: {{ .Values.service.dataPort }}
+      targetPort: data
+      protocol: TCP
+      name: data
+    - port: 7171
+      targetPort: backup-web
+      protocol: TCP
+      name: backup-web
+  selector:
+    {{- include "clickhouse.selectorLabels" . | nindent 4 }}

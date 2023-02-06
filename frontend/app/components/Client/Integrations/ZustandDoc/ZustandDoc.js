@@ -81,7 +81,7 @@ const useBearStore = create(
                     }
                 />
 
-                <DocLink className="mt-4" label="Integrate Vuex" url="https://docs.openreplay.com/plugins/zustand" />
+                <DocLink className="mt-4" label="Integrate Zustand" url="https://docs.openreplay.com/plugins/zustand" />
             </div>
         </div>
     );

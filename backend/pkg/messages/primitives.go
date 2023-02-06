@@ -8,13 +8,17 @@ import (
 	"log"
 )
 
+var (
+	one   = []byte{0}
+	three = []byte{0, 0, 0}
+)
+
 func ReadByte(reader io.Reader) (byte, error) {
-	p := make([]byte, 1)
-	_, err := io.ReadFull(reader, p)
+	_, err := io.ReadFull(reader, one)
 	if err != nil {
 		return 0, err
 	}
-	return p[0], nil
+	return one[0], nil
 }
 
 func ReadData(reader io.Reader) ([]byte, error) {
@@ -156,8 +160,7 @@ func WriteSize(size uint64, buf []byte, p int) {
 }
 
 func ReadSize(reader io.Reader) (uint64, error) {
-	buf := make([]byte, 3)
-	n, err := io.ReadFull(reader, buf)
+	n, err := io.ReadFull(reader, three)
 	if err != nil {
 		return 0, err
 	}
@@ -165,7 +168,7 @@ func ReadSize(reader io.Reader) (uint64, error) {
 		return 0, fmt.Errorf("read only %d of 3 size bytes", n)
 	}
 	var size uint64
-	for i, b := range buf {
+	for i, b := range three {
 		size += uint64(b) << (8 * i)
 	}
 	return size, nil

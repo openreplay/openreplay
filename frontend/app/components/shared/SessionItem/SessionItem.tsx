@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import cn from 'classnames';
-import { CountryFlag, Avatar, TextEllipsis, Label, Icon } from 'UI';
+import { CountryFlag, Avatar, TextEllipsis, Label, Icon, Tooltip } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
@@ -12,7 +12,6 @@ import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from 'App/routes';
 import { capitalize } from 'App/utils';
-import { Tooltip } from 'react-tippy';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession();
@@ -132,8 +131,8 @@ function SessionItem(props: RouteComponentProps & Props) {
                     )}
                     <div style={{ width: compact ? '40%' : '20%' }} className="px-2 flex flex-col justify-between">
                         <div>
-                            {/* @ts-ignore */}
                             <Tooltip
+                                delay={0}
                                 title={`${formatTimeOrDate(startedAt, timezone, true)} ${timezone.label}`}
                                 className="w-fit !block"
                             >

@@ -1,0 +1,21 @@
+apiVersion: v2
+appVersion: 1.12.0
+description: Official HashiCorp Vault Chart
+home: https://www.vaultproject.io
+icon: https://github.com/hashicorp/vault/raw/f22d202cde2018f9455dec755118a9b84586e082/Vault_PrimaryLogo_Black.png
+keywords:
+- vault
+- security
+- encryption
+- secrets
+- management
+- automation
+- infrastructure
+kubeVersion: '>= 1.16.0-0'
+name: vault
+sources:
+- https://github.com/hashicorp/vault
+- https://github.com/hashicorp/vault-helm
+- https://github.com/hashicorp/vault-k8s
+- https://github.com/hashicorp/vault-csi-provider
+version: 0.22.1

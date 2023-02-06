@@ -2,21 +2,15 @@ package postgres
 
 import (
 	"log"
-	"math"
 
-	"openreplay/backend/pkg/hashid"
+	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
 
-// TODO: change messages and replace everywhere to e.Index
-func getSqIdx(messageID uint64) uint {
-	return uint(messageID % math.MaxInt32)
-}
-
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
 	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
-		e.MessageID,
+		truncSqIdx(e.MessageID),
 		e.Name, e.Payload)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
@@ -46,7 +40,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 		return err
 	}
 	// base_path is deprecated
-	if err = conn.webPageEvents.Append(sessionID, e.MessageID, e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
+	if err = conn.webPageEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
@@ -69,7 +63,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Cli
 			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
 		)
 		`
-	conn.batchQueue(sessionID, sqlRequest, sessionID, e.MessageID, e.Timestamp, e.Label, e.Selector)
+	conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector)
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 0)
 	// Add new value set to autocomplete bulk
@@ -85,7 +79,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	if e.ValueMasked {
 		value = nil
 	}
-	if err := conn.webInputEvents.Append(sessionID, e.MessageID, e.Timestamp, value, e.Label); err != nil {
+	if err := conn.webInputEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, value, e.Label); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
@@ -93,7 +87,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *ErrorEvent) (err error) {
+func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) (err error) {
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
@@ -105,7 +99,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 			}
 		}
 	}()
-	errorID := hashid.WebErrorID(projectID, e)
+	errorID := e.ID(projectID)
 
 	if err = tx.exec(`
 		INSERT INTO errors
@@ -123,7 +117,7 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		VALUES
 			($1, $2, $3, $4)
 		`,
-		sessionID, e.MessageID, e.Timestamp, errorID,
+		sessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID,
 	); err != nil {
 		return err
 	}
@@ -135,6 +129,18 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		return err
 	}
 	err = tx.commit()
+
+	// Insert tags
+	sqlRequest := `
+		INSERT INTO public.errors_tags (
+			session_id, message_id, error_id, key, value
+		) VALUES (
+			$1, $2, $3, $4, $5
+		) ON CONFLICT DO NOTHING`
+	for key, value := range e.Tags {
+		conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), errorID, key, value)
+	}
+
 	return
 }
 
@@ -163,7 +169,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 			$12, $13
 		) ON CONFLICT DO NOTHING`
 	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, getSqIdx(e.MessageID),
+		sessionID, e.Timestamp, truncSqIdx(e.MessageID),
 		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
 		e.Duration, e.Status < 400,
@@ -181,7 +187,7 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, save
 		request = &e.Variables
 		response = &e.Response
 	}
-	if err := conn.webGraphQLEvents.Append(sessionID, e.Timestamp, e.MessageID, e.OperationName, request, response); err != nil {
+	if err := conn.webGraphQLEvents.Append(sessionID, e.Timestamp, truncSqIdx(e.MessageID), e.OperationName, request, response); err != nil {
 		log.Printf("insert web graphQL event err: %s", err)
 	}
 	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)

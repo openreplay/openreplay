@@ -55,8 +55,7 @@ func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 	}
 	c, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
-		log.Println(err)
-		log.Fatalln("pgxpool.Connect Error")
+		log.Fatalf("pgxpool.Connect err: %s", err)
 	}
 	conn := &Conn{
 		batches:         make(map[uint64]*pgx.Batch),

@@ -1,5 +1,5 @@
-import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
-import Widget, { IWidget } from "./types/widget";
+import { makeAutoObservable, computed } from "mobx"
+import Widget from "./types/widget";
 import { metricService, errorService } from "App/services";
 import { toast } from 'react-toastify';
 import Error from "./types/error";
@@ -8,8 +8,8 @@ export default class MetricStore {
     isLoading: boolean = false
     isSaving: boolean = false
 
-    metrics: IWidget[] = []
-    instance: IWidget = new Widget()
+    metrics: Widget[] = []
+    instance = new Widget()
 
     page: number = 1
     pageSize: number = 10
@@ -20,41 +20,21 @@ export default class MetricStore {
     sessionsPageSize: number = 10
 
     constructor() {
-        makeAutoObservable(this, {
-            isLoading: observable,
-            metrics: observable,
-            instance: observable,
-            page: observable,
-            pageSize: observable,
-            metricsSearch: observable,
-            sort: observable,
+        makeAutoObservable(this)
+    }
 
-            init: action,
-            updateKey: action,
-            merge: action,
-            reset: action,
-            addToList: action,
-            updateInList: action,
-            findById: action,
-            removeById: action,
-
-            save: action,
-            fetchList: action,
-            fetch: action,
-            delete: action,
-
-            fetchError: action,
-
-            paginatedList: computed,
-        })
+    @computed
+    get sortedWidgets() {
+        return [...this.metrics].sort((a, b) => b.lastModified - a.lastModified)
     }
 
     // State Actions
-    init(metric?: IWidget|null) {
+    init(metric?: Widget | null) {
         this.instance.update(metric || new Widget())
     }
 
     updateKey(key: string, value: any) {
+        // @ts-ignore
         this[key] = value
     }
 
@@ -70,33 +50,36 @@ export default class MetricStore {
         }
     }
 
-    addToList(metric: IWidget) {
+    addToList(metric: Widget) {
         this.metrics.push(metric)
     }
 
-    updateInList(metric: IWidget) {
-        const index = this.metrics.findIndex((m: IWidget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY])
+    updateInList(metric: Widget) {
+        // @ts-ignore
+        const index = this.metrics.findIndex((m: Widget) => m[Widget.ID_KEY] === metric[Widget.ID_KEY])
         if (index >= 0) {
             this.metrics[index] = metric
         }
     }
 
     findById(id: string) {
+        // @ts-ignore
         return this.metrics.find(m => m[Widget.ID_KEY] === id)
     }
 
     removeById(id: string): void {
+        // @ts-ignore
         this.metrics = this.metrics.filter(m => m[Widget.ID_KEY] !== id)
     }
 
-    get paginatedList(): IWidget[] {
+    get paginatedList(): Widget[] {
         const start = (this.page - 1) * this.pageSize
         const end = start + this.pageSize
         return this.metrics.slice(start, end)
     }
 
     // API Communication
-    save(metric: IWidget, dashboardId?: string): Promise<any> {
+    save(metric: Widget, dashboardId?: string): Promise<any> {
         const wasCreating = !metric.exists()
         this.isSaving = true
         return new Promise((resolve, reject) => {
@@ -143,10 +126,12 @@ export default class MetricStore {
             })
     }
 
-    delete(metric: IWidget) {
+    delete(metric: Widget) {
         this.isSaving = true
+        // @ts-ignore
         return metricService.deleteMetric(metric[Widget.ID_KEY])
             .then(() => {
+                // @ts-ignore
                 this.removeById(metric[Widget.ID_KEY])
                 toast.success('Metric deleted successfully')
             }).finally(() => {

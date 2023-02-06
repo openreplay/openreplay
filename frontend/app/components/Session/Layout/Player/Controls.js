@@ -89,7 +89,7 @@ function Controls({
               icon="replay-10"
             />
           </div>
-          <div className="flex items-center"> 
+          <div className="flex items-center">
             <button
               className={ cn("text-gray-darkest hover:bg-gray-lightest", cls.speedButton) }
               onClick={ player.toggleSpeed }
@@ -119,7 +119,7 @@ function Controls({
                 hasErrors={ hasErrors }
               />
             )}
-            
+
             <ControlButton
               disabled={ disabled }
               onClick={ player.toggleFullscreen }

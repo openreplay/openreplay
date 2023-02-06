@@ -15,7 +15,7 @@ efsCleaner:
     # In case of pvc, you'll have to provide the pvc name.
     # For example
     # name: openreplay-efs
-    name: hostPath
+    name: "{{ .Values.global.pvcRWXName }}"
     hostMountPath: /openreplay/storage/nfs
 
 telemetry:
@@ -55,7 +55,6 @@ sessionsCleaner:
 # Common env values are from chalice for the crons
 chalice:
   env:
-    ch_host: clickhouse-openreplay-clickhouse.db.svc.cluster.local
     ch_port: 9000
     captcha_server: ''
     captcha_key: ''
@@ -84,3 +83,13 @@ fullnameOverride: "utilities-openreplay"
 # refer: https://crontab.guru/#5_3_*_*_1
 cron: "5 3 */3 * *"
 
+# Pod configurations
+
+securityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+podSecurityContext:
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+  fsGroupChangePolicy: "OnRootMismatch"

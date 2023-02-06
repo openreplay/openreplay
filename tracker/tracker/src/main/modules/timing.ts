@@ -226,13 +226,13 @@ export default function (app: App, opts: Partial<Options>): void {
           paintBlocks === null
             ? 0
             : calculateSpeedIndex(firstContentfulPaint || firstPaint, paintBlocks)
+        const { domContentLoadedEventEnd, navigationStart } = performance.timing
         const timeToInteractive =
           interactiveWindowTickTime === null
             ? Math.max(
                 interactiveWindowStartTime,
                 firstContentfulPaint,
-                performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart ||
-                  0,
+                domContentLoadedEventEnd - navigationStart || 0,
               )
             : 0
         app.send(

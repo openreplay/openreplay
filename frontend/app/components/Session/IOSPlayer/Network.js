@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { useState, useCallback } from 'react';
-import { Popup, SlideModal } from 'UI';
+import { Tooltip, SlideModal } from 'UI';
 
 import { NETWORK } from 'Player/ios/state';
 
@@ -24,13 +24,13 @@ const COLUMNS = [
     label: 'url',
     width: 130,
     render: (r) => (
-      <Popup
-        content={<div className={cls.popupNameContent}>{r.url}</div>}
+      <Tooltip
+        title={<div className={cls.popupNameContent}>{r.url}</div>}
         size="mini"
         position="right center"
       >
         <div className={cls.popupNameTrigger}>{r.url}</div>
-      </Popup>
+      </Tooltip>
     ),
   },
   {

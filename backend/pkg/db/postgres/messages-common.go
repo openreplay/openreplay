@@ -82,6 +82,10 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 	return dur, nil
 }
 
+func (conn *Conn) InsertSessionEncryptionKey(sessionID uint64, key []byte) error {
+	return conn.c.Exec(`UPDATE sessions SET file_key = $2 WHERE session_id = $1`, sessionID, string(key))
+}
+
 func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 	sqlRequest := `
 	UPDATE sessions
@@ -91,22 +95,23 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 			ELSE
 				(COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}'))::issue_type[]
 			END
-    FROM events_common.issues
-      INNER JOIN issues AS ps USING (issue_id)
-                WHERE session_id = $1)
-		WHERE session_id = $1`
+    	FROM events_common.issues
+		INNER JOIN issues AS ps USING (issue_id)
+		WHERE session_id = $1)
+	WHERE session_id = $1
+	`
 	return conn.c.Exec(sqlRequest, sessionID)
 }
 
-func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {
-	if err := conn.requests.Append(sessionID, timestamp, getSqIdx(index), url, duration, success); err != nil {
+func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool) error {
+	if err := conn.requests.Append(sessionID, timestamp, index, url, duration, success); err != nil {
 		return fmt.Errorf("insert request in bulk err: %s", err)
 	}
 	return nil
 }
 
-func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint64, name string, payload string) error {
-	if err := conn.customEvents.Append(sessionID, timestamp, getSqIdx(index), name, payload); err != nil {
+func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint32, name string, payload string) error {
+	if err := conn.customEvents.Append(sessionID, timestamp, index, name, payload); err != nil {
 		return fmt.Errorf("insert custom event in bulk err: %s", err)
 	}
 	return nil
@@ -160,20 +165,16 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	if *payload == "" || *payload == "{}" {
 		payload = nil
 	}
-	context := &e.Context
-	if *context == "" || *context == "{}" {
-		context = nil
-	}
 
 	if err = tx.exec(`
 		INSERT INTO issues (
-			project_id, issue_id, type, context_string, context
+			project_id, issue_id, type, context_string
 		) (SELECT
-			project_id, $2, $3, $4, CAST($5 AS jsonb)
+			project_id, $2, $3, $4
 			FROM sessions
 			WHERE session_id = $1
 		)ON CONFLICT DO NOTHING`,
-		sessionID, issueID, e.Type, e.ContextString, context,
+		sessionID, issueID, e.Type, e.ContextString,
 	); err != nil {
 		return err
 	}
@@ -184,7 +185,7 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			$1, $2, $3, $4, CAST($5 AS jsonb)
 		)`,
 		sessionID, issueID, e.Timestamp,
-		getSqIdx(e.MessageID),
+		truncSqIdx(e.MessageID),
 		payload,
 	); err != nil {
 		return err
@@ -204,7 +205,7 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			VALUES
 				($1, $2, $3, left($4, 2700), $5, 'error')
 			`,
-			sessionID, getSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload,
+			sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload,
 		); err != nil {
 			return err
 		}

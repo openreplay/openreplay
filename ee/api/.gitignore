@@ -210,9 +210,8 @@ Pipfile
 /chalicelib/core/log_tool_sumologic.py
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
-/chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
-/chalicelib/core/sessions_metas.py
+#exp /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
 #exp /chalicelib/core/significance.py
 /chalicelib/core/slack.py
@@ -242,24 +241,21 @@ Pipfile
 /routers/subs/__init__.py
 /routers/__init__.py
 /chalicelib/core/assist.py
+/auth/__init__.py
 /auth/auth_apikey.py
-/auth/auth_jwt.py
 /build.sh
 /routers/base.py
 /routers/core.py
 /routers/crons/core_crons.py
-/routers/subs/dashboard.py
 /db_changes.sql
-/Dockerfile.bundle
+/Dockerfile_bundle
 /entrypoint.bundle.sh
 /chalicelib/core/heatmaps.py
-/routers/subs/insights.py
 /schemas.py
 #exp /chalicelib/core/custom_metrics.py
 /chalicelib/core/performance_event.py
 /chalicelib/core/saved_search.py
 /app_alerts.py
 /build_alerts.sh
-/routers/subs/metrics.py
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

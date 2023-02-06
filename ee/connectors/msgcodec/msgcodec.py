@@ -124,7 +124,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 3:
-            return SessionEnd(
+            return SessionEndDeprecated(
                 timestamp=self.read_uint(reader)
             )
 
@@ -237,13 +237,6 @@ class MessageCodec(Codec):
                 y=self.read_uint(reader)
             )
 
-        if message_id == 21:
-            return MouseClickDepricated(
-                id=self.read_uint(reader),
-                hesitation_time=self.read_uint(reader),
-                label=self.read_string(reader)
-            )
-
         if message_id == 22:
             return ConsoleLog(
                 level=self.read_string(reader),
@@ -271,7 +264,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 25:
-            return JSException(
+            return JSExceptionDeprecated(
                 name=self.read_string(reader),
                 message=self.read_string(reader),
                 payload=self.read_string(reader)
@@ -345,16 +338,6 @@ class MessageCodec(Codec):
                 hesitation_time=self.read_uint(reader),
                 label=self.read_string(reader),
                 selector=self.read_string(reader)
-            )
-
-        if message_id == 34:
-            return ErrorEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                source=self.read_string(reader),
-                name=self.read_string(reader),
-                message=self.read_string(reader),
-                payload=self.read_string(reader)
             )
 
         if message_id == 35:
@@ -541,6 +524,19 @@ class MessageCodec(Codec):
                 max_used_js_heap_size=self.read_uint(reader)
             )
 
+        if message_id == 57:
+            return LoadFontFace(
+                parent_id=self.read_uint(reader),
+                family=self.read_string(reader),
+                source=self.read_string(reader),
+                descriptors=self.read_string(reader)
+            )
+
+        if message_id == 58:
+            return SetNodeFocus(
+                id=self.read_int(reader)
+            )
+
         if message_id == 59:
             return LongTask(
                 timestamp=self.read_uint(reader),
@@ -666,6 +662,26 @@ class MessageCodec(Codec):
             return Zustand(
                 mutation=self.read_string(reader),
                 state=self.read_string(reader)
+            )
+
+        if message_id == 78:
+            return JSException(
+                name=self.read_string(reader),
+                message=self.read_string(reader),
+                payload=self.read_string(reader),
+                metadata=self.read_string(reader)
+            )
+
+        if message_id == 126:
+            return SessionEnd(
+                timestamp=self.read_uint(reader),
+                encryption_key=self.read_string(reader)
+            )
+
+        if message_id == 127:
+            return SessionSearch(
+                timestamp=self.read_uint(reader),
+                partition=self.read_uint(reader)
             )
 
         if message_id == 107:

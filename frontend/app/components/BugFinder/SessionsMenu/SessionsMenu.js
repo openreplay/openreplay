@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { SideMenuitem, Popup } from 'UI'
+import { SideMenuitem, Tooltip } from 'UI'
 import stl from './sessionMenu.module.css';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
@@ -24,12 +24,11 @@ function SessionsMenu(props) {
           <span>Sessions</span>
         </div>
         <span className={ cn(stl.manageButton, 'mr-2') } onClick={() => showModal(<SessionSettings />, { right: true })}>
-          <Popup
-            hideOnClick={true}
-            content={<span>Configure the percentage of sessions <br /> to be captured, timezone and more.</span>}
+          <Tooltip
+            title={<span>Configure the percentage of sessions <br /> to be captured, timezone and more.</span>}
           >
             Settings
-          </Popup>
+          </Tooltip>
         </span>
       </div>
 

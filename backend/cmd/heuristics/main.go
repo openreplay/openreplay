@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/queue/types"
 	"os"
 	"os/signal"
 	"syscall"
@@ -47,25 +46,18 @@ func main() {
 
 	// Init producer and consumer for data bus
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
-	consumer := queue.NewMessageConsumer(
+
+	msgHandler := func(msg messages.Message) {
+		statsLogger.Collect(msg)
+		builderMap.HandleMessage(msg)
+	}
+
+	consumer := queue.NewConsumer(
 		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		func(sessionID uint64, iter messages.Iterator, meta *types.Meta) {
-			var lastMessageID uint64
-			for iter.Next() {
-				statsLogger.Collect(sessionID, meta)
-				msg := iter.Message().Decode()
-				if msg == nil {
-					log.Printf("failed batch, sess: %d, lastIndex: %d", sessionID, lastMessageID)
-					continue
-				}
-				lastMessageID = msg.Meta().Index
-				builderMap.HandleMessage(sessionID, msg, iter.Message().Meta().Index)
-			}
-			iter.Close()
-		},
+		messages.NewMessageIterator(msgHandler, nil, true),
 		false,
 		cfg.MessageSizeLimit,
 	)
@@ -86,10 +78,12 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			builderMap.IterateReadyMessages(func(sessionID uint64, readyMsg messages.Message) {
-				producer.Produce(cfg.TopicAnalytics, sessionID, messages.Encode(readyMsg))
+				producer.Produce(cfg.TopicAnalytics, sessionID, readyMsg.Encode())
 			})
 			producer.Flush(cfg.ProducerTimeout)
 			consumer.Commit()
+		case msg := <-consumer.Rebalanced():
+			log.Println(msg)
 		default:
 			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)

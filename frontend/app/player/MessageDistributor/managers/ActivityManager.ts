@@ -7,12 +7,12 @@ class SkipIntervalCls {
   get time(): number {
   	return this.start;
   }
-  contains(ts) {
+  contains(ts: number) {
     return ts > this.start && ts < this.end;
   }
 }
 
-export type SkipInterval = InstanceType<typeof SkipIntervalCls>;
+export type SkipInterval = InstanceType<typeof SkipIntervalCls>; // exporting only class' type
 
 
 export default class ActivityManager extends ListWalker<SkipInterval> {

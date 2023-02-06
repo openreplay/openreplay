@@ -9,7 +9,7 @@ $offset: 10px;
 .headers {
   box-shadow: 0 1px 2px 0 $gray-light;
   background-color: $gray-lightest;
-  color: $gray-medium;
+  color: $gray-darkest;
   font-size: 12px;
   overflow-x: hidden;
   white-space: nowrap;
@@ -47,6 +47,10 @@ $offset: 10px;
 .row {
   display: flex;
   padding: 0 $offset;
+
+  &:hover {
+    background-color: $active-blue;
+  }
   /*align-items: center;
   cursor: pointer;
   */

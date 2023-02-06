@@ -1,6 +1,6 @@
 import React from 'react';
 import VerticalLine from '../VerticalLine';
-import { connectPlayer, Controls } from 'App/player';
+import { connectPlayer, Controls } from 'Player';
 
 interface Props {
     children: React.ReactNode;

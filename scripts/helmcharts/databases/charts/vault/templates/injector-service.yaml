@@ -1,0 +1,22 @@
+{{- template "vault.injectorEnabled" . -}}
+{{- if .injectorEnabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.fullname" . }}-agent-injector-svc
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "vault.name" . }}-agent-injector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  {{ template "injector.service.annotations" . }}
+spec:
+  ports:
+  - name: https
+    port: 443
+    targetPort: {{ .Values.injector.port }}
+  selector:
+    app.kubernetes.io/name: {{ include "vault.name" . }}-agent-injector
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    component: webhook
+{{- end }}

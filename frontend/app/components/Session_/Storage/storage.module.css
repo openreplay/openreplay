@@ -1,8 +1,7 @@
 
 .button {
-  padding: 2px 6px;
+  padding: 3px 6px;
   cursor: pointer;
-  width: 60px;
   border-radius: 3px;
   color: $gray-light;
   &:hover {

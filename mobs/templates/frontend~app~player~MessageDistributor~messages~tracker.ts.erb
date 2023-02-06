@@ -14,7 +14,7 @@ export type TrackerMessage = <%= $messages.select { |msg| msg.tracker }.map { |m
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
-    <% $messages.select { |msg| msg.replayer & msg.tracker }.each do |msg| %>
+    <% $messages.select { |msg| msg.replayer != false && msg.tracker }.each do |msg| %>
     case <%= msg.id %>: {
       return {
         tp: "<%= msg.name.snake_case %>",

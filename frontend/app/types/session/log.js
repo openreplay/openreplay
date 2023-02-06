@@ -24,13 +24,14 @@ export default Record({
   value: '',
   time: undefined,
   index: undefined,
+  errorId: undefined,
 }, {
 	methods: {
 		isRed() {
 			return isRed(this);
 		},
 		isYellow() {
-			return this.level === WARNING;
+			return this.level === WARNING || WARN;
 		}
 	}
 });

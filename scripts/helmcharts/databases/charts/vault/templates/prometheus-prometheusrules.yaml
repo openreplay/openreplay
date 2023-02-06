@@ -1,0 +1,26 @@
+{{ if and (.Values.serverTelemetry.prometheusRules.rules)
+     (or (.Values.global.serverTelemetry.prometheusOperator) (.Values.serverTelemetry.prometheusRules.enabled) )
+}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ template "vault.fullname" . }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- /* update the selectors docs in values.yaml whenever the defaults below change. */ -}}
+    {{- $selectors := .Values.serverTelemetry.prometheusRules.selectors }}
+    {{- if $selectors }}
+    {{- toYaml $selectors | nindent 4 }}
+    {{- else }}
+    release: prometheus
+    {{- end }}
+spec:
+  groups:
+  - name: {{ include "vault.fullname" . }}
+    rules:
+      {{- toYaml .Values.serverTelemetry.prometheusRules.rules | nindent 6 }}
+{{- end }}

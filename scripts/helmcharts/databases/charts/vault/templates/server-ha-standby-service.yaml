@@ -1,0 +1,45 @@
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- template "vault.serverServiceEnabled" . -}}
+{{- if .serverServiceEnabled -}}
+{{- if eq .mode "ha" }}
+# Service for standby Vault pod
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.fullname" . }}-standby
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+{{ template "vault.service.annotations" .}}
+spec:
+  {{- if .Values.server.service.type}}
+  type: {{ .Values.server.service.type }}
+  {{- end}}
+  {{- if .Values.server.service.clusterIP }}
+  clusterIP: {{ .Values.server.service.clusterIP }}
+  {{- end }}
+  {{- include "service.externalTrafficPolicy" .Values.server.service }}
+  publishNotReadyAddresses: {{ .Values.server.service.publishNotReadyAddresses }}
+  ports:
+    - name: {{ include "vault.scheme" . }}
+      port: {{ .Values.server.service.port }}
+      targetPort: {{ .Values.server.service.targetPort }}
+      {{- if and (.Values.server.service.standbyNodePort) (eq (.Values.server.service.type | toString) "NodePort") }}
+      nodePort: {{ .Values.server.service.standbyNodePort }}
+      {{- end }}
+    - name: https-internal
+      port: 8201
+      targetPort: 8201
+  selector:
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    component: server
+    vault-active: "false"
+{{- end }}
+{{- end }}
+{{- end }}

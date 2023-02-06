@@ -32,3 +32,11 @@ const wsserver = wsapp.listen(PORT, HOST, () => {
 wsapp.enable('trust proxy');
 socket.start(wsserver);
 module.exports = {wsserver};
+
+wsapp.get('/private/shutdown', (req, res) => {
+        console.log("Requested shutdown");
+        res.statusCode = 200;
+        res.end("ok!");
+        process.kill(1, "SIGTERM");
+    }
+);

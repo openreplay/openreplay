@@ -4,11 +4,11 @@
 import type { Timed } from './timed'
 import type { RawMessage } from './raw'
 import type {
-<%= $messages.select { |msg| msg.replayer }.map { |msg| "  Raw#{msg.name.snake_case.pascal_case}," }.join "\n" %>
+<%= $messages.select { |msg| msg.replayer != false }.map { |msg| "  Raw#{msg.name.snake_case.pascal_case}," }.join "\n" %>
 } from './raw'
 
 export type Message = RawMessage & Timed
 
-<% $messages.select { |msg| msg.replayer }.each do |msg| %>
+<% $messages.select { |msg| msg.replayer != false }.each do |msg| %>
 export type <%= msg.name.snake_case.pascal_case %> = Raw<%= msg.name.snake_case.pascal_case %> & Timed
 <% end %>

@@ -25,10 +25,10 @@ serviceAccount:
 
 podAnnotations: {}
 
-podSecurityContext: {}
+# podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
+# securityContext: {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -99,3 +99,5 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+persistence: {}

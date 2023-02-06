@@ -28,7 +28,8 @@ const peerServer = ExpressPeerServer(server, {
     debug: true,
     path: '/',
     proxied: true,
-    allow_discovery: false
+    allow_discovery: false,
+    concurrent_limit: 100000
 });
 peerServer.on('connection', peerConnection);
 peerServer.on('disconnect', peerDisconnect);
@@ -42,3 +43,11 @@ process.on('uncaughtException', err => {
     debug && console.log(err.stack);
     // process.exit(1);
 });
+
+app.get('/private/shutdown', (req, res) => {
+        console.log("Requested shutdown");
+        res.statusCode = 200;
+        res.end("ok!");
+        process.kill(1, "SIGTERM");
+    }
+);

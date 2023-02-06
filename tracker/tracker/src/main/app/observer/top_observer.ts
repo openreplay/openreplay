@@ -129,6 +129,8 @@ export default class TopObserver extends Observer {
       window.document,
       () => {
         this.app.send(CreateDocument())
+        // it has no node_id here
+        this.app.nodes.callNodeCallbacks(document, true)
       },
       window.document.documentElement,
     )

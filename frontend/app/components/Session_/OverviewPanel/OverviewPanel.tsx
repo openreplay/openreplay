@@ -1,4 +1,4 @@
-import { connectPlayer } from 'App/player';
+import { connectPlayer } from 'Player';
 import { toggleBottomBlock } from 'Duck/components/player';
 import React, { useEffect } from 'react';
 import BottomBlock from '../BottomBlock';
@@ -23,8 +23,10 @@ interface Props {
   issuesList: any[];
   performanceChartData: any;
   endTime: number;
+  fetchPresented?: boolean;
 }
 function OverviewPanel(props: Props) {
+  const { fetchPresented = false } = props;
   const [dataLoaded, setDataLoaded] = React.useState(false);
   const [selectedFeatures, setSelectedFeatures] = React.useState([
     'PERFORMANCE',
@@ -86,7 +88,10 @@ function OverviewPanel(props: Props) {
         <BottomBlock.Content>
           <OverviewPanelContainer endTime={props.endTime}>
             <TimelineScale endTime={props.endTime} />
-            <div style={{ width: '100%', height: '187px' }} className="transition relative">
+            <div
+              style={{ width: 'calc(100vw - 1rem)', margin: '0 auto', height: '187px' }}
+              className="transition relative"
+            >
               <NoContent
                 show={selectedFeatures.length === 0}
                 title={
@@ -107,7 +112,11 @@ function OverviewPanel(props: Props) {
                       title={feature}
                       list={resources[feature]}
                       renderElement={(pointer: any) => (
-                        <TimelinePointer pointer={pointer} type={feature} />
+                        <TimelinePointer
+                          pointer={pointer}
+                          type={feature}
+                          fetchPresented={fetchPresented}
+                        />
                       )}
                       endTime={props.endTime}
                       message={HELP_MESSAGE[feature]}
@@ -132,6 +141,7 @@ export default connect(
   }
 )(
   connectPlayer((state: any) => ({
+    fetchPresented: state.fetchList.length > 0,
     resourceList: state.resourceList
       .filter((r: any) => r.isRed() || r.isYellow())
       .concat(state.fetchList.filter((i: any) => parseInt(i.status) >= 400))

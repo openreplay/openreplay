@@ -14,7 +14,7 @@ def get_by_tenant_id(tenant_id):
                        api_key,
                        created_at,
                         '{license.EDITION}' AS edition,
-                        version_number,
+                        openreplay_version() AS version_number,
                         opt_out
                     FROM public.tenants
                     LIMIT 1;""",

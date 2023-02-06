@@ -49,7 +49,8 @@ function FunnelIssuesDropdown() {
         }
     }
 
-    const onClickOutside = () => {
+    const onClickOutside = (e: any) => {
+        if (e.target.id === 'dd-button') return;
         if (isOpen) {
             setTimeout(() => {
                 setIsOpen(false);
@@ -85,21 +86,23 @@ function FunnelIssuesDropdown() {
                     IndicatorSeparator: (): any => null,
                     IndicatorsContainer: (): any => null,
                     Control: ({ children, ...props }: any) => (
-                        <components.Control {...props}>
-                            <OutsideClickDetectingDiv
-                                // className={ cn("relative flex items-center", { "flex-1" : fullWidth }) }
-                                onClickOutside={onClickOutside}
-                            >
-                            { children }
-                            <button
-                                className="px-2 py-1 bg-white rounded-2xl border border-teal border-dashed color-teal flex items-center hover:bg-active-blue"
-                                onClick={() => setIsOpen(!isOpen)}
-                            >
-                                <Icon name="funnel" size={16} color="teal" />
-                                <span className="ml-2">Issues</span>
-                            </button>
-                            </OutsideClickDetectingDiv>
-                        </components.Control>
+                        <OutsideClickDetectingDiv
+                            className="relative items-center block"
+                            onClickOutside={onClickOutside}
+                        >
+                            <components.Control {...props}>
+                                { children }
+                                <button
+                                    id="dd-button"
+                                    className="px-2 py-1 bg-white rounded-2xl border border-teal border-dashed color-teal flex items-center hover:bg-active-blue select-none"
+                                    onClick={() => setIsOpen(!isOpen)}
+                                >
+                                    <Icon name="funnel" size={16} color="teal" className="pointer-events-none" />
+                                    <span className="ml-2 pointer-events-none">Issues</span>
+                                </button>
+                                
+                            </components.Control>
+                        </OutsideClickDetectingDiv>
                     ),
                     Placeholder: (): any => null,
                     SingleValue: (): any => null,

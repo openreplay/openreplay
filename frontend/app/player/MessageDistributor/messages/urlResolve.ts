@@ -50,6 +50,14 @@ function rewriteCSSLinks(css: string, rewriter: (rawurl: string) => string): str
   return css
 }
 
+function rewritePseudoclasses(css: string): string {
+  return css
+    .replace(/:hover/g, ".-openreplay-hover")
+    .replace(/:focus/g, ".-openreplay-focus")
+}
+
 export function resolveCSS(baseURL: string, css: string): string {
-  return rewriteCSSLinks(css, rawurl => resolveURL(baseURL, rawurl));
+  return rewritePseudoclasses(
+    rewriteCSSLinks(css, rawurl => resolveURL(baseURL, rawurl))
+  );
 }

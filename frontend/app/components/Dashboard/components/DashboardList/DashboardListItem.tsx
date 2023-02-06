@@ -23,7 +23,7 @@ function DashboardListItem(props: Props) {
     };
     return (
         <div className="hover:bg-active-blue cursor-pointer border-t px-6" onClick={onItemClick}>
-            <div className="grid grid-cols-12 py-4 select-none">
+            <div className="grid grid-cols-12 py-4 select-none items-center">
                 <div className="col-span-8 flex items-start">
                     <div className="flex items-center capitalize-first">
                         <div className="w-9 h-9 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">

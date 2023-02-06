@@ -3,6 +3,7 @@ package redisstream
 import (
 	"log"
 	"net"
+	"openreplay/backend/pkg/messages"
 	"sort"
 	"strconv"
 	"strings"
@@ -10,8 +11,6 @@ import (
 
 	_redis "github.com/go-redis/redis"
 	"github.com/pkg/errors"
-
-	"openreplay/backend/pkg/queue/types"
 )
 
 type idsInfo struct {
@@ -21,16 +20,17 @@ type idsInfo struct {
 type streamPendingIDsMap map[string]*idsInfo
 
 type Consumer struct {
-	redis          *_redis.Client
-	streams        []string
-	group          string
-	messageHandler types.MessageHandler
-	idsPending     streamPendingIDsMap
-	lastTs         int64
-	autoCommit     bool
+	redis           *_redis.Client
+	streams         []string
+	group           string
+	messageIterator messages.MessageIterator
+	idsPending      streamPendingIDsMap
+	lastTs          int64
+	autoCommit      bool
+	event           chan interface{}
 }
 
-func NewConsumer(group string, streams []string, messageHandler types.MessageHandler) *Consumer {
+func NewConsumer(group string, streams []string, messageIterator messages.MessageIterator) *Consumer {
 	redis := getRedisClient()
 	for _, stream := range streams {
 		err := redis.XGroupCreateMkStream(stream, group, "0").Err()
@@ -52,16 +52,21 @@ func NewConsumer(group string, streams []string, messageHandler types.MessageHan
 	}
 
 	return &Consumer{
-		redis:          redis,
-		messageHandler: messageHandler,
-		streams:        streams,
-		group:          group,
-		autoCommit:     true,
-		idsPending:     idsPending,
+		redis:           redis,
+		messageIterator: messageIterator,
+		streams:         streams,
+		group:           group,
+		autoCommit:      true,
+		idsPending:      idsPending,
+		event:           make(chan interface{}, 4),
 	}
 }
 
 const READ_COUNT = 10
+
+func (c *Consumer) Rebalanced() <-chan interface{} {
+	return c.event
+}
 
 func (c *Consumer) ConsumeNext() error {
 	// MBTODO: read in go routine, send messages to channel
@@ -102,11 +107,8 @@ func (c *Consumer) ConsumeNext() error {
 			if idx > 0x1FFF {
 				return errors.New("Too many messages per ms in redis")
 			}
-			c.messageHandler(sessionID, []byte(valueString), &types.Meta{
-				Topic:     r.Stream,
-				Timestamp: int64(ts),
-				ID:        ts<<13 | (idx & 0x1FFF), // Max: 4096 messages/ms for 69 years
-			})
+			bID := ts<<13 | (idx & 0x1FFF) // Max: 4096 messages/ms for 69 years
+			c.messageIterator.Iterate([]byte(valueString), messages.NewBatchInfo(sessionID, r.Stream, bID, 0, int64(ts)))
 			if c.autoCommit {
 				if err = c.redis.XAck(r.Stream, c.group, m.ID).Err(); err != nil {
 					return errors.Wrapf(err, "Acknoledgment error for messageID %v", m.ID)
@@ -160,8 +162,4 @@ func (c *Consumer) CommitBack(gap int64) error {
 
 func (c *Consumer) Close() {
 	// noop
-}
-
-func (c *Consumer) HasFirstPartition() bool {
-	return false
 }

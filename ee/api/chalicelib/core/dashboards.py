@@ -118,6 +118,8 @@ def get_dashboard(project_id, user_id, dashboard_id):
             for w in row["widgets"]:
                 w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
                 w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
+                w["config"]["col"] = w["default_config"]["col"]
+                w["config"]["row"] = w["default_config"]["row"]
                 for s in w["series"]:
                     s["created_at"] = TimeUTC.datetime_to_timestamp(s["created_at"])
     return helper.dict_to_camel_case(row)

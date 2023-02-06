@@ -72,11 +72,10 @@ export const INITIAL_STATE: State = {
 
 const MAX_RECONNECTION_COUNT = 4;
 
-
 export default class AssistManager {
-  private timeTravelJump = false;
-  private jumped = false;
+  private videoStreams: Record<string, MediaStreamTrack> = {}
 
+  // TODO: Session type
   constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
@@ -119,9 +118,9 @@ export default class AssistManager {
   }
 
   private socket: Socket | null = null
-  connect() {
+  connect(agentToken: string) {
     const jmr = new JSONRawMessageReader()
-    const reader = new MStreamReader(jmr)
+    const reader = new MStreamReader(jmr, this.session.startedAt)
     let waitingForMessages = true
     let disconnectTimeout: ReturnType<typeof setTimeout> | undefined
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
@@ -143,13 +142,18 @@ export default class AssistManager {
       // @ts-ignore
       const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
-      // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {
         path: '/ws-assist/socket',
+        auth: {
+          token: agentToken
+        },
         query: {
           peerId: this.peerID,
           identity: "agent",
-          //agentInfo: JSON.stringify({})
+          agentInfo: JSON.stringify({
+            ...this.session.agentInfo,
+            query: document.location.search
+          })
         }
       })
       socket.on("connect", () => {
@@ -161,7 +165,7 @@ export default class AssistManager {
         update({ calling: CallingState.NoCall })
       })
       socket.on('messages', messages => {
-        !this.timeTravelJump && jmr.append(messages) // as RawMessage[]
+        jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
           waitingForMessages = false // TODO: more explicit
@@ -173,18 +177,9 @@ export default class AssistManager {
           }
         }
 
-        if (this.timeTravelJump) {
-          return;
-        }
-
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
-          //@ts-ignore
-          if (this.jumped) {
-            // @ts-ignore
-            msg.time = this.md.getLastRecordedMessageTime() + msg.time
-          }
           // @ts-ignore TODO: fix msg types in generator
-          this.md.distributeMessage(msg, msg._index)
+          this.md.appendMessage(msg, msg._index)
         }
       })
       socket.on("control_granted", id => {
@@ -210,6 +205,14 @@ export default class AssistManager {
             inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
           }
         }
+      })
+      socket.on('videofeed', ({ streamId, enabled }) => {
+        console.log(streamId, enabled)
+        console.log(this.videoStreams)
+        if (this.videoStreams[streamId]) {
+          this.videoStreams[streamId].enabled = enabled
+        }
+        console.log(this.videoStreams)
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
@@ -295,11 +298,13 @@ export default class AssistManager {
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
       this.md.overlay.addEventListener("click", this.onMouseClick)
       this.md.overlay.addEventListener("wheel", this.onWheel)
+      this.md.toggleRemoteControlStatus(true)
       update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
       this.md.overlay.removeEventListener("mousemove", this.onMouseMove)
       this.md.overlay.removeEventListener("click", this.onMouseClick)
       this.md.overlay.removeEventListener("wheel", this.onWheel)
+      this.md.toggleRemoteControlStatus(false)
       update({ remoteControl: RemoteControlStatus.Disabled })
       this.toggleAnnotation(false)
     }
@@ -311,7 +316,10 @@ export default class AssistManager {
     if (remoteControl === RemoteControlStatus.Requesting) { return }
     if (remoteControl === RemoteControlStatus.Disabled) {
       update({ remoteControl: RemoteControlStatus.Requesting })
-      this.socket.emit("request_control")
+      this.socket.emit("request_control", JSON.stringify({
+        ...this.session.agentInfo,
+        query: document.location.search
+      }))
       // setTimeout(() => {
       //   if (getState().remoteControl !== RemoteControlStatus.Requesting) { return }
       //   this.socket?.emit("release_control")
@@ -370,6 +378,7 @@ export default class AssistManager {
           })
 
           call.on('stream', stream => {
+            this.videoStreams[call.peer] = stream.getVideoTracks()[0]
             this.callArgs && this.callArgs.onStream(stream)
           });
           // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
@@ -501,6 +510,9 @@ export default class AssistManager {
 
       call.on('stream', stream => {
         getState().calling !== CallingState.OnCall && update({ calling: CallingState.OnCall })
+
+        this.videoStreams[call.peer] = stream.getVideoTracks()[0]
+
         this.callArgs && this.callArgs.onStream(stream)
       });
       // call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
@@ -555,12 +567,13 @@ export default class AssistManager {
     }
   }
 
-  private annot: AnnotationCanvas | null = null
-
-  toggleTimeTravelJump() {
-    this.jumped = true;
-    this.timeTravelJump = !this.timeTravelJump;
+  toggleVideoLocalStream(enabled: boolean) {
+    this.getPeer().then((peer) => {
+      this.socket.emit('videofeed', { streamId: peer.id, enabled })
+    })
   }
+
+  private annot: AnnotationCanvas | null = null
 
   /* ==== Cleaning ==== */
   private cleaned: boolean = false

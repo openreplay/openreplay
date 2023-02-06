@@ -1,0 +1,77 @@
+{{- if not .Values.global.openshift }}
+{{ template "vault.mode" . }}
+{{- if ne .mode "external" }}
+{{- if .Values.server.ingress.enabled -}}
+{{- $extraPaths := .Values.server.ingress.extraPaths -}}
+{{- $serviceName := include "vault.fullname" . -}}
+{{- template "vault.serverServiceEnabled" . -}}
+{{- if .serverServiceEnabled -}}
+{{- if and (eq .mode "ha" ) (eq (.Values.server.ingress.activeService | toString) "true") }}
+{{- $serviceName = printf "%s-%s" $serviceName "active" -}}
+{{- end }}
+{{- $servicePort := .Values.server.service.port -}}
+{{- $pathType := .Values.server.ingress.pathType -}}
+{{- $kubeVersion := .Capabilities.KubeVersion.Version }}
+{{ if semverCompare ">= 1.19.0-0" $kubeVersion }}
+apiVersion: networking.k8s.io/v1
+{{ else if .Capabilities.APIVersions.Has "networking.k8s.io/v1beta1" }}
+apiVersion: networking.k8s.io/v1beta1
+{{ else }}
+apiVersion: extensions/v1beta1
+{{ end }}
+kind: Ingress
+metadata:
+  name: {{ template "vault.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    helm.sh/chart: {{ include "vault.chart" . }}
+    app.kubernetes.io/name: {{ include "vault.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    {{- with .Values.server.ingress.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- template "vault.ingress.annotations" . }}
+spec:
+{{- if .Values.server.ingress.tls }}
+  tls:
+  {{- range .Values.server.ingress.tls }}
+    - hosts:
+      {{- range .hosts }}
+        - {{ . | quote }}
+      {{- end }}
+      secretName: {{ .secretName }}
+  {{- end }}
+{{- end }}
+{{- if .Values.server.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.server.ingress.ingressClassName }}
+{{- end }}
+  rules:
+  {{- range .Values.server.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+{{ if $extraPaths }}
+{{ toYaml $extraPaths | indent 10 }}
+{{- end }}
+        {{- range (.paths | default (list "/")) }}
+          - path: {{ . }}
+            {{ if semverCompare ">= 1.19.0-0" $kubeVersion }}
+            pathType: {{ $pathType }}
+            {{ end }}
+            backend:
+              {{ if semverCompare ">= 1.19.0-0" $kubeVersion }}
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $servicePort }}
+              {{ else }}
+              serviceName: {{ $serviceName }}
+              servicePort: {{ $servicePort }}
+              {{ end }}
+        {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

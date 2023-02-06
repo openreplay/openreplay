@@ -7,7 +7,7 @@ from fastapi import BackgroundTasks
 import schemas
 from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants, assist
-from chalicelib.utils import dev, email_helper
+from chalicelib.utils import email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -194,14 +194,6 @@ def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-
-    # helper.async_post(config('email_basic') % 'member_invitation',
-    #                   {
-    #                       "email": data["email"],
-    #                       "invitationLink": new_member["invitationLink"],
-    #                       "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
-    #                       "senderName": admin["name"]
-    #                   })
     background_tasks.add_task(email_helper.send_team_invitation, **{
         "recipient": data["email"],
         "invitation_link": new_member["invitationLink"],
@@ -259,9 +251,8 @@ def generate_new_api_key(user_id):
             cur.mogrify(
                 f"""UPDATE public.users
                     SET api_key=generate_api_key(20)
-                    WHERE
-                     users.user_id = %(userId)s
-                     AND deleted_at IS NULL
+                    WHERE users.user_id = %(userId)s
+                            AND deleted_at IS NULL
                     RETURNING api_key;""",
                 {"userId": user_id})
         )
@@ -302,6 +293,39 @@ def edit(user_id_to_update, tenant_id, changes: schemas.EditUserSchema, editor_i
     return {"data": user}
 
 
+def edit_member(user_id_to_update, tenant_id, changes: schemas.EditUserSchema, editor_id):
+    user = get_member(user_id=user_id_to_update, tenant_id=tenant_id)
+    if editor_id != user_id_to_update or changes.admin is not None and changes.admin != user["admin"]:
+        admin = get(tenant_id=tenant_id, user_id=editor_id)
+        if not admin["superAdmin"] and not admin["admin"]:
+            return {"errors": ["unauthorized"]}
+    _changes = {}
+    if editor_id == user_id_to_update:
+        if changes.admin is not None:
+            if user["superAdmin"]:
+                changes.admin = None
+            elif changes.admin != user["admin"]:
+                return {"errors": ["cannot change your own role"]}
+
+    if changes.email is not None and changes.email != user["email"]:
+        if email_exists(changes.email):
+            return {"errors": ["email already exists."]}
+        if get_deleted_user_by_email(changes.email) is not None:
+            return {"errors": ["email previously deleted."]}
+        _changes["email"] = changes.email
+
+    if changes.name is not None and len(changes.name) > 0:
+        _changes["name"] = changes.name
+
+    if changes.admin is not None:
+        _changes["role"] = "admin" if changes.admin else "member"
+
+    if len(_changes.keys()) > 0:
+        update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
+        return {"data": get_member(user_id=user_id_to_update, tenant_id=tenant_id)}
+    return {"data": user}
+
+
 def get_by_email_only(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -314,15 +338,16 @@ def get_by_email_only(email):
                         users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        TRUE AS has_password
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                    WHERE
-                     users.email = %(email)s                     
-                     AND users.deleted_at IS NULL;""",
+                    WHERE users.email = %(email)s                     
+                     AND users.deleted_at IS NULL
+                    LIMIT 1;""",
                 {"email": email})
         )
-        r = cur.fetchall()
-    return helper.list_to_camel_case(r)
+        r = cur.fetchone()
+    return helper.dict_to_camel_case(r)
 
 
 def get_by_email_reset(email, reset_token):
@@ -349,11 +374,44 @@ def get_by_email_reset(email, reset_token):
     return helper.dict_to_camel_case(r)
 
 
+def get_member(tenant_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        users.user_id,
+                        users.email, 
+                        users.role, 
+                        users.name, 
+                        users.created_at,
+                        (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                        (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        basic_authentication.password IS NOT NULL AS joined,
+                        invitation_token
+                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
+                    WHERE users.deleted_at IS NULL AND users.user_id=%(user_id)s
+                    ORDER BY name, user_id""",
+                {"user_id": user_id})
+        )
+        u = helper.dict_to_camel_case(cur.fetchone())
+        if u:
+            u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
+            if u["invitationToken"]:
+                u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+            else:
+                u["invitationLink"] = None
+
+    return u
+
+
 def get_members(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         users.email, 
                         users.role, 
                         users.name, 
@@ -367,7 +425,7 @@ def get_members(tenant_id):
                         invitation_token
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL
-                    ORDER BY name, id"""
+                    ORDER BY name, user_id"""
         )
         r = cur.fetchall()
         if len(r):
@@ -424,8 +482,8 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
-    tenant_id = r.pop("tenantId")
 
+    tenant_id = r.pop("tenantId")
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
@@ -452,8 +510,8 @@ def set_password_invitation(user_id, new_password):
                "changePwdExpireAt": None, "changePwdToken": None}
     user = update(tenant_id=-1, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
-    tenant_id = r.pop("tenantId")
 
+    tenant_id = r.pop("tenantId")
     r["limits"] = {
         "teamMember": -1,
         "projects": -1,
@@ -552,7 +610,19 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                 )
 
 
-def authenticate(email, password, for_change_password=False, for_plugin=False):
+def change_jwt_iat(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""UPDATE public.users
+                       SET jwt_iat = timezone('utc'::text, now())
+                       WHERE user_id = %(user_id)s 
+                       RETURNING jwt_iat;""",
+            {"user_id": user_id})
+        cur.execute(query)
+        return cur.fetchone().get("jwt_iat")
+
+
+def authenticate(email, password, for_change_password=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -573,22 +643,16 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
         cur.execute(query)
         r = cur.fetchone()
 
-        if r is not None:
-            if for_change_password:
-                return True
-            r = helper.dict_to_camel_case(r)
-            query = cur.mogrify(
-                f"""UPDATE public.users
-                   SET jwt_iat = timezone('utc'::text, now())
-                   WHERE user_id = %(user_id)s 
-                   RETURNING jwt_iat;""",
-                {"user_id": r["userId"]})
-            cur.execute(query)
-            return {
-                "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
-                                                TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),
-                                                aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
-                "email": email,
-                **r
-            }
+    if r is not None:
+        if for_change_password:
+            return True
+        r = helper.dict_to_camel_case(r)
+        jwt_iat = change_jwt_iat(r['userId'])
+        return {
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
+                                            TimeUTC.datetime_to_timestamp(jwt_iat),
+                                            aud=f"front:{helper.get_stage_name()}"),
+            "email": email,
+            **r
+        }
     return None

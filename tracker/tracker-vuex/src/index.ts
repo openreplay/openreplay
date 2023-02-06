@@ -25,7 +25,8 @@ function processMutationAndState(
       const _table = encoder.commit();
       for (let key in _table) app.send(Messages.OTable(key, _table[key]));
       app.send(Messages.Vuex(_mutation, _state));
-    } catch {
+    } catch (e) {
+      console.error(e)
       encoder.clear();
     }
   }
@@ -49,6 +50,7 @@ export default function(opts: Partial<Options> = {}) {
     return (storeName: string) => (store) => {
       // Vuex
       if (store.subscribe) {
+        app.debug.log('Hooked to vuex store')
         const randomId = Math.random().toString(36).substring(2, 9)
         store.subscribe((mutation, storeState) => {
           state[storeName || randomId] = storeState
@@ -58,6 +60,7 @@ export default function(opts: Partial<Options> = {}) {
 
       // Pinia
       if (store.$onAction) {
+        app.debug.log('Hooked to pinia store')
         store.$onAction(({ name, store, args }) => {
           try {
             state[storeName || store.$id] = store.$state;

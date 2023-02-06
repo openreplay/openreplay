@@ -1,5 +1,4 @@
 import { applyChange, revertChange } from 'deep-diff';
-import { INITIAL_STATE as listsInitialState } from '../lists';
 import { INITIAL_STATE as playerInitialState, INITIAL_NON_RESETABLE_STATE as playerInitialNonResetableState } from '../Player';
 
 const UPDATE = 'player/UPDATE';
@@ -7,7 +6,6 @@ const CLEAN = 'player/CLEAN';
 const REDUX = 'player/REDUX';
 
 const resetState = {
-	...listsInitialState,
 	...playerInitialState,
 	initialized: false,
 };

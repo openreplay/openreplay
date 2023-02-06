@@ -5,7 +5,8 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
+func (mi *Saver) InsertMessage(msg Message) error {
+	sessionID := msg.SessionID()
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:
@@ -37,23 +38,16 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 	case *PageEvent:
 		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebPageEvent(sessionID, m)
-	case *ErrorEvent:
-		return mi.pg.InsertWebErrorEvent(sessionID, m)
 	case *FetchEvent:
 		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebFetchEvent(sessionID, m)
 	case *GraphQLEvent:
 		mi.sendToFTS(msg, sessionID)
 		return mi.pg.InsertWebGraphQLEvent(sessionID, m)
+	case *JSException:
+		return mi.pg.InsertWebJSException(m)
 	case *IntegrationEvent:
-		return mi.pg.InsertWebErrorEvent(sessionID, &ErrorEvent{
-			MessageID: m.Meta().Index,
-			Timestamp: m.Timestamp,
-			Source:    m.Source,
-			Name:      m.Name,
-			Message:   m.Message,
-			Payload:   m.Payload,
-		})
+		return mi.pg.InsertWebIntegrationEvent(m)
 
 		// IOS
 	case *IOSSessionStart:

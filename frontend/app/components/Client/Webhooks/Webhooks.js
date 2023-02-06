@@ -46,7 +46,7 @@ function Webhooks(props) {
       <div className={cn(styles.tabHeader, 'px-5 pt-5')}>
         <h3 className={cn(styles.tabTitle, 'text-2xl')}>{'Webhooks'}</h3>
         {/* <Button rounded={true} icon="plus" variant="outline" onClick={() => init()} /> */}
-        <Button className="ml-auto" variant="primary" onClick={() => init()}>Add</Button>
+        <Button className="ml-auto" variant="primary" onClick={() => init()}>Add Webhook</Button>
       </div>
 
       <div className="text-base text-disabled-text flex items-center my-3 px-5">
