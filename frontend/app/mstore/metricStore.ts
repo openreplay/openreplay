@@ -101,8 +101,6 @@ export default class MetricStore {
   merge(obj: any, updateChangeFlag: boolean = true) {
     const type = obj.metricType;
 
-    console.log('iobj', obj)
-
     // handle metricType change
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
       this.instance.series.forEach((s: any, i: number) => {
