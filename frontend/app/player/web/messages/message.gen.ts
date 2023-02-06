@@ -34,6 +34,8 @@ import type {
   RawNgRx,
   RawGraphQl,
   RawPerformanceTrack,
+  RawStringDict,
+  RawSetNodeAttributeDict,
   RawResourceTiming,
   RawConnectionInformation,
   RawSetPageVisibility,
@@ -124,6 +126,10 @@ export type NgRx = RawNgRx & Timed
 export type GraphQl = RawGraphQl & Timed
 
 export type PerformanceTrack = RawPerformanceTrack & Timed
+
+export type StringDict = RawStringDict & Timed
+
+export type SetNodeAttributeDict = RawSetNodeAttributeDict & Timed
 
 export type ResourceTiming = RawResourceTiming & Timed
 

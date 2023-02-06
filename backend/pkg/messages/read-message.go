@@ -792,6 +792,33 @@ func DecodePerformanceTrack(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeStringDict(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &StringDict{}
+	if msg.Key, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SetNodeAttributeDict{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Name, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeDOMDrop(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &DOMDrop{}
@@ -1813,6 +1840,10 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeGraphQL(reader)
 	case 49:
 		return DecodePerformanceTrack(reader)
+	case 50:
+		return DecodeStringDict(reader)
+	case 51:
+		return DecodeSetNodeAttributeDict(reader)
 	case 52:
 		return DecodeDOMDrop(reader)
 	case 53:

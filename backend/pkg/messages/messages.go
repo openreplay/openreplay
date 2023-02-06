@@ -48,6 +48,8 @@ const (
 	MsgNgRx                        = 47
 	MsgGraphQL                     = 48
 	MsgPerformanceTrack            = 49
+	MsgStringDict                  = 50
+	MsgSetNodeAttributeDict        = 51
 	MsgDOMDrop                     = 52
 	MsgResourceTiming              = 53
 	MsgConnectionInformation       = 54
@@ -1314,6 +1316,54 @@ func (msg *PerformanceTrack) Decode() Message {
 
 func (msg *PerformanceTrack) TypeID() int {
 	return 49
+}
+
+type StringDict struct {
+	message
+	Key   string
+	Value string
+}
+
+func (msg *StringDict) Encode() []byte {
+	buf := make([]byte, 21+len(msg.Key)+len(msg.Value))
+	buf[0] = 50
+	p := 1
+	p = WriteString(msg.Key, buf, p)
+	p = WriteString(msg.Value, buf, p)
+	return buf[:p]
+}
+
+func (msg *StringDict) Decode() Message {
+	return msg
+}
+
+func (msg *StringDict) TypeID() int {
+	return 50
+}
+
+type SetNodeAttributeDict struct {
+	message
+	ID    uint64
+	Name  string
+	Value string
+}
+
+func (msg *SetNodeAttributeDict) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Name)+len(msg.Value))
+	buf[0] = 51
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Name, buf, p)
+	p = WriteString(msg.Value, buf, p)
+	return buf[:p]
+}
+
+func (msg *SetNodeAttributeDict) Decode() Message {
+	return msg
+}
+
+func (msg *SetNodeAttributeDict) TypeID() int {
+	return 51
 }
 
 type DOMDrop struct {

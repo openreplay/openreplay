@@ -431,6 +431,19 @@ class MessageCodec(Codec):
                 used_js_heap_size=self.read_uint(reader)
             )
 
+        if message_id == 50:
+            return StringDict(
+                key=self.read_string(reader),
+                value=self.read_string(reader)
+            )
+
+        if message_id == 51:
+            return SetNodeAttributeDict(
+                id=self.read_uint(reader),
+                name=self.read_string(reader),
+                value=self.read_string(reader)
+            )
+
         if message_id == 52:
             return DOMDrop(
                 timestamp=self.read_uint(reader)
