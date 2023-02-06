@@ -18,6 +18,7 @@ import {
   STACKEVENTS,
   STORAGE,
   toggleBottomBlock,
+  changeSkipInterval,
 } from 'Duck/components/player';
 import { PlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
@@ -290,6 +291,7 @@ export default connect(
     fullscreenOff,
     toggleBottomBlock,
     fetchSessions,
+    changeSkipInterval,
   }
 )(ControlPlayer);
 

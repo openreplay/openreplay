@@ -25,7 +25,8 @@ export default class SharePopup extends React.PureComponent {
     isOpen: false,
     channelId: this.props.channels.getIn([0, 'webhookId']),
     teamsChannel: this.props.msTeamsChannels.getIn([0, 'webhookId']),
-    loading: false,
+    loadingSlack: false,
+    loadingTeams: false,
   };
 
   componentDidMount() {
@@ -39,7 +40,7 @@ export default class SharePopup extends React.PureComponent {
 
   editMessage = (e) => this.setState({ comment: e.target.value });
   shareToSlack = () => {
-    this.setState({ loading: true }, () => {
+    this.setState({ loadingSlack: true }, () => {
       this.props
         .sendSlackMsg({
           integrationId: this.state.channelId,
@@ -52,7 +53,7 @@ export default class SharePopup extends React.PureComponent {
   };
 
   shareToMSTeams = () => {
-    this.setState({ loading: true }, () => {
+    this.setState({ loadingTeams: true }, () => {
       this.props
         .sendMsTeamsMsg({
           integrationId: this.state.teamsChannel,
@@ -75,7 +76,8 @@ export default class SharePopup extends React.PureComponent {
   };
 
   handleSuccess = (endpoint) => {
-    this.setState({ isOpen: false, comment: '', loading: false });
+    const obj = endpoint === 'Slack' ? { isOpen: false, comment: '', loadingSlack: false } : { isOpen: false, comment: '', loadingTeams: false }
+    this.setState(obj);
     toast.success(`Sent to ${endpoint}.`);
   };
 
@@ -89,7 +91,7 @@ export default class SharePopup extends React.PureComponent {
 
   render() {
     const { trigger, channels, msTeamsChannels, showCopyLink = false } = this.props;
-    const { comment, channelId, teamsChannel, loading } = this.state;
+    const { comment, channelId, teamsChannel, loadingSlack, loadingTeams } = this.state;
 
     const slackOptions = channels
       .map(({ webhookId, name }) => ({ value: webhookId, label: name }))
@@ -137,7 +139,7 @@ export default class SharePopup extends React.PureComponent {
                           <Button onClick={this.shareToSlack} variant="primary">
                             <div className="flex items-center">
                               <Icon name="integrations/slack-bw" color="white" size="18" marginRight="10" />
-                              {loading ? 'Sending...' : 'Send'}
+                              {loadingSlack ? 'Sending...' : 'Send'}
                             </div>
                           </Button>
                         )}
@@ -163,7 +165,7 @@ export default class SharePopup extends React.PureComponent {
                                 size="18"
                                 marginRight="10"
                               />
-                              {loading ? 'Sending...' : 'Send'}
+                              {loadingTeams ? 'Sending...' : 'Send'}
                             </div>
                           </Button>
                         )}
