@@ -2,6 +2,9 @@ import requests
 from decouple import config
 from datetime import datetime
 
+from fastapi import HTTPException
+from starlette import status
+
 import schemas
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_base import BaseCollaboration
@@ -10,10 +13,13 @@ from chalicelib.core.collaboration_base import BaseCollaboration
 class Slack(BaseCollaboration):
     @classmethod
     def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
+        if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
+                                  webhook_type=schemas.WebhookType.slack):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
         if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
                                endpoint=data.url,
-                               webhook_type="slack",
+                               webhook_type=schemas.WebhookType.slack,
                                name=data.name)
         return None
 

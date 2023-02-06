@@ -1,7 +1,11 @@
 import logging
+from typing import Optional
 
 import requests
+from fastapi import HTTPException
+from starlette import status
 
+import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -108,7 +112,27 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
         return w
 
 
+def exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int],
+                     webhook_type: str = schemas.WebhookType.webhook) -> bool:
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""SELECT EXISTS(SELECT count(1) AS count 
+                                              FROM public.webhooks
+                                              WHERE name ILIKE %(name)s 
+                                                   AND deleted_at ISNULL
+                                                   AND tenant_id=%(tenant_id)s
+                                                   AND type=%(webhook_type)s
+                                                   {"AND webhook_id!=%(exclude_id))s" if exclude_id else ""}) AS exists;""",
+                            {"tenant_id": tenant_id, "name": name, "exclude_id": exclude_id,
+                             "webhook_type": webhook_type})
+        cur.execute(query)
+        row = cur.fetchone()
+    return row["exists"]
+
+
 def add_edit(tenant_id, data, replace_none=None):
+    if "name" in data and len(data["name"]) > 0 \
+            and exists_by_name(name=data["name"], exclude_id=data.get("webhookId"), tenant_id=tenant_id):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
     if data.get("webhookId") is not None:
         return update(tenant_id=tenant_id, webhook_id=data["webhookId"],
                       changes={"endpoint": data["endpoint"],
