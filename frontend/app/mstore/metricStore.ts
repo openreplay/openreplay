@@ -101,12 +101,18 @@ export default class MetricStore {
   merge(obj: any, updateChangeFlag: boolean = true) {
     const type = obj.metricType;
 
+    console.log('iobj', obj)
+
     // handle metricType change
     if (obj.hasOwnProperty('metricType') && type !== this.instance.metricType) {
       this.instance.series.forEach((s: any, i: number) => {
         this.instance.series[i].filter.eventsOrderSupport = ['then', 'or', 'and']
       })
       this.changeType(type);
+    }
+
+    if (obj.hasOwnProperty('metricOf') && obj.metricOf !== this.instance.metricOf && (obj.metricOf === 'sessions' || obj.metricOf === 'jsErrors')) {
+      obj.viewType = 'table'
     }
 
     // handle metricValue change
