@@ -86,7 +86,7 @@ export default class BatchWriter {
     this.beaconSizeLimit = limit
   }
 
-  private applyDict(str: string): string {
+  private applyDict(str: string): number {
     const [key, isNew] = this.strDict.getKey(str)
     if (isNew) {
       this.writeMessage([Messages.Type.StringDict, key, str])

@@ -43,7 +43,7 @@ export default class DOMManager extends ListWalker<Message> {
   private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
-  private stringDict: Record<string,string> = {}
+  private stringDict: Record<number,string> = {}
 
 
   private upperBodyId: number = -1;
@@ -233,13 +233,13 @@ export default class DOMManager extends ListWalker<Message> {
         this.stringDict[msg.key] = msg.value
         return
       case MType.SetNodeAttributeDict:
-        this.stringDict[msg.name] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
-        this.stringDict[msg.value] === undefined  && logger.error("No dictionary key for msg 'value': ", msg)
-        if (!this.stringDict[msg.name] || !this.stringDict[msg.value]) { return }
+        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
+        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
+        if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined ) { return }
         this.setNodeAttribute({ 
           id: msg.id,
-          name: this.stringDict[msg.name],
-          value: this.stringDict[msg.value],
+          name: this.stringDict[msg.nameKey],
+          value: this.stringDict[msg.valueKey],
         })
         return
       case MType.RemoveNodeAttribute:

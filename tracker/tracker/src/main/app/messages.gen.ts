@@ -475,7 +475,7 @@ export function PerformanceTrack(
 }
 
 export function StringDict(
-  key: string,
+  key: number,
   value: string,
 ): Messages.StringDict {
   return [
@@ -487,14 +487,14 @@ export function StringDict(
 
 export function SetNodeAttributeDict(
   id: number,
-  name: string,
-  value: string,
+  nameKey: number,
+  valueKey: number,
 ): Messages.SetNodeAttributeDict {
   return [
     Messages.Type.SetNodeAttributeDict,
     id,
-    name,
-    value,
+    nameKey,
+    valueKey,
   ]
 }
 
