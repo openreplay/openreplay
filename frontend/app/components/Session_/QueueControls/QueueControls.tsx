@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { setAutoplayValues } from 'Duck/sessions';
-import { session as sessionRoute } from 'App/routes';
-import { Link, Icon, Tooltip } from 'UI';;
+import { withSiteId, session as sessionRoute } from 'App/routes';
+import { Link, Icon, Tooltip } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import { fetchAutoplaySessions } from 'Duck/search';
@@ -10,18 +10,20 @@ import { fetchAutoplaySessions } from 'Duck/search';
 const PER_PAGE = 10;
 
 interface Props extends RouteComponentProps {
+  siteId: string;
   previousId: string;
   nextId: string;
   defaultList: any;
   currentPage: number;
   total: number;
-  setAutoplayValues?: () => void;
+  setAutoplayValues: () => void;
   latestRequestTime: any;
   sessionIds: any;
-  fetchAutoplaySessions?: (page: number) => Promise<void>;
+  fetchAutoplaySessions: (page: number) => Promise<void>;
 }
 function QueueControls(props: Props) {
   const {
+    siteId,
     previousId,
     nextId,
     currentPage,
@@ -49,43 +51,46 @@ function QueueControls(props: Props) {
     }
   }, []);
 
+  const nextHandler = () => {
+    props.history.push(withSiteId(sessionRoute(nextId), siteId));
+  };
+
+  const prevHandler = () => {
+    props.history.push(withSiteId(sessionRoute(previousId), siteId));
+  };
+
   return (
     <div className="flex items-center">
-      <Tooltip
-        placement="bottom"
-        title={<div className="whitespace-nowrap">Play Previous Session</div>}
-        disabled={!previousId}
+      <div
+        onClick={prevHandler}
+        className={cn('p-1 bg-gray-bg group rounded-full color-gray-darkest font-medium', {
+          'pointer-events-none opacity-50': !previousId,
+          'cursor-pointer': !!previousId,
+        })}
       >
-        <Link to={sessionRoute(previousId)} disabled={!previousId}>
-          <div
-            className={cn(
-              'p-1 bg-gray-bg group rounded-full color-gray-darkest font-medium',
-              previousId && 'cursor-pointer',
-              !disabled && nextId && 'hover:bg-bg-blue'
-            )}
-          >
-            <Icon name="prev1" className="group-hover:fill-main" color="inherit" size="16" />
-          </div>
-        </Link>
-      </Tooltip>
-
-      <Tooltip
-        placement="bottom"
-        title={<div className="whitespace-nowrap">Play Next Session</div>}
-        disabled={!nextId}
+        <Tooltip
+          placement="bottom"
+          title={<div className="whitespace-nowrap">Play Previous Session</div>}
+          disabled={!previousId}
+        >
+          <Icon name="prev1" className="group-hover:fill-main" color="inherit" size="16" />
+        </Tooltip>
+      </div>
+      <div
+        onClick={nextHandler}
+        className={cn('p-1 bg-gray-bg group ml-1 rounded-full color-gray-darkest font-medium', {
+          'pointer-events-none opacity-50': !nextId,
+          'cursor-pointer': !!nextId,
+        })}
       >
-        <Link to={sessionRoute(nextId)} disabled={!nextId}>
-          <div
-            className={cn(
-              'p-1 bg-gray-bg group ml-1 rounded-full color-gray-darkest font-medium',
-              nextId && 'cursor-pointer',
-              !disabled && nextId && 'hover:bg-bg-blue'
-            )}
-          >
-            <Icon name="next1" className="group-hover:fill-main" color="inherit" size="16" />
-          </div>
-        </Link>
-      </Tooltip>
+        <Tooltip
+          placement="bottom"
+          title={<div className="whitespace-nowrap">Play Next Session</div>}
+          disabled={!nextId}
+        >
+          <Icon name="next1" className="group-hover:fill-main" color="inherit" size="16" />
+        </Tooltip>
+      </div>
     </div>
   );
 }
@@ -98,6 +103,7 @@ export default connect(
     total: state.getIn(['sessions', 'total']) || 0,
     sessionIds: state.getIn(['sessions', 'sessionIds']) || [],
     latestRequestTime: state.getIn(['search', 'latestRequestTime']),
+    siteId: state.getIn(['site', 'siteId']),
   }),
   { setAutoplayValues, fetchAutoplaySessions }
-)(withRouter(QueueControls))
+)(withRouter(QueueControls));
