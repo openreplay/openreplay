@@ -489,8 +489,8 @@ def delete(project_id, metric_id, user_id):
             RETURNING data;""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
-    # for EE only
-    row = cur.fetchone()
+        # for EE only
+        row = cur.fetchone()
     if row:
         if row["data"] and not sessions_favorite.favorite_session_exists(session_id=row["data"]["sessionId"]):
             keys = sessions_mobs. \

@@ -22,11 +22,11 @@ class CurrentContext(schemas.CurrentContext):
 
 
 class RolePayloadSchema(BaseModel):
-    name: str = Field(...)
-    description: Optional[str] = Field(None)
+    name: str = Field(..., min_length=1, max_length=40)
+    description: Optional[str] = Field(default=None)
     permissions: List[Permissions] = Field(...)
-    all_projects: bool = Field(True)
-    projects: List[int] = Field([])
+    all_projects: bool = Field(default=True)
+    projects: List[int] = Field(default=[])
     _transform_name = validator('name', pre=True, allow_reuse=True)(schemas.remove_whitespace)
 
     class Config:
