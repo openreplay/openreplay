@@ -481,24 +481,8 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
 
-    tenant_id = r.pop("tenantId")
-    r["limits"] = {
-        "teamMember": -1,
-        "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
-
-    c = tenants.get_by_tenant_id(tenant_id)
-    c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True)
-    c["smtp"] = helper.has_smtp()
-    c["iceServers"] = assist.get_ice_servers()
     return {
-        'jwt': r.pop('jwt'),
-        'data': {
-            "user": r,
-            "client": c
-        }
+        'jwt': r.pop('jwt')
     }
 
 
