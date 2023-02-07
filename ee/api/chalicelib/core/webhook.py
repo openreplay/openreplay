@@ -115,7 +115,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
 def exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int],
                      webhook_type: str = schemas.WebhookType.webhook) -> bool:
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT EXISTS(SELECT count(1) AS count 
+        query = cur.mogrify(f"""SELECT EXISTS(SELECT 1 
                                               FROM public.webhooks
                                               WHERE name ILIKE %(name)s 
                                                    AND deleted_at ISNULL

@@ -11,7 +11,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 def __exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify(f"""SELECT EXISTS(SELECT count(1) AS count 
+        query = cur.mogrify(f"""SELECT EXISTS(SELECT 1 
                                               FROM public.roles 
                                               WHERE tenant_id = %(tenant_id)s
                                                   AND name ILIKE %(name)s
