@@ -95,11 +95,10 @@ function Timeline(props: IProps) {
 
   const loadAndSeek = async (e: React.MouseEvent<HTMLDivElement>) => {
     e.persist();
-    await player.toggleTimetravel();
-
-    setTimeout(() => {
+    const result = await player.toggleTimetravel();
+    if (result) {
       seekProgress(e);
-    });
+    }
   };
 
   const jumpToTime = (e: React.MouseEvent<HTMLDivElement>) => {

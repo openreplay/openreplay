@@ -21,14 +21,17 @@ interface Props {
   placement?: Placement;
   children: JSX.Element;
   onOpen?: () => void;
+  onClose?: () => void;
 }
 
-const Popover = ({ children, render, placement, onOpen = () => {} }: Props) => {
+const Popover = ({ children, render, placement, onOpen, onClose }: Props) => {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
-      onOpen();
+      onOpen?.();
+    } else {
+      onClose?.();
     }
   }, [open]);
 
