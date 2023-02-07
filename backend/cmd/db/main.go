@@ -131,19 +131,27 @@ func main() {
 
 	// Send collected batches to db
 	commitDBUpdates := func() {
+		// Commit collected batches and bulks of information to PG
+		start := time.Now()
 		pg.Commit()
+		pgDur := time.Now().Sub(start).Milliseconds()
+
+		// Commit collected batches of information to CH
+		start = time.Now()
 		if err := saver.CommitStats(); err != nil {
 			log.Printf("Error on stats commit: %v", err)
 		}
-		pgDur := 0
+		chDur := time.Now().Sub(start).Milliseconds()
+
 		// Commit current position in queue
-		start := time.Now()
+		start = time.Now()
 		if err := consumer.Commit(); err != nil {
 			log.Printf("Error on consumer commit: %v", err)
 		}
-		chDur := time.Now().Sub(start).Milliseconds()
+		kfDur := time.Now().Sub(start).Milliseconds()
+
 		// Send collected data to PG and CH
-		log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
+		log.Printf("commit duration(ms), pg: %d, ch: %d, kf: %d", pgDur, chDur, kfDur)
 	}
 	for {
 		select {
