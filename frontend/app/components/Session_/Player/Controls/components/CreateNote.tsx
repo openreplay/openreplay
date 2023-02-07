@@ -68,9 +68,11 @@ function CreateNote({
 
   React.useEffect(() => {
     if (inputRef.current && isVisible) {
-      fetchSlack();
-      fetchTeams();
       inputRef.current.focus();
+      if (teamsChannels.size === 0 || slackChannels.size === 0) {
+        fetchSlack();
+        fetchTeams();
+      }
     }
   }, [isVisible]);
 
@@ -79,7 +81,7 @@ function CreateNote({
   const cleanUp = () => {
     setCreateNoteTooltip({ isVisible: false, time: 0 });
     setText('');
-    setTag(undefined);
+    setTag(TAGS[0]);
   }
   const onSubmit = () => {
     if (text === '') return;
@@ -100,12 +102,12 @@ function CreateNote({
     };
     if (isEdit) {
       return notesStore
-        .updateNote(editNote.noteId, note)
+        .updateNote(editNote.noteId!, note)
         .then((r) => {
           toast.success('Note updated');
-          notesStore.fetchSessionNotes(sessionId).then((notes) => {
-            onSuccess(editNote.noteId);
-            updateNote(r);
+          notesStore.fetchSessionNotes(sessionId).then(() => {
+            onSuccess(editNote.noteId!);
+            updateNote(r as Note);
           });
         })
         .catch((e) => {
@@ -120,10 +122,10 @@ function CreateNote({
     return notesStore
       .addNote(sessionId, note)
       .then((r) => {
-        onSuccess(r.noteId as unknown as string);
+        onSuccess(r!.noteId as unknown as string);
         toast.success('Note added');
-        notesStore.fetchSessionNotes(sessionId).then((notes) => {
-          addNote(r);
+        notesStore.fetchSessionNotes(sessionId).then(() => {
+          addNote(r as Note);
         });
       })
       .catch((e) => {
@@ -159,14 +161,16 @@ function CreateNote({
     }))
     .toJS() as unknown as { value: string; label: string }[];
 
+  // @ts-ignore
   slackChannelsOptions.unshift({ value: null, label: 'Pick a channel' });
+  // @ts-ignore
   teamsChannelsOptions.unshift({ value: null, label: 'Pick a channel' });
 
-  const changeSlackChannel = ({ value, name }: { value: Record<string, string>; name: string }) => {
+  const changeSlackChannel = ({ value }: { value: Record<string, string>; name: string }) => {
     setSlackChannel(value.value);
   };
 
-  const changeTeamsChannel = ({ value, name }: { value: Record<string, string>; name: string }) => {
+  const changeTeamsChannel = ({ value }: { value: Record<string, string>; name: string }) => {
     setTeamsChannel(value.value);
   };
 
