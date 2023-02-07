@@ -464,10 +464,10 @@ class StringDict(Message):
 class SetNodeAttributeDict(Message):
     __id__ = 51
 
-    def __init__(self, id, name, value):
+    def __init__(self, id, name_key, value_key):
         self.id = id
-        self.name = name
-        self.value = value
+        self.name_key = name_key
+        self.value_key = value_key
 
 
 class DOMDrop(Message):

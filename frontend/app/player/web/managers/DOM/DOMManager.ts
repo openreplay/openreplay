@@ -43,6 +43,7 @@ export default class DOMManager extends ListWalker<Message> {
   private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
+  private stringDict: Record<number,string> = {}
 
 
   private upperBodyId: number = -1;
@@ -134,6 +135,31 @@ export default class DOMManager extends ListWalker<Message> {
     parent.insertChildAt(child, index)
   }
 
+  private setNodeAttribute(msg: { id: number, name: string, value: string }) {
+    let { name, value } = msg;
+    const vn = this.vElements.get(msg.id)
+    if (!vn) { logger.error("Node not found", msg); return }
+    if (vn.node.tagName === "INPUT" && name === "name") {
+      // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
+      return
+    }
+    if (name === "href" && vn.node.tagName === "LINK") {
+      // @ts-ignore  ?global ENV type   // It've been done on backend (remove after testing in saas)
+      // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
+      //   value = value.replace("?", "%3F");
+      // }
+      if (!value.startsWith("http")) { return }
+      // blob:... value happened here. https://foss.openreplay.com/3/session/7013553567419137
+      // that resulted in that link being unable to load and having 4sec timeout in the below function.
+      this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
+    }
+    if (vn.node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
+      value = "url(#" + (value.split("#")[1] ||")")
+    }
+    vn.setAttribute(name, value)
+    this.removeBodyScroll(msg.id, vn)
+  }
+
   private applyMessage = (msg: Message): Promise<any> | undefined => {
     let node: Node | undefined
     let vn: VNode | undefined
@@ -160,10 +186,11 @@ export default class DOMManager extends ListWalker<Message> {
         this.vRoots.clear()
         this.vRoots.set(0, vDoc) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
-        // todo: start from 0 (sync logic with tracker)
+        // todo: start from 0-node (sync logic with tracker)
         this.vTexts.clear()
         this.stylesManager.reset()
         this.activeIframeRoots.clear()
+        this.stringDict = {}
         return
       case MType.CreateTextNode:
         vn = new VText()
@@ -200,28 +227,20 @@ export default class DOMManager extends ListWalker<Message> {
         vn.parentNode.removeChild(vn)
         return
       case MType.SetNodeAttribute:
-        let { name, value } = msg;
-        vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
-        if (vn.node.tagName === "INPUT" && name === "name") {
-          // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
-          return
-        }
-        if (name === "href" && vn.node.tagName === "LINK") {
-          // @ts-ignore  ?global ENV type   // It've been done on backend (remove after testing in saas)
-          // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
-          //   value = value.replace("?", "%3F");
-          // }
-          if (!value.startsWith("http")) { return }
-          // blob:... value happened here. https://foss.openreplay.com/3/session/7013553567419137
-          // that resulted in that link being unable to load and having 4sec timeout in the below function.
-          this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
-        }
-        if (vn.node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
-          value = "url(#" + (value.split("#")[1] ||")")
-        }
-        vn.setAttribute(name, value)
-        this.removeBodyScroll(msg.id, vn)
+        this.setNodeAttribute(msg)
+        return
+      case MType.StringDict:
+        this.stringDict[msg.key] = msg.value
+        return
+      case MType.SetNodeAttributeDict:
+        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
+        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
+        if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined ) { return }
+        this.setNodeAttribute({ 
+          id: msg.id,
+          name: this.stringDict[msg.nameKey],
+          value: this.stringDict[msg.valueKey],
+        })
         return
       case MType.RemoveNodeAttribute:
         vn = this.vElements.get(msg.id)

@@ -279,14 +279,14 @@ message 49, 'PerformanceTrack' do  #, :replayer => :devtools --> requires player
 end
 # since 4.1.9
 message 50, "StringDict" do
-  string "Key"
+  uint "Key"
   string "Value"
 end
 # since 4.1.9
 message 51, "SetNodeAttributeDict" do
   uint 'ID'
-  string 'Name'
-  string 'Value'
+  uint 'NameKey'
+  uint 'ValueKey'
 end
 
 ## 50,51

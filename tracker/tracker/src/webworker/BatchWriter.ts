@@ -1,6 +1,7 @@
 import type Message from '../common/messages.gen.js'
 import * as Messages from '../common/messages.gen.js'
 import MessageEncoder from './MessageEncoder.gen.js'
+import StringDictionary from './StringDictionary.js'
 
 const SIZE_BYTES = 3
 const MAX_M_SIZE = (1 << (SIZE_BYTES * 8)) - 1
@@ -9,6 +10,7 @@ export default class BatchWriter {
   private nextIndex = 0
   private beaconSize = 2 * 1e5 // Default 200kB
   private encoder = new MessageEncoder(this.beaconSize)
+  private strDict = new StringDictionary()
   private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
 
@@ -84,12 +86,28 @@ export default class BatchWriter {
     this.beaconSizeLimit = limit
   }
 
+  private applyDict(str: string): number {
+    const [key, isNew] = this.strDict.getKey(str)
+    if (isNew) {
+      this.writeMessage([Messages.Type.StringDict, key, str])
+    }
+    return key
+  }
+
   writeMessage(message: Message) {
     if (message[0] === Messages.Type.Timestamp) {
       this.timestamp = message[1] // .timestamp
     }
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1] // .url
+    }
+    if (message[0] === Messages.Type.SetNodeAttribute) {
+      message = [
+        Messages.Type.SetNodeAttributeDict,
+        message[1],
+        this.applyDict(message[2]),
+        this.applyDict(message[3]),
+      ] as Messages.SetNodeAttributeDict
     }
     if (this.writeWithSize(message)) {
       return

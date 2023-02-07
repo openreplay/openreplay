@@ -795,7 +795,7 @@ func DecodePerformanceTrack(reader BytesReader) (Message, error) {
 func DecodeStringDict(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &StringDict{}
-	if msg.Key, err = reader.ReadString(); err != nil {
+	if msg.Key, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	if msg.Value, err = reader.ReadString(); err != nil {
@@ -810,10 +810,10 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	if msg.ID, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Name, err = reader.ReadString(); err != nil {
+	if msg.NameKey, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.Value, err = reader.ReadString(); err != nil {
+	if msg.ValueKey, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err

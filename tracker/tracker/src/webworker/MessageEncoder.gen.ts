@@ -159,11 +159,11 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.StringDict:
-      return  this.string(msg[1]) && this.string(msg[2])
+      return  this.uint(msg[1]) && this.string(msg[2])
     break
 
     case Messages.Type.SetNodeAttributeDict:
-      return  this.uint(msg[1]) && this.string(msg[2]) && this.string(msg[3])
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3])
     break
 
     case Messages.Type.ResourceTiming:
