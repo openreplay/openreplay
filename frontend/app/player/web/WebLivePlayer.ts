@@ -47,6 +47,7 @@ export default class WebLivePlayer extends WebPlayer {
     if (this.wpState.get().liveTimeTravel) {
       return
     }
+    let result = false;
     this.historyFileIsLoading = true
     this.messageManager.setMessagesLoading(true) // do it in one place. update unique  loading states each time instead
     this.messageManager.resetMessageManagers()
@@ -60,6 +61,7 @@ export default class WebLivePlayer extends WebPlayer {
       this.wpState.update({
         liveTimeTravel: true,
       })
+      result = true
       // here we need to update also lists state, if we gonna use them this.messageManager.onFileReadSuccess
     } catch(e) {
       toast.error('Error requesting a session file')
@@ -74,6 +76,7 @@ export default class WebLivePlayer extends WebPlayer {
 
     this.historyFileIsLoading = false
     this.messageManager.setMessagesLoading(false)
+    return result;
   }
 
   jumpToLive = () => {
