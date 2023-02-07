@@ -278,11 +278,14 @@ export default class App {
     listener: EventListener,
     useSafe = true,
     useCapture = true,
+    onlyStop = false,
   ): void {
     if (useSafe) {
       listener = this.safe(listener)
     }
-    this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
+    if (!onlyStop) {
+      this.attachStartCallback(() => target?.addEventListener(type, listener, useCapture), useSafe)
+    }
     this.attachStopCallback(() => target?.removeEventListener(type, listener, useCapture), useSafe)
   }
 

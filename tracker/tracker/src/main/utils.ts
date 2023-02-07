@@ -86,8 +86,8 @@ export function debounce(func: (...args: any[]) => void, timeout = 125) {
   let timer: NodeJS.Timeout
   return (...args: any[]) => {
     clearTimeout(timer)
-    // @ts-ignore
     timer = setTimeout(() => {
+      // @ts-ignore
       func.apply(this, args)
     }, timeout)
   }

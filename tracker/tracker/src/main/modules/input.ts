@@ -7,6 +7,7 @@ const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', '
 
 // TODO: take into consideration "contenteditable" attribute
 type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
+
 function isTextEditable(node: any): node is TextEditableElement {
   if (hasTag(node, 'textarea')) {
     return true
@@ -18,7 +19,7 @@ function isTextEditable(node: any): node is TextEditableElement {
   return INPUT_TYPES.includes(node.type)
 }
 
-function isCheckable(node: any): node is HTMLInputElement {
+function isCheckbox(node: any): node is HTMLInputElement {
   if (!hasTag(node, 'input')) {
     return false
   }
@@ -134,22 +135,11 @@ export default function (app: App, opts: Partial<Options>): void {
   }
 
   const inputValues: Map<number, string> = new Map()
-  const checkableValues: Map<number, boolean> = new Map()
+  const checkboxValues: Map<number, boolean> = new Map()
 
   app.attachStopCallback(() => {
     inputValues.clear()
-    checkableValues.clear()
-  })
-
-  app.ticker.attach((): void => {
-    checkableValues.forEach((checked, id) => {
-      const node = app.nodes.getNode(id) as HTMLInputElement
-      if (!node) return checkableValues.delete(id)
-      if (checked !== node.checked) {
-        checkableValues.set(id, node.checked)
-        app.send(SetInputChecked(id, node.checked))
-      }
-    })
+    checkboxValues.clear()
   })
 
   const debouncedUpdate = debounce((id: number, node: TextEditableElement) => {
@@ -166,19 +156,20 @@ export default function (app: App, opts: Partial<Options>): void {
       // TODO: support multiple select (?): use selectedOptions; Need send target?
       if (hasTag(node, 'select')) {
         sendInputValue(id, node)
-        app.attachEventListener(node, 'change', () => {
+        const handler = () => {
           sendInputValue(id, node)
-        })
+        }
+        node.addEventListener('change', handler)
+        app.attachEventListener(node, 'change', handler, false, true, true)
       }
+
       if (isTextEditable(node)) {
         inputValues.set(id, node.value)
         sendInputValue(id, node)
-
-        node.addEventListener('focus', () => {
-          // @ts-ignore
+        const setFocus = () => {
           Object.assign(node, { or_focusStart: +new Date() })
-        })
-        node.addEventListener('input', (e) => {
+        }
+        const inputEvent = (e: InputEvent) => {
           const value = (e.target as HTMLInputElement).value
           if (inputValues.get(id) === '' && value !== '') {
             const inputTime = +new Date()
@@ -188,20 +179,37 @@ export default function (app: App, opts: Partial<Options>): void {
           }
           inputValues.set(id, value)
           debouncedUpdate(id, node)
-        })
-        node.addEventListener('change', (e) => {
+        }
+        const changeEvent = (e: InputEvent) => {
           const value = (e.target as HTMLInputElement).value
           if (inputValues.get(id) !== value) {
             inputValues.set(id, value)
             debouncedUpdate(id, node)
           }
           Object.assign(node, { or_inputHesitation: undefined, or_focusStart: undefined })
-        })
+        }
+        node.addEventListener('focus', setFocus)
+        node.addEventListener('input', inputEvent)
+        node.addEventListener('change', changeEvent)
+        app.attachEventListener(node, 'focus', setFocus, false, true, true)
+        app.attachEventListener(node, 'input', inputEvent, false, true, true)
+        app.attachEventListener(node, 'change', changeEvent, false, true, true)
         return
       }
-      if (isCheckable(node)) {
-        checkableValues.set(id, node.checked)
+
+      if (isCheckbox(node)) {
+        checkboxValues.set(id, node.checked)
         app.send(SetInputChecked(id, node.checked))
+        const checkboxChange = (e: InputEvent) => {
+          const value = (e.target as HTMLInputElement).checked
+          if (checkboxValues.get(id) !== value) {
+            checkboxValues.set(id, value)
+            app.send(SetInputChecked(id, value))
+          }
+        }
+        node.addEventListener('change', checkboxChange)
+        app.attachEventListener(node, 'change', checkboxChange, false, true, true)
+
         return
       }
     }),
