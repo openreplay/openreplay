@@ -114,8 +114,8 @@ func main() {
 	consumer := queue.NewConsumer(
 		cfg.GroupDB,
 		[]string{
-			cfg.TopicRawWeb,
-			cfg.TopicAnalytics,
+			cfg.TopicRawWeb,    // from tracker
+			cfg.TopicAnalytics, // from heuristics
 		},
 		messages.NewMessageIterator(msgHandler, msgFilter, true),
 		false,
@@ -162,6 +162,7 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			commitDBUpdates()
+			builderMap.ClearOldSessions()
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
