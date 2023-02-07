@@ -1,5 +1,5 @@
 import type App from '../app/index.js'
-import { normSpaces, IN_BROWSER, getLabelAttribute } from '../utils.js'
+import { normSpaces, IN_BROWSER, getLabelAttribute, debounce } from '../utils.js'
 import { hasTag } from '../app/guards.js'
 import { SetInputTarget, SetInputValue, SetInputChecked } from '../app/messages.gen.js'
 
@@ -94,12 +94,14 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   )
+
   function sendInputTarget(id: number, node: TextEditableElement): void {
     const label = getInputLabel(node)
     if (label !== '') {
       app.send(SetInputTarget(id, label))
     }
   }
+
   function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
     let value = node.value
     let inputMode: InputMode = options.defaultInputMode
@@ -126,33 +128,20 @@ export default function (app: App, opts: Partial<Options>): void {
         value = ''
         break
     }
-
+    // @ts-ignore if hesitationTime > 150 add it ???
+    console.log(node.or_inputHesitation)
     app.send(SetInputValue(id, value, mask))
   }
 
   const inputValues: Map<number, string> = new Map()
   const checkableValues: Map<number, boolean> = new Map()
-  const registeredTargets: Set<number> = new Set()
 
   app.attachStopCallback(() => {
     inputValues.clear()
     checkableValues.clear()
-    registeredTargets.clear()
   })
 
   app.ticker.attach((): void => {
-    inputValues.forEach((value, id) => {
-      const node = app.nodes.getNode(id) as HTMLInputElement
-      if (!node) return inputValues.delete(id)
-      if (value !== node.value) {
-        inputValues.set(id, node.value)
-        if (!registeredTargets.has(id)) {
-          registeredTargets.add(id)
-          sendInputTarget(id, node)
-        }
-        sendInputValue(id, node)
-      }
-    })
     checkableValues.forEach((checked, id) => {
       const node = app.nodes.getNode(id) as HTMLInputElement
       if (!node) return checkableValues.delete(id)
@@ -162,7 +151,11 @@ export default function (app: App, opts: Partial<Options>): void {
       }
     })
   })
-  app.ticker.attach(Set.prototype.clear, 100, false, registeredTargets)
+
+  const debouncedUpdate = debounce((id: number, node: TextEditableElement) => {
+    sendInputTarget(id, node)
+    sendInputValue(id, node)
+  }, 125)
 
   app.nodes.attachNodeCallback(
     app.safe((node: Node): void => {
@@ -180,6 +173,30 @@ export default function (app: App, opts: Partial<Options>): void {
       if (isTextEditable(node)) {
         inputValues.set(id, node.value)
         sendInputValue(id, node)
+
+        node.addEventListener('focus', () => {
+          // @ts-ignore
+          Object.assign(node, { or_focusStart: +new Date() })
+        })
+        node.addEventListener('input', (e) => {
+          const value = (e.target as HTMLInputElement).value
+          if (inputValues.get(id) === '' && value !== '') {
+            const inputTime = +new Date()
+            // @ts-ignore
+            const hesitationTime = inputTime - node.or_focusStart
+            Object.assign(node, { or_inputHesitation: hesitationTime })
+          }
+          inputValues.set(id, value)
+          debouncedUpdate(id, node)
+        })
+        node.addEventListener('change', (e) => {
+          const value = (e.target as HTMLInputElement).value
+          if (inputValues.get(id) !== value) {
+            inputValues.set(id, value)
+            debouncedUpdate(id, node)
+          }
+          Object.assign(node, { or_inputHesitation: undefined, or_focusStart: undefined })
+        })
         return
       }
       if (isCheckable(node)) {
