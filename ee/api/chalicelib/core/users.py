@@ -740,6 +740,8 @@ def authenticate(email, password, for_change_password=False):
             "email": email,
             **r
         }
+    if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
+        return {"errors": ["must sign-in with SSO, enforced by admin"]}
     return None
 
 
