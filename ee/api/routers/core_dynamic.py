@@ -1,7 +1,7 @@
 from typing import Optional, Union
 
 from decouple import config
-from fastapi import Body, Depends, BackgroundTasks
+from fastapi import Body, Depends, BackgroundTasks, Request
 from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
@@ -16,6 +16,7 @@ from chalicelib.utils import SAML2_helper
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context, OR_scope
+from routers import saml
 from routers.base import get_routers
 from schemas_ee import Permissions
 
@@ -100,7 +101,9 @@ def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberS
 
 
 @public_app.get('/users/invitation', tags=['users'])
-def process_invitation_link(token: str):
+def process_invitation_link(token: str, request: Request):
+    if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
+        return saml.start_sso(request=request)
     if token is None or len(token) < 64:
         return {"errors": ["please provide a valid invitation"]}
     user = users.get_by_invitation_token(token)
