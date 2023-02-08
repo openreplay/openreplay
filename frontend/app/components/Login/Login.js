@@ -129,7 +129,7 @@ class Login extends React.Component {
                   </div>
                 </div>
               </Loader>
-              {errors.length ? (
+              {errors && errors.length ? (
                 <div className={stl.errors}>
                   {errors.map((error) => (
                     <div className={stl.errorItem}>

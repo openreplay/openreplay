@@ -30,6 +30,7 @@ export const initialState = Map({
   onboarding: false,
   sites: List(),
   jwt: null,
+  errors: List(),
   loginRequest: {
     loading: false,
     errors: []
@@ -77,8 +78,9 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
     case LOGIN.FAILURE:
+      console.log('login failed', action);
       deleteCookie('jwt', '/', 'openreplay.com')
-      return state.set('loginRequest', { loading: false, errors: ['Invalid username or password'] });
+      return state.set('loginRequest', { loading: false, errors: action.errors });
     case FETCH_ACCOUNT.FAILURE:
     case DELETE.SUCCESS:
     case DELETE.FAILURE:
@@ -100,6 +102,7 @@ const reducer = (state = initialState, action = {}) => {
 
 export default withRequestState({
   signupRequest: SIGNUP,
+  // loginRequest: LOGIN,
   updatePasswordRequest: UPDATE_PASSWORD,
   requestResetPassowrd: REQUEST_RESET_PASSWORD,
   resetPassword: RESET_PASSWORD,
