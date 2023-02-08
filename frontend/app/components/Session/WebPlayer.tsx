@@ -69,7 +69,9 @@ function WebPlayer(props: any) {
   const isPlayerReady = contextValue.store?.get().ready
 
   React.useEffect(() => {
-    contextValue.player && contextValue.player.play()
+    if (activeTab !== 'Click Map') {
+     contextValue.player && contextValue.player.play()
+    }
   }, [insights, isPlayerReady, jumpTimestamp])
 
   // LAYOUT (TODO: local layout state - useContext or something..)

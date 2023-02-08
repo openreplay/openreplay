@@ -75,12 +75,6 @@ function LivePlayer({
     }
   }, []);
 
-  const TABS = {
-    EVENTS: 'User Steps',
-    CLICKMAP: 'Click Map',
-  };
-  const [activeTab, setActiveTab] = useState('');
-
   if (!contextValue.player) return null;
 
   return (
@@ -89,8 +83,6 @@ function LivePlayer({
         <PlayerBlockHeader
           // @ts-ignore
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          tabs={TABS}
           isMultiview={openedFromMultiview}
         />
       )}
