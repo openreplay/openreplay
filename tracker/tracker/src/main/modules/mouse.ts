@@ -112,7 +112,7 @@ export default function (app: App): void {
   let directionChangeCount = 0
   let distance = 0
   let checkIntervalId: NodeJS.Timer
-  const shakeThreshold = 0.005
+  const shakeThreshold = 0.008
   const shakeCheckInterval = 225
 
   function checkMouseShaking() {
@@ -124,7 +124,7 @@ export default function (app: App): void {
     }
 
     const acceleration = (nextVelocity - velocity) / shakeCheckInterval
-    if (directionChangeCount && acceleration > shakeThreshold) {
+    if (directionChangeCount > 3 && acceleration > shakeThreshold) {
       console.log('Mouse shake detected!')
     }
 
