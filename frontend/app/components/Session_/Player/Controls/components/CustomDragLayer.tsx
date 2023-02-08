@@ -25,7 +25,7 @@ function getItemStyles(
       display: "none"
     }
   }
-  let { x, y } = currentOffset;
+  let { x } = currentOffset;
   if (x > maxX) {
     x = maxX;
   }
@@ -61,7 +61,7 @@ const CustomDragLayer: FC<Props> = memo(function CustomDragLayer({ maxX, minX, o
   }))
 
   useEffect(() => {
-    if (!isDragging || !currentOffset) {
+    if (!isDragging || !currentOffset?.x) {
       return
     }
     onDrag(currentOffset)
