@@ -3,7 +3,7 @@ fromVersion: "v1.10.0"
 postgresql: &postgres
   # For generating passwords
   # `openssl rand -hex 20`
-  postgresqlPassword: "changeMePassword"
+  postgresqlPassword: "428b1c4b4b4cad3b80da"
   postgresqlHost: "postgresql.db.svc.cluster.local"
   postgresqlPort: "5432"
   postgresqlUser: "postgres"
@@ -22,7 +22,7 @@ clickhouse: &clickhouse
   enabled: false
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   username: default
-  password: "changeMePassword"
+  password: ""
   service:
     webPort: 9000
 
