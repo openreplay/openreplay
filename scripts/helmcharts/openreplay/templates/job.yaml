@@ -219,7 +219,7 @@ spec:
           mountPath: /opt/openreplay
       {{- end }}
       - name: clickhouse
-        image: yandex/clickhouse-client:21.9.4.35
+        image: clickhouse/clickhouse-server:22.12-alpine
         env:
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
