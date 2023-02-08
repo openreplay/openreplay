@@ -43,6 +43,10 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: ch_username
+              value: "{{ .Values.global.clickhouse.username }}"
+            - name: ch_password
+              value: "{{ .Values.global.clickhouse.password }}"
             - name: ch_host
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port

@@ -137,7 +137,7 @@ kafka:
 # Enterprise dbs
 clickhouse:
   image:
-    tag: "22.2.2.1"
+    tag: "22.12-alpine"
   enabled: false
 
 postgreql:

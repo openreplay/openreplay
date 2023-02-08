@@ -43,6 +43,10 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: CH_USERNAME
+              value: '{{ .Values.global.clickhouse.userame }}'
+            - name: CH_PASSWORD
+              value: '{{ .Values.global.clickhouse.password }}'
             - name: CLICKHOUSE_STRING
               value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
             - name: LICENSE_KEY

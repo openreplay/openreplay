@@ -79,7 +79,10 @@ ENV TZ=UTC \
     TOPIC_STORAGE_FAILOVER=storage-failover \
     SERVICE_NAME=$SERVICE_NAME \
     PROFILER_ENABLED=false \
-    COMPRESSION_TYPE=zstd
+    COMPRESSION_TYPE=zstd \
+    CH_USERNAME="default" \
+    CH_PASSWORD="" \
+    CH_DATABASE="default"
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \

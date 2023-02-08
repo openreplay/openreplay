@@ -3,15 +3,17 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/license"
 )
@@ -38,14 +40,28 @@ type connectorImpl struct {
 	batches map[string]Bulk //driver.Batch
 }
 
+// Check env variables. If not present, return default value.
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func NewConnector(url string) Connector {
 	license.CheckLicense()
+	// Check username, password, database
+	userName := getEnv("CH_USERNAME", "default")
+	password := getEnv("CH_PASSWORD", "")
+	database := getEnv("CH_DATABASE", "default")
 	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/default")
+	url = strings.TrimSuffix(url, "/"+database)
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
-			Database: "default",
+			Database: database,
+			Username: userName,
+			Password: password,
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
