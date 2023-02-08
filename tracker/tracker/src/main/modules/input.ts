@@ -129,9 +129,10 @@ export default function (app: App, opts: Partial<Options>): void {
         value = ''
         break
     }
-    // @ts-ignore if hesitationTime > 150 add it ???
-    console.log(node.or_inputHesitation)
-    app.send(SetInputValue(id, value, mask))
+
+    // @ts-ignore maybe if hesitationTime > 150 ?
+    const hesitationTime = node.or_inputHesitation || 0
+    app.send(SetInputValue(id, value, hesitationTime, mask))
   }
 
   const inputValues: Map<number, string> = new Map()

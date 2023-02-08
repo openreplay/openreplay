@@ -159,6 +159,7 @@ export type SetInputValue = [
   /*type:*/ Type.SetInputValue,
   /*id:*/ number,
   /*value:*/ string,
+  /*hesitationTime:*/ number,
   /*mask:*/ number,
 ]
 

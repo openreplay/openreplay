@@ -94,6 +94,7 @@ end
 message 18, 'SetInputValue' do
   uint 'ID'
   string 'Value'
+  int 'HesitationTime'
   int 'Mask'
 end
 message 19, 'SetInputChecked' do

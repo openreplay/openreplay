@@ -163,9 +163,10 @@ class SetInputTarget(Message):
 class SetInputValue(Message):
     __id__ = 18
 
-    def __init__(self, id, value, mask):
+    def __init__(self, id, value, hesitation_time, mask):
         self.id = id
         self.value = value
+        self.hesitation_time = hesitation_time
         self.mask = mask
 
 

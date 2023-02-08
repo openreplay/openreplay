@@ -270,6 +270,9 @@ func DecodeSetInputValue(reader BytesReader) (Message, error) {
 	if msg.Value, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
+	if msg.HesitationTime, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
 	if msg.Mask, err = reader.ReadInt(); err != nil {
 		return nil, err
 	}

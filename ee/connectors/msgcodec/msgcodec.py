@@ -200,6 +200,7 @@ class MessageCodec(Codec):
             return SetInputValue(
                 id=self.read_uint(reader),
                 value=self.read_string(reader),
+                hesitation_time=self.read_int(reader),
                 mask=self.read_int(reader)
             )
 

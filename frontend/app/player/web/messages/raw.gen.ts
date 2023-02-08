@@ -156,6 +156,7 @@ export interface RawSetInputValue {
   tp: MType.SetInputValue,
   id: number,
   value: string,
+  hesitationTime: number,
   mask: number,
 }
 

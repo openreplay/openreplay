@@ -531,17 +531,19 @@ func (msg *SetInputTarget) TypeID() int {
 
 type SetInputValue struct {
 	message
-	ID    uint64
-	Value string
-	Mask  int64
+	ID             uint64
+	Value          string
+	HesitationTime int64
+	Mask           int64
 }
 
 func (msg *SetInputValue) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Value))
+	buf := make([]byte, 41+len(msg.Value))
 	buf[0] = 18
 	p := 1
 	p = WriteUint(msg.ID, buf, p)
 	p = WriteString(msg.Value, buf, p)
+	p = WriteInt(msg.HesitationTime, buf, p)
 	p = WriteInt(msg.Mask, buf, p)
 	return buf[:p]
 }

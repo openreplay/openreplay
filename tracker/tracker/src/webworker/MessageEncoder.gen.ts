@@ -67,7 +67,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.SetInputValue:
-      return  this.uint(msg[1]) && this.string(msg[2]) && this.int(msg[3])
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.int(msg[3]) && this.int(msg[4])
     break
 
     case Messages.Type.SetInputChecked:

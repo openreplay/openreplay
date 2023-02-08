@@ -107,12 +107,45 @@ export default function (app: App): void {
   let mouseTargetTime = 0
   let selectorMap: { [id: number]: string } = {}
 
+  let velocity = 0
+  let direction = 0
+  let directionChangeCount = 0
+  let distance = 0
+  let checkIntervalId: NodeJS.Timer
+  const shakeThreshold = 0.005
+  const shakeCheckInterval = 225
+
+  function checkMouseShaking() {
+    const nextVelocity = distance / shakeCheckInterval
+
+    if (!velocity) {
+      velocity = nextVelocity
+      return
+    }
+
+    const acceleration = (nextVelocity - velocity) / shakeCheckInterval
+    if (directionChangeCount && acceleration > shakeThreshold) {
+      console.log('Mouse shake detected!')
+    }
+
+    distance = 0
+    directionChangeCount = 0
+    velocity = nextVelocity
+  }
+
+  app.attachStartCallback(() => {
+    checkIntervalId = setInterval(() => checkMouseShaking(), shakeCheckInterval)
+  })
+
   app.attachStopCallback(() => {
     mousePositionX = -1
     mousePositionY = -1
     mousePositionChanged = false
     mouseTarget = null
     selectorMap = {}
+    if (checkIntervalId) {
+      clearInterval(checkIntervalId)
+    }
   })
 
   const sendMouseMove = (): void => {
@@ -146,6 +179,14 @@ export default function (app: App): void {
         mousePositionX = e.clientX + left
         mousePositionY = e.clientY + top
         mousePositionChanged = true
+
+        const nextDirection = Math.sign(e.movementX)
+        distance += Math.abs(e.movementX) + Math.abs(e.movementY)
+
+        if (nextDirection !== direction) {
+          direction = nextDirection
+          directionChangeCount++
+        }
       },
       false,
     )

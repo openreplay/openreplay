@@ -98,6 +98,7 @@ type TrSetInputValue = [
   type: 18,
   id: number,
   value: string,
+  hesitationTime: number,
   mask: number,
 ]
 
@@ -549,7 +550,8 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         tp: MType.SetInputValue,
         id: tMsg[1],
         value: tMsg[2],
-        mask: tMsg[3],
+        hesitationTime: tMsg[3],
+        mask: tMsg[4],
       }
     }
     

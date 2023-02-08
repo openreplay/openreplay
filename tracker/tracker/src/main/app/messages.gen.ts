@@ -172,12 +172,14 @@ export function SetInputTarget(
 export function SetInputValue(
   id: number,
   value: string,
+  hesitationTime: number,
   mask: number,
 ): Messages.SetInputValue {
   return [
     Messages.Type.SetInputValue,
     id,
     value,
+    hesitationTime,
     mask,
   ]
 }
