@@ -231,6 +231,10 @@ spec:
             value: "{{.Values.global.clickhouse.chHost}}"
           - name: CH_PORT
             value: "{{.Values.global.clickhouse.service.webPort}}"
+          - name: CH_USERNAME
+            value: "{{.Values.global.clickhouse.username}}"
+          - name: CH_PASSWORD
+            value: "{{.Values.global.clickhouse.password}}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh

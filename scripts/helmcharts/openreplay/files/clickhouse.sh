@@ -11,7 +11,7 @@ function migrate() {
         echo "Migrating clickhouse version $version"
         # For now, we can ignore the clickhouse db inject errors.
         # TODO: Better error handling in script
-        clickhouse-client -h ${CH_HOST} --port ${CH_PORT} --multiquery < ${clickhousedir}/${version}/${version}.sql || true
+        clickhouse-client -h ${CH_HOST} --port ${CH_PORT} --user ${CH_USERNAME} --password ${CH_PASSWORD} --multiquery < ${clickhousedir}/${version}/${version}.sql || true
     done
 }
 
@@ -19,7 +19,7 @@ function init() {
     echo "Initializing clickhouse"
     for file in `ls ${clickhousedir}/create/*.sql`; do
         echo "Injecting $file"
-        clickhouse-client -h ${CH_HOST} --port ${CH_PORT} --multiquery < $file || true
+        clickhouse-client -h ${CH_HOST} --user ${CH_USERNAME} --password ${CH_PASSWORD} --port ${CH_PORT} --multiquery < $file || true
     done
 }
 

@@ -55,6 +55,10 @@ spec:
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port
               value: "{{ .Values.global.clickhouse.service.webPort }}"
+            - name: ch_username
+              value: '{{ .Values.global.clickhouse.username }}'
+            - name: ch_password
+              value: '{{ .Values.global.clickhouse.passwordk }}'
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
