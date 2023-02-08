@@ -21,6 +21,8 @@ clickhouse: &clickhouse
   # For enterpriseEdition
   enabled: false
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  username: default
+  password: "changeMePassword"
   service:
     webPort: 9000
 
