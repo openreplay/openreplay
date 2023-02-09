@@ -79,6 +79,7 @@ const (
 	MsgBatchMeta                   = 80
 	MsgBatchMetadata               = 81
 	MsgPartitionedMessage          = 82
+	MsgInputChange                 = 83
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -531,19 +532,17 @@ func (msg *SetInputTarget) TypeID() int {
 
 type SetInputValue struct {
 	message
-	ID             uint64
-	Value          string
-	HesitationTime int64
-	Mask           int64
+	ID    uint64
+	Value string
+	Mask  int64
 }
 
 func (msg *SetInputValue) Encode() []byte {
-	buf := make([]byte, 41+len(msg.Value))
+	buf := make([]byte, 31+len(msg.Value))
 	buf[0] = 18
 	p := 1
 	p = WriteUint(msg.ID, buf, p)
 	p = WriteString(msg.Value, buf, p)
-	p = WriteInt(msg.HesitationTime, buf, p)
 	p = WriteInt(msg.Mask, buf, p)
 	return buf[:p]
 }
@@ -2117,6 +2116,31 @@ func (msg *PartitionedMessage) Decode() Message {
 
 func (msg *PartitionedMessage) TypeID() int {
 	return 82
+}
+
+type InputChange struct {
+	message
+	ID             uint64
+	Label          string
+	HesitationTime int64
+}
+
+func (msg *InputChange) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Label))
+	buf[0] = 83
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteInt(msg.HesitationTime, buf, p)
+	return buf[:p]
+}
+
+func (msg *InputChange) Decode() Message {
+	return msg
+}
+
+func (msg *InputChange) TypeID() int {
+	return 83
 }
 
 type IssueEvent struct {

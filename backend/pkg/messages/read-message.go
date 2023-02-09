@@ -270,9 +270,6 @@ func DecodeSetInputValue(reader BytesReader) (Message, error) {
 	if msg.Value, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
-	if msg.HesitationTime, err = reader.ReadInt(); err != nil {
-		return nil, err
-	}
 	if msg.Mask, err = reader.ReadInt(); err != nil {
 		return nil, err
 	}
@@ -1296,6 +1293,21 @@ func DecodePartitionedMessage(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeInputChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &InputChange{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.HesitationTime, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1905,6 +1917,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeBatchMetadata(reader)
 	case 82:
 		return DecodePartitionedMessage(reader)
+	case 83:
+		return DecodeInputChange(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

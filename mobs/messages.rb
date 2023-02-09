@@ -94,7 +94,6 @@ end
 message 18, 'SetInputValue' do
   uint 'ID'
   string 'Value'
-  int 'HesitationTime'
   int 'Mask'
 end
 message 19, 'SetInputChecked' do
@@ -476,6 +475,11 @@ message 82, 'PartitionedMessage', :replayer => false do
   uint 'PartTotal'
 end
 
+message 83, 'InputChange', :replayer => false do
+    uint 'ID'
+    string 'Label'
+    int 'HesitationTime'
+end
 
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do

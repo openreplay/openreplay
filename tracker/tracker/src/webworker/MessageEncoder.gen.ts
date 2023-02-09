@@ -67,7 +67,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.SetInputValue:
-      return  this.uint(msg[1]) && this.string(msg[2]) && this.int(msg[3]) && this.int(msg[4])
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.int(msg[3])
     break
 
     case Messages.Type.SetInputChecked:
@@ -252,6 +252,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.PartitionedMessage:
       return  this.uint(msg[1]) && this.uint(msg[2])
+    break
+
+    case Messages.Type.InputChange:
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.int(msg[3])
     break
 
     }

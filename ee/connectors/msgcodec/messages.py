@@ -163,10 +163,9 @@ class SetInputTarget(Message):
 class SetInputValue(Message):
     __id__ = 18
 
-    def __init__(self, id, value, hesitation_time, mask):
+    def __init__(self, id, value, mask):
         self.id = id
         self.value = value
-        self.hesitation_time = hesitation_time
         self.mask = mask
 
 
@@ -743,6 +742,15 @@ class PartitionedMessage(Message):
     def __init__(self, part_no, part_total):
         self.part_no = part_no
         self.part_total = part_total
+
+
+class InputChange(Message):
+    __id__ = 83
+
+    def __init__(self, id, label, hesitation_time):
+        self.id = id
+        self.label = label
+        self.hesitation_time = hesitation_time
 
 
 class IssueEvent(Message):

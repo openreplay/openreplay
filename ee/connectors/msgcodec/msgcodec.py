@@ -200,7 +200,6 @@ class MessageCodec(Codec):
             return SetInputValue(
                 id=self.read_uint(reader),
                 value=self.read_string(reader),
-                hesitation_time=self.read_int(reader),
                 mask=self.read_int(reader)
             )
 
@@ -659,6 +658,13 @@ class MessageCodec(Codec):
             return PartitionedMessage(
                 part_no=self.read_uint(reader),
                 part_total=self.read_uint(reader)
+            )
+
+        if message_id == 83:
+            return InputChange(
+                id=self.read_uint(reader),
+                label=self.read_string(reader),
+                hesitation_time=self.read_int(reader)
             )
 
         if message_id == 125:

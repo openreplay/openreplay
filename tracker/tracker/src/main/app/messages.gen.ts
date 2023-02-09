@@ -172,14 +172,12 @@ export function SetInputTarget(
 export function SetInputValue(
   id: number,
   value: string,
-  hesitationTime: number,
   mask: number,
 ): Messages.SetInputValue {
   return [
     Messages.Type.SetInputValue,
     id,
     value,
-    hesitationTime,
     mask,
   ]
 }
@@ -791,6 +789,19 @@ export function PartitionedMessage(
     Messages.Type.PartitionedMessage,
     partNo,
     partTotal,
+  ]
+}
+
+export function InputChange(
+  id: number,
+  label: string,
+  hesitationTime: number,
+): Messages.InputChange {
+  return [
+    Messages.Type.InputChange,
+    id,
+    label,
+    hesitationTime,
   ]
 }
 

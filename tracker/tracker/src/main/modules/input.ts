@@ -1,7 +1,7 @@
 import type App from '../app/index.js'
 import { normSpaces, IN_BROWSER, getLabelAttribute, debounce } from '../utils.js'
 import { hasTag } from '../app/guards.js'
-import { SetInputTarget, SetInputValue, SetInputChecked } from '../app/messages.gen.js'
+import { InputChange, SetInputValue, SetInputChecked } from '../app/messages.gen.js'
 
 const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date', 'tel']
 
@@ -86,6 +86,7 @@ export interface Options {
 }
 
 export default function (app: App, opts: Partial<Options>): void {
+  const inputHesitationMap: Map<number, { hesitation: number; focusEv: number }> = new Map()
   const options: Options = Object.assign(
     {
       obscureInputNumbers: true,
@@ -96,10 +97,12 @@ export default function (app: App, opts: Partial<Options>): void {
     opts,
   )
 
-  function sendInputTarget(id: number, node: TextEditableElement): void {
+  function sendInputChange(id: number, node: TextEditableElement): void {
     const label = getInputLabel(node)
+    // @ts-ignore maybe if hesitationTime > 150 ?
+    const { hesitation } = inputHesitationMap.get(id)
     if (label !== '') {
-      app.send(SetInputTarget(id, label))
+      app.send(InputChange(id, label, hesitation))
     }
   }
 
@@ -130,9 +133,7 @@ export default function (app: App, opts: Partial<Options>): void {
         break
     }
 
-    // @ts-ignore maybe if hesitationTime > 150 ?
-    const hesitationTime = node.or_inputHesitation || 0
-    app.send(SetInputValue(id, value, hesitationTime, mask))
+    app.send(SetInputValue(id, value, mask))
   }
 
   const inputValues: Map<number, string> = new Map()
@@ -144,9 +145,13 @@ export default function (app: App, opts: Partial<Options>): void {
   })
 
   const debouncedUpdate = debounce((id: number, node: TextEditableElement) => {
-    sendInputTarget(id, node)
+    sendInputChange(id, node)
     sendInputValue(id, node)
   }, 125)
+
+  const debouncedTyping = debounce((id: number, node: TextEditableElement) => {
+    sendInputValue(id, node)
+  }, 60)
 
   app.nodes.attachNodeCallback(
     app.safe((node: Node): void => {
@@ -160,26 +165,27 @@ export default function (app: App, opts: Partial<Options>): void {
         const handler = () => {
           sendInputValue(id, node)
         }
-        node.addEventListener('change', handler)
-        app.attachEventListener(node, 'change', handler, false, true, true)
+        app.nodes.attachNodeListener(node, 'change', handler)
       }
 
       if (isTextEditable(node)) {
         inputValues.set(id, node.value)
+        inputHesitationMap.set(id, { hesitation: 0, focusEv: 0 })
         sendInputValue(id, node)
         const setFocus = () => {
-          Object.assign(node, { or_focusStart: +new Date() })
+          inputHesitationMap.set(id, { hesitation: 0, focusEv: +new Date() })
         }
         const inputEvent = (e: InputEvent) => {
           const value = (e.target as HTMLInputElement).value
           if (inputValues.get(id) === '' && value !== '') {
             const inputTime = +new Date()
+            const { focusEv } = inputHesitationMap.get(id)!
             // @ts-ignore
-            const hesitationTime = inputTime - node.or_focusStart
-            Object.assign(node, { or_inputHesitation: hesitationTime })
+            const hesitationTime = inputTime - focusEv
+            inputHesitationMap.set(id, { hesitation: hesitationTime, focusEv })
           }
           inputValues.set(id, value)
-          debouncedUpdate(id, node)
+          debouncedTyping(id, node)
         }
         const changeEvent = (e: InputEvent) => {
           const value = (e.target as HTMLInputElement).value
@@ -187,14 +193,11 @@ export default function (app: App, opts: Partial<Options>): void {
             inputValues.set(id, value)
             debouncedUpdate(id, node)
           }
-          Object.assign(node, { or_inputHesitation: undefined, or_focusStart: undefined })
+          inputHesitationMap.set(id, { hesitation: 0, focusEv: 0 })
         }
-        node.addEventListener('focus', setFocus)
-        node.addEventListener('input', inputEvent)
-        node.addEventListener('change', changeEvent)
-        app.attachEventListener(node, 'focus', setFocus, false, true, true)
-        app.attachEventListener(node, 'input', inputEvent, false, true, true)
-        app.attachEventListener(node, 'change', changeEvent, false, true, true)
+        app.nodes.attachNodeListener(node, 'focus', setFocus)
+        app.nodes.attachNodeListener(node, 'input', inputEvent)
+        app.nodes.attachNodeListener(node, 'change', changeEvent)
         return
       }
 
@@ -203,13 +206,10 @@ export default function (app: App, opts: Partial<Options>): void {
         app.send(SetInputChecked(id, node.checked))
         const checkboxChange = (e: InputEvent) => {
           const value = (e.target as HTMLInputElement).checked
-          if (checkboxValues.get(id) !== value) {
-            checkboxValues.set(id, value)
-            app.send(SetInputChecked(id, value))
-          }
+          checkboxValues.set(id, value)
+          app.send(SetInputChecked(id, value))
         }
-        node.addEventListener('change', checkboxChange)
-        app.attachEventListener(node, 'change', checkboxChange, false, true, true)
+        app.nodes.attachNodeListener(node, 'change', checkboxChange)
 
         return
       }

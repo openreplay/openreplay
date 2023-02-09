@@ -172,13 +172,11 @@ export default class RawMessageReader extends PrimitiveReader {
     case 18: {
       const id = this.readUint(); if (id === null) { return resetPointer() }
       const value = this.readString(); if (value === null) { return resetPointer() }
-      const hesitationTime = this.readInt(); if (hesitationTime === null) { return resetPointer() }
       const mask = this.readInt(); if (mask === null) { return resetPointer() }
       return {
         tp: MType.SetInputValue,
         id,
         value,
-        hesitationTime,
         mask,
       };
     }
