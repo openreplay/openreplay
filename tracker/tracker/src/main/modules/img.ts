@@ -5,14 +5,15 @@ import { hasTag } from '../app/guards.js'
 
 function resolveURL(url: string, location: Location = document.location) {
   url = url.trim()
-  if (url.startsWith('/')) {
-    return location.origin + url
-  } else if (
+  if (
+    url.startsWith('//') ||
     url.startsWith('http://') ||
     url.startsWith('https://') ||
     url.startsWith('data:') // any other possible value here? https://bugzilla.mozilla.org/show_bug.cgi?id=1758035
   ) {
     return url
+  } else if (url.startsWith('/')) {
+    return location.origin + url
   } else {
     return location.origin + location.pathname + url
   }
