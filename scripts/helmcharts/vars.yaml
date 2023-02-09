@@ -3,7 +3,7 @@ fromVersion: "v1.10.0"
 postgresql: &postgres
   # For generating passwords
   # `openssl rand -hex 20`
-  postgresqlPassword: "428b1c4b4b4cad3b80da"
+  postgresqlPassword: "changeMePassword"
   postgresqlHost: "postgresql.db.svc.cluster.local"
   postgresqlPort: "5432"
   postgresqlUser: "postgres"
