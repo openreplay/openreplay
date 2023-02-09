@@ -119,14 +119,14 @@ describe(
       cy.get('[data-test-id=log-button]').click();
       cy.wait('@getAccount')
       cy.wait(SECOND * 2)
-      cy.visit('3/session/7585361734083637?jumpto=5000&freeze=true')
+      cy.visit('3/session/7585361734083637?jumpto=7500&freeze=true')
       cy.wait('@getFirstMob')
       cy.wait('@getSecondMob')
       cy.wait(SECOND * 2)
 
       cy.window().then(win => {
         const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
-        jumpMethod(SECOND * 5)
+        jumpMethod(SECOND * 7500)
       })
       cy.wait(SECOND * 4)
       cy.matchImageSnapshot('1st-breakpoint');
