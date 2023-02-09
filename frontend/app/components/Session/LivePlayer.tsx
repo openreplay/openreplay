@@ -82,7 +82,6 @@ function LivePlayer({
       {!fullView && (
         <PlayerBlockHeader
           // @ts-ignore
-          activeTab={activeTab}
           isMultiview={openedFromMultiview}
         />
       )}

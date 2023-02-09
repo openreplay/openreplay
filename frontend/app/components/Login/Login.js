@@ -110,7 +110,7 @@ class Login extends React.Component {
                       placeholder="Email"
                       name="email"
                       onChange={this.write}
-                      required="true"
+                      required
                       icon="user-alt"
                     />
                   </div>
@@ -123,7 +123,7 @@ class Login extends React.Component {
                       placeholder="Password"
                       name="password"
                       onChange={this.write}
-                      required="true"
+                      required
                       icon="lock-alt"
                     />
                   </div>
