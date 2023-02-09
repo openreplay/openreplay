@@ -126,7 +126,7 @@ describe(
 
       cy.window().then(win => {
         const jumpMethod = win.playerJump ? win.playerJump : win.playerJumpToTime
-        jumpMethod(SECOND * 7500)
+        jumpMethod(SECOND * 7.5)
       })
       cy.wait(SECOND * 4)
       cy.matchImageSnapshot('1st-breakpoint');
