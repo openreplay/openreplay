@@ -34,9 +34,9 @@ export default () => (next) => (action) => {
       }
     })
     .catch(async (e) => {
-      const data = await e.response.json();
+      const data = await e.response?.json();
       logger.error('Error during API request. ', e);
-      return next({ type: FAILURE, errors: parseError(data.errors) });
+      return next({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
     });
 };
 
