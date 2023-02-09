@@ -8,7 +8,7 @@ on:
         default: 'false'
   push:
     branches:
-      - test_ci
+      - dev
     paths:
       - ee/api/**
       - api/**
