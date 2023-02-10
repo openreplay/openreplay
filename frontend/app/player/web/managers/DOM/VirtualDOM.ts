@@ -122,7 +122,7 @@ export class VElement extends VParent {
 type StyleSheetCallback = (s: CSSStyleSheet) => void
 export type StyleElement = HTMLStyleElement | SVGStyleElement
 
-// @Depricated TODO: remove in favor of PostponedStyleSheet
+// @deprecated TODO: remove in favor of PostponedStyleSheet
 export class VStyleElement extends VElement {
 	private loaded = false
 	private stylesheetCallbacks: StyleSheetCallback[] = []

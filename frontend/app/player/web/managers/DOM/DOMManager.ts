@@ -287,7 +287,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
 
-      // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
+      // @deprecated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
       case MType.CssInsertRule:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -306,7 +306,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
-      // end @depricated
+      // end @deprecated
 
       case MType.CreateIFrameDocument:
         vn = this.vElements.get(msg.frameID)

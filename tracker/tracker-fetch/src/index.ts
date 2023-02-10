@@ -28,7 +28,7 @@ export interface Options {
   ignoreHeaders: Array<string> | boolean
   sanitiser?: (RequestResponseData) => RequestResponseData | null
 
-  // Depricated
+  // @deprecated
   requestSanitizer?: any
   responseSanitizer?: any
 }
@@ -49,7 +49,7 @@ export default function(opts: Partial<Options> = {}): (app: App | null) => Windo
     opts,
   );
   if (options.requestSanitizer && options.responseSanitizer) {
-    console.warn("OpenReplay fetch plugin: `requestSanitizer` and `responseSanitizer` options are depricated. Please, use `sanitiser` instead (check out documentation at https://docs.openreplay.com/plugins/fetch).")
+    console.warn("OpenReplay fetch plugin: `requestSanitizer` and `responseSanitizer` options are deprecated. Please, use `sanitiser` instead (check out documentation at https://docs.openreplay.com/plugins/fetch).")
   }
 
   return (app: App | null) => {
