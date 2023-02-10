@@ -12,7 +12,7 @@ function selection(app: App) {
         app.send(SelectionChange(selectionStart, selectionEnd, selectedText))
       }
     } else {
-      app.send(SelectionChange(0, 0, ''))
+      app.send(SelectionChange(-1, -1, ''))
     }
   })
 }
