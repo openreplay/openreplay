@@ -10,7 +10,7 @@ type bulksTask struct {
 }
 
 func NewBulksTask() *bulksTask {
-	return &bulksTask{bulks: make([]Bulk, 14)}
+	return &bulksTask{bulks: make([]Bulk, 0, 14)}
 }
 
 type BulkSet struct {

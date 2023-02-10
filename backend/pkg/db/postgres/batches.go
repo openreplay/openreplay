@@ -74,7 +74,7 @@ type batchesTask struct {
 }
 
 func NewBatchesTask(size int) *batchesTask {
-	return &batchesTask{batches: make([]*SessionBatch, size)}
+	return &batchesTask{batches: make([]*SessionBatch, 0, size)}
 }
 
 type BatchSet struct {
