@@ -1,0 +1,117 @@
+import { getFilterKeyTypeByKey, setQueryParamKeyFromFilterkey } from 'Types/filter/filterType';
+import Period, { LAST_24_HOURS, LAST_7_DAYS, LAST_30_DAYS, CUSTOM_RANGE } from 'Types/app/period';
+import Filter from 'Types/filter/filter';
+import { filtersMap } from 'App/types/filter/newFilter';
+
+export const createUrlQuery = (filter: any) => {
+  const query = [];
+
+  for (const f of filter.filters) {
+    if (!f.value.length) {
+      continue;
+    }
+
+    let str = `${f.operator}|${f.value.join('|')}`;
+    if (f.hasSource) {
+      str = `${str}^${f.sourceOperator}|${f.source.join('|')}`;
+    }
+
+    let key: any = setQueryParamKeyFromFilterkey(f.key);
+    if (!key) {
+      key = [f.key];
+    }
+
+    query.push({ key: key + '[]', value: str });
+  }
+
+  if (query.length > 0) {
+    query.push({ key: 'range[]', value: filter.rangeValue });
+    if (filter.rangeValue === CUSTOM_RANGE) {
+      query.push({ key: 'rStart[]', value: filter.startDate });
+      query.push({ key: 'rEnd[]', value: filter.endDate });
+    }
+  }
+
+  return query.map(({ key, value }) => `${key}=${value}`).join('&');
+};
+
+export const getFiltersFromQuery = (search: string, filter: any) => {
+  if (!search || filter.filters.size > 0) {
+    return;
+  }
+
+  const entires = getQueryObject(search);
+  const period: any = getPeriodFromEntries(entires);
+  const filters = getFiltersFromEntries(entires);
+
+  return Filter({ filters, rangeValue: period.rangeName });
+};
+
+const getFiltersFromEntries = (entires: any) => {
+  const _filters: any = { ...filtersMap };
+  const filters: any = [];
+  if (entires.length > 0) {
+    entires.forEach((item: any) => {
+      if (!item.key || !item.value) {
+        return;
+      }
+
+      let filter: any = {};
+      const filterKey = getFilterKeyTypeByKey(item.key);
+      if (!filterKey) {
+        return;
+      }
+      const tmp = item.value.split('^');
+      const valueArr = tmp[0].split('|');
+      const operator = valueArr.shift();
+      const sourceArr = tmp[1] ? tmp[1].split('|') : [];
+      const sourceOperator = sourceArr.shift();
+
+      if (filterKey) {
+        filter.type = filterKey;
+        filter.key = filterKey;
+      } else {
+        filter = _filters[item.key];
+        if (!!filter) {
+          filter.type = filter.key;
+          filter.key = filter.key;
+        }
+      }
+
+      filter.value = valueArr;
+      filter.operator = operator;
+      filter.source = sourceArr;
+      filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+      if (!filter.filters || filter.filters.size === 0) {
+        filters.push(filter);
+      }
+    });
+  }
+  return filters;
+};
+
+const getPeriodFromEntries = (entires: any) => {
+  const rangeFilter = entires.find(({ key }: any) => key === 'range');
+  if (!rangeFilter) {
+    return Period();
+  }
+
+  if (rangeFilter.value === CUSTOM_RANGE) {
+    const start = entires.find(({ key }: any) => key === 'rStart').value;
+    const end = entires.find(({ key }: any) => key === 'rEnd').value;
+    return Period({ rangeName: rangeFilter.value, start, end });
+  }
+
+  return Period({ rangeName: rangeFilter.value });
+};
+
+function getQueryObject(search: any) {
+  let jsonArray = search
+    .slice(1)
+    .split('&')
+    .map((item: any) => {
+      let [key, value] = item.split('=');
+      return { key: key.slice(0, -2), value };
+    });
+  return jsonArray;
+}

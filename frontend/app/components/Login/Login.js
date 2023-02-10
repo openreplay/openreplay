@@ -68,13 +68,11 @@ class Login extends React.Component {
 
     return (
       <div className="flex flex-col md:flex-row" style={{ height: '100vh' }}>
-        <div className={cn('md:w-6/12 relative', stl.left)}>
+        <div className={cn('md:w-6/12 relative overflow-hidden', stl.left)}>
           <div className="px-6 pt-10">
             <img src="/assets/logo-white.svg" />
           </div>
-          <div className="color-white text-lg flex items-center">
-            <img style={{ width: '800px', position: 'absolute', bottom: 0, left: 0 }} src={LoginBg} />
-          </div>
+          <img style={{ width: '800px', position: 'absolute', bottom: -100, left: 0 }} src={LoginBg} />
         </div>
         <div className="md:w-6/12 flex items-center justify-center py-10">
           <div className="">
