@@ -51,6 +51,6 @@ func (si *Saver) CommitStats() error {
 	return si.ch.Commit()
 }
 
-func (si *Saver) Stop() error {
+func (si *Saver) Close() error {
 	return si.ch.Stop()
 }
