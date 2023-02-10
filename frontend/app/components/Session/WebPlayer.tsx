@@ -48,9 +48,9 @@ function WebPlayer(props: any) {
     notesStore.fetchSessionNotes(session.sessionId).then((r) => {
       const note = props.query.get('note');
       if (note) {
-        WebPlayerInst.pause();
         setNoteItem(notesStore.getNoteById(parseInt(note, 10), r));
         setShowNote(true);
+        WebPlayerInst.pause();
       }
     })
 
@@ -69,10 +69,13 @@ function WebPlayer(props: any) {
   const isPlayerReady = contextValue.store?.get().ready
 
   React.useEffect(() => {
-    if (activeTab !== 'Click Map') {
+    if (showNoteModal) {
+      contextValue.player.pause()
+    }
+    if (activeTab !== 'Click Map' && !showNoteModal && isPlayerReady) {
      contextValue.player && contextValue.player.play()
     }
-  }, [insights, isPlayerReady, jumpTimestamp])
+  }, [activeTab, isPlayerReady, showNoteModal])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(
@@ -85,7 +88,7 @@ function WebPlayer(props: any) {
 
   const onNoteClose = () => {
     setShowNote(false);
-    contextValue.player.togglePlay();
+    contextValue.player.play();
   };
 
   if (!contextValue.player || !session) return null;
