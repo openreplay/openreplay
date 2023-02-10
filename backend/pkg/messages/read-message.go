@@ -1308,6 +1308,21 @@ func DecodeInputChange(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeSelectionChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SelectionChange{}
+	if msg.SelectionStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.SelectionEnd, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Selection, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1919,6 +1934,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodePartitionedMessage(reader)
 	case 83:
 		return DecodeInputChange(reader)
+	case 84:
+		return DecodeSelectionChange(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

@@ -54,6 +54,7 @@ export const TP_MAP = {
   76: MType.AdoptedSsAddOwner,
   77: MType.AdoptedSsRemoveOwner,
   79: MType.Zustand,
+  84: MType.SelectionChange,
   90: MType.IosSessionStart,
   93: MType.IosCustomEvent,
   96: MType.IosScreenChanges,

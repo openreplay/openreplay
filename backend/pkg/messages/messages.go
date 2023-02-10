@@ -80,6 +80,7 @@ const (
 	MsgBatchMetadata               = 81
 	MsgPartitionedMessage          = 82
 	MsgInputChange                 = 83
+	MsgSelectionChange             = 84
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2141,6 +2142,31 @@ func (msg *InputChange) Decode() Message {
 
 func (msg *InputChange) TypeID() int {
 	return 83
+}
+
+type SelectionChange struct {
+	message
+	SelectionStart uint64
+	SelectionEnd   uint64
+	Selection      string
+}
+
+func (msg *SelectionChange) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Selection))
+	buf[0] = 84
+	p := 1
+	p = WriteUint(msg.SelectionStart, buf, p)
+	p = WriteUint(msg.SelectionEnd, buf, p)
+	p = WriteString(msg.Selection, buf, p)
+	return buf[:p]
+}
+
+func (msg *SelectionChange) Decode() Message {
+	return msg
+}
+
+func (msg *SelectionChange) TypeID() int {
+	return 84
 }
 
 type IssueEvent struct {

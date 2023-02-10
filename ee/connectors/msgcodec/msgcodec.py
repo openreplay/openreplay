@@ -667,6 +667,13 @@ class MessageCodec(Codec):
                 hesitation_time=self.read_int(reader)
             )
 
+        if message_id == 84:
+            return SelectionChange(
+                selection_start=self.read_uint(reader),
+                selection_end=self.read_uint(reader),
+                selection=self.read_string(reader)
+            )
+
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),

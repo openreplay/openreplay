@@ -805,3 +805,16 @@ export function InputChange(
   ]
 }
 
+export function SelectionChange(
+  selectionStart: number,
+  selectionEnd: number,
+  selection: string,
+): Messages.SelectionChange {
+  return [
+    Messages.Type.SelectionChange,
+    selectionStart,
+    selectionEnd,
+    selection,
+  ]
+}
+

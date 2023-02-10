@@ -753,6 +753,15 @@ class InputChange(Message):
         self.hesitation_time = hesitation_time
 
 
+class SelectionChange(Message):
+    __id__ = 84
+
+    def __init__(self, selection_start, selection_end, selection):
+        self.selection_start = selection_start
+        self.selection_end = selection_end
+        self.selection = selection
+
+
 class IssueEvent(Message):
     __id__ = 125
 

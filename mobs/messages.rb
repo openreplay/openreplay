@@ -481,6 +481,12 @@ message 83, 'InputChange', :replayer => false do
     int 'HesitationTime'
 end
 
+message 84, 'SelectionChange' do
+    uint 'SelectionStart'
+    uint 'SelectionEnd'
+    string 'Selection'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'

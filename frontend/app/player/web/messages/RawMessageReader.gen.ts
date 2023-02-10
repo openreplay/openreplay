@@ -627,6 +627,18 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 84: {
+      const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
+      const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }
+      const selection = this.readString(); if (selection === null) { return resetPointer() }
+      return {
+        tp: MType.SelectionChange,
+        selectionStart,
+        selectionEnd,
+        selection,
+      };
+    }
+
     case 90: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const projectID = this.readUint(); if (projectID === null) { return resetPointer() }
