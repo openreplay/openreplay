@@ -103,11 +103,12 @@ export function fetchGDPR(siteId) {
   }
 }
 
-export function saveGDPR(siteId, gdpr) {
-  return {
+export const saveGDPR = (siteId, gdpr) => (dispatch, getState) => {
+  const g = getState().getIn(['site', 'instance', 'gdpr']);
+  return dispatch({
     types: array(SAVE_GDPR),
-    call: client => client.post(`/${ siteId }/gdpr`, gdpr.toData()),
-  };
+    call: client => client.post(`/${ siteId }/gdpr`, g.toData()),
+  });
 }
 
 export function fetchList(siteId) {

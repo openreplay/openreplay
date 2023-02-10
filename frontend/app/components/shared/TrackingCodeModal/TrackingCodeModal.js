@@ -1,7 +1,5 @@
 import React from 'react';
 import { Tabs } from 'UI';
-import { editGDPR, saveGDPR } from 'Duck/site';
-import { connect } from 'react-redux';
 import ProjectCodeSnippet from './ProjectCodeSnippet';
 import InstallDocs from './InstallDocs';
 
@@ -31,7 +29,7 @@ class TrackingCodeModal extends React.PureComponent {
     };
 
     render() {
-        const { site, displayed, onClose, title = '', subTitle } = this.props;
+        const { title = '', subTitle } = this.props;
         const { activeTab } = this.state;
         return (
             <div className="bg-white h-screen overflow-y-auto" style={{ width: '700px' }}>
@@ -48,14 +46,4 @@ class TrackingCodeModal extends React.PureComponent {
     }
 }
 
-export default connect(
-    (state) => ({
-        // site: state.getIn(['site', 'instance']),
-        // gdpr: state.getIn(['site', 'instance', 'gdpr']),
-        saving: state.getIn(['site', 'saveGDPR', 'loading']),
-    }),
-    {
-        editGDPR,
-        saveGDPR,
-    }
-)(TrackingCodeModal);
+export default TrackingCodeModal;
