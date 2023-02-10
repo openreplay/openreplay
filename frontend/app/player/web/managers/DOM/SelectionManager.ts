@@ -1,39 +1,68 @@
-import type { SelectionChange } from '../../messages'
-import type { VElement} from "./VirtualDOM";
+import type { SelectionChange } from '../../messages';
+import type { VElement } from './VirtualDOM';
 import ListWalker from '../../../common/ListWalker';
-
-const SELECTION_CLASS = { start: "-openreplay-selection-start", end: "-openreplay-selection-end" }
-
+import Screen from 'Player/web/Screen/Screen';
 
 export default class SelectionManager extends ListWalker<SelectionChange> {
-  constructor(private readonly vElements: Map<number, VElement>) {
+  constructor(private readonly vElements: Map<number, VElement>, private readonly screen: Screen) {
     super();
   }
 
-  private selected: [Element | null, Element | null] = [null, null]
+  private selected: [{ id: number, node: Element } | null, { id: number, node: Element } | null] = [null, null];
+
+  clearSelection() {
+    this.selected[0] && this.screen.overlay.removeChild(this.selected[0].node) && this.selected[0].node.remove();
+    this.selected[1] && this.screen.overlay.removeChild(this.selected[1].node) && this.selected[1].node.remove();
+    this.selected = [null, null];
+  }
 
   move(t: number) {
-    const msg = this.moveGetLast(t)
-    if (!msg) { return }
-    console.log(msg)
-    if (msg.selectionStart <= 0) {
-      this.selected[0]?.classList.remove(SELECTION_CLASS.start)
-      this.selected[0].style.border = 'unset'
-      this.selected[1]?.classList.remove(SELECTION_CLASS.end)
-      this.selected = [null, null]
+    const msg = this.moveGetLast(t);
+    if (!msg) {
       return;
     }
-    const startVNode = this.vElements.get(msg.selectionStart -1)
-    const endVNode = this.vElements.get(msg.selectionEnd -1)
+    // in theory: empty selection or selection removed
+    if (msg.selectionStart <= 0) {
+      this.clearSelection()
+      return;
+    }
+    // preventing clones
+    if (this.selected[0] && this.selected[0].id === msg.selectionStart) return;
 
-    console.log(startVNode, endVNode, this.vElements)
+    const startVNode = this.vElements.get(msg.selectionStart - 1);
+    const endVNode = this.vElements.get(msg.selectionEnd - 1);
+
+    // only one selection present on page at the same time
+    if (this.selected[0] && this.selected[0]?.id !== msg.selectionStart) this.clearSelection()
 
     if (startVNode && endVNode) {
-      this.selected = [startVNode.node, endVNode.node]
+      const startCoords = startVNode.node.getBoundingClientRect();
+      const endCoords = endVNode.node.getBoundingClientRect();
 
-      this.selected[0]?.classList.add(SELECTION_CLASS.start)
-      this.selected[0].style.border = '5px solid red'
-      this.selected[1]?.classList.add(SELECTION_CLASS.end)
+      const startPointer = document.createElement('div');
+      const endPointer = document.createElement('div');
+
+      Object.assign(endPointer.style, {
+        top: endCoords.top + 'px',
+        left: (endCoords.left + endCoords.width + 3) + 'px',
+        width: '3px',
+        height: endCoords.height + 'px',
+        border: '3px solid red',
+        position: 'absolute',
+      });
+      Object.assign(startPointer.style, {
+        top: startCoords.top + 'px',
+        left: (startCoords.left - 3) + 'px',
+        width: '3px',
+        height: startCoords.height + 'px',
+        border: '3px solid red',
+        position: 'absolute',
+      });
+
+      this.screen.overlay.appendChild(startPointer);
+      this.screen.overlay.appendChild(endPointer);
+
+      this.selected = [{ id: msg.selectionStart, node: startPointer }, { id: msg.selectionEnd, node: endPointer }];
     }
   }
 }

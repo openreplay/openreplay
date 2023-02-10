@@ -49,7 +49,7 @@ export default class DOMManager extends ListWalker<Message> {
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
   private stylesManager: StylesManager
   private focusManager: FocusManager = new FocusManager(this.vElements)
-  private selectionManager: SelectionManager = new SelectionManager(this.vElements)
+  private selectionManager: SelectionManager
 
   constructor(
     private readonly screen: Screen,
@@ -58,6 +58,7 @@ export default class DOMManager extends ListWalker<Message> {
     setCssLoading: ConstructorParameters<typeof StylesManager>[1],
   ) {
     super()
+    this.selectionManager = new SelectionManager(this.vElements, screen)
     this.stylesManager = new StylesManager(screen, setCssLoading)
   }
 
