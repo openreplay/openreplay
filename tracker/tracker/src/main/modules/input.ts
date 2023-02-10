@@ -153,6 +153,25 @@ export default function (app: App, opts: Partial<Options>): void {
     sendInputValue(id, node)
   }, 60)
 
+  app.ticker.attach(() => {
+    inputValues.forEach((value, id) => {
+      const node = app.nodes.getNode(id) as HTMLInputElement
+      if (!node) return inputValues.delete(id)
+      if (value !== node.value) {
+        inputValues.set(id, node.value)
+        sendInputValue(id, node)
+      }
+    })
+    checkboxValues.forEach((checked, id) => {
+      const node = app.nodes.getNode(id) as HTMLInputElement
+      if (!node) return checkboxValues.delete(id)
+      if (checked !== node.checked) {
+        checkboxValues.set(id, node.checked)
+        app.send(SetInputChecked(id, node.checked))
+      }
+    })
+  }, 5)
+
   app.nodes.attachNodeCallback(
     app.safe((node: Node): void => {
       const id = app.nodes.getID(node)

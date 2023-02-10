@@ -18,6 +18,12 @@ export default class Ticker {
     this.callbacks = []
   }
 
+  /**
+   * @param {Callback} callback - repeated cb
+   * @param {number} n - number of turn skips; ticker have a 30 ms cycle
+   * @param {boolean} useSafe - using safe wrapper to check if app is active
+   * @param {object} thisArg - link to <this>
+   * */
   attach(callback: Callback, n = 0, useSafe = true, thisArg?: any) {
     if (thisArg) {
       callback = callback.bind(thisArg)
