@@ -70,11 +70,11 @@ func (b *SessionBatch) Prepare() {
 }
 
 type batchesTask struct {
-	batches chan *SessionBatch
+	batches []*SessionBatch
 }
 
 func NewBatchesTask(size int) *batchesTask {
-	return &batchesTask{batches: make(chan *SessionBatch, size)}
+	return &batchesTask{batches: make([]*SessionBatch, size)}
 }
 
 type BatchSet struct {
@@ -163,10 +163,10 @@ func (conn *BatchSet) updateBatchSize(sessionID uint64, reqSize int) {
 }
 
 func (conn *BatchSet) Commit() {
-	newTask := NewBatchesTask(len(conn.batches) + 1)
+	newTask := NewBatchesTask(len(conn.batches) + 2)
 	// Copy batches
 	for _, b := range conn.batches {
-		newTask.batches <- b
+		newTask.batches = append(newTask.batches, b)
 	}
 	// Reset current batches
 	conn.batches = make(map[uint64]*SessionBatch)
@@ -179,7 +179,7 @@ func (conn *BatchSet) Commit() {
 		}
 	}
 	log.Printf("size of updates batch: %d", batch.Len())
-	newTask.batches <- batch
+	newTask.batches = append(newTask.batches, batch)
 	conn.updates = make(map[uint64]*sessionUpdates)
 
 	conn.workerTask <- newTask
@@ -191,7 +191,7 @@ func (conn *BatchSet) Stop() {
 }
 
 func (conn *BatchSet) sendBatches(t *batchesTask) {
-	for batch := range t.batches {
+	for _, batch := range t.batches {
 		// Append session update sql request to the end of batch
 		batch.Prepare()
 		// Record batch size in bytes and number of lines

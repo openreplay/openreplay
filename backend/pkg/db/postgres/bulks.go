@@ -6,11 +6,11 @@ import (
 )
 
 type bulksTask struct {
-	bulks chan Bulk
+	bulks []Bulk
 }
 
 func NewBulksTask() *bulksTask {
-	return &bulksTask{bulks: make(chan Bulk, 14)}
+	return &bulksTask{bulks: make([]Bulk, 14)}
 }
 
 type BulkSet struct {
@@ -207,20 +207,20 @@ func (conn *BulkSet) Send() {
 	newTask := NewBulksTask()
 
 	// Prepare set of bulks to send
-	newTask.bulks <- conn.autocompletes
-	newTask.bulks <- conn.requests
-	newTask.bulks <- conn.customEvents
-	newTask.bulks <- conn.webPageEvents
-	newTask.bulks <- conn.webInputEvents
-	newTask.bulks <- conn.webGraphQL
-	newTask.bulks <- conn.webErrors
-	newTask.bulks <- conn.webErrorEvents
-	newTask.bulks <- conn.webErrorTags
-	newTask.bulks <- conn.webIssues
-	newTask.bulks <- conn.webIssueEvents
-	newTask.bulks <- conn.webCustomEvents
-	newTask.bulks <- conn.webClickEvents
-	newTask.bulks <- conn.webNetworkRequest
+	newTask.bulks = append(newTask.bulks, conn.autocompletes)
+	newTask.bulks = append(newTask.bulks, conn.requests)
+	newTask.bulks = append(newTask.bulks, conn.customEvents)
+	newTask.bulks = append(newTask.bulks, conn.webPageEvents)
+	newTask.bulks = append(newTask.bulks, conn.webInputEvents)
+	newTask.bulks = append(newTask.bulks, conn.webGraphQL)
+	newTask.bulks = append(newTask.bulks, conn.webErrors)
+	newTask.bulks = append(newTask.bulks, conn.webErrorEvents)
+	newTask.bulks = append(newTask.bulks, conn.webErrorTags)
+	newTask.bulks = append(newTask.bulks, conn.webIssues)
+	newTask.bulks = append(newTask.bulks, conn.webIssueEvents)
+	newTask.bulks = append(newTask.bulks, conn.webCustomEvents)
+	newTask.bulks = append(newTask.bulks, conn.webClickEvents)
+	newTask.bulks = append(newTask.bulks, conn.webNetworkRequest)
 
 	conn.workerTask <- newTask
 
@@ -234,7 +234,8 @@ func (conn *BulkSet) Stop() {
 }
 
 func (conn *BulkSet) sendBulks(t *bulksTask) {
-	for bulk := range t.bulks {
+	log.Printf("sendBulks")
+	for _, bulk := range t.bulks {
 		if err := bulk.Send(); err != nil {
 			log.Printf("%s bulk send err: %s", bulk.Table(), err)
 		}
