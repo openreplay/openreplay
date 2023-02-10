@@ -98,7 +98,7 @@ func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 		batches:         make(map[uint64]*SessionBatch),
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
-		workerTask:      make(chan *batchesTask),
+		workerTask:      make(chan *batchesTask, 1),
 		done:            make(chan struct{}),
 		finished:        make(chan struct{}),
 		updates:         make(map[uint64]*sessionUpdates),
