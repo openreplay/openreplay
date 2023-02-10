@@ -5,6 +5,14 @@ import (
 	"openreplay/backend/pkg/monitoring"
 )
 
+type bulksTask struct {
+	bulks chan Bulk
+}
+
+func NewBulksTask() *bulksTask {
+	return &bulksTask{bulks: make(chan Bulk, 14)}
+}
+
 type BulkSet struct {
 	c                 Pool
 	autocompletes     Bulk
@@ -21,15 +29,19 @@ type BulkSet struct {
 	webCustomEvents   Bulk
 	webClickEvents    Bulk
 	webNetworkRequest Bulk
-	bulksToSend       chan Bulk
 	metrics           *monitoring.Metrics
+	workerTask        chan *bulksTask
+	done              chan struct{}
+	finished          chan struct{}
 }
 
 func NewBulkSet(c Pool, metrics *monitoring.Metrics) *BulkSet {
 	bs := &BulkSet{
-		c:           c,
-		bulksToSend: make(chan Bulk, 28), // 2 full sets of 14 bulks
-		metrics:     metrics,
+		c:          c,
+		metrics:    metrics,
+		workerTask: make(chan *bulksTask, 1),
+		done:       make(chan struct{}),
+		finished:   make(chan struct{}),
 	}
 	bs.initBulks()
 	go bs.worker()
@@ -192,31 +204,56 @@ func (conn *BulkSet) initBulks() {
 }
 
 func (conn *BulkSet) Send() {
+	newTask := NewBulksTask()
+
 	// Prepare set of bulks to send
-	conn.bulksToSend <- conn.autocompletes
-	conn.bulksToSend <- conn.requests
-	conn.bulksToSend <- conn.customEvents
-	conn.bulksToSend <- conn.webPageEvents
-	conn.bulksToSend <- conn.webInputEvents
-	conn.bulksToSend <- conn.webGraphQL
-	conn.bulksToSend <- conn.webErrors
-	conn.bulksToSend <- conn.webErrorEvents
-	conn.bulksToSend <- conn.webErrorTags
-	conn.bulksToSend <- conn.webIssues
-	conn.bulksToSend <- conn.webIssueEvents
-	conn.bulksToSend <- conn.webCustomEvents
-	conn.bulksToSend <- conn.webClickEvents
-	conn.bulksToSend <- conn.webNetworkRequest
+	newTask.bulks <- conn.autocompletes
+	newTask.bulks <- conn.requests
+	newTask.bulks <- conn.customEvents
+	newTask.bulks <- conn.webPageEvents
+	newTask.bulks <- conn.webInputEvents
+	newTask.bulks <- conn.webGraphQL
+	newTask.bulks <- conn.webErrors
+	newTask.bulks <- conn.webErrorEvents
+	newTask.bulks <- conn.webErrorTags
+	newTask.bulks <- conn.webIssues
+	newTask.bulks <- conn.webIssueEvents
+	newTask.bulks <- conn.webCustomEvents
+	newTask.bulks <- conn.webClickEvents
+	newTask.bulks <- conn.webNetworkRequest
+
+	conn.workerTask <- newTask
 
 	// Reset new bulks
 	conn.initBulks()
 }
 
-func (conn *BulkSet) worker() {
-	for {
-		bulk := <-conn.bulksToSend
+func (conn *BulkSet) Stop() {
+	conn.done <- struct{}{}
+	<-conn.finished
+}
+
+func (conn *BulkSet) sendBulks(t *bulksTask) {
+	for bulk := range t.bulks {
 		if err := bulk.Send(); err != nil {
 			log.Printf("%s bulk send err: %s", bulk.Table(), err)
+		}
+	}
+}
+
+func (conn *BulkSet) worker() {
+	for {
+		select {
+		case t := <-conn.workerTask:
+			conn.sendBulks(t)
+		case <-conn.done:
+			if len(conn.workerTask) > 0 {
+				for t := range conn.workerTask {
+					conn.sendBulks(t)
+				}
+			}
+			conn.finished <- struct{}{}
+			return
 		}
 	}
 }

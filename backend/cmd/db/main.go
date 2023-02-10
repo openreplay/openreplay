@@ -158,6 +158,12 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %s: terminating\n", sig.String())
 			commitDBUpdates()
+			if err := pg.Close(); err != nil {
+				log.Printf("db.Close error: %s", err)
+			}
+			if err := saver.Close(); err != nil {
+				log.Printf("saver.Close error: %s", err)
+			}
 			consumer.Close()
 			os.Exit(0)
 		case <-commitTick:

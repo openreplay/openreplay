@@ -19,6 +19,7 @@ import (
 type Connector interface {
 	Prepare() error
 	Commit() error
+	Stop() error
 	InsertWebSession(session *types.Session) error
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
@@ -106,6 +107,11 @@ func (c *connectorImpl) Commit() error {
 			return fmt.Errorf("can't send batch: %s", err)
 		}
 	}
+	return nil
+}
+
+func (c *connectorImpl) Stop() error {
+	// TODO: Implement it
 	return nil
 }
 

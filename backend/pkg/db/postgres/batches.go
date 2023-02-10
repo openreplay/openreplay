@@ -69,10 +69,17 @@ func (b *SessionBatch) Prepare() {
 	}
 }
 
+type batchesTask struct {
+	batches chan *SessionBatch
+}
+
+func NewBatchesTask(size int) *batchesTask {
+	return &batchesTask{batches: make(chan *SessionBatch, size)}
+}
+
 type BatchSet struct {
 	c                 Pool
 	batches           map[uint64]*SessionBatch
-	batchesToSend     chan *SessionBatch
 	batchQueueLimit   int
 	batchSizeLimit    int
 	batchSizeBytes    syncfloat64.Histogram
@@ -80,6 +87,9 @@ type BatchSet struct {
 	sqlRequestTime    syncfloat64.Histogram
 	sqlRequestCounter syncfloat64.Counter
 	updates           map[uint64]*sessionUpdates
+	workerTask        chan *batchesTask
+	done              chan struct{}
+	finished          chan struct{}
 }
 
 func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *BatchSet {
@@ -88,45 +98,14 @@ func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 		batches:         make(map[uint64]*SessionBatch),
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
-		batchesToSend:   make(chan *SessionBatch, 10000),
+		workerTask:      make(chan *batchesTask),
+		done:            make(chan struct{}),
+		finished:        make(chan struct{}),
 		updates:         make(map[uint64]*sessionUpdates),
 	}
 	bs.initMetrics(metrics)
 	go bs.worker()
 	return bs
-}
-
-func (conn *BatchSet) worker() {
-	for {
-		batch := <-conn.batchesToSend
-		// Append session update sql request to the end of batch
-		batch.Prepare()
-		// Record batch size in bytes and number of lines
-		conn.batchSizeBytes.Record(context.Background(), float64(batch.Size()))
-		conn.batchSizeLines.Record(context.Background(), float64(batch.Len()))
-
-		start := time.Now()
-		isFailed := false
-
-		// Send batch to db and execute
-		br := conn.c.SendBatch(batch.batch)
-		l := batch.Len()
-		for i := 0; i < l; i++ {
-			if _, err := br.Exec(); err != nil {
-				log.Printf("Error in PG batch (session: %d): %v \n", batch.SessionID(), err)
-				failedSql := batch.items[i]
-				query := strings.ReplaceAll(failedSql.query, "\n", " ")
-				log.Println("failed sql req:", query, failedSql.arguments)
-				isFailed = true
-			}
-		}
-		br.Close() // returns err
-		dur := time.Now().Sub(start).Milliseconds()
-		conn.sqlRequestTime.Record(context.Background(), float64(dur),
-			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-		conn.sqlRequestCounter.Add(context.Background(), 1,
-			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-	}
 }
 
 func (conn *BatchSet) initMetrics(metrics *monitoring.Metrics) {
@@ -184,9 +163,10 @@ func (conn *BatchSet) updateBatchSize(sessionID uint64, reqSize int) {
 }
 
 func (conn *BatchSet) Commit() {
+	newTask := NewBatchesTask(len(conn.batches) + 1)
 	// Copy batches
 	for _, b := range conn.batches {
-		conn.batchesToSend <- b
+		newTask.batches <- b
 	}
 	// Reset current batches
 	conn.batches = make(map[uint64]*SessionBatch)
@@ -199,6 +179,62 @@ func (conn *BatchSet) Commit() {
 		}
 	}
 	log.Printf("size of updates batch: %d", batch.Len())
-	conn.batchesToSend <- batch
+	newTask.batches <- batch
 	conn.updates = make(map[uint64]*sessionUpdates)
+
+	conn.workerTask <- newTask
+}
+
+func (conn *BatchSet) Stop() {
+	conn.done <- struct{}{}
+	<-conn.finished
+}
+
+func (conn *BatchSet) sendBatches(t *batchesTask) {
+	for batch := range t.batches {
+		// Append session update sql request to the end of batch
+		batch.Prepare()
+		// Record batch size in bytes and number of lines
+		conn.batchSizeBytes.Record(context.Background(), float64(batch.Size()))
+		conn.batchSizeLines.Record(context.Background(), float64(batch.Len()))
+
+		start := time.Now()
+		isFailed := false
+
+		// Send batch to db and execute
+		br := conn.c.SendBatch(batch.batch)
+		l := batch.Len()
+		for i := 0; i < l; i++ {
+			if _, err := br.Exec(); err != nil {
+				log.Printf("Error in PG batch (session: %d): %v \n", batch.SessionID(), err)
+				failedSql := batch.items[i]
+				query := strings.ReplaceAll(failedSql.query, "\n", " ")
+				log.Println("failed sql req:", query, failedSql.arguments)
+				isFailed = true
+			}
+		}
+		br.Close() // returns err
+		dur := time.Now().Sub(start).Milliseconds()
+		conn.sqlRequestTime.Record(context.Background(), float64(dur),
+			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
+		conn.sqlRequestCounter.Add(context.Background(), 1,
+			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
+	}
+}
+
+func (conn *BatchSet) worker() {
+	for {
+		select {
+		case t := <-conn.workerTask:
+			conn.sendBatches(t)
+		case <-conn.done:
+			if len(conn.workerTask) > 0 {
+				for t := range conn.workerTask {
+					conn.sendBatches(t)
+				}
+			}
+			conn.finished <- struct{}{}
+			return
+		}
+	}
 }

@@ -49,6 +49,8 @@ func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 }
 
 func (conn *Conn) Close() error {
+	conn.bulks.Stop()
+	conn.batches.Stop()
 	conn.c.Close()
 	return nil
 }
