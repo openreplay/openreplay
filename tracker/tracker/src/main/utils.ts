@@ -81,14 +81,3 @@ export function hasOpenreplayAttribute(e: Element, attr: string): boolean {
 
   return false
 }
-
-export function debounce(func: (...args: any[]) => void, timeout = 125) {
-  let timer: NodeJS.Timeout
-  return (...args: any[]) => {
-    clearTimeout(timer)
-    timer = setTimeout(() => {
-      // @ts-ignore
-      func.apply(this, args)
-    }, timeout)
-  }
-}
