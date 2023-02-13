@@ -12,6 +12,7 @@ export default class Filter {
     eventsOrderSupport: string[] = ['then', 'or', 'and']
     startTimestamp: number = 0
     endTimestamp: number = 0
+    eventsHeader: string = "EVENTS"
 
     constructor() {
         makeAutoObservable(this, {

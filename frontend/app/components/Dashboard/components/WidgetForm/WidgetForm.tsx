@@ -57,7 +57,7 @@ function WidgetForm(props: Props) {
     metric.metricType
   );
 
-  const excludeFilterKeys = isClickmap ? eventKeys : [];
+  const excludeFilterKeys = isClickmap || isPathAnalysis ? eventKeys : [];
 
   useEffect(() => {
     if (!!metric && !initialInstance) {
@@ -138,13 +138,13 @@ function WidgetForm(props: Props) {
             <>
               <span className="mx-3"></span>
               <Select
-                name="metricValue"
+                name="metricOf"
                 options={[
                   { value: 'start-point', label: 'With Start Point' },
                   { value: 'end-point', label: 'With End Point' },
                 ]}
-                defaultValue="start-point"
-                // value={metric.metricValue}
+                defaultValue={metric.metricOf}
+                // value={metric.metricOf}
                 onChange={writeOption}
                 placeholder="All Issues"
               />
@@ -241,7 +241,7 @@ function WidgetForm(props: Props) {
                 <div className="mb-2" key={series.name}>
                   <FilterSeries
                     canExclude={isPathAnalysis}
-                    supportsEmpty={!isClickmap}
+                    supportsEmpty={!isClickmap && !isPathAnalysis}
                     excludeFilterKeys={excludeFilterKeys}
                     observeChanges={() => metric.updateKey('hasChanged', true)}
                     hideHeader={isTable || isClickmap || isInsights || isPathAnalysis || isFunnel}
