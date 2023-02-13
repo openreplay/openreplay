@@ -171,14 +171,13 @@ func (conn *BatchSet) Commit() {
 	// Reset current batches
 	conn.batches = make(map[uint64]*SessionBatch)
 
-	// test batch
+	// common batch for user's updates
 	batch := NewSessionBatch(0)
 	for _, upd := range conn.updates {
 		if str, args := upd.request(); str != "" {
 			batch.Queue(str, args...)
 		}
 	}
-	log.Printf("size of updates batch: %d", batch.Len())
 	newTask.batches = append(newTask.batches, batch)
 	conn.updates = make(map[uint64]*sessionUpdates)
 

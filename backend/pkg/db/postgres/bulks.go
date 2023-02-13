@@ -234,7 +234,6 @@ func (conn *BulkSet) Stop() {
 }
 
 func (conn *BulkSet) sendBulks(t *bulksTask) {
-	log.Printf("sendBulks")
 	for _, bulk := range t.bulks {
 		if err := bulk.Send(); err != nil {
 			log.Printf("%s bulk send err: %s", bulk.Table(), err)
