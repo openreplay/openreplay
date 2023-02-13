@@ -121,6 +121,10 @@ func (c *connectorImpl) Commit() error {
 	for _, b := range c.batches {
 		newTask.bulks = append(newTask.bulks, b)
 	}
+	c.batches = make(map[string]Bulk, 13)
+	if err := c.Prepare(); err != nil {
+		log.Printf("can't prepare new CH batch set: %s", err)
+	}
 	c.workerTask <- newTask
 	return nil
 }
