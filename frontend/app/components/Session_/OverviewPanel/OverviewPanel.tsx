@@ -76,7 +76,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
   ]);
 
   return (
-      <BottomBlock style={{ height: '245px' }}>
+      <BottomBlock style={{ height: '100%' }}>
         <BottomBlock.Header>
           <span className="font-semibold color-gray-medium mr-4">X-RAY</span>
           <div className="flex items-center h-20">
@@ -88,13 +88,14 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
             <TimelineScale endTime={endTime} />
             <div
               // style={{ width: '100%', height: '187px', overflow: 'hidden' }}
-              style={{ width: 'calc(100vw - 1rem)', margin: '0 auto', height: '187px' }}
+              style={{ width: 'calc(100vw - 1rem)', margin: '0 auto' }}
               className="transition relative"
             >
               <NoContent
                 show={selectedFeatures.length === 0}
+                style={{ height: '60px', minHeight: 'unset', padding: 0 }}
                 title={
-                  <div className="flex items-center mt-16">
+                  <div className="flex items-center">
                     <Icon name="info-circle" className="mr-2" size="18" />
                     Select a debug option to visualize on timeline.
                   </div>
