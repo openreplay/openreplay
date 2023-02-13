@@ -3,6 +3,7 @@ package postgres
 import (
 	"log"
 	"openreplay/backend/pkg/monitoring"
+	"time"
 )
 
 type bulksTask struct {
@@ -245,7 +246,9 @@ func (conn *BulkSet) worker() {
 	for {
 		select {
 		case t := <-conn.workerTask:
+			start := time.Now()
 			conn.sendBulks(t)
+			log.Printf("pg bulks dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-conn.done:
 			if len(conn.workerTask) > 0 {
 				for t := range conn.workerTask {
