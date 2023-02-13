@@ -1,7 +1,7 @@
 import type App from '../app/index.js'
 import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
-import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils.js'
-import { MouseMove, MouseClick } from '../app/messages.gen.js'
+import { normSpaces, hasOpenreplayAttribute, getLabelAttribute, now } from '../utils.js'
+import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 
 function _getSelector(target: Element, document: Document): string {
@@ -37,7 +37,7 @@ function isClickable(element: Element): boolean {
     element.getAttribute('role') === 'button'
   )
   //|| element.className.includes("btn")
-  // MBTODO: intersept addEventListener
+  // MBTODO: intercept addEventListener
 }
 
 //TODO: fix (typescript is not sure about target variable after assignation of svg)
@@ -126,6 +126,7 @@ export default function (app: App): void {
     const acceleration = (nextVelocity - velocity) / shakeCheckInterval
     if (directionChangeCount > 3 && acceleration > shakeThreshold) {
       console.log('Mouse shake detected!')
+      app.send(MouseThrashing(now()))
     }
 
     distance = 0

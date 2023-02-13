@@ -84,6 +84,7 @@ const (
 	MsgSessionSearch               = 127
 	MsgInputChange                 = 112
 	MsgSelectionChange             = 113
+	MsgMouseThrashing              = 114
 	MsgIOSBatchMeta                = 107
 	MsgIOSSessionStart             = 90
 	MsgIOSSessionEnd               = 91
@@ -2252,6 +2253,27 @@ func (msg *SelectionChange) Decode() Message {
 
 func (msg *SelectionChange) TypeID() int {
 	return 113
+}
+
+type MouseThrashing struct {
+	message
+	Timestamp uint64
+}
+
+func (msg *MouseThrashing) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 114
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *MouseThrashing) Decode() Message {
+	return msg
+}
+
+func (msg *MouseThrashing) TypeID() int {
+	return 114
 }
 
 type IOSBatchMeta struct {

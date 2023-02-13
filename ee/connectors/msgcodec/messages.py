@@ -794,6 +794,13 @@ class SelectionChange(Message):
         self.selection = selection
 
 
+class MouseThrashing(Message):
+    __id__ = 114
+
+    def __init__(self, timestamp):
+        self.timestamp = timestamp
+
+
 class IOSBatchMeta(Message):
     __id__ = 107
 

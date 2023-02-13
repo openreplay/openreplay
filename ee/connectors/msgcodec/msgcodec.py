@@ -700,6 +700,11 @@ class MessageCodec(Codec):
                 selection=self.read_string(reader)
             )
 
+        if message_id == 114:
+            return MouseThrashing(
+                timestamp=self.read_uint(reader)
+            )
+
         if message_id == 107:
             return IOSBatchMeta(
                 timestamp=self.read_uint(reader),

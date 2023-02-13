@@ -512,3 +512,7 @@ message 113, 'SelectionChange' do
     uint 'SelectionEnd'
     string 'Selection'
 end
+
+message 114, 'MouseThrashing' do
+    uint 'Timestamp'
+end

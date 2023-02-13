@@ -639,6 +639,14 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 114: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      return {
+        tp: MType.MouseThrashing,
+        timestamp,
+      };
+    }
+
     case 90: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const projectID = this.readUint(); if (projectID === null) { return resetPointer() }

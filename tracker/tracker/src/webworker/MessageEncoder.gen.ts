@@ -262,6 +262,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3])
     break
 
+    case Messages.Type.MouseThrashing:
+      return  this.uint(msg[1])
+    break
+
     }
   }
 

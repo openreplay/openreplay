@@ -824,3 +824,12 @@ export function SelectionChange(
   ]
 }
 
+export function MouseThrashing(
+  timestamp: number,
+): Messages.MouseThrashing {
+  return [
+    Messages.Type.MouseThrashing,
+    timestamp,
+  ]
+}
+

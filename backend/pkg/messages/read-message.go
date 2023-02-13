@@ -1383,6 +1383,15 @@ func DecodeSelectionChange(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeMouseThrashing(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MouseThrashing{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IOSBatchMeta{}
@@ -1951,6 +1960,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeInputChange(reader)
 	case 113:
 		return DecodeSelectionChange(reader)
+	case 114:
+		return DecodeMouseThrashing(reader)
 	case 107:
 		return DecodeIOSBatchMeta(reader)
 	case 90:
