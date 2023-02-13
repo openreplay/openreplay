@@ -114,8 +114,8 @@ func main() {
 	consumer := queue.NewConsumer(
 		cfg.GroupDB,
 		[]string{
-			cfg.TopicRawWeb,
-			cfg.TopicAnalytics,
+			cfg.TopicRawWeb,    // from tracker
+			cfg.TopicAnalytics, // from heuristics
 		},
 		messages.NewMessageIterator(msgHandler, msgFilter, true),
 		false,
@@ -131,30 +131,34 @@ func main() {
 
 	// Send collected batches to db
 	commitDBUpdates := func() {
-		start := time.Now()
-		pg.CommitBatches()
-		pgDur := time.Now().Sub(start).Milliseconds()
-
-		start = time.Now()
+		// Commit collected batches and bulks of information to PG
+		pg.Commit()
+		// Commit collected batches of information to CH
 		if err := saver.CommitStats(); err != nil {
 			log.Printf("Error on stats commit: %v", err)
 		}
-		chDur := time.Now().Sub(start).Milliseconds()
-		log.Printf("commit duration(ms), pg: %d, ch: %d", pgDur, chDur)
-
+		// Commit current position in queue
 		if err := consumer.Commit(); err != nil {
 			log.Printf("Error on consumer commit: %v", err)
 		}
 	}
+
 	for {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %s: terminating\n", sig.String())
 			commitDBUpdates()
+			if err := pg.Close(); err != nil {
+				log.Printf("db.Close error: %s", err)
+			}
+			if err := saver.Close(); err != nil {
+				log.Printf("saver.Close error: %s", err)
+			}
 			consumer.Close()
 			os.Exit(0)
 		case <-commitTick:
 			commitDBUpdates()
+			builderMap.ClearOldSessions()
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:

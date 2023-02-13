@@ -21,6 +21,7 @@ import (
 type Connector interface {
 	Prepare() error
 	Commit() error
+	Stop() error
 	InsertWebSession(session *types.Session) error
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
@@ -35,9 +36,20 @@ type Connector interface {
 	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
 }
 
+type task struct {
+	bulks []Bulk
+}
+
+func NewTask() *task {
+	return &task{bulks: make([]Bulk, 0, 14)}
+}
+
 type connectorImpl struct {
-	conn    driver.Conn
-	batches map[string]Bulk //driver.Batch
+	conn       driver.Conn
+	batches    map[string]Bulk //driver.Batch
+	workerTask chan *task
+	done       chan struct{}
+	finished   chan struct{}
 }
 
 // Check env variables. If not present, return default value.
@@ -76,9 +88,13 @@ func NewConnector(url string) Connector {
 	}
 
 	c := &connectorImpl{
-		conn:    conn,
-		batches: make(map[string]Bulk, 9),
+		conn:       conn,
+		batches:    make(map[string]Bulk, 13),
+		workerTask: make(chan *task, 1),
+		done:       make(chan struct{}),
+		finished:   make(chan struct{}),
 	}
+	go c.worker()
 	return c
 }
 
@@ -117,12 +133,47 @@ func (c *connectorImpl) Prepare() error {
 }
 
 func (c *connectorImpl) Commit() error {
+	newTask := NewTask()
 	for _, b := range c.batches {
+		newTask.bulks = append(newTask.bulks, b)
+	}
+	c.batches = make(map[string]Bulk, 13)
+	if err := c.Prepare(); err != nil {
+		log.Printf("can't prepare new CH batch set: %s", err)
+	}
+	c.workerTask <- newTask
+	return nil
+}
+
+func (c *connectorImpl) Stop() error {
+	c.done <- struct{}{}
+	<-c.finished
+	return c.conn.Close()
+}
+
+func (c *connectorImpl) sendBulks(t *task) {
+	for _, b := range t.bulks {
 		if err := b.Send(); err != nil {
-			return fmt.Errorf("can't send batch: %s", err)
+			log.Printf("can't send batch: %s", err)
 		}
 	}
-	return nil
+}
+
+func (c *connectorImpl) worker() {
+	for {
+		select {
+		case t := <-c.workerTask:
+			start := time.Now()
+			c.sendBulks(t)
+			log.Printf("ch bulks dur: %d", time.Now().Sub(start).Milliseconds())
+		case <-c.done:
+			for t := range c.workerTask {
+				c.sendBulks(t)
+			}
+			c.finished <- struct{}{}
+			return
+		}
+	}
 }
 
 func (c *connectorImpl) checkError(name string, err error) {

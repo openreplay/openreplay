@@ -50,3 +50,7 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 func (si *Saver) CommitStats() error {
 	return si.ch.Commit()
 }
+
+func (si *Saver) Close() error {
+	return si.ch.Stop()
+}
