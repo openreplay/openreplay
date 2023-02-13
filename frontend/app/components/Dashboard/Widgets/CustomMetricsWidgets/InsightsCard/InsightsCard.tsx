@@ -69,7 +69,7 @@ function InsightsCard({ data }: any) {
       <div className="overflow-y-auto" style={{ maxHeight: '240px' }}>
         {data.issues &&
           data.issues.map((item: any) => (
-            <InsightItem item={item} onClick={(e) => clickHanddler(e, item)} />
+            <InsightItem key={item.name} item={item} onClick={(e) => clickHanddler(e, item)} />
           ))}
       </div>
     </NoContent>
