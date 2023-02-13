@@ -15,8 +15,6 @@ export default class Cursor {
     if (isMobile) this.cursor.style.backgroundImage = 'unset'
     overlay.appendChild(this.cursor);
     this.isMobile = isMobile;
-
-    window.shakeTest = this.shake.bind(this);
   }
 
   toggle(flag: boolean) {
@@ -85,7 +83,7 @@ export default class Cursor {
     }, 600)
   }
 
-  // TODO (to keep on a different playig speed):
+  // TODO (to keep on a different playing speed):
   // transition
   // setTransitionSpeed()
 
