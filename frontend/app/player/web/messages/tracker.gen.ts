@@ -430,14 +430,17 @@ type TrPartitionedMessage = [
 ]
 
 type TrInputChange = [
-  type: 83,
+  type: 112,
   id: number,
+  value: string,
+  valueMasked: boolean,
   label: string,
   hesitationTime: number,
+  inputDuration: number,
 ]
 
 type TrSelectionChange = [
-  type: 84,
+  type: 113,
   selectionStart: number,
   selectionEnd: number,
   selection: string,
@@ -881,7 +884,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
       }
     }
     
-    case 84: {
+    case 113: {
       return {
         tp: MType.SelectionChange,
         selectionStart: tMsg[1],

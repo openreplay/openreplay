@@ -794,14 +794,20 @@ export function PartitionedMessage(
 
 export function InputChange(
   id: number,
+  value: string,
+  valueMasked: boolean,
   label: string,
   hesitationTime: number,
+  inputDuration: number,
 ): Messages.InputChange {
   return [
     Messages.Type.InputChange,
     id,
+    value,
+    valueMasked,
     label,
     hesitationTime,
+    inputDuration,
   ]
 }
 

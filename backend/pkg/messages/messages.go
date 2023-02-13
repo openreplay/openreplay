@@ -79,11 +79,11 @@ const (
 	MsgBatchMeta                   = 80
 	MsgBatchMetadata               = 81
 	MsgPartitionedMessage          = 82
-	MsgInputChange                 = 83
-	MsgSelectionChange             = 84
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
+	MsgInputChange                 = 112
+	MsgSelectionChange             = 113
 	MsgIOSBatchMeta                = 107
 	MsgIOSSessionStart             = 90
 	MsgIOSSessionEnd               = 91
@@ -2119,56 +2119,6 @@ func (msg *PartitionedMessage) TypeID() int {
 	return 82
 }
 
-type InputChange struct {
-	message
-	ID             uint64
-	Label          string
-	HesitationTime int64
-}
-
-func (msg *InputChange) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Label))
-	buf[0] = 83
-	p := 1
-	p = WriteUint(msg.ID, buf, p)
-	p = WriteString(msg.Label, buf, p)
-	p = WriteInt(msg.HesitationTime, buf, p)
-	return buf[:p]
-}
-
-func (msg *InputChange) Decode() Message {
-	return msg
-}
-
-func (msg *InputChange) TypeID() int {
-	return 83
-}
-
-type SelectionChange struct {
-	message
-	SelectionStart uint64
-	SelectionEnd   uint64
-	Selection      string
-}
-
-func (msg *SelectionChange) Encode() []byte {
-	buf := make([]byte, 31+len(msg.Selection))
-	buf[0] = 84
-	p := 1
-	p = WriteUint(msg.SelectionStart, buf, p)
-	p = WriteUint(msg.SelectionEnd, buf, p)
-	p = WriteString(msg.Selection, buf, p)
-	return buf[:p]
-}
-
-func (msg *SelectionChange) Decode() Message {
-	return msg
-}
-
-func (msg *SelectionChange) TypeID() int {
-	return 84
-}
-
 type IssueEvent struct {
 	message
 	MessageID     uint64
@@ -2246,6 +2196,62 @@ func (msg *SessionSearch) Decode() Message {
 
 func (msg *SessionSearch) TypeID() int {
 	return 127
+}
+
+type InputChange struct {
+	message
+	ID             uint64
+	Value          string
+	ValueMasked    bool
+	Label          string
+	HesitationTime int64
+	InputDuration  int64
+}
+
+func (msg *InputChange) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Value)+len(msg.Label))
+	buf[0] = 112
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Value, buf, p)
+	p = WriteBoolean(msg.ValueMasked, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteInt(msg.HesitationTime, buf, p)
+	p = WriteInt(msg.InputDuration, buf, p)
+	return buf[:p]
+}
+
+func (msg *InputChange) Decode() Message {
+	return msg
+}
+
+func (msg *InputChange) TypeID() int {
+	return 112
+}
+
+type SelectionChange struct {
+	message
+	SelectionStart uint64
+	SelectionEnd   uint64
+	Selection      string
+}
+
+func (msg *SelectionChange) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Selection))
+	buf[0] = 113
+	p := 1
+	p = WriteUint(msg.SelectionStart, buf, p)
+	p = WriteUint(msg.SelectionEnd, buf, p)
+	p = WriteString(msg.Selection, buf, p)
+	return buf[:p]
+}
+
+func (msg *SelectionChange) Decode() Message {
+	return msg
+}
+
+func (msg *SelectionChange) TypeID() int {
+	return 113
 }
 
 type IOSBatchMeta struct {

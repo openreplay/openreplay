@@ -660,20 +660,6 @@ class MessageCodec(Codec):
                 part_total=self.read_uint(reader)
             )
 
-        if message_id == 83:
-            return InputChange(
-                id=self.read_uint(reader),
-                label=self.read_string(reader),
-                hesitation_time=self.read_int(reader)
-            )
-
-        if message_id == 84:
-            return SelectionChange(
-                selection_start=self.read_uint(reader),
-                selection_end=self.read_uint(reader),
-                selection=self.read_string(reader)
-            )
-
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),
@@ -695,6 +681,23 @@ class MessageCodec(Codec):
             return SessionSearch(
                 timestamp=self.read_uint(reader),
                 partition=self.read_uint(reader)
+            )
+
+        if message_id == 112:
+            return InputChange(
+                id=self.read_uint(reader),
+                value=self.read_string(reader),
+                value_masked=self.read_boolean(reader),
+                label=self.read_string(reader),
+                hesitation_time=self.read_int(reader),
+                input_duration=self.read_int(reader)
+            )
+
+        if message_id == 113:
+            return SelectionChange(
+                selection_start=self.read_uint(reader),
+                selection_end=self.read_uint(reader),
+                selection=self.read_string(reader)
             )
 
         if message_id == 107:

@@ -255,7 +255,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
     break
 
     case Messages.Type.InputChange:
-      return  this.uint(msg[1]) && this.string(msg[2]) && this.int(msg[3])
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.boolean(msg[3]) && this.string(msg[4]) && this.int(msg[5]) && this.int(msg[6])
     break
 
     case Messages.Type.SelectionChange:

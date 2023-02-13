@@ -475,17 +475,7 @@ message 82, 'PartitionedMessage', :replayer => false do
   uint 'PartTotal'
 end
 
-message 83, 'InputChange', :replayer => false do
-    uint 'ID'
-    string 'Label'
-    int 'HesitationTime'
-end
-
-message 84, 'SelectionChange' do
-    uint 'SelectionStart'
-    uint 'SelectionEnd'
-    string 'Selection'
-end
+# 90-111 reserved iOS
 
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
@@ -504,4 +494,21 @@ end
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
+end
+
+# since tracker 4.1.10
+
+message 112, 'InputChange', :replayer => false do
+    uint 'ID'
+    string 'Value'
+    boolean 'ValueMasked'
+    string 'Label'
+    int 'HesitationTime'
+    int 'InputDuration'
+end
+
+message 113, 'SelectionChange' do
+    uint 'SelectionStart'
+    uint 'SelectionEnd'
+    string 'Selection'
 end

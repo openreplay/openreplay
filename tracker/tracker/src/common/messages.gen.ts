@@ -63,8 +63,8 @@ export declare const enum Type {
   Zustand = 79,
   BatchMetadata = 81,
   PartitionedMessage = 82,
-  InputChange = 83,
-  SelectionChange = 84,
+  InputChange = 112,
+  SelectionChange = 113,
 }
 
 
@@ -495,8 +495,11 @@ export type PartitionedMessage = [
 export type InputChange = [
   /*type:*/ Type.InputChange,
   /*id:*/ number,
+  /*value:*/ string,
+  /*valueMasked:*/ boolean,
   /*label:*/ string,
   /*hesitationTime:*/ number,
+  /*inputDuration:*/ number,
 ]
 
 export type SelectionChange = [

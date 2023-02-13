@@ -744,24 +744,6 @@ class PartitionedMessage(Message):
         self.part_total = part_total
 
 
-class InputChange(Message):
-    __id__ = 83
-
-    def __init__(self, id, label, hesitation_time):
-        self.id = id
-        self.label = label
-        self.hesitation_time = hesitation_time
-
-
-class SelectionChange(Message):
-    __id__ = 84
-
-    def __init__(self, selection_start, selection_end, selection):
-        self.selection_start = selection_start
-        self.selection_end = selection_end
-        self.selection = selection
-
-
 class IssueEvent(Message):
     __id__ = 125
 
@@ -789,6 +771,27 @@ class SessionSearch(Message):
     def __init__(self, timestamp, partition):
         self.timestamp = timestamp
         self.partition = partition
+
+
+class InputChange(Message):
+    __id__ = 112
+
+    def __init__(self, id, value, value_masked, label, hesitation_time, input_duration):
+        self.id = id
+        self.value = value
+        self.value_masked = value_masked
+        self.label = label
+        self.hesitation_time = hesitation_time
+        self.input_duration = input_duration
+
+
+class SelectionChange(Message):
+    __id__ = 113
+
+    def __init__(self, selection_start, selection_end, selection):
+        self.selection_start = selection_start
+        self.selection_end = selection_end
+        self.selection = selection
 
 
 class IOSBatchMeta(Message):

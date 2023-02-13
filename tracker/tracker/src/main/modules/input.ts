@@ -6,9 +6,9 @@ import { InputChange, SetInputValue, SetInputChecked } from '../app/messages.gen
 const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date', 'tel']
 
 // TODO: take into consideration "contenteditable" attribute
-type TextFeildElement = HTMLInputElement | HTMLTextAreaElement
+type TextFieldElement = HTMLInputElement | HTMLTextAreaElement
 
-function isTextFeildElement(node: Node): node is TextFeildElement {
+function isTextFieldElement(node: Node): node is TextFieldElement {
   if (hasTag(node, 'textarea')) {
     return true
   }
@@ -27,7 +27,7 @@ function isCheckbox(node: Node): node is HTMLInputElement & { type: 'checkbox' |
   return type === 'checkbox' || type === 'radio'
 }
 
-const labelElementFor: (element: TextFeildElement) => HTMLLabelElement | undefined =
+const labelElementFor: (element: TextFieldElement) => HTMLLabelElement | undefined =
   IN_BROWSER && 'labels' in HTMLInputElement.prototype
     ? (node) => {
         let p: Node | null = node
@@ -57,7 +57,7 @@ const labelElementFor: (element: TextFeildElement) => HTMLLabelElement | undefin
         }
       }
 
-export function getInputLabel(node: TextFeildElement): string {
+export function getInputLabel(node: TextFieldElement): string {
   let label = getLabelAttribute(node)
   if (label === null) {
     const labelElement = labelElementFor(node)
@@ -96,7 +96,7 @@ export default function (app: App, opts: Partial<Options>): void {
     opts,
   )
 
-  function sendInputValue(id: number, node: TextFeildElement | HTMLSelectElement): void {
+  function getInputValue(id: number, node: TextFieldElement | HTMLSelectElement) {
     let value = node.value
     let inputMode: InputMode = options.defaultInputMode
 
@@ -123,6 +123,11 @@ export default function (app: App, opts: Partial<Options>): void {
         break
     }
 
+    return { value, mask }
+  }
+  function sendInputValue(id: number, node: TextFieldElement | HTMLSelectElement): void {
+    const { value, mask } = getInputValue(id, node)
+
     app.send(SetInputValue(id, value, mask))
   }
 
@@ -134,7 +139,7 @@ export default function (app: App, opts: Partial<Options>): void {
     checkboxValues.clear()
   })
 
-  function trackInputValue(id: number, node: TextFeildElement) {
+  function trackInputValue(id: number, node: TextFieldElement) {
     if (inputValues.get(id) === node.value) {
       return
     }
@@ -150,7 +155,7 @@ export default function (app: App, opts: Partial<Options>): void {
     app.send(SetInputChecked(id, value))
   }
 
-  // The only way (to our knowladge) to track all kinds of input changes, including those made by JS
+  // The only way (to our knowledge) to track all kinds of input changes, including those made by JS
   app.ticker.attach(() => {
     inputValues.forEach((value, id) => {
       const node = app.nodes.getNode(id) as HTMLInputElement
@@ -162,12 +167,18 @@ export default function (app: App, opts: Partial<Options>): void {
       if (!node) return checkboxValues.delete(id)
       trackCheckboxValue(id, node.checked)
     })
-  }, 5)
+  }, 3)
 
-  function sendInputChange(id: number, node: TextFeildElement, hesitationTime: number) {
-    trackInputValue(id, node)
+  function sendInputChange(
+    id: number,
+    node: TextFieldElement,
+    hesitationTime: number,
+    inputTime: number,
+  ) {
+    const { value, mask } = getInputValue(id, node)
     const label = getInputLabel(node)
-    app.send(InputChange(id, label, hesitationTime))
+
+    app.send(InputChange(id, value, mask !== 0, label, hesitationTime, inputTime))
   }
 
   app.nodes.attachNodeCallback(
@@ -183,22 +194,27 @@ export default function (app: App, opts: Partial<Options>): void {
         app.nodes.attachNodeListener(node, 'change', () => sendInputValue(id, node))
       }
 
-      if (isTextFeildElement(node)) {
+      if (isTextFieldElement(node)) {
         trackInputValue(id, node)
         let nodeFocusTime = 0
         let nodeHesitationTime = 0
+        let inputTime = 0
+
         const onFocus = () => {
           nodeFocusTime = now()
         }
+
         const onInput = () => {
-          const value = node.value
           if (nodeHesitationTime === 0) {
-            nodeHesitationTime = nodeFocusTime - now()
+            nodeHesitationTime = now() - nodeFocusTime
           }
         }
+
         const onChange = () => {
-          sendInputChange(id, node, nodeHesitationTime)
+          inputTime = now() - nodeFocusTime
+          sendInputChange(id, node, nodeHesitationTime, inputTime)
           nodeHesitationTime = 0
+          inputTime = 0
         }
         app.nodes.attachNodeListener(node, 'focus', onFocus)
         app.nodes.attachNodeListener(node, 'input', onInput)
@@ -208,7 +224,7 @@ export default function (app: App, opts: Partial<Options>): void {
 
       if (isCheckbox(node)) {
         trackCheckboxValue(id, node.checked)
-        app.nodes.attachNodeListener(node, 'change', (e) => trackCheckboxValue(id, node.checked))
+        app.nodes.attachNodeListener(node, 'change', () => trackCheckboxValue(id, node.checked))
         return
       }
     }),

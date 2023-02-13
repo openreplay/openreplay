@@ -53,7 +53,7 @@ export const enum MType {
   AdoptedSsAddOwner = 76,
   AdoptedSsRemoveOwner = 77,
   Zustand = 79,
-  SelectionChange = 84,
+  SelectionChange = 113,
   IosSessionStart = 90,
   IosCustomEvent = 93,
   IosScreenChanges = 96,
