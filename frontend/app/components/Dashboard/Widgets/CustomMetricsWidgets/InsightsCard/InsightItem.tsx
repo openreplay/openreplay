@@ -100,7 +100,7 @@ function RageItem({ item, className, onClick }: any) {
       <Icon name={item.icon} size={18} className="mr-2" color={item.iconColor} />
       <div className="mx-1 bg-gray-100 px-2 rounded">{item.isNew ? item.name : 'Click Rage'}</div>
       {item.isNew && <div className="mx-1">has</div>}
-      {!item.isNew && <div className="mx-1">on</div>}
+      {!item.isNew && <div className="mx-1">on <span className="mx-1 bg-gray-100 px-2 rounded">{item.name}</span></div>}
       {item.isNew && <div className="font-medium text-red">{item.ratio}%</div>}
       {item.isNew && <div className="mx-1">more clickrage than other raged elements.</div>}
       {!item.isNew && (
