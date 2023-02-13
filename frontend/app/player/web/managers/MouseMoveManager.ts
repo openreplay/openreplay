@@ -1,5 +1,5 @@
 import type Screen from '../Screen/Screen'
-import type { MouseMove } from '../messages'
+import type { MouseMove } from "../messages";
 
 import ListWalker from '../../common/ListWalker'
 

@@ -3,9 +3,11 @@ import styles from './cursor.module.css';
 
 
 export default class Cursor {
+  private readonly isMobile: boolean;
   private readonly cursor: HTMLDivElement;
   private tagElement: HTMLDivElement;
-  private isMobile: boolean;
+  private coords = { x: 0, y: 0 };
+  private isMoving = false;
 
   constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
@@ -13,6 +15,8 @@ export default class Cursor {
     if (isMobile) this.cursor.style.backgroundImage = 'unset'
     overlay.appendChild(this.cursor);
     this.isMobile = isMobile;
+
+    window.shakeTest = this.shake.bind(this);
   }
 
   toggle(flag: boolean) {
@@ -50,8 +54,27 @@ export default class Cursor {
   }
 
   move({ x, y }: Point) {
+    this.isMoving = true;
     this.cursor.style.left = x + 'px';
     this.cursor.style.top = y + 'px';
+    this.coords = { x, y };
+    setTimeout(() => this.isMoving = false, 60)
+  }
+
+  shake(iteration = 1, upwards = true, original: { x: number, y: number } = this.coords) {
+    if (this.isMoving) return;
+    if (iteration < 10) {
+      this.cursor.style.width = 45 + 'px'
+      this.cursor.style.height = 75 + 'px'
+      const shift = upwards ? 60 : -60
+      this.move({ x: this.coords.x + shift, y: this.coords.y - shift })
+      setTimeout(() => this.shake(iteration + 1, !upwards, original), 60)
+    } else {
+      this.cursor.style.width = 18 + 'px'
+      this.cursor.style.height = 30 + 'px'
+
+      this.move(original)
+    }
   }
 
   click() {
