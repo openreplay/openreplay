@@ -266,6 +266,10 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1])
     break
 
+    case Messages.Type.RemovedNodesCount:
+      return  this.uint(msg[1]) && this.boolean(msg[2])
+    break
+
     }
   }
 
