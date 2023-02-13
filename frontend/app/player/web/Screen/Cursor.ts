@@ -65,21 +65,11 @@ export default class Cursor {
     this.cursor.style.transition = 'top .125s linear, left .125s linear'
   }
 
-  shake(iteration = 1, upwards = true, original: { x: number, y: number } = this.coords) {
-    if (this.isMoving) {
-      return this.setDefaultStyle()
-    }
-    if (iteration < 10) {
-      this.cursor.style.transition = 'top .06s linear, left .06s linear'
-      this.cursor.style.width = 45 + 'px'
-      this.cursor.style.height = 75 + 'px'
-      const shift = upwards ? 90 : -90
-      this.move({ x: this.coords.x + shift, y: this.coords.y - shift })
-      setTimeout(() => this.shake(iteration + 1, !upwards, original), 60)
-    } else {
-      this.setDefaultStyle()
-      return this.move(original)
-    }
+  shake() {
+    this.cursor.classList.add(styles.shaking)
+    setTimeout(() => {
+      this.cursor.classList.remove(styles.shaking)
+    }, 500)
   }
 
   click() {

@@ -108,3 +108,29 @@
 		transform: scale3d(1, 1, 1);
 	}
 }
+
+.cursor.shaking {
+    width: 45px;
+    height: 75px;
+    -webkit-animation: shaking 0.3s linear;
+    animation: shaking 0.3s linear;
+    animation-iteration-count: 2;
+}
+
+@keyframes shaking {
+    0% {
+        transform: translate(60px, -60px);
+    }
+    25% {
+        transform: translate(-60px, 60px);
+    }
+    50% {
+        transform: translate(60px, -60px);
+    }
+    75% {
+        transform: translate(-60px, 60px);
+    }
+    100% {
+        transform: translate(60px, -60px);
+    }
+}
