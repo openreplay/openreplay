@@ -19,6 +19,7 @@ import {
   PERFORMANCE,
   WEB_VITALS,
   INSIGHTS,
+  USER_PATH,
 } from 'App/constants/card';
 import { eventKeys } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
@@ -47,6 +48,7 @@ function WidgetForm(props: Props) {
   const isClickmap = metric.metricType === CLICKMAP;
   const isFunnel = metric.metricType === FUNNEL;
   const isInsights = metric.metricType === INSIGHTS;
+  const isPathAnalysis = metric.metricType === USER_PATH;
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
@@ -132,6 +134,38 @@ function WidgetForm(props: Props) {
           <MetricTypeDropdown onSelect={writeOption} />
           <MetricSubtypeDropdown onSelect={writeOption} />
 
+          {isPathAnalysis && (
+            <>
+              <span className="mx-3"></span>
+              <Select
+                name="metricValue"
+                options={[
+                  { value: 'start-point', label: 'With Start Point' },
+                  { value: 'end-point', label: 'With End Point' },
+                ]}
+                defaultValue="start-point"
+                // value={metric.metricValue}
+                onChange={writeOption}
+                placeholder="All Issues"
+              />
+
+              <span className="mx-3">showing</span>
+              <Select
+                name="metricValue"
+                options={[
+                  { value: 'pages', label: 'Pages' },
+                  { value: 'clicks', label: 'Clicks' },
+                  { value: 'events', label: 'Events' },
+                ]}
+                defaultValue="pages"
+                // value={metric.metricValue}
+                isMulti={true}
+                onChange={writeOption}
+                placeholder="All Issues"
+              />
+            </>
+          )}
+
           {metric.metricOf === FilterKey.ISSUE && metric.metricType === TABLE && (
             <>
               <span className="mx-3">issue type</span>
@@ -187,8 +221,8 @@ function WidgetForm(props: Props) {
       {!isPredefined && (
         <div className="form-group">
           <div className="flex items-center font-medium py-2">
-            {`${isTable || isFunnel || isClickmap || isInsights ? 'Filter by' : 'Chart Series'}`}
-            {!isTable && !isFunnel && !isClickmap && !isInsights && (
+            {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis ? 'Filter by' : 'Chart Series'}`}
+            {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && (
               <Button
                 className="ml-2"
                 variant="text-primary"
@@ -206,10 +240,11 @@ function WidgetForm(props: Props) {
               .map((series: any, index: number) => (
                 <div className="mb-2" key={series.name}>
                   <FilterSeries
+                    canExclude={isPathAnalysis}
                     supportsEmpty={!isClickmap}
                     excludeFilterKeys={excludeFilterKeys}
                     observeChanges={() => metric.updateKey('hasChanged', true)}
-                    hideHeader={isTable || isClickmap || isInsights}
+                    hideHeader={isTable || isClickmap || isInsights || isPathAnalysis || isFunnel}
                     seriesIndex={index}
                     series={series}
                     onRemoveSeries={() => metric.removeSeries(index)}

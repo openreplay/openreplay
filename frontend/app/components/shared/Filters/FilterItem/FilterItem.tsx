@@ -16,9 +16,10 @@ interface Props {
     saveRequestPayloads?: boolean;
     disableDelete?: boolean;
     excludeFilterKeys?: Array<string>;
+    hideIndex?: boolean;
 }
 function FilterItem(props: Props) {
-    const { isFilter = false, filterIndex, filter, saveRequestPayloads, disableDelete = false, excludeFilterKeys = [] } = props;
+    const { isFilter = false, filterIndex, filter, saveRequestPayloads, disableDelete = false, excludeFilterKeys = [], hideIndex = false } = props;
     const canShowValues = !(filter.operator === 'isAny' || filter.operator === 'onAny' || filter.operator === 'isUndefined');
     const isSubFilter = filter.type === FilterType.SUB_FILTERS;
 
@@ -53,7 +54,7 @@ function FilterItem(props: Props) {
     return (
         <div className="flex items-center hover:bg-active-blue -mx-5 px-5">
             <div className="flex items-start w-full">
-                {!isFilter && (
+                {!isFilter && !hideIndex && (
                     <div className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-light-shade mr-2">
                         <span>{filterIndex + 1}</span>
                     </div>

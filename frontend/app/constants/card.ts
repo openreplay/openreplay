@@ -185,12 +185,12 @@ export const TYPES: CardType[] = [
       { title: 'Captured Sessions', slug: FilterKey.COUNT_SESSIONS, description: '' },
     ],
   },
-  // {
-  //   title: 'Path Analysis',
-  //   icon: 'signpost-split',
-  //   description: 'See where users are flowing and explore their journeys.',
-  //   slug: USER_PATH,
-  // },
+  {
+    title: 'Path Analysis',
+    icon: 'signpost-split',
+    description: 'See where users are flowing and explore their journeys.',
+    slug: USER_PATH,
+  },
   // {
   //   title: 'Retention',
   //   icon: 'arrow-repeat',

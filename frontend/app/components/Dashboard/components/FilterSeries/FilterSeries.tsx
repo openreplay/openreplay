@@ -5,6 +5,7 @@ import FilterSelection from 'Shared/Filters/FilterSelection';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
 import { observer } from 'mobx-react-lite';
+import ExcludeFilters from './ExcludeFilters';
 
 interface Props {
   seriesIndex: number;
@@ -16,6 +17,7 @@ interface Props {
   emptyMessage?: any;
   observeChanges?: () => void;
   excludeFilterKeys?: Array<string>
+  canExclude?: boolean;
 }
 
 function FilterSeries(props: Props) {
@@ -26,7 +28,8 @@ function FilterSeries(props: Props) {
     hideHeader = false,
     emptyMessage = 'Add user event or filter to define the series by clicking Add Step.',
     supportsEmpty = true,
-    excludeFilterKeys = []
+    excludeFilterKeys = [],
+    canExclude = false,
   } = props;
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
@@ -53,6 +56,7 @@ function FilterSeries(props: Props) {
 
   return (
     <div className="border rounded bg-white">
+      {canExclude && <ExcludeFilters filter={series.filter} onAddFilter={onAddFilter} onUpdateFilter={onUpdateFilter} /> }
       <div className={cn("border-b px-5 h-12 flex items-center relative", { 'hidden': hideHeader })}>
         <div className="mr-auto">
           <SeriesName seriesIndex={seriesIndex} name={series.name} onUpdate={(name) => series.update('name', name)} />
