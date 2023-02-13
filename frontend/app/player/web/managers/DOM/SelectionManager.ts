@@ -9,11 +9,15 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
   }
 
   private selected: [{ id: number, node: Element } | null, { id: number, node: Element } | null] = [null, null];
+  private markers: Element[] = []
 
   clearSelection() {
     this.selected[0] && this.screen.overlay.removeChild(this.selected[0].node) && this.selected[0].node.remove();
     this.selected[1] && this.screen.overlay.removeChild(this.selected[1].node) && this.selected[1].node.remove();
+    this.markers.forEach(marker => marker.remove())
+
     this.selected = [null, null];
+    this.markers = [];
   }
 
   move(t: number) {
@@ -27,7 +31,7 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
       return;
     }
     // preventing clones
-    if (this.selected[0] && this.selected[0].id === msg.selectionStart) return;
+    if ((this.selected[0] && this.selected[0].id === msg.selectionStart) && (this.selected[1] && this.selected[1].id === msg.selectionEnd)) return;
 
     const startVNode = this.vElements.get(msg.selectionStart - 1);
     const endVNode = this.vElements.get(msg.selectionEnd - 1);
@@ -59,6 +63,7 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
         position: 'absolute',
       });
 
+      this.markers.push(startPointer, endPointer);
       this.screen.overlay.appendChild(startPointer);
       this.screen.overlay.appendChild(endPointer);
 
