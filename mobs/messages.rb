@@ -470,7 +470,6 @@ end
 
 message 115, 'RemovedNodesCount', :replayer => false do
     uint 'NodesCount'
-    boolean 'DOMDropped'
 end
 
 ## Backend-only

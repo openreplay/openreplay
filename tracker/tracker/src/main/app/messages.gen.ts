@@ -835,12 +835,10 @@ export function MouseThrashing(
 
 export function RemovedNodesCount(
   nodesCount: number,
-  domdropped: boolean,
 ): Messages.RemovedNodesCount {
   return [
     Messages.Type.RemovedNodesCount,
     nodesCount,
-    domdropped,
   ]
 }
 
