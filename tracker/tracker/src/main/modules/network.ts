@@ -35,6 +35,16 @@ type FetchRequestBody = RequestInit['body']
 //   }
 // }
 
+function checkCacheByPerformanceTimings(requestUrl: string) {
+  if (performance) {
+    const timings = performance.getEntriesByName(requestUrl)[0]
+    // @ts-ignore - weird ts typings, please refer to https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming
+    if (timings.transferSize === 0 || timings.responseStart - timings.requestStart < 10) {
+      return true
+    }
+  } else return false
+}
+
 interface RequestData {
   body: XHRRequestBody | FetchRequestBody
   headers: Record<string, string>
@@ -208,6 +218,10 @@ export default function (app: App, opts: Partial<Options> = {}) {
             return
           }
 
+          const isCached =
+            r.status === 304 ||
+            reqHs['x-cache'].includes('Hit') ||
+            checkCacheByPerformanceTimings(reqResInfo.url)
           app.send(
             NetworkRequest(
               'fetch',
@@ -215,7 +229,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
               String(reqResInfo.url),
               stringify(reqResInfo.request),
               stringify(reqResInfo.response),
-              r.status,
+              isCached ? 304 : r.status,
               startTime + getTimeOrigin(),
               duration,
             ),
@@ -274,6 +288,10 @@ export default function (app: App, opts: Partial<Options> = {}) {
           return
         }
 
+        const isCached =
+          xhr.status === 304 ||
+          reqHs['x-cache'].includes('Hit') ||
+          (xhr.status < 400 && checkCacheByPerformanceTimings(reqResInfo.url))
         app.send(
           NetworkRequest(
             'xhr',
@@ -281,7 +299,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
             String(reqResInfo.url),
             stringify(reqResInfo.request),
             stringify(reqResInfo.response),
-            xhr.status,
+            isCached ? 304 : xhr.status,
             startTime + getTimeOrigin(),
             duration,
           ),
