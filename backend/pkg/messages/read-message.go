@@ -300,9 +300,9 @@ func DecodeMouseMove(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+func DecodeLegacyNetworkRequest(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &NetworkRequest{}
+	msg := &LegacyNetworkRequest{}
 	if msg.Type, err = reader.ReadString(); err != nil {
 		return nil, err
 	}
@@ -1329,6 +1329,39 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &NetworkRequest{}
+	if msg.Type, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Method, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Cached, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IOSBatchMeta{}
@@ -1774,7 +1807,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 20:
 		return DecodeMouseMove(reader)
 	case 21:
-		return DecodeNetworkRequest(reader)
+		return DecodeLegacyNetworkRequest(reader)
 	case 22:
 		return DecodeConsoleLog(reader)
 	case 23:
@@ -1895,6 +1928,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSessionEnd(reader)
 	case 127:
 		return DecodeSessionSearch(reader)
+	case 128:
+		return DecodeNetworkRequest(reader)
 	case 107:
 		return DecodeIOSBatchMeta(reader)
 	case 90:

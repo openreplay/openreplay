@@ -185,7 +185,7 @@ class MouseMove(Message):
         self.y = y
 
 
-class NetworkRequest(Message):
+class LegacyNetworkRequest(Message):
     __id__ = 21
 
     def __init__(self, type, method, url, request, response, status, timestamp, duration):
@@ -770,6 +770,21 @@ class SessionSearch(Message):
     def __init__(self, timestamp, partition):
         self.timestamp = timestamp
         self.partition = partition
+
+
+class NetworkRequest(Message):
+    __id__ = 128
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration, cached):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+        self.cached = cached
 
 
 class IOSBatchMeta(Message):

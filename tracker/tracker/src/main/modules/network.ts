@@ -39,10 +39,9 @@ function checkCacheByPerformanceTimings(requestUrl: string) {
   if (performance) {
     const timings = performance.getEntriesByName(requestUrl)[0]
     // @ts-ignore - weird ts typings, please refer to https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming
-    if (timings.transferSize === 0 || timings.responseStart - timings.requestStart < 10) {
-      return true
-    }
-  } else return false
+    return timings.transferSize === 0 || timings.responseStart - timings.requestStart < 10
+  }
+  return false
 }
 
 interface RequestData {
@@ -229,9 +228,10 @@ export default function (app: App, opts: Partial<Options> = {}) {
               String(reqResInfo.url),
               stringify(reqResInfo.request),
               stringify(reqResInfo.response),
-              isCached ? 304 : r.status,
+              r.status,
               startTime + getTimeOrigin(),
               duration,
+              isCached,
             ),
           )
         })
@@ -299,9 +299,10 @@ export default function (app: App, opts: Partial<Options> = {}) {
             String(reqResInfo.url),
             stringify(reqResInfo.request),
             stringify(reqResInfo.response),
-            isCached ? 304 : xhr.status,
+            xhr.status,
             startTime + getTimeOrigin(),
             duration,
+            isCached,
           ),
         )
       }),
