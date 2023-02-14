@@ -6,7 +6,8 @@ function createFileRecorder(
   mimeType: string,
   recName: string,
   sessionId: string,
-  saveCb: Function
+  saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void,
+  onStop: () => void
 ) {
   let ended = false;
   const start = new Date().getTime();
@@ -26,6 +27,7 @@ function createFileRecorder(
 
     ended = true;
     saveFile(recordedChunks, mimeType, start, recName, sessionId, saveCb);
+    onStop()
     recordedChunks = [];
   }
 
@@ -48,7 +50,7 @@ function saveFile(
   startDate: number,
   recName: string,
   sessionId: string,
-  saveCb: Function
+  saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void
 ) {
   const saveObject = { name: recName, duration: new Date().getTime() - startDate, sessionId };
 
@@ -90,14 +92,15 @@ async function recordScreen() {
  *
  * @returns  a promise that resolves to a function that stops the recording
  */
-export async function screenRecorder(recName: string, sessionId: string, saveCb: Function) {
+export async function screenRecorder(recName: string, sessionId: string, saveCb: (saveObj: { name: string; duration: number }, blob: Blob) => void, onStop: () => void) {
   try {
     const stream = await recordScreen();
-    const mediaRecorder = createFileRecorder(stream, FILE_TYPE, recName, sessionId, saveCb);
+    const mediaRecorder = createFileRecorder(stream, FILE_TYPE, recName, sessionId, saveCb, onStop);
 
     return () => {
       if (mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
+        onStop()
       }
     }
   } catch (e) {

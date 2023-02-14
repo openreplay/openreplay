@@ -8,7 +8,7 @@ let stopRecorderCb: () => void;
 import { recordingsService } from 'App/services';
 import { toast } from 'react-toastify';
 import { formatTimeOrDate } from 'App/date';
-import { PlayerContext } from 'App/components/Session/playerContext';
+import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
 
 /**
@@ -24,9 +24,7 @@ function isSupported() {
 
   if (agent.includes('edge') || agent.includes('edg/')) return true;
   // @ts-ignore
-  if (agent.includes('chrome') && !!window.chrome) return true;
-
-  return false;
+  return agent.includes('chrome') && !!window.chrome;
 }
 
 const supportedBrowsers = ['Chrome v91+', 'Edge v90+'];
@@ -41,8 +39,8 @@ function ScreenRecorder({
   sessionId: string;
   isEnterprise: boolean;
 }) {
-  const { player, store } = React.useContext(PlayerContext)
-  const recordingState = store.get().recordingState
+  const { player, store } = React.useContext(PlayerContext) as ILivePlayerContext;
+  const recordingState = store.get().recordingState;
 
   const [isRecording, setRecording] = React.useState(false);
 
@@ -54,7 +52,7 @@ function ScreenRecorder({
     try {
       toast.warn('Uploading the recording...');
       const { URL, key } = await recordingsService.reserveUrl(siteId, { ...saveObj, sessionId });
-      const status = recordingsService.saveFile(URL, blob);
+      const status = await recordingsService.saveFile(URL, blob);
 
       if (status) {
         await recordingsService.confirmFile(siteId, { ...saveObj, sessionId }, key);
@@ -68,38 +66,49 @@ function ScreenRecorder({
 
   React.useEffect(() => {
     if (!isRecording && recordingState === SessionRecordingStatus.Recording) {
-      startRecording();
+      void startRecording();
     }
     if (isRecording && recordingState !== SessionRecordingStatus.Recording) {
       stopRecordingHandler();
     }
   }, [recordingState, isRecording]);
 
+  const onStop = () => {
+    setRecording(false);
+    player.assistManager.stopRecording();
+  };
+
   const startRecording = async () => {
-    const stop = await screenRecorder(
-      `${formatTimeOrDate(new Date().getTime(), undefined, true)}_${sessionId}`,
-      sessionId,
-      onSave
-    );
-    stopRecorderCb = stop;
-    setRecording(true);
+    try {
+      // @ts-ignore
+      stopRecorderCb = await screenRecorder(
+        `${formatTimeOrDate(new Date().getTime(), undefined, true)}_${sessionId}`,
+        sessionId,
+        onSave,
+        onStop
+      );
+      setRecording(true);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const stopRecordingHandler = () => {
-    player.assistManager.stopRecording();
     stopRecorderCb?.();
-    setRecording(false);
+    onStop();
   };
 
   const recordingRequest = () => {
-    player.assistManager.requestRecording()
+    player.assistManager.requestRecording();
   };
 
   if (!isSupported() || !isEnterprise) {
     return (
       <div className="p-2">
         {/* @ts-ignore */}
-        <Tooltip title={isEnterprise ? supportedMessage : 'This feature requires an enterprise license.'}>
+        <Tooltip
+          title={isEnterprise ? supportedMessage : 'This feature requires an enterprise license.'}
+        >
           <Button icon="record-circle" disabled variant="text-primary">
             Record Activity
           </Button>
@@ -121,7 +130,7 @@ function ScreenRecorder({
 }
 
 export default connect((state: any) => ({
-    isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-    siteId: state.getIn(['site', 'siteId']),
-    sessionId: state.getIn(['sessions', 'current']).sessionId,
-  }))(observer(ScreenRecorder))
+  isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
+  siteId: state.getIn(['site', 'siteId']),
+  sessionId: state.getIn(['sessions', 'current']).sessionId,
+}))(observer(ScreenRecorder));

@@ -36,7 +36,7 @@ export default class ScreenRecordingState {
   private status = RecordingState.Off
   private recordingAgent: string
   private overlayAdded = false
-  private uiComponents: [HTMLDivElement, HTMLDivElement]
+  private uiComponents: [HTMLDivElement]
 
   constructor(private readonly confirmOptions: ConfirmOptions) { }
 
@@ -79,16 +79,6 @@ export default class ScreenRecordingState {
 
   private readonly acceptRecording = () => {
     if (!this.overlayAdded) {
-      const stopButton = window.document.createElement('div')
-      stopButton.onclick = () => this.rejectRecording()
-      Object.assign(stopButton.style, buttonStyles)
-      stopButton.textContent = 'Stop Recording'
-      stopButton.className = 'or-recording-button'
-      stopButton.setAttribute('data-openreplay-obscured', '')
-      stopButton.setAttribute('data-openreplay-hidden', '')
-      stopButton.setAttribute('data-openreplay-ignore', '')
-      window.document.body.appendChild(stopButton)
-
       const borderWindow = window.document.createElement('div')
       Object.assign(borderWindow.style, borderStyles)
       borderWindow.className = 'or-recording-border'
@@ -99,7 +89,7 @@ export default class ScreenRecordingState {
 
       this.overlayAdded = true
 
-      this.uiComponents = [stopButton, borderWindow,]
+      this.uiComponents = [borderWindow,]
     }
     this.status = RecordingState.Recording
   }
@@ -118,6 +108,7 @@ export default class ScreenRecordingState {
     this.confirm?.remove()
     this.status = RecordingState.Off
 
+    this.overlayAdded = false
     this.uiComponents.forEach((el) => el.parentElement?.removeChild(el))
   }
 }
