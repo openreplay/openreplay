@@ -110,9 +110,9 @@ jobs:
 
         cat /tmp/image_override.yaml
         # Deploy command
-        kubectl config set-context --namespace=app --current
-        kubectl config get-contexts
-        k_version=$(kubectl version --short 2>/dev/null | awk '/Server/{print $NF}')
+        mv openreplay/charts/{ingress-nginx,chalice,quickwit} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,chalice,quickwit} openreplay/charts/
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
