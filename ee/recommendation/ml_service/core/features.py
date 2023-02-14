@@ -3,6 +3,7 @@ from utils.pg_client import PostgresClient
 
 def get_features_clickhouse(**kwargs):
     """Gets features from ClickHouse database"""
+    #FOR ALL SESSIONS
     if 'limit' in kwargs:
         limit = kwargs['limit']
     else:
@@ -17,6 +18,7 @@ ON T1.session_id = T2.session_id AND T1.project_id = T2.project_id;"""
 
 
 def get_features_postgres(**kwargs):
+    # DOES NOT CONTAIN SESSION ID
     with PostgresClient() as conn:
         funnels = query_funnels(conn, **kwargs)
         metrics = query_metrics(conn, **kwargs)
@@ -151,6 +153,21 @@ def clean_filters_split(data, isfunnel=False):
                                   'operator': _operator
                                   })
     return _data
+
+
+def get_favorites():
+    #TODO: Get features for these sessions
+    query_1 = """SELECT * FROM experimental.user_favorite_sessions as t1 INNER JOIN (SELECT * FROM experimental.sessions) as t2 ON t1.session_id=t2.session_id"""
+    query_2 = """SELECT * FROM experimental.user_viewed_sessions as t1 INNER JOIN (SELECT * FROM experimental.sessions) as t2 ON t1.session_id=t2.session_id"""
+    with ClickHouseClient() as conn:
+        res1 = conn.execute(query_1)
+        res2 = conn.execute(query_2)
+    return {'favorite': res1, 'viewed': res2}
+
+def get_latest_sessions():
+    #TODO: Do we need this?
+    query = """SELECT * FROM sessions ORDER BY _timestamp LIMIT 100 """
+
 
 def test():
     print('One test')
