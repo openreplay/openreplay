@@ -202,7 +202,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
     full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
                                                   favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                   user_id=user_id)
@@ -264,6 +264,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 GROUP BY user_id
                                             ) AS users_sessions;""",
                                      full_args)
+        elif ids_only:
+            main_query = cur.format(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                    full_args)
         else:
             if data.order is None:
                 data.order = schemas.SortOrderType.desc.value
@@ -302,8 +308,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print(data.json())
             print("--------------------")
             raise err
-        if errors_only:
-            return helper.list_to_camel_case(cur.fetchall())
+        if errors_only or ids_only:
+            return helper.list_to_camel_case(sessions)
 
         if len(sessions) > 0:
             sessions = sessions[0]
