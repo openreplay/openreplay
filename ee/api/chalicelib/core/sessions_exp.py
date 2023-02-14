@@ -1526,17 +1526,18 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 
 def count_all():
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
-        row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
+    with ch_client.ClickHouseClient() as cur:
+        row = cur.execute(query=f"SELECT COUNT(session_id) AS count FROM {exp_ch_helper.get_main_sessions_table()}")
     return row.get("count", 0)
 
 
 def session_exists(project_id, session_id):
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format("""SELECT 1 
-                         FROM public.sessions 
-                         WHERE session_id=%(session_id)s 
-                            AND project_id=%(project_id)s""",
+        query = cur.format(f"""SELECT 1 
+                               FROM {exp_ch_helper.get_main_sessions_table()} 
+                               WHERE session_id=%(session_id)s 
+                                    AND project_id=%(project_id)s
+                               LIMIT 1""",
                            {"project_id": project_id, "session_id": session_id})
         row = cur.execute(query)
     return row is not None
