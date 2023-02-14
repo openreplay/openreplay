@@ -243,6 +243,12 @@ export const applyFilter = reduceThenFetchResource((filter, force = false) => ({
     force,
 }));
 
+export const updateFilter = (filter, force = false) => ({
+    type: APPLY,
+    filter,
+    force,
+});
+
 export const updateCurrentPage = reduceThenFetchResource((page) => ({
     type: UPDATE_CURRENT_PAGE,
     page,
