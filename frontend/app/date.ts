@@ -82,7 +82,7 @@ export function formatDateTimeDefault(timestamp: number): string {
  * @param {Object} timezone fixed offset like UTC+6
  * @returns {String} formatted date (or time if its today)
  */
-export function formatTimeOrDate(timestamp: number, timezone: Timezone, isFull = false): string {
+export function formatTimeOrDate(timestamp: number, timezone?: Timezone, isFull = false): string {
   var date = DateTime.fromMillis(timestamp)
   if (timezone) {
     if (timezone.value === 'UTC') date = date.toUTC();
