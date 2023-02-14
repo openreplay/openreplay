@@ -128,10 +128,10 @@ export function renderDuration(r: any) {
   );
 }
 
-function renderStatus({ status }: { status: string }) {
+function renderStatus({ status, cached }: { status: string, cached: boolean }) {
   return (
     <>
-      {parseInt(status, 10) === 200 ? (
+      {cached ? (
         <Tooltip title={"Served from cache"}>
           <div className="flex items-center">
             <span className="mr-1">{status}</span>
