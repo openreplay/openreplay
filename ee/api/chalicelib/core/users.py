@@ -729,7 +729,7 @@ def authenticate(email, password, for_change_password=False):
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        if config("enforce_SSO", cast=bool, default=False) and not r["superAdmin"] and helper.is_saml2_available():
+        if config("enforce_SSO", cast=bool, default=False) and helper.is_saml2_available():
             return {"errors": ["must sign-in with SSO, enforced by admin"]}
 
         jwt_iat = change_jwt_iat(r['userId'])
