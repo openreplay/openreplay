@@ -1,4 +1,4 @@
-# This action will push the chalice changes to aws
+# This action will push the alerts changes to aws
 on:
   workflow_dispatch:
     inputs:
@@ -10,10 +10,9 @@ on:
     branches:
       - dev
     paths:
-      - ee/api/**
       - api/**
 
-name: Build and Deploy Chalice EE
+name: Build and Deploy Alerts
 
 jobs:
   deploy:
@@ -30,12 +29,12 @@ jobs:
 
     - name: Docker login
       run: |
-        docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
 
     - uses: azure/k8s-set-context@v1
       with:
         method: kubeconfig
-        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
 
     # Caching docker images
@@ -44,19 +43,19 @@ jobs:
       continue-on-error: true
 
 
-    - name: Building and Pushing api image
+    - name: Building and Pushing Alerts image
       id: build-image
       env:
-        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}-ee
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
         skip_security_checks=${{ github.event.inputs.skip_security_checks }}
         cd api
-        PUSH_IMAGE=0 bash -x ./build.sh ee
+        PUSH_IMAGE=0 bash -x ./build_alerts.sh
         [[ "x$skip_security_checks" == "xtrue" ]]  || {
           curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
-          images=("chalice")
+          images=("alerts")
           for image in ${images[*]};do
             ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
           done
@@ -67,7 +66,7 @@ jobs:
         } && {
           echo "Skipping Security Checks"
         }
-        images=("chalice")
+        images=("alerts")
         for image in ${images[*]};do
           docker push $DOCKER_REPO/$image:$IMAGE_TAG 
         done
@@ -87,8 +86,7 @@ jobs:
             cat <<EOF >> /tmp/image_override.yaml
         ${image_array[0]}:
           image:
-            # We've to strip off the -ee, as helm will append it.
-            tag: `echo ${image_array[1]} | cut -d '-' -f 1`
+            tag: ${image_array[1]}
         EOF
         done
 
@@ -98,25 +96,23 @@ jobs:
 
         ## Update secerts
         sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
-        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
-        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
-        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
-        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
-        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
 
         # Update changed image tag
-        sed -i "/chalice/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/alerts/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
-        kubectl config set-context --namespace=app --current
-        kubectl config get-contexts
-        k_version=$(kubectl version --short 2>/dev/null | awk '/Server/{print $NF}')
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
+        mv openreplay/charts/{ingress-nginx,alerts,quickwit} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,alerts,quickwit} openreplay/charts/
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
       env:
-        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        # We're not passing -ee flag, because helm will add that.
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
@@ -124,7 +120,7 @@ jobs:
       if: ${{ failure() }}
       uses: rtCamp/action-slack-notify@v2
       env:
-        SLACK_CHANNEL: ee
+        SLACK_CHANNEL: foss
         SLACK_TITLE: "Failed ${{ github.workflow }}"
         SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
@@ -135,7 +131,7 @@ jobs:
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3
     #   env:
-    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-    #     IMAGE_TAG: ${{ github.sha }}-ee
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
     #     ENVIRONMENT: staging
-    #
+

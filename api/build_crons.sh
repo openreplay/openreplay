@@ -43,4 +43,6 @@ function build_crons(){
 }
 
 check_prereq
-build_crons $1
+[[ $1 == "ee" ]] && {
+    build_crons $1
+}

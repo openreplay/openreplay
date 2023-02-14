@@ -32,7 +32,7 @@ jobs:
         kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
 
-    - name: Building and Pusing api image
+    - name: Building and Pushing api image
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
