@@ -8,7 +8,7 @@ on:
         default: 'false'
   push:
     branches:
-      - dev
+      - api-v1.10.0
     paths:
       - ee/api/**
       - api/**
