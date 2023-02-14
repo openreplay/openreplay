@@ -70,13 +70,15 @@ func (m *messageReaderImpl) Parse() (err error) {
 			}
 
 			// Dirty hack to avoid extra memory allocation
-			m.data[curr-1] = uint8(m.msgType)
+			mTypeByteSize := ByteSizeUint(m.msgType)
+			from := int(curr) - mTypeByteSize
+			WriteUint(m.msgType, m.data, from)
 
 			// Add message meta to list
 			m.list = append(m.list, &MessageMeta{
 				msgType: m.msgType,
 				msgSize: m.msgSize + 1,
-				msgFrom: uint64(curr - 1),
+				msgFrom: uint64(from),
 			})
 
 			// Update data pointer
