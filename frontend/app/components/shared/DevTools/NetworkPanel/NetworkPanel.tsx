@@ -128,8 +128,7 @@ export function renderDuration(r: any) {
   );
 }
 
-function renderStatus({ status }) {
-
+function renderStatus({ status }: { status: string }) {
   return (
     <>
       {parseInt(status, 10) === 200 ? (
@@ -143,6 +142,7 @@ function renderStatus({ status }) {
     </>
   )
 }
+
 function NetworkPanel({ startedAt }: { startedAt: number }) {
   const { player, store } = React.useContext(PlayerContext)
 
