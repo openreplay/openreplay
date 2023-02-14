@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 )
 
 var (
@@ -48,6 +49,15 @@ func WriteUint(v uint64, buf []byte, p int) int {
 	}
 	buf[p] = byte(v)
 	return p + 1
+}
+
+func ByteSizeUint(v uint64) int {
+	if v == 0 {
+		return 1
+	}
+	nBits := math.Floor(math.Log2(float64(v))) + 1
+	nBytes := math.Ceil(nBits / 7)
+	return int(nBytes)
 }
 
 func ReadInt(reader io.Reader) (int64, error) {
