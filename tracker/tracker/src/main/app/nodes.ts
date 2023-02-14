@@ -26,10 +26,6 @@ export default class Nodes {
     listeners.push([type, listener, useCapture])
   }
 
-  getNodesCount() {
-    return this.nodes.length
-  }
-
   registerNode(node: Node): [/*id:*/ number, /*isNew:*/ boolean] {
     let id: number = (node as any)[this.node_id]
     const isNew = id === undefined

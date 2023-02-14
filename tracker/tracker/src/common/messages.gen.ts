@@ -519,7 +519,6 @@ export type MouseThrashing = [
 export type RemovedNodesCount = [
   /*type:*/ Type.RemovedNodesCount,
   /*nodesCount:*/ number,
-  /*domdropped:*/ boolean,
 ]
 
 

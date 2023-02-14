@@ -218,7 +218,6 @@ export default abstract class Observer {
 
   private unbindTree(node: Node) {
     let removed = 0
-    const nodesCount = this.app.nodes.getNodesCount()
     const id = this.app.nodes.unregisterNode(node)
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
@@ -241,7 +240,7 @@ export default abstract class Observer {
         removed += 1
         this.app.nodes.unregisterNode(walker.currentNode)
       }
-      this.app.send(RemovedNodesCount(removed, removed / nodesCount > 0.5))
+      this.app.send(RemovedNodesCount(removed))
     }
   }
 

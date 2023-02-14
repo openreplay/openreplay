@@ -2105,15 +2105,13 @@ func (msg *MouseThrashing) TypeID() int {
 type RemovedNodesCount struct {
 	message
 	NodesCount uint64
-	DOMDropped bool
 }
 
 func (msg *RemovedNodesCount) Encode() []byte {
-	buf := make([]byte, 21)
+	buf := make([]byte, 11)
 	buf[0] = 115
 	p := 1
 	p = WriteUint(msg.NodesCount, buf, p)
-	p = WriteBoolean(msg.DOMDropped, buf, p)
 	return buf[:p]
 }
 

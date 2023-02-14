@@ -1275,9 +1275,6 @@ func DecodeRemovedNodesCount(reader BytesReader) (Message, error) {
 	if msg.NodesCount, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
-	if msg.DOMDropped, err = reader.ReadBoolean(); err != nil {
-		return nil, err
-	}
 	return msg, err
 }
 

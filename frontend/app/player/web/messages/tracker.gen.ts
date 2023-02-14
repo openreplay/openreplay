@@ -454,7 +454,6 @@ type TrMouseThrashing = [
 type TrRemovedNodesCount = [
   type: 115,
   nodesCount: number,
-  domdropped: boolean,
 ]
 
 

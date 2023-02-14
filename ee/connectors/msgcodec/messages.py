@@ -739,9 +739,8 @@ class MouseThrashing(Message):
 class RemovedNodesCount(Message):
     __id__ = 115
 
-    def __init__(self, nodes_count, dom_dropped):
+    def __init__(self, nodes_count):
         self.nodes_count = nodes_count
-        self.dom_dropped = dom_dropped
 
 
 class IssueEvent(Message):
