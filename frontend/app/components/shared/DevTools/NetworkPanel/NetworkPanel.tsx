@@ -128,6 +128,21 @@ export function renderDuration(r: any) {
   );
 }
 
+function renderStatus({ status }) {
+
+  return (
+    <>
+      {parseInt(status, 10) === 200 ? (
+        <Tooltip title={"Served from cache"}>
+          <div className="flex items-center">
+            <span className="mr-1">{status}</span>
+            <Icon name="wifi" size={16} />
+          </div>
+        </Tooltip>
+      ) : status}
+    </>
+  )
+}
 function NetworkPanel({ startedAt }: { startedAt: number }) {
   const { player, store } = React.useContext(PlayerContext)
 
@@ -348,7 +363,8 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
                 {
                   label: 'Status',
                   dataKey: 'status',
-                  width: 70,
+                  width: 90,
+                  render: renderStatus,
                 },
                 {
                   label: 'Type',
