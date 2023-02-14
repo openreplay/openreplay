@@ -177,4 +177,3 @@ SUBNETS.json
 ./chalicelib/.configs
 README/*
 .local
-build_crons.sh

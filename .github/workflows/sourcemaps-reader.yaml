@@ -38,7 +38,7 @@ jobs:
       continue-on-error: true
 
 
-    - name: Building and Pusing sourcemaps-reader image
+    - name: Building and Pushing sourcemaps-reader image
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
