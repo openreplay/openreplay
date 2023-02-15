@@ -1,12 +1,7 @@
 package storage
 
-import "github.com/prometheus/client_golang/prometheus"
-
 func RecordSessionSize(fileSize float64, fileType string) {
-	storageSessionSize.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		fileSize,
-		map[string]string{"file_type": fileType},
-	)
+	storageSessionSize.WithLabelValues(fileType).Observe(fileSize)
 }
 
 func IncreaseStorageTotalSessions() {
@@ -14,36 +9,21 @@ func IncreaseStorageTotalSessions() {
 }
 
 func RecordSessionReadDuration(durMillis float64, fileType string) {
-	storageSessionReadDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		durMillis/1000.0,
-		map[string]string{"file_type": fileType},
-	)
+	storageSessionReadDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
 func RecordSessionSortDuration(durMillis float64, fileType string) {
-	storageSessionSortDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		durMillis/1000.0,
-		map[string]string{"file_type": fileType},
-	)
+	storageSessionSortDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
 func RecordSessionEncodeDuration(durMillis float64, fileType string) {
-	storageSessionEncodeDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		durMillis/1000.0,
-		map[string]string{"file_type": fileType},
-	)
+	storageSessionEncodeDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
 func RecordSessionCompressDuration(durMillis float64, fileType string) {
-	storageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		durMillis/1000.0,
-		map[string]string{"file_type": fileType},
-	)
+	storageSessionCompressDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
 func RecordSessionUploadDuration(durMillis float64, fileType string) {
-	storageSessionUploadDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		durMillis/1000.0,
-		map[string]string{"file_type": fileType},
-	)
+	storageSessionUploadDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
