@@ -2,14 +2,13 @@ package storage
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	gzip "github.com/klauspost/pgzip"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
+	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
@@ -25,6 +24,13 @@ const (
 	DEV FileType = "/devtools.mob"
 )
 
+func (t FileType) String() string {
+	if t == DOM {
+		return "dom"
+	}
+	return "devtools"
+}
+
 type Task struct {
 	id   string
 	doms *bytes.Buffer
@@ -36,92 +42,23 @@ type Storage struct {
 	cfg        *config.Config
 	s3         *storage.S3
 	startBytes []byte
-
-	totalSessions    syncfloat64.Counter
-	sessionDOMSize   syncfloat64.Histogram
-	sessionDEVSize   syncfloat64.Histogram
-	readingDOMTime   syncfloat64.Histogram
-	readingDEVTime   syncfloat64.Histogram
-	sortingDOMTime   syncfloat64.Histogram
-	sortingDEVTime   syncfloat64.Histogram
-	archivingDOMTime syncfloat64.Histogram
-	archivingDEVTime syncfloat64.Histogram
-	uploadingDOMTime syncfloat64.Histogram
-	uploadingDEVTime syncfloat64.Histogram
-
-	tasks chan *Task
-	ready chan struct{}
+	tasks      chan *Task
+	ready      chan struct{}
 }
 
-func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Storage, error) {
+func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	case s3 == nil:
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
-	// Create metrics
-	totalSessions, err := metrics.RegisterCounter("sessions_total")
-	if err != nil {
-		log.Printf("can't create sessions_total metric: %s", err)
-	}
-	sessionDOMSize, err := metrics.RegisterHistogram("sessions_size")
-	if err != nil {
-		log.Printf("can't create session_size metric: %s", err)
-	}
-	sessionDevtoolsSize, err := metrics.RegisterHistogram("sessions_dt_size")
-	if err != nil {
-		log.Printf("can't create sessions_dt_size metric: %s", err)
-	}
-	readingDOMTime, err := metrics.RegisterHistogram("reading_duration")
-	if err != nil {
-		log.Printf("can't create reading_duration metric: %s", err)
-	}
-	readingDEVTime, err := metrics.RegisterHistogram("reading_dt_duration")
-	if err != nil {
-		log.Printf("can't create reading_duration metric: %s", err)
-	}
-	sortingDOMTime, err := metrics.RegisterHistogram("sorting_duration")
-	if err != nil {
-		log.Printf("can't create reading_duration metric: %s", err)
-	}
-	sortingDEVTime, err := metrics.RegisterHistogram("sorting_dt_duration")
-	if err != nil {
-		log.Printf("can't create reading_duration metric: %s", err)
-	}
-	archivingDOMTime, err := metrics.RegisterHistogram("archiving_duration")
-	if err != nil {
-		log.Printf("can't create archiving_duration metric: %s", err)
-	}
-	archivingDEVTime, err := metrics.RegisterHistogram("archiving_dt_duration")
-	if err != nil {
-		log.Printf("can't create archiving_duration metric: %s", err)
-	}
-	uploadingDOMTime, err := metrics.RegisterHistogram("uploading_duration")
-	if err != nil {
-		log.Printf("can't create uploading_duration metric: %s", err)
-	}
-	uploadingDEVTime, err := metrics.RegisterHistogram("uploading_dt_duration")
-	if err != nil {
-		log.Printf("can't create uploading_duration metric: %s", err)
-	}
 	newStorage := &Storage{
-		cfg:              cfg,
-		s3:               s3,
-		startBytes:       make([]byte, cfg.FileSplitSize),
-		totalSessions:    totalSessions,
-		sessionDOMSize:   sessionDOMSize,
-		sessionDEVSize:   sessionDevtoolsSize,
-		readingDOMTime:   readingDOMTime,
-		readingDEVTime:   readingDEVTime,
-		sortingDOMTime:   sortingDOMTime,
-		sortingDEVTime:   sortingDEVTime,
-		archivingDOMTime: archivingDOMTime,
-		archivingDEVTime: archivingDEVTime,
-		uploadingDOMTime: uploadingDOMTime,
-		uploadingDEVTime: uploadingDEVTime,
-		tasks:            make(chan *Task, 1),
-		ready:            make(chan struct{}),
+		cfg:        cfg,
+		s3:         s3,
+		startBytes: make([]byte, cfg.FileSplitSize),
+		tasks:      make(chan *Task, 1),
+		ready:      make(chan struct{}),
 	}
 	go newStorage.worker()
 	return newStorage, nil
@@ -187,11 +124,11 @@ func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't sort session, err: %s", err)
 	}
-	if tp == DOM {
-		s.sortingDOMTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
-	} else {
-		s.sortingDEVTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
-	}
+	// Save metric
+	metrics.StorageSessionSortDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+		float64(time.Now().Sub(start).Milliseconds()),
+		map[string]string{"file_type": tp.String()},
+	)
 	return res, nil
 }
 
@@ -216,25 +153,33 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 		return err
 	}
 	durRead := time.Now().Sub(startRead).Milliseconds()
-	// Send metrics
-	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
-	if tp == DOM {
-		s.sessionDOMSize.Record(ctx, float64(len(mob)))
-		s.readingDOMTime.Record(ctx, float64(durRead))
-	} else {
-		s.sessionDEVSize.Record(ctx, float64(len(mob)))
-		s.readingDEVTime.Record(ctx, float64(durRead))
-	}
+	// Save metrics
+	metrics.StorageSessionSize.(prometheus.ExemplarObserver).ObserveWithExemplar(
+		float64(len(mob)),
+		map[string]string{"file_type": tp.String()},
+	)
+	metrics.StorageSessionReadDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+		float64(durRead),
+		map[string]string{"file_type": tp.String()},
+	)
 	// Encode and compress session
 	if tp == DEV {
 		startCompress := time.Now()
 		task.dev = s.compressSession(mob)
-		s.archivingDEVTime.Record(ctx, float64(time.Now().Sub(startCompress).Milliseconds()))
+		// Save metric
+		metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+			float64(time.Now().Sub(startCompress).Milliseconds()),
+			map[string]string{"file_type": tp.String()},
+		)
 	} else {
 		if len(mob) <= s.cfg.FileSplitSize {
 			startCompress := time.Now()
 			task.doms = s.compressSession(mob)
-			s.archivingDOMTime.Record(ctx, float64(time.Now().Sub(startCompress).Milliseconds()))
+			//
+			metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+				float64(time.Now().Sub(startCompress).Milliseconds()),
+				map[string]string{"file_type": tp.String()},
+			)
 			return nil
 		}
 		wg := &sync.WaitGroup{}
@@ -253,7 +198,10 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 			wg.Done()
 		}()
 		wg.Wait()
-		s.archivingDOMTime.Record(ctx, float64(firstPart+secondPart))
+		metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+			float64(firstPart+secondPart),
+			map[string]string{"file_type": tp.String()},
+		)
 	}
 	return nil
 }
@@ -324,11 +272,16 @@ func (s *Storage) uploadSession(task *Task) {
 		wg.Done()
 	}()
 	wg.Wait()
-	// Record metrics
-	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
-	s.uploadingDOMTime.Record(ctx, float64(uploadDoms+uploadDome))
-	s.uploadingDEVTime.Record(ctx, float64(uploadDev))
-	s.totalSessions.Add(ctx, 1)
+	// Save metrics
+	metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+		float64(uploadDoms+uploadDome),
+		map[string]string{"file_type": DOM.String()},
+	)
+	metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
+		float64(uploadDev),
+		map[string]string{"file_type": DEV.String()},
+	)
+	metrics.StorageTotalSessions.Inc()
 }
 
 func (s *Storage) worker() {

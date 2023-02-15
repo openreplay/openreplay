@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/metrics"
 	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
@@ -12,13 +13,15 @@ import (
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/failover"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+
 	"openreplay/backend/pkg/queue"
 	s3storage "openreplay/backend/pkg/storage"
 )
 
 func main() {
-	metrics := monitoring.New("storage")
+	m := metrics.New()
+	m.RegisterStorageMetrics()
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
@@ -27,7 +30,7 @@ func main() {
 	}
 
 	s3 := s3storage.NewS3(cfg.S3Region, cfg.S3Bucket)
-	srv, err := storage.New(cfg, s3, metrics)
+	srv, err := storage.New(cfg, s3)
 	if err != nil {
 		log.Printf("can't init storage service: %s", err)
 		return
