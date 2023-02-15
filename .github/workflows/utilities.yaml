@@ -52,12 +52,7 @@ jobs:
         sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-        # bash kube-install.sh --app utilities
-        # Deploy command
-        mv openreplay/charts/{ingress-nginx,assist,quickwit} /tmp
-        rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,assist,quickwit} openreplay/charts/
-        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
+        bash kube-install.sh --app utilities
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
