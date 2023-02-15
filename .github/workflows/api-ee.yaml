@@ -12,6 +12,17 @@ on:
     paths:
       - ee/api/**
       - api/**
+    paths-ignore:
+      - api/.gitignore
+      - api/app_alerts.py
+      - api/*-dev.sh
+      - api/requirements-*.txt
+      - ee/api/.gitignore
+      - ee/api/app_alerts.py
+      - ee/api/app_crons.py
+      - ee/api/*-dev.sh
+      - ee/api/requirements-*.txt
+
 
 name: Build and Deploy Chalice EE
 

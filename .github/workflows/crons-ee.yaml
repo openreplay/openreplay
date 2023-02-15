@@ -12,6 +12,19 @@ on:
     paths:
       - ee/api/**
       - api/**
+    paths-ignore:
+      - api/.gitignore
+      - api/app.py
+      - api/app_alerts.py
+      - api/*-dev.sh
+      - api/requirements.txt
+      - api/requirements-alerts.txt
+      - ee/api/.gitignore
+      - ee/api/app.py
+      - ee/api/app_alerts.py
+      - ee/api/*-dev.sh
+      - ee/api/requirements.txt
+      - ee/api/requirements-crons.txt
 
 name: Build and Deploy Crons EE
 
