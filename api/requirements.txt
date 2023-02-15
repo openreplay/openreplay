@@ -13,3 +13,4 @@ uvicorn[standard]==0.20.0
 python-decouple==3.6
 pydantic[email]==1.10.2
 apscheduler==3.9.1.post1
+starlette>=0.25.0 # not directly required, pinned by Snyk to avoid a vulnerability
