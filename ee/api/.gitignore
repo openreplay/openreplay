@@ -263,5 +263,6 @@ Pipfile.lock
 /chalicelib/core/saved_search.py
 /app_alerts.py
 /build_alerts.sh
+/build_crons.sh
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

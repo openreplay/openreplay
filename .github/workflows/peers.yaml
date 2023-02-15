@@ -1,15 +1,15 @@
-# This action will push the utilities changes to aws
+# This action will push the peers changes to aws
 on:
   workflow_dispatch:
   push:
     branches:
       - dev
     paths:
-      - "utilities/**"
-      - "!utilities/.gitignore"
-      - "!utilities/*-dev.sh"
+      - "peers/**"
+      - "!peers/.gitignore"
+      - "!peers/*-dev.sh"
 
-name: Build and Deploy Utilities
+name: Build and Deploy Peers
 
 jobs:
   deploy:
@@ -41,7 +41,7 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
-        cd utilities
+        cd peers
         PUSH_IMAGE=1 bash build.sh
     - name: Deploy to kubernetes
       run: |
@@ -52,7 +52,7 @@ jobs:
         sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-        bash kube-install.sh --app utilities
+        bash kube-install.sh --app peers
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}

@@ -55,7 +55,7 @@ def get_presigned_url_for_sharing(bucket, expires_in, key, check_exists=False):
     )
 
 
-def get_presigned_url_for_upload_deprecated(bucket, expires_in, key, **args):
+def get_presigned_url_for_upload(bucket, expires_in, key, **args):
     return client.generate_presigned_url(
         'put_object',
         Params={
@@ -66,10 +66,7 @@ def get_presigned_url_for_upload_deprecated(bucket, expires_in, key, **args):
     )
 
 
-
-
-
-def get_presigned_url_for_upload(bucket, expires_in, key, conditions=None, public=False, content_type=None):
+def get_presigned_url_for_upload_secure(bucket, expires_in, key, conditions=None, public=False, content_type=None):
     acl = 'private'
     if public:
         acl = 'public-read'
