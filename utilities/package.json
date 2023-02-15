@@ -1,5 +1,5 @@
 {
-  "name": "utilities-server",
+  "name": "assist-server",
   "version": "1.0.0",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
