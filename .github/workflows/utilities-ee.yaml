@@ -10,7 +10,7 @@ on:
       - "!utilities/.gitignore"
       - "!utilities/*-dev.sh"
 
-name: Build and Deploy Utilities EE
+name: Build and Deploy Assist EE
 
 jobs:
   deploy:
