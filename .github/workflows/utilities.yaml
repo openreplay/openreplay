@@ -52,7 +52,7 @@ jobs:
         sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-#        bash kube-install.sh --app utilities
+        # bash kube-install.sh --app utilities
         # Deploy command
         mv openreplay/charts/{ingress-nginx,assist,quickwit} /tmp
         rm -rf  openreplay/charts/*
