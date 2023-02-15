@@ -1176,6 +1176,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             ) {"" if or_events else (f"AS event_{event_index} " + ("ON(TRUE)" if event_index > 0 else ""))}\
             """)
             event_index += 1
+            # limit THEN-events to 7 in CH because sequenceMatch cannot take more arguments
+            if event_index == 7 and data.events_order == schemas.SearchEventOrder._then:
+                break
 
         if event_index < 2:
             data.events_order = schemas.SearchEventOrder._or
