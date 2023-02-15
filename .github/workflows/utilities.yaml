@@ -5,10 +5,9 @@ on:
     branches:
       - dev
     paths:
-      - utilities/**
-    paths-ignore:
-      - utilities/.gitignore
-      - utilities/*-dev.sh
+      - "utilities/**"
+      - "!utilities/.gitignore"
+      - "!utilities/*-dev.sh"
 
 name: Build and Deploy Utilities
 

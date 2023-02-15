@@ -5,10 +5,9 @@ on:
     branches:
       - dev
     paths:
-      - peers/**
-    paths-ignore:
-      - peers/.gitignore
-      - peers/*-dev.sh
+      - "peers/**"
+      - "!peers/.gitignore"
+      - "!peers/*-dev.sh"
 
 name: Build and Deploy Peers
 

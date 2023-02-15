@@ -10,21 +10,20 @@ on:
     branches:
       - api-v1.10.0
     paths:
-      - ee/api/**
-      - api/**
-    paths-ignore:
-      - api/.gitignore
-      - api/routers
-      - api/app.py
-      - api/*-dev.sh
-      - api/requirements.txt
-      - api/requirements-crons.txt
-      - ee/api/.gitignore
-      - ee/api/routers
-      - ee/api/app.py
-      - ee/api/*-dev.sh
-      - ee/api/requirements.txt
-      - ee/api/requirements-crons.txt
+      - "ee/api/**"
+      - "api/**"
+      - "!api/.gitignore"
+      - "!api/routers"
+      - "!api/app.py"
+      - "!api/*-dev.sh"
+      - "!api/requirements.txt"
+      - "!api/requirements-crons.txt"
+      - "!ee/api/.gitignore"
+      - "!ee/api/routers"
+      - "!ee/api/app.py"
+      - "!ee/api/*-dev.sh"
+      - "!ee/api/requirements.txt"
+      - "!ee/api/requirements-crons.txt"
 
 
 name: Build and Deploy Alerts EE

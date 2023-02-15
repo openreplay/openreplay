@@ -10,14 +10,13 @@ on:
     branches:
       - api-v1.10.0
     paths:
-      - api/**
-    paths-ignore:
-      - api/.gitignore
-      - api/routers
-      - api/app.py
-      - api/*-dev.sh
-      - api/requirements.txt
-      - api/requirements-crons.txt
+      - "api/**"
+      - "!api/.gitignore"
+      - "!api/routers"
+      - "!api/app.py"
+      - "!api/*-dev.sh"
+      - "!api/requirements.txt"
+      - "!api/requirements-crons.txt"
 
 name: Build and Deploy Alerts
 

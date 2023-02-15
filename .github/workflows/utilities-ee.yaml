@@ -5,11 +5,10 @@ on:
     branches:
       - dev
     paths:
-      - ee/utilities/**
-      - utilities/*/**
-    paths-ignore:
-      - utilities/.gitignore
-      - utilities/*-dev.sh
+      - "ee/utilities/**"
+      - "utilities/*/**"
+      - "!utilities/.gitignore"
+      - "!utilities/*-dev.sh"
 
 name: Build and Deploy Utilities EE
 

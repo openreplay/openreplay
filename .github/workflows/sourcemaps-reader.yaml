@@ -5,10 +5,9 @@ on:
     branches:
       - dev
     paths:
-      - sourcemap-reader/**
-    paths-ignore:
-      - sourcemap-reader/.gitignore
-      - sourcemap-reader/*-dev.sh
+      - "sourcemap-reader/**"
+      - "!sourcemap-reader/.gitignore"
+      - "!sourcemap-reader/*-dev.sh"
 
 name: Build and Deploy sourcemap-reader
 
