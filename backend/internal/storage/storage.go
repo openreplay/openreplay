@@ -3,18 +3,19 @@ package storage
 import (
 	"bytes"
 	"fmt"
-	gzip "github.com/klauspost/pgzip"
-	"github.com/prometheus/client_golang/prometheus"
 	"log"
-	config "openreplay/backend/internal/config/storage"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/metrics"
-	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	config "openreplay/backend/internal/config/storage"
+	"openreplay/backend/pkg/messages"
+	metrics "openreplay/backend/pkg/metrics/storage"
+	"openreplay/backend/pkg/storage"
+
+	gzip "github.com/klauspost/pgzip"
 )
 
 type FileType string
@@ -124,11 +125,7 @@ func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't sort session, err: %s", err)
 	}
-	// Save metric
-	metrics.StorageSessionSortDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		float64(time.Now().Sub(start).Milliseconds()),
-		map[string]string{"file_type": tp.String()},
-	)
+	metrics.RecordSessionSortDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 	return res, nil
 }
 
@@ -152,34 +149,19 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 	if err != nil {
 		return err
 	}
-	durRead := time.Now().Sub(startRead).Milliseconds()
-	// Save metrics
-	metrics.StorageSessionSize.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		float64(len(mob)),
-		map[string]string{"file_type": tp.String()},
-	)
-	metrics.StorageSessionReadDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		float64(durRead),
-		map[string]string{"file_type": tp.String()},
-	)
+	metrics.RecordSessionSize(float64(len(mob)), tp.String())
+	metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
+
 	// Encode and compress session
 	if tp == DEV {
-		startCompress := time.Now()
+		start := time.Now()
 		task.dev = s.compressSession(mob)
-		// Save metric
-		metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-			float64(time.Now().Sub(startCompress).Milliseconds()),
-			map[string]string{"file_type": tp.String()},
-		)
+		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 	} else {
 		if len(mob) <= s.cfg.FileSplitSize {
-			startCompress := time.Now()
+			start := time.Now()
 			task.doms = s.compressSession(mob)
-			//
-			metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-				float64(time.Now().Sub(startCompress).Milliseconds()),
-				map[string]string{"file_type": tp.String()},
-			)
+			metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
 			return nil
 		}
 		wg := &sync.WaitGroup{}
@@ -198,10 +180,7 @@ func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
 			wg.Done()
 		}()
 		wg.Wait()
-		metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-			float64(firstPart+secondPart),
-			map[string]string{"file_type": tp.String()},
-		)
+		metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
 	}
 	return nil
 }
@@ -272,16 +251,9 @@ func (s *Storage) uploadSession(task *Task) {
 		wg.Done()
 	}()
 	wg.Wait()
-	// Save metrics
-	metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		float64(uploadDoms+uploadDome),
-		map[string]string{"file_type": DOM.String()},
-	)
-	metrics.StorageSessionCompressDuration.(prometheus.ExemplarObserver).ObserveWithExemplar(
-		float64(uploadDev),
-		map[string]string{"file_type": DEV.String()},
-	)
-	metrics.StorageTotalSessions.Inc()
+	metrics.RecordSessionUploadDuration(float64(uploadDoms+uploadDome), DOM.String())
+	metrics.RecordSessionUploadDuration(float64(uploadDev), DEV.String())
+	metrics.IncreaseStorageTotalSessions()
 }
 
 func (s *Storage) worker() {

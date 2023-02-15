@@ -35,14 +35,6 @@ func New() *MetricServer {
 	}
 }
 
-func (s *MetricServer) RegisterStorageMetrics() {
-	s.registry.MustRegister(
-		StorageSessionSize,
-		StorageTotalSessions,
-		StorageSessionReadDuration,
-		StorageSessionSortDuration,
-		StorageSessionEncodeDuration,
-		StorageSessionCompressDuration,
-		StorageSessionUploadDuration,
-	)
+func (s *MetricServer) Register(cs []prometheus.Collector) {
+	s.registry.MustRegister(cs...)
 }
