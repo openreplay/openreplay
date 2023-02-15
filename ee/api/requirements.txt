@@ -17,3 +17,4 @@ apscheduler==3.9.1.post1
 clickhouse-driver==0.2.4
 python3-saml==1.14.0
 python-multipart==0.0.5
+lxml>=4.9.1 # not directly required, pinned by Snyk to avoid a vulnerability
