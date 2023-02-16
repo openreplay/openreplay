@@ -1,15 +1,15 @@
-# This action will push the utilities changes to aws
+# This action will push the assist changes to aws
 on:
   workflow_dispatch:
   push:
     branches:
-      - dev
+      - api-v1.10.0
     paths:
       - "utilities/**"
       - "!utilities/.gitignore"
       - "!utilities/*-dev.sh"
 
-name: Build and Deploy Utilities
+name: Build and Deploy Assist
 
 jobs:
   deploy:

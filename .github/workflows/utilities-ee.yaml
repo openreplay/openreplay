@@ -1,4 +1,4 @@
-# This action will push the utilities changes to aws
+# This action will push the assist changes to aws
 on:
   workflow_dispatch:
   push:
@@ -10,7 +10,7 @@ on:
       - "!utilities/.gitignore"
       - "!utilities/*-dev.sh"
 
-name: Build and Deploy Utilities EE
+name: Build and Deploy Assist EE
 
 jobs:
   deploy:
