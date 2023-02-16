@@ -268,7 +268,7 @@ module.exports = {
                 debug && console.log(`notifying new agent about no SESSIONS`);
                 io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
             }
-            socket.join(socket.peerId);
+            await socket.join(socket.peerId);
             if (io.sockets.adapter.rooms.get(socket.peerId)) {
                 debug && console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
             }
