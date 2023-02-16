@@ -6,6 +6,8 @@ on:
       - dev
     paths:
       - "ee/utilities/**"
+      - "!ee/utilities/.gitignore"
+      - "!ee/utilities/*-dev.sh"
       - "utilities/*/**"
       - "!utilities/.gitignore"
       - "!utilities/*-dev.sh"
