@@ -283,7 +283,7 @@ module.exports = {
     wsRouter,
     start: (server, prefix) => {
         createSocketIOServer(server, prefix);
-        io.use(async (socket, next) => await authorizer.check(socket, next));
+        // io.use(async (socket, next) => await authorizer.check(socket, next));
         io.on('connection', async (socket) => {
             socket.on(EVENTS_DEFINITION.listen.ERROR, err => errorHandler(EVENTS_DEFINITION.listen.ERROR, err));
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
@@ -309,7 +309,8 @@ module.exports = {
                 debug && console.log(`notifying new agent about no SESSIONS`);
                 io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
             }
-            await io.of('/').adapter.remoteJoin(socket.id, socket.peerId);
+            // await io.of('/').adapter.join(socket.id, socket.peerId);
+            await socket.join(socket.peerId);
             let rooms = await io.of('/').adapter.allRooms();
             if (rooms.has(socket.peerId)) {
                 let connectedSockets = await io.in(socket.peerId).fetchSockets();
