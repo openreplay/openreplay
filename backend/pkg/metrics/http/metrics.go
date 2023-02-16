@@ -45,7 +45,7 @@ func IncreaseTotalRequests() {
 	httpTotalRequests.Inc()
 }
 
-func Metrics() []prometheus.Collector {
+func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		httpRequestSize,
 		httpRequestDuration,

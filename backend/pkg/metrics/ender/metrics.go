@@ -42,7 +42,7 @@ func IncreaseTotalSessions() {
 	enderTotalSessions.Inc()
 }
 
-func Metrics() []prometheus.Collector {
+func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		enderActiveSessions,
 		enderClosedSessions,

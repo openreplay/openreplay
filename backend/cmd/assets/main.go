@@ -12,14 +12,14 @@ import (
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	monitoring "openreplay/backend/pkg/metrics/assets"
+	assetsMetrics "openreplay/backend/pkg/metrics/assets"
 	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
 	m := metrics.New()
-	m.Register(monitoring.Metrics())
+	m.Register(assetsMetrics.List())
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
@@ -34,7 +34,7 @@ func main() {
 		switch m := msg.(type) {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
-			monitoring.IncreaseProcessesSessions()
+			assetsMetrics.IncreaseProcessesSessions()
 		// TODO: connect to "raw" topic in order to listen for JSException
 		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)

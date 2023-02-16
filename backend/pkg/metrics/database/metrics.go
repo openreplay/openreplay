@@ -44,6 +44,18 @@ func RecordBatchInsertDuration(number float64) {
 	dbBatchElements.Observe(number)
 }
 
+var dbTotalBatches = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Namespace: "db",
+		Name:      "batches_total",
+		Help:      "A counter showing the total number of all inserted batches.",
+	},
+)
+
+func IncreaseTotalBatches() {
+	dbTotalBatches.Inc()
+}
+
 var dbBulkSize = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Namespace: "db",
@@ -100,26 +112,29 @@ func RecordRequestDuration(durMillis float64, method, table string) {
 	dbRequestDuration.WithLabelValues(method, table).Observe(durMillis / 1000.0)
 }
 
-var dbTotalRequests = prometheus.NewCounter(
+var dbTotalRequests = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Namespace: "db",
 		Name:      "requests_total",
 		Help:      "A counter showing the total number of all SQL requests.",
 	},
+	[]string{"method", "table"},
 )
 
-func IncreaseTotalRequests() {
-	dbTotalRequests.Inc()
+func IncreaseTotalRequests(method, table string) {
+	dbTotalRequests.WithLabelValues(method, table).Inc()
 }
 
-func Metrics() []prometheus.Collector {
+func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		dbBatchSize,
 		dbBatchElements,
 		dbBatchInsertDuration,
+		dbTotalBatches,
 		dbBulkSize,
 		dbBulkElements,
 		dbBulkInsertDuration,
+		dbRequestDuration,
 		dbTotalRequests,
 	}
 }

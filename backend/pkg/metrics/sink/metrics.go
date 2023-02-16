@@ -158,7 +158,7 @@ func RecordProcessAssetDuration(durMillis float64) {
 	sinkProcessAssetDuration.Observe(durMillis / 1000.0)
 }
 
-func Metrics() []prometheus.Collector {
+func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		sinkMessageSize,
 		sinkWrittenMessages,

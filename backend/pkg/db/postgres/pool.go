@@ -3,12 +3,12 @@ package postgres
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"strings"
 	"time"
+
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
+	"openreplay/backend/pkg/metrics/database"
 )
 
 // Pool is a pgx.Pool wrapper with metrics integration
@@ -22,19 +22,15 @@ type Pool interface {
 }
 
 type poolImpl struct {
-	conn              *pgxpool.Pool
-	sqlRequestTime    syncfloat64.Histogram
-	sqlRequestCounter syncfloat64.Counter
+	conn *pgxpool.Pool
 }
 
 func (p *poolImpl) Query(sql string, args ...interface{}) (pgx.Rows, error) {
 	start := time.Now()
 	res, err := p.conn.Query(getTimeoutContext(), sql, args...)
 	method, table := methodName(sql)
-	p.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", method), attribute.String("table", table))
-	p.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", method), attribute.String("table", table))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	database.IncreaseTotalRequests(method, table)
 	return res, err
 }
 
@@ -42,10 +38,8 @@ func (p *poolImpl) QueryRow(sql string, args ...interface{}) pgx.Row {
 	start := time.Now()
 	res := p.conn.QueryRow(getTimeoutContext(), sql, args...)
 	method, table := methodName(sql)
-	p.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", method), attribute.String("table", table))
-	p.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", method), attribute.String("table", table))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	database.IncreaseTotalRequests(method, table)
 	return res
 }
 
@@ -53,45 +47,37 @@ func (p *poolImpl) Exec(sql string, arguments ...interface{}) error {
 	start := time.Now()
 	_, err := p.conn.Exec(getTimeoutContext(), sql, arguments...)
 	method, table := methodName(sql)
-	p.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", method), attribute.String("table", table))
-	p.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", method), attribute.String("table", table))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	database.IncreaseTotalRequests(method, table)
 	return err
 }
 
 func (p *poolImpl) SendBatch(b *pgx.Batch) pgx.BatchResults {
 	start := time.Now()
 	res := p.conn.SendBatch(getTimeoutContext(), b)
-	p.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", "sendBatch"))
-	p.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", "sendBatch"))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "sendBatch", "")
+	database.IncreaseTotalRequests("sendBatch", "")
 	return res
 }
 
 func (p *poolImpl) Begin() (*_Tx, error) {
 	start := time.Now()
 	tx, err := p.conn.Begin(context.Background())
-	p.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", "begin"))
-	p.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", "begin"))
-	return &_Tx{tx, p.sqlRequestTime, p.sqlRequestCounter}, err
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "begin", "")
+	database.IncreaseTotalRequests("begin", "")
+	return &_Tx{tx}, err
 }
 
 func (p *poolImpl) Close() {
 	p.conn.Close()
 }
 
-func NewPool(conn *pgxpool.Pool, sqlRequestTime syncfloat64.Histogram, sqlRequestCounter syncfloat64.Counter) (Pool, error) {
+func NewPool(conn *pgxpool.Pool) (Pool, error) {
 	if conn == nil {
 		return nil, errors.New("conn is empty")
 	}
 	return &poolImpl{
-		conn:              conn,
-		sqlRequestTime:    sqlRequestTime,
-		sqlRequestCounter: sqlRequestCounter,
+		conn: conn,
 	}, nil
 }
 
@@ -99,38 +85,30 @@ func NewPool(conn *pgxpool.Pool, sqlRequestTime syncfloat64.Histogram, sqlReques
 
 type _Tx struct {
 	pgx.Tx
-	sqlRequestTime    syncfloat64.Histogram
-	sqlRequestCounter syncfloat64.Counter
 }
 
 func (tx *_Tx) exec(sql string, args ...interface{}) error {
 	start := time.Now()
 	_, err := tx.Exec(context.Background(), sql, args...)
 	method, table := methodName(sql)
-	tx.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", method), attribute.String("table", table))
-	tx.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", method), attribute.String("table", table))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), method, table)
+	database.IncreaseTotalRequests(method, table)
 	return err
 }
 
 func (tx *_Tx) rollback() error {
 	start := time.Now()
 	err := tx.Rollback(context.Background())
-	tx.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", "rollback"))
-	tx.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", "rollback"))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "rollback", "")
+	database.IncreaseTotalRequests("rollback", "")
 	return err
 }
 
 func (tx *_Tx) commit() error {
 	start := time.Now()
 	err := tx.Commit(context.Background())
-	tx.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()),
-		attribute.String("method", "commit"))
-	tx.sqlRequestCounter.Add(context.Background(), 1,
-		attribute.String("method", "commit"))
+	database.RecordRequestDuration(float64(time.Now().Sub(start).Milliseconds()), "commit", "")
+	database.IncreaseTotalRequests("commit", "")
 	return err
 }
 

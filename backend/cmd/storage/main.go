@@ -12,7 +12,7 @@ import (
 	"openreplay/backend/pkg/failover"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
-	service "openreplay/backend/pkg/metrics/storage"
+	storageMetrics "openreplay/backend/pkg/metrics/storage"
 	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	cloud "openreplay/backend/pkg/storage"
@@ -20,7 +20,7 @@ import (
 
 func main() {
 	m := metrics.New()
-	m.Register(service.Metrics())
+	m.Register(storageMetrics.List())
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 

@@ -101,7 +101,7 @@ func RecordSessionUploadDuration(durMillis float64, fileType string) {
 	storageSessionUploadDuration.WithLabelValues(fileType).Observe(durMillis / 1000.0)
 }
 
-func Metrics() []prometheus.Collector {
+func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		storageSessionSize,
 		storageTotalSessions,

@@ -3,8 +3,6 @@ package main
 import (
 	"errors"
 	"log"
-	types2 "openreplay/backend/pkg/db/types"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,16 +12,21 @@ import (
 	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
+	types2 "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
+	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/sessions"
 )
 
 func main() {
-	metrics := monitoring.New("db")
+	m := metrics.New()
+	m.Register(databaseMetrics.List())
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := db.New()
@@ -33,7 +36,7 @@ func main() {
 
 	// Init database
 	pg := cache.NewPGCache(
-		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics), cfg.ProjectExpirationTimeoutMs)
+		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.

@@ -62,7 +62,7 @@ func RecordUploadDuration(durMillis float64, isFailed bool) {
 	assetsUploadDuration.WithLabelValues(failed).Observe(durMillis)
 }
 
-func Metrics() []prometheus.Collector {
+func List() []prometheus.Collector {
 	return []prometheus.Collector{
 		assetsProcessedSessions,
 		assetsSavedSessions,

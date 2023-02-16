@@ -1,14 +1,13 @@
 package postgres
 
 import (
-	"context"
-	"github.com/jackc/pgx/v4"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
-	"openreplay/backend/pkg/monitoring"
 	"strings"
 	"time"
+
+	"openreplay/backend/pkg/metrics/database"
+
+	"github.com/jackc/pgx/v4"
 )
 
 type batchItem struct {
@@ -78,21 +77,17 @@ func NewBatchesTask(size int) *batchesTask {
 }
 
 type BatchSet struct {
-	c                 Pool
-	batches           map[uint64]*SessionBatch
-	batchQueueLimit   int
-	batchSizeLimit    int
-	batchSizeBytes    syncfloat64.Histogram
-	batchSizeLines    syncfloat64.Histogram
-	sqlRequestTime    syncfloat64.Histogram
-	sqlRequestCounter syncfloat64.Counter
-	updates           map[uint64]*sessionUpdates
-	workerTask        chan *batchesTask
-	done              chan struct{}
-	finished          chan struct{}
+	c               Pool
+	batches         map[uint64]*SessionBatch
+	batchQueueLimit int
+	batchSizeLimit  int
+	updates         map[uint64]*sessionUpdates
+	workerTask      chan *batchesTask
+	done            chan struct{}
+	finished        chan struct{}
 }
 
-func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *BatchSet {
+func NewBatchSet(c Pool, queueLimit, sizeLimit int) *BatchSet {
 	bs := &BatchSet{
 		c:               c,
 		batches:         make(map[uint64]*SessionBatch),
@@ -103,29 +98,8 @@ func NewBatchSet(c Pool, queueLimit, sizeLimit int, metrics *monitoring.Metrics)
 		finished:        make(chan struct{}),
 		updates:         make(map[uint64]*sessionUpdates),
 	}
-	bs.initMetrics(metrics)
 	go bs.worker()
 	return bs
-}
-
-func (conn *BatchSet) initMetrics(metrics *monitoring.Metrics) {
-	var err error
-	conn.batchSizeBytes, err = metrics.RegisterHistogram("batch_size_bytes")
-	if err != nil {
-		log.Printf("can't create batchSizeBytes metric: %s", err)
-	}
-	conn.batchSizeLines, err = metrics.RegisterHistogram("batch_size_lines")
-	if err != nil {
-		log.Printf("can't create batchSizeLines metric: %s", err)
-	}
-	conn.sqlRequestTime, err = metrics.RegisterHistogram("sql_request_time")
-	if err != nil {
-		log.Printf("can't create sqlRequestTime metric: %s", err)
-	}
-	conn.sqlRequestCounter, err = metrics.RegisterCounter("sql_request_number")
-	if err != nil {
-		log.Printf("can't create sqlRequestNumber metric: %s", err)
-	}
 }
 
 func (conn *BatchSet) getBatch(sessionID uint64) *SessionBatch {
@@ -194,11 +168,10 @@ func (conn *BatchSet) sendBatches(t *batchesTask) {
 		// Append session update sql request to the end of batch
 		batch.Prepare()
 		// Record batch size in bytes and number of lines
-		conn.batchSizeBytes.Record(context.Background(), float64(batch.Size()))
-		conn.batchSizeLines.Record(context.Background(), float64(batch.Len()))
+		database.RecordBatchSize(float64(batch.Size()))
+		database.RecordBatchElements(float64(batch.Len()))
 
 		start := time.Now()
-		isFailed := false
 
 		// Send batch to db and execute
 		br := conn.c.SendBatch(batch.batch)
@@ -209,15 +182,11 @@ func (conn *BatchSet) sendBatches(t *batchesTask) {
 				failedSql := batch.items[i]
 				query := strings.ReplaceAll(failedSql.query, "\n", " ")
 				log.Println("failed sql req:", query, failedSql.arguments)
-				isFailed = true
 			}
 		}
 		br.Close() // returns err
-		dur := time.Now().Sub(start).Milliseconds()
-		conn.sqlRequestTime.Record(context.Background(), float64(dur),
-			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
-		conn.sqlRequestCounter.Add(context.Background(), 1,
-			attribute.String("method", "batch"), attribute.Bool("failed", isFailed))
+		database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
+		database.IncreaseTotalBatches()
 	}
 }
 
