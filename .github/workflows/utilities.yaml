@@ -1,4 +1,4 @@
-# This action will push the utilities changes to aws
+# This action will push the assist changes to aws
 on:
   workflow_dispatch:
   push:
