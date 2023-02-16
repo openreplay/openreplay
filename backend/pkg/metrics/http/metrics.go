@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"openreplay/backend/pkg/metrics/common"
+	"strconv"
 )
 
 var httpRequestSize = prometheus.NewHistogramVec(
@@ -15,8 +16,8 @@ var httpRequestSize = prometheus.NewHistogramVec(
 	[]string{"url", "response_code"},
 )
 
-func RecordRequestSize(size float64, url, code string) {
-	httpRequestDuration.WithLabelValues(url, code).Observe(size)
+func RecordRequestSize(size float64, url string, code int) {
+	httpRequestDuration.WithLabelValues(url, strconv.Itoa(code)).Observe(size)
 }
 
 var httpRequestDuration = prometheus.NewHistogramVec(
@@ -29,8 +30,8 @@ var httpRequestDuration = prometheus.NewHistogramVec(
 	[]string{"url", "response_code"},
 )
 
-func RecordRequestDuration(durMillis float64, url, code string) {
-	httpRequestDuration.WithLabelValues(url, code).Observe(durMillis)
+func RecordRequestDuration(durMillis float64, url string, code int) {
+	httpRequestDuration.WithLabelValues(url, strconv.Itoa(code)).Observe(durMillis / 1000.0)
 }
 
 var httpTotalRequests = prometheus.NewCounter(
