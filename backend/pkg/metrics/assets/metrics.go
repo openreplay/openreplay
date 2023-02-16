@@ -3,6 +3,7 @@ package assets
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"openreplay/backend/pkg/metrics/common"
+	"strconv"
 )
 
 var assetsProcessedSessions = prometheus.NewCounter(
@@ -33,21 +34,21 @@ var assetsDownloadDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Namespace: "assets",
 		Name:      "download_duration_seconds",
-		Help:      "A histogram displaying the download duration of each asset in seconds.",
+		Help:      "A histogram displaying the duration of downloading for each asset in seconds.",
 		Buckets:   common.DefaultDurationBuckets,
 	},
 	[]string{"response_code"},
 )
 
-func RecordDownloadDuration(durMillis float64, code string) {
-	assetsDownloadDuration.WithLabelValues(code).Observe(durMillis)
+func RecordDownloadDuration(durMillis float64, code int) {
+	assetsDownloadDuration.WithLabelValues(strconv.Itoa(code)).Observe(durMillis)
 }
 
 var assetsUploadDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Namespace: "assets",
 		Name:      "upload_s3_duration_seconds",
-		Help:      "A histogram displaying the upload duration of each asset in seconds.",
+		Help:      "A histogram displaying the duration of uploading to s3 for each asset in seconds.",
 		Buckets:   common.DefaultDurationBuckets,
 	},
 	[]string{"failed"},
