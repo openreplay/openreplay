@@ -24,7 +24,7 @@ const {
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 const wsRouter = express.Router();
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
 console.log(`Using Redis: ${REDIS_URL}`);
