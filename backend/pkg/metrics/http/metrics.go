@@ -17,7 +17,7 @@ var httpRequestSize = prometheus.NewHistogramVec(
 )
 
 func RecordRequestSize(size float64, url string, code int) {
-	httpRequestDuration.WithLabelValues(url, strconv.Itoa(code)).Observe(size)
+	httpRequestSize.WithLabelValues(url, strconv.Itoa(code)).Observe(size)
 }
 
 var httpRequestDuration = prometheus.NewHistogramVec(
