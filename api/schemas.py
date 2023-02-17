@@ -750,8 +750,7 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
 
 class FlatSessionsSearch(BaseModel):
     events: Optional[List[_SessionSearchEventSchema]] = Field([])
-    # filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
-    filters: List[SessionSearchFilterSchema] = Field([])
+    filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
 
     @root_validator(pre=True)
     def flat_to_original(cls, values):
