@@ -127,7 +127,7 @@ function AlertListItem(props: Props) {
         {'When the '}
         <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.detectionMethod}</span>
         {' of '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.seriesName}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.seriesName || alert.query.left}</span>
         {' is '}
         <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
           {alert.query.operator}
