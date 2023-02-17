@@ -54,10 +54,12 @@ LeftToDb = {
     schemas.AlertColumn.errors__4xx_5xx__count: {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)", "formula": "COUNT(session_id)",
         "condition": "status/100!=2"},
-    schemas.AlertColumn.errors__4xx__count: {"table": "events.resources INNER JOIN public.sessions USING(session_id)",
-                                             "formula": "COUNT(session_id)", "condition": "status/100=4"},
-    schemas.AlertColumn.errors__5xx__count: {"table": "events.resources INNER JOIN public.sessions USING(session_id)",
-                                             "formula": "COUNT(session_id)", "condition": "status/100=5"},
+    schemas.AlertColumn.errors__4xx__count: {
+        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
+        "formula": "COUNT(session_id)", "condition": "status/100=4"},
+    schemas.AlertColumn.errors__5xx__count: {
+        "table": "events.resources INNER JOIN public.sessions USING(session_id)",
+        "formula": "COUNT(session_id)", "condition": "status/100=5"},
     schemas.AlertColumn.errors__javascript__impacted_sessions__count: {
         "table": "events.resources INNER JOIN public.sessions USING(session_id)",
         "formula": "COUNT(DISTINCT session_id)", "condition": "success= FALSE AND type='script'"},
@@ -100,7 +102,7 @@ def can_check(a) -> bool:
             a["options"].get("lastNotification") is None or
             a["options"]["lastNotification"] <= 0 or
             ((now - a["options"]["lastNotification"]) > a["options"]["renotifyInterval"] * 60 * 1000)) \
-           and ((now - a["createdAt"]) % (TimeInterval[repetitionBase] * 60 * 1000)) < 60 * 1000
+        and ((now - a["createdAt"]) % (TimeInterval[repetitionBase] * 60 * 1000)) < 60 * 1000
 
 
 def Build(a):
@@ -124,7 +126,7 @@ def Build(a):
         subQ = f"""SELECT {colDef["formula"]} AS value
                     FROM {colDef["table"]}
                     WHERE project_id = %(project_id)s 
-                        {"AND " + colDef["condition"] if colDef.get("condition") is not None else ""}"""
+                        {"AND " + colDef["condition"] if colDef.get("condition") else ""}"""
         j_s = colDef.get("joinSessions", True)
         main_table = colDef["table"]
     is_ss = main_table == "public.sessions"
@@ -211,7 +213,7 @@ def process():
                     cur = cur.recreate(rollback=True)
         if len(notifications) > 0:
             cur.execute(
-                cur.mogrify(f"""UPDATE public.Alerts 
+                cur.mogrify(f"""UPDATE public.alerts 
                                 SET options = options||'{{"lastNotification":{TimeUTC.now()}}}'::jsonb 
                                 WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
     if len(notifications) > 0:
