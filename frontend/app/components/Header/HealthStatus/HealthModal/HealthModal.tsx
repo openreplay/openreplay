@@ -1,4 +1,5 @@
 import React from 'react';
+// @ts-ignore
 import slide from 'App/svg/cheers.svg';
 import { Icon, Button } from 'UI';
 import Footer from './Footer'
@@ -17,7 +18,7 @@ function Category({ name, healthOk }: { name: string; healthOk: boolean }) {
   )
 }
 
-function HealthModal({ healthOk }: { healthOk: boolean }) {
+function HealthModal() {
 
   return (
     <div
