@@ -135,7 +135,7 @@ def Build(a):
                     FROM {colDef["table"](now)}
                     WHERE project_id = %(project_id)s 
                         {"AND event_type=%(event_type)s" if params["event_type"] else ""} 
-                        {"AND " + colDef["condition"] if colDef.get("condition") is not None else ""}"""
+                        {"AND " + colDef["condition"] if colDef.get("condition") else ""}"""
 
     q = f"""SELECT coalesce(value,0) AS value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
 
@@ -198,9 +198,14 @@ def process():
             if alert["query"]["left"] != "CUSTOM":
                 continue
             if alerts_processor.can_check(alert):
-                logging.info(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
-                query = ch_cur.format(query, params)
+                try:
+                    query = ch_cur.format(query, params)
+                except Exception as e:
+                    logging.error(
+                        f"!!!Error while building alert query for alertId:{alert['alertId']} name: {alert['name']}")
+                    logging.error(e)
+                    continue
                 logging.debug(alert)
                 logging.debug(query)
                 try:
