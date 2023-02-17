@@ -7,10 +7,12 @@ function Category({ name, healthOk }: { name: string; healthOk: boolean }) {
   const icon = healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
   return (
     <div
-      className={'p-4 flex items-center gap-2 border-b cursor-pointer hover:bg-gray-lightest'}
+      className={'p-4 flex items-center gap-2 border-b cursor-pointer hover:bg-active-blue'}
     >
       <Icon name={icon} size={20} color={'green'} />
       {name}
+
+      <Icon name={"chevron-right"} size={16} className={"ml-auto"} />
     </div>
   )
 }
