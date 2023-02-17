@@ -19,6 +19,7 @@ import UserMenu from './UserMenu';
 import SettingsMenu from './SettingsMenu';
 import DefaultMenuView from './DefaultMenuView';
 import PreferencesView from './PreferencesView';
+import HealthStatus from './HealthStatus'
 
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 
@@ -77,6 +78,8 @@ const Header = (props) => {
             </div>
           </Tooltip>
         </div>
+
+        <HealthStatus />
 
         <div className={cn(styles.userDetails, 'group cursor-pointer')}>
           <div className="flex items-center">

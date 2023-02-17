@@ -24,11 +24,9 @@ export default function MetaInfo({
         {Object.keys(envObject).map((envTag) => (
           <div key={envTag} className="flex items-center">
             <div className="py-1 px-2 font-medium">{envTag}</div>
-            <div className="rounded bg-active-blue px-2 py-1 whitespace-nowrap overflow-hidden text-clip">
-              <span className="text-base">
+            <div className="rounded text-base bg-active-blue px-2 py-1 whitespace-nowrap overflow-hidden text-clip">
               {/* @ts-ignore */}
               {envObject[envTag]}
-              </span>
             </div>
           </div>
         ))}
