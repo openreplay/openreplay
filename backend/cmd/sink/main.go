@@ -74,8 +74,7 @@ func main() {
 			sessionID = 0
 			return
 		}
-
-		// [METRICS] Increase the number of processed messages
+		
 		sinkMetrics.IncreaseTotalMessages()
 
 		// Send SessionEnd trigger to storage service
@@ -174,7 +173,6 @@ func main() {
 			}
 		}
 
-		// [METRICS] Increase the number of written to the files messages and the message size
 		sinkMetrics.IncreaseWrittenMessages()
 		sinkMetrics.RecordMessageSize(float64(len(msg.Encode())))
 	}

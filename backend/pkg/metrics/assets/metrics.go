@@ -41,7 +41,7 @@ var assetsDownloadDuration = prometheus.NewHistogramVec(
 )
 
 func RecordDownloadDuration(durMillis float64, code int) {
-	assetsDownloadDuration.WithLabelValues(strconv.Itoa(code)).Observe(durMillis)
+	assetsDownloadDuration.WithLabelValues(strconv.Itoa(code)).Observe(durMillis / 1000.0)
 }
 
 var assetsUploadDuration = prometheus.NewHistogramVec(
@@ -59,7 +59,7 @@ func RecordUploadDuration(durMillis float64, isFailed bool) {
 	if isFailed {
 		failed = "true"
 	}
-	assetsUploadDuration.WithLabelValues(failed).Observe(durMillis)
+	assetsUploadDuration.WithLabelValues(failed).Observe(durMillis / 1000.0)
 }
 
 func List() []prometheus.Collector {
