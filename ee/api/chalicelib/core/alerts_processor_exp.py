@@ -198,7 +198,6 @@ def process():
             if alert["query"]["left"] != "CUSTOM":
                 continue
             if alerts_processor.can_check(alert):
-                logging.info(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
                 try:
                     query = ch_cur.format(query, params)
