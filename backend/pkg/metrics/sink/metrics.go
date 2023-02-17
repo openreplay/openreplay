@@ -67,29 +67,38 @@ func IncreaseTotalBatches() {
 	sinkTotalBatches.Inc()
 }
 
-var sinkWrittenBytes = prometheus.NewHistogram(
+var sinkWrittenBytes = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Namespace: "sink",
 		Name:      "written_bytes",
 		Help:      "A histogram displaying the size of buffer in bytes written to session file.",
 		Buckets:   common.DefaultSizeBuckets,
 	},
+	[]string{"file_type"},
 )
 
-func RecordWrittenBytes(size float64) {
-	sinkWrittenBytes.Observe(size)
+func RecordWrittenBytes(size float64, fileType string) {
+	if size == 0 {
+		return
+	}
+	sinkWrittenBytes.WithLabelValues(fileType).Observe(size)
+	IncreaseTotalWrittenBytes(size, fileType)
 }
 
-var sinkTotalWrittenBytes = prometheus.NewCounter(
+var sinkTotalWrittenBytes = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Namespace: "sink",
 		Name:      "written_bytes_total",
 		Help:      "A counter displaying the total number of bytes written to all session files.",
 	},
+	[]string{"file_type"},
 )
 
-func IncreaseTotalWrittenBytes() {
-	sinkTotalWrittenBytes.Inc()
+func IncreaseTotalWrittenBytes(size float64, fileType string) {
+	if size == 0 {
+		return
+	}
+	sinkTotalWrittenBytes.WithLabelValues(fileType).Add(size)
 }
 
 var sinkCachedAssets = prometheus.NewGauge(

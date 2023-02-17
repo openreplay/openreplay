@@ -61,11 +61,12 @@ func main() {
 			if domBuffer.Len() <= 0 && devBuffer.Len() <= 0 {
 				return
 			}
+			sinkMetrics.RecordWrittenBytes(float64(domBuffer.Len()), "dom")
+			sinkMetrics.RecordWrittenBytes(float64(devBuffer.Len()), "devtools")
 
 			// Write buffered batches to the session
 			if err := writer.Write(sessionID, domBuffer.Bytes(), devBuffer.Bytes()); err != nil {
 				log.Printf("writer error: %s", err)
-				return
 			}
 
 			// Prepare buffer for the next batch
@@ -74,7 +75,7 @@ func main() {
 			sessionID = 0
 			return
 		}
-		
+
 		sinkMetrics.IncreaseTotalMessages()
 
 		// Send SessionEnd trigger to storage service
