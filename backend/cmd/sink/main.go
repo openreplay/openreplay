@@ -2,10 +2,8 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/binary"
 	"log"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,13 +14,16 @@ import (
 	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
+	sinkMetrics "openreplay/backend/pkg/metrics/sink"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
 
 func main() {
-	metrics := monitoring.New("sink")
+	m := metrics.New()
+	m.Register(sinkMetrics.List())
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
@@ -39,22 +40,8 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
-	assetMessageHandler := assetscache.New(cfg, rewriter, producer, metrics)
-
+	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
 	counter := storage.NewLogCounter()
-	// Session message metrics
-	totalMessages, err := metrics.RegisterCounter("messages_total")
-	if err != nil {
-		log.Printf("can't create messages_total metric: %s", err)
-	}
-	savedMessages, err := metrics.RegisterCounter("messages_saved")
-	if err != nil {
-		log.Printf("can't create messages_saved metric: %s", err)
-	}
-	messageSize, err := metrics.RegisterHistogram("messages_size")
-	if err != nil {
-		log.Printf("can't create messages_size metric: %s", err)
-	}
 
 	var (
 		sessionID    uint64
@@ -89,7 +76,7 @@ func main() {
 		}
 
 		// [METRICS] Increase the number of processed messages
-		totalMessages.Add(context.Background(), 1)
+		sinkMetrics.IncreaseTotalMessages()
 
 		// Send SessionEnd trigger to storage service
 		if msg.TypeID() == messages.MsgSessionEnd {
@@ -188,8 +175,8 @@ func main() {
 		}
 
 		// [METRICS] Increase the number of written to the files messages and the message size
-		messageSize.Record(context.Background(), float64(len(msg.Encode())))
-		savedMessages.Add(context.Background(), 1)
+		sinkMetrics.IncreaseWrittenMessages()
+		sinkMetrics.RecordMessageSize(float64(len(msg.Encode())))
 	}
 
 	consumer := queue.NewConsumer(
