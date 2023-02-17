@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Tooltip } from 'UI';
+import { Icon } from 'UI';
 import cn from 'classnames';
 import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
 
