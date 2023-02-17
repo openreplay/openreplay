@@ -138,7 +138,6 @@ ALTER TABLE IF EXISTS projects
     ADD COLUMN IF NOT EXISTS beacon_size integer NOT NULL DEFAULT 0;
 
 -- To migrate saved search data
--- SET client_min_messages TO NOTICE;
 
 -- SET client_min_messages TO NOTICE;
 CREATE OR REPLACE FUNCTION get_new_event_key(key text)

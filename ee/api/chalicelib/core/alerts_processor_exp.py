@@ -4,9 +4,10 @@ from decouple import config
 
 import schemas
 from chalicelib.core import alerts_listener, alerts_processor
-from chalicelib.core import sessions, alerts
+from chalicelib.core import alerts
 from chalicelib.utils import pg_client, ch_client, exp_ch_helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.core import sessions_exp as sessions
 
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 
