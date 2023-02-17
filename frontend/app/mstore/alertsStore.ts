@@ -9,6 +9,7 @@ export default class AlertsStore {
     // @ts-ignore
   instance: Alert = new Alert({}, false);
   loading = false
+  page: number = 1;
 
   constructor() {
     makeAutoObservable(this);
@@ -16,6 +17,11 @@ export default class AlertsStore {
 
   changeSearch = (value: string) => {
     this.alertsSearch = value;
+    this.page = 1;
+  }
+
+  updateKey(key: string, value: any) {
+    this[key] = value
   }
 
   fetchList = async () => {
