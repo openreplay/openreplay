@@ -40,20 +40,8 @@ var dbBatchInsertDuration = prometheus.NewHistogram(
 	},
 )
 
-func RecordBatchInsertDuration(number float64) {
-	dbBatchElements.Observe(number)
-}
-
-var dbTotalBatches = prometheus.NewCounter(
-	prometheus.CounterOpts{
-		Namespace: "db",
-		Name:      "batches_total",
-		Help:      "A counter showing the total number of all inserted batches.",
-	},
-)
-
-func IncreaseTotalBatches() {
-	dbTotalBatches.Inc()
+func RecordBatchInsertDuration(durMillis float64) {
+	dbBatchInsertDuration.Observe(durMillis / 1000.0)
 }
 
 var dbBulkSize = prometheus.NewHistogramVec(
@@ -75,7 +63,7 @@ var dbBulkElements = prometheus.NewHistogramVec(
 		Namespace: "db",
 		Name:      "bulk_size_elements",
 		Help:      "A histogram displaying the size of data set in each bulk.",
-		Buckets:   common.DefaultSizeBuckets,
+		Buckets:   common.DefaultBuckets,
 	},
 	[]string{"db", "table"},
 )
@@ -89,7 +77,7 @@ var dbBulkInsertDuration = prometheus.NewHistogramVec(
 		Namespace: "db",
 		Name:      "bulk_insert_duration_seconds",
 		Help:      "A histogram displaying the duration of bulk inserts in seconds.",
-		Buckets:   common.DefaultSizeBuckets,
+		Buckets:   common.DefaultDurationBuckets,
 	},
 	[]string{"db", "table"},
 )
@@ -103,7 +91,7 @@ var dbRequestDuration = prometheus.NewHistogramVec(
 		Namespace: "db",
 		Name:      "request_duration_seconds",
 		Help:      "A histogram displaying the duration of each sql request in seconds.",
-		Buckets:   common.DefaultSizeBuckets,
+		Buckets:   common.DefaultDurationBuckets,
 	},
 	[]string{"method", "table"},
 )
@@ -130,7 +118,6 @@ func List() []prometheus.Collector {
 		dbBatchSize,
 		dbBatchElements,
 		dbBatchInsertDuration,
-		dbTotalBatches,
 		dbBulkSize,
 		dbBulkElements,
 		dbBulkInsertDuration,
