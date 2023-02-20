@@ -80,7 +80,7 @@ const getFiltersFromEntries = (entires: any) => {
 
       filter.value = valueArr;
       filter.operator = operator;
-      filter.source = sourceArr;
+      filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
       filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
       if (!filter.filters || filter.filters.size === 0) {
         filters.push(filter);
