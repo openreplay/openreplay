@@ -13,7 +13,8 @@ function Modal(props: Props) {
     useEffect(() => {
         if (open) {
             document.body.style.overflow = 'hidden';
-        } else {
+        } 
+        return () => {
             document.body.style.overflow = 'auto';
         }
     }, [open]);
