@@ -94,7 +94,7 @@ function WidgetSessions(props: Props) {
     useEffect(() => {
         metricStore.updateKey('sessionsPage', 1);
         loadData();
-    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.clickMapSearch]);
+    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.clickMapSearch, activeSeries]);
     useEffect(loadData, [metricStore.sessionsPage]);
 
     return (
