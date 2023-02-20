@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
+	start := time.Now()
 	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
 	defer body.Close()
 
@@ -21,7 +23,7 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 
 		reader, err = gzip.NewReader(body)
 		if err != nil {
-			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: stage-dependent response
+			ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0) // TODO: stage-dependent response
 			return
 		}
 		//log.Println("Gzip reader init", reader)
@@ -32,7 +34,7 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 	//log.Println("Reader after switch:", reader)
 	buf, err := ioutil.ReadAll(reader)
 	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+		ResponseWithError(w, http.StatusInternalServerError, err, start, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
 	e.services.Producer.Produce(topicName, sessionID, buf) // What if not able to send?
