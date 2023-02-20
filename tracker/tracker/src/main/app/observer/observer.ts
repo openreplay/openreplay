@@ -217,7 +217,6 @@ export default abstract class Observer {
   }
 
   private unbindTree(node: Node) {
-    let removed = 0
     const id = this.app.nodes.unregisterNode(node)
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
@@ -236,6 +235,8 @@ export default abstract class Observer {
         // @ts-ignore
         false,
       )
+
+      let removed = 0
       while (walker.nextNode()) {
         removed += 1
         this.app.nodes.unregisterNode(walker.currentNode)
