@@ -326,7 +326,7 @@ $$
 LANGUAGE plpgsql;
 
 
--- To migrate saved metric_series data
+-- To migrate metric_series data
 DO
 $$
     DECLARE
