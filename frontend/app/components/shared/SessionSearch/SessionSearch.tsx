@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
-import { edit, addFilter } from 'Duck/search';
+import { edit, addFilter, fetchSessions, updateFilter } from 'Duck/search';
 import SessionSearchQueryParamHandler from 'Shared/SessionSearchQueryParamHandler';
+
+import { debounce } from 'App/utils';
+
+let debounceFetch: any = () => {}
 
 interface Props {
   appliedFilter: any;
@@ -13,12 +17,16 @@ interface Props {
   addFilter: typeof addFilter;
   saveRequestPayloads: boolean;
   metaLoading?: boolean
+  fetchSessions: typeof fetchSessions;
+  updateFilter: typeof updateFilter;
 }
 function SessionSearch(props: Props) {
   const { appliedFilter, saveRequestPayloads = false, metaLoading } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
-
+  useEffect(() => {
+    debounceFetch = debounce(() => props.fetchSessions(), 500);
+  }, [])
 
   const onAddFilter = (filter: any) => {
     props.addFilter(filter);
@@ -33,10 +41,12 @@ function SessionSearch(props: Props) {
       }
     });
 
-    props.edit({
+    props.updateFilter({
       ...appliedFilter,
       filters: newFilters,
     });
+
+    debounceFetch()
   };
 
   const onRemoveFilter = (filterIndex: any) => {
@@ -44,15 +54,19 @@ function SessionSearch(props: Props) {
       return i !== filterIndex;
     });
 
-    props.edit({
+    props.updateFilter({
       filters: newFilters,
     });
+
+    debounceFetch()
   };
 
   const onChangeEventsOrder = (e: any, { value }: any) => {
-    props.edit({
+    props.updateFilter({
       eventsOrder: value,
     });
+
+    debounceFetch()
   };
 
   return !metaLoading && (
@@ -102,5 +116,5 @@ export default connect(
     appliedFilter: state.getIn(['search', 'instance']),
     metaLoading: state.getIn(['customFields', 'fetchRequestActive', 'loading'])
   }),
-  { edit, addFilter }
+  { edit, addFilter, fetchSessions, updateFilter }
 )(SessionSearch);
