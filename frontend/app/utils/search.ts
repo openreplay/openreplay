@@ -13,7 +13,7 @@ export const createUrlQuery = (filter: any) => {
 
     let str = `${f.operator}|${f.value.join('|')}`;
     if (f.hasSource) {
-      str = `${str}^${f.sourceOperator}|${f.source.join('|')}`;
+      str = `${str}^${f.sourceOperator ? f.sourceOperator : ''}|${f.source ? f.source.join('|') : ''}`;
     }
 
     let key: any = setQueryParamKeyFromFilterkey(f.key);
