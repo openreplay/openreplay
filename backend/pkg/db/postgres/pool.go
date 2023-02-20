@@ -147,7 +147,8 @@ func methodName(sql string) (string, string) {
 	case "update":
 		table = strings.TrimSpace(parts[1])
 	case "insert":
-		table = strings.TrimSpace(parts[2])
+		tableNameParts := strings.Split(strings.TrimSpace(parts[2]), "(")
+		table = tableNameParts[0]
 	}
 	return cmd, table
 }
