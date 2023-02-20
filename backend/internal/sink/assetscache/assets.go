@@ -1,20 +1,19 @@
 package assetscache
 
 import (
-	"context"
 	"crypto/md5"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"io"
 	"log"
 	"net/url"
-	"openreplay/backend/internal/config/sink"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/queue/types"
-	"openreplay/backend/pkg/url/assets"
+	metrics "openreplay/backend/pkg/metrics/sink"
 	"strings"
 	"sync"
 	"time"
+
+	"openreplay/backend/internal/config/sink"
+	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/url/assets"
 )
 
 type CachedAsset struct {
@@ -23,52 +22,21 @@ type CachedAsset struct {
 }
 
 type AssetsCache struct {
-	mutex         sync.RWMutex
-	cfg           *sink.Config
-	rewriter      *assets.Rewriter
-	producer      types.Producer
-	cache         map[string]*CachedAsset
-	blackList     []string // use "example.com" to filter all domains or ".example.com" to filter only third-level domain
-	totalAssets   syncfloat64.Counter
-	cachedAssets  syncfloat64.Counter
-	skippedAssets syncfloat64.Counter
-	assetSize     syncfloat64.Histogram
-	assetDuration syncfloat64.Histogram
+	mutex     sync.RWMutex
+	cfg       *sink.Config
+	rewriter  *assets.Rewriter
+	producer  types.Producer
+	cache     map[string]*CachedAsset
+	blackList []string // use "example.com" to filter all domains or ".example.com" to filter only third-level domain
 }
 
-func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer, metrics *monitoring.Metrics) *AssetsCache {
-	// Assets metrics
-	totalAssets, err := metrics.RegisterCounter("assets_total")
-	if err != nil {
-		log.Printf("can't create assets_total metric: %s", err)
-	}
-	cachedAssets, err := metrics.RegisterCounter("assets_cached")
-	if err != nil {
-		log.Printf("can't create assets_cached metric: %s", err)
-	}
-	skippedAssets, err := metrics.RegisterCounter("assets_skipped")
-	if err != nil {
-		log.Printf("can't create assets_skipped metric: %s", err)
-	}
-	assetSize, err := metrics.RegisterHistogram("asset_size")
-	if err != nil {
-		log.Printf("can't create asset_size metric: %s", err)
-	}
-	assetDuration, err := metrics.RegisterHistogram("asset_duration")
-	if err != nil {
-		log.Printf("can't create asset_duration metric: %s", err)
-	}
+func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
 	assetsCache := &AssetsCache{
-		cfg:           cfg,
-		rewriter:      rewriter,
-		producer:      producer,
-		cache:         make(map[string]*CachedAsset, 64),
-		blackList:     make([]string, 0),
-		totalAssets:   totalAssets,
-		cachedAssets:  cachedAssets,
-		skippedAssets: skippedAssets,
-		assetSize:     assetSize,
-		assetDuration: assetDuration,
+		cfg:       cfg,
+		rewriter:  rewriter,
+		producer:  producer,
+		cache:     make(map[string]*CachedAsset, 64),
+		blackList: make([]string, 0),
 	}
 	// Parse black list for cache layer
 	if len(cfg.CacheBlackList) > 0 {
@@ -84,7 +52,7 @@ func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer, m
 }
 
 func (e *AssetsCache) cleaner() {
-	cleanTick := time.Tick(time.Minute * 30)
+	cleanTick := time.Tick(time.Minute * 3)
 	for {
 		select {
 		case <-cleanTick:
@@ -105,6 +73,7 @@ func (e *AssetsCache) clearCache() {
 		if int64(now.Sub(cache.ts).Minutes()) > e.cfg.CacheExpiration {
 			deleted++
 			delete(e.cache, id)
+			metrics.DecreaseCachedAssets()
 		}
 	}
 	log.Printf("cache cleaner: deleted %d/%d assets", deleted, cacheSize)
@@ -232,8 +201,7 @@ func parseHost(baseURL string) (string, error) {
 }
 
 func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) string {
-	ctx := context.Background()
-	e.totalAssets.Add(ctx, 1)
+	metrics.IncreaseTotalAssets()
 	// Try to find asset in cache
 	h := md5.New()
 	// Cut first part of url (scheme + host)
@@ -255,7 +223,7 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	e.mutex.RUnlock()
 	if ok {
 		if int64(time.Now().Sub(cachedAsset.ts).Minutes()) < e.cfg.CacheExpiration {
-			e.skippedAssets.Add(ctx, 1)
+			metrics.IncreaseSkippedAssets()
 			return cachedAsset.msg
 		}
 	}
@@ -267,8 +235,8 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	start := time.Now()
 	res := e.getRewrittenCSS(sessionID, baseURL, css)
 	duration := time.Now().Sub(start).Milliseconds()
-	e.assetSize.Record(ctx, float64(len(res)))
-	e.assetDuration.Record(ctx, float64(duration))
+	metrics.RecordAssetSize(float64(len(res)))
+	metrics.RecordProcessAssetDuration(float64(duration))
 	// Save asset to cache if we spent more than threshold
 	if duration > e.cfg.CacheThreshold {
 		e.mutex.Lock()
@@ -277,7 +245,7 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 			ts:  time.Now(),
 		}
 		e.mutex.Unlock()
-		e.cachedAssets.Add(ctx, 1)
+		metrics.IncreaseCachedAssets()
 	}
 	// Return rewritten asset
 	return res

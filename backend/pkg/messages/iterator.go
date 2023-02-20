@@ -74,12 +74,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		i.messageInfo.Index++
 
 		msg := reader.Message()
+		msgType := msg.TypeID()
 
 		// Preprocess "system" messages
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("decode error, type: %d, info: %s", msg.TypeID(), i.batchInfo.Info())
+				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 			msg = transformDeprecated(msg)
@@ -99,7 +100,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if i.autoDecode {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("decode error, type: %d, info: %s", msg.TypeID(), i.batchInfo.Info())
+				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 		}

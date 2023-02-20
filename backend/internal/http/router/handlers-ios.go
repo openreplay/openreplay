@@ -22,28 +22,28 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	req := &StartIOSSessionRequest{}
 
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 
 	if err := json.NewDecoder(body).Decode(req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err)
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, 0)
 		return
 	}
 
 	if req.ProjectKey == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, 0)
 		return
 	}
 
 	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
+			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"), startTime, r.URL.Path, 0)
 		} else {
-			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+			ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
 		}
 		return
 	}
@@ -53,18 +53,18 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	if err != nil { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
 		if dice >= p.SampleRate {
-			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, 0)
 			return
 		}
 
 		ua := e.services.UaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, 0)
 			return
 		}
 		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
-			ResponseWithError(w, http.StatusInternalServerError, err)
+			ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
@@ -94,22 +94,24 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
-	})
+	}, startTime, r.URL.Path, 0)
 }
 
 func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawIOS)
 }
 
 func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil && err != token.EXPIRED {
-		ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 	// Check timestamps here?
@@ -117,16 +119,17 @@ func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Reque
 }
 
 func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
 	log.Printf("recieved imagerequest")
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
-		ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, 0)
 		return
 	}
 
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, 0)
 		return
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
@@ -134,21 +137,21 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 
 	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
-		ResponseWithError(w, http.StatusUnsupportedMediaType, err)
+		ResponseWithError(w, http.StatusUnsupportedMediaType, err, startTime, r.URL.Path, 0)
 		return
 		// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
 	} else if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+		ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, 0) // TODO: send error here only on staging
 		return
 	}
 
 	if r.MultipartForm == nil {
-		ResponseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
+		ResponseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"), startTime, r.URL.Path, 0)
 		return
 	}
 
 	if len(r.MultipartForm.Value["projectKey"]) == 0 {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("projectKey parameter missing")) // status for missing/wrong parameter?
+		ResponseWithError(w, http.StatusBadRequest, errors.New("projectKey parameter missing"), startTime, r.URL.Path, 0) // status for missing/wrong parameter?
 		return
 	}
 

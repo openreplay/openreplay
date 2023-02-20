@@ -3,17 +3,15 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
-	"os"
 	"strings"
 	"time"
-
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/license"
 )
@@ -52,28 +50,14 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-// Check env variables. If not present, return default value.
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
 func NewConnector(url string) Connector {
 	license.CheckLicense()
-	// Check username, password, database
-	userName := getEnv("CH_USERNAME", "default")
-	password := getEnv("CH_PASSWORD", "")
-	database := getEnv("CH_DATABASE", "default")
 	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/"+database)
+	url = strings.TrimSuffix(url, "/default")
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
-			Database: database,
-			Username: userName,
-			Password: password,
+			Database: "default",
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
@@ -99,7 +83,7 @@ func NewConnector(url string) Connector {
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, query)
+	batch, err := NewBulk(c.conn, name, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}

@@ -1,13 +1,11 @@
 package sessionender
 
 import (
-	"context"
-	"fmt"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
 	"time"
+
+	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/metrics/ender"
 )
 
 // EndedSessionHandler handler for ended sessions
@@ -23,32 +21,16 @@ type session struct {
 
 // SessionEnder updates timestamp of last message for each session
 type SessionEnder struct {
-	timeout        int64
-	sessions       map[uint64]*session // map[sessionID]session
-	timeCtrl       *timeController
-	activeSessions syncfloat64.UpDownCounter
-	totalSessions  syncfloat64.Counter
+	timeout  int64
+	sessions map[uint64]*session // map[sessionID]session
+	timeCtrl *timeController
 }
 
-func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, error) {
-	if metrics == nil {
-		return nil, fmt.Errorf("metrics module is empty")
-	}
-	activeSessions, err := metrics.RegisterUpDownCounter("sessions_active")
-	if err != nil {
-		return nil, fmt.Errorf("can't register session.active metric: %s", err)
-	}
-	totalSessions, err := metrics.RegisterCounter("sessions_total")
-	if err != nil {
-		return nil, fmt.Errorf("can't register session.total metric: %s", err)
-	}
-
+func New(timeout int64, parts int) (*SessionEnder, error) {
 	return &SessionEnder{
-		timeout:        timeout,
-		sessions:       make(map[uint64]*session),
-		timeCtrl:       NewTimeController(parts),
-		activeSessions: activeSessions,
-		totalSessions:  totalSessions,
+		timeout:  timeout,
+		sessions: make(map[uint64]*session),
+		timeCtrl: NewTimeController(parts),
 	}, nil
 }
 
@@ -74,8 +56,8 @@ func (se *SessionEnder) UpdateSession(msg messages.Message) {
 			lastUserTime:  msgTimestamp,   // last timestamp from user's machine
 			isEnded:       false,
 		}
-		se.activeSessions.Add(context.Background(), 1)
-		se.totalSessions.Add(context.Background(), 1)
+		ender.IncreaseActiveSessions()
+		ender.IncreaseTotalSessions()
 		return
 	}
 	// Keep the highest user's timestamp for correct session duration value
@@ -100,7 +82,8 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 			sess.isEnded = true
 			if handler(sessID, sess.lastUserTime) {
 				delete(se.sessions, sessID)
-				se.activeSessions.Add(context.Background(), -1)
+				ender.DecreaseActiveSessions()
+				ender.IncreaseClosedSessions()
 				removedSessions++
 			} else {
 				log.Printf("sessID: %d, userTime: %d", sessID, sess.lastUserTime)
