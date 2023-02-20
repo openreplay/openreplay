@@ -9,7 +9,7 @@ interface Props {
 }
 function FilterSource(props: Props) {
     const { filter } = props;
-    const [value, setValue] = useState(filter.source[0] || '');
+    const [value, setValue] = useState(filter.source && filter.source[0] ? filter.source[0] : '');
 
     useEffect(() => {
         setValue(filter.source[0] || '');
