@@ -75,7 +75,7 @@ export default class MetricService {
     getMetricChartData(metric: Widget, data: any, isWidget: boolean = false): Promise<any> {
         if (
           metric.metricType === CLICKMAP
-          && document.location.pathname.split('/').pop() !== 'metrics'
+          && document.location.pathname.split('/').pop() === 'metrics'
           && (document.location.pathname.indexOf('dashboard') !== -1 && document.location.pathname.indexOf('metric') === -1)
         ) {
             return Promise.resolve({})
