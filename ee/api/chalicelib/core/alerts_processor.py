@@ -149,8 +149,7 @@ def Build(a):
                           "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000,
                           "timestamp_sub2": TimeUTC.now() - 2 * a["options"]["currentPeriod"] * 60 * 1000}
             else:
-                sub1 = f"""{subQ} AND timestamp>=%(startDate)s 
-                                  AND timestamp<=%(now)s
+                sub1 = f"""{subQ} {"AND timestamp >= %(startDate)s AND timestamp <= %(now)s" if not is_ss else ""}
                                 {"AND start_ts >= %(startDate)s AND start_ts <= %(now)s" if j_s else ""}"""
                 params["startDate"] = TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000
                 sub2 = f"""{subQ} {"AND timestamp < %(startDate)s AND timestamp >= %(timestamp_sub2)s" if not is_ss else ""}
