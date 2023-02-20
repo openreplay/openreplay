@@ -186,7 +186,6 @@ func (conn *BatchSet) sendBatches(t *batchesTask) {
 		}
 		br.Close() // returns err
 		database.RecordBatchInsertDuration(float64(time.Now().Sub(start).Milliseconds()))
-		database.IncreaseTotalBatches()
 	}
 }
 
