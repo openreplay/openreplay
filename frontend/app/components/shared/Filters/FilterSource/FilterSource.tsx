@@ -12,7 +12,7 @@ function FilterSource(props: Props) {
     const [value, setValue] = useState(filter.source && filter.source[0] ? filter.source[0] : '');
 
     useEffect(() => {
-        setValue(filter.source[0] || '');
+        setValue(filter.source && filter.source[0] ? filter.source[0] : '');
     }, [filter]);
 
     const write = ({ target: { value, name } }: any) => setValue(value);
