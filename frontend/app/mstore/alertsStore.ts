@@ -20,7 +20,9 @@ export default class AlertsStore {
     this.page = 1;
   }
 
+  // TODO: remove it
   updateKey(key: string, value: any) {
+    // @ts-ignore
     this[key] = value
   }
 
@@ -77,10 +79,10 @@ export default class AlertsStore {
 
   edit = (diff: Partial<Alert>) => {
     const key = Object.keys(diff)[0]
-    const oldInst = this.instance
+    const oldInst = { ...this.instance }
     // @ts-ignore
     oldInst[key] = diff[key]
 
-    this.instance = oldInst
+    this.instance = new Alert(oldInst, !!oldInst.alertId)
   }
 }
