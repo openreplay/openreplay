@@ -2,6 +2,7 @@ import React from 'react';
 import { components, OptionProps } from 'react-select';
 import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 export interface Props extends OptionProps {
   icon?: string;
@@ -13,7 +14,7 @@ function CustomDropdownOption(props: Props) {
   const { icon = '', label, description, isSelected, isFocused, disabled } = props;
   return (
     <components.Option {...props} className="!p-0 mb-2">
-      <Tooltip disabled={!disabled} title="This feature requires an enterprise license." delay={0}>
+      <Tooltip disabled={!disabled} title={ENTERPRISE_REQUEIRED} delay={0}>
         <div
           className={cn(
             'cursor-pointer group p-2 flex item-start border border-transparent rounded hover:!bg-active-blue !leading-0',
