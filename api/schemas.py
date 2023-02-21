@@ -363,9 +363,11 @@ class AlertSchema(BaseModel):
 
     @root_validator(pre=True)
     def transform_alert(cls, values):
-        if values.get("seriesId") is None and isinstance(values["query"]["left"], int):
+        if isinstance(values["query"]["left"], int):
             values["seriesId"] = values["query"]["left"]
             values["query"]["left"] = AlertColumn.custom
+        else:
+            values["seriesId"] = None
 
         return values
 

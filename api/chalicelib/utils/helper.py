@@ -283,6 +283,7 @@ def custom_alert_to_front(values):
     # to support frontend format for payload
     if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.custom:
         values["query"]["left"] = values["seriesId"]
+        values["seriesId"] = None
     return values
 
 
