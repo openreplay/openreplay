@@ -132,6 +132,7 @@ kafka:
     tag: 2.8.1
   fullnameOverride: kafka
   enabled: false
+  replicaCount: 2
 
 
 # Enterprise dbs
