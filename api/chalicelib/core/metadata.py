@@ -19,8 +19,8 @@ def __exists_by_name(project_id: int, name: str, exclude_index: Optional[int]) -
         constraints = column_names()
         if exclude_index:
             del constraints[exclude_index - 1]
-        for c in constraints:
-            c += " ILIKE %(name)s"
+        for i in range(len(constraints)):
+            constraints[i] += " ILIKE %(name)s"
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
                                 FROM public.projects
                                 WHERE project_id = %(project_id)s 
