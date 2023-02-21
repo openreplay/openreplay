@@ -2,6 +2,40 @@ import React from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
 import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
+import { response } from './HealthModal/mock'
+
+function mapResponse(resp) {
+  const dbKeys = Object.keys(resp.databases)
+  const ingestKeys = Object.keys(resp.ingestionPipeline)
+  const backendKeys = Object.keys(resp.backendServices)
+
+  if (!resp.overall.health) {
+    const dbHealth: Record<string, any> = {
+      overall: true,
+    }
+    const ingestHealth: Record<string, any> = {
+      overall: true,
+    }
+    const backHealth: Record<string, any> = {
+      overall: true,
+    }
+    dbKeys.forEach(key => {
+      const dbStatus = resp.databases[key].health
+      if (!dbStatus) dbHealth.overall = false
+      dbHealth[key] = resp.databases.key
+    })
+    ingestKeys.forEach(key => {
+      const ingestStatus = resp.ingestionPipeline[key].health
+      if (!ingestStatus) ingestHealth.overall = false
+      ingestHealth[key] = resp.ingestionPipeline.key
+    })
+    backendKeys.forEach(key => {
+      const backendStatus = resp.backendServices[key].health
+      if (!backendStatus) backHealth.overall = false
+      backHealth[key] = resp.backendServices.key
+    })
+  }
+}
 
 function HealthStatus() {
   const [healthOk, setHealth] = React.useState(false);
