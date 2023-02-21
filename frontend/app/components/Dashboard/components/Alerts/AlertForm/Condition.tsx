@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from 'UI';
 import Select from 'Shared/Select';
 import { alertConditions as conditions } from 'App/constants';
+import Alert from 'Types/alert'
 
 const thresholdOptions = [
   { label: '15 minutes', value: 15 },
