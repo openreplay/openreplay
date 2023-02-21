@@ -11,16 +11,29 @@ const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({ text: tab, key: tab })
 
 function parseRequestResponse(
   r: string,
-  setHeaders: (hs: Record<string, string>) => void,
-  setJSONBody: (body: Object) => void,
+  setHeaders: (hs: Record<string, string> | null) => void,
+  setJSONBody: (body: Record<string, string> | null) => void,
   setStringBody: (body: string) => void,
 ) {
   try {
+    if (!r) {
+      setHeaders(null);
+      setJSONBody(null);
+      setStringBody('');
+      return;
+    }
     let json = JSON.parse(r)
     const hs = json.headers
     const bd = json.body as string
+
     if (typeof hs === "object") {
       setHeaders(hs);
+    } else {
+      setHeaders(null);
+    }
+    if (!bd) {
+      setJSONBody(null)
+      setStringBody('')
     }
     if (typeof bd !== 'string') {
       throw new Error(`body is not a string`)
@@ -52,6 +65,7 @@ function FetchTabs({ resource }: Props) {
   const [requestHeaders, setRequestHeaders] = useState<Record<string,string> | null>(null);
   const [responseHeaders, setResponseHeaders] = useState<Record<string,string> | null>(null);
 
+  console.log(resource)
   useEffect(() => {
     const { request, response } = resource;
     parseRequestResponse(
@@ -69,15 +83,22 @@ function FetchTabs({ resource }: Props) {
   }, [resource]);
 
   const renderActiveTab = () => {
-    const { request, response } = resource;
     switch (activeTab) {
       case REQUEST:
         return (
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-                <div className="mt-6 text-2xl">Body is Empty.</div>
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
+                <div className="mt-6 text-2xl">
+                  Body is Empty or not captured.
+                  {' '}
+                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                    Configure
+                  </a>
+                  {' '}
+                  network capturing to get more out of fetch/XHR requests.
+                </div>
               </div>
             }
             size="small"
@@ -100,9 +121,9 @@ function FetchTabs({ resource }: Props) {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
                 <div className="mt-6 text-2xl">
-                  Body is Empty.
+                  Body is Empty or not captured.
                   {' '}
                   <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
                     Configure
