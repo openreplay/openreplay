@@ -19,7 +19,6 @@ func New(pg *cache.PGCache, cfg *db.Config) *Saver {
 	var producer types.Producer = nil
 	if cfg.UseQuickwit {
 		producer = queue.NewProducer(cfg.MessageSizeLimit, true)
-		defer producer.Close(15000)
 	}
 	return &Saver{pg: pg, producer: producer, topic: cfg.QuickwitTopic}
 }
