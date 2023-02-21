@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NoContent, Loader, Pagination } from 'UI';
+import { NoContent, Loader, Pagination, Button } from 'UI';
 import Select from 'Shared/Select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
@@ -28,6 +28,7 @@ function WidgetSessions(props: Props) {
   const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm');
   const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm');
   const [seriesOptions, setSeriesOptions] = useState([{ label: 'All', value: 'all' }]);
+  const hasFilters = filter.filters.length > 0 || (filter.startTimestamp !== dashboardStore.drillDownPeriod.start || filter.endTimestamp !== dashboardStore.drillDownPeriod.end);
 
   const writeOption = ({ value }: any) => setActiveSeries(value.value);
   useEffect(() => {
@@ -105,6 +106,11 @@ function WidgetSessions(props: Props) {
   ]);
   useEffect(loadData, [metricStore.sessionsPage]);
 
+  const clearFilters = () => {
+    metricStore.updateKey('sessionsPage', 1);
+    dashboardStore.resetDrillDownFilter();
+  }
+
   return (
     <div className={cn(className, 'bg-white p-3 pb-0 rounded border')}>
       <div className="flex items-center justify-between">
@@ -117,12 +123,15 @@ function WidgetSessions(props: Props) {
           </div>
         </div>
 
-        {widget.metricType !== 'table' && widget.metricType !== CLICKMAP && (
-          <div className="flex items-center ml-6">
-            <span className="mr-2 color-gray-medium">Filter by Series</span>
-            <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          {hasFilters && <Button variant="text-primary" onClick={clearFilters}>Clear Filters</Button>}
+          {widget.metricType !== 'table' && widget.metricType !== CLICKMAP && (
+            <div className="flex items-center ml-6">
+              <span className="mr-2 color-gray-medium">Filter by Series</span>
+              <Select options={seriesOptions} defaultValue={'all'} onChange={writeOption} plain />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-3">
@@ -193,7 +202,10 @@ const getListSessionsBySeries = (data: any, seriesId: any) => {
     },
     { sessions: [] }
   );
-  arr.total = seriesId === 'all' ? Math.max(...data.map((i: any) => i.total)) : data.find((i: any) => i.seriesId === seriesId).total;
+  arr.total =
+    seriesId === 'all'
+      ? Math.max(...data.map((i: any) => i.total))
+      : data.find((i: any) => i.seriesId === seriesId).total;
   return arr;
 };
 
