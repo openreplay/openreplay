@@ -1,6 +1,11 @@
+## 4.1.6
+
+- fix recording state import 
+
 ## 4.1.5
 
 - fixed peerjs hack that caused ts compile issues
+- - added screen recording feature (EE) license
 
 ## 4.1.4
 
