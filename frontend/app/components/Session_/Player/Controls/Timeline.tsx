@@ -175,13 +175,15 @@ function Timeline(props: IProps) {
               style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
             />
           ))}
-          {issues.map((i: Issue) => (
-            <div
-              key={i.key}
-              className={stl.redEvent}
-              style={{ left: `${getTimelinePosition(i.time, scale)}%` }}
-            />
-          ))}
+          {/* TODO: refactor and make any sense out of this */}
+
+          {/*  {issues.map((i: Issue) => (*/}
+          {/*  <div*/}
+          {/*    key={i.key}*/}
+          {/*    className={stl.redEvent}*/}
+          {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
+          {/*  />*/}
+          {/*))}*/}
           {notes.map((note) => note.timestamp > 0 ? (
             <div
               key={note.noteId}
