@@ -10,6 +10,73 @@ ALTER TYPE webhook_type ADD VALUE IF NOT EXISTS 'msteams';
 UPDATE metrics
 SET is_public= TRUE;
 
+CREATE OR REPLACE FUNCTION get_global_key(key text)
+    RETURNS text AS
+$$
+DECLARE
+    events_map CONSTANT JSONB := '{
+          "SESSIONS": "sessions",
+          "sessionCount": "sessionCount",
+          "CLICK": "click",
+          "INPUT": "input",
+          "LOCATION": "location",
+          "CUSTOM": "custom",
+          "REQUEST": "request",
+          "FETCH": "fetch",
+          "GRAPHQL": "graphql",
+          "STATEACTION": "stateAction",
+          "ERROR": "error",
+          "CLICK_IOS": "clickIos",
+          "INPUT_IOS": "inputIos",
+          "VIEW_IOS": "viewIos",
+          "CUSTOM_IOS": "customIos",
+          "REQUEST_IOS": "requestIos",
+          "ERROR_IOS": "errorIos",
+          "DOM_COMPLETE": "domComplete",
+          "LARGEST_CONTENTFUL_PAINT_TIME": "largestContentfulPaintTime",
+          "TIME_BETWEEN_EVENTS": "timeBetweenEvents",
+          "TTFB": "ttfb",
+          "AVG_CPU_LOAD": "avgCpuLoad",
+          "AVG_MEMORY_USAGE": "avgMemoryUsage",
+          "FETCH_FAILED": "fetchFailed",
+          "FETCH_URL": "fetchUrl",
+          "FETCH_STATUS_CODE": "fetchStatusCode",
+          "FETCH_METHOD": "fetchMethod",
+          "FETCH_DURATION": "fetchDuration",
+          "FETCH_REQUEST_BODY": "fetchRequestBody",
+          "FETCH_RESPONSE_BODY": "fetchResponseBody",
+          "GRAPHQL_NAME": "graphqlName",
+          "GRAPHQL_METHOD": "graphqlMethod",
+          "GRAPHQL_REQUEST_BODY": "graphqlRequestBody",
+          "GRAPHQL_RESPONSE_BODY": "graphqlResponseBody",
+          "USEROS": "userOs",
+          "USERBROWSER": "userBrowser",
+          "USERDEVICE": "userDevice",
+          "USERCOUNTRY": "userCountry",
+          "USERID": "userId",
+          "USERANONYMOUSID": "userAnonymousId",
+          "REFERRER": "referrer",
+          "REVID": "revId",
+          "USEROS_IOS": "userOsIos",
+          "USERDEVICE_IOS": "userDeviceIos",
+          "USERCOUNTRY_IOS": "userCountryIos",
+          "USERID_IOS": "userIdIos",
+          "USERANONYMOUSID_IOS": "userAnonymousIdIos",
+          "REVID_IOS": "revIdIos",
+          "DURATION": "duration",
+          "PLATFORM": "platform",
+          "METADATA": "metadata",
+          "ISSUE": "issue",
+          "EVENTS_COUNT": "eventsCount",
+          "UTM_SOURCE": "utmSource",
+          "UTM_MEDIUM": "utmMedium",
+          "UTM_CAMPAIGN": "utmCampaign"
+        }';
+BEGIN
+    RETURN jsonb_extract_path(events_map, key);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
 ALTER TABLE IF EXISTS metrics
     ALTER COLUMN metric_type TYPE text,
     ALTER COLUMN metric_type SET DEFAULT 'timeseries',
@@ -24,6 +91,10 @@ $$
                   FROM information_schema.columns
                   WHERE table_name = 'metrics'
                     and column_name = 'is_predefined') THEN
+            -- 0. change metric_of
+            UPDATE metrics
+            SET metric_of=coalesce(replace(get_global_key(metric_of), '"', ''),left(metric_of, 1) || right(replace(initcap(metric_of), '_', ''), -1))
+            WHERE not is_predefined;
 
             -- 1. pre transform structure
             ALTER TABLE IF EXISTS metrics
@@ -401,6 +472,7 @@ LANGUAGE plpgsql;
 DROP FUNCTION get_new_filter_key;
 DROP FUNCTION get_new_event_filter_key;
 DROP FUNCTION get_new_event_key;
+DROP FUNCTION get_global_key;
 
 DROP TABLE IF EXISTS public.funnels;
 ALTER TABLE IF EXISTS public.metrics
