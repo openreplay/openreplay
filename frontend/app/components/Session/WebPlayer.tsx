@@ -26,8 +26,6 @@ function WebPlayer(props: any) {
     closeBottomBlock,
     fullscreen,
     fetchList,
-    insights,
-    jumpTimestamp,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
