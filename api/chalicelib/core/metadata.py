@@ -22,10 +22,10 @@ def __exists_by_name(project_id: int, name: str, exclude_index: Optional[int]) -
         for c in constraints:
             c += " ILIKE %(name)s"
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
-                                              FROM public.projects
-                                              WHERE project_id = %(project_id)s 
-                                                  AND deleted_at ISNULL
-                                                  AND ({" OR ".join(constraints)})) AS exists;""",
+                                FROM public.projects
+                                WHERE project_id = %(project_id)s 
+                                  AND deleted_at ISNULL
+                                  AND ({" OR ".join(constraints)})) AS exists;""",
                             {"project_id": project_id, "name": name})
         cur.execute(query=query)
         row = cur.fetchone()
