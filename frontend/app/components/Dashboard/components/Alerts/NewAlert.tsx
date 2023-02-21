@@ -278,7 +278,13 @@ const NewAlert = (props: IProps) => {
 
       <div className="bg-white mt-4 border rounded mb-10">
         {instance && (
-          <AlertListItem alert={instance} demo siteId="" init={() => null} webhooks={webhooks} />
+          <AlertListItem
+            alert={instance}
+            triggerOptions={triggerOptions}
+            demo
+            siteId=""
+            init={() => null}
+            webhooks={webhooks} />
         )}
       </div>
     </>
