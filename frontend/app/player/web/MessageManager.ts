@@ -193,9 +193,9 @@ export default class MessageManager {
     // this.state.update({ filesLoaded: true })
   }
 
-  async loadMessages() {
+  async loadMessages(isClickmap: boolean = false) {
     this.setMessagesLoading(true)
-    // TODO: reuseable decryptor instance
+    // TODO: reusable decryptor instance
     const createNewParser = (shouldDecrypt = true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
@@ -233,6 +233,7 @@ export default class MessageManager {
       .finally(this.onFileReadFinally);
 
     // load devtools (TODO: start after the first DOM file download)
+    if (isClickmap) return;
     this.state.update({ devtoolsLoading: true })
     loadFiles(this.session.devtoolsURL, createNewParser())
     // EFS fallback
