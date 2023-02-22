@@ -1,5 +1,4 @@
 import type App from '../app/index.js'
-import { hasTag } from '../app/guards.js'
 import { IN_BROWSER } from '../utils.js'
 import { ConsoleLog } from '../app/messages.gen.js'
 

@@ -75,9 +75,12 @@ function ConsolePanel() {
   const jump = (t: number) => player.jump(t)
 
   const { logList, exceptionsList, logListNow, exceptionsListNow } = store.get()
-  const list = useMemo(() => 
-    logList.concat(exceptionsList).sort((a, b) => a.time - b.time),
-    [ logList.length, exceptionsList.length ],
+  const usedLogs = logListNow.length > logList.length ? logListNow : logList
+  const usedExceptions = exceptionsListNow.length > exceptionsList.length ? exceptionsListNow : exceptionsList
+
+  const list = useMemo(() =>
+      usedLogs.concat(usedExceptions).sort((a, b) => a.time - b.time),
+    [ usedLogs.length, usedExceptions.length ],
   ) as ILog[]
   let filteredList = useRegExListFilterMemo(list, l => l.value, filter)  
   filteredList = useTabListFilterMemo(filteredList, l => LEVEL_TAB[l.level], ALL, activeTab)
