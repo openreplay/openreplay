@@ -173,7 +173,7 @@ def query_requests_by_period(project_id, start_time, end_time, filters: Optional
             if n == n_:
                 data_['value'] = v[0]
                 data_['oldValue'] = v[1]
-                data_['change'] = 100* v[2]
+                data_['change'] = 100 * v[2]
                 data_['isNew'] = False
                 break
         results.append(data_)
@@ -252,12 +252,12 @@ def query_most_errors_by_period(project_id, start_time, end_time,
     for n in common_errors:
         if n is None:
             continue
-        old_errors = _sum_table_index(_table_where(table_hh2, names_idx, n), names_idx)
-        if old_errors == 0:
+        sum_old_errors = _sum_table_index(_table_where(table_hh2, names_idx, n), sessions_idx)
+        if sum_old_errors == 0:
             continue
-        new_errors = _sum_table_index(_table_where(table_hh1, names_idx, n), names_idx)
+        sum_new_errors = _sum_table_index(_table_where(table_hh1, names_idx, n), sessions_idx)
         # error_increase[n] = (new_errors - old_errors) / old_errors
-        error_values[n] = new_errors, old_errors, (new_errors - old_errors) / old_errors
+        error_values[n] = sum_new_errors, sum_old_errors, (sum_new_errors - sum_old_errors) / sum_old_errors
     ratio = sorted(percentage_errors.items(), key=lambda k: k[1], reverse=True)
     increase = sorted(error_values.items(), key=lambda k: k[1][-1], reverse=True)
     names_ = set([k[0] for k in increase[:3] + ratio[:3]] + new_errors[:3])
@@ -347,18 +347,20 @@ def query_cpu_memory_by_period(project_id, start_time, end_time,
     output = list()
     if cpu_oldvalue is not None or cpu_newvalue is not None:
         output.append({'category': schemas_ee.InsightCategories.resources,
-                 'name': 'cpu',
-                 'value': cpu_newvalue,
-                 'oldValue': cpu_oldvalue,
-                 'change': 100 * (cpu_newvalue - cpu_oldvalue) / cpu_oldvalue if cpu_ratio is not None else cpu_ratio,
-                 'isNew': True if cpu_newvalue is not None and cpu_oldvalue is None else False})
+                       'name': 'cpu',
+                       'value': cpu_newvalue,
+                       'oldValue': cpu_oldvalue,
+                       'change': 100 * (
+                                   cpu_newvalue - cpu_oldvalue) / cpu_oldvalue if cpu_ratio is not None else cpu_ratio,
+                       'isNew': True if cpu_newvalue is not None and cpu_oldvalue is None else False})
     if mem_oldvalue is not None or mem_newvalue is not None:
         output.append({'category': schemas_ee.InsightCategories.resources,
-                 'name': 'memory',
-                 'value': mem_newvalue,
-                 'oldValue': mem_oldvalue,
-                 'change': 100 * (mem_newvalue - mem_oldvalue) / mem_oldvalue if mem_ratio is not None else mem_ratio,
-                 'isNew': True if mem_newvalue is not None and mem_oldvalue is None else False})
+                       'name': 'memory',
+                       'value': mem_newvalue,
+                       'oldValue': mem_oldvalue,
+                       'change': 100 * (
+                                   mem_newvalue - mem_oldvalue) / mem_oldvalue if mem_ratio is not None else mem_ratio,
+                       'isNew': True if mem_newvalue is not None and mem_oldvalue is None else False})
     return output
 
 
