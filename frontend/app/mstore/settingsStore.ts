@@ -6,7 +6,6 @@ import Webhook, { IWebhook } from 'Types/webhook';
 import {
   webhookService
 } from 'App/services';
-import Alert, { IAlert } from "Types/alert";
 
 export default class SettingsStore {
   loadingCaptureRate: boolean = false;
@@ -73,8 +72,11 @@ export default class SettingsStore {
         this.webhookInst = new Webhook(data)
        if (inst.webhookId === undefined) this.setWebhooks([...this.webhooks, this.webhookInst])
        else this.setWebhooks([...this.webhooks.filter(hook => hook.webhookId !== data.webhookId), this.webhookInst])
-       this.hooksLoading = false
+
      })
+      .finally(() => {
+        this.hooksLoading = false
+      })
   }
 
   setWebhooks = (webhooks: Webhook[]) => {
