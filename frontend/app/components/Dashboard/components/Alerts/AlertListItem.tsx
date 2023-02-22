@@ -8,6 +8,7 @@ import { DateTime } from 'luxon';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import Alert from 'Types/alert';
+import { observer } from 'mobx-react-lite'
 
 const getThreshold = (threshold: number) => {
   if (threshold === 15) return '15 Minutes';
@@ -165,4 +166,4 @@ function AlertListItem(props: Props) {
   );
 }
 
-export default withRouter(AlertListItem);
+export default withRouter(observer(AlertListItem));
