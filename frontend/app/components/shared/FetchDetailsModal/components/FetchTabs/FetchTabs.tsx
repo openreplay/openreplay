@@ -22,7 +22,7 @@ function parseRequestResponse(
       setStringBody('');
       return;
     }
-    let json = JSON.parse(r)
+    const json = JSON.parse(r)
     const hs = json.headers
     const bd = json.body as string
 
@@ -35,11 +35,8 @@ function parseRequestResponse(
       setJSONBody(null)
       setStringBody('')
     }
-    if (typeof bd !== 'string') {
-      throw new Error(`body is not a string`)
-    }
     try {
-      let jBody = JSON.parse(bd)
+      const jBody = JSON.parse(bd)
       if (typeof jBody === "object" && jBody != null) {
         setJSONBody(jBody)
       } else {
