@@ -62,7 +62,6 @@ function FetchTabs({ resource }: Props) {
   const [requestHeaders, setRequestHeaders] = useState<Record<string,string> | null>(null);
   const [responseHeaders, setResponseHeaders] = useState<Record<string,string> | null>(null);
 
-  console.log(resource)
   useEffect(() => {
     const { request, response } = resource;
     parseRequestResponse(
