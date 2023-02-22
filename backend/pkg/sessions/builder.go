@@ -41,19 +41,19 @@ func (b *builder) checkSessionEnd(message Message) {
 	}
 }
 
-func (b *builder) handleMessage(message Message, messageID uint64) {
-	if messageID < b.lastMessageID {
+func (b *builder) handleMessage(m Message) {
+	if m.MessageID() < b.lastMessageID {
 		// May happen in case of duplicated messages in kafka (if  `idempotence: false`)
-		log.Printf("skip message with wrong msgID, sessID: %d, msgID: %d, lastID: %d", b.sessionID, messageID, b.lastMessageID)
+		log.Printf("skip message with wrong msgID, sessID: %d, msgID: %d, lastID: %d", b.sessionID, m.MessageID(), b.lastMessageID)
 		return
 	}
-	timestamp := GetTimestamp(message)
+	timestamp := GetTimestamp(m)
 	if timestamp == 0 {
-		switch message.(type) {
+		switch m.(type) {
 		case *IssueEvent, *PerformanceTrackAggr:
 			break
 		default:
-			log.Printf("skip message with empty timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, messageID, message.TypeID())
+			log.Printf("skip message with empty timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, m.MessageID(), m.TypeID())
 		}
 		return
 	}
@@ -65,10 +65,10 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 
 	b.lastSystemTime = time.Now()
 	for _, p := range b.processors {
-		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
-			rm.Meta().SetMeta(message.Meta())
+		if rm := p.Handle(m, b.timestamp); rm != nil {
+			rm.Meta().SetMeta(m.Meta())
 			b.readyMsgs = append(b.readyMsgs, rm)
 		}
 	}
-	b.checkSessionEnd(message)
+	b.checkSessionEnd(m)
 }

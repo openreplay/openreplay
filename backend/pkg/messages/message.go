@@ -8,6 +8,8 @@ type Message interface {
 	TypeID() int
 	Meta() *message
 	SessionID() uint64
+	MessageID() uint64
+	Time() int64
 }
 
 // BatchInfo represents common information for all messages inside data batch
@@ -70,6 +72,14 @@ func (m *message) SetMeta(origin *message) {
 
 func (m *message) SessionID() uint64 {
 	return m.batch.sessionID
+}
+
+func (m *message) MessageID() uint64 {
+	return m.Meta().Index
+}
+
+func (m *message) Time() int64 {
+	return m.Meta().Timestamp
 }
 
 func (m *message) SetSessionID(sessID uint64) {

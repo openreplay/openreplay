@@ -7,13 +7,7 @@ import (
 	"openreplay/backend/pkg/messages/performance"
 )
 
-/*
-	Handler name: PerformanceAggregator
-	Input event:  PerformanceTrack
-	Output event: PerformanceTrackAggr
-*/
-
-const AGGREGATION_WINDOW = 2 * 60 * 1000
+const AggregationWindow = 2 * 60 * 1000
 
 type PerformanceAggregator struct {
 	*PerformanceTrackAggr
@@ -42,7 +36,7 @@ func (b *PerformanceAggregator) reset() {
 	b.lastTimestamp = 0
 }
 
-func (b *PerformanceAggregator) Handle(message Message, _ uint64, timestamp uint64) Message {
+func (b *PerformanceAggregator) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *PerformanceTrack:
 		if b.PerformanceTrackAggr == nil || msg.Frames == -1 || msg.Ticks == -1 {
@@ -93,7 +87,7 @@ func (b *PerformanceAggregator) Handle(message Message, _ uint64, timestamp uint
 		b.lastTimestamp = timestamp
 	}
 	if b.PerformanceTrackAggr != nil &&
-		timestamp-b.PerformanceTrackAggr.TimestampStart >= AGGREGATION_WINDOW {
+		timestamp-b.PerformanceTrackAggr.TimestampStart >= AggregationWindow {
 		return b.Build()
 	}
 	return nil

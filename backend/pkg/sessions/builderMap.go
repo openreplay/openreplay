@@ -8,7 +8,7 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const FORCE_DELETE_TIMEOUT = 4 * time.Hour
+const ForceDeleteTimeout = 4 * time.Hour
 
 type builderMap struct {
 	handlersFabric func() []handlers.MessageProcessor
@@ -32,17 +32,14 @@ func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 }
 
 func (m *builderMap) HandleMessage(msg Message) {
-	sessionID := msg.SessionID()
-	messageID := msg.Meta().Index
-	b := m.GetBuilder(sessionID)
-	b.handleMessage(msg, messageID)
+	m.GetBuilder(msg.SessionID()).handleMessage(msg)
 }
 
 func (m *builderMap) ClearOldSessions() {
 	deleted := 0
 	now := time.Now()
 	for id, sess := range m.sessions {
-		if sess.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(now) {
+		if sess.lastSystemTime.Add(ForceDeleteTimeout).Before(now) {
 			// Should delete zombie session
 			delete(m.sessions, id)
 			deleted++
@@ -54,7 +51,7 @@ func (m *builderMap) ClearOldSessions() {
 }
 
 func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, iter func(msg Message)) {
-	if b.ended || b.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(time.Now()) {
+	if b.ended || b.lastSystemTime.Add(ForceDeleteTimeout).Before(time.Now()) {
 		for _, p := range b.processors {
 			if rm := p.Build(); rm != nil {
 				rm.Meta().SetSessionID(sessionID)
@@ -70,13 +67,7 @@ func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, i
 
 func (m *builderMap) IterateReadyMessages(iter func(sessionID uint64, msg Message)) {
 	for sessionID, session := range m.sessions {
-		m.iterateSessionReadyMessages(
-			sessionID,
-			session,
-			func(msg Message) {
-				iter(sessionID, msg)
-			},
-		)
+		m.iterateSessionReadyMessages(sessionID, session, func(msg Message) { iter(sessionID, msg) })
 	}
 }
 
@@ -85,9 +76,5 @@ func (m *builderMap) IterateSessionReadyMessages(sessionID uint64, iter func(msg
 	if !ok {
 		return
 	}
-	m.iterateSessionReadyMessages(
-		sessionID,
-		session,
-		iter,
-	)
+	m.iterateSessionReadyMessages(sessionID, session, iter)
 }

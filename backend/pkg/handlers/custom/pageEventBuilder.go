@@ -16,7 +16,7 @@ func NewPageEventBuilder() *pageEventBuilder {
 	return ieBuilder
 }
 
-func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *SetPageLocation:
 		if msg.NavigationStart == 0 { // routing without new page loading
@@ -24,7 +24,7 @@ func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp u
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    false,
-				MessageID: messageID,
+				MessageID: message.MessageID(),
 				Timestamp: timestamp,
 			}
 		} else {
@@ -33,7 +33,7 @@ func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp u
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    true,
-				MessageID: messageID,
+				MessageID: message.MessageID(),
 				Timestamp: timestamp,
 			}
 			return pageEvent

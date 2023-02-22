@@ -10,7 +10,7 @@ import (
 
 	"openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/pkg/handlers"
-	web2 "openreplay/backend/pkg/handlers/web"
+	"openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
@@ -28,15 +28,12 @@ func main() {
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
-			// web handlers
-			&web2.ClickRageDetector{},
-			&web2.CpuIssueDetector{},
-			&web2.DeadClickDetector{},
-			&web2.MemoryIssueDetector{},
-			&web2.NetworkIssueDetector{},
-			&web2.PerformanceAggregator{},
-			// Other handlers (you can add your custom handlers here)
-			//&custom.CustomHandler{},
+			&web.ClickRageDetector{},
+			&web.CpuIssueDetector{},
+			&web.DeadClickDetector{},
+			&web.MemoryIssueDetector{},
+			&web.NetworkIssueDetector{},
+			&web.PerformanceAggregator{},
 		}
 	}
 

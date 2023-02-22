@@ -42,3 +42,17 @@ func (m *RawMessage) SessionID() uint64 {
 	}
 	return 0
 }
+
+func (m *RawMessage) MessageID() uint64 {
+	if m.meta != nil {
+		return m.meta.Index
+	}
+	return 0
+}
+
+func (m *RawMessage) Time() int64 {
+	if m.meta != nil {
+		return m.meta.Timestamp
+	}
+	return 0
+}

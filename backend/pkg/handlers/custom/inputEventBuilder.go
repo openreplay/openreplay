@@ -24,7 +24,7 @@ func (b *inputEventBuilder) clearLabels() {
 	b.inputLabels = make(inputLabels)
 }
 
-func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (b *inputEventBuilder) Handle(message Message, timestamp uint64) Message {
 	var inputEvent Message = nil
 	switch msg := message.(type) {
 	case *SetInputTarget:
@@ -41,7 +41,7 @@ func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp 
 		}
 		if b.inputEvent == nil {
 			b.inputEvent = &InputEvent{
-				MessageID:   messageID,
+				MessageID:   message.MessageID(),
 				Timestamp:   timestamp,
 				Value:       msg.Value,
 				ValueMasked: msg.Mask > 0,

@@ -44,12 +44,12 @@ func (b *EventMapper) Build() Message {
 	return nil
 }
 
-func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (b *EventMapper) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *MouseClick:
 		if msg.Label != "" {
 			return &ClickEvent{
-				MessageID:      messageID,
+				MessageID:      message.MessageID(),
 				Label:          msg.Label,
 				HesitationTime: msg.HesitationTime,
 				Timestamp:      timestamp,
@@ -58,7 +58,7 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 		}
 	case *ResourceTiming:
 		return &ResourceEvent{
-			MessageID:       messageID,
+			MessageID:       message.MessageID(),
 			Timestamp:       msg.Timestamp,
 			Duration:        msg.Duration,
 			TTFB:            msg.TTFB,
@@ -73,7 +73,7 @@ func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64
 		return &IssueEvent{
 			Type:          "custom",
 			Timestamp:     timestamp,
-			MessageID:     messageID,
+			MessageID:     message.MessageID(),
 			ContextString: msg.Name,
 			Payload:       msg.Payload,
 		}
