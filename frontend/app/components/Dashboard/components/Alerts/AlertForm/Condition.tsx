@@ -26,6 +26,7 @@ interface ICondition {
   writeQuery: (data: any) => void;
   writeQueryOption: (e: any, data: any) => void;
   unit: any;
+  changeUnit: (value: string) => void;
 }
 
 function Condition({
@@ -36,6 +37,7 @@ function Condition({
   writeQueryOption,
   writeQuery,
   unit,
+  changeUnit,
 }: ICondition) {
   return (
     <div>
@@ -48,7 +50,7 @@ function Condition({
             options={changeOptions}
             name="change"
             defaultValue={instance.change}
-            onChange={({ value }) => writeOption(null, { name: 'change', value })}
+            onChange={({ value }) => changeUnit(value)}
             id="change-dropdown"
           />
         </div>
