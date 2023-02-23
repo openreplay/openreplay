@@ -17,7 +17,7 @@ function DashboardOptions(props: Props) {
         { icon: 'text-paragraph', text: `${!isTitlePresent ? 'Add' : 'Edit'} Description`, onClick: () => editHandler(false) },
         { icon: 'users', text: 'Visibility & Access', onClick: editHandler },
         { icon: 'trash', text: 'Delete', onClick: deleteHandler },
-        { icon: 'pdf-download', text: 'Download Report', onClick: renderReport, disabled: !isEnterprise, tooltipTitle: {ENTERPRISE_REQUEIRED} }
+        { icon: 'pdf-download', text: 'Download Report', onClick: renderReport, disabled: !isEnterprise, tooltipTitle: ENTERPRISE_REQUEIRED }
     ]
 
     return (
