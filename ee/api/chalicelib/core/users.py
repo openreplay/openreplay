@@ -591,19 +591,6 @@ def set_password_invitation(tenant_id, user_id, new_password):
     }
 
 
-def count_members(tenant_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT 
-                        COUNT(user_id) 
-                    FROM public.users WHERE tenant_id = %(tenant_id)s AND deleted_at IS NULL;""",
-                {"tenant_id": tenant_id})
-        )
-        r = cur.fetchone()
-    return r["count"]
-
-
 def email_exists(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
