@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "4.1.10",
+  "version": "5.0.0",
   "keywords": [
     "logging",
     "replay"
