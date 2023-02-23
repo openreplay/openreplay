@@ -33,4 +33,6 @@ echo $DOCKER_REPO
     bash build.sh $@
     cd ../api
     bash build.sh $@
+    bash build_alerts.sh $@
+    bash build_crons.sh $@
 }

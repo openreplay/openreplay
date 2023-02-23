@@ -5,13 +5,15 @@ import { SetPageLocation, SetViewportSize, SetPageVisibility } from '../app/mess
 export default function (app: App): void {
   let url: string, width: number, height: number
   let navigationStart: number
+  let referrer = document.referrer
 
   const sendSetPageLocation = app.safe(() => {
     const { URL } = document
     if (URL !== url) {
       url = URL
-      app.send(SetPageLocation(url, document.referrer, navigationStart))
+      app.send(SetPageLocation(url, referrer, navigationStart))
       navigationStart = 0
+      referrer = url
     }
   })
 

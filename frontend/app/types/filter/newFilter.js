@@ -194,6 +194,7 @@ export default Record({
         _filter = filtersMap[type];
       }
     }
+
     return {
       ..._filter,
       ...filter,

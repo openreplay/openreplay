@@ -13,7 +13,7 @@ export const createUrlQuery = (filter: any) => {
 
     let str = `${f.operator}|${f.value.join('|')}`;
     if (f.hasSource) {
-      str = `${str}^${f.sourceOperator}|${f.source.join('|')}`;
+      str = `${str}^${f.sourceOperator ? f.sourceOperator : ''}|${f.source ? f.source.join('|') : ''}`;
     }
 
     let key: any = setQueryParamKeyFromFilterkey(f.key);
@@ -58,9 +58,6 @@ const getFiltersFromEntries = (entires: any) => {
 
       let filter: any = {};
       const filterKey = getFilterKeyTypeByKey(item.key);
-      if (!filterKey) {
-        return;
-      }
       const tmp = item.value.split('^');
       const valueArr = tmp[0].split('|');
       const operator = valueArr.shift();
@@ -78,10 +75,20 @@ const getFiltersFromEntries = (entires: any) => {
         }
       }
 
+      if (!filter) {
+        return
+      }
+
       filter.value = valueArr;
       filter.operator = operator;
-      filter.source = sourceArr;
-      filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+      if (filter.icon === "filters/metadata") {
+        filter.source = filter.type;
+        filter.type = 'metadata';
+      } else {
+        filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
+        filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
+      }
+      
       if (!filter.filters || filter.filters.size === 0) {
         filters.push(filter);
       }

@@ -20,14 +20,11 @@ require (
 	github.com/klauspost/pgzip v1.2.5
 	github.com/oschwald/maxminddb-golang v1.7.0
 	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.12.1
 	github.com/sethvargo/go-envconfig v0.7.0
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
-	go.opentelemetry.io/otel v1.7.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.30.0
-	go.opentelemetry.io/otel/metric v0.30.0
-	go.opentelemetry.io/otel/sdk/metric v0.30.0
-	golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	golang.org/x/net v0.1.1-0.20221104162952-702349b0e862
 	google.golang.org/api v0.81.0
 )
 
@@ -38,8 +35,6 @@ require (
 	cloud.google.com/go/storage v1.14.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
-	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
@@ -55,19 +50,18 @@ require (
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/paulmach/orb v0.7.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
-	github.com/prometheus/client_golang v1.12.1 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.7.0 // indirect
+	go.opentelemetry.io/otel v1.7.0 // indirect
 	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29 // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220517211312-f3a8303e98df // indirect
 	google.golang.org/appengine v1.6.7 // indirect

@@ -2,17 +2,19 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "kafka.fullname" . }}-jmx-configuration
-  labels: {{- include "kafka.labels" . | nindent 4 }}
+  name: {{ printf "%s-jmx-configuration" (include "common.names.fullname" .) }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
     {{- if .Values.commonLabels }}
-    {{- include "kafka.tplValue" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
     {{- end }}
   {{- if .Values.commonAnnotations }}
-  annotations: {{- include "kafka.tplValue" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
 data:
   jmx-kafka-prometheus.yml: |-
-    {{- include "kafka.tplValue" ( dict "value" .Values.metrics.jmx.config "context" $ ) | nindent 4 }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.jmx.config "context" $ ) | nindent 4 }}
     rules:
       - pattern: kafka.controller<type=(ControllerChannelManager), name=(QueueSize), broker-id=(\d+)><>(Value)
         name: kafka_controller_$1_$2_$4
@@ -56,4 +58,7 @@ data:
         labels:
           topic: $3
           partition: $4
+      {{- if .Values.metrics.jmx.extraRules }}
+      {{- include "common.tplvalues.render" ( dict "value" .Values.metrics.jmx.extraRules "context" $ ) | nindent 6 }}
+      {{- end }}
 {{- end -}}

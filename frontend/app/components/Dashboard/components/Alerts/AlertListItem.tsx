@@ -8,6 +8,7 @@ import { DateTime } from 'luxon';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import cn from 'classnames';
 import Alert from 'Types/alert';
+import { observer } from 'mobx-react-lite'
 
 const getThreshold = (threshold: number) => {
   if (threshold === 15) return '15 Minutes';
@@ -42,9 +43,8 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
       ' (' +
       alert.msteamsInput
         .map((channelId: number) => {
-          return (
-            webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')?.name
-          );
+          return webhooks.find((hook) => hook.webhookId === channelId && hook.type === 'msteams')
+            ?.name;
         })
         .join(', ') +
       ')'
@@ -58,7 +58,7 @@ const getNotifyChannel = (alert: Record<string, any>, webhooks: Array<any>) => {
     }
   }
   if (alert.msteams) {
-    str += (str === '' ? '' : ' and ') + 'MS Teams'
+    str += (str === '' ? '' : ' and ') + 'MS Teams';
     if (alert.msteamsInput.length > 0) {
       str += getMsTeamsChannels();
     }
@@ -79,10 +79,11 @@ interface Props extends RouteComponentProps {
   init: (alert: Alert) => void;
   demo?: boolean;
   webhooks: Array<any>;
+  triggerOptions: Record<string, any>;
 }
 
 function AlertListItem(props: Props) {
-  const { alert, siteId, history, init, demo, webhooks } = props;
+  const { alert, siteId, history, init, demo, webhooks, triggerOptions } = props;
 
   if (!alert) {
     return null;
@@ -94,6 +95,11 @@ function AlertListItem(props: Props) {
     init(alert || {});
     history.push(path);
   };
+
+  const formTriggerName = () =>
+    Number.isInteger(alert.query.left) && triggerOptions
+      ? triggerOptions.find((opt: { value: any, label: string }) => opt.value === alert.query.left).label
+      : alert.query.left;
 
   return (
     <div
@@ -118,29 +124,36 @@ function AlertListItem(props: Props) {
           {demo
             ? DateTime.fromMillis(+new Date()).toFormat('LLL dd, yyyy, hh:mm a')
             : checkForRecent(
-              DateTime.fromMillis(alert.createdAt || +new Date()),
-              'LLL dd, yyyy, hh:mm a'
-            )}
+                DateTime.fromMillis(alert.createdAt || +new Date()),
+                'LLL dd, yyyy, hh:mm a'
+              )}
         </div>
       </div>
       <div className="color-gray-medium px-2 pb-2">
         {'When the '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.detectionMethod}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+          {alert.detectionMethod}
+        </span>
         {' of '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{alert.seriesName}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+          {triggerOptions ? formTriggerName() : alert.seriesName}
+        </span>
         {' is '}
         <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
           {alert.query.operator}
-          {numberWithCommas(alert.query.right)} {alert.metric?.unit}
+          {numberWithCommas(alert.query.right)}
+          {alert.change === 'percent' ? '%' : alert.metric?.unit}
         </span>
         {' over the past '}
-        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>{getThreshold(
-          alert.currentPeriod)}</span>
+        <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas' }}>
+          {getThreshold(alert.currentPeriod)}
+        </span>
         {alert.detectionMethod === 'change' ? (
           <>
             {' compared to the previous '}
-            <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas ' }}>{getThreshold(
-              alert.previousPeriod)}</span>
+            <span className="font-semibold" style={{ fontFamily: 'Menlo, Monaco, Consolas ' }}>
+              {getThreshold(alert.previousPeriod)}
+            </span>
           </>
         ) : null}
         {', notify me on '}
@@ -153,4 +166,4 @@ function AlertListItem(props: Props) {
   );
 }
 
-export default withRouter(AlertListItem);
+export default withRouter(observer(AlertListItem));

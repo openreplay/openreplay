@@ -13,7 +13,7 @@ interface Props {
 const IntegrationItem = (props: Props) => {
     const { integration, integrated, hide = false } = props;
     return hide ? <></> : (
-        <div className={cn(stl.wrapper, 'mb-4', { [stl.integrated]: integrated })} onClick={(e) => props.onClick(e)}>
+        <div className={cn(stl.wrapper, { [stl.integrated]: integrated })} onClick={(e) => props.onClick(e)}>
             {integrated && (
                 <div className="m-2 absolute right-0 top-0 h-4 w-4 rounded-full bg-teal flex items-center justify-center">
                     <Tooltip title="Integrated" delay={0}>

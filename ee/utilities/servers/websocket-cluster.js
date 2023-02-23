@@ -24,7 +24,7 @@ const {
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 const wsRouter = express.Router();
-const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_URL = (process.env.REDIS_URL || "localhost:6379").replace(/((^\w+:|^)\/\/|^)/, 'redis://');
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
 console.log(`Using Redis: ${REDIS_URL}`);
@@ -309,7 +309,8 @@ module.exports = {
                 debug && console.log(`notifying new agent about no SESSIONS`);
                 io.to(socket.id).emit(EVENTS_DEFINITION.emit.NO_SESSIONS);
             }
-            await io.of('/').adapter.remoteJoin(socket.id, socket.peerId);
+            // await io.of('/').adapter.join(socket.id, socket.peerId);
+            await socket.join(socket.peerId);
             let rooms = await io.of('/').adapter.allRooms();
             if (rooms.has(socket.peerId)) {
                 let connectedSockets = await io.in(socket.peerId).fetchSockets();

@@ -10,6 +10,7 @@ import { confirm } from 'UI';
 import { clearSearch } from 'Duck/search';
 import { clearSearch as clearSearchLive } from 'Duck/liveSearch';
 import { withStore } from 'App/mstore';
+import { toast } from 'react-toastify';
 
 @connect(
     (state) => ({
@@ -61,9 +62,14 @@ export default class NewSiteForm extends React.PureComponent {
             return this.setState({ existsError: true });
         }
         if (site.exists()) {
-            this.props.update(this.props.site, this.props.site.id).then(() => {
-                this.props.onClose(null);
-                this.props.fetchList();
+            this.props.update(this.props.site, this.props.site.id).then((response) => {
+                if (!response || !response.errors || response.errors.size === 0) {
+                    this.props.onClose(null);
+                    this.props.fetchList();
+                    toast.success('Project updated successfully');
+                } else {
+                    toast.error(response.errors[0]);
+                }
             });
         } else {
             this.props.save(this.props.site).then(() => {

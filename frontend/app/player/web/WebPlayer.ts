@@ -46,7 +46,7 @@ export default class WebPlayer extends Player {
     this.screen = screen
     this.messageManager = messageManager
     if (!live) { // hack. TODO: split OfflinePlayer class
-      messageManager.loadMessages()
+      void messageManager.loadMessages(isClickMap)
     }
 
     this.targetMarker = new TargetMarker(this.screen, wpState)

@@ -2,12 +2,12 @@ import React, { useEffect } from 'react';
 import { useHistory } from 'react-router';
 import { connect } from 'react-redux';
 import { addFilterByKeyAndValue, addFilter } from 'Duck/search';
-import { applyFilter } from 'Duck/search';
+import { updateFilter } from 'Duck/search';
 import { createUrlQuery, getFiltersFromQuery } from 'App/utils/search';
 
 interface Props {
   appliedFilter: any;
-  applyFilter: any;
+  updateFilter: any;
   addFilterByKeyAndValue: typeof addFilterByKeyAndValue;
   addFilter: typeof addFilter;
 }
@@ -17,7 +17,7 @@ const SessionSearchQueryParamHandler = (props: Props) => {
 
   const applyFilterFromQuery = () => {
     const filter = getFiltersFromQuery(history.location.search, appliedFilter);
-    props.applyFilter(filter, true);
+    props.updateFilter(filter, true);
   };
 
   const generateUrlQuery = () => {
@@ -35,5 +35,5 @@ export default connect(
   (state: any) => ({
     appliedFilter: state.getIn(['search', 'instance']),
   }),
-  { addFilterByKeyAndValue, addFilter, applyFilter }
+  { addFilterByKeyAndValue, addFilter, updateFilter }
 )(SessionSearchQueryParamHandler);

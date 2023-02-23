@@ -23,7 +23,7 @@ public_app, app, app_apikey = get_routers()
 
 
 @public_app.post('/login', tags=["authentication"])
-def login(data: schemas.UserLoginSchema = Body(...)):
+async def login(data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,27 +56,27 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 
 
 @app.get('/logout', tags=["login", "logout"])
-def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
+async def logout_user(response: Response, context: schemas.CurrentContext = Depends(OR_context)):
     response.delete_cookie("jwt")
     return {"data": "success"}
 
 
 @app.post('/{projectId}/sessions/search', tags=["sessions"])
-def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+async def sessions_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id)
     return {'data': data}
 
 
 @app.post('/{projectId}/sessions/search/ids', tags=["sessions"])
-def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
+async def session_ids_search(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search_sessions(data=data, project_id=projectId, user_id=context.user_id, ids_only=True)
     return {'data': data}
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str,
+async def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
                   schemas.PerformanceEventType, schemas.FetchFilterType,
                   schemas.GraphqlFilterType, str] = None,
@@ -108,7 +108,7 @@ def events_search(projectId: int, q: str,
 
 
 @app.get('/{projectId}/integrations', tags=["integrations"])
-def get_integrations_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_integrations_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = integrations_global.get_global_integrations_status(tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
                                                               project_id=projectId)
@@ -116,7 +116,7 @@ def get_integrations_status(projectId: int, context: schemas.CurrentContext = De
 
 
 @app.post('/{projectId}/integrations/{integration}/notify/{webhookId}/{source}/{sourceId}', tags=["integrations"])
-def integration_notify(projectId: int, integration: str, webhookId: int, source: str, sourceId: str,
+async def integration_notify(projectId: int, integration: str, webhookId: int, source: str, sourceId: str,
                        data: schemas.IntegrationNotificationSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     comment = None
@@ -140,144 +140,144 @@ def integration_notify(projectId: int, integration: str, webhookId: int, source:
 
 
 @app.get('/integrations/sentry', tags=["integrations"])
-def get_all_sentry(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_sentry(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/sentry', tags=["integrations"])
-def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/sentry', tags=["integrations"])
-def add_edit_sentry(projectId: int, data: schemas.SentrySchema = Body(...),
+async def add_edit_sentry(projectId: int, data: schemas.SentrySchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/sentry', tags=["integrations"])
-def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/{projectId}/integrations/sentry/events/{eventId}', tags=["integrations"])
-def proxy_sentry(projectId: int, eventId: str, context: schemas.CurrentContext = Depends(OR_context)):
+async def proxy_sentry(projectId: int, eventId: str, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.proxy_get(tenant_id=context.tenant_id, project_id=projectId, event_id=eventId)}
 
 
 @app.get('/integrations/datadog', tags=["integrations"])
-def get_all_datadog(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_datadog(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/datadog', tags=["integrations"])
-def get_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/datadog', tags=["integrations"])
-def add_edit_datadog(projectId: int, data: schemas.DatadogSchema = Body(...),
+async def add_edit_datadog(projectId: int, data: schemas.DatadogSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/datadog', tags=["integrations"])
-def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/stackdriver', tags=["integrations"])
-def get_all_stackdriver(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_stackdriver(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/stackdriver', tags=["integrations"])
-def get_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/stackdriver', tags=["integrations"])
-def add_edit_stackdriver(projectId: int, data: schemas.StackdriverSchema = Body(...),
+async def add_edit_stackdriver(projectId: int, data: schemas.StackdriverSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/stackdriver', tags=["integrations"])
-def delete_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/newrelic', tags=["integrations"])
-def get_all_newrelic(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_newrelic(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/newrelic', tags=["integrations"])
-def get_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/newrelic', tags=["integrations"])
-def add_edit_newrelic(projectId: int, data: schemas.NewrelicSchema = Body(...),
+async def add_edit_newrelic(projectId: int, data: schemas.NewrelicSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/newrelic', tags=["integrations"])
-def delete_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/rollbar', tags=["integrations"])
-def get_all_rollbar(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_rollbar(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/rollbar', tags=["integrations"])
-def get_rollbar(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_rollbar(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/rollbar', tags=["integrations"])
-def add_edit_rollbar(projectId: int, data: schemas.RollbarSchema = Body(...),
+async def add_edit_rollbar(projectId: int, data: schemas.RollbarSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/rollbar', tags=["integrations"])
-def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.post('/integrations/bugsnag/list_projects', tags=["integrations"])
-def list_projects_bugsnag(data: schemas.BugsnagBasicSchema = Body(...),
+async def list_projects_bugsnag(data: schemas.BugsnagBasicSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.list_projects(auth_token=data.authorizationToken)}
 
 
 @app.get('/integrations/bugsnag', tags=["integrations"])
-def get_all_bugsnag(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_bugsnag(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/bugsnag', tags=["integrations"])
-def get_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/bugsnag', tags=["integrations"])
-def add_edit_bugsnag(projectId: int, data: schemas.BugsnagSchema = Body(...),
+async def add_edit_bugsnag(projectId: int, data: schemas.BugsnagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/bugsnag', tags=["integrations"])
-def delete_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.post('/integrations/cloudwatch/list_groups', tags=["integrations"])
-def list_groups_cloudwatch(data: schemas.CloudwatchBasicSchema = Body(...),
+async def list_groups_cloudwatch(data: schemas.CloudwatchBasicSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.list_log_groups(aws_access_key_id=data.awsAccessKeyId,
                                                         aws_secret_access_key=data.awsSecretAccessKey,
@@ -285,77 +285,77 @@ def list_groups_cloudwatch(data: schemas.CloudwatchBasicSchema = Body(...),
 
 
 @app.get('/integrations/cloudwatch', tags=["integrations"])
-def get_all_cloudwatch(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_cloudwatch(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-def get_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-def add_edit_cloudwatch(projectId: int, data: schemas.CloudwatchSchema = Body(...),
+async def add_edit_cloudwatch(projectId: int, data: schemas.CloudwatchSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-def delete_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/elasticsearch', tags=["integrations"])
-def get_all_elasticsearch(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_elasticsearch(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-def get_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.get(project_id=projectId)}
 
 
 @app.post('/integrations/elasticsearch/test', tags=["integrations"])
-def test_elasticsearch_connection(data: schemas.ElasticsearchBasicSchema = Body(...),
+async def test_elasticsearch_connection(data: schemas.ElasticsearchBasicSchema = Body(...),
                                   context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.ping(tenant_id=context.tenant_id, **data.dict())}
 
 
 @app.post('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-def add_edit_elasticsearch(projectId: int, data: schemas.ElasticsearchSchema = Body(...),
+async def add_edit_elasticsearch(projectId: int, data: schemas.ElasticsearchSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": log_tool_elasticsearch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-def delete_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/sumologic', tags=["integrations"])
-def get_all_sumologic(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_sumologic(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/sumologic', tags=["integrations"])
-def get_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/sumologic', tags=["integrations"])
-def add_edit_sumologic(projectId: int, data: schemas.SumologicSchema = Body(...),
+async def add_edit_sumologic(projectId: int, data: schemas.SumologicSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/sumologic', tags=["integrations"])
-def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/issues', tags=["integrations"])
-def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
@@ -364,7 +364,7 @@ def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)
 
 
 @app.get('/integrations/jira', tags=["integrations"])
-def get_integration_status_jira(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_integration_status_jira(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
                                                               tool=integration_jira_cloud.PROVIDER)
@@ -374,7 +374,7 @@ def get_integration_status_jira(context: schemas.CurrentContext = Depends(OR_con
 
 
 @app.get('/integrations/github', tags=["integrations"])
-def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
                                                               tool=integration_github.PROVIDER)
@@ -384,7 +384,7 @@ def get_integration_status_github(context: schemas.CurrentContext = Depends(OR_c
 
 
 @app.post('/integrations/jira', tags=["integrations"])
-def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
+async def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     if not data.url.endswith('atlassian.net'):
         return {"errors": ["url must be a valid JIRA URL (example.atlassian.net)"]}
@@ -397,7 +397,7 @@ def add_edit_jira_cloud(data: schemas.JiraSchema = Body(...),
 
 
 @app.post('/integrations/github', tags=["integrations"])
-def add_edit_github(data: schemas.GithubSchema = Body(...),
+async def add_edit_github(data: schemas.GithubSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
@@ -408,7 +408,7 @@ def add_edit_github(data: schemas.GithubSchema = Body(...),
 
 
 @app.delete('/integrations/issues', tags=["integrations"])
-def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None and integration is None:
@@ -417,7 +417,7 @@ def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends
 
 
 @app.delete('/integrations/jira', tags=["integrations"])
-def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
@@ -428,7 +428,7 @@ def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.delete('/integrations/github', tags=["integrations"])
-def delete_github(context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_github(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id,
@@ -439,7 +439,7 @@ def delete_github(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/integrations/issues/list_projects', tags=["integrations"])
-def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -451,7 +451,7 @@ def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(OR
 
 
 @app.get('/integrations/issues/{integrationProjectId}', tags=["integrations"])
-def get_integration_metadata(integrationProjectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_integration_metadata(integrationProjectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -463,7 +463,7 @@ def get_integration_metadata(integrationProjectId: int, context: schemas.Current
 
 
 @app.get('/{projectId}/assignments', tags=["assignment"])
-def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_all(project_id=projectId, user_id=context.user_id)
     return {
         'data': data
@@ -471,7 +471,7 @@ def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depend
 
 
 @app.post('/{projectId}/sessions/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
-def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
+async def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
                             data: schemas.AssignmentSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.create_new_assignment(tenant_id=context.tenant_id, project_id=projectId,
@@ -488,12 +488,12 @@ def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId
 
 
 @app.get('/{projectId}/gdpr', tags=["projects", "gdpr"])
-def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_gdpr(project_id=projectId)}
 
 
 @app.post('/{projectId}/gdpr', tags=["projects", "gdpr"])
-def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
+async def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
     result = projects.edit_gdpr(project_id=projectId, gdpr=data.dict())
     if "errors" in result:
@@ -502,43 +502,43 @@ def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
 
 
 @public_app.post('/password/reset-link', tags=["reset password"])
-def reset_password_handler(data: schemas.ForgetPasswordPayloadSchema = Body(...)):
+async def reset_password_handler(data: schemas.ForgetPasswordPayloadSchema = Body(...)):
     if len(data.email) < 5:
         return {"errors": ["please provide a valid email address"]}
     return reset_password.reset(data=data)
 
 
 @app.get('/{projectId}/metadata', tags=["metadata"])
-def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": metadata.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/metadata/list', tags=["metadata"])
-def add_edit_delete_metadata(projectId: int, data: schemas.MetadataListSchema = Body(...),
+async def add_edit_delete_metadata(projectId: int, data: schemas.MetadataListSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.add_edit_delete(tenant_id=context.tenant_id, project_id=projectId, new_metas=data.list)
 
 
 @app.post('/{projectId}/metadata', tags=["metadata"])
-def add_metadata(projectId: int, data: schemas.MetadataBasicSchema = Body(...),
+async def add_metadata(projectId: int, data: schemas.MetadataBasicSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.add(tenant_id=context.tenant_id, project_id=projectId, new_name=data.key)
 
 
 @app.post('/{projectId}/metadata/{index}', tags=["metadata"])
-def edit_metadata(projectId: int, index: int, data: schemas.MetadataBasicSchema = Body(...),
+async def edit_metadata(projectId: int, index: int, data: schemas.MetadataBasicSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=index,
                          new_name=data.key)
 
 
 @app.delete('/{projectId}/metadata/{index}', tags=["metadata"])
-def delete_metadata(projectId: int, index: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_metadata(projectId: int, index: int, context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.delete(tenant_id=context.tenant_id, project_id=projectId, index=index)
 
 
 @app.get('/{projectId}/metadata/search', tags=["metadata"])
-def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentContext = Depends(OR_context)):
+async def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0 and len(key) == 0:
         return {"data": []}
     if len(q) == 0:
@@ -549,72 +549,72 @@ def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentCo
 
 
 @app.get('/{projectId}/integration/sources', tags=["integrations"])
-def search_integrations(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def search_integrations(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return log_tools.search(project_id=projectId)
 
 
 @app.get('/{projectId}/sample_rate', tags=["projects"])
-def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_capture_status(project_id=projectId)}
 
 
 @app.post('/{projectId}/sample_rate', tags=["projects"])
-def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
+async def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.update_capture_status(project_id=projectId, changes=data.dict())}
 
 
 @app.get('/announcements', tags=["announcements"])
-def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.get_all(user_id=context.user_id)}
 
 
 @app.get('/announcements/view', tags=["announcements"])
-def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.view(user_id=context.user_id)}
 
 
 @app.get('/show_banner', tags=["banner"])
-def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
+async def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": False}
 
 
 @app.post('/{projectId}/alerts', tags=["alerts"])
-def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
+async def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.create(project_id=projectId, data=data)
 
 
 @app.get('/{projectId}/alerts', tags=["alerts"])
-def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get_all(project_id=projectId)}
 
 
 @app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
-def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get_predefined_values() \
                     + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get(id=alertId)}
 
 
 @app.post('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
+async def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.update(id=alertId, data=data)
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.delete(project_id=projectId, alert_id=alertId)
 
 
 @app_apikey.put('/{projectKey}/sourcemaps/', tags=["sourcemaps"])
 @app_apikey.put('/{projectKey}/sourcemaps', tags=["sourcemaps"])
-def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
+async def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     project_id = projects.get_internal_project_id(projectKey)
     if project_id is None:
@@ -624,59 +624,59 @@ def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayl
 
 
 @app.get('/config/weekly_report', tags=["weekly report config"])
-def get_weekly_report_config(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_weekly_report_config(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": weekly_report.get_config(user_id=context.user_id)}
 
 
 @app.post('/config/weekly_report', tags=["weekly report config"])
-def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...),
+async def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": weekly_report.edit_config(user_id=context.user_id, weekly_report=data.weekly_report)}
 
 
 @app.get('/{projectId}/issue_types', tags=["issues"])
-def issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": issues.get_all_types()}
 
 
 @app.get('/issue_types', tags=["issues"])
-def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
+async def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": issues.get_all_types()}
 
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
-def get_sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_sessions_ws_user_id(projectId, user_id=userId)
     return {'data': data}
 
 
 @app.post('/{projectId}/assist/sessions', tags=["assist"])
-def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
+async def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_sessions_ws(projectId, body=data)
     return {'data': data}
 
 
 @app.post('/{projectId}/mobile/{sessionId}/urls', tags=['mobile'])
-def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayloadSchema = Body(...),
+async def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayloadSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
 
 
 @public_app.post('/signup', tags=['signup'])
 @public_app.put('/signup', tags=['signup'])
-def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
     return signup.create_step1(data)
 
 
 @app.post('/projects', tags=['projects'])
-def create_project(data: schemas.CreateProjectSchema = Body(...),
+async def create_project(data: schemas.CreateProjectSchema = Body(...),
                    context: schemas.CurrentContext = Depends(OR_context)):
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
 @app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
                                 include_gdpr=True)
     if data is None:
@@ -685,18 +685,18 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_con
 
 
 @app.put('/projects/{projectId}', tags=['projects'])
-def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
+async def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
 
 
 @app.delete('/projects/{projectId}', tags=['projects'])
-def delete_project(projectId, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_project(projectId, context: schemas.CurrentContext = Depends(OR_context)):
     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
 
 
 @app.get('/client/new_api_key', tags=['client'])
-def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_context)):
+async def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_context)):
     return {
         'data': tenants.generate_new_api_key(context.tenant_id)
     }
@@ -704,28 +704,28 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_conte
 
 @app.post('/client', tags=['client'])
 @app.put('/client', tags=['client'])
-def edit_client(data: schemas.UpdateTenantSchema = Body(...),
+async def edit_client(data: schemas.UpdateTenantSchema = Body(...),
                 context: schemas.CurrentContext = Depends(OR_context)):
     return tenants.update(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
 @app.get('/notifications', tags=['notifications'])
-def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
 
 
 @app.get('/notifications/count', tags=['notifications'])
-def get_notifications_count(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_notifications_count(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.get_all_count(tenant_id=context.tenant_id, user_id=context.user_id)}
 
 
 @app.get('/notifications/{notificationId}/view', tags=['notifications'])
-def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.view_notification(notification_ids=[notificationId], user_id=context.user_id)}
 
 
 @app.post('/notifications/view', tags=['notifications'])
-def batch_view_notifications(data: schemas.NotificationsViewSchema,
+async def batch_view_notifications(data: schemas.NotificationsViewSchema,
                              context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.view_notification(notification_ids=data.ids,
                                                     startTimestamp=data.startTimestamp,
@@ -735,83 +735,83 @@ def batch_view_notifications(data: schemas.NotificationsViewSchema,
 
 
 @app.get('/boarding', tags=['boarding'])
-def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": boarding.get_state(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/installing', tags=['boarding'])
-def get_boarding_state_installing(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_boarding_state_installing(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": boarding.get_state_installing(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/identify-users', tags=["boarding"])
-def get_boarding_state_identify_users(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_boarding_state_identify_users(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": boarding.get_state_identify_users(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/manage-users', tags=["boarding"])
-def get_boarding_state_manage_users(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_boarding_state_manage_users(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": boarding.get_state_manage_users(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/integrations', tags=["boarding"])
-def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": boarding.get_state_integrations(tenant_id=context.tenant_id)}
 
 
 @app.get('/integrations/slack/channels', tags=["integrations"])
-def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.slack)}
 
 
 @app.get('/integrations/slack/{webhookId}', tags=["integrations"])
-def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_slack_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": Slack.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)}
 
 
 @app.delete('/integrations/slack/{webhookId}', tags=["integrations"])
-def delete_slack_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_slack_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
 @app.put('/webhooks', tags=["webhooks"])
-def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
+async def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data.dict(), replace_none=True)}
 
 
 @app.get('/webhooks', tags=["webhooks"])
-def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.get_by_tenant(tenant_id=context.tenant_id, replace_none=True)}
 
 
 @app.delete('/webhooks/{webhookId}', tags=["webhooks"])
-def delete_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)}
 
 
 @app.get('/client/members', tags=["client"])
-def get_members(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_members(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": users.get_members(tenant_id=context.tenant_id)}
 
 
 @app.get('/client/members/{memberId}/reset', tags=["client"])
-def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return users.reset_member(tenant_id=context.tenant_id, editor_id=context.user_id, user_id_to_update=memberId)
 
 
 @app.delete('/client/members/{memberId}', tags=["client"])
-def delete_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
 
 
 @app.get('/account/new_api_key', tags=["account"])
-def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context)):
+async def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 
 
 @app.post('/account/password', tags=["account"])
-def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
+async def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return users.change_password(email=context.email, old_password=data.old_password,
                                  new_password=data.new_password, tenant_id=context.tenant_id,
@@ -819,34 +819,34 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
 
 
 @app.post('/{projectId}/saved_search', tags=["savedSearch"])
-def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...),
+async def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return saved_search.create(project_id=projectId, user_id=context.user_id, data=data)
 
 
 @app.get('/{projectId}/saved_search', tags=["savedSearch"])
-def get_saved_searches(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_saved_searches(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": saved_search.get_all(project_id=projectId, user_id=context.user_id, details=True)}
 
 
 @app.get('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-def get_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def get_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": saved_search.get(project_id=projectId, search_id=search_id, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-def update_saved_search(projectId: int, search_id: int, data: schemas.SavedSearchSchema = Body(...),
+async def update_saved_search(projectId: int, search_id: int, data: schemas.SavedSearchSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": saved_search.update(user_id=context.user_id, search_id=search_id, data=data, project_id=projectId)}
 
 
 @app.delete('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
-def delete_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}
 
 
 @app.get('/limits', tags=['accounts'])
-def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
     return {
         'data': {
             "teamMember": -1,
@@ -856,12 +856,12 @@ def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/integrations/msteams/channels', tags=["integrations"])
-def get_msteams_channels(context: schemas.CurrentContext = Depends(OR_context)):
+async def get_msteams_channels(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type=schemas.WebhookType.msteams)}
 
 
 @app.post('/integrations/msteams', tags=['integrations'])
-def add_msteams_integration(data: schemas.AddCollaborationSchema,
+async def add_msteams_integration(data: schemas.AddCollaborationSchema,
                             context: schemas.CurrentContext = Depends(OR_context)):
     n = MSTeams.add(tenant_id=context.tenant_id, data=data)
     if n is None:
@@ -873,7 +873,7 @@ def add_msteams_integration(data: schemas.AddCollaborationSchema,
 
 
 @app.post('/integrations/msteams/{webhookId}', tags=['integrations'])
-def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSchema = Body(...),
+async def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSchema = Body(...),
                              context: schemas.CurrentContext = Depends(OR_context)):
     if len(data.url) > 0:
         old = MSTeams.get_integration(tenant_id=context.tenant_id, integration_id=webhookId)
@@ -890,12 +890,12 @@ def edit_msteams_integration(webhookId: int, data: schemas.EditCollaborationSche
 
 
 @app.delete('/integrations/msteams/{webhookId}', tags=["integrations"])
-def delete_msteams_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
+async def delete_msteams_integration(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)
 
 
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
-def get_general_stats():
+async def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
 
 
@@ -903,6 +903,6 @@ def get_general_stats():
 @public_app.post('/', tags=["health"])
 @public_app.put('/', tags=["health"])
 @public_app.delete('/', tags=["health"])
-def health_check():
+async def health_check():
     return {"data": {"stage": f"live {config('version_number', default='')}",
                      "internalCrons": config("LOCAL_CRONS", default=False, cast=bool)}}

@@ -17,10 +17,10 @@ function AlertsList({ siteId }: Props) {
   const { alertsStore, settingsStore } = useStore();
   const { fetchWebhooks, webhooks } = settingsStore
   const { alerts: alertsList, alertsSearch, fetchList, init } = alertsStore
+  const page = alertsStore.page;
 
   React.useEffect(() => { fetchList(); fetchWebhooks() }, []);
   const alertsArray = alertsList
-  const [page, setPage] = React.useState(1);
 
   const filteredAlerts = filterList(alertsArray, alertsSearch, ['name'], (item, query) => query.test(item.query.left))
   const list = alertsSearch !== '' ? filteredAlerts : alertsArray;
@@ -59,7 +59,7 @@ function AlertsList({ siteId }: Props) {
         <Pagination
           page={page}
           totalPages={Math.ceil(list.length / pageSize)}
-          onPageChange={(page) => setPage(page)}
+          onPageChange={(page) => alertsStore.updateKey('page', page)}
           limit={pageSize}
           debounceRequest={100}
         />

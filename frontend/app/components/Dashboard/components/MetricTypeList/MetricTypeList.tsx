@@ -7,6 +7,7 @@ import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { dashboardMetricCreate, withSiteId } from 'App/routes';
 import { useStore } from 'App/mstore';
 import { connect } from 'react-redux';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 interface Props extends RouteComponentProps {
   dashboardId: number;
@@ -24,7 +25,7 @@ function MetricTypeList(props: Props) {
       return {
         ...metric,
         disabled: metric.slug === INSIGHTS && !isEnterprise,
-        tooltipTitle: disabled ? 'This feature requires an enterprise license.' : '',
+        tooltipTitle: disabled ? ENTERPRISE_REQUEIRED : '',
       };
     });
   }, []);

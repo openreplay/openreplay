@@ -8,9 +8,13 @@ on:
         default: 'false'
   push:
     branches:
-      - dev
+      - api-v1.10.0
     paths:
-      - api/**
+      - "api/**"
+      - "!api/.gitignore"
+      - "!api/app_alerts.py"
+      - "!api/*-dev.sh"
+      - "!api/requirements-*.txt"
 
 name: Build and Deploy Chalice
 
@@ -43,7 +47,7 @@ jobs:
       continue-on-error: true
 
 
-    - name: Building and Pusing api image
+    - name: Building and Pushing api image
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
@@ -55,7 +59,7 @@ jobs:
         PUSH_IMAGE=0 bash -x ./build.sh
         [[ "x$skip_security_checks" == "xtrue" ]]  || {
           curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
-          images=("chalice" "alerts")
+          images=("chalice")
           for image in ${images[*]};do
             ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
           done
@@ -66,7 +70,7 @@ jobs:
         } && {
           echo "Skipping Security Checks"
         }
-        images=("chalice" "alerts")
+        images=("chalice")
         for image in ${images[*]};do
           docker push $DOCKER_REPO/$image:$IMAGE_TAG 
         done

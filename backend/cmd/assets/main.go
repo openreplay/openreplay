@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"log"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,12 +11,16 @@ import (
 	"openreplay/backend/internal/assets/cacher"
 	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
+	assetsMetrics "openreplay/backend/pkg/metrics/assets"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	metrics := monitoring.New("assets")
+	m := metrics.New()
+	m.Register(assetsMetrics.List())
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
@@ -26,18 +28,13 @@ func main() {
 		pprof.StartProfilingServer()
 	}
 
-	cacher := cacher.NewCacher(cfg, metrics)
-
-	totalAssets, err := metrics.RegisterCounter("assets_total")
-	if err != nil {
-		log.Printf("can't create assets_total metric: %s", err)
-	}
+	cacher := cacher.NewCacher(cfg)
 
 	msgHandler := func(msg messages.Message) {
 		switch m := msg.(type) {
 		case *messages.AssetCache:
 			cacher.CacheURL(m.SessionID(), m.URL)
-			totalAssets.Add(context.Background(), 1)
+			assetsMetrics.IncreaseProcessesSessions()
 		// TODO: connect to "raw" topic in order to listen for JSException
 		case *messages.JSException:
 			sourceList, err := assets.ExtractJSExceptionSources(&m.Payload)

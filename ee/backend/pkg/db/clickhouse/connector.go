@@ -3,17 +3,15 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
-	"os"
 	"strings"
 	"time"
-
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/license"
 )
@@ -21,6 +19,7 @@ import (
 type Connector interface {
 	Prepare() error
 	Commit() error
+	Stop() error
 	InsertWebSession(session *types.Session) error
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
@@ -35,33 +34,30 @@ type Connector interface {
 	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
 }
 
-type connectorImpl struct {
-	conn    driver.Conn
-	batches map[string]Bulk //driver.Batch
+type task struct {
+	bulks []Bulk
 }
 
-// Check env variables. If not present, return default value.
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
+func NewTask() *task {
+	return &task{bulks: make([]Bulk, 0, 14)}
+}
+
+type connectorImpl struct {
+	conn       driver.Conn
+	batches    map[string]Bulk //driver.Batch
+	workerTask chan *task
+	done       chan struct{}
+	finished   chan struct{}
 }
 
 func NewConnector(url string) Connector {
 	license.CheckLicense()
-	// Check username, password, database
-	userName := getEnv("CH_USERNAME", "default")
-	password := getEnv("CH_PASSWORD", "")
-	database := getEnv("CH_DATABASE", "default")
 	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/"+database)
+	url = strings.TrimSuffix(url, "/default")
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
-			Database: database,
-			Username: userName,
-			Password: password,
+			Database: "default",
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
@@ -76,14 +72,18 @@ func NewConnector(url string) Connector {
 	}
 
 	c := &connectorImpl{
-		conn:    conn,
-		batches: make(map[string]Bulk, 9),
+		conn:       conn,
+		batches:    make(map[string]Bulk, 13),
+		workerTask: make(chan *task, 1),
+		done:       make(chan struct{}),
+		finished:   make(chan struct{}),
 	}
+	go c.worker()
 	return c
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, query)
+	batch, err := NewBulk(c.conn, name, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -117,12 +117,47 @@ func (c *connectorImpl) Prepare() error {
 }
 
 func (c *connectorImpl) Commit() error {
+	newTask := NewTask()
 	for _, b := range c.batches {
+		newTask.bulks = append(newTask.bulks, b)
+	}
+	c.batches = make(map[string]Bulk, 13)
+	if err := c.Prepare(); err != nil {
+		log.Printf("can't prepare new CH batch set: %s", err)
+	}
+	c.workerTask <- newTask
+	return nil
+}
+
+func (c *connectorImpl) Stop() error {
+	c.done <- struct{}{}
+	<-c.finished
+	return c.conn.Close()
+}
+
+func (c *connectorImpl) sendBulks(t *task) {
+	for _, b := range t.bulks {
 		if err := b.Send(); err != nil {
-			return fmt.Errorf("can't send batch: %s", err)
+			log.Printf("can't send batch: %s", err)
 		}
 	}
-	return nil
+}
+
+func (c *connectorImpl) worker() {
+	for {
+		select {
+		case t := <-c.workerTask:
+			start := time.Now()
+			c.sendBulks(t)
+			log.Printf("ch bulks dur: %d", time.Now().Sub(start).Milliseconds())
+		case <-c.done:
+			for t := range c.workerTask {
+				c.sendBulks(t)
+			}
+			c.finished <- struct{}{}
+			return
+		}
+	}
 }
 
 func (c *connectorImpl) checkError(name string, err error) {

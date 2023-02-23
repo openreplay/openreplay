@@ -3,6 +3,7 @@ package messages
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/metrics/sink"
 )
 
 type sinkMessageIteratorImpl struct {
@@ -53,6 +54,8 @@ func (i *sinkMessageIteratorImpl) sendBatchEnd() {
 }
 
 func (i *sinkMessageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
+	sink.RecordBatchSize(float64(len(batchData)))
+	sink.IncreaseTotalBatches()
 	// Create new message reader
 	reader := NewMessageReader(batchData)
 

@@ -167,6 +167,10 @@ const NewAlert = (props: IProps) => {
     edit({ query: { ...query, [name]: value } });
   };
 
+  const changeUnit = (value: string) => {
+    alertsStore.changeUnit(value)
+  }
+
   const writeQuery = ({ target: { value, name } }: React.ChangeEvent<HTMLInputElement>) => {
     const { query } = instance;
     edit({ query: { ...query, [name]: value } });
@@ -243,6 +247,7 @@ const NewAlert = (props: IProps) => {
                 instance={instance}
                 triggerOptions={triggerOptions}
                 writeQueryOption={writeQueryOption}
+                changeUnit={changeUnit}
                 writeQuery={writeQuery}
                 unit={unit}
               />
@@ -278,7 +283,13 @@ const NewAlert = (props: IProps) => {
 
       <div className="bg-white mt-4 border rounded mb-10">
         {instance && (
-          <AlertListItem alert={instance} demo siteId="" init={() => null} webhooks={webhooks} />
+          <AlertListItem
+            alert={instance}
+            triggerOptions={triggerOptions}
+            demo
+            siteId=""
+            init={() => null}
+            webhooks={webhooks} />
         )}
       </div>
     </>

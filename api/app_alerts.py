@@ -53,3 +53,10 @@ async def stop_server():
     await shutdown()
     import os, signal
     os.kill(1, signal.SIGTERM)
+
+
+if config("LOCAL_DEV", default=False, cast=bool):
+    @app.get('/private/trigger', tags=["private"])
+    async def trigger_main_cron():
+        logging.info("Triggering main cron")
+        alerts_processor.process()
