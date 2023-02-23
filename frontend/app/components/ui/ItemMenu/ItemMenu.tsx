@@ -68,7 +68,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
             {items
               .filter(({ hidden }) => !hidden)
               .map(({ onClick, text, icon, disabled = false, tooltipTitle = '' }) => (
-                <Tooltip disabled={!disabled} title={tooltipTitle}>
+                <Tooltip disabled={!disabled} title={tooltipTitle} delay={0}>
                   <div
                     key={text}
                     onClick={!disabled ? this.onClick(onClick) : () => {}}
