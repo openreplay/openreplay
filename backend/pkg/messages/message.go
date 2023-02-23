@@ -9,7 +9,7 @@ type Message interface {
 	Meta() *message
 	SessionID() uint64
 	MessageID() uint64
-	Time() int64
+	Time() uint64
 }
 
 // BatchInfo represents common information for all messages inside data batch
@@ -49,7 +49,7 @@ func (b *BatchInfo) Info() string {
 }
 
 type message struct {
-	Timestamp int64
+	Timestamp uint64
 	Index     uint64
 	Url       string
 	batch     *BatchInfo
@@ -78,7 +78,7 @@ func (m *message) MessageID() uint64 {
 	return m.Meta().Index
 }
 
-func (m *message) Time() int64 {
+func (m *message) Time() uint64 {
 	return m.Meta().Timestamp
 }
 

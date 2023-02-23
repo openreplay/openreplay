@@ -47,23 +47,20 @@ func (b *builder) handleMessage(m Message) {
 		log.Printf("skip message with wrong msgID, sessID: %d, msgID: %d, lastID: %d", b.sessionID, m.MessageID(), b.lastMessageID)
 		return
 	}
-	timestamp := GetTimestamp(m)
-	if timestamp == 0 {
+	if m.Time() <= 0 {
 		switch m.(type) {
 		case *IssueEvent, *PerformanceTrackAggr:
 			break
 		default:
-			log.Printf("skip message with empty timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, m.MessageID(), m.TypeID())
+			log.Printf("skip message with incorrect timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, m.MessageID(), m.TypeID())
 		}
 		return
 	}
-	if timestamp < b.timestamp {
-		//log.Printf("skip message with wrong timestamp, sessID: %d, msgID: %d, type: %d, msgTS: %d, lastTS: %d", b.sessionID, messageID, message.TypeID(), timestamp, b.timestamp)
-	} else {
-		b.timestamp = timestamp
+	if m.Time() > b.timestamp {
+		b.timestamp = m.Time()
 	}
-
 	b.lastSystemTime = time.Now()
+	// Process current message
 	for _, p := range b.processors {
 		if rm := p.Handle(m, b.timestamp); rm != nil {
 			rm.Meta().SetMeta(m.Meta())

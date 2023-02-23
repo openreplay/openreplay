@@ -18,7 +18,6 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/sessions"
 )
@@ -30,9 +29,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := db.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	// Init database
 	pg := cache.NewPGCache(

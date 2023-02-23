@@ -16,7 +16,6 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	sinkMetrics "openreplay/backend/pkg/metrics/sink"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
@@ -27,9 +26,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
@@ -112,7 +108,7 @@ func main() {
 			log.Printf("zero ts; sessID: %d, msgType: %d", msg.SessionID(), msg.TypeID())
 		} else {
 			// Log ts of last processed message
-			counter.Update(msg.SessionID(), time.UnixMilli(ts))
+			counter.Update(msg.SessionID(), time.UnixMilli(int64(ts)))
 		}
 
 		// Try to encode message to avoid null data inserts

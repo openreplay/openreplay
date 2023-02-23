@@ -8,21 +8,28 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const ForceDeleteTimeout = 4 * time.Hour
+const ForceDeleteTimeout = 30 * time.Minute
 
 type builderMap struct {
 	handlersFabric func() []handlers.MessageProcessor
 	sessions       map[uint64]*builder
 }
 
-func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) *builderMap {
+type EventBuilder interface {
+	IterateSessionReadyMessages(sessionID uint64, iter func(msg Message))
+	IterateReadyMessages(iter func(sessionID uint64, msg Message))
+	HandleMessage(msg Message)
+	ClearOldSessions()
+}
+
+func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) EventBuilder {
 	return &builderMap{
 		handlersFabric: handlersFabric,
 		sessions:       make(map[uint64]*builder),
 	}
 }
 
-func (m *builderMap) GetBuilder(sessionID uint64) *builder {
+func (m *builderMap) getBuilder(sessionID uint64) *builder {
 	b := m.sessions[sessionID]
 	if b == nil {
 		b = NewBuilder(sessionID, m.handlersFabric()...) // Should create new instances
@@ -32,7 +39,7 @@ func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 }
 
 func (m *builderMap) HandleMessage(msg Message) {
-	m.GetBuilder(msg.SessionID()).handleMessage(msg)
+	m.getBuilder(msg.SessionID()).handleMessage(msg)
 }
 
 func (m *builderMap) ClearOldSessions() {

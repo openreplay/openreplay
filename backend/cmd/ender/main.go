@@ -18,7 +18,6 @@ import (
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	enderMetrics "openreplay/backend/pkg/metrics/ender"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -30,9 +29,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := ender.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()

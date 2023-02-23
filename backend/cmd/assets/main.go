@@ -13,7 +13,6 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	assetsMetrics "openreplay/backend/pkg/metrics/assets"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -24,9 +23,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	cacher := cacher.NewCacher(cfg)
 
