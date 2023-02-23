@@ -79,6 +79,10 @@ spec:
               # S3 compatible storage
               value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
             {{- end }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

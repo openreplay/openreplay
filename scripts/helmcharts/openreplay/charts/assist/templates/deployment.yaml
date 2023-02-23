@@ -75,6 +75,10 @@ spec:
               {{- end }}
             - name: REDIS_URL
               value: {{ .Values.global.redis.redisHost }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
