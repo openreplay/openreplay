@@ -202,7 +202,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
     full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
                                                   favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                   user_id=user_id)
@@ -264,6 +264,12 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 GROUP BY user_id
                                             ) AS users_sessions;""",
                                      full_args)
+        elif ids_only:
+            main_query = cur.format(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                    full_args)
         else:
             if data.order is None:
                 data.order = schemas.SortOrderType.desc.value
@@ -302,8 +308,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print(data.json())
             print("--------------------")
             raise err
-        if errors_only:
-            return helper.list_to_camel_case(cur.fetchall())
+        if errors_only or ids_only:
+            return helper.list_to_camel_case(sessions)
 
         if len(sessions) > 0:
             sessions = sessions[0]
@@ -1170,6 +1176,9 @@ def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_statu
             ) {"" if or_events else (f"AS event_{event_index} " + ("ON(TRUE)" if event_index > 0 else ""))}\
             """)
             event_index += 1
+            # limit THEN-events to 7 in CH because sequenceMatch cannot take more arguments
+            if event_index == 7 and data.events_order == schemas.SearchEventOrder._then:
+                break
 
         if event_index < 2:
             data.events_order = schemas.SearchEventOrder._or
@@ -1520,17 +1529,18 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 
 def count_all():
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
-        row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
+    with ch_client.ClickHouseClient() as cur:
+        row = cur.execute(query=f"SELECT COUNT(session_id) AS count FROM {exp_ch_helper.get_main_sessions_table()}")
     return row.get("count", 0)
 
 
 def session_exists(project_id, session_id):
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format("""SELECT 1 
-                         FROM public.sessions 
-                         WHERE session_id=%(session_id)s 
-                            AND project_id=%(project_id)s""",
+        query = cur.format(f"""SELECT 1 
+                               FROM {exp_ch_helper.get_main_sessions_table()} 
+                               WHERE session_id=%(session_id)s 
+                                    AND project_id=%(project_id)s
+                               LIMIT 1""",
                            {"project_id": project_id, "session_id": session_id})
         row = cur.execute(query)
     return row is not None

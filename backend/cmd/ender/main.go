@@ -2,8 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"strings"
@@ -12,16 +10,23 @@ import (
 
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
+	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
+	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	enderMetrics "openreplay/backend/pkg/metrics/ender"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	metrics := monitoring.New("ender")
+	m := metrics.New()
+	m.Register(enderMetrics.List())
+	m.Register(databaseMetrics.List())
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := ender.New()
@@ -29,10 +34,10 @@ func main() {
 		pprof.StartProfilingServer()
 	}
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return

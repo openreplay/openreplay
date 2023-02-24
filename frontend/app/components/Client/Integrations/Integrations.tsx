@@ -99,7 +99,7 @@ function Integrations(props: Props) {
           </div>
           <div className="">{cat.description}</div>
 
-          <div className="flex flex-wrap mt-4">
+          <div className="flex flex-wrap mt-4 gap-3">
             {cat.integrations.map((integration: any) => (
               <React.Fragment key={integration.slug}>
                 <Tooltip

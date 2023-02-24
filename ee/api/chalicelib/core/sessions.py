@@ -304,7 +304,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 extra_col = ""
                 extra_where = ""
                 pre_query = ""
-                distinct_on="s.session_id"
+                distinct_on = "s.session_id"
                 if metric_of == schemas.MetricOfTable.user_country:
                     main_col = "user_country"
                 elif metric_of == schemas.MetricOfTable.user_device:
@@ -324,7 +324,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.MetricOfTable.visited_url:
                     main_col = "path"
                     extra_col = ", path"
-                    distinct_on+=",path"
+                    distinct_on += ",path"
                 main_query = cur.mogrify(f"""{pre_query}
                                              SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,
@@ -1197,8 +1197,9 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 def count_all():
     with pg_client.PostgresClient(unlimited_query=True) as cur:
-        row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
-    return row.get("count", 0)
+        cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
+        row = cur.fetchone()
+    return row.get("count", 0) if row else 0
 
 
 def session_exists(project_id, session_id):
@@ -1206,7 +1207,8 @@ def session_exists(project_id, session_id):
         query = cur.mogrify("""SELECT 1 
                              FROM public.sessions 
                              WHERE session_id=%(session_id)s 
-                                AND project_id=%(project_id)s""",
+                                AND project_id=%(project_id)s
+                             LIMIT 1;""",
                             {"project_id": project_id, "session_id": session_id})
         cur.execute(query)
         row = cur.fetchone()

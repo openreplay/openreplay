@@ -75,20 +75,20 @@ spec:
             - name: MINIO_FORCE_NEW_KEYS
               value: {{ ternary "yes" "no" .Values.forceNewKeys | quote }}
             {{- if .Values.useCredentialsFile }}
-            - name: MINIO_ACCESS_KEY_FILE
+            - name: MINIO_ROOT_USER_FILE
               value: "/opt/bitnami/minio/secrets/access-key"
             {{- else }}
-            - name: MINIO_ACCESS_KEY
+            - name: MINIO_ROOT_USER
               valueFrom:
                 secretKeyRef:
                   name: {{ include "minio.secretName" . }}
                   key: access-key
             {{- end }}
             {{- if .Values.useCredentialsFile }}
-            - name: MINIO_SECRET_KEY_FILE
+            - name: MINIO_ROOT_PASSWORD_FILE
               value: "/opt/bitnami/minio/secrets/secret-key"
             {{- else }}
-            - name: MINIO_SECRET_KEY
+            - name: MINIO_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "minio.secretName" . }}

@@ -13,11 +13,11 @@ from chalicelib.utils.TimeUTC import TimeUTC
 def __exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int]) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1
-                                              FROM public.projects
-                                              WHERE deleted_at IS NULL
-                                                  AND name ILIKE %(name)s
-                                                  AND tenant_id = %(tenant_id)s
-                                                  {"AND project_id!=%(exclude_id))s" if exclude_id else ""}) AS exists;""",
+                                FROM public.projects
+                                WHERE deleted_at IS NULL
+                                  AND name ILIKE %(name)s
+                                  AND tenant_id = %(tenant_id)s
+                                  {"AND project_id!=%(exclude_id)s" if exclude_id else ""}) AS exists;""",
                             {"tenant_id": tenant_id, "name": name, "exclude_id": exclude_id})
 
         cur.execute(query=query)

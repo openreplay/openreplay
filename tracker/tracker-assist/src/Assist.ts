@@ -12,7 +12,7 @@ import AnnotationCanvas from './AnnotationCanvas.js'
 import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js'
 import { callConfirmDefault, } from './ConfirmWindow/defaults.js'
 import type { Options as ConfirmOptions, } from './ConfirmWindow/defaults.js'
-import ScreenRecordingState from './ScreenRecordingState'
+import ScreenRecordingState from './ScreenRecordingState.js'
 
 // TODO: fully specified strict check with no-any (everywhere)
 // @ts-ignore

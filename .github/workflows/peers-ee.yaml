@@ -1,13 +1,16 @@
-# This action will push the utilities changes to aws
+# This action will push the peers changes to aws
 on:
   workflow_dispatch:
   push:
     branches:
       - dev
     paths:
-      - utilities/**
+      - "ee/peers/**"
+      - "peers/**"
+      - "!peers/.gitignore"
+      - "!peers/*-dev.sh"
 
-name: Build and Deploy Utilities
+name: Build and Deploy Peers
 
 jobs:
   deploy:
@@ -24,35 +27,35 @@ jobs:
 
     - name: Docker login
       run: |
-        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
+        docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
 
     - uses: azure/k8s-set-context@v1
       with:
         method: kubeconfig
-        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
 
     - name: Building and Pushing api image
       id: build-image
       env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
-        cd utilities
-        PUSH_IMAGE=1 bash build.sh
+        cd peers
+        PUSH_IMAGE=1 bash build.sh ee
     - name: Deploy to kubernetes
       run: |
         cd scripts/helmcharts/
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\" #g" vars.yaml
-        sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\" #g" vars.yaml
-        sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
+        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.EE_REGISTRY_URL }}\"#g" vars.yaml
+        sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\" #g" vars.yaml
+        sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.EE_MINIO_SECRET_KEY }}\" #g" vars.yaml
+        sed -i "s#domain_name.*#domain_name: \"ee.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-        bash kube-install.sh --app utilities
+        bash kube-install.sh --app peers
       env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
 
@@ -60,7 +63,7 @@ jobs:
     #   if: ${{ failure() }}
     #   uses: mxschmitt/action-tmate@v3
     #   env:
-    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
     #     IMAGE_TAG: ${{ github.sha }}
     #     ENVIRONMENT: staging
     #

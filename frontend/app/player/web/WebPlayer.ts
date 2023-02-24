@@ -1,4 +1,4 @@
-import { Log, LogLevel } from './types'
+import { Log, LogLevel } from './types/log'
 
 import type { Store } from 'App/player'
 import Player from '../player/Player'
@@ -30,7 +30,6 @@ export default class WebPlayer extends Player {
     let initialLists = live ? {} : {
       event: session.events || [],
       stack: session.stackEvents || [],
-      resource: session.resources || [], // MBTODO: put ResourceTiming in file
       exceptions: session.errors?.map(({ name, ...rest }: any) =>
         Log({
           level: LogLevel.ERROR,
@@ -46,7 +45,7 @@ export default class WebPlayer extends Player {
     this.screen = screen
     this.messageManager = messageManager
     if (!live) { // hack. TODO: split OfflinePlayer class
-      messageManager.loadMessages()
+      void messageManager.loadMessages(isClickMap)
     }
 
     this.targetMarker = new TargetMarker(this.screen, wpState)

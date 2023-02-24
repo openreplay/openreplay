@@ -80,8 +80,8 @@ export default class SharePopup extends React.PureComponent {
   handleSuccess = (endpoint) => {
     const obj =
       endpoint === 'Slack'
-        ? { isOpen: false, comment: '', loadingSlack: false }
-        : { isOpen: false, comment: '', loadingTeams: false };
+        ? { loadingSlack: false }
+        : { loadingTeams: false };
     this.setState(obj);
     toast.success(`Sent to ${endpoint}.`);
   };
@@ -109,7 +109,7 @@ export default class SharePopup extends React.PureComponent {
     return (
       <Popover
         onOpen={() => this.setState({ isOpen: true })}
-        onClose={() => this.setState({ isOpen: false })}
+        onClose={() => this.setState({ isOpen: false, comment: '' })}
         render={() => (
           <div className={styles.wrapper}>
             {this.state.loadingTeams || this.state.loadingSlack ? (

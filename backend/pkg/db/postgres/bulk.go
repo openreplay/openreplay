@@ -2,13 +2,9 @@ package postgres
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
-	"log"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics/database"
 	"time"
 )
 
@@ -25,15 +21,13 @@ type Bulk interface {
 }
 
 type bulkImpl struct {
-	conn         Pool
-	table        string
-	columns      string
-	template     string
-	setSize      int
-	sizeLimit    int
-	values       []interface{}
-	bulkSize     syncfloat64.Histogram
-	bulkDuration syncfloat64.Histogram
+	conn      Pool
+	table     string
+	columns   string
+	template  string
+	setSize   int
+	sizeLimit int
+	values    []interface{}
 }
 
 func (b *bulkImpl) Append(args ...interface{}) error {
@@ -79,18 +73,15 @@ func (b *bulkImpl) send() error {
 		return fmt.Errorf("send bulk err: %s", err)
 	}
 	// Save bulk metrics
-	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
-	b.bulkDuration.Record(ctx, float64(time.Now().Sub(start).Milliseconds()), attribute.String("table", b.table))
-	b.bulkSize.Record(ctx, float64(size), attribute.String("table", b.table))
+	database.RecordBulkElements(float64(size), "pg", b.table)
+	database.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "pg", b.table)
 	return nil
 }
 
-func NewBulk(conn Pool, metrics *monitoring.Metrics, table, columns, template string, setSize, sizeLimit int) (Bulk, error) {
+func NewBulk(conn Pool, table, columns, template string, setSize, sizeLimit int) (Bulk, error) {
 	switch {
 	case conn == nil:
 		return nil, errors.New("db conn is empty")
-	case metrics == nil:
-		return nil, errors.New("metrics is empty")
 	case table == "":
 		return nil, errors.New("table is empty")
 	case columns == "":
@@ -102,23 +93,13 @@ func NewBulk(conn Pool, metrics *monitoring.Metrics, table, columns, template st
 	case sizeLimit <= 0:
 		return nil, errors.New("size limit is wrong")
 	}
-	messagesInBulk, err := metrics.RegisterHistogram("messages_in_bulk")
-	if err != nil {
-		log.Printf("can't create messages_size metric: %s", err)
-	}
-	bulkInsertDuration, err := metrics.RegisterHistogram("bulk_insert_duration")
-	if err != nil {
-		log.Printf("can't create messages_size metric: %s", err)
-	}
 	return &bulkImpl{
-		conn:         conn,
-		table:        table,
-		columns:      columns,
-		template:     template,
-		setSize:      setSize,
-		sizeLimit:    sizeLimit,
-		values:       make([]interface{}, 0, setSize*sizeLimit),
-		bulkSize:     messagesInBulk,
-		bulkDuration: bulkInsertDuration,
+		conn:      conn,
+		table:     table,
+		columns:   columns,
+		template:  template,
+		setSize:   setSize,
+		sizeLimit: sizeLimit,
+		values:    make([]interface{}, 0, setSize*sizeLimit),
 	}, nil
 }

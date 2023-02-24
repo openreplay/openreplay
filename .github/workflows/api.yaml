@@ -8,9 +8,13 @@ on:
         default: 'false'
   push:
     branches:
-      - dev
+      - api-v1.10.0
     paths:
-      - api/**
+      - "api/**"
+      - "!api/.gitignore"
+      - "!api/app_alerts.py"
+      - "!api/*-dev.sh"
+      - "!api/requirements-*.txt"
 
 name: Build and Deploy Chalice
 

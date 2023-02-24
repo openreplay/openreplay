@@ -2,9 +2,9 @@
 import { Decoder } from "syncod";
 import logger from 'App/logger';
 
-import Resource, { TYPES as RES_TYPES } from 'Types/session/resource';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
-import { Log } from './types';
+import { Log } from './types/log';
+import { Resource, ResourceType, getResourceFromResourceTiming, getResourceFromNetworkRequest } from './types/resource'
 
 import { toast } from 'react-toastify';
 
@@ -193,9 +193,9 @@ export default class MessageManager {
     // this.state.update({ filesLoaded: true })
   }
 
-  async loadMessages() {
+  async loadMessages(isClickmap: boolean = false) {
     this.setMessagesLoading(true)
-    // TODO: reuseable decryptor instance
+    // TODO: reusable decryptor instance
     const createNewParser = (shouldDecrypt = true) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
@@ -233,6 +233,7 @@ export default class MessageManager {
       .finally(this.onFileReadFinally);
 
     // load devtools (TODO: start after the first DOM file download)
+    if (isClickmap) return;
     this.state.update({ devtoolsLoading: true })
     loadFiles(this.session.devtoolsURL, createNewParser())
     // EFS fallback
@@ -394,19 +395,13 @@ export default class MessageManager {
           Log(msg)
         )
         break;
+      case MType.ResourceTiming:
+        // TODO: merge `resource` and `fetch` lists into one here instead of UI
+        this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
+        break;
       case MType.Fetch:
       case MType.NetworkRequest:
-        this.lists.lists.fetch.insert(new Resource({
-          method: msg.method,
-          url: msg.url,
-          request: msg.request,
-          response: msg.response,
-          status: msg.status,
-          duration: msg.duration,
-          type: msg.type === "xhr" ? RES_TYPES.XHR : RES_TYPES.FETCH,
-          time: Math.max(msg.timestamp - this.sessionStart, 0), // !!! doesn't look good. TODO: find solution to show negative timings
-          index,
-        }) as Timed)
+        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.Redux:
         decoded = this.decodeStateMessage(msg, ["state", "action"]);

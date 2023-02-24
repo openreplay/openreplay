@@ -75,7 +75,7 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [props.bottomBlock, props.fullscreen, playerContext.player]);
+  }, [props.bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
 
   if (!playerContext.player) return null;
 

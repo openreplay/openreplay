@@ -2,6 +2,7 @@ import { IconNames } from 'App/components/ui/SVG';
 import React from 'react';
 import { Icon, Tooltip } from 'UI';
 import cn from 'classnames';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 export interface MetricType {
   title: string;
@@ -23,7 +24,7 @@ function MetricTypeItem(props: Props) {
     onClick = () => {},
   } = props;
   return (
-    <Tooltip disabled={!disabled} title="This feature requires an enterprise license." delay={0}>
+    <Tooltip disabled={!disabled} title={ENTERPRISE_REQUEIRED} delay={0}>
       <div
         className={cn(
           'rounded color-gray-darkest flex items-start border border-transparent p-4 hover:bg-active-blue cursor-pointer group hover-color-teal',
