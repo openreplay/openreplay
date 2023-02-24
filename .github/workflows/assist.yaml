@@ -5,7 +5,7 @@ on:
     branches:
       - dev
     paths:
-      - "utilities/*/**"
+      - "utilities/**"
       - "!utilities/.gitignore"
       - "!utilities/*-dev.sh"
 
