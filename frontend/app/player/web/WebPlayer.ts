@@ -127,6 +127,7 @@ export default class WebPlayer extends Player {
 
   clean = () => {
     super.clean()
+    this.messageManager.clean()
     window.removeEventListener('resize', this.scale)
   }
 }

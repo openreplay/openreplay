@@ -10,10 +10,6 @@ export interface Moveable {
   move(time: number): void
 }
 
-export interface Cleanable {
-  clean(): void
-}
-
 export interface Interval {
   contains(t: number): boolean
   start: number

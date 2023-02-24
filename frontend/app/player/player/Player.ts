@@ -1,6 +1,6 @@
 import * as typedLocalStorage from './localStorage';
 
-import type { Moveable, Cleanable, Store } from '../common/types';
+import type { Moveable, Store } from '../common/types';
 import Animator from './Animator';
 import type { GetState as AnimatorGetState } from './Animator';
 
@@ -33,7 +33,7 @@ export default class Player extends Animator {
     speed: initialSpeed,
   } as const
 
-  constructor(private pState: Store<State & AnimatorGetState>, private manager: Moveable & Cleanable) {
+  constructor(private pState: Store<State & AnimatorGetState>, private manager: Moveable) {
     super(pState, manager)
 
     // Autoplay
@@ -108,7 +108,6 @@ export default class Player extends Animator {
 
   clean() {
     this.pause()
-    this.manager.clean()
   }
 
 }
