@@ -4,7 +4,9 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const INPUT_EVENT_TIMEOUT = 1 * 60 * 1000
+// Move to heuristics
+
+const InputEventTimeout = 1 * 60 * 1000
 
 type inputLabels map[uint64]string
 
@@ -59,7 +61,7 @@ func (b *inputEventBuilder) Handle(message Message, timestamp uint64) Message {
 		return b.Build()
 	}
 
-	if b.inputEvent != nil && b.inputEvent.Timestamp+INPUT_EVENT_TIMEOUT < timestamp {
+	if b.inputEvent != nil && b.inputEvent.Timestamp+InputEventTimeout < timestamp {
 		return b.Build()
 	}
 	return nil

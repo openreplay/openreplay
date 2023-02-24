@@ -444,11 +444,6 @@ class MessageCodec(Codec):
                 value_key=self.read_uint(reader)
             )
 
-        if message_id == 52:
-            return DOMDrop(
-                timestamp=self.read_uint(reader)
-            )
-
         if message_id == 53:
             return ResourceTiming(
                 timestamp=self.read_uint(reader),

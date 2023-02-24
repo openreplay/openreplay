@@ -46,9 +46,9 @@ func (b *EventMapper) Build() Message {
 
 func (b *EventMapper) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
-	case *MouseClick:
+	case *MouseClick: // use only mouse click
 		if msg.Label != "" {
-			return &ClickEvent{
+			return &ClickEvent{ // remove it
 				MessageID:      message.MessageID(),
 				Label:          msg.Label,
 				HesitationTime: msg.HesitationTime,

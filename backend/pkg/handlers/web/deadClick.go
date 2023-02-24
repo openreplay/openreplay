@@ -30,6 +30,7 @@ func (d *DeadClickDetector) reset() {
 }
 
 func (d *DeadClickDetector) Build() Message {
+	// remove reset from external Build call
 	defer d.reset()
 	if d.lastMouseClick == nil || d.lastClickTimestamp+ClickRelationTime > d.lastTimestamp { // reaction is instant
 		return nil
@@ -67,6 +68,7 @@ func (d *DeadClickDetector) Handle(message Message, timestamp uint64) Message {
 		*RemoveNodeAttribute,
 		*CreateElementNode,
 		*CreateTextNode,
+		*SetNodeFocus,
 		*MoveNode,
 		*RemoveNode,
 		*SetCSSData,

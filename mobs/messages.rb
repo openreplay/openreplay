@@ -289,11 +289,6 @@ message 51, "SetNodeAttributeDict" do
   uint 'ValueKey'
 end
 
-## 50,51
-# Doesn't work properly. TODO: Make proper detections in tracker 
-message 52, 'DOMDrop', :tracker => false, :replayer => false do
-  uint 'Timestamp'
-end
 message 53, 'ResourceTiming', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'

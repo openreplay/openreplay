@@ -470,13 +470,6 @@ class SetNodeAttributeDict(Message):
         self.value_key = value_key
 
 
-class DOMDrop(Message):
-    __id__ = 52
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-
 class ResourceTiming(Message):
     __id__ = 53
 

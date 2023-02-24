@@ -33,7 +33,7 @@ func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.
 }
 
 func (h *heuristicsImpl) run() {
-	tick := time.Tick(30 * time.Second)
+	tick := time.Tick(10 * time.Second)
 	for {
 		select {
 		case <-tick:
