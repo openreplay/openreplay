@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
-import { TYPES } from 'Types/session/resource';
+import { ResourceType } from 'Player';
 import { formatBytes } from 'App/utils';
 import { formatMs } from 'App/date';
 
@@ -21,12 +21,12 @@ const MEDIA = 'media';
 const OTHER = 'other';
 
 const TAB_TO_TYPE_MAP = {
-  [XHR]: TYPES.XHR,
-  [JS]: TYPES.JS,
-  [CSS]: TYPES.CSS,
-  [IMG]: TYPES.IMG,
-  [MEDIA]: TYPES.MEDIA,
-  [OTHER]: TYPES.OTHER,
+  [XHR]: ResourceType.XHR,
+  [JS]: ResourceType.SCRIPT,
+  [CSS]: ResourceType.CSS,
+  [IMG]: ResourceType.IMG,
+  [MEDIA]: ResourceType.MEDIA,
+  [OTHER]: ResourceType.OTHER,
 };
 const TABS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER].map((tab) => ({
   text: tab,

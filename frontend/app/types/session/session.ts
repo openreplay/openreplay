@@ -1,7 +1,6 @@
 import { Duration } from 'luxon';
 import SessionEvent, { TYPES, EventData, InjectedEvent } from './event';
 import StackEvent from './stackEvent';
-import Resource from './resource';
 import SessionError, { IError } from './error';
 import Issue, { IIssue } from './issue';
 import { Note } from 'App/services/NotesService'
@@ -31,8 +30,6 @@ export interface ISession {
   duration: number,
   events: InjectedEvent[],
   stackEvents: StackEvent[],
-  resources: Resource[],
-  missedResources: Resource[],
   metadata: [],
   favorite: boolean,
   filterId?: string,
@@ -119,7 +116,6 @@ export default class Session {
   duration: ISession["duration"]
   events: ISession["events"]
   stackEvents: ISession["stackEvents"]
-  resources: ISession["resources"]
   metadata: ISession["metadata"]
   favorite: ISession["favorite"]
   filterId?: ISession["filterId"]
@@ -181,7 +177,6 @@ export default class Session {
       devtoolsURL = [],
       mobsUrl = [],
       notes = [],
-      resources = [],
       ...session
     } = sessionData
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -207,13 +202,6 @@ export default class Session {
         }
       })
     }
-
-    let resourcesList = resources.map((r) => new Resource(r as any));
-    resourcesList.forEach((r: Resource) => {
-      r.time = Math.max(0, r.time - startedAt)
-    })
-    resourcesList = resourcesList.sort((r1, r2) => r1.time - r2.time);
-    const missedResources = resourcesList.filter(({ success }) => !success);
 
     const stackEventsList: StackEvent[] = []
     if (stackEvents?.length || session.userEvents?.length) {
@@ -245,8 +233,6 @@ export default class Session {
       siteId: projectId,
       events,
       stackEvents: stackEventsList,
-      resources: resourcesList,
-      missedResources,
       userDevice,
       userDeviceType,
       isMobile,

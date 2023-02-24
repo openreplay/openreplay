@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import FetchBasicDetails from './components/FetchBasicDetails';
 import { Button } from 'UI';
-import { TYPES } from 'Types/session/resource';
+import { ResourceType } from 'Player';
 import FetchTabs from './components/FetchTabs/FetchTabs';
 import { useStore } from 'App/mstore';
 import { DateTime } from 'luxon';
@@ -17,7 +17,7 @@ function FetchDetailsModal(props: Props) {
   const [resource, setResource] = useState(props.resource);
   const [first, setFirst] = useState(false);
   const [last, setLast] = useState(false);
-  const isXHR = resource.type === TYPES.XHR || resource.type === TYPES.FETCH
+  const isXHR = resource.type === ResourceType.XHR || resource.type === ResourceType.FETCH
   const {
     sessionStore: { devTools },
     settingsStore: { sessionSettings: { timezone }},

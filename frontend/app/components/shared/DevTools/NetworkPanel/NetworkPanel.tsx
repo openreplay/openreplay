@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { Duration } from 'luxon';
 
 import { Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
-import { TYPES } from 'Types/session/resource';
+import { ResourceType } from 'Player';
 import { formatBytes } from 'App/utils';
 import { formatMs } from 'App/date';
 import { useModal } from 'App/components/Modal';
@@ -28,13 +28,13 @@ const MEDIA = 'media';
 const OTHER = 'other';
 
 const TYPE_TO_TAB = {
-  [TYPES.XHR]: XHR,
-  [TYPES.FETCH]: XHR,
-  [TYPES.JS]: JS,
-  [TYPES.CSS]: CSS,
-  [TYPES.IMG]: IMG,
-  [TYPES.MEDIA]: MEDIA,
-  [TYPES.OTHER]: OTHER,
+  [ResourceType.XHR]: XHR,
+  [ResourceType.FETCH]: XHR,
+  [ResourceType.SCRIPT]: JS,
+  [ResourceType.CSS]: CSS,
+  [ResourceType.IMG]: IMG,
+  [ResourceType.MEDIA]: MEDIA,
+  [ResourceType.OTHER]: OTHER,
 }
 
 const TAP_KEYS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER] as const;
@@ -154,7 +154,7 @@ function NetworkPanel({ startedAt }: { startedAt: number }) {
   const activeIndex = devTools[INDEX_KEY].index;
 
   const list = useMemo(() =>
-    // TODO: better merge (with body size info)
+    // TODO: better merge (with body size info) - do it in player
     resourceList.filter(res => !fetchList.some(ft => {
       // res.url !== ft.url doesn't work on relative URLs appearing within fetchList (to-fix in player)
       if (res.name !== ft.name) { return false }
