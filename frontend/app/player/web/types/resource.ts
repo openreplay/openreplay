@@ -11,7 +11,7 @@ export const enum ResourceType {
 }
 
 function getURLExtention(url: string): string {
-  const pts = url.split(".")
+  const pts = url.split("?")[0].split(".")
   return pts[pts.length-1] || ""
 }
 
