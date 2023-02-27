@@ -83,7 +83,7 @@ const getFiltersFromEntries = (entires: any) => {
       filter.operator = operator;
       if (filter.icon === "filters/metadata") {
         filter.source = filter.type;
-        filter.type = 'metadata';
+        filter.type = 'METADATA';
       } else {
         filter.source = sourceArr && sourceArr.length > 0 ? sourceArr : null;
         filter.sourceOperator = !!sourceOperator ? decodeURI(sourceOperator) : null;
