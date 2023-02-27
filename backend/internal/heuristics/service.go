@@ -42,6 +42,7 @@ func (h *heuristicsImpl) run() {
 			})
 			h.producer.Flush(h.cfg.ProducerTimeout)
 			h.consumer.Commit()
+			// TODO: builderMap.ClearOldSessions()
 		case msg := <-h.consumer.Rebalanced():
 			log.Println(msg)
 		default:

@@ -12,14 +12,11 @@ import (
 	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
-	types2 "openreplay/backend/pkg/db/types"
-	"openreplay/backend/pkg/handlers"
-	custom2 "openreplay/backend/pkg/handlers/custom"
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/sessions"
 )
 
 func main() {
@@ -34,18 +31,6 @@ func main() {
 	pg := cache.NewPGCache(
 		postgres.NewConn(cfg.Postgres.String(), cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
-
-	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
-	handlersFabric := func() []handlers.MessageProcessor {
-		return []handlers.MessageProcessor{
-			&custom2.EventMapper{},
-			custom2.NewInputEventBuilder(),
-			custom2.NewPageEventBuilder(),
-		}
-	}
-
-	// Create handler's aggregator
-	builderMap := sessions.NewBuilderMap(handlersFabric)
 
 	// Init modules
 	saver := datasaver.New(pg, cfg)
@@ -69,8 +54,9 @@ func main() {
 			return
 		}
 
+		// Get sessionID
 		var (
-			session *types2.Session
+			session *types.Session
 			err     error
 		)
 		if msg.TypeID() == messages.MsgSessionEnd {
@@ -90,23 +76,6 @@ func main() {
 		if err != nil {
 			log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
 		}
-
-		// Handle heuristics and save to temporary queue in memory
-		builderMap.HandleMessage(msg)
-
-		// Process saved heuristics messages as usual messages above in the code
-		builderMap.IterateSessionReadyMessages(msg.SessionID(), func(msg messages.Message) {
-			if err := saver.InsertMessage(msg); err != nil {
-				if !postgres.IsPkeyViolation(err) {
-					log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-				}
-				return
-			}
-
-			if err := saver.InsertStats(session, msg); err != nil {
-				log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-			}
-		})
 	}
 
 	// Init consumer
@@ -157,7 +126,6 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			commitDBUpdates()
-			builderMap.ClearOldSessions()
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:

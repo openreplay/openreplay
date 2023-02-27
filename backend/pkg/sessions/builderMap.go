@@ -16,7 +16,6 @@ type builderMap struct {
 }
 
 type EventBuilder interface {
-	IterateSessionReadyMessages(sessionID uint64, iter func(msg Message))
 	IterateReadyMessages(iter func(sessionID uint64, msg Message))
 	HandleMessage(msg Message)
 	ClearOldSessions()
@@ -76,12 +75,4 @@ func (m *builderMap) IterateReadyMessages(iter func(sessionID uint64, msg Messag
 	for sessionID, session := range m.sessions {
 		m.iterateSessionReadyMessages(sessionID, session, func(msg Message) { iter(sessionID, msg) })
 	}
-}
-
-func (m *builderMap) IterateSessionReadyMessages(sessionID uint64, iter func(msg Message)) {
-	session, ok := m.sessions[sessionID]
-	if !ok {
-		return
-	}
-	m.iterateSessionReadyMessages(sessionID, session, iter)
 }
