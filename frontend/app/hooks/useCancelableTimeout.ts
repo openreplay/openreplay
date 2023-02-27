@@ -15,6 +15,6 @@ export default function useCancelableTimeout(
 		clearTimeout(idRef.current)
 		onCancel()
 	}
-	useEffect(() => () => clearTimeout(idRef.current)) // auto-cancel without callback (clean)
+	useEffect(() => () => clearTimeout(idRef.current), []) // auto-cancel without callback (on clean)
 	return [ triggerTimeout, cancelTimeout ]
 }
