@@ -1,4 +1,4 @@
-## Licenses (as of November 04, 2022)
+## Licenses (as of January 23, 2023)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -49,6 +49,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | scikit-learn | BSD3 | Python |
 | sqlalchemy | MIT | Python |
 | pandas-redshift | MIT | Python |
+| confluent-kafka | Apache2 | Python |
 | amplitude-js | MIT | JavaScript |
 | classnames | MIT | JavaScript |
 | codemirror | MIT | JavaScript |
@@ -105,12 +106,13 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | kafka | Apache2 | Infrastructure |
 | stern | Apache2 | Infrastructure |
 | k9s | Apache2 | Infrastructure |
-| minio | GPLv3 | Infrastructure |
+| minio | [AGPLv3](https://github.com/minio/minio/blob/master/LICENSE) | Infrastructure |
 | postgreSQL | PostgreSQL License | Infrastructure |
-| ansible | GPLv3 | Infrastructure |
 | k3s | Apache2 | Infrastructure |
 | nginx | BSD2 | Infrastructure |
 | clickhouse | Apache2 | Infrastructure |
 | redis | BSD3 | Infrastructure |
 | yq | MIT | Infrastructure |
 | html2canvas | MIT | JavaScript |
+| eget | MIT | Infrastructure |
+

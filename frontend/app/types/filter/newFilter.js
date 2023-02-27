@@ -15,21 +15,21 @@ export const filters = [
   { key: FilterKey.FETCH, type: FilterType.SUB_FILTERS, category: FilterCategory.JAVASCRIPT, operator: 'is', label: 'Network Request', filters: [
       { key: FilterKey.FETCH_URL, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with URL', placeholder: 'Enter path or URL', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
       { key: FilterKey.FETCH_STATUS_CODE, type: FilterType.NUMBER_MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with status code', placeholder: 'Enter status code', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
-      { key: FilterKey.FETCH_METHOD, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', placeholder: 'Select method type', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', options: filterOptions.methodOptions },
+      { key: FilterKey.FETCH_METHOD, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', placeholder: 'Select method type', operatorOptions: filterOptions.stringOperatorsLimited, icon: 'filters/fetch', options: filterOptions.methodOptions },
       { key: FilterKey.FETCH_DURATION, type: FilterType.NUMBER, category: FilterCategory.PERFORMANCE, label: 'with duration (ms)', placeholder: 'E.g. 12', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
       { key: FilterKey.FETCH_REQUEST_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with request body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
       { key: FilterKey.FETCH_RESPONSE_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with response body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     ], icon: 'filters/fetch', isEvent: true },
   { key: FilterKey.GRAPHQL, type: FilterType.SUB_FILTERS, category: FilterCategory.JAVASCRIPT, label: 'GraphQL', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/graphql', isEvent: true, filters: [
       { key: FilterKey.GRAPHQL_NAME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with name', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
-      { key: FilterKey.GRAPHQL_METHOD, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', options: filterOptions.methodOptions },
+      { key: FilterKey.GRAPHQL_METHOD, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', operatorOptions: filterOptions.stringOperatorsLimited, icon: 'filters/fetch', options: filterOptions.methodOptions },
       { key: FilterKey.GRAPHQL_REQUEST_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with request body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
       { key: FilterKey.GRAPHQL_RESPONSE_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with response body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     ]},
   { key: FilterKey.STATEACTION, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'State Action', placeholder: 'E.g. 12', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/state-action', isEvent: true },
   { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Error Message', placeholder: 'E.g. Uncaught SyntaxError', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/error', isEvent: true },
   // { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
-  
+
     // FILTERS
   { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User OS', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/os' },
   { key: FilterKey.USER_BROWSER, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User Browser', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/browser' },
@@ -42,7 +42,7 @@ export const filters = [
     // { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
   { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', placeholder: 'E.g. Alex, or alex@domain.com, or EMP123', operator: 'is', operatorOptions: filterOptions.stringOperators.concat([{ label: 'is undefined', value: 'isUndefined'}]), icon: 'filters/userid' },
   { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
-  
+
     // PERFORMANCE
   { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', placeholder: 'Enter path', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/dom-complete', isEvent: true, hasSource: true, sourceOperator: '>=', sourcePlaceholder: 'E.g. 12', sourceUnit: 'ms', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint', placeholder: 'Enter path', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, source: [], icon: 'filters/lcpt', isEvent: true, hasSource: true, sourceOperator: '>=', sourcePlaceholder: 'E.g. 12', sourceUnit: 'ms', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
@@ -52,6 +52,14 @@ export const filters = [
   { key: FilterKey.FETCH_FAILED, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Failed Request', placeholder: 'Enter path', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, icon: 'filters/fetch-failed', isEvent: true },
   { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', placeholder: 'Select an issue', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/click', options: filterOptions.issueOptions },
 ];
+
+export const eventKeys = filters.filter((i) => i.isEvent).map(i => i.key);
+
+export const clickmapFilter = {
+  key: FilterKey.LOCATION,
+  type: FilterType.MULTIPLE,
+  category: FilterCategory.INTERACTIONS,
+  label: 'Visited URL', placeholder: 'Enter URL or path', operator: filterOptions.pageUrlOperators[0].value, operatorOptions: filterOptions.pageUrlOperators, icon: 'filters/location', isEvent: true }
 
 const mapFilters = (list) => {
   return list.reduce((acc, filter) => {
@@ -97,12 +105,12 @@ export const clearMetaFilters = () => {
 
 /**
  * Add a new filter to the filter list
- * @param {*} category 
- * @param {*} key 
- * @param {*} type 
- * @param {*} operator 
- * @param {*} operatorOptions 
- * @param {*} icon 
+ * @param {*} category
+ * @param {*} key
+ * @param {*} type
+ * @param {*} operator
+ * @param {*} operatorOptions
+ * @param {*} icon
  */
 export const addElementToFiltersMap = (
   category = FilterCategory.METADATA,
@@ -143,15 +151,15 @@ export default Record({
   value: [""],
   source: [""],
   category: '',
-  
+
   custom: '',
   // target: Target(),
   level: '',
-  
+
   hasNoValue: false,
   isFilter: false,
   actualValue: '',
-  
+
   hasSource: false,
   source: [""],
   sourceType: '',
@@ -161,7 +169,7 @@ export default Record({
   sourceOperatorOptions: [],
 
   operator: '',
-  operatorOptions: [],  
+  operatorOptions: [],
   operatorDisabled: false,
   isEvent: false,
   index: 0,
@@ -187,6 +195,14 @@ export default Record({
         _filter = filtersMap[type];
       }
     }
+
+    if (!_filter) {
+      _filter = {
+        key: filter.key,
+        type: "MULTIPLE",
+      }
+    }
+
     return {
       ..._filter,
       ...filter,
@@ -199,8 +215,8 @@ export default Record({
 
 /**
  * Group filters by category
- * @param {*} filtersMap 
- * @returns 
+ * @param {*} filtersMap
+ * @returns
  */
 export const generateFilterOptions = (map) => {
   const filterSection = {};

@@ -6,6 +6,7 @@
   align-items: center;
   height: 26px;
   width: 100%;
+  /* z-index: 3; TODO this has to be fixed in clickmaps @Nikita */
 
   & .right {
     height: 24px;

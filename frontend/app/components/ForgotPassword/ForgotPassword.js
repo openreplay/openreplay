@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import ReCAPTCHA from 'react-google-recaptcha';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Form, Input, Loader, Button, Link, Icon, Message } from 'UI';
-import { requestResetPassword, resetPassword } from 'Duck/user';
+import { requestResetPassword, resetPassword, resetErrors } from 'Duck/user';
 import { login as loginRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import { validateEmail } from 'App/validate';
@@ -26,7 +26,7 @@ const checkDontMatch = (newPassword, newPasswordRepeat) =>
     loading: state.getIn([ 'user', 'requestResetPassowrd', 'loading' ]) || state.getIn([ 'user', 'resetPassword', 'loading' ]),
     params: new URLSearchParams(props.location.search)
   }),
-  { requestResetPassword, resetPassword },
+  { requestResetPassword, resetPassword, resetErrors },
 )
 @withPageTitle("Password Reset - OpenReplay")
 @withRouter
@@ -42,7 +42,7 @@ export default class ForgotPassword extends React.PureComponent {
   };
 
   handleSubmit = (token) => {
-    const { email, requested, code, password } = this.state;
+    const { email, password } = this.state;
     const { params } = this.props;
 
     const pass = params.get('pass')
@@ -87,6 +87,10 @@ export default class ForgotPassword extends React.PureComponent {
     } else if (!CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
+  }
+
+  componentWillUnmount() {
+    this.props.resetErrors()
   }
 
   render() {
@@ -148,7 +152,7 @@ export default class ForgotPassword extends React.PureComponent {
                 }
 
                 {
-                  requested && (
+                  requested && !errors && (
                     <div>Reset password link has been sent to your email.</div>
                   )
                 }

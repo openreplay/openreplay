@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"log"
 	"openreplay/backend/pkg/handlers"
 	"time"
 
@@ -35,6 +36,21 @@ func (m *builderMap) HandleMessage(msg Message) {
 	messageID := msg.Meta().Index
 	b := m.GetBuilder(sessionID)
 	b.handleMessage(msg, messageID)
+}
+
+func (m *builderMap) ClearOldSessions() {
+	deleted := 0
+	now := time.Now()
+	for id, sess := range m.sessions {
+		if sess.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(now) {
+			// Should delete zombie session
+			delete(m.sessions, id)
+			deleted++
+		}
+	}
+	if deleted > 0 {
+		log.Printf("deleted %d sessions from message builder", deleted)
+	}
 }
 
 func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, iter func(msg Message)) {

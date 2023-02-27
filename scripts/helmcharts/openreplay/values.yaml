@@ -1,3 +1,7 @@
+migrationJob:
+  podAnnotations:
+    linkerd.io/inject: disabled
+
 redis: &redis
   tls:
     enabled: false
@@ -5,15 +9,10 @@ redis: &redis
 ingress-nginx:
   enabled: true
   controller:
-    name: controller
-    image:
-      registry: k8s.gcr.io
-      image: ingress-nginx/controller
-      ## for backwards compatibility consider setting the full image url via the repository value below
-      ## use *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail
-      ## repository:
-      tag: "v1.3.0"
-      digest: ""
+    admissionWebhooks:
+      patch:
+        podAnnotations:
+          linkerd.io/inject: disabled
 
 # For enterpriseEdition Only
 vault: &vault
@@ -38,3 +37,5 @@ global:
   vault: *vault
   redis: *redis
   clusterDomain: "svc.cluster.local"
+  # In case you've http proxy to access internet.
+  env: {}

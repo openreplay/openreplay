@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine3.15 AS prepare
+FROM golang:1.18-alpine3.17 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 
@@ -19,11 +19,16 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic open
 
 
 FROM alpine AS entrypoint
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
+
 RUN apk add --no-cache ca-certificates librdkafka-dev cyrus-sasl cyrus-sasl-gssapiv2 krb5
 RUN adduser -u 1001 openreplay -D
 
+ARG SERVICE_NAME
 ENV TZ=UTC \
-    FS_ULIMIT=1000 \
+    GIT_SHA=$GIT_SHA \
+    FS_ULIMIT=10000 \
     FS_DIR=/mnt/efs \
     MAXMINDDB_FILE=/home/openreplay/geoip.mmdb \
     UAPARSER_FILE=/home/openreplay/regexes.yaml \
@@ -71,11 +76,15 @@ ENV TZ=UTC \
     BEACON_SIZE_LIMIT=1000000 \
     USE_FAILOVER=false \
     GROUP_STORAGE_FAILOVER=failover \
-    TOPIC_STORAGE_FAILOVER=storage-failover
+    TOPIC_STORAGE_FAILOVER=storage-failover \
+    SERVICE_NAME=$SERVICE_NAME \
+    PROFILER_ENABLED=false \
+    COMPRESSION_TYPE=zstd \
+    CH_USERNAME="default" \
+    CH_PASSWORD="" \
+    CH_DATABASE="default"
 
 
-
-ARG SERVICE_NAME
 RUN if [ "$SERVICE_NAME" = "http" ]; then \
   wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
   wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi

@@ -16,7 +16,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		}
 		return nil
 	case *IssueEvent:
-		session, err := mi.pg.GetSession(sessionID)
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -37,7 +37,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 	case *UserAnonymousID:
 		return mi.pg.InsertWebUserAnonymousID(sessionID, m)
 	case *CustomEvent:
-		session, err := mi.pg.GetSession(sessionID)
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -58,8 +58,8 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		return mi.pg.InsertWebJSException(m)
 	case *IntegrationEvent:
 		return mi.pg.InsertWebIntegrationEvent(m)
-	case *FetchEvent:
-		session, err := mi.pg.GetSession(sessionID)
+	case *NetworkRequest:
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -72,9 +72,9 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				}
 			}
 		}
-		return mi.pg.InsertWebFetchEvent(sessionID, m)
-	case *GraphQLEvent:
-		session, err := mi.pg.GetSession(sessionID)
+		return mi.pg.InsertWebNetworkRequest(sessionID, m)
+	case *GraphQL:
+		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
 			log.Printf("can't get session info for CH: %s", err)
 		} else {
@@ -82,7 +82,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				log.Printf("can't insert graphQL event into clickhouse: %s", err)
 			}
 		}
-		return mi.pg.InsertWebGraphQLEvent(sessionID, m)
+		return mi.pg.InsertWebGraphQL(sessionID, m)
 	case *SetPageLocation:
 		return mi.pg.InsertSessionReferrer(sessionID, m.Referrer)
 

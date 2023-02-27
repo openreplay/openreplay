@@ -5,7 +5,7 @@ def get_all_alerts():
     with pg_client.PostgresClient(long_query=True) as cur:
         query = """SELECT tenant_id,
                            alert_id,
-                           project_id,
+                           projects.project_id,
                            detection_method,
                            query,
                            options,
@@ -13,10 +13,13 @@ def get_all_alerts():
                            alerts.name,
                            alerts.series_id,
                            filter,
-                           change
+                           change,
+                           COALESCE(metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count',
+                                    query ->> 'left')                             AS series_name
                     FROM public.alerts
-                             LEFT JOIN metric_series USING (series_id)
                              INNER JOIN projects USING (project_id)
+                             LEFT JOIN metric_series USING (series_id)
+                             LEFT JOIN metrics USING (metric_id)
                     WHERE alerts.deleted_at ISNULL
                       AND alerts.active
                       AND projects.active

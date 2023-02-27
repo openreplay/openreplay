@@ -1,5 +1,5 @@
 import React from 'react';
-import { JSONTree, Button } from 'UI';
+import { JSONTree } from 'UI';
 import cn from 'classnames';
 
 interface Props {

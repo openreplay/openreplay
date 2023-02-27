@@ -12,7 +12,6 @@ import { init as initSite } from 'Duck/site';
 import { getInitials } from 'App/utils';
 
 import ErrorGenPanel from 'App/dev/components';
-import Alerts from '../Alerts/Alerts';
 import { fetchListActive as fetchMetadata } from 'Duck/customField';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
@@ -91,8 +90,6 @@ const Header = (props) => {
 
         {<ErrorGenPanel />}
       </div>
-
-      {showAlerts && <Alerts />}
     </div>
   );
 };
@@ -103,7 +100,6 @@ export default withRouter(
       account: state.getIn(['user', 'account']),
       siteId: state.getIn(['site', 'siteId']),
       sites: state.getIn(['site', 'list']),
-      showAlerts: state.getIn(['dashboard', 'showAlerts']),
       boardingCompletion: state.getIn(['dashboard', 'boardingCompletion']),
     }),
     { onLogoutClick: logout, initSite, fetchMetadata }

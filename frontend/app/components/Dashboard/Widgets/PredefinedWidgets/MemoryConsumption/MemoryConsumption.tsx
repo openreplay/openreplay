@@ -3,8 +3,8 @@ import { NoContent } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import { 
     AreaChart, Area,
-    BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    CartesianGrid, Tooltip,
+    ResponsiveContainer,
     XAxis, YAxis
   } from 'recharts';
 import { NO_METRIC_DATA } from 'App/constants/messages'

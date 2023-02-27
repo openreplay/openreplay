@@ -1,9 +1,9 @@
 import React from 'react';
-import { Loader, NoContent } from 'UI';
+import { NoContent } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import { 
   ComposedChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, 
-  XAxis, YAxis, ReferenceLine, Tooltip, Legend
+  XAxis, YAxis, ReferenceLine, Tooltip
 } from 'recharts';
 import { NO_METRIC_DATA } from 'App/constants/messages'
 
@@ -87,7 +87,7 @@ function ResponseTimeDistribution(props: Props) {
                   />
                   <Bar minPointSize={1} name="Calls" dataKey="count" stackId="a" fill={colors[2]} label="Backend" />
                   <Tooltip {...Styles.tooltip} labelFormatter={val => 'Page Response Time: ' + val} />
-                  { metric.data.percentiles.map((item, i) => (
+                  { metric.data.percentiles && metric.data.percentiles.map((item: any, i: number) => (
                     <ReferenceLine
                       key={i}
                       label={

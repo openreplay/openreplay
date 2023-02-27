@@ -2,7 +2,7 @@ __author__ = "AZNAUROV David"
 __maintainer__ = "KRAIEM Taha Yassine"
 
 from decouple import config
-
+from chalicelib.utils import sql_helper as sh
 import schemas
 from chalicelib.core import events, metadata
 
@@ -56,33 +56,33 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 continue
             f["value"] = helper.values_for_operator(value=f["value"], op=f["operator"])
             # filter_args = _multiple_values(f["value"])
-            op = sessions.__get_sql_operator(f["operator"])
+            op = sh.get_sql_operator(f["operator"])
 
             filter_type = f["type"]
             # values[f_k] = sessions.__get_sql_value_multiple(f["value"])
             f_k = f"f_value{i}"
             values = {**values,
-                      **sessions._multiple_values(helper.values_for_operator(value=f["value"], op=f["operator"]),
-                                                  value_key=f_k)}
+                      **sh.multi_values(helper.values_for_operator(value=f["value"], op=f["operator"]),
+                                                                 value_key=f_k)}
             if filter_type == schemas.FilterType.user_browser:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.user_browser {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_browser {op} %({f_k})s', f["value"], value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.user_os {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_os {op} %({f_k})s', f["value"], value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.user_device {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_device {op} %({f_k})s', f["value"], value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.user_country {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_country {op} %({f_k})s', f["value"], value_key=f_k))
             elif filter_type == schemas.FilterType.duration:
                 if len(f["value"]) > 0 and f["value"][0] is not None:
                     first_stage_extra_constraints.append(f's.duration >= %(minDuration)s')
@@ -92,36 +92,36 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                     values["maxDuration"] = f["value"][1]
             elif filter_type == schemas.FilterType.referrer:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
-                filter_extra_from = [f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"]
+                filter_extra_from = [f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"]
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f"p.base_referrer {op} %({f_k})s", f["value"], value_key=f_k))
-            elif filter_type == events.event_type.METADATA.ui_type:
+                    sh.multi_conditions(f"p.base_referrer {op} %({f_k})s", f["value"], value_key=f_k))
+            elif filter_type == events.EventType.METADATA.ui_type:
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 # op = sessions.__get_sql_operator(f["operator"])
                 if f.get("key") in meta_keys.keys():
                     first_stage_extra_constraints.append(
-                        sessions._multiple_conditions(
+                        sh.multi_conditions(
                             f's.{metadata.index_to_colname(meta_keys[f["key"]])} {op} %({f_k})s', f["value"],
                             value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.user_id {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.user_anonymous_id,
                                  schemas.FilterType.user_anonymous_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.user_anonymous_id {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.user_anonymous_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
             elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
-                    sessions._multiple_conditions(f's.rev_id {op} %({f_k})s', f["value"], value_key=f_k))
+                    sh.multi_conditions(f's.rev_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
     i = -1
     for s in stages:
@@ -131,7 +131,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
 
         if not isinstance(s["value"], list):
             s["value"] = [s["value"]]
-        is_any = sessions._isAny_opreator(s["operator"])
+        is_any = sh.isAny_opreator(s["operator"])
         if not is_any and isinstance(s["value"], list) and len(s["value"]) == 0:
             continue
         i += 1
@@ -139,41 +139,42 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
         else:
             extra_from = []
-        op = sessions.__get_sql_operator(s["operator"])
-        event_type = s["type"].upper()
-        if event_type == events.event_type.CLICK.ui_type:
-            next_table = events.event_type.CLICK.table
-            next_col_name = events.event_type.CLICK.column
-        elif event_type == events.event_type.INPUT.ui_type:
-            next_table = events.event_type.INPUT.table
-            next_col_name = events.event_type.INPUT.column
-        elif event_type == events.event_type.LOCATION.ui_type:
-            next_table = events.event_type.LOCATION.table
-            next_col_name = events.event_type.LOCATION.column
-        elif event_type == events.event_type.CUSTOM.ui_type:
-            next_table = events.event_type.CUSTOM.table
-            next_col_name = events.event_type.CUSTOM.column
+        op = sh.get_sql_operator(s["operator"])
+        # event_type = s["type"].upper()
+        event_type = s["type"]
+        if event_type == events.EventType.CLICK.ui_type:
+            next_table = events.EventType.CLICK.table
+            next_col_name = events.EventType.CLICK.column
+        elif event_type == events.EventType.INPUT.ui_type:
+            next_table = events.EventType.INPUT.table
+            next_col_name = events.EventType.INPUT.column
+        elif event_type == events.EventType.LOCATION.ui_type:
+            next_table = events.EventType.LOCATION.table
+            next_col_name = events.EventType.LOCATION.column
+        elif event_type == events.EventType.CUSTOM.ui_type:
+            next_table = events.EventType.CUSTOM.table
+            next_col_name = events.EventType.CUSTOM.column
         #     IOS --------------
-        elif event_type == events.event_type.CLICK_IOS.ui_type:
-            next_table = events.event_type.CLICK_IOS.table
-            next_col_name = events.event_type.CLICK_IOS.column
-        elif event_type == events.event_type.INPUT_IOS.ui_type:
-            next_table = events.event_type.INPUT_IOS.table
-            next_col_name = events.event_type.INPUT_IOS.column
-        elif event_type == events.event_type.VIEW_IOS.ui_type:
-            next_table = events.event_type.VIEW_IOS.table
-            next_col_name = events.event_type.VIEW_IOS.column
-        elif event_type == events.event_type.CUSTOM_IOS.ui_type:
-            next_table = events.event_type.CUSTOM_IOS.table
-            next_col_name = events.event_type.CUSTOM_IOS.column
+        elif event_type == events.EventType.CLICK_IOS.ui_type:
+            next_table = events.EventType.CLICK_IOS.table
+            next_col_name = events.EventType.CLICK_IOS.column
+        elif event_type == events.EventType.INPUT_IOS.ui_type:
+            next_table = events.EventType.INPUT_IOS.table
+            next_col_name = events.EventType.INPUT_IOS.column
+        elif event_type == events.EventType.VIEW_IOS.ui_type:
+            next_table = events.EventType.VIEW_IOS.table
+            next_col_name = events.EventType.VIEW_IOS.column
+        elif event_type == events.EventType.CUSTOM_IOS.ui_type:
+            next_table = events.EventType.CUSTOM_IOS.table
+            next_col_name = events.EventType.CUSTOM_IOS.column
         else:
-            print("=================UNDEFINED")
+            print(f"=================UNDEFINED:{event_type}")
             continue
 
-        values = {**values, **sessions._multiple_values(helper.values_for_operator(value=s["value"], op=s["operator"]),
-                                                        value_key=f"value{i + 1}")}
-        if sessions.__is_negation_operator(op) and i > 0:
-            op = sessions.__reverse_sql_operator(op)
+        values = {**values, **sh.multi_values(helper.values_for_operator(value=s["value"], op=s["operator"]),
+                                                                       value_key=f"value{i + 1}")}
+        if sh.is_negation_operator(op) and i > 0:
+            op = sh.reverse_sql_operator(op)
             main_condition = "left_not.session_id ISNULL"
             extra_from.append(f"""LEFT JOIN LATERAL (SELECT session_id 
                                                         FROM {next_table} AS s_main 
@@ -184,8 +185,8 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             if is_any:
                 main_condition = "TRUE"
             else:
-                main_condition = sessions._multiple_conditions(f"main.{next_col_name} {op} %(value{i + 1})s",
-                                                               values=s["value"], value_key=f"value{i + 1}")
+                main_condition = sh.multi_conditions(f"main.{next_col_name} {op} %(value{i + 1})s",
+                                                                              values=s["value"], value_key=f"value{i + 1}")
         n_stages_query.append(f""" 
         (SELECT main.session_id, 
                 {"MIN(main.timestamp)" if i + 1 < len(stages) else "MAX(main.timestamp)"} AS stage{i + 1}_timestamp
@@ -326,7 +327,7 @@ def get_transitions_and_issues_of_each_type(rows: List[RealDictRow], all_issues,
 
     transitions ::: if transited from the first stage to the last - 1
                     else - 0
-    errors      ::: a dictionary where the keys are all unique issues (currently context-wise)
+    errors      ::: a dictionary WHERE the keys are all unique issues (currently context-wise)
                     the values are lists
                     if an issue happened between the first stage to the last - 1
                     else - 0

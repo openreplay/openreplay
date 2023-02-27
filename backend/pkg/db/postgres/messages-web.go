@@ -9,9 +9,13 @@ import (
 )
 
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, projectID uint32, e *CustomEvent) error {
-	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
-		truncSqIdx(e.MessageID),
-		e.Name, e.Payload)
+	err := conn.InsertCustomEvent(
+		sessionID,
+		uint64(e.Meta().Timestamp),
+		truncSqIdx(e.Meta().Index),
+		e.Name,
+		e.Payload,
+	)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, projectID, "CUSTOM", e.Name)
 	}
@@ -40,7 +44,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 		return err
 	}
 	// base_path is deprecated
-	if err = conn.webPageEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
+	if err = conn.bulks.Get("webPageEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer),
 		host, path, query, e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive, calcResponseTime(e), calcDomBuildingTime(e)); err != nil {
 		log.Printf("insert web page event in bulk err: %s", err)
@@ -54,16 +58,11 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, projectID uint32, e *Page
 }
 
 func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *ClickEvent) error {
-	sqlRequest := `
-		INSERT INTO events.clicks
-			(session_id, message_id, timestamp, label, selector, url)
-		(SELECT
-			$1, $2, $3, NULLIF($4, ''), $5, host || path
-			FROM events.pages
-			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
-		)
-		`
-	conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector)
+	var host, path string
+	host, path, _, _ = url.GetURLParts(e.Url)
+	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
+		log.Printf("insert web click err: %s", err)
+	}
 	// Accumulate session updates and exec inside batch with another sql commands
 	conn.updateSessionEvents(sessionID, 1, 0)
 	// Add new value set to autocomplete bulk
@@ -79,7 +78,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	if e.ValueMasked {
 		value = nil
 	}
-	if err := conn.webInputEvents.Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, value, e.Label); err != nil {
+	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, value, e.Label); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
@@ -87,64 +86,24 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
-func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) (err error) {
-	tx, err := conn.c.Begin()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if rollbackErr := tx.rollback(); rollbackErr != nil {
-				log.Printf("rollback err: %s", rollbackErr)
-			}
-		}
-	}()
+func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) error {
 	errorID := e.ID(projectID)
-
-	if err = tx.exec(`
-		INSERT INTO errors
-			(error_id, project_id, source, name, message, payload)
-		VALUES
-			($1, $2, $3, $4, $5, $6::jsonb)
-		ON CONFLICT DO NOTHING`,
-		errorID, projectID, e.Source, e.Name, e.Message, e.Payload,
-	); err != nil {
-		return err
+	if err := conn.bulks.Get("webErrors").Append(errorID, projectID, e.Source, e.Name, e.Message, e.Payload); err != nil {
+		log.Printf("insert web error err: %s", err)
 	}
-	if err = tx.exec(`
-		INSERT INTO events.errors
-			(session_id, message_id, timestamp, error_id)
-		VALUES
-			($1, $2, $3, $4)
-		`,
-		sessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID,
-	); err != nil {
-		return err
+	if err := conn.bulks.Get("webErrorEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, errorID); err != nil {
+		log.Printf("insert web error event err: %s", err)
 	}
-	if err = tx.exec(`
-		UPDATE sessions SET errors_count = errors_count + 1, issue_score = issue_score + 1000
-		WHERE session_id = $1`,
-		sessionID,
-	); err != nil {
-		return err
-	}
-	err = tx.commit()
-
-	// Insert tags
-	sqlRequest := `
-		INSERT INTO public.errors_tags (
-			session_id, message_id, error_id, key, value
-		) VALUES (
-			$1, $2, $3, $4, $5
-		) ON CONFLICT DO NOTHING`
+	conn.updateSessionIssues(sessionID, 1, 1000)
 	for key, value := range e.Tags {
-		conn.batchQueue(sessionID, sqlRequest, sessionID, truncSqIdx(e.MessageID), errorID, key, value)
+		if err := conn.bulks.Get("webErrorTags").Append(sessionID, truncSqIdx(e.MessageID), errorID, key, value); err != nil {
+			log.Printf("insert web error token err: %s", err)
+		}
 	}
-
-	return
+	return nil
 }
 
-func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePayload bool, e *FetchEvent) error {
+func (conn *Conn) InsertWebNetworkRequest(sessionID uint64, projectID uint32, savePayload bool, e *NetworkRequest) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Request
@@ -155,39 +114,18 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, projectID uint32, savePa
 	if err != nil {
 		return err
 	}
-
-	sqlRequest := `
-		INSERT INTO events_common.requests (
-			session_id, timestamp, seq_index, 
-			url, host, path, query,
-			request_body, response_body, status_code, method,
-			duration, success
-		) VALUES (
-			$1, $2, $3, 
-			left($4, 2700), $5, $6, $7,
-			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
-			$12, $13
-		) ON CONFLICT DO NOTHING`
-	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, truncSqIdx(e.MessageID),
-		e.URL, host, path, query,
-		request, response, e.Status, url.EnsureMethod(e.Method),
-		e.Duration, e.Status < 400,
-	)
-
-	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.URL)+len(host)+len(path)+len(query)+
-		len(e.Request)+len(e.Response)+len(url.EnsureMethod(e.Method))+8*5+1)
+	conn.bulks.Get("webNetworkRequest").Append(sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.URL, host, path, query,
+		request, response, e.Status, url.EnsureMethod(e.Method), e.Duration, e.Status < 400)
 	return nil
 }
 
-func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, projectID uint32, savePayload bool, e *GraphQLEvent) error {
+func (conn *Conn) InsertWebGraphQL(sessionID uint64, projectID uint32, savePayload bool, e *GraphQL) error {
 	var request, response *string
 	if savePayload {
 		request = &e.Variables
 		response = &e.Response
 	}
-	if err := conn.webGraphQLEvents.Append(sessionID, e.Timestamp, truncSqIdx(e.MessageID), e.OperationName, request, response); err != nil {
+	if err := conn.bulks.Get("webGraphQL").Append(sessionID, e.Meta().Timestamp, truncSqIdx(e.Meta().Index), e.OperationName, request, response); err != nil {
 		log.Printf("insert web graphQL event err: %s", err)
 	}
 	conn.insertAutocompleteValue(sessionID, projectID, "GRAPHQL", e.OperationName)
@@ -200,7 +138,7 @@ func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error
 	}
 	return conn.c.Exec(`
 		UPDATE sessions 
-		SET referrer = $1, base_referrer = $2
+		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
 		WHERE session_id = $3 AND referrer IS NULL`,
 		referrer, url.DiscardURLQuery(referrer), sessionID)
 }

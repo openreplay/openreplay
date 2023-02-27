@@ -43,6 +43,10 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: CH_USERNAME
+              value: '{{ .Values.global.clickhouse.userame }}'
+            - name: CH_PASSWORD
+              value: '{{ .Values.global.clickhouse.password }}'
             - name: CLICKHOUSE_STRING
               value: '{{ .Values.global.clickhouse.chHost }}:{{.Values.global.clickhouse.service.webPort}}/{{.Values.env.ch_db}}'
             - name: LICENSE_KEY
@@ -65,6 +69,10 @@ spec:
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

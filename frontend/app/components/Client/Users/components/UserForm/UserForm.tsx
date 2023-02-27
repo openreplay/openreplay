@@ -49,7 +49,7 @@ function UserForm(props: Props) {
     }
     
     return useObserver(() => (
-        <div className="bg-white h-screen p-6" style={{ width: '400px'}}>
+        <div className="bg-white h-screen p-6">
             <div className="">
                 <h1 className="text-2xl mb-4">{`${user.exists() ? 'Update' : 'Invite'} User`}</h1>
             </div>
@@ -59,6 +59,7 @@ function UserForm(props: Props) {
                     <Input
                         name="name"
                         autoFocus
+                        maxLength="50"
                         value={ user.name }
                         onChange={ write }
                         className="w-full"
@@ -71,6 +72,7 @@ function UserForm(props: Props) {
                     <Input
                         disabled={user.exists()}
                         name="email"
+                        maxLength="320"
                         value={ user.email }
                         onChange={ write }
                         className="w-full"

@@ -3,18 +3,17 @@ package router
 import (
 	"encoding/json"
 	"errors"
-	"github.com/Masterminds/semver"
-	"go.opentelemetry.io/otel/attribute"
 	"io"
 	"log"
 	"math/rand"
 	"net/http"
-	"openreplay/backend/internal/http/uuid"
-	"openreplay/backend/pkg/flakeid"
 	"strconv"
 	"time"
 
+	"github.com/Masterminds/semver"
+	"openreplay/backend/internal/http/uuid"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/flakeid"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/token"
 )
@@ -28,13 +27,6 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 	if err != nil {
 		return nil, err
 	}
-
-	reqSize := len(bodyBytes)
-	e.requestSize.Record(
-		r.Context(),
-		float64(reqSize),
-		[]attribute.KeyValue{attribute.String("method", r.URL.Path)}...,
-	)
 	return bodyBytes, nil
 }
 
@@ -56,40 +48,43 @@ func getSessionTimestamp(req *StartSessionRequest, startTimeMili int64) (ts uint
 
 func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
+	bodySize := 0
 
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	bodySize = len(bodyBytes)
 
 	// Parse request body
 	req := &StartSessionRequest{}
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err)
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			ResponseWithError(w, http.StatusNotFound, errors.New("project doesn't exist or capture limit has been reached"))
+			ResponseWithError(w, http.StatusNotFound,
+				errors.New("project doesn't exist or capture limit has been reached"), startTime, r.URL.Path, bodySize)
 		} else {
 			log.Printf("can't get project by key: %s", err)
-			ResponseWithError(w, http.StatusInternalServerError, errors.New("can't get project by key"))
+			ResponseWithError(w, http.StatusInternalServerError, errors.New("can't get project by key"), startTime, r.URL.Path, bodySize)
 		}
 		return
 	}
@@ -99,19 +94,19 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	if err != nil || req.Reset { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
 		if dice >= p.SampleRate {
-			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"), startTime, r.URL.Path, bodySize)
 			return
 		}
 
 		ua := e.services.UaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
 			return
 		}
 		startTimeMili := startTime.UnixMilli()
 		sessionID, err := e.services.Flaker.Compose(uint64(startTimeMili))
 		if err != nil {
-			ResponseWithError(w, http.StatusInternalServerError, err)
+			ResponseWithError(w, http.StatusInternalServerError, err, startTime, r.URL.Path, bodySize)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
@@ -152,37 +147,44 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	// Save information about session beacon size
+	e.addBeaconSize(tokenData.ID, p.BeaconSize)
+
 	ResponseWithJSON(w, &StartSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		ProjectID:       strconv.FormatUint(uint64(p.ProjectID), 10),
-		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
+		BeaconSizeLimit: e.getBeaconSize(tokenData.ID),
 		StartTimestamp:  int64(flakeid.ExtractTimestamp(tokenData.ID)),
 		Delay:           tokenData.Delay,
-	})
+	}, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
-	bodyBytes, err := e.readBody(w, r, e.cfg.BeaconSizeLimit)
+	bodyBytes, err := e.readBody(w, r, e.getBeaconSize(sessionData.ID))
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	bodySize = len(bodyBytes)
 
 	// Send processed messages to queue as array of bytes
 	// TODO: check bytes for nonsense crap
@@ -191,39 +193,43 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		log.Printf("can't send processed messages to queue: %s", err)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	ResponseOK(w, startTime, r.URL.Path, bodySize)
 }
 
 func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	startTime := time.Now()
+	bodySize := 0
+
 	// Check request body
 	if r.Body == nil {
-		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"), startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
-		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err, startTime, r.URL.Path, bodySize)
 		return
 	}
+	bodySize = len(bodyBytes)
 
 	// Parse request body
 	req := &NotStartedRequest{}
 
 	if err := json.Unmarshal(bodyBytes, req); err != nil {
-		ResponseWithError(w, http.StatusBadRequest, err)
+		ResponseWithError(w, http.StatusBadRequest, err, startTime, r.URL.Path, bodySize)
 		return
 	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("projectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("projectKey value required"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	ua := e.services.UaParser.ParseFromHTTPRequest(r) // TODO?: insert anyway
 	if ua == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"), startTime, r.URL.Path, bodySize)
 		return
 	}
 	country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
@@ -245,5 +251,5 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Unable to insert Unstarted Session: %v\n", err)
 	}
 
-	w.WriteHeader(http.StatusOK)
+	ResponseOK(w, startTime, r.URL.Path, bodySize)
 }

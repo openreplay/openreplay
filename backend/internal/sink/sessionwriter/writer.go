@@ -5,8 +5,6 @@ import (
 	"log"
 	"sync"
 	"time"
-
-	"openreplay/backend/pkg/messages"
 )
 
 type SessionWriter struct {
@@ -35,11 +33,8 @@ func NewWriter(filesLimit uint16, workingDir string, fileBuffer int, syncTimeout
 	return w
 }
 
-func (w *SessionWriter) Write(msg messages.Message) (err error) {
-	var (
-		sess *Session
-		sid  = msg.SessionID()
-	)
+func (w *SessionWriter) Write(sid uint64, domBuffer, devBuffer []byte) (err error) {
+	var sess *Session
 
 	// Load session
 	sessObj, ok := w.sessions.Load(sid)
@@ -65,7 +60,7 @@ func (w *SessionWriter) Write(msg messages.Message) (err error) {
 	}
 
 	// Write data to session
-	return sess.Write(msg)
+	return sess.Write(domBuffer, devBuffer)
 }
 
 func (w *SessionWriter) sync(sid uint64) error {

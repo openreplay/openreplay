@@ -19,7 +19,7 @@ function FunnelIssueDetails(props: Props) {
 
     useEffect(() => {
         setLoading(true);
-        const _filters = { ...filter, series: widget.data.stages ? widget.toJsonDrilldown().map((item: any) => {
+        const _filters = { ...filter, series: widget.data.stages ? widget.series.map((item: any) => {
             return {
                 ...item,
                 filter: {
@@ -27,7 +27,7 @@ function FunnelIssueDetails(props: Props) {
                     filters: item.filter.filters.filter((filter: any, index: any) => {
                         const stage = widget.data.funnel.stages[index];
                         return stage &&stage.isActive
-                    })
+                    }).map((f: any) => f.toJson())
                 }
             }
         }) : [], };

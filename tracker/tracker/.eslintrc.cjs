@@ -3,7 +3,7 @@ module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ['./tsconfig-base.json', './src/main/tsconfig-cjs.json'],
+    project: ['./tsconfig-base.json', './src/main/tsconfig-cjs.json'], // ??TODO: use correct project
     tsconfigRootDir: __dirname,
   },
   plugins: ['prettier', '@typescript-eslint'],
@@ -45,5 +45,6 @@ module.exports = {
     'no-unused-expressions': 'off',
     '@typescript-eslint/no-unused-expressions': 'warn',
     '@typescript-eslint/no-useless-constructor': 'warn',
+    'prefer-rest-params': 'off',
   },
 };

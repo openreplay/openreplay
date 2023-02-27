@@ -84,6 +84,7 @@ wheels/
 *.egg
 MANIFEST
 Pipfile
+Pipfile.lock
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -176,4 +177,3 @@ SUBNETS.json
 ./chalicelib/.configs
 README/*
 .local
-build_crons.sh

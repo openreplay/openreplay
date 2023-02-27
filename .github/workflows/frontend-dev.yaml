@@ -20,9 +20,11 @@ jobs:
         restore-keys: |
           ${{ runner.OS }}-build-
           ${{ runner.OS }}-
+
     - name: Docker login
       run: |
         docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
+
     - uses: azure/k8s-set-context@v1
       with:
         method: kubeconfig
@@ -45,15 +47,18 @@ jobs:
         docker tag $DOCKER_REPO/frontend:${IMAGE_TAG} $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
         docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
         docker push $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
+
     - name: Deploy to kubernetes foss
       run: |
         cd scripts/helmcharts/
+
         set -x
         cat <<EOF>>/tmp/image_override.yaml
         frontend:
           image:
             tag: ${IMAGE_TAG}
         EOF
+
         ## Update secerts
         sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
         sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.DEV_PG_PASSWORD }}\"/g" vars.yaml
@@ -61,8 +66,10 @@ jobs:
         sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.DEV_MINIO_SECRET_KEY }}\"/g" vars.yaml
         sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.DEV_JWT_SECRET }}\"/g" vars.yaml
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.DEV_DOMAIN_NAME }}\"/g" vars.yaml
+
         # Update changed image tag
         sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
         cat /tmp/image_override.yaml
         # Deploy command
         mv openreplay/charts/{ingress-nginx,frontend,quickwit} /tmp

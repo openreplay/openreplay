@@ -12,7 +12,7 @@ const Message = ({
   inline = false,
   success = false,
   info = true,
-  text,
+  text = undefined,
 }) =>
   visible || !hidden ? (
     <div className={cn(styles.message, 'flex items-center')} data-inline={inline}>

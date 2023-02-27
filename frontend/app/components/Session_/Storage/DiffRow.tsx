@@ -2,8 +2,8 @@ import React from 'react';
 import cn from 'classnames';
 
 interface Props {
-  shades: Record<string, string>;
-  pathRoot: string;
+  shades?: Record<string, string>;
+  pathRoot?: string;
   path: string;
   diff: Record<string, any>;
 }

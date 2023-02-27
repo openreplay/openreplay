@@ -37,7 +37,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			$11, $12,
 			$13,
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
-			NULLIF($19, '')
+			NULLIF(LEFT($19, 8000), '')
 		)`,
 		sessionID, s.ProjectID, s.Timestamp,
 		s.UserUUID, s.UserDevice, s.UserDeviceType, s.UserCountry,
@@ -104,14 +104,14 @@ func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint32, url string, duration uint64, success bool) error {
-	if err := conn.requests.Append(sessionID, timestamp, index, url, duration, success); err != nil {
+	if err := conn.bulks.Get("requests").Append(sessionID, timestamp, index, url, duration, success); err != nil {
 		return fmt.Errorf("insert request in bulk err: %s", err)
 	}
 	return nil
 }
 
 func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint32, name string, payload string) error {
-	if err := conn.customEvents.Append(sessionID, timestamp, index, name, payload); err != nil {
+	if err := conn.bulks.Get("customEvents").Append(sessionID, timestamp, index, name, payload); err != nil {
 		return fmt.Errorf("insert custom event in bulk err: %s", err)
 	}
 	return nil
@@ -119,7 +119,7 @@ func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index ui
 
 func (conn *Conn) InsertUserID(sessionID uint64, userID string) error {
 	sqlRequest := `
-		UPDATE sessions SET  user_id = $1
+		UPDATE sessions SET  user_id = LEFT($1, 8000)
 		WHERE session_id = $2`
 	conn.batchQueue(sessionID, sqlRequest, userID, sessionID)
 
@@ -141,75 +141,29 @@ func (conn *Conn) InsertUserAnonymousID(sessionID uint64, userAnonymousID string
 
 func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
 	sqlRequest := `
-		UPDATE sessions SET  metadata_%v = $1
+		UPDATE sessions SET  metadata_%v = LEFT($1, 8000)
 		WHERE session_id = $2`
 	return conn.c.Exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
 }
 
-func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) (err error) {
-	tx, err := conn.c.Begin()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if err != nil {
-			if rollbackErr := tx.rollback(); rollbackErr != nil {
-				log.Printf("rollback err: %s", rollbackErr)
-			}
-		}
-	}()
+func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {
 	issueID := hashid.IssueID(projectID, e)
-
-	// TEMP. TODO: nullable & json message field type
 	payload := &e.Payload
 	if *payload == "" || *payload == "{}" {
 		payload = nil
 	}
 
-	if err = tx.exec(`
-		INSERT INTO issues (
-			project_id, issue_id, type, context_string
-		) (SELECT
-			project_id, $2, $3, $4
-			FROM sessions
-			WHERE session_id = $1
-		)ON CONFLICT DO NOTHING`,
-		sessionID, issueID, e.Type, e.ContextString,
-	); err != nil {
-		return err
+	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, e.Type, e.ContextString); err != nil {
+		log.Printf("insert web issue err: %s", err)
 	}
-	if err = tx.exec(`
-		INSERT INTO events_common.issues (
-			session_id, issue_id, timestamp, seq_index, payload
-		) VALUES (
-			$1, $2, $3, $4, CAST($5 AS jsonb)
-		)`,
-		sessionID, issueID, e.Timestamp,
-		truncSqIdx(e.MessageID),
-		payload,
-	); err != nil {
-		return err
+	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MessageID), payload); err != nil {
+		log.Printf("insert web issue event err: %s", err)
 	}
-	if err = tx.exec(`
-		UPDATE sessions SET issue_score = issue_score + $2
-		WHERE session_id = $1`,
-		sessionID, getIssueScore(e),
-	); err != nil {
-		return err
-	}
-	// TODO: no redundancy. Deliver to UI in a different way
+	conn.updateSessionIssues(sessionID, 0, getIssueScore(e))
 	if e.Type == "custom" {
-		if err = tx.exec(`
-			INSERT INTO events_common.customs
-				(session_id, seq_index, timestamp, name, payload, level)
-			VALUES
-				($1, $2, $3, left($4, 2700), $5, 'error')
-			`,
-			sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload,
-		); err != nil {
-			return err
+		if err := conn.bulks.Get("webCustomEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload, "error"); err != nil {
+			log.Printf("insert web custom event err: %s", err)
 		}
 	}
-	err = tx.commit()
-	return
+	return nil
 }

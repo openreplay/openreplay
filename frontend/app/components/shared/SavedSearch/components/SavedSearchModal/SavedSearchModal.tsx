@@ -59,10 +59,10 @@ function SavedSearchModal(props: Props) {
         setTimeout(() => setshowModal(true), 0);
     };
 
-    const shownItems = props.list.filter((item) => item.name.includes(filterQuery));
+    const shownItems = props.list.filter((item) => item.name.toLocaleLowerCase().includes(filterQuery.toLocaleLowerCase()));
 
     return (
-        <div className="bg-white box-shadow h-screen" style={{ width: '450px' }}>
+        <div className="bg-white box-shadow h-screen">
             <div className="p-6">
                 <h1 className="text-2xl">
                     Saved Search <span className="color-gray-medium">{props.list.size}</span>

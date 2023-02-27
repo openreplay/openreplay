@@ -8,22 +8,31 @@ set -e
 # Removing local alpine:latest image
 docker rmi alpine || true
 
+# Signing image
+# cosign sign --key awskms:///alias/openreplay-container-sign image_url:tag
+export SIGN_IMAGE=1
+export PUSH_IMAGE=1
+export AWS_DEFAULT_REGION="eu-central-1"
+export SIGN_KEY="awskms:///alias/openreplay-container-sign"
+
 echo $DOCKER_REPO
-[[ -z DOCKER_REPO ]] && {
+[[ -z $DOCKER_REPO ]] && {
     echo Set DOCKER_REPO="your docker registry"
     exit 1
 } || {
     docker login $DOCKER_REPO
     cd ../../backend
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../utilities
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../peers
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../frontend
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../sourcemap-reader
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
     cd ../api
-    PUSH_IMAGE=1 bash build.sh $@
+    bash build.sh $@
+    bash build_alerts.sh $@
+    bash build_crons.sh $@
 }

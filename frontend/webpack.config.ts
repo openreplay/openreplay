@@ -1,6 +1,6 @@
 import webpack from "webpack";
 import path from "path";
-import { Configuration as WebpackConfiguration, HotModuleReplacementPlugin } from "webpack";
+import { Configuration as WebpackConfiguration } from "webpack";
 import { Configuration as WebpackDevServerConfiguration } from 'webpack-dev-server';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import HtmlWebpackPlugin from "html-webpack-plugin";
@@ -123,7 +123,7 @@ const config: Configuration = {
         { from: "./app/assets", to: "assets" },
       ],
     }),
-    new MiniCssExtractPlugin(),
+    new MiniCssExtractPlugin({ ignoreOrder: true }),
   ],
   devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
@@ -132,10 +132,12 @@ const config: Configuration = {
   devServer: {
     // static: path.join(__dirname, "public"),
     historyApiFallback: true,
-    host: 'localhost',
+    host: '0.0.0.0',
     open: true,
     port: 3333,
     hot: true,
+    compress: true,
+    allowedHosts: "all",
   },
 };
 

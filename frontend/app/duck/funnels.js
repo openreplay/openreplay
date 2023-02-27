@@ -99,12 +99,12 @@ const reducer = (state = initialState, action = {}) => {
         .set('criticalIssuesCount', action.data.issues.criticalIssuesCount)
 		case FETCH_SESSIONS_SUCCESS:      
       return state
-        .set('sessions', List(action.data.sessions).map(Session))
+        .set('sessions', List(action.data.sessions).map(s => new Session(s)))
         .set('total', action.data.total)
     case FETCH_ISSUE_SUCCESS:      
       return state
         .set('issue', FunnelIssue(action.data.issue))
-        .set('sessions', List(action.data.sessions.sessions).map(Session))
+        .set('sessions', List(action.data.sessions.sessions).map(s => new Session(s)))
         .set('sessionsTotal', action.data.sessions.total)
     case RESET_ISSUE:
       return state.set('isses', FunnelIssue())
@@ -145,10 +145,6 @@ const reducer = (state = initialState, action = {}) => {
       return state.update('list', itemInListUpdater(CustomField(action.data)))
     case REMOVE_SUCCESS:
       return state.update('list', list => list.filter(item => item.index !== action.index));
-    case INIT:
-      return state.set('instance', Funnel(action.instance));
-    case EDIT:
-      return state.mergeIn([ 'instance' ], action.instance);
     case APPLY_FILTER:      
       return state.mergeIn([ action.filterType ], Array.isArray(action.filter) ? action.filter : Map(action.filter));
     case APPLY_ISSUE_FILTER:      

@@ -8,31 +8,39 @@ interface Props {
   time: number;
   offset: number;
   isVisible: boolean;
-  liveTimeTravel: boolean;
+  timeStr: string;
 }
 
 function TimeTooltip({
   time,
   offset,
   isVisible,
-  liveTimeTravel,
+  timeStr,
 }: Props) {
-  const duration = Duration.fromMillis(time).toFormat(`${liveTimeTravel ? '-' : ''}mm:ss`);
   return (
     <div
       className={stl.timeTooltip}
       style={{
-        top: -30,
-        left: offset - 20,
+        top: 0,
+        left: offset,
         display: isVisible ? 'block' : 'none',
+        transform: 'translate(-50%, -110%)',
+        whiteSpace: 'nowrap',
+        textAlign: "center",
       }}
     >
-      {!time ? 'Loading' : duration}
+      {!time ? 'Loading' : time}
+      {timeStr ? (
+        <>
+          <br />
+          <span className="text-gray-light">({timeStr})</span>
+        </>
+      ) : null}
     </div>
   );
 }
 
 export default connect((state) => {
-  const { time = 0, offset = 0, isVisible } = state.getIn(['sessions', 'timeLineTooltip']);
-  return { time, offset, isVisible };
+  const { time = 0, offset = 0, isVisible, timeStr } = state.getIn(['sessions', 'timeLineTooltip']);
+  return { time, offset, isVisible, timeStr };
 })(TimeTooltip);

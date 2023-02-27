@@ -21,3 +21,4 @@ export {
 } from './schedule';
 export { default } from './filterOptions';
 // export { default as storageKeys } from './storageKeys';
+export const ENTERPRISE_REQUEIRED = "This feature requires an enterprise license.";

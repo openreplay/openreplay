@@ -3,7 +3,9 @@ import { Loader, Icon } from 'UI';
 import { connect } from 'react-redux';
 import { fetchInsights } from 'Duck/sessions';
 import SelectorsList from './components/SelectorsList/SelectorsList';
-import { markTargets, Controls as Player } from 'Player';
+import { PlayerContext } from 'App/components/Session/playerContext';
+import { compareJsonObjects } from 'App/utils';
+
 import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
 import Period from 'Types/app/period';
@@ -12,7 +14,6 @@ const JUMP_OFFSET = 1000;
 interface Props {
     filters: any;
     fetchInsights: (filters: Record<string, any>) => void;
-    urls: [];
     insights: any;
     events: Array<any>;
     urlOptions: Array<any>;
@@ -22,8 +23,11 @@ interface Props {
 }
 
 function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab }: Props) {
-    const [insightsFilters, setInsightsFilters] = useState(filters);
+    const { player: Player } = React.useContext(PlayerContext)
+    const markTargets = (t: any) => Player.markTargets(t)
     const defaultValue = urlOptions && urlOptions[0] ? urlOptions[0].value : '';
+    const [insightsFilters, setInsightsFilters] = useState({ ...filters, url: host + defaultValue });
+    const prevInsights = React.useRef<any>();
 
     const period = Period({
         start: insightsFilters.startDate,
@@ -44,18 +48,22 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
     }, [insights]);
 
     useEffect(() => {
+        const changed = !compareJsonObjects(prevInsights.current, insightsFilters);
+        if (!changed) { return }
+
         if (urlOptions && urlOptions[0]) {
             const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
             Player.pause();
             fetchInsights({ ...insightsFilters, url });
+            markTargets([]);
         }
+        prevInsights.current = insightsFilters;
     }, [insightsFilters]);
 
     const onPageSelect = ({ value }: any) => {
         const event = events.find((item) => item.url === value.value);
         Player.jump(event.time + JUMP_OFFSET);
         setInsightsFilters({ ...insightsFilters, url: host + value.value });
-        markTargets([]);
     };
 
     return (
@@ -97,7 +105,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
 }
 
 export default connect(
-    (state) => {
+    (state: any) => {
         const events = state.getIn(['sessions', 'visitedEvents']);
         return {
             filters: state.getIn(['sessions', 'insightFilters']),

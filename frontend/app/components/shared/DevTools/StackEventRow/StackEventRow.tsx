@@ -2,7 +2,7 @@ import React from 'react';
 import JumpButton from '../JumpButton';
 import { Icon } from 'UI';
 import cn from 'classnames';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { OPENREPLAY } from 'Types/session/stackEvent';
 
 interface Props {
   event: any;
@@ -28,7 +28,7 @@ function StackEventRow(props: Props) {
   return (
     <div
       style={style}
-      data-scroll-item={event.isRed()}
+      data-scroll-item={event.isRed}
       onClick={props.onClick}
       className={cn(
         'group flex items-center py-2 px-4 border-b cursor-pointer relative',

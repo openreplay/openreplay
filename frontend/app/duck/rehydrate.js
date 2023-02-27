@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import RehydrateJob from 'Types/rehydrateJob';
 
-import { mergeReducers, success, array } from './funcTools/tools';
+import { mergeReducers } from './funcTools/tools';
 import { createRequestReducer } from './funcTools/request';
 import { 
 	createCRUDReducer, 

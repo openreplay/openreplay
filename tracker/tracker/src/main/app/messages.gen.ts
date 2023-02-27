@@ -2,36 +2,8 @@
 /* eslint-disable */
 
 import * as Messages from '../../common/messages.gen.js'
-export { default } from '../../common/messages.gen.js'
+export { default, Type } from '../../common/messages.gen.js'
 
-
-export function BatchMetadata(
-  version: number,
-  pageNo: number,
-  firstIndex: number,
-  timestamp: number,
-  location: string,
-): Messages.BatchMetadata {
-  return [
-    Messages.Type.BatchMetadata,
-    version,
-    pageNo,
-    firstIndex,
-    timestamp,
-    location,
-  ]
-}
-
-export function PartitionedMessage(
-  partNo: number,
-  partTotal: number,
-): Messages.PartitionedMessage {
-  return [
-    Messages.Type.PartitionedMessage,
-    partNo,
-    partTotal,
-  ]
-}
 
 export function Timestamp(
   timestamp: number,
@@ -232,6 +204,29 @@ export function MouseMove(
   ]
 }
 
+export function NetworkRequest(
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
+): Messages.NetworkRequest {
+  return [
+    Messages.Type.NetworkRequest,
+    type,
+    method,
+    url,
+    request,
+    response,
+    status,
+    timestamp,
+    duration,
+  ]
+}
+
 export function ConsoleLog(
   level: string,
   value: string,
@@ -281,25 +276,12 @@ export function PageRenderTiming(
   ]
 }
 
-export function JSExceptionDeprecated(
-  name: string,
-  message: string,
-  payload: string,
-): Messages.JSExceptionDeprecated {
-  return [
-    Messages.Type.JSExceptionDeprecated,
-    name,
-    message,
-    payload,
-  ]
-}
-
-export function RawCustomEvent(
+export function CustomEvent(
   name: string,
   payload: string,
-): Messages.RawCustomEvent {
+): Messages.CustomEvent {
   return [
-    Messages.Type.RawCustomEvent,
+    Messages.Type.CustomEvent,
     name,
     payload,
   ]
@@ -489,6 +471,30 @@ export function PerformanceTrack(
     ticks,
     totalJSHeapSize,
     usedJSHeapSize,
+  ]
+}
+
+export function StringDict(
+  key: number,
+  value: string,
+): Messages.StringDict {
+  return [
+    Messages.Type.StringDict,
+    key,
+    value,
+  ]
+}
+
+export function SetNodeAttributeDict(
+  id: number,
+  nameKey: number,
+  valueKey: number,
+): Messages.SetNodeAttributeDict {
+  return [
+    Messages.Type.SetNodeAttributeDict,
+    id,
+    nameKey,
+    valueKey,
   ]
 }
 
@@ -732,17 +738,6 @@ export function AdoptedSSRemoveOwner(
   ]
 }
 
-export function Zustand(
-  mutation: string,
-  state: string,
-): Messages.Zustand {
-  return [
-    Messages.Type.Zustand,
-    mutation,
-    state,
-  ]
-}
-
 export function JSException(
   name: string,
   message: string,
@@ -755,6 +750,45 @@ export function JSException(
     message,
     payload,
     metadata,
+  ]
+}
+
+export function Zustand(
+  mutation: string,
+  state: string,
+): Messages.Zustand {
+  return [
+    Messages.Type.Zustand,
+    mutation,
+    state,
+  ]
+}
+
+export function BatchMetadata(
+  version: number,
+  pageNo: number,
+  firstIndex: number,
+  timestamp: number,
+  location: string,
+): Messages.BatchMetadata {
+  return [
+    Messages.Type.BatchMetadata,
+    version,
+    pageNo,
+    firstIndex,
+    timestamp,
+    location,
+  ]
+}
+
+export function PartitionedMessage(
+  partNo: number,
+  partTotal: number,
+): Messages.PartitionedMessage {
+  return [
+    Messages.Type.PartitionedMessage,
+    partNo,
+    partTotal,
   ]
 }
 

@@ -1,16 +1,13 @@
 package cacher
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
-	"openreplay/backend/pkg/monitoring"
+	metrics "openreplay/backend/pkg/metrics/assets"
 	"path/filepath"
 	"strings"
 	"time"
@@ -25,30 +22,22 @@ import (
 const MAX_CACHE_DEPTH = 5
 
 type cacher struct {
-	timeoutMap       *timeoutMap      // Concurrency implemented
-	s3               *storage.S3      // AWS Docs: "These clients are safe to use concurrently."
-	httpClient       *http.Client     // Docs: "Clients are safe for concurrent use by multiple goroutines."
-	rewriter         *assets.Rewriter // Read only
-	Errors           chan error
-	sizeLimit        int
-	downloadedAssets syncfloat64.Counter
-	requestHeaders   map[string]string
-	workers          *WorkerPool
+	timeoutMap     *timeoutMap      // Concurrency implemented
+	s3             *storage.S3      // AWS Docs: "These clients are safe to use concurrently."
+	httpClient     *http.Client     // Docs: "Clients are safe for concurrent use by multiple goroutines."
+	rewriter       *assets.Rewriter // Read only
+	Errors         chan error
+	sizeLimit      int
+	requestHeaders map[string]string
+	workers        *WorkerPool
 }
 
 func (c *cacher) CanCache() bool {
 	return c.workers.CanAddTask()
 }
 
-func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
+func NewCacher(cfg *config.Config) *cacher {
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
-	if metrics == nil {
-		log.Fatalf("metrics are empty")
-	}
-	downloadedAssets, err := metrics.RegisterCounter("assets_downloaded")
-	if err != nil {
-		log.Printf("can't create downloaded_assets metric: %s", err)
-	}
 	c := &cacher{
 		timeoutMap: newTimeoutMap(),
 		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets),
@@ -59,11 +48,10 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 		},
-		rewriter:         rewriter,
-		Errors:           make(chan error),
-		sizeLimit:        cfg.AssetsSizeLimit,
-		downloadedAssets: downloadedAssets,
-		requestHeaders:   cfg.AssetsRequestHeaders,
+		rewriter:       rewriter,
+		Errors:         make(chan error),
+		sizeLimit:      cfg.AssetsSizeLimit,
+		requestHeaders: cfg.AssetsRequestHeaders,
 	}
 	c.workers = NewPool(64, c.CacheFile)
 	return c
@@ -75,6 +63,7 @@ func (c *cacher) CacheFile(task *Task) {
 
 func (c *cacher) cacheURL(t *Task) {
 	t.retries--
+	start := time.Now()
 	req, _ := http.NewRequest("GET", t.requestURL, nil)
 	if t.retries%2 == 0 {
 		req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
@@ -87,11 +76,12 @@ func (c *cacher) cacheURL(t *Task) {
 		c.Errors <- errors.Wrap(err, t.urlContext)
 		return
 	}
+	metrics.RecordDownloadDuration(float64(time.Now().Sub(start).Milliseconds()), res.StatusCode)
 	defer res.Body.Close()
 	if res.StatusCode >= 400 {
 		printErr := true
-		// Retry 403 error
-		if res.StatusCode == 403 && t.retries > 0 {
+		// Retry 403/503 errors
+		if (res.StatusCode == 403 || res.StatusCode == 503) && t.retries > 0 {
 			c.workers.AddTask(t)
 			printErr = false
 		}
@@ -122,12 +112,15 @@ func (c *cacher) cacheURL(t *Task) {
 	}
 
 	// TODO: implement in streams
+	start = time.Now()
 	err = c.s3.Upload(strings.NewReader(strData), t.cachePath, contentType, false)
 	if err != nil {
+		metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), true)
 		c.Errors <- errors.Wrap(err, t.urlContext)
 		return
 	}
-	c.downloadedAssets.Add(context.Background(), 1)
+	metrics.RecordUploadDuration(float64(time.Now().Sub(start).Milliseconds()), false)
+	metrics.IncreaseSavedSessions()
 
 	if isCSS {
 		if t.depth > 0 {

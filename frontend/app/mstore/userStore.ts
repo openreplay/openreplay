@@ -1,12 +1,12 @@
 import { makeAutoObservable, observable, action } from "mobx"
-import User, { IUser } from "./types/user";
+import User from "./types/user";
 import { userService } from "App/services";
 import { toast } from 'react-toastify';
 import copy from 'copy-to-clipboard';
 
 export default class UserStore {
-    list: IUser[] = [];
-    instance: IUser|null = null;
+    list: User[] = [];
+    instance: User|null = null;
     page: number = 1;
     pageSize: number = 10;
     searchQuery: string = "";
@@ -44,7 +44,7 @@ export default class UserStore {
     }
 
     initUser(user?: any ): Promise<void> {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             if (user) {
                 this.instance = new User().fromJson(user.toJson());
             } else {
@@ -54,7 +54,7 @@ export default class UserStore {
         })
     }
 
-    updateKey(key: string, value: any) {
+    updateKey(key: keyof this, value: any) {
         this[key] = value
 
         if (key === 'searchQuery') {
@@ -62,7 +62,7 @@ export default class UserStore {
         }
     }
 
-    updateUser(user: IUser) {
+    updateUser(user: User) {
         const index = this.list.findIndex(u => u.userId === user.userId);
         if (index > -1) {
             this.list[index] = user;
@@ -101,7 +101,7 @@ export default class UserStore {
         });
     }
 
-    saveUser(user: IUser): Promise<any> {
+    saveUser(user: User): Promise<any> {
         this.saving = true;
         const wasCreating = !user.userId;
         return new Promise((resolve, reject) => {

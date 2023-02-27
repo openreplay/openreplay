@@ -1,0 +1,45 @@
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: cosign
+  namespace: "{{ .Release.Namespace }}"
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "4" # Higher precidence, so the first the config map will get created.
+spec:
+  # validationFailureAction: enforce
+  validationFailureAction: audit
+  background: false
+  webhookTimeoutSeconds: 30
+  # failurePolicy: Fail
+  failurePolicy: Ignore
+  rules:
+    - name: openreplay-image-signature
+      match:
+        any:
+        - resources:
+            kinds:
+            - Pod
+            - Deployment
+      verifyImages:
+      - imageReferences:
+        - "public.ecr.aws/p1t3u8a3/*"
+        attestors:
+        - count: 1
+          entries:
+          - keys:
+              publicKeys: |-
+                -----BEGIN PUBLIC KEY-----
+                MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAoLidzRiNIO3l/sWCYw2f
+                Ct71YSj7UVerhbR81TNEKYtW0fUqg4GagS+esprcXteHPoBI+ZcfL2xJIs0ZNHZs
+                A+2VXYrsFRgREtABFCwJ2G51ybusoS3jpBsAmSNjG0uzseDxQMTh0arNOlNbhbmI
+                Tj1ty2JfyLejDKlxavXheKmJGb+7IdDCMmP3f5mXSsJpsOM8SJo49BkvKhTwzjc0
+                01dsSLo5mk9jeG2C6UvPCQeMIUKaf5GlYWyFx7vLZ+z5be9TPuWDH4GO0RtxJVXt
+                tqmk32aKe+0KDLH0ak9WRVz3ugYEjs+tqdO3y3ALLoGAAI+yGxGSfWFDnDj5AXpA
+                2/XYSJAWRzPu35/H3laSrxaApYWN5an69jI30JY7SoEy/k+10oIGe2FGIihXTdq+
+                As3IKPEtvuN9s3RTm2ujV/7rEnVVKWiHvQCwH8rxhsbDTeJCoNs8hSBUq1Muttct
+                EWML8s/TCIK01PyvH6VNQSnc+lRKAJOd5NpZ/SVMXBbrykCQSZPE8RcaQum3nMxE
+                Tri24VcWfRHj1WwUYzxpmoVE5F1lw0lqQIXlwz+AFhCLGsePSkjFShFtNFQuX22r
+                Q73JTt3FX4JEzaaKC5BZwXmkEs3MVpQj43HuEqDyejlsPWwRBYwZIzXpoBhOCFHD
+                t4PI8n+1dSE+uavu/ijgXl8CAwEAAQ==
+                -----END PUBLIC KEY-----

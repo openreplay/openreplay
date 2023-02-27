@@ -14,8 +14,12 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Default step in docker build
 FROM nginx:alpine
 LABEL maintainer=Rajesh<rajesh@openreplay.com>
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
 COPY --from=builder /work/public /var/www/openreplay
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+ENV GIT_SHA=$GIT_SHA
 
 EXPOSE 8080
 RUN chown -R nginx:nginx /var/cache/nginx && \

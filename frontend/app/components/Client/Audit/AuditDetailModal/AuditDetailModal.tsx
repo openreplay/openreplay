@@ -11,7 +11,7 @@ function AuditDetailModal(props: Props) {
     // console.log('jsonResponse', jsonResponse)
 
     return (
-        <div style={{ width: '500px' }} className="bg-white h-screen overflow-y-auto">
+        <div className="bg-white h-screen overflow-y-auto">
             <h1 className="text-2xl p-4">Audit Details</h1>
             <div className="p-4">
                 <h5 className="mb-2">{ 'URL'}</h5>

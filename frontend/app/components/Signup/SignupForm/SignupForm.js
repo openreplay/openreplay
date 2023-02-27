@@ -1,5 +1,5 @@
 import React from 'react'
-import { Form, Input, Icon, Button, Link, CircularLoader } from 'UI'
+import { Form, Input, Icon, Button, Link } from 'UI'
 import { login } from 'App/routes'
 import ReCAPTCHA from 'react-google-recaptcha'
 import stl from './signup.module.css'

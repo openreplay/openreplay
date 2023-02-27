@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ template "kyverno.fullname" . }}-test"
+  labels:
+    {{- include "kyverno.test-labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: {{ include "kyverno.image" (dict "image" .Values.testImage "defaultTag" "latest") | quote }}
+      imagePullPolicy: {{ default .Values.image.pullPolicy .Values.testImage.pullPolicy }}
+      {{- with .Values.testResources }}
+      resources: {{ tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- if .Values.testSecurityContext }}
+      securityContext: {{ include "kyverno.testSecurityContext" . | nindent 8 }}
+      {{- end }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 20 ; wget -O- -S --no-check-certificate https://{{ template "kyverno.serviceName" . }}:{{ .Values.service.port }}/health/liveness
+    - name: wget-metrics
+      image: {{ include "kyverno.image" (dict "image" .Values.testImage "defaultTag" "latest") | quote }}
+      imagePullPolicy: {{ default .Values.image.pullPolicy .Values.testImage.pullPolicy }}
+      {{- with .Values.testResources }}
+      resources: {{ tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- if .Values.testSecurityContext }}
+      securityContext: {{ include "kyverno.testSecurityContext" . | nindent 8 }}
+      {{- end }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          sleep 20 ; wget -O- -S --no-check-certificate http://{{ template "kyverno.serviceName" . }}-metrics:{{ .Values.metricsService.port }}/metrics

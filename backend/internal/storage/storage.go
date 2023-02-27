@@ -2,233 +2,268 @@ package storage
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
-	config "openreplay/backend/internal/config/storage"
-	"openreplay/backend/pkg/flakeid"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
+	"strings"
+	"sync"
 	"time"
+
+	config "openreplay/backend/internal/config/storage"
+	"openreplay/backend/pkg/messages"
+	metrics "openreplay/backend/pkg/metrics/storage"
+	"openreplay/backend/pkg/storage"
+
+	gzip "github.com/klauspost/pgzip"
 )
+
+type FileType string
+
+const (
+	DOM FileType = "/dom.mob"
+	DEV FileType = "/devtools.mob"
+)
+
+func (t FileType) String() string {
+	if t == DOM {
+		return "dom"
+	}
+	return "devtools"
+}
+
+type Task struct {
+	id   string
+	doms *bytes.Buffer
+	dome *bytes.Buffer
+	dev  *bytes.Buffer
+}
 
 type Storage struct {
 	cfg        *config.Config
 	s3         *storage.S3
 	startBytes []byte
-
-	totalSessions       syncfloat64.Counter
-	sessionDOMSize      syncfloat64.Histogram
-	sessionDevtoolsSize syncfloat64.Histogram
-	readingDOMTime      syncfloat64.Histogram
-	readingTime         syncfloat64.Histogram
-	archivingTime       syncfloat64.Histogram
+	tasks      chan *Task
+	ready      chan struct{}
 }
 
-func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Storage, error) {
+func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	case s3 == nil:
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
-	// Create metrics
-	totalSessions, err := metrics.RegisterCounter("sessions_total")
-	if err != nil {
-		log.Printf("can't create sessions_total metric: %s", err)
+	newStorage := &Storage{
+		cfg:        cfg,
+		s3:         s3,
+		startBytes: make([]byte, cfg.FileSplitSize),
+		tasks:      make(chan *Task, 1),
+		ready:      make(chan struct{}),
 	}
-	sessionDOMSize, err := metrics.RegisterHistogram("sessions_size")
-	if err != nil {
-		log.Printf("can't create session_size metric: %s", err)
-	}
-	sessionDevtoolsSize, err := metrics.RegisterHistogram("sessions_dt_size")
-	if err != nil {
-		log.Printf("can't create sessions_dt_size metric: %s", err)
-	}
-	readingTime, err := metrics.RegisterHistogram("reading_duration")
-	if err != nil {
-		log.Printf("can't create reading_duration metric: %s", err)
-	}
-	archivingTime, err := metrics.RegisterHistogram("archiving_duration")
-	if err != nil {
-		log.Printf("can't create archiving_duration metric: %s", err)
-	}
-	return &Storage{
-		cfg:                 cfg,
-		s3:                  s3,
-		startBytes:          make([]byte, cfg.FileSplitSize),
-		totalSessions:       totalSessions,
-		sessionDOMSize:      sessionDOMSize,
-		sessionDevtoolsSize: sessionDevtoolsSize,
-		readingTime:         readingTime,
-		archivingTime:       archivingTime,
-	}, nil
+	go newStorage.worker()
+	return newStorage, nil
 }
 
-func (s *Storage) UploadSessionFiles(msg *messages.SessionEnd) error {
-	if err := s.uploadKey(msg.SessionID(), "/dom.mob", true, 5, msg.EncryptionKey); err != nil {
+func (s *Storage) Wait() {
+	<-s.ready
+}
+
+func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
+	// Generate file path
+	sessionID := strconv.FormatUint(msg.SessionID(), 10)
+	filePath := s.cfg.FSDir + "/" + sessionID
+	// Prepare sessions
+	newTask := &Task{
+		id: sessionID,
+	}
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		if prepErr := s.prepareSession(filePath, DOM, newTask); prepErr != nil {
+			err = fmt.Errorf("prepareSession DOM err: %s", prepErr)
+		}
+		wg.Done()
+	}()
+	go func() {
+		if prepErr := s.prepareSession(filePath, DEV, newTask); prepErr != nil {
+			err = fmt.Errorf("prepareSession DEV err: %s", prepErr)
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+	if err != nil {
+		if strings.Contains(err.Error(), "big file") {
+			log.Printf("%s, sess: %d", err, msg.SessionID())
+			return nil
+		}
 		return err
 	}
-	if err := s.uploadKey(msg.SessionID(), "/devtools.mob", false, 4, msg.EncryptionKey); err != nil {
-		log.Printf("can't find devtools for session: %d, err: %s", msg.SessionID(), err)
+	// Send new task to worker
+	s.tasks <- newTask
+	// Unload worker
+	<-s.ready
+	return nil
+}
+
+func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
+	// Check file size before download into memory
+	info, err := os.Stat(filePath)
+	if err == nil && info.Size() > s.cfg.MaxFileSize {
+		return nil, fmt.Errorf("big file, size: %d", info.Size())
+	}
+	// Read file into memory
+	raw, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+	if !s.cfg.UseSort {
+		return raw, nil
+	}
+	start := time.Now()
+	res, err := s.sortSessionMessages(raw)
+	if err != nil {
+		return nil, fmt.Errorf("can't sort session, err: %s", err)
+	}
+	metrics.RecordSessionSortDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+	return res, nil
+}
+
+func (s *Storage) sortSessionMessages(raw []byte) ([]byte, error) {
+	// Parse messages, sort by index and save result into slice of bytes
+	unsortedMessages, err := messages.SplitMessages(raw)
+	if err != nil {
+		log.Printf("can't sort session, err: %s", err)
+		return raw, nil
+	}
+	return messages.MergeMessages(raw, messages.SortMessages(unsortedMessages)), nil
+}
+
+func (s *Storage) prepareSession(path string, tp FileType, task *Task) error {
+	// Open mob file
+	if tp == DEV {
+		path += "devtools"
+	}
+	startRead := time.Now()
+	mob, err := s.openSession(path, tp)
+	if err != nil {
+		return err
+	}
+	metrics.RecordSessionSize(float64(len(mob)), tp.String())
+	metrics.RecordSessionReadDuration(float64(time.Now().Sub(startRead).Milliseconds()), tp.String())
+
+	// Encode and compress session
+	if tp == DEV {
+		start := time.Now()
+		task.dev = s.compressSession(mob)
+		metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+	} else {
+		if len(mob) <= s.cfg.FileSplitSize {
+			start := time.Now()
+			task.doms = s.compressSession(mob)
+			metrics.RecordSessionCompressDuration(float64(time.Now().Sub(start).Milliseconds()), tp.String())
+			return nil
+		}
+		wg := &sync.WaitGroup{}
+		wg.Add(2)
+		var firstPart, secondPart int64
+		go func() {
+			start := time.Now()
+			task.doms = s.compressSession(mob[:s.cfg.FileSplitSize])
+			firstPart = time.Now().Sub(start).Milliseconds()
+			wg.Done()
+		}()
+		go func() {
+			start := time.Now()
+			task.dome = s.compressSession(mob[s.cfg.FileSplitSize:])
+			secondPart = time.Now().Sub(start).Milliseconds()
+			wg.Done()
+		}()
+		wg.Wait()
+		metrics.RecordSessionCompressDuration(float64(firstPart+secondPart), tp.String())
 	}
 	return nil
 }
 
-// TODO: make a bit cleaner.
-// TODO: Of course, I'll do!
-func (s *Storage) uploadKey(sessID uint64, suffix string, shouldSplit bool, retryCount int, encryptionKey string) error {
-	if retryCount <= 0 {
-		return nil
-	}
-	start := time.Now()
-	fileName := strconv.FormatUint(sessID, 10)
-	mobFileName := fileName
-	if suffix == "/devtools.mob" {
-		mobFileName += "devtools"
-	}
-	filePath := s.cfg.FSDir + "/" + mobFileName
-
-	// Check file size before download into memory
-	info, err := os.Stat(filePath)
-	if err == nil {
-		if info.Size() > s.cfg.MaxFileSize {
-			log.Printf("big file, size: %d, session: %d", info.Size(), sessID)
-			return nil
-		}
-	}
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("File open error: %v; sessID: %s, part: %d, sessStart: %s\n",
-			err, fileName, sessID%16,
-			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
-		)
-	}
-	defer file.Close()
-
-	var fileSize int64 = 0
-	fileInfo, err := file.Stat()
-	if err != nil {
-		log.Printf("can't get file info: %s", err)
-	} else {
-		fileSize = fileInfo.Size()
-	}
-
+func (s *Storage) encryptSession(data []byte, encryptionKey string) []byte {
 	var encryptedData []byte
-	fileName += suffix
-	if shouldSplit {
-		nRead, err := file.Read(s.startBytes)
+	var err error
+	if encryptionKey != "" {
+		encryptedData, err = EncryptData(data, []byte(encryptionKey))
 		if err != nil {
-			log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
-				err,
-				fileName,
-				sessID%16,
-				time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
-			)
-			time.AfterFunc(s.cfg.RetryTimeout, func() {
-				s.uploadKey(sessID, suffix, shouldSplit, retryCount-1, encryptionKey)
-			})
-			return nil
+			log.Printf("can't encrypt data: %s", err)
+			encryptedData = data
 		}
-		s.readingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
-
-		start = time.Now()
-		// Encrypt session file if we have encryption key
-		if encryptionKey != "" {
-			encryptedData, err = EncryptData(s.startBytes[:nRead], []byte(encryptionKey))
-			if err != nil {
-				log.Printf("can't encrypt data: %s", err)
-				encryptedData = s.startBytes[:nRead]
-			}
-		} else {
-			encryptedData = s.startBytes[:nRead]
-		}
-		// Compress and save to s3
-		startReader := bytes.NewBuffer(encryptedData)
-		if err := s.s3.Upload(s.gzipFile(startReader), fileName+"s", "application/octet-stream", true); err != nil {
-			log.Fatalf("Storage: start upload failed.  %v\n", err)
-		}
-		// TODO: fix possible error (if we read less then FileSplitSize)
-		if nRead == s.cfg.FileSplitSize {
-			restPartSize := fileSize - int64(nRead)
-			fileData := make([]byte, restPartSize)
-			nRead, err = file.Read(fileData)
-			if err != nil {
-				log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
-					err,
-					fileName,
-					sessID%16,
-					time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
-				)
-				return nil
-			}
-			if int64(nRead) != restPartSize {
-				log.Printf("can't read the rest part of file")
-			}
-
-			// Encrypt session file if we have encryption key
-			if encryptionKey != "" {
-				encryptedData, err = EncryptData(fileData, []byte(encryptionKey))
-				if err != nil {
-					log.Printf("can't encrypt data: %s", err)
-					encryptedData = fileData
-				}
-			} else {
-				encryptedData = fileData
-			}
-			// Compress and save to s3
-			endReader := bytes.NewBuffer(encryptedData)
-			if err := s.s3.Upload(s.gzipFile(endReader), fileName+"e", "application/octet-stream", true); err != nil {
-				log.Fatalf("Storage: end upload failed. %v\n", err)
-			}
-		}
-		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
 	} else {
-		start = time.Now()
-		fileData := make([]byte, fileSize)
-		nRead, err := file.Read(fileData)
-		if err != nil {
-			log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
-				err,
-				fileName,
-				sessID%16,
-				time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
-			)
-			return nil
-		}
-		if int64(nRead) != fileSize {
-			log.Printf("can't read the rest part of file")
-		}
+		encryptedData = data
+	}
+	return encryptedData
+}
 
-		// Encrypt session file if we have encryption key
-		if encryptionKey != "" {
-			encryptedData, err = EncryptData(fileData, []byte(encryptionKey))
-			if err != nil {
-				log.Printf("can't encrypt data: %s", err)
-				encryptedData = fileData
+func (s *Storage) compressSession(data []byte) *bytes.Buffer {
+	zippedMob := new(bytes.Buffer)
+	z, _ := gzip.NewWriterLevel(zippedMob, gzip.BestSpeed)
+	if _, err := z.Write(data); err != nil {
+		log.Printf("can't write session data to compressor: %s", err)
+	}
+	if err := z.Close(); err != nil {
+		log.Printf("can't close compressor: %s", err)
+	}
+	return zippedMob
+}
+
+func (s *Storage) uploadSession(task *Task) {
+	wg := &sync.WaitGroup{}
+	wg.Add(3)
+	var (
+		uploadDoms int64 = 0
+		uploadDome int64 = 0
+		uploadDev  int64 = 0
+	)
+	go func() {
+		if task.doms != nil {
+			start := time.Now()
+			if err := s.s3.Upload(task.doms, task.id+string(DOM)+"s", "application/octet-stream", true); err != nil {
+				log.Fatalf("Storage: start upload failed.  %s", err)
 			}
-		} else {
-			encryptedData = fileData
+			uploadDoms = time.Now().Sub(start).Milliseconds()
 		}
-		endReader := bytes.NewBuffer(encryptedData)
-		if err := s.s3.Upload(s.gzipFile(endReader), fileName, "application/octet-stream", true); err != nil {
-			log.Fatalf("Storage: end upload failed. %v\n", err)
+		wg.Done()
+	}()
+	go func() {
+		if task.dome != nil {
+			start := time.Now()
+			if err := s.s3.Upload(task.dome, task.id+string(DOM)+"e", "application/octet-stream", true); err != nil {
+				log.Fatalf("Storage: start upload failed.  %s", err)
+			}
+			uploadDome = time.Now().Sub(start).Milliseconds()
 		}
-		s.archivingTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()))
-	}
+		wg.Done()
+	}()
+	go func() {
+		if task.dev != nil {
+			start := time.Now()
+			if err := s.s3.Upload(task.dev, task.id+string(DEV), "application/octet-stream", true); err != nil {
+				log.Fatalf("Storage: start upload failed.  %s", err)
+			}
+			uploadDev = time.Now().Sub(start).Milliseconds()
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+	metrics.RecordSessionUploadDuration(float64(uploadDoms+uploadDome), DOM.String())
+	metrics.RecordSessionUploadDuration(float64(uploadDev), DEV.String())
+	metrics.IncreaseStorageTotalSessions()
+}
 
-	// Save metrics
-	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
-	if shouldSplit {
-		s.totalSessions.Add(ctx, 1)
-		s.sessionDOMSize.Record(ctx, float64(fileSize))
-	} else {
-		s.sessionDevtoolsSize.Record(ctx, float64(fileSize))
+func (s *Storage) worker() {
+	for {
+		select {
+		case task := <-s.tasks:
+			s.uploadSession(task)
+		default:
+			// Signal that worker finished all tasks
+			s.ready <- struct{}{}
+		}
 	}
-
-	return nil
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from 'UI';
 
-const ListItem = ({ webhook, onEdit, onDelete }) => {
+const ListItem = ({ webhook, onEdit }) => {
     return (
         <div className="border-t group hover:bg-active-blue flex items-center justify-between py-3 px-5 cursor-pointer" onClick={onEdit}>
             <div>

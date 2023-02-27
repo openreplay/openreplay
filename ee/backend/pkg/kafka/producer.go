@@ -15,13 +15,20 @@ type Producer struct {
 
 func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 	kafkaConfig := &kafka.ConfigMap{
-		"enable.idempotence":     true,
-		"bootstrap.servers":      env.String("KAFKA_SERVERS"),
-		"go.delivery.reports":    true,
-		"security.protocol":      "plaintext",
-		"go.batch.producer":      useBatch,
-		"queue.buffering.max.ms": 100,
-		"message.max.bytes":      messageSizeLimit,
+		"enable.idempotence":                    true,
+		"bootstrap.servers":                     env.String("KAFKA_SERVERS"),
+		"go.delivery.reports":                   true,
+		"security.protocol":                     "plaintext",
+		"go.batch.producer":                     useBatch,
+		"message.max.bytes":                     messageSizeLimit, // should be synced with broker config
+		"linger.ms":                             1000,
+		"queue.buffering.max.ms":                1000,
+		"batch.num.messages":                    1000,
+		"queue.buffering.max.messages":          1000,
+		"retries":                               3,
+		"retry.backoff.ms":                      100,
+		"max.in.flight.requests.per.connection": 1,
+		"compression.type":                      env.String("COMPRESSION_TYPE"),
 	}
 	// Apply ssl configuration
 	if env.Bool("KAFKA_USE_SSL") {

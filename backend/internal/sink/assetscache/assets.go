@@ -1,19 +1,19 @@
 package assetscache
 
 import (
-	"context"
 	"crypto/md5"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"io"
 	"log"
 	"net/url"
-	"openreplay/backend/internal/config/sink"
-	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
-	"openreplay/backend/pkg/queue/types"
-	"openreplay/backend/pkg/url/assets"
+	metrics "openreplay/backend/pkg/metrics/sink"
+	"strings"
 	"sync"
 	"time"
+
+	"openreplay/backend/internal/config/sink"
+	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/url/assets"
 )
 
 type CachedAsset struct {
@@ -22,57 +22,37 @@ type CachedAsset struct {
 }
 
 type AssetsCache struct {
-	mutex         sync.RWMutex
-	cfg           *sink.Config
-	rewriter      *assets.Rewriter
-	producer      types.Producer
-	cache         map[string]*CachedAsset
-	totalAssets   syncfloat64.Counter
-	cachedAssets  syncfloat64.Counter
-	skippedAssets syncfloat64.Counter
-	assetSize     syncfloat64.Histogram
-	assetDuration syncfloat64.Histogram
+	mutex     sync.RWMutex
+	cfg       *sink.Config
+	rewriter  *assets.Rewriter
+	producer  types.Producer
+	cache     map[string]*CachedAsset
+	blackList []string // use "example.com" to filter all domains or ".example.com" to filter only third-level domain
 }
 
-func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer, metrics *monitoring.Metrics) *AssetsCache {
-	// Assets metrics
-	totalAssets, err := metrics.RegisterCounter("assets_total")
-	if err != nil {
-		log.Printf("can't create assets_total metric: %s", err)
-	}
-	cachedAssets, err := metrics.RegisterCounter("assets_cached")
-	if err != nil {
-		log.Printf("can't create assets_cached metric: %s", err)
-	}
-	skippedAssets, err := metrics.RegisterCounter("assets_skipped")
-	if err != nil {
-		log.Printf("can't create assets_skipped metric: %s", err)
-	}
-	assetSize, err := metrics.RegisterHistogram("asset_size")
-	if err != nil {
-		log.Printf("can't create asset_size metric: %s", err)
-	}
-	assetDuration, err := metrics.RegisterHistogram("asset_duration")
-	if err != nil {
-		log.Printf("can't create asset_duration metric: %s", err)
-	}
+func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
 	assetsCache := &AssetsCache{
-		cfg:           cfg,
-		rewriter:      rewriter,
-		producer:      producer,
-		cache:         make(map[string]*CachedAsset, 64),
-		totalAssets:   totalAssets,
-		cachedAssets:  cachedAssets,
-		skippedAssets: skippedAssets,
-		assetSize:     assetSize,
-		assetDuration: assetDuration,
+		cfg:       cfg,
+		rewriter:  rewriter,
+		producer:  producer,
+		cache:     make(map[string]*CachedAsset, 64),
+		blackList: make([]string, 0),
+	}
+	// Parse black list for cache layer
+	if len(cfg.CacheBlackList) > 0 {
+		blackList := strings.Split(cfg.CacheBlackList, ",")
+		for _, domain := range blackList {
+			if len(domain) > 0 {
+				assetsCache.blackList = append(assetsCache.blackList, domain)
+			}
+		}
 	}
 	go assetsCache.cleaner()
 	return assetsCache
 }
 
 func (e *AssetsCache) cleaner() {
-	cleanTick := time.Tick(time.Minute * 30)
+	cleanTick := time.Tick(time.Minute * 3)
 	for {
 		select {
 		case <-cleanTick:
@@ -93,9 +73,26 @@ func (e *AssetsCache) clearCache() {
 		if int64(now.Sub(cache.ts).Minutes()) > e.cfg.CacheExpiration {
 			deleted++
 			delete(e.cache, id)
+			metrics.DecreaseCachedAssets()
 		}
 	}
 	log.Printf("cache cleaner: deleted %d/%d assets", deleted, cacheSize)
+}
+
+func (e *AssetsCache) shouldSkipAsset(baseURL string) bool {
+	if len(e.blackList) == 0 {
+		return false
+	}
+	host, err := parseHost(baseURL)
+	if err != nil {
+		return false
+	}
+	for _, blackHost := range e.blackList {
+		if strings.Contains(host, blackHost) {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
@@ -110,6 +107,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 			newMsg.SetMeta(msg.Meta())
 			return newMsg
 		} else if m.Name == "style" {
+			if e.shouldSkipAsset(m.BaseURL) {
+				return msg
+			}
 			newMsg := &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,
@@ -119,6 +119,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 			return newMsg
 		}
 	case *messages.SetCSSDataURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.SetCSSData{
 			ID:   m.ID,
 			Data: e.handleCSS(m.SessionID(), m.BaseURL, m.Data),
@@ -126,6 +129,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.CSSInsertRuleURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.CSSInsertRule{
 			ID:    m.ID,
 			Index: m.Index,
@@ -134,6 +140,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.AdoptedSSReplaceURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.AdoptedSSReplace{
 			SheetID: m.SheetID,
 			Text:    e.handleCSS(m.SessionID(), m.BaseURL, m.Text),
@@ -141,6 +150,9 @@ func (e *AssetsCache) ParseAssets(msg messages.Message) messages.Message {
 		newMsg.SetMeta(msg.Meta())
 		return newMsg
 	case *messages.AdoptedSSInsertRuleURLBased:
+		if e.shouldSkipAsset(m.BaseURL) {
+			return msg
+		}
 		newMsg := &messages.AdoptedSSInsertRule{
 			SheetID: m.SheetID,
 			Index:   m.Index,
@@ -180,13 +192,20 @@ func (e *AssetsCache) handleURL(sessionID uint64, baseURL string, urlVal string)
 	}
 }
 
+func parseHost(baseURL string) (string, error) {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", err
+	}
+	return u.Scheme + "://" + u.Host + "/", nil
+}
+
 func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) string {
-	ctx := context.Background()
-	e.totalAssets.Add(ctx, 1)
+	metrics.IncreaseTotalAssets()
 	// Try to find asset in cache
 	h := md5.New()
 	// Cut first part of url (scheme + host)
-	u, err := url.Parse(baseURL)
+	justUrl, err := parseHost(baseURL)
 	if err != nil {
 		log.Printf("can't parse url: %s, err: %s", baseURL, err)
 		if e.cfg.CacheAssets {
@@ -194,7 +213,6 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 		}
 		return e.getRewrittenCSS(sessionID, baseURL, css)
 	}
-	justUrl := u.Scheme + "://" + u.Host + "/"
 	// Calculate hash sum of url + css
 	io.WriteString(h, justUrl)
 	io.WriteString(h, css)
@@ -205,7 +223,7 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	e.mutex.RUnlock()
 	if ok {
 		if int64(time.Now().Sub(cachedAsset.ts).Minutes()) < e.cfg.CacheExpiration {
-			e.skippedAssets.Add(ctx, 1)
+			metrics.IncreaseSkippedAssets()
 			return cachedAsset.msg
 		}
 	}
@@ -217,8 +235,8 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 	start := time.Now()
 	res := e.getRewrittenCSS(sessionID, baseURL, css)
 	duration := time.Now().Sub(start).Milliseconds()
-	e.assetSize.Record(ctx, float64(len(res)))
-	e.assetDuration.Record(ctx, float64(duration))
+	metrics.RecordAssetSize(float64(len(res)))
+	metrics.RecordProcessAssetDuration(float64(duration))
 	// Save asset to cache if we spent more than threshold
 	if duration > e.cfg.CacheThreshold {
 		e.mutex.Lock()
@@ -227,7 +245,7 @@ func (e *AssetsCache) handleCSS(sessionID uint64, baseURL string, css string) st
 			ts:  time.Now(),
 		}
 		e.mutex.Unlock()
-		e.cachedAssets.Add(ctx, 1)
+		metrics.IncreaseCachedAssets()
 	}
 	// Return rewritten asset
 	return res

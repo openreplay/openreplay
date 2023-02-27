@@ -3,7 +3,7 @@ chardet==5.0.0
 clickhouse-driver==0.2.4
 clickhouse-sqlalchemy==0.2.2
 idna==3.4
-kafka-python==2.0.2
+confluent-kafka
 psycopg2-binary==2.9.3
 pytz==2022.6
 requests==2.28.1

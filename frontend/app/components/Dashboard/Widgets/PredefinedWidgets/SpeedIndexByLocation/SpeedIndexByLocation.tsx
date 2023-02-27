@@ -24,6 +24,7 @@ function SpeedIndexByLocation(props: Props) {
         const max = metric.data.chart.reduce((acc: any, item: any) => Math.max(acc, item.value), 0);
         const min = metric.data.chart.reduce((acc: any, item: any) => Math.min(acc, item.value), 0);
         metric.data.chart.forEach((item: any) => {
+            if (!item || !item.userCountry) { return }
             item.perNumber = positionOfTheNumber(min, max, item.value, 5);
             data[item.userCountry.toLowerCase()] = item;
         });

@@ -1,8 +1,8 @@
 import logger from 'App/logger';
 import APIClient from './api_client';
-import { UPDATE, DELETE } from './duck/jwt';
+import { FETCH_ACCOUNT, UPDATE_JWT } from './duck/user';
 
-export default (store) => (next) => (action) => {
+export default () => (next) => (action) => {
   const { types, call, ...rest } = action;
   if (!call) {
     return next(action);
@@ -14,7 +14,7 @@ export default (store) => (next) => (action) => {
   return call(client)
     .then(async (response) => {
       if (response.status === 403) {
-        next({ type: DELETE });
+        next({ type: FETCH_ACCOUNT.FAILURE });
       }
       if (!response.ok) {
         const text = await response.text();
@@ -30,20 +30,21 @@ export default (store) => (next) => (action) => {
         next({ type: SUCCESS, data, ...rest });
       }
       if (jwt) {
-        next({ type: UPDATE, data: jwt });
+        next({ type: UPDATE_JWT, data: jwt });
       }
     })
-    .catch((e) => {
+    .catch(async (e) => {
+      const data = await e.response?.json();
       logger.error('Error during API request. ', e);
-      return next({ type: FAILURE, errors: parseError(e) });
+      return next({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
     });
 };
 
 function parseError(e) {
   try {
-    return JSON.parse(e).errors || [];
+    return [...JSON.parse(e).errors] || [];
   } catch {
-    return e;
+    return Array.isArray(e) ? e : [e];
   }
 }
 

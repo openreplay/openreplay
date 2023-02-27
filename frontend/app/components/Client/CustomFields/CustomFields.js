@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Button, Loader, NoContent, Icon } from 'UI';
+import { Button, Loader, NoContent, Icon, Tooltip } from 'UI';
 import { init, fetchList, save, remove } from 'Duck/customField';
 import SiteDropdown from 'Shared/SiteDropdown';
 import styles from './customFields.module.css';
@@ -11,6 +11,7 @@ import ListItem from './ListItem';
 import { confirm } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { useModal } from 'App/components/Modal';
+import { toast } from 'react-toastify';
 
 function CustomFields(props) {
     const [currentSite, setCurrentSite] = React.useState(props.sites.get(0));
@@ -25,10 +26,11 @@ function CustomFields(props) {
     }, []);
 
     const save = (field) => {
-        props.save(currentSite.id, field).then(() => {
-            const { errors } = props;
-            if (!errors || errors.size === 0) {
+        props.save(currentSite.id, field).then((response) => {
+            if (!response || !response.errors || response.errors.size === 0) {
                 hideModal();
+            } else {
+                toast.error(response.errors[0]);
             }
         });
     };
@@ -71,7 +73,11 @@ function CustomFields(props) {
                 <div style={{ marginRight: '15px' }}>
                     <SiteDropdown value={currentSite && currentSite.id} onChange={onChangeSelect} />
                 </div>
-                <Button className="ml-auto" variant="primary" onClick={() => init()}>Add Metadata</Button>
+                <div className="ml-auto">
+                <Tooltip title="You've reached the limit of 10 metadata." disabled={fields.size < 10}>
+                    <Button disabled={fields.size >= 10} variant="primary" onClick={() => init()}>Add Metadata</Button>
+                </Tooltip>
+                </div>
             </div>
             <div className="text-base text-disabled-text flex px-5 items-center my-3">
                 <Icon name="info-circle-fill" className="mr-2" size={16} />

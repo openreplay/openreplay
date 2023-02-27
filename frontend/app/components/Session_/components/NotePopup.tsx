@@ -1,23 +1,23 @@
 import React from 'react';
 import { Button } from 'UI';
-import { connectPlayer, pause } from 'Player';
 import { connect } from 'react-redux';
 import { setCreateNoteTooltip } from 'Duck/sessions';
-import GuidePopup, { FEATURE_KEYS } from 'Shared/GuidePopup';
+import GuidePopup from 'Shared/GuidePopup';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 function NotePopup({
   setCreateNoteTooltip,
-  time,
   tooltipActive,
 }: {
   setCreateNoteTooltip: (args: any) => void;
-  time: number;
   tooltipActive: boolean;
 }) {
+  const { player, store } = React.useContext(PlayerContext)
+
   const toggleNotePopup = () => {
     if (tooltipActive) return;
-    pause();
-    setCreateNoteTooltip({ time: time, isVisible: true });
+    player.pause();
+    setCreateNoteTooltip({ time: store.get().time, isVisible: true });
   };
 
   React.useEffect(() => {
@@ -36,14 +36,9 @@ function NotePopup({
   );
 }
 
-const NotePopupPl = connectPlayer(
-  // @ts-ignore
-  (state) => ({ time: state.time })
-)(React.memo(NotePopup));
-
 const NotePopupComp = connect(
   (state: any) => ({ tooltipActive: state.getIn(['sessions', 'createNoteTooltip', 'isVisible']) }),
   { setCreateNoteTooltip }
-)(NotePopupPl);
+)(NotePopup);
 
 export default React.memo(NotePopupComp);

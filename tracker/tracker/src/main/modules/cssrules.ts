@@ -87,7 +87,7 @@ export default function (app: App | null) {
   app.observer.attachContextCallback(patchContext)
 
   app.nodes.attachNodeCallback((node: Node): void => {
-    if (!(hasTag(node, 'STYLE') || hasTag(node, 'style')) || !node.sheet) {
+    if (!hasTag(node, 'style') || !node.sheet) {
       return
     }
     if (node.textContent !== null && node.textContent.trim().length > 0) {

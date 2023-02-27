@@ -3,44 +3,35 @@ import cn from 'classnames';
 import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { SegmentSelection, Button, Icon } from 'UI';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { FilterKey } from 'Types/filter/filterType';
 import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
-// import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import ClickMapRagePicker from "Components/Dashboard/components/ClickMapRagePicker";
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
+import { CLICKMAP, TABLE, TIMESERIES } from "App/constants/card";
 
 interface Props {
     className?: string;
     name: string;
+    isEditing?: boolean;
 }
 function WidgetPreview(props: Props) {
     const [showDashboardSelectionModal, setShowDashboardSelectionModal] = React.useState(false);
     const { className = '' } = props;
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
-    const metric: any = useObserver(() => metricStore.instance);
-    const isTimeSeries = metric.metricType === 'timeseries';
-    const isTable = metric.metricType === 'table';
-    const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
-    const disableVisualization = useObserver(() => metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS);
-    // const period = useObserver(() => dashboardStore.drillDownPeriod);
+    const metric: any = metricStore.instance;
+    const isTimeSeries = metric.metricType === TIMESERIES;
+    const isTable = metric.metricType === TABLE;
+    const disableVisualization = metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS;
 
-    const chagneViewType = (e, { name, value }: any) => {
+    const changeViewType = (_, { name, value }: any) => {
         metric.update({ [ name ]: value });
     }
 
-    // const onChangePeriod = (period: any) => {
-    //     dashboardStore.setDrillDownPeriod(period);
-    //     const periodTimestamps = period.toTimestamps();
-    //     drillDownFilter.merge({
-    //         startTimestamp: periodTimestamps.startTimestamp,
-    //         endTimestamp: periodTimestamps.endTimestamp,
-    //     })
-    // }
-
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
 
-    return useObserver(() => (
+    return (
         <>
         <div className={cn(className, 'bg-white rounded border')}>
             <div className="flex items-center justify-between px-4 pt-2">
@@ -55,8 +46,8 @@ function WidgetPreview(props: Props) {
                                 name="viewType"
                                 className="my-3"
                                 primary
-                                icons={true}
-                                onSelect={ chagneViewType }
+                                size="small"
+                                onSelect={ changeViewType }
                                 value={{ value: metric.viewType }}
                                 list={ [
                                     { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
@@ -73,8 +64,8 @@ function WidgetPreview(props: Props) {
                                 name="viewType"
                                 className="my-3"
                                 primary={true}
-                                icons={true}
-                                onSelect={ chagneViewType }
+                                size="small"
+                                onSelect={ changeViewType }
                                 value={{ value: metric.viewType }}
                                 list={[
                                     { value: 'table', name: 'Table', icon: 'table' },
@@ -85,6 +76,9 @@ function WidgetPreview(props: Props) {
                         </>
                     )}
                     <div className="mx-4" />
+                    {metric.metricType === CLICKMAP ? (
+                        <ClickMapRagePicker />
+                    ) : null}
                     <WidgetDateRange />
                     {/* add to dashboard */}
                     {metric.exists() && (
@@ -93,7 +87,7 @@ function WidgetPreview(props: Props) {
                         className="ml-2 p-0"
                         onClick={() => setShowDashboardSelectionModal(true)}
                         disabled={!canAddToDashboard}
-                    > 
+                    >
                         <Icon name="columns-gap-filled" size="14" className="mr-2" color="teal"/>
                         Add to Dashboard
                     </Button>
@@ -112,7 +106,7 @@ function WidgetPreview(props: Props) {
             />
         )}
         </>
-    ));
+    );
 }
 
-export default WidgetPreview;
+export default observer(WidgetPreview);

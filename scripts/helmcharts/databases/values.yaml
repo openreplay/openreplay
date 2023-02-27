@@ -132,12 +132,13 @@ kafka:
     tag: 2.8.1
   fullnameOverride: kafka
   enabled: false
+  replicaCount: 2
 
 
 # Enterprise dbs
 clickhouse:
   image:
-    tag: "22.2.2.1"
+    tag: "22.12-alpine"
   enabled: false
 
 postgreql:

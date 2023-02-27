@@ -8,7 +8,7 @@ interface Props {
     width?: string;
 }
 function VerticalLine(props: Props) {
-    const { left, className = 'border-gray-dark', height = '221px', width = '1px' } = props;
+    const { left, className = 'border-gray-dark', height = '100%', width = '1px' } = props;
     return <div className={cn('absolute border-r border-dashed z-10', className)} style={{ left: `${left}%`, height, width }} />;
 }
 

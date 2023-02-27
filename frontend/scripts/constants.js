@@ -3,7 +3,7 @@ const countries = require('country-data').countries;
 
 delete countries['UK'];
 delete countries['EU'];
-for (code in countries) {
+for (let code in countries) {
   const country = countries[code];
   if (code.length != 2) {
     delete countries[code];

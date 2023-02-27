@@ -1,5 +1,3 @@
-import { List } from 'immutable';
-
 export interface SavedSearch {
     count: number;
     createdAt: number;
@@ -10,5 +8,4 @@ export interface SavedSearch {
     projectId: number;
     searchId: number;
     userId: number;
-    watchdogs: List<any>
 }

@@ -21,7 +21,7 @@ import (
 	Output event: IssueEvent
 */
 
-const CLICK_RELATION_TIME = 1400
+const CLICK_RELATION_TIME = 1234
 
 type DeadClickDetector struct {
 	lastTimestamp      uint64

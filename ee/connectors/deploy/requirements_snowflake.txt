@@ -1,5 +1,5 @@
 pandas==1.5.1
-kafka-python==2.0.2
+confluent-kafka
 SQLAlchemy==1.4.43
 snowflake-connector-python==2.8.2
 snowflake-sqlalchemy==1.4.4

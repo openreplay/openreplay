@@ -7,34 +7,131 @@ on:
     branches: [ "main" ]
     paths:
       - frontend/**
+      - tracker/**
   pull_request:
     branches: [ "dev", "main" ]
     paths:
       - frontend/**
+      - tracker/**
+env:
+  API: ${{ secrets.E2E_API_ORIGIN }}
+  ASSETS: ${{ secrets.E2E_ASSETS_ORIGIN }}
+  APIEDP: ${{ secrets.E2E_EDP_ORIGIN }}
+  CY_ACC: ${{ secrets.CYPRESS_ACCOUNT }}
+  CY_PASS: ${{ secrets.CYPRESS_PASSWORD }}
+  FOSS_PROJECT_KEY: ${{ secrets.FOSS_PROJECT_KEY }}
+  FOSS_INGEST: ${{ secrets.FOSS_INGEST }}
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    defaults:
-      run: 
-        working-directory: ./frontend
+  build-and-test:
+    runs-on: macos-latest
+    name: Build and test Tracker plus Replayer
     strategy:
       matrix:
-        node-version: [16.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+        node-version: [ 16.x ]
     steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: Setup packages
-      run: npm i --legacy-peer-deps --ignore-scripts
-    - name: Run unit tests
-      run: npm test --if-resent
-    - name: Run Frontend
-      run: npm start
-    - name: Wait for frontend
-      run: npx wait-on http://0.0.0.0:3333
-    - name: Run visual tests
-      run: npm run cy:test --if-present
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache tracker modules
+        uses: actions/cache@v1
+        with:
+          path: tracker/tracker/node_modules
+          key: ${{ runner.OS }}-test_tracker_build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            test_tracker_build{{ runner.OS }}-build-
+            test_tracker_build{{ runner.OS }}-
+      - name: Setup Testing packages
+        run: |
+          cd tracker/tracker
+          npm i -g yarn
+          yarn
+      - name: Jest tests
+        run: |
+          cd tracker/tracker
+          yarn test
+      - name: Build tracker inst
+        run: |
+          cd tracker/tracker
+          yarn build
+      - name: Setup Testing UI Env
+        run: |
+          cd tracker/tracker-testing-playground
+          echo "REACT_APP_KEY=$FOSS_PROJECT_KEY" >> .env
+          echo "REACT_APP_INGEST=$FOSS_INGEST" >> .env
+      - name: Setup Testing packages
+        run: |
+          cd tracker/tracker-testing-playground
+          yarn
+      - name: Wait for Testing Frontend
+        run: |
+          cd tracker/tracker-testing-playground
+          yarn start &> ui.log &
+          npx wait-on http://localhost:3000
+          cd ../../frontend
+      - name: Cache node modules
+        uses: actions/cache@v1
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.OS }}-build-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.OS }}-build-
+            ${{ runner.OS }}-
+      - name: Setup env
+        run: |
+          cd frontend
+          echo "NODE_ENV=development" >> .env
+          echo "SOURCEMAP=true" >> .env
+          echo "ORIGIN=$API" >> .env
+          echo "ASSETS_HOST=$ASSETS" >> .env
+          echo "API_EDP=$APIEDP" >> .env
+          echo "SENTRY_ENABLED = false" >> .env
+          echo "SENTRY_URL = ''" >> .env
+          echo "CAPTCHA_ENABLED = false" >> .env
+          echo "CAPTCHA_SITE_KEY = 'asdad'" >> .env
+          echo "MINIO_ENDPOINT = ''" >> .env
+          echo "MINIO_PORT = ''" >> .env
+          echo "MINIO_USE_SSL = ''" >> .env
+          echo "MINIO_ACCESS_KEY = ''" >> .env
+          echo "MINIO_SECRET_KEY = ''" >> .env
+          echo "VERSION = '1.9.0'" >> .env
+          echo "TRACKER_VERSION = '4.0.0'" >> .env
+          echo "COMMIT_HASH = 'dev'" >> .env
+          echo "{ \"account\": \"$CY_ACC\", \"password\": \"$CY_PASS\" }" >> cypress.env.json
+
+      - name: Setup packages
+        run: |
+          cd frontend
+          yarn
+      - name: Run unit tests
+        run: |
+          cd frontend
+          yarn test
+      - name: Run Frontend
+        run: |
+          cd frontend
+          yarn start &> frontend.log &
+      - name: Wait for frontend
+        run: |
+          cd frontend
+          npx wait-on http://0.0.0.0:3333
+      - name: (Chrome) Run visual tests
+        run: |
+          cd frontend
+          yarn cy:test
+#        firefox have different viewport somehow
+#      - name: (Firefox) Run visual tests
+#        run: yarn cy:test-firefox
+#      - name: (Edge) Run visual tests
+#        run: yarn cy:test-edge
+      - name: Upload Debug
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'Snapshots'
+          path: |
+            frontend/cypress/videos
+            frontend/cypress/snapshots/replayer.cy.ts
+            frontend/cypress/screenshots
+            frontend/cypress/snapshots/generalStability.cy.ts

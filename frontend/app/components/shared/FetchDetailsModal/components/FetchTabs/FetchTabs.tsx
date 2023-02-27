@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import logger from 'App/logger'
 import Headers from '../Headers';
 import { JSONTree, Tabs, NoContent } from 'UI';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
@@ -8,65 +9,104 @@ const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
 const TABS = [HEADERS, REQUEST, RESPONSE].map((tab) => ({ text: tab, key: tab }));
 
-interface Props {
-  resource: any;
+function parseRequestResponse(
+  r: string,
+  setHeaders: (hs: Record<string, string> | null) => void,
+  setJSONBody: (body: Record<string, string> | null) => void,
+  setStringBody: (body: string) => void,
+) {
+  try {
+    if (!r) {
+      setHeaders(null);
+      setJSONBody(null);
+      setStringBody('');
+      return;
+    }
+    const json = JSON.parse(r)
+    const hs = json.headers
+    const bd = json.body as string
+
+    if (typeof hs === "object") {
+      setHeaders(hs);
+    } else {
+      setHeaders(null);
+    }
+    if (!bd) {
+      setJSONBody(null)
+      setStringBody('')
+    }
+    try {
+      const jBody = JSON.parse(bd)
+      if (typeof jBody === "object" && jBody != null) {
+        setJSONBody(jBody)
+      } else {
+        setStringBody(bd)
+      }
+    } catch {
+      setStringBody(bd)
+    }
+  } catch(e) { logger.error("Error decoding payload json:", e, r)}
 }
-function FetchTabs(props: Props) {
-  const { resource } = props;
+
+
+interface Props {
+  resource: { request: string, response: string };
+}
+function FetchTabs({ resource }: Props) {
   const [activeTab, setActiveTab] = useState(HEADERS);
   const onTabClick = (tab: string) => setActiveTab(tab);
-  const [jsonPayload, setJsonPayload] = useState(null);
-  const [jsonResponse, setJsonResponse] = useState(null);
-  const [requestHeaders, setRequestHeaders] = useState(null);
-  const [responseHeaders, setResponseHeaders] = useState(null);
+  const [jsonRequest, setJsonRequest] = useState<Object | null>(null);
+  const [jsonResponse, setJsonResponse] = useState<Object | null>(null);
+  const [stringRequest, setStringRequest] = useState<string>('');
+  const [stringResponse, setStringResponse ] = useState<string>('');
+  const [requestHeaders, setRequestHeaders] = useState<Record<string,string> | null>(null);
+  const [responseHeaders, setResponseHeaders] = useState<Record<string,string> | null>(null);
 
   useEffect(() => {
-    const { payload, response } = resource;
-
-    try {
-      let jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload;
-      let requestHeaders = jsonPayload.headers;
-      jsonPayload.body =
-        typeof jsonPayload.body === 'string' ? JSON.parse(jsonPayload.body) : jsonPayload.body;
-      delete jsonPayload.headers;
-      setJsonPayload(jsonPayload);
-      setRequestHeaders(requestHeaders);
-    } catch (e) {}
-
-    try {
-      let jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
-      let responseHeaders = jsonResponse.headers;
-      jsonResponse.body =
-        typeof jsonResponse.body === 'string' ? JSON.parse(jsonResponse.body) : jsonResponse.body;
-      delete jsonResponse.headers;
-      setJsonResponse(jsonResponse);
-      setResponseHeaders(responseHeaders);
-    } catch (e) {}
-  }, [resource, activeTab]);
+    const { request, response } = resource;
+    parseRequestResponse(
+      request,
+      setRequestHeaders,
+      setJsonRequest,
+      setStringRequest,
+    )
+    parseRequestResponse(
+      response,
+      setResponseHeaders,
+      setJsonResponse,
+      setStringResponse,
+    )
+  }, [resource]);
 
   const renderActiveTab = () => {
-    const { payload, response } = resource;
     switch (activeTab) {
       case REQUEST:
         return (
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-                <div className="mt-6 text-2xl">Body is Empty.</div>
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
+                <div className="mt-6 text-2xl">
+                  Body is Empty or not captured.
+                  {' '}
+                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                    Configure
+                  </a>
+                  {' '}
+                  network capturing to get more out of fetch/XHR requests.
+                </div>
               </div>
             }
             size="small"
-            show={!payload}
+            show={!jsonRequest && !stringRequest}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                {jsonPayload === undefined ? (
-                  <div className="ml-3 break-words my-3"> {payload} </div>
-                ) : (
-                  <JSONTree src={jsonPayload} collapsed={false} enableClipboard />
-                )}
+                { jsonRequest 
+                  ? <JSONTree src={jsonRequest} collapsed={false} enableClipboard />
+                  : <div className="ml-3 break-words my-3"> {stringRequest} </div>
+                }
               </div>
               <div className="divider" />
             </div>
@@ -77,21 +117,28 @@ function FetchTabs(props: Props) {
           <NoContent
             title={
               <div className="flex flex-col items-center justify-center">
-                <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
-                <div className="mt-6 text-2xl">Body is Empty.</div>
+                <AnimatedSVG name={ICONS.NO_RESULTS} size={170} />
+                <div className="mt-6 text-2xl">
+                  Body is Empty or not captured.
+                  {' '}
+                  <a href="https://docs.openreplay.com/installation/network-options" className="link" target="_blank">
+                    Configure
+                  </a>
+                  {' '}
+                  network capturing to get more out of fetch/XHR requests.
+                </div>
               </div>
             }
             size="small"
-            show={!response}
+            show={!jsonResponse && !stringResponse}
             // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
-                {jsonResponse === undefined ? (
-                  <div className="ml-3 break-words my-3"> {response} </div>
-                ) : (
-                  <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
-                )}
+                { jsonResponse 
+                  ? <JSONTree src={jsonResponse} collapsed={false} enableClipboard />
+                  : <div className="ml-3 break-words my-3"> {stringResponse} </div>  
+                }
               </div>
               <div className="divider" />
             </div>

@@ -13,7 +13,7 @@ import {
   useInteractions,
   FloatingPortal,
   arrow,
-  computePosition,
+
 } from '@floating-ui/react-dom-interactions';
 import type { Placement } from '@floating-ui/react-dom-interactions';
 import { INDEXES } from 'App/constants/zindex';

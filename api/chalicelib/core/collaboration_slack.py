@@ -1,19 +1,26 @@
 import requests
 from decouple import config
 from datetime import datetime
+
+from fastapi import HTTPException
+from starlette import status
+
+import schemas
 from chalicelib.core import webhook
+from chalicelib.core.collaboration_base import BaseCollaboration
 
 
-class Slack:
+class Slack(BaseCollaboration):
     @classmethod
-    def add_channel(cls, tenant_id, **args):
-        url = args["url"]
-        name = args["name"]
-        if cls.say_hello(url):
+    def add(cls, tenant_id, data: schemas.AddCollaborationSchema):
+        if webhook.exists_by_name(tenant_id=tenant_id, name=data.name, exclude_id=None,
+                                  webhook_type=schemas.WebhookType.slack):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"name already exists.")
+        if cls.say_hello(data.url):
             return webhook.add(tenant_id=tenant_id,
-                               endpoint=url,
-                               webhook_type="slack",
-                               name=name)
+                               endpoint=data.url,
+                               webhook_type=schemas.WebhookType.slack,
+                               name=data.name)
         return None
 
     @classmethod
@@ -35,39 +42,8 @@ class Slack:
         return True
 
     @classmethod
-    def send_text_attachments(cls, tenant_id, webhook_id, text, **args):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
-        if integration is None:
-            return {"errors": ["slack integration not found"]}
-        try:
-            r = requests.post(
-                url=integration["endpoint"],
-                json={
-                    "attachments": [
-                        {
-                            "text": text,
-                            "ts": datetime.now().timestamp(),
-                            **args
-                        }
-                    ]
-                },
-                timeout=5)
-            if r.status_code != 200:
-                print(f"!! issue sending slack text attachments; webhookId:{webhook_id} code:{r.status_code}")
-                print(r.text)
-                return None
-        except requests.exceptions.Timeout:
-            print(f"!! Timeout sending slack text attachments webhookId:{webhook_id}")
-            return None
-        except Exception as e:
-            print(f"!! Issue sending slack text attachments webhookId:{webhook_id}")
-            print(str(e))
-            return None
-        return {"data": r.text}
-
-    @classmethod
     def send_raw(cls, tenant_id, webhook_id, body):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
+        integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         try:
@@ -90,7 +66,7 @@ class Slack:
 
     @classmethod
     def send_batch(cls, tenant_id, webhook_id, attachments):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=webhook_id)
+        integration = cls.get_integration(tenant_id=tenant_id, integration_id=webhook_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
         print(f"====> sending slack batch notification: {len(attachments)}")
@@ -105,24 +81,12 @@ class Slack:
                 print(r.text)
 
     @classmethod
-    def __share_to_slack(cls, tenant_id, integration_id, fallback, pretext, title, title_link, text):
-        integration = cls.__get(tenant_id=tenant_id, integration_id=integration_id)
+    def __share(cls, tenant_id, integration_id, attachement):
+        integration = cls.get_integration(tenant_id=tenant_id, integration_id=integration_id)
         if integration is None:
             return {"errors": ["slack integration not found"]}
-        r = requests.post(
-            url=integration["endpoint"],
-            json={
-                "attachments": [
-                    {
-                        "fallback": fallback,
-                        "pretext": pretext,
-                        "title": title,
-                        "title_link": title_link,
-                        "text": text,
-                        "ts": datetime.now().timestamp()
-                    }
-                ]
-            })
+        attachement["ts"] = datetime.now().timestamp()
+        r = requests.post(url=integration["endpoint"], json={"attachments": [attachement]})
         return r.text
 
     @classmethod
@@ -132,7 +96,10 @@ class Slack:
                 "title": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
                 "title_link": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
                 "text": comment}
-        return {"data": cls.__share_to_slack(tenant_id, integration_id, **args)}
+        data = cls.__share(tenant_id, integration_id, attachement=args)
+        if "errors" in data:
+            return data
+        return {"data": data}
 
     @classmethod
     def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
@@ -141,19 +108,18 @@ class Slack:
                 "title": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
                 "title_link": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
                 "text": comment}
-        return {"data": cls.__share_to_slack(tenant_id, integration_id, **args)}
+        data = cls.__share(tenant_id, integration_id, attachement=args)
+        if "errors" in data:
+            return data
+        return {"data": data}
 
     @classmethod
-    def has_slack(cls, tenant_id):
-        integration = cls.__get(tenant_id=tenant_id)
-        return not (integration is None or len(integration) == 0)
-
-    @classmethod
-    def __get(cls, tenant_id, integration_id=None):
+    def get_integration(cls, tenant_id, integration_id=None):
         if integration_id is not None:
-            return webhook.get(tenant_id=tenant_id, webhook_id=integration_id)
+            return webhook.get_webhook(tenant_id=tenant_id, webhook_id=integration_id,
+                                       webhook_type=schemas.WebhookType.slack)
 
-        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type="slack")
+        integrations = webhook.get_by_type(tenant_id=tenant_id, webhook_type=schemas.WebhookType.slack)
         if integrations is None or len(integrations) == 0:
             return None
         return integrations[0]

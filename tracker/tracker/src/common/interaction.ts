@@ -26,4 +26,4 @@ type Failure = {
   reason: string
 }
 
-export type FromWorkerData = 'restart' | Failure
+export type FromWorkerData = 'restart' | Failure | 'not_init'

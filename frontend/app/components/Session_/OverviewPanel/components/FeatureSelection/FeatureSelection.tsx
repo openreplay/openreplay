@@ -22,7 +22,7 @@ interface Props {
 function FeatureSelection(props: Props) {
   const { list } = props;
   const features = [NETWORK, ERRORS, EVENTS, CLICKRAGE, PERFORMANCE];
-  const disabled = list.length >= 3;
+  const disabled = list.length >= 5;
 
   return (
     <React.Fragment>

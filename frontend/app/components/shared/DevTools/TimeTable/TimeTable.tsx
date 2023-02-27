@@ -2,7 +2,7 @@ import React from 'react';
 import { List, AutoSizer } from 'react-virtualized';
 import cn from 'classnames';
 import { Duration } from 'luxon';
-import { NoContent, Icon, Button } from 'UI';
+import { NoContent, Button } from 'UI';
 import { percentOf } from 'App/utils';
 
 import BarRow from './BarRow';
@@ -21,7 +21,7 @@ type Durationed = {
 
 type CanBeRed = {
   //+isRed: boolean,
-  isRed: () => boolean;
+  isRed: boolean;
 };
 
 interface Row extends Timed, Durationed, CanBeRed {
@@ -211,10 +211,10 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           stl.row,
           {
             [stl.hoverable]: hoverable,
-            'error color-red': !!row.isRed && row.isRed(),
+            'error color-red': row.isRed,
             'cursor-pointer': typeof onRowClick === 'function',
             [stl.activeRow]: activeIndex === index,
-            // [stl.inactiveRow]: !activeIndex || index > activeIndex,
+            [stl.inactiveRow]: !activeIndex || index > activeIndex,
           }
         )}
         onClick={typeof onRowClick === 'function' ? () => onRowClick(row, index) : undefined}
@@ -222,8 +222,8 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       >
         {columns
           .filter((i: any) => !i.hidden)
-          .map(({ dataKey, render, width }) => (
-            <div className={stl.cell} style={{ width: `${width}px` }}>
+          .map(({ dataKey, render, width, label }) => (
+            <div key={parseInt(label.replace(' ', '')+dataKey, 36)} className={stl.cell} style={{ width: `${width}px` }}>
               {render
                 ? render(row)
                 : row[dataKey || ''] || <i className="color-gray-light">{'empty'}</i>}
@@ -240,7 +240,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   onPrevClick = () => {
     let prevRedIndex = -1;
     for (let i = this.state.firstVisibleRowIndex - 1; i >= 0; i--) {
-      if (this.props.rows[i].isRed()) {
+      if (this.props.rows[i].isRed) {
         prevRedIndex = i;
         break;
       }
@@ -253,7 +253,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   onNextClick = () => {
     let prevRedIndex = -1;
     for (let i = this.state.firstVisibleRowIndex + 1; i < this.props.rows.length; i++) {
-      if (this.props.rows[i].isRed()) {
+      if (this.props.rows[i].isRed) {
         prevRedIndex = i;
         break;
       }
@@ -327,6 +327,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
           <div className={stl.infoHeaders}>
             {columns.map(({ label, width, dataKey, onClick = null }) => (
               <div
+                key={parseInt(label.replace(' ', ''), 36)}
                 className={cn(stl.headerCell, 'flex items-center select-none', {
                   'cursor-pointer': typeof onClick === 'function',
                 })}
@@ -354,6 +355,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
               ))}
               {visibleRefLines.map(({ time, color, onClick }) => (
                 <div
+                  key={time}
                   className={cn(stl.refLine, `bg-${color}`)}
                   style={{
                     left: `${percentOf(time - timestart, timewidth)}%`,

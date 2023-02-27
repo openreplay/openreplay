@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from 'UI';
 import Select from 'Shared/Select';
 import { alertConditions as conditions } from 'App/constants';
+import Alert from 'Types/alert'
 
 const thresholdOptions = [
   { label: '15 minutes', value: 15 },
@@ -25,6 +26,7 @@ interface ICondition {
   writeQuery: (data: any) => void;
   writeQueryOption: (e: any, data: any) => void;
   unit: any;
+  changeUnit: (value: string) => void;
 }
 
 function Condition({
@@ -35,6 +37,7 @@ function Condition({
   writeQueryOption,
   writeQuery,
   unit,
+  changeUnit,
 }: ICondition) {
   return (
     <div>
@@ -47,7 +50,7 @@ function Condition({
             options={changeOptions}
             name="change"
             defaultValue={instance.change}
-            onChange={({ value }) => writeOption(null, { name: 'change', value })}
+            onChange={({ value }) => changeUnit(value)}
             id="change-dropdown"
           />
         </div>
@@ -100,6 +103,7 @@ function Condition({
               value={instance.query.right}
               onChange={writeQuery}
               placeholder="Specify Value"
+              type={"number"}
             />
           )}
         </div>

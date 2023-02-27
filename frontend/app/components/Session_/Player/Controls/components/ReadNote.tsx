@@ -7,8 +7,7 @@ import { observer } from 'mobx-react-lite';
 import { TeamBadge } from 'Shared/SessionListContainer/components/Notes';
 
 interface Props {
-  userEmail: string;
-  note: Note;
+  note?: Note;
   notFound?: boolean;
   onClose: () => void;
 }
@@ -17,7 +16,7 @@ function ReadNote(props: Props) {
   const { settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
-  if (props.notFound) {
+  if (props.notFound || props.note === undefined) {
     return (
       <div style={{ position: 'absolute', top: '45%', left: 'calc(50% - 200px)' }}>
         <div
@@ -58,7 +57,7 @@ function ReadNote(props: Props) {
             <Icon name="quotes" color="main" size={16} />
           </div>
           <div className="ml-2">
-            <div className="text-base">{props.userEmail}</div>
+            <div className="text-base">{props.note.userName}</div>
             <div className="text-disabled-text text-sm">
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
             </div>

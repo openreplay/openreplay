@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	common.Config
+	common.Postgres
 	HTTPHost          string        `env:"HTTP_HOST,default="`
 	HTTPPort          string        `env:"HTTP_PORT,required"`
 	HTTPTimeout       time.Duration `env:"HTTP_TIMEOUT,default=60s"`
@@ -19,10 +20,10 @@ type Config struct {
 	FileSizeLimit     int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
 	AWSRegion         string        `env:"AWS_REGION,required"`
 	S3BucketIOSImages string        `env:"S3_BUCKET_IOS_IMAGES,required"`
-	Postgres          string        `env:"POSTGRES_STRING,required"`
 	TokenSecret       string        `env:"TOKEN_SECRET,required"`
 	UAParserFile      string        `env:"UAPARSER_FILE,required"`
 	MaxMinDBFile      string        `env:"MAXMINDDB_FILE,required"`
+	UseProfiler       bool          `env:"PROFILER_ENABLED,default=false"`
 	WorkerID          uint16
 }
 

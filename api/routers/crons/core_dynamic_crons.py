@@ -1,3 +1,6 @@
+from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+
 from chalicelib.core import telemetry
 from chalicelib.core import weekly_report, jobs
 
@@ -15,7 +18,10 @@ async def telemetry_cron() -> None:
 
 
 cron_jobs = [
-    {"func": telemetry_cron, "trigger": "cron", "day_of_week": "*"},
-    {"func": run_scheduled_jobs, "trigger": "interval", "seconds": 60, "misfire_grace_time": 20},
-    {"func": weekly_report2, "trigger": "cron", "day_of_week": "mon", "hour": 5, "misfire_grace_time": 60 * 60}
+    {"func": telemetry_cron, "trigger": CronTrigger(day_of_week="*"),
+     "misfire_grace_time": 60 * 60, "max_instances": 1},
+    {"func": run_scheduled_jobs, "trigger": IntervalTrigger(minutes=1),
+     "misfire_grace_time": 20, "max_instances": 1},
+    {"func": weekly_report2, "trigger": CronTrigger(day_of_week="mon", hour=5),
+     "misfire_grace_time": 60 * 60, "max_instances": 1}
 ]

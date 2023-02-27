@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Button, Message, Form, Input } from 'UI';
 import styles from './profileSettings.module.css';
 import { updatePassword } from 'Duck/user';
+import { toast } from 'react-toastify';
 
 const ERROR_DOESNT_MATCH = "Passwords doesn't match";
 const MIN_LENGTH = 8;
@@ -48,12 +49,15 @@ export default class ChangePassword extends React.PureComponent {
                 oldPassword,
                 newPassword,
             })
-            .then(() => {
-                if (this.props.passwordErrors.size === 0) {
-                    this.setState({
-                        ...defaultState,
-                        success: true,
-                    });
+            .then((e) => {
+                const success = !e || !e.errors || e.errors.length === 0;
+                this.setState({
+                    ...defaultState,
+                    success: success,
+                    show: !success
+                });
+                if (success) {
+                    toast.success(`Successfully changed password`);
                 }
             });
     };
@@ -98,7 +102,7 @@ export default class ChangePassword extends React.PureComponent {
                 <Message error hidden={!doesntMatch}>
                     {ERROR_DOESNT_MATCH}
                 </Message>
-                <div className="flex items-center">
+                <div className="flex items-center pt-3">
                     <Button type="submit" variant="outline" disabled={this.isSubmitDisabled()} loading={loading}>
                         Change Password
                     </Button>
@@ -107,9 +111,6 @@ export default class ChangePassword extends React.PureComponent {
                         Cancel
                     </Button>
                 </div>
-                <Message success hidden={!success}>
-                    {'Successfully changed the password!'}
-                </Message>
             </Form>
         ) : (
             <div onClick={() => this.setState({ show: true })}>

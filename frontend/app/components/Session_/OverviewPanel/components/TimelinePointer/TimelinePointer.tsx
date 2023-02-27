@@ -1,5 +1,4 @@
 import React from 'react';
-import { Controls } from 'Player';
 import { NETWORK, EXCEPTIONS } from 'Duck/components/player';
 import { useModal } from 'App/components/Modal';
 import { Icon, Tooltip } from 'UI';
@@ -7,6 +6,7 @@ import StackEventModal from '../StackEventModal';
 import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 import FetchDetails from 'Shared/FetchDetailsModal';
 import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 interface Props {
   pointer: any;
@@ -15,28 +15,30 @@ interface Props {
   fetchPresented?: boolean;
 }
 const TimelinePointer = React.memo((props: Props) => {
+  const { player } = React.useContext(PlayerContext)
+
   const { showModal } = useModal();
   const createEventClickHandler = (pointer: any, type: any) => (e: any) => {
     if (props.noClick) return;
     e.stopPropagation();
-    Controls.jump(pointer.time);
+    player.jump(pointer.time);
     if (!type) {
       return;
     }
 
     if (type === 'ERRORS') {
-      showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true });
+      showModal(<ErrorDetailsModal errorId={pointer.errorId} />, { right: true, width: 1200 });
     }
 
     if (type === 'EVENT') {
-      showModal(<StackEventModal event={pointer} />, { right: true });
+      showModal(<StackEventModal event={pointer} />, { right: true, width: 450 });
     }
 
     if (type === NETWORK) {
       if (pointer.tp === 'graph_ql') {
-        showModal(<GraphQLDetailsModal resource={pointer} />, { right: true });
+        showModal(<GraphQLDetailsModal resource={pointer} />, { right: true, width: 500 });
       } else {
-        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true });
+        showModal(<FetchDetails resource={pointer} fetchPresented={props.fetchPresented} />, { right: true, width: 500 });
       }
     }
     // props.toggleBottomBlock(type);

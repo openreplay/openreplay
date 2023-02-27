@@ -25,24 +25,24 @@ def __get_autocomplete_table(value, project_id):
         if e == schemas.FilterType.user_country:
             c_list = countries.get_country_code_autocomplete(value)
             if len(c_list) > 0:
-                sub_queries.append(f"""(SELECT DISTINCT ON(value) type, value
+                sub_queries.append(f"""(SELECT DISTINCT ON(value) '{e.value}' AS _type, value
                                         FROM {TABLE}
                                         WHERE project_id = %(project_id)s
-                                            AND type= '{e}' 
+                                            AND type= '{e.value.upper()}' 
                                             AND value IN %(c_list)s)""")
             continue
-        sub_queries.append(f"""(SELECT type, value
+        sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                 FROM {TABLE}
                                 WHERE project_id = %(project_id)s
-                                    AND type= '{e}' 
+                                    AND type= '{e.value.upper()}' 
                                     AND value ILIKE %(svalue)s
                                 ORDER BY value
                                 LIMIT 5)""")
         if len(value) > 2:
-            sub_queries.append(f"""(SELECT type, value
+            sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                     FROM {TABLE}
                                     WHERE project_id = %(project_id)s
-                                        AND type= '{e}' 
+                                        AND type= '{e.value.upper()}' 
                                         AND value ILIKE %(value)s
                                     ORDER BY value
                                     LIMIT 5)""")
@@ -62,8 +62,11 @@ def __get_autocomplete_table(value, project_id):
             print(value)
             print("--------------------")
             raise err
-        results = helper.list_to_camel_case(cur.fetchall())
-        return results
+        results = cur.fetchall()
+    for r in results:
+        r["type"] = r.pop("_type")
+    results = helper.list_to_camel_case(results)
+    return results
 
 
 def __generic_query(typename, value_length=None):
@@ -72,7 +75,7 @@ def __generic_query(typename, value_length=None):
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
-                      AND type='{typename}'
+                      AND type='{typename.upper()}'
                       AND value IN %(value)s
                       ORDER BY value"""
 
@@ -81,7 +84,7 @@ def __generic_query(typename, value_length=None):
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
-                      AND type='{typename}'
+                      AND type='{typename.upper()}'
                       AND value ILIKE %(svalue)s
                       ORDER BY value
                     LIMIT 5)
@@ -90,7 +93,7 @@ def __generic_query(typename, value_length=None):
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
-                      AND type='{typename}'
+                      AND type='{typename.upper()}'
                       AND value ILIKE %(value)s
                       ORDER BY value
                     LIMIT 5);"""
@@ -98,7 +101,7 @@ def __generic_query(typename, value_length=None):
                 FROM {TABLE}
                 WHERE
                   project_id = %(project_id)s
-                  AND type='{typename}'
+                  AND type='{typename.upper()}'
                   AND value ILIKE %(svalue)s
                   ORDER BY value
                 LIMIT 10;"""
@@ -135,13 +138,13 @@ def __generic_autocomplete_metas(typename):
     return f
 
 
-def __pg_errors_query(source=None, value_length=None):
+def __errors_query(source=None, value_length=None):
     if value_length is None or value_length > 2:
         return f"""((SELECT DISTINCT ON(lg.message)
                         lg.message AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
-                    FROM {events.event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR.ui_type}' AS type
+                    FROM {events.EventType.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.message ILIKE %(svalue)s
@@ -152,8 +155,8 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
-                    FROM {events.event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR.ui_type}' AS type
+                    FROM {events.EventType.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.name ILIKE %(svalue)s
@@ -164,8 +167,8 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(lg.message)
                         lg.message AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
-                    FROM {events.event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR.ui_type}' AS type
+                    FROM {events.EventType.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.message ILIKE %(value)s
@@ -176,8 +179,8 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
-                    FROM {events.event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR.ui_type}' AS type
+                    FROM {events.EventType.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.name ILIKE %(value)s
@@ -187,8 +190,8 @@ def __pg_errors_query(source=None, value_length=None):
     return f"""((SELECT DISTINCT ON(lg.message)
                     lg.message AS value,
                     source,
-                    '{events.event_type.ERROR.ui_type}' AS type
-                FROM {events.event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    '{events.EventType.ERROR.ui_type}' AS type
+                FROM {events.EventType.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
                 WHERE
                   s.project_id = %(project_id)s
                   AND lg.message ILIKE %(svalue)s
@@ -199,8 +202,8 @@ def __pg_errors_query(source=None, value_length=None):
                 (SELECT DISTINCT ON(lg.name)
                     lg.name AS value,
                     source,
-                    '{events.event_type.ERROR.ui_type}' AS type
-                FROM {events.event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    '{events.EventType.ERROR.ui_type}' AS type
+                FROM {events.EventType.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
                 WHERE
                   s.project_id = %(project_id)s
                   AND lg.name ILIKE %(svalue)s
@@ -209,11 +212,11 @@ def __pg_errors_query(source=None, value_length=None):
                 LIMIT 5));"""
 
 
-def __search_pg_errors(project_id, value, key=None, source=None):
+def __search_errors(project_id, value, key=None, source=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(__pg_errors_query(source,
-                                          value_length=len(value)),
+            cur.mogrify(__errors_query(source,
+                                       value_length=len(value)),
                         {"project_id": project_id, "value": helper.string_to_sql_like(value),
                          "svalue": helper.string_to_sql_like("^" + value),
                          "source": source}))
@@ -221,12 +224,12 @@ def __search_pg_errors(project_id, value, key=None, source=None):
     return results
 
 
-def __search_pg_errors_ios(project_id, value, key=None, source=None):
+def __search_errors_ios(project_id, value, key=None, source=None):
     if len(value) > 2:
         query = f"""(SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
-                        '{events.event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {events.event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR_IOS.ui_type}' AS type
+                    FROM {events.EventType.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -235,8 +238,8 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
                     UNION ALL
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
-                        '{events.event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {events.event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR_IOS.ui_type}' AS type
+                    FROM {events.EventType.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -245,8 +248,8 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
                     UNION ALL
                     (SELECT DISTINCT ON(lg.reason)
                         lg.reason AS value,
-                        '{events.event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {events.event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR_IOS.ui_type}' AS type
+                    FROM {events.EventType.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -255,8 +258,8 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
                     UNION ALL
                     (SELECT DISTINCT ON(lg.name)
                         lg.name AS value,
-                        '{events.event_type.ERROR_IOS.ui_type}' AS type
-                    FROM {events.event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        '{events.EventType.ERROR_IOS.ui_type}' AS type
+                    FROM {events.EventType.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
                     WHERE
                       s.project_id = %(project_id)s
                       AND lg.project_id = %(project_id)s
@@ -265,8 +268,8 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
     else:
         query = f"""(SELECT DISTINCT ON(lg.reason)
                             lg.reason AS value,
-                            '{events.event_type.ERROR_IOS.ui_type}' AS type
-                        FROM {events.event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                            '{events.EventType.ERROR_IOS.ui_type}' AS type
+                        FROM {events.EventType.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
                         WHERE
                           s.project_id = %(project_id)s
                           AND lg.project_id = %(project_id)s
@@ -275,8 +278,8 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
                         UNION ALL
                         (SELECT DISTINCT ON(lg.name)
                             lg.name AS value,
-                            '{events.event_type.ERROR_IOS.ui_type}' AS type
-                        FROM {events.event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                            '{events.EventType.ERROR_IOS.ui_type}' AS type
+                        FROM {events.EventType.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
                         WHERE
                           s.project_id = %(project_id)s
                           AND lg.project_id = %(project_id)s
@@ -289,7 +292,7 @@ def __search_pg_errors_ios(project_id, value, key=None, source=None):
     return results
 
 
-def __search_pg_metadata(project_id, value, key=None, source=None):
+def __search_metadata(project_id, value, key=None, source=None):
     meta_keys = metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
     if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():

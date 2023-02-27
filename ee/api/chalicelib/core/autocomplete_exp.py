@@ -25,24 +25,24 @@ def __get_autocomplete_table(value, project_id):
         if e == schemas.FilterType.user_country:
             c_list = countries.get_country_code_autocomplete(value)
             if len(c_list) > 0:
-                sub_queries.append(f"""(SELECT DISTINCT ON(value) type, value
+                sub_queries.append(f"""(SELECT DISTINCT ON(value) '{e.value}' AS _type, value
                                         FROM {TABLE}
                                         WHERE project_id = %(project_id)s
-                                            AND type= '{e}' 
+                                            AND type= '{e.value.upper()}' 
                                             AND value IN %(c_list)s)""")
             continue
-        sub_queries.append(f"""(SELECT type, value
+        sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                 FROM {TABLE}
                                 WHERE project_id = %(project_id)s
-                                    AND type= '{e}' 
+                                    AND type= '{e.value.upper()}' 
                                     AND value ILIKE %(svalue)s
                                 ORDER BY value
                                 LIMIT 5)""")
         if len(value) > 2:
-            sub_queries.append(f"""(SELECT type, value
+            sub_queries.append(f"""(SELECT '{e.value}' AS _type, value
                                     FROM {TABLE}
                                     WHERE project_id = %(project_id)s
-                                        AND type= '{e}' 
+                                        AND type= '{e.value.upper()}' 
                                         AND value ILIKE %(value)s
                                     ORDER BY value
                                     LIMIT 5)""")
@@ -64,25 +64,28 @@ def __get_autocomplete_table(value, project_id):
             print(value)
             print("--------------------")
             raise err
-        return results
+    for r in results:
+        r["type"] = r.pop("_type")
+    results = helper.list_to_camel_case(results)
+    return results
 
 
 def __generic_query(typename, value_length=None):
     if typename == schemas.FilterType.user_country:
         return f"""SELECT DISTINCT value, type
-                        FROM {TABLE}
-                        WHERE
-                          project_id = %(project_id)s
-                          AND type='{typename}'
-                          AND value IN %(c_list)s
-                          ORDER BY value"""
+                    FROM {TABLE}
+                    WHERE
+                      project_id = %(project_id)s
+                      AND type='{typename.upper()}'
+                      AND value IN %(value)s
+                      ORDER BY value"""
 
     if value_length is None or value_length > 2:
         return f"""(SELECT DISTINCT value, type
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
-                      AND type='{typename}'
+                      AND type='{typename.upper()}'
                       AND value ILIKE %(svalue)s
                       ORDER BY value
                     LIMIT 5)
@@ -91,7 +94,7 @@ def __generic_query(typename, value_length=None):
                     FROM {TABLE}
                     WHERE
                       project_id = %(project_id)s
-                      AND type='{typename}'
+                      AND type='{typename.upper()}'
                       AND value ILIKE %(value)s
                       ORDER BY value
                     LIMIT 5);"""
@@ -99,7 +102,7 @@ def __generic_query(typename, value_length=None):
                 FROM {TABLE}
                 WHERE
                   project_id = %(project_id)s
-                  AND type='{typename}'
+                  AND type='{typename.upper()}'
                   AND value ILIKE %(svalue)s
                   ORDER BY value
                 LIMIT 10;"""
@@ -120,18 +123,17 @@ def __generic_autocomplete(event: Event):
 def __generic_autocomplete_metas(typename):
     def f(project_id, text):
         with ch_client.ClickHouseClient() as cur:
-            c_list = []
+            params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
+                      "svalue": helper.string_to_sql_like("^" + text)}
+
             if typename == schemas.FilterType.user_country:
-                c_list = countries.get_country_code_autocomplete(text)
-                if len(c_list) == 0:
+                params["value"] = tuple(countries.get_country_code_autocomplete(text))
+                if len(params["value"]) == 0:
                     return []
 
             query = __generic_query(typename, value_length=len(text))
-            params = {"project_id": project_id, "value": helper.string_to_sql_like(text),
-                      "svalue": helper.string_to_sql_like("^" + text), "rvalue": text,
-                      "c_list": tuple(c_list)}
-            results = cur.execute(query=query, params=params)
-        return results
+            rows = cur.execute(query=query, params=params)
+        return rows
 
     return f
 
@@ -142,7 +144,7 @@ def __pg_errors_query(source=None, value_length=None):
         return f"""((SELECT DISTINCT ON(message)
                         message AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
+                        '{events.EventType.ERROR.ui_type}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -154,7 +156,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(name)
                         name AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
+                        '{events.EventType.ERROR.ui_type}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -165,7 +167,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(message)
                         message AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
+                        '{events.EventType.ERROR.ui_type}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -176,7 +178,7 @@ def __pg_errors_query(source=None, value_length=None):
                     (SELECT DISTINCT ON(name)
                         name AS value,
                         source,
-                        '{events.event_type.ERROR.ui_type}' AS type
+                        '{events.EventType.ERROR.ui_type}' AS type
                     FROM {MAIN_TABLE}
                     WHERE
                       project_id = %(project_id)s
@@ -186,7 +188,7 @@ def __pg_errors_query(source=None, value_length=None):
     return f"""((SELECT DISTINCT ON(message)
                     message AS value,
                     source,
-                    '{events.event_type.ERROR.ui_type}' AS type
+                    '{events.EventType.ERROR.ui_type}' AS type
                 FROM {MAIN_TABLE}
                 WHERE
                   project_id = %(project_id)s
@@ -197,7 +199,7 @@ def __pg_errors_query(source=None, value_length=None):
                 (SELECT DISTINCT ON(name)
                     name AS value,
                     source,
-                    '{events.event_type.ERROR.ui_type}' AS type
+                    '{events.EventType.ERROR.ui_type}' AS type
                 FROM {MAIN_TABLE}
                 WHERE
                   project_id = %(project_id)s
@@ -206,7 +208,7 @@ def __pg_errors_query(source=None, value_length=None):
                 LIMIT 5));"""
 
 
-def __search_pg_errors(project_id, value, key=None, source=None):
+def __search_errors(project_id, value, key=None, source=None):
     with ch_client.ClickHouseClient() as cur:
         query = cur.format(__pg_errors_query(source, value_length=len(value)),
                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
@@ -216,12 +218,12 @@ def __search_pg_errors(project_id, value, key=None, source=None):
     return helper.list_to_camel_case(results)
 
 
-def __search_pg_errors_ios(project_id, value, key=None, source=None):
+def __search_errors_ios(project_id, value, key=None, source=None):
     # TODO: define this when ios events are supported in CH
     return []
 
 
-def __search_pg_metadata(project_id, value, key=None, source=None):
+def __search_metadata(project_id, value, key=None, source=None):
     meta_keys = metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
     if len(meta_keys) == 0 or key is not None and key not in meta_keys.keys():
@@ -234,18 +236,18 @@ def __search_pg_metadata(project_id, value, key=None, source=None):
         colname = metadata.index_to_colname(meta_keys[k])
         if len(value) > 2:
             sub_from.append(f"""((SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
-                                FROM {exp_ch_helper.get_main_sessions_table(0)} 
+                                FROM {exp_ch_helper.get_main_sessions_table()} 
                                 WHERE project_id = %(project_id)s 
                                 AND {colname} ILIKE %(svalue)s LIMIT 5)
                                 UNION DISTINCT
                                 (SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
-                                FROM {exp_ch_helper.get_main_sessions_table(0)} 
+                                FROM {exp_ch_helper.get_main_sessions_table()} 
                                 WHERE project_id = %(project_id)s 
                                 AND {colname} ILIKE %(value)s LIMIT 5))
                                 """)
         else:
             sub_from.append(f"""(SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
-                                FROM {exp_ch_helper.get_main_sessions_table(0)} 
+                                FROM {exp_ch_helper.get_main_sessions_table()} 
                                 WHERE project_id = %(project_id)s
                                 AND {colname} ILIKE %(svalue)s LIMIT 5)""")
     with ch_client.ClickHouseClient() as cur:

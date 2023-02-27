@@ -6,7 +6,7 @@ import stl from './chatWindow.module.css';
 import ChatControls from '../ChatControls/ChatControls';
 import Draggable from 'react-draggable';
 import type { LocalStream } from 'Player';
-import { toggleVideoLocalStream } from 'Player'
+import { PlayerContext } from 'App/components/Session/playerContext';
 
 export interface Props {
   incomeStream: MediaStream[] | null;
@@ -17,6 +17,10 @@ export interface Props {
 }
 
 function ChatWindow({ userId, incomeStream, localStream, endCall, isPrestart }: Props) {
+  const { player } = React.useContext(PlayerContext)
+
+  const toggleVideoLocalStream = player.assistManager.toggleVideoLocalStream;
+
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false);
   const [anyRemoteEnabled, setRemoteEnabled] = useState(false);
 

@@ -90,6 +90,9 @@ ${icons.map(icon => {
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
     .replace(/clip-path/g, 'clipPath')
     .replace(/clip-rule/g, 'clipRule')
+    // hack to keep fill rule for some icons like stop recording square
+    .replace(/clipRule="evenoddCustomFill"/g, 'clipRule="evenodd" fillRule="evenodd"')
+    .replace(/fill-rule/g, 'fillRule')
     .replace(/fill-opacity/g, 'fillOpacity')
     .replace(/stop-color/g, 'stopColor')
     .replace(/xml:space="preserve"/g, '')};`;

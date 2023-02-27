@@ -12,7 +12,7 @@ from chalicelib.utils import pg_client
 from routers import core, core_dynamic
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
-from routers.subs import dashboard, insights, metrics, v1_api
+from routers.subs import insights, metrics, v1_api
 
 app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -48,7 +48,6 @@ app.include_router(core.app_apikey)
 app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)
 app.include_router(core_dynamic.app_apikey)
-app.include_router(dashboard.app)
 app.include_router(metrics.app)
 app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)

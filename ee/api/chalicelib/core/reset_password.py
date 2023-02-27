@@ -1,3 +1,5 @@
+from decouple import config
+
 import schemas
 from chalicelib.core import users
 from chalicelib.utils import email_helper, captcha, helper
@@ -15,6 +17,8 @@ def reset(data: schemas.ForgetPasswordPayloadSchema):
         # ---FOR SSO
         if a_user.get("origin") is not None and a_user.get("hasPassword", False) is False:
             return {"errors": ["Please use your SSO to login"]}
+        if config("enforce_SSO", cast=bool, default=False) and not a_user["superAdmin"] and helper.is_saml2_available():
+            return {"errors": ["Please use your SSO to login, enforced by admin"]}
         # ----------
         invitation_link = users.generate_new_invitation(user_id=a_user["id"])
         email_helper.send_forgot_password(recipient=data.email, invitation_link=invitation_link)

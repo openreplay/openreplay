@@ -1,7 +1,7 @@
-import { FilterKey, IssueType } from 'Types/filter/filterType';
+import { FilterKey, IssueType, IssueCategory } from 'Types/filter/filterType';
 // TODO remove text property from options
 export const options = [
-  { key: 'on', label: 'on', value: 'on' }, 
+  { key: 'on', label: 'on', value: 'on' },
   { key: 'notOn', label: 'not on', value: 'notOn' },
   { key: 'onAny', label: 'on any', value: 'onAny' },
   { key: 'is', label: 'is', value: 'is' },
@@ -13,9 +13,9 @@ export const options = [
   { key: 'contains', label: 'contains', value: 'contains' },
   { key: 'notContains', label: 'not contains', value: 'notContains' },
   { key: 'hasAnyValue', label: 'has any value', value: 'hasAnyValue' },
-  { key: 'hasNoValue', label: 'has no value', value: 'hasNoValue' },   
+  { key: 'hasNoValue', label: 'has no value', value: 'hasNoValue' },
   { key: 'isSignedUp', label: 'is signed up', value: 'isSignedUp' },
-  { key: 'notSignedUp', label: 'not signed up', value: 'notSignedUp' },  
+  { key: 'notSignedUp', label: 'not signed up', value: 'notSignedUp' },
   { key: 'before', label: 'before', value: 'before' },
   { key: 'after', label: 'after', value: 'after' },
   { key: 'inRage', label: 'in rage', value: 'inRage' },
@@ -32,17 +32,20 @@ export const options = [
 ];
 
 const filterKeys = ['is', 'isNot'];
+const stringFilterKeysLimited = ['is', 'isAny', 'isNot'];
 const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const stringFilterKeysPerformance = ['is', 'inAnyPage', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const targetFilterKeys = ['on', 'notOn', 'onAny', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
+const pageUrlFilter = ['contains', 'startsWith', 'endsWith']
 
 const getOperatorsByKeys = (keys) => {
   return options.filter(option => keys.includes(option.key));
 };
 
 export const baseOperators = options.filter(({key}) => filterKeys.includes(key));
+export const stringOperatorsLimited = options.filter(({key}) => stringFilterKeysLimited.includes(key));
 export const stringOperators = options.filter(({key}) => stringFilterKeys.includes(key));
 export const stringOperatorsPerformance = options.filter(({key}) => stringFilterKeysPerformance.includes(key));
 export const targetOperators = options.filter(({key}) => targetFilterKeys.includes(key));
@@ -50,6 +53,7 @@ export const booleanOperators = [
   { key: 'true', label: 'true', value: 'true' },
   { key: 'false', label: 'false', value: 'false' },
 ]
+export const pageUrlOperators = options.filter(({key}) => pageUrlFilter.includes(key))
 
 export const customOperators = [
   { key: '=', label: '=', value: '=' },
@@ -86,6 +90,7 @@ export const metricOf = [
   { label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
   { label: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
   { label: 'URLs', value: FilterKey.LOCATION, type: 'table' },
+
 ]
 
 export const methodOptions = [
@@ -97,7 +102,7 @@ export const methodOptions = [
   { label: 'HEAD', value: 'HEAD' },
   { label: 'OPTIONS', value: 'OPTIONS' },
   { label: 'TRACE', value: 'TRACE' },
-  { label: 'CONNECT', value: 'CONNECT' },  
+  { label: 'CONNECT', value: 'CONNECT' },
 ]
 
 export const issueOptions = [
@@ -115,10 +120,23 @@ export const issueOptions = [
   { label: 'Error', value: IssueType.JS_EXCEPTION },
 ]
 
+export const issueCategories = [
+  { label: 'Resources', value: IssueCategory.RESOURCES },
+  { label: 'Network Request', value: IssueCategory.NETWORK },
+  { label: 'Click Rage', value: IssueCategory.RAGE },
+  { label: 'JS Errors', value: IssueCategory.ERRORS },
+]
+
+export const issueCategoriesMap = issueCategories.reduce((acc, {value, label}) => {
+  acc[value] = label;
+  return acc;
+}, {})
+
 export default {
   options,
   baseOperators,
   stringOperators,
+  stringOperatorsLimited,
   targetOperators,
   booleanOperators,
   customOperators,
@@ -127,5 +145,7 @@ export default {
   metricTypes,
   metricOf,
   issueOptions,
+  issueCategories,
   methodOptions,
+  pageUrlOperators,
 }

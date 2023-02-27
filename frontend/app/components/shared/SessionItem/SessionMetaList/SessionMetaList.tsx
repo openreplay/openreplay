@@ -1,5 +1,4 @@
 import React from 'react';
-import { Popup } from 'UI';
 import cn from 'classnames';
 import MetaItem from '../MetaItem';
 import MetaMoreButton from '../MetaMoreButton';
@@ -16,7 +15,9 @@ export default function SessionMetaList(props: Props) {
   return (
     <div className={cn('text-sm flex items-center', className)}>
       {metaList.slice(0, maxLength).map(({ label, value }, index) => (
-        <MetaItem key={index} label={label} value={'' + value} className="mr-3" />
+        <React.Fragment key={index}>
+          <MetaItem label={label} value={'' + value} className="mr-3" />
+        </React.Fragment>
       ))}
 
       {metaList.length > maxLength && <MetaMoreButton list={metaList} maxLength={maxLength} />}

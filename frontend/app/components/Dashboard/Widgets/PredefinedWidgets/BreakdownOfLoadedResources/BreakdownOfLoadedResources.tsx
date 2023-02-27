@@ -2,9 +2,8 @@ import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
 import { 
-    AreaChart, Area,
     BarChart, Bar, CartesianGrid, Tooltip,
-    LineChart, Line, Legend, ResponsiveContainer, 
+    Legend, ResponsiveContainer,
     XAxis, YAxis
   } from 'recharts';
 
@@ -20,7 +19,7 @@ function BreakdownOfLoadedResources(props: Props) {
         <NoContent
           size="small"
           title="No data available"
-          show={ metric.data.chart.length === 0 }
+          show={ metric.data.chart && metric.data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">
               <BarChart

@@ -3,7 +3,7 @@ import smtplib
 from smtplib import SMTPAuthenticationError
 
 from decouple import config
-from starlette.exceptions import HTTPException
+from fastapi import HTTPException
 
 
 class EmptySMTP:
@@ -17,20 +17,20 @@ class SMTPClient:
     def __init__(self):
         if config("EMAIL_HOST") is None or len(config("EMAIL_HOST")) == 0:
             return
-        elif config("EMAIL_USE_SSL").lower() == "false":
-            self.server = smtplib.SMTP(host=config("EMAIL_HOST"), port=int(config("EMAIL_PORT")))
+        elif not config("EMAIL_USE_SSL", cast=bool):
+            self.server = smtplib.SMTP(host=config("EMAIL_HOST"), port=config("EMAIL_PORT", cast=int))
         else:
             if len(config("EMAIL_SSL_KEY")) == 0 or len(config("EMAIL_SSL_CERT")) == 0:
-                self.server = smtplib.SMTP_SSL(host=config("EMAIL_HOST"), port=int(config("EMAIL_PORT")))
+                self.server = smtplib.SMTP_SSL(host=config("EMAIL_HOST"), port=config("EMAIL_PORT", cast=int))
             else:
-                self.server = smtplib.SMTP_SSL(host=config("EMAIL_HOST"), port=int(config("EMAIL_PORT")),
+                self.server = smtplib.SMTP_SSL(host=config("EMAIL_HOST"), port=config("EMAIL_PORT", cast=int),
                                                keyfile=config("EMAIL_SSL_KEY"), certfile=config("EMAIL_SSL_CERT"))
 
     def __enter__(self):
         if self.server is None:
             return EmptySMTP()
         self.server.ehlo()
-        if config("EMAIL_USE_SSL").lower() == "false" and config("EMAIL_USE_TLS").lower() == "true":
+        if not config("EMAIL_USE_SSL", cast=bool) and config("EMAIL_USE_TLS", cast=bool):
             self.server.starttls()
             # stmplib docs recommend calling ehlo() before & after starttls()
             self.server.ehlo()

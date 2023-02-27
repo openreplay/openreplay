@@ -43,6 +43,10 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: ch_username
+              value: "{{ .Values.global.clickhouse.username }}"
+            - name: ch_password
+              value: "{{ .Values.global.clickhouse.password }}"
             - name: ch_host
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port
@@ -62,7 +66,7 @@ spec:
             - name: pg_host
               value: '{{ .Values.global.postgresql.postgresqlHost }}'
             - name: pg_port
-              value: "5432"
+              value: '{{ .Values.global.postgresql.postgresqlPort }}'
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
             - name: pg_user
@@ -130,6 +134,10 @@ spec:
               value: '{{ .Values.global.email.emailSslCert }}'
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

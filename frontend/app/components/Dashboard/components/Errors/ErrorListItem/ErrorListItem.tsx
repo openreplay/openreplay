@@ -1,16 +1,12 @@
 import React from 'react';
 import cn from 'classnames';
 import moment from 'moment';
-import { error as errorRoute } from 'App/routes';
 import { IGNORED, RESOLVED } from 'Types/errorInfo';
-import { Link, Label } from 'UI';
 import ErrorName from '../ErrorName';
 import ErrorLabel from '../ErrorLabel';
 import { BarChart, Bar, YAxis, Tooltip, XAxis } from 'recharts';
 import { Styles } from '../../../Widgets/common';
 import { diffFromNowString } from 'App/date';
-import { useModal } from '../../../../Modal';
-import ErrorDetailsModal from '../ErrorDetailsModal';
 
 interface Props {
     error: any;

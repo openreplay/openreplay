@@ -6,3 +6,6 @@ build
 .cache
 .eslintrc.cjs
 *.gen.ts
+
+**/*.test.ts
+src/main/plugin.ts

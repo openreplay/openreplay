@@ -33,7 +33,13 @@ function migration() {
 
     # Checking migration versions
     cd /opt/openreplay/openreplay/scripts/schema
-    migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${PREVIOUS_APP_VERSION} '$NF > number {print $NF}' | grep -v create`)
+
+    # We need to remove version dots
+    function normalise_version {
+      echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+    }
+    all_versions=(`ls -l db/init_dbs/$db | grep -E ^d | grep -v create | awk '{print $NF}'`)
+    migration_versions=(`for ver in ${all_versions[*]}; do if [[ $(normalise_version $ver) > $(normalise_version "${PREVIOUS_APP_VERSION}") ]]; then echo $ver; fi; done`)
     echo "Migration version: ${migration_versions[*]}"
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
     joined_migration_versions=$(IFS=, ; echo "${migration_versions[*]}")

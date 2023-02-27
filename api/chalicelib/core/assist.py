@@ -4,7 +4,8 @@ from os.path import exists as path_exists, getsize
 import jwt
 import requests
 from decouple import config
-from starlette.exceptions import HTTPException
+from starlette import status
+from fastapi import HTTPException
 
 import schemas
 from chalicelib.core import projects
@@ -181,6 +182,8 @@ def autocomplete(project_id, q: str, key: str = None):
         except:
             print("couldn't get response")
         return {"errors": ["Something went wrong wile calling assist"]}
+    for r in results:
+        r["type"] = __change_keys(r["type"])
     return {"data": results}
 
 
@@ -192,10 +195,11 @@ def get_ice_servers():
 def __get_efs_path():
     efs_path = config("FS_DIR")
     if not path_exists(efs_path):
-        raise HTTPException(400, f"EFS not found in path: {efs_path}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"EFS not found in path: {efs_path}")
 
     if not access(efs_path, R_OK):
-        raise HTTPException(400, f"EFS found under: {efs_path}; but it is not readable, please check permissions")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"EFS found under: {efs_path}; but it is not readable, please check permissions")
     return efs_path
 
 
@@ -209,11 +213,12 @@ def get_raw_mob_by_id(project_id, session_id):
     path_to_file = efs_path + "/" + __get_mob_path(project_id=project_id, session_id=session_id)
     if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
-            raise HTTPException(400, f"Replay file found under: {efs_path};" +
-                                f" but it is not readable, please check permissions")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Replay file found under: {efs_path};" +
+                                       " but it is not readable, please check permissions")
         # getsize return size in bytes, UNPROCESSED_MAX_SIZE is in Kb
         if (getsize(path_to_file) / 1000) >= config("UNPROCESSED_MAX_SIZE", cast=int, default=200 * 1000):
-            raise HTTPException(413, "Replay file too large")
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Replay file too large")
         return path_to_file
 
     return None
@@ -229,8 +234,9 @@ def get_raw_devtools_by_id(project_id, session_id):
     path_to_file = efs_path + "/" + __get_devtools_path(project_id=project_id, session_id=session_id)
     if path_exists(path_to_file):
         if not access(path_to_file, R_OK):
-            raise HTTPException(400, f"Devtools file found under: {efs_path};"
-                                     f" but it is not readable, please check permissions")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail=f"Devtools file found under: {efs_path};"
+                                       " but it is not readable, please check permissions")
 
         return path_to_file
 
@@ -262,3 +268,27 @@ def session_exists(project_id, session_id):
         except:
             print("couldn't get response")
         return False
+
+
+def __change_keys(key):
+    return {
+        "PAGETITLE": schemas.LiveFilterType.page_title.value,
+        "ACTIVE": "active",
+        "LIVE": "live",
+        "SESSIONID": schemas.LiveFilterType.session_id.value,
+        "METADATA": schemas.LiveFilterType.metadata.value,
+        "USERID": schemas.LiveFilterType.user_id.value,
+        "USERUUID": schemas.LiveFilterType.user_UUID.value,
+        "PROJECTKEY": "projectKey",
+        "REVID": schemas.LiveFilterType.rev_id.value,
+        "TIMESTAMP": "timestamp",
+        "TRACKERVERSION": schemas.LiveFilterType.tracker_version.value,
+        "ISSNIPPET": "isSnippet",
+        "USEROS": schemas.LiveFilterType.user_os.value,
+        "USERBROWSER": schemas.LiveFilterType.user_browser.value,
+        "USERBROWSERVERSION": schemas.LiveFilterType.user_browser_version.value,
+        "USERDEVICE": schemas.LiveFilterType.user_device.value,
+        "USERDEVICETYPE": schemas.LiveFilterType.user_device_type.value,
+        "USERCOUNTRY": schemas.LiveFilterType.user_country.value,
+        "PROJECTID": "projectId"
+    }.get(key.upper(), key)

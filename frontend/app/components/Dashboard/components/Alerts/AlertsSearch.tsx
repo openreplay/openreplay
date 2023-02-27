@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Icon } from 'UI';
 import { debounce } from 'App/utils';
-import { changeSearch } from 'Duck/alerts';
-import { connect } from 'react-redux';
+import { useStore } from 'App/mstore'
+import { observer } from 'mobx-react-lite'
 
 let debounceUpdate: any = () => {};
 
-interface Props {
-  changeSearch: (value: string) => void;
-}
-
-function AlertsSearch({ changeSearch }: Props) {
-  const [inputValue, setInputValue] = useState('');
+function AlertsSearch() {
+  const { alertsStore } = useStore();
+  const [inputValue, setInputValue] = useState(alertsStore.alertsSearch);
 
   useEffect(() => {
-    debounceUpdate = debounce((value: string) => changeSearch(value), 500);
+    debounceUpdate = debounce((value: string) => alertsStore.changeSearch(value), 500);
   }, []);
 
   const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,10 +33,4 @@ function AlertsSearch({ changeSearch }: Props) {
   );
 }
 
-export default connect(
-  (state) => ({
-    // @ts-ignore
-    alertsSearch: state.getIn(['alerts', 'alertsSearch']),
-  }),
-  { changeSearch }
-)(AlertsSearch);
+export default observer(AlertsSearch);

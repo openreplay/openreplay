@@ -86,7 +86,7 @@ export default function (app: App): void {
     if (dl !== null) {
       return dl
     }
-    if (hasTag(target, 'INPUT')) {
+    if (hasTag(target, 'input')) {
       return getInputLabel(target)
     }
     if (isClickable(target)) {

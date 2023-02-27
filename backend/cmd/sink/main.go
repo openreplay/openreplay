@@ -1,7 +1,8 @@
 package main
 
 import (
-	"context"
+	"bytes"
+	"encoding/binary"
 	"log"
 	"os"
 	"os/signal"
@@ -13,17 +14,22 @@ import (
 	"openreplay/backend/internal/sink/sessionwriter"
 	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
+	sinkMetrics "openreplay/backend/pkg/metrics/sink"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/url/assets"
 )
 
 func main() {
-	metrics := monitoring.New("sink")
-
+	m := metrics.New()
+	m.Register(sinkMetrics.List())
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
 		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
@@ -34,26 +40,43 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
-	assetMessageHandler := assetscache.New(cfg, rewriter, producer, metrics)
-
+	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
 	counter := storage.NewLogCounter()
-	// Session message metrics
-	totalMessages, err := metrics.RegisterCounter("messages_total")
-	if err != nil {
-		log.Printf("can't create messages_total metric: %s", err)
-	}
-	savedMessages, err := metrics.RegisterCounter("messages_saved")
-	if err != nil {
-		log.Printf("can't create messages_saved metric: %s", err)
-	}
-	messageSize, err := metrics.RegisterHistogram("messages_size")
-	if err != nil {
-		log.Printf("can't create messages_size metric: %s", err)
-	}
+
+	var (
+		sessionID    uint64
+		messageIndex = make([]byte, 8)
+		domBuffer    = bytes.NewBuffer(make([]byte, 1024))
+		devBuffer    = bytes.NewBuffer(make([]byte, 1024))
+	)
+
+	// Reset buffers
+	domBuffer.Reset()
+	devBuffer.Reset()
 
 	msgHandler := func(msg messages.Message) {
-		// [METRICS] Increase the number of processed messages
-		totalMessages.Add(context.Background(), 1)
+		// Check batchEnd signal (nil message)
+		if msg == nil {
+			// Skip empty buffers
+			if domBuffer.Len() <= 0 && devBuffer.Len() <= 0 {
+				return
+			}
+			sinkMetrics.RecordWrittenBytes(float64(domBuffer.Len()), "dom")
+			sinkMetrics.RecordWrittenBytes(float64(devBuffer.Len()), "devtools")
+
+			// Write buffered batches to the session
+			if err := writer.Write(sessionID, domBuffer.Bytes(), devBuffer.Bytes()); err != nil {
+				log.Printf("writer error: %s", err)
+			}
+
+			// Prepare buffer for the next batch
+			domBuffer.Reset()
+			devBuffer.Reset()
+			sessionID = 0
+			return
+		}
+
+		sinkMetrics.IncreaseTotalMessages()
 
 		// Send SessionEnd trigger to storage service
 		if msg.TypeID() == messages.MsgSessionEnd {
@@ -98,15 +121,61 @@ func main() {
 			return
 		}
 
-		// Write message to file
-		if err := writer.Write(msg); err != nil {
-			log.Printf("writer error: %s", err)
-			return
+		// Write message to the batch buffer
+		if sessionID == 0 {
+			sessionID = msg.SessionID()
 		}
 
-		// [METRICS] Increase the number of written to the files messages and the message size
-		messageSize.Record(context.Background(), float64(len(msg.Encode())))
-		savedMessages.Add(context.Background(), 1)
+		// Encode message index
+		binary.LittleEndian.PutUint64(messageIndex, msg.Meta().Index)
+
+		var (
+			n   int
+			err error
+		)
+
+		// Add message to dom buffer
+		if messages.IsDOMType(msg.TypeID()) {
+			// Write message index
+			n, err = domBuffer.Write(messageIndex)
+			if err != nil {
+				log.Printf("domBuffer index write err: %s", err)
+			}
+			if n != len(messageIndex) {
+				log.Printf("domBuffer index not full write: %d/%d", n, len(messageIndex))
+			}
+			// Write message body
+			n, err = domBuffer.Write(msg.Encode())
+			if err != nil {
+				log.Printf("domBuffer message write err: %s", err)
+			}
+			if n != len(msg.Encode()) {
+				log.Printf("domBuffer message not full write: %d/%d", n, len(messageIndex))
+			}
+		}
+
+		// Add message to dev buffer
+		if !messages.IsDOMType(msg.TypeID()) || msg.TypeID() == messages.MsgTimestamp {
+			// Write message index
+			n, err = devBuffer.Write(messageIndex)
+			if err != nil {
+				log.Printf("devBuffer index write err: %s", err)
+			}
+			if n != len(messageIndex) {
+				log.Printf("devBuffer index not full write: %d/%d", n, len(messageIndex))
+			}
+			// Write message body
+			n, err = devBuffer.Write(msg.Encode())
+			if err != nil {
+				log.Printf("devBuffer message write err: %s", err)
+			}
+			if n != len(msg.Encode()) {
+				log.Printf("devBuffer message not full write: %d/%d", n, len(messageIndex))
+			}
+		}
+
+		sinkMetrics.IncreaseWrittenMessages()
+		sinkMetrics.RecordMessageSize(float64(len(msg.Encode())))
 	}
 
 	consumer := queue.NewConsumer(
@@ -114,7 +183,7 @@ func main() {
 		[]string{
 			cfg.TopicRawWeb,
 		},
-		messages.NewMessageIterator(msgHandler, nil, false),
+		messages.NewSinkMessageIterator(msgHandler, nil, false),
 		false,
 		cfg.MessageSizeLimit,
 	)

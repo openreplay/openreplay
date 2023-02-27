@@ -1,0 +1,53 @@
+annotations:
+  artifacthub.io/changes: |
+    - kind: added
+      description: Added possibility to define additional init and sidecar container.
+    - kind: added
+      description: Added ability to remove namespaces from default resourceFilters list.
+    - kind: added
+      description: Prevent installing Kyverno in namespace kube-system.
+    - kind: fixed
+      description: Docs for generatecontrollerExtraResources.
+    - kind: changed
+      description: Enable autogen internals by default.
+    - kind: fixed
+      description: Self signed certificates not using SANs.
+    - kind: added
+      description: Extra args support for init container.
+    - kind: added
+      description: Allow overriding of test security context and resource block.
+    - kind: added
+      description: Added possibility to define custom image registries
+    - kind: added
+      description: Enable adding optional annotations to configmaps
+    - kind: added
+      description: Add startup probes support
+    - kind: added
+      description: Support extra CRD annotations
+    - kind: added
+      description: Grafana dashboard.
+  artifacthub.io/links: |
+    - name: Documentation
+      url: https://kyverno.io/docs
+  artifacthub.io/operator: "false"
+  artifacthub.io/prerelease: "false"
+apiVersion: v2
+appVersion: v1.8.5
+description: Kubernetes Native Policy Management
+home: https://kyverno.io/
+icon: https://github.com/kyverno/kyverno/raw/main/img/logo.png
+keywords:
+- kubernetes
+- nirmata
+- policy agent
+- validating webhook
+- admissions controller
+kubeVersion: '>=1.16.0-0'
+maintainers:
+- name: Nirmata
+  url: https://kyverno.io/
+name: kyverno
+sources:
+- https://github.com/kyverno/kyverno
+type: application
+version: 2.6.5

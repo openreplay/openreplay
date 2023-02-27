@@ -42,7 +42,7 @@ function UserListItem(props: Props) {
       onClick={editHandler}
     >
       <div className="col-span-5">
-        <span className="mr-2">{user.name}</span>
+        <span className="mr-2 capitalize">{user.name}</span>
         {/* {isEnterprise && <AdminPrivilegeLabel user={user} />} */}
       </div>
       <div className="col-span-3">

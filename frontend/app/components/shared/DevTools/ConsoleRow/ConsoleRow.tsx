@@ -15,7 +15,7 @@ interface Props {
 function ConsoleRow(props: Props) {
   const { log, iconProps, jump, renderWithNL, style, recalcHeight } = props;
   const [expanded, setExpanded] = useState(false);
-  const lines = log.value.split('\n').filter((l: any) => !!l);
+  const lines = log.value?.split('\n').filter((l: any) => !!l) || [];
   const canExpand = lines.length > 1;
 
   const clickable = canExpand || !!log.errorId;
@@ -30,19 +30,19 @@ function ConsoleRow(props: Props) {
       className={cn(
         'border-b flex items-center py-2 px-4 overflow-hidden group relative select-none',
         {
-          info: !log.isYellow() && !log.isRed(),
-          warn: log.isYellow(),
-          error: log.isRed(),
+          info: !log.isYellow && !log.isRed,
+          warn: log.isYellow,
+          error: log.isRed,
           'cursor-pointer': clickable,
           'cursor-pointer underline decoration-dotted decoration-gray-200': !!log.errorId,
         }
       )}
-      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : () => {}}
+      onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : undefined}
     >
       <div className="mr-2">
         <Icon size="14" {...iconProps} />
       </div>
-      <div key={log.key} data-scroll-item={log.isRed()}>
+      <div key={log.key} data-scroll-item={log.isRed}>
         <div className={cn('flex items-center')}>
           {canExpand && (
             <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />

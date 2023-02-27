@@ -21,17 +21,17 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
   const menuItems = [
     {
       icon: 'quotes',
-      text: 'Add/Remove Note',
+      text: 'Notes',
       onClick: () => bugReportStore.toggleSubStepModal(true, 'note', step.key),
     },
     {
       icon: 'info-circle',
-      text: `Add/Remove Error`,
+      text: `Errors`,
       onClick: () => bugReportStore.toggleSubStepModal(true, 'error', step.key),
     },
     {
       icon: 'network',
-      text: 'Add/Remove Network Request',
+      text: 'Bad Network Requests',
       onClick: () => bugReportStore.toggleSubStepModal(true, 'network', step.key),
     },
   ];
@@ -64,7 +64,7 @@ function Step({ step, ind, isDefault }: { step: IStep; ind: number; isDefault?: 
               )}
             >
               {/* @ts-ignore */}
-              <Tooltip title="Add Note, Error or Network Request" className="!flex items-center">
+              <Tooltip title="Add Note, Error or bad Network Request" className="!flex items-center">
                 <ItemMenu
                   label={
                     <Icon

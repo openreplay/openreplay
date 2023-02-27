@@ -1,6 +1,6 @@
 import React from 'react'
 import { Styles } from '../../common';
-import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
+import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { LineChart, Line, Legend } from 'recharts';
 
 interface Props {

@@ -10,7 +10,8 @@ set -e
 
 image_name="sourcemaps-reader"
 
-git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
+git_sha=$(git rev-parse --short HEAD)
+image_tag=${IMAGE_TAG:-git_sha}
 envarg="default-foss"
 tmp_folder_name="${image_name}_${RANDOM}"
 
@@ -33,17 +34,20 @@ function build_api(){
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
-        cp -rf ../ee/sourcemap-reader/* ./
+        cp -rf ../ee/sourcemap-reader/* ./ || true # We share same codebase for ee/foss
         envarg="default-ee"
         tag="ee-"
     }
-    docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1} .
+    docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} .
     cd ../sourcemap-reader
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1}
-        docker tag ${DOCKER_REPO:-'local'}/${image_name}:${git_sha1} ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/${image_name}:${image_tag}
+        docker tag ${DOCKER_REPO:-'local'}/${image_name}:${image_tag} ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/${image_name}:${tag}latest
+    }
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/$image_name:${image_tag}
     }
     echo "${image_name} docker build completed"
 }

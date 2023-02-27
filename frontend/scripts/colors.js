@@ -8,6 +8,7 @@ fs.writeFileSync('app/styles/colors-autogen.css', `/* Auto-generated, DO NOT EDI
 
 /* fill */
 ${ colors.map(color => `.fill-${ color } { fill: $${ color } }`).join('\n') }
+${ colors.map(color => `.hover-fill-${ color }:hover svg { fill: $${ color } }`).join('\n') }
 
 /* color */
 ${ colors.map(color => `.color-${ color } { color: $${ color } }`).join('\n') }

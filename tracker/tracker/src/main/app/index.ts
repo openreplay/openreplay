@@ -1,5 +1,5 @@
 import type Message from './messages.gen.js'
-import { Timestamp, Metadata, UserID } from './messages.gen.js'
+import { Timestamp, Metadata, UserID, Type as MType } from './messages.gen.js'
 import { now, adjustTimeOrigin, deprecationWarn } from '../utils.js'
 import Nodes from './nodes.js'
 import Observer from './observer/top_observer.js'
@@ -165,6 +165,8 @@ export default class App {
         if (data === 'restart') {
           this.stop(false)
           this.start({}, true)
+        } else if (data === 'not_init') {
+          console.warn('WebWorker: writer not initialised. Restarting tracker')
         } else if (data.type === 'failure') {
           this.stop(false)
           this._debug('worker_failed', data.reason)
@@ -199,10 +201,22 @@ export default class App {
     this.debug.error('OpenReplay error: ', context, e)
   }
 
+  private _usingOldFetchPlugin = false
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) {
       return
     }
+    // === Back compatibility with Fetch/Axios plugins ===
+    if (message[0] === MType.Fetch) {
+      this._usingOldFetchPlugin = true
+      deprecationWarn('Fetch plugin', "'network' init option", '/installation/network-options')
+      deprecationWarn('Axios plugin', "'network' init option", '/installation/network-options')
+    }
+    if (this._usingOldFetchPlugin && message[0] === MType.NetworkRequest) {
+      return
+    }
+    // ====================================================
+
     this.messages.push(message)
     // TODO: commit on start if there were `urgent` sends;
     // Clarify where urgent can be used for;
@@ -312,18 +326,25 @@ export default class App {
     return this.session.getInfo().sessionID || undefined
   }
 
-  getSessionURL(): string | undefined {
-    const { projectID, sessionID } = this.session.getInfo()
+  getSessionURL(options?: { withCurrentTime?: boolean }): string | undefined {
+    const { projectID, sessionID, timestamp } = this.session.getInfo()
     if (!projectID || !sessionID) {
       this.debug.error('OpenReplay error: Unable to build session URL')
       return undefined
     }
     const ingest = this.options.ingestPoint
-    const isSaas = ingest === DEFAULT_INGEST_POINT
+    const isSaas = /api\.openreplay\.com/.test(ingest)
 
-    const projectPath = isSaas ? ingest.replace('api', 'app') : ingest
+    const projectPath = isSaas ? 'https://openreplay.com/ingest' : ingest
 
-    return projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+    const url = projectPath.replace(/ingest$/, `${projectID}/session/${sessionID}`)
+
+    if (options?.withCurrentTime) {
+      const jumpTo = now() - timestamp
+      return `${url}?jumpto=${jumpTo}`
+    }
+
+    return url
   }
 
   getHost(): string {
@@ -445,7 +466,7 @@ export default class App {
           return Promise.reject('no worker found after start request (this might not happen)')
         }
         if (this.activityState === ActivityState.NotActive) {
-          return Promise.reject('Tracker stopped during authorisation')
+          return Promise.reject('Tracker stopped during authorization')
         }
         const {
           token,

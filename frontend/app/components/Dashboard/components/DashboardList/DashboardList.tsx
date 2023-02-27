@@ -1,22 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { NoContent, Pagination, Icon } from 'UI';
+import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
-import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import DashboardListItem from './DashboardListItem';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function DashboardList() {
   const { dashboardStore } = useStore();
-  const [shownDashboards, setDashboards] = React.useState([]);
-  const dashboards = dashboardStore.sortedDashboards;
+  const list = dashboardStore.filteredList;
   const dashboardsSearch = dashboardStore.dashboardsSearch;
-
-  React.useEffect(() => {
-    setDashboards(filterList(dashboards, dashboardsSearch, ['name', 'owner', 'description']));
-  }, [dashboardsSearch]);
-
-  const list = dashboardsSearch !== '' ? shownDashboards : dashboards;
   const lenth = list.length;
 
   return (
@@ -24,12 +17,19 @@ function DashboardList() {
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
-          <Icon name="no-dashboard" size={80} color="figmaColors-accent-secondary" />
-          <div className="text-center text-gray-600 my-4">
-            {dashboardsSearch !== ''
-              ? 'No matching results'
-              : "You haven't created any dashboards yet"}
+          <div className="text-center my-4">
+            {dashboardsSearch !== '' ? (
+              'No matching results'
+            ) : (
+              <div>
+                <div>Create your first Dashboard</div>
+                <div className="text-sm color-gray-medium font-normal">
+                  A dashboard lets you visualize trends and insights of data captured by OpenReplay.
+                </div>
+              </div>
+            )}
           </div>
+          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
         </div>
       }
     >
@@ -37,7 +37,7 @@ function DashboardList() {
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-8">Title</div>
           <div className="col-span-2">Visibility</div>
-          <div className="col-span-2 text-right">Created</div>
+          <div className="col-span-2 text-right">Creation Date</div>
         </div>
 
         {sliceListPerPage(list, dashboardStore.page - 1, dashboardStore.pageSize).map(

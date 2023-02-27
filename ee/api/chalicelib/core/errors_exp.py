@@ -744,7 +744,7 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     else:
         table_name = ""
     if type_condition:
-        ch_sub_query.append(f"{table_name}event_type='ERROR'")
+        ch_sub_query.append(f"{table_name}EventType='ERROR'")
     if time_constraint:
         ch_sub_query += [f"{table_name}datetime >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"{table_name}datetime < toDateTime(%({endTime_arg_name})s/1000)"]
@@ -920,7 +920,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                     params["maxDuration"] = f.value[1]
 
             elif filter_type == schemas.FilterType.referrer:
-                # extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+                # extra_from += f"INNER JOIN {events.EventType.LOCATION.table} AS p USING(session_id)"
                 if is_any:
                     referrer_constraint = 'isNotNull(s.base_referrer)'
                 else:
@@ -1062,7 +1062,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id):
                                             toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
                                      FROM {MAIN_EVENTS_TABLE}
                                      WHERE project_id=%(project_id)s
-                                        AND event_type='ERROR'
+                                        AND EventType='ERROR'
                                      GROUP BY error_id) AS time_details
                 ON details.error_id=time_details.error_id
                     INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart

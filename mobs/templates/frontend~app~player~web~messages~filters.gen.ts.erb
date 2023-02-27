@@ -1,0 +1,9 @@
+// Auto-generated, do not edit
+/* eslint-disable */
+
+import { MType } from './raw.gen'
+
+const DOM_TYPES = [<%= $messages.select { |msg| msg.replayer == true }.map { |msg| "#{msg.id}" }.join "," %>]
+export function isDOMType(t: MType) {
+	return DOM_TYPES.includes(t)
+}

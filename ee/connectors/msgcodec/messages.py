@@ -6,34 +6,6 @@ class Message(ABC):
     pass
 
 
-class BatchMeta(Message):
-    __id__ = 80
-
-    def __init__(self, page_no, first_index, timestamp):
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-
-
-class BatchMetadata(Message):
-    __id__ = 81
-
-    def __init__(self, version, page_no, first_index, timestamp, location):
-        self.version = version
-        self.page_no = page_no
-        self.first_index = first_index
-        self.timestamp = timestamp
-        self.location = location
-
-
-class PartitionedMessage(Message):
-    __id__ = 82
-
-    def __init__(self, part_no, part_total):
-        self.part_no = part_no
-        self.part_total = part_total
-
-
 class Timestamp(Message):
     __id__ = 0
 
@@ -213,6 +185,20 @@ class MouseMove(Message):
         self.y = y
 
 
+class NetworkRequest(Message):
+    __id__ = 21
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+
+
 class ConsoleLog(Message):
     __id__ = 22
 
@@ -265,7 +251,7 @@ class IntegrationEvent(Message):
         self.payload = payload
 
 
-class RawCustomEvent(Message):
+class CustomEvent(Message):
     __id__ = 27
 
     def __init__(self, name, payload):
@@ -358,16 +344,6 @@ class ResourceEvent(Message):
         self.status = status
 
 
-class CustomEvent(Message):
-    __id__ = 36
-
-    def __init__(self, message_id, timestamp, name, payload):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.name = name
-        self.payload = payload
-
-
 class CSSInsertRule(Message):
     __id__ = 37
 
@@ -420,15 +396,6 @@ class StateAction(Message):
     __id__ = 42
 
     def __init__(self, type):
-        self.type = type
-
-
-class StateActionEvent(Message):
-    __id__ = 43
-
-    def __init__(self, message_id, timestamp, type):
-        self.message_id = message_id
-        self.timestamp = timestamp
         self.type = type
 
 
@@ -486,30 +453,21 @@ class PerformanceTrack(Message):
         self.used_js_heap_size = used_js_heap_size
 
 
-class GraphQLEvent(Message):
+class StringDict(Message):
     __id__ = 50
 
-    def __init__(self, message_id, timestamp, operation_kind, operation_name, variables, response):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.operation_kind = operation_kind
-        self.operation_name = operation_name
-        self.variables = variables
-        self.response = response
+    def __init__(self, key, value):
+        self.key = key
+        self.value = value
 
 
-class FetchEvent(Message):
+class SetNodeAttributeDict(Message):
     __id__ = 51
 
-    def __init__(self, message_id, timestamp, method, url, request, response, status, duration):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.duration = duration
+    def __init__(self, id, name_key, value_key):
+        self.id = id
+        self.name_key = name_key
+        self.value_key = value_key
 
 
 class DOMDrop(Message):
@@ -617,7 +575,7 @@ class SetCSSDataURLBased(Message):
         self.base_url = base_url
 
 
-class IssueEvent(Message):
+class IssueEventDeprecated(Message):
     __id__ = 62
 
     def __init__(self, message_id, timestamp, type, context_string, context, payload):
@@ -740,14 +698,6 @@ class AdoptedSSRemoveOwner(Message):
         self.id = id
 
 
-class Zustand(Message):
-    __id__ = 79
-
-    def __init__(self, mutation, state):
-        self.mutation = mutation
-        self.state = state
-
-
 class JSException(Message):
     __id__ = 78
 
@@ -756,6 +706,55 @@ class JSException(Message):
         self.message = message
         self.payload = payload
         self.metadata = metadata
+
+
+class Zustand(Message):
+    __id__ = 79
+
+    def __init__(self, mutation, state):
+        self.mutation = mutation
+        self.state = state
+
+
+class BatchMeta(Message):
+    __id__ = 80
+
+    def __init__(self, page_no, first_index, timestamp):
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+
+
+class BatchMetadata(Message):
+    __id__ = 81
+
+    def __init__(self, version, page_no, first_index, timestamp, location):
+        self.version = version
+        self.page_no = page_no
+        self.first_index = first_index
+        self.timestamp = timestamp
+        self.location = location
+
+
+class PartitionedMessage(Message):
+    __id__ = 82
+
+    def __init__(self, part_no, part_total):
+        self.part_no = part_no
+        self.part_total = part_total
+
+
+class IssueEvent(Message):
+    __id__ = 125
+
+    def __init__(self, message_id, timestamp, type, context_string, context, payload, url):
+        self.message_id = message_id
+        self.timestamp = timestamp
+        self.type = type
+        self.context_string = context_string
+        self.context = context
+        self.payload = payload
+        self.url = url
 
 
 class SessionEnd(Message):

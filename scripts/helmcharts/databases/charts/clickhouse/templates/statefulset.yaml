@@ -29,6 +29,10 @@ spec:
       containers:
         - name: {{ .Chart.Name }}-backup
           env:
+          - name: CLICKHOUSE_USER
+            value: "{{ .Values.username }}"
+          - name: CLICKHOUSE_PASSWORD
+            value: "{{ .Values.password }}"
           - name: API_LISTEN
             value: "0.0.0.0:7171"
           {{- range $key, $value := .Values.backupEnv }}
@@ -49,6 +53,12 @@ spec:
             mountPath: /var/lib/clickhouse
         - name: {{ .Chart.Name }}
           env:
+          - name: CLICKHOUSE_USER
+            value: "{{ .Values.username }}"
+          - name: CLICKHOUSE_PASSWORD
+            value: "{{ .Values.password }}"
+          - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+            value: "1"
           {{- range $key, $value := .Values.env }}
           - name: "{{ $key }}"
             value: "{{ $value }}"

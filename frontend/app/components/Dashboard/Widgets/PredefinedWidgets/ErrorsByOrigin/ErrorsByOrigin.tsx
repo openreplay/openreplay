@@ -20,7 +20,7 @@ function ErrorsByOrigin(props: Props) {
         <NoContent
           size="small"
           title={NO_METRIC_DATA}
-          show={ metric.data.chart.length === 0 }
+          show={ metric.data.chart && metric.data.chart.length === 0 }
           style={ { height: '240px' } }
         >
           <ResponsiveContainer height={ 240 } width="100%">

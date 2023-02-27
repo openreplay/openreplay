@@ -64,12 +64,12 @@ function WidgetName(props: Props) {
         />
       ) : (
         // @ts-ignore
-        <Tooltip title="Double click to rename" disabled={!canEdit}>
-          <div 
-            onDoubleClick={() => setEditing(true)} 
+        <Tooltip delay={200} title="Double click to rename" disabled={!canEdit}>
+          <div
+            onDoubleClick={() => setEditing(true)}
             className={
               cn(
-                "text-2xl h-8 flex items-center border-transparent", 
+                "text-2xl h-8 flex items-center border-transparent",
                 canEdit && 'cursor-pointer select-none border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium'
               )
             }
@@ -77,7 +77,7 @@ function WidgetName(props: Props) {
             { name }
           </div>
         </Tooltip>
-        
+
       )}
       { canEdit && <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div> }
     </div>

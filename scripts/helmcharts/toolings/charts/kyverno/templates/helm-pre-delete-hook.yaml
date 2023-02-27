@@ -1,0 +1,29 @@
+{{- if .Values.webhooksCleanup.enable }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "kyverno.fullname" . }}-hook-pre-delete
+  labels: {{ include "kyverno.labels" . | nindent 4 }}
+    app: kyverno
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+spec:
+  template:
+    spec:
+      serviceAccount: {{ template "kyverno.serviceAccountName" . }}
+      containers:
+        - name: kubectl
+          image: {{ .Values.webhooksCleanup.image }}
+          command:
+            - sh
+            - '-c'
+            - >-
+              kubectl delete validatingwebhookconfiguration kyverno-policy-validating-webhook-cfg;
+              kubectl delete validatingwebhookconfiguration kyverno-resource-validating-webhook-cfg;
+              kubectl delete mutatingwebhookconfiguration kyverno-policy-mutating-webhook-cfg;
+              kubectl delete mutatingwebhookconfiguration kyverno-resource-mutating-webhook-cfg;
+              kubectl delete mutatingwebhookconfiguration kyverno-verify-mutating-webhook-cfg;
+      restartPolicy: Never
+  backoffLimit: 2
+{{- end }}

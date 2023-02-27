@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action, runInAction } from "mobx"
+import { makeAutoObservable, runInAction } from "mobx"
 import Widget from "./widget"
 import { dashboardService  } from "App/services"
 import { toast } from 'react-toastify';
@@ -6,7 +6,7 @@ import { DateTime } from 'luxon';
 
 export default class Dashboard {
     public static get ID_KEY():string { return "dashboardId" }
-    dashboardId: any = undefined
+    dashboardId?: string = undefined
     name: string = "Untitled Dashboard"
     description: string = ""
     isPublic: boolean = true
@@ -30,12 +30,19 @@ export default class Dashboard {
         this.validate()
     }
 
+    updateInfo(data: any) {
+        runInAction(() => {
+            this.name = data.name || this.name
+            this.description = data.description || this.description
+            this.isPublic = data.isPublic
+        })
+    }
+
     toJson() {
         return {
             dashboardId: this.dashboardId,
             name: this.name,
             isPublic: this.isPublic,
-            createdAt: this.createdAt,
             metrics: this.metrics,
             description: this.description,
         }

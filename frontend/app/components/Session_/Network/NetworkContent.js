@@ -1,9 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
-// import { connectPlayer } from 'Player';
-import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler, Button } from 'UI';
+import { QuestionMarkHint, Tooltip, Tabs, Input, NoContent, Icon, Toggler } from 'UI';
 import { getRE } from 'App/utils';
-import { TYPES } from 'Types/session/resource';
+import { ResourceType } from 'Player';
 import { formatBytes } from 'App/utils';
 import { formatMs } from 'App/date';
 
@@ -12,7 +11,6 @@ import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
 import stl from './network.module.css';
 import { Duration } from 'luxon';
-import { jump } from 'Player';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -23,12 +21,12 @@ const MEDIA = 'media';
 const OTHER = 'other';
 
 const TAB_TO_TYPE_MAP = {
-  [XHR]: TYPES.XHR,
-  [JS]: TYPES.JS,
-  [CSS]: TYPES.CSS,
-  [IMG]: TYPES.IMG,
-  [MEDIA]: TYPES.MEDIA,
-  [OTHER]: TYPES.OTHER,
+  [XHR]: ResourceType.XHR,
+  [JS]: ResourceType.SCRIPT,
+  [CSS]: ResourceType.CSS,
+  [IMG]: ResourceType.IMG,
+  [MEDIA]: ResourceType.MEDIA,
+  [OTHER]: ResourceType.OTHER,
 };
 const TABS = [ALL, XHR, JS, CSS, IMG, MEDIA, OTHER].map((tab) => ({
   text: tab,
@@ -78,15 +76,16 @@ const renderXHRText = () => (
     <QuestionMarkHint
       content={
         <>
-          Use our{' '}
+          Configure{' '}
           <a
             className="color-teal underline"
             target="_blank"
-            href="https://docs.openreplay.com/plugins/fetch"
+            href="https://docs.openreplay.com/installation/network-options"
           >
-            Fetch plugin
+            Configure
           </a>
-          {' to capture HTTP requests and responses, including status codes and bodies.'} <br />
+          network capturing
+          {' to see fetch/XHR requests and response payloads.'} <br />
           We also provide{' '}
           <a
             className="color-teal underline"
@@ -112,8 +111,6 @@ function renderSize(r) {
     content = 'Not captured';
   } else {
     const headerSize = r.headerSize || 0;
-    const encodedSize = r.encodedBodySize || 0;
-    const transferred = headerSize + encodedSize;
     const showTransferred = r.headerSize != null;
 
     triggerText = formatBytes(r.decodedBodySize);
@@ -138,11 +135,11 @@ export function renderDuration(r) {
   if (!r.success) return 'x';
 
   const text = `${Math.floor(r.duration)}ms`;
-  if (!r.isRed() && !r.isYellow()) return text;
+  if (!r.isRed && !r.isYellow) return text;
 
   let tooltipText;
   let className = 'w-full h-full flex items-center ';
-  if (r.isYellow()) {
+  if (r.isYellow) {
     tooltipText = 'Slower than average';
     className += 'warn color-orange';
   } else {
@@ -234,7 +231,6 @@ export default class NetworkContent extends React.PureComponent {
               className="input-small"
               placeholder="Filter by name"
               icon="search"
-              iconPosition="left"
               name="filter"
               onChange={this.onFilterChange}
               height={28}

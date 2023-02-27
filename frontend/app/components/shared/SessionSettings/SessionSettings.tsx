@@ -6,7 +6,7 @@ import CaptureRate from './components/CaptureRate';
 
 function SessionSettings() {
     return (
-        <div className="bg-white box-shadow h-screen overflow-y-auto" style={{ width: '450px'}}>
+        <div className="bg-white box-shadow h-screen overflow-y-auto">
             <div className="px-6 pt-6">
                 <h1 className="text-2xl">Sessions Settings</h1>
             </div>

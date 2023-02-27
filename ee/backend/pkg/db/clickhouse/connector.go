@@ -19,6 +19,7 @@ import (
 type Connector interface {
 	Prepare() error
 	Commit() error
+	Stop() error
 	InsertWebSession(session *types.Session) error
 	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
@@ -27,15 +28,26 @@ type Connector interface {
 	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
 	InsertAutocomplete(session *types.Session, msgType, msgValue string) error
-	InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error
+	InsertRequest(session *types.Session, msg *messages.NetworkRequest, savePayload bool) error
 	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
-	InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error
+	InsertGraphQL(session *types.Session, msg *messages.GraphQL) error
 	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
 }
 
+type task struct {
+	bulks []Bulk
+}
+
+func NewTask() *task {
+	return &task{bulks: make([]Bulk, 0, 14)}
+}
+
 type connectorImpl struct {
-	conn    driver.Conn
-	batches map[string]Bulk //driver.Batch
+	conn       driver.Conn
+	batches    map[string]Bulk //driver.Batch
+	workerTask chan *task
+	done       chan struct{}
+	finished   chan struct{}
 }
 
 func NewConnector(url string) Connector {
@@ -60,14 +72,18 @@ func NewConnector(url string) Connector {
 	}
 
 	c := &connectorImpl{
-		conn:    conn,
-		batches: make(map[string]Bulk, 9),
+		conn:       conn,
+		batches:    make(map[string]Bulk, 13),
+		workerTask: make(chan *task, 1),
+		done:       make(chan struct{}),
+		finished:   make(chan struct{}),
 	}
+	go c.worker()
 	return c
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, query)
+	batch, err := NewBulk(c.conn, name, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -76,18 +92,18 @@ func (c *connectorImpl) newBatch(name, query string) error {
 }
 
 var batches = map[string]string{
-	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"sessions":      "INSERT INTO experimental.sessions (session_id, project_id, user_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, pages_count, events_count, errors_count, issue_score, referrer, issue_types, tracker_version, user_browser, user_browser_version, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10) VALUES (?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000), SUBSTR(?, 1, 8000))",
+	"resources":     "INSERT INTO experimental.resources (session_id, project_id, message_id, datetime, url, type, duration, ttfb, header_size, encoded_body_size, decoded_body_size, success) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, ?)",
 	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?)",
 	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
 	"custom":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, payload, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
 	"graphql":       "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, name, request_body, response_body, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
+	"issuesEvents":  "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, issue_id, issue_type, event_type, url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"issues":        "INSERT INTO experimental.issues (project_id, issue_id, type, context_string) VALUES (?, ?, ?, ?)",
 }
 
@@ -101,12 +117,47 @@ func (c *connectorImpl) Prepare() error {
 }
 
 func (c *connectorImpl) Commit() error {
+	newTask := NewTask()
 	for _, b := range c.batches {
+		newTask.bulks = append(newTask.bulks, b)
+	}
+	c.batches = make(map[string]Bulk, 13)
+	if err := c.Prepare(); err != nil {
+		log.Printf("can't prepare new CH batch set: %s", err)
+	}
+	c.workerTask <- newTask
+	return nil
+}
+
+func (c *connectorImpl) Stop() error {
+	c.done <- struct{}{}
+	<-c.finished
+	return c.conn.Close()
+}
+
+func (c *connectorImpl) sendBulks(t *task) {
+	for _, b := range t.bulks {
 		if err := b.Send(); err != nil {
-			return fmt.Errorf("can't send batch: %s", err)
+			log.Printf("can't send batch: %s", err)
 		}
 	}
-	return nil
+}
+
+func (c *connectorImpl) worker() {
+	for {
+		select {
+		case t := <-c.workerTask:
+			start := time.Now()
+			c.sendBulks(t)
+			log.Printf("ch bulks dur: %d", time.Now().Sub(start).Milliseconds())
+		case <-c.done:
+			for t := range c.workerTask {
+				c.sendBulks(t)
+			}
+			c.finished <- struct{}{}
+			return
+		}
+	}
 }
 
 func (c *connectorImpl) checkError(name string, err error) {
@@ -132,6 +183,7 @@ func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueE
 		issueID,
 		msg.Type,
 		"ISSUE",
+		msg.URL,
 	); err != nil {
 		c.checkError("issuesEvents", err)
 		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
@@ -289,7 +341,13 @@ func (c *connectorImpl) InsertWebErrorEvent(session *types.Session, msg *types.E
 		keys = append(keys, k)
 		values = append(values, v)
 	}
-
+	// Check error source before insert to avoid panic from clickhouse lib
+	switch msg.Source {
+	case "js_exception", "bugsnag", "cloudwatch", "datadog", "elasticsearch", "newrelic", "rollbar", "sentry", "stackdriver", "sumologic":
+	default:
+		return fmt.Errorf("unknown error source: %s", msg.Source)
+	}
+	// Insert event to batch
 	if err := c.batches["errors"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
@@ -352,7 +410,7 @@ func (c *connectorImpl) InsertAutocomplete(session *types.Session, msgType, msgV
 	return nil
 }
 
-func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.FetchEvent, savePayload bool) error {
+func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.NetworkRequest, savePayload bool) error {
 	urlMethod := url.EnsureMethod(msg.Method)
 	if urlMethod == "" {
 		return fmt.Errorf("can't parse http method. sess: %d, method: %s", session.SessionID, msg.Method)
@@ -365,8 +423,8 @@ func (c *connectorImpl) InsertRequest(session *types.Session, msg *messages.Fetc
 	if err := c.batches["requests"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
+		msg.Meta().Index,
+		datetime(uint64(msg.Meta().Timestamp)),
 		msg.URL,
 		request,
 		response,
@@ -386,8 +444,8 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	if err := c.batches["custom"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
+		msg.Meta().Index,
+		datetime(uint64(msg.Meta().Timestamp)),
 		msg.Name,
 		msg.Payload,
 		"CUSTOM",
@@ -398,12 +456,12 @@ func (c *connectorImpl) InsertCustom(session *types.Session, msg *messages.Custo
 	return nil
 }
 
-func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.GraphQLEvent) error {
+func (c *connectorImpl) InsertGraphQL(session *types.Session, msg *messages.GraphQL) error {
 	if err := c.batches["graphql"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
-		datetime(msg.Timestamp),
+		msg.Meta().Index,
+		datetime(uint64(msg.Meta().Timestamp)),
 		msg.OperationName,
 		nullableString(msg.Variables),
 		nullableString(msg.Response),

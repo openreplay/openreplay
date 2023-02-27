@@ -119,21 +119,20 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
           }).then((canvas) => {
             const imgData = canvas.toDataURL('img/png');
 
-            var imgWidth = 200;
-            var pageHeight = 295;
-            var imgHeight = (canvas.height * imgWidth) / canvas.width;
-            var heightLeft = imgHeight;
-            var position = 0;
+            let imgWidth = 200;
+            let pageHeight = 295;
+            let imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight - pageHeight;
+            let position = 0;
 
 
             doc.addImage(imgData, 'PNG', 5, 5, imgWidth, imgHeight);
 
             doc.addImage('/assets/img/report-head.png', 'png', 210/2 - 40/2, 2, 45, 5);
-
-            heightLeft -= pageHeight - 7;
+            if (position === 0 && heightLeft === 0) doc.addImage('/assets/img/report-head.png', 'png', 210/2 - 40/2, pageHeight - 5, 45, 5);
 
             while (heightLeft >= 0) {
-              position = heightLeft - imgHeight + 10;
+              position = heightLeft - imgHeight;
               doc.addPage();
               doc.addImage(imgData, 'PNG', 5, position, imgWidth, imgHeight);
               doc.addImage('/assets/img/report-head.png', 'png', 210/2 - 40/2, pageHeight - 5, 45, 5);
@@ -141,7 +140,6 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
             }
 
             doc.link(5, 295 - Math.abs(heightLeft) - 25, 200, 30, { url: sessionUrl });
-            if (position === 0) doc.addImage('/assets/img/report-head.png', 'png', 210/2 - 40/2, pageHeight - 5, 45, 5);
 
             doc.save('Bug Report: ' + sessionId + '.pdf');
             setRendering(false);
@@ -184,7 +182,7 @@ function BugReportModal({ hideModal, session, width, height, account, xrayProps,
   return (
     <div
       className="bg-white overflow-y-scroll"
-      style={{ maxWidth: '70vw', width: 620, height: '100vh' }}
+      style={{ height: '100vh' }}
     >
       <div className="flex flex-col p-4 gap-8 bg-white relative" ref={reportRef}>
         <Title userName={account.name} />

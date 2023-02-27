@@ -1,105 +1,90 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { hideHint } from 'Duck/components/player';
+import React, { useEffect, useMemo, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { Tabs, Input, NoContent, Icon } from 'UI';
-import { getRE } from 'App/utils';
-import { List, CellMeasurer, CellMeasurerCache, AutoSizer } from 'react-virtualized';
-
+import { List, CellMeasurer, AutoSizer } from 'react-virtualized';
+import { PlayerContext } from 'App/components/Session/playerContext';
 import BottomBlock from '../BottomBlock';
-import { connectPlayer, jump } from 'Player';
 import { useModal } from 'App/components/Modal';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
-import { DATADOG, SENTRY, STACKDRIVER, typeList } from 'Types/session/stackEvent';
-import { connect } from 'react-redux';
+import { typeList } from 'Types/session/stackEvent';
 import StackEventRow from 'Shared/DevTools/StackEventRow';
-import StackEventModal from '../StackEventModal';
 
-let timeOut: any = null;
-const TIMEOUT_DURATION = 5000;
+import StackEventModal from '../StackEventModal';
+import useAutoscroll, { getLastItemTime } from '../useAutoscroll';
+import { useRegExListFilterMemo, useTabListFilterMemo } from '../useListFilter'
+import useCellMeasurerCache from 'App/hooks/useCellMeasurerCache'
+
 const INDEX_KEY = 'stackEvent';
 const ALL = 'ALL';
-const TABS = [ALL, ...typeList].map((tab) => ({ text: tab, key: tab }));
+const TAB_KEYS = [ ALL, ...typeList] as const
+const TABS = TAB_KEYS.map((tab) => ({ text: tab, key: tab }))
 
-interface Props {
-  list: any;
-  hideHint: any;
-  time: any;
-}
-function StackEventPanel(props: Props) {
-  const { list, time } = props;
-  const additionalHeight = 0;
+function StackEventPanel() {
+  const { player, store } = React.useContext(PlayerContext)
+  const jump = (t: number) => player.jump(t)
+  const { stackList: list, stackListNow: listNow } = store.get()
+
   const {
     sessionStore: { devTools },
   } = useStore();
-  const { showModal, component: modalActive } = useModal();
-  const [filteredList, setFilteredList] = useState([]);
-  const filter = useObserver(() => devTools[INDEX_KEY].filter);
-  const activeTab = useObserver(() => devTools[INDEX_KEY].activeTab);
-  const activeIndex = useObserver(() => devTools[INDEX_KEY].index);
-  const [pauseSync, setPauseSync] = useState(activeIndex > 0);
-  const synRef: any = useRef({});
-  synRef.current = {
-    pauseSync,
+  const { showModal } = useModal();
+  const [isDetailsModalActive, setIsDetailsModalActive] = useState(false) // TODO:embed that into useModal
+  const filter = devTools[INDEX_KEY].filter
+  const activeTab = devTools[INDEX_KEY].activeTab
+  const activeIndex = devTools[INDEX_KEY].index
+
+  let filteredList = useRegExListFilterMemo(list, it => it.name, filter)  
+  filteredList = useTabListFilterMemo(filteredList, it => it.source, ALL, activeTab)
+
+  const onTabClick = (activeTab: typeof TAB_KEYS[number]) => devTools.update(INDEX_KEY, { activeTab })
+  const onFilterChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => devTools.update(INDEX_KEY, { filter: value })
+  const tabs = useMemo(() => 
+    TABS.filter(({ key }) => key === ALL || list.some(({ source }) => key === source)), 
+    [ list.length ],
+  )
+
+  const [
+    timeoutStartAutoscroll,
+    stopAutoscroll,
+  ] = useAutoscroll(
+    filteredList,
+    getLastItemTime(listNow),
     activeIndex,
-  };
-  const _list = React.useRef();
-
-  const onTabClick = (activeTab: any) => devTools.update(INDEX_KEY, { activeTab });
-  const onFilterChange = ({ target: { value } }: any) => {
-    devTools.update(INDEX_KEY, { filter: value });
-  };
-
-  const getCurrentIndex = () => {
-    return filteredList.filter((item: any) => item.time <= time).length - 1;
-  };
-
-  const removePause = () => {
-    if (!!modalActive) return;
-    clearTimeout(timeOut);
-    timeOut = setTimeout(() => {
-      devTools.update(INDEX_KEY, { index: getCurrentIndex() });
-      setPauseSync(false);
-    }, TIMEOUT_DURATION);
-  };
-
-  useEffect(() => {
-    const currentIndex = getCurrentIndex();
-    if (currentIndex !== activeIndex && !pauseSync) {
-      devTools.update(INDEX_KEY, { index: currentIndex });
-    }
-  }, [time]);
-
+    index => devTools.update(INDEX_KEY, { index })
+  )
+  const onMouseEnter = stopAutoscroll
   const onMouseLeave = () => {
-    removePause();
-  };
+    if (isDetailsModalActive) { return }
+    timeoutStartAutoscroll()
+  }
 
-  React.useMemo(() => {
-    const filterRE = getRE(filter, 'i');
-    let list = props.list;
-
-    list = list.filter(
-      ({ name, source }: any) =>
-        (!!filter ? filterRE.test(name) : true) && (activeTab === ALL || activeTab === source)
-    );
-
-    setFilteredList(list);
-  }, [filter, activeTab]);
-
-  const tabs = useMemo(() => {
-    return TABS.filter(({ key }) => key === ALL || list.some(({ source }: any) => key === source));
-  }, []);
-
-  const cache = new CellMeasurerCache({
-    fixedWidth: true,
-    keyMapper: (index: number) => filteredList[index],
-  });
+  const cache = useCellMeasurerCache(filteredList)
 
   const showDetails = (item: any) => {
-    clearTimeout(timeOut);
-    showModal(<StackEventModal event={item} />, { right: true, onClose: removePause });
-    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
-    setPauseSync(true);
-  };
+    setIsDetailsModalActive(true)
+    showModal(
+      <StackEventModal event={item} />, 
+      { 
+        right: true,
+        width: 500,
+        onClose: () => {
+          setIsDetailsModalActive(false)
+          timeoutStartAutoscroll()
+        } 
+      }
+    )
+    devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) })
+    stopAutoscroll()
+  }
+
+  const _list = React.useRef()
+  useEffect(() => {
+    if (_list.current) {
+      // @ts-ignore
+      _list.current.scrollToRow(activeIndex)
+    }
+  }, [ activeIndex ])
+
 
   const _rowRenderer = ({ index, key, parent, style }: any) => {
     const item = filteredList[index];
@@ -114,7 +99,7 @@ function StackEventPanel(props: Props) {
             key={item.key}
             event={item}
             onJump={() => {
-              setPauseSync(true);
+              stopAutoscroll()
               devTools.update(INDEX_KEY, { index: filteredList.indexOf(item) });
               jump(item.time);
             }}
@@ -123,19 +108,12 @@ function StackEventPanel(props: Props) {
         )}
       </CellMeasurer>
     );
-  };
-
-  useEffect(() => {
-    if (_list.current) {
-      // @ts-ignore
-      _list.current.scrollToRow(activeIndex);
-    }
-  }, [activeIndex]);
+  }
 
   return (
     <BottomBlock
-      style={{ height: 300 + additionalHeight + 'px' }}
-      onMouseEnter={() => setPauseSync(true)}
+      style={{ height: '300px' }}
+      onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
       <BottomBlock.Header>
@@ -147,7 +125,6 @@ function StackEventPanel(props: Props) {
           className="input-small h-8"
           placeholder="Filter by keyword"
           icon="search"
-          iconPosition="left"
           name="filter"
           height={28}
           onChange={onFilterChange}
@@ -186,16 +163,4 @@ function StackEventPanel(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    hintIsHidden:
-      state.getIn(['components', 'player', 'hiddenHints', 'stack']) ||
-      !state.getIn(['site', 'list']).some((s: any) => s.stackIntegrations),
-  }),
-  { hideHint }
-)(
-  connectPlayer((state: any) => ({
-    list: state.stackList,
-    time: state.time,
-  }))(StackEventPanel)
-);
+export default observer(StackEventPanel)

@@ -176,6 +176,7 @@ chalicelib/.config
 chalicelib/saas
 README/*
 Pipfile
+Pipfile.lock
 
 .local/*
 
@@ -183,13 +184,17 @@ Pipfile
 #exp /chalicelib/core/alerts_processor.py
 /chalicelib/core/announcements.py
 /chalicelib/core/autocomplete.py
+/chalicelib/core/click_maps.py
+/chalicelib/core/collaboration_base.py
+/chalicelib/core/collaboration_msteams.py
 /chalicelib/core/collaboration_slack.py
 /chalicelib/core/countries.py
+/chalicelib/core/dashboards.py
 #exp /chalicelib/core/errors.py
 /chalicelib/core/errors_favorite.py
 #exp /chalicelib/core/events.py
 /chalicelib/core/events_ios.py
-#exp /chalicelib/core/funnels.py
+/chalicelib/core/funnels.py
 /chalicelib/core/integration_base.py
 /chalicelib/core/integration_base_issue.py
 /chalicelib/core/integration_github.py
@@ -214,7 +219,6 @@ Pipfile
 #exp /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
 #exp /chalicelib/core/significance.py
-/chalicelib/core/slack.py
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
@@ -226,6 +230,7 @@ Pipfile
 /chalicelib/utils/dev.py
 /chalicelib/utils/email_handler.py
 /chalicelib/utils/email_helper.py
+/chalicelib/utils/errors_helper.py
 /chalicelib/utils/event_filter_definition.py
 /chalicelib/utils/github_client_v3.py
 /chalicelib/utils/helper.py
@@ -234,6 +239,7 @@ Pipfile
 /chalicelib/utils/pg_client.py
 /chalicelib/utils/s3.py
 /chalicelib/utils/smtp.py
+/chalicelib/utils/sql_helper.py
 /chalicelib/utils/strings.py
 /chalicelib/utils/TimeUTC.py
 /routers/app/__init__.py
@@ -257,5 +263,6 @@ Pipfile
 /chalicelib/core/saved_search.py
 /app_alerts.py
 /build_alerts.sh
+/build_crons.sh
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

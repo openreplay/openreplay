@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"openreplay/backend/pkg/metrics/database"
+	"time"
 )
 
 const (
@@ -15,6 +17,7 @@ const (
 type Bulk interface {
 	Append(args ...interface{}) error
 	Send() error
+	Table() string
 }
 
 type bulkImpl struct {
@@ -45,7 +48,13 @@ func (b *bulkImpl) Send() error {
 	return b.send()
 }
 
+func (b *bulkImpl) Table() string {
+	return b.table
+}
+
 func (b *bulkImpl) send() error {
+	start := time.Now()
+	size := len(b.values) / b.setSize
 	request := bytes.NewBufferString(insertPrefix + b.table + b.columns + insertValues)
 	args := make([]interface{}, b.setSize)
 	for i := 0; i < len(b.values)/b.setSize; i++ {
@@ -63,6 +72,9 @@ func (b *bulkImpl) send() error {
 	if err != nil {
 		return fmt.Errorf("send bulk err: %s", err)
 	}
+	// Save bulk metrics
+	database.RecordBulkElements(float64(size), "pg", b.table)
+	database.RecordBulkInsertDuration(float64(time.Now().Sub(start).Milliseconds()), "pg", b.table)
 	return nil
 }
 

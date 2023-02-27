@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PageTitle, Icon, Button } from 'UI';
 import AuditList from '../AuditList';
 import AuditSearchField from '../AuditSearchField';
@@ -7,11 +7,18 @@ import { useObserver } from 'mobx-react-lite';
 import Select from 'Shared/Select';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { numberWithCommas } from 'App/utils';
+import withPageTitle from 'HOCs/withPageTitle';
 
-function AuditView(props) {
+function AuditView() {
     const { auditStore } = useStore();
     const order = useObserver(() => auditStore.order);
     const total = useObserver(() => numberWithCommas(auditStore.total));
+
+    useEffect(() => {
+        return () => {
+            auditStore.updateKey('searchQuery', '');
+        }
+    }, [])
 
     const exportToCsv = () => {
         auditStore.exportToCsv();
@@ -49,7 +56,10 @@ function AuditView(props) {
                             onChange={({ value }) => auditStore.updateKey('order', value.value)}
                         />
                     </div>
-                    <AuditSearchField onChange={(value) => auditStore.updateKey('searchQuery', value) }/>
+                    <AuditSearchField onChange={(value) => {
+                        auditStore.updateKey('searchQuery', value);
+                        auditStore.updateKey('page', 1)
+                    } }/>
                     <div>
                         <Button variant="text-primary" className="ml-3" onClick={exportToCsv}>
                             <Icon name="grid-3x3" color="teal" />
@@ -64,4 +74,4 @@ function AuditView(props) {
     ));
 }
 
-export default AuditView;
+export default withPageTitle('Audit Trail - OpenReplay Preferences')(AuditView);

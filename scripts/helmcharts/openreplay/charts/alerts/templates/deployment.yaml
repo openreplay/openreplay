@@ -55,6 +55,10 @@ spec:
               value: "{{ .Values.global.clickhouse.chHost }}"
             - name: ch_port
               value: "{{ .Values.global.clickhouse.service.webPort }}"
+            - name: ch_username
+              value: '{{ .Values.global.clickhouse.username }}'
+            - name: ch_password
+              value: '{{ .Values.global.clickhouse.passwordk }}'
             - name: pg_user
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
@@ -112,6 +116,10 @@ spec:
               value: '{{ .Values.global.email.emailSslCert }}'
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

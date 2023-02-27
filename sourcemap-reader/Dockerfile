@@ -1,5 +1,7 @@
 FROM node:18-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+ARG GIT_SHA
+LABEL GIT_SHA=$GIT_SHA
 RUN apk add --no-cache tini
 
 ARG envarg
@@ -8,6 +10,7 @@ ENV SOURCE_MAP_VERSION=0.7.4 \
     LISTEN_PORT=9000 \
     MAPPING_WASM=/work/mappings.wasm \
     PRIVATE_ENDPOINTS=true \
+    GIT_SHA=$GIT_SHA \
     ENTERPRISE_BUILD=${envarg}
 
 ADD https://unpkg.com/source-map@${SOURCE_MAP_VERSION}/lib/mappings.wasm ${MAPPING_WASM}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Popover } from 'UI';
+import { Icon, Popover, Tooltip } from 'UI';
 import styles from './itemMenu.module.css';
 import cn from 'classnames';
 
@@ -9,6 +9,7 @@ interface Item {
   onClick: (args: any) => void;
   hidden?: boolean;
   disabled?: boolean;
+  tooltipTitle?: string;
 }
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   flat?: boolean;
   items: Item[];
   label?: React.ReactNode;
+  sm?: boolean;
   onToggle?: (args: any) => void;
 }
 
@@ -52,7 +54,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
   };
 
   render() {
-    const { items, label = '', bold } = this.props;
+    const { items, label = '', bold, sm } = this.props;
     const { displayed } = this.state;
     const parentStyles = label ? 'rounded px-2 py-2 hover:bg-gray-light' : '';
 
@@ -61,30 +63,29 @@ export default class ItemMenu extends React.PureComponent<Props> {
         render={() => (
           <div
             className={cn(styles.menu, { [styles.menuDim]: !bold })}
-            // style={{
-            //   top: this.props.flat ? 24 : undefined,
-            // }}
             // data-displayed={displayed}
           >
             {items
               .filter(({ hidden }) => !hidden)
-              .map(({ onClick, text, icon, disabled = false }) => (
-                <div
-                  key={text}
-                  onClick={!disabled ? this.onClick(onClick) : () => {}}
-                  className={disabled ? 'cursor-not-allowed' : ''}
-                  role="menuitem"
-                >
-                  <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
-                    {icon && (
-                      <div className={styles.iconWrapper}>
-                        {/* @ts-ignore */}
-                        <Icon name={icon} size="13" color="gray-dark" />
-                      </div>
-                    )}
-                    <div>{text}</div>
+              .map(({ onClick, text, icon, disabled = false, tooltipTitle = '' }) => (
+                <Tooltip disabled={!disabled} title={tooltipTitle} delay={0}>
+                  <div
+                    key={text}
+                    onClick={!disabled ? this.onClick(onClick) : () => {}}
+                    className={disabled ? 'cursor-not-allowed' : ''}
+                    role="menuitem"
+                  >
+                    <div className={cn(styles.menuItem, 'text-neutral-700', { disabled: disabled })}>
+                      {icon && (
+                        <div className={styles.iconWrapper}>
+                          {/* @ts-ignore */}
+                          <Icon name={icon} size="13" color="gray-dark" />
+                        </div>
+                      )}
+                      <div>{text}</div>
+                    </div>
                   </div>
-                </div>
+                </Tooltip>
               ))}
           </div>
         )}
@@ -92,7 +93,7 @@ export default class ItemMenu extends React.PureComponent<Props> {
         <div
           // onClick={this.toggleMenu}
           className={cn(
-            'flex items-center cursor-pointer select-none hover rounded-full',
+            'flex items-center cursor-pointer select-none',
             !this.props.flat ? parentStyles : '',
             { 'bg-gray-light': !this.props.flat && displayed && label }
           )}
@@ -111,7 +112,8 @@ export default class ItemMenu extends React.PureComponent<Props> {
               }}
               className={cn('rounded-full flex items-center justify-center', {
                 'bg-gray-light': displayed,
-                'w-10 h-10': !label,
+                'w-10 h-10': !label && !sm,
+                'w-8 h-8': sm,
               })}
               role="button"
             >

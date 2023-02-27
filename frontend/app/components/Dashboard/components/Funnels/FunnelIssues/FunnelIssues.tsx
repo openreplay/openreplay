@@ -31,7 +31,7 @@ function FunnelIssues() {
                         filters: item.filter.filters.filter((filter: any, index: any) => {
                             const stage = widget.data.funnel.stages[index];
                             return stage &&stage.isActive
-                        })
+                        }).map((f: any) => f.toJson())
                     }
                 }
             }),
@@ -49,7 +49,7 @@ function FunnelIssues() {
     const depsString = JSON.stringify(widget.series);
 
     useEffect(() => {
-        debounceRequest({ ...filter, series: widget.toJsonDrilldown(), page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
+        debounceRequest({ ...filter, series: widget.series, page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
     }, [stages.length, drillDownPeriod, filter.filters, depsString, metricStore.sessionsPage]);
 
     return useObserver(() => (

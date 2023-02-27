@@ -1,5 +1,4 @@
 import React from 'react';
-import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
 import { Button, Input, Form } from 'UI';
 import { updateAccount, updateClient } from 'Duck/user';
@@ -52,6 +51,7 @@ export default class Settings extends React.PureComponent {
             type="text"
             onChange={ this.onChange }
             value={ accountName }
+            maxLength={50}
           />
         </Form.Field>
 
@@ -63,6 +63,7 @@ export default class Settings extends React.PureComponent {
             type="text"
             onChange={ this.onChange }
             value={ organizationName }
+            maxLength={50}
           />
         </Form.Field>
 

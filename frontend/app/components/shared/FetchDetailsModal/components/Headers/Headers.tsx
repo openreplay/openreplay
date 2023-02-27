@@ -1,11 +1,11 @@
 import React from 'react';
-import { NoContent, TextEllipsis } from 'UI';
+import { NoContent } from 'UI';
 import stl from './headers.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
-  requestHeaders: any;
-  responseHeaders: any;
+  requestHeaders: Record<string,string>
+  responseHeaders: Record<string,string>
 }
 function Headers(props: Props) {
   return (
@@ -21,7 +21,7 @@ function Headers(props: Props) {
         show={!props.requestHeaders && !props.responseHeaders}
         // animatedIcon="no-results"
       >
-        {props.requestHeaders && (
+        {props.requestHeaders && Object.values(props.requestHeaders).length > 0 && (
           <>
             <div className="mb-4 mt-4">
               <div className="my-2 font-medium">Request Headers</div>
@@ -36,7 +36,7 @@ function Headers(props: Props) {
           </>
         )}
 
-        {props.responseHeaders && (
+        {props.responseHeaders && Object.values(props.responseHeaders).length > 0 && (
           <div className="mt-4">
             <div className="my-2 font-medium">Response Headers</div>
             {Object.keys(props.responseHeaders).map((h) => (

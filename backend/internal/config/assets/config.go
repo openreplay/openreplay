@@ -14,6 +14,7 @@ type Config struct {
 	AssetsOrigin         string            `env:"ASSETS_ORIGIN,required"`
 	AssetsSizeLimit      int               `env:"ASSETS_SIZE_LIMIT,required"`
 	AssetsRequestHeaders map[string]string `env:"ASSETS_REQUEST_HEADERS"`
+	UseProfiler          bool              `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New() *Config {

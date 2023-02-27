@@ -1,12 +1,9 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux';
 import { editGDPR, saveGDPR } from 'Duck/site';
-import copy from 'copy-to-clipboard';
 import { Checkbox } from 'UI';
-import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
 import styles from './projectCodeSnippet.module.css'
-import Highlight from 'react-highlight'
 import Select from 'Shared/Select'
 import CodeSnippet from '../../CodeSnippet';
 
@@ -23,78 +20,21 @@ inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 const ProjectCodeSnippet = props  => {
   const { gdpr, site } = props;
   const [changed, setChanged] = useState(false)
-  const [copied, setCopied] = useState(false)
 
-  const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
-<script>
-  var initOpts = {
-    projectKey: "PROJECT_KEY",
-    ingestPoint: "https://${window.location.hostname}/ingest",
-    defaultInputMode: ${inputModeOptionsMap[gdpr.defaultInputMode]},
-    obscureTextNumbers: ${gdpr.maskNumbers},
-    obscureTextEmails: ${gdpr.maskEmails},
-  };
-  var startOpts = { userID: "" };
-  (function(A,s,a,y,e,r){
-    r=window.OpenReplay=[e,r,y,[s-1, e]];
-    s=document.createElement('script');s.src=A;s.async=!a;
-    document.getElementsByTagName('head')[0].appendChild(s);
-    r.start=function(v){r.push([0])};
-    r.stop=function(v){r.push([1])};
-    r.setUserID=function(id){r.push([2,id])};
-    r.setUserAnonymousID=function(id){r.push([3,id])};
-    r.setMetadata=function(k,v){r.push([4,k,v])};
-    r.event=function(k,p,i){r.push([5,k,p,i])};
-    r.issue=function(k,p){r.push([6,k,p])};
-    r.isActive=function(){return false};
-    r.getSessionToken=function(){};
-  })("//static.openreplay.com/${window.env.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
-</script>`;
-
-  const saveGDPR = (value) => {
+  const saveGDPR = () => {
     setChanged(true)
-    props.saveGDPR(site.id, GDPR({...value}));
+    props.saveGDPR(site.id);
   }
 
   const onChangeSelect = ({ name, value }) => {
-    const { gdpr } = site;
     props.editGDPR({ [ name ]: value });
-    saveGDPR({ ...gdpr, [ name ]: value });
+    saveGDPR();
   };
 
   const onChangeOption = ({ target: { name, checked }}) => {
-    const { gdpr } = props.site;
-    const _gdpr = { ...gdpr.toData() };
-    _gdpr[name] = checked;
     props.editGDPR({ [ name ]: checked });
-    saveGDPR(_gdpr)
+    saveGDPR()
   }
-
-  const getOptionValues = () => {
-    const { gdpr } = props.site;
-    return (!!gdpr.maskEmails)|(!!gdpr.maskNumbers << 1)|(['plain' , 'obscured', 'hidden'].indexOf(gdpr.defaultInputMode) << 5)|28
-  }
-
-
-  const getCodeSnippet = site => {
-    let snippet = codeSnippet;
-    if (site && site.id) {
-      snippet = snippet.replace('PROJECT_KEY', site.projectKey);
-    }
-    return snippet
-      //.replace('XXX', getOptionValues())
-      //.replace('HOST', site && site.host);   
-  }   
-
-  const copyHandler = (code) => {
-    setCopied(true);
-    copy(code);
-    setTimeout(() => {
-      setCopied(false);
-    }, 1000);
-  };  
-
-  const _snippet = getCodeSnippet(site);
   
   return (
     <div>
@@ -155,8 +95,6 @@ const ProjectCodeSnippet = props  => {
 }
 
 export default connect(state => ({
-  // siteId: state.getIn([ 'site', 'siteId' ]),
-  // site: state.getIn([ 'site', 'instance' ]),
   gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
   saving: state.getIn([ 'site', 'saveGDPR', 'loading' ])
 }), { editGDPR, saveGDPR })(ProjectCodeSnippet)

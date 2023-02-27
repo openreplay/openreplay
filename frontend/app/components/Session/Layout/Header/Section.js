@@ -1,6 +1,5 @@
 import React from 'react';
 import { Icon } from 'UI';
-import styles from './section.module.css';
 
 export default function Section({ icon, label }) {
   return (

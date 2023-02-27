@@ -57,6 +57,10 @@ spec:
               value: {{ .Values.global.s3.secretKey }}
             - name: QW_DATA_DIR
               value: /opt/openreplay/
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
           ports:
             {{- range $key, $val := .Values.service.ports }}
             - name: {{ $key }}

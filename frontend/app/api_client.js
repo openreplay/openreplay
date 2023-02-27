@@ -11,6 +11,7 @@ const siteIdRequiredPaths = [
   '/metadata',
   '/integrations/sentry/events',
   '/integrations/slack/notify',
+  '/integrations/msteams/notify',
   '/assignments',
   '/integration/sources',
   '/issue_types',
@@ -24,7 +25,7 @@ const siteIdRequiredPaths = [
   '/heatmaps',
   '/custom_metrics',
   '/dashboards',
-  '/metrics',
+  '/cards',
   '/unprocessed',
   '/notes',
   // '/custom_metrics/sessions',
@@ -57,7 +58,7 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
 
 export default class APIClient {
   constructor() {
-    const jwt = store.getState().get('jwt');
+    const jwt = store.getState().getIn(['user', 'jwt']);
     const siteId = store.getState().getIn([ 'site', 'siteId' ]);
     this.init = {
       headers: {
@@ -87,14 +88,20 @@ export default class APIClient {
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&
-      !path.includes('/watchdogs/rules') &&
       !path.includes('/assist/credentials') &&
       !!this.siteId &&
       siteIdRequiredPaths.some(sidPath => path.startsWith(sidPath))
     ) {
       edp = `${ edp }/${ this.siteId }`
     }
-    return fetch(edp + path, this.init);
+    return fetch(edp + path, this.init)
+        .then((response) => {
+          if (response.ok) {
+            return response
+          } else {
+            return Promise.reject({ message: `! ${this.init.method} error on ${path}; ${response.status}`, response });
+          }
+        })
   }
 
   get(path, params, options) {

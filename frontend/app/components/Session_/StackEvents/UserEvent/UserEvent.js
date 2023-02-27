@@ -1,12 +1,8 @@
 import React from 'react';
 import cn from 'classnames';
-import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent';
+import { OPENREPLAY } from 'Types/session/stackEvent';
 import { Icon } from 'UI';
 import withToggle from 'HOCs/withToggle';
-import Sentry from './Sentry';
-import JsonViewer from './JsonViewer';
-import stl from './userEvent.module.css';
-import { Duration } from 'luxon';
 import JumpButton from 'Shared/DevTools/JumpButton';
 
 // const modalSources = [ SENTRY, DATADOG ];
@@ -24,7 +20,7 @@ export default class UserEvent extends React.PureComponent {
 
   getLevelClassname() {
     const { userEvent } = this.props;
-    if (userEvent.isRed()) return 'error color-red';
+    if (userEvent.isRed) return 'error color-red';
     return '';
   }
 
@@ -39,7 +35,7 @@ export default class UserEvent extends React.PureComponent {
     message = typeof message === 'string' ? message : JSON.stringify(message);
     return (
       <div
-        data-scroll-item={userEvent.isRed()}
+        data-scroll-item={userEvent.isRed}
         onClick={this.onClickDetails}
         className={cn(
           'group flex items-center py-2 px-4 border-b cursor-pointer relative',

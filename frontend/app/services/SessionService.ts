@@ -1,32 +1,81 @@
 import APIClient from 'App/api_client';
-import { fetchErrorCheck } from 'App/utils';
+import { ISession } from 'Types/session/session';
+import { IErrorStack } from 'Types/session/errorStack';
+import { clean as cleanParams } from 'App/api_client';
 
 export default class SettingsService {
-    private client: APIClient;
+  private client: APIClient;
 
-    constructor(client?: APIClient) {
-        this.client = client ? client : new APIClient();
-    }
+  constructor(client?: APIClient) {
+    this.client = client ? client : new APIClient();
+  }
 
-    initClient(client?: APIClient) {
-        this.client = client || new APIClient();
-    }
+  initClient(client?: APIClient) {
+    this.client = client || new APIClient();
+  }
 
-    saveCaptureRate(data: any) {
-        return this.client.post('/sample_rate', data);
-    }
+  saveCaptureRate(data: any) {
+    return this.client.post('/sample_rate', data);
+  }
 
-    fetchCaptureRate() {
-        return this.client
-            .get('/sample_rate')
-            .then((response) => response.json())
-            .then((response) => response.data || 0);
-    }
+  fetchCaptureRate() {
+    return this.client
+      .get('/sample_rate')
+      .then((response) => response.json())
+      .then((response) => response.data || 0);
+  }
 
-    getSessions(filter: any) {
-        return this.client
-            .post('/sessions/search', filter)
-            .then(fetchErrorCheck)
-            .then((response) => response.data || []);
-    }
+  getSessions(filter: any): Promise<{ sessions: ISession[], total: number }> {
+    return this.client
+      .post('/sessions/search', filter)
+      .then(r => r.json())
+      .then((response) => response.data || [])
+      .catch(e => Promise.reject(e))
+  }
+
+  getSessionInfo(sessionId: string, isLive?: boolean): Promise<ISession> {
+    return this.client
+      .get(isLive ? `/assist/sessions/${sessionId}` : `/sessions/${sessionId}`)
+      .then((r) => r.json())
+      .then((j) => j.data || {})
+      .catch(console.error);
+  }
+
+  getLiveSessions(filter: any): Promise<{ sessions: ISession[] }> {
+    return this.client
+      .post('/assist/sessions', cleanParams(filter))
+      .then(r => r.json())
+      .then((response) => response.data || [])
+      .catch(e => Promise.reject(e))
+  }
+
+  getErrorStack(sessionId: string, errorId: string): Promise<{ trace: IErrorStack[] }> {
+    return this.client
+      .get(`/sessions/${sessionId}/errors/${errorId}/sourcemaps`)
+      .then(r => r.json())
+      .then(j => j.data || {})
+      .catch(e => Promise.reject(e))
+  }
+
+  getAutoplayList(params = {}): Promise<{ sessionId: string }[]> {
+    return this.client
+      .post('/sessions/search/ids', cleanParams(params))
+      .then(r => r.json())
+      .then(j => j.data || [])
+      .catch(e => Promise.reject(e))
+  }
+
+  toggleFavorite(sessionId: string): Promise<any> {
+    return this.client
+      .get(`/sessions/${sessionId}/favorite`)
+      .catch(Promise.reject)
+  }
+
+  getClickMap(params = {}): Promise<any[]> {
+    return this.client
+      .post('/heatmaps/url', params)
+      .then(r => r.json())
+      .then(j => j.data || [])
+      .catch(Promise.reject)
+  }
 }

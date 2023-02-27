@@ -1,16 +1,15 @@
-import schemas
-from chalicelib.core import issues
-from chalicelib.core import metadata
-from chalicelib.core import sessions_metas
+from typing import Optional
 
+import schemas
+from chalicelib.core import autocomplete
+from chalicelib.core import issues
+from chalicelib.core import sessions_metas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter, Event
 
-from chalicelib.core import autocomplete
 
-
-def get_customs_by_sessionId2_pg(session_id, project_id):
+def get_customs_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""\
             SELECT 
@@ -53,50 +52,53 @@ def __get_grouped_clickrage(rows, session_id, project_id):
     return rows
 
 
-def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
+def get_by_session_id(session_id, project_id, group_clickrage=False, event_type: Optional[schemas.EventType] = None):
     with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""\
-            SELECT 
-                c.*,
-                'CLICK' AS type
-            FROM events.clicks AS c
-            WHERE 
-              c.session_id = %(session_id)s
-            ORDER BY c.timestamp;""",
-                                {"project_id": project_id, "session_id": session_id})
-                    )
-        rows = cur.fetchall()
-        if group_clickrage:
-            rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
-
-        cur.execute(cur.mogrify("""
-            SELECT 
-                i.*,
-                'INPUT' AS type
-            FROM events.inputs AS i
-            WHERE 
-              i.session_id = %(session_id)s
-            ORDER BY i.timestamp;""",
-                                {"project_id": project_id, "session_id": session_id})
-                    )
-        rows += cur.fetchall()
-        cur.execute(cur.mogrify("""\
-            SELECT 
-                l.*,
-                l.path AS value,
-                l.path AS url,
-                'LOCATION' AS type
-            FROM events.pages AS l
-            WHERE 
-              l.session_id = %(session_id)s
-            ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
-        rows += cur.fetchall()
+        rows = []
+        if event_type is None or event_type == schemas.EventType.click:
+            cur.execute(cur.mogrify("""\
+                SELECT 
+                    c.*,
+                    'CLICK' AS type
+                FROM events.clicks AS c
+                WHERE 
+                  c.session_id = %(session_id)s
+                ORDER BY c.timestamp;""",
+                                    {"project_id": project_id, "session_id": session_id})
+                        )
+            rows += cur.fetchall()
+            if group_clickrage:
+                rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
+        if event_type is None or event_type == schemas.EventType.input:
+            cur.execute(cur.mogrify("""
+                SELECT 
+                    i.*,
+                    'INPUT' AS type
+                FROM events.inputs AS i
+                WHERE 
+                  i.session_id = %(session_id)s
+                ORDER BY i.timestamp;""",
+                                    {"project_id": project_id, "session_id": session_id})
+                        )
+            rows += cur.fetchall()
+        if event_type is None or event_type == schemas.EventType.location:
+            cur.execute(cur.mogrify("""\
+                SELECT 
+                    l.*,
+                    l.path AS value,
+                    l.path AS url,
+                    'LOCATION' AS type
+                FROM events.pages AS l
+                WHERE 
+                  l.session_id = %(session_id)s
+                ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
+            rows += cur.fetchall()
         rows = helper.list_to_camel_case(rows)
         rows = sorted(rows, key=lambda k: (k["timestamp"], k["messageId"]))
     return rows
 
 
-class event_type:
+class EventType:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
     LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="path")
@@ -118,46 +120,46 @@ class event_type:
 
 
 SUPPORTED_TYPES = {
-    event_type.CLICK.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CLICK),
-                                              query=autocomplete.__generic_query(typename=event_type.CLICK.ui_type)),
-    event_type.INPUT.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.INPUT),
-                                              query=autocomplete.__generic_query(typename=event_type.INPUT.ui_type)),
-    event_type.LOCATION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.LOCATION),
-                                                 query=autocomplete.__generic_query(
-                                                     typename=event_type.LOCATION.ui_type)),
-    event_type.CUSTOM.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CUSTOM),
-                                               query=autocomplete.__generic_query(typename=event_type.CUSTOM.ui_type)),
-    event_type.REQUEST.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.REQUEST),
+    EventType.CLICK.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK),
+                                             query=autocomplete.__generic_query(typename=EventType.CLICK.ui_type)),
+    EventType.INPUT.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT),
+                                             query=autocomplete.__generic_query(typename=EventType.INPUT.ui_type)),
+    EventType.LOCATION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.LOCATION),
                                                 query=autocomplete.__generic_query(
-                                                    typename=event_type.REQUEST.ui_type)),
-    event_type.GRAPHQL.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.GRAPHQL),
-                                                query=autocomplete.__generic_query(
-                                                    typename=event_type.GRAPHQL.ui_type)),
-    event_type.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.STATEACTION),
-                                                    query=autocomplete.__generic_query(
-                                                        typename=event_type.STATEACTION.ui_type)),
-    event_type.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors,
-                                              query=None),
-    event_type.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_pg_metadata,
-                                                 query=None),
-    #     IOS
-    event_type.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CLICK_IOS),
-                                                  query=autocomplete.__generic_query(
-                                                      typename=event_type.CLICK_IOS.ui_type)),
-    event_type.INPUT_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.INPUT_IOS),
-                                                  query=autocomplete.__generic_query(
-                                                      typename=event_type.INPUT_IOS.ui_type)),
-    event_type.VIEW_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.VIEW_IOS),
-                                                 query=autocomplete.__generic_query(
-                                                     typename=event_type.VIEW_IOS.ui_type)),
-    event_type.CUSTOM_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.CUSTOM_IOS),
+                                                    typename=EventType.LOCATION.ui_type)),
+    EventType.CUSTOM.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM),
+                                              query=autocomplete.__generic_query(typename=EventType.CUSTOM.ui_type)),
+    EventType.REQUEST.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST),
+                                               query=autocomplete.__generic_query(
+                                                   typename=EventType.REQUEST.ui_type)),
+    EventType.GRAPHQL.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.GRAPHQL),
+                                               query=autocomplete.__generic_query(
+                                                   typename=EventType.GRAPHQL.ui_type)),
+    EventType.STATEACTION.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.STATEACTION),
                                                    query=autocomplete.__generic_query(
-                                                       typename=event_type.CUSTOM_IOS.ui_type)),
-    event_type.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(event_type.REQUEST_IOS),
-                                                    query=autocomplete.__generic_query(
-                                                        typename=event_type.REQUEST_IOS.ui_type)),
-    event_type.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_pg_errors_ios,
-                                                  query=None),
+                                                       typename=EventType.STATEACTION.ui_type)),
+    EventType.ERROR.ui_type: SupportedFilter(get=autocomplete.__search_errors,
+                                             query=None),
+    EventType.METADATA.ui_type: SupportedFilter(get=autocomplete.__search_metadata,
+                                                query=None),
+    #     IOS
+    EventType.CLICK_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CLICK_IOS),
+                                                 query=autocomplete.__generic_query(
+                                                     typename=EventType.CLICK_IOS.ui_type)),
+    EventType.INPUT_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.INPUT_IOS),
+                                                 query=autocomplete.__generic_query(
+                                                     typename=EventType.INPUT_IOS.ui_type)),
+    EventType.VIEW_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.VIEW_IOS),
+                                                query=autocomplete.__generic_query(
+                                                    typename=EventType.VIEW_IOS.ui_type)),
+    EventType.CUSTOM_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.CUSTOM_IOS),
+                                                  query=autocomplete.__generic_query(
+                                                      typename=EventType.CUSTOM_IOS.ui_type)),
+    EventType.REQUEST_IOS.ui_type: SupportedFilter(get=autocomplete.__generic_autocomplete(EventType.REQUEST_IOS),
+                                                   query=autocomplete.__generic_query(
+                                                       typename=EventType.REQUEST_IOS.ui_type)),
+    EventType.ERROR_IOS.ui_type: SupportedFilter(get=autocomplete.__search_errors_ios,
+                                                 query=None),
 }
 
 
@@ -165,7 +167,7 @@ def get_errors_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
                     SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
-                    FROM {event_type.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
+                    FROM {EventType.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
                     WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
                     ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
         errors = cur.fetchall()
@@ -182,11 +184,9 @@ def search(text, event_type, project_id, source, key):
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
         # for IOS events autocomplete
         # if event_type + "_IOS" in SUPPORTED_TYPES.keys():
-        #     rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
-        #                                                      source=source)
+        #     rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,source=source)
     elif event_type + "_IOS" in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
-                                                        source=source)
+        rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key, source=source)
     elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
     elif event_type.endswith("_IOS") \

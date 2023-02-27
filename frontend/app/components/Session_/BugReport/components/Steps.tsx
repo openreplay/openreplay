@@ -46,6 +46,12 @@ function Steps({ xrayProps, notes, members }: Props) {
     bugReportStore.resetSteps();
   };
 
+  React.useEffect(() => {
+    if (bugReportStore.sessionEventSteps.length < RADIUS && bugReportStore.sessionEventSteps.length > 0) {
+      setRadius(bugReportStore.sessionEventSteps.length);
+    }
+  }, [bugReportStore.sessionEventSteps])
+
   return (
     <div>
       <SectionTitle>Steps to reproduce</SectionTitle>
@@ -63,7 +69,7 @@ function Steps({ xrayProps, notes, members }: Props) {
           STEPS
           <div id="pdf-ignore">
             {timePointer > 0 ? (
-              <StepRadius pickRadius={stepPickRadius} setRadius={setRadius} />
+              <StepRadius pickRadius={stepPickRadius} setRadius={setRadius} stepsNum={bugReportStore.sessionEventSteps.length}/>
             ) : null}
           </div>
         </div>

@@ -9,6 +9,9 @@ import { StoreProvider, RootStore } from './mstore';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DndProvider } from 'react-dnd';
 
+// @ts-ignore
+window.getCommitHash = () => console.log(window.env.COMMIT_HASH)
+
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('app');
     const root = createRoot(container);
@@ -16,9 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <Provider store={store}>
             <StoreProvider store={new RootStore()}>
                 <DndProvider backend={HTML5Backend}>
-                    {/* <React.StrictMode> */}
-                        <Router />
-                    {/* </React.StrictMode> */}
+                    <Router />
                 </DndProvider>
             </StoreProvider>
         </Provider>

@@ -13,11 +13,13 @@ function warn(...args) {
   if (!window.env.PRODUCTION || options.verbose) {
     console.warn(...args);
   }
+  options.exceptionsLogs.push(args)
 }
 
 function error(...args) {
   if (!window.env.PRODUCTION || options.verbose) {
     console.error(...args);
+    options.exceptionsLogs.push(args)
   }
 }
 
@@ -33,6 +35,8 @@ function group(groupName, ...args) {
       console.groupCollapsed(groupName);
     }
     console.log(...args);
+
+    options.exceptionsLogs.push(args)
   }
 }
 

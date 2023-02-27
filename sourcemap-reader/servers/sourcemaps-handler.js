@@ -3,7 +3,7 @@ const fs = require('fs');
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
 const URL = require('url');
-const request = require('request');
+const http = require('http');
 const wasm = fs.readFileSync(process.env.MAPPING_WASM || '/mappings.wasm');
 sourceMap.SourceMapConsumer.initialize({
     "lib/mappings.wasm": wasm
@@ -83,26 +83,54 @@ module.exports.sourcemapReader = async event => {
         };
         return new Promise(function (resolve, reject) {
             const getObjectStart = Date.now();
-            return request.get(options.URL, (err, response, sourcemap) => {
-                if (err || response.statusCode !== 200) {
+            return http.get(options.URL, (response) => {
+                const {statusCode} = response;
+                const contentType = response.headers['content-type'];
+
+                let err;
+                // Any 2xx status code signals a successful response but
+                // here we're only checking for 200.
+                if (statusCode !== 200) {
+                    err = new Error('Request Failed.\n' +
+                        `Status Code: ${statusCode}`);
+                } else if (!/^application\/json/.test(contentType)) {
+                    err = new Error('Invalid content-type.\n' +
+                        `Expected application/json but received ${contentType}`);
+                }
+                if (err) {
+                    // Consume response data to free up memory
+                    response.resume();
+
                     console.error("[SR] Getting file from URL failed");
                     console.error("err:");
-                    console.error(err);
+                    console.error(err.message);
                     console.error("response:");
-                    if (err) {
-                        return reject(err);
+                    return reject(err);
+                }
+                response.setEncoding('utf8');
+                let rawData = '';
+                response.on('data', (chunk) => {
+                    rawData += chunk;
+                });
+                response.on('end', () => {
+                    try {
+                        const sourcemap = JSON.parse(rawData);
+                        const getObjectEnd = Date.now();
+                        options.fileSize = (response.headers['content-length'] / 1024) / 1024;
+                        options.fileSizeUnit = 'Mb';
+                        options.downloadTime = (getObjectEnd - getObjectStart) / 1000;
+                        options.downloadTimeUnit = 's';
+                        if (options.fileSize >= 3) {
+                            console.log("[SR] large file:" + JSON.stringify(options));
+                        }
+                        return parseSourcemap(sourcemap, event, options, resolve, reject);
+                    } catch (e) {
+                        return reject(e);
                     }
-                    return reject(response);
-                }
-                const getObjectEnd = Date.now();
-                options.fileSize = (response.headers['content-length'] / 1024) / 1024;
-                options.fileSizeUnit = 'Mb';
-                options.downloadTime = (getObjectEnd - getObjectStart) / 1000;
-                options.downloadTimeUnit = 's';
-                if (options.fileSize >= 3) {
-                    console.log("[SR] large file:" + JSON.stringify(options));
-                }
-                return parseSourcemap(sourcemap, event, options, resolve, reject);
+                });
+
+            }).on('error', (e) => {
+                return reject(e);
             });
         });
     } else {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Checkbox, Icon } from 'UI';
+import { Icon } from 'UI';
 import cn from 'classnames';
 import stl from './featureItem.module.css';
 

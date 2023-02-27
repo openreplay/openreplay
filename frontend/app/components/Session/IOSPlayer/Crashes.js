@@ -13,7 +13,7 @@ function Crashes({ player }) {
 
 	const [ filter, setFilter ] = useState("");
 	const filterRE = getRE(filter, 'i');
-  const filtered = player.lists[CRASHES].listNow.filter(({ name, reason, stacktrace }) => 
+  const filtered = player.lists[CRASHES].listNow.filter(({ name, reason, stacktrace }) =>
   	filterRE.test(name) || filterRE.test(reason) || filterRE.test(stacktrace)
   );
 	return (
@@ -23,7 +23,6 @@ function Crashes({ player }) {
 	        className="input-small"
 	        placeholder="Filter"
 	        icon="search"
-	        iconPosition="left"
 	        name="filter"
 	        onChange={ setFilter }
 	      />

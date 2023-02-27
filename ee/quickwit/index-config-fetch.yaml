@@ -2,13 +2,28 @@
 # Index config file for gh-archive dataset.
 #
 
-version: 0
+version: 0.4
 
 index_id: fetchevent
 
 doc_mapping:
-  mode: strict
+  mode: dynamic
   field_mappings:
+    - name: insertion_timestamp
+      type: datetime
+      input_formats:
+        - unix_timestamp
+      precision: seconds
+      fast: true
+    - name: project_id
+      type: i64
+      fast: true
+    - name: session_id
+      type: i64
+      fast: true
+    - name: message_id
+      type: i64
+      fast: true
     - name: method
       type: text
       tokenizer: default
@@ -18,11 +33,15 @@ doc_mapping:
       tokenizer: default
       record: position
     - name: request
-      type: text
+      type: json
+      stored: true
+      indexed: true
       tokenizer: default
       record: position
     - name: response
-      type: text
+      type: json
+      stored: true
+      indexed: true
       tokenizer: default
       record: position
     - name: status
@@ -35,6 +54,11 @@ doc_mapping:
     - name: duration
       type: i64
       fast: true
+  timestamp_field: insertion_timestamp
 
 search_settings:
-  default_search_fields: [url, request, response]
+  default_search_fields: [project_id, session_id, url, request]
+
+retention:
+  period: 30 days
+  schedule: hourly

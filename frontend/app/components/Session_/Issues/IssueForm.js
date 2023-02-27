@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { Form, Input, Button, CircularLoader, Loader } from 'UI';
-//import {  } from 'Duck/issues';
 import { addActivity, init, edit, fetchAssignments, fetchMeta } from 'Duck/assignments';
 import Select from 'Shared/Select';
 
@@ -119,7 +118,6 @@ class IssueForm extends React.PureComponent {
               selection
               name="assignee"
               options={userOptions}
-              // value={ instance.assignee }
               fluid
               onChange={this.writeOption}
               placeholder="Select a user"
@@ -153,7 +151,7 @@ class IssueForm extends React.PureComponent {
           <Button
             loading={creating}
             variant="primary"
-            disabled={!instance.validate()}
+            disabled={!instance.isValid}
             className="float-left mr-2"
             type="submit"
           >

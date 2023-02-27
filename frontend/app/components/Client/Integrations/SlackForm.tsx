@@ -3,7 +3,6 @@ import SlackChannelList from './SlackChannelList/SlackChannelList';
 import { fetchList, init } from 'Duck/integrations/slack';
 import { connect } from 'react-redux';
 import SlackAddForm from './SlackAddForm';
-import { useModal } from 'App/components/Modal';
 import { Button } from 'UI';
 
 interface Props {
@@ -38,7 +37,7 @@ const SlackForm = (props: Props) => {
             <div className="shrink-0" style={{ width: '350px' }}>
                 <div className="flex items-center p-5">
                     <h3 className="text-2xl mr-3">Slack</h3>
-                    <Button rounded={true} icon="plus" variant="outline" onClick={onNew}/>
+                    <Button rounded={true} icon="plus" iconSize={24} variant="outline" onClick={onNew}/>
                 </div>
                 <SlackChannelList onEdit={onEdit} />
             </div>

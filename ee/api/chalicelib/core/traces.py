@@ -179,10 +179,10 @@ def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
                            COALESCE(JSONB_AGG(full_traces ORDER BY rn) 
                                     FILTER (WHERE rn > %(p_start)s AND rn <= %(p_end)s), '[]'::JSONB) AS sessions
                     FROM (SELECT traces.*,users.email,users.name AS username, 
-                                ROW_NUMBER() OVER (ORDER BY traces.created_at {data.order}) AS rn 
+                                ROW_NUMBER() OVER (ORDER BY traces.created_at {data.order.value}) AS rn 
                             FROM traces LEFT JOIN users USING (user_id)
                             WHERE {" AND ".join(conditions)}
-                            ORDER BY traces.created_at {data.order}) AS full_traces;""", params)
+                            ORDER BY traces.created_at {data.order.value}) AS full_traces;""", params)
         )
         rows = cur.fetchone()
     return helper.dict_to_camel_case(rows)

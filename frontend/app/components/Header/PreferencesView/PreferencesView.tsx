@@ -1,7 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
 import { withRouter } from 'react-router-dom';
-import ProjectCodeSnippet from 'App/components/Onboarding/components/OnboardingTabs/ProjectCodeSnippet';
 
 interface Props {
   history: any;

@@ -8,7 +8,8 @@
 # Example
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh
 
-git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
+git_sha=$(git rev-parse --short HEAD)
+image_tag=${IMAGE_TAG:-git_sha}
 ee="false"
 check_prereq() {
     which docker || {
@@ -21,11 +22,14 @@ check_prereq() {
 export DOCKER_BUILDKIT=1
 function build(){
     # Run docker as the same user, else we'll run in to permission issues.
-    docker build -t ${DOCKER_REPO:-'local'}/frontend:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image .
+    docker build -t ${DOCKER_REPO:-'local'}/frontend:${image_tag} --platform linux/amd64 --build-arg GIT_SHA=$git_sha .
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/frontend:${git_sha1}
+        docker push ${DOCKER_REPO:-'local'}/frontend:${image_tag}
     }
-    echo "frotend build completed"
+    [[ $SIGN_IMAGE -eq 1 ]] && {
+        cosign sign --key $SIGN_KEY ${DOCKER_REPO:-'local'}/frontend:${image_tag}
+    }
+    echo "frontend build completed"
 }
 
 check_prereq

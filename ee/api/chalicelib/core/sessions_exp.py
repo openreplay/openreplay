@@ -3,9 +3,10 @@ from typing import List, Union
 import schemas
 import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist, performance_event, metrics, sessions_devtool, \
+    sessions_mobs, issues, projects, resources, assist, performance_event, metrics, sessions_devtool, \
     sessions_notes
-from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper
+from chalicelib.utils import pg_client, helper, metrics_helper, ch_client, exp_ch_helper, errors_helper
+from chalicelib.utils import sql_helper as sh
 
 SESSION_PROJECTION_COLS_CH = """\
 s.project_id,
@@ -81,7 +82,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                 (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key,
                 encode(file_key,'hex') AS file_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
-                {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata._get_column_names()]) + ") AS project_metadata") if group_metadata else ''}
+                {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata.column_names()]) + ") AS project_metadata") if group_metadata else ''}
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
             WHERE s.project_id = %(project_id)s
                 AND s.session_id = %(session_id)s;""",
@@ -105,16 +106,16 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_ios(session_id=session_id)
                 else:
-                    data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
-                                                                 group_clickrage=True)
+                    data['events'] = events.get_by_session_id(project_id=project_id, session_id=session_id,
+                                                              group_clickrage=True)
                     all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     # limit the number of errors to reduce the response-body size
-                    data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors
+                    data['errors'] = [errors_helper.format_first_stack_frame(e) for e in all_errors
                                       if e['source'] == "js_exception"][:500]
-                    data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
-                                                                             session_id=session_id)
+                    data['userEvents'] = events.get_customs_by_session_id(project_id=project_id,
+                                                                          session_id=session_id)
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
                     data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
@@ -201,7 +202,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 # This function executes the query and return result
 def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+                    error_status=schemas.ErrorStatus.all, count_only=False, issue=None, ids_only=False):
     full_args, query_part = search_query_parts_ch(data=data, error_status=error_status, errors_only=errors_only,
                                                   favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                   user_id=user_id)
@@ -236,9 +237,9 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = schemas.SortOrderType.desc
+                data.order = schemas.SortOrderType.desc.value
             else:
-                data.order = data.order.upper()
+                data.order = data.order.value
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
                 g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
@@ -263,9 +264,17 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
                                                 GROUP BY user_id
                                             ) AS users_sessions;""",
                                      full_args)
+        elif ids_only:
+            main_query = cur.format(f"""SELECT DISTINCT ON(s.session_id) s.session_id
+                                             {query_part}
+                                             ORDER BY s.session_id desc
+                                             LIMIT %(sessions_limit)s OFFSET %(sessions_limit_s)s;""",
+                                    full_args)
         else:
             if data.order is None:
-                data.order = schemas.SortOrderType.desc
+                data.order = schemas.SortOrderType.desc.value
+            else:
+                data.order = data.order.value
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -299,8 +308,8 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
             print(data.json())
             print("--------------------")
             raise err
-        if errors_only:
-            return helper.list_to_camel_case(cur.fetchall())
+        if errors_only or ids_only:
+            return helper.list_to_camel_case(sessions)
 
         if len(sessions) > 0:
             sessions = sessions[0]
@@ -335,18 +344,18 @@ def search_sessions(data: schemas.SessionsSearchPayloadSchema, project_id, user_
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
-                   metric_of: schemas.TableMetricOfType, metric_value: List):
+                   metric_of: schemas.MetricOfTable, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density))
     extra_event = None
-    if metric_of == schemas.TableMetricOfType.visited_url:
+    if metric_of == schemas.MetricOfTable.visited_url:
         extra_event = f"""SELECT DISTINCT ev.session_id, ev.url_path
                             FROM {exp_ch_helper.get_main_events_table(data.startDate)} AS ev
                             WHERE ev.datetime >= toDateTime(%(startDate)s / 1000)
                               AND ev.datetime <= toDateTime(%(endDate)s / 1000)
                               AND ev.project_id = %(project_id)s
-                              AND ev.event_type = 'LOCATION'"""
-    elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
+                              AND ev.EventType = 'LOCATION'"""
+    elif metric_of == schemas.MetricOfTable.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
     full_args, query_part = search_query_parts_ch(data=data, error_status=None, errors_only=False,
@@ -383,21 +392,21 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
         elif metric_type == schemas.MetricType.table:
             full_args["limit_s"] = 0
             full_args["limit_e"] = 200
-            if isinstance(metric_of, schemas.TableMetricOfType):
+            if isinstance(metric_of, schemas.MetricOfTable):
                 main_col = "user_id"
                 extra_col = "s.user_id"
                 extra_where = ""
                 pre_query = ""
-                if metric_of == schemas.TableMetricOfType.user_country:
+                if metric_of == schemas.MetricOfTable.user_country:
                     main_col = "user_country"
                     extra_col = "s.user_country"
-                elif metric_of == schemas.TableMetricOfType.user_device:
+                elif metric_of == schemas.MetricOfTable.user_device:
                     main_col = "user_device"
                     extra_col = "s.user_device"
-                elif metric_of == schemas.TableMetricOfType.user_browser:
+                elif metric_of == schemas.MetricOfTable.user_browser:
                     main_col = "user_browser"
                     extra_col = "s.user_browser"
-                elif metric_of == schemas.TableMetricOfType.issues:
+                elif metric_of == schemas.MetricOfTable.issues:
                     main_col = "issue"
                     extra_col = f"arrayJoin(s.issue_types) AS {main_col}"
                     if len(metric_value) > 0:
@@ -407,7 +416,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             extra_where.append(f"{main_col} = %({arg_name})s")
                             full_args[arg_name] = metric_value[i]
                         extra_where = f"WHERE ({' OR '.join(extra_where)})"
-                elif metric_of == schemas.TableMetricOfType.visited_url:
+                elif metric_of == schemas.MetricOfTable.visited_url:
                     main_col = "url_path"
                     extra_col = "s.url_path"
                 main_query = cur.format(f"""{pre_query}
@@ -470,12 +479,13 @@ def __get_event_type(event_type: Union[schemas.EventType, schemas.PerformanceEve
     }
 
     if event_type not in defs:
-        raise Exception(f"unsupported event_type:{event_type}")
+        raise Exception(f"unsupported EventType:{event_type}")
     return defs.get(event_type)
 
 
 # this function generates the query and return the generated-query with the dict of query arguments
-def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
+def search_query_parts_ch(data: schemas.SessionsSearchPayloadSchema, error_status, errors_only, favorite_only, issue,
+                          project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
@@ -624,7 +634,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     ss_constraints.append(
                         _multiple_conditions(f"ms.base_referrer {op} toString(%({f_k})s)", f.value, is_not=is_not,
                                              value_key=f_k))
-            elif filter_type == events.event_type.METADATA.ui_type:
+            elif filter_type == events.EventType.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
@@ -777,32 +787,32 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                              **_multiple_values(event.value, value_key=e_k),
                              **_multiple_values(event.source, value_key=s_k)}
 
-            if event_type == events.event_type.CLICK.ui_type:
+            if event_type == events.EventType.CLICK.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.event_type.CLICK.column
+                _column = events.EventType.CLICK.column
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
 
-            elif event_type == events.event_type.INPUT.ui_type:
+            elif event_type == events.EventType.INPUT.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.event_type.INPUT.column
+                _column = events.EventType.INPUT.column
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
@@ -813,7 +823,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                                                             value_key=f"custom{i}"))
                     full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
 
-            elif event_type == events.event_type.LOCATION.ui_type:
+            elif event_type == events.EventType.LOCATION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
@@ -822,28 +832,28 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
                                                                 event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.event_type.CUSTOM.ui_type:
+            elif event_type == events.EventType.CUSTOM.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.event_type.CUSTOM.column
+                _column = events.EventType.CUSTOM.column
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.event_type.REQUEST.ui_type:
+            elif event_type == events.EventType.REQUEST.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
                 _column = 'url_path'
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
@@ -852,38 +862,38 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
-            # elif event_type == events.event_type.GRAPHQL.ui_type:
+            # elif EventType == events.EventType.GRAPHQL.ui_type:
             #     event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
             #     event_where.append(f"main.event_type='GRAPHQL'")
             #     events_conditions.append({"type": event_where[-1]})
             #     if not is_any:
             #         event_where.append(
-            #             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
+            #             _multiple_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k})s", event.value,
             #                                  value_key=e_k))
             #         events_conditions[-1]["condition"] = event_where[-1]
-            elif event_type == events.event_type.STATEACTION.ui_type:
+            elif event_type == events.EventType.STATEACTION.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                _column = events.event_type.STATEACTION.column
+                _column = events.EventType.STATEACTION.column
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 if not is_any:
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
                                                                 event.value, value_key=e_k))
                         events_conditions[-1]["condition"] = event_where[-1]
             # TODO: isNot for ERROR
-            elif event_type == events.event_type.ERROR.ui_type:
+            elif event_type == events.EventType.ERROR.ui_type:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main"
                 events_extra_join = f"SELECT * FROM {MAIN_EVENTS_TABLE} AS main1 WHERE main1.project_id=%(project_id)s"
                 event_where.append(f"main.event_type='{__get_event_type(event_type)}'")
@@ -913,7 +923,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     if is_not:
                         event_where.append(_multiple_conditions(f"sub.{_column} {op} %({e_k})s", event.value,
                                                                 value_key=e_k))
-                        events_conditions_not.append({"type": f"sub.event_type='{__get_event_type(event_type)}'"})
+                        events_conditions_not.append({"type": f"sub.EventType='{__get_event_type(event_type)}'"})
                         events_conditions_not[-1]["condition"] = event_where[-1]
                     else:
                         event_where.append(_multiple_conditions(f"main.{_column} {op} %({e_k})s",
@@ -925,13 +935,13 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
 
-            # elif event_type == schemas.PerformanceEventType.fetch_duration:
-            #     event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+            # elif EventType == schemas.PerformanceEventType.fetch_duration:
+            #     event_from = event_from % f"{events.EventType.REQUEST.table} AS main "
             #     if not is_any:
             #         event_where.append(
             #             _multiple_conditions(f"main.url_path {op} %({e_k})s",
             #                                  event.value, value_key=e_k))
-            #     col = performance_event.get_col(event_type)
+            #     col = performance_event.get_col(EventType)
             #     colname = col["column"]
             #     tname = "main"
             #     e_k += "_custom"
@@ -959,7 +969,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
                 event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
                                                         event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
@@ -982,14 +992,14 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
                 event_where.append(f"isNotNull({tname}.{colname}) AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator.value} %({e_k})s",
                                                         event.source, value_key=e_k))
                 events_conditions[-1]["condition"].append(event_where[-1])
                 events_conditions[-1]["condition"] = " AND ".join(events_conditions[-1]["condition"])
             # TODO: no isNot for TimeBetweenEvents
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{MAIN_EVENTS_TABLE} AS main "
-                # event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
+                # event_from = event_from % f"{getattr(events.EventType, event.value[0].type).table} AS main INNER JOIN {getattr(events.EventType, event.value[1].type).table} AS main2 USING(session_id) "
                 event_where.append(f"main.event_type='{__get_event_type(event.value[0].type)}'")
                 events_conditions.append({"type": event_where[-1]})
                 event_where.append(f"main.event_type='{__get_event_type(event.value[0].type)}'")
@@ -1016,7 +1026,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 if not is_any:
                     event_where.append(
                         _multiple_conditions(
-                            f"main.{getattr(events.event_type, event.value[0].type).column} {s_op} %({e_k1})s",
+                            f"main.{getattr(events.EventType, event.value[0].type).column} {s_op} %({e_k1})s",
                             event.value[0].value, value_key=e_k1))
                     events_conditions[-2]["condition"] = event_where[-1]
                 s_op = __get_sql_operator(event.value[1].operator)
@@ -1024,7 +1034,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 if not is_any:
                     event_where.append(
                         _multiple_conditions(
-                            f"main.{getattr(events.event_type, event.value[1].type).column} {s_op} %({e_k2})s",
+                            f"main.{getattr(events.EventType, event.value[1].type).column} {s_op} %({e_k2})s",
                             event.value[1].value, value_key=e_k2))
                     events_conditions[-1]["condition"] = event_where[-1]
 
@@ -1034,8 +1044,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                 #     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
                 #                          event.source, value_key=e_k))
                 # events_conditions[-2]["time"] = f"(?t{event.sourceOperator} %({e_k})s)"
-                events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator}%({e_k})s", event.source,
-                                                                     value_key=e_k)
+                events_conditions[-2]["time"] = _multiple_conditions(f"?t{event.sourceOperator.value}%({e_k})s",
+                                                                     event.source, value_key=e_k)
                 event_index += 1
             # TODO: no isNot for RequestDetails
             elif event_type == schemas.EventType.request_details:
@@ -1060,7 +1070,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                         apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
-                            _multiple_conditions(f"main.status {f.operator} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.status {f.operator.value} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
@@ -1071,7 +1081,8 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                         apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
-                            _multiple_conditions(f"main.duration {f.operator} %({e_k_f})s", f.value, value_key=e_k_f))
+                            _multiple_conditions(f"main.duration {f.operator.value} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                         apply = True
                     elif f.type == schemas.FetchFilterType._request_body:
@@ -1106,7 +1117,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
                     full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
                     if f.type == schemas.GraphqlFilterType._name:
                         event_where.append(
-                            _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                            _multiple_conditions(f"main.{events.EventType.GRAPHQL.column} {op} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
                         events_conditions[-1]["condition"].append(event_where[-1])
                     elif f.type == schemas.GraphqlFilterType._method:
@@ -1165,6 +1176,9 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
             ) {"" if or_events else (f"AS event_{event_index} " + ("ON(TRUE)" if event_index > 0 else ""))}\
             """)
             event_index += 1
+            # limit THEN-events to 7 in CH because sequenceMatch cannot take more arguments
+            if event_index == 7 and data.events_order == schemas.SearchEventOrder._then:
+                break
 
         if event_index < 2:
             data.events_order = schemas.SearchEventOrder._or
@@ -1287,7 +1301,7 @@ def search_query_parts_ch(data, error_status, errors_only, favorite_only, issue,
     #             b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
 
     # if errors_only:
-    #     extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
+    #     extra_from += f" INNER JOIN {events.EventType.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
     #     extra_constraints.append("ser.source = 'js_exception'")
     #     extra_constraints.append("ser.project_id = %(project_id)s")
     # if error_status != schemas.ErrorStatus.all:
@@ -1410,39 +1424,6 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
     return results
 
 
-def search_by_issue(user_id, issue, project_id, start_date, end_date):
-    constraints = ["s.project_id = %(projectId)s",
-                   "p_issues.context_string = %(issueContextString)s",
-                   "p_issues.type = %(issueType)s"]
-    if start_date is not None:
-        constraints.append("start_ts >= %(startDate)s")
-    if end_date is not None:
-        constraints.append("start_ts <= %(endDate)s")
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                f"""SELECT DISTINCT ON(favorite_sessions.session_id, s.session_id) {SESSION_PROJECTION_COLS}
-            FROM public.sessions AS s
-                                INNER JOIN events_common.issues USING (session_id)
-                                INNER JOIN public.issues AS p_issues USING (issue_id)
-                                LEFT JOIN (SELECT user_id, session_id
-                                            FROM public.user_favorite_sessions
-                                            WHERE user_id = %(userId)s) AS favorite_sessions
-                                           USING (session_id)
-            WHERE {" AND ".join(constraints)}
-            ORDER BY s.session_id DESC;""",
-                {
-                    "issueContextString": issue["contextString"],
-                    "issueType": issue["type"], "userId": user_id,
-                    "projectId": project_id,
-                    "startDate": start_date,
-                    "endDate": end_date
-                }))
-
-        rows = cur.fetchall()
-    return helper.list_to_camel_case(rows)
-
-
 def get_user_sessions(project_id, user_id, start_date, end_date):
     with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
@@ -1548,17 +1529,18 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 
 def count_all():
-    with pg_client.PostgresClient(unlimited_query=True) as cur:
-        row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
+    with ch_client.ClickHouseClient() as cur:
+        row = cur.execute(query=f"SELECT COUNT(session_id) AS count FROM {exp_ch_helper.get_main_sessions_table()}")
     return row.get("count", 0)
 
 
 def session_exists(project_id, session_id):
     with ch_client.ClickHouseClient() as cur:
-        query = cur.format("""SELECT 1 
-                         FROM public.sessions 
-                         WHERE session_id=%(session_id)s 
-                            AND project_id=%(project_id)s""",
+        query = cur.format(f"""SELECT 1 
+                               FROM {exp_ch_helper.get_main_sessions_table()} 
+                               WHERE session_id=%(session_id)s 
+                                    AND project_id=%(project_id)s
+                               LIMIT 1""",
                            {"project_id": project_id, "session_id": session_id})
         row = cur.execute(query)
     return row is not None

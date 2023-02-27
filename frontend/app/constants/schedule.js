@@ -2,7 +2,7 @@ export const MINUTES = [
   { value: 5, label: '5 Minutes' },
   { value: 15, label: '15 Minutes' },
   { value: 30, label: '30 Minutes' },
-  { value: 60, label: '60 Minutes' },  
+  { value: 60, label: '60 Minutes' },
 ];
 
 export const HOURS = [ ...Array(24).keys() ].map(i => ({ value: i, label: `${ i > 9 ? '' : '0' }${ i }:00` }));
@@ -21,6 +21,7 @@ export const DAYS = [
 
 export const EMAIL = 'email';
 export const SLACK = 'slack';
+export const TEAMS = 'msteams';
 export const WEBHOOK = 'webhook';
 
 export const CHANNEL = [

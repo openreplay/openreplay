@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { FilterKey } from 'Types/filter/filterType';
 import SessionItem from 'Shared/SessionItem';
 import { NoContent, Loader, Pagination, Button, Icon } from 'UI';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import {
   fetchSessions,
@@ -22,7 +23,7 @@ enum NoContentType {
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 let sessionTimeOut: any = null;
-interface Props {
+interface Props extends RouteComponentProps {
   loading: boolean;
   list: any;
   currentPage: number;
@@ -94,7 +95,7 @@ function SessionList(props: Props) {
     // handle scroll position
     const { scrollY } = props;
     window.scrollTo(0, scrollY);
-    if (total === 0) {
+    if (total === 0 && props.history.location.search === "") {
       props.fetchSessions(null, true);
     }
     props.fetchMetadata();
@@ -137,13 +138,13 @@ function SessionList(props: Props) {
       <NoContent
         title={
           <div className="flex items-center justify-center flex-col">
-            <AnimatedSVG name={NO_CONTENT.icon} size={170} />
+            <AnimatedSVG name={NO_CONTENT.icon} size={180} />
             <div className="mt-2" />
             <div className="text-center text-gray-600 relative">
               {NO_CONTENT.message}
               {noContentType === NoContentType.ToDate ? (
-                <div style={{ position: 'absolute', right: -170, top: -110 }}>
-                  <Icon name="list-arrow" size={130} width={150} />
+                <div style={{ position: 'absolute', right: -200, top: -170 }}>
+                  <Icon name="pointer-sessions-search" size={250} width={240} />
                 </div>
               ) : null}
             </div>
@@ -154,7 +155,7 @@ function SessionList(props: Props) {
             {(isVault || isBookmark) && (
               <div>
                 {isVault
-                  ? 'Add a session to your vault from player screen to retain it for ever.'
+                  ? 'Add any session to your vault from the replay page and retain it longer.'
                   : 'Bookmark important sessions in player screen and quickly find them here.'}
               </div>
             )}
@@ -169,7 +170,7 @@ function SessionList(props: Props) {
             </Button>
           </div>
         }
-        show={!loading && list.size === 0}
+        show={!loading && list.length === 0}
       >
         {list.map((session: any) => (
           <div key={session.sessionId} className="border-b">
@@ -188,7 +189,7 @@ function SessionList(props: Props) {
         <div className="flex items-center justify-between p-5">
           <div>
             Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{' '}
-            <span className="font-medium">{(currentPage - 1) * pageSize + list.size}</span> of{' '}
+            <span className="font-medium">{(currentPage - 1) * pageSize + list.length}</span> of{' '}
             <span className="font-medium">{numberWithCommas(total)}</span> sessions.
           </div>
           <Pagination
@@ -226,4 +227,4 @@ export default connect(
     fetchMetadata,
     checkForLatestSessions,
   }
-)(SessionList);
+)(withRouter(SessionList));

@@ -1,27 +1,32 @@
-#/bin/bash
+#!/bin/bash
 set -e
 
+# Ref: https://stackoverflow.com/questions/5947742/how-to-change-the-output-color-of-echo-in-linux
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BWHITE='\033[1;37m'
+NC='\033[0m' # No Color
 # --- helper functions for logs ---
 info()
 {
-    echo '[INFO] ' "$@"
+    echo -e "${GREEN}[INFO] " "$@" "$NC"
 }
 warn()
 {
-    echo '[WARN] ' "$@" >&2
+    echo -e "${YELLOW}[INFO] " "$@" "$NC"
 }
 fatal()
 {
-    echo '[ERROR] ' "$@" >&2
+    echo -e "${RED}[INFO] " "$@" "$NC"
     exit 1
 }
 
-version="v1.9.0"
-usr=`whoami`
+usr=$(whoami)
 
 # Installing k3s
 function install_k8s() {
-    curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.22.8+k3s1' INSTALL_K3S_EXEC="--no-deploy=traefik" sh -
+    curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.25.6+k3s1' INSTALL_K3S_EXEC="--disable=traefik" sh -
     [[ -d ~/.kube ]] || mkdir ~/.kube
     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
     sudo chmod 0644 ~/.kube/config
@@ -51,7 +56,7 @@ function install_tools() {
     ## $install_status GH package manager
     exists eget || {
         info "$install_status eget"
-        download_url=`curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4`
+        download_url=$(curl https://api.github.com/repos/zyedidia/eget/releases/latest -s | grep linux_amd64 | grep browser_download_url | cut -d '"' -f4)
         curl -SsL ${download_url} -o /tmp/eget.tar.gz
         tar -xf /tmp/eget.tar.gz --strip-components=1 -C /tmp/
         sudo mv /tmp/eget /usr/local/bin/eget
@@ -93,8 +98,8 @@ randomPass() {
 ## Prepping the infra
 
 # Mac os doesn't have gnu sed, which will cause compatibility issues.
-# This wrapper will help to check the sed, and use the correct version="v1.9.0"
-# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.9.0"
+# This wrapper will help to check the sed, and use the correct version="v1.10.0"
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version="v1.10.0"
 function is_gnu_sed(){
   sed --version >/dev/null 2>&1
 }
@@ -113,7 +118,7 @@ function sed_i_wrapper(){
 
 function create_passwords() {
   # Error out only if the domain name is empty in vars.yaml
-  existing_domain_name=`grep domainName vars.yaml | awk '{print $2}' | xargs`
+  existing_domain_name=$(awk '/domainName/ {print $2}' vars.yaml | xargs)
   [[ -z $existing_domain_name ]] && {
     [[ -z $DOMAIN_NAME ]] && {
       fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
@@ -139,6 +144,8 @@ function set_permissions() {
 
 ## Installing OpenReplay
 function install_openreplay() {
+  info "installing toolings"
+  helm upgrade --install toolings ./toolings -n app --create-namespace --wait -f ./vars.yaml --atomic
   info "installing databases"
   helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
   info "installing application"
@@ -166,7 +173,15 @@ function main() {
   } || {
     set_permissions
     install_openreplay
+    sudo mkdir -p /var/lib/openreplay
+    sudo cp -f openreplay-cli /bin/openreplay
+    sudo cp -rf ../../../openreplay /var/lib/openreplay
+    sudo cp -f vars.yaml /var/lib/openreplay
   }
 }
 
 main
+
+info "Configuration file is saved in /var/lib/openreplay/vars.yaml"
+info "You can delete the directory $(echo $(cd ../.. && pwd)). Backup stored in /var/lib/openreplay"
+info "Run ${BWHITE}openreplay -h${GREEN} to see the cli information to manage OpenReplay."

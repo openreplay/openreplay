@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import CustomMetriLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetriLineChart';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
@@ -13,27 +13,31 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
 import { FilterKey } from 'Types/filter/filterType';
-
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS, INSIGHTS } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
-import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
 import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
+import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'
+import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
+
 interface Props {
     metric: any;
     isWidget?: boolean;
     isTemplate?: boolean;
+    isPreview?: boolean;
 }
+
 function WidgetChart(props: Props) {
     const { isWidget = false, metric, isTemplate } = props;
-    const { dashboardStore, metricStore } = useStore();
+    const { dashboardStore, metricStore, sessionStore } = useStore();
     const _metric: any = metricStore.instance;
-    const period = useObserver(() => dashboardStore.period);
-    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
+    const period = dashboardStore.period;
+    const drillDownPeriod = dashboardStore.drillDownPeriod;
     const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
-    const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
+    const isOverviewWidget = metric.metricType === WEB_VITALS;
     const params = { density: isOverviewWidget ? 7 : 70 }
     const metricParams = { ...params }
     const prevMetricRef = useRef<any>();
@@ -43,10 +47,16 @@ function WidgetChart(props: Props) {
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
 
+    useEffect(() => {
+        return () => {
+            dashboardStore.resetDrillDownFilter();
+        }
+    }, [])
+
     const onChartClick = (event: any) => {
         if (event) {
             if (isTableWidget || isPieChart) { // get the filter of clicked row
-                const periodTimestamps = period.toTimestamps()
+                const periodTimestamps = drillDownPeriod.toTimestamps()
                 drillDownFilter.merge({
                     filters: event,
                     startTimestamp: periodTimestamps.startTimestamp,
@@ -77,43 +87,42 @@ function WidgetChart(props: Props) {
     }
 
     const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
-    useEffect(() => {
+    const loadPage = () => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
             prevMetricRef.current = metric;
             return
-        };
+        }
         prevMetricRef.current = metric;
         const timestmaps = drillDownPeriod.toTimestamps();
         const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget, !isWidget ? drillDownPeriod : period);
-    }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
+    }
+    useEffect(() => {
+        _metric.updateKey('page', 1)
+        loadPage();
+    }, [drillDownPeriod, period, depsString, metric.metricType, metric.metricOf, metric.viewType, metric.metricValue]);
+    useEffect(loadPage, [_metric.page]);
 
 
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;
-
         const metricWithData = { ...metric, data };
-        if (metricType === 'sessions') {
-            return <SessionWidget metric={metric} data={data} />
-        }
 
-        if (metricType === 'errors') {
-            return <ErrorsWidget metric={metric} data={data} />
-        }
-
-        if (metricType === 'funnel') {
+        if (metricType === FUNNEL) {
             return <FunnelWidget metric={metric} data={data} isWidget={isWidget || isTemplate} />
         }
 
-        if (metricType === 'predefined') {
-            const defaultMetric = metric.data.chart.length === 0 ? metricWithData : metric
+        if (metricType === 'predefined' || metricType === ERRORS || metricType === PERFORMANCE || metricType === RESOURCE_MONITORING || metricType === WEB_VITALS) {
+            const defaultMetric = metric.data.chart && metric.data.chart.length === 0 ? metricWithData : metric
             if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
-            return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data} predefinedKey={metric.predefinedKey} />
+            return <WidgetPredefinedChart isTemplate={isTemplate} metric={defaultMetric} data={data} predefinedKey={metric.metricOf} />
         }
 
-        if (metricType === 'timeseries') {
+        // TODO add USER_PATH, RETENTION, FEATUER_ADOPTION
+
+        if (metricType === TIMESERIES) {
             if (viewType === 'lineChart') {
                 return (
                     <CustomMetriLineChart
@@ -134,7 +143,7 @@ function WidgetChart(props: Props) {
             }
         }
 
-        if (metricType === 'table') {
+        if (metricType === TABLE) {
             if (metricOf === FilterKey.SESSIONS) {
                 return (
                     <CustomMetricTableSessions
@@ -155,7 +164,7 @@ function WidgetChart(props: Props) {
                     />
                 )
             }
-            if (viewType === 'table') {
+            if (viewType === TABLE) {
                 return (
                     <CustomMetricTable
                         metric={metric} data={data[0]}
@@ -175,8 +184,24 @@ function WidgetChart(props: Props) {
                 )
             }
         }
+        if (metricType === CLICKMAP) {
+            if (!props.isPreview) {
+                return (
+                    <div style={{ height: '229px', overflow:'hidden', marginBottom: '10px'}}>
+                        <img src={metric.thumbnail} alt="clickmap thumbnail" />
+                    </div>
+                )
+            }
+            return (
+                <ClickMapCard />
+            )
+        }
 
-        return <div>Unknown</div>;
+        if (metricType === INSIGHTS) {
+            return <InsightsCard data={data} />
+        }
+
+        return <div>Unknown metric type</div>;
     }
     return (
         <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>

@@ -2,40 +2,48 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/internal/config/http"
-	"openreplay/backend/internal/http/router"
-	"openreplay/backend/internal/http/server"
-	"openreplay/backend/internal/http/services"
-	"openreplay/backend/pkg/monitoring"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"openreplay/backend/internal/config/http"
+	"openreplay/backend/internal/http/router"
+	"openreplay/backend/internal/http/server"
+	"openreplay/backend/internal/http/services"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/metrics"
+	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	httpMetrics "openreplay/backend/pkg/metrics/http"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	metrics := monitoring.New("http")
+	m := metrics.New()
+	m.Register(httpMetrics.List())
+	m.Register(databaseMetrics.List())
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := http.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
 	// Connect to queue
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
 	// Connect to database
-	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), 1000*60*20)
+	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), 1000*60*20)
 	defer dbConn.Close()
 
 	// Build all services
 	services := services.New(cfg, producer, dbConn)
 
 	// Init server's routes
-	router, err := router.NewRouter(cfg, services, metrics)
+	router, err := router.NewRouter(cfg, services)
 	if err != nil {
 		log.Fatalf("failed while creating engine: %s", err)
 	}

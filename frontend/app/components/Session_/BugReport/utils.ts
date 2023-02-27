@@ -62,7 +62,7 @@ export function getClosestEventStep(time: number, arr: Step[]) {
 export const selectEventSteps = (steps: Step[], targetTime: number, radius: number) => {
   const { targetStep, index } = getClosestEventStep(targetTime, steps)
 
-  const stepsBeforeEvent = steps.slice(index - radius, index)
+  const stepsBeforeEvent = steps.slice(Math.max(index - radius, 0), index)
   const stepsAfterEvent = steps.slice(index + 1, index + 1 + radius)
 
   return [...stepsBeforeEvent, targetStep, ...stepsAfterEvent]

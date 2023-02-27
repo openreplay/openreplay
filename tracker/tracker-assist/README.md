@@ -2,6 +2,10 @@
 
 OpenReplay Assist Plugin allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.
 
+## Documentation
+
+For launch options and available public methods, [refer to the documentation](https://docs.openreplay.com/plugins/assist)
+
 ## Installation
 
 ```bash
@@ -72,7 +76,7 @@ trackerAssist({
 type ConfirmOptions = {
   text?:string,
   style?: StyleObject, // style object (i.e {color: 'red', borderRadius: '10px'})
-  confirmBtn?: ButtonOptions, 
+  confirmBtn?: ButtonOptions,
   declineBtn?: ButtonOptions
 }
 
@@ -82,7 +86,7 @@ type ButtonOptions = HTMLButtonElement | string | {
 }
 ```
 
-- `callConfirm`: Customize the text and/or layout of the call request popup. 
+- `callConfirm`: Customize the text and/or layout of the call request popup.
 - `controlConfirm`: Customize the text and/or layout of the remote control request popup.
 - `config`: Contains any custom ICE/TURN server configuration. Defaults to `{ 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }], 'sdpSemantics': 'unified-plan' }`.
 - `onAgentConnect: () => (()=>void | void)`: This callback function is fired when someone from OpenReplay UI connects to the current live session. It can return another function. In this case, returned callback will be called when the same agent connection gets closed.

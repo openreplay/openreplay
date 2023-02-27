@@ -15,6 +15,9 @@ backupImage:
   pullPolicy: IfNotPresent
   tag: "latest"
 
+username: default
+password: ""
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

@@ -2,29 +2,34 @@ package main
 
 import (
 	"log"
-	config "openreplay/backend/internal/config/integrations"
-	"openreplay/backend/internal/integrations/clientManager"
-	"openreplay/backend/pkg/monitoring"
-	"time"
-
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	config "openreplay/backend/internal/config/integrations"
+	"openreplay/backend/internal/integrations/clientManager"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
+	"openreplay/backend/pkg/metrics"
+	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/token"
 )
 
 func main() {
-	metrics := monitoring.New("integrations")
+	m := metrics.New()
+	m.Register(databaseMetrics.List())
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 
-	pg := postgres.NewConn(cfg.PostgresURI, 0, 0, metrics)
+	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0)
 	defer pg.Close()
 
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
@@ -47,7 +52,7 @@ func main() {
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
-	listener, err := postgres.NewIntegrationsListener(cfg.PostgresURI)
+	listener, err := postgres.NewIntegrationsListener(cfg.Postgres.String())
 	if err != nil {
 		log.Printf("Postgres listener error: %v\n", err)
 		log.Fatalf("Postgres listener error")

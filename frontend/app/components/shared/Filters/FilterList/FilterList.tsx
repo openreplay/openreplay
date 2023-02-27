@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import FilterItem from '../FilterItem';
 import { SegmentSelection, Tooltip } from 'UI';
 import { List } from 'immutable';
@@ -12,13 +12,17 @@ interface Props {
   hideEventsOrder?: boolean;
   observeChanges?: () => void;
   saveRequestPayloads?: boolean;
+  supportsEmpty?: boolean
+  excludeFilterKeys?: Array<string>
 }
 function FilterList(props: Props) {
-  const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads } = props;
+  const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads, supportsEmpty = true, excludeFilterKeys = [] } = props;
   const filters = List(filter.filters);
+  const eventsOrderSupport = filter.eventsOrderSupport;
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
   let rowIndex = 0;
+  const cannotDeleteFilter = hasEvents && !supportsEmpty;
 
   useEffect(observeChanges, [filters]);
 
@@ -48,13 +52,13 @@ function FilterList(props: Props) {
                 <SegmentSelection
                   primary
                   name="eventsOrder"
-                  extraSmall={true}
+                  size="small"
                   onSelect={props.onChangeEventsOrder}
                   value={{ value: filter.eventsOrder }}
                   list={[
-                    { name: 'THEN', value: 'then' },
-                    { name: 'AND', value: 'and' },
-                    { name: 'OR', value: 'or' },
+                    { name: 'THEN', value: 'then', disabled: eventsOrderSupport && !eventsOrderSupport.includes('then') },
+                    { name: 'AND', value: 'and', disabled: eventsOrderSupport && !eventsOrderSupport.includes('and')},
+                    { name: 'OR', value: 'or', disabled: eventsOrderSupport && !eventsOrderSupport.includes('or')},
                   ]}
                 />
               </div>
@@ -69,6 +73,8 @@ function FilterList(props: Props) {
                 onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
                 onRemoveFilter={() => onRemoveFilter(filterIndex)}
                 saveRequestPayloads={saveRequestPayloads}
+                disableDelete={cannotDeleteFilter}
+                excludeFilterKeys={excludeFilterKeys}
               />
             ) : null
           )}
@@ -89,6 +95,7 @@ function FilterList(props: Props) {
                 filter={filter}
                 onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
                 onRemoveFilter={() => onRemoveFilter(filterIndex)}
+                excludeFilterKeys={excludeFilterKeys}
               />
             ) : null
           )}

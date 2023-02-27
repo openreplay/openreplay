@@ -23,3 +23,7 @@ func (si *Saver) InsertStats(session *Session, msg Message) error {
 func (si *Saver) CommitStats() error {
 	return nil
 }
+
+func (si *Saver) Close() error {
+	return nil
+}

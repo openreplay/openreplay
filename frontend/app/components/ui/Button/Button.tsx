@@ -5,7 +5,7 @@ import { CircularLoader, Icon, Tooltip } from 'UI';
 interface Props {
   className?: string;
   children?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   variant?: 'default' | 'primary' | 'text' | 'text-primary' | 'text-red' | 'outline' | 'green';
@@ -32,51 +32,31 @@ export default (props: Props) => {
     ...rest
   } = props;
 
-  let classes = ['relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap'];
   let iconColor = variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
 
-  if (variant === 'default') {
-    classes.push('bg-white hover:bg-gray-light border border-gray-light');
-  }
+  const variantClasses = {
+    default: 'bg-white hover:bg-gray-light border border-gray-light',
+    primary: 'bg-teal color-white hover:bg-teal-dark',
+    green: 'bg-green color-white hover:bg-green-dark',
+    text: 'bg-transparent color-gray-dark hover:bg-gray-light-shade hover:!text-teal hover-fill-teal',
+    'text-primary': 'bg-transparent color-teal hover:bg-teal-light hover:color-teal-dark',
+    'text-red': 'bg-transparent color-red hover:bg-teal-light',
+    outline: 'bg-white color-teal border border-teal hover:bg-teal-light',
+  };
 
-  if (variant === 'primary') {
-    classes.push('bg-teal color-white hover:bg-teal-dark');
-  }
-
-  if (variant === 'green') {
-    classes.push('bg-green color-white hover:bg-green-dark');
-    iconColor = 'white';
-  }
-
-  if (variant === 'text') {
-    classes.push('bg-transparent color-gray-dark hover:bg-gray-light-shade');
-  }
-
-  if (variant === 'text-primary') {
-    classes.push('bg-transparent color-teal hover:bg-teal-light hover:color-teal-dark');
-  }
-
-  if (variant === 'text-red') {
-    classes.push('bg-transparent color-red hover:bg-teal-light');
-  }
-
-  if (variant === 'outline') {
-    classes.push('bg-white color-teal border border-teal hover:bg-teal-light');
-  }
-
-  if (disabled) {
-    classes.push('opacity-40 pointer-events-none');
-  }
+  let classes = cn(
+    'relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap',
+    variantClasses[variant],
+    { 'opacity-40 pointer-events-none': disabled },
+    { '!rounded-full h-10 w-10 justify-center': rounded },
+    className
+  );
 
   if (variant === 'primary') {
     iconColor = 'white';
   }
   if (variant === 'text-red') {
     iconColor = 'red';
-  }
-
-  if (rounded) {
-    classes = classes.map((c) => c.replace('rounded', 'rounded-full h-10 w-10 justify-center'));
   }
 
   const render = () => (

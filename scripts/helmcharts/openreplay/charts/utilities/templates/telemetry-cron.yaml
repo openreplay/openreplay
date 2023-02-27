@@ -1,5 +1,10 @@
 {{- if .Values.global.enterpriseEditionLicense }}
+{{- $kubeTargetVersion := .Capabilities.KubeVersion.GitVersion }}
+{{- if semverCompare ">=1.22.0-0" $kubeTargetVersion }}
+apiVersion: batch/v1
+{{- else }}
 apiVersion: batch/v1beta1
+{{- end }}
 kind: CronJob
 metadata:
   name: telemetry-cron
@@ -12,6 +17,11 @@ spec:
     spec:
       backoffLimit: 0 # Don't restart the failed jobs
       template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
         spec:
           restartPolicy: Never
           containers:

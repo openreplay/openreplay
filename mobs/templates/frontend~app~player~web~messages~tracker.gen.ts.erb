@@ -1,0 +1,30 @@
+// Auto-generated, do not edit
+/* eslint-disable */
+
+import type { RawMessage } from './raw.gen'
+import { MType } from './raw.gen'
+
+<% $messages.select { |msg| msg.tracker }.each do |msg| %>
+type Tr<%= msg.name %> = [
+  type: <%= msg.id %>,
+  <%= msg.attributes.map { |attr| "#{attr.name.camel_case}: #{attr.type_js}," }.join "\n  " %>
+]
+<% end %>
+
+export type TrackerMessage = <%= $messages.select { |msg| msg.tracker }.map { |msg| "Tr#{msg.name}" }.join " | " %>
+
+export default function translate(tMsg: TrackerMessage): RawMessage | null {
+  switch(tMsg[0]) {
+    <% $messages.select { |msg| msg.replayer != false && msg.tracker }.each do |msg| %>
+    case <%= msg.id %>: {
+      return {
+        tp: MType.<%= msg.name.snake_case.pascal_case %>,
+        <%= msg.attributes.map.with_index { |attr, i| "#{attr.name.camel_case}: tMsg[#{i+1}]," }.join "\n        " %>
+      }
+    }
+    <% end %>
+    default:
+      return null
+  }
+
+}

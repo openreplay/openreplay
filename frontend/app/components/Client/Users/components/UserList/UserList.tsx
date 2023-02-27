@@ -7,6 +7,7 @@ import { Pagination, NoContent, Loader } from 'UI';
 import { useModal } from 'App/components/Modal';
 import UserForm from '../UserForm';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { filterList } from 'App/utils';
 
 interface Props {
     isOnboarding?: boolean;
@@ -20,15 +21,16 @@ function UserList(props: Props) {
     const searchQuery = useObserver(() => userStore.searchQuery);
     const { showModal } = useModal();
 
-    const filterList = (list) => {
-        const filterRE = getRE(searchQuery, 'i');
-        let _list = list.filter((w) => {
-            return filterRE.test(w.email) || filterRE.test(w.roleName);
-        });
-        return _list;
-    };
+    // const filterList = (list) => {
+    //     const filterRE = getRE(searchQuery, 'i');
+    //     let _list = list.filter((w) => {
+    //         return filterRE.test(w.email) || filterRE.test(w.roleName);
+    //     });
+    //     return _list;
+    // };
+    const getList = (list) => filterList(list, searchQuery, ['email', 'roleName', 'name'])
 
-    const list: any = searchQuery !== '' ? filterList(users) : users;
+    const list: any = searchQuery !== '' ? getList(users) : users;
     const length = list.length;
 
     useEffect(() => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, Link } from 'UI';
+import { Link } from 'UI';
 import PlayLink from 'Shared/SessionItem/PlayLink';
 import { tagProps, Note } from 'App/services/NotesService';
 import { formatTimeOrDate } from 'App/date';
@@ -13,7 +13,6 @@ import TeamBadge from './TeamBadge';
 
 interface Props {
   note: Note;
-  userEmail: string;
 }
 
 function NoteItem(props: Props) {
@@ -69,7 +68,7 @@ function NoteItem(props: Props) {
             ) : null}
             <div className="text-disabled-text flex items-center text-sm">
               <span className="color-gray-darkest mr-1">By </span>
-              {props.userEmail},{' '}
+              {props.note.userName},{' '}
               {formatTimeOrDate(props.note.createdAt as unknown as number, timezone)}
               <div className="mx-2" />
               {!props.note.isPublic ? null : <TeamBadge />}

@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import { fetchListType, fetchType, saveType, removeType, editType } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
-import { array, success, createListUpdater, mergeReducers } from './funcTools/tools';
+import { array, success, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from 'App/routes';
@@ -71,6 +71,7 @@ function reducer(state = initialState, action = {}) {
         case EDIT:
             return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
         case APPLY:
+            
             return action.fromUrl ? state.set('instance', Filter(action.filter)) : state.mergeIn(['instance'], action.filter).set('currentPage', 1);
         case success(FETCH):
             return state.set('instance', action.data);
@@ -242,6 +243,12 @@ export const applyFilter = reduceThenFetchResource((filter, force = false) => ({
     force,
 }));
 
+export const updateFilter = (filter, force = false) => ({
+    type: APPLY,
+    filter,
+    force,
+});
+
 export const updateCurrentPage = reduceThenFetchResource((page) => ({
     type: UPDATE_CURRENT_PAGE,
     page,
@@ -318,9 +325,17 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-    // const filter = getState().getIn(['search', 'instance']);
-    // dispatch(applySavedSearch(new SavedFilter({})));
-    dispatch(edit(new Filter({ filters: [] })));
+    const instance = getState().getIn(['search', 'instance']);
+    dispatch(
+        edit(
+            new Filter({
+              rangeValue: instance.rangeValue,
+              startDate: instance.startDate,
+              endDate: instance.endDate,
+              filters: [],
+            })
+        )
+    );
     return dispatch({
         type: CLEAR_SEARCH,
     });
@@ -359,6 +374,7 @@ export const addFilterByKeyAndValue =
             defaultFilter.sourceOperator = sourceOperator;
             defaultFilter.source = source;
         }
+
         dispatch(addFilter(defaultFilter));
     };
 

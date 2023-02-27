@@ -1,4 +1,4 @@
-fromVersion: "v1.9.0"
+fromVersion: "v1.10.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -21,6 +21,8 @@ clickhouse: &clickhouse
   # For enterpriseEdition
   enabled: false
   chHost: clickhouse-openreplay-clickhouse.db.svc.cluster.local
+  username: default
+  password: ""
   service:
     webPort: 9000
 
@@ -118,8 +120,9 @@ global:
     vaultBucket: "vault-data"
     # This is only for enterpriseEdition
     quickwitBucket: "quickwit"
-    # If you're using minio, make sure these variables
-    # are the same as minio.global.minio.accesskey and secretKey
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
@@ -147,6 +150,7 @@ chalice:
     # idp_sls_url: ''
     # idp_name: ''
     # idp_tenantKey: ''
+    # enforce_SSO: 'false'
 
 # Below is an example on how to override values
 # chartname:

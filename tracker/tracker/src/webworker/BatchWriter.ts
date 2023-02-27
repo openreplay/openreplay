@@ -1,6 +1,7 @@
 import type Message from '../common/messages.gen.js'
 import * as Messages from '../common/messages.gen.js'
 import MessageEncoder from './MessageEncoder.gen.js'
+import StringDictionary from './StringDictionary.js'
 
 const SIZE_BYTES = 3
 const MAX_M_SIZE = (1 << (SIZE_BYTES * 8)) - 1
@@ -9,6 +10,7 @@ export default class BatchWriter {
   private nextIndex = 0
   private beaconSize = 2 * 1e5 // Default 200kB
   private encoder = new MessageEncoder(this.beaconSize)
+  private strDict = new StringDictionary()
   private readonly sizeBuffer = new Uint8Array(SIZE_BYTES)
   private isEmpty = true
 
@@ -36,7 +38,7 @@ export default class BatchWriter {
   }
 
   private prepare(): void {
-    if (!this.encoder.isEmpty()) {
+    if (!this.encoder.isEmpty) {
       return
     }
 
@@ -84,6 +86,14 @@ export default class BatchWriter {
     this.beaconSizeLimit = limit
   }
 
+  private applyDict(str: string): number {
+    const [key, isNew] = this.strDict.getKey(str)
+    if (isNew) {
+      this.writeMessage([Messages.Type.StringDict, key, str])
+    }
+    return key
+  }
+
   writeMessage(message: Message) {
     if (message[0] === Messages.Type.Timestamp) {
       this.timestamp = message[1] // .timestamp
@@ -91,22 +101,31 @@ export default class BatchWriter {
     if (message[0] === Messages.Type.SetPageLocation) {
       this.url = message[1] // .url
     }
+    if (message[0] === Messages.Type.SetNodeAttribute) {
+      message = [
+        Messages.Type.SetNodeAttributeDict,
+        message[1],
+        this.applyDict(message[2]),
+        this.applyDict(message[3]),
+      ] as Messages.SetNodeAttributeDict
+    }
     if (this.writeWithSize(message)) {
       return
     }
+    // buffer overflow, send already written data first then try again
     this.finaliseBatch()
-    while (!this.writeWithSize(message)) {
-      if (this.beaconSize === this.beaconSizeLimit) {
-        console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
-        this.encoder.reset()
-        this.prepare()
-        return
-      }
-      // MBTODO: tempWriter for one message?
-      this.beaconSize = Math.min(this.beaconSize * 2, this.beaconSizeLimit)
-      this.encoder = new MessageEncoder(this.beaconSize)
-      this.prepare()
+    if (this.writeWithSize(message)) {
+      return
     }
+    // buffer is too small. Create one with maximal capacity
+    this.encoder = new MessageEncoder(this.beaconSizeLimit)
+    this.prepare()
+    if (!this.writeWithSize(message)) {
+      console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
+    }
+    // reset encoder to normal size
+    this.encoder = new MessageEncoder(this.beaconSize)
+    this.prepare()
   }
 
   finaliseBatch() {

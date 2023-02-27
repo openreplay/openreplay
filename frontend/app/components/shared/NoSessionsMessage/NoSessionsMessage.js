@@ -29,7 +29,7 @@ const NoSessionsMessage = (props) => {
                             </div>
                             <div className="ml-2 color-gray-darkest mr-auto text-base">
                                 It might take a few minutes for first recording to appear. 
-                                <a href="https://docs.openreplay.com/troubleshooting" className="link ml-2">
+                                <a href="https://docs.openreplay.com/en/troubleshooting/session-recordings/" className="link ml-2">
                                     Troubleshoot
                                 </a>
                                 .

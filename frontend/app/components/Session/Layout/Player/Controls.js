@@ -1,10 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { useEffect, useCallback } from 'react';
-import { connect } from 'react-redux';
+import { useEffect } from 'react';
 import cn from 'classnames';
-
-import { Popup, Icon } from 'UI';
 
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';

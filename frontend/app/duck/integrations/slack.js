@@ -7,6 +7,7 @@ const SAVE = new RequestTypes('slack/SAVE');
 const UPDATE = new RequestTypes('slack/UPDATE');
 const REMOVE = new RequestTypes('slack/REMOVE');
 const FETCH_LIST = new RequestTypes('slack/FETCH_LIST');
+const SEND_MSG = new RequestTypes('slack/SEND_MSG');
 const EDIT = 'slack/EDIT';
 const INIT = 'slack/INIT';
 const idKey = 'webhookId';
@@ -39,6 +40,7 @@ export default withRequestState(
     {
         fetchRequest: FETCH_LIST,
         saveRequest: SAVE,
+        updateRequest: UPDATE,
         removeRequest: REMOVE,
     },
     reducer
@@ -61,7 +63,7 @@ export function save(instance) {
 export function update(instance) {
     return {
         types: UPDATE.toArray(),
-        call: (client) => client.put(`/integrations/slack/${instance.webhookId}`, instance.toData()),
+        call: (client) => client.post(`/integrations/slack/${instance.webhookId}`, instance.toData()),
     };
 }
 
@@ -85,4 +87,13 @@ export function remove(id) {
         call: (client) => client.delete(`/integrations/slack/${id}`),
         id,
     };
+}
+
+// https://api.openreplay.com/5587/integrations/slack/notify/315/sessions/7856803626558104
+//
+export function sendSlackMsg({ integrationId, entity, entityId, data }) {
+    return {
+        types: SEND_MSG.toArray(),
+        call: (client) => client.post(`/integrations/slack/notify/${integrationId}/${entity}/${entityId}`, data)
+    }
 }

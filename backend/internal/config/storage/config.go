@@ -21,6 +21,8 @@ type Config struct {
 	ProducerCloseTimeout int           `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 	UseFailover          bool          `env:"USE_FAILOVER,default=false"`
 	MaxFileSize          int64         `env:"MAX_FILE_SIZE,default=524288000"`
+	UseSort              bool          `env:"USE_SESSION_SORT,default=true"`
+	UseProfiler          bool          `env:"PROFILER_ENABLED,default=false"`
 }
 
 func New() *Config {

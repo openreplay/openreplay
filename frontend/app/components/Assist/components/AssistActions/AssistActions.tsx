@@ -2,16 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Tooltip } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { toggleChatWindow } from 'Duck/sessions';
-import { connectPlayer } from 'Player';
 import ChatWindow from '../../ChatWindow';
-import {
-  callPeer,
-  setCallArgs,
-  requestReleaseRemoteControl,
-  toggleAnnotation,
-  toggleUserName,
-} from 'Player';
 import {
   CallingState,
   ConnectionStatus,
@@ -19,9 +10,12 @@ import {
   RequestLocalStream,
 } from 'Player';
 import type { LocalStream } from 'Player';
+import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
+import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 import { confirm } from 'UI';
 import stl from './AassistActions.module.css';
+import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorder';
 
 function onReject() {
   toast.info(`Call was rejected.`);
@@ -34,31 +28,41 @@ function onError(e: any) {
 
 interface Props {
   userId: string;
-  calling: CallingState;
-  annotating: boolean;
-  peerConnectionStatus: ConnectionStatus;
-  remoteControlStatus: RemoteControlStatus;
   hasPermission: boolean;
   isEnterprise: boolean;
   isCallActive: boolean;
   agentIds: string[];
-  livePlay: boolean;
   userDisplayName: string;
 }
 
 function AssistActions({
   userId,
-  calling,
-  annotating,
-  peerConnectionStatus,
-  remoteControlStatus,
   hasPermission,
   isEnterprise,
   isCallActive,
   agentIds,
-  livePlay,
   userDisplayName,
 }: Props) {
+  // @ts-ignore ???
+  const { player, store } = React.useContext<ILivePlayerContext>(PlayerContext)
+
+  const {
+    assistManager: {
+      call: callPeer,
+      setCallArgs,
+      requestReleaseRemoteControl,
+      toggleAnnotation,
+    },
+  toggleUserName,
+  } = player
+  const {
+    calling,
+    annotating,
+    peerConnectionStatus,
+    remoteControl: remoteControlStatus,
+    livePlay,
+  } = store.get()
+
   const [isPrestart, setPrestart] = useState(false);
   const [incomeStream, setIncomeStream] = useState<MediaStream[] | null>([]);
   const [localStream, setLocalStream] = useState<LocalStream | null>(null);
@@ -113,6 +117,7 @@ function AssistActions({
 
   const addIncomeStream = (stream: MediaStream) => {
     setIncomeStream((oldState) => {
+      if (oldState === null) return [stream]
       if (!oldState.find((existingStream) => existingStream.id === stream.id)) {
         return [...oldState, stream];
       }
@@ -175,6 +180,10 @@ function AssistActions({
         </>
       )}
 
+      {/* @ts-ignore wtf? */}
+      <ScreenRecorder />
+      <div className={stl.divider} />
+
       {/* @ts-ignore */}
       <Tooltip title="Go live to initiate remote control" disabled={livePlay}>
         <div
@@ -236,23 +245,16 @@ function AssistActions({
 }
 
 const con = connect(
-  (state) => {
+  (state: any) => {
     const permissions = state.getIn(['user', 'account', 'permissions']) || [];
     return {
       hasPermission: permissions.includes('ASSIST_CALL'),
       isEnterprise: state.getIn(['user', 'account', 'edition']) === 'ee',
-      userDisplayName: state.getIn(['sessions', 'current', 'userDisplayName']),
+      userDisplayName: state.getIn(['sessions', 'current']).userDisplayName,
     };
-  },
-  { toggleChatWindow }
+  }
 );
 
 export default con(
-  connectPlayer((state) => ({
-    calling: state.calling,
-    annotating: state.annotating,
-    remoteControlStatus: state.remoteControl,
-    peerConnectionStatus: state.peerConnectionStatus,
-    livePlay: state.livePlay,
-  }))(AssistActions)
+  observer(AssistActions)
 );

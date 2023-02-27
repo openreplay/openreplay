@@ -8,6 +8,7 @@ type Project struct {
 	MaxSessionDuration  int64
 	SampleRate          byte
 	SaveRequestPayloads bool
+	BeaconSize          int64
 	Metadata1           *string
 	Metadata2           *string
 	Metadata3           *string

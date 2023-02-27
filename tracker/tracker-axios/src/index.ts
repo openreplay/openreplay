@@ -52,9 +52,14 @@ export default function(opts: Partial<Options> = {}) {
     opts,
   );
 	return (app: App | null) => {
-    if (app === null) {
+    if (app === null ||
+      // @ts-ignore - a catch for the developers who apply a plugin several times
+      options.instance.__openreplayAxiosInstalled__
+    ) {
       return;
     }
+    // @ts-ignore
+    options.instance.__openreplayAxiosInstalled__ = true
 
     const ihOpt = options.ignoreHeaders
     const isHIgnoring = Array.isArray(ihOpt)
