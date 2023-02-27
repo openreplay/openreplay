@@ -232,7 +232,8 @@ $$
         IF EXISTS(SELECT column_name
                   FROM information_schema.columns
                   WHERE table_name = 'metrics'
-                    and column_name = 'is_predefined') THEN
+                    AND column_name = 'is_predefined'
+                    AND table_schema = 'public') THEN
             -- 0. change metric_of
             UPDATE metrics
             SET metric_of=coalesce(replace(get_global_key(metric_of), '"', ''),
