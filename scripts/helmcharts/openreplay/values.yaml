@@ -37,5 +37,7 @@ global:
   vault: *vault
   redis: *redis
   clusterDomain: "svc.cluster.local"
-  # In case you've http proxy to access internet.
   env: {}
+  # If you're accessing OpenReplay with http, then update the value to http
+  ORSecureAccess: true
+
