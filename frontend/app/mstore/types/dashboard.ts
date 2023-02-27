@@ -30,6 +30,14 @@ export default class Dashboard {
         this.validate()
     }
 
+    updateInfo(data: any) {
+        runInAction(() => {
+            this.name = data.name || this.name
+            this.description = data.description || this.description
+            this.isPublic = data.isPublic
+        })
+    }
+
     toJson() {
         return {
             dashboardId: this.dashboardId,

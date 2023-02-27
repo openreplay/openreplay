@@ -215,9 +215,9 @@ export default class DashboardStore {
 
   syncDashboardInfo(id: string, info: { name: string, description: string, isPublic: boolean, createdAt: number }) {
     if (this.selectedDashboard !== null) {
-      this.selectedDashboard.update(info)
+      this.selectedDashboard.updateInfo(info)
       const index = this.dashboards.findIndex((d) => d.dashboardId === id);
-      Object.assign(this.dashboards[index], info)
+      this.dashboards[index].updateInfo(info);
     }
   }
 
