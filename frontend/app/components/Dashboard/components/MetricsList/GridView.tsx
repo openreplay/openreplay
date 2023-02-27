@@ -22,6 +22,7 @@ function GridView(props: Props) {
           <WidgetWrapper
             key={metric.metricId}
             widget={metric}
+            isGridView={true}
             active={selectedList.includes(metric.metricId)}
             isWidget={true}
             onClick={() => onItemClick(parseInt(metric.metricId))}

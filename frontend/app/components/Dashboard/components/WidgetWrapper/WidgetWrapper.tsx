@@ -28,6 +28,7 @@ interface Props {
   isWidget?: boolean;
   hideName?: boolean;
   grid?: string;
+  isGridView?: boolean;
 }
 function WidgetWrapper(props: Props & RouteComponentProps) {
   const { dashboardStore } = useStore();
@@ -40,6 +41,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
     isTemplate = false,
     siteId,
     grid = '',
+    isGridView = false,
   } = props;
   const widget: any = props.widget;
   const isTimeSeries = widget.metricType === 'timeseries';
@@ -133,14 +135,14 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
         ) : null}
         {isWidget && (
           <div className="flex items-center" id="no-print">
-            {!isPredefined && isTimeSeries && (
+            {!isPredefined && isTimeSeries && !isGridView && (
               <>
                 <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
                 <div className="mx-2" />
               </>
             )}
 
-            {!isTemplate && (
+            {!isTemplate && !isGridView && (
               <ItemMenu
                 items={[
                   {
