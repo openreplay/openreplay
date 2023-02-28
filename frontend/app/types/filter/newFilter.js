@@ -195,6 +195,13 @@ export default Record({
       }
     }
 
+    if (!_filter) {
+      _filter = {
+        key: filter.key,
+        type: "MULTIPLE",
+      }
+    }
+
     return {
       ..._filter,
       ...filter,

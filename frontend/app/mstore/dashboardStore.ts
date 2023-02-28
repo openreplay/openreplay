@@ -189,19 +189,19 @@ export default class DashboardStore {
     return new Promise((resolve, reject) => {
       dashboardService
         .saveDashboard(dashboard)
-        .then((_dashboard) => {
+        .then((_dashboard: any) => {
           runInAction(() => {
             if (isCreating) {
               toast.success('Dashboard created successfully');
               this.addDashboard(new Dashboard().fromJson(_dashboard));
             } else {
               toast.success('Dashboard successfully updated ');
-              this.updateDashboard(new Dashboard().fromJson(_dashboard));
+              this.syncDashboardInfo(_dashboard.dashboardId!, _dashboard);
             }
             resolve(_dashboard);
           });
         })
-        .catch((error) => {
+        .catch(() => {
           toast.error('Error saving dashboard');
           reject();
         })
@@ -211,6 +211,14 @@ export default class DashboardStore {
           });
         });
     });
+  }
+
+  syncDashboardInfo(id: string, info: { name: string, description: string, isPublic: boolean, createdAt: number }) {
+    if (this.selectedDashboard !== null) {
+      this.selectedDashboard.updateInfo(info)
+      const index = this.dashboards.findIndex((d) => d.dashboardId === id);
+      this.dashboards[index].updateInfo(info);
+    }
   }
 
   saveMetric(metric: Widget, dashboardId: string): Promise<any> {

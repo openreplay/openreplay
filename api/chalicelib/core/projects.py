@@ -212,15 +212,6 @@ def delete(tenant_id, user_id, project_id):
     return {"data": {"state": "success"}}
 
 
-def count_by_tenant(tenant_id):
-    with pg_client.PostgresClient() as cur:
-        query = """SELECT count(1) AS count
-                   FROM public.projects AS s
-                   WHERE s.deleted_at IS NULL;"""
-        cur.execute(query=query)
-        return cur.fetchone()["count"]
-
-
 def get_gdpr(project_id):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT gdpr

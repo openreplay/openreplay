@@ -17,13 +17,6 @@ export function debounce(callback, wait, context = this) {
   };
 }
 
-export function getResourceName(url: string) {
-  return url
-    .split('/')
-    .filter((s) => s !== '')
-    .pop();
-}
-
 /* eslint-disable no-mixed-operators */
 export function randomInt(a, b) {
   const min = (b ? a : 0) - 0.5;

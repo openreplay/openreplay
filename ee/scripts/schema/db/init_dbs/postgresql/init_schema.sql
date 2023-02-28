@@ -747,6 +747,7 @@ $$
                 metric_value   text[]    NOT NULL DEFAULT '{}'::text[],
                 metric_format  text,
                 thumbnail      text,
+                is_pinned      boolean   NOT NULL DEFAULT FALSE,
                 default_config jsonb     NOT NULL DEFAULT '{
                   "col": 2,
                   "row": 2,

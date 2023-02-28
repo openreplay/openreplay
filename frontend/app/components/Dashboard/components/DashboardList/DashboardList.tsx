@@ -37,7 +37,7 @@ function DashboardList() {
         <div className="grid grid-cols-12 py-2 font-medium px-6">
           <div className="col-span-8">Title</div>
           <div className="col-span-2">Visibility</div>
-          <div className="col-span-2 text-right">Created</div>
+          <div className="col-span-2 text-right">Creation Date</div>
         </div>
 
         {sliceListPerPage(list, dashboardStore.page - 1, dashboardStore.pageSize).map(

@@ -51,7 +51,7 @@ spec:
               value: "{{ .Values.global.s3.region }}"
             - name: S3_HOST
               {{- if contains "minio" .Values.global.s3.endpoint }}
-              value: 'https://{{ .Values.global.domainName }}:{{ .Values.global.ingress.controller.service.ports.https}}'
+              value: '{{ .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
               {{- else}}
               value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
@@ -75,6 +75,10 @@ spec:
               {{- end }}
             - name: REDIS_URL
               value: {{ .Values.global.redis.redisHost }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

@@ -6,7 +6,7 @@ on:
       - dev
     paths:
       - "ee/utilities/**"
-      - "utilities/*/**"
+      - "utilities/**"
       - "!utilities/.gitignore"
       - "!utilities/*-dev.sh"
 
@@ -21,7 +21,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
       with:
-        # We need to diff with old commit 
+        # We need to diff with old commit
         # to see which workers got changed.
         fetch-depth: 2
 
