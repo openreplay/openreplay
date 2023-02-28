@@ -121,7 +121,7 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                        WHERE dashboards.project_id = %(projectId)s
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public)
-                       RETURNING dashboard_id,name,description,is_public,created_at;"""
+                       RETURNING dashboard_id,name,description,is_public,created_at"""
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                            INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
