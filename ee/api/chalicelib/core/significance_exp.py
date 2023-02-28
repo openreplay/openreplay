@@ -264,7 +264,7 @@ def pearson_corr(x: list, y: list):
         return None, None, False
 
     if n == 2:
-        return math.copysign(1, x[1] - x[0]) * math.copysign(1, y[1] - y[0]), 1.0
+        return math.copysign(1, x[1] - x[0]) * math.copysign(1, y[1] - y[0]), 1.0, True
 
     xmean = sum(x) / len(x)
     ymean = sum(y) / len(y)
