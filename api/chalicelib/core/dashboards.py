@@ -126,7 +126,9 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
             pg_query = f"""WITH dash AS ({pg_query})
                            INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
                            VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s)" for i in range(len(data.metrics))])}
-                           RETURNING dash.*;"""
+                           RETURNING (SELECT dashboard_id FROM dash),(SELECT name FROM dash),
+                                     (SELECT description FROM dash),(SELECT is_public FROM dash),
+                                     (SELECT created_at FROM dash);"""
             for i, m in enumerate(data.metrics):
                 params[f"metric_id_{i}"] = m
                 # params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
