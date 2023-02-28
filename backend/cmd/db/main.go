@@ -37,8 +37,7 @@ func main() {
 	saver.InitStats()
 
 	msgFilter := []int{messages.MsgMetadata, messages.MsgIssueEvent, messages.MsgSessionStart, messages.MsgSessionEnd,
-		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgClickEvent,
-		messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
+		messages.MsgUserID, messages.MsgUserAnonymousID, messages.MsgIntegrationEvent, messages.MsgPerformanceTrackAggr,
 		messages.MsgJSException, messages.MsgResourceTiming,
 		messages.MsgCustomEvent, messages.MsgCustomIssue, messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL,
 		messages.MsgStateAction, messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument,
