@@ -30,14 +30,14 @@ func (si *Saver) InsertStats(session *types.Session, msg messages.Message) error
 		return si.ch.InsertWebSession(session)
 	case *messages.PerformanceTrackAggr:
 		return si.ch.InsertWebPerformanceTrackAggr(session, m)
-	case *messages.ClickEvent:
+	case *messages.MouseClick:
 		return si.ch.InsertWebClickEvent(session, m)
 	case *messages.InputEvent:
 		return si.ch.InsertWebInputEvent(session, m)
 	// Unique for Web
 	case *messages.PageEvent:
 		return si.ch.InsertWebPageEvent(session, m)
-	case *messages.ResourceEvent:
+	case *messages.ResourceTiming:
 		return si.ch.InsertWebResourceEvent(session, m)
 	case *messages.JSException:
 		return si.ch.InsertWebErrorEvent(session, types.WrapJSException(m))

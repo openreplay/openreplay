@@ -46,6 +46,18 @@ func main() {
 
 	// Handler logic
 	msgHandler := func(msg messages.Message) {
+		// Convert customIssue
+		switch m := msg.(type) {
+		case *messages.CustomEvent:
+			msg = &messages.IssueEvent{
+				Type:          "custom",
+				Timestamp:     m.Time(),
+				MessageID:     m.MessageID(),
+				ContextString: m.Name,
+				Payload:       m.Payload,
+			}
+		}
+
 		// Just save session data into db without additional checks
 		if err := saver.InsertMessage(msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {

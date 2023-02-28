@@ -35,40 +35,36 @@ func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrac
 	return nil
 }
 
-func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent) error {
+func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceTiming) error {
 	host, _, _, err := url.GetURLParts(e.URL)
 	if err != nil {
 		return err
 	}
-
+	msgType := url.GetResourceType(e.Initiator, e.URL)
 	sqlRequest := `
 		INSERT INTO events.resources (
 			session_id, timestamp, message_id, 
 			type,
 			url, url_host, url_hostpath,
 			success, status, 
-			method,
 			duration, ttfb, header_size, encoded_body_size, decoded_body_size
 		) VALUES (
 			$1, $2, $3, 
 			$4, 
 			LEFT($5, 8000), LEFT($6, 300), LEFT($7, 2000), 
 			$8, $9, 
-			NULLIF($10, '')::events.resource_method,
-			NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0), NULLIF($15, 0)
+			NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0)
 		)`
 	urlQuery := url.DiscardURLQuery(e.URL)
-	urlMethod := url.EnsureMethod(e.Method)
 	conn.batchQueue(sessionID, sqlRequest,
-		sessionID, e.Timestamp, truncSqIdx(e.MessageID),
-		e.Type,
+		sessionID, e.Timestamp, truncSqIdx(e.MessageID()),
+		msgType,
 		e.URL, host, urlQuery,
-		e.Success, e.Status,
-		urlMethod,
+		e.Duration != 0, 0,
 		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
 	)
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.Type)+len(e.URL)+len(host)+len(urlQuery)+len(urlMethod)+8*9+1)
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(msgType)+len(e.URL)+len(host)+len(urlQuery)+8*9+1)
 	return nil
 }

@@ -155,7 +155,7 @@ func (c *PGCache) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 	return c.Conn.InsertWebPageEvent(sessionID, session.ProjectID, e)
 }
 
-func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
+func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *MouseClick) error {
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err

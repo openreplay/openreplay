@@ -2,11 +2,10 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/pkg/handlers/custom"
-
 	config "openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/heuristics"
 	"openreplay/backend/pkg/handlers"
+	"openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
@@ -21,7 +20,6 @@ func main() {
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
-			&custom.EventMapper{},
 			custom.NewInputEventBuilder(),
 			custom.NewPageEventBuilder(),
 			&web.ClickRageDetector{},

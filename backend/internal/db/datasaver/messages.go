@@ -29,7 +29,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		return mi.pg.InsertWebUserAnonymousID(sessionID, m)
 	case *CustomEvent:
 		return mi.pg.InsertWebCustomEvent(sessionID, m)
-	case *ClickEvent:
+	case *MouseClick:
 		return mi.pg.InsertWebClickEvent(sessionID, m)
 	case *InputEvent:
 		return mi.pg.InsertWebInputEvent(sessionID, m)

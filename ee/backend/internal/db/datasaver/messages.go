@@ -3,7 +3,6 @@ package datasaver
 import (
 	"fmt"
 	"log"
-	. "openreplay/backend/pkg/messages"
 )
 
 func (mi *Saver) InsertMessage(msg Message) error {
@@ -46,7 +45,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 			}
 		}
 		return mi.pg.InsertWebCustomEvent(sessionID, m)
-	case *ClickEvent:
+	case *MouseClick:
 		return mi.pg.InsertWebClickEvent(sessionID, m)
 	case *InputEvent:
 		return mi.pg.InsertWebInputEvent(sessionID, m)
