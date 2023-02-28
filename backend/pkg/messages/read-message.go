@@ -546,69 +546,6 @@ func DecodeInputEvent(reader BytesReader) (Message, error) {
         return msg, err
 }
 
-func DecodeClickEvent(reader BytesReader) (Message, error) {
-    var err error = nil
-    msg := &ClickEvent{}
-    	if msg.MessageID, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.HesitationTime, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.Label, err = reader.ReadString(); err != nil {
-            return nil, err
-        }
-	if msg.Selector, err = reader.ReadString(); err != nil {
-            return nil, err
-        }
-        return msg, err
-}
-
-func DecodeResourceEvent(reader BytesReader) (Message, error) {
-    var err error = nil
-    msg := &ResourceEvent{}
-    	if msg.MessageID, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.Duration, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.TTFB, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.HeaderSize, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.EncodedBodySize, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.DecodedBodySize, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-	if msg.URL, err = reader.ReadString(); err != nil {
-            return nil, err
-        }
-	if msg.Type, err = reader.ReadString(); err != nil {
-            return nil, err
-        }
-	if msg.Success, err = reader.ReadBoolean(); err != nil {
-            return nil, err
-        }
-	if msg.Method, err = reader.ReadString(); err != nil {
-            return nil, err
-        }
-	if msg.Status, err = reader.ReadUint(); err != nil {
-            return nil, err
-        }
-        return msg, err
-}
-
 func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
     var err error = nil
     msg := &CSSInsertRule{}
@@ -1803,10 +1740,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodePageEvent(reader)
 	case 32:
 		return DecodeInputEvent(reader)
-	case 33:
-		return DecodeClickEvent(reader)
-	case 35:
-		return DecodeResourceEvent(reader)
 	case 37:
 		return DecodeCSSInsertRule(reader)
 	case 38:

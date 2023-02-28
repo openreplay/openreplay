@@ -321,31 +321,6 @@ class MessageCodec(Codec):
                 label=self.read_string(reader)
             )
 
-        if message_id == 33:
-            return ClickEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                hesitation_time=self.read_uint(reader),
-                label=self.read_string(reader),
-                selector=self.read_string(reader)
-            )
-
-        if message_id == 35:
-            return ResourceEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                duration=self.read_uint(reader),
-                ttfb=self.read_uint(reader),
-                header_size=self.read_uint(reader),
-                encoded_body_size=self.read_uint(reader),
-                decoded_body_size=self.read_uint(reader),
-                url=self.read_string(reader),
-                type=self.read_string(reader),
-                success=self.read_boolean(reader),
-                method=self.read_string(reader),
-                status=self.read_uint(reader)
-            )
-
         if message_id == 37:
             return CSSInsertRule(
                 id=self.read_uint(reader),

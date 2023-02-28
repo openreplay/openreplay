@@ -315,35 +315,6 @@ class InputEvent(Message):
         self.label = label
 
 
-class ClickEvent(Message):
-    __id__ = 33
-
-    def __init__(self, message_id, timestamp, hesitation_time, label, selector):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.hesitation_time = hesitation_time
-        self.label = label
-        self.selector = selector
-
-
-class ResourceEvent(Message):
-    __id__ = 35
-
-    def __init__(self, message_id, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, type, success, method, status):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.duration = duration
-        self.ttfb = ttfb
-        self.header_size = header_size
-        self.encoded_body_size = encoded_body_size
-        self.decoded_body_size = decoded_body_size
-        self.url = url
-        self.type = type
-        self.success = success
-        self.method = method
-        self.status = status
-
-
 class CSSInsertRule(Message):
     __id__ = 37
 

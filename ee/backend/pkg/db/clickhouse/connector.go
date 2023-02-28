@@ -21,9 +21,9 @@ type Connector interface {
 	Commit() error
 	Stop() error
 	InsertWebSession(session *types.Session) error
-	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
+	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
-	InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error
+	InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error
 	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
 	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
@@ -83,7 +83,7 @@ func NewConnector(url string) Connector {
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, name, query)
+	batch, err := NewBulk(c.conn, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -242,28 +242,25 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error {
-	var method interface{} = url.EnsureMethod(msg.Method)
-	if method == "" {
-		method = nil
-	}
-	resourceType := url.EnsureType(msg.Type)
+func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error {
+	msgType := url.GetResourceType(msg.Initiator, msg.URL)
+	resourceType := url.EnsureType(msgType)
 	if resourceType == "" {
-		return fmt.Errorf("can't parse resource type, sess: %s, type: %s", session.SessionID, msg.Type)
+		return fmt.Errorf("can't parse resource type, sess: %d, type: %s", session.SessionID, msgType)
 	}
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MessageID(),
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
-		msg.Type,
+		msgType,
 		nullableUint16(uint16(msg.Duration)),
 		nullableUint16(uint16(msg.TTFB)),
 		nullableUint16(uint16(msg.HeaderSize)),
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
-		msg.Success,
+		msg.Duration != 0,
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -298,7 +295,7 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	return nil
 }
 
-func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error {
+func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error {
 	if msg.Label == "" {
 		return nil
 	}

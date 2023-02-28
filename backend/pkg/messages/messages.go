@@ -34,8 +34,6 @@ const (
     MsgMetadata = 30
     MsgPageEvent = 31
     MsgInputEvent = 32
-    MsgClickEvent = 33
-    MsgResourceEvent = 35
     MsgCSSInsertRule = 37
     MsgCSSDeleteRule = 38
     MsgFetch = 39
@@ -943,78 +941,6 @@ func (msg *InputEvent) Decode() Message {
 
 func (msg *InputEvent) TypeID() int {
 	return 32
-}
-
-type ClickEvent struct {
-	message
-	MessageID uint64
-	Timestamp uint64
-	HesitationTime uint64
-	Label string
-	Selector string
-}
-
-func (msg *ClickEvent) Encode() []byte {
-	buf := make([]byte, 51+len(msg.Label)+len(msg.Selector))
-	buf[0] = 33
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.HesitationTime, buf, p)
-	p = WriteString(msg.Label, buf, p)
-	p = WriteString(msg.Selector, buf, p)
-	return buf[:p]
-}
-
-func (msg *ClickEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ClickEvent) TypeID() int {
-	return 33
-}
-
-type ResourceEvent struct {
-	message
-	MessageID uint64
-	Timestamp uint64
-	Duration uint64
-	TTFB uint64
-	HeaderSize uint64
-	EncodedBodySize uint64
-	DecodedBodySize uint64
-	URL string
-	Type string
-	Success bool
-	Method string
-	Status uint64
-}
-
-func (msg *ResourceEvent) Encode() []byte {
-	buf := make([]byte, 121+len(msg.URL)+len(msg.Type)+len(msg.Method))
-	buf[0] = 35
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Duration, buf, p)
-	p = WriteUint(msg.TTFB, buf, p)
-	p = WriteUint(msg.HeaderSize, buf, p)
-	p = WriteUint(msg.EncodedBodySize, buf, p)
-	p = WriteUint(msg.DecodedBodySize, buf, p)
-	p = WriteString(msg.URL, buf, p)
-	p = WriteString(msg.Type, buf, p)
-	p = WriteBoolean(msg.Success, buf, p)
-	p = WriteString(msg.Method, buf, p)
-	p = WriteUint(msg.Status, buf, p)
-	return buf[:p]
-}
-
-func (msg *ResourceEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ResourceEvent) TypeID() int {
-	return 35
 }
 
 type CSSInsertRule struct {
