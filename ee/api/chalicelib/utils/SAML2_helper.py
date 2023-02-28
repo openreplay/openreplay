@@ -8,8 +8,8 @@ from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from starlette.datastructures import FormData
 
 SAML2 = {
-    "strict": True,
-    "debug": True,
+    "strict": config("saml_strict", cast=bool, default=True),
+    "debug": config("saml_debug", cast=bool, default=True),
     "sp": {
         "entityId": config("SITE_URL") + "/api/sso/saml2/metadata/",
         "assertionConsumerService": {
@@ -21,8 +21,8 @@ SAML2 = {
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
-        "x509cert": "",
-        "privateKey": ""
+        "x509cert": config("sp_x509cert", default=""),
+        "privateKey": config("sp_key", default="")
     },
     "idp": None
 }
