@@ -130,6 +130,10 @@ export default class MetricStore {
 
     obj['metricValue'] = [];
 
+    if (value === TABLE) {
+      obj['metricOf'] = 'userId';
+    }
+
     if (value === TABLE || value === TIMESERIES) {
       obj['viewType'] = 'table';
     }
