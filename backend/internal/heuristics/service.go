@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"openreplay/backend/internal/config/heuristics"
-	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 )
@@ -33,16 +32,17 @@ func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.
 }
 
 func (h *heuristicsImpl) run() {
-	tick := time.Tick(10 * time.Second)
+	tick := time.Tick(15 * time.Second)
 	for {
 		select {
+		case evt := <-h.events.Events():
+			if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
+				log.Printf("can't send new event to queue: %s", err)
+			}
 		case <-tick:
-			h.events.IterateReadyMessages(func(sessionID uint64, readyMsg messages.Message) {
-				h.producer.Produce(h.cfg.TopicAnalytics, sessionID, readyMsg.Encode())
-			})
 			h.producer.Flush(h.cfg.ProducerTimeout)
 			h.consumer.Commit()
-			// TODO: builderMap.ClearOldSessions()
+			h.events.ClearOldSessions()
 		case msg := <-h.consumer.Rebalanced():
 			log.Println(msg)
 		default:

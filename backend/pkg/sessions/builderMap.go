@@ -13,18 +13,36 @@ const ForceDeleteTimeout = 30 * time.Minute
 type builderMap struct {
 	handlersFabric func() []handlers.MessageProcessor
 	sessions       map[uint64]*builder
+	events         chan Message
+	done           chan struct{}
 }
 
 type EventBuilder interface {
-	IterateReadyMessages(iter func(sessionID uint64, msg Message))
 	HandleMessage(msg Message)
 	ClearOldSessions()
+	Events() chan Message
 }
 
 func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) EventBuilder {
 	return &builderMap{
 		handlersFabric: handlersFabric,
 		sessions:       make(map[uint64]*builder),
+		events:         make(chan Message, 1024),
+		done:           make(chan struct{}),
+	}
+}
+
+func (m *builderMap) worker() {
+	tick := time.Tick(5 * time.Second)
+	for {
+		select {
+		case <-tick:
+			for sessID, evtBuilder := range m.sessions {
+				m.iterateSessionReadyMessages(sessID, evtBuilder)
+			}
+		case <-m.done:
+			return
+		}
 	}
 }
 
@@ -35,6 +53,10 @@ func (m *builderMap) getBuilder(sessionID uint64) *builder {
 		m.sessions[sessionID] = b
 	}
 	return b
+}
+
+func (m *builderMap) Events() chan Message {
+	return m.events
 }
 
 func (m *builderMap) HandleMessage(msg Message) {
@@ -56,7 +78,7 @@ func (m *builderMap) ClearOldSessions() {
 	}
 }
 
-func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, iter func(msg Message)) {
+func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder) {
 	if b.ended || b.lastSystemTime.Add(ForceDeleteTimeout).Before(time.Now()) {
 		for _, p := range b.processors {
 			if rm := p.Build(); rm != nil {
@@ -65,14 +87,8 @@ func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, i
 			}
 		}
 	}
-	b.iterateReadyMessages(iter)
+	b.iterateReadyMessages(m.events)
 	if b.ended {
 		delete(m.sessions, sessionID)
-	}
-}
-
-func (m *builderMap) IterateReadyMessages(iter func(sessionID uint64, msg Message)) {
-	for sessionID, session := range m.sessions {
-		m.iterateSessionReadyMessages(sessionID, session, func(msg Message) { iter(sessionID, msg) })
 	}
 }

@@ -25,9 +25,9 @@ func NewBuilder(sessionID uint64, handlers ...handlers.MessageProcessor) *builde
 	}
 }
 
-func (b *builder) iterateReadyMessages(iter func(msg Message)) {
+func (b *builder) iterateReadyMessages(ch chan Message) {
 	for _, readyMsg := range b.readyMsgs {
-		iter(readyMsg)
+		ch <- readyMsg
 	}
 	b.readyMsgs = nil
 }
