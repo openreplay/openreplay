@@ -193,9 +193,7 @@ func (conn *BatchSet) worker() {
 	for {
 		select {
 		case t := <-conn.workerTask:
-			start := time.Now()
 			conn.sendBatches(t)
-			log.Printf("pg batches dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-conn.done:
 			if len(conn.workerTask) > 0 {
 				for t := range conn.workerTask {

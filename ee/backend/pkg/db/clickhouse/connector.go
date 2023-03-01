@@ -147,9 +147,7 @@ func (c *connectorImpl) worker() {
 	for {
 		select {
 		case t := <-c.workerTask:
-			start := time.Now()
 			c.sendBulks(t)
-			log.Printf("ch bulks dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-c.done:
 			for t := range c.workerTask {
 				c.sendBulks(t)
