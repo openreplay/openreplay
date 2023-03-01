@@ -83,7 +83,7 @@ func NewConnector(url string) Connector {
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, query)
+	batch, err := NewBulk(c.conn, name, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -251,7 +251,7 @@ func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *mess
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID(),
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
 		msgType,
@@ -302,7 +302,7 @@ func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *message
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),
