@@ -8,7 +8,7 @@ type Message interface {
 	TypeID() int
 	Meta() *message
 	SessionID() uint64
-	MessageID() uint64
+	MsgID() uint64
 	Time() uint64
 }
 
@@ -74,7 +74,7 @@ func (m *message) SessionID() uint64 {
 	return m.batch.sessionID
 }
 
-func (m *message) MessageID() uint64 {
+func (m *message) MsgID() uint64 {
 	return m.Meta().Index
 }
 

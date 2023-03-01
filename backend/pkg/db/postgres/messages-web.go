@@ -63,7 +63,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Mou
 	}
 	var host, path string
 	host, path, _, _ = url.GetURLParts(e.Url)
-	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MessageID()), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
+	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
 	// Accumulate session updates and exec inside batch with another sql commands

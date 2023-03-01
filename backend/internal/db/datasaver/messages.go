@@ -35,7 +35,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 		return mi.pg.InsertIssueEvent(sessionID, &IssueEvent{
 			Type:          "custom",
 			Timestamp:     m.Time(),
-			MessageID:     m.MessageID(),
+			MessageID:     m.MsgID(),
 			ContextString: m.Name,
 			Payload:       m.Payload,
 		})

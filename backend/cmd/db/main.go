@@ -51,7 +51,7 @@ func main() {
 			msg = &messages.IssueEvent{
 				Type:          "custom",
 				Timestamp:     m.Time(),
-				MessageID:     m.MessageID(),
+				MessageID:     m.MsgID(),
 				ContextString: m.Name,
 				Payload:       m.Payload,
 			}
