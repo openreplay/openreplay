@@ -127,7 +127,7 @@ function LiveSessionList(props: Props) {
               <div className="text-center flex justify-center items-center flex-col">
                 <span>
                   Assist is the best way to support you users while they're browsing your site,
-                  {' '}through live replay, co-browsing and video conferencing capabilities. Learn More.{' '}
+                  {' '}through live replay, co-browsing and video conferencing capabilities. {' '}
                   <a
                     target="_blank"
                     className="link"
