@@ -74,7 +74,7 @@ spec:
               value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}'
             - name: S3_HOST
               {{- if contains "minio" .Values.global.s3.endpoint }}
-              value: '{{ .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
               {{- else}}
               value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
