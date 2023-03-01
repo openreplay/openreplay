@@ -77,7 +77,7 @@ func (f *CpuIssueDetector) Handle(message Message, timestamp uint64) Message {
 		// Update values
 		if f.startTimestamp == 0 {
 			f.startTimestamp = timestamp
-			f.startMessageID = message.MessageID()
+			f.startMessageID = message.MsgID()
 		}
 		if f.maxRate < cpuRate {
 			f.maxRate = cpuRate

@@ -4,8 +4,6 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-// move to heuristics
-
 const PageEventTimeout = 1 * 60 * 1000
 
 type pageEventBuilder struct {
@@ -26,7 +24,7 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    false,
-				MessageID: message.MessageID(),
+				MessageID: message.MsgID(),
 				Timestamp: timestamp,
 			}
 		} else {
@@ -35,7 +33,7 @@ func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    true,
-				MessageID: message.MessageID(),
+				MessageID: message.MsgID(),
 				Timestamp: timestamp,
 			}
 			return pageEvent

@@ -42,9 +42,9 @@ func (b *builder) checkSessionEnd(message Message) {
 }
 
 func (b *builder) handleMessage(m Message) {
-	if m.MessageID() < b.lastMessageID {
+	if m.MsgID() < b.lastMessageID {
 		// May happen in case of duplicated messages in kafka (if  `idempotence: false`)
-		log.Printf("skip message with wrong msgID, sessID: %d, msgID: %d, lastID: %d", b.sessionID, m.MessageID(), b.lastMessageID)
+		log.Printf("skip message with wrong msgID, sessID: %d, msgID: %d, lastID: %d", b.sessionID, m.MsgID(), b.lastMessageID)
 		return
 	}
 	if m.Time() <= 0 {
@@ -52,7 +52,7 @@ func (b *builder) handleMessage(m Message) {
 		case *IssueEvent, *PerformanceTrackAggr:
 			break
 		default:
-			log.Printf("skip message with incorrect timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, m.MessageID(), m.TypeID())
+			log.Printf("skip message with incorrect timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, m.MsgID(), m.TypeID())
 		}
 		return
 	}

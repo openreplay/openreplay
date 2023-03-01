@@ -16,7 +16,7 @@ func (f *NetworkIssueDetector) Handle(message Message, timestamp uint64) Message
 		if msg.Status >= 400 {
 			return &IssueEvent{
 				Type:          "bad_request",
-				MessageID:     message.MessageID(),
+				MessageID:     message.MsgID(),
 				Timestamp:     msg.Timestamp,
 				ContextString: msg.URL,
 			}

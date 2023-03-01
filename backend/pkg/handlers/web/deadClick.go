@@ -62,7 +62,7 @@ func (d *DeadClickDetector) Handle(message Message, timestamp uint64) Message {
 		}
 		d.lastMouseClick = msg
 		d.lastClickTimestamp = timestamp
-		d.lastMessageID = message.MessageID()
+		d.lastMessageID = message.MsgID()
 		return event
 	case *SetNodeAttribute,
 		*RemoveNodeAttribute,

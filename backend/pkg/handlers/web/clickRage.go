@@ -75,7 +75,7 @@ func (crd *ClickRageDetector) Handle(message Message, timestamp uint64) Message 
 		crd.lastTimestamp = timestamp
 		crd.lastLabel = msg.Label
 		crd.firstInARawTimestamp = timestamp
-		crd.firstInARawMessageId = message.MessageID()
+		crd.firstInARawMessageId = message.MsgID()
 		crd.countsInARow = 1
 		if crd.url == "" && msg.Url != "" {
 			crd.url = msg.Url

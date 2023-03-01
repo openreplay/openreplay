@@ -63,7 +63,7 @@ func (f *MemoryIssueDetector) Handle(message Message, timestamp uint64) Message 
 		if rate >= MEM_RATE_THRESHOLD {
 			if f.startTimestamp == 0 {
 				f.startTimestamp = timestamp
-				f.startMessageID = message.MessageID()
+				f.startMessageID = message.MsgID()
 			}
 			if f.rate < rate {
 				f.rate = rate
