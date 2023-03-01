@@ -21,7 +21,7 @@ SAML2 = {
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
-        "x509cert": config("sp_x509cert", default=""),
+        "x509cert": config("sp_crt", default=""),
         "privateKey": config("sp_key", default="")
     },
     "idp": None
