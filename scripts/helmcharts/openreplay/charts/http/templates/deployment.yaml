@@ -90,7 +90,7 @@ spec:
             - name: ASSETS_ORIGIN
             {{- if contains "minio" .Values.global.s3.endpoint }}
               # Local minio Installation
-              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}/{{.Values.global.s3.assetsBucket}}'
             {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
               # AWS S3
               # Ref: https://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
