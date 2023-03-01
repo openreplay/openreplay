@@ -3,6 +3,7 @@ package datasaver
 import (
 	"fmt"
 	"log"
+	. "openreplay/backend/pkg/messages"
 )
 
 func (mi *Saver) InsertMessage(msg Message) error {
@@ -24,7 +25,6 @@ func (mi *Saver) InsertMessage(msg Message) error {
 			}
 		}
 		return mi.pg.InsertIssueEvent(sessionID, m)
-	//TODO: message adapter (transformer) (at the level of pkg/message) for types: *IOSMetadata, *IOSIssueEvent and others
 
 	// Web
 	case *SessionStart:
