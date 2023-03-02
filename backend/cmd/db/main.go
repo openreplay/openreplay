@@ -56,6 +56,8 @@ func main() {
 				ContextString: m.Name,
 				Payload:       m.Payload,
 			}
+		case *messages.PageEvent:
+			log.Printf("page event, url: %s", m.URL)
 		}
 
 		// Just save session data into db without additional checks
