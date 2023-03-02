@@ -46,7 +46,10 @@ securityContext: {}
 
 env: {}
 backupEnv:
-  BACKUPS_TO_KEEP_LOCAL: "2"
+  API_LISTEN: "0.0.0.0:7171"
+  BACKUPS_TO_KEEP_LOCAL: "1"
+  CLICKHOUSE_HOST: "localhost"
+  CLICKHOUSE_PORT: "9000"
 # REMOTE_STORAGE=s3
 # S3_ACCESS_KEY=key
 # S3_SECRET_KEY=password
