@@ -38,6 +38,8 @@ func (h *heuristicsImpl) run() {
 		case evt := <-h.events.Events():
 			if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
 				log.Printf("can't send new event to queue: %s", err)
+			} else {
+				log.Printf("new event has been sent to db, type: %d, sess: %d", evt.TypeID(), evt.SessionID())
 			}
 		case <-tick:
 			h.producer.Flush(h.cfg.ProducerTimeout)
