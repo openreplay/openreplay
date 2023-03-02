@@ -2,6 +2,9 @@ migrationJob:
   podAnnotations:
     linkerd.io/inject: disabled
 
+migration:
+  env: {}
+
 redis: &redis
   tls:
     enabled: false
