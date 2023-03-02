@@ -14,7 +14,7 @@ tmp_dir=$(mktemp -d)
 [[ -d $OR_DIR ]] || {
   sudo mkdir $OR_DIR
 }
-export PATH=$PATH:/var/lib/openreplay
+export PATH=/var/lib/openreplay:$PATH
 
 tools=(
   zyedidia/eget

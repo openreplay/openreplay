@@ -39,6 +39,10 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: ENTERPRISE_EDITION_LICENSE
             value: "{{ .Values.global.enterpriseEditionLicense }}"
         command:
@@ -111,6 +115,10 @@ spec:
             {{- else }}
             value: '{{ .Values.global.postgresql.postgresqlPassword }}'
             {{- end}}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           {{- range $key, $val := .Values.global.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
@@ -131,6 +139,10 @@ spec:
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
           {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
@@ -168,6 +180,10 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PGHOST
@@ -194,6 +210,10 @@ spec:
       - name: vault-s3-upload
         env:
           {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
@@ -245,6 +265,10 @@ spec:
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
@@ -273,6 +297,10 @@ spec:
         image: bitnami/kafka:2.6.0-debian-10-r30
         env:
           {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
           - name: {{ $key }}
             value: '{{ $val }}'
           {{- end }}
