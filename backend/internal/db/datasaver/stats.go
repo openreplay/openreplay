@@ -13,9 +13,9 @@ func (si *Saver) InsertStats(session *Session, msg Message) error {
 	switch m := msg.(type) {
 	// Web
 	case *PerformanceTrackAggr:
-		return si.pg.InsertWebStatsPerformance(session.SessionID, m)
+		return si.pg.InsertWebStatsPerformance(m)
 	case *ResourceTiming:
-		return si.pg.InsertWebStatsResourceEvent(session.SessionID, m)
+		return si.pg.InsertWebStatsResourceEvent(m)
 	}
 	return nil
 }

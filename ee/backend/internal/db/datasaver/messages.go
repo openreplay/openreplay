@@ -3,7 +3,6 @@ package datasaver
 import (
 	"fmt"
 	"log"
-	. "openreplay/backend/pkg/messages"
 )
 
 func (mi *Saver) InsertMessage(msg Message) error {
@@ -11,7 +10,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:
-		if err := mi.pg.InsertMetadata(sessionID, m); err != nil {
+		if err := mi.pg.InsertMetadata(m); err != nil {
 			return fmt.Errorf("insert metadata err: %s", err)
 		}
 		return nil
@@ -24,17 +23,17 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				log.Printf("can't insert issue event into clickhouse: %s", err)
 			}
 		}
-		return mi.pg.InsertIssueEvent(sessionID, m)
+		return mi.pg.InsertIssueEvent(m)
 
 	// Web
 	case *SessionStart:
-		return mi.pg.HandleWebSessionStart(sessionID, m)
+		return mi.pg.HandleWebSessionStart(m)
 	case *SessionEnd:
-		return mi.pg.HandleWebSessionEnd(sessionID, m)
+		return mi.pg.HandleWebSessionEnd(m)
 	case *UserID:
-		return mi.pg.InsertWebUserID(sessionID, m)
+		return mi.pg.InsertWebUserID(m)
 	case *UserAnonymousID:
-		return mi.pg.InsertWebUserAnonymousID(sessionID, m)
+		return mi.pg.InsertWebUserAnonymousID(m)
 	case *CustomEvent:
 		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
@@ -44,15 +43,15 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				log.Printf("can't insert graphQL event into clickhouse: %s", err)
 			}
 		}
-		return mi.pg.InsertWebCustomEvent(sessionID, m)
+		return mi.pg.InsertWebCustomEvent(m)
 	case *MouseClick:
-		return mi.pg.InsertWebClickEvent(sessionID, m)
+		return mi.pg.InsertWebClickEvent(m)
 	case *InputEvent:
-		return mi.pg.InsertWebInputEvent(sessionID, m)
+		return mi.pg.InsertWebInputEvent(m)
 
 	// Unique Web messages
 	case *PageEvent:
-		return mi.pg.InsertWebPageEvent(sessionID, m)
+		return mi.pg.InsertWebPageEvent(m)
 	case *JSException:
 		return mi.pg.InsertWebJSException(m)
 	case *IntegrationEvent:
@@ -71,7 +70,7 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				}
 			}
 		}
-		return mi.pg.InsertWebNetworkRequest(sessionID, m)
+		return mi.pg.InsertWebNetworkRequest(m)
 	case *GraphQL:
 		session, err := mi.pg.Cache.GetSession(sessionID)
 		if err != nil {
@@ -81,32 +80,32 @@ func (mi *Saver) InsertMessage(msg Message) error {
 				log.Printf("can't insert graphQL event into clickhouse: %s", err)
 			}
 		}
-		return mi.pg.InsertWebGraphQL(sessionID, m)
+		return mi.pg.InsertWebGraphQL(m)
 	case *SetPageLocation:
-		return mi.pg.InsertSessionReferrer(sessionID, m.Referrer)
+		return mi.pg.InsertSessionReferrer(m.Referrer)
 
 		// IOS
 	case *IOSSessionStart:
-		return mi.pg.InsertIOSSessionStart(sessionID, m)
+		return mi.pg.InsertIOSSessionStart(m)
 	case *IOSSessionEnd:
-		return mi.pg.InsertIOSSessionEnd(sessionID, m)
+		return mi.pg.InsertIOSSessionEnd(m)
 	case *IOSUserID:
-		return mi.pg.InsertIOSUserID(sessionID, m)
+		return mi.pg.InsertIOSUserID(m)
 	case *IOSUserAnonymousID:
-		return mi.pg.InsertIOSUserAnonymousID(sessionID, m)
+		return mi.pg.InsertIOSUserAnonymousID(m)
 	case *IOSCustomEvent:
-		return mi.pg.InsertIOSCustomEvent(sessionID, m)
+		return mi.pg.InsertIOSCustomEvent(m)
 	case *IOSClickEvent:
-		return mi.pg.InsertIOSClickEvent(sessionID, m)
+		return mi.pg.InsertIOSClickEvent(m)
 	case *IOSInputEvent:
-		return mi.pg.InsertIOSInputEvent(sessionID, m)
+		return mi.pg.InsertIOSInputEvent(m)
 		// Unique IOS messages
 	case *IOSNetworkCall:
-		return mi.pg.InsertIOSNetworkCall(sessionID, m)
+		return mi.pg.InsertIOSNetworkCall(m)
 	case *IOSScreenEnter:
-		return mi.pg.InsertIOSScreenEnter(sessionID, m)
+		return mi.pg.InsertIOSScreenEnter(m)
 	case *IOSCrash:
-		return mi.pg.InsertIOSCrash(sessionID, m)
+		return mi.pg.InsertIOSCrash(m)
 
 	}
 	return nil // "Not implemented"

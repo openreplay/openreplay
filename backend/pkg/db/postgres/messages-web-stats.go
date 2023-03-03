@@ -5,7 +5,8 @@ import (
 	"openreplay/backend/pkg/url"
 )
 
-func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrackAggr) error {
+func (conn *Conn) InsertWebStatsPerformance(p *PerformanceTrackAggr) error {
+	sessionID := p.SessionID()
 	timestamp := (p.TimestampEnd + p.TimestampStart) / 2
 
 	sqlRequest := `
@@ -35,7 +36,8 @@ func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrac
 	return nil
 }
 
-func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceTiming) error {
+func (conn *Conn) InsertWebStatsResourceEvent(e *ResourceTiming) error {
+	sessionID := e.SessionID()
 	host, _, _, err := url.GetURLParts(e.URL)
 	if err != nil {
 		return err
