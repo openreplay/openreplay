@@ -397,7 +397,7 @@ export default class MessageManager {
         break;
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI
-        if (msg.initiator !== ResourceType.FETCH) {
+        if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
           this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
         }
         break;
