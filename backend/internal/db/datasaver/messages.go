@@ -1,6 +1,7 @@
 package datasaver
 
 import (
+	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -23,17 +24,10 @@ func (mi *Saver) InsertMessage(msg Message) error {
 	case *UserAnonymousID:
 		return mi.pg.InsertWebUserAnonymousID(m)
 	case *CustomEvent:
-		err := mi.pg.InsertWebCustomEvent(m)
-		if err != nil {
+		if err := mi.pg.InsertWebCustomEvent(m); err != nil {
 			return err
 		}
-		return mi.pg.InsertIssueEvent(&IssueEvent{
-			Type:          "custom",
-			Timestamp:     m.Time(),
-			MessageID:     m.MsgID(),
-			ContextString: m.Name,
-			Payload:       m.Payload,
-		})
+		return mi.pg.InsertIssueEvent(types.WrapCustomEvent(m))
 	case *MouseClick:
 		return mi.pg.InsertWebClickEvent(m)
 	case *InputEvent:
