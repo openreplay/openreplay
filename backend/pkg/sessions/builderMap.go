@@ -24,12 +24,14 @@ type EventBuilder interface {
 }
 
 func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) EventBuilder {
-	return &builderMap{
+	b := &builderMap{
 		handlersFabric: handlersFabric,
 		sessions:       make(map[uint64]*builder),
 		events:         make(chan Message, 1024),
 		done:           make(chan struct{}),
 	}
+	go b.worker()
+	return b
 }
 
 func (m *builderMap) worker() {
