@@ -12,29 +12,8 @@ function renderDefaultStatus() {
   return '2xx-3xx';
 }
 
-export function renderName(r: Record<string, any>) {
-  const { player } = React.useContext(PlayerContext);
-
-  return (
-    <div className="flex justify-between items-center grow-0 w-full">
-      <div>{r.operationName}</div>
-      <Button
-        variant="text"
-        className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
-        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          player.jump(r.time);
-        }}
-      >
-        Jump
-      </Button>
-    </div>
-  );
-}
-
 function GraphQL() {
   const { player, store } = React.useContext(PlayerContext);
-
   const { graphqlList: list, graphqlListNow: listNow, time, livePlay } = store.get();
 
   const defaultState = {
@@ -51,6 +30,24 @@ function GraphQL() {
   };
 
   const [state, setState] = React.useState(defaultState);
+
+  function renderName(r: Record<string, any>) {
+    return (
+      <div className="flex justify-between items-center grow-0 w-full">
+        <div>{r.operationName}</div>
+        <Button
+          variant="text"
+          className="right-0 text-xs uppercase p-2 color-gray-500 hover:color-teal"
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation();
+            player.jump(r.time);
+          }}
+        >
+          Jump
+        </Button>
+      </div>
+    );
+  }
 
   const filterList = (list: any, value: string) => {
     const filterRE = getRE(value, 'i');
