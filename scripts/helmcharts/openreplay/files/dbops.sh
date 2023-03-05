@@ -42,7 +42,7 @@ function migration() {
     migration_versions=(`for ver in ${all_versions[*]}; do if [[ $(normalise_version $ver) > $(normalise_version "${PREVIOUS_APP_VERSION}") ]]; then echo $ver; fi; done | sort -V`)
     echo "Migration version: ${migration_versions[*]}"
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
-    joined_migration_versions=$(IFS=, ; printf '%s\n' "${migration_versions[@]}" | tac | tr '\n' ' '; echo)
+    joined_migration_versions=$(IFS=, ; echo "${migration_versions[*]}")
     
     cd -
 
