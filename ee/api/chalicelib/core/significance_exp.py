@@ -580,10 +580,10 @@ def get_top_insights(filter_d, project_id):
     # Obtain the first part of the output
     stages_list = get_stages(stages, rows)
     # Obtain the second part of the output
-    n_critical_issues, issues_dict, total_drop_due_to_issues = get_issues(stages, rows,
-                                                                          first_stage=filter_d.get("firstStage"),
-                                                                          last_stage=filter_d.get("lastStage"),
-                                                                          drop_only=True)
+    total_drop_due_to_issues = get_issues(stages, rows,
+                                          first_stage=filter_d.get("firstStage"),
+                                          last_stage=filter_d.get("lastStage"),
+                                          drop_only=True)
     return stages_list, total_drop_due_to_issues
 
 
