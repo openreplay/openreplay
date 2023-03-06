@@ -12,6 +12,8 @@ import BottomBlock from '../BottomBlock/index';
 import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
+import logger from "App/logger";
+import { toJS } from 'mobx'
 
 function getActionsName(type: string) {
   switch (type) {
@@ -23,10 +25,19 @@ function getActionsName(type: string) {
   }
 }
 
+const storageDecodeKeys = {
+  [STORAGE_TYPES.REDUX]: ['state', 'action'],
+  [STORAGE_TYPES.NGRX]: ['state', 'action'],
+  [STORAGE_TYPES.VUEX]: ['state', 'mutation'],
+  [STORAGE_TYPES.ZUSTAND]: ['state', 'mutation'],
+  [STORAGE_TYPES.MOBX]: ['payload'],
+  [STORAGE_TYPES.NONE]: ['state, action', 'payload', 'mutation'],
+}
 interface Props {
   hideHint: (args: string) => void;
   hintIsHidden: boolean;
 }
+
 function Storage(props: Props) {
   const lastBtnRef = React.useRef<HTMLButtonElement>();
   const [showDiffs, setShowDiffs] = React.useState(false);
@@ -36,6 +47,24 @@ function Storage(props: Props) {
   const listNow = selectStorageListNow(state);
   const list = selectStorageList(state);
   const type = selectStorageType(state);
+
+  const decodeMessage = (msg: any) => {
+    const decoded = {};
+    const pureMSG = toJS(msg)
+    const keys = storageDecodeKeys[type];
+    try {
+      keys.forEach(key => {
+        if (pureMSG[key]) {
+          // @ts-ignore TODO: types for decoder
+          decoded[key] = player.decodeMessage(pureMSG[key]);
+        }
+      });
+    } catch (e) {
+      logger.error("Error on message decoding: ", e, pureMSG);
+      return null;
+    }
+    return { ...pureMSG, ...decoded };
+  }
 
   const focusNextButton = () => {
     if (lastBtnRef.current) {
@@ -106,27 +135,30 @@ function Storage(props: Props) {
     player.jump(list[listNow.length].time);
   };
 
-  const renderItem = (item: Record<string, any>, i: number, prevItem: Record<string, any>) => {
+  const renderItem = (item: Record<string, any>, i: number, prevItem?: Record<string, any>) => {
     let src;
     let name;
+
+    const prevItemD = prevItem ? decodeMessage(prevItem) : undefined
+    const itemD = decodeMessage(item)
 
     switch (type) {
       case STORAGE_TYPES.REDUX:
       case STORAGE_TYPES.NGRX:
-        src = item.action;
+        src = itemD.action;
         name = src && src.type;
         break;
       case STORAGE_TYPES.VUEX:
-        src = item.mutation;
+        src = itemD.mutation;
         name = src && src.type;
         break;
       case STORAGE_TYPES.MOBX:
-        src = item.payload;
+        src = itemD.payload;
         name = `@${item.type} ${src && src.type}`;
         break;
       case STORAGE_TYPES.ZUSTAND:
         src = null;
-        name = item.mutation.join('');
+        name = itemD.mutation.join('');
     }
 
     if (src !== null && !showDiffs) {
@@ -144,7 +176,7 @@ function Storage(props: Props) {
           </div>
         ) : (
           <>
-            {renderDiff(item, prevItem)}
+            {renderDiff(itemD, prevItemD)}
             <div style={{ flex: 2 }} className="flex pl-10 pt-2">
               <JSONTree
                 name={ensureString(name)}
@@ -160,11 +192,11 @@ function Storage(props: Props) {
           className="flex-1 flex gap-2 pt-2 items-center justify-end self-start"
         >
           {typeof item.duration === 'number' && (
-            <div className="font-size-12 color-gray-medium">{formatMs(item.duration)}</div>
+            <div className="font-size-12 color-gray-medium">{formatMs(itemD.duration)}</div>
           )}
           <div className="w-12">
             {i + 1 < listNow.length && (
-              <button className={stl.button} onClick={() => jump(item.time, item._index)}>
+              <button className={stl.button} onClick={() => player.jump(item.time)}>
                 {'JUMP'}
               </button>
             )}
@@ -281,7 +313,11 @@ function Storage(props: Props) {
                   {'Empty state.'}
                 </div>
               ) : (
-                <JSONTree collapsed={2} src={listNow.length === 0 ? list[0].state : listNow[listNow.length - 1].state} />
+                <JSONTree collapsed={2} src={
+                  listNow.length === 0
+                    ? decodeMessage(list[0]).state
+                    : decodeMessage(listNow[listNow.length - 1]).state}
+                />
               )}
             </div>
           )}
