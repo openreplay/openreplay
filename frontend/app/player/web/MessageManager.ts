@@ -107,7 +107,7 @@ export default class MessageManager {
 
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
-  private readonly decoder = new Decoder();
+  public readonly decoder = new Decoder();
   private readonly lists: Lists;
 
   private activityManager: ActivityManager | null = null;
@@ -406,39 +406,24 @@ export default class MessageManager {
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.Redux:
-        decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log('redux', decoded)
-        if (decoded != null) {
-          this.lists.lists.redux.append(decoded);
-        }
+        logger.log('redux', msg)
+        this.lists.lists.redux.append(msg);
         break;
       case MType.NgRx:
-        decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log('ngrx', decoded)
-        if (decoded != null) {
-          this.lists.lists.ngrx.append(decoded);
-        }
+        logger.log('ngrx', msg)
+        this.lists.lists.ngrx.append(msg);
         break;
       case MType.Vuex:
-        decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
-        logger.log('vuex', decoded)
-        if (decoded != null) {
-          this.lists.lists.vuex.append(decoded);
-        }
+        logger.log('vuex', msg)
+        this.lists.lists.vuex.append(msg);
         break;
       case MType.Zustand:
-        decoded = this.decodeStateMessage(msg, ["state", "mutation"])
-        logger.log('zustand', decoded)
-        if (decoded != null) {
-          this.lists.lists.zustand.append(decoded)
-        }
+        logger.log('zustand', msg)
+        this.lists.lists.zustand.append(msg)
+        break
       case MType.MobX:
-        decoded = this.decodeStateMessage(msg, ["payload"]);
-        logger.log('mobx', decoded)
-
-        if (decoded != null) {
-          this.lists.lists.mobx.append(decoded);
-        }
+        logger.log('mobx', msg)
+        this.lists.lists.mobx.append(msg);
         break;
       case MType.GraphQl:
         this.lists.lists.graphql.append(msg);
