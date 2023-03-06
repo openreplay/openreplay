@@ -26,11 +26,7 @@ type saverImpl struct {
 }
 
 func New(cfg *db.Config, pg *cache.PGCache) Saver {
-	s := &saverImpl{
-		cfg:      cfg,
-		pg:       pg,
-		ch:       nil,
-		producer: nil}
+	s := &saverImpl{cfg: cfg, pg: pg}
 	s.init()
 	return s
 }
