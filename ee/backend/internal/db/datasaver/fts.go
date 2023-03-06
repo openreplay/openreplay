@@ -126,7 +126,7 @@ func (s *saverImpl) sendToFTS(msg messages.Message) {
 		log.Printf("can't marshal json for quickwit: %s", err)
 	} else {
 		if len(event) > 0 {
-			if err := s.producer.Produce(s.topic, msg.SessionID(), event); err != nil {
+			if err := s.producer.Produce(s.cfg.QuickwitTopic, msg.SessionID(), event); err != nil {
 				log.Printf("can't send event to quickwit: %s", err)
 			}
 		}
