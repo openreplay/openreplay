@@ -3,10 +3,10 @@ package datasaver
 import (
 	"errors"
 	"log"
-	"openreplay/backend/pkg/db/clickhouse"
 
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/pkg/db/cache"
+	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
