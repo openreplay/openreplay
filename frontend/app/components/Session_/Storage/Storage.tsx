@@ -50,7 +50,7 @@ function Storage(props: Props) {
 
   const decodeMessage = (msg: any) => {
     const decoded = {};
-    const pureMSG = toJS(msg)
+    const pureMSG = { ...msg }
     const keys = storageDecodeKeys[type];
     try {
       keys.forEach(key => {
