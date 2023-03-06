@@ -39,16 +39,12 @@ func (s *saverImpl) Handle(msg Message) {
 	if msg.TypeID() == MsgCustomEvent {
 		defer s.Handle(types.WrapCustomEvent(msg.(*CustomEvent)))
 	}
-
-	// Just save session data into db without additional checks
 	if err := s.handleMessage(msg); err != nil {
 		if !postgres.IsPkeyViolation(err) {
 			log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
 		}
 		return
 	}
-
-	// Save statistics to db
 	if err := s.handleExtraMessage(msg); err != nil {
 		log.Printf("Stats Insertion Error %v; Session: %d, Message: %v", err, msg.SessionID(), msg)
 	}
@@ -110,11 +106,9 @@ func (s *saverImpl) handleMessage(msg Message) error {
 }
 
 func (s *saverImpl) Commit() error {
-	// Commit collected batches and bulks of information to PG
 	if s.pg != nil {
 		s.pg.Commit()
 	}
-	// Commit collected batches of information to CH
 	if s.ch != nil {
 		s.ch.Commit()
 	}

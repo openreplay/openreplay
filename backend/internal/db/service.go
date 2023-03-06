@@ -2,11 +2,12 @@ package db
 
 import (
 	"log"
+	"time"
+
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/internal/service"
 	"openreplay/backend/pkg/queue/types"
-	"time"
 )
 
 type dbImpl struct {
@@ -15,19 +16,14 @@ type dbImpl struct {
 	saver    datasaver.Saver
 }
 
-func New(cfg *db.Config, c types.Consumer, s datasaver.Saver) service.Interface {
-	service := &dbImpl{
+func New(cfg *db.Config, consumer types.Consumer, saver datasaver.Saver) service.Interface {
+	s := &dbImpl{
 		cfg:      cfg,
-		consumer: c,
-		saver:    s,
+		consumer: consumer,
+		saver:    saver,
 	}
-	go service.run()
-	return service
-}
-
-func (d *dbImpl) commit() {
-	d.saver.Commit()
-	d.consumer.Commit()
+	go s.run()
+	return s
 }
 
 func (d *dbImpl) run() {
@@ -44,6 +40,11 @@ func (d *dbImpl) run() {
 			}
 		}
 	}
+}
+
+func (d *dbImpl) commit() {
+	d.saver.Commit()
+	d.consumer.Commit()
 }
 
 func (d *dbImpl) Stop() {
