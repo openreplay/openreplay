@@ -65,6 +65,12 @@ function Storage(props: Props) {
     return { ...pureMSG, ...decoded };
   }
 
+  const decodedList = React.useMemo(() => {
+    return listNow.map(msg => {
+      return decodeMessage(msg)
+    })
+  }, [listNow.length])
+
   const focusNextButton = () => {
     if (lastBtnRef.current) {
       lastBtnRef.current.focus();
@@ -138,8 +144,8 @@ function Storage(props: Props) {
     let src;
     let name;
 
-    const prevItemD = prevItem ? decodeMessage(prevItem) : undefined
-    const itemD = decodeMessage(item)
+    const itemD = item
+    const prevItemD = prevItem ? prevItem : undefined
 
     switch (type) {
       case STORAGE_TYPES.REDUX:
@@ -322,8 +328,8 @@ function Storage(props: Props) {
           )}
           <div className="flex" style={{ width: showStore ? '75%' : '100%' }}>
             <Autoscroll className="ph-10">
-              {listNow.map((item: Record<string, any>, i: number) =>
-                renderItem(item, i, i > 0 ? listNow[i - 1] : undefined)
+              {decodedList.map((item: Record<string, any>, i: number) =>
+                renderItem(item, i, i > 0 ? decodedList[i - 1] : undefined)
               )}
             </Autoscroll>
           </div>
@@ -341,3 +347,47 @@ export default connect(
     hideHint,
   }
 )(observer(Storage));
+
+
+/**
+ * TODO: compute diff and only decode the required parts
+ * WIP example
+ * function useStorageDecryptedList(list: Record<string, any>[], type: string, player: IWebPlayer) {
+ *   const [decryptedList, setDecryptedList] = React.useState(list);
+ *   const [listLength, setLength] = React.useState(list.length)
+ *
+ *   const decodeMessage = (msg: any, type: StorageType) => {
+ *     const decoded = {};
+ *     const pureMSG = { ...msg }
+ *     const keys = storageDecodeKeys[type];
+ *     try {
+ *       keys.forEach(key => {
+ *         if (pureMSG[key]) {
+ *           // @ts-ignore TODO: types for decoder
+ *           decoded[key] = player.decodeMessage(pureMSG[key]);
+ *         }
+ *       });
+ *     } catch (e) {
+ *       logger.error("Error on message decoding: ", e, pureMSG);
+ *       return null;
+ *     }
+ *     return { ...pureMSG, ...decoded };
+ *   }
+ *
+ *   React.useEffect(() => {
+ *     if (list.length !== listLength) {
+ *       const last = list[list.length - 1]._index;
+ *       let diff;
+ *       if (last < decryptedList[decryptedList.length - 1]._index) {
+ *
+ *       }
+ *       diff = list.filter(item => !decryptedList.includes(i => i._index === item._index))
+ *       const decryptedDiff = diff.map(item => {
+ *         return player.decodeMessage(item)
+ *       })
+ *       const result =
+ *     }
+ *   }, [list.length])
+ * }
+ *
+ * */
