@@ -42,6 +42,8 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 	)
+
+	// Run service and wait for TERM signal
 	service := heuristics.New(cfg, producer, consumer, eventBuilder)
 	log.Printf("Heuristics service started\n")
 	terminator.Wait(service)

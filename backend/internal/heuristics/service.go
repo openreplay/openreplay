@@ -5,13 +5,10 @@ import (
 	"time"
 
 	"openreplay/backend/internal/config/heuristics"
+	"openreplay/backend/internal/service"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/sessions"
 )
-
-type Heuristics interface {
-	Stop()
-}
 
 type heuristicsImpl struct {
 	cfg      *heuristics.Config
@@ -20,7 +17,7 @@ type heuristicsImpl struct {
 	events   sessions.EventBuilder
 }
 
-func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.EventBuilder) Heuristics {
+func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.EventBuilder) service.Interface {
 	s := &heuristicsImpl{
 		cfg:      cfg,
 		producer: p,

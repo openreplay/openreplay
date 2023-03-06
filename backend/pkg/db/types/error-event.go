@@ -122,11 +122,13 @@ func (e *ErrorEvent) ID(projectID uint32) string {
 }
 
 func WrapCustomEvent(m *CustomEvent) *IssueEvent {
-	return &IssueEvent{
+	msg := &IssueEvent{
 		Type:          "custom",
 		Timestamp:     m.Time(),
 		MessageID:     m.MsgID(),
 		ContextString: m.Name,
 		Payload:       m.Payload,
 	}
+	msg.Meta().SetMeta(m.Meta())
+	return msg
 }
