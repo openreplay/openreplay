@@ -64,7 +64,6 @@ func (b *builder) handleMessage(m Message) {
 	for _, p := range b.processors {
 		if rm := p.Handle(m, b.timestamp); rm != nil {
 			rm.Meta().SetMeta(m.Meta())
-			log.Printf("new event, msgType: %d, sessID: %d", rm.TypeID(), rm.SessionID())
 			b.readyMsgs = append(b.readyMsgs, rm)
 		}
 	}
