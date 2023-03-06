@@ -1,4 +1,5 @@
 from utils.ch_client import ClickHouseClient
+from utils.df_utils import _add_to_dict
 import numpy as np
 
 
@@ -14,15 +15,15 @@ def get_training_database(user_id=None):
     n1, n2 = len(x1), len(x2)
     for i in range(n1):
         x = x1[i]
-        __add_to_dict(x.pop('project_id'), i, X_project_ids)
-        __add_to_dict(x.pop('session_id'), i, X_sessions_ids)
-        __add_to_dict(x.pop('user_id'), i, X_users_ids)
+        _add_to_dict(x.pop('project_id'), i, X_project_ids)
+        _add_to_dict(x.pop('session_id'), i, X_sessions_ids)
+        _add_to_dict(x.pop('user_id'), i, X_users_ids)
         _X.append(list(x.values()))
     for i in range(n2):
         x = x2[i]
-        __add_to_dict(x.pop('project_id'), i+n1, X_project_ids)
-        __add_to_dict(x.pop('session_id'), i+n1, X_sessions_ids)
-        __add_to_dict(x.pop('user_id'), i+n1, X_users_ids)
+        _add_to_dict(x.pop('project_id'), i+n1, X_project_ids)
+        _add_to_dict(x.pop('session_id'), i+n1, X_sessions_ids)
+        _add_to_dict(x.pop('user_id'), i+n1, X_users_ids)
         _X.append(list(x.values()))
     _Y = np.array([1]*n1+[0]*n2)
     return np.array(_X), np.array(_Y),\
@@ -122,13 +123,6 @@ def ch_features(with_issues=False):
     return z, y, None
 
 
-def __add_to_dict(element, index, dictionary):
-    if element not in dictionary.keys():
-        dictionary[element] = [index]
-    else:
-        dictionary[element].append(index)
-
-
 def dataset(test=True, selection='viewed'):
     if not test:
         X = get_sessions()
@@ -140,9 +134,9 @@ def dataset(test=True, selection='viewed'):
         _X = list()
         for i in range(len(X)):
             x = X[i]
-            __add_to_dict(x.pop('project_id'), i, X_project_ids)
-            __add_to_dict(x.pop('session_id'), i, X_sessions_ids)
-            __add_to_dict(x.pop('user_id'), i, X_users_ids)
+            _add_to_dict(x.pop('project_id'), i, X_project_ids)
+            _add_to_dict(x.pop('session_id'), i, X_sessions_ids)
+            _add_to_dict(x.pop('user_id'), i, X_users_ids)
             _X.append(list(x.values()))
 
         return np.array(_X), None, \
@@ -160,9 +154,9 @@ def dataset(test=True, selection='viewed'):
 
         for i in range(len(X)):
             x = X[i]
-            __add_to_dict(x.pop('project_id'), i, X_project_ids)
-            __add_to_dict(x.pop('session_id'), i, X_sessions_ids)
-            __add_to_dict(x.pop('user_id'), i, X_users_ids)
+            _add_to_dict(x.pop('project_id'), i, X_project_ids)
+            _add_to_dict(x.pop('session_id'), i, X_sessions_ids)
+            _add_to_dict(x.pop('user_id'), i, X_users_ids)
             _X.append(list(x.values()))
 
         Y_project_ids = dict()
@@ -171,9 +165,9 @@ def dataset(test=True, selection='viewed'):
 
         for i in range(len(Y[selection])):
             y = Y[selection][i]
-            __add_to_dict(y.pop('project_id'), i, Y_project_ids)
-            __add_to_dict(y.pop('session_id'), i, Y_sessions_ids)
-            __add_to_dict(y.pop('user_id'), i, Y_users_ids)
+            _add_to_dict(y.pop('project_id'), i, Y_project_ids)
+            _add_to_dict(y.pop('session_id'), i, Y_sessions_ids)
+            _add_to_dict(y.pop('user_id'), i, Y_users_ids)
             _Y.append(list(y.values()))
 
         return np.array(_X), np.array(_Y),\
