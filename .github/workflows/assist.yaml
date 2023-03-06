@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - api-*
     paths:
       - "utilities/**"
       - "!utilities/.gitignore"
