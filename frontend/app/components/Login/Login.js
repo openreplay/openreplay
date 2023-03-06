@@ -40,7 +40,6 @@ class Login extends React.Component {
     const jwt = params.get('jwt');
     if (jwt) {
       this.props.setJwt(jwt);
-      window.location.href = '/';
     }
   }
 
