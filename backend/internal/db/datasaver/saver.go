@@ -1,7 +1,6 @@
 package datasaver
 
 import (
-	"errors"
 	"log"
 
 	"openreplay/backend/internal/config/db"
@@ -49,27 +48,9 @@ func (s *saverImpl) Handle(msg Message) {
 		return
 	}
 
-	// Get sessionID
-	var (
-		session *types.Session
-		err     error
-	)
-	if msg.TypeID() == MsgSessionEnd {
-		session, err = s.pg.GetSession(msg.SessionID())
-	} else {
-		session, err = s.pg.Cache.GetSession(msg.SessionID())
-	}
-	if session == nil {
-		if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
-			log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
-		}
-		return
-	}
-
 	// Save statistics to db
-	err = s.handleExtraMessage(msg)
-	if err != nil {
-		log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
+	if err := s.handleExtraMessage(msg); err != nil {
+		log.Printf("Stats Insertion Error %v; Session: %d, Message: %v", err, msg.SessionID(), msg)
 	}
 	return
 }

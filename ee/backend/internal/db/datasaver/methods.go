@@ -1,9 +1,10 @@
 package datasaver
 
 import (
-	"fmt"
+	"errors"
 	"log"
 
+	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/clickhouse"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
@@ -27,9 +28,20 @@ func (s *saverImpl) handleExtraMessage(msg Message) error {
 	s.sendToFTS(msg)
 
 	// Get session data
-	session, err := s.pg.Cache.GetSession(msg.SessionID())
-	if err != nil {
-		return fmt.Errorf("can't get session info for CH: %s", err)
+	var (
+		session *types.Session
+		err     error
+	)
+	if msg.TypeID() == MsgSessionEnd {
+		session, err = s.pg.GetSession(msg.SessionID())
+	} else {
+		session, err = s.pg.Cache.GetSession(msg.SessionID())
+	}
+	if session == nil {
+		if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
+			log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, msg.SessionID(), msg)
+		}
+		return err
 	}
 
 	// Handle message
