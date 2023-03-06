@@ -13,7 +13,6 @@ import DiffRow from './DiffRow';
 import cn from 'classnames';
 import stl from './storage.module.css';
 import logger from "App/logger";
-import { toJS } from 'mobx'
 
 function getActionsName(type: string) {
   switch (type) {
