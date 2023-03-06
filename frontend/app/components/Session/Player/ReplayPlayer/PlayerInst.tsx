@@ -68,9 +68,6 @@ function Player(props: IProps) {
       playerContext.player.attach(parentElement);
       setAttached(true)
     }
-    if (isAttached && isReady) {
-      playerContext.player.play();
-    }
   }, [isReady]);
 
   React.useEffect(() => {
