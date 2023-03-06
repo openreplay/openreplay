@@ -86,7 +86,7 @@ export default class WebPlayer extends Player {
 
   // delayed message decoding for state plugins
   decodeMessage = (msg: Message) => {
-    return this.messageManager.decoder.decode(msg)
+    return this.messageManager.decodeMessage(msg)
   }
 
   // Inspector & marker

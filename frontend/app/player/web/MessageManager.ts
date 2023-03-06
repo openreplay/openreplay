@@ -463,6 +463,10 @@ export default class MessageManager {
     this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
   }
 
+  decodeMessage(msg: Message) {
+    return this.decoder.decode(msg)
+  }
+
   private setSize({ height, width }: { height: number, width: number }) {
     this.screen.scale({ height, width });
     this.state.update({ width, height });
