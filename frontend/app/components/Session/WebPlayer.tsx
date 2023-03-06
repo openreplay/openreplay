@@ -70,7 +70,8 @@ function WebPlayer(props: any) {
     if (showNoteModal) {
       contextValue.player.pause()
     }
-    if (activeTab !== 'Click Map' && !showNoteModal && isPlayerReady) {
+
+    if (activeTab === '' && !showNoteModal && isPlayerReady) {
      contextValue.player && contextValue.player.play()
     }
   }, [activeTab, isPlayerReady, showNoteModal])
