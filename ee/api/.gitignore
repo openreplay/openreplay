@@ -264,5 +264,6 @@ Pipfile.lock
 /app_alerts.py
 /build_alerts.sh
 /build_crons.sh
+/routers/subs/health.py
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

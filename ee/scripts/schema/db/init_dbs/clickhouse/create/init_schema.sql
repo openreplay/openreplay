@@ -1,3 +1,4 @@
+CREATE OR REPLACE FUNCTION openreplay_version AS() -> 'v1.11.0-ee';
 CREATE DATABASE IF NOT EXISTS experimental;
 
 CREATE TABLE IF NOT EXISTS experimental.autocomplete

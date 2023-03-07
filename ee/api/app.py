@@ -18,7 +18,7 @@ from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
 from routers.crons import ee_crons
 from routers.subs import insights, metrics, v1_api_ee
-from routers.subs import v1_api
+from routers.subs import v1_api, health
 
 app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -68,6 +68,9 @@ app.include_router(metrics.app)
 app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
 app.include_router(v1_api_ee.app_apikey)
+app.include_router(health.public_app)
+app.include_router(health.app)
+app.include_router(health.app_apikey)
 
 loglevel = config("LOGLEVEL", default=logging.INFO)
 print(f">Loglevel set to: {loglevel}")

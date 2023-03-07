@@ -78,6 +78,7 @@ rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./schemas.py
+rm -rf ./routers/subs/health.py
 rm -rf ./routers/subs/v1_api.py
 #exp rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/performance_event.py
