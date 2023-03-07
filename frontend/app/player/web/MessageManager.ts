@@ -211,14 +211,14 @@ export default class MessageManager {
         const sorted = msgs.sort((m1, m2) => m1.time - m2.time)
 
         let indx = sorted[0]._index
-        let counter = 0
+        let outOfOrderCounter = 0
         sorted.forEach(msg => {
-          if (indx > msg._index) counter++
+          if (indx > msg._index) outOfOrderCounter++
           else indx = msg._index
           this.distributeMessage(msg, msg._index)
         })
 
-        if (counter > 0) console.warn("Unsorted mob file, error count: ", counter)
+        if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
         logger.info("Messages count: ", msgs.length, sorted, file)
 
         this._sortMessagesHack(msgs)
@@ -236,7 +236,7 @@ export default class MessageManager {
       // EFS fallback
       .catch((e) =>
         requestEFSDom(this.session.sessionId)
-          .then(createNewParser(false))
+          .then(createNewParser(false, 'domEFS'))
       )
       .then(this.onFileReadSuccess)
       .catch(this.onFileReadFailed)
@@ -249,7 +249,7 @@ export default class MessageManager {
     // EFS fallback
     .catch(() =>
       requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser(false, 'devtools'))
+        .then(createNewParser(false, 'devtoolsEFS'))
     )
     .then(() => {
       this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
@@ -416,23 +416,18 @@ export default class MessageManager {
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.Redux:
-        // logger.log('redux', msg)
         this.lists.lists.redux.append(msg);
         break;
       case MType.NgRx:
-        logger.log('ngrx', msg)
         this.lists.lists.ngrx.append(msg);
         break;
       case MType.Vuex:
-        // logger.log('vuex', msg)
         this.lists.lists.vuex.append(msg);
         break;
       case MType.Zustand:
-        logger.log('zustand', msg)
         this.lists.lists.zustand.append(msg)
         break
       case MType.MobX:
-        logger.log('mobx', msg)
         this.lists.lists.mobx.append(msg);
         break;
       case MType.GraphQl:
