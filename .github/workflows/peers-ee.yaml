@@ -55,7 +55,7 @@ jobs:
         ENVIRONMENT: staging
       run: |
         skip_security_checks=${{ github.event.inputs.skip_security_checks }}
-        cd api
+        cd peers
         PUSH_IMAGE=0 bash -x ./build.sh ee
         [[ "x$skip_security_checks" == "xtrue" ]]  || {
           curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
