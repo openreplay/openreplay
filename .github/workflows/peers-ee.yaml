@@ -11,7 +11,7 @@ on:
       - "!peers/.gitignore"
       - "!peers/*-dev.sh"
 
-name: Build and Deploy Peers
+name: Build and Deploy Peers EE
 
 jobs:
   deploy:
@@ -48,13 +48,25 @@ jobs:
     - name: Deploy to kubernetes
       run: |
         cd scripts/helmcharts/
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.EE_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\" #g" vars.yaml
-        sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.EE_MINIO_SECRET_KEY }}\" #g" vars.yaml
-        sed -i "s#domain_name.*#domain_name: \"ee.openreplay.com\" #g" vars.yaml
-        sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
-        sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-        bash kube-install.sh --app peers
+
+        ## Update secerts
+        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
+        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
+
+        # Update changed image tag
+        sed -i "/peers/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
+        cat /tmp/image_override.yaml
+        # Deploy command
+        mv openreplay/charts/{ingress-nginx,peers,quickwit} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,peers,quickwit} openreplay/charts/
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
