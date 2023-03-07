@@ -1,3 +1,6 @@
+from urllib.parse import urlparse
+
+import redis
 import requests
 from decouple import config
 
@@ -65,7 +68,21 @@ def __not_supported():
     return {"errors": ["not supported"]}
 
 
-def check_be_service(service_name):
+def __always_healthy():
+    return {
+        "health": True,
+        "details": {}
+    }
+
+
+def __always_healthy_with_version():
+    return {
+        "health": True,
+        "details": {"version": config("version_number", default="unknown")}
+    }
+
+
+def __check_be_service(service_name):
     def fn():
         fail_response = {
             "health": False,
@@ -87,7 +104,6 @@ def check_be_service(service_name):
         except Exception as e:
             print("!! Issue getting storage-health response")
             print(str(e))
-            print("expected JSON, received:")
             try:
                 print(results.text)
                 fail_response["details"]["errors"].append(results.text)
@@ -103,32 +119,61 @@ def check_be_service(service_name):
     return fn
 
 
+def __check_redis():
+    fail_response = {
+        "health": False,
+        "details": {"errors": ["server health-check failed"]}
+    }
+    if config("REDIS_STRING", default=None) is None:
+        fail_response["details"]["errors"].append("REDIS_STRING not defined in env-vars")
+        return fail_response
+
+    try:
+        u = urlparse(config("REDIS_STRING"))
+        r = redis.Redis(host=u.hostname, port=u.port, socket_timeout=2)
+        r.ping()
+    except Exception as e:
+        print("!! Issue getting assist-health response")
+        print(str(e))
+        fail_response["details"]["errors"].append(str(e))
+        return fail_response
+
+    return {
+        "health": True,
+        "details": {"version": r.execute_command('INFO')['redis_version']}
+    }
+
+
+def __check_assist():
+    pass
+
+
 def get_health():
     health_map = {
         "databases": {
             "postgres": __check_database_pg
         },
         "ingestionPipeline": {
-            "redis": __not_supported
+            "redis": __check_redis
         },
         "backendServices": {
-            "alerts": check_be_service("alerts"),
-            "assets": check_be_service("assets"),
-            "assist": check_be_service("assist"),
-            "chalice": check_be_service("chalice"),
-            "db": check_be_service("db"),
-            "ender": check_be_service("ender"),
-            "frontend": check_be_service("frontend"),
-            "heuristics": check_be_service("heuristics"),
-            "http": check_be_service("http"),
-            "ingress-nginx": check_be_service("ingress-nginx"),
-            "integrations": check_be_service("integrations"),
-            "peers": check_be_service("peers"),
-            "quickwit": check_be_service("quickwit"),
-            "sink": check_be_service("sink"),
-            "sourcemapreader": check_be_service("sourcemapreader"),
-            "storage": check_be_service("storage"),
-            "utilities": check_be_service("utilities")
+            "alerts": __check_be_service("alerts"),
+            "assets": __check_be_service("assets"),
+            "assist": __check_assist,
+            "chalice": __always_healthy_with_version,
+            "db": __check_be_service("db"),
+            "ender": __check_be_service("ender"),
+            "frontend": __check_be_service("frontend"),
+            "heuristics": __check_be_service("heuristics"),
+            "http": __check_be_service("http"),
+            "ingress-nginx": __always_healthy,
+            "integrations": __check_be_service("integrations"),
+            "peers": __check_be_service("peers"),
+            "quickwit": __check_be_service("quickwit"),
+            "sink": __check_be_service("sink"),
+            "sourcemapreader": __check_be_service("sourcemapreader"),
+            "storage": __check_be_service("storage"),
+            "utilities": __check_be_service("utilities")
         },
         # "overall": {
         #   "health": "na",
