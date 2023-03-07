@@ -1,3 +1,7 @@
+## 5.0.1
+
+- Default text input mode is now Obscured
+
 ## 5.0.0
 
 - Added "tel" to supported input types
