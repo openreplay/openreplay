@@ -416,7 +416,7 @@ export default class MessageManager {
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.Redux:
-        logger.log('redux', msg)
+        // logger.log('redux', msg)
         this.lists.lists.redux.append(msg);
         break;
       case MType.NgRx:
@@ -424,7 +424,7 @@ export default class MessageManager {
         this.lists.lists.ngrx.append(msg);
         break;
       case MType.Vuex:
-        logger.log('vuex', msg)
+        // logger.log('vuex', msg)
         this.lists.lists.vuex.append(msg);
         break;
       case MType.Zustand:
