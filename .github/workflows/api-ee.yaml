@@ -5,7 +5,7 @@ on:
       skip_security_checks:
         description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
         required: false
-        default: 'false'
+        default: 'true'
   push:
     branches:
       - dev
