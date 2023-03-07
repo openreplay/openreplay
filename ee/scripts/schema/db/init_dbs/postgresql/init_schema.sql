@@ -253,7 +253,7 @@ $$
                   "maskEmails": true,
                   "sampleRate": 33,
                   "maskNumbers": false,
-                  "defaultInputMode": "plain"
+                  "defaultInputMode": "obscured"
                 }'::jsonb,
                 first_recorded_session_at timestamp without time zone NULL            DEFAULT NULL,
                 sessions_last_check_at    timestamp without time zone NULL            DEFAULT NULL,
