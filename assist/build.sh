@@ -16,20 +16,20 @@ check_prereq() {
 }
 
 function build_api(){
-    destination="_utilities"
+    destination="_assist"
     [[ $1 == "ee" ]] && {
-        destination="_utilities_ee"
+        destination="_assist_ee"
     }
-    cp -R ../utilities ../${destination}
+    cp -R ../assist ../${destination}
     cd ../${destination}
 
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
-        cp -rf ../ee/utilities/* ./
+        cp -rf ../ee/assist/* ./
     }
     docker build -f ./Dockerfile --build-arg GIT_SHA=$git_sha -t ${DOCKER_REPO:-'local'}/assist:${image_tag} .
 
-    cd ../utilities
+    cd ../assist
     rm -rf ../${destination}
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/assist:${image_tag}
