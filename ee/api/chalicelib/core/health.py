@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 import redis
 import requests
 from decouple import config
+import kafka
 
 from chalicelib.utils import pg_client, ch_client
 
@@ -133,7 +134,7 @@ def __check_redis():
         r = redis.Redis(host=u.hostname, port=u.port, socket_timeout=2)
         r.ping()
     except Exception as e:
-        print("!! Issue getting assist-health response")
+        print("!! Issue getting redis-health response")
         print(str(e))
         fail_response["details"]["errors"].append(str(e))
         return fail_response
@@ -156,7 +157,7 @@ def get_health():
         },
         "ingestionPipeline": {
             "redis": __check_redis,
-            "kafka": __not_supported
+            "kafka": __check_kafka
         },
         "backendServices": {
             "alerts": __check_be_service("alerts"),
@@ -219,4 +220,29 @@ def __check_database_ch():
 
 
 def __check_kafka():
-    pass
+    fail_response = {
+        "health": False,
+        "details": {"errors": ["server health-check failed"]}
+    }
+    if config("KAFKA_SERVERS", default=None) is None:
+        fail_response["details"]["errors"].append("KAFKA_SERVERS not defined in env-vars")
+        return fail_response
+
+    try:
+        # consumer = kafka.KafkaConsumer(group_id='test', bootstrap_servers=[config("KAFKA_SERVERS")])
+        # topics = consumer.topics()
+        #
+        # if not topics:
+        #     raise RuntimeError()
+        client =kafka.KafkaClient(bootstrap_servers=[config("KAFKA_SERVERS")])
+    except Exception as e:
+        print("!! Issue getting kafka-health response")
+        print(str(e))
+        fail_response["details"]["errors"].append(str(e))
+        return fail_response
+
+    return {
+        "health": True,
+        "details": {"version": r.execute_command('INFO')['redis_version']}
+    }
+

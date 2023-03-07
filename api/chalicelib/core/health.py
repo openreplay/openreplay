@@ -133,7 +133,7 @@ def __check_redis():
         r = redis.Redis(host=u.hostname, port=u.port, socket_timeout=2)
         r.ping()
     except Exception as e:
-        print("!! Issue getting assist-health response")
+        print("!! Issue getting redis-health response")
         print(str(e))
         fail_response["details"]["errors"].append(str(e))
         return fail_response
