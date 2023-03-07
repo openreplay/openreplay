@@ -14,6 +14,10 @@ type DeadClickDetector struct {
 	inputIDSet         map[uint64]bool
 }
 
+func NewDeadClickDetector() *DeadClickDetector {
+	return &DeadClickDetector{inputIDSet: make(map[uint64]bool)}
+}
+
 func (d *DeadClickDetector) addInputID(id uint64) {
 	d.inputIDSet[id] = true
 }
