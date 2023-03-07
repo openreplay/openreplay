@@ -58,7 +58,7 @@ export default class StackEvent {
   level: IStackEvent["level"];
 
   constructor(evt: IStackEvent) {
-    const event = { ...evt, source: evt.source || OPENREPLAY }
+    const event = { ...evt, source: evt.source || OPENREPLAY, payload: evt.payload || {} };
     Object.assign(this, {
       ...event,
       isRed: isRed(event),
