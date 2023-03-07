@@ -196,7 +196,7 @@ export default class MessageManager {
   async loadMessages(isClickmap: boolean = false) {
     this.setMessagesLoading(true)
     // TODO: reusable decryptor instance
-    const createNewParser = (shouldDecrypt = true) => {
+    const createNewParser = (shouldDecrypt = true, file) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
@@ -206,11 +206,21 @@ export default class MessageManager {
         fileReader.append(b)
         const msgs: Array<Message> = []
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          this.distributeMessage(msg, msg._index)
           msgs.push(msg)
         }
+        const sorted = msgs.sort((m1, m2) => m1.time - m2.time)
 
-        logger.info("Messages count: ", msgs.length, msgs)
+        let indx = sorted[0]._index
+        let counter = 0
+        sorted.forEach(msg => {
+          if (indx > msg._index) counter++
+          else indx = msg._index
+          this.distributeMessage(msg, msg._index)
+        })
+
+        if (counter > 0) console.warn("Unsorted mob file, error count: ", counter)
+        logger.info("Messages count: ", msgs.length, sorted, file)
+
         this._sortMessagesHack(msgs)
         this.setMessagesLoading(false)
       })
@@ -219,8 +229,8 @@ export default class MessageManager {
     this.waitingForFiles = true
 
     const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? { url: this.session.domURL, parser: createNewParser }
-      : { url: this.session.mobsUrl, parser: () => createNewParser(false)}
+      ? { url: this.session.domURL, parser: () => createNewParser(true, 'dom') }
+      : { url: this.session.mobsUrl, parser: () => createNewParser(false, 'dom')}
 
     loadFiles(loadMethod.url, loadMethod.parser())
       // EFS fallback
@@ -235,11 +245,11 @@ export default class MessageManager {
     // load devtools (TODO: start after the first DOM file download)
     if (isClickmap) return;
     this.state.update({ devtoolsLoading: true })
-    loadFiles(this.session.devtoolsURL, createNewParser())
+    loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
     // EFS fallback
     .catch(() =>
       requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser(false))
+        .then(createNewParser(false, 'devtools'))
     )
     .then(() => {
       this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
@@ -406,11 +416,8 @@ export default class MessageManager {
         this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.Redux:
-        decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log('redux', decoded)
-        if (decoded != null) {
-          this.lists.lists.redux.append(decoded);
-        }
+        // logger.log('redux', msg)
+        this.lists.lists.redux.append(msg);
         break;
       case MType.NgRx:
         decoded = this.decodeStateMessage(msg, ["state", "action"]);
@@ -420,11 +427,8 @@ export default class MessageManager {
         }
         break;
       case MType.Vuex:
-        decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
-        logger.log('vuex', decoded)
-        if (decoded != null) {
-          this.lists.lists.vuex.append(decoded);
-        }
+        // logger.log('vuex', msg)
+        this.lists.lists.vuex.append(msg);
         break;
       case MType.Zustand:
         decoded = this.decodeStateMessage(msg, ["state", "mutation"])
