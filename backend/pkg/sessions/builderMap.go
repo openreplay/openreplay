@@ -2,9 +2,9 @@ package sessions
 
 import (
 	"log"
-	"openreplay/backend/pkg/handlers"
 	"time"
 
+	"openreplay/backend/pkg/handlers"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -14,12 +14,11 @@ type builderMap struct {
 	handlersFabric func() []handlers.MessageProcessor
 	sessions       map[uint64]*builder
 	events         chan Message
-	done           chan struct{}
 }
 
 type EventBuilder interface {
 	HandleMessage(msg Message)
-	ClearOldSessions()
+	CheckSessions()
 	Events() chan Message
 }
 
@@ -28,24 +27,8 @@ func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) EventBuild
 		handlersFabric: handlersFabric,
 		sessions:       make(map[uint64]*builder),
 		events:         make(chan Message, 1024),
-		done:           make(chan struct{}),
 	}
-	go b.worker()
 	return b
-}
-
-func (m *builderMap) worker() {
-	tick := time.Tick(5 * time.Second)
-	for {
-		select {
-		case <-tick:
-			for sessID, evtBuilder := range m.sessions {
-				m.iterateSessionReadyMessages(sessID, evtBuilder)
-			}
-		case <-m.done:
-			return
-		}
-	}
 }
 
 func (m *builderMap) getBuilder(sessionID uint64) *builder {
@@ -65,13 +48,15 @@ func (m *builderMap) HandleMessage(msg Message) {
 	m.getBuilder(msg.SessionID()).handleMessage(msg)
 }
 
-func (m *builderMap) ClearOldSessions() {
+func (m *builderMap) CheckSessions() {
 	deleted := 0
 	now := time.Now()
-	for id, sess := range m.sessions {
-		if sess.lastSystemTime.Add(ForceDeleteTimeout).Before(now) {
-			// Should delete zombie session
-			delete(m.sessions, id)
+	for sessID, eventBuilder := range m.sessions {
+		// Check session's events
+		m.iterateSessionReadyMessages(sessID, eventBuilder)
+		// Check session age and delete if it's old enough
+		if eventBuilder.lastSystemTime.Add(ForceDeleteTimeout).Before(now) {
+			delete(m.sessions, sessID)
 			deleted++
 		}
 	}

@@ -29,7 +29,7 @@ func New(cfg *heuristics.Config, p types.Producer, c types.Consumer, e sessions.
 }
 
 func (h *heuristicsImpl) run() {
-	tick := time.Tick(15 * time.Second)
+	tick := time.Tick(10 * time.Second)
 	for {
 		select {
 		case evt := <-h.events.Events():
@@ -39,7 +39,7 @@ func (h *heuristicsImpl) run() {
 		case <-tick:
 			h.producer.Flush(h.cfg.ProducerTimeout)
 			h.consumer.Commit()
-			h.events.ClearOldSessions()
+			h.events.CheckSessions()
 		case msg := <-h.consumer.Rebalanced():
 			log.Println(msg)
 		default:
