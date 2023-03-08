@@ -14,6 +14,8 @@ import type { Options as ObserverOptions } from './observer/top_observer.js'
 import type { Options as SanitizerOptions } from './sanitizer.js'
 import type { Options as LoggerOptions } from './logger.js'
 import type { Options as SessOptions } from './session.js'
+import type { Options as NetworkOptions } from '../modules/network.js'
+
 import type {
   Options as WebworkerOptions,
   ToWorkerData,
@@ -75,6 +77,7 @@ type AppOptions = {
 
   // @deprecated
   onStart?: StartCallback
+  network?: NetworkOptions
 } & WebworkerOptions &
   SessOptions
 
@@ -99,6 +102,7 @@ export default class App {
   private readonly stopCallbacks: Array<() => any> = []
   private readonly commitCallbacks: Array<CommitCallback> = []
   private readonly options: AppOptions
+  public readonly networkOptions?: NetworkOptions
   private readonly revID: string
   private activityState: ActivityState = ActivityState.NotActive
   private readonly version = 'TRACKER_VERSION' // TODO: version compatability check inside each plugin.
@@ -109,6 +113,7 @@ export default class App {
     // } ?? maybe onStart is good
 
     this.projectKey = projectKey
+    this.networkOptions = options.network
     this.options = Object.assign(
       {
         revID: '',
