@@ -24,6 +24,8 @@ function isClickable(element: Element): boolean {
     tag === 'A' ||
     tag === 'LI' ||
     tag === 'SELECT' ||
+    tag === 'TR' ||
+    tag === 'TH' ||
     (element as HTMLElement).onclick != null ||
     element.getAttribute('role') === 'button'
   )
