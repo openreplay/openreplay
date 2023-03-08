@@ -240,7 +240,7 @@ export default class TargetMarker {
           })
         }
 
-        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage }))
+        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage, left }))
 
         border.appendChild(smallClicksBubble)
         overlay.appendChild(bubbleContainer)
