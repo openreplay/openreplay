@@ -218,7 +218,7 @@ export default class Screen {
     case ScaleMode.AdjustParentHeight:
       this.scaleRatio = offsetWidth / width
       translate = "translate(-50%, 0)"
-      posStyles = { top: 0, height: this.document!.documentElement.getBoundingClientRect().height + 'px', }
+      posStyles = { top: 0, height: height + 'px', }
       break;
     }
 
