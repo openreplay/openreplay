@@ -10,7 +10,7 @@ import (
 
 type builder struct {
 	sessionID      uint64
-	readyMsgs      []Message
+	readyMsgs      chan Message
 	timestamp      uint64
 	lastMessageID  uint64
 	lastSystemTime time.Time
@@ -18,18 +18,12 @@ type builder struct {
 	ended          bool
 }
 
-func NewBuilder(sessionID uint64, handlers ...handlers.MessageProcessor) *builder {
+func NewBuilder(sessionID uint64, events chan Message, handlers ...handlers.MessageProcessor) *builder {
 	return &builder{
 		sessionID:  sessionID,
 		processors: handlers,
+		readyMsgs:  events,
 	}
-}
-
-func (b *builder) iterateReadyMessages(ch chan Message) {
-	for _, readyMsg := range b.readyMsgs {
-		ch <- readyMsg
-	}
-	b.readyMsgs = nil
 }
 
 func (b *builder) checkSessionEnd(message Message) {
@@ -64,7 +58,7 @@ func (b *builder) handleMessage(m Message) {
 	for _, p := range b.processors {
 		if rm := p.Handle(m, b.timestamp); rm != nil {
 			rm.Meta().SetMeta(m.Meta())
-			b.readyMsgs = append(b.readyMsgs, rm)
+			b.readyMsgs <- rm
 		}
 	}
 	b.checkSessionEnd(m)

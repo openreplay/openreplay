@@ -39,7 +39,6 @@ func (h *heuristicsImpl) run() {
 		case <-tick:
 			h.producer.Flush(h.cfg.ProducerTimeout)
 			h.consumer.Commit()
-			h.events.CheckSessions()
 		case msg := <-h.consumer.Rebalanced():
 			log.Println(msg)
 		default:
@@ -51,6 +50,14 @@ func (h *heuristicsImpl) run() {
 }
 
 func (h *heuristicsImpl) Stop() {
+	// Stop event builder and flush all events
+	log.Println("stopping heuristics service")
+	h.events.Stop()
+	for evt := range h.events.Events() {
+		if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
+			log.Printf("can't send new event to queue: %s", err)
+		}
+	}
 	h.producer.Close(h.cfg.ProducerTimeout)
 	h.consumer.Commit()
 	h.consumer.Close()
