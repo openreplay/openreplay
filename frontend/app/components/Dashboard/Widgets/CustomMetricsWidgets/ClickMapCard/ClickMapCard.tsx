@@ -20,6 +20,7 @@ function ClickMapCard({
     const onMarkerClick = (s: string, innerText: string) => {
         metricStore.changeClickMapSearch(s, innerText)
     }
+    const mapUrl = metricStore.instance.series[0].filter.filters[0].value[0]
 
     React.useEffect(() => {
         return () => clearCurrentSession()
@@ -32,12 +33,10 @@ function ClickMapCard({
 
     React.useEffect(() => {
         if (visitedEvents.length) {
-            const urlOptions = visitedEvents.map(({ url, host }: any) => ({ label: url, value: url, host }))
-            const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
             const rangeValue = dashboardStore.drillDownPeriod.rangeValue
             const startDate = dashboardStore.drillDownPeriod.start
             const endDate = dashboardStore.drillDownPeriod.end
-            fetchInsights({ ...insightsFilters, url, startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
+            fetchInsights({ ...insightsFilters, url: mapUrl || '/', startDate, endDate, rangeValue, clickRage: metricStore.clickMapFilter })
         }
     }, [visitedEvents, metricStore.clickMapFilter])
 
@@ -62,9 +61,8 @@ function ClickMapCard({
         return <div className="py-2">Loading session</div>
     }
 
-    const searchUrl = metricStore.instance.series[0].filter.filters[0].value[0]
     const jumpToEvent = metricStore.instance.data.events.find((evt: Record<string, any>) => {
-        if (searchUrl) return evt.path.includes(searchUrl)
+        if (mapUrl) return evt.path.includes(mapUrl)
         return evt
     }) || { timestamp: metricStore.instance.data.startTs }
 

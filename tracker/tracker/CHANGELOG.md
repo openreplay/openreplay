@@ -1,4 +1,7 @@
-## 5.0.0
+## 5.0.1
+
+- Default text input mode is now Obscured
+- Use `@medv/finder` instead of our own implementation of `getSelector` for better clickmaps experience
 
 - Added "tel" to supported input types
 - Added `{ withCurrentTime: true }` to `tracker.getSessionURL` method which will return sessionURL with current session's timestamp
