@@ -16,7 +16,6 @@ function Player() {
     }
   }, []);
 
-
   if (!playerContext.player) return null;
 
   return (
