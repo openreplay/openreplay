@@ -49,7 +49,7 @@ podSecurityContext:
 #  port: 9000
 
 serviceMonitor:
-  enabled: true
+  enabled: false
   additionalLabels:
     release: observability
   scrapeConfigs:
