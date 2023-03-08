@@ -92,7 +92,7 @@ export interface Options {
   sanitizer?: Sanitizer
 }
 
-export default function (app: App, opts: Partial<Options> = {}) {
+export default function (app: App, opts: Partial<Options> = {}, customEnv?: Record<string, any>) {
   const options: Options = Object.assign(
     {
       failuresOnly: false,
@@ -150,8 +150,11 @@ export default function (app: App, opts: Partial<Options> = {}) {
   }
 
   /* ====== Fetch ====== */
-  const origFetch = window.fetch.bind(window) as WindowFetch
-  window.fetch = (input, init = {}) => {
+  const origFetch = customEnv
+    ? (customEnv.fetch.bind(customEnv) as WindowFetch)
+    : (window.fetch.bind(window) as WindowFetch)
+
+  const trackFetch = (input: RequestInfo | URL, init: RequestInit = {}) => {
     if (!(typeof input === 'string' || input instanceof URL) || app.isServiceURL(String(input))) {
       return origFetch(input, init)
     }
@@ -237,12 +240,23 @@ export default function (app: App, opts: Partial<Options> = {}) {
       return response
     })
   }
+
+  if (customEnv) {
+    customEnv.fetch = trackFetch
+  } else {
+    window.fetch = trackFetch
+  }
   /* ====== <> ====== */
 
   /* ====== XHR ====== */
-  const nativeOpen = XMLHttpRequest.prototype.open
-  XMLHttpRequest.prototype.open = function (initMethod, url) {
-    const xhr = this
+
+  const nativeOpen = customEnv
+    ? customEnv.XMLHttpRequest.prototype.open
+    : XMLHttpRequest.prototype.open
+
+  function trackXMLHttpReqOpen(initMethod: string, url: string | URL) {
+    // @ts-ignore ??? this -> XMLHttpRequest
+    const xhr = this as XMLHttpRequest
     setSessionTokenHeader((name, value) => xhr.setRequestHeader(name, value))
 
     let startTime = 0
@@ -302,23 +316,47 @@ export default function (app: App, opts: Partial<Options> = {}) {
 
     //TODO: handle error (though it has no Error API nor any useful information)
     //xhr.addEventListener('error', (e) => {})
-    return nativeOpen.apply(this, arguments)
+    // @ts-ignore ??? this -> XMLHttpRequest
+    return nativeOpen.apply(this as XMLHttpRequest, arguments)
   }
+  if (customEnv) {
+    customEnv.XMLHttpRequest.prototype.open = trackXMLHttpReqOpen.bind(customEnv)
+  } else {
+    XMLHttpRequest.prototype.open = trackXMLHttpReqOpen
+  }
+
   const nativeSend = XMLHttpRequest.prototype.send
-  XMLHttpRequest.prototype.send = function (body) {
-    const rdo = getXHRRequestDataObject(this)
+  function trackXHRSend(body: Document | XMLHttpRequestBodyInit | null | undefined) {
+    // @ts-ignore ??? this -> XMLHttpRequest
+    const rdo = getXHRRequestDataObject(this as XMLHttpRequest)
     rdo.body = body
 
-    return nativeSend.apply(this, arguments)
+    // @ts-ignore ??? this -> XMLHttpRequest
+    return nativeSend.apply(this as XMLHttpRequest, arguments)
   }
+
+  if (customEnv) {
+    customEnv.XMLHttpRequest.prototype.send = trackXHRSend.bind(customEnv)
+  } else {
+    XMLHttpRequest.prototype.send = trackXHRSend
+  }
+
   const nativeSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader
-  XMLHttpRequest.prototype.setRequestHeader = function (name, value) {
+
+  function trackSetReqHeader(name: string, value: string) {
     if (!isHIgnored(name)) {
-      const rdo = getXHRRequestDataObject(this)
+      // @ts-ignore ??? this -> XMLHttpRequest
+      const rdo = getXHRRequestDataObject(this as XMLHttpRequest)
       rdo.headers[name] = value
     }
+    // @ts-ignore ??? this -> XMLHttpRequest
+    return nativeSetRequestHeader.apply(this as XMLHttpRequest, arguments)
+  }
 
-    return nativeSetRequestHeader.apply(this, arguments)
+  if (customEnv) {
+    customEnv.XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader.bind(customEnv)
+  } else {
+    XMLHttpRequest.prototype.setRequestHeader = trackSetReqHeader
   }
   /* ====== <> ====== */
 }
