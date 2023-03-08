@@ -175,8 +175,14 @@ function main() {
     install_openreplay
     sudo mkdir -p /var/lib/openreplay
     sudo cp -f openreplay-cli /bin/openreplay
-    sudo cp -rf ../../../openreplay /var/lib/openreplay
-    sudo cp -f vars.yaml /var/lib/openreplay
+    [[ ! -d /var/lib/openreplay/openreplay ]] || {
+      cd /var/lib/openreplay/openreplay
+      date +%m-%d-%Y-%H%M%S | sudo tee -a /var/lib/openreplay/or_versions.txt
+      sudo git log -1 2>&1 | sudo tee -a /var/lib/openreplay/or_versions.txt
+      sudo rm -rf /var/lib/openreplay/openreplay
+      cd -
+    }
+    sudo cp -rf $(cd ../.. && pwd) /var/lib/openreplay/openreplay
   }
 }
 

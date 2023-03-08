@@ -173,12 +173,14 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
 
         values = {**values, **sh.multi_values(helper.values_for_operator(value=s["value"], op=s["operator"]),
                                               value_key=f"value{i + 1}")}
-        if sh.is_negation_operator(op) and i > 0:
+        if sh.is_negation_operator(s["operator"]) and i > 0:
             op = sh.reverse_sql_operator(op)
             main_condition = "left_not.session_id ISNULL"
             extra_from.append(f"""LEFT JOIN LATERAL (SELECT session_id 
                                                         FROM {next_table} AS s_main 
-                                                        WHERE s_main.{next_col_name} {op} %(value{i + 1})s
+                                                        WHERE 
+                                                        {sh.multi_conditions(f"s_main.{next_col_name} {op} %(value{i + 1})s",
+                                                                             values=s["value"], value_key=f"value{i + 1}")}
                                                         AND s_main.timestamp >= T{i}.stage{i}_timestamp
                                                         AND s_main.session_id = T1.session_id) AS left_not ON (TRUE)""")
         else:

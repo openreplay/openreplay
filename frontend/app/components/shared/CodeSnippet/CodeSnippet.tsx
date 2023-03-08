@@ -4,8 +4,8 @@ import Highlight from 'react-highlight';
 
 const inputModeOptions = [
     { label: 'Record all inputs', value: 'plain' },
-    { label: 'Ignore all inputs', value: 'obscured' },
     { label: 'Obscure all inputs', value: 'hidden' },
+    { label: 'Ignore all inputs', value: 'obscured' },
 ];
   
 const inputModeOptionsMap: any = {}
