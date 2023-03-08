@@ -3,26 +3,17 @@ import { hasTag, isSVGElement, isDocument } from '../app/guards.js'
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils.js'
 import { MouseMove, MouseClick } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
+import { finder } from '@medv/finder'
 
 function _getSelector(target: Element, document: Document): string {
-  let el: Element | null = target
-  let selector: string | null = null
-  do {
-    if (el.id) {
-      return `#${el.id}` + (selector ? ` > ${selector}` : '')
-    }
-    selector =
-      el.className
-        .split(' ')
-        .map((cn) => cn.trim())
-        .filter((cn) => cn !== '')
-        .reduce((sel, cn) => `${sel}.${cn}`, el.tagName.toLowerCase()) +
-      (selector ? ` > ${selector}` : '')
-    if (el === document.body) {
-      return selector
-    }
-    el = el.parentElement
-  } while (el !== document.body && el !== null)
+  const selector = finder(target, {
+    root: document.body,
+    seedMinLength: 3,
+    optimizedMinLength: 2,
+    threshold: 1000,
+    maxNumberOfTries: 10_000,
+  })
+
   return selector
 }
 

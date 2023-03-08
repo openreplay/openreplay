@@ -3,7 +3,6 @@ import Cursor from './Cursor'
 
 import type { Point, Dimensions } from './types';
 
-
 export type State  = Dimensions
 
 export const INITIAL_STATE: State = {
@@ -182,7 +181,7 @@ export default class Screen {
   getElementBySelector(selector: string) {
     if (!selector) return null;
     try {
-      const safeSelector = selector.replace(/:/g, '\\\\3A ').replace(/\//g, '\\/');
+      const safeSelector = selector.replace(/\//g, '\\/');
       return this.document?.querySelector<HTMLElement>(safeSelector) || null;
     } catch (e) {
       console.error("Can not select element. ", e)
