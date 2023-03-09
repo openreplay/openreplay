@@ -1,13 +1,10 @@
 import Observer from './observer.js'
 import { CreateIFrameDocument } from '../messages.gen.js'
-import Network from '../../modules/network.js'
 
 export default class IFrameObserver extends Observer {
   observe(iframe: HTMLIFrameElement) {
     const doc = iframe.contentDocument
-    const iWindow = iframe.contentWindow
     const hostID = this.app.nodes.getID(iframe)
-    console.log(iframe)
     if (!doc || hostID === undefined) {
       return
     } //log TODO common app.logger
@@ -19,7 +16,6 @@ export default class IFrameObserver extends Observer {
         return
       }
       this.app.send(CreateIFrameDocument(hostID, docID))
-      Network(this.app, this.app.networkOptions, iWindow!)
     })
   }
 }

@@ -1,5 +1,6 @@
 import Observer from './observer.js'
 import { isElementNode, hasTag } from '../guards.js'
+import Network from '../../modules/network.js'
 
 import IFrameObserver from './iframe_observer.js'
 import ShadowRootObserver from './shadow_root_observer.js'
@@ -92,6 +93,7 @@ export default class TopObserver extends Observer {
           //TODO: more explicit logic
         ) {
           this.contextsSet.add(currentWin)
+          Network(this.app, this.app.networkOptions, currentWin)
           //@ts-ignore https://github.com/microsoft/TypeScript/issues/41684
           this.contextCallbacks.forEach((cb) => cb(currentWin))
         }
