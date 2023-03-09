@@ -47,7 +47,7 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
                     for j, sf in enumerate(f.filters):
                         f_k = f"issue_svalue{i}{j}"
                         args = {**args, **sh.multi_values(sf.value, value_key=f_k)}
-                        if sf.type == schemas.IssueFilterType._on_selector and len(sf.value) > 0:
+                        if sf.type == schemas.IssueFilterType._selector and len(sf.value) > 0:
                             constraints.append(sh.multi_conditions(f"clicks.selector = %({f_k})s",
                                                                    sf.value, value_key=f_k))
 
@@ -55,9 +55,8 @@ def get_by_url(project_id, data: schemas.GetHeatmapPayloadSchema):
         constraints.append("""(issues.session_id IS NULL 
                                 OR (issues.timestamp >= %(startDate)s
                                     AND issues.timestamp <= %(endDate)s
-                                    AND mis.project_id = %(project_id)s
-                                    AND mis.type = 'click_rage'))""")
-        q_count += ",COALESCE(bool_or(mis.issue_id IS NOT NULL), FALSE) AS click_rage"
+                                    AND mis.project_id = %(project_id)s))""")
+        q_count += ",COALESCE(bool_or(mis.type = 'click_rage'), FALSE) AS click_rage"
         query_from += """LEFT JOIN events_common.issues USING (timestamp, session_id)
                        LEFT JOIN issues AS mis USING (issue_id)"""
     with pg_client.PostgresClient() as cur:
