@@ -4,7 +4,7 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const INPUT_EVENT_TIMEOUT = 1 * 60 * 1000
+const InputEventTimeout = 1 * 60 * 1000
 
 type inputLabels map[uint64]string
 
@@ -24,7 +24,7 @@ func (b *inputEventBuilder) clearLabels() {
 	b.inputLabels = make(inputLabels)
 }
 
-func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (b *inputEventBuilder) Handle(message Message, timestamp uint64) Message {
 	var inputEvent Message = nil
 	switch msg := message.(type) {
 	case *SetInputTarget:
@@ -41,7 +41,7 @@ func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp 
 		}
 		if b.inputEvent == nil {
 			b.inputEvent = &InputEvent{
-				MessageID:   messageID,
+				MessageID:   message.MsgID(),
 				Timestamp:   timestamp,
 				Value:       msg.Value,
 				ValueMasked: msg.Mask > 0,
@@ -59,7 +59,7 @@ func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp 
 		return b.Build()
 	}
 
-	if b.inputEvent != nil && b.inputEvent.Timestamp+INPUT_EVENT_TIMEOUT < timestamp {
+	if b.inputEvent != nil && b.inputEvent.Timestamp+InputEventTimeout < timestamp {
 		return b.Build()
 	}
 	return nil

@@ -13,7 +13,6 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/metrics"
 	storageMetrics "openreplay/backend/pkg/metrics/storage"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	cloud "openreplay/backend/pkg/storage"
 )
@@ -25,9 +24,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	s3 := cloud.NewS3(cfg.S3Region, cfg.S3Bucket)
 	srv, err := storage.New(cfg, s3)

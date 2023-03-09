@@ -3,6 +3,7 @@ package heuristics
 import (
 	"openreplay/backend/internal/config/common"
 	"openreplay/backend/internal/config/configurator"
+	"openreplay/backend/pkg/pprof"
 )
 
 type Config struct {
@@ -19,5 +20,8 @@ type Config struct {
 func New() *Config {
 	cfg := &Config{}
 	configurator.Process(cfg)
+	if cfg.UseProfiler {
+		pprof.StartProfilingServer()
+	}
 	return cfg
 }

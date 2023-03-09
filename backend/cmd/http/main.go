@@ -15,7 +15,6 @@ import (
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	httpMetrics "openreplay/backend/pkg/metrics/http"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -27,9 +26,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := http.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	// Connect to queue
 	producer := queue.NewProducer(cfg.MessageSizeLimit, true)

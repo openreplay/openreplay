@@ -6,7 +6,8 @@ import (
 	"openreplay/backend/pkg/url"
 )
 
-func (conn *Conn) InsertIOSCustomEvent(sessionID uint64, e *messages.IOSCustomEvent) error {
+func (conn *Conn) InsertIOSCustomEvent(e *messages.IOSCustomEvent) error {
+	sessionID := e.SessionID()
 	err := conn.InsertCustomEvent(sessionID, e.Timestamp, truncSqIdx(e.Index), e.Name, e.Payload)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, 0, "CUSTOM_IOS", e.Name)
@@ -14,7 +15,8 @@ func (conn *Conn) InsertIOSCustomEvent(sessionID uint64, e *messages.IOSCustomEv
 	return err
 }
 
-func (conn *Conn) InsertIOSUserID(sessionID uint64, userID *messages.IOSUserID) error {
+func (conn *Conn) InsertIOSUserID(userID *messages.IOSUserID) error {
+	sessionID := userID.SessionID()
 	err := conn.InsertUserID(sessionID, userID.Value)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, 0, "USERID_IOS", userID.Value)
@@ -22,7 +24,8 @@ func (conn *Conn) InsertIOSUserID(sessionID uint64, userID *messages.IOSUserID) 
 	return err
 }
 
-func (conn *Conn) InsertIOSUserAnonymousID(sessionID uint64, userAnonymousID *messages.IOSUserAnonymousID) error {
+func (conn *Conn) InsertIOSUserAnonymousID(userAnonymousID *messages.IOSUserAnonymousID) error {
+	sessionID := userAnonymousID.SessionID()
 	err := conn.InsertUserAnonymousID(sessionID, userAnonymousID.Value)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, 0, "USERANONYMOUSID_IOS", userAnonymousID.Value)
@@ -30,7 +33,8 @@ func (conn *Conn) InsertIOSUserAnonymousID(sessionID uint64, userAnonymousID *me
 	return err
 }
 
-func (conn *Conn) InsertIOSNetworkCall(sessionID uint64, e *messages.IOSNetworkCall) error {
+func (conn *Conn) InsertIOSNetworkCall(e *messages.IOSNetworkCall) error {
+	sessionID := e.SessionID()
 	err := conn.InsertRequest(sessionID, e.Timestamp, truncSqIdx(e.Index), e.URL, e.Duration, e.Success)
 	if err == nil {
 		conn.insertAutocompleteValue(sessionID, 0, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
@@ -38,7 +42,8 @@ func (conn *Conn) InsertIOSNetworkCall(sessionID uint64, e *messages.IOSNetworkC
 	return err
 }
 
-func (conn *Conn) InsertIOSScreenEnter(sessionID uint64, screenEnter *messages.IOSScreenEnter) error {
+func (conn *Conn) InsertIOSScreenEnter(screenEnter *messages.IOSScreenEnter) error {
+	sessionID := screenEnter.SessionID()
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
@@ -69,7 +74,8 @@ func (conn *Conn) InsertIOSScreenEnter(sessionID uint64, screenEnter *messages.I
 	return nil
 }
 
-func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOSClickEvent) error {
+func (conn *Conn) InsertIOSClickEvent(clickEvent *messages.IOSClickEvent) error {
+	sessionID := clickEvent.SessionID()
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
@@ -100,7 +106,8 @@ func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOS
 	return nil
 }
 
-func (conn *Conn) InsertIOSInputEvent(sessionID uint64, inputEvent *messages.IOSInputEvent) error {
+func (conn *Conn) InsertIOSInputEvent(inputEvent *messages.IOSInputEvent) error {
+	sessionID := inputEvent.SessionID()
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err
@@ -137,7 +144,8 @@ func (conn *Conn) InsertIOSInputEvent(sessionID uint64, inputEvent *messages.IOS
 	return nil
 }
 
-func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *messages.IOSCrash) error {
+func (conn *Conn) InsertIOSCrash(projectID uint32, crash *messages.IOSCrash) error {
+	sessionID := crash.SessionID()
 	tx, err := conn.c.Begin()
 	if err != nil {
 		return err

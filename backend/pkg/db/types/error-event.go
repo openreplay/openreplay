@@ -120,3 +120,15 @@ func (e *ErrorEvent) ID(projectID uint32) string {
 	}
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
+
+func WrapCustomEvent(m *CustomEvent) *IssueEvent {
+	msg := &IssueEvent{
+		Type:          "custom",
+		Timestamp:     m.Time(),
+		MessageID:     m.MsgID(),
+		ContextString: m.Name,
+		Payload:       m.Payload,
+	}
+	msg.Meta().SetMeta(m.Meta())
+	return msg
+}

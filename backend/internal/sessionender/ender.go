@@ -9,13 +9,13 @@ import (
 )
 
 // EndedSessionHandler handler for ended sessions
-type EndedSessionHandler func(sessionID uint64, timestamp int64) bool
+type EndedSessionHandler func(sessionID uint64, timestamp uint64) bool
 
 // session holds information about user's session live status
 type session struct {
 	lastTimestamp int64
 	lastUpdate    int64
-	lastUserTime  int64
+	lastUserTime  uint64
 	isEnded       bool
 }
 

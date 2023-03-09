@@ -21,7 +21,8 @@ func (c *PGCache) HandleSessionEnd(sessionID uint64) error {
 	return nil
 }
 
-func (c *PGCache) InsertIssueEvent(sessionID uint64, crash *IssueEvent) error {
+func (c *PGCache) InsertIssueEvent(crash *IssueEvent) error {
+	sessionID := crash.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -29,7 +30,8 @@ func (c *PGCache) InsertIssueEvent(sessionID uint64, crash *IssueEvent) error {
 	return c.Conn.InsertIssueEvent(sessionID, session.ProjectID, crash)
 }
 
-func (c *PGCache) InsertMetadata(sessionID uint64, metadata *Metadata) error {
+func (c *PGCache) InsertMetadata(metadata *Metadata) error {
+	sessionID := metadata.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
