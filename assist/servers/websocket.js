@@ -26,8 +26,7 @@ const debug = process.env.debug === "1";
 
 const createSocketIOServer = function (server, prefix) {
     io = _io(server, {
-        // maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
-        maxHttpBufferSize: parseInt(process.env.maxHttpBufferSizeBytes),
+        maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
         cors: {
             origin: "*",
             methods: ["GET", "POST", "PUT"]

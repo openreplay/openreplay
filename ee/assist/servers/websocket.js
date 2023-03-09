@@ -29,7 +29,7 @@ const debug = process.env.debug === "1";
 const createSocketIOServer = function (server, prefix) {
     if (process.env.uws !== "true") {
         io = _io(server, {
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
@@ -38,7 +38,7 @@ const createSocketIOServer = function (server, prefix) {
         });
     } else {
         io = new _io.Server({
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
