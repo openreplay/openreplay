@@ -106,6 +106,7 @@ const (
 	MsgIOSIssueEvent               = 111
 )
 
+
 type Timestamp struct {
 	message
 	Timestamp uint64
@@ -129,22 +130,22 @@ func (msg *Timestamp) TypeID() int {
 
 type SessionStart struct {
 	message
-	Timestamp            uint64
-	ProjectID            uint64
-	TrackerVersion       string
-	RevID                string
-	UserUUID             string
-	UserAgent            string
-	UserOS               string
-	UserOSVersion        string
-	UserBrowser          string
-	UserBrowserVersion   string
-	UserDevice           string
-	UserDeviceType       string
+	Timestamp uint64
+	ProjectID uint64
+	TrackerVersion string
+	RevID string
+	UserUUID string
+	UserAgent string
+	UserOS string
+	UserOSVersion string
+	UserBrowser string
+	UserBrowserVersion string
+	UserDevice string
+	UserDeviceType string
 	UserDeviceMemorySize uint64
-	UserDeviceHeapSize   uint64
-	UserCountry          string
-	UserID               string
+	UserDeviceHeapSize uint64
+	UserCountry string
+	UserID string
 }
 
 func (msg *SessionStart) Encode() []byte {
@@ -201,8 +202,8 @@ func (msg *SessionEndDeprecated) TypeID() int {
 
 type SetPageLocation struct {
 	message
-	URL             string
-	Referrer        string
+	URL string
+	Referrer string
 	NavigationStart uint64
 }
 
@@ -226,7 +227,7 @@ func (msg *SetPageLocation) TypeID() int {
 
 type SetViewportSize struct {
 	message
-	Width  uint64
+	Width uint64
 	Height uint64
 }
 
@@ -272,6 +273,7 @@ func (msg *SetViewportScroll) TypeID() int {
 
 type CreateDocument struct {
 	message
+
 }
 
 func (msg *CreateDocument) Encode() []byte {
@@ -292,11 +294,11 @@ func (msg *CreateDocument) TypeID() int {
 
 type CreateElementNode struct {
 	message
-	ID       uint64
+	ID uint64
 	ParentID uint64
-	index    uint64
-	Tag      string
-	SVG      bool
+	index uint64
+	Tag string
+	SVG bool
 }
 
 func (msg *CreateElementNode) Encode() []byte {
@@ -321,9 +323,9 @@ func (msg *CreateElementNode) TypeID() int {
 
 type CreateTextNode struct {
 	message
-	ID       uint64
+	ID uint64
 	ParentID uint64
-	Index    uint64
+	Index uint64
 }
 
 func (msg *CreateTextNode) Encode() []byte {
@@ -346,9 +348,9 @@ func (msg *CreateTextNode) TypeID() int {
 
 type MoveNode struct {
 	message
-	ID       uint64
+	ID uint64
 	ParentID uint64
-	Index    uint64
+	Index uint64
 }
 
 func (msg *MoveNode) Encode() []byte {
@@ -392,8 +394,8 @@ func (msg *RemoveNode) TypeID() int {
 
 type SetNodeAttribute struct {
 	message
-	ID    uint64
-	Name  string
+	ID uint64
+	Name string
 	Value string
 }
 
@@ -417,7 +419,7 @@ func (msg *SetNodeAttribute) TypeID() int {
 
 type RemoveNodeAttribute struct {
 	message
-	ID   uint64
+	ID uint64
 	Name string
 }
 
@@ -440,7 +442,7 @@ func (msg *RemoveNodeAttribute) TypeID() int {
 
 type SetNodeData struct {
 	message
-	ID   uint64
+	ID uint64
 	Data string
 }
 
@@ -463,7 +465,7 @@ func (msg *SetNodeData) TypeID() int {
 
 type SetCSSData struct {
 	message
-	ID   uint64
+	ID uint64
 	Data string
 }
 
@@ -487,8 +489,8 @@ func (msg *SetCSSData) TypeID() int {
 type SetNodeScroll struct {
 	message
 	ID uint64
-	X  int64
-	Y  int64
+	X int64
+	Y int64
 }
 
 func (msg *SetNodeScroll) Encode() []byte {
@@ -511,7 +513,7 @@ func (msg *SetNodeScroll) TypeID() int {
 
 type SetInputTarget struct {
 	message
-	ID    uint64
+	ID uint64
 	Label string
 }
 
@@ -534,9 +536,9 @@ func (msg *SetInputTarget) TypeID() int {
 
 type SetInputValue struct {
 	message
-	ID    uint64
+	ID uint64
 	Value string
-	Mask  int64
+	Mask int64
 }
 
 func (msg *SetInputValue) Encode() []byte {
@@ -559,7 +561,7 @@ func (msg *SetInputValue) TypeID() int {
 
 type SetInputChecked struct {
 	message
-	ID      uint64
+	ID uint64
 	Checked bool
 }
 
@@ -605,14 +607,14 @@ func (msg *MouseMove) TypeID() int {
 
 type NetworkRequest struct {
 	message
-	Type      string
-	Method    string
-	URL       string
-	Request   string
-	Response  string
-	Status    uint64
+	Type string
+	Method string
+	URL string
+	Request string
+	Response string
+	Status uint64
 	Timestamp uint64
-	Duration  uint64
+	Duration uint64
 }
 
 func (msg *NetworkRequest) Encode() []byte {
@@ -663,15 +665,15 @@ func (msg *ConsoleLog) TypeID() int {
 
 type PageLoadTiming struct {
 	message
-	RequestStart               uint64
-	ResponseStart              uint64
-	ResponseEnd                uint64
+	RequestStart uint64
+	ResponseStart uint64
+	ResponseEnd uint64
 	DomContentLoadedEventStart uint64
-	DomContentLoadedEventEnd   uint64
-	LoadEventStart             uint64
-	LoadEventEnd               uint64
-	FirstPaint                 uint64
-	FirstContentfulPaint       uint64
+	DomContentLoadedEventEnd uint64
+	LoadEventStart uint64
+	LoadEventEnd uint64
+	FirstPaint uint64
+	FirstContentfulPaint uint64
 }
 
 func (msg *PageLoadTiming) Encode() []byte {
@@ -700,8 +702,8 @@ func (msg *PageLoadTiming) TypeID() int {
 
 type PageRenderTiming struct {
 	message
-	SpeedIndex        uint64
-	VisuallyComplete  uint64
+	SpeedIndex uint64
+	VisuallyComplete uint64
 	TimeToInteractive uint64
 }
 
@@ -725,7 +727,7 @@ func (msg *PageRenderTiming) TypeID() int {
 
 type JSExceptionDeprecated struct {
 	message
-	Name    string
+	Name string
 	Message string
 	Payload string
 }
@@ -751,10 +753,10 @@ func (msg *JSExceptionDeprecated) TypeID() int {
 type IntegrationEvent struct {
 	message
 	Timestamp uint64
-	Source    string
-	Name      string
-	Message   string
-	Payload   string
+	Source string
+	Name string
+	Message string
+	Payload string
 }
 
 func (msg *IntegrationEvent) Encode() []byte {
@@ -779,7 +781,7 @@ func (msg *IntegrationEvent) TypeID() int {
 
 type CustomEvent struct {
 	message
-	Name    string
+	Name string
 	Payload string
 }
 
@@ -844,7 +846,7 @@ func (msg *UserAnonymousID) TypeID() int {
 
 type Metadata struct {
 	message
-	Key   string
+	Key string
 	Value string
 }
 
@@ -867,23 +869,23 @@ func (msg *Metadata) TypeID() int {
 
 type PageEvent struct {
 	message
-	MessageID                  uint64
-	Timestamp                  uint64
-	URL                        string
-	Referrer                   string
-	Loaded                     bool
-	RequestStart               uint64
-	ResponseStart              uint64
-	ResponseEnd                uint64
+	MessageID uint64
+	Timestamp uint64
+	URL string
+	Referrer string
+	Loaded bool
+	RequestStart uint64
+	ResponseStart uint64
+	ResponseEnd uint64
 	DomContentLoadedEventStart uint64
-	DomContentLoadedEventEnd   uint64
-	LoadEventStart             uint64
-	LoadEventEnd               uint64
-	FirstPaint                 uint64
-	FirstContentfulPaint       uint64
-	SpeedIndex                 uint64
-	VisuallyComplete           uint64
-	TimeToInteractive          uint64
+	DomContentLoadedEventEnd uint64
+	LoadEventStart uint64
+	LoadEventEnd uint64
+	FirstPaint uint64
+	FirstContentfulPaint uint64
+	SpeedIndex uint64
+	VisuallyComplete uint64
+	TimeToInteractive uint64
 }
 
 func (msg *PageEvent) Encode() []byte {
@@ -920,11 +922,11 @@ func (msg *PageEvent) TypeID() int {
 
 type InputEvent struct {
 	message
-	MessageID   uint64
-	Timestamp   uint64
-	Value       string
+	MessageID uint64
+	Timestamp uint64
+	Value string
 	ValueMasked bool
-	Label       string
+	Label string
 }
 
 func (msg *InputEvent) Encode() []byte {
@@ -947,82 +949,10 @@ func (msg *InputEvent) TypeID() int {
 	return 32
 }
 
-type ClickEvent struct {
-	message
-	MessageID      uint64
-	Timestamp      uint64
-	HesitationTime uint64
-	Label          string
-	Selector       string
-}
-
-func (msg *ClickEvent) Encode() []byte {
-	buf := make([]byte, 51+len(msg.Label)+len(msg.Selector))
-	buf[0] = 33
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.HesitationTime, buf, p)
-	p = WriteString(msg.Label, buf, p)
-	p = WriteString(msg.Selector, buf, p)
-	return buf[:p]
-}
-
-func (msg *ClickEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ClickEvent) TypeID() int {
-	return 33
-}
-
-type ResourceEvent struct {
-	message
-	MessageID       uint64
-	Timestamp       uint64
-	Duration        uint64
-	TTFB            uint64
-	HeaderSize      uint64
-	EncodedBodySize uint64
-	DecodedBodySize uint64
-	URL             string
-	Type            string
-	Success         bool
-	Method          string
-	Status          uint64
-}
-
-func (msg *ResourceEvent) Encode() []byte {
-	buf := make([]byte, 121+len(msg.URL)+len(msg.Type)+len(msg.Method))
-	buf[0] = 35
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Duration, buf, p)
-	p = WriteUint(msg.TTFB, buf, p)
-	p = WriteUint(msg.HeaderSize, buf, p)
-	p = WriteUint(msg.EncodedBodySize, buf, p)
-	p = WriteUint(msg.DecodedBodySize, buf, p)
-	p = WriteString(msg.URL, buf, p)
-	p = WriteString(msg.Type, buf, p)
-	p = WriteBoolean(msg.Success, buf, p)
-	p = WriteString(msg.Method, buf, p)
-	p = WriteUint(msg.Status, buf, p)
-	return buf[:p]
-}
-
-func (msg *ResourceEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ResourceEvent) TypeID() int {
-	return 35
-}
-
 type CSSInsertRule struct {
 	message
-	ID    uint64
-	Rule  string
+	ID uint64
+	Rule string
 	Index uint64
 }
 
@@ -1046,7 +976,7 @@ func (msg *CSSInsertRule) TypeID() int {
 
 type CSSDeleteRule struct {
 	message
-	ID    uint64
+	ID uint64
 	Index uint64
 }
 
@@ -1069,13 +999,13 @@ func (msg *CSSDeleteRule) TypeID() int {
 
 type Fetch struct {
 	message
-	Method    string
-	URL       string
-	Request   string
-	Response  string
-	Status    uint64
+	Method string
+	URL string
+	Request string
+	Response string
+	Status uint64
 	Timestamp uint64
-	Duration  uint64
+	Duration uint64
 }
 
 func (msg *Fetch) Encode() []byte {
@@ -1102,10 +1032,10 @@ func (msg *Fetch) TypeID() int {
 
 type Profiler struct {
 	message
-	Name     string
+	Name string
 	Duration uint64
-	Args     string
-	Result   string
+	Args string
+	Result string
 }
 
 func (msg *Profiler) Encode() []byte {
@@ -1129,7 +1059,7 @@ func (msg *Profiler) TypeID() int {
 
 type OTable struct {
 	message
-	Key   string
+	Key string
 	Value string
 }
 
@@ -1173,8 +1103,8 @@ func (msg *StateAction) TypeID() int {
 
 type Redux struct {
 	message
-	Action   string
-	State    string
+	Action string
+	State string
 	Duration uint64
 }
 
@@ -1199,7 +1129,7 @@ func (msg *Redux) TypeID() int {
 type Vuex struct {
 	message
 	Mutation string
-	State    string
+	State string
 }
 
 func (msg *Vuex) Encode() []byte {
@@ -1221,7 +1151,7 @@ func (msg *Vuex) TypeID() int {
 
 type MobX struct {
 	message
-	Type    string
+	Type string
 	Payload string
 }
 
@@ -1244,8 +1174,8 @@ func (msg *MobX) TypeID() int {
 
 type NgRx struct {
 	message
-	Action   string
-	State    string
+	Action string
+	State string
 	Duration uint64
 }
 
@@ -1271,8 +1201,8 @@ type GraphQL struct {
 	message
 	OperationKind string
 	OperationName string
-	Variables     string
-	Response      string
+	Variables string
+	Response string
 }
 
 func (msg *GraphQL) Encode() []byte {
@@ -1296,10 +1226,10 @@ func (msg *GraphQL) TypeID() int {
 
 type PerformanceTrack struct {
 	message
-	Frames          int64
-	Ticks           int64
+	Frames int64
+	Ticks int64
 	TotalJSHeapSize uint64
-	UsedJSHeapSize  uint64
+	UsedJSHeapSize uint64
 }
 
 func (msg *PerformanceTrack) Encode() []byte {
@@ -1323,7 +1253,7 @@ func (msg *PerformanceTrack) TypeID() int {
 
 type StringDict struct {
 	message
-	Key   uint64
+	Key uint64
 	Value string
 }
 
@@ -1346,8 +1276,8 @@ func (msg *StringDict) TypeID() int {
 
 type SetNodeAttributeDict struct {
 	message
-	ID       uint64
-	NameKey  uint64
+	ID uint64
+	NameKey uint64
 	ValueKey uint64
 }
 
@@ -1369,37 +1299,16 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 51
 }
 
-type DOMDrop struct {
-	message
-	Timestamp uint64
-}
-
-func (msg *DOMDrop) Encode() []byte {
-	buf := make([]byte, 11)
-	buf[0] = 52
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	return buf[:p]
-}
-
-func (msg *DOMDrop) Decode() Message {
-	return msg
-}
-
-func (msg *DOMDrop) TypeID() int {
-	return 52
-}
-
 type ResourceTiming struct {
 	message
-	Timestamp       uint64
-	Duration        uint64
-	TTFB            uint64
-	HeaderSize      uint64
+	Timestamp uint64
+	Duration uint64
+	TTFB uint64
+	HeaderSize uint64
 	EncodedBodySize uint64
 	DecodedBodySize uint64
-	URL             string
-	Initiator       string
+	URL string
+	Initiator string
 }
 
 func (msg *ResourceTiming) Encode() []byte {
@@ -1428,7 +1337,7 @@ func (msg *ResourceTiming) TypeID() int {
 type ConnectionInformation struct {
 	message
 	Downlink uint64
-	Type     string
+	Type string
 }
 
 func (msg *ConnectionInformation) Encode() []byte {
@@ -1471,20 +1380,20 @@ func (msg *SetPageVisibility) TypeID() int {
 
 type PerformanceTrackAggr struct {
 	message
-	TimestampStart     uint64
-	TimestampEnd       uint64
-	MinFPS             uint64
-	AvgFPS             uint64
-	MaxFPS             uint64
-	MinCPU             uint64
-	AvgCPU             uint64
-	MaxCPU             uint64
+	TimestampStart uint64
+	TimestampEnd uint64
+	MinFPS uint64
+	AvgFPS uint64
+	MaxFPS uint64
+	MinCPU uint64
+	AvgCPU uint64
+	MaxCPU uint64
 	MinTotalJSHeapSize uint64
 	AvgTotalJSHeapSize uint64
 	MaxTotalJSHeapSize uint64
-	MinUsedJSHeapSize  uint64
-	AvgUsedJSHeapSize  uint64
-	MaxUsedJSHeapSize  uint64
+	MinUsedJSHeapSize uint64
+	AvgUsedJSHeapSize uint64
+	MaxUsedJSHeapSize uint64
 }
 
 func (msg *PerformanceTrackAggr) Encode() []byte {
@@ -1518,9 +1427,9 @@ func (msg *PerformanceTrackAggr) TypeID() int {
 
 type LoadFontFace struct {
 	message
-	ParentID    uint64
-	Family      string
-	Source      string
+	ParentID uint64
+	Family string
+	Source string
 	Descriptors string
 }
 
@@ -1566,12 +1475,12 @@ func (msg *SetNodeFocus) TypeID() int {
 
 type LongTask struct {
 	message
-	Timestamp     uint64
-	Duration      uint64
-	Context       uint64
+	Timestamp uint64
+	Duration uint64
+	Context uint64
 	ContainerType uint64
-	ContainerSrc  string
-	ContainerId   string
+	ContainerSrc string
+	ContainerId string
 	ContainerName string
 }
 
@@ -1599,9 +1508,9 @@ func (msg *LongTask) TypeID() int {
 
 type SetNodeAttributeURLBased struct {
 	message
-	ID      uint64
-	Name    string
-	Value   string
+	ID uint64
+	Name string
+	Value string
 	BaseURL string
 }
 
@@ -1626,8 +1535,8 @@ func (msg *SetNodeAttributeURLBased) TypeID() int {
 
 type SetCSSDataURLBased struct {
 	message
-	ID      uint64
-	Data    string
+	ID uint64
+	Data string
 	BaseURL string
 }
 
@@ -1651,12 +1560,12 @@ func (msg *SetCSSDataURLBased) TypeID() int {
 
 type IssueEventDeprecated struct {
 	message
-	MessageID     uint64
-	Timestamp     uint64
-	Type          string
+	MessageID uint64
+	Timestamp uint64
+	Type string
 	ContextString string
-	Context       string
-	Payload       string
+	Context string
+	Payload string
 }
 
 func (msg *IssueEventDeprecated) Encode() []byte {
@@ -1682,7 +1591,7 @@ func (msg *IssueEventDeprecated) TypeID() int {
 
 type TechnicalInfo struct {
 	message
-	Type  string
+	Type string
 	Value string
 }
 
@@ -1705,7 +1614,7 @@ func (msg *TechnicalInfo) TypeID() int {
 
 type CustomIssue struct {
 	message
-	Name    string
+	Name string
 	Payload string
 }
 
@@ -1749,9 +1658,9 @@ func (msg *AssetCache) TypeID() int {
 
 type CSSInsertRuleURLBased struct {
 	message
-	ID      uint64
-	Rule    string
-	Index   uint64
+	ID uint64
+	Rule string
+	Index uint64
 	BaseURL string
 }
 
@@ -1776,10 +1685,10 @@ func (msg *CSSInsertRuleURLBased) TypeID() int {
 
 type MouseClick struct {
 	message
-	ID             uint64
+	ID uint64
 	HesitationTime uint64
-	Label          string
-	Selector       string
+	Label string
+	Selector string
 }
 
 func (msg *MouseClick) Encode() []byte {
@@ -1804,7 +1713,7 @@ func (msg *MouseClick) TypeID() int {
 type CreateIFrameDocument struct {
 	message
 	FrameID uint64
-	ID      uint64
+	ID uint64
 }
 
 func (msg *CreateIFrameDocument) Encode() []byte {
@@ -1827,7 +1736,7 @@ func (msg *CreateIFrameDocument) TypeID() int {
 type AdoptedSSReplaceURLBased struct {
 	message
 	SheetID uint64
-	Text    string
+	Text string
 	BaseURL string
 }
 
@@ -1852,7 +1761,7 @@ func (msg *AdoptedSSReplaceURLBased) TypeID() int {
 type AdoptedSSReplace struct {
 	message
 	SheetID uint64
-	Text    string
+	Text string
 }
 
 func (msg *AdoptedSSReplace) Encode() []byte {
@@ -1875,8 +1784,8 @@ func (msg *AdoptedSSReplace) TypeID() int {
 type AdoptedSSInsertRuleURLBased struct {
 	message
 	SheetID uint64
-	Rule    string
-	Index   uint64
+	Rule string
+	Index uint64
 	BaseURL string
 }
 
@@ -1902,8 +1811,8 @@ func (msg *AdoptedSSInsertRuleURLBased) TypeID() int {
 type AdoptedSSInsertRule struct {
 	message
 	SheetID uint64
-	Rule    string
-	Index   uint64
+	Rule string
+	Index uint64
 }
 
 func (msg *AdoptedSSInsertRule) Encode() []byte {
@@ -1927,7 +1836,7 @@ func (msg *AdoptedSSInsertRule) TypeID() int {
 type AdoptedSSDeleteRule struct {
 	message
 	SheetID uint64
-	Index   uint64
+	Index uint64
 }
 
 func (msg *AdoptedSSDeleteRule) Encode() []byte {
@@ -1950,7 +1859,7 @@ func (msg *AdoptedSSDeleteRule) TypeID() int {
 type AdoptedSSAddOwner struct {
 	message
 	SheetID uint64
-	ID      uint64
+	ID uint64
 }
 
 func (msg *AdoptedSSAddOwner) Encode() []byte {
@@ -1973,7 +1882,7 @@ func (msg *AdoptedSSAddOwner) TypeID() int {
 type AdoptedSSRemoveOwner struct {
 	message
 	SheetID uint64
-	ID      uint64
+	ID uint64
 }
 
 func (msg *AdoptedSSRemoveOwner) Encode() []byte {
@@ -1995,9 +1904,9 @@ func (msg *AdoptedSSRemoveOwner) TypeID() int {
 
 type JSException struct {
 	message
-	Name     string
-	Message  string
-	Payload  string
+	Name string
+	Message string
+	Payload string
 	Metadata string
 }
 
@@ -2023,7 +1932,7 @@ func (msg *JSException) TypeID() int {
 type Zustand struct {
 	message
 	Mutation string
-	State    string
+	State string
 }
 
 func (msg *Zustand) Encode() []byte {
@@ -2045,9 +1954,9 @@ func (msg *Zustand) TypeID() int {
 
 type BatchMeta struct {
 	message
-	PageNo     uint64
+	PageNo uint64
 	FirstIndex uint64
-	Timestamp  int64
+	Timestamp int64
 }
 
 func (msg *BatchMeta) Encode() []byte {
@@ -2070,11 +1979,11 @@ func (msg *BatchMeta) TypeID() int {
 
 type BatchMetadata struct {
 	message
-	Version    uint64
-	PageNo     uint64
+	Version uint64
+	PageNo uint64
 	FirstIndex uint64
-	Timestamp  int64
-	Location   string
+	Timestamp int64
+	Location string
 }
 
 func (msg *BatchMetadata) Encode() []byte {
@@ -2099,7 +2008,7 @@ func (msg *BatchMetadata) TypeID() int {
 
 type PartitionedMessage struct {
 	message
-	PartNo    uint64
+	PartNo uint64
 	PartTotal uint64
 }
 
@@ -2122,13 +2031,13 @@ func (msg *PartitionedMessage) TypeID() int {
 
 type IssueEvent struct {
 	message
-	MessageID     uint64
-	Timestamp     uint64
-	Type          string
+	MessageID uint64
+	Timestamp uint64
+	Type string
 	ContextString string
-	Context       string
-	Payload       string
-	URL           string
+	Context string
+	Payload string
+	URL string
 }
 
 func (msg *IssueEvent) Encode() []byte {
@@ -2155,7 +2064,7 @@ func (msg *IssueEvent) TypeID() int {
 
 type SessionEnd struct {
 	message
-	Timestamp     uint64
+	Timestamp uint64
 	EncryptionKey string
 }
 
@@ -2278,8 +2187,8 @@ func (msg *MouseThrashing) TypeID() int {
 
 type IOSBatchMeta struct {
 	message
-	Timestamp  uint64
-	Length     uint64
+	Timestamp uint64
+	Length uint64
 	FirstIndex uint64
 }
 
@@ -2303,16 +2212,16 @@ func (msg *IOSBatchMeta) TypeID() int {
 
 type IOSSessionStart struct {
 	message
-	Timestamp      uint64
-	ProjectID      uint64
+	Timestamp uint64
+	ProjectID uint64
 	TrackerVersion string
-	RevID          string
-	UserUUID       string
-	UserOS         string
-	UserOSVersion  string
-	UserDevice     string
+	RevID string
+	UserUUID string
+	UserOS string
+	UserOSVersion string
+	UserDevice string
 	UserDeviceType string
-	UserCountry    string
+	UserCountry string
 }
 
 func (msg *IOSSessionStart) Encode() []byte {
@@ -2364,9 +2273,9 @@ func (msg *IOSSessionEnd) TypeID() int {
 type IOSMetadata struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Key       string
-	Value     string
+	Length uint64
+	Key string
+	Value string
 }
 
 func (msg *IOSMetadata) Encode() []byte {
@@ -2391,9 +2300,9 @@ func (msg *IOSMetadata) TypeID() int {
 type IOSCustomEvent struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Name      string
-	Payload   string
+	Length uint64
+	Name string
+	Payload string
 }
 
 func (msg *IOSCustomEvent) Encode() []byte {
@@ -2418,8 +2327,8 @@ func (msg *IOSCustomEvent) TypeID() int {
 type IOSUserID struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Value     string
+	Length uint64
+	Value string
 }
 
 func (msg *IOSUserID) Encode() []byte {
@@ -2443,8 +2352,8 @@ func (msg *IOSUserID) TypeID() int {
 type IOSUserAnonymousID struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Value     string
+	Length uint64
+	Value string
 }
 
 func (msg *IOSUserAnonymousID) Encode() []byte {
@@ -2468,11 +2377,11 @@ func (msg *IOSUserAnonymousID) TypeID() int {
 type IOSScreenChanges struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	X         uint64
-	Y         uint64
-	Width     uint64
-	Height    uint64
+	Length uint64
+	X uint64
+	Y uint64
+	Width uint64
+	Height uint64
 }
 
 func (msg *IOSScreenChanges) Encode() []byte {
@@ -2498,10 +2407,10 @@ func (msg *IOSScreenChanges) TypeID() int {
 
 type IOSCrash struct {
 	message
-	Timestamp  uint64
-	Length     uint64
-	Name       string
-	Reason     string
+	Timestamp uint64
+	Length uint64
+	Name string
+	Reason string
 	Stacktrace string
 }
 
@@ -2528,9 +2437,9 @@ func (msg *IOSCrash) TypeID() int {
 type IOSScreenEnter struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Title     string
-	ViewName  string
+	Length uint64
+	Title string
+	ViewName string
 }
 
 func (msg *IOSScreenEnter) Encode() []byte {
@@ -2555,9 +2464,9 @@ func (msg *IOSScreenEnter) TypeID() int {
 type IOSScreenLeave struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Title     string
-	ViewName  string
+	Length uint64
+	Title string
+	ViewName string
 }
 
 func (msg *IOSScreenLeave) Encode() []byte {
@@ -2582,10 +2491,10 @@ func (msg *IOSScreenLeave) TypeID() int {
 type IOSClickEvent struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Label     string
-	X         uint64
-	Y         uint64
+	Length uint64
+	Label string
+	X uint64
+	Y uint64
 }
 
 func (msg *IOSClickEvent) Encode() []byte {
@@ -2610,11 +2519,11 @@ func (msg *IOSClickEvent) TypeID() int {
 
 type IOSInputEvent struct {
 	message
-	Timestamp   uint64
-	Length      uint64
-	Value       string
+	Timestamp uint64
+	Length uint64
+	Value string
 	ValueMasked bool
-	Label       string
+	Label string
 }
 
 func (msg *IOSInputEvent) Encode() []byte {
@@ -2640,9 +2549,9 @@ func (msg *IOSInputEvent) TypeID() int {
 type IOSPerformanceEvent struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Name      string
-	Value     uint64
+	Length uint64
+	Name string
+	Value uint64
 }
 
 func (msg *IOSPerformanceEvent) Encode() []byte {
@@ -2667,9 +2576,9 @@ func (msg *IOSPerformanceEvent) TypeID() int {
 type IOSLog struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Severity  string
-	Content   string
+	Length uint64
+	Severity string
+	Content string
 }
 
 func (msg *IOSLog) Encode() []byte {
@@ -2694,8 +2603,8 @@ func (msg *IOSLog) TypeID() int {
 type IOSInternalError struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Content   string
+	Length uint64
+	Content string
 }
 
 func (msg *IOSInternalError) Encode() []byte {
@@ -2719,14 +2628,14 @@ func (msg *IOSInternalError) TypeID() int {
 type IOSNetworkCall struct {
 	message
 	Timestamp uint64
-	Length    uint64
-	Duration  uint64
-	Headers   string
-	Body      string
-	URL       string
-	Success   bool
-	Method    string
-	Status    uint64
+	Length uint64
+	Duration uint64
+	Headers string
+	Body string
+	URL string
+	Success bool
+	Method string
+	Status uint64
 }
 
 func (msg *IOSNetworkCall) Encode() []byte {
@@ -2756,19 +2665,19 @@ func (msg *IOSNetworkCall) TypeID() int {
 type IOSPerformanceAggregated struct {
 	message
 	TimestampStart uint64
-	TimestampEnd   uint64
-	MinFPS         uint64
-	AvgFPS         uint64
-	MaxFPS         uint64
-	MinCPU         uint64
-	AvgCPU         uint64
-	MaxCPU         uint64
-	MinMemory      uint64
-	AvgMemory      uint64
-	MaxMemory      uint64
-	MinBattery     uint64
-	AvgBattery     uint64
-	MaxBattery     uint64
+	TimestampEnd uint64
+	MinFPS uint64
+	AvgFPS uint64
+	MaxFPS uint64
+	MinCPU uint64
+	AvgCPU uint64
+	MaxCPU uint64
+	MinMemory uint64
+	AvgMemory uint64
+	MaxMemory uint64
+	MinBattery uint64
+	AvgBattery uint64
+	MaxBattery uint64
 }
 
 func (msg *IOSPerformanceAggregated) Encode() []byte {
@@ -2802,11 +2711,11 @@ func (msg *IOSPerformanceAggregated) TypeID() int {
 
 type IOSIssueEvent struct {
 	message
-	Timestamp     uint64
-	Type          string
+	Timestamp uint64
+	Type string
 	ContextString string
-	Context       string
-	Payload       string
+	Context string
+	Payload string
 }
 
 func (msg *IOSIssueEvent) Encode() []byte {
@@ -2828,3 +2737,4 @@ func (msg *IOSIssueEvent) Decode() Message {
 func (msg *IOSIssueEvent) TypeID() int {
 	return 111
 }
+

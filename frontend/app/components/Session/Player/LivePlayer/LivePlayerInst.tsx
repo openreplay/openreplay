@@ -4,7 +4,7 @@ import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
 import LiveControls from './LiveControls';
 import ConsolePanel from 'Shared/DevTools/ConsolePanel';
-
+import { observer } from 'mobx-react-lite'
 import Overlay from './Overlay';
 import stl from 'Components/Session_/Player/player.module.css';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
@@ -27,7 +27,9 @@ function Player(props: IProps) {
   // @ts-ignore TODO
   const playerContext = React.useContext<ILivePlayerContext>(PlayerContext);
   const screenWrapper = React.useRef<HTMLDivElement>(null);
+  const ready = playerContext.store.get().ready
 
+  console.log(ready)
   React.useEffect(() => {
     if (!props.closedLive || isMultiview) {
       const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture
@@ -40,7 +42,7 @@ function Player(props: IProps) {
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [playerContext.player]);
+  }, [playerContext.player, ready]);
 
   if (!playerContext.player) return null;
 
@@ -78,4 +80,4 @@ export default connect(
         (isAssist && !state.getIn(['sessions', 'current']).live),
     };
   }
-)(Player);
+)(observer(Player));

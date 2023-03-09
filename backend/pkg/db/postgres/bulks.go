@@ -2,8 +2,6 @@ package postgres
 
 import (
 	"log"
-	"openreplay/backend/pkg/monitoring"
-	"time"
 )
 
 type bulksTask struct {
@@ -30,16 +28,14 @@ type BulkSet struct {
 	webCustomEvents   Bulk
 	webClickEvents    Bulk
 	webNetworkRequest Bulk
-	metrics           *monitoring.Metrics
 	workerTask        chan *bulksTask
 	done              chan struct{}
 	finished          chan struct{}
 }
 
-func NewBulkSet(c Pool, metrics *monitoring.Metrics) *BulkSet {
+func NewBulkSet(c Pool) *BulkSet {
 	bs := &BulkSet{
 		c:          c,
-		metrics:    metrics,
 		workerTask: make(chan *bulksTask, 1),
 		done:       make(chan struct{}),
 		finished:   make(chan struct{}),
@@ -86,7 +82,7 @@ func (conn *BulkSet) Get(name string) Bulk {
 
 func (conn *BulkSet) initBulks() {
 	var err error
-	conn.autocompletes, err = NewBulk(conn.c, conn.metrics,
+	conn.autocompletes, err = NewBulk(conn.c,
 		"autocomplete",
 		"(value, type, project_id)",
 		"($%d, $%d, $%d)",
@@ -94,7 +90,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create autocomplete bulk: %s", err)
 	}
-	conn.requests, err = NewBulk(conn.c, conn.metrics,
+	conn.requests, err = NewBulk(conn.c,
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, duration, success)",
 		"($%d, $%d, $%d, LEFT($%d, 8000), $%d, $%d)",
@@ -102,7 +98,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create requests bulk: %s", err)
 	}
-	conn.customEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.customEvents, err = NewBulk(conn.c,
 		"events_common.customs",
 		"(session_id, timestamp, seq_index, name, payload)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d)",
@@ -110,7 +106,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create customEvents bulk: %s", err)
 	}
-	conn.webPageEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.webPageEvents, err = NewBulk(conn.c,
 		"events.pages",
 		"(session_id, message_id, timestamp, referrer, base_referrer, host, path, query, dom_content_loaded_time, "+
 			"load_time, response_end, first_paint_time, first_contentful_paint_time, speed_index, visually_complete, "+
@@ -122,7 +118,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
-	conn.webInputEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.webInputEvents, err = NewBulk(conn.c,
 		"events.inputs",
 		"(session_id, message_id, timestamp, value, label)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), NULLIF(LEFT($%d, 2000),''))",
@@ -130,7 +126,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
-	conn.webGraphQL, err = NewBulk(conn.c, conn.metrics,
+	conn.webGraphQL, err = NewBulk(conn.c,
 		"events.graphql",
 		"(session_id, timestamp, message_id, name, request_body, response_body)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
@@ -138,7 +134,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
-	conn.webErrors, err = NewBulk(conn.c, conn.metrics,
+	conn.webErrors, err = NewBulk(conn.c,
 		"errors",
 		"(error_id, project_id, source, name, message, payload)",
 		"($%d, $%d, $%d, $%d, $%d, $%d::jsonb)",
@@ -146,7 +142,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webErrors bulk: %s", err)
 	}
-	conn.webErrorEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.webErrorEvents, err = NewBulk(conn.c,
 		"events.errors",
 		"(session_id, message_id, timestamp, error_id)",
 		"($%d, $%d, $%d, $%d)",
@@ -154,7 +150,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webErrorEvents bulk: %s", err)
 	}
-	conn.webErrorTags, err = NewBulk(conn.c, conn.metrics,
+	conn.webErrorTags, err = NewBulk(conn.c,
 		"public.errors_tags",
 		"(session_id, message_id, error_id, key, value)",
 		"($%d, $%d, $%d, $%d, $%d)",
@@ -162,7 +158,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webErrorEvents bulk: %s", err)
 	}
-	conn.webIssues, err = NewBulk(conn.c, conn.metrics,
+	conn.webIssues, err = NewBulk(conn.c,
 		"issues",
 		"(project_id, issue_id, type, context_string)",
 		"($%d, $%d, $%d, $%d)",
@@ -170,7 +166,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webIssues bulk: %s", err)
 	}
-	conn.webIssueEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.webIssueEvents, err = NewBulk(conn.c,
 		"events_common.issues",
 		"(session_id, issue_id, timestamp, seq_index, payload)",
 		"($%d, $%d, $%d, $%d, CAST($%d AS jsonb))",
@@ -178,7 +174,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webIssueEvents bulk: %s", err)
 	}
-	conn.webCustomEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.webCustomEvents, err = NewBulk(conn.c,
 		"events_common.customs",
 		"(session_id, seq_index, timestamp, name, payload, level)",
 		"($%d, $%d, $%d, LEFT($%d, 2000), $%d, $%d)",
@@ -186,7 +182,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webCustomEvents bulk: %s", err)
 	}
-	conn.webClickEvents, err = NewBulk(conn.c, conn.metrics,
+	conn.webClickEvents, err = NewBulk(conn.c,
 		"events.clicks",
 		"(session_id, message_id, timestamp, label, selector, url, path)",
 		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000))",
@@ -194,7 +190,7 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webClickEvents bulk: %s", err)
 	}
-	conn.webNetworkRequest, err = NewBulk(conn.c, conn.metrics,
+	conn.webNetworkRequest, err = NewBulk(conn.c,
 		"events_common.requests",
 		"(session_id, timestamp, seq_index, url, host, path, query, request_body, response_body, status_code, method, duration, success)",
 		"($%d, $%d, $%d, LEFT($%d, 8000), LEFT($%d, 300), LEFT($%d, 2000), LEFT($%d, 8000), $%d, $%d, $%d::smallint, NULLIF($%d, '')::http_method, $%d, $%d)",
@@ -246,9 +242,7 @@ func (conn *BulkSet) worker() {
 	for {
 		select {
 		case t := <-conn.workerTask:
-			start := time.Now()
 			conn.sendBulks(t)
-			log.Printf("pg bulks dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-conn.done:
 			if len(conn.workerTask) > 0 {
 				for t := range conn.workerTask {

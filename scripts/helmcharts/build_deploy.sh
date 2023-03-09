@@ -10,6 +10,7 @@ docker rmi alpine || true
 
 # Signing image
 # cosign sign --key awskms:///alias/openreplay-container-sign image_url:tag
+export COSIGN_YES=true # Skip confirmation
 export SIGN_IMAGE=1
 export PUSH_IMAGE=1
 export AWS_DEFAULT_REGION="eu-central-1"

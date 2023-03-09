@@ -16,7 +16,7 @@ export const clickmapStyles = {
   },
   bubbleContainer: ({ top, left, height }: { top: number; left: number, height: number }) => ({
     position: 'absolute',
-    top: top > 20 ? top + 'px' : height + 2 + 'px',
+    top: top > 75 ? top + 'px' : height+75 + 'px',
     width: '250px',
     left: `${left}px`,
     padding: '10px',
@@ -51,9 +51,9 @@ export const clickmapStyles = {
     position: 'absolute',
     zIndex,
   }),
-  clicks: ({ top, height, isRage }: { top: number; height: number, isRage?: boolean }) => ({
+  clicks: ({ top, height, isRage, left }: { top: number; height: number, isRage?: boolean, left: number }) => ({
     top: top > 20 ? 0 : `${height}px`,
-    left: 0,
+    left: left < 5 ? '100%' : 0,
     position: 'absolute',
     borderRadius: '999px',
     padding: '6px',

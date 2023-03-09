@@ -68,14 +68,11 @@ function Player(props: IProps) {
       playerContext.player.attach(parentElement);
       setAttached(true)
     }
-    if (isAttached && isReady) {
-      playerContext.player.play();
-    }
   }, [isReady]);
 
   React.useEffect(() => {
     playerContext.player.scale();
-  }, [props.bottomBlock, props.fullscreen, playerContext.player]);
+  }, [props.bottomBlock, props.fullscreen, playerContext.player, activeTab, fullView]);
 
   if (!playerContext.player) return null;
 

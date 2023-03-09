@@ -35,6 +35,14 @@ spec:
       - name: git
         image: alpine/git
         env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: ENTERPRISE_EDITION_LICENSE
             value: "{{ .Values.global.enterpriseEditionLicense }}"
         command:
@@ -107,6 +115,14 @@ spec:
             {{- else }}
             value: '{{ .Values.global.postgresql.postgresqlPassword }}'
             {{- end}}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
         image: bitnami/postgresql:13.3.0-debian-10-r53
         command: 
         - /bin/bash
@@ -122,6 +138,14 @@ spec:
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: UPGRADE_FRONTENT
@@ -152,6 +176,14 @@ spec:
       {{- if .Values.vault.enabled }}
       - name: vault
         env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PGHOST
@@ -177,6 +209,14 @@ spec:
           mountPath: /opt/migrations/
       - name: vault-s3-upload
         env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: AWS_ACCESS_KEY_ID
             value: "{{ .Values.global.s3.accessKey }}"
           - name: AWS_SECRET_ACCESS_KEY
@@ -221,6 +261,14 @@ spec:
       - name: clickhouse
         image: clickhouse/clickhouse-server:22.12-alpine
         env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: FORCE_MIGRATION
             value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
@@ -248,6 +296,14 @@ spec:
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
         env:
+          {{- range $key, $val := .Values.global.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: '{{ $val }}'
+          {{- end }}
           - name: RETENTION_TIME
             value: "{{ .Values.global.kafka.retentionTime }}"
           - name: KAFKA_HOST

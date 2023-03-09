@@ -195,6 +195,14 @@ export default Record({
         _filter = filtersMap[type];
       }
     }
+
+    if (!_filter) {
+      _filter = {
+        key: filter.key,
+        type: "MULTIPLE",
+      }
+    }
+
     return {
       ..._filter,
       ...filter,

@@ -6,6 +6,7 @@ import AssistRouter from './AssistRouter';
 import { SideMenuitem } from 'UI';
 import { withSiteId, assist, recordings } from 'App/routes';
 import { connect } from 'react-redux';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 interface Props extends RouteComponentProps {
   siteId: string;
@@ -40,7 +41,7 @@ function Assist(props: Props) {
               iconName="record-circle"
               onClick={() => redirect(recordings())}
               disabled={!isEnterprise}
-              tooltipTitle="This feature requires an enterprise license."
+              tooltipTitle={ENTERPRISE_REQUEIRED}
             />
           </div>
           <div className="side-menu-margined w-full">

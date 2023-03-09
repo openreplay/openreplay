@@ -116,12 +116,12 @@ def exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int],
                      webhook_type: str = schemas.WebhookType.webhook) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1 
-                                              FROM public.webhooks
-                                              WHERE name ILIKE %(name)s 
-                                                   AND deleted_at ISNULL
-                                                   AND tenant_id=%(tenant_id)s
-                                                   AND type=%(webhook_type)s
-                                                   {"AND webhook_id!=%(exclude_id))s" if exclude_id else ""}) AS exists;""",
+                                FROM public.webhooks
+                                WHERE name ILIKE %(name)s 
+                                   AND deleted_at ISNULL
+                                   AND tenant_id=%(tenant_id)s
+                                   AND type=%(webhook_type)s
+                                   {"AND webhook_id!=%(exclude_id)s" if exclude_id else ""}) AS exists;""",
                             {"tenant_id": tenant_id, "name": name, "exclude_id": exclude_id,
                              "webhook_type": webhook_type})
         cur.execute(query)

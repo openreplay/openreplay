@@ -161,7 +161,6 @@ export default class TargetMarker {
       const scaleRatio = this.screen.getScale()
       Object.assign(overlay.style, clickmapStyles.overlayStyle({ height: iframeSize.height, width: iframeSize.width, scale: scaleRatio }))
 
-      console.log(selections)
       this.clickMapOverlay = overlay
       selections.forEach((s, i) => {
         const el = this.screen.getElementBySelector(s.selector);
@@ -188,7 +187,6 @@ export default class TargetMarker {
         Object.assign(bubbleContainer.style, clickmapStyles.bubbleContainer({ top, left: Math.max(100, frameWidth - left > 250 ? left : frameWidth - 220), height }))
 
         const border = document.createElement("div")
-
 
         let key = 0
 
@@ -242,7 +240,7 @@ export default class TargetMarker {
           })
         }
 
-        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage }))
+        Object.assign(smallClicksBubble.style, clickmapStyles.clicks({ top, height, isRage: s.clickRage, left }))
 
         border.appendChild(smallClicksBubble)
         overlay.appendChild(bubbleContainer)

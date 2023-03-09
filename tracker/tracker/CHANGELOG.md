@@ -1,10 +1,16 @@
-## 4.1.10
+## 5.0.1
+
+- Default text input mode is now Obscured
+- Use `@medv/finder` instead of our own implementation of `getSelector` for better clickmaps experience
+
+## 5.0.0
 
 - Added "tel" to supported input types
 - Added `{ withCurrentTime: true }` to `tracker.getSessionURL` method which will return sessionURL with current session's timestamp
 - Added Network module that captures fetch/xhr by default (with no plugin required)
 - Use `timeOrigin()` instead of `performance.timing.navigationStart` in ResourceTiming messages
 - Added app restart when service worker died after inactivity (mobile safari)
+- **[breaking]** string dictionary to reduce session size
 
 ## 4.1.8
 

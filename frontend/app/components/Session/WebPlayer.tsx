@@ -26,8 +26,6 @@ function WebPlayer(props: any) {
     closeBottomBlock,
     fullscreen,
     fetchList,
-    insights,
-    jumpTimestamp,
   } = props;
   const { notesStore } = useStore();
   const [activeTab, setActiveTab] = useState('');
@@ -72,7 +70,8 @@ function WebPlayer(props: any) {
     if (showNoteModal) {
       contextValue.player.pause()
     }
-    if (activeTab !== 'Click Map' && !showNoteModal && isPlayerReady) {
+
+    if (activeTab === '' && !showNoteModal && isPlayerReady) {
      contextValue.player && contextValue.player.play()
     }
   }, [activeTab, isPlayerReady, showNoteModal])

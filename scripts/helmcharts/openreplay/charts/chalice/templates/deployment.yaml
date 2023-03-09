@@ -66,7 +66,7 @@ spec:
             - name: pg_host
               value: '{{ .Values.global.postgresql.postgresqlHost }}'
             - name: pg_port
-              value: "5432"
+              value: '{{ .Values.global.postgresql.postgresqlPort }}'
             - name: pg_dbname
               value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
             - name: pg_user
@@ -81,10 +81,10 @@ spec:
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
               {{- end}}
             - name: SITE_URL
-              value: 'https://{{ .Values.global.domainName }}'
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}'
             - name: S3_HOST
               {{- if contains "minio" .Values.global.s3.endpoint }}
-              value: 'https://{{ .Values.global.domainName }}:{{ .Values.global.ingress.controller.service.ports.https}}'
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}:{{ ternary .Values.global.ingress.controller.service.ports.https .Values.global.ingress.controller.service.ports.http .Values.global.ORSecureAccess }}'
               {{- else}}
               value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
@@ -134,6 +134,10 @@ spec:
               value: '{{ .Values.global.email.emailSslCert }}'
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

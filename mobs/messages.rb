@@ -187,29 +187,6 @@ message 32, 'InputEvent', :tracker => false, :replayer => false do
   boolean 'ValueMasked'
   string 'Label'
 end
-message 33, 'ClickEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  uint 'HesitationTime'
-  string 'Label'
-  string 'Selector'
-end
-## 34
-message 35, 'ResourceEvent', :tracker => false, :replayer => false do
-  uint 'MessageID'
-  uint 'Timestamp'
-  uint 'Duration'
-  uint 'TTFB'
-  uint 'HeaderSize'
-  uint 'EncodedBodySize'
-  uint 'DecodedBodySize'
-  string 'URL'
-  string 'Type'
-  boolean 'Success'
-  string 'Method'
-  uint 'Status'
-end
-#36
 
 # DEPRECATED since 4.0.2 in favor of AdoptedSSInsertRule + AdoptedSSAddOwner
 message 37, 'CSSInsertRule' do
@@ -287,12 +264,6 @@ message 51, "SetNodeAttributeDict" do
   uint 'ID'
   uint 'NameKey'
   uint 'ValueKey'
-end
-
-## 50,51
-# Doesn't work properly. TODO: Make proper detections in tracker 
-message 52, 'DOMDrop', :tracker => false, :replayer => false do
-  uint 'Timestamp'
 end
 message 53, 'ResourceTiming', :replayer => :devtools do
   uint 'Timestamp'

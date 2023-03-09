@@ -81,7 +81,12 @@ function Timeline(props: IProps) {
   };
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target !== progressRef.current && e.target !== timelineRef.current) {
+    if (
+      e.target !== progressRef.current
+      && e.target !== timelineRef.current
+      // @ts-ignore black magic
+      && !progressRef.current.contains(e.target)
+    ) {
       return props.tooltipVisible && hideTimeTooltip();
     }
 
@@ -91,7 +96,7 @@ function Timeline(props: IProps) {
     const timeLineTooltip = {
       time: Duration.fromMillis(time).toFormat(`mm:ss`),
       timeStr,
-      offset: e.nativeEvent.offsetX,
+      offset: e.nativeEvent.pageX,
       isVisible: true,
     };
 
@@ -175,13 +180,15 @@ function Timeline(props: IProps) {
               style={{ left: `${getTimelinePosition(e.time, scale)}%` }}
             />
           ))}
-          {issues.map((i: Issue) => (
-            <div
-              key={i.key}
-              className={stl.redEvent}
-              style={{ left: `${getTimelinePosition(i.time, scale)}%` }}
-            />
-          ))}
+          {/* TODO: refactor and make any sense out of this */}
+
+          {/*  {issues.map((i: Issue) => (*/}
+          {/*  <div*/}
+          {/*    key={i.key}*/}
+          {/*    className={stl.redEvent}*/}
+          {/*    style={{ left: `${getTimelinePosition(i.time, scale)}%` }}*/}
+          {/*  />*/}
+          {/*))}*/}
           {notes.map((note) => note.timestamp > 0 ? (
             <div
               key={note.noteId}

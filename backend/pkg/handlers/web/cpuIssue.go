@@ -15,8 +15,8 @@ import (
 	Output event: IssueEvent
 */
 
-const CPU_THRESHOLD = 70 // % out of 100
-const CPU_MIN_DURATION_TRIGGER = 6 * 1000
+const CpuThreshold = 70 // % out of 100
+const CpuMinDurationTrigger = 6 * 1000
 
 type CpuIssueDetector struct {
 	startTimestamp uint64
@@ -26,65 +26,61 @@ type CpuIssueDetector struct {
 	contextString  string
 }
 
-func (f *CpuIssueDetector) Build() Message {
-	if f.startTimestamp == 0 {
-		return nil
-	}
-	duration := f.lastTimestamp - f.startTimestamp
-	timestamp := f.startTimestamp
-	messageID := f.startMessageID
-	maxRate := f.maxRate
-
-	f.startTimestamp = 0
-	f.startMessageID = 0
-	f.maxRate = 0
-	if duration < CPU_MIN_DURATION_TRIGGER {
-		return nil
-	}
-
-	payload, err := json.Marshal(struct {
+func (f *CpuIssueDetector) createPayload() string {
+	p, err := json.Marshal(struct {
 		Duration uint64
 		Rate     uint64
-	}{duration, maxRate})
+	}{f.duration(), f.maxRate})
 	if err != nil {
 		log.Printf("can't marshal CpuIssue payload to json: %s", err)
 	}
+	return string(p)
+}
 
+func (f *CpuIssueDetector) duration() uint64 {
+	return f.lastTimestamp - f.startTimestamp
+}
+
+func (f *CpuIssueDetector) reset() {
+	f.startTimestamp = 0
+	f.startMessageID = 0
+	f.maxRate = 0
+}
+
+func (f *CpuIssueDetector) Build() Message {
+	defer f.reset()
+	if f.startTimestamp == 0 || f.duration() < CpuMinDurationTrigger {
+		return nil
+	}
 	return &IssueEvent{
 		Type:          "cpu",
-		Timestamp:     timestamp,
-		MessageID:     messageID,
+		Timestamp:     f.startTimestamp,
+		MessageID:     f.startMessageID,
 		ContextString: f.contextString,
-		Payload:       string(payload),
+		Payload:       f.createPayload(),
 	}
 }
 
-func (f *CpuIssueDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (f *CpuIssueDetector) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *PerformanceTrack:
-		dt := performance.TimeDiff(timestamp, f.lastTimestamp)
-		if dt == 0 {
-			return nil // TODO: handle error
+		// Ignore if it's a wrong message order
+		if timestamp < f.lastTimestamp {
+			return nil
 		}
-
 		f.lastTimestamp = timestamp
-
-		if msg.Frames == -1 || msg.Ticks == -1 {
+		cpuRate := performance.CPURate(msg.Ticks, performance.TimeDiff(timestamp, f.lastTimestamp))
+		// Build event if cpu issue have gone
+		if msg.Frames == -1 || msg.Ticks == -1 || cpuRate < CpuThreshold {
 			return f.Build()
 		}
-
-		cpuRate := performance.CPURate(msg.Ticks, dt)
-
-		if cpuRate >= CPU_THRESHOLD {
-			if f.startTimestamp == 0 {
-				f.startTimestamp = timestamp
-				f.startMessageID = messageID
-			}
-			if f.maxRate < cpuRate {
-				f.maxRate = cpuRate
-			}
-		} else {
-			return f.Build()
+		// Update values
+		if f.startTimestamp == 0 {
+			f.startTimestamp = timestamp
+			f.startMessageID = message.MsgID()
+		}
+		if f.maxRate < cpuRate {
+			f.maxRate = cpuRate
 		}
 	case *SetPageLocation:
 		f.contextString = msg.URL

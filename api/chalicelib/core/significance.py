@@ -57,7 +57,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             f_k = f"f_value{i}"
             values = {**values,
                       **sh.multi_values(helper.values_for_operator(value=f["value"], op=f["operator"]),
-                                                                 value_key=f_k)}
+                                        value_key=f_k)}
             if filter_type == schemas.FilterType.user_browser:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
@@ -166,13 +166,15 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             continue
 
         values = {**values, **sh.multi_values(helper.values_for_operator(value=s["value"], op=s["operator"]),
-                                                                       value_key=f"value{i + 1}")}
-        if sh.is_negation_operator(op) and i > 0:
+                                              value_key=f"value{i + 1}")}
+        if sh.is_negation_operator(s["operator"]) and i > 0:
             op = sh.reverse_sql_operator(op)
             main_condition = "left_not.session_id ISNULL"
             extra_from.append(f"""LEFT JOIN LATERAL (SELECT session_id 
                                                         FROM {next_table} AS s_main 
-                                                        WHERE s_main.{next_col_name} {op} %(value{i + 1})s
+                                                        WHERE 
+                                                        {sh.multi_conditions(f"s_main.{next_col_name} {op} %(value{i + 1})s",
+                                                                             values=s["value"], value_key=f"value{i + 1}")}
                                                         AND s_main.timestamp >= T{i}.stage{i}_timestamp
                                                         AND s_main.session_id = T1.session_id) AS left_not ON (TRUE)""")
         else:
@@ -180,7 +182,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 main_condition = "TRUE"
             else:
                 main_condition = sh.multi_conditions(f"main.{next_col_name} {op} %(value{i + 1})s",
-                                                                              values=s["value"], value_key=f"value{i + 1}")
+                                                     values=s["value"], value_key=f"value{i + 1}")
         n_stages_query.append(f""" 
         (SELECT main.session_id, 
                 {"MIN(main.timestamp)" if i + 1 < len(stages) else "MAX(main.timestamp)"} AS stage{i + 1}_timestamp
@@ -258,7 +260,7 @@ def pearson_corr(x: list, y: list):
         return None, None, False
 
     if n == 2:
-        return math.copysign(1, x[1] - x[0]) * math.copysign(1, y[1] - y[0]), 1.0
+        return math.copysign(1, x[1] - x[0]) * math.copysign(1, y[1] - y[0]), 1.0, True
 
     xmean = sum(x) / len(x)
     ymean = sum(y) / len(y)
@@ -574,8 +576,10 @@ def get_top_insights(filter_d, project_id):
     # Obtain the first part of the output
     stages_list = get_stages(stages, rows)
     # Obtain the second part of the output
-    total_drop_due_to_issues = get_issues(stages, rows, first_stage=filter_d.get("firstStage"),
-                                          last_stage=filter_d.get("lastStage"), drop_only=True)
+    total_drop_due_to_issues = get_issues(stages, rows,
+                                          first_stage=filter_d.get("firstStage"),
+                                          last_stage=filter_d.get("lastStage"),
+                                          drop_only=True)
     return stages_list, total_drop_due_to_issues
 
 

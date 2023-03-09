@@ -74,12 +74,13 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		i.messageInfo.Index++
 
 		msg := reader.Message()
+		msgType := msg.TypeID()
 
 		// Preprocess "system" messages
 		if _, ok := i.preFilter[msg.TypeID()]; ok {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("decode error, type: %d, info: %s", msg.TypeID(), i.batchInfo.Info())
+				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 			msg = transformDeprecated(msg)
@@ -99,7 +100,7 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		if i.autoDecode {
 			msg = msg.Decode()
 			if msg == nil {
-				log.Printf("decode error, type: %d, info: %s", msg.TypeID(), i.batchInfo.Info())
+				log.Printf("decode error, type: %d, info: %s", msgType, i.batchInfo.Info())
 				return
 			}
 		}
@@ -107,9 +108,18 @@ func (i *messageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
 		// Set meta information for message
 		msg.Meta().SetMeta(i.messageInfo)
 
+		// Update timestamp value for iOS message types
+		if IsIOSType(msgType) {
+			msg.Meta().Timestamp = i.getIOSTimestamp(msg)
+		}
+
 		// Process message
 		i.handler(msg)
 	}
+}
+
+func (i *messageIteratorImpl) getIOSTimestamp(msg Message) uint64 {
+	return GetTimestamp(msg)
 }
 
 func (i *messageIteratorImpl) zeroTsLog(msgType string) {
@@ -126,7 +136,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 			return fmt.Errorf("incorrect batch version: %d, skip current batch, info: %s", i.version, i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.messageInfo.Timestamp = m.Timestamp
+		i.messageInfo.Timestamp = uint64(m.Timestamp)
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMetadata")
 		}
@@ -139,7 +149,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.messageInfo.Timestamp = m.Timestamp
+		i.messageInfo.Timestamp = uint64(m.Timestamp)
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMeta")
 		}
@@ -149,13 +159,13 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 
 	case *Timestamp:
-		i.messageInfo.Timestamp = int64(m.Timestamp)
+		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("Timestamp")
 		}
 
 	case *SessionStart:
-		i.messageInfo.Timestamp = int64(m.Timestamp)
+		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionStart")
 			log.Printf("zero session start, project: %d, UA: %s, tracker: %s, info: %s",
@@ -163,7 +173,7 @@ func (i *messageIteratorImpl) preprocessing(msg Message) error {
 		}
 
 	case *SessionEnd:
-		i.messageInfo.Timestamp = int64(m.Timestamp)
+		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionEnd")
 		}

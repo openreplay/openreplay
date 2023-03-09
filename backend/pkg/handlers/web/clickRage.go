@@ -7,14 +7,8 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-/*
-	Handler name: ClickRage
-	Input event:  MouseClick
-	Output event: IssueEvent
-*/
-
-const MAX_TIME_DIFF = 300
-const MIN_CLICKS_IN_A_ROW = 3
+const MaxTimeDiff = 300
+const MinClicksInARow = 3
 
 type ClickRageDetector struct {
 	lastTimestamp        uint64
@@ -34,46 +28,54 @@ func (crd *ClickRageDetector) reset() {
 	crd.url = ""
 }
 
-func (crd *ClickRageDetector) Build() Message {
-	defer crd.reset()
-	if crd.countsInARow >= MIN_CLICKS_IN_A_ROW {
-		payload, err := json.Marshal(struct{ Count int }{crd.countsInARow})
-		if err != nil {
-			log.Printf("can't marshal ClickRage payload to json: %s", err)
-		}
-		event := &IssueEvent{
-			Type:          "click_rage",
-			ContextString: crd.lastLabel,
-			Payload:       string(payload),
-			Timestamp:     crd.firstInARawTimestamp,
-			MessageID:     crd.firstInARawMessageId,
-			URL:           crd.url,
-		}
-		return event
+func (crd *ClickRageDetector) createPayload() string {
+	p, err := json.Marshal(struct{ Count int }{crd.countsInARow})
+	if err != nil {
+		log.Printf("can't marshal ClickRage payload to json: %s", err)
+		return ""
 	}
-	return nil
+	return string(p)
 }
 
-func (crd *ClickRageDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (crd *ClickRageDetector) Build() Message {
+	defer crd.reset()
+	if crd.countsInARow < MinClicksInARow {
+		return nil
+	}
+	return &IssueEvent{
+		Type:          "click_rage",
+		ContextString: crd.lastLabel,
+		Payload:       crd.createPayload(),
+		Timestamp:     crd.firstInARawTimestamp,
+		MessageID:     crd.firstInARawMessageId,
+		URL:           crd.url,
+	}
+}
+
+func (crd *ClickRageDetector) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *MouseClick:
+		// Set click url
 		if crd.url == "" && msg.Url != "" {
 			crd.url = msg.Url
 		}
-		// TODO: check if we it is ok to capture clickRage event without the connected ClickEvent in db.
+		// Click on different object -> build if we can and reset the builder
 		if msg.Label == "" {
 			return crd.Build()
 		}
-		if crd.lastLabel == msg.Label && timestamp-crd.lastTimestamp < MAX_TIME_DIFF {
+		// Update builder with last information
+		if crd.lastLabel == msg.Label && timestamp-crd.lastTimestamp < MaxTimeDiff {
 			crd.lastTimestamp = timestamp
 			crd.countsInARow += 1
 			return nil
 		}
+		// Try to build event
 		event := crd.Build()
+		// Use current message as init values for new event
 		crd.lastTimestamp = timestamp
 		crd.lastLabel = msg.Label
 		crd.firstInARawTimestamp = timestamp
-		crd.firstInARawMessageId = messageID
+		crd.firstInARawMessageId = message.MsgID()
 		crd.countsInARow = 1
 		if crd.url == "" && msg.Url != "" {
 			crd.url = msg.Url

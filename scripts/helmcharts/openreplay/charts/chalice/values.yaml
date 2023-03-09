@@ -51,7 +51,7 @@ service:
     metrics: 8888
 
 serviceMonitor:
-  enabled: true
+  enabled: false
   additionalLabels:
     release: observability
   scrapeConfigs:
@@ -121,11 +121,11 @@ affinity: {}
 healthCheck:
   livenessProbe:
     httpGet:
-      path: /
+      path: /signup
       port: 8000
-    initialDelaySeconds: 100
-    periodSeconds: 15
-    timeoutSeconds: 10
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 15
 
 
 pvc:

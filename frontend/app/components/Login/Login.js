@@ -10,6 +10,7 @@ import stl from './login.module.css';
 import cn from 'classnames';
 import { setJwt } from 'Duck/user';
 import LoginBg from '../../svg/login-illustration.svg';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -39,7 +40,6 @@ class Login extends React.Component {
     const jwt = params.get('jwt');
     if (jwt) {
       this.props.setJwt(jwt);
-      window.location.href = '/';
     }
   }
 
@@ -165,7 +165,7 @@ class Login extends React.Component {
               ) : (
                 <Tooltip
                   delay={0}
-                  title={<div>{authDetails.edition === 'ee' ? "SSO has not been configured. Please reach out to your admin." : "This feature requires an enterprise license."}</div>}
+                  title={<div>{authDetails.edition === 'ee' ? "SSO has not been configured. Please reach out to your admin." : ENTERPRISE_REQUEIRED}</div>}
                   placement="top"
                 >
                   <Button

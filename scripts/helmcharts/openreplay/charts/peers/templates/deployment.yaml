@@ -54,6 +54,10 @@ spec:
               {{- else }}
               value: {{ .Values.global.s3.accessKey }}
               {{- end }}
+            {{- range $key, $val := .Values.global.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

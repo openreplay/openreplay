@@ -3,7 +3,6 @@ import Cursor from './Cursor'
 
 import type { Point, Dimensions } from './types';
 
-
 export type State  = Dimensions
 
 export const INITIAL_STATE: State = {
@@ -182,7 +181,7 @@ export default class Screen {
   getElementBySelector(selector: string) {
     if (!selector) return null;
     try {
-      const safeSelector = selector.replace(/:/g, '\\\\3A ').replace(/\//g, '\\/');
+      const safeSelector = selector.replace(/\//g, '\\/');
       return this.document?.querySelector<HTMLElement>(safeSelector) || null;
     } catch (e) {
       console.error("Can not select element. ", e)
@@ -213,11 +212,12 @@ export default class Screen {
     case ScaleMode.Embed:
       this.scaleRatio = Math.min(offsetWidth / width, offsetHeight / height)
       translate = "translate(-50%, -50%)"
+      posStyles = { height: height + 'px' }
       break;
     case ScaleMode.AdjustParentHeight:
       this.scaleRatio = offsetWidth / width
       translate = "translate(-50%, 0)"
-      posStyles = { top: 0 }
+      posStyles = { top: 0, height: height + 'px', }
       break;
     }
 
@@ -232,13 +232,11 @@ export default class Screen {
     }
 
     Object.assign(this.screen.style, posStyles, {
-      height: height + 'px',
       width: width + 'px',
       transform: `scale(${this.scaleRatio}) ${translate}`,
     })
-    Object.assign(this.iframe.style, {
+    Object.assign(this.iframe.style,  posStyles, {
       width: width + 'px',
-      height: height + 'px',
     })
 
     this.boundingRect = this.overlay.getBoundingClientRect();

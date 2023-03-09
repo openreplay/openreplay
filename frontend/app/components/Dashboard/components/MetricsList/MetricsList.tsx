@@ -21,7 +21,7 @@ function MetricsList({
   
   const dashboard = dashboardStore.selectedDashboard;
   const existingCardIds = useMemo(() => dashboard?.widgets?.map(i => parseInt(i.metricId)), [dashboard]);
-  const cards = useMemo(() => metricStore.filteredCards.filter(i => !existingCardIds?.includes(parseInt(i.metricId))), [metricStore.filteredCards]);
+  const cards = useMemo(() => !!onSelectionChange ? metricStore.filteredCards.filter(i => !existingCardIds?.includes(parseInt(i.metricId))) : metricStore.filteredCards, [metricStore.filteredCards]);
 
   useEffect(() => {
     metricStore.fetchList();

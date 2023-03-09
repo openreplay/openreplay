@@ -10,6 +10,7 @@ import { toast } from 'react-toastify';
 import { formatTimeOrDate } from 'App/date';
 import { PlayerContext, ILivePlayerContext } from 'App/components/Session/playerContext';
 import { observer } from 'mobx-react-lite';
+import { ENTERPRISE_REQUEIRED } from 'App/constants';
 
 /**
  * "edge" || "edg/"   chromium based edge (dev or canary)
@@ -107,7 +108,7 @@ function ScreenRecorder({
       <div className="p-2">
         {/* @ts-ignore */}
         <Tooltip
-          title={isEnterprise ? supportedMessage : 'This feature requires an enterprise license.'}
+          title={isEnterprise ? supportedMessage : ENTERPRISE_REQUEIRED}
         >
           <Button icon="record-circle" disabled variant="text-primary">
             Record Activity

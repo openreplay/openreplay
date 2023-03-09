@@ -2,11 +2,10 @@ package postgres
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4/pgxpool"
-	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
+
+	"github.com/jackc/pgx/v4/pgxpool"
 	"openreplay/backend/pkg/db/types"
-	"openreplay/backend/pkg/monitoring"
 )
 
 type CH interface {
@@ -15,36 +14,28 @@ type CH interface {
 
 // Conn contains batches, bulks and cache for all sessions
 type Conn struct {
-	c                 Pool
-	batches           *BatchSet
-	bulks             *BulkSet
-	batchSizeBytes    syncfloat64.Histogram
-	batchSizeLines    syncfloat64.Histogram
-	sqlRequestTime    syncfloat64.Histogram
-	sqlRequestCounter syncfloat64.Counter
-	chConn            CH
+	c       Pool
+	batches *BatchSet
+	bulks   *BulkSet
+	chConn  CH // hack for autocomplete inserts, TODO: rewrite
 }
 
 func (conn *Conn) SetClickHouse(ch CH) {
 	conn.chConn = ch
 }
 
-func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *Conn {
-	if metrics == nil {
-		log.Fatalf("metrics is nil")
-	}
+func NewConn(url string, queueLimit, sizeLimit int) *Conn {
 	c, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		log.Fatalf("pgxpool.Connect err: %s", err)
 	}
 	conn := &Conn{}
-	conn.initMetrics(metrics)
-	conn.c, err = NewPool(c, conn.sqlRequestTime, conn.sqlRequestCounter)
+	conn.c, err = NewPool(c)
 	if err != nil {
 		log.Fatalf("can't create new pool wrapper: %s", err)
 	}
-	conn.bulks = NewBulkSet(conn.c, metrics)
-	conn.batches = NewBatchSet(conn.c, queueLimit, sizeLimit, metrics)
+	conn.bulks = NewBulkSet(conn.c)
+	conn.batches = NewBatchSet(conn.c, queueLimit, sizeLimit)
 	return conn
 }
 
@@ -53,26 +44,6 @@ func (conn *Conn) Close() error {
 	conn.batches.Stop()
 	conn.c.Close()
 	return nil
-}
-
-func (conn *Conn) initMetrics(metrics *monitoring.Metrics) {
-	var err error
-	conn.batchSizeBytes, err = metrics.RegisterHistogram("batch_size_bytes")
-	if err != nil {
-		log.Printf("can't create batchSizeBytes metric: %s", err)
-	}
-	conn.batchSizeLines, err = metrics.RegisterHistogram("batch_size_lines")
-	if err != nil {
-		log.Printf("can't create batchSizeLines metric: %s", err)
-	}
-	conn.sqlRequestTime, err = metrics.RegisterHistogram("sql_request_time")
-	if err != nil {
-		log.Printf("can't create sqlRequestTime metric: %s", err)
-	}
-	conn.sqlRequestCounter, err = metrics.RegisterCounter("sql_request_number")
-	if err != nil {
-		log.Printf("can't create sqlRequestNumber metric: %s", err)
-	}
 }
 
 func (conn *Conn) insertAutocompleteValue(sessionID uint64, projectID uint32, tp string, value string) {

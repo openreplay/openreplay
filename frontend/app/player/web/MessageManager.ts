@@ -2,9 +2,9 @@
 import { Decoder } from "syncod";
 import logger from 'App/logger';
 
-import Resource, { TYPES as RES_TYPES } from 'Types/session/resource';
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
-import { Log } from './types';
+import { Log } from './types/log';
+import { Resource, ResourceType, getResourceFromResourceTiming, getResourceFromNetworkRequest } from './types/resource'
 
 import { toast } from 'react-toastify';
 
@@ -108,7 +108,7 @@ export default class MessageManager {
 
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
-  private readonly decoder = new Decoder();
+  public readonly decoder = new Decoder();
   private readonly lists: Lists;
 
   private activityManager: ActivityManager | null = null;
@@ -194,10 +194,10 @@ export default class MessageManager {
     // this.state.update({ filesLoaded: true })
   }
 
-  async loadMessages() {
+  async loadMessages(isClickmap: boolean = false) {
     this.setMessagesLoading(true)
-    // TODO: reuseable decryptor instance
-    const createNewParser = (shouldDecrypt = true) => {
+    // TODO: reusable decryptor instance
+    const createNewParser = (shouldDecrypt = true, file) => {
       const decrypt = shouldDecrypt && this.session.fileKey
         ? (b: Uint8Array) => decryptSessionBytes(b, this.session.fileKey)
         : (b: Uint8Array) => Promise.resolve(b)
@@ -207,11 +207,21 @@ export default class MessageManager {
         fileReader.append(b)
         const msgs: Array<Message> = []
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          this.distributeMessage(msg, msg._index)
           msgs.push(msg)
         }
+        const sorted = msgs.sort((m1, m2) => m1.time - m2.time)
 
-        logger.info("Messages count: ", msgs.length, msgs)
+        let indx = sorted[0]._index
+        let outOfOrderCounter = 0
+        sorted.forEach(msg => {
+          if (indx > msg._index) outOfOrderCounter++
+          else indx = msg._index
+          this.distributeMessage(msg, msg._index)
+        })
+
+        if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
+        logger.info("Messages count: ", msgs.length, sorted, file)
+
         this._sortMessagesHack(msgs)
         this.setMessagesLoading(false)
       })
@@ -220,26 +230,27 @@ export default class MessageManager {
     this.waitingForFiles = true
 
     const loadMethod = this.session.domURL && this.session.domURL.length > 0
-      ? { url: this.session.domURL, parser: createNewParser }
-      : { url: this.session.mobsUrl, parser: () => createNewParser(false)}
+      ? { url: this.session.domURL, parser: () => createNewParser(true, 'dom') }
+      : { url: this.session.mobsUrl, parser: () => createNewParser(false, 'dom')}
 
     loadFiles(loadMethod.url, loadMethod.parser())
       // EFS fallback
       .catch((e) =>
         requestEFSDom(this.session.sessionId)
-          .then(createNewParser(false))
+          .then(createNewParser(false, 'domEFS'))
       )
       .then(this.onFileReadSuccess)
       .catch(this.onFileReadFailed)
       .finally(this.onFileReadFinally);
 
     // load devtools (TODO: start after the first DOM file download)
+    if (isClickmap) return;
     this.state.update({ devtoolsLoading: true })
-    loadFiles(this.session.devtoolsURL, createNewParser())
+    loadFiles(this.session.devtoolsURL, createNewParser(true, 'devtools'))
     // EFS fallback
     .catch(() =>
       requestEFSDevtools(this.session.sessionId)
-        .then(createNewParser(false))
+        .then(createNewParser(false, 'devtoolsEFS'))
     )
     .then(() => {
       this.state.update(this.lists.getFullListsState()) // TODO: also in case of dynamic update through assist
@@ -402,54 +413,30 @@ export default class MessageManager {
           Log(msg)
         )
         break;
+      case MType.ResourceTiming:
+        // TODO: merge `resource` and `fetch` lists into one here instead of UI
+        if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
+          this.lists.lists.resource.insert(getResourceFromResourceTiming(msg, this.sessionStart))
+        }
+        break;
       case MType.Fetch:
       case MType.NetworkRequest:
-        this.lists.lists.fetch.insert(new Resource({
-          method: msg.method,
-          url: msg.url,
-          request: msg.request,
-          response: msg.response,
-          status: msg.status,
-          duration: msg.duration,
-          type: msg.type === "xhr" ? RES_TYPES.XHR : RES_TYPES.FETCH,
-          time: Math.max(msg.timestamp - this.sessionStart, 0), // !!! doesn't look good. TODO: find solution to show negative timings
-          index,
-        }) as Timed)
+        this.lists.lists.fetch.insert(getResourceFromNetworkRequest(msg, this.sessionStart))
         break;
       case MType.Redux:
-        decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log('redux', decoded)
-        if (decoded != null) {
-          this.lists.lists.redux.append(decoded);
-        }
+        this.lists.lists.redux.append(msg);
         break;
       case MType.NgRx:
-        decoded = this.decodeStateMessage(msg, ["state", "action"]);
-        logger.log('ngrx', decoded)
-        if (decoded != null) {
-          this.lists.lists.ngrx.append(decoded);
-        }
+        this.lists.lists.ngrx.append(msg);
         break;
       case MType.Vuex:
-        decoded = this.decodeStateMessage(msg, ["state", "mutation"]);
-        logger.log('vuex', decoded)
-        if (decoded != null) {
-          this.lists.lists.vuex.append(decoded);
-        }
+        this.lists.lists.vuex.append(msg);
         break;
       case MType.Zustand:
-        decoded = this.decodeStateMessage(msg, ["state", "mutation"])
-        logger.log('zustand', decoded)
-        if (decoded != null) {
-          this.lists.lists.zustand.append(decoded)
-        }
+        this.lists.lists.zustand.append(msg)
+        break
       case MType.MobX:
-        decoded = this.decodeStateMessage(msg, ["payload"]);
-        logger.log('mobx', decoded)
-
-        if (decoded != null) {
-          this.lists.lists.mobx.append(decoded);
-        }
+        this.lists.lists.mobx.append(msg);
         break;
       case MType.GraphQl:
         this.lists.lists.graphql.append(msg);
@@ -487,6 +474,10 @@ export default class MessageManager {
   setMessagesLoading(messagesLoading: boolean) {
     this.screen.display(!messagesLoading);
     this.state.update({ messagesLoading, ready: !messagesLoading && !this.state.get().cssLoading });
+  }
+
+  decodeMessage(msg: Message) {
+    return this.decoder.decode(msg)
   }
 
   private setSize({ height, width }: { height: number, width: number }) {

@@ -3,6 +3,7 @@ package messages
 import (
 	"fmt"
 	"log"
+	"openreplay/backend/pkg/metrics/sink"
 )
 
 type sinkMessageIteratorImpl struct {
@@ -53,6 +54,8 @@ func (i *sinkMessageIteratorImpl) sendBatchEnd() {
 }
 
 func (i *sinkMessageIteratorImpl) Iterate(batchData []byte, batchInfo *BatchInfo) {
+	sink.RecordBatchSize(float64(len(batchData)))
+	sink.IncreaseTotalBatches()
 	// Create new message reader
 	reader := NewMessageReader(batchData)
 
@@ -125,7 +128,7 @@ func (i *sinkMessageIteratorImpl) preprocessing(msg Message) error {
 			return fmt.Errorf("incorrect batch version: %d, skip current batch, info: %s", i.version, i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.messageInfo.Timestamp = m.Timestamp
+		i.messageInfo.Timestamp = uint64(m.Timestamp)
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMetadata")
 		}
@@ -138,7 +141,7 @@ func (i *sinkMessageIteratorImpl) preprocessing(msg Message) error {
 			return fmt.Errorf("batchMeta found at the end of the batch, info: %s", i.batchInfo.Info())
 		}
 		i.messageInfo.Index = m.PageNo<<32 + m.FirstIndex // 2^32  is the maximum count of messages per page (ha-ha)
-		i.messageInfo.Timestamp = m.Timestamp
+		i.messageInfo.Timestamp = uint64(m.Timestamp)
 		if m.Timestamp == 0 {
 			i.zeroTsLog("BatchMeta")
 		}
@@ -148,13 +151,13 @@ func (i *sinkMessageIteratorImpl) preprocessing(msg Message) error {
 		}
 
 	case *Timestamp:
-		i.messageInfo.Timestamp = int64(m.Timestamp)
+		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("Timestamp")
 		}
 
 	case *SessionStart:
-		i.messageInfo.Timestamp = int64(m.Timestamp)
+		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionStart")
 			log.Printf("zero session start, project: %d, UA: %s, tracker: %s, info: %s",
@@ -162,7 +165,7 @@ func (i *sinkMessageIteratorImpl) preprocessing(msg Message) error {
 		}
 
 	case *SessionEnd:
-		i.messageInfo.Timestamp = int64(m.Timestamp)
+		i.messageInfo.Timestamp = m.Timestamp
 		if m.Timestamp == 0 {
 			i.zeroTsLog("SessionEnd")
 		}

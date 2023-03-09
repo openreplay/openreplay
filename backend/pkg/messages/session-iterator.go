@@ -40,13 +40,6 @@ func SplitMessages(data []byte) ([]*msgInfo, error) {
 			return nil, fmt.Errorf("read message type err: %s", err)
 		}
 
-		if msgType == MsgRedux {
-			log.Printf("redux")
-		}
-		if msgType == MsgFetch {
-			log.Printf("fetch")
-		}
-
 		// Read message body
 		_, err = ReadMessage(msgType, reader)
 		if err != nil {

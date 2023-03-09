@@ -33,8 +33,6 @@ spec:
             value: "{{ .Values.username }}"
           - name: CLICKHOUSE_PASSWORD
             value: "{{ .Values.password }}"
-          - name: API_LISTEN
-            value: "0.0.0.0:7171"
           {{- range $key, $value := .Values.backupEnv }}
           - name: "{{ $key }}"
             value: "{{ $value }}"

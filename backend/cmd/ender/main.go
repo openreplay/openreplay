@@ -2,8 +2,6 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/pprof"
 	"os"
 	"os/signal"
 	"strings"
@@ -12,27 +10,30 @@ import (
 
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
+	"openreplay/backend/internal/storage"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/monitoring"
+	"openreplay/backend/pkg/metrics"
+	databaseMetrics "openreplay/backend/pkg/metrics/database"
+	enderMetrics "openreplay/backend/pkg/metrics/ender"
 	"openreplay/backend/pkg/queue"
 )
 
 func main() {
-	metrics := monitoring.New("ender")
+	m := metrics.New()
+	m.Register(enderMetrics.List())
+	m.Register(databaseMetrics.List())
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := ender.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
+	sessions, err := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
@@ -67,12 +68,12 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			failedSessionEnds := make(map[uint64]int64)
+			failedSessionEnds := make(map[uint64]uint64)
 			duplicatedSessionEnds := make(map[uint64]uint64)
 
 			// Find ended sessions and send notification to other services
-			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
-				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
+			sessions.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
+				msg := &messages.SessionEnd{Timestamp: timestamp}
 				currDuration, err := pg.GetSessionDuration(sessionID)
 				if err != nil {
 					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)

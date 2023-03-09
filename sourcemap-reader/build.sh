@@ -34,7 +34,7 @@ function build_api(){
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
-        cp -rf ../ee/sourcemap-reader/* ./
+        cp -rf ../ee/sourcemap-reader/* ./ || true # We share same codebase for ee/foss
         envarg="default-ee"
         tag="ee-"
     }

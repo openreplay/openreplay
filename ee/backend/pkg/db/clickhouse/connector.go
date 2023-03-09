@@ -3,17 +3,15 @@ package clickhouse
 import (
 	"errors"
 	"fmt"
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
-	"os"
 	"strings"
 	"time"
-
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 
 	"openreplay/backend/pkg/license"
 )
@@ -23,9 +21,9 @@ type Connector interface {
 	Commit() error
 	Stop() error
 	InsertWebSession(session *types.Session) error
-	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
+	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
-	InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error
+	InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error
 	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
 	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
@@ -52,28 +50,14 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
-// Check env variables. If not present, return default value.
-func getEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
-}
-
 func NewConnector(url string) Connector {
 	license.CheckLicense()
-	// Check username, password, database
-	userName := getEnv("CH_USERNAME", "default")
-	password := getEnv("CH_PASSWORD", "")
-	database := getEnv("CH_DATABASE", "default")
 	url = strings.TrimPrefix(url, "tcp://")
-	url = strings.TrimSuffix(url, "/"+database)
+	url = strings.TrimSuffix(url, "/default")
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
-			Database: database,
-			Username: userName,
-			Password: password,
+			Database: "default",
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
@@ -99,7 +83,7 @@ func NewConnector(url string) Connector {
 }
 
 func (c *connectorImpl) newBatch(name, query string) error {
-	batch, err := NewBulk(c.conn, query)
+	batch, err := NewBulk(c.conn, name, query)
 	if err != nil {
 		return fmt.Errorf("can't create new batch: %s", err)
 	}
@@ -163,9 +147,7 @@ func (c *connectorImpl) worker() {
 	for {
 		select {
 		case t := <-c.workerTask:
-			start := time.Now()
 			c.sendBulks(t)
-			log.Printf("ch bulks dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-c.done:
 			for t := range c.workerTask {
 				c.sendBulks(t)
@@ -258,28 +240,25 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error {
-	var method interface{} = url.EnsureMethod(msg.Method)
-	if method == "" {
-		method = nil
-	}
-	resourceType := url.EnsureType(msg.Type)
+func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error {
+	msgType := url.GetResourceType(msg.Initiator, msg.URL)
+	resourceType := url.EnsureType(msgType)
 	if resourceType == "" {
-		return fmt.Errorf("can't parse resource type, sess: %s, type: %s", session.SessionID, msg.Type)
+		return fmt.Errorf("can't parse resource type, sess: %d, type: %s", session.SessionID, msgType)
 	}
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
-		msg.Type,
+		msgType,
 		nullableUint16(uint16(msg.Duration)),
 		nullableUint16(uint16(msg.TTFB)),
 		nullableUint16(uint16(msg.HeaderSize)),
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
-		msg.Success,
+		msg.Duration != 0,
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -314,14 +293,14 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	return nil
 }
 
-func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error {
+func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error {
 	if msg.Label == "" {
 		return nil
 	}
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),

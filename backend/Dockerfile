@@ -82,7 +82,9 @@ ENV TZ=UTC \
     COMPRESSION_TYPE=zstd \
     CH_USERNAME="default" \
     CH_PASSWORD="" \
-    CH_DATABASE="default"
+    CH_DATABASE="default" \
+    # Max file size to process, default to 100MB
+    MAX_FILE_SIZE=100000000
 
 
 RUN if [ "$SERVICE_NAME" = "http" ]; then \

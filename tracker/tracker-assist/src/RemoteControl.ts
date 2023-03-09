@@ -11,7 +11,7 @@ export enum RCStatus {
 
 
 let setInputValue = function(this: HTMLInputElement | HTMLTextAreaElement,  value: string) { this.value = value }
-const nativeInputValueDescriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')
+const nativeInputValueDescriptor = typeof window !== 'undefined' && Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')
 if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
   setInputValue = nativeInputValueDescriptor.set
 }

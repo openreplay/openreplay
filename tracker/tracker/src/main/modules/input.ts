@@ -90,7 +90,7 @@ export default function (app: App, opts: Partial<Options>): void {
     {
       obscureInputNumbers: true,
       obscureInputEmails: true,
-      defaultInputMode: InputMode.Plain,
+      defaultInputMode: InputMode.Obscured,
       obscureInputDates: false,
     },
     opts,

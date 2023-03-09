@@ -114,17 +114,21 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         row = cur.fetchone()
         offset = row["count"]
         pg_query = f"""UPDATE dashboards
-                      SET name = %(name)s,
+                       SET name = %(name)s,
                           description= %(description)s
                             {", is_public = %(is_public)s" if data.is_public is not None else ""}
                             {", is_pinned = %(is_pinned)s" if data.is_pinned is not None else ""}
-                        WHERE dashboards.project_id = %(projectId)s
+                       WHERE dashboards.project_id = %(projectId)s
                           AND dashboard_id = %(dashboard_id)s
-                          AND (dashboards.user_id = %(userId)s OR is_public)"""
+                          AND (dashboards.user_id = %(userId)s OR is_public)
+                       RETURNING dashboard_id,name,description,is_public,created_at"""
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
-                         INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
-                         VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s)" for i in range(len(data.metrics))])};"""
+                           INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
+                           VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s)" for i in range(len(data.metrics))])}
+                           RETURNING (SELECT dashboard_id FROM dash),(SELECT name FROM dash),
+                                     (SELECT description FROM dash),(SELECT is_public FROM dash),
+                                     (SELECT created_at FROM dash);"""
             for i, m in enumerate(data.metrics):
                 params[f"metric_id_{i}"] = m
                 # params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
@@ -134,8 +138,10 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                 params[f"config_{i}"] = json.dumps({"position": i + offset})
 
         cur.execute(cur.mogrify(pg_query, params))
-
-    return {"success": True}
+        row = cur.fetchone()
+        if row:
+            row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
 
 
 def get_widget(project_id, user_id, dashboard_id, widget_id):

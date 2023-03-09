@@ -115,4 +115,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | yq | MIT | Infrastructure |
 | html2canvas | MIT | JavaScript |
 | eget | MIT | Infrastructure |
-
+| @medv/finder | MIT | JavaScript |
