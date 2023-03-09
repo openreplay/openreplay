@@ -22,7 +22,7 @@ function TimeTooltip({
       className={stl.timeTooltip}
       style={{
         top: 0,
-        left: offset,
+        left: `calc(${offset}px - 0.5rem)`,
         display: isVisible ? 'block' : 'none',
         transform: 'translate(-50%, -110%)',
         whiteSpace: 'nowrap',

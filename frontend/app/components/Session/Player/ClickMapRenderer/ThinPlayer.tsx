@@ -25,7 +25,11 @@ function WebPlayer(props: any) {
     );
     setContextValue({ player: WebPlayerInst, store: PlayerStore });
 
-    return () => WebPlayerInst.clean();
+    return () => {
+      WebPlayerInst.clean();
+      // @ts-ignore
+      setContextValue(defaultContextValue);
+    }
   }, [session.sessionId]);
 
   const isPlayerReady = contextValue.store?.get().ready

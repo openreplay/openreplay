@@ -81,7 +81,12 @@ function Timeline(props: IProps) {
   };
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target !== progressRef.current && e.target !== timelineRef.current) {
+    if (
+      e.target !== progressRef.current
+      && e.target !== timelineRef.current
+      // @ts-ignore black magic
+      && !progressRef.current.contains(e.target)
+    ) {
       return props.tooltipVisible && hideTimeTooltip();
     }
 
@@ -91,7 +96,7 @@ function Timeline(props: IProps) {
     const timeLineTooltip = {
       time: Duration.fromMillis(time).toFormat(`mm:ss`),
       timeStr,
-      offset: e.nativeEvent.offsetX,
+      offset: e.nativeEvent.pageX,
       isVisible: true,
     };
 
