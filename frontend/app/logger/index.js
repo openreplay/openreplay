@@ -24,18 +24,27 @@ function error(...args) {
 }
 
 let groupTm = {};
+let groupedLogs = {};
 
 function group(groupName, ...args) {
   if (!window.env.PRODUCTION || options.verbose) {
-    if (!groupTm[groupName]) {
-      groupTm[groupName] = setTimeout(() => {
-        console.groupEnd()
-        delete groupTm[groupName]
-      }, 500);
-      console.groupCollapsed(groupName);
+    if (groupTm[groupName]) {
+      clearTimeout(groupTm[groupName])
+      groupTm[groupName] = null
+    } else {
+      groupedLogs[groupName] = []
     }
-    console.log(...args);
+    groupedLogs[groupName].push(args);
 
+    groupTm[groupName] = setTimeout(() => {
+      console.groupCollapsed(groupName)
+      groupedLogs[groupName].forEach((log) => {
+        console.log(...log)
+      })
+      console.groupEnd()
+      delete groupTm[groupName]
+      delete groupedLogs[groupName]
+    }, 500)
     options.exceptionsLogs.push(args)
   }
 }
