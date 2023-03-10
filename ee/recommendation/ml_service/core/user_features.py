@@ -1,14 +1,18 @@
 from utils.pg_client import PostgresClient
 from decouple import config
-from utils.df_utils import _add_to_dict
-from utils.declarations import CountryValue, DeviceValue
+from utils.df_utils import _add_to_dict, _process_pg_response
 import numpy as np
 
 
-def get_training_database(projectId=None):
-    args = {"projectId": projectId, }
+def get_training_database(projectId=None, max_timestamp=None, favorites=False):
+    #TODO: Set a pertinent limit to number of not seen values (balance dataset)
+    args = {"projectId": projectId, "max_timestamp": max_timestamp}
     with PostgresClient() as conn:
         x1 = signals_features(conn, **args)
+        if favorites:
+            x2 = user_favorite_sessions(args['projectId'], conn)
+        if max_timestamp is not None:
+            x3 = user_not_seen_sessions(args['projectId'], args['max_timestamp'], conn)
 
     X_project_ids = dict()
     X_users_ids = dict()
@@ -16,17 +20,11 @@ def get_training_database(projectId=None):
 
     _X = list()
     _Y = list()
-    n1 = len(x1)
-    for i in range(n1):
-        x = x1[i]
-        _add_to_dict(x.pop('project_id'), i, X_project_ids)
-        _add_to_dict(x.pop('session_id'), i, X_sessions_ids)
-        _add_to_dict(x.pop('user_id'), i, X_users_ids)
-        _Y.append(x.pop('train_label'))
-
-        x['country'] = CountryValue(x['country']).get_int_val()
-        x['device_type'] = DeviceValue(x['device_type']).get_int_val()
-        _X.append(list(x.values()))
+    _process_pg_response(x1, _X, _Y, X_project_ids, X_users_ids, X_sessions_ids, label=None)
+    if favorites:
+        _process_pg_response(x2, _X, _Y, X_project_ids, X_users_ids, X_sessions_ids, label=1)
+    if max_timestamp:
+        _process_pg_response(x3, _X, _Y, X_project_ids, X_users_ids, X_sessions_ids, label=0)
     return np.array(_X), np.array(_Y), \
            {'project_id': X_project_ids,
             'user_id': X_users_ids,
@@ -48,6 +46,38 @@ def signals_features(conn, **kwargs):
     GROUP BY T.project_id, T.session_id, T.user_id, T.viewer_id, T.events_count, T.errors_count, T.duration, T.country, T.issue_score, T.device_type""",
                          {"projectId": projectId, "events_threshold": events_threshold})
     conn.execute(query)
+    res = conn.fetchall()
+    return res
+
+
+def user_favorite_sessions(projectId, conn):
+    query = """SELECT project_id, session_id, user_id, viewer_id, events_count, errors_count, duration, country, issue_score, device_type FROM (
+    (SELECT session_id, project_id, user_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
+    FROM sessions WHERE project_id=%(projectId)s) AS T1
+    INNER JOIN (SELECT user_id as viewer_id, session_id as fav_session_id FROM user_favorite_sessions) as T2
+    ON T1.session_id=T2.fav_session_id) AS T"""
+    conn.execute(
+        conn.mogrify(query, {"projectId": projectId})
+    )
+    res = conn.fetchall()
+    return res
+
+
+def user_not_seen_sessions(projectId, max_timestamp, conn):
+    query = """SELECT project_id, session_id, user_id, viewer_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
+FROM (
+         (SELECT *
+         FROM sessions
+         WHERE project_id = %(projectId)s AND start_ts < %(maxTimestamp)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions)
+         LIMIT 100) AS T1
+             LEFT JOIN
+         (SELECT user_id as viewer_id
+         FROM users
+         WHERE tenant_id IN (SELECT tenant_id FROM projects WHERE project_id = %(projectId)s)) AS T2 ON true
+     )"""
+    conn.execute(
+        conn.mogrify(query, {"projectId": projectId, "maxTimestamp": max_timestamp})
+    )
     res = conn.fetchall()
     return res
 
