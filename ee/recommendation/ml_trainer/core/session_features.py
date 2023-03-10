@@ -25,7 +25,7 @@ def get_training_database(user_id=None):
         _add_to_dict(x.pop('session_id'), i+n1, X_sessions_ids)
         _add_to_dict(x.pop('user_id'), i+n1, X_users_ids)
         _X.append(list(x.values()))
-    _Y = np.array([1]*n1+[0]*n2)
+    _Y = [1]*n1+[0]*n2
     return np.array(_X), np.array(_Y),\
            {'project_id': X_project_ids,
             'user_id': X_users_ids,
