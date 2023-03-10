@@ -4,6 +4,7 @@ from os import environ
 import requests
 from decouple import config
 
+from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -22,7 +23,7 @@ def check():
         environ["expiration"] = "-1"
         environ["numberOfSeats"] = "0"
         return
-    print(f"validating: {license}")
+    print(f"validating: {helper.obfuscate(license)}")
     r = requests.post('https://api.openreplay.com/os/license', json={"mid": __get_mid(), "license": get_license()})
     if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
         print("license validation failed")
