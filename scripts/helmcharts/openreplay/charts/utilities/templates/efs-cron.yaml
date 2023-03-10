@@ -44,7 +44,6 @@ spec:
             volumeMounts:
             - mountPath: /mnt/efs
               name: datadir
-          restartPolicy: Never
           {{- if eq (tpl .Values.efsCleaner.pvc.name . ) "hostPath" }}
           volumes:
           - name: datadir
