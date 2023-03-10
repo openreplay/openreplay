@@ -111,6 +111,8 @@ class PostgresClient:
     def __enter__(self):
         if self.cursor is None:
             self.cursor = self.connection.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            self.cursor.cursor_execute = self.cursor.execute
+            self.cursor.execute = self.__execute
             self.cursor.recreate = self.recreate_cursor
         return self.cursor
 
@@ -135,6 +137,17 @@ class PostgresClient:
                     and not self.long_query \
                     and not self.unlimited_query:
                 postgreSQL_pool.putconn(self.connection)
+
+    def __execute(self, query, vars=None):
+        try:
+            result = self.cursor.cursor_execute(query=query, vars=vars)
+        except psycopg2.Error as error:
+            logging.error(f"!!! Error of type:{type(error)} while executing query:")
+            logging.error(query)
+            logging.info("starting rollback to allow future execution")
+            self.connection.rollback()
+            raise error
+        return result
 
     def recreate_cursor(self, rollback=False):
         if rollback:
