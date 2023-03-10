@@ -1,7 +1,10 @@
 package postgres
 
 import (
+	"encoding/hex"
+	"hash/fnv"
 	"log"
+	"strconv"
 
 	"openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
@@ -89,6 +92,24 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 	return nil
 }
 
+func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *InputChange) error {
+	// Debug log
+	log.Printf("new InputDuration event: %v", e)
+	if e.Label == "" {
+		return nil
+	}
+	value := &e.Value
+	if e.ValueMasked {
+		value = nil
+	}
+	if err := conn.bulks.Get("webInputDurations").Append(sessionID, truncSqIdx(e.ID), e.Timestamp, value, e.Label, e.HesitationTime, e.InputDuration); err != nil {
+		log.Printf("insert web input event err: %s", err)
+	}
+	conn.updateSessionEvents(sessionID, 1, 0)
+	conn.insertAutocompleteValue(sessionID, projectID, "INPUT", e.Label)
+	return nil
+}
+
 func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *types.ErrorEvent) error {
 	errorID := e.ID(projectID)
 	if err := conn.bulks.Get("webErrors").Append(errorID, projectID, e.Source, e.Name, e.Message, e.Payload); err != nil {
@@ -144,4 +165,27 @@ func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error
 		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
 		WHERE session_id = $3 AND referrer IS NULL`,
 		referrer, url.DiscardURLQuery(referrer), sessionID)
+}
+
+func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *MouseThrashing) error {
+	// Debug log
+	log.Printf("new MouseThrashing event: %v", e)
+	//
+	issueID := mouseThrashingID(projectID, sessionID, e.Timestamp)
+	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_trashing", e.Url); err != nil {
+		log.Printf("insert web issue err: %s", err)
+	}
+	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
+		log.Printf("insert web issue event err: %s", err)
+	}
+	conn.updateSessionIssues(sessionID, 0, 50)
+	return nil
+}
+
+func mouseThrashingID(projectID uint32, sessID, ts uint64) string {
+	hash := fnv.New128a()
+	hash.Write([]byte("mouse_trashing"))
+	hash.Write([]byte(strconv.FormatUint(sessID, 10)))
+	hash.Write([]byte(strconv.FormatUint(ts, 10)))
+	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
