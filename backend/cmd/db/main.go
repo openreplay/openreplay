@@ -38,7 +38,7 @@ func main() {
 		messages.MsgFetch, messages.MsgNetworkRequest, messages.MsgGraphQL, messages.MsgStateAction,
 		messages.MsgSetInputTarget, messages.MsgSetInputValue, messages.MsgCreateDocument, messages.MsgMouseClick,
 		messages.MsgSetPageLocation, messages.MsgPageLoadTiming, messages.MsgPageRenderTiming,
-		messages.MsgInputEvent, messages.MsgPageEvent}
+		messages.MsgInputEvent, messages.MsgPageEvent, messages.MsgMouseThrashing, messages.MsgInputChange}
 
 	// Init consumer
 	consumer := queue.NewConsumer(
