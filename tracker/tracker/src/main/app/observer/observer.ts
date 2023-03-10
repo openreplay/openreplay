@@ -8,7 +8,7 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
-  RemovedNodesCount,
+  UnbindNodes,
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -237,11 +237,12 @@ export default abstract class Observer {
       )
 
       let removed = 0
+      const total = this.app.nodes.getNodeCount()
       while (walker.nextNode()) {
         removed += 1
         this.app.nodes.unregisterNode(walker.currentNode)
       }
-      this.app.send(RemovedNodesCount(removed))
+      this.app.send(UnbindNodes(Math.floor((removed / total) * 100)))
     }
   }
 

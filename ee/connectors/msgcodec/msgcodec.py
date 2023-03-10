@@ -653,8 +653,8 @@ class MessageCodec(Codec):
             )
 
         if message_id == 115:
-            return RemovedNodesCount(
-                nodes_count=self.read_uint(reader)
+            return UnbindNodes(
+                total_removed_percent=self.read_uint(reader)
             )
 
         if message_id == 125:
