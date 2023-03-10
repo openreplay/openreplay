@@ -448,7 +448,6 @@ end
 
 # 90-111 reserved iOS
 
-
 message 112, 'InputChange', :replayer => false do
     uint 'ID'
     string 'Value'
@@ -468,8 +467,8 @@ message 114, 'MouseThrashing' do
     uint 'Timestamp'
 end
 
-message 115, 'RemovedNodesCount', :replayer => false do
-    uint 'NodesCount'
+message 115, 'UnbindNodes', :replayer => false do
+    uint 'TotalRemovedPercent'
 end
 
 ## Backend-only
