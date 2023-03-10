@@ -2,8 +2,8 @@ from urllib.parse import urlparse
 
 import redis
 import requests
+from confluent_kafka.admin import AdminClient
 from decouple import config
-import kafka
 
 from chalicelib.utils import pg_client, ch_client
 
@@ -229,12 +229,11 @@ def __check_kafka():
         return fail_response
 
     try:
-        # consumer = kafka.KafkaConsumer(group_id='test', bootstrap_servers=[config("KAFKA_SERVERS")])
-        # topics = consumer.topics()
-        #
-        # if not topics:
-        #     raise RuntimeError()
-        client =kafka.KafkaClient(bootstrap_servers=[config("KAFKA_SERVERS")])
+        a = AdminClient({'bootstrap.servers': config("KAFKA_SERVERS"), "socket.connection.setup.timeout.ms": 3000})
+        topics = a.list_topics().topics
+        if not topics:
+            raise Exception('topics not found')
+
     except Exception as e:
         print("!! Issue getting kafka-health response")
         print(str(e))
@@ -243,6 +242,5 @@ def __check_kafka():
 
     return {
         "health": True,
-        "details": {"version": r.execute_command('INFO')['redis_version']}
+        "details": {}
     }
-
