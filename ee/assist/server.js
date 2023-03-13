@@ -1,6 +1,7 @@
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
 const express = require('express');
+const health = require("./utils/health");
 const assert = require('assert').strict;
 
 let socket;
@@ -14,7 +15,7 @@ const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.LISTEN_PORT || 9001;
 assert.ok(process.env.ASSIST_KEY, 'The "ASSIST_KEY" environment variable is required');
 const P_KEY = process.env.ASSIST_KEY;
-const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`
+const PREFIX = process.env.PREFIX || process.env.prefix || `/assist`;
 
 let debug = process.env.debug === "1";
 const heapdump = process.env.heapdump === "1";
@@ -31,18 +32,11 @@ if (process.env.uws !== "true") {
     );
     heapdump && wsapp.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
     wsapp.use(`${PREFIX}/${P_KEY}`, socket.wsRouter);
-    wsapp.get('/private/shutdown', (req, res) => {
-            console.log("Requested shutdown");
-            res.statusCode = 200;
-            res.end("ok!");
-            process.kill(1, "SIGTERM");
-        }
-    );
 
     wsapp.enable('trust proxy');
     const wsserver = wsapp.listen(PORT, HOST, () => {
         console.log(`WS App listening on http://${HOST}:${PORT}`);
-        console.log('Press Ctrl+C to quit.');
+        health.healthApp.listen(health.PORT, HOST, health.listen_cb);
     });
 
     socket.start(wsserver);
@@ -102,13 +96,6 @@ if (process.env.uws !== "true") {
     uapp.post(`${PREFIX}/${P_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
     uapp.get(`${PREFIX}/${P_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveByProject));
 
-    uapp.get('/private/shutdown', (res, req) => {
-            console.log("Requested shutdown");
-            res.writeStatus('200 OK').end("ok!");
-            process.kill(1, "SIGTERM");
-        }
-    );
-
     socket.start(uapp);
 
     uapp.listen(HOST, PORT, (token) => {
@@ -116,7 +103,7 @@ if (process.env.uws !== "true") {
             console.warn("port already in use");
         }
         console.log(`WS App listening on http://${HOST}:${PORT}`);
-        console.log('Press Ctrl+C to quit.');
+        health.healthApp.listen(health.PORT, HOST, health.listen_cb);
     });
 
 

@@ -45,7 +45,22 @@ const respond = function (res, data) {
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": data}));
 }
-
+const countSessions = async function () {
+    let count = 0;
+    try {
+        const arr = Array.from(io.sockets.adapter.rooms);
+        const filtered = arr.filter(room => !room[1].has(room[0]));
+        for (let i of filtered) {
+            let {projectKey, sessionId} = extractPeerId(i[0]);
+            if (projectKey !== null && sessionId !== null) {
+                count++;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return count;
+}
 const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
     let filters = extractPayloadFromRequest(req);
@@ -360,6 +375,7 @@ module.exports = {
 
         socketConnexionTimeout(io);
     },
+    countSessions,
     handlers: {
         socketsList,
         socketsListByProject,

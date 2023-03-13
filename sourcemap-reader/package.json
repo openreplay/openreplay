@@ -1,6 +1,6 @@
 {
   "name": "sourcemaps-reader",
-  "version": "1.0.0",
+  "version": "v1.11.0",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
   "scripts": {

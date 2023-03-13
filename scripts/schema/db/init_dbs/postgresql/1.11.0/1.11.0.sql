@@ -17,4 +17,9 @@ ALTER TABLE public.projects
       "defaultInputMode": "obscured"
     }'::jsonb;
 
+ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'mouse_thrashing';
+
+ALTER TABLE events.clicks
+    ADD COLUMN hesitation integer NULL;
+
 COMMIT;

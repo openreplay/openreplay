@@ -31,7 +31,7 @@ else:
     HEALTH_ENDPOINTS = {
         "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/metrics",
         "assets": "http://assets-openreplay.app.svc.cluster.local:8888/metrics",
-        "assist": "http://assist-openreplay.app.svc.cluster.local:8888/metrics",
+        "assist": "http://assist-openreplay.app.svc.cluster.local:8888/health",
         "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",
         "db": "http://db-openreplay.app.svc.cluster.local:8888/metrics",
         "ender": "http://ender-openreplay.app.svc.cluster.local:8888/metrics",
@@ -40,12 +40,11 @@ else:
         "http": "http://http-openreplay.app.svc.cluster.local:8888/metrics",
         "ingress-nginx": "http://ingress-nginx-openreplay.app.svc.cluster.local:8888/metrics",
         "integrations": "http://integrations-openreplay.app.svc.cluster.local:8888/metrics",
-        "peers": "http://peers-openreplay.app.svc.cluster.local:8888/metrics",
+        "peers": "http://peers-openreplay.app.svc.cluster.local:8888/health",
         "quickwit": "http://quickwit-openreplay.app.svc.cluster.local:8888/metrics",
         "sink": "http://sink-openreplay.app.svc.cluster.local:8888/metrics",
-        "sourcemapreader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/metrics",
+        "sourcemapreader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/health",
         "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics",
-        "utilities": "http://utilities-openreplay.app.svc.cluster.local:8888/metrics",
     }
 
 
@@ -172,8 +171,7 @@ def get_health():
             "quickwit": __check_be_service("quickwit"),
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
-            "storage": __check_be_service("storage"),
-            "utilities": __check_be_service("utilities")
+            "storage": __check_be_service("storage")
         },
         # "overall": {
         #   "health": "na",
