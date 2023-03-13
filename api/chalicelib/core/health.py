@@ -41,7 +41,6 @@ else:
         "ingress-nginx": "http://ingress-nginx-openreplay.app.svc.cluster.local:8888/metrics",
         "integrations": "http://integrations-openreplay.app.svc.cluster.local:8888/metrics",
         "peers": "http://peers-openreplay.app.svc.cluster.local:8888/health",
-        "quickwit": "http://quickwit-openreplay.app.svc.cluster.local:8888/metrics",
         "sink": "http://sink-openreplay.app.svc.cluster.local:8888/metrics",
         "sourcemapreader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/health",
         "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics",
@@ -168,7 +167,6 @@ def get_health():
             "ingress-nginx": __always_healthy,
             "integrations": __check_be_service("integrations"),
             "peers": __check_be_service("peers"),
-            "quickwit": __check_be_service("quickwit"),
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage")
