@@ -4,11 +4,12 @@ import slide from 'App/svg/cheers.svg';
 import { Icon, Button } from 'UI';
 import Footer from './Footer'
 
-function Category({ name, healthOk }: { name: string; healthOk: boolean }) {
+export function Category({ name, healthOk, onClick }: { name: string; healthOk: boolean; onClick: (args: any) => void }) {
   const icon = healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
   return (
     <div
-      className={'p-4 flex items-center gap-2 border-b cursor-pointer hover:bg-active-blue'}
+      className={'px-4 py-2 flex items-center gap-2 border-b cursor-pointer hover:bg-active-blue'}
+      onClick={onClick}
     >
       <Icon name={icon} size={20} color={'green'} />
       {name}
@@ -18,7 +19,7 @@ function Category({ name, healthOk }: { name: string; healthOk: boolean }) {
   )
 }
 
-function HealthModal() {
+function HealthModal({ getHealth, isLoading, healthResponse }: { getHealth: () => void; isLoading: boolean; healthResponse: Record<string, any> }) {
 
   return (
     <div
@@ -37,7 +38,7 @@ function HealthModal() {
         }
       >
         <div className={'text-xl font-semibold'}>Installation Status</div>
-        <Button icon={'arrow-repeat'} variant={'text-primary'}>
+        <Button loading={isLoading} onClick={getHealth} icon={'arrow-repeat'} variant={'text-primary'}>
           Recheck
         </Button>
       </div>
@@ -46,8 +47,8 @@ function HealthModal() {
         <div className={'flex flex-col h-full'} style={{ flex: 1 }}>
           <Category name={'Databases'} healthOk={true} />
           <Category name={'Ingestion Pipeline'} healthOk={false} />
-          <Category name={'Backend'} healthOk={false} />
-          <Category name={'SSL'} healthOk={true} />
+          <Category name={'Backend Services'} healthOk={false} />
+          {/*<Category name={'SSL'} healthOk={true} />*/}
         </div>
         <div
           className={'bg-gray-lightest border-l w-fit border-figmaColors-divider'}
@@ -65,5 +66,8 @@ function HealthModal() {
     </div>
   );
 }
+
+
+
 
 export default HealthModal;
