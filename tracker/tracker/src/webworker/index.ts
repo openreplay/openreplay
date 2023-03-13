@@ -137,11 +137,13 @@ self.onmessage = ({ data }: any): any => {
   if (data.type === 'auth') {
     if (!sender) {
       console.debug('WebWorker: sender not initialised. Received auth.')
+      initiateRestart()
       return
     }
-    
+
     if (!writer) {
       console.debug('WebWorker: writer not initialised. Received auth.')
+      initiateRestart()
       return
     }
 

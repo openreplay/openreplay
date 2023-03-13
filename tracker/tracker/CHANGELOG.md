@@ -1,5 +1,6 @@
 ## 5.0.1
 
+- Re-init worker after device sleep/hybernation
 - Default text input mode is now Obscured
 - Use `@medv/finder` instead of our own implementation of `getSelector` for better clickmaps experience
 
