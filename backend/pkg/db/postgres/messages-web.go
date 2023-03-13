@@ -172,7 +172,7 @@ func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *Mo
 	log.Printf("new MouseThrashing event: %v", e)
 	//
 	issueID := mouseThrashingID(projectID, sessionID, e.Timestamp)
-	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_trashing", e.Url); err != nil {
+	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
 		log.Printf("insert web issue err: %s", err)
 	}
 	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
