@@ -159,6 +159,7 @@ export default class Session {
   notes: ISession["notes"]
   notesWithEvents: ISession["notesWithEvents"]
   fileKey: ISession["fileKey"]
+  durationSeconds: number
 
   constructor(plainSession?: ISession) {
     const sessionData = plainSession || (emptyValues as unknown as ISession)
@@ -238,6 +239,7 @@ export default class Session {
       isMobile,
       startedAt,
       duration,
+      durationSeconds,
       userNumericHash: hashString(
         session.userId ||
         session.userAnonymousId ||
@@ -257,5 +259,46 @@ export default class Session {
       notes,
       notesWithEvents: notesWithEvents,
     })
+  }
+
+  addIssues(issues: IIssue[]) {
+    const issuesList = issues.map(
+      (i, k) => new Issue({ ...i, time: i.timestamp - this.startedAt, key: k })) || [];
+
+    // @ts-ignore
+    this.issues = issuesList;
+  }
+
+  addEvents(sessionEvents: EventData[], sessionNotes: Note[]) {
+    const events: InjectedEvent[] = []
+    const rawEvents: (EventData & { key: number })[] = []
+
+    if (sessionEvents.length) {
+      sessionEvents.forEach((event, k) => {
+        const time = event.timestamp - this.startedAt
+        if (event.type !== TYPES.CONSOLE && time <= this.durationSeconds) {
+          const EventClass = SessionEvent({ ...event, time, key: k })
+          if (EventClass) {
+            events.push(EventClass);
+          }
+          rawEvents.push({ ...event, time, key: k });
+        }
+      })
+    }
+
+    const rawNotes = sessionNotes;
+    const notesWithEvents = [...rawEvents, ...rawNotes].sort((a, b) => {
+      // @ts-ignore just in case
+      const aTs = a.timestamp || a.time;
+      // @ts-ignore
+      const bTs = b.timestamp || b.time;
+
+      return aTs - bTs;
+    }) || [];
+
+    // @ts-ignore
+    this.notesWithEvents = notesWithEvents;
+    this.notes = sessionNotes
+    this.events = events
   }
 }
