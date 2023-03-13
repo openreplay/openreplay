@@ -41,11 +41,8 @@ func (c *cacher) CanCache() bool {
 func NewCacher(cfg *config.Config) *cacher {
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
 	}
 
 	if cfg.ClientCertFilePath != "" && cfg.ClientKeyFilePath != "" && cfg.CaCertFilePath != "" {
@@ -55,7 +52,7 @@ func NewCacher(cfg *config.Config) *cacher {
 
 		cert, err = tls.LoadX509KeyPair(cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
 		if err != nil {
-			log.Fatalf("%s: Error creating x509 keypair from the client cert file %s and client key file %s", err, cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
+			log.Fatalf("Error creating x509 keypair from the client cert file %s and client key file %s , Error: %s", err, cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
 		}
 
 		caCert, err := ioutil.ReadFile(cfg.CaCertFilePath)
@@ -64,14 +61,12 @@ func NewCacher(cfg *config.Config) *cacher {
 		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
-		transport = &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{
+		tlsConfig = &tls.Config{
 				InsecureSkipVerify: true,
 				Certificates:       []tls.Certificate{cert},
 				RootCAs:            caCertPool,
-			},
-		}
+			}
+		
 	}
 
 	c := &cacher{
@@ -79,7 +74,10 @@ func NewCacher(cfg *config.Config) *cacher {
 		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets),
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
-			Transport: transport,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				TLSClientConfig: tlsConfig,
+			},
 		},
 		rewriter:       rewriter,
 		Errors:         make(chan error),
