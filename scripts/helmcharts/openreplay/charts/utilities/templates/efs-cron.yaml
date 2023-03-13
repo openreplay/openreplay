@@ -25,7 +25,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: efs-cleaner
-            image: "{{ tpl .Values.efsCleaner.image.repository . }}:{{ .Values.efsCleaner.image.tag | default .Chart.AppVersion }}"
+            image: alpine
             command:
             - /bin/sh
             - -c
