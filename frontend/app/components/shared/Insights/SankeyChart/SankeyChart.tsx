@@ -1,3 +1,4 @@
+import { active } from 'App/components/Alerts/alertItem.css';
 import React from 'react';
 import { Sankey, ResponsiveContainer } from 'recharts';
 import CustomLink from './CustomLink';
@@ -24,6 +25,8 @@ interface Props {
 }
 function SankeyChart(props: Props) {
   const { data, nodePadding = 50, nodeWidth = 10 } = props;
+  const [activeLink, setActiveLink] = React.useState<any>(null);
+
   return (
     <ResponsiveContainer height={400} width="100%">
       <Sankey
@@ -41,7 +44,7 @@ function SankeyChart(props: Props) {
           top: 40,
           bottom: 10,
         }}
-        link={<CustomLink />}
+        link={<CustomLink onClick={(props: any) => setActiveLink(props)} activeLink={activeLink} />}
       >
         <defs>
           <linearGradient id={'linkGradient'}>

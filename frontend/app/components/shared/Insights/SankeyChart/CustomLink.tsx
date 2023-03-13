@@ -1,23 +1,33 @@
 import React from 'react';
 import { Layer } from 'recharts';
 
-interface Props {
-  payload: any;
-  sourceX: number;
-  targetX: number;
-  sourceY: number;
-  targetY: number;
-  sourceControlX: number;
-  targetControlX: number;
-  linkWidth: number;
-  index: number;
-}
+// interface Props {
+//   payload: any;
+//   sourceX: number;
+//   targetX: number;
+//   sourceY: number;
+//   targetY: number;
+//   sourceControlX: number;
+//   targetControlX: number;
+//   linkWidth: number;
+//   index: number;
+// }
 function CustomLink(props: any) {
   const [fill, setFill] = React.useState('url(#linkGradient)');
-  const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, index } =
+  const { payload, sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, index, activeLink } =
     props;
+  const activeSource = activeLink?.payload.source;
+  const activeTarget = activeLink?.payload.target;
+  const isActive = activeSource?.name === payload.source.name && activeTarget?.name === payload.target.name;
+
+  const onClick = () => {
+    if (props.onClick) {
+      props.onClick(props);
+    }
+  };
+  
   return (
-    <Layer key={`CustomLink${index}`}>
+    <Layer key={`CustomLink${index}`} onClick={onClick}>
       <path
         d={`
             M${sourceX},${sourceY + linkWidth / 2}
@@ -30,7 +40,7 @@ function CustomLink(props: any) {
               ${sourceX},${sourceY - linkWidth / 2}
             Z
           `}
-        fill={fill}
+        fill={isActive ? 'rgba(57, 78, 255, 0.5)' : fill}
         strokeWidth="0"
         onMouseEnter={() => {
           setFill('rgba(57, 78, 255, 0.5)');
