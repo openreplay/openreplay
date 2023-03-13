@@ -10,6 +10,7 @@ import RecordingsService from "./RecordingsService";
 import ConfigService from './ConfigService'
 import AlertsService from './AlertsService'
 import WebhookService from './WebhookService'
+import HealthService from "./HealthService";
 
 export const dashboardService  = new DashboardService();
 export const metricService = new MetricService();
@@ -24,6 +25,8 @@ export const configService = new ConfigService();
 export const alertsService = new AlertsService();
 export const webhookService = new WebhookService();
 
+export const healthService = new HealthService();
+
 export const services = [
   dashboardService,
   metricService,
@@ -37,4 +40,5 @@ export const services = [
   configService,
   alertsService,
   webhookService,
+  healthService,
 ]
