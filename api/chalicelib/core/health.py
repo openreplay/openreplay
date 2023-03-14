@@ -29,7 +29,7 @@ if config("LOCAL_DEV", cast=bool, default=False):
 
 else:
     HEALTH_ENDPOINTS = {
-        "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/metrics",
+        "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/health",
         "assets": "http://assets-openreplay.app.svc.cluster.local:8888/metrics",
         "assist": "http://assist-openreplay.app.svc.cluster.local:8888/health",
         "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",

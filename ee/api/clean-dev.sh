@@ -86,3 +86,5 @@ rm -rf ./chalicelib/core/performance_event.py
 rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./app_alerts.py
 rm -rf ./build_alerts.sh
+rm -rf ./run-dev.sh
+rm -rf ./run-alerts-dev.sh
