@@ -1,4 +1,5 @@
 import schemas
+import schemas_ee
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, resources, assist, sessions_devtool, sessions_notes
 from chalicelib.utils import errors_helper
@@ -15,8 +16,8 @@ def __group_metadata(session, project_metadata):
 
 
 # for backward compatibility
-def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
-                  group_metadata=False, live=True):
+def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, full_data=False,
+                  include_fav_viewed=False, group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
@@ -33,7 +34,8 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
             SELECT
                 s.*,
                 s.session_id::text AS session_id,
-                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
+                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key,
+                encode(file_key,'hex') AS file_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata.column_names()]) + ") AS project_metadata") if group_metadata else ''}
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
@@ -71,7 +73,8 @@ def get_by_id2_pg(project_id, session_id, context: schemas.CurrentContext, full_
                                                                           session_id=session_id)
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
-                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id)
+                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                                                                    context=context)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
                                                                     start_ts=data["startTs"], duration=data["duration"])
 

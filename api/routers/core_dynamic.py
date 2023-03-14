@@ -271,8 +271,8 @@ async def get_live_session(projectId: int, sessionId: str, background_tasks: Bac
                            context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId,
-                                      full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
+        data = sessions_replay.get_replay(context=context, project_id=projectId, session_id=sessionId,
+                                          full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):

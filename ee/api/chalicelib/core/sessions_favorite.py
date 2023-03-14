@@ -10,13 +10,15 @@ def add_favorite_session(context: schemas_ee.CurrentContext, project_id, session
         cur.execute(
             cur.mogrify(f"""\
                 INSERT INTO public.user_favorite_sessions(user_id, session_id) 
-                VALUES (%(userId)s,%(sessionId)s);""",
-                        {"userId": context.user_id, "sessionId": session_id})
+                VALUES (%(userId)s,%(session_id)s)
+                RETURNING session_id;""",
+                        {"userId": context.user_id, "session_id": session_id})
         )
-
-    sessions_favorite_exp.add_favorite_session(project_id=project_id, user_id=context.user_id, session_id=session_id)
-    return sessions.get_by_id2_pg(project_id=project_id, session_id=session_id,
-                                  full_data=False, include_fav_viewed=True, context=context)
+        row = cur.fetchone()
+    if row:
+        sessions_favorite_exp.add_favorite_session(project_id=project_id, user_id=context.user_id, session_id=session_id)
+        return {"data": {"sessionId": session_id}}
+    return {"errors": ["something went wrong"]}
 
 
 def remove_favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
@@ -25,12 +27,15 @@ def remove_favorite_session(context: schemas_ee.CurrentContext, project_id, sess
             cur.mogrify(f"""\
                         DELETE FROM public.user_favorite_sessions                          
                         WHERE user_id = %(userId)s
-                            AND session_id = %(sessionId)s;""",
-                        {"userId": context.user_id, "sessionId": session_id})
+                            AND session_id = %(session_id)s
+                        RETURNING session_id;""",
+                        {"userId": context.user_id, "session_id": session_id})
         )
-    sessions_favorite_exp.remove_favorite_session(project_id=project_id, user_id=context.user_id, session_id=session_id)
-    return sessions.get_by_id2_pg(project_id=project_id, session_id=session_id,
-                                  full_data=False, include_fav_viewed=True, context=context)
+        row = cur.fetchone()
+    if row:
+        sessions_favorite_exp.remove_favorite_session(project_id=project_id, user_id=context.user_id, session_id=session_id)
+        return {"data": {"sessionId": session_id}}
+    return {"errors": ["something went wrong"]}
 
 
 def favorite_session(context: schemas_ee.CurrentContext, project_id, session_id):
