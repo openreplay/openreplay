@@ -1,7 +1,10 @@
 package heuristics
 
 import (
+	"fmt"
 	"log"
+	"openreplay/backend/pkg/messages"
+	metrics "openreplay/backend/pkg/metrics/heuristics"
 	"time"
 
 	"openreplay/backend/internal/config/heuristics"
@@ -35,6 +38,8 @@ func (h *heuristicsImpl) run() {
 		case evt := <-h.events.Events():
 			if err := h.producer.Produce(h.cfg.TopicAnalytics, evt.SessionID(), evt.Encode()); err != nil {
 				log.Printf("can't send new event to queue: %s", err)
+			} else {
+				metrics.IncreaseTotalEvents(messageTypeName(evt))
 			}
 		case <-tick:
 			h.producer.Flush(h.cfg.ProducerTimeout)
@@ -61,4 +66,22 @@ func (h *heuristicsImpl) Stop() {
 	h.producer.Close(h.cfg.ProducerTimeout)
 	h.consumer.Commit()
 	h.consumer.Close()
+}
+
+func messageTypeName(msg messages.Message) string {
+	switch msg.TypeID() {
+	case 31:
+		return "PageEvent"
+	case 32:
+		return "InputEvent"
+	case 56:
+		return "PerformanceTrackAggr"
+	case 69:
+		return "MouseClick"
+	case 125:
+		m := msg.(*messages.IssueEvent)
+		return fmt.Sprintf("IssueEvent(%s)", m.Type)
+	default:
+		return "unknown"
+	}
 }

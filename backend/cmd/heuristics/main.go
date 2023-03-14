@@ -8,12 +8,17 @@ import (
 	"openreplay/backend/pkg/handlers/custom"
 	"openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/metrics"
+	heuristicsMetrics "openreplay/backend/pkg/metrics/heuristics"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/sessions"
 	"openreplay/backend/pkg/terminator"
 )
 
 func main() {
+	m := metrics.New()
+	m.Register(heuristicsMetrics.List())
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	cfg := config.New()
 
