@@ -40,7 +40,7 @@ export default () => (next) => (action) => {
     });
 };
 
-function parseError(e) {
+export function parseError(e) {
   try {
     return [...JSON.parse(e).errors] || [];
   } catch {
