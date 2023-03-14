@@ -142,10 +142,6 @@ def __check_redis():
     }
 
 
-def __check_assist():
-    pass
-
-
 def get_health():
     health_map = {
         "databases": {
@@ -157,7 +153,7 @@ def get_health():
         "backendServices": {
             "alerts": __check_be_service("alerts"),
             "assets": __check_be_service("assets"),
-            "assist": __check_assist,
+            "assist": __check_be_service("assist"),
             "chalice": __always_healthy_with_version,
             "db": __check_be_service("db"),
             "ender": __check_be_service("ender"),

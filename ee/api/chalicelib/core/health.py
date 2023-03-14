@@ -30,7 +30,7 @@ if config("LOCAL_DEV", cast=bool, default=False):
 
 else:
     HEALTH_ENDPOINTS = {
-        "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/metrics",
+        "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/health",
         "assets": "http://assets-openreplay.app.svc.cluster.local:8888/metrics",
         "assist": "http://assist-openreplay.app.svc.cluster.local:8888/health",
         "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",
@@ -45,7 +45,7 @@ else:
         "quickwit": "http://quickwit-openreplay.app.svc.cluster.local:8888/metrics",
         "sink": "http://sink-openreplay.app.svc.cluster.local:8888/metrics",
         "sourcemapreader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/health",
-        "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics"
+        "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics",
     }
 
 
@@ -144,10 +144,6 @@ def __check_redis():
     }
 
 
-def __check_assist():
-    pass
-
-
 def get_health():
     health_map = {
         "databases": {
@@ -161,7 +157,7 @@ def get_health():
         "backendServices": {
             "alerts": __check_be_service("alerts"),
             "assets": __check_be_service("assets"),
-            "assist": __check_assist,
+            "assist": __check_be_service("assist"),
             "chalice": __always_healthy_with_version,
             "db": __check_be_service("db"),
             "ender": __check_be_service("ender"),
