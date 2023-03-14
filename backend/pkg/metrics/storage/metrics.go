@@ -31,6 +31,32 @@ func IncreaseStorageTotalSessions() {
 	storageTotalSessions.Inc()
 }
 
+var storageSkippedSessionSize = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Namespace: "storage",
+		Name:      "session_size_bytes",
+		Help:      "A histogram displaying the size of each skipped session file in bytes.",
+		Buckets:   common.DefaultSizeBuckets,
+	},
+	[]string{"file_type"},
+)
+
+func RecordSkippedSessionSize(fileSize float64, fileType string) {
+	storageSkippedSessionSize.WithLabelValues(fileType).Observe(fileSize)
+}
+
+var storageTotalSkippedSessions = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Namespace: "storage",
+		Name:      "sessions_skipped_total",
+		Help:      "A counter displaying the total number of all skipped sessions because of the size limits.",
+	},
+)
+
+func IncreaseStorageTotalSkippedSessions() {
+	storageTotalSkippedSessions.Inc()
+}
+
 var storageSessionReadDuration = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Namespace: "storage",
