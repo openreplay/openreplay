@@ -24,14 +24,15 @@ from routers.subs import v1_api, health
 loglevel = config("LOGLEVEL", default=logging.INFO)
 print(f">Loglevel set to: {loglevel}")
 logging.basicConfig(level=loglevel)
-ap_logger = logging.getLogger('apscheduler')
-ap_logger.setLevel(loglevel)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logging.info(">>>>> starting up <<<<<")
+    ap_logger = logging.getLogger('apscheduler')
+    ap_logger.setLevel(loglevel)
+
     app.schedule = AsyncIOScheduler()
     app.queue_system = queue.Queue()
     await pg_client.init()
