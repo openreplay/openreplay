@@ -16,6 +16,7 @@ def __group_metadata(session, project_metadata):
 
 
 # for backward compatibility
+# This function should not use Clickhouse because it doesn't have `file_key`
 def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, full_data=False,
                   include_fav_viewed=False, group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
@@ -92,6 +93,7 @@ def get_by_id2_pg(project_id, session_id, context: schemas_ee.CurrentContext, fu
             return None
 
 
+# This function should not use Clickhouse because it doesn't have `file_key`
 def get_replay(project_id, session_id, context: schemas.CurrentContext, full_data=False, include_fav_viewed=False,
                group_metadata=False, live=True):
     with pg_client.PostgresClient() as cur:
