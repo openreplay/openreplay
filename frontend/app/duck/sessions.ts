@@ -1,18 +1,25 @@
 import { List, Map } from 'immutable';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
-import { Location } from 'Types/session/event'
+import { EventData, Location } from "Types/session/event";
 import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects, cleanSessionFilters } from 'App/utils';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
+import APIClient from 'App/api_client';
+import { FETCH_ACCOUNT, UPDATE_JWT } from "Duck/user";
+import logger from "App/logger";
 
 const name = 'sessions';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH_AUTOPLAY_LIST = new RequestTypes('sessions/FETCH_AUTOPLAY_LIST');
-const FETCH = new RequestTypes('sessions/FETCH');
+const FETCH = new RequestTypes('sessions/FETCH')
+const FETCHV2 = new RequestTypes('sessions/FETCHV2')
+const FETCH_EVENTS = new RequestTypes('sessions/FETCH_EVENTS');
+const FETCH_NOTES = new RequestTypes('sessions/FETCH_NOTES');
+
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
 const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
 const TOGGLE_FAVORITE = new RequestTypes('sessions/TOGGLE_FAVORITE');
@@ -161,10 +168,81 @@ const reducer = (state = initialState, action: IAction) => {
                 });
             });
             return state
+              .set('current', session)
+              .set('eventsIndex', matching)
+              .set('visitedEvents', visitedEvents)
+              .set('host', visitedEvents[0] && visitedEvents[0].host);
+        }
+        case FETCHV2.SUCCESS: {
+            const session = new Session(action.data);
+
+            return state
                 .set('current', session)
-                .set('eventsIndex', matching)
-                .set('visitedEvents', visitedEvents)
-                .set('host', visitedEvents[0] && visitedEvents[0].host);
+        }
+        case FETCH_EVENTS.SUCCESS: {
+            const {
+                errors,
+                events,
+                issues,
+                resources,
+                stackEvents,
+                userEvents
+            } = action.data as { errors: any[], events: any[], issues: any[], resources: any[], stackEvents: any[], userEvents: EventData[] };
+            const filterEvents = action.filter.events as Record<string, any>[];
+            const session = state.get('current') as Session;
+            const matching: number[] = [];
+
+            const visitedEvents: Location[] = [];
+            const tmpMap = new Set();
+            events.forEach((event) => {
+                // @ts-ignore assume that event is LocationEvent
+                if (event.type === 'LOCATION' && !tmpMap.has(event.url)) {
+                    // @ts-ignore assume that event is LocationEvent
+                    tmpMap.add(event.url);
+                    // @ts-ignore assume that event is LocationEvent
+                    visitedEvents.push(event);
+                }
+            });
+
+            filterEvents.forEach(({ key, operator, value }) => {
+                events.forEach((e, index) => {
+                    if (key === e.type) {
+                        // @ts-ignore assume that event is LocationEvent
+                        const val = e.type === 'LOCATION' ? e.url : e.value;
+                        if (operator === 'is' && value === val) {
+                            matching.push(index);
+                        }
+                        if (operator === 'contains' && val.includes(value)) {
+                            matching.push(index);
+                        }
+                    }
+                });
+            });
+
+            const newSession = session.addEvents(
+              events,
+              errors,
+              issues,
+              resources,
+              stackEvents,
+              userEvents
+            );
+            
+            const forceUpdate = state.set('current', {})
+            return forceUpdate
+              .set('current', newSession)
+              .set('eventsIndex', matching)
+              .set('visitedEvents', visitedEvents)
+              .set('host', visitedEvents[0] && visitedEvents[0].host);
+        }
+        case FETCH_NOTES.SUCCESS: {
+            const notes = action.data;
+            if (notes.length > 0) {
+                const session = state.get('current') as Session;
+                const newSession = session.addNotes(notes);
+                return state.set('current', newSession);
+            }
+            return state
         }
         case FETCH_FAVORITE_LIST.SUCCESS:
             return state.set('favoriteList', action.data.map(s => new Session(s)));
@@ -320,6 +398,59 @@ export const fetch =
             filter: getState().getIn(['filters', 'appliedFilter']),
         });
     };
+
+function parseError(e: any) {
+    try {
+        return [...JSON.parse(e).errors] || [];
+    } catch {
+        return Array.isArray(e) ? e : [e];
+    }
+}
+
+// implementing custom middleware-like request to keep the behavior
+// TODO: move all to mobx
+export const fetchV2 = (sessionId: string) =>
+  (dispatch, getState) => {
+      const apiClient = new APIClient()
+      const apiGet = (url: string, dispatch: any, FAILURE: string) => apiClient.get(url)
+        .then(async (response) => {
+            if (response.status === 403) {
+                dispatch({ type: FETCH_ACCOUNT.FAILURE });
+            }
+            if (!response.ok) {
+                const text = await response.text();
+                return Promise.reject(text);
+            }
+            return response.json();
+        })
+        .then((json) => json || {})
+        .catch(async (e) => {
+            const data = await e.response?.json();
+            logger.error('Error during API request. ', e);
+            return dispatch({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
+        });
+
+    const filter = getState().getIn(['filters', 'appliedFilter'])
+    apiGet(`/sessions/${sessionId}/replay`, dispatch, FETCH.FAILURE)
+      .then(async ({ jwt, errors, data }) => {
+          if (errors) {
+              dispatch({ type: FETCH.FAILURE, errors, data });
+          } else {
+              dispatch({ type: FETCHV2.SUCCESS, data, ...filter });
+
+              let [events, notes] = await Promise.all([
+                  apiGet(`/sessions/${sessionId}/events`, dispatch, FETCH_EVENTS.FAILURE),
+                  apiGet(`/sessions/${sessionId}/notes`, dispatch, FETCH_NOTES.FAILURE),
+              ]);
+              dispatch({ type: FETCH_EVENTS.SUCCESS, data: events.data, filter });
+              dispatch({ type: FETCH_NOTES.SUCCESS, data: notes.data });
+          }
+          if (jwt) {
+              dispatch({ type: UPDATE_JWT, data: jwt });
+          }
+      });
+
+  }
 
 export function clearCurrentSession() {
     return {
