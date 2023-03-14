@@ -32,7 +32,7 @@ interface InputEvent extends IEvent {
   value: string;
 }
 
-interface LocationEvent extends IEvent {
+export interface LocationEvent extends IEvent {
   url: string;
   host: string;
   pageLoad: boolean;
