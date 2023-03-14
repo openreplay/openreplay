@@ -11,6 +11,7 @@ import cn from 'classnames';
 import { setJwt } from 'Duck/user';
 import LoginBg from '../../svg/login-illustration.svg';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
+import { fetchTenants } from 'Duck/user';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
@@ -24,7 +25,7 @@ export default
     authDetails: state.getIn(['user', 'authDetails']),
     params: new URLSearchParams(props.location.search),
   }),
-  { login, setJwt }
+  { login, setJwt, fetchTenants }
 )
 @withPageTitle('Login - OpenReplay')
 @withRouter
@@ -37,6 +38,7 @@ class Login extends React.Component {
 
   componentDidMount() {
     const { params } = this.props;
+    this.props.fetchTenants();
     const jwt = params.get('jwt');
     if (jwt) {
       this.props.setJwt(jwt);

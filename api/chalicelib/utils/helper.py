@@ -318,4 +318,6 @@ def get_domain():
 def obfuscate(text, keep_last: int = 4):
     if text is None or not isinstance(text, str):
         return text
+    if len(text) <= keep_last:
+        return "*" * len(text)
     return "*" * (len(text) - keep_last) + text[-keep_last:]
