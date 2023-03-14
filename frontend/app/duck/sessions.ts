@@ -11,6 +11,7 @@ import { getDateRangeFromValue } from 'App/dateRange';
 import APIClient from 'App/api_client';
 import { FETCH_ACCOUNT, UPDATE_JWT } from "Duck/user";
 import logger from "App/logger";
+import { parseError } from 'App/api_middleware'
 
 const name = 'sessions';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
@@ -398,14 +399,6 @@ export const fetch =
             filter: getState().getIn(['filters', 'appliedFilter']),
         });
     };
-
-function parseError(e: any) {
-    try {
-        return [...JSON.parse(e).errors] || [];
-    } catch {
-        return Array.isArray(e) ? e : [e];
-    }
-}
 
 // implementing custom middleware-like request to keep the behavior
 // TODO: move all to mobx
