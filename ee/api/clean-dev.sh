@@ -35,6 +35,7 @@ rm -rf ./chalicelib/core/log_tool_stackdriver.py
 rm -rf ./chalicelib/core/log_tool_sumologic.py
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
+rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 #exp rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
