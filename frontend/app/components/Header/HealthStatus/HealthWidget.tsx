@@ -79,6 +79,7 @@ function HealthWidget({
                     onClick={() => setShowModal(true)}
                     healthOk={false}
                     name={service.name}
+                    isSelectable
                   />
                 </React.Fragment>
               ))}

@@ -34,6 +34,7 @@ function HealthModal({
   const handleClose = () => {
     setShowModal(false);
   };
+
   return (
     <div
       style={{
@@ -103,7 +104,7 @@ function HealthModal({
           </div>
         </div>
         <div className={'p-4 mt-auto w-full border-t border-figmaColors-divider'}>
-          <Button variant={'primary'} className={'ml-auto'}>
+          <Button disabled={!healthResponse.overallHealth} loading={isLoading} variant={'primary'} className={'ml-auto'}>
             Create Account
           </Button>
         </div>
