@@ -78,6 +78,10 @@ func (s *saverImpl) handleExtraMessage(msg Message) error {
 		}
 	case *GraphQL:
 		return s.ch.InsertGraphQL(session, m)
+	case *InputChange:
+		return s.ch.InsertWebInputDuration(session, m)
+	case *MouseThrashing:
+		return s.ch.InsertMouseThrashing(session, m)
 	}
 	return nil
 }

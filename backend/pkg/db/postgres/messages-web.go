@@ -1,12 +1,9 @@
 package postgres
 
 import (
-	"encoding/hex"
-	"hash/fnv"
 	"log"
-	"strconv"
-
 	"openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/hashid"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
@@ -171,7 +168,7 @@ func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *Mo
 	// Debug log
 	log.Printf("new MouseThrashing event: %v", e)
 	//
-	issueID := mouseThrashingID(projectID, sessionID, e.Timestamp)
+	issueID := hashid.MouseThrashingID(projectID, sessionID, e.Timestamp)
 	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
 		log.Printf("insert web issue err: %s", err)
 	}
@@ -180,12 +177,4 @@ func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *Mo
 	}
 	conn.updateSessionIssues(sessionID, 0, 50)
 	return nil
-}
-
-func mouseThrashingID(projectID uint32, sessID, ts uint64) string {
-	hash := fnv.New128a()
-	hash.Write([]byte("mouse_trashing"))
-	hash.Write([]byte(strconv.FormatUint(sessID, 10)))
-	hash.Write([]byte(strconv.FormatUint(ts, 10)))
-	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
