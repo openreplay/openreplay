@@ -7,6 +7,7 @@ import MessageManager from './MessageManager'
 import InspectorController from './addons/InspectorController'
 import TargetMarker from './addons/TargetMarker'
 import Screen, { ScaleMode } from './Screen/Screen'
+import { Message } from "Player/web/messages";
 
 
 // export type State = typeof WebPlayer.INITIAL_STATE
@@ -81,6 +82,11 @@ export default class WebPlayer extends Player {
     this.inspectorController.scale({ width, height })
 
     this.targetMarker.updateMarkedTargets()
+  }
+
+  // delayed message decoding for state plugins
+  decodeMessage = (msg: Message) => {
+    return this.messageManager.decodeMessage(msg)
   }
 
   // Inspector & marker
