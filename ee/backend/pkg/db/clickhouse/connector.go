@@ -173,11 +173,11 @@ func (c *connectorImpl) InsertWebInputDuration(session *types.Session, msg *mess
 	if err := c.batches["inputs"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		msg.Label,
 		"INPUT",
-		nullableUint16(uint16(msg.Duration)),
+		nullableUint16(uint16(msg.InputDuration)),
 		nullableUint32(uint32(msg.HesitationTime)),
 	); err != nil {
 		c.checkError("inputs", err)
@@ -187,7 +187,7 @@ func (c *connectorImpl) InsertWebInputDuration(session *types.Session, msg *mess
 }
 
 func (c *connectorImpl) InsertMouseThrashing(session *types.Session, msg *messages.MouseThrashing) error {
-	issueID := hashid.MouseThrashingID(session.projectID, session.sessionID, msg.Timestamp)
+	issueID := hashid.MouseThrashingID(session.ProjectID, session.SessionID, msg.Timestamp)
 	// Insert issue event to batches
 	if err := c.batches["issuesEvents"].Append(
 		session.SessionID,
