@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: "{{ .Values.global.openReplayContainerRegistry }}/frontend"
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 

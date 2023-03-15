@@ -43,6 +43,8 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
+            - name: RECYCLE
+              value: '1'
             - name: AWS_ACCESS_KEY_ID
               {{- if .Values.global.s3.existingSecret }}
               valueFrom:
