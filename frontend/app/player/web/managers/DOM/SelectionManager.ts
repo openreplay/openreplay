@@ -48,19 +48,21 @@ export default class SelectionManager extends ListWalker<SelectionChange> {
 
       Object.assign(endPointer.style, {
         top: endCoords.top + 'px',
-        left: (endCoords.left + endCoords.width + 3) + 'px',
-        width: '3px',
+        left: (endCoords.left + (endCoords.width / 2) + 3) + 'px',
+        width: (endCoords.width / 2) + 'px',
         height: endCoords.height + 'px',
-        border: '3px solid red',
+        borderRight: '2px solid blue',
         position: 'absolute',
+        boxShadow: '1px 4px 1px -2px blue',
       });
       Object.assign(startPointer.style, {
         top: startCoords.top + 'px',
         left: (startCoords.left - 3) + 'px',
-        width: '3px',
+        width: (startCoords.width / 2 ) + 'px',
         height: startCoords.height + 'px',
-        border: '3px solid red',
+        borderLeft: '2px solid blue',
         position: 'absolute',
+        boxShadow: '1px 4px 1px -2px blue',
       });
 
       this.markers.push(startPointer, endPointer);
