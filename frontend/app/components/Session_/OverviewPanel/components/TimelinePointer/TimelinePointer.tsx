@@ -7,10 +7,12 @@ import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorD
 import FetchDetails from 'Shared/FetchDetailsModal';
 import GraphQLDetailsModal from 'Shared/GraphQLDetailsModal';
 import { PlayerContext } from 'App/components/Session/playerContext';
+import { TYPES } from 'App/types/session/event'
+import { types as issueTypes } from 'App/types/session/issue'
 
 interface Props {
   pointer: any;
-  type: any;
+  type: 'ERRORS' | 'EVENT' | 'NETWORK' | 'FRUSTRATIONS' | 'EVENTS' | 'PERFORMANCE';
   noClick?: boolean;
   fetchPresented?: boolean;
 }
@@ -71,19 +73,25 @@ const TimelinePointer = React.memo((props: Props) => {
     );
   };
 
-  const renderClickRageElement = (item: any) => {
+  const renderFrustrationElement = (item: any) => {
+    const elData = { name: '', icon: ''}
+    if (item.type === TYPES.CLICK) Object.assign(elData, { name: `User hesitated to click for ${Math.round(item.hesitation/1000)}s`, icon: 'click-hesitation' })
+    if (item.type === TYPES.INPUT) Object.assign(elData, { name: `User hesitated to enter a value for ${Math.round(item.hesitation/1000)}s`, icon: 'input-hesitation' })
+    if (item.type === TYPES.CLICKRAGE) Object.assign(elData, { name: 'Click Rage', icon: 'click-rage' })
+    if (item.type === issueTypes.MOUSE_THRASHING) Object.assign(elData, { name: 'Mouse Thrashing', icon: 'cursor-trash' })
+
     return (
       <Tooltip
         title={
           <div className="">
-            <b>{'Click Rage'}</b>
+            <b>{elData.name}</b>
           </div>
         }
         delay={0}
         placement="top"
       >
         <div onClick={createEventClickHandler(item, null)} className="cursor-pointer">
-          <Icon className="bg-white" name="funnel/emoji-angry" color="red" size="16" />
+          <Icon name={elData.icon} color="black" size="16" />
         </div>
       </Tooltip>
     );
@@ -158,8 +166,8 @@ const TimelinePointer = React.memo((props: Props) => {
     if (type === 'NETWORK') {
       return renderNetworkElement(pointer);
     }
-    if (type === 'CLICKRAGE') {
-      return renderClickRageElement(pointer);
+    if (type === 'FRUSTRATIONS') {
+      return renderFrustrationElement(pointer);
     }
     if (type === 'ERRORS') {
       return renderExceptionElement(pointer);

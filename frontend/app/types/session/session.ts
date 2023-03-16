@@ -2,11 +2,36 @@ import { Duration } from 'luxon';
 import SessionEvent, { TYPES, EventData, InjectedEvent } from './event';
 import StackEvent from './stackEvent';
 import SessionError, { IError } from './error';
-import Issue, { IIssue } from './issue';
+import Issue, { IIssue, types as issueTypes } from './issue';
 import { Note } from 'App/services/NotesService'
 
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
+
+function mergeEventLists(arr1: any[], arr2: any[]) {
+  let merged = [];
+  let index1 = 0;
+  let index2 = 0;
+  let current = 0;
+
+  while (current < (arr1.length + arr2.length)) {
+
+    let isArr1Depleted = index1 >= arr1.length;
+    let isArr2Depleted = index2 >= arr2.length;
+
+    if (!isArr1Depleted && (isArr2Depleted || (arr1[index1].timestamp < arr2[index2].timestamp))) {
+      merged[current] = arr1[index1];
+      index1++;
+    } else {
+      merged[current] = arr2[index2];
+      index2++;
+    }
+
+    current++;
+  }
+
+  return merged;
+}
 
 function hashString(s: string): number {
   let mul = 1;
@@ -158,6 +183,8 @@ export default class Session {
   agentToken: ISession["agentToken"]
   notes: ISession["notes"]
   notesWithEvents: ISession["notesWithEvents"]
+  frustrations: Array<IIssue | InjectedEvent>
+
   fileKey: ISession["fileKey"]
 
   constructor(plainSession?: ISession) {
@@ -217,14 +244,31 @@ export default class Session {
       (i, k) => new Issue({ ...i, time: i.timestamp - startedAt, key: k })) || [];
 
     const rawNotes = notes;
-    const notesWithEvents = [...rawEvents, ...rawNotes].sort((a, b) => {
-      // @ts-ignore just in case
+
+
+    const frustrationEvents = events.filter(ev => {
+        if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
+          // @ts-ignore
+          return ev.hesitation > 1000
+        }
+        return ev.type === TYPES.CLICKRAGE
+      }
+    )
+    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+
+    const frustrationList = [...frustrationEvents, ...frustrationIssues].sort((a, b) => {
+      // @ts-ignore
       const aTs = a.timestamp || a.time;
       // @ts-ignore
       const bTs = b.timestamp || b.time;
 
       return aTs - bTs;
     }) || [];
+
+    const mixedEventsWithIssues = mergeEventLists(
+      mergeEventLists(rawEvents, rawNotes),
+      frustrationIssues
+    )
 
     Object.assign(this, {
       ...session,
@@ -255,7 +299,8 @@ export default class Session {
       domURL,
       devtoolsURL,
       notes,
-      notesWithEvents: notesWithEvents,
+      notesWithEvents: mixedEventsWithIssues,
+      frustrations: frustrationList,
     })
   }
 }

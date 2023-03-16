@@ -7,16 +7,18 @@ const CLICKRAGE = 'CLICKRAGE';
 const IOS_VIEW = 'VIEW';
 export const TYPES = { CONSOLE, CLICK, INPUT, LOCATION, CUSTOM, CLICKRAGE, IOS_VIEW };
 
+export type EventType =
+  | typeof CONSOLE
+  | typeof CLICK
+  | typeof INPUT
+  | typeof LOCATION
+  | typeof CUSTOM
+  | typeof CLICKRAGE;
+
 interface IEvent {
   time: number;
   timestamp: number;
-  type:
-    | typeof CONSOLE
-    | typeof CLICK
-    | typeof INPUT
-    | typeof LOCATION
-    | typeof CUSTOM
-    | typeof CLICKRAGE;
+  type: EventType
   name: string;
   key: number;
   label: string;
@@ -35,6 +37,7 @@ interface ConsoleEvent extends IEvent {
 interface ClickEvent extends IEvent {
   targetContent: string;
   count: number;
+  hesitation: number;
 }
 
 interface InputEvent extends IEvent {
@@ -98,12 +101,13 @@ export class Click extends Event {
   readonly name = 'Click';
   targetContent = '';
   count: number;
+  hesitation: number = 0;
 
   constructor(evt: ClickEvent, isClickRage?: boolean) {
-    console.log(evt);
     super(evt);
     this.targetContent = evt.targetContent;
     this.count = evt.count;
+    this.hesitation = evt.hesitation;
     if (isClickRage) {
       this.type = CLICKRAGE;
     }

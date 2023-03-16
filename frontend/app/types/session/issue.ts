@@ -1,6 +1,6 @@
 import Record from 'Types/Record';
 
-const types = {
+export const types = {
   ALL: 'all',
   JS_EXCEPTION: 'js_exception',
   BAD_REQUEST: 'bad_request',
