@@ -32,8 +32,6 @@ const plugins = (removeFill = true) => {
                 name: 'preset-default',
                 params: {
                   overrides: {
-                  cleanupIds: false,
-                  prefixIds: false,
                     inlineStyles: {
                       onlyMatchedOnce: false,
                     },
