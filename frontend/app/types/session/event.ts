@@ -46,7 +46,7 @@ interface InputEvent extends IEvent {
   duration: number;
 }
 
-interface LocationEvent extends IEvent {
+export interface LocationEvent extends IEvent {
   url: string;
   host: string;
   pageLoad: boolean;

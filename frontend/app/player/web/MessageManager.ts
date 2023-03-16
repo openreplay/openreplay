@@ -109,7 +109,7 @@ export default class MessageManager {
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   public readonly decoder = new Decoder();
-  private readonly lists: Lists;
+  private lists: Lists;
 
   private activityManager: ActivityManager | null = null;
 
@@ -136,6 +136,18 @@ export default class MessageManager {
     })
 
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
+  }
+
+  public updateLists(lists: Partial<InitialLists>) {
+    this.lists = new Lists(lists)
+
+    lists?.event?.forEach((e: Record<string, string>) => {
+      if (e.type === EVENT_TYPES.LOCATION) {
+        this.locationEventManager.append(e);
+      }
+    })
+
+    this.state.update({ ...this.lists.getFullListsState() });
   }
 
   private setCSSLoading = (cssLoading: boolean) => {

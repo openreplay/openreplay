@@ -197,7 +197,7 @@ export default function (app: App): void {
             id,
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             getTargetLabel(target),
-            getSelector(id, target),
+            isClickable(target) ? getSelector(id, target) : '',
           ),
           true,
         )

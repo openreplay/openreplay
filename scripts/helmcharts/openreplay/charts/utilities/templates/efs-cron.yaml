@@ -26,7 +26,6 @@ spec:
           containers:
           - name: efs-cleaner
             image: alpine
-            image: "{{ tpl .Values.efsCleaner.image.repository . }}:{{ .Values.efsCleaner.image.tag | default .Chart.AppVersion }}"
             command:
             - /bin/sh
             - -c
@@ -44,7 +43,6 @@ spec:
             volumeMounts:
             - mountPath: /mnt/efs
               name: datadir
-          restartPolicy: Never
           {{- if eq (tpl .Values.efsCleaner.pvc.name . ) "hostPath" }}
           volumes:
           - name: datadir

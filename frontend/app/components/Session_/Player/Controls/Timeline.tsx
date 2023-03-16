@@ -91,6 +91,7 @@ function Timeline(props: IProps) {
     }
 
     const time = getTime(e);
+    if (!time) return;
     const tz = settingsStore.sessionSettings.timezone.value
     const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
     const timeLineTooltip = {

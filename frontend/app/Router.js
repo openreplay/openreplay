@@ -120,8 +120,6 @@ class Router extends React.Component {
         super(props);
         if (props.isLoggedIn) {
             this.fetchInitialData();
-        } else {
-            props.fetchTenants();
         }
     }
 

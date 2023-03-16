@@ -69,6 +69,21 @@ export default class WebPlayer extends Player {
 
   }
 
+  updateLists = (session: any) => {
+    let lists = {
+      event: session.events || [],
+      stack: session.stackEvents || [],
+      exceptions: session.errors?.map(({ name, ...rest }: any) =>
+        Log({
+          level: LogLevel.ERROR,
+          value: name,
+          ...rest,
+        })
+      ) || [],
+    }
+    this.messageManager.updateLists(lists)
+  }
+
   attach = (parent: HTMLElement, isClickmap?: boolean) => {
     this.screen.attach(parent)
     if (!isClickmap) {

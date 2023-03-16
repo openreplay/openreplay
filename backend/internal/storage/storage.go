@@ -95,6 +95,7 @@ func (s *Storage) Upload(msg *messages.SessionEnd) (err error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "big file") {
 			log.Printf("%s, sess: %d", err, msg.SessionID())
+			metrics.IncreaseStorageTotalSkippedSessions()
 			return nil
 		}
 		return err
@@ -110,6 +111,7 @@ func (s *Storage) openSession(filePath string, tp FileType) ([]byte, error) {
 	// Check file size before download into memory
 	info, err := os.Stat(filePath)
 	if err == nil && info.Size() > s.cfg.MaxFileSize {
+		metrics.RecordSkippedSessionSize(float64(info.Size()), tp.String())
 		return nil, fmt.Errorf("big file, size: %d", info.Size())
 	}
 	// Read file into memory

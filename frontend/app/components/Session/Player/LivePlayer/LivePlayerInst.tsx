@@ -29,7 +29,6 @@ function Player(props: IProps) {
   const screenWrapper = React.useRef<HTMLDivElement>(null);
   const ready = playerContext.store.get().ready
 
-  console.log(ready)
   React.useEffect(() => {
     if (!props.closedLive || isMultiview) {
       const parentElement = findDOMNode(screenWrapper.current) as HTMLDivElement | null; //TODO: good architecture

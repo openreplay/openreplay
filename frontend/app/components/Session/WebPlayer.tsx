@@ -64,6 +64,12 @@ function WebPlayer(props: any) {
     return () => WebPlayerInst.clean();
   }, [session.sessionId]);
 
+  React.useEffect(() => {
+    if (session.events.length > 0 || session.errors.length > 0) {
+      contextValue.player.updateLists(session)
+    }
+  }, [session.events, session.errors])
+
   const isPlayerReady = contextValue.store?.get().ready
 
   React.useEffect(() => {

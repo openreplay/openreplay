@@ -26,7 +26,7 @@ def unlock_cron() -> None:
 
 
 cron_jobs = [
-    {"func": unlock_cron, "trigger": "cron", "hour": "*"},
+    {"func": unlock_cron, "trigger": CronTrigger(day="*")},
 ]
 
 SINGLE_CRONS = [{"func": telemetry_cron, "trigger": CronTrigger(day_of_week="*"),

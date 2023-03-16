@@ -10,9 +10,19 @@ import {
   RemoveNode,
 } from '../messages.gen.js'
 import App from '../index.js'
-import { isRootNode, isTextNode, isElementNode, isSVGElement, hasTag } from '../guards.js'
+import {
+  isRootNode,
+  isTextNode,
+  isElementNode,
+  isSVGElement,
+  hasTag,
+  isCommentNode,
+} from '../guards.js'
 
 function isIgnored(node: Node): boolean {
+  if (isCommentNode(node)) {
+    return true
+  }
   if (isTextNode(node)) {
     return false
   }
