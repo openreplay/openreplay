@@ -145,11 +145,11 @@ function set_permissions() {
 ## Installing OpenReplay
 function install_openreplay() {
   info "installing toolings"
-  helm upgrade --install toolings ./toolings -n app --create-namespace --wait -f ./vars.yaml --atomic
+  helm upgrade --install toolings ./toolings -n app --create-namespace --wait -f ./vars.yaml --atomic --debug
   info "installing databases"
-  helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
+  helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic --debug
   info "installing application"
-  helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
+  helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic --debug
 }
 
 function main() {
@@ -183,6 +183,7 @@ function main() {
       cd -
     }
     sudo cp -rf $(cd ../.. && pwd) /var/lib/openreplay/openreplay
+    sudo cp -rf ./vars.yaml /var/lib/openreplay/
   }
 }
 
