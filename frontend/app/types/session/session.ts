@@ -9,7 +9,7 @@ import { toJS } from 'mobx';
 const HASH_MOD = 1610612741;
 const HASH_P = 53;
 
-function mergeEventLists(arr1: any[], arr2: any[]) {
+function mergeEventLists<T extends Record<string, any>, Y extends Record<string, any>>(arr1: T[], arr2: Y[]): Array<T | Y> {
   let merged = [];
   let index1 = 0;
   let index2 = 0;
@@ -32,6 +32,12 @@ function mergeEventLists(arr1: any[], arr2: any[]) {
   }
 
   return merged;
+}
+function sortEvents(a: Record<string, any>, b: Record<string, any>) {
+  const aTs = a.timestamp || a.time;
+  const bTs = b.timestamp || b.time;
+
+  return aTs - bTs;
 }
 
 function hashString(s: string): number {
@@ -259,19 +265,12 @@ export default class Session {
     )
     const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
 
-    const frustrationList = [...frustrationEvents, ...frustrationIssues].sort((a, b) => {
-      // @ts-ignore
-      const aTs = a.timestamp || a.time;
-      // @ts-ignore
-      const bTs = b.timestamp || b.time;
-
-        return aTs - bTs;
-      }) || [];
+    const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
 
     const mixedEventsWithIssues = mergeEventLists(
       mergeEventLists(rawEvents, rawNotes),
       frustrationIssues
-    )
+    ).sort(sortEvents)
 
     Object.assign(this, {
       ...session,
@@ -303,11 +302,9 @@ export default class Session {
       domURL,
       devtoolsURL,
       notes,
-      notesWithEvents: notesWithEvents,
-    });
       notesWithEvents: mixedEventsWithIssues,
       frustrations: frustrationList,
-    })
+    });
   }
 
   addEvents(
@@ -347,14 +344,32 @@ export default class Session {
       });
     }
 
+    const frustrationEvents = events.filter(ev => {
+        if (ev.type === TYPES.CLICK || ev.type === TYPES.INPUT) {
+          // @ts-ignore
+          return ev.hesitation > 1000
+        }
+        return ev.type === TYPES.CLICKRAGE
+      }
+    )
+    const frustrationIssues = issuesList.filter(i => i.type === issueTypes.MOUSE_THRASHING)
+    const frustrationList = [...frustrationEvents, ...frustrationIssues].sort(sortEvents) || [];
+
+    const mixedEventsWithIssues = mergeEventLists(
+      rawEvents,
+      frustrationIssues
+    ).sort(sortEvents)
+
     this.events = events;
     // @ts-ignore
-    this.notesWithEvents = rawEvents;
+    this.notesWithEvents = mixedEventsWithIssues;
     this.errors = exceptions;
     this.issues = issuesList;
     // @ts-ignore legacy code? no idea
     this.resources = resources;
     this.stackEvents = stackEventsList;
+    // @ts-ignore
+    this.frustrations = frustrationList;
 
     return this;
   }
@@ -365,7 +380,7 @@ export default class Session {
       [...this.notesWithEvents, ...sessionNotes].sort((a, b) => {
         // @ts-ignore just in case
         const aTs = a.timestamp || a.time;
-        // @ts-ignore
+        // @ts-ignore supporting old code...
         const bTs = b.timestamp || b.time;
 
         return aTs - bTs;
