@@ -250,6 +250,9 @@ export default class AssistManager {
   requestReleaseRemoteControl = (...args: Parameters<RemoteControl['requestReleaseRemoteControl']>) => {
     return this.remoteControl?.requestReleaseRemoteControl(...args)
   }
+  setRemoteControlCallbacks = (...args: Parameters<RemoteControl['setCallbacks']>) => {
+    return this.remoteControl?.setCallbacks(...args)
+  }
   releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => {
     return this.remoteControl?.releaseRemoteControl(...args)
   }
