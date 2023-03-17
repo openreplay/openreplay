@@ -1,3 +1,11 @@
+## 5.0.2
+
+- Added `onCallDeny`, `onRemoteControlDeny` and `onRecordingDeny` callbacks to signal denial of user's consent to call/control/recording
+
+## 5.0.1
+
+- dependency updates
+
 ## 5.0.0
 
 - fix recording state import 
