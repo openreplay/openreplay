@@ -8,6 +8,7 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
+  RemovedNodesCount,
 } from '../messages.gen.js'
 import App from '../index.js'
 import {
@@ -216,6 +217,8 @@ export default abstract class Observer {
   }
 
   private unbindTree(node: Node) {
+    let removed = 0
+    const nodesCount = this.app.nodes.getNodesCount()
     const id = this.app.nodes.unregisterNode(node)
     if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       // Sending RemoveNode only for parent to maintain
@@ -235,9 +238,10 @@ export default abstract class Observer {
         false,
       )
       while (walker.nextNode()) {
+        removed += 1
         this.app.nodes.unregisterNode(walker.currentNode)
       }
-      // MBTODO: count and send RemovedNodesCount (for the page crash detection in heuristics)
+      this.app.send(RemovedNodesCount(removed, removed / nodesCount > 0.5))
     }
   }
 

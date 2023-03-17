@@ -448,6 +448,31 @@ end
 
 # 90-111 reserved iOS
 
+
+message 112, 'InputChange', :replayer => false do
+    uint 'ID'
+    string 'Value'
+    boolean 'ValueMasked'
+    string 'Label'
+    int 'HesitationTime'
+    int 'InputDuration'
+end
+
+message 113, 'SelectionChange' do
+    uint 'SelectionStart'
+    uint 'SelectionEnd'
+    string 'Selection'
+end
+
+message 114, 'MouseThrashing' do
+    uint 'Timestamp'
+end
+
+message 115, 'RemovedNodesCount', :replayer => false do
+    uint 'NodesCount'
+    boolean 'DOMDropped'
+end
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'
@@ -468,22 +493,3 @@ message 127, 'SessionSearch', :tracker => false, :replayer => false  do
 end
 
 # since tracker 4.1.10
-
-message 112, 'InputChange', :replayer => false do
-    uint 'ID'
-    string 'Value'
-    boolean 'ValueMasked'
-    string 'Label'
-    int 'HesitationTime'
-    int 'InputDuration'
-end
-
-message 113, 'SelectionChange' do
-    uint 'SelectionStart'
-    uint 'SelectionEnd'
-    string 'Selection'
-end
-
-message 114, 'MouseThrashing' do
-    uint 'Timestamp'
-end

@@ -708,6 +708,14 @@ class PartitionedMessage(Message):
         self.part_total = part_total
 
 
+class RemovedNodesCount(Message):
+    __id__ = 115
+
+    def __init__(self, nodes_count, dom_dropped):
+        self.nodes_count = nodes_count
+        self.dom_dropped = dom_dropped
+
+
 class IssueEvent(Message):
     __id__ = 125
 
