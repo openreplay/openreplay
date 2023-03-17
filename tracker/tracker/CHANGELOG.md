@@ -1,3 +1,9 @@
+# 5.0.2
+
+- Capture mouse thrashing, input hesitation+duration, click hesitation
+- Capture DOM node drop event (>30% nodes removed)
+- Capture iframe network requests
+
 ## 5.0.1
 
 - Re-init worker after device sleep/hybernation
