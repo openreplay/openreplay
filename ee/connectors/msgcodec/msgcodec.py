@@ -420,7 +420,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 53:
-            return ResourceTiming(
+            return ResourceTimingLegacy(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -657,6 +657,33 @@ class MessageCodec(Codec):
                 total_removed_percent=self.read_uint(reader)
             )
 
+        if message_id == 116:
+            return ResourceTiming(
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                ttfb=self.read_uint(reader),
+                header_size=self.read_uint(reader),
+                encoded_body_size=self.read_uint(reader),
+                decoded_body_size=self.read_uint(reader),
+                url=self.read_string(reader),
+                initiator=self.read_string(reader),
+                transferred_size=self.read_uint(reader),
+                cached=self.read_boolean(reader)
+            )
+
+        if message_id == 117:
+            return NetworkRequest(
+                type=self.read_string(reader),
+                method=self.read_string(reader),
+                url=self.read_string(reader),
+                request=self.read_string(reader),
+                response=self.read_string(reader),
+                status=self.read_uint(reader),
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                cached=self.read_boolean(reader)
+            )
+
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),
@@ -678,19 +705,6 @@ class MessageCodec(Codec):
             return SessionSearch(
                 timestamp=self.read_uint(reader),
                 partition=self.read_uint(reader)
-            )
-
-        if message_id == 128:
-            return NetworkRequest(
-                type=self.read_string(reader),
-                method=self.read_string(reader),
-                url=self.read_string(reader),
-                request=self.read_string(reader),
-                response=self.read_string(reader),
-                status=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                duration=self.read_uint(reader),
-                cached=self.read_boolean(reader)
             )
 
         if message_id == 107:

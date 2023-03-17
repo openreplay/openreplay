@@ -211,7 +211,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const duration = this.readUint(); if (duration === null) { return resetPointer() }
       return {
-        tp: MType.NetworkRequest,
+        tp: MType.LegacyNetworkRequest,
         type,
         method,
         url,
@@ -403,7 +403,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const url = this.readString(); if (url === null) { return resetPointer() }
       const initiator = this.readString(); if (initiator === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTiming,
+        tp: MType.ResourceTimingLegacy,
         timestamp,
         duration,
         ttfb,
@@ -644,6 +644,56 @@ export default class RawMessageReader extends PrimitiveReader {
       return {
         tp: MType.MouseThrashing,
         timestamp,
+      };
+    }
+
+    case 116: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
+      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
+      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+      return {
+        tp: MType.ResourceTiming,
+        timestamp,
+        duration,
+        ttfb,
+        headerSize,
+        encodedBodySize,
+        decodedBodySize,
+        url,
+        initiator,
+        transferredSize,
+        cached,
+      };
+    }
+
+    case 117: {
+      const type = this.readString(); if (type === null) { return resetPointer() }
+      const method = this.readString(); if (method === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const request = this.readString(); if (request === null) { return resetPointer() }
+      const response = this.readString(); if (response === null) { return resetPointer() }
+      const status = this.readUint(); if (status === null) { return resetPointer() }
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+      return {
+        tp: MType.NetworkRequest,
+        type,
+        method,
+        url,
+        request,
+        response,
+        status,
+        timestamp,
+        duration,
+        cached,
       };
     }
 

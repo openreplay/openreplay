@@ -217,10 +217,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
             return
           }
 
-          const isCached =
-            r.status === 304 ||
-            reqHs['x-cache'].includes('Hit') ||
-            checkCacheByPerformanceTimings(reqResInfo.url)
+          const isCached = r.status === 304 || checkCacheByPerformanceTimings(reqResInfo.url)
           app.send(
             NetworkRequest(
               'fetch',
@@ -289,9 +286,7 @@ export default function (app: App, opts: Partial<Options> = {}) {
         }
 
         const isCached =
-          xhr.status === 304 ||
-          reqHs['x-cache'].includes('Hit') ||
-          (xhr.status < 400 && checkCacheByPerformanceTimings(reqResInfo.url))
+          xhr.status === 304 || (xhr.status < 400 && checkCacheByPerformanceTimings(reqResInfo.url))
         app.send(
           NetworkRequest(
             'xhr',

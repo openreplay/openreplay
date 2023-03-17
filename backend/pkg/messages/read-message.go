@@ -756,9 +756,9 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTiming(reader BytesReader) (Message, error) {
+func DecodeResourceTimingLegacy(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &ResourceTiming{}
+	msg := &ResourceTimingLegacy{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1278,6 +1278,75 @@ func DecodeUnbindNodes(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
+func DecodeResourceTiming(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &ResourceTiming{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.TTFB, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.HeaderSize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.EncodedBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DecodedBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Initiator, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.TransferredSize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Cached, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeNetworkRequest(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &NetworkRequest{}
+	if msg.Type, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Method, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Request, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Response, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Status, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Cached, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIssueEvent(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &IssueEvent{}
@@ -1324,39 +1393,6 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.Partition, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeNetworkRequest(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &NetworkRequest{}
-	if msg.Type, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Method, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Request, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Response, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Status, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Cached, err = reader.ReadBoolean(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1859,7 +1895,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 51:
 		return DecodeSetNodeAttributeDict(reader)
 	case 53:
-		return DecodeResourceTiming(reader)
+		return DecodeResourceTimingLegacy(reader)
 	case 54:
 		return DecodeConnectionInformation(reader)
 	case 55:
@@ -1922,14 +1958,16 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeMouseThrashing(reader)
 	case 115:
 		return DecodeUnbindNodes(reader)
+	case 116:
+		return DecodeResourceTiming(reader)
+	case 117:
+		return DecodeNetworkRequest(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:
 		return DecodeSessionEnd(reader)
 	case 127:
 		return DecodeSessionSearch(reader)
-	case 128:
-		return DecodeNetworkRequest(reader)
 	case 107:
 		return DecodeIOSBatchMeta(reader)
 	case 90:

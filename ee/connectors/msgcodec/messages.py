@@ -441,7 +441,7 @@ class SetNodeAttributeDict(Message):
         self.value_key = value_key
 
 
-class ResourceTiming(Message):
+class ResourceTimingLegacy(Message):
     __id__ = 53
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator):
@@ -743,6 +743,37 @@ class UnbindNodes(Message):
         self.total_removed_percent = total_removed_percent
 
 
+class ResourceTiming(Message):
+    __id__ = 116
+
+    def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached):
+        self.timestamp = timestamp
+        self.duration = duration
+        self.ttfb = ttfb
+        self.header_size = header_size
+        self.encoded_body_size = encoded_body_size
+        self.decoded_body_size = decoded_body_size
+        self.url = url
+        self.initiator = initiator
+        self.transferred_size = transferred_size
+        self.cached = cached
+
+
+class NetworkRequest(Message):
+    __id__ = 117
+
+    def __init__(self, type, method, url, request, response, status, timestamp, duration, cached):
+        self.type = type
+        self.method = method
+        self.url = url
+        self.request = request
+        self.response = response
+        self.status = status
+        self.timestamp = timestamp
+        self.duration = duration
+        self.cached = cached
+
+
 class IssueEvent(Message):
     __id__ = 125
 
@@ -770,21 +801,6 @@ class SessionSearch(Message):
     def __init__(self, timestamp, partition):
         self.timestamp = timestamp
         self.partition = partition
-
-
-class NetworkRequest(Message):
-    __id__ = 128
-
-    def __init__(self, type, method, url, request, response, status, timestamp, duration, cached):
-        self.type = type
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.timestamp = timestamp
-        self.duration = duration
-        self.cached = cached
 
 
 class IOSBatchMeta(Message):
