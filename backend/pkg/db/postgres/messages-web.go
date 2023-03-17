@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"log"
-
 	"openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/hashid"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
@@ -63,7 +63,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, projectID uint32, e *Mou
 	}
 	var host, path string
 	host, path, _, _ = url.GetURLParts(e.Url)
-	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path); err != nil {
+	if err := conn.bulks.Get("webClickEvents").Append(sessionID, truncSqIdx(e.MsgID()), e.Timestamp, e.Label, e.Selector, host+path, path, e.HesitationTime); err != nil {
 		log.Printf("insert web click err: %s", err)
 	}
 	// Accumulate session updates and exec inside batch with another sql commands
@@ -82,6 +82,24 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 		value = nil
 	}
 	if err := conn.bulks.Get("webInputEvents").Append(sessionID, truncSqIdx(e.MessageID), e.Timestamp, value, e.Label); err != nil {
+		log.Printf("insert web input event err: %s", err)
+	}
+	conn.updateSessionEvents(sessionID, 1, 0)
+	conn.insertAutocompleteValue(sessionID, projectID, "INPUT", e.Label)
+	return nil
+}
+
+func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *InputChange) error {
+	// Debug log
+	log.Printf("new InputDuration event: %v", e)
+	if e.Label == "" {
+		return nil
+	}
+	value := &e.Value
+	if e.ValueMasked {
+		value = nil
+	}
+	if err := conn.bulks.Get("webInputDurations").Append(sessionID, truncSqIdx(e.ID), e.Timestamp, value, e.Label, e.HesitationTime, e.InputDuration); err != nil {
 		log.Printf("insert web input event err: %s", err)
 	}
 	conn.updateSessionEvents(sessionID, 1, 0)
@@ -144,4 +162,19 @@ func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error
 		SET referrer = LEFT($1, 8000), base_referrer = LEFT($2, 8000)
 		WHERE session_id = $3 AND referrer IS NULL`,
 		referrer, url.DiscardURLQuery(referrer), sessionID)
+}
+
+func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *MouseThrashing) error {
+	// Debug log
+	log.Printf("new MouseThrashing event: %v", e)
+	//
+	issueID := hashid.MouseThrashingID(projectID, sessionID, e.Timestamp)
+	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
+		log.Printf("insert web issue err: %s", err)
+	}
+	if err := conn.bulks.Get("webIssueEvents").Append(sessionID, issueID, e.Timestamp, truncSqIdx(e.MsgID()), nil); err != nil {
+		log.Printf("insert web issue event err: %s", err)
+	}
+	conn.updateSessionIssues(sessionID, 0, 50)
+	return nil
 }

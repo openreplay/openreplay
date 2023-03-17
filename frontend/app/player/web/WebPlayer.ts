@@ -31,6 +31,7 @@ export default class WebPlayer extends Player {
     let initialLists = live ? {} : {
       event: session.events || [],
       stack: session.stackEvents || [],
+      frustrations: session.frustrations || [],
       exceptions: session.errors?.map(({ name, ...rest }: any) =>
         Log({
           level: LogLevel.ERROR,

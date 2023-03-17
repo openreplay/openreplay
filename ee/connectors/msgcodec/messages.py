@@ -737,6 +737,34 @@ class SessionSearch(Message):
         self.partition = partition
 
 
+class InputChange(Message):
+    __id__ = 112
+
+    def __init__(self, id, value, value_masked, label, hesitation_time, input_duration):
+        self.id = id
+        self.value = value
+        self.value_masked = value_masked
+        self.label = label
+        self.hesitation_time = hesitation_time
+        self.input_duration = input_duration
+
+
+class SelectionChange(Message):
+    __id__ = 113
+
+    def __init__(self, selection_start, selection_end, selection):
+        self.selection_start = selection_start
+        self.selection_end = selection_end
+        self.selection = selection
+
+
+class MouseThrashing(Message):
+    __id__ = 114
+
+    def __init__(self, timestamp):
+        self.timestamp = timestamp
+
+
 class IOSBatchMeta(Message):
     __id__ = 107
 

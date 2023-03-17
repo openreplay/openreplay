@@ -2,25 +2,24 @@ import logger from 'App/logger';
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
-
 import { MType } from '../../messages';
 import ListWalker from '../../../common/ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
 import FocusManager from './FocusManager';
-import {
-  VElement,
-  VText,
-  VShadowRoot,
-  VDocument,
-  VNode,
-  VStyleElement,
-  PostponedStyleSheet,
-} from './VirtualDOM';
+import SelectionManager from './SelectionManager';
 import type { StyleElement } from './VirtualDOM';
-import { insertRule, deleteRule } from './safeCSSRules';
+import {
+  PostponedStyleSheet,
+  VDocument,
+  VElement,
+  VNode,
+  VShadowRoot,
+  VStyleElement,
+  VText,
+} from './VirtualDOM';
+import { deleteRule, insertRule } from './safeCSSRules';
 
-
-type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
 const IGNORED_ATTRS = [ "autocomplete" ];
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
@@ -50,7 +49,7 @@ export default class DOMManager extends ListWalker<Message> {
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
   private stylesManager: StylesManager
   private focusManager: FocusManager = new FocusManager(this.vElements)
-
+  private selectionManager: SelectionManager
 
   constructor(
     private readonly screen: Screen,
@@ -59,6 +58,7 @@ export default class DOMManager extends ListWalker<Message> {
     setCssLoading: ConstructorParameters<typeof StylesManager>[1],
   ) {
     super()
+    this.selectionManager = new SelectionManager(this.vElements, screen)
     this.stylesManager = new StylesManager(screen, setCssLoading)
   }
 
@@ -74,6 +74,10 @@ export default class DOMManager extends ListWalker<Message> {
     }
     if (m.tp === MType.SetNodeFocus) {
       this.focusManager.append(m)
+      return
+    }
+    if (m.tp === MType.SelectionChange) {
+      this.selectionManager.append(m)
       return
     }
     if (m.tp === MType.CreateElementNode) {
@@ -287,7 +291,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
 
-      // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
+      // @deprecated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
       case MType.CssInsertRule:
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
@@ -306,7 +310,7 @@ export default class DOMManager extends ListWalker<Message> {
         }
         vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
-      // end @depricated
+      // end @deprecated
 
       case MType.CreateIFrameDocument:
         vn = this.vElements.get(msg.frameID)
@@ -432,6 +436,7 @@ export default class DOMManager extends ListWalker<Message> {
     return this.stylesManager.moveReady(t).then(() => {
       // Apply focus
       this.focusManager.move(t)
+      this.selectionManager.move(t)
       // Apply all scrolls after the styles got applied
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)

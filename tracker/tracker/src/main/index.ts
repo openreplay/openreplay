@@ -24,6 +24,7 @@ import Focus from './modules/focus.js'
 import Fonts from './modules/fonts.js'
 import Network from './modules/network.js'
 import ConstructedStyleSheets from './modules/constructedStyleSheets.js'
+import Selection from './modules/selection.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils.js'
 
 import type { Options as AppOptions } from './app/index.js'
@@ -131,6 +132,7 @@ export default class API {
       Focus(app)
       Fonts(app)
       Network(app, options.network)
+      Selection(app)
       ;(window as any).__OPENREPLAY__ = this
 
       if (options.autoResetOnWindowOpen) {

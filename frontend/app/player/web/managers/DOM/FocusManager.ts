@@ -3,7 +3,6 @@ import type { SetNodeFocus } from '../../messages';
 import type { VElement } from './VirtualDOM';
 import ListWalker from '../../../common/ListWalker';
 
-
 const FOCUS_CLASS = "-openreplay-focus"
 
 export default class FocusManager extends ListWalker<SetNodeFocus> {

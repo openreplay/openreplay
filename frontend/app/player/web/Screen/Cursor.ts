@@ -3,9 +3,11 @@ import styles from './cursor.module.css';
 
 
 export default class Cursor {
+  private readonly isMobile: boolean;
   private readonly cursor: HTMLDivElement;
   private tagElement: HTMLDivElement;
-  private isMobile: boolean;
+  private coords = { x: 0, y: 0 };
+  private isMoving = false;
 
   constructor(overlay: HTMLDivElement, isMobile: boolean) {
     this.cursor = document.createElement('div');
@@ -50,8 +52,24 @@ export default class Cursor {
   }
 
   move({ x, y }: Point) {
+    this.isMoving = true;
     this.cursor.style.left = x + 'px';
     this.cursor.style.top = y + 'px';
+    this.coords = { x, y };
+    setTimeout(() => this.isMoving = false, 60)
+  }
+
+  setDefaultStyle() {
+    this.cursor.style.width = 18 + 'px'
+    this.cursor.style.height = 30 + 'px'
+    this.cursor.style.transition = 'top .125s linear, left .125s linear'
+  }
+
+  shake() {
+    this.cursor.classList.add(styles.shaking)
+    setTimeout(() => {
+      this.cursor.classList.remove(styles.shaking)
+    }, 500)
   }
 
   click() {
@@ -62,7 +80,7 @@ export default class Cursor {
     }, 600)
   }
 
-  // TODO (to keep on a different playig speed):
+  // TODO (to keep on a different playing speed):
   // transition
   // setTransitionSpeed()
 

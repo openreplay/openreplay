@@ -792,3 +792,44 @@ export function PartitionedMessage(
   ]
 }
 
+export function InputChange(
+  id: number,
+  value: string,
+  valueMasked: boolean,
+  label: string,
+  hesitationTime: number,
+  inputDuration: number,
+): Messages.InputChange {
+  return [
+    Messages.Type.InputChange,
+    id,
+    value,
+    valueMasked,
+    label,
+    hesitationTime,
+    inputDuration,
+  ]
+}
+
+export function SelectionChange(
+  selectionStart: number,
+  selectionEnd: number,
+  selection: string,
+): Messages.SelectionChange {
+  return [
+    Messages.Type.SelectionChange,
+    selectionStart,
+    selectionEnd,
+    selection,
+  ]
+}
+
+export function MouseThrashing(
+  timestamp: number,
+): Messages.MouseThrashing {
+  return [
+    Messages.Type.MouseThrashing,
+    timestamp,
+  ]
+}
+

@@ -1272,6 +1272,54 @@ func DecodeSessionSearch(reader BytesReader) (Message, error) {
         return msg, err
 }
 
+func DecodeInputChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &InputChange{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ValueMasked, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.HesitationTime, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.InputDuration, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSelectionChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SelectionChange{}
+	if msg.SelectionStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.SelectionEnd, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Selection, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeMouseThrashing(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MouseThrashing{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
 func DecodeIOSBatchMeta(reader BytesReader) (Message, error) {
     var err error = nil
     msg := &IOSBatchMeta{}
@@ -1830,6 +1878,12 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeSessionEnd(reader)
 	case 127:
 		return DecodeSessionSearch(reader)
+	case 112:
+		return DecodeInputChange(reader)
+	case 113:
+		return DecodeSelectionChange(reader)
+	case 114:
+		return DecodeMouseThrashing(reader)
 	case 107:
 		return DecodeIOSBatchMeta(reader)
 	case 90:

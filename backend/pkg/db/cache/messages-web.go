@@ -180,3 +180,21 @@ func (c *PGCache) InsertWebInputEvent(e *InputEvent) error {
 	}
 	return c.Conn.InsertWebInputEvent(sessionID, session.ProjectID, e)
 }
+
+func (c *PGCache) InsertWebInputDuration(e *InputChange) error {
+	sessionID := e.SessionID()
+	session, err := c.Cache.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebInputDuration(sessionID, session.ProjectID, e)
+}
+
+func (c *PGCache) InsertMouseThrashing(e *MouseThrashing) error {
+	sessionID := e.SessionID()
+	session, err := c.Cache.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertMouseThrashing(sessionID, session.ProjectID, e)
+}

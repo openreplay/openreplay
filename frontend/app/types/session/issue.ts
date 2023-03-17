@@ -1,11 +1,12 @@
 import Record from 'Types/Record';
 
-const types = {
+export const types = {
   ALL: 'all',
   JS_EXCEPTION: 'js_exception',
   BAD_REQUEST: 'bad_request',
   CRASH: 'crash',
-  CLICK_RAGE: 'click_rage'
+  CLICK_RAGE: 'click_rage',
+  MOUSE_THRASHING: 'mouse_thrashing',
 } as const
 
 type TypeKeys = keyof typeof types
@@ -21,6 +22,7 @@ export const issues_types = [
   { 'type': types.BAD_REQUEST, 'visible': true, 'order': 2, 'name': 'Bad Requests', 'icon': 'funnel/file-medical-alt' },
   { 'type': types.CLICK_RAGE, 'visible': true, 'order': 3, 'name': 'Click Rage', 'icon': 'funnel/emoji-angry' },
   { 'type': types.CRASH, 'visible': true, 'order': 4, 'name': 'Crashes', 'icon': 'funnel/file-earmark-break' },
+  { 'type': types.MOUSE_THRASHING, 'visible': true, 'order': 5, 'name': 'Mouse Thrashing', 'icon': 'close' },
   // { 'type': 'memory', 'visible': true, 'order': 4, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   // { 'type': 'vault', 'visible': true, 'order': 5, 'name': 'Vault', 'icon': 'safe' },
   // { 'type': 'bookmark', 'visible': true, 'order': 5, 'name': 'Bookmarks', 'icon': 'safe' },

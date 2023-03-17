@@ -4,15 +4,15 @@ import { Checkbox, Tooltip } from 'UI';
 const NETWORK = 'NETWORK';
 const ERRORS = 'ERRORS';
 const EVENTS = 'EVENTS';
-const CLICKRAGE = 'CLICKRAGE';
+const FRUSTRATIONS = 'FRUSTRATIONS';
 const PERFORMANCE = 'PERFORMANCE';
 
 export const HELP_MESSAGE: any = {
   NETWORK: 'Network requests made in this session',
   EVENTS: 'Visualizes the events that takes place in the DOM',
   ERRORS: 'Visualizes native JS errors like Type, URI, Syntax etc.',
-  CLICKRAGE: 'Indicates user frustration when repeated clicks are recorded',
   PERFORMANCE: 'Summary of this session’s memory, and CPU consumption on the timeline',
+  FRUSTRATIONS: 'Indicates user frustrations in the session',
 };
 
 interface Props {
@@ -21,7 +21,7 @@ interface Props {
 }
 function FeatureSelection(props: Props) {
   const { list } = props;
-  const features = [NETWORK, ERRORS, EVENTS, CLICKRAGE, PERFORMANCE];
+  const features = [NETWORK, ERRORS, EVENTS, PERFORMANCE, FRUSTRATIONS];
   const disabled = list.length >= 5;
 
   return (
@@ -30,7 +30,7 @@ function FeatureSelection(props: Props) {
         const checked = list.includes(feature);
         const _disabled = disabled && !checked;
         return (
-          <Tooltip key={index} title="X-RAY supports up to 3 views" disabled={!_disabled} delay={0}>
+          <Tooltip key={index} title="X-RAY supports up to 5 views" disabled={!_disabled} delay={0}>
             <Checkbox
               key={index}
               label={feature}

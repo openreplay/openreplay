@@ -2,102 +2,108 @@
 package messages
 
 const (
-    MsgTimestamp = 0
-    MsgSessionStart = 1
-    MsgSessionEndDeprecated = 3
-    MsgSetPageLocation = 4
-    MsgSetViewportSize = 5
-    MsgSetViewportScroll = 6
-    MsgCreateDocument = 7
-    MsgCreateElementNode = 8
-    MsgCreateTextNode = 9
-    MsgMoveNode = 10
-    MsgRemoveNode = 11
-    MsgSetNodeAttribute = 12
-    MsgRemoveNodeAttribute = 13
-    MsgSetNodeData = 14
-    MsgSetCSSData = 15
-    MsgSetNodeScroll = 16
-    MsgSetInputTarget = 17
-    MsgSetInputValue = 18
-    MsgSetInputChecked = 19
-    MsgMouseMove = 20
-    MsgNetworkRequest = 21
-    MsgConsoleLog = 22
-    MsgPageLoadTiming = 23
-    MsgPageRenderTiming = 24
-    MsgJSExceptionDeprecated = 25
-    MsgIntegrationEvent = 26
-    MsgCustomEvent = 27
-    MsgUserID = 28
-    MsgUserAnonymousID = 29
-    MsgMetadata = 30
-    MsgPageEvent = 31
-    MsgInputEvent = 32
-    MsgCSSInsertRule = 37
-    MsgCSSDeleteRule = 38
-    MsgFetch = 39
-    MsgProfiler = 40
-    MsgOTable = 41
-    MsgStateAction = 42
-    MsgRedux = 44
-    MsgVuex = 45
-    MsgMobX = 46
-    MsgNgRx = 47
-    MsgGraphQL = 48
-    MsgPerformanceTrack = 49
-    MsgStringDict = 50
-    MsgSetNodeAttributeDict = 51
-    MsgResourceTiming = 53
-    MsgConnectionInformation = 54
-    MsgSetPageVisibility = 55
-    MsgPerformanceTrackAggr = 56
-    MsgLoadFontFace = 57
-    MsgSetNodeFocus = 58
-    MsgLongTask = 59
-    MsgSetNodeAttributeURLBased = 60
-    MsgSetCSSDataURLBased = 61
-    MsgIssueEventDeprecated = 62
-    MsgTechnicalInfo = 63
-    MsgCustomIssue = 64
-    MsgAssetCache = 66
-    MsgCSSInsertRuleURLBased = 67
-    MsgMouseClick = 69
-    MsgCreateIFrameDocument = 70
-    MsgAdoptedSSReplaceURLBased = 71
-    MsgAdoptedSSReplace = 72
-    MsgAdoptedSSInsertRuleURLBased = 73
-    MsgAdoptedSSInsertRule = 74
-    MsgAdoptedSSDeleteRule = 75
-    MsgAdoptedSSAddOwner = 76
-    MsgAdoptedSSRemoveOwner = 77
-    MsgJSException = 78
-    MsgZustand = 79
-    MsgBatchMeta = 80
-    MsgBatchMetadata = 81
-    MsgPartitionedMessage = 82
-    MsgIssueEvent = 125
-    MsgSessionEnd = 126
-    MsgSessionSearch = 127
-    MsgIOSBatchMeta = 107
-    MsgIOSSessionStart = 90
-    MsgIOSSessionEnd = 91
-    MsgIOSMetadata = 92
-    MsgIOSCustomEvent = 93
-    MsgIOSUserID = 94
-    MsgIOSUserAnonymousID = 95
-    MsgIOSScreenChanges = 96
-    MsgIOSCrash = 97
-    MsgIOSScreenEnter = 98
-    MsgIOSScreenLeave = 99
-    MsgIOSClickEvent = 100
-    MsgIOSInputEvent = 101
-    MsgIOSPerformanceEvent = 102
-    MsgIOSLog = 103
-    MsgIOSInternalError = 104
-    MsgIOSNetworkCall = 105
-    MsgIOSPerformanceAggregated = 110
-    MsgIOSIssueEvent = 111
+	MsgTimestamp                   = 0
+	MsgSessionStart                = 1
+	MsgSessionEndDeprecated        = 3
+	MsgSetPageLocation             = 4
+	MsgSetViewportSize             = 5
+	MsgSetViewportScroll           = 6
+	MsgCreateDocument              = 7
+	MsgCreateElementNode           = 8
+	MsgCreateTextNode              = 9
+	MsgMoveNode                    = 10
+	MsgRemoveNode                  = 11
+	MsgSetNodeAttribute            = 12
+	MsgRemoveNodeAttribute         = 13
+	MsgSetNodeData                 = 14
+	MsgSetCSSData                  = 15
+	MsgSetNodeScroll               = 16
+	MsgSetInputTarget              = 17
+	MsgSetInputValue               = 18
+	MsgSetInputChecked             = 19
+	MsgMouseMove                   = 20
+	MsgNetworkRequest              = 21
+	MsgConsoleLog                  = 22
+	MsgPageLoadTiming              = 23
+	MsgPageRenderTiming            = 24
+	MsgJSExceptionDeprecated       = 25
+	MsgIntegrationEvent            = 26
+	MsgCustomEvent                 = 27
+	MsgUserID                      = 28
+	MsgUserAnonymousID             = 29
+	MsgMetadata                    = 30
+	MsgPageEvent                   = 31
+	MsgInputEvent                  = 32
+	MsgClickEvent                  = 33
+	MsgResourceEvent               = 35
+	MsgCSSInsertRule               = 37
+	MsgCSSDeleteRule               = 38
+	MsgFetch                       = 39
+	MsgProfiler                    = 40
+	MsgOTable                      = 41
+	MsgStateAction                 = 42
+	MsgRedux                       = 44
+	MsgVuex                        = 45
+	MsgMobX                        = 46
+	MsgNgRx                        = 47
+	MsgGraphQL                     = 48
+	MsgPerformanceTrack            = 49
+	MsgStringDict                  = 50
+	MsgSetNodeAttributeDict        = 51
+	MsgDOMDrop                     = 52
+	MsgResourceTiming              = 53
+	MsgConnectionInformation       = 54
+	MsgSetPageVisibility           = 55
+	MsgPerformanceTrackAggr        = 56
+	MsgLoadFontFace                = 57
+	MsgSetNodeFocus                = 58
+	MsgLongTask                    = 59
+	MsgSetNodeAttributeURLBased    = 60
+	MsgSetCSSDataURLBased          = 61
+	MsgIssueEventDeprecated        = 62
+	MsgTechnicalInfo               = 63
+	MsgCustomIssue                 = 64
+	MsgAssetCache                  = 66
+	MsgCSSInsertRuleURLBased       = 67
+	MsgMouseClick                  = 69
+	MsgCreateIFrameDocument        = 70
+	MsgAdoptedSSReplaceURLBased    = 71
+	MsgAdoptedSSReplace            = 72
+	MsgAdoptedSSInsertRuleURLBased = 73
+	MsgAdoptedSSInsertRule         = 74
+	MsgAdoptedSSDeleteRule         = 75
+	MsgAdoptedSSAddOwner           = 76
+	MsgAdoptedSSRemoveOwner        = 77
+	MsgJSException                 = 78
+	MsgZustand                     = 79
+	MsgBatchMeta                   = 80
+	MsgBatchMetadata               = 81
+	MsgPartitionedMessage          = 82
+	MsgIssueEvent                  = 125
+	MsgSessionEnd                  = 126
+	MsgSessionSearch               = 127
+	MsgInputChange                 = 112
+	MsgSelectionChange             = 113
+	MsgMouseThrashing              = 114
+	MsgIOSBatchMeta                = 107
+	MsgIOSSessionStart             = 90
+	MsgIOSSessionEnd               = 91
+	MsgIOSMetadata                 = 92
+	MsgIOSCustomEvent              = 93
+	MsgIOSUserID                   = 94
+	MsgIOSUserAnonymousID          = 95
+	MsgIOSScreenChanges            = 96
+	MsgIOSCrash                    = 97
+	MsgIOSScreenEnter              = 98
+	MsgIOSScreenLeave              = 99
+	MsgIOSClickEvent               = 100
+	MsgIOSInputEvent               = 101
+	MsgIOSPerformanceEvent         = 102
+	MsgIOSLog                      = 103
+	MsgIOSInternalError            = 104
+	MsgIOSNetworkCall              = 105
+	MsgIOSPerformanceAggregated    = 110
+	MsgIOSIssueEvent               = 111
 )
 
 
@@ -2100,6 +2106,83 @@ func (msg *SessionSearch) Decode() Message {
 
 func (msg *SessionSearch) TypeID() int {
 	return 127
+}
+
+type InputChange struct {
+	message
+	ID             uint64
+	Value          string
+	ValueMasked    bool
+	Label          string
+	HesitationTime int64
+	InputDuration  int64
+}
+
+func (msg *InputChange) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Value)+len(msg.Label))
+	buf[0] = 112
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Value, buf, p)
+	p = WriteBoolean(msg.ValueMasked, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteInt(msg.HesitationTime, buf, p)
+	p = WriteInt(msg.InputDuration, buf, p)
+	return buf[:p]
+}
+
+func (msg *InputChange) Decode() Message {
+	return msg
+}
+
+func (msg *InputChange) TypeID() int {
+	return 112
+}
+
+type SelectionChange struct {
+	message
+	SelectionStart uint64
+	SelectionEnd   uint64
+	Selection      string
+}
+
+func (msg *SelectionChange) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Selection))
+	buf[0] = 113
+	p := 1
+	p = WriteUint(msg.SelectionStart, buf, p)
+	p = WriteUint(msg.SelectionEnd, buf, p)
+	p = WriteString(msg.Selection, buf, p)
+	return buf[:p]
+}
+
+func (msg *SelectionChange) Decode() Message {
+	return msg
+}
+
+func (msg *SelectionChange) TypeID() int {
+	return 113
+}
+
+type MouseThrashing struct {
+	message
+	Timestamp uint64
+}
+
+func (msg *MouseThrashing) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 114
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *MouseThrashing) Decode() Message {
+	return msg
+}
+
+func (msg *MouseThrashing) TypeID() int {
+	return 114
 }
 
 type IOSBatchMeta struct {

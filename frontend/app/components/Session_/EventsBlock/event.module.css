@@ -141,6 +141,13 @@
   cursor: pointer;
 }
 
+.frustration {
+  background-color: rgba(204, 0, 0, 0.1)!important;
+  box-shadow:
+          2px 2px 1px 1px white,
+          2px 2px 0px 1px rgba(0,0,0,0.4);
+}
+
 .clickrageType {
   background-color: #FFF3F3;
   border: 1px solid #CC0000;

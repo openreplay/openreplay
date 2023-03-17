@@ -19,7 +19,7 @@ import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
 
 import MFileReader from './messages/MFileReader';
-import { MType } from './messages';
+import { MouseThrashing, MType } from "./messages";
 import { isDOMType } from './messages/filters.gen';
 import type {
   Message,
@@ -100,6 +100,7 @@ export default class MessageManager {
   private performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
   private windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
   private clickManager: ListWalker<MouseClick> = new ListWalker();
+  private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
 
   private resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
   private pagesManager: PagesManager;
@@ -345,8 +346,12 @@ export default class MessageManager {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
-      if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
+      if (!!lastClick && t - lastClick.time < 600) { // happened during last 600ms
         this.screen.cursor.click();
+      }
+      const lastThrashing = this.mouseThrashingManager.moveGetLast(t)
+      if (!!lastThrashing && t - lastThrashing.time < 300) {
+        this.screen.cursor.shake();
       }
     })
 
@@ -387,6 +392,9 @@ export default class MessageManager {
         break;
       case MType.SetViewportSize:
         this.resizeManager.append(msg);
+        break;
+      case MType.MouseThrashing:
+        this.mouseThrashingManager.append(msg);
         break;
       case MType.MouseMove:
         this.mouseMoveManager.append(msg);

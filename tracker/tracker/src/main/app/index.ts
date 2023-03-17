@@ -149,7 +149,7 @@ export default class App {
       }
     })
 
-    // @depricated (use sessionHash on start instead)
+    // @deprecated (use sessionHash on start instead)
     if (sessionToken != null) {
       this.session.applySessionHash(sessionToken)
     }

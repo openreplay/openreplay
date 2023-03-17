@@ -31,9 +31,9 @@ export interface Options {
   controlConfirm: ConfirmOptions;
   recordingConfirm: ConfirmOptions;
 
-  // @depricated
+  // @deprecated
   confirmText?: string;
-  // @depricated
+  // @deprecated
   confirmStyle?: Properties;
 
   config: RTCConfiguration;

@@ -1,13 +1,23 @@
 import React from 'react';
 import copy from 'copy-to-clipboard';
 import cn from 'classnames';
-import { Icon, TextEllipsis } from 'UI';
+import { Icon, TextEllipsis, Tooltip } from 'UI';
 import { TYPES } from 'Types/session/event';
 import { prorata } from 'App/utils';
 import withOverlay from 'Components/hocs/withOverlay';
 import LoadInfo from './LoadInfo';
 import cls from './event.module.css';
 import { numberWithCommas } from 'App/utils';
+
+function isFrustrationEvent(evt) {
+  if (evt.type === 'mouse_thrashing' || evt.type === TYPES.CLICKRAGE) {
+    return true;
+  }
+  if (evt.type === TYPES.CLICK || evt.type === TYPES.INPUT) {
+    return evt.hesitation > 1000
+  }
+  return false
+}
 
 @withOverlay()
 export default class Event extends React.PureComponent {
@@ -44,35 +54,50 @@ export default class Event extends React.PureComponent {
     const { event } = this.props;
     let title = event.type;
     let body;
+    let icon;
+    const isFrustration = isFrustrationEvent(event);
+    const tooltip = { disabled: true, text: '' }
+
     switch (event.type) {
       case TYPES.LOCATION:
         title = 'Visited';
         body = event.url;
+        icon = 'location';
         break;
       case TYPES.CLICK:
         title = 'Clicked';
         body = event.label;
+        icon = isFrustration ? 'click_hesitation' : 'click';
+        isFrustration ? Object.assign(tooltip, { disabled: false, text: `User hesitated to click for ${Math.round(event.hesitation/1000)}s`, }) : null;
         break;
       case TYPES.INPUT:
         title = 'Input';
         body = event.value;
+        icon = isFrustration ? 'input_hesitation' : 'input';
+        isFrustration ? Object.assign(tooltip, { disabled: false, text: `User hesitated to enter a value for ${Math.round(event.hesitation/1000)}s`, }) : null;
         break;
       case TYPES.CLICKRAGE:
         title = `${ event.count } Clicks`;
         body = event.label;
+        icon = 'clickrage'
         break;
       case TYPES.IOS_VIEW:
         title = 'View';
         body = event.name;
+        icon = 'ios_view'
+        break;
+      case 'mouse_thrashing':
+        title = 'Mouse Thrashing';
+        icon = 'mouse_thrashing'
         break;
     }
     const isLocation = event.type === TYPES.LOCATION;
-    const isClickrage = event.type === TYPES.CLICKRAGE;
 
     return (
+        <Tooltip title={tooltip.text} disabled={tooltip.disabled} placement={"left"} anchorClassName={"w-full"} containerClassName={"w-full"}>
       <div className={ cn(cls.main, 'flex flex-col w-full') } >
         <div className="flex items-center w-full">
-          { event.type && <Icon name={`event/${event.type.toLowerCase()}`} size="16" color={isClickrage? 'red' : 'gray-dark' } /> }
+          { event.type && <Icon name={`event/${icon}`} size="16" color={'gray-dark' } /> }
           <div className="ml-3 w-full">
             <div className="flex w-full items-first justify-between">
               <div className="flex items-center w-full" style={{ minWidth: '0'}}>
@@ -100,6 +125,7 @@ export default class Event extends React.PureComponent {
           </div>
         }
       </div>
+        </Tooltip>
     );
   };
 
@@ -110,17 +136,15 @@ export default class Event extends React.PureComponent {
       isCurrent,
       onClick,
       showSelection,
-      onCheckboxClick,
       showLoadInfo,
       toggleLoadInfo,
       isRed,
-      extended,
-      highlight = false,
       presentInSearch = false,
-      isLastInGroup,
       whiteBg,
     } = this.props;
     const { menuOpen } = this.state;
+
+    const isFrustration = isFrustrationEvent(event);
     return (
       <div
         ref={ ref => { this.wrapper = ref } }
@@ -135,7 +159,7 @@ export default class Event extends React.PureComponent {
           [ cls.red ]: isRed,
           [ cls.clickType ]: event.type === TYPES.CLICK,
           [ cls.inputType ]: event.type === TYPES.INPUT,
-          [ cls.clickrageType ]: event.type === TYPES.CLICKRAGE,
+          [ cls.frustration ]: isFrustration,
           [ cls.highlight ] : presentInSearch,
           [ cls.lastInGroup ]: whiteBg,
         }) }
@@ -146,13 +170,10 @@ export default class Event extends React.PureComponent {
             { event.target ? 'Copy CSS' : 'Copy URL' }
           </button>
         }
-        <div className={ cls.topBlock }>
-          <div className={ cls.firstLine }>
+        <div className={ cn(cls.topBlock, 'w-full') }>
+          <div className={ cn(cls.firstLine, 'w-full') }>
             { this.renderBody() }
           </div>
-          {/* { event.type === TYPES.LOCATION &&
-          <div className="text-sm font-normal color-gray-medium">{event.url}</div>
-          } */}
         </div>
         { event.type === TYPES.LOCATION && (event.fcpTime || event.visuallyComplete || event.timeToInteractive) &&
           <LoadInfo

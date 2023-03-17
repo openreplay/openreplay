@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { toggleBottomBlock } from 'Duck/components/player';
 import BottomBlock from '../BottomBlock';
 import EventRow from './components/EventRow';
-import { TYPES } from 'Types/session/event';
 import { connect } from 'react-redux';
 import TimelineScale from './components/TimelineScale';
 import FeatureSelection, { HELP_MESSAGE } from './components/FeatureSelection/FeatureSelection';
@@ -28,6 +27,7 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
       performanceChartData,
       stackList: stackEventList,
       eventList: eventsList,
+      frustrationsList,
       exceptionsList,
       resourceList: resourceListUnmap,
       fetchList,
@@ -46,8 +46,8 @@ function OverviewPanel({ issuesList }: { issuesList: Record<string, any>[] }) {
       NETWORK: resourceList,
       ERRORS: exceptionsList,
       EVENTS: stackEventList,
-      CLICKRAGE: eventsList.filter((item: any) => item.type === TYPES.CLICKRAGE),
       PERFORMANCE: performanceChartData,
+      FRUSTRATIONS: frustrationsList,
     };
   }, [dataLoaded]);
 

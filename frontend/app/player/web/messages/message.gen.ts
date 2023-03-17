@@ -55,6 +55,8 @@ import type {
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
   RawZustand,
+  RawSelectionChange,
+  RawMouseThrashing,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -168,6 +170,10 @@ export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
 export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type Zustand = RawZustand & Timed
+
+export type SelectionChange = RawSelectionChange & Timed
+
+export type MouseThrashing = RawMouseThrashing & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 

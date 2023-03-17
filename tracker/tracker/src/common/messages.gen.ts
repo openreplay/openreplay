@@ -63,6 +63,9 @@ export declare const enum Type {
   Zustand = 79,
   BatchMetadata = 81,
   PartitionedMessage = 82,
+  InputChange = 112,
+  SelectionChange = 113,
+  MouseThrashing = 114,
 }
 
 
@@ -490,6 +493,28 @@ export type PartitionedMessage = [
   /*partTotal:*/ number,
 ]
 
+export type InputChange = [
+  /*type:*/ Type.InputChange,
+  /*id:*/ number,
+  /*value:*/ string,
+  /*valueMasked:*/ boolean,
+  /*label:*/ string,
+  /*hesitationTime:*/ number,
+  /*inputDuration:*/ number,
+]
 
-type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTiming | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage
+export type SelectionChange = [
+  /*type:*/ Type.SelectionChange,
+  /*selectionStart:*/ number,
+  /*selectionEnd:*/ number,
+  /*selection:*/ string,
+]
+
+export type MouseThrashing = [
+  /*type:*/ Type.MouseThrashing,
+  /*timestamp:*/ number,
+]
+
+
+type Message =  Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetNodeScroll | SetInputTarget | SetInputValue | SetInputChecked | MouseMove | NetworkRequest | ConsoleLog | PageLoadTiming | PageRenderTiming | CustomEvent | UserID | UserAnonymousID | Metadata | CSSInsertRule | CSSDeleteRule | Fetch | Profiler | OTable | StateAction | Redux | Vuex | MobX | NgRx | GraphQL | PerformanceTrack | StringDict | SetNodeAttributeDict | ResourceTiming | ConnectionInformation | SetPageVisibility | LoadFontFace | SetNodeFocus | LongTask | SetNodeAttributeURLBased | SetCSSDataURLBased | TechnicalInfo | CustomIssue | CSSInsertRuleURLBased | MouseClick | CreateIFrameDocument | AdoptedSSReplaceURLBased | AdoptedSSInsertRuleURLBased | AdoptedSSDeleteRule | AdoptedSSAddOwner | AdoptedSSRemoveOwner | JSException | Zustand | BatchMetadata | PartitionedMessage | InputChange | SelectionChange | MouseThrashing
 export default Message
