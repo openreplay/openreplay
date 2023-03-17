@@ -102,7 +102,7 @@ func (s *saverImpl) handleMessage(msg Message) error {
 	case *IOSCrash:
 		return s.pg.InsertIOSCrash(m)
 	case *UnbindNodes:
-		log.Printf("UnbineNodes: %+v", m)
+		log.Printf("UnbindNodes: %+v", m)
 	}
 	return nil
 }
