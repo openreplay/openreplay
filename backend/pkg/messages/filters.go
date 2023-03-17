@@ -2,7 +2,11 @@
 package messages
 
 func IsReplayerType(id int) bool {
+<<<<<<< HEAD
 	return 1 != id && 3 != id && 17 != id && 23 != id && 24 != id && 25 != id && 26 != id && 27 != id && 28 != id && 29 != id && 30 != id && 31 != id && 32 != id && 33 != id && 35 != id && 42 != id && 52 != id && 56 != id && 62 != id && 63 != id && 64 != id && 66 != id && 78 != id && 80 != id && 81 != id && 82 != id && 125 != id && 126 != id && 127 != id && 112 != id && 107 != id && 91 != id && 92 != id && 94 != id && 95 != id && 97 != id && 98 != id && 99 != id && 101 != id && 104 != id && 110 != id && 111 != id
+=======
+	return 1 != id && 3 != id && 17 != id && 23 != id && 24 != id && 25 != id && 26 != id && 27 != id && 28 != id && 29 != id && 30 != id && 31 != id && 32 != id && 33 != id && 35 != id && 42 != id && 52 != id && 56 != id && 62 != id && 63 != id && 64 != id && 66 != id && 78 != id && 80 != id && 81 != id && 82 != id && 115 != id && 125 != id && 126 != id && 127 != id && 107 != id && 91 != id && 92 != id && 94 != id && 95 != id && 97 != id && 98 != id && 99 != id && 101 != id && 104 != id && 110 != id && 111 != id
+>>>>>>> 3e1b8c39f (change(tracker): add nodes drop message)
 }
 
 func IsIOSType(id int) bool {

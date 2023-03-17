@@ -630,6 +630,12 @@ class MessageCodec(Codec):
                 part_total=self.read_uint(reader)
             )
 
+        if message_id == 115:
+            return RemovedNodesCount(
+                nodes_count=self.read_uint(reader),
+                dom_dropped=self.read_boolean(reader)
+            )
+
         if message_id == 125:
             return IssueEvent(
                 message_id=self.read_uint(reader),

@@ -79,6 +79,7 @@ const (
 	MsgBatchMeta                   = 80
 	MsgBatchMetadata               = 81
 	MsgPartitionedMessage          = 82
+	MsgRemovedNodesCount           = 115
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2027,6 +2028,29 @@ func (msg *PartitionedMessage) Decode() Message {
 
 func (msg *PartitionedMessage) TypeID() int {
 	return 82
+}
+
+type RemovedNodesCount struct {
+	message
+	NodesCount uint64
+	DOMDropped bool
+}
+
+func (msg *RemovedNodesCount) Encode() []byte {
+	buf := make([]byte, 21)
+	buf[0] = 115
+	p := 1
+	p = WriteUint(msg.NodesCount, buf, p)
+	p = WriteBoolean(msg.DOMDropped, buf, p)
+	return buf[:p]
+}
+
+func (msg *RemovedNodesCount) Decode() Message {
+	return msg
+}
+
+func (msg *RemovedNodesCount) TypeID() int {
+	return 115
 }
 
 type IssueEvent struct {
