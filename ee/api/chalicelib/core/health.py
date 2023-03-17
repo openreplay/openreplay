@@ -2,7 +2,7 @@ from urllib.parse import urlparse
 
 import redis
 import requests
-from confluent_kafka.admin import AdminClient
+# from confluent_kafka.admin import AdminClient
 from decouple import config
 
 from chalicelib.utils import pg_client, ch_client
@@ -152,7 +152,7 @@ def get_health():
         },
         "ingestionPipeline": {
             "redis": __check_redis,
-            "kafka": __check_kafka
+            # "kafka": __check_kafka
         },
         "backendServices": {
             "alerts": __check_be_service("alerts"),
