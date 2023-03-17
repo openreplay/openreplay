@@ -22,7 +22,7 @@ colima start --with-kubernetes --cpu 2 --memory 8 -p openreplay
 ```yaml
 git clone https://github.com/openreplay/openreplay -b dev
 cd openreplay/scripts/helmcharts
-SKIP_K8S_INSTALL=true SKIP_K8S_TOOLS=true gDOMAIN_NAME=openreplay.local bash -x init.sh
+SKIP_K8S_INSTALL=true SKIP_K8S_TOOLS=true DOMAIN_NAME=openreplay.local bash -x init.sh
 ```
 
 ## Updating DNS
