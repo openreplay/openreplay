@@ -237,12 +237,17 @@ export default abstract class Observer {
       )
 
       let removed = 0
-      const total = this.app.nodes.getNodeCount()
+      const totalBeforeRemove = this.app.nodes.getNodeCount()
+
       while (walker.nextNode()) {
         removed += 1
         this.app.nodes.unregisterNode(walker.currentNode)
       }
-      this.app.send(UnbindNodes(Math.floor((removed / total) * 100)))
+
+      const removedPercent = Math.floor((removed / totalBeforeRemove) * 100)
+      if (removedPercent > 30) {
+        this.app.send(UnbindNodes(removedPercent))
+      }
     }
   }
 
