@@ -101,8 +101,6 @@ func (s *saverImpl) handleMessage(msg Message) error {
 		return s.pg.InsertIOSScreenEnter(m)
 	case *IOSCrash:
 		return s.pg.InsertIOSCrash(m)
-	case *UnbindNodes:
-		log.Printf("UnbindNodes: %+v", m)
 	}
 	return nil
 }

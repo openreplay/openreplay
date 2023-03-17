@@ -90,8 +90,6 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, projectID uint32, e *Inp
 }
 
 func (conn *Conn) InsertWebInputDuration(sessionID uint64, projectID uint32, e *InputChange) error {
-	// Debug log
-	log.Printf("new InputDuration event: %v", e)
 	if e.Label == "" {
 		return nil
 	}
@@ -165,9 +163,6 @@ func (conn *Conn) InsertSessionReferrer(sessionID uint64, referrer string) error
 }
 
 func (conn *Conn) InsertMouseThrashing(sessionID uint64, projectID uint32, e *MouseThrashing) error {
-	// Debug log
-	log.Printf("new MouseThrashing event: %v", e)
-	//
 	issueID := hashid.MouseThrashingID(projectID, sessionID, e.Timestamp)
 	if err := conn.bulks.Get("webIssues").Append(projectID, issueID, "mouse_thrashing", e.Url); err != nil {
 		log.Printf("insert web issue err: %s", err)
