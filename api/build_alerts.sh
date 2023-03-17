@@ -8,13 +8,33 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
 git_sha=$(git rev-parse --short HEAD)
-image_tag=${IMAGE_TAG:-git_sha}
+image_tag=${IMAGE_TAG:-$git_sha}
 envarg="default-foss"
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
         exit 1
     }
+}
+
+
+[[ $1 == ee ]] && ee=true
+[[ $PATCH -eq 1 ]] && {
+  image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
+  [[ $ee == "true" ]] && { 
+    image_tag="${image_tag}-ee"
+  }
+}
+update_helm_release() {
+  chart=$1
+  HELM_TAG="$(grep -iER ^version ../scripts/helmcharts/openreplay/charts/$chart | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
+  # Update the chart version
+  sed -i "s#^version.*#version: $HELM_TAG# g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
+  # Update image tags
+  sed -i "s#ppVersion.*#ppVersion: \"$image_tag\"#g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
+  # Commit the changes
+  git add ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
+  git commit -m "chore(helm): Updating $chart image release"
 }
 
 function build_alerts(){
@@ -48,3 +68,4 @@ function build_alerts(){
 
 check_prereq
 build_alerts $1
+[[ $PATCH -eq 1 ]] && update_helm_release alerts
