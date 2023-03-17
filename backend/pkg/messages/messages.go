@@ -79,7 +79,7 @@ const (
 	MsgInputChange                 = 112
 	MsgSelectionChange             = 113
 	MsgMouseThrashing              = 114
-	MsgRemovedNodesCount           = 115
+	MsgUnbindNodes                 = 115
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -2102,24 +2102,24 @@ func (msg *MouseThrashing) TypeID() int {
 	return 114
 }
 
-type RemovedNodesCount struct {
+type UnbindNodes struct {
 	message
-	NodesCount uint64
+	TotalRemovedPercent uint64
 }
 
-func (msg *RemovedNodesCount) Encode() []byte {
+func (msg *UnbindNodes) Encode() []byte {
 	buf := make([]byte, 11)
 	buf[0] = 115
 	p := 1
-	p = WriteUint(msg.NodesCount, buf, p)
+	p = WriteUint(msg.TotalRemovedPercent, buf, p)
 	return buf[:p]
 }
 
-func (msg *RemovedNodesCount) Decode() Message {
+func (msg *UnbindNodes) Decode() Message {
 	return msg
 }
 
-func (msg *RemovedNodesCount) TypeID() int {
+func (msg *UnbindNodes) TypeID() int {
 	return 115
 }
 

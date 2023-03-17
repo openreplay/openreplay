@@ -1269,10 +1269,10 @@ func DecodeMouseThrashing(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeRemovedNodesCount(reader BytesReader) (Message, error) {
+func DecodeUnbindNodes(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &RemovedNodesCount{}
-	if msg.NodesCount, err = reader.ReadUint(); err != nil {
+	msg := &UnbindNodes{}
+	if msg.TotalRemovedPercent, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1888,7 +1888,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 114:
 		return DecodeMouseThrashing(reader)
 	case 115:
-		return DecodeRemovedNodesCount(reader)
+		return DecodeUnbindNodes(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

@@ -736,11 +736,11 @@ class MouseThrashing(Message):
         self.timestamp = timestamp
 
 
-class RemovedNodesCount(Message):
+class UnbindNodes(Message):
     __id__ = 115
 
-    def __init__(self, nodes_count):
-        self.nodes_count = nodes_count
+    def __init__(self, total_removed_percent):
+        self.total_removed_percent = total_removed_percent
 
 
 class IssueEvent(Message):

@@ -833,12 +833,12 @@ export function MouseThrashing(
   ]
 }
 
-export function RemovedNodesCount(
-  nodesCount: number,
-): Messages.RemovedNodesCount {
+export function UnbindNodes(
+  totalRemovedPercent: number,
+): Messages.UnbindNodes {
   return [
-    Messages.Type.RemovedNodesCount,
-    nodesCount,
+    Messages.Type.UnbindNodes,
+    totalRemovedPercent,
   ]
 }
 
