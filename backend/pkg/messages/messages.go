@@ -48,7 +48,7 @@ const (
 	MsgPerformanceTrack            = 49
 	MsgStringDict                  = 50
 	MsgSetNodeAttributeDict        = 51
-	MsgResourceTiming              = 53
+	MsgResourceTimingLegacy        = 53
 	MsgConnectionInformation       = 54
 	MsgSetPageVisibility           = 55
 	MsgPerformanceTrackAggr        = 56
@@ -80,10 +80,11 @@ const (
 	MsgSelectionChange             = 113
 	MsgMouseThrashing              = 114
 	MsgUnbindNodes                 = 115
+	MsgResourceTiming              = 116
+	MsgNetworkRequest              = 117
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
-	MsgNetworkRequest              = 128
 	MsgIOSBatchMeta                = 107
 	MsgIOSSessionStart             = 90
 	MsgIOSSessionEnd               = 91
@@ -1296,7 +1297,7 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 51
 }
 
-type ResourceTiming struct {
+type ResourceTimingLegacy struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -1308,7 +1309,7 @@ type ResourceTiming struct {
 	Initiator       string
 }
 
-func (msg *ResourceTiming) Encode() []byte {
+func (msg *ResourceTimingLegacy) Encode() []byte {
 	buf := make([]byte, 81+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 53
 	p := 1
@@ -1323,11 +1324,11 @@ func (msg *ResourceTiming) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTiming) Decode() Message {
+func (msg *ResourceTimingLegacy) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTiming) TypeID() int {
+func (msg *ResourceTimingLegacy) TypeID() int {
 	return 53
 }
 
@@ -2124,6 +2125,82 @@ func (msg *UnbindNodes) TypeID() int {
 	return 115
 }
 
+type ResourceTiming struct {
+	message
+	Timestamp       uint64
+	Duration        uint64
+	TTFB            uint64
+	HeaderSize      uint64
+	EncodedBodySize uint64
+	DecodedBodySize uint64
+	URL             string
+	Initiator       string
+	TransferredSize uint64
+	Cached          bool
+}
+
+func (msg *ResourceTiming) Encode() []byte {
+	buf := make([]byte, 101+len(msg.URL)+len(msg.Initiator))
+	buf[0] = 116
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.TTFB, buf, p)
+	p = WriteUint(msg.HeaderSize, buf, p)
+	p = WriteUint(msg.EncodedBodySize, buf, p)
+	p = WriteUint(msg.DecodedBodySize, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Initiator, buf, p)
+	p = WriteUint(msg.TransferredSize, buf, p)
+	p = WriteBoolean(msg.Cached, buf, p)
+	return buf[:p]
+}
+
+func (msg *ResourceTiming) Decode() Message {
+	return msg
+}
+
+func (msg *ResourceTiming) TypeID() int {
+	return 116
+}
+
+type NetworkRequest struct {
+	message
+	Type      string
+	Method    string
+	URL       string
+	Request   string
+	Response  string
+	Status    uint64
+	Timestamp uint64
+	Duration  uint64
+	Cached    bool
+}
+
+func (msg *NetworkRequest) Encode() []byte {
+	buf := make([]byte, 91+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
+	buf[0] = 117
+	p := 1
+	p = WriteString(msg.Type, buf, p)
+	p = WriteString(msg.Method, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Request, buf, p)
+	p = WriteString(msg.Response, buf, p)
+	p = WriteUint(msg.Status, buf, p)
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteBoolean(msg.Cached, buf, p)
+	return buf[:p]
+}
+
+func (msg *NetworkRequest) Decode() Message {
+	return msg
+}
+
+func (msg *NetworkRequest) TypeID() int {
+	return 117
+}
+
 type IssueEvent struct {
 	message
 	MessageID     uint64
@@ -2201,43 +2278,6 @@ func (msg *SessionSearch) Decode() Message {
 
 func (msg *SessionSearch) TypeID() int {
 	return 127
-}
-
-type NetworkRequest struct {
-	message
-	Type      string
-	Method    string
-	URL       string
-	Request   string
-	Response  string
-	Status    uint64
-	Timestamp uint64
-	Duration  uint64
-	Cached    bool
-}
-
-func (msg *NetworkRequest) Encode() []byte {
-	buf := make([]byte, 91+len(msg.Type)+len(msg.Method)+len(msg.URL)+len(msg.Request)+len(msg.Response))
-	buf[0] = 128
-	p := 1
-	p = WriteString(msg.Type, buf, p)
-	p = WriteString(msg.Method, buf, p)
-	p = WriteString(msg.URL, buf, p)
-	p = WriteString(msg.Request, buf, p)
-	p = WriteString(msg.Response, buf, p)
-	p = WriteUint(msg.Status, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Duration, buf, p)
-	p = WriteBoolean(msg.Cached, buf, p)
-	return buf[:p]
-}
-
-func (msg *NetworkRequest) Decode() Message {
-	return msg
-}
-
-func (msg *NetworkRequest) TypeID() int {
-	return 128
 }
 
 type IOSBatchMeta struct {

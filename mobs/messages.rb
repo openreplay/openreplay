@@ -265,7 +265,7 @@ message 51, "SetNodeAttributeDict" do
   uint 'NameKey'
   uint 'ValueKey'
 end
-message 53, 'ResourceTiming', :replayer => :devtools do
+message 53, 'ResourceTimingLegacy', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'
@@ -471,6 +471,33 @@ message 115, 'UnbindNodes', :replayer => false do
     uint 'TotalRemovedPercent'
 end
 
+message 116, 'ResourceTiming', :replayer => :devtools do
+  uint 'Timestamp'
+  uint 'Duration'
+  uint 'TTFB'
+  uint 'HeaderSize'
+  uint 'EncodedBodySize'
+  uint 'DecodedBodySize'
+  string 'URL'
+  string 'Initiator'
+  uint 'TransferredSize'
+  boolean 'Cached'
+end
+
+message 117, 'NetworkRequest', :replayer => :devtools do
+  string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
+  string 'Method'
+  string 'URL'
+  string 'Request'
+  string 'Response'
+  uint 'Status'
+  uint 'Timestamp'
+  uint 'Duration'
+  boolean 'Cached'
+end
+
+
+
 ## Backend-only
 message 125, 'IssueEvent', :replayer => false, :tracker => false do
   uint 'MessageID'
@@ -488,16 +515,4 @@ end
 message 127, 'SessionSearch', :tracker => false, :replayer => false  do
   uint 'Timestamp'
   uint 'Partition'
-end
-
-message 128, 'NetworkRequest', :replayer => :devtools do
-  string 'Type' # fetch/xhr/anythingElse(axios,gql,fonts,image?)
-  string 'Method'
-  string 'URL'
-  string 'Request'
-  string 'Response'
-  uint 'Status'
-  uint 'Timestamp'
-  uint 'Duration'
-  boolean 'Cached'
 end

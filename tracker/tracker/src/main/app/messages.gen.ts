@@ -204,7 +204,7 @@ export function MouseMove(
   ]
 }
 
-export function NetworkRequest(
+export function LegacyNetworkRequest(
   type: string,
   method: string,
   url: string,
@@ -213,9 +213,9 @@ export function NetworkRequest(
   status: number,
   timestamp: number,
   duration: number,
-): Messages.NetworkRequest {
+): Messages.LegacyNetworkRequest {
   return [
-    Messages.Type.NetworkRequest,
+    Messages.Type.LegacyNetworkRequest,
     type,
     method,
     url,
@@ -498,7 +498,7 @@ export function SetNodeAttributeDict(
   ]
 }
 
-export function ResourceTiming(
+export function ResourceTimingLegacy(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -507,9 +507,9 @@ export function ResourceTiming(
   decodedBodySize: number,
   url: string,
   initiator: string,
-): Messages.ResourceTiming {
+): Messages.ResourceTimingLegacy {
   return [
-    Messages.Type.ResourceTiming,
+    Messages.Type.ResourceTimingLegacy,
     timestamp,
     duration,
     ttfb,
@@ -839,6 +839,58 @@ export function UnbindNodes(
   return [
     Messages.Type.UnbindNodes,
     totalRemovedPercent,
+  ]
+}
+
+export function ResourceTiming(
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
+): Messages.ResourceTiming {
+  return [
+    Messages.Type.ResourceTiming,
+    timestamp,
+    duration,
+    ttfb,
+    headerSize,
+    encodedBodySize,
+    decodedBodySize,
+    url,
+    initiator,
+    transferredSize,
+    cached,
+  ]
+}
+
+export function NetworkRequest(
+  type: string,
+  method: string,
+  url: string,
+  request: string,
+  response: string,
+  status: number,
+  timestamp: number,
+  duration: number,
+  cached: boolean,
+): Messages.NetworkRequest {
+  return [
+    Messages.Type.NetworkRequest,
+    type,
+    method,
+    url,
+    request,
+    response,
+    status,
+    timestamp,
+    duration,
+    cached,
   ]
 }
 

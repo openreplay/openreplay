@@ -118,6 +118,9 @@ export default function (app: App, opts: Partial<Options>): void {
         entry.decodedBodySize || 0,
         entry.name,
         entry.initiatorType,
+        entry.transferSize,
+        // @ts-ignore
+        (entry.responseStatus && entry.responseStatus === 304) || entry.transferSize === 0,
       ),
     )
   }
