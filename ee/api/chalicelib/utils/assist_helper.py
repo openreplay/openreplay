@@ -37,13 +37,16 @@ def get_full_config():
     if __get_secret() is not None:
         for i in range(len(servers)):
             url = servers[i].split(",")[0]
-            servers[i] = {"url": url} if url.lower().startswith("stun") else {"url": url, **credentials}
+            # servers[i] = {"url": url} if url.lower().startswith("stun") else {"url": url, **credentials}
+            servers[i] = {"urls": url} if url.lower().startswith("stun") else {"urls": url, **credentials}
     else:
         for i in range(len(servers)):
             s = servers[i].split(",")
             if len(s) == 3:
-                servers[i] = {"url": s[0], "username": s[1], "credential": s[2]}
+                # servers[i] = {"url": s[0], "username": s[1], "credential": s[2]}
+                servers[i] = {"urls": s[0], "username": s[1], "credential": s[2]}
             else:
-                servers[i] = {"url": s[0]}
+                # servers[i] = {"url": s[0]}
+                servers[i] = {"urls": s[0]}
 
     return servers
