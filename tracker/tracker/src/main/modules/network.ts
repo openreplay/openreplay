@@ -38,8 +38,10 @@ type FetchRequestBody = RequestInit['body']
 function checkCacheByPerformanceTimings(requestUrl: string) {
   if (performance) {
     const timings = performance.getEntriesByName(requestUrl)[0]
-    // @ts-ignore - weird ts typings, please refer to https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming
-    return timings.transferSize === 0 || timings.responseStart - timings.requestStart < 10
+    if (timings) {
+      // @ts-ignore - weird ts typings, please refer to https://developer.mozilla.org/en-US/docs/Web/API/PerformanceNavigationTiming
+      return timings.transferSize === 0 || timings.responseStart - timings.requestStart < 10
+    }
   }
   return false
 }
