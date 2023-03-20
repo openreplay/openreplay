@@ -139,8 +139,10 @@ export default class MessageManager {
   }
 
   public updateLists(lists: Partial<InitialLists>) {
-    this.lists = new Lists(lists)
-
+    Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
+      const currentList = this.lists.lists[key]
+      lists[key]!.forEach(item => currentList.insert(item))
+    })
     lists?.event?.forEach((e: Record<string, string>) => {
       if (e.type === EVENT_TYPES.LOCATION) {
         this.locationEventManager.append(e);

@@ -35,7 +35,7 @@ export const TP_MAP = {
   49: MType.PerformanceTrack,
   50: MType.StringDict,
   51: MType.SetNodeAttributeDict,
-  53: MType.ResourceTimingLegacy,
+  53: MType.ResourceTimingDeprecated,
   54: MType.ConnectionInformation,
   55: MType.SetPageVisibility,
   57: MType.LoadFontFace,

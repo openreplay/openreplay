@@ -68,7 +68,7 @@ function WebPlayer(props: any) {
     if (session.events.length > 0 || session.errors.length > 0) {
       contextValue.player?.updateLists?.(session)
     }
-  }, [session.events, session.errors])
+  }, [session.events, session.errors, contextValue.player])
 
   const isPlayerReady = contextValue.store?.get().ready
 

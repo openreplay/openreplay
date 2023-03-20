@@ -756,9 +756,9 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeResourceTimingLegacy(reader BytesReader) (Message, error) {
+func DecodeResourceTimingDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &ResourceTimingLegacy{}
+	msg := &ResourceTimingDeprecated{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1895,7 +1895,7 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 	case 51:
 		return DecodeSetNodeAttributeDict(reader)
 	case 53:
-		return DecodeResourceTimingLegacy(reader)
+		return DecodeResourceTimingDeprecated(reader)
 	case 54:
 		return DecodeConnectionInformation(reader)
 	case 55:

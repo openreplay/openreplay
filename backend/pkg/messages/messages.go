@@ -48,7 +48,7 @@ const (
 	MsgPerformanceTrack            = 49
 	MsgStringDict                  = 50
 	MsgSetNodeAttributeDict        = 51
-	MsgResourceTimingLegacy        = 53
+	MsgResourceTimingDeprecated    = 53
 	MsgConnectionInformation       = 54
 	MsgSetPageVisibility           = 55
 	MsgPerformanceTrackAggr        = 56
@@ -1297,7 +1297,7 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 51
 }
 
-type ResourceTimingLegacy struct {
+type ResourceTimingDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -1309,7 +1309,7 @@ type ResourceTimingLegacy struct {
 	Initiator       string
 }
 
-func (msg *ResourceTimingLegacy) Encode() []byte {
+func (msg *ResourceTimingDeprecated) Encode() []byte {
 	buf := make([]byte, 81+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 53
 	p := 1
@@ -1324,11 +1324,11 @@ func (msg *ResourceTimingLegacy) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTimingLegacy) Decode() Message {
+func (msg *ResourceTimingDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTimingLegacy) TypeID() int {
+func (msg *ResourceTimingDeprecated) TypeID() int {
 	return 53
 }
 

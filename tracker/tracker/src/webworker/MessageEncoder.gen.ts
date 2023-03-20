@@ -166,7 +166,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3])
     break
 
-    case Messages.Type.ResourceTimingLegacy:
+    case Messages.Type.ResourceTimingDeprecated:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8])
     break
 
