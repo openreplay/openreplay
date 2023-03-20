@@ -36,7 +36,7 @@ import type {
   RawPerformanceTrack,
   RawStringDict,
   RawSetNodeAttributeDict,
-  RawResourceTimingLegacy,
+  RawResourceTimingDeprecated,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLoadFontFace,
@@ -135,7 +135,7 @@ export type StringDict = RawStringDict & Timed
 
 export type SetNodeAttributeDict = RawSetNodeAttributeDict & Timed
 
-export type ResourceTimingLegacy = RawResourceTimingLegacy & Timed
+export type ResourceTimingDeprecated = RawResourceTimingDeprecated & Timed
 
 export type ConnectionInformation = RawConnectionInformation & Timed
 

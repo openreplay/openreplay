@@ -403,7 +403,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const url = this.readString(); if (url === null) { return resetPointer() }
       const initiator = this.readString(); if (initiator === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTimingLegacy,
+        tp: MType.ResourceTimingDeprecated,
         timestamp,
         duration,
         ttfb,

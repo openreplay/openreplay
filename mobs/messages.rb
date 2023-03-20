@@ -265,7 +265,7 @@ message 51, "SetNodeAttributeDict" do
   uint 'NameKey'
   uint 'ValueKey'
 end
-message 53, 'ResourceTimingLegacy', :replayer => :devtools do
+message 53, 'ResourceTimingDeprecated', :replayer => :devtools do
   uint 'Timestamp'
   uint 'Duration'
   uint 'TTFB'

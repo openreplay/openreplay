@@ -498,7 +498,7 @@ export function SetNodeAttributeDict(
   ]
 }
 
-export function ResourceTimingLegacy(
+export function ResourceTimingDeprecated(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -507,9 +507,9 @@ export function ResourceTimingLegacy(
   decodedBodySize: number,
   url: string,
   initiator: string,
-): Messages.ResourceTimingLegacy {
+): Messages.ResourceTimingDeprecated {
   return [
-    Messages.Type.ResourceTimingLegacy,
+    Messages.Type.ResourceTimingDeprecated,
     timestamp,
     duration,
     ttfb,

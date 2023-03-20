@@ -441,7 +441,7 @@ class SetNodeAttributeDict(Message):
         self.value_key = value_key
 
 
-class ResourceTimingLegacy(Message):
+class ResourceTimingDeprecated(Message):
     __id__ = 53
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator):

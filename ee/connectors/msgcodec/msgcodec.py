@@ -420,7 +420,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 53:
-            return ResourceTimingLegacy(
+            return ResourceTimingDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
