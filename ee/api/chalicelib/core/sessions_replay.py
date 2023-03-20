@@ -133,7 +133,8 @@ def get_replay(project_id, session_id, context: schemas.CurrentContext, full_dat
                 else:
                     data['domURL'] = sessions_mobs.get_urls(session_id=session_id, project_id=project_id)
                     data['mobsUrl'] = sessions_mobs.get_urls_depercated(session_id=session_id)
-                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id)
+                    data['devtoolsURL'] = sessions_devtool.get_urls(session_id=session_id, project_id=project_id,
+                                                                    context=context)
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['live'] = live and assist.is_live(project_id=project_id, session_id=session_id,
