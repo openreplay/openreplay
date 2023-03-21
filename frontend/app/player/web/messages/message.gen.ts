@@ -21,7 +21,7 @@ import type {
   RawSetInputValue,
   RawSetInputChecked,
   RawMouseMove,
-  RawLegacyNetworkRequest,
+  RawNetworkRequest,
   RawConsoleLog,
   RawCssInsertRule,
   RawCssDeleteRule,
@@ -58,7 +58,6 @@ import type {
   RawSelectionChange,
   RawMouseThrashing,
   RawResourceTiming,
-  RawNetworkRequest,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -105,7 +104,7 @@ export type SetInputChecked = RawSetInputChecked & Timed
 
 export type MouseMove = RawMouseMove & Timed
 
-export type LegacyNetworkRequest = RawLegacyNetworkRequest & Timed
+export type NetworkRequest = RawNetworkRequest & Timed
 
 export type ConsoleLog = RawConsoleLog & Timed
 
@@ -178,8 +177,6 @@ export type SelectionChange = RawSelectionChange & Timed
 export type MouseThrashing = RawMouseThrashing & Timed
 
 export type ResourceTiming = RawResourceTiming & Timed
-
-export type NetworkRequest = RawNetworkRequest & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 

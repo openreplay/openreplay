@@ -19,7 +19,7 @@ export const enum MType {
   SetInputValue = 18,
   SetInputChecked = 19,
   MouseMove = 20,
-  LegacyNetworkRequest = 21,
+  NetworkRequest = 21,
   ConsoleLog = 22,
   CssInsertRule = 37,
   CssDeleteRule = 38,
@@ -56,7 +56,6 @@ export const enum MType {
   SelectionChange = 113,
   MouseThrashing = 114,
   ResourceTiming = 116,
-  NetworkRequest = 117,
   IosSessionStart = 90,
   IosCustomEvent = 93,
   IosScreenChanges = 96,
@@ -175,8 +174,8 @@ export interface RawMouseMove {
   y: number,
 }
 
-export interface RawLegacyNetworkRequest {
-  tp: MType.LegacyNetworkRequest,
+export interface RawNetworkRequest {
+  tp: MType.NetworkRequest,
   type: string,
   method: string,
   url: string,
@@ -448,19 +447,6 @@ export interface RawResourceTiming {
   cached: boolean,
 }
 
-export interface RawNetworkRequest {
-  tp: MType.NetworkRequest,
-  type: string,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-  cached: boolean,
-}
-
 export interface RawIosSessionStart {
   tp: MType.IosSessionStart,
   timestamp: number,
@@ -532,4 +518,4 @@ export interface RawIosNetworkCall {
 }
 
 
-export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawLegacyNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawNetworkRequest | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;
+export type RawMessage = RawTimestamp | RawSetPageLocation | RawSetViewportSize | RawSetViewportScroll | RawCreateDocument | RawCreateElementNode | RawCreateTextNode | RawMoveNode | RawRemoveNode | RawSetNodeAttribute | RawRemoveNodeAttribute | RawSetNodeData | RawSetCssData | RawSetNodeScroll | RawSetInputValue | RawSetInputChecked | RawMouseMove | RawNetworkRequest | RawConsoleLog | RawCssInsertRule | RawCssDeleteRule | RawFetch | RawProfiler | RawOTable | RawRedux | RawVuex | RawMobX | RawNgRx | RawGraphQl | RawPerformanceTrack | RawStringDict | RawSetNodeAttributeDict | RawResourceTimingDeprecated | RawConnectionInformation | RawSetPageVisibility | RawLoadFontFace | RawSetNodeFocus | RawLongTask | RawSetNodeAttributeURLBased | RawSetCssDataURLBased | RawCssInsertRuleURLBased | RawMouseClick | RawCreateIFrameDocument | RawAdoptedSsReplaceURLBased | RawAdoptedSsReplace | RawAdoptedSsInsertRuleURLBased | RawAdoptedSsInsertRule | RawAdoptedSsDeleteRule | RawAdoptedSsAddOwner | RawAdoptedSsRemoveOwner | RawZustand | RawSelectionChange | RawMouseThrashing | RawResourceTiming | RawIosSessionStart | RawIosCustomEvent | RawIosScreenChanges | RawIosClickEvent | RawIosPerformanceEvent | RawIosLog | RawIosNetworkCall;
