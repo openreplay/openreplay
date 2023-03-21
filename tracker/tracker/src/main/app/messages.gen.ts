@@ -204,7 +204,7 @@ export function MouseMove(
   ]
 }
 
-export function LegacyNetworkRequest(
+export function NetworkRequest(
   type: string,
   method: string,
   url: string,
@@ -213,9 +213,9 @@ export function LegacyNetworkRequest(
   status: number,
   timestamp: number,
   duration: number,
-): Messages.LegacyNetworkRequest {
+): Messages.NetworkRequest {
   return [
-    Messages.Type.LegacyNetworkRequest,
+    Messages.Type.NetworkRequest,
     type,
     method,
     url,
@@ -865,31 +865,6 @@ export function ResourceTiming(
     url,
     initiator,
     transferredSize,
-    cached,
-  ]
-}
-
-export function NetworkRequest(
-  type: string,
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-  cached: boolean,
-): Messages.NetworkRequest {
-  return [
-    Messages.Type.NetworkRequest,
-    type,
-    method,
-    url,
-    request,
-    response,
-    status,
-    timestamp,
-    duration,
     cached,
   ]
 }

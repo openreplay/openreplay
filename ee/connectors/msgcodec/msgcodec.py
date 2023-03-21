@@ -216,7 +216,7 @@ class MessageCodec(Codec):
             )
 
         if message_id == 21:
-            return LegacyNetworkRequest(
+            return NetworkRequest(
                 type=self.read_string(reader),
                 method=self.read_string(reader),
                 url=self.read_string(reader),
@@ -668,19 +668,6 @@ class MessageCodec(Codec):
                 url=self.read_string(reader),
                 initiator=self.read_string(reader),
                 transferred_size=self.read_uint(reader),
-                cached=self.read_boolean(reader)
-            )
-
-        if message_id == 117:
-            return NetworkRequest(
-                type=self.read_string(reader),
-                method=self.read_string(reader),
-                url=self.read_string(reader),
-                request=self.read_string(reader),
-                response=self.read_string(reader),
-                status=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                duration=self.read_uint(reader),
                 cached=self.read_boolean(reader)
             )
 

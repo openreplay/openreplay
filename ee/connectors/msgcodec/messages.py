@@ -185,7 +185,7 @@ class MouseMove(Message):
         self.y = y
 
 
-class LegacyNetworkRequest(Message):
+class NetworkRequest(Message):
     __id__ = 21
 
     def __init__(self, type, method, url, request, response, status, timestamp, duration):
@@ -756,21 +756,6 @@ class ResourceTiming(Message):
         self.url = url
         self.initiator = initiator
         self.transferred_size = transferred_size
-        self.cached = cached
-
-
-class NetworkRequest(Message):
-    __id__ = 117
-
-    def __init__(self, type, method, url, request, response, status, timestamp, duration, cached):
-        self.type = type
-        self.method = method
-        self.url = url
-        self.request = request
-        self.response = response
-        self.status = status
-        self.timestamp = timestamp
-        self.duration = duration
         self.cached = cached
 
 
