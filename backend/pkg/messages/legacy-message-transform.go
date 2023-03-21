@@ -30,6 +30,19 @@ func transformDeprecated(msg Message) Message {
 			Payload:       m.Payload,
 			URL:           "",
 		}
+	case *ResourceTimingDeprecated:
+		return &ResourceTiming{
+			Timestamp:       m.Timestamp,
+			Duration:        m.Duration,
+			TTFB:            m.TTFB,
+			HeaderSize:      m.HeaderSize,
+			EncodedBodySize: m.EncodedBodySize,
+			DecodedBodySize: m.DecodedBodySize,
+			URL:             m.URL,
+			Initiator:       m.Initiator,
+			TransferredSize: 0,
+			Cached:          false,
+		}
 	}
 	return msg
 }
