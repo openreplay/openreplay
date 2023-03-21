@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
+	"os"
 	"strings"
 	"time"
 
@@ -52,14 +53,25 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func NewConnector(url string) Connector {
 	license.CheckLicense()
 	url = strings.TrimPrefix(url, "tcp://")
 	url = strings.TrimSuffix(url, "/default")
+	userName := getEnv("CH_USERNAME", "default")
+	password := getEnv("CH_PASSWORD", "")
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
 			Database: "default",
+			Username: userName,
+			Password: password,
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
@@ -67,7 +79,6 @@ func NewConnector(url string) Connector {
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
 		},
-		// Debug: true,
 	})
 	if err != nil {
 		log.Fatal(err)
