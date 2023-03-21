@@ -20,8 +20,9 @@ class ClickHouseClient:
 
     def __init__(self):
         self.__client = clickhouse_driver.Client(host=config("ch_host"),
-                                                 database=config("ch_database",default="default", cast=str),
-                                                 password=config("ch_password",default="", cast=str),
+                                                 database=config("ch_database", default="default"),
+                                                 user=config("ch_user", default="default"),
+                                                 password=config("ch_password", default=""),
                                                  port=config("ch_port", cast=int),
                                                  settings=settings) \
             if self.__client is None else self.__client
