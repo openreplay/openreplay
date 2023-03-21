@@ -7,7 +7,7 @@ export interface Indexed {
 }
 
 export interface Moveable {
-  move(time: number): void
+  move(time: number, isJump?: boolean): void
 }
 
 export interface Cleanable {

@@ -228,7 +228,7 @@ export default class MessageManager {
         sorted.forEach(msg => {
           if (indx > msg._index) outOfOrderCounter++
           else indx = msg._index
-          this.distributeMessage(msg, msg._index)
+          this.distributeMessage(msg)
         })
 
         if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
@@ -287,7 +287,7 @@ export default class MessageManager {
     this.activityManager = new ActivityManager(this.session.duration.milliseconds);
   }
 
-  move(t: number, index?: number): void {
+  move(t: number, isJump?: boolean, index?: number): void {
     const stateToUpdate: Partial<State> = {};
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
@@ -337,7 +337,7 @@ export default class MessageManager {
     if (!!lastResize) {
       this.setSize(lastResize)
     }
-    this.pagesManager.moveReady(t).then(() => {
+    this.pagesManager.moveReady(t, isJump).then(() => {
 
       const lastScroll = this.scrollManager.moveGetLast(t, index);
       if (!!lastScroll && this.screen.window) {
@@ -374,7 +374,7 @@ export default class MessageManager {
     return { ...msg, ...decoded };
   }
 
-  distributeMessage(msg: Message, index: number): void {
+  distributeMessage(msg: Message): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     this.state.update({ lastMessageTime })

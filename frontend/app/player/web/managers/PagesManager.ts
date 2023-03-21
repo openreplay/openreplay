@@ -33,14 +33,14 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		this.forEach(page => page.sort(comparator))
 	}
 
-	moveReady(t: number): Promise<void> {
+	moveReady(t: number, isJump?: boolean): Promise<void> {
 		const requiredPage = this.moveGetLast(t)
 		if (requiredPage != null) {
 			this.currentPage = requiredPage
 			this.currentPage.reset() // Otherwise it won't apply create_document
 		}
 		if (this.currentPage != null) {
-			return this.currentPage.moveReady(t)
+			return this.currentPage.moveReady(t, isJump)
 		}
 		return Promise.resolve()
 	}

@@ -108,8 +108,8 @@ export class VElement extends VParent {
 			} else {
 				try {
 					this.node.setAttribute(key, value)
-				} catch {
-					// log err
+				} catch (e) {
+					console.error(e)
 				}
 			}
 		})
@@ -134,7 +134,8 @@ export class VStyleElement extends VElement {
 		    this.stylesheetCallbacks.forEach(cb => cb(sheet))
 		    this.stylesheetCallbacks = []
 		  } else {
-		    console.warn("Style onload: sheet is null")
+		    // console.warn("Style onload: sheet is null") ?
+				// sometimes logs shit ton of errors for some reason
 		  }
 		  this.loaded = true
 		}

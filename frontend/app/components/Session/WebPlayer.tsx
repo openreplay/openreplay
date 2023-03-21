@@ -66,7 +66,7 @@ function WebPlayer(props: any) {
 
   React.useEffect(() => {
     if (session.events.length > 0 || session.errors.length > 0) {
-      contextValue.player.updateLists(session)
+      contextValue.player?.updateLists?.(session)
     }
   }, [session.events, session.errors])
 

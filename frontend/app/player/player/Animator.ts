@@ -60,12 +60,12 @@ export default class Animator {
     window.playerJump = this.jump.bind(this)
   }
 
-  private setTime(time: number) {
+  private setTime(time: number, isJump?: boolean) {
     this.store.update({
       time,
       completed: false,
     })
-    this.mm.move(time)
+    this.mm.move(time, isJump)
   }
 
   private startAnimation() {
@@ -183,11 +183,11 @@ export default class Animator {
   jump = (time: number) => {
     if (this.store.get().playing) {
       cancelAnimationFrame(this.animationFrameRequestId)
-      this.setTime(time)
+      this.setTime(time, true)
       this.startAnimation()
       this.store.update({ livePlay: time === this.store.get().endTime })
     } else {
-      this.setTime(time)
+      this.setTime(time, true)
       this.store.update({ livePlay: time === this.store.get().endTime })
     }
   }

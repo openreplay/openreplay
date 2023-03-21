@@ -43,7 +43,7 @@ export default class DOMManager extends ListWalker<Message> {
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
   private stringDict: Record<number,string> = {}
-
+  private attrsBacktrack: Message[] = []
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
@@ -143,6 +143,7 @@ export default class DOMManager extends ListWalker<Message> {
     let { name, value } = msg;
     const vn = this.vElements.get(msg.id)
     if (!vn) { logger.error("Node not found", msg); return }
+
     if (vn.node.tagName === "INPUT" && name === "name") {
       // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
       return
@@ -152,9 +153,13 @@ export default class DOMManager extends ListWalker<Message> {
       // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
       //   value = value.replace("?", "%3F");
       // }
-      if (!value.startsWith("http")) { return }
-      // blob:... value happened here. https://foss.openreplay.com/3/session/7013553567419137
-      // that resulted in that link being unable to load and having 4sec timeout in the below function.
+      if (!value.startsWith("http")) {
+        return
+      }
+      // blob:... value can happen here for some reason.
+      // which will result in that link being unable to load and having 4sec timeout in the below function.
+
+      // TODO: check if node actually exists on the page, not just in memory
       this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
     }
     if (vn.node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
@@ -164,8 +169,7 @@ export default class DOMManager extends ListWalker<Message> {
     this.removeBodyScroll(msg.id, vn)
   }
 
-  private applyMessage = (msg: Message): Promise<any> | undefined => {
-    let node: Node | undefined
+  private applyMessage = (msg: Message, isJump?: boolean): Promise<any> | undefined => {
     let vn: VNode | undefined
     let doc: Document | null
     let styleSheet: CSSStyleSheet | PostponedStyleSheet | undefined
@@ -229,9 +233,12 @@ export default class DOMManager extends ListWalker<Message> {
         if (!vn) { logger.error("Node not found", msg); return }
         if (!vn.parentNode) { logger.error("Parent node not found", msg); return }
         vn.parentNode.removeChild(vn)
+        this.vElements.delete(msg.id)
+        this.vTexts.delete(msg.id)
         return
       case MType.SetNodeAttribute:
-        this.setNodeAttribute(msg)
+        if (isJump && msg.name === 'href') this.attrsBacktrack.push(msg)
+        else this.setNodeAttribute(msg)
         return
       case MType.StringDict:
         this.stringDict[msg.key] = msg.value
@@ -240,11 +247,14 @@ export default class DOMManager extends ListWalker<Message> {
         this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
         this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
         if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined ) { return }
-        this.setNodeAttribute({ 
-          id: msg.id,
-          name: this.stringDict[msg.nameKey],
-          value: this.stringDict[msg.valueKey],
-        })
+        if (isJump && this.stringDict[msg.nameKey] === 'href') this.attrsBacktrack.push(msg)
+        else {
+          this.setNodeAttribute({
+            id: msg.id,
+            name: this.stringDict[msg.nameKey],
+            value: this.stringDict[msg.valueKey],
+          })
+        }
         return
       case MType.RemoveNodeAttribute:
         vn = this.vElements.get(msg.id)
@@ -422,13 +432,53 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
-  async moveReady(t: number): Promise<void> {
+  applyBacktrack(msg: Message) {
+    // @ts-ignore
+    const target = this.vElements.get(msg.id)
+    if (!target) {
+      return
+    }
+
+    switch (msg.tp) {
+      case MType.SetNodeAttribute: {
+        this.setNodeAttribute(msg)
+        return
+      }
+      case MType.SetNodeAttributeDict: {
+        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
+        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
+        if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined) {
+          return
+        }
+        this.setNodeAttribute({
+          id: msg.id,
+          name: this.stringDict[msg.nameKey],
+          value: this.stringDict[msg.valueKey],
+        })
+        return;
+      }
+    }
+  }
+
+  async moveReady(t: number, isJump?: boolean): Promise<void> {
     // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     // This function autoresets pointer if necessary (better name?)
-   
-    await this.moveWait(t, this.applyMessage)
+
+    /**
+     * Basically just skipping all set attribute with attrs being "href" if user is 'jumping'
+     * to the other point of replay to save time on NOT downloading any resources before the dom tree changes
+     * are applied, so it won't try to download and then cancel when node is created in msg N and removed in msg N+2
+     * which produces weird bug when asset is cached (10-25ms delay)
+     * */
+    await this.moveWait(t, (msg) => this.applyMessage(msg, isJump))
+    if (isJump) {
+      this.attrsBacktrack.forEach(msg => {
+        this.applyBacktrack(msg)
+      })
+      this.attrsBacktrack = []
+    }
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
     // Thinkabout (read): css preload
