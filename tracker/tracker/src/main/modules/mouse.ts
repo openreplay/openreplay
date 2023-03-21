@@ -5,7 +5,7 @@ import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 import { finder } from '@medv/finder'
 
-function _getSelector(target: Element, document: Document): string {
+function _getSelector(target: Element, document: Document) {
   const selector = finder(target, {
     root: document.body,
     seedMinLength: 3,
@@ -73,7 +73,12 @@ function _getTarget(target: Element, document: Document): Element | null {
   return target === document.documentElement ? null : target
 }
 
-export default function (app: App): void {
+export interface MouseHandlerOptions {
+  disableClickmaps?: boolean
+}
+
+export default function (app: App, options?: MouseHandlerOptions): void {
+  const { disableClickmaps = false } = options || {}
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target)
     if (dl !== null) {
@@ -197,7 +202,7 @@ export default function (app: App): void {
             id,
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             getTargetLabel(target),
-            isClickable(target) ? getSelector(id, target) : '',
+            isClickable(target) && !disableClickmaps ? getSelector(id, target) : '',
           ),
           true,
         )

@@ -34,6 +34,8 @@ import type { Options as InputOptions } from './modules/input.js'
 import type { Options as PerformanceOptions } from './modules/performance.js'
 import type { Options as TimingOptions } from './modules/timing.js'
 import type { Options as NetworkOptions } from './modules/network.js'
+import type { MouseHandlerOptions } from './modules/mouse.js'
+
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
 import type { StartPromiseReturn } from './app/index.js'
@@ -47,6 +49,7 @@ export type Options = Partial<
   respectDoNotTrack?: boolean
   autoResetOnWindowOpen?: boolean
   network?: NetworkOptions
+  mouse?: MouseHandlerOptions
   // dev only
   __DISABLE_SECURE_MODE?: boolean
 }
@@ -125,7 +128,7 @@ export default class API {
       Exception(app, options)
       Img(app)
       Input(app, options)
-      Mouse(app)
+      Mouse(app, options.mouse)
       Timing(app, options)
       Performance(app, options)
       Scroll(app)
