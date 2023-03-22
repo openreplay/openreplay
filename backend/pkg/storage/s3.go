@@ -33,10 +33,6 @@ func NewS3(region string, bucket string) *S3 {
 
 func (s3 *S3) Upload(reader io.Reader, key string, contentType string, gzipped bool) error {
 	cacheControl := "max-age=2628000, immutable, private"
-	// For asset files we set max-age to 1 day
-	if !gzipped {
-		cacheControl = "max-age=86400, immutable, private"
-	}
 	var contentEncoding *string
 	if gzipped {
 		gzipStr := "gzip"
