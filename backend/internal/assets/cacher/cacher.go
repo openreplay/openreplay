@@ -62,11 +62,11 @@ func NewCacher(cfg *config.Config) *cacher {
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig = &tls.Config{
-				InsecureSkipVerify: true,
-				Certificates:       []tls.Certificate{cert},
-				RootCAs:            caCertPool,
-			}
-		
+			InsecureSkipVerify: true,
+			Certificates:       []tls.Certificate{cert},
+			RootCAs:            caCertPool,
+		}
+
 	}
 
 	c := &cacher{
@@ -75,7 +75,7 @@ func NewCacher(cfg *config.Config) *cacher {
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
 			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
+				Proxy:           http.ProxyFromEnvironment,
 				TLSClientConfig: tlsConfig,
 			},
 		},
@@ -135,6 +135,13 @@ func (c *cacher) cacheURL(t *Task) {
 	if contentType == "" {
 		contentType = mime.TypeByExtension(filepath.Ext(res.Request.URL.Path))
 	}
+
+	// Skip html file (usually it's a CDN mock for 404 error)
+	if strings.HasPrefix(contentType, "text/html") {
+		c.Errors <- errors.Wrap(fmt.Errorf("context type is text/html, sessID: %d", t.sessionID), t.urlContext)
+		return
+	}
+
 	isCSS := strings.HasPrefix(contentType, "text/css")
 
 	strData := string(data)
