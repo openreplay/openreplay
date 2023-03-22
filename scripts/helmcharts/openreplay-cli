@@ -118,6 +118,7 @@ log info '
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
+                    [ -e | --edit ]
                     [ -p | --install-packages ]
                     [ -l | --logs SERVICE ] 
          Services: alerts assets assist chalice 
@@ -236,7 +237,7 @@ function clean_tmp_dir() {
   install_packages
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrvpiuhsl:U: --long reload,restart,verbose,install-packages,install,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpiuhsl:U: --long reload,edit,restart,verbose,install-packages,install,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   help
@@ -278,6 +279,17 @@ do
       clean_tmp_dir
       exit 0
       ;;
+    -e | --edit)
+      log title "Editing OpenReplay"
+      sudo vim -n /var/lib/openreplay/vars.yaml
+      /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml || {
+        log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} and fix the issue."
+        exit 100
+      }
+      reload
+      clean_tmp_dir
+      exit 0
+    ;;
     -s | --status)
       log title "Checking OpenReplay Components Status"
       status
