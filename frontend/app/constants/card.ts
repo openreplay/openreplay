@@ -191,12 +191,12 @@ export const TYPES: CardType[] = [
     description: 'See where users are flowing and explore their journeys.',
     slug: USER_PATH,
   },
-  // {
-  //   title: 'Retention',
-  //   icon: 'arrow-repeat',
-  //   description: 'Get an understanding of how many users are returning.',
-  //   slug: RETENTION,
-  // },
+  {
+    title: 'Retention',
+    icon: 'arrow-repeat',
+    description: 'Get an understanding of how many users are returning.',
+    slug: RETENTION,
+  },
   // {
   //   title: 'Feature Adoption',
   //   icon: 'card-checklist',

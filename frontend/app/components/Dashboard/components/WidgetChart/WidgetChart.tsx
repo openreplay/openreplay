@@ -13,7 +13,7 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
 import { FilterKey } from 'Types/filter/filterType';
-import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS, INSIGHTS, USER_PATH } from 'App/constants/card';
+import { TIMESERIES, TABLE, CLICKMAP, FUNNEL, ERRORS, PERFORMANCE, RESOURCE_MONITORING, WEB_VITALS, INSIGHTS, USER_PATH, RETENTION } from 'App/constants/card';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import SessionWidget from '../Sessions/SessionWidget';
 import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
@@ -21,6 +21,7 @@ import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetr
 import ClickMapCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/ClickMapCard'
 import InsightsCard from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/InsightsCard';
 import SankeyChart from 'Shared/Insights/SankeyChart';
+import CohortCard from '../../Widgets/CustomMetricsWidgets/CohortCard';
 
 interface Props {
     metric: any;
@@ -218,6 +219,23 @@ function WidgetChart(props: Props) {
                 ],
               };
             return <SankeyChart data={_data} />
+        }
+
+        if (metricType === RETENTION) {
+            if (viewType === 'trend') {
+                return (
+                    <CustomMetriLineChart
+                        data={data}
+                        colors={colors}
+                        params={params}
+                        onClick={onChartClick}
+                    />
+                )
+            } else if (viewType === 'cohort') {
+                return (
+                    <CohortCard data={data[0]} />
+                )
+            }
         }
 
         return <div>Unknown metric type</div>;

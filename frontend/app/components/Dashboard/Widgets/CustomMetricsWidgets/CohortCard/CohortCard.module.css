@@ -1,0 +1,37 @@
+.cohortTableContainer {
+  display: flex;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.fixedTableWrapper {
+  flex-shrink: 0;
+}
+
+.scrollableTableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.cohortTable {
+  border-collapse: separate;
+  width: max-content;
+  border-spacing: 6px;
+}
+
+.cell {
+  border: transparent;
+  border-radius: 3px;
+  padding: 4px 8px;
+  text-align: center;
+  min-width: 80px;
+  cursor: pointer;
+}
+
+.header {
+  height: 29px;
+}
+
+.header .bg {
+  background-color: #f2f2f2;
+}

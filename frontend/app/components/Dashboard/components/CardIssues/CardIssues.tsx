@@ -52,7 +52,6 @@ function CardIssues() {
     }
 
     const handleClick = (issue: any) => {
-        // console.log(issue)
         showModal(<SessionsModal list={[]} />, { right: true, width: 450 })
     }
 

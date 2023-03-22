@@ -20,6 +20,7 @@ import {
   WEB_VITALS,
   INSIGHTS,
   USER_PATH,
+  RETENTION,
 } from 'App/constants/card';
 import { eventKeys } from 'App/types/filter/newFilter';
 import { renderClickmapThumbnail } from './renderMap';
@@ -49,6 +50,7 @@ function WidgetForm(props: Props) {
   const isFunnel = metric.metricType === FUNNEL;
   const isInsights = metric.metricType === INSIGHTS;
   const isPathAnalysis = metric.metricType === USER_PATH;
+  const isRetention = metric.metricType === RETENTION;
   const canAddSeries = metric.series.length < 3;
   const eventsLength = metric.series[0].filter.filters.filter((i: any) => i.isEvent).length;
   const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
@@ -221,8 +223,8 @@ function WidgetForm(props: Props) {
       {!isPredefined && (
         <div className="form-group">
           <div className="flex items-center font-medium py-2">
-            {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis ? 'Filter by' : 'Chart Series'}`}
-            {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && (
+            {`${isTable || isFunnel || isClickmap || isInsights || isPathAnalysis || isRetention ? 'Filter by' : 'Chart Series'}`}
+            {!isTable && !isFunnel && !isClickmap && !isInsights && !isPathAnalysis && !isRetention && (
               <Button
                 className="ml-2"
                 variant="text-primary"
@@ -236,7 +238,7 @@ function WidgetForm(props: Props) {
 
           {metric.series.length > 0 &&
             metric.series
-              .slice(0, isTable || isFunnel || isClickmap || isInsights ? 1 : metric.series.length)
+              .slice(0, isTable || isFunnel || isClickmap || isInsights || isRetention ? 1 : metric.series.length)
               .map((series: any, index: number) => (
                 <div className="mb-2" key={series.name}>
                   <FilterSeries

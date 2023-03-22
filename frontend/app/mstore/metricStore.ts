@@ -13,7 +13,8 @@ import {
   WEB_VITALS,
   INSIGHTS,
   CLICKMAP,
-  USER_PATH
+  USER_PATH,
+  RETENTION
 } from 'App/constants/card';
 import { clickmapFilter } from 'App/types/filter/newFilter';
 import { getRE } from 'App/utils';
@@ -142,6 +143,9 @@ export default class MetricStore {
     }
     if (value === TIMESERIES) {
       obj['viewType'] = 'lineChart';
+    }
+    if (value === RETENTION) {
+      obj['viewType'] = 'cohort';
     }
     if (
       value === ERRORS ||
