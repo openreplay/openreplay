@@ -16,7 +16,8 @@ else:
                           aws_access_key_id=config("S3_KEY"),
                           aws_secret_access_key=config("S3_SECRET"),
                           config=Config(signature_version='s3v4'),
-                          region_name=config("sessions_region"))
+                          region_name=config("sessions_region"),
+                          verify=(False if config("S3_DISABLE_SSL_VERIFY") else True))
 
 
 def __get_s3_resource():
@@ -26,7 +27,8 @@ def __get_s3_resource():
                           aws_access_key_id=config("S3_KEY"),
                           aws_secret_access_key=config("S3_SECRET"),
                           config=Config(signature_version='s3v4'),
-                          region_name=config("sessions_region"))
+                          region_name=config("sessions_region"),
+                          verify=(False if config("S3_DISABLE_SSL_VERIFY") else True))
 
 
 def exists(bucket, key):
