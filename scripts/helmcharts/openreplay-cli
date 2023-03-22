@@ -153,10 +153,12 @@ function status() {
 function or_helm_upgrade() {
   set -o pipefail
   log_file="${tmp_dir}/helm.log"
+  state=$1
   chart_names=(
     toolings
     openreplay
     )
+  [[ $state == "reload" ]] && chart_names=( openreplay )
   for chart in "${chart_names[@]}"; do
     [[ -z $OR_VERSION ]] || HELM_OPTIONS="--set dbMigrationUpstreamBranch=${OR_VERSION}"
     if ! helm upgrade --install "$chart" ./"$chart" -n "$APP_NS" --wait -f ./vars.yaml --atomic --debug $HELM_OPTIONS  2>&1 | tee -a "${log_file}"; then
@@ -223,7 +225,7 @@ function upgrade() {
 function reload() {
   err_cd $OR_DIR/openreplay/scripts/helmcharts
   sudo cp -f $OR_DIR/vars.yaml .
-  or_helm_upgrade
+  or_helm_upgrade reload
   return
 }
 
