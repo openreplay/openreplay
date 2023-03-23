@@ -1,6 +1,7 @@
 import { Icon } from 'UI';
 import React from 'react';
 import cn from 'classnames';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function Category({
   name,
@@ -10,15 +11,18 @@ function Category({
   isExpandable,
   isExpanded,
   isSelected,
+  isLoading,
 }: {
   name: string;
-  healthOk: boolean;
+  healthOk?: boolean;
+  isLoading?: boolean;
   onClick: (args: any) => void;
   isSelectable?: boolean;
   isExpandable?: boolean;
   isExpanded?: boolean;
   isSelected?: boolean;
 }) {
+
   const icon = healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
   return (
     <div
@@ -29,7 +33,9 @@ function Category({
       )}
       onClick={onClick}
     >
-      <Icon name={icon} size={20} color={'green'} />
+      {isLoading ? (
+        <AnimatedSVG name={ICONS.LOADER} size={20} />
+      ) : <Icon name={icon} size={20} color={'green'} />}
       {name}
 
       {isSelectable ? <Icon name={'chevron-right'} size={16} className={'ml-auto'} /> : null}

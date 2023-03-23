@@ -1,9 +1,14 @@
 import React from 'react';
 import { Icon } from 'UI';
+import cn from 'classnames'
 
-function Footer() {
+function Footer({ isSetup }: { isSetup?: boolean }) {
   return (
-    <div className={'flex w-full p-4 items-center justify-center bg-gray-lightest gap-4'}>
+    <div className={cn(
+      'flex w-full p-4 items-center justify-center',
+      'bg-gray-lightest gap-4',
+      !isSetup ? 'border-t border-figmaColors-divider' : ''
+    )}>
       <a
         href={'https://docs.openreplay.com/en/troubleshooting/'}
         target="_blank"
