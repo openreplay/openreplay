@@ -34,11 +34,7 @@ function SubserviceHealth({
           {subservice?.details?.errors?.length ? (
             <div className={'py-2 px-4 bg-white rounded-xl border border-light-gray'}>
               <div>Error log:</div>
-              {subservice.details.errors.map((err: string, i) => (
-                <div className={'mt-2'} key={i + 1}>
-                  {i + 1}. {err}
-                </div>
-              ))}
+              {subservice.details.errors.toString()}
             </div>
           ) : subservice?.health ? null : (
             'Service not responding'
