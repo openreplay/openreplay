@@ -6,6 +6,8 @@ import stl from './signup.module.css';
 import cn from 'classnames';
 import SignupForm from './SignupForm';
 import RegisterBg from '../../svg/register.svg';
+import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
+import { getHealthRequest } from 'Components/Header/HealthStatus/getHealth';
 
 const BulletItem = ({ text }) => (
   <div className="flex items-center mb-4">
@@ -15,9 +17,45 @@ const BulletItem = ({ text }) => (
     <div>{text}</div>
   </div>
 );
+
+const healthStatusCheck_key = '__or__healthStatusCheck_key'
+
 @withPageTitle('Signup - OpenReplay')
 export default class Signup extends React.Component {
+  state = {
+    healthModalPassed: localStorage.getItem(healthStatusCheck_key === 'true'),
+    healthStatusLoading: true,
+    healthStatus: null,
+  }
+
+  getHealth = async () => {
+    this.setState({ healthStatusLoading: true });
+    const { healthMap } = await getHealthRequest();
+    this.setState({ healthStatus: healthMap, healthStatusLoading: false });
+  }
+
+  componentDidMount() {
+    if (!this.state.healthModalPassed) void this.getHealth();
+  }
+
+  setHealthModalPassed = () => {
+    localStorage.setItem(healthStatusCheck_key, 'true');
+    this.setState({ healthModalPassed: true });
+  }
+
   render() {
+    if (!this.state.healthModalPassed) {
+      return (
+          <HealthModal
+              setShowModal={() => null}
+              healthResponse={this.state.healthStatus}
+              getHealth={this.getHealth}
+              isLoading={this.state.healthStatusLoading}
+              setPassed={this.setHealthModalPassed}
+          />
+      )
+    }
+
     return (
       <div className="flex" style={{ height: '100vh' }}>
         <div className={cn('w-6/12 relative overflow-hidden', stl.left)}>
