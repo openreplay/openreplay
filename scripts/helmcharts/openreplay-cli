@@ -216,19 +216,14 @@ function cleanup() {
   # Confirmation for deletion. Do you want to delete Postgres/Minio(session) data before $date ?
   delete_from_number_days=$1
   delete_from_date=$(date +%Y-%m-%d -d "$delete_from_number_days day ago")
-  log debug "Do you want to delete data from postgres and minio before ${BWHITE}$delete_from_date${YELLOW}"
+  log debug "Do you want to delete the data captured on and before ${BWHITE}$delete_from_date${YELLOW}?"
   read -p "Are you sure[y/n]? " -n 1 -r
   echo    # (optional) move to a new line
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     log err "Cancelling data deletion"
   fi
 
-  # Run pg command
-# $PGHOST
-# $PGPORT
-# $PGDATABASE
-# $PGUSER
-# $PGPASSWORD
+  # Run pg cleanup
   pguser=$(awk '/postgresqlUser/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
   pgpassword=$(awk '/postgresqlPassword/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
   pghost=$(awk '/postgresqlHost/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
@@ -243,7 +238,7 @@ function cleanup() {
     --env PGPASSWORD=$pgpassword \
     --env PGPORT=$pgport \
     --image bitnami/postgresql -- psql -c "DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000;"
-  # Run minio command
+  # Run minio cleanup
   MINIO_ACCESS_KEY=$(awk '/accessKey/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
   MINIO_SECRET_KEY=$(awk '/secretKey/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
   MINIO_HOST=$(awk '/endpoint/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
@@ -255,8 +250,9 @@ function cleanup() {
       mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY &&
       mc rm --recursive --dangerous --force --older-than ${delete_from_number_days}d minio/mobs
       "
-  log info "Postgres data cleanup initiated. Postgres will auto vacuum marked for deletion data in idle time. Ideally clean up will complete in 1 to 2 days."
-  log info "Minio(s3) cleanup initiated. You should be able to see the data available, once the process completed. ${BWHITE}openreplay -s${GREEN} to check the status"
+  log info "Postgres data cleanup process initiated. Postgres will automatically vacuum deleted rows when the database is idle. This may take up a few days to free the disk space."
+  log info "Minio (where recordings are stored) cleanup process initiated." 
+  log info "Run ${BWHITE}openreplay -s${GREEN} to check the status of the cleanup process and available disk space."
   return
 }
 
