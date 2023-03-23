@@ -135,7 +135,7 @@ function HealthModal({
             </Button>
           </div>
         ) : null}
-        <Footer isSetup />
+        <Footer isSetup={isSetup} />
       </div>
     </div>
   );
