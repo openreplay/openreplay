@@ -255,6 +255,8 @@ function cleanup() {
       mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY &&
       mc rm --recursive --dangerous --force --older-than ${delete_from_number_days}d minio/mobs
       "
+  log info "Postgres data cleanup initiated. Postgres will auto vacuum marked for deletion data in idle time. Ideally clean up will complete in 1 to 2 days."
+  log info "Minio(s3) cleanup initiated. You should be able to see the data available, once the process completed. ${BWHITE}openreplay -s${GREEN} to check the status"
   return
 }
 
