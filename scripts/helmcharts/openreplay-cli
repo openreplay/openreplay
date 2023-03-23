@@ -114,6 +114,7 @@ echo -e ${NC}
 log info '
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
+                    [ -i | --install DOMAIN_NAME ]
                     [ -u | --upgrade ]
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
@@ -184,6 +185,29 @@ function upgrade_old() {
   upgrade
 }
 
+function clone_repo() {
+  err_cd "$tmp_dir"
+  log info "Working directory $tmp_dir"
+  git_options="-b ${OR_VERSION:-main}"
+  eval git clone "${OR_REPO}" --depth 1 $git_options
+  return
+}
+
+function install() {
+  domain_name=$1
+  # TODO: Check existing installation
+  # Installing OR
+  log title "Installing OpenReplay"
+  clone_repo
+  err_cd "$tmp_dir/openreplay/scripts/helmcharts"
+  DOMAIN_NAME=$domain_name bash init.sh
+  return
+}
+
+function cleanup() {
+  Log title "Cleaning Up Data"
+}
+
 function upgrade() {
   # TODO:
   # 1. store vars.yaml in central place.
@@ -191,15 +215,12 @@ function upgrade() {
   # 3. How to update package. Because openreplay -u will be done from old update script
   # 4. Update from Version
   exists git || log err "Git not found. Please install"
-  log info "Working directory $tmp_dir"
-  err_cd "$tmp_dir"
   or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
 
   # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
 
-  git_options="-b ${OR_VERSION:-main}"
-  eval git clone "${OR_REPO}" --depth 1 $git_options
+  clone_repo
   err_cd openreplay/scripts/helmcharts
   install_packages
   [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
@@ -239,7 +260,7 @@ function clean_tmp_dir() {
   install_packages
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpiuhsl:U: --long reload,edit,restart,verbose,install-packages,install,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   help
@@ -256,6 +277,12 @@ do
       clean_tmp_dir
       exit 0
       ;;
+    -i | --install)
+      log title "Installing OpenReplay"
+      install "$2"
+      clean_tmp_dir
+      exit 0
+    ;;
     -u | --upgrade)
       log title "Upgrading OpenReplay"
       upgrade
