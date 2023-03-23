@@ -15,6 +15,9 @@ tmp_dir=$(mktemp -d)
   sudo mkdir $OR_DIR
 }
 export PATH=/var/lib/openreplay:$PATH
+function xargs() {
+  /var/lib/openreplay/busybox xargs
+}
 
 tools=(
   zyedidia/eget
@@ -114,10 +117,12 @@ echo -e ${NC}
 log info '
   Usage: openreplay [ -h | --help ]
                     [ -s | --status ]
+                    [ -i | --install DOMAIN_NAME ]
                     [ -u | --upgrade ]
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
+                    [ -c | --cleanup N(in days) ]
                     [ -e | --edit ]
                     [ -p | --install-packages ]
                     [ -l | --logs SERVICE ] 
@@ -184,6 +189,73 @@ function upgrade_old() {
   upgrade
 }
 
+function clone_repo() {
+  err_cd "$tmp_dir"
+  log info "Working directory $tmp_dir"
+  git_options="-b ${OR_VERSION:-main}"
+  eval git clone "${OR_REPO}" --depth 1 $git_options
+  return
+}
+
+function install() {
+  domain_name=$1
+  # Check existing installation
+  [[ -f ${OR_DIR}/vars.yaml ]] && {
+    or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+    log err "Openreplay installation ${BWHITE}${or_version}${RED} found. If you want to upgrade, run ${BWHITE}openreplay -u${RED}"
+  }
+  # Installing OR
+  log title "Installing OpenReplay"
+  clone_repo
+  err_cd "$tmp_dir/openreplay/scripts/helmcharts"
+  DOMAIN_NAME=$domain_name bash init.sh
+  return
+}
+
+function cleanup() {
+  # Confirmation for deletion. Do you want to delete Postgres/Minio(session) data before $date ?
+  delete_from_number_days=$1
+  delete_from_date=$(date +%Y-%m-%d -d "$delete_from_number_days day ago")
+  log debug "Do you want to delete the data captured on and before ${BWHITE}$delete_from_date${YELLOW}?"
+  read -p "Are you sure[y/n]? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    log err "Cancelling data deletion"
+  fi
+
+  # Run pg cleanup
+  pguser=$(awk '/postgresqlUser/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pgpassword=$(awk '/postgresqlPassword/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pghost=$(awk '/postgresqlHost/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pgport=$(awk '/postgresqlPort/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pgdatabase=$(awk '/postgresqlDatabase/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  kubectl delete po -n ${APP_NS} pg-cleanup &> /dev/null || true
+  kubectl run pg-cleanup -n ${APP_NS} \
+    --restart=Never \
+    --env PGHOST=$pghost \
+    --env PGUSER=$pguser \
+    --env PGDATABASE=$pgdatabase \
+    --env PGPASSWORD=$pgpassword \
+    --env PGPORT=$pgport \
+    --image bitnami/postgresql -- psql -c "DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000;"
+  # Run minio cleanup
+  MINIO_ACCESS_KEY=$(awk '/accessKey/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
+  MINIO_SECRET_KEY=$(awk '/secretKey/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
+  MINIO_HOST=$(awk '/endpoint/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
+  kubectl delete po -n ${APP_NS} minio-cleanup &> /dev/null || true
+  kubectl run minio-cleanup -n ${APP_NS} \
+    --restart=Never \
+    --env MINIO_HOST=$pghost \
+    --image bitnami/minio:2020.10.9-debian-10-r6 -- /bin/sh -c "
+      mc alias set minio $MINIO_HOST $MINIO_ACCESS_KEY $MINIO_SECRET_KEY &&
+      mc rm --recursive --dangerous --force --older-than ${delete_from_number_days}d minio/mobs
+      "
+  log info "Postgres data cleanup process initiated. Postgres will automatically vacuum deleted rows when the database is idle. This may take up a few days to free the disk space."
+  log info "Minio (where recordings are stored) cleanup process initiated." 
+  log info "Run ${BWHITE}openreplay -s${GREEN} to check the status of the cleanup process and available disk space."
+  return
+}
+
 function upgrade() {
   # TODO:
   # 1. store vars.yaml in central place.
@@ -191,15 +263,12 @@ function upgrade() {
   # 3. How to update package. Because openreplay -u will be done from old update script
   # 4. Update from Version
   exists git || log err "Git not found. Please install"
-  log info "Working directory $tmp_dir"
-  err_cd "$tmp_dir"
   or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
 
   # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
 
-  git_options="-b ${OR_VERSION:-main}"
-  eval git clone "${OR_REPO}" --depth 1 $git_options
+  clone_repo
   err_cd openreplay/scripts/helmcharts
   install_packages
   [[ -d /openreplay ]] && sudo chown -R 1001:1001 /openreplay
@@ -239,7 +308,7 @@ function clean_tmp_dir() {
   install_packages
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpiuhsl:U: --long reload,edit,restart,verbose,install-packages,install,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade:,cleanup: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   help
@@ -256,6 +325,12 @@ do
       clean_tmp_dir
       exit 0
       ;;
+    -i | --install)
+      log title "Installing OpenReplay"
+      install "$2"
+      clean_tmp_dir
+      exit 0
+    ;;
     -u | --upgrade)
       log title "Upgrading OpenReplay"
       upgrade
@@ -265,6 +340,12 @@ do
     -U | --deprecated-upgrade)
       log title "[Deprected] Upgrading OpenReplay"
       upgrade_old "$2"
+      clean_tmp_dir
+      exit 0
+    ;;
+    -c | --cleanup)
+      log title "Cleaning up data older than $2 days"
+      cleanup "$2"
       clean_tmp_dir
       exit 0
     ;;
