@@ -234,7 +234,7 @@ function cleanup() {
   pghost=$(awk '/postgresqlHost/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
   pgport=$(awk '/postgresqlPort/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
   pgdatabase=$(awk '/postgresqlDatabase/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
-  kubectl delete po -n ${APP_NS} pg-cleanup || true
+  kubectl delete po -n ${APP_NS} pg-cleanup &> /dev/null || true
   kubectl run pg-cleanup -n ${APP_NS} \
     --restart=Never \
     --env PGHOST=$pghost \
@@ -247,7 +247,7 @@ function cleanup() {
   MINIO_ACCESS_KEY=$(awk '/accessKey/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
   MINIO_SECRET_KEY=$(awk '/secretKey/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
   MINIO_HOST=$(awk '/endpoint/{print $NF}' < "${OR_DIR}/vars.yaml" | tail -n1 | xargs)
-  kubectl delete po -n ${APP_NS} minio-cleanup || true
+  kubectl delete po -n ${APP_NS} minio-cleanup &> /dev/null || true
   kubectl run minio-cleanup -n ${APP_NS} \
     --restart=Never \
     --env MINIO_HOST=$pghost \
