@@ -195,7 +195,11 @@ function clone_repo() {
 
 function install() {
   domain_name=$1
-  # TODO: Check existing installation
+  # Check existing installation
+  [[ -f ${OR_DIR}/vars.yaml ]] && {
+    or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+    log err "Openreplay installation ${BWHITE}${or_version}${RED} found. If you want to upgrade, run ${BWHITE}openreplay -u${RED}"
+  }
   # Installing OR
   log title "Installing OpenReplay"
   clone_repo
