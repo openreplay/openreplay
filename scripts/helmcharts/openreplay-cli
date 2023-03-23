@@ -15,6 +15,9 @@ tmp_dir=$(mktemp -d)
   sudo mkdir $OR_DIR
 }
 export PATH=/var/lib/openreplay:$PATH
+function xargs() {
+  /var/lib/openreplay/busybox xargs $@
+}
 
 tools=(
   zyedidia/eget
@@ -119,6 +122,7 @@ log info '
                     [ -U | --deprecated-upgrade /path/to/old_vars.yaml]
                     [ -r | --restart ]
                     [ -R | --Reload ]
+                    [ -c | --cleanup N(in days) ]
                     [ -e | --edit ]
                     [ -p | --install-packages ]
                     [ -l | --logs SERVICE ] 
@@ -209,7 +213,36 @@ function install() {
 }
 
 function cleanup() {
-  Log title "Cleaning Up Data"
+  # Confirmation for deletion. Do you want to delete Postgres/Minio(session) data before $date ?
+  delete_from_date=$(date +%Y-%m-%d -d "$1 day ago")
+  log debug "Do you want to delete data from postgres and minio before ${BWHITE}$delete_from_date${YELLOW}"
+  read -p "Are you sure? " -n 1 -r
+  echo    # (optional) move to a new line
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    log err "Cancelling data deletion"
+  fi
+
+  # Run pg command
+# $PGHOST
+# $PGPORT
+# $PGDATABASE
+# $PGUSER
+# $PGPASSWORD
+  pguser=$(awk '/postgresqlUser/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pgpassword=$(awk '/postgresqlPassword/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pghost=$(awk '/postgresqlHost/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pgport=$(awk '/postgresqlPort/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  pgdatabase=$(awk '/postgresqlDatabase/{print $2}' < "${OR_DIR}/vars.yaml" | xargs)
+  kubectl delete po -n ${APP_NS} pg-cleanup || true
+  kubectl run pg-cleanup -n ${APP_NS} \
+    --env PGHOST=$pghost \
+    --env PGUSER=$pguser \
+    --env PGDATABASE=$pgdatabase \
+    --env PGPASSWORD=$pgpassword \
+    --env PGPORT=$pgport \
+    --image bitnami/postgresql -- psql -c "DELETE FROM public.sessions WHERE start_ts < extract(epoch from '${delete_from_date}'::date) * 1000;"
+  # Run minio command
+  return
 }
 
 function upgrade() {
@@ -264,7 +297,7 @@ function clean_tmp_dir() {
   install_packages
 }
 
-PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade: -- "$@")
+PARSED_ARGUMENTS=$(busybox getopt -a -n openreplay -o Rrevpi:uhsl:U:c: --long reload,edit,restart,verbose,install-packages,install:,upgrade,help,status,logs,deprecated-upgrade:,cleanup: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   help
@@ -296,6 +329,12 @@ do
     -U | --deprecated-upgrade)
       log title "[Deprected] Upgrading OpenReplay"
       upgrade_old "$2"
+      clean_tmp_dir
+      exit 0
+    ;;
+    -c | --cleanup)
+      log title "Cleaning up data older than $2 days"
+      cleanup "$2"
       clean_tmp_dir
       exit 0
     ;;
