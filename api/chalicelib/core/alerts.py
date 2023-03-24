@@ -116,7 +116,7 @@ def process_notifications(data):
     BATCH_SIZE = 200
     for t in full.keys():
         for i in range(0, len(full[t]), BATCH_SIZE):
-            notifications_list = full[t][i:i + BATCH_SIZE]
+            notifications_list = full[t][i:min(i + BATCH_SIZE, len(full[t]))]
             if notifications_list is None or len(notifications_list) == 0:
                 break
 

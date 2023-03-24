@@ -947,13 +947,14 @@ $$
 
             CREATE TABLE IF NOT EXISTS events.clicks
             (
-                session_id bigint          NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-                message_id bigint          NOT NULL,
-                timestamp  bigint          NOT NULL,
-                label      text DEFAULT NULL,
-                url        text DEFAULT '' NOT NULL,
+                session_id bigint             NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+                message_id bigint             NOT NULL,
+                timestamp  bigint             NOT NULL,
+                label      text    DEFAULT NULL,
+                url        text    DEFAULT '' NOT NULL,
                 path       text,
-                selector   text DEFAULT '' NOT NULL,
+                selector   text    DEFAULT '' NOT NULL,
+                hesitation integer DEFAULT NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS clicks_session_id_idx ON events.clicks (session_id);
@@ -974,8 +975,10 @@ $$
                 session_id bigint NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
                 message_id bigint NOT NULL,
                 timestamp  bigint NOT NULL,
-                label      text DEFAULT NULL,
-                value      text DEFAULT NULL,
+                label      text    DEFAULT NULL,
+                value      text    DEFAULT NULL,
+                duration   integer DEFAULT NULL,
+                hesitation integer DEFAULT NULL,
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX IF NOT EXISTS inputs_session_id_idx ON events.inputs (session_id);
