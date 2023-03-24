@@ -15,7 +15,6 @@ if config("LOCAL_DEV", cast=bool, default=False):
         "chalice": "http://127.0.0.1:8888/metrics",
         "db": "http://127.0.0.1:8888/metrics",
         "ender": "http://127.0.0.1:8888/metrics",
-        "frontend": "http://127.0.0.1:8888/metrics",
         "heuristics": "http://127.0.0.1:8888/metrics",
         "http": "http://127.0.0.1:8888/metrics",
         "ingress-nginx": "http://127.0.0.1:8888/metrics",
@@ -36,7 +35,6 @@ else:
         "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",
         "db": "http://db-openreplay.app.svc.cluster.local:8888/metrics",
         "ender": "http://ender-openreplay.app.svc.cluster.local:8888/metrics",
-        "frontend": "http://frontend-openreplay.app.svc.cluster.local:8888/metrics",
         "heuristics": "http://heuristics-openreplay.app.svc.cluster.local:8888/metrics",
         "http": "http://http-openreplay.app.svc.cluster.local:8888/metrics",
         "ingress-nginx": "http://ingress-nginx-openreplay.app.svc.cluster.local:8888/metrics",
@@ -153,6 +151,7 @@ def get_health():
         "ingestionPipeline": {
             "redis": __check_redis,
             # "kafka": __check_kafka
+            "kafka": __always_healthy
         },
         "backendServices": {
             "alerts": __check_be_service("alerts"),
@@ -161,7 +160,7 @@ def get_health():
             "chalice": __always_healthy_with_version,
             "db": __check_be_service("db"),
             "ender": __check_be_service("ender"),
-            "frontend": __check_be_service("frontend"),
+            "frontend": __always_healthy,
             "heuristics": __check_be_service("heuristics"),
             "http": __check_be_service("http"),
             "ingress-nginx": __always_healthy,
@@ -171,18 +170,7 @@ def get_health():
             "sink": __check_be_service("sink"),
             "sourcemapreader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage")
-        },
-        # "overall": {
-        #   "health": "na",
-        #   "details": {
-        #     "numberOfEventCaptured": "int",
-        #     "numberOfSessionsCaptured": "int"
-        #   },
-        #   "labels": {
-        #     "parent": "information"
-        #   }
-        # },
-        # "ssl": True
+        }
     }
     for parent_key in health_map.keys():
         for element_key in health_map[parent_key]:
@@ -213,28 +201,28 @@ def __check_database_ch():
     }
 
 
-def __check_kafka():
-    fail_response = {
-        "health": False,
-        "details": {"errors": ["server health-check failed"]}
-    }
-    if config("KAFKA_SERVERS", default=None) is None:
-        fail_response["details"]["errors"].append("KAFKA_SERVERS not defined in env-vars")
-        return fail_response
-
-    try:
-        a = AdminClient({'bootstrap.servers': config("KAFKA_SERVERS"), "socket.connection.setup.timeout.ms": 3000})
-        topics = a.list_topics().topics
-        if not topics:
-            raise Exception('topics not found')
-
-    except Exception as e:
-        print("!! Issue getting kafka-health response")
-        print(str(e))
-        fail_response["details"]["errors"].append(str(e))
-        return fail_response
-
-    return {
-        "health": True,
-        "details": {}
-    }
+# def __check_kafka():
+#     fail_response = {
+#         "health": False,
+#         "details": {"errors": ["server health-check failed"]}
+#     }
+#     if config("KAFKA_SERVERS", default=None) is None:
+#         fail_response["details"]["errors"].append("KAFKA_SERVERS not defined in env-vars")
+#         return fail_response
+#
+#     try:
+#         a = AdminClient({'bootstrap.servers': config("KAFKA_SERVERS"), "socket.connection.setup.timeout.ms": 3000})
+#         topics = a.list_topics().topics
+#         if not topics:
+#             raise Exception('topics not found')
+#
+#     except Exception as e:
+#         print("!! Issue getting kafka-health response")
+#         print(str(e))
+#         fail_response["details"]["errors"].append(str(e))
+#         return fail_response
+#
+#     return {
+#         "health": True,
+#         "details": {}
+#     }
