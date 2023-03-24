@@ -19,24 +19,19 @@ const BulletItem = ({ text }) => (
 export default class Signup extends React.Component {
   render() {
     return (
-      <div className="flex" style={{ height: '100vh' }}>
-        <div className={cn('w-6/12 relative overflow-hidden', stl.left)}>
-          <div className="px-6 pt-10">
-            <img src="/assets/logo-white.svg" />
-          </div>
-          <img
-            style={{ width: '800px', position: 'absolute', bottom: -100, left: 0 }}
-            src={RegisterBg}
-          />
-          <div className="color-white text-lg flex items-center px-20 pt-32">
+      <div className="flex justify-center items-center gap-6" style={{ height: '100vh' }}>
+        <div className={cn('relative overflow-hidden')}>
+          <div className="text-lg flex items-center" style={{ width: '350px'}}>
             <div>
-              <div className="flex items-center text-3xl font-bold mb-6">
-                OpenReplay Cloud{' '}
-                <div className="ml-2">
-                  <Icon name="signup" size="28" color="white" />
+              <div className="flex items-end text-3xl font-bold mb-6">
+                <div className="">
+                  <img src="/assets/logo.svg" width={200}/>
+                </div>{' '}
+                <div className="ml-2 text-lg color-gray-medium">
+                  Cloud
                 </div>
               </div>
-              <div>OpenReplay Cloud is the hosted version of our open-source project.</div>
+              <div className="border-b pb-2 mb-2">OpenReplay Cloud is the hosted version of our <a className="link" href="https://github.com/openreplay/openreplay" target="_blank">open-source</a> project.</div>
               <div>We’ll manage hosting, scaling and upgrades.</div>
 
               <div className="mt-8">
@@ -47,7 +42,7 @@ export default class Signup extends React.Component {
             </div>
           </div>
         </div>
-        <div className="w-6/12 flex items-center justify-center">
+        <div className="flex items-center justify-center">
           <div className="">
             <SignupForm />
           </div>

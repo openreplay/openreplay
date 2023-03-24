@@ -1,26 +1,25 @@
-import React from 'react'
-import { Form, Input, Icon, Button, Link } from 'UI'
-import { login } from 'App/routes'
-import ReCAPTCHA from 'react-google-recaptcha'
-import stl from './signup.module.css'
+import React from 'react';
+import { Form, Input, Icon, Button, Link } from 'UI';
+import { login } from 'App/routes';
+import ReCAPTCHA from 'react-google-recaptcha';
+import stl from './signup.module.css';
 import { signup } from 'Duck/user';
-import { connect } from 'react-redux'
-import Select from 'Shared/Select'
+import { connect } from 'react-redux';
+import Select from 'Shared/Select';
 import { SITE_ID_STORAGE_KEY } from 'App/constants/storageKeys';
 
-const LOGIN_ROUTE = login()
-const recaptchaRef = React.createRef()
+const LOGIN_ROUTE = login();
+const recaptchaRef = React.createRef();
 
 @connect(
-  state => ({
+  (state) => ({
     tenants: state.getIn(['user', 'tenants']),
-    errors: state.getIn([ 'user', 'signupRequest', 'errors' ]),
-    loading: state.getIn([ 'user', 'signupRequest', 'loading' ]),
+    errors: state.getIn(['user', 'signupRequest', 'errors']),
+    loading: state.getIn(['user', 'signupRequest', 'loading']),
   }),
-  { signup },
+  { signup }
 )
 export default class SignupForm extends React.Component {
-
   state = {
     tenantId: '',
     fullname: '',
@@ -36,21 +35,30 @@ export default class SignupForm extends React.Component {
     if (props.errors && props.errors.size > 0 && state.reload) {
       recaptchaRef.current.reset();
       return {
-        reload: false
-      }
-    } 
+        reload: false,
+      };
+    }
     return null;
   }
 
   handleSubmit = (token) => {
     const { tenantId, fullname, password, email, projectName, organizationName, auth } = this.state;
-    localStorage.removeItem(SITE_ID_STORAGE_KEY)
-    this.props.signup({ tenantId, fullname, password, email, projectName, organizationName, auth, 'g-recaptcha-response': token })
-    this.setState({ reload: true })
-  }
+    localStorage.removeItem(SITE_ID_STORAGE_KEY);
+    this.props.signup({
+      tenantId,
+      fullname,
+      password,
+      email,
+      projectName,
+      organizationName,
+      auth,
+      'g-recaptcha-response': token,
+    });
+    this.setState({ reload: true });
+  };
 
-  write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
-  writeOption = ({ name, value }) => this.setState({ [ name ]: value.value });
+  write = ({ target: { value, name } }) => this.setState({ [name]: value });
+  writeOption = ({ name, value }) => this.setState({ [name]: value.value });
 
   onSubmit = (e) => {
     e.preventDefault();
@@ -60,52 +68,51 @@ export default class SignupForm extends React.Component {
     } else if (!CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
-  }
+  };
   render() {
     const { loading, errors, tenants } = this.props;
     const { CAPTCHA_ENABLED } = this.state;
 
     return (
-      <Form onSubmit={ this.onSubmit }>
+      <Form onSubmit={this.onSubmit} className="bg-white border rounded">
         <div className="mb-8">
-          <h2 className="text-center text-3xl mb-6">Get Started</h2>
-          <div className="text-center text-xl">Already having an account? <span className="link"><Link to={ LOGIN_ROUTE }>Sign in</Link></span></div>
+          <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">Create Account</h2>
         </div>
         <>
-          { CAPTCHA_ENABLED && (
+          {CAPTCHA_ENABLED && (
             <ReCAPTCHA
-              ref={ recaptchaRef }
+              ref={recaptchaRef}
               size="invisible"
-              sitekey={ window.env.CAPTCHA_SITE_KEY }
-              onChange={ token => this.handleSubmit(token) }
+              sitekey={window.env.CAPTCHA_SITE_KEY}
+              onChange={(token) => this.handleSubmit(token)}
             />
           )}
-          <div>
-            { tenants.length > 0 && (
+          <div className="px-8">
+            {tenants.length > 0 && (
               <Form.Field>
                 <label>Existing Accounts</label>
                 <Select
                   className="w-full"
                   placeholder="Select account"
                   selection
-                  options={ tenants }
+                  options={tenants}
                   name="tenantId"
                   // value={ instance.currentPeriod }
-                  onChange={ this.writeOption }
+                  onChange={this.writeOption}
                 />
               </Form.Field>
             )}
             <Form.Field>
-              <label>Email</label>
+              <label>Email Address</label>
               <Input
                 autoFocus={true}
                 autoComplete="username"
                 type="email"
                 placeholder="E.g. email@yourcompany.com"
                 name="email"
-                onChange={ this.write }
-                className={ stl.email }
+                onChange={this.write}
                 required="true"
+                icon="envelope"
               />
             </Form.Field>
             <Form.Field>
@@ -115,57 +122,72 @@ export default class SignupForm extends React.Component {
                 placeholder="Min 8 Characters"
                 minLength="8"
                 name="password"
-                onChange={ this.write }
-                className={ stl.password }
+                onChange={this.write}
                 required="true"
+                icon="key"
               />
             </Form.Field>
             <Form.Field>
               <label>Name</label>
-              <Input                
+              <Input
                 type="text"
                 placeholder="E.g John Doe"
                 name="fullname"
-                onChange={ this.write }
-                className={ stl.email }
+                onChange={this.write}
                 required="true"
+                icon="user-alt"
               />
             </Form.Field>
-  
             <Form.Field>
               <label>Organization</label>
-              <Input                
+              <Input
                 type="text"
                 placeholder="E.g Uber"
                 name="organizationName"
-                onChange={ this.write }
-                className={ stl.email }
+                onChange={this.write}
                 required="true"
+                icon="buildings"
               />
             </Form.Field>
-
-            <div className="mb-6">
-              <div className="text-sm">By creating an account, you agree to our <a href="https://openreplay.com/terms.html" className="link">Terms of Service</a> and <a href="https://openreplay.com/privacy.html" className="link">Privacy Policy</a>.</div>
+            
+            <Button type="submit" variant="primary" loading={loading} className="w-full">
+              Create account
+            </Button>
+            <div className="my-6">
+              <div className="text-sm">
+                By signing up, you agree to our{' '}
+                <a href="https://openreplay.com/terms.html" className="link">
+                terms of service
+                </a>{' '}
+                and{' '}
+                <a href="https://openreplay.com/privacy.html" className="link">
+                  privacy policy
+                </a>
+                .
+              </div>
             </div>
-
           </div>
         </>
-        { errors &&
-          <div className={ stl.errors }>
-            { errors.map(error => (
+        {errors && (
+          <div className={stl.errors}>
+            {errors.map((error) => (
               <div className={stl.errorItem}>
-                <Icon name="info" color="red" size="20"/>
-                <span className="color-red ml-2">{ error }<br /></span>
+                <Icon name="info" color="red" size="20" />
+                <span className="color-red ml-2">
+                  {error}
+                  <br />
+                </span>
               </div>
-            )) }
+            ))}
           </div>
-        }
-        <div className={ stl.formFooter }>
-          <Button type="submit" variant="primary" loading={loading}>
-            Create account
-          </Button>
-        </div>
+        )}
+        <div className="text-center bg-gray-50 py-4 border-t">
+            Already having an account?{' '}
+            <span className="link">
+              <Link to={LOGIN_ROUTE}>Login</Link>
+            </span>
+          </div>
       </Form>
-    )
+    );
   }
 }
