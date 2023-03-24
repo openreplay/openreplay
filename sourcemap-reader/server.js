@@ -1,11 +1,12 @@
 const dumps = require('./utils/HeapSnapshot');
 const sourcemapsReaderServer = require('./servers/sourcemaps-server');
 const express = require('express');
+const health = require("./utils/health");
 const {request_logger} = require("./utils/helper");
 
 const HOST = process.env.SMR_HOST || '127.0.0.1';
 const PORT = process.env.SMR_PORT || 9000;
-const PREFIX = process.env.PREFIX || process.env.prefix || ''
+const PREFIX = process.env.PREFIX || process.env.prefix || '';
 const P_KEY = process.env.SMR_KEY || 'smr';
 const heapdump = process.env.heapdump === "1";
 
@@ -21,14 +22,7 @@ heapdump && app.use(`${PREFIX}/${P_KEY}/heapdump`, dumps.router);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`SR App listening on http://${HOST}:${PORT}`);
-    console.log('Press Ctrl+C to quit.');
+    health.healthApp.listen(health.PORT, HOST, health.listen_cb);
 });
-module.exports = {server};
 
-app.get('/private/shutdown', (req, res) => {
-        console.log("Requested shutdown");
-        res.statusCode = 200;
-        res.end("ok!");
-        process.kill(1, "SIGTERM");
-    }
-);
+module.exports = {server};

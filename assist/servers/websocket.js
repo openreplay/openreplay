@@ -2,8 +2,11 @@ const _io = require('socket.io');
 const express = require('express');
 const {
     extractPeerId,
+    extractProjectKeyFromRequest,
+    extractSessionIdFromRequest,
     hasFilters,
     isValidSession,
+    extractPayloadFromRequest,
     sortPaginate,
     getValidAttributes,
     uniqueAutocomplete
@@ -16,59 +19,51 @@ const {
     errorHandler,
     authorizer
 } = require('../utils/assistHelper');
-const {
-    extractProjectKeyFromRequest,
-    extractSessionIdFromRequest,
-    extractPayloadFromRequest,
-} = require('../utils/helper-ee');
 const wsRouter = express.Router();
 
 let io;
 const debug = process.env.debug === "1";
 
 const createSocketIOServer = function (server, prefix) {
-    if (process.env.uws !== "true") {
-        io = _io(server, {
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"]
-            },
-            path: (prefix ? prefix : '') + '/socket'
-        });
-    } else {
-        io = new _io.Server({
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"]
-            },
-            path: (prefix ? prefix : '') + '/socket'
-            // transports: ['websocket'],
-            // upgrade: false
-        });
-        io.attachApp(server);
-    }
+    io = _io(server, {
+        maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
+        cors: {
+            origin: "*",
+            methods: ["GET", "POST", "PUT"]
+        },
+        path: (prefix ? prefix : '') + '/socket'
+    });
 }
+
 
 const getAvailableRooms = async function () {
     return io.sockets.adapter.rooms.keys();
 }
 
 const respond = function (res, data) {
-    let result = {data}
-    if (process.env.uws !== "true") {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(result));
-    } else {
-        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
-    }
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({"data": data}));
 }
-
+const countSessions = async function () {
+    let count = 0;
+    try {
+        const arr = Array.from(io.sockets.adapter.rooms);
+        const filtered = arr.filter(room => !room[1].has(room[0]));
+        for (let i of filtered) {
+            let {projectKey, sessionId} = extractPeerId(i[0]);
+            if (projectKey !== null && sessionId !== null) {
+                count++;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return count;
+}
 const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
-    let filters = await extractPayloadFromRequest(req, res);
+    let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -95,7 +90,7 @@ const socketsListByProject = async function (req, res) {
     debug && console.log("[WS]looking for available sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractPayloadFromRequest(req, res);
+    let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -116,14 +111,14 @@ const socketsListByProject = async function (req, res) {
         }
     }
     liveSessions[_projectKey] = liveSessions[_projectKey] || [];
-    respond(res, _sessionId === undefined ? sortPaginate(liveSessions[_projectKey], filters)
+    respond(res, _sessionId === undefined ? liveSessions[_projectKey]
         : liveSessions[_projectKey].length > 0 ? liveSessions[_projectKey][0]
             : null);
 }
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
-    let filters = await extractPayloadFromRequest(req, res);
+    let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -151,7 +146,7 @@ const socketsLiveByProject = async function (req, res) {
     debug && console.log("[WS]looking for available LIVE sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractPayloadFromRequest(req, res);
+    let filters = extractPayloadFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -181,7 +176,7 @@ const socketsLiveByProject = async function (req, res) {
 const autocomplete = async function (req, res) {
     debug && console.log("[WS]autocomplete");
     let _projectKey = extractProjectKeyFromRequest(req);
-    let filters = await extractPayloadFromRequest(req);
+    let filters = extractPayloadFromRequest(req);
     let results = [];
     if (filters.query && Object.keys(filters.query).length > 0) {
         let rooms = await getAvailableRooms();
@@ -199,6 +194,7 @@ const autocomplete = async function (req, res) {
     }
     respond(res, uniqueAutocomplete(results));
 }
+
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
@@ -242,12 +238,13 @@ async function get_all_agents_ids(io, socket) {
     return agents;
 }
 
+
 wsRouter.get(`/sockets-list`, socketsList);
 wsRouter.post(`/sockets-list`, socketsList);
 wsRouter.get(`/sockets-list/:projectKey/autocomplete`, autocomplete);
 wsRouter.get(`/sockets-list/:projectKey`, socketsListByProject);
-wsRouter.post(`/sockets-list/:projectKey`, socketsListByProject);
 wsRouter.get(`/sockets-list/:projectKey/:sessionId`, socketsListByProject);
+wsRouter.post(`/sockets-list/:projectKey`, socketsListByProject);
 
 wsRouter.get(`/sockets-live`, socketsLive);
 wsRouter.post(`/sockets-live`, socketsLive);
@@ -255,7 +252,6 @@ wsRouter.get(`/sockets-live/:projectKey/autocomplete`, autocomplete);
 wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
-
 
 module.exports = {
     wsRouter,
@@ -379,11 +375,11 @@ module.exports = {
 
         socketConnexionTimeout(io);
     },
+    countSessions,
     handlers: {
         socketsList,
         socketsListByProject,
         socketsLive,
-        socketsLiveByProject,
-        autocomplete
+        socketsLiveByProject
     }
 };

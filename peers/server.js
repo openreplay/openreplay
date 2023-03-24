@@ -1,5 +1,6 @@
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
+const health = require("./utils/health");
 const assert = require('assert').strict;
 const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 const express = require('express');
@@ -44,10 +45,4 @@ process.on('uncaughtException', err => {
     // process.exit(1);
 });
 
-app.get('/private/shutdown', (req, res) => {
-        console.log("Requested shutdown");
-        res.statusCode = 200;
-        res.end("ok!");
-        process.kill(1, "SIGTERM");
-    }
-);
+health.healthApp.listen(health.PORT, HOST, health.listen_cb);

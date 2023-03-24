@@ -35,6 +35,7 @@ rm -rf ./chalicelib/core/log_tool_stackdriver.py
 rm -rf ./chalicelib/core/log_tool_sumologic.py
 rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
+rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
 #exp rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
@@ -78,9 +79,12 @@ rm -rf ./Dockerfile_bundle
 rm -rf ./entrypoint.bundle.sh
 rm -rf ./chalicelib/core/heatmaps.py
 rm -rf ./schemas.py
+rm -rf ./routers/subs/health.py
 rm -rf ./routers/subs/v1_api.py
 #exp rm -rf ./chalicelib/core/custom_metrics.py
 rm -rf ./chalicelib/core/performance_event.py
 rm -rf ./chalicelib/core/saved_search.py
 rm -rf ./app_alerts.py
 rm -rf ./build_alerts.sh
+rm -rf ./run-dev.sh
+rm -rf ./run-alerts-dev.sh

@@ -6,7 +6,7 @@ from starlette.responses import RedirectResponse, FileResponse
 
 import schemas
 from chalicelib.core import sessions, errors, errors_viewed, errors_favorite, sessions_assignments, heatmaps, \
-    sessions_favorite, assist, sessions_notes, click_maps
+    sessions_favorite, assist, sessions_notes, click_maps, sessions_replay
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -145,18 +145,50 @@ async def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
                                           stack_integrations=True)}
 
 
-@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
+# for backward compatibility
+@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions", "replay"])
 async def get_session(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
                       context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
         return {"errors": ["session not found"]}
-    data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
-                                  include_fav_viewed=True, group_metadata=True, context=context)
+    data = sessions_replay.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
+                                         include_fav_viewed=True, group_metadata=True, context=context)
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
         background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
                                   session_id=sessionId)
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/replay', tags=["sessions", "replay"])
+async def get_session_events(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
+                             context: schemas.CurrentContext = Depends(OR_context)):
+    if isinstance(sessionId, str):
+        return {"errors": ["session not found"]}
+    data = sessions_replay.get_replay(project_id=projectId, session_id=sessionId, full_data=True,
+                                      include_fav_viewed=True, group_metadata=True, context=context)
+    if data is None:
+        return {"errors": ["session not found"]}
+    if data.get("inDB"):
+        background_tasks.add_task(sessions_viewed.view_session, project_id=projectId, user_id=context.user_id,
+                                  session_id=sessionId)
+    return {
+        'data': data
+    }
+
+
+@app.get('/{projectId}/sessions/{sessionId}/events', tags=["sessions", "replay"])
+async def get_session_events(projectId: int, sessionId: Union[int, str],
+                             context: schemas.CurrentContext = Depends(OR_context)):
+    if isinstance(sessionId, str):
+        return {"errors": ["session not found"]}
+    data = sessions_replay.get_events(project_id=projectId, session_id=sessionId)
+    if data is None:
+        return {"errors": ["session not found"]}
+
     return {
         'data': data
     }
@@ -239,8 +271,8 @@ async def get_live_session(projectId: int, sessionId: str, background_tasks: Bac
                            context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
-        data = sessions.get_by_id2_pg(context=context, project_id=projectId, session_id=sessionId,
-                                      full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
+        data = sessions_replay.get_replay(context=context, project_id=projectId, session_id=sessionId,
+                                          full_data=True, include_fav_viewed=True, group_metadata=True, live=False)
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):

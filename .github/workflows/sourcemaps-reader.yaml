@@ -1,4 +1,4 @@
-# This action will push the chalice changes to aws
+# This action will push the sourcemapreader changes to aws
 on:
   workflow_dispatch:
   push:
@@ -83,13 +83,13 @@ jobs:
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
 
         # Update changed image tag
-        sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/sourcemapreader/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
-        mv openreplay/charts/{ingress-nginx,chalice,quickwit} /tmp
+        mv openreplay/charts/{ingress-nginx,sourcemapreader,quickwit} /tmp
         rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,chalice,quickwit} openreplay/charts/
+        mv /tmp/{ingress-nginx,sourcemapreader,quickwit} openreplay/charts/
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}

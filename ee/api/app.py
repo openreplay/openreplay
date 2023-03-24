@@ -1,5 +1,6 @@
 import logging
 import queue
+from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
@@ -10,17 +11,54 @@ from starlette import status
 from starlette.responses import StreamingResponse, JSONResponse
 
 from chalicelib.core import traces
+from chalicelib.utils import events_queue
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from chalicelib.utils import events_queue
 from routers import core, core_dynamic, ee, saml
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
 from routers.crons import ee_crons
 from routers.subs import insights, metrics, v1_api_ee
-from routers.subs import v1_api
+from routers.subs import v1_api, health
 
-app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
+loglevel = config("LOGLEVEL", default=logging.INFO)
+print(f">Loglevel set to: {loglevel}")
+logging.basicConfig(level=loglevel)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logging.info(">>>>> starting up <<<<<")
+    ap_logger = logging.getLogger('apscheduler')
+    ap_logger.setLevel(loglevel)
+
+    app.schedule = AsyncIOScheduler()
+    app.queue_system = queue.Queue()
+    await pg_client.init()
+    await events_queue.init()
+    app.schedule.start()
+
+    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs + traces.cron_jobs + ee_crons.ee_cron_jobs:
+        app.schedule.add_job(id=job["func"].__name__, **job)
+
+    ap_logger.info(">Scheduled jobs:")
+    for job in app.schedule.get_jobs():
+        ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+
+    # App listening
+    yield
+
+    # Shutdown
+    logging.info(">>>>> shutting down <<<<<")
+    app.schedule.shutdown(wait=True)
+    await traces.process_traces_queue()
+    await events_queue.terminate()
+    await pg_client.terminate()
+
+
+app = FastAPI(root_path="/api", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""),
+              lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
@@ -68,43 +106,6 @@ app.include_router(metrics.app)
 app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
 app.include_router(v1_api_ee.app_apikey)
-
-loglevel = config("LOGLEVEL", default=logging.INFO)
-print(f">Loglevel set to: {loglevel}")
-logging.basicConfig(level=loglevel)
-ap_logger = logging.getLogger('apscheduler')
-ap_logger.setLevel(loglevel)
-app.schedule = AsyncIOScheduler()
-app.queue_system = queue.Queue()
-
-
-@app.on_event("startup")
-async def startup():
-    logging.info(">>>>> starting up <<<<<")
-    await pg_client.init()
-    await events_queue.init()
-    app.schedule.start()
-
-    for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs + traces.cron_jobs + ee_crons.ee_cron_jobs:
-        app.schedule.add_job(id=job["func"].__name__, **job)
-
-    ap_logger.info(">Scheduled jobs:")
-    for job in app.schedule.get_jobs():
-        ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    logging.info(">>>>> shutting down <<<<<")
-    app.schedule.shutdown(wait=True)
-    await traces.process_traces_queue()
-    await events_queue.terminate()
-    await pg_client.terminate()
-
-
-@app.get('/private/shutdown', tags=["private"])
-async def stop_server():
-    logging.info("Requested shutdown")
-    await shutdown()
-    import os, signal
-    os.kill(1, signal.SIGTERM)
+app.include_router(health.public_app)
+app.include_router(health.app)
+app.include_router(health.app_apikey)

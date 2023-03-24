@@ -34,7 +34,7 @@ const debug = process.env.debug === "1";
 const createSocketIOServer = function (server, prefix) {
     if (process.env.uws !== "true") {
         io = _io(server, {
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
@@ -43,7 +43,7 @@ const createSocketIOServer = function (server, prefix) {
         });
     } else {
         io = new _io.Server({
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+            maxHttpBufferSize: (parseFloat(process.env.maxHttpBufferSize) || 5) * 1e6,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
@@ -81,6 +81,22 @@ const respond = function (res, data) {
     } else {
         res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
     }
+}
+
+const countSessions = async function () {
+    let count = 0;
+    try {
+        let rooms = await io.of('/').adapter.allRooms();
+        for (let i of rooms) {
+            let {projectKey, sessionId} = extractPeerId(i);
+            if (projectKey !== undefined && sessionId !== undefined) {
+                count++;
+            }
+        }
+    } catch (e) {
+        console.error(e);
+    }
+    return count;
 }
 
 const socketsList = async function (req, res) {
@@ -417,6 +433,7 @@ module.exports = {
                 process.exit(2);
             });
     },
+    countSessions,
     handlers: {
         socketsList,
         socketsListByProject,
