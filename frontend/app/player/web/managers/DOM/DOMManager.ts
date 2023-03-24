@@ -257,13 +257,9 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
       case MType.RemoveNodeAttribute:
-        if (isJump) {
-          this.attrsBacktrack = this.attrsBacktrack.filter(m => m.id !== msg.id && m.name !== msg.name)
-        } else {
           vn = this.vElements.get(msg.id)
           if (!vn) { logger.error("Node not found", msg); return }
           vn.removeAttribute(msg.name)
-        }
         return
       case MType.SetInputValue:
         vn = this.vElements.get(msg.id)
@@ -478,22 +474,9 @@ export default class DOMManager extends ListWalker<Message> {
      * */
     // http://0.0.0.0:3333/5/session/8452905874437457
     // 70 iframe, 8 create element - STYLE tag
-    console.time('moveWait')
-    let t0 = performance.now()
-    let t1 = t0
-    const timings = []
     await this.moveWait(t, (msg) => {
-      t0 = performance.now()
       this.applyMessage(msg, isJump)
-      t1 = performance.now()
-      timings.push({ t: t1 - t0, m: msg.tp, msg })
     })
-
-    console.timeEnd('moveWait')
-    console.log(
-      timings.sort((a, b) => b.t - a.t),
-      timings.filter(t => t.msg.tag === 'STYLE').length,
-    )
 
     if (isJump) {
       this.attrsBacktrack.forEach(msg => {
