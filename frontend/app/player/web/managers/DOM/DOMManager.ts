@@ -257,9 +257,13 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
       case MType.RemoveNodeAttribute:
-        vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
-        vn.removeAttribute(msg.name)
+        if (isJump) {
+          this.attrsBacktrack = this.attrsBacktrack.filter(m => m.id !== msg.id && m.name !== msg.name)
+        } else {
+          vn = this.vElements.get(msg.id)
+          if (!vn) { logger.error("Node not found", msg); return }
+          vn.removeAttribute(msg.name)
+        }
         return
       case MType.SetInputValue:
         vn = this.vElements.get(msg.id)
@@ -472,7 +476,25 @@ export default class DOMManager extends ListWalker<Message> {
      * are applied, so it won't try to download and then cancel when node is created in msg N and removed in msg N+2
      * which produces weird bug when asset is cached (10-25ms delay)
      * */
-    await this.moveWait(t, (msg) => this.applyMessage(msg, isJump))
+    // http://0.0.0.0:3333/5/session/8452905874437457
+    // 70 iframe, 8 create element - STYLE tag
+    console.time('moveWait')
+    let t0 = performance.now()
+    let t1 = t0
+    const timings = []
+    await this.moveWait(t, (msg) => {
+      t0 = performance.now()
+      this.applyMessage(msg, isJump)
+      t1 = performance.now()
+      timings.push({ t: t1 - t0, m: msg.tp, msg })
+    })
+
+    console.timeEnd('moveWait')
+    console.log(
+      timings.sort((a, b) => b.t - a.t),
+      timings.filter(t => t.msg.tag === 'STYLE').length,
+    )
+
     if (isJump) {
       this.attrsBacktrack.forEach(msg => {
         this.applyBacktrack(msg)
@@ -480,7 +502,6 @@ export default class DOMManager extends ListWalker<Message> {
       this.attrsBacktrack = []
     }
     this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
-
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady(t).then(() => {
