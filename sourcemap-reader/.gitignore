@@ -3,8 +3,5 @@ node_modules
 npm-debug.log
 .cache
 test.html
-/utils/assistHelper.js
-/utils/geoIP.js
-/utils/HeapSnapshot.js
-/utils/helper.js
+utils
 mappings.wasm

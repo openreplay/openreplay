@@ -1,5 +1,4 @@
 const express = require('express');
-const socket = require("../servers/websocket");
 const HOST = process.env.LISTEN_HOST || '0.0.0.0';
 const PORT = process.env.HEALTH_PORT || 8888;
 
@@ -17,8 +16,7 @@ const check_health = async function (req, res) {
     respond(res, {
         "health": true,
         "details": {
-            "version": process.env.npm_package_version,
-            "connectedSessions": await socket.countSessions()
+            "version": process.env.npm_package_version
         }
     });
 }
