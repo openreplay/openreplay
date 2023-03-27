@@ -6,13 +6,13 @@ import numpy as np
 
 def get_training_database(projectId=None, max_timestamp=None, favorites=False):
     #TODO: Set a pertinent limit to number of not seen values (balance dataset)
-    args = {"projectId": projectId, "max_timestamp": max_timestamp}
+    args = {"projectId": projectId, "max_timestamp": max_timestamp, "limit": 20}
     with PostgresClient() as conn:
         x1 = signals_features(conn, **args)
         if favorites:
             x2 = user_favorite_sessions(args['projectId'], conn)
         if max_timestamp is not None:
-            x3 = user_not_seen_sessions(args['projectId'], args['max_timestamp'], conn)
+            x3 = user_not_seen_sessions(args['projectId'], args['max_timestamp'], args['limit'], conn)
 
     X_project_ids = dict()
     X_users_ids = dict()
@@ -63,20 +63,20 @@ def user_favorite_sessions(projectId, conn):
     return res
 
 
-def user_not_seen_sessions(projectId, max_timestamp, conn):
+def user_not_seen_sessions(projectId, max_timestamp, limit, conn):
     query = """SELECT project_id, session_id, user_id, viewer_id, events_count, errors_count, duration, user_country as country, issue_score, user_device_type as device_type
 FROM (
          (SELECT *
          FROM sessions
-         WHERE project_id = %(projectId)s AND start_ts < %(maxTimestamp)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions)
-         LIMIT 100) AS T1
+         WHERE project_id = %(projectId)s AND start_ts < %(maxTimestamp)s AND session_id NOT IN (SELECT session_id FROM user_viewed_sessions) AND duration IS NOT NULL
+         LIMIT %(limit)s) AS T1
              LEFT JOIN
          (SELECT user_id as viewer_id
          FROM users
          WHERE tenant_id IN (SELECT tenant_id FROM projects WHERE project_id = %(projectId)s)) AS T2 ON true
      )"""
     conn.execute(
-        conn.mogrify(query, {"projectId": projectId, "maxTimestamp": max_timestamp})
+        conn.mogrify(query, {"projectId": projectId, "maxTimestamp": max_timestamp, "limit": limit})
     )
     res = conn.fetchall()
     return res

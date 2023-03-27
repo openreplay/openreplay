@@ -1,5 +1,7 @@
 import mlflow.pyfunc
 
+import numpy as np
+from sklearn import metrics
 from sklearn.svm import SVC
 from sklearn.feature_selection import SequentialFeatureSelector as sfs
 from sklearn.preprocessing import normalize
@@ -46,6 +48,7 @@ class SVM_recommendation(mlflow.pyfunc.PythonModel):
         self.svm = SVC(**params)
         self.transforms = [lambda k: k]
         self.score = 0
+        self.confusion_matrix = None
         if test:
             knn = knc(n_neighbors=3)
             self.transform = [PCA(n_components=3), sfs(knn, n_features_to_select=2)]
@@ -58,7 +61,15 @@ class SVM_recommendation(mlflow.pyfunc.PythonModel):
         X = t2(X)
         self.transforms = [t1, t2]
         self.svm.fit(X, y)
-        self.score = self.svm.score(X, y)
+        pred = self.svm.predict(X)
+        z = y + 2 * pred
+        n = len(z)
+        false_pos = np.count_nonzero(z == 1) / n
+        false_neg = np.count_nonzero(z == 2) / n
+        true_pos = np.count_nonzero(z == 3) / n
+        true_neg = 1 - false_neg - false_pos - true_pos
+        self.confusion_matrix = np.array([[true_neg, false_pos], [false_neg, true_pos]])
+        self.score = true_pos + true_neg
 
     def predict(self, x):
         for t in self.transforms:
@@ -70,3 +81,7 @@ class SVM_recommendation(mlflow.pyfunc.PythonModel):
             x = t(x)
         pred = self.svm.predict_proba(x)
         return sorted(range(len(pred)), key=lambda k: pred[k][1], reverse=True), pred
+
+    def plots(self):
+        display = metrics.ConfusionMatrixDisplay(confusion_matrix=self.confusion_matrix, display_labels=[False, True])
+        return {'confusion_matrix': display.plot().figure_}
