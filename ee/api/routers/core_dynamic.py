@@ -7,7 +7,7 @@ from starlette.responses import RedirectResponse, FileResponse
 import schemas
 import schemas_ee
 from chalicelib.core import sessions, assist, heatmaps, sessions_favorite, sessions_assignments, errors, errors_viewed, \
-    errors_favorite, sessions_notes, click_maps, sessions_replay
+    errors_favorite, sessions_notes, click_maps, sessions_replay, signup
 from chalicelib.core import sessions_viewed
 from chalicelib.core import tenants, users, projects, license
 from chalicelib.core import webhook
@@ -29,6 +29,13 @@ async def get_all_signup():
                      "sso": SAML2_helper.is_saml2_available(),
                      "ssoProvider": SAML2_helper.get_saml2_provider(),
                      "edition": license.EDITION}}
+
+
+if not tenants.tenants_exists(use_pool=False):
+    @public_app.post('/signup', tags=['signup'])
+    @public_app.put('/signup', tags=['signup'])
+    async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
+        return signup.create_step1(data)
 
 
 @app.get('/account', tags=['accounts'])
