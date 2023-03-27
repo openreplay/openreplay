@@ -289,7 +289,7 @@ export default class MessageManager {
     this.activityManager = new ActivityManager(this.session.duration.milliseconds);
   }
 
-  move(t: number, isJump?: boolean, index?: number): void {
+  move(t: number, index?: number): void {
     const stateToUpdate: Partial<State> = {};
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
@@ -339,7 +339,7 @@ export default class MessageManager {
     if (!!lastResize) {
       this.setSize(lastResize)
     }
-    this.pagesManager.moveReady(t, isJump).then(() => {
+    this.pagesManager.moveReady(t).then(() => {
 
       const lastScroll = this.scrollManager.moveGetLast(t, index);
       if (!!lastScroll && this.screen.window) {

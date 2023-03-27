@@ -64,6 +64,7 @@ service:
   type: ClusterIP
   ports:
     peerjs: 9000
+    metrics: 8888
 
 ingress:
   enabled: true

@@ -8,7 +8,7 @@ jira==3.4.1
 
 
 
-fastapi==0.92.0
+fastapi==0.95.0
 uvicorn[standard]==0.20.0
 python-decouple==3.7
 pydantic[email]==1.10.4
@@ -17,3 +17,6 @@ apscheduler==3.10.0
 clickhouse-driver==0.2.5
 python3-saml==1.15.0
 python-multipart==0.0.5
+
+redis==4.5.1
+#confluent-kafka==2.0.2

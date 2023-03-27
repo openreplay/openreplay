@@ -1,4 +1,4 @@
-## Licenses (as of January 23, 2023)
+## Licenses (as of March 24, 2023)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -40,6 +40,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | python-multipart | Apache | Python |
 | elasticsearch-py | Apache2 | Python |
 | jira | BSD2 | Python |
+| redis-py | MIT | Python |
 | clickhouse-driver | MIT | Python |
 | python3-saml | MIT | Python |
 | kubernetes | Apache2 | Python |

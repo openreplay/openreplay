@@ -1,4 +1,5 @@
 import type { Store, Moveable, Interval } from '../common/types';
+import MessageManager from 'App/player/web/MessageManager'
 
 const fps = 60
 const performance: { now: () => number } = window.performance || { now: Date.now.bind(Date) }
@@ -54,18 +55,18 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0
 
-  constructor(private store: Store<GetState>, private mm: Moveable) {
+  constructor(private store: Store<GetState>, private mm: MessageManager) {
 
     // @ts-ignore
     window.playerJump = this.jump.bind(this)
   }
 
-  private setTime(time: number, isJump?: boolean) {
+  private setTime(time: number) {
     this.store.update({
       time,
       completed: false,
     })
-    this.mm.move(time, isJump)
+    this.mm.move(time)
   }
 
   private startAnimation() {
@@ -183,11 +184,11 @@ export default class Animator {
   jump = (time: number) => {
     if (this.store.get().playing) {
       cancelAnimationFrame(this.animationFrameRequestId)
-      this.setTime(time, true)
+      this.setTime(time)
       this.startAnimation()
       this.store.update({ livePlay: time === this.store.get().endTime })
     } else {
-      this.setTime(time, true)
+      this.setTime(time)
       this.store.update({ livePlay: time === this.store.get().endTime })
     }
   }

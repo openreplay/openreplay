@@ -1,6 +1,11 @@
 # This action will push the peers changes to aws
 on:
   workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        required: false
+        default: 'false'
   push:
     branches:
       - dev
@@ -11,7 +16,7 @@ on:
       - "!peers/.gitignore"
       - "!peers/*-dev.sh"
 
-name: Build and Deploy Peers
+name: Build and Deploy Peers EE
 
 jobs:
   deploy:
@@ -36,29 +41,97 @@ jobs:
         kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
 
-    - name: Building and Pushing api image
+    # Caching docker images
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      # Ignore the failure of a step and avoid terminating the job.
+      continue-on-error: true
+
+
+    - name: Building and Pushing peers image
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
+        skip_security_checks=${{ github.event.inputs.skip_security_checks }}
         cd peers
-        PUSH_IMAGE=1 bash build.sh ee
+        PUSH_IMAGE=0 bash -x ./build.sh ee
+        [[ "x$skip_security_checks" == "xtrue" ]]  || {
+          curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+          images=("peers")
+          for image in ${images[*]};do
+            ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+          done
+          err_code=$?
+          [[ $err_code -ne 0 ]] && {
+            exit $err_code
+          }
+        } && {
+          echo "Skipping Security Checks"
+        }
+        images=("peers")
+        for image in ${images[*]};do
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+        done
+    - name: Creating old image input
+      run: |
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            # We've to strip off the -ee, as helm will append it.
+            tag: `echo ${image_array[1]} | cut -d '-' -f 1`
+        EOF
+        done
+
     - name: Deploy to kubernetes
       run: |
         cd scripts/helmcharts/
-        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.EE_REGISTRY_URL }}\"#g" vars.yaml
-        sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\" #g" vars.yaml
-        sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.EE_MINIO_SECRET_KEY }}\" #g" vars.yaml
-        sed -i "s#domain_name.*#domain_name: \"ee.openreplay.com\" #g" vars.yaml
-        sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
-        sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-        bash kube-install.sh --app peers
+
+        ## Update secerts
+        sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
+        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
+
+        # Update changed image tag
+        sed -i "/peers/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
+        cat /tmp/image_override.yaml
+        # Deploy command
+        mv openreplay/charts/{ingress-nginx,peers,quickwit} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,peers,quickwit} openreplay/charts/
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
+
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: ee
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
 
     # - name: Debug Job
     #   if: ${{ failure() }}

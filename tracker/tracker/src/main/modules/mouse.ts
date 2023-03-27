@@ -5,13 +5,13 @@ import { MouseMove, MouseClick, MouseThrashing } from '../app/messages.gen.js'
 import { getInputLabel } from './input.js'
 import { finder } from '@medv/finder'
 
-function _getSelector(target: Element, document: Document) {
+function _getSelector(target: Element, document: Document, options?: MouseHandlerOptions): string {
   const selector = finder(target, {
     root: document.body,
     seedMinLength: 3,
-    optimizedMinLength: 2,
-    threshold: 1000,
-    maxNumberOfTries: 10_000,
+    optimizedMinLength: options?.minSelectorDepth || 2,
+    threshold: options?.nthThreshold || 1000,
+    maxNumberOfTries: options?.maxOptimiseTries || 10_000,
   })
 
   return selector
@@ -75,6 +75,25 @@ function _getTarget(target: Element, document: Document): Element | null {
 
 export interface MouseHandlerOptions {
   disableClickmaps?: boolean
+  /** minimum length of an optimised selector.
+   *
+   * body > div > div > p => body > p for example
+   *
+   * default 2
+   * */
+  minSelectorDepth?: number
+  /** how many selectors to try before falling back to nth-child selectors
+   * performance expensive operation
+   *
+   * default 1000
+   * */
+  nthThreshold?: number
+  /**
+   * how many tries to optimise and shorten the selector
+   *
+   * default 10_000
+   * */
+  maxOptimiseTries?: number
 }
 
 export default function (app: App, options?: MouseHandlerOptions): void {
@@ -155,8 +174,8 @@ export default function (app: App, options?: MouseHandlerOptions): void {
   }
 
   const patchDocument = (document: Document, topframe = false) => {
-    function getSelector(id: number, target: Element): string {
-      return (selectorMap[id] = selectorMap[id] || _getSelector(target, document))
+    function getSelector(id: number, target: Element, options?: MouseHandlerOptions): string {
+      return (selectorMap[id] = selectorMap[id] || _getSelector(target, document, options))
     }
 
     const attachListener = topframe
@@ -202,7 +221,7 @@ export default function (app: App, options?: MouseHandlerOptions): void {
             id,
             mouseTarget === target ? Math.round(performance.now() - mouseTargetTime) : 0,
             getTargetLabel(target),
-            isClickable(target) && !disableClickmaps ? getSelector(id, target) : '',
+            isClickable(target) && !disableClickmaps ? getSelector(id, target, options) : '',
           ),
           true,
         )

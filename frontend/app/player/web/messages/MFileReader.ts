@@ -3,7 +3,7 @@ import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
 import RawMessageReader from './RawMessageReader.gen';
 import resolveURL from './urlBasedResolver'
-
+import Logger from 'App/logger'
 
 // TODO: composition instead of inheritance
 // needSkipMessage() and next() methods here use buf and p protected properties,
@@ -59,10 +59,8 @@ export default class MFileReader extends RawMessageReader {
       if (!skippedMessage) {
         return null
       }
-      this.logger.group("Openreplay: Skipping messages ", skippedMessage)
-
+      Logger.group("Openreplay: Skipping messages ", skippedMessage)
     }
-
     this.pLastMessageID = this.p
 
     const rMsg = this.readRawMessage()

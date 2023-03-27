@@ -56,7 +56,7 @@ export default class WebLivePlayer extends WebPlayer {
       const bytes = await requestEFSDom(this.session.sessionId)
       const fileReader = new MFileReader(bytes, this.session.startedAt)
       for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-        this.messageManager.distributeMessage(msg, msg._index)
+        this.messageManager.distributeMessage(msg)
       }
       this.wpState.update({
         liveTimeTravel: true,

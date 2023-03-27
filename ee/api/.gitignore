@@ -215,6 +215,7 @@ Pipfile.lock
 /chalicelib/core/log_tool_sumologic.py
 /chalicelib/core/metadata.py
 /chalicelib/core/mobile.py
+/chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
 #exp /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
@@ -264,5 +265,8 @@ Pipfile.lock
 /app_alerts.py
 /build_alerts.sh
 /build_crons.sh
+/run-dev.sh
+/run-alerts-dev.sh
+/routers/subs/health.py
 /routers/subs/v1_api.py
 #exp /chalicelib/core/dashboards.py

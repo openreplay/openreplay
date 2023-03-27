@@ -1,6 +1,6 @@
 {
   "name": "peers-server",
-  "version": "1.0.0",
+  "version": "v1.11.0",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
   "scripts": {
@@ -19,6 +19,6 @@
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
     "express": "^4.18.2",
-    "peer": "^v1.0.0-rc.9"
+    "peer": "^v1.0.0"
   }
 }

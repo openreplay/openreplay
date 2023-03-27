@@ -1,2 +1,2 @@
 #!/bin/bash
-rsync -avr --exclude=".*" --ignore-existing ../utilities/utils ./
+rsync -avr --exclude=".*" --ignore-existing ../assist/utils ./

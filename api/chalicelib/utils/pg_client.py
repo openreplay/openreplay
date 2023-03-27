@@ -87,9 +87,10 @@ class PostgresClient:
     long_query = False
     unlimited_query = False
 
-    def __init__(self, long_query=False, unlimited_query=False):
+    def __init__(self, long_query=False, unlimited_query=False, use_pool=True):
         self.long_query = long_query
         self.unlimited_query = unlimited_query
+        self.use_pool = use_pool
         if unlimited_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-UNLIMITED"
@@ -100,7 +101,7 @@ class PostgresClient:
             long_config["options"] = f"-c statement_timeout=" \
                                      f"{config('pg_long_timeout', cast=int, default=5 * 60) * 1000}"
             self.connection = psycopg2.connect(**long_config)
-        elif not config('PG_POOL', cast=bool, default=True):
+        elif not use_pool or not config('PG_POOL', cast=bool, default=True):
             single_config = dict(_PG_CONFIG)
             single_config["application_name"] += "-NOPOOL"
             single_config["options"] = f"-c statement_timeout={config('PG_TIMEOUT', cast=int, default=30) * 1000}"
@@ -120,11 +121,12 @@ class PostgresClient:
         try:
             self.connection.commit()
             self.cursor.close()
-            if self.long_query or self.unlimited_query:
+            if not self.use_pool or self.long_query or self.unlimited_query:
                 self.connection.close()
         except Exception as error:
             logging.error("Error while committing/closing PG-connection", error)
             if str(error) == "connection already closed" \
+                    and self.use_pool \
                     and not self.long_query \
                     and not self.unlimited_query \
                     and config('PG_POOL', cast=bool, default=True):
@@ -134,6 +136,7 @@ class PostgresClient:
                 raise error
         finally:
             if config('PG_POOL', cast=bool, default=True) \
+                    and self.use_pool \
                     and not self.long_query \
                     and not self.unlimited_query:
                 postgreSQL_pool.putconn(self.connection)

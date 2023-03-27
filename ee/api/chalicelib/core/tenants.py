@@ -51,7 +51,7 @@ def get_by_api_key(api_key):
                                 WHERE tenants.api_key = %(api_key)s 
                                     AND tenants.deleted_at ISNULL
                                 LIMIT 1;""",
-            {"api_key": api_key})
+                            {"api_key": api_key})
         cur.execute(query=query)
         return helper.dict_to_camel_case(cur.fetchone())
 
@@ -94,7 +94,7 @@ def update(tenant_id, user_id, data: schemas.UpdateTenantSchema):
     return edit_client(tenant_id=tenant_id, changes=changes)
 
 
-def tenants_exists():
-    with pg_client.PostgresClient() as cur:
+def tenants_exists(use_pool=True):
+    with pg_client.PostgresClient(use_pool=use_pool) as cur:
         cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
         return cur.fetchone()["exists"]

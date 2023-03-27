@@ -4,7 +4,9 @@
 - Capture DOM node drop event (>30% nodes removed)
 - Capture iframe network requests
 - Detect cached requests to img, css and js resources; send transferred size
-- added `{ network: { disableClickmaps: boolean } }` to disable calculating el. selectors
+- added `{ mouse: { disableClickmaps: boolean } }` to disable calculating el. selectors
+- added `{ mouse: { minSelectorDepth?: number; nthThreshold?: number; maxOptimiseTries?: number }` for selector finding optimisations
+- fixed inline css loading in specific cases when assets gets around min flush size
 
 ## 5.0.1
 

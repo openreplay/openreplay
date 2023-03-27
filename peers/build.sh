@@ -41,7 +41,8 @@ function build_api(){
     }
     cp -R ../peers ../${destination}
     cd ../${destination}
-    cp -R ../utilities/utils .
+    cp -R ../assist/utils .
+    cp ../sourcemap-reader/utils/health.js ./utils/.
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/peers/* ./
