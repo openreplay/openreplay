@@ -98,7 +98,7 @@ class Login extends React.Component {
                   />
                 )}
                 <div style={{ width: '350px' }} className="px-8">
-                  <div className="mb-6">
+                  <Form.Field>
                     <label>Email Address</label>
                     <Input
                       data-test-id={"login"}
@@ -111,8 +111,8 @@ class Login extends React.Component {
                       required
                       icon="envelope"
                     />
-                  </div>
-                  <div className="mb-6">
+                  </Form.Field>
+                  <Form.Field>
                     <label className="mb-2">Password</label>
                     <Input
                       data-test-id={"password"}
@@ -122,9 +122,9 @@ class Login extends React.Component {
                       name="password"
                       onChange={this.write}
                       required
-                      icon="lock-alt"
+                      icon="key"
                     />
-                  </div>
+                  </Form.Field>
                 </div>
               </Loader>
               {errors && errors.length ? (
@@ -153,12 +153,10 @@ class Login extends React.Component {
             </Form>
 
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
-              <div className="mb-4">or</div>
-
               {authDetails.sso ? (
                 <a href="/api/sso/saml2" rel="noopener noreferrer">
-                  <Button variant="outline" type="submit">
-                    {`Login with SSO ${
+                  <Button variant="text-primary" type="submit">
+                    {`Login with enterprise account ${
                       authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
                     }`}
                   </Button>
@@ -170,12 +168,12 @@ class Login extends React.Component {
                   placement="top"
                 >
                   <Button
-                    variant="outline"
+                    variant="text-primary"
                     type="submit"
                     className="pointer-events-none opacity-30"
                   >
-                    {`Login with SSO ${
-                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
+                    {`Login with enterprise account ${
+                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : '(SSO)'
                     }`}
                   </Button>
                 </Tooltip>

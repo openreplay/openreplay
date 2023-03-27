@@ -114,22 +114,18 @@ export default class ForgotPassword extends React.PureComponent {
             <img src="/assets/logo.svg" width={200} />
           </div>
           <div className="border rounded bg-white" style={{ width: '350px' }}>
-            <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">
-              { resetting ? "Create Password" : "Reset Password" }
-            </h2>
+            {!resetting && <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">Reset Password</h2>}
+            {resetting && <h2 className="text-center text-lg font-medium mb-6 border-b p-5 w-full">
+              Welcome, join your organization by <br/> setting a new password
+              </h2>
+            }
 
             <div className="px-8">
-              {resetting && <div className="my-6">Provide your email address, so we can send you a link to reset your password.</div> }
               <Form
                 onSubmit={this.onSubmit}
                 style={{ minWidth: '50%' }}
                 className="flex flex-col items-center justify-center"
               >
-                {/* <div className="mb-8">
-                  <h2 className="text-center text-3xl mb-6">{`${
-                    resetting ? 'Create' : 'Reset'
-                  } Password`}</h2>
-                </div> */}
                 <Loader loading={loading}>
                   <div data-hidden={updated} className="w-full">
                     {CAPTCHA_ENABLED && (
@@ -172,28 +168,31 @@ export default class ForgotPassword extends React.PureComponent {
                     {resetting && (
                       <React.Fragment>
                         <Form.Field>
-                          <i className={stl.inputIconPassword} />
+                          <label>{'Set a password'}</label>
+                          {/* <i className={stl.inputIconPassword} /> */}
                           <Input
                             autocomplete="new-password"
                             type="password"
-                            placeholder="Password"
+                            placeholder="Type here..."
                             name="password"
                             onChange={this.write}
                             className="w-full"
+                            icon="key"
                           />
                         </Form.Field>
                         <div className={stl.passwordPolicy} data-hidden={!this.shouldShouwPolicy()}>
                           {PASSWORD_POLICY}
                         </div>
                         <Form.Field>
-                          <i className={stl.inputIconPassword} />
+                        <label>{'Cofirm password'}</label>
                           <Input
                             autocomplete="new-password"
                             type="password"
-                            placeholder="Confirm Password"
+                            placeholder="Re-enter your new password"
                             name="passwordRepeat"
                             onChange={this.write}
                             className="w-full"
+                            icon="key"
                           />
                         </Form.Field>
                       </React.Fragment>
