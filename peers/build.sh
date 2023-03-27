@@ -62,4 +62,6 @@ function build_api(){
 
 check_prereq
 build_api $1
-[[ $PATCH -eq 1 ]] && update_helm_release peers
+if [[ $PATCH -eq 1 ]]; then
+  update_helm_release peers 
+fi
