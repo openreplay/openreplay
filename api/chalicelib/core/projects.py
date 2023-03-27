@@ -54,6 +54,7 @@ def __create(tenant_id, name):
 
 
 def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False):
+    stack_integrations = False
     with pg_client.PostgresClient() as cur:
         extra_projection = ""
         extra_join = ""
