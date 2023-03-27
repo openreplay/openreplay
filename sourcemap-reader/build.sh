@@ -30,7 +30,7 @@ function build_api(){
     }
     cp -R ../sourcemap-reader ../${destination}
     cd ../${destination}
-    cp -R ../assist/utils .
+    cp -R ../assist/utils/* ./utils/.
     tag=""
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
