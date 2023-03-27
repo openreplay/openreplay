@@ -663,12 +663,6 @@ async def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignP
     return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
 
 
-@public_app.post('/signup', tags=['signup'])
-@public_app.put('/signup', tags=['signup'])
-async def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-    return signup.create_step1(data)
-
-
 @app.post('/projects', tags=['projects'])
 async def create_project(data: schemas.CreateProjectSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):

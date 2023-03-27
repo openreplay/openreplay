@@ -55,6 +55,7 @@ def __create(tenant_id, name):
 
 
 def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, user_id=None):
+    stack_integrations = False
     with pg_client.PostgresClient() as cur:
         role_query = """INNER JOIN LATERAL (SELECT 1
                         FROM users
