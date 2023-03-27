@@ -366,7 +366,7 @@ do
       log title "Editing OpenReplay"
       sudo vim -n /var/lib/openreplay/vars.yaml
       /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml || {
-        log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} and fix the issue."
+        log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} after fixing the issue."
         exit 100
       }
       reload
