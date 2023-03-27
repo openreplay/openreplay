@@ -69,18 +69,16 @@ class Login extends React.Component {
     const { CAPTCHA_ENABLED } = this.state;
 
     return (
-      <div className="flex flex-col md:flex-row" style={{ height: '100vh' }}>
-        <div className={cn('md:w-6/12 relative overflow-hidden', stl.left)}>
-          <div className="px-6 pt-10">
-            <img src="/assets/logo-white.svg" />
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center">
+          <div className="m-10 ">
+            <img src="/assets/logo.svg" width={200}/>
           </div>
-          <img style={{ width: '800px', position: 'absolute', bottom: -100, left: 0 }} src={LoginBg} />
-        </div>
-        <div className="md:w-6/12 flex items-center justify-center py-10">
-          <div className="">
+          <div className="border rounded bg-white">
             <Form onSubmit={this.onSubmit} className="flex items-center justify-center flex-col">
-              <div className="mb-8">
-                <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
+              <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">Login to your account</h2>
+              <div className="">
+                
                 {!authDetails.tenants && (
                   <div className="text-center text-xl">
                     Don't have an account?{' '}
@@ -99,19 +97,19 @@ class Login extends React.Component {
                     onChange={(token) => this.handleSubmit(token)}
                   />
                 )}
-                <div style={{ width: '350px' }}>
+                <div style={{ width: '350px' }} className="px-8">
                   <div className="mb-6">
-                    <label>Email</label>
+                    <label>Email Address</label>
                     <Input
                       data-test-id={"login"}
                       autoFocus={true}
                       autoComplete="username"
                       type="text"
-                      placeholder="Email"
+                      placeholder="e.g. john@example.com"
                       name="email"
                       onChange={this.write}
                       required
-                      icon="user-alt"
+                      icon="envelope"
                     />
                   </div>
                   <div className="mb-6">
@@ -142,15 +140,16 @@ class Login extends React.Component {
                   ))}
                 </div>
               ) : null}
-              {/* <div className={ stl.formFooter }> */}
-              <Button data-test-id={"log-button"} className="mt-2" type="submit" variant="primary">
-                {'Login'}
-              </Button>
+              
+              <div className="px-8 w-full">
+                <Button data-test-id={"log-button"} className="mt-2 w-full text-center" type="submit" variant="primary">
+                  {'Login'}
+                </Button>
 
-              <div className={cn(stl.links, 'text-lg')}>
-                <Link to={FORGOT_PASSWORD}>{'Forgot your password?'}</Link>
+                <div className="my-8">
+                  <span className="color-gray-medium">Having trouble logging in?</span> <Link to={FORGOT_PASSWORD} className="link ml-1">{'Reset password'}</Link>
+                </div>
               </div>
-              {/* </div> */}
             </Form>
 
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
@@ -182,6 +181,8 @@ class Login extends React.Component {
                 </Tooltip>
               )}
             </div>
+            
+
           </div>
         </div>
       </div>

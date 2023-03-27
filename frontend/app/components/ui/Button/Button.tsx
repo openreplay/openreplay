@@ -60,7 +60,7 @@ export default (props: Props) => {
   }
 
   const render = () => (
-    <button {...rest} type={type} className={cn(classes, className)}>
+    <button {...rest} type={type} className={cn(classes, className, 'flex items-center justify-center')}>
       {icon && (
         // @ts-ignore
         <Icon className={cn({ 'mr-2': children })} name={icon} color={iconColor} size={iconSize} />
