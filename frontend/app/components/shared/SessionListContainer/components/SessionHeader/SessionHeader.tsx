@@ -47,40 +47,24 @@ function SessionHeader(props: Props) {
   };
 
   return (
-    <div className="flex items-center px-4 justify-between">
-      <div className="flex items-center justify-between">
-        <div className="mr-3 text-base flex items-center gap-4">
-          <Tab onClick={() => props.setActiveTab({ type: 'all' })} addBorder={activeTab === 'all'}>
-            <span className="font-bold">SESSIONS</span>
-          </Tab>
-          <Tab
-            onClick={() => props.setActiveTab({ type: 'bookmark' })}
-            addBorder={activeTab === 'bookmark'}
-          >
-            <span className="font-bold">{`${isEnterprise ? 'VAULT' : 'BOOKMARKS'}`}</span>
-          </Tab>
-          <Tab
-            addBorder={activeTab === 'notes'}
-            onClick={() => props.setActiveTab({ type: 'notes' })}
-          >
-            <span className="font-bold">NOTES</span>
-          </Tab>
-        </div>
-      </div>
-
-      {activeTab !== 'notes' && activeTab !== 'bookmark' ? (
-        <div className="flex items-center">
-          <SessionTags />
-          <div className="mx-4" />
-          <SelectDateRange period={period} onChange={onDateChange} right={true} />
-          <div className="mx-2" />
+    <div className="flex items-center px-4 py-1 justify-between w-full">
+      {activeTab !== 'notes' ? (
+        <div className="flex items-center w-full justify-end">
+          {activeTab !== 'bookmark' && (
+            <>
+              <SessionTags />
+              <div className="mr-auto" />
+              <SelectDateRange period={period} onChange={onDateChange} right={true} />
+              <div className="mx-2" />
+            </>
+          )}
           <SessionSort />
           <SessionSettingButton />
         </div>
       ) : null}
 
       {activeTab === 'notes' && (
-        <div className="flex items-center">
+        <div className="flex items-center justify-end w-full">
           <NoteTags />
         </div>
       )}
