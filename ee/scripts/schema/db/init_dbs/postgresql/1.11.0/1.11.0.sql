@@ -22,10 +22,18 @@ $$
 SELECT 'v1.11.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
+ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'mouse_thrashing';
+
+LOCK TABLE ONLY events.inputs IN ACCESS EXCLUSIVE MODE;
 ALTER TABLE events.inputs
     ADD COLUMN duration   integer NULL,
     ADD COLUMN hesitation integer NULL;
 
+LOCK TABLE ONLY events.clicks IN ACCESS EXCLUSIVE MODE;
+ALTER TABLE events.clicks
+    ADD COLUMN hesitation integer NULL;
+
+LOCK TABLE ONLY public.projects IN ACCESS EXCLUSIVE MODE;
 ALTER TABLE public.projects
     ALTER COLUMN gdpr SET DEFAULT '{
       "maskEmails": true,
@@ -33,10 +41,5 @@ ALTER TABLE public.projects
       "maskNumbers": false,
       "defaultInputMode": "obscured"
     }'::jsonb;
-
-ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'mouse_thrashing';
-
-ALTER TABLE events.clicks
-    ADD COLUMN hesitation integer NULL;
 
 COMMIT;
