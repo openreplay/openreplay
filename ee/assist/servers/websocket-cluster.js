@@ -83,22 +83,6 @@ const respond = function (res, data) {
     }
 }
 
-const countSessions = async function () {
-    let count = 0;
-    try {
-        let rooms = await io.of('/').adapter.allRooms();
-        for (let i of rooms) {
-            let {projectKey, sessionId} = extractPeerId(i);
-            if (projectKey !== undefined && sessionId !== undefined) {
-                count++;
-            }
-        }
-    } catch (e) {
-        console.error(e);
-    }
-    return count;
-}
-
 const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
     let filters = await extractPayloadFromRequest(req, res);
@@ -433,7 +417,6 @@ module.exports = {
                 process.exit(2);
             });
     },
-    countSessions,
     handlers: {
         socketsList,
         socketsListByProject,

@@ -11,6 +11,7 @@ servers/peerjs-server.js
 servers/sourcemaps-handler.js
 servers/sourcemaps-server.js
 /utils/geoIP.js
+/utils/health.js
 /utils/HeapSnapshot.js
 /utils/helper.js
 /utils/assistHelper.js
