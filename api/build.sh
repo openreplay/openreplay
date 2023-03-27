@@ -78,12 +78,12 @@ function build_api(){
 check_prereq
 build_api $environment
 echo buil_complete
-#IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO SIGN_IMAGE=$SIGN_IMAGE SIGN_KEY=$SIGN_KEY bash build_alerts.sh $1
-#
-#[[ $environment == "ee" ]] && {
-#  cp ../ee/api/build_crons.sh .
-#  IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO SIGN_IMAGE=$SIGN_IMAGE SIGN_KEY=$SIGN_KEY bash build_crons.sh $1
-#  exit_err $?
-#  rm build_crons.sh
-#} || true
 [[ $PATCH -eq 1 ]] && update_helm_release chalice
+IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO SIGN_IMAGE=$SIGN_IMAGE SIGN_KEY=$SIGN_KEY bash build_alerts.sh $1
+
+[[ $environment == "ee" ]] && {
+  cp ../ee/api/build_crons.sh .
+  IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO SIGN_IMAGE=$SIGN_IMAGE SIGN_KEY=$SIGN_KEY bash build_crons.sh $1
+  exit_err $?
+  rm build_crons.sh
+} || true
