@@ -14,6 +14,7 @@ clickhouse-driver==0.2.4
 python3-saml==1.14.0
 python-multipart==0.0.5
 python-decouple
+pydantic
 
 argcomplete
 apache-airflow
