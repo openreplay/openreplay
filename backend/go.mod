@@ -19,6 +19,7 @@ require (
 	github.com/jackc/pgx/v4 v4.6.0
 	github.com/klauspost/pgzip v1.2.5
 	github.com/oschwald/maxminddb-golang v1.7.0
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/sethvargo/go-envconfig v0.7.0

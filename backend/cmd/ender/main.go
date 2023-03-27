@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/memory"
 	"os"
 	"os/signal"
 	"strings"
@@ -50,6 +51,11 @@ func main() {
 		false,
 		cfg.MessageSizeLimit,
 	)
+
+	memManager, err := memory.NewManager(cfg.MemoryThreshold)
+	if err != nil {
+		log.Printf("can't init memory manager: %s", err)
+	}
 
 	log.Printf("Ender service started\n")
 
@@ -121,6 +127,10 @@ func main() {
 		case msg := <-consumer.Rebalanced():
 			log.Println(msg)
 		default:
+			if !memManager.HasFreeMemory() {
+				log.Println("Memory is full")
+				continue
+			}
 			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)
 			}
