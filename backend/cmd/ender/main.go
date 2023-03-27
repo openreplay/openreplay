@@ -128,9 +128,6 @@ func main() {
 			log.Println(msg)
 		default:
 			if !memManager.HasFreeMemory() {
-				// DEBUG_START
-				log.Println("Memory is full")
-				// DEBUG_END
 				continue
 			}
 			if err := consumer.ConsumeNext(); err != nil {

@@ -2,11 +2,10 @@ package memory
 
 import (
 	"errors"
+	"github.com/pbnjay/memory"
 	"log"
 	"sync"
 	"time"
-
-	"github.com/pbnjay/memory"
 )
 
 type Manager interface {
@@ -28,37 +27,44 @@ func NewManager(threshold uint64) (Manager, error) {
 		threshold: threshold,
 		current:   1,
 	}
+	m.calcMemoryUsage()
 	go m.worker()
 	return m, nil
 }
 
-func (m *managerImpl) currentFree() uint64 {
+func (m *managerImpl) currentUsage() uint64 {
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	return m.current
 }
 
+func (m *managerImpl) calcMemoryUsage() {
+	total := memory.TotalMemory()
+	free := memory.FreeMemory()
+	current := uint64(float64((total-free)*100) / float64(total))
+	// Check limits
+	if current > 100 && m.currentUsage() < 100 {
+		log.Printf("can't calculate memory usage, free: %d, total: %d", free, total)
+		current = 100
+	}
+	// Print debug info
+	if m.currentUsage() != current {
+		log.Printf("total: %d, free: %d, current usage: %d, threshold: %d", total, free, current, m.threshold)
+	}
+	m.mutex.Lock()
+	m.current = current
+	m.mutex.Unlock()
+}
+
 func (m *managerImpl) worker() {
 	for {
 		select {
-		case <-time.After(10 * time.Second):
-			total := memory.TotalMemory()
-			free := memory.FreeMemory()
-			current := uint64(float64(free*100) / float64(total))
-			// DEBUG_START
-			log.Printf("total: %d, free: %d, current: %d, threshold: %d", total, free, current, m.threshold)
-			// DEBUG_END
-			if current >= 100 && m.currentFree() < 100 {
-				log.Printf("can't calculate free memory, free: %d, total: %d", free, total)
-				current = 100
-			}
-			m.mutex.Lock()
-			m.current = current
-			m.mutex.Unlock()
+		case <-time.After(3 * time.Second):
+			m.calcMemoryUsage()
 		}
 	}
 }
 
 func (m *managerImpl) HasFreeMemory() bool {
-	return m.currentFree() <= m.threshold
+	return m.currentUsage() <= m.threshold
 }
