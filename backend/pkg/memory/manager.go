@@ -26,7 +26,7 @@ func NewManager(threshold uint64) (Manager, error) {
 	m := &managerImpl{
 		mutex:     &sync.RWMutex{},
 		threshold: 100 - threshold,
-		current:   100,
+		current:   1,
 	}
 	go m.worker()
 	return m, nil
@@ -46,7 +46,7 @@ func (m *managerImpl) worker() {
 			free := memory.FreeMemory()
 			current := uint64(float64(free*100) / float64(total))
 			// DEBUG_START
-			log.Printf("total: %d, free: %d, current: %d", total, free, current)
+			log.Printf("total: %d, free: %d, current: %d, threshold: %d", total, free, current, m.threshold)
 			// DEBUG_END
 			if current >= 100 && m.currentFree() < 100 {
 				log.Printf("can't calculate free memory, free: %d, total: %d", free, total)
@@ -60,5 +60,5 @@ func (m *managerImpl) worker() {
 }
 
 func (m *managerImpl) HasFreeMemory() bool {
-	return m.currentFree() >= m.threshold
+	return m.currentFree() <= m.threshold
 }
