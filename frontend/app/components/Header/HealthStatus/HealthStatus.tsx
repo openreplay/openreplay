@@ -22,6 +22,7 @@ export interface IServiceStats {
 function HealthStatus() {
   const healthResponseSaved = localStorage.getItem(healthResponseKey) || '{}';
   const [healthResponse, setHealthResponse] = React.useState(JSON.parse(healthResponseSaved));
+  const [isError, setIsError] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const lastAskedSaved = localStorage.getItem(lastAskedKey);
   const [lastAsked, setLastAsked] = React.useState(lastAskedSaved);
@@ -36,6 +37,7 @@ function HealthStatus() {
       setLastAsked(asked.toString());
     } catch (e) {
       console.error(e);
+      setIsError(true);
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +53,7 @@ function HealthStatus() {
     }
   }, []);
 
-  const icon = healthResponse?.overallHealth ? 'pulse' : ('exclamation-circle-fill' as const);
+  const icon = !isError && healthResponse?.overallHealth ? 'pulse' : ('exclamation-circle-fill' as const);
   return (
     <>
       <div className={'relative group h-full hover:bg-figmaColors-secondary-outlined-hover-background'}>
@@ -71,6 +73,7 @@ function HealthStatus() {
           isLoading={isLoading}
           lastAsked={lastAsked}
           setShowModal={setShowModal}
+          isError={isError}
         />
       </div>
       {showModal ? (

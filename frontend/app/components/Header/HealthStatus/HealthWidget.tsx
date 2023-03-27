@@ -10,12 +10,14 @@ function HealthWidget({
   isLoading,
   lastAsked,
   setShowModal,
+  isError,
 }: {
   healthResponse: { overallHealth: boolean; healthMap: Record<string, IServiceStats> };
   getHealth: Function;
   isLoading: boolean;
   lastAsked: string | null;
   setShowModal: (visible: boolean) => void;
+  isError?: boolean;
 }) {
   const [lastAskedDiff, setLastAskedDiff] = React.useState(0);
   const healthOk = healthResponse?.overallHealth;
@@ -28,8 +30,8 @@ function HealthWidget({
     setLastAskedDiff(diffInMinutes);
   }, [lastAsked]);
 
-  const title = healthOk ? 'All Systems Operational' : 'Service disruption';
-  const icon = healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
+  const title = !isError && healthOk ? 'All Systems Operational' : 'Service disruption';
+  const icon = !isError && healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
 
   const problematicServices = Object.values(healthResponse?.healthMap || {}).filter(
     (service: Record<string, any>) => !service.healthOk
@@ -65,10 +67,12 @@ function HealthWidget({
             <Icon name={'arrow-repeat'} size={16} color={'main'} />
           </div>
         </div>
+        {isError && <div className={'text-secondary text-sm'}>Error getting service health status</div>}
+
         <div className={'divider w-full border border-b-light-gray'} />
 
         <div className={'w-full'}>
-          {!healthOk ? (
+          {!isError && !healthOk ? (
             <>
               <div className={'text-secondary pb-2'}>
                 Observed installation Issue with the following

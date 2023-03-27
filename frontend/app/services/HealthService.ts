@@ -5,6 +5,5 @@ export default class HealthService extends BaseService {
     return this.client.get('/health')
       .then(r => r.json())
       .then(j => j.data || {})
-      .catch(Promise.reject)
   }
 }
