@@ -52,7 +52,7 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
-	memManager, err := memory.NewManager(cfg.MemoryThreshold)
+	memManager, err := memory.NewManager(cfg.MaxMemoryUsage)
 	if err != nil {
 		log.Printf("can't init memory manager: %s", err)
 	}

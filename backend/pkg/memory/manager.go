@@ -25,7 +25,7 @@ func NewManager(threshold uint64) (Manager, error) {
 	}
 	m := &managerImpl{
 		mutex:     &sync.RWMutex{},
-		threshold: 100 - threshold,
+		threshold: threshold,
 		current:   1,
 	}
 	go m.worker()

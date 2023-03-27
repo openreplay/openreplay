@@ -16,7 +16,7 @@ type Config struct {
 	PartitionsNumber           int    `env:"PARTITIONS_NUMBER,required"`
 	UseEncryption              bool   `env:"USE_ENCRYPTION,default=false"`
 	UseProfiler                bool   `env:"PROFILER_ENABLED,default=false"`
-	MemoryThreshold            uint64 `env:"MEMORY_THRESHOLD,default=90"`
+	MaxMemoryUsage             uint64 `env:"MAX_MEMORY_USAGE,default=90"`
 }
 
 func New() *Config {
