@@ -109,7 +109,7 @@ def __check_be_service(service_name):
             return fail_response
         return {
             "health": True,
-            "details": {}
+            "details": results.json().get("data", {})
         }
 
     return fn
