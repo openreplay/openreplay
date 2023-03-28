@@ -433,7 +433,7 @@ export const fetchV2 = (sessionId: string) =>
 
               let [events, notes] = await Promise.all([
                   apiGet(`/sessions/${sessionId}/events`, dispatch),
-                  apiGet(`/sessions/${sessionId}/notes`, dispatch,),
+                  apiGet(`/sessions/${sessionId}/notes`, dispatch),
               ]);
               if (notes) {
                 dispatch({ type: FETCH_NOTES.SUCCESS, data: notes.data });
