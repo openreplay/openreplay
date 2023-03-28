@@ -81,7 +81,7 @@ function install_packages() {
   [[ -e "$OR_DIR/eget" ]] || {
     cd "$tmp_dir" || log err "Not able to cd to tmp dir $tmp_dir"
     curl --version &> /dev/null || log err "curl not found. Please install"
-    curl https://zyedidia.github.io/eget.sh | sh
+    curl -SsL https://zyedidia.github.io/eget.sh | sh - > /dev/null
     sudo mv eget $OR_DIR
     err_cd -
   }
