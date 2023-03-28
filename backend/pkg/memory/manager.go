@@ -53,12 +53,13 @@ func (m *managerImpl) calcMemoryUsage() {
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 	allocated := rtm.Alloc / 1024 / 1024
+	total := rtm.Sys / 1024 / 1024
 	if allocated > m.maximum && m.HasFreeMemory() {
 		log.Println("memory consumption is greater than maximum memory, current: ", allocated, "maximum: ", m.maximum)
 	}
 	current := uint64(float64(allocated*100) / float64(m.maximum))
 	// DEBUG
-	log.Printf("current memory allocated: %d, maximum: %d, current usage: %d, threshold: %d", allocated, m.maximum, current, m.threshold)
+	log.Printf("current memory consumption: %d, allocated: %d, maximum: %d, current usage: %d, threshold: %d", total, allocated, m.maximum, current, m.threshold)
 	m.mutex.Lock()
 	m.current = current
 	m.mutex.Unlock()
