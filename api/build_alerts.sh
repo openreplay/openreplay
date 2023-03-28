@@ -8,7 +8,7 @@
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
 git_sha=$(git rev-parse --short HEAD)
-image_tag=${IMAGE_TAG:-$git_sha}
+image_tag=${IMAGE_TAG:-git_sha}
 envarg="default-foss"
 check_prereq() {
     which docker || {
@@ -21,7 +21,7 @@ check_prereq() {
 [[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
   image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
-  [[ $ee == "true" ]] && { 
+  [[ $ee == "true" ]] && {
     image_tag="${image_tag}-ee"
   }
 }
@@ -68,4 +68,6 @@ function build_alerts(){
 
 check_prereq
 build_alerts $1
-[[ $PATCH -eq 1 ]] && update_helm_release alerts
+if [[ $PATCH -eq 1 ]]; then
+  update_helm_release alerts
+fi

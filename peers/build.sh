@@ -18,7 +18,7 @@ check_prereq() {
 [[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
   image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
-  [[ $ee == "true" ]] && { 
+  [[ $ee == "true" ]] && {
     image_tag="${image_tag}-ee"
   }
 }
@@ -63,5 +63,5 @@ function build_api(){
 check_prereq
 build_api $1
 if [[ $PATCH -eq 1 ]]; then
-  update_helm_release peers 
+  update_helm_release peers
 fi
