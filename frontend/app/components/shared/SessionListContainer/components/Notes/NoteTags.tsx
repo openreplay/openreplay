@@ -18,7 +18,7 @@ function NoteTags() {
   const { notesStore } = useStore();
 
   return (
-    <div className="flex items-center">
+    <div className="flex items-center w-full">
       <div>
         <TagItem
           onClick={() => notesStore.toggleTag()}
@@ -35,7 +35,7 @@ function NoteTags() {
           />
         </div>
       ))}
-      <div className="ml-2" />
+      <div className="ml-auto" />
       <Select
         name="notesOwner"
         plain
