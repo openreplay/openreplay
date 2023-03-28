@@ -405,7 +405,7 @@ export const fetch =
 export const fetchV2 = (sessionId: string) =>
   (dispatch, getState) => {
       const apiClient = new APIClient()
-      const apiGet = (url: string, dispatch: any, FAILURE: string) => apiClient.get(url)
+      const apiGet = (url: string, dispatch: any, FAILURE?: string) => apiClient.get(url)
         .then(async (response) => {
             if (response.status === 403) {
                 dispatch({ type: FETCH_ACCOUNT.FAILURE });
@@ -420,7 +420,7 @@ export const fetchV2 = (sessionId: string) =>
         .catch(async (e) => {
             const data = await e.response?.json();
             logger.error('Error during API request. ', e);
-            return dispatch({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
+            return FAILURE && dispatch({ type: FAILURE, errors: data ? parseError(data.errors) : [] });
         });
 
     const filter = getState().getIn(['filters', 'appliedFilter'])
@@ -432,11 +432,15 @@ export const fetchV2 = (sessionId: string) =>
               dispatch({ type: FETCHV2.SUCCESS, data, ...filter });
 
               let [events, notes] = await Promise.all([
-                  apiGet(`/sessions/${sessionId}/events`, dispatch, FETCH_EVENTS.FAILURE),
-                  apiGet(`/sessions/${sessionId}/notes`, dispatch, FETCH_NOTES.FAILURE),
+                  apiGet(`/sessions/${sessionId}/events`, dispatch),
+                  apiGet(`/sessions/${sessionId}/notes`, dispatch,),
               ]);
-              dispatch({ type: FETCH_EVENTS.SUCCESS, data: events.data, filter });
-              dispatch({ type: FETCH_NOTES.SUCCESS, data: notes.data });
+              if (notes) {
+                dispatch({ type: FETCH_NOTES.SUCCESS, data: notes.data });
+              }
+              if (events) {
+                  dispatch({ type: FETCH_EVENTS.SUCCESS, data: events.data, filter });
+              }
           }
           if (jwt) {
               dispatch({ type: UPDATE_JWT, data: jwt });
