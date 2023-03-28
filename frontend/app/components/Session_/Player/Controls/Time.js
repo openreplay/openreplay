@@ -5,7 +5,7 @@ import { PlayTime } from 'App/player-ui'
 
 const ReduxTime = observer(({ format, name, isCustom }) => {
   const { store } = React.useContext(PlayerContext)
-  const time = store.get()[name]
+  const time = store.get()[name] || 0
 
   return <PlayTime format={format} time={time} isCustom={isCustom} />
 })
