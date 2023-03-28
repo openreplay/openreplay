@@ -500,6 +500,7 @@ class IssueType(str, Enum):
     crash = 'crash'
     custom = 'custom'
     js_exception = 'js_exception'
+    mouse_thrashing = 'mouse_thrashing'
 
 
 class MetricFormatType(str, Enum):
