@@ -107,7 +107,8 @@ jobs:
         sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
 
         # Update changed image tag
-        sed -i "/sourcemapreader/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/sourcemaps-reader/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/sourcemaps-reader/sourcemapreader/g" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
