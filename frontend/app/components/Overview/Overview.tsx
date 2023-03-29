@@ -9,16 +9,16 @@ import OverviewMenu from 'Shared/OverviewMenu';
 
 function Overview() {
   return (
-    <div className="page-margin container-90">
+    <div className="page-margin container-90 flex relative">
       <div className={cn('side-menu')}>
         <OverviewMenu />
       </div>
       <div
-        className={cn("side-menu-margined")}
+        className={cn("side-menu-margined w-full")}
       >
         <NoSessionsMessage />
 
-        <div className="mb-5">
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px'}}>
           <MainSearchBar />
           <SessionSearch />
 
