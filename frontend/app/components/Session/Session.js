@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
-import { fetch as fetchSession } from 'Duck/sessions';
+import { fetch as fetchSession, clearCurrentSession } from 'Duck/sessions';
 import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { Link, NoContent, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
@@ -18,6 +18,7 @@ function Session({
 	loading,
 	hasErrors,
 	fetchSession,
+	clearCurrentSession,
  }) {
  	usePageTitle("OpenReplay Session Player");
  	const [ initializing, setInitializing ] = useState(true)
@@ -29,6 +30,9 @@ function Session({
 			console.error("No sessionID in route.")
 		}
 		setInitializing(false)
+		return () => {
+			clearCurrentSession();
+		}
 	},[ sessionId ]);
 
 	useEffect(() => {
@@ -65,4 +69,5 @@ export default withPermissions(['SESSION_REPLAY'], '', true)(connect((state, pro
 	}, {
 	fetchSession,
 	fetchSlackList,
+	clearCurrentSession,
 })(Session));

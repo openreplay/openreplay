@@ -208,7 +208,11 @@ export default class MessageManager {
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
           msgs.push(msg)
         }
-        const sorted = msgs.sort((m1, m2) => m1.time - m2.time)
+        const sorted = msgs.sort((m1, m2) => {
+          // @ts-ignore
+          if (m1.time === m2.time) return m1._index - m2._index
+          return m1.time - m2.time
+        })
 
         let indx = sorted[0]._index
         let outOfOrderCounter = 0
