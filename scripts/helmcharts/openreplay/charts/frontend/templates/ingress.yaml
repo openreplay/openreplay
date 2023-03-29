@@ -63,7 +63,7 @@ metadata:
   {{- end }}
     nginx.ingress.kubernetes.io/backend-protocol: https
     nginx.ingress.kubernetes.io/upstream-vhost: static.openreplay.com
-    nginx.ingress.kubernetes.io/rewrite-target: '/$1/openreplay.js'
+    nginx.ingress.kubernetes.io/rewrite-target: '/$1/openreplay$2.js'
     nginx.ingress.kubernetes.io/proxy-body-size: 8m
     nginx.ingress.kubernetes.io/proxy-buffering: "on"
     nginx.ingress.kubernetes.io/server-snippet: |
@@ -81,7 +81,7 @@ spec:
     - host: {{ .Values.global.domainName }} 
       http:
         paths:
-          - path: /script/(.*)/openreplay.js
+          - path: /script/(.*)/openreplay(.*).js
             pathType: Prefix
             backend:
               service:
