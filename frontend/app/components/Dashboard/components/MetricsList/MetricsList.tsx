@@ -54,10 +54,10 @@ function MetricsList({
       title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_CARDS} size={180} />
-          <div className="text-center text-gray-600 my-4">
+          <div className="text-center mt-4">
             {metricsSearch !== '' ? 'No matching results' : "You haven't created any cards yet"}
           </div>
-          <div className="text-base text-disabled-text flex items-center px-6">
+          <div className="text-sm color-gray-medium font-normal">
             Create cards to capture key interactions and track KPIs.
           </div>
         </div>

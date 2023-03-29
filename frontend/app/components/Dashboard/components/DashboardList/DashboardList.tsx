@@ -17,6 +17,7 @@ function DashboardList() {
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
+          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
           <div className="text-center my-4">
             {dashboardsSearch !== '' ? (
               'No matching results'
@@ -29,7 +30,6 @@ function DashboardList() {
               </div>
             )}
           </div>
-          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
         </div>
       }
     >
