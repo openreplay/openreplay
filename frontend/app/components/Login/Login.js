@@ -36,9 +36,22 @@ class Login extends React.Component {
     CAPTCHA_ENABLED: window.env.CAPTCHA_ENABLED === 'true',
   };
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { authDetails } = nextProps;
+    if (Object.keys(authDetails).length === 0) {
+      return null;
+    }
+
+    if (!authDetails.tenants) {
+      nextProps.history.push(SIGNUP_ROUTE);
+    }
+
+    return null;
+  }
+
   componentDidMount() {
     const { params } = this.props;
-    this.props.fetchTenants();
+    this.props.fetchTenants()
     const jwt = params.get('jwt');
     if (jwt) {
       this.props.setJwt(jwt);
@@ -156,7 +169,7 @@ class Login extends React.Component {
               {authDetails.sso ? (
                 <a href="/api/sso/saml2" rel="noopener noreferrer">
                   <Button variant="text-primary" type="submit">
-                    {`Login with enterprise account ${
+                    {`Login with SSO ${
                       authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
                     }`}
                   </Button>
@@ -172,8 +185,8 @@ class Login extends React.Component {
                     type="submit"
                     className="pointer-events-none opacity-30"
                   >
-                    {`Login with enterprise account ${
-                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : '(SSO)'
+                    {`Login with SSO ${
+                      authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
                     }`}
                   </Button>
                 </Tooltip>
