@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Icon, Tooltip, Button } from 'UI';
 import QueueControls from './QueueControls';
 import Bookmark from 'Shared/Bookmark';
@@ -32,6 +32,15 @@ function SubHeader(props) {
     eventList: eventsList,
     endTime,
   } = store.get();
+
+  const enabledIntegration = useMemo(() => {
+    const { integrations } = props;
+    if (!integrations || !integrations.size) {
+      return false;
+    }
+  
+    return integrations.some((i) => i.token);
+  })
 
   const mappedResourceList = resourceList
     .filter((r) => r.isRed || r.isYellow)
@@ -120,7 +129,7 @@ function SubHeader(props) {
           Create Bug Report
         </Button>
         <NotePopup />
-        <Issues sessionId={props.sessionId} />
+        {enabledIntegration && <Issues sessionId={props.sessionId} /> }
         <SharePopup
           entity="sessions"
           id={props.sessionId}
@@ -154,4 +163,7 @@ function SubHeader(props) {
   );
 }
 
-export default connect((state) => ({ siteId: state.getIn(['site', 'siteId']) }))(observer(SubHeader));
+export default connect((state) => ({
+  siteId: state.getIn(['site', 'siteId']),
+  integrations: state.getIn([ 'issues', 'list' ])
+}))(observer(SubHeader));
