@@ -45,7 +45,7 @@ function ReportTitle() {
         />
       ) : (
         // @ts-ignore
-        <Tooltip delay={200} title="Double click to rename">
+        <Tooltip delay={200} title="Double click to edit">
           <div
             onDoubleClick={toggleEdit}
             className={cn(

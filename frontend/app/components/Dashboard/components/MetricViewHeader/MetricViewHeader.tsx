@@ -53,6 +53,13 @@ function MetricViewHeader() {
             isSearchable={true}
           />
 
+          <DashboardDropdown
+            plain={true}
+            onChange={(value: any) =>
+              metricStore.updateKey('filter', { ...filter, dashboard: value })
+            }
+          />
+
           <Select
             options={[
               { label: 'Newest', value: 'desc' },
@@ -62,13 +69,6 @@ function MetricViewHeader() {
             defaultValue={metricStore.sort.by}
             onChange={({ value }) => metricStore.updateKey('sort', { by: value.value })}
             plain={true}
-          />
-
-          <DashboardDropdown
-            plain={true}
-            onChange={(value: any) =>
-              metricStore.updateKey('filter', { ...filter, dashboard: value })
-            }
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ function DashboardDropdown({ onChange, plain = false }: { plain?: boolean; onCha
   return (
     <Select
       isSearchable={true}
-      placeholder="Select Dashboard"
+      placeholder="Filter by Dashboard"
       plain={plain}
       options={dashboardOptions}
       value={metricStore.filter.dashboard}

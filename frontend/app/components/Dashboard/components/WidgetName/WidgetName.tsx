@@ -64,7 +64,7 @@ function WidgetName(props: Props) {
         />
       ) : (
         // @ts-ignore
-        <Tooltip delay={200} title="Double click to rename" disabled={!canEdit}>
+        <Tooltip delay={200} title="Double click to edit" disabled={!canEdit}>
           <div
             onDoubleClick={() => setEditing(true)}
             className={
