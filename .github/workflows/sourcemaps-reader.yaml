@@ -107,7 +107,7 @@ jobs:
 
         # Update changed image tag
         sed -i "/sourcemaps-reader/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
-        sed -i "/sourcemaps-reader/sourcemapreader/g" /tmp/image_override.yaml
+        sed -i "s/sourcemaps-reader/sourcemapreader/g" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
