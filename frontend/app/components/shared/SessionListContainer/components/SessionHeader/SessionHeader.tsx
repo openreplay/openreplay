@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { numberWithCommas } from 'App/utils';
 import { applyFilter } from 'Duck/search';
 import Period from 'Types/app/period';
@@ -7,22 +7,8 @@ import SessionTags from '../SessionTags';
 import NoteTags from '../Notes/NoteTags';
 import { connect } from 'react-redux';
 import SessionSort from '../SessionSort';
-import cn from 'classnames';
 import { setActiveTab } from 'Duck/search';
 import SessionSettingButton from '../SessionSettingButton';
-
-// @ts-ignore
-const Tab = ({ addBorder, onClick, children }) => (
-  <div
-    className={cn('py-3 cursor-pointer border-b', {
-      'border-b color-teal border-teal': addBorder,
-      'border-transparent': !addBorder,
-    })}
-    onClick={onClick}
-  >
-    {children}
-  </div>
-);
 
 interface Props {
   listCount: number;
@@ -41,6 +27,16 @@ function SessionHeader(props: Props) {
 
   const period = Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
+  const title = useMemo(() => {
+    if (activeTab === 'notes') {
+      return 'Notes';
+    }
+    if (activeTab === 'bookmark') {
+      return isEnterprise? 'Vault' : 'Bookmarks';
+    }
+    return 'Sessions';
+  }, [activeTab]);
+
   const onDateChange = (e: any) => {
     const dateValues = e.toJSON();
     props.applyFilter(dateValues);
@@ -48,6 +44,7 @@ function SessionHeader(props: Props) {
 
   return (
     <div className="flex items-center px-4 py-1 justify-between w-full">
+      <h2 className="text-2xl capitalize mr-4">{title}</h2>
       {activeTab !== 'notes' ? (
         <div className="flex items-center w-full justify-end">
           {activeTab !== 'bookmark' && (
