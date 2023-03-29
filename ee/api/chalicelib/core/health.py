@@ -79,7 +79,7 @@ def __check_be_service(service_name):
         try:
             results = requests.get(HEALTH_ENDPOINTS.get(service_name), timeout=2)
             if results.status_code != 200:
-                print(f"!! issue with the storage-health code:{results.status_code}")
+                print(f"!! issue with the {service_name}-health code:{results.status_code}")
                 print(results.text)
                 # fail_response["details"]["errors"].append(results.text)
                 return fail_response
@@ -88,7 +88,7 @@ def __check_be_service(service_name):
             # fail_response["details"]["errors"].append("timeout")
             return fail_response
         except Exception as e:
-            print("!! Issue getting storage-health response")
+            print(f"!! Issue getting {service_name}-health response")
             print(str(e))
             try:
                 print(results.text)
@@ -156,9 +156,9 @@ def get_health():
             "ingress-nginx": __always_healthy,
             "integrations": __check_be_service("integrations"),
             "peers": __check_be_service("peers"),
-            "quickwit": __check_be_service("quickwit"),
+            # "quickwit": __check_be_service("quickwit"),
             "sink": __check_be_service("sink"),
-            "sourcemaps-reader": __check_be_service("sourcemapreader"),
+            "sourcemaps-reader": __check_be_service("sourcemaps-reader"),
             "storage": __check_be_service("storage")
         }
     }
