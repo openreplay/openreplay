@@ -79,7 +79,7 @@ function UserCard({ className, request, session, width, height, similarSessions,
                             render={() => (
                                 <div className="text-left bg-white">
                                     <SessionInfoItem
-                                        comp={<CountryFlag country={userCountry} />}
+                                        comp={<CountryFlag country={userCountry} height={11} />}
                                         label={countries[userCountry]}
                                         value={<span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt)}</span>}
                                     />
