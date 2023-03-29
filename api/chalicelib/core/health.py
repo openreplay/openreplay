@@ -152,7 +152,7 @@ def get_health():
             "integrations": __check_be_service("integrations"),
             "peers": __check_be_service("peers"),
             "sink": __check_be_service("sink"),
-            "sourcemaps-reader": __check_be_service("sourcemapreader"),
+            "sourcemaps-reader": __check_be_service("sourcemaps-reader"),
             "storage": __check_be_service("storage")
         }
     }
