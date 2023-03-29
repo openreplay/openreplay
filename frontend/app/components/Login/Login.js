@@ -177,7 +177,7 @@ class Login extends React.Component {
               ) : (
                 <Tooltip
                   delay={0}
-                  title={<div>{authDetails.edition === 'ee' ? "SSO has not been configured. Please reach out to your admin." : ENTERPRISE_REQUEIRED}</div>}
+                  title={<div className="text-center">{authDetails.edition === 'ee' ? <span>SSO has not been configured. <br /> Please reach out to your admin.</span> : ENTERPRISE_REQUEIRED}</div>}
                   placement="top"
                 >
                   <Button
