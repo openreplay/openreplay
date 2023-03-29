@@ -23,9 +23,9 @@ function DashboardList() {
               'No matching results'
             ) : (
               <div>
-                <div>Create your first Dashboard</div>
+                <div>You haven't created any dashboards yet</div>
                 <div className="text-sm color-gray-medium font-normal">
-                  A dashboard lets you visualize trends and insights of data captured by OpenReplay.
+                A Dashboard is a collection of Cards that can be shared across teams.
                 </div>
               </div>
             )}
