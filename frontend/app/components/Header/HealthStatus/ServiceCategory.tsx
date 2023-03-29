@@ -29,8 +29,8 @@ function Category({
   return (
     <div
       className={cn(
-        'px-4 py-2 flex items-center gap-2 cursor-pointer',
-        isExpandable || isSelectable ? 'hover:bg-active-blue' : '',
+        'px-4 py-2 flex items-center gap-2',
+        isExpandable || isSelectable ? 'hover:bg-active-blue cursor-pointer' : '',
         isSelected ? 'bg-active-blue' : '',
         noBorder ? '' : 'border-b',
       )}
