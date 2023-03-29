@@ -46,16 +46,32 @@ else:
 
 
 def __check_database_pg():
+    fail_response = {
+        "health": False,
+        "details": {
+            "errors": ["Postgres health-check failed"]
+        }
+    }
     with pg_client.PostgresClient() as cur:
-        cur.execute("SHOW server_version;")
-        server_version = cur.fetchone()
-        cur.execute("SELECT openreplay_version() AS version;")
-        schema_version = cur.fetchone()
+        try:
+            cur.execute("SHOW server_version;")
+            server_version = cur.fetchone()
+        except Exception as e:
+            print("!! health failed: postgres not responding")
+            print(str(e))
+            return fail_response
+        try:
+            cur.execute("SELECT openreplay_version() AS version;")
+            schema_version = cur.fetchone()
+        except Exception as e:
+            print("!! health failed: openreplay_version not defined")
+            print(str(e))
+            return fail_response
     return {
         "health": True,
         "details": {
-            "version": server_version["server_version"],
-            "schema": schema_version["version"]
+            # "version": server_version["server_version"],
+            # "schema": schema_version["version"]
         }
     }
 
@@ -68,13 +84,6 @@ def __always_healthy():
     return {
         "health": True,
         "details": {}
-    }
-
-
-def __always_healthy_with_version():
-    return {
-        "health": True,
-        "details": {"version": config("version_number", default="unknown")}
     }
 
 
@@ -91,21 +100,21 @@ def __check_be_service(service_name):
             if results.status_code != 200:
                 print(f"!! issue with the storage-health code:{results.status_code}")
                 print(results.text)
-                fail_response["details"]["errors"].append(results.text)
+                # fail_response["details"]["errors"].append(results.text)
                 return fail_response
         except requests.exceptions.Timeout:
             print(f"!! Timeout getting {service_name}-health")
-            fail_response["details"]["errors"].append("timeout")
+            # fail_response["details"]["errors"].append("timeout")
             return fail_response
         except Exception as e:
             print("!! Issue getting storage-health response")
             print(str(e))
             try:
                 print(results.text)
-                fail_response["details"]["errors"].append(results.text)
+                # fail_response["details"]["errors"].append(results.text)
             except:
                 print("couldn't get response")
-                fail_response["details"]["errors"].append(str(e))
+                # fail_response["details"]["errors"].append(str(e))
             return fail_response
         return {
             "health": True,
@@ -121,7 +130,7 @@ def __check_redis():
         "details": {"errors": ["server health-check failed"]}
     }
     if config("REDIS_STRING", default=None) is None:
-        fail_response["details"]["errors"].append("REDIS_STRING not defined in env-vars")
+        # fail_response["details"]["errors"].append("REDIS_STRING not defined in env-vars")
         return fail_response
 
     try:
@@ -131,12 +140,14 @@ def __check_redis():
     except Exception as e:
         print("!! Issue getting redis-health response")
         print(str(e))
-        fail_response["details"]["errors"].append(str(e))
+        # fail_response["details"]["errors"].append(str(e))
         return fail_response
 
     return {
         "health": True,
-        "details": {"version": r.execute_command('INFO')['redis_version']}
+        "details": {
+            # "version": r.execute_command('INFO')['redis_version']
+        }
     }
 
 
@@ -152,7 +163,7 @@ def get_health():
             "alerts": __check_be_service("alerts"),
             "assets": __check_be_service("assets"),
             "assist": __check_be_service("assist"),
-            "chalice": __always_healthy_with_version,
+            "chalice": __always_healthy,
             "db": __check_be_service("db"),
             "ender": __check_be_service("ender"),
             "frontend": __always_healthy,
