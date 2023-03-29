@@ -6,43 +6,22 @@ from decouple import config
 
 from chalicelib.utils import pg_client
 
-if config("LOCAL_DEV", cast=bool, default=False):
-    HEALTH_ENDPOINTS = {
-        "alerts": "http://127.0.0.1:8888/metrics",
-        "assets": "http://127.0.0.1:8888/metrics",
-        "assist": "http://127.0.0.1:8888/metrics",
-        "chalice": "http://127.0.0.1:8888/metrics",
-        "db": "http://127.0.0.1:8888/metrics",
-        "ender": "http://127.0.0.1:8888/metrics",
-        "heuristics": "http://127.0.0.1:8888/metrics",
-        "http": "http://127.0.0.1:8888/metrics",
-        "ingress-nginx": "http://127.0.0.1:8888/metrics",
-        "integrations": "http://127.0.0.1:8888/metrics",
-        "peers": "http://127.0.0.1:8888/metrics",
-        "quickwit": "http://127.0.0.1:8888/metrics",
-        "sink": "http://127.0.0.1:8888/metrics",
-        "sourcemapreader": "http://127.0.0.1:8888/metrics",
-        "storage": "http://127.0.0.1:8888/metrics",
-        "utilities": "http://127.0.0.1:8888/metrics"
-    }
-
-else:
-    HEALTH_ENDPOINTS = {
-        "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/health",
-        "assets": "http://assets-openreplay.app.svc.cluster.local:8888/metrics",
-        "assist": "http://assist-openreplay.app.svc.cluster.local:8888/health",
-        "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",
-        "db": "http://db-openreplay.app.svc.cluster.local:8888/metrics",
-        "ender": "http://ender-openreplay.app.svc.cluster.local:8888/metrics",
-        "heuristics": "http://heuristics-openreplay.app.svc.cluster.local:8888/metrics",
-        "http": "http://http-openreplay.app.svc.cluster.local:8888/metrics",
-        "ingress-nginx": "http://ingress-nginx-openreplay.app.svc.cluster.local:8888/metrics",
-        "integrations": "http://integrations-openreplay.app.svc.cluster.local:8888/metrics",
-        "peers": "http://peers-openreplay.app.svc.cluster.local:8888/health",
-        "sink": "http://sink-openreplay.app.svc.cluster.local:8888/metrics",
-        "sourcemapreader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/health",
-        "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics",
-    }
+HEALTH_ENDPOINTS = {
+    "alerts": "http://alerts-openreplay.app.svc.cluster.local:8888/health",
+    "assets": "http://assets-openreplay.app.svc.cluster.local:8888/metrics",
+    "assist": "http://assist-openreplay.app.svc.cluster.local:8888/health",
+    "chalice": "http://chalice-openreplay.app.svc.cluster.local:8888/metrics",
+    "db": "http://db-openreplay.app.svc.cluster.local:8888/metrics",
+    "ender": "http://ender-openreplay.app.svc.cluster.local:8888/metrics",
+    "heuristics": "http://heuristics-openreplay.app.svc.cluster.local:8888/metrics",
+    "http": "http://http-openreplay.app.svc.cluster.local:8888/metrics",
+    "ingress-nginx": "http://ingress-nginx-openreplay.app.svc.cluster.local:8888/metrics",
+    "integrations": "http://integrations-openreplay.app.svc.cluster.local:8888/metrics",
+    "peers": "http://peers-openreplay.app.svc.cluster.local:8888/health",
+    "sink": "http://sink-openreplay.app.svc.cluster.local:8888/metrics",
+    "sourcemaps-reader": "http://sourcemapreader-openreplay.app.svc.cluster.local:8888/health",
+    "storage": "http://storage-openreplay.app.svc.cluster.local:8888/metrics",
+}
 
 
 def __check_database_pg():
@@ -173,7 +152,7 @@ def get_health():
             "integrations": __check_be_service("integrations"),
             "peers": __check_be_service("peers"),
             "sink": __check_be_service("sink"),
-            "sourcemapreader": __check_be_service("sourcemapreader"),
+            "sourcemaps-reader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage")
         }
     }
