@@ -370,7 +370,14 @@ do
       ;;
     -e | --edit)
       log title "Editing OpenReplay"
-      sudo vim -n /var/lib/openreplay/vars.yaml
+      [[ -f ${OR_DIR}/vars.yaml ]] || {
+        log err "
+              Couldn't open ${BWHITE}${OR_DIR}/vars.yaml${RED}. Seems like a custom installation.
+              Edit the proper ${BWHITE}vars.yaml${RED} and run ${BWHITE}openreplay -R${RED}
+              Or ${BWHITE}helm upgrade openreplay -n app openreplay/scripts/helmcharts/openreplay -f openreplay/scripts/helmcharts/vars.yaml --debug --atomic"
+        exit 100
+      }
+      sudo vim -n ${OR_DIR}/vars.yaml
       /var/lib/openreplay/yq 'true' /var/lib/openreplay/vars.yaml || {
         log debug "seems like the edit is not correct. Rerun ${BWHITE}openreplay -e${YELLOW} after fixing the issue."
         exit 100
