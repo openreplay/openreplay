@@ -1,4 +1,4 @@
-# 5.0.2
+# 6.0.0
 
 - Capture mouse thrashing, input hesitation+duration, click hesitation
 - Capture DOM node drop event (>30% nodes removed)
