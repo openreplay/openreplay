@@ -120,7 +120,7 @@ export default class DOMManager extends ListWalker<Message> {
     }
     const parent = this.vElements.get(parentID) || this.vRoots.get(parentID)
     if (!parent) {
-      logger.error("Insert error. Parent node not found", parentID);
+      logger.error("Insert error. Parent node not found", parentID, this.vElements, this.vRoots);
       return;
     }
 
@@ -177,7 +177,7 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.CreateDocument:
         doc = this.screen.document;
         if (!doc) {
-          logger.error("No root iframe document found", msg)
+          logger.error("No root iframe document found", msg, this.screen)
           return;
         }
         doc.open();
