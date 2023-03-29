@@ -134,7 +134,9 @@ const reducer = (state = initialState, action: IAction) => {
             return state.set('filteredEvents', filteredEvents).set('eventsQuery', query);
         }
         case CLEAR_CURRENT_SESSION: {
-            return state.set('current', new Session())
+            const session = new Session();
+
+            return state.set('current', session)
               .set('eventsIndex', [])
               .set('visitedEvents', List())
               .set('host', '');
