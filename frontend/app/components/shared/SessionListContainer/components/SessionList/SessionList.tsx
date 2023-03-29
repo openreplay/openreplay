@@ -143,7 +143,7 @@ function SessionList(props: Props) {
             <div className="text-center text-gray-600 relative">
               {NO_CONTENT.message}
               {noContentType === NoContentType.ToDate ? (
-                <div style={{ position: 'absolute', right: -200, top: -170 }}>
+                <div style={{ position: 'absolute', right: -160, top: -170 }}>
                   <Icon name="pointer-sessions-search" size={250} width={240} />
                 </div>
               ) : null}
