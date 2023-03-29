@@ -1,6 +1,6 @@
 import { observer, useObserver } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
-import { NoContent, Pagination } from 'UI';
+import { NoContent, Pagination, Icon } from 'UI';
 import { useStore } from 'App/mstore';
 import { sliceListPerPage } from 'App/utils';
 import GridView from './GridView';
@@ -15,7 +15,7 @@ function MetricsList({
   onSelectionChange?: (selected: any[]) => void;
 }) {
   const { metricStore, dashboardStore } = useStore();
-  const metricsSearch = metricStore.metricsSearch;
+  const metricsSearch = metricStore.filter.query;
   const listView = useObserver(() => metricStore.listView);
   const [selectedMetrics, setSelectedMetrics] = useState<any>([]);
   
@@ -56,6 +56,9 @@ function MetricsList({
           <AnimatedSVG name={ICONS.NO_CARDS} size={180} />
           <div className="text-center text-gray-600 my-4">
             {metricsSearch !== '' ? 'No matching results' : "You haven't created any cards yet"}
+          </div>
+          <div className="text-base text-disabled-text flex items-center px-6">
+            Create cards to capture key interactions and track KPIs.
           </div>
         </div>
       }
