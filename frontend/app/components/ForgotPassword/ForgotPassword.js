@@ -116,7 +116,7 @@ export default class ForgotPassword extends React.PureComponent {
           <div className="border rounded bg-white" style={{ width: '350px' }}>
             {!resetting && <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">Reset Password</h2>}
             {resetting && <h2 className="text-center text-lg font-medium mb-6 border-b p-5 w-full">
-              Welcome, join your organization by <br/> setting a new password
+              Welcome, join your organization by <br/> creating a new password
               </h2>
             }
 
@@ -142,16 +142,17 @@ export default class ForgotPassword extends React.PureComponent {
 
                     {!resetting && !requested && (
                       <Form.Field>
-                        <label>{'Email Address:'}</label>
+                        <label>{'Email Address'}</label>
                         <Input
                           autoFocus={true}
                           autocomplete="email"
-                          type="text"
+                          type="email"
                           placeholder="Email"
                           name="email"
                           onChange={this.write}
                           className="w-full"
                           icon="envelope"
+                          required
                         />
                       </Form.Field>
                     )}
@@ -168,7 +169,7 @@ export default class ForgotPassword extends React.PureComponent {
                     {resetting && (
                       <React.Fragment>
                         <Form.Field>
-                          <label>{'Set a password'}</label>
+                          <label>{'New password'}</label>
                           {/* <i className={stl.inputIconPassword} /> */}
                           <Input
                             autocomplete="new-password"
@@ -178,6 +179,7 @@ export default class ForgotPassword extends React.PureComponent {
                             onChange={this.write}
                             className="w-full"
                             icon="key"
+                            required
                           />
                         </Form.Field>
                         <div className={stl.passwordPolicy} data-hidden={!this.shouldShouwPolicy()}>
@@ -193,6 +195,7 @@ export default class ForgotPassword extends React.PureComponent {
                             onChange={this.write}
                             className="w-full"
                             icon="key"
+                            required
                           />
                         </Form.Field>
                       </React.Fragment>
@@ -226,7 +229,7 @@ export default class ForgotPassword extends React.PureComponent {
                     variant="primary"
                     loading={loading}
                     className="w-full"
-                    disabled={(resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
+                    // disabled={(resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
                   >
                     {resetting ? 'Create' : 'Email password reset link'}
                   </Button>

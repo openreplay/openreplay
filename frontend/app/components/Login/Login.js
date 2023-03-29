@@ -114,10 +114,11 @@ class Login extends React.Component {
                   <Form.Field>
                     <label>Email Address</label>
                     <Input
+                      autoFocus
                       data-test-id={"login"}
                       autoFocus={true}
                       autoComplete="username"
-                      type="text"
+                      type="email"
                       placeholder="e.g. john@example.com"
                       name="email"
                       onChange={this.write}
