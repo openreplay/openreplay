@@ -48,7 +48,7 @@ function SessionSearchField(props: Props) {
                         searchQuery={searchQuery}
                         isMainSearch={true}
                         onFilterClick={onAddFilter}
-                        isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
+                        isLive={isRoute(ASSIST_ROUTE, window.location.pathname) || window.location.pathname.includes('multiview')}
                         // filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
                         // filterSearchList={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterSearchListLive : props.filterSearchList }
                     />
