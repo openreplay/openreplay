@@ -11,7 +11,7 @@ from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def create_step1(data: schemas.UserSignupSchema):
+def create_tenant(data: schemas.UserSignupSchema):
     print(f"===================== SIGNUP STEP 1 AT {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
     if not config("MULTI_TENANTS", cast=bool, default=False) and tenants.tenants_exists():

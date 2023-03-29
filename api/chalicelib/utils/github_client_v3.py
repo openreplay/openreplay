@@ -1,8 +1,7 @@
-import requests
 from datetime import datetime
 
-from fastapi import HTTPException
-from starlette import status
+import requests
+from fastapi import HTTPException, status
 
 
 class github_formatters:
