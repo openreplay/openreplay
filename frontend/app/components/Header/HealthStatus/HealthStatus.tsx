@@ -59,7 +59,7 @@ function HealthStatus() {
       <div className={'relative group h-full hover:bg-figmaColors-secondary-outlined-hover-background'}>
         <div
           className={
-            'rounded cursor-pointer p-2 flex items-center'
+            'rounded cursor-pointer p-2 flex items-center h-full'
           }
         >
           <div className={'rounded p-2 border border-light-gray bg-white flex items-center '}>

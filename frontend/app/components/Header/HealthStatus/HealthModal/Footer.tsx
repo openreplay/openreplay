@@ -6,7 +6,7 @@ function Footer({ isSetup }: { isSetup?: boolean }) {
   return (
     <div className={cn(
       'flex w-full p-4 items-center justify-center',
-      'bg-gray-lightest gap-4',
+      'bg-gray-lightest gap-8',
       !isSetup ? 'border-t border-figmaColors-divider' : ''
     )}>
       <a

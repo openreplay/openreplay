@@ -12,6 +12,7 @@ function Category({
   isExpanded,
   isSelected,
   isLoading,
+  noBorder,
 }: {
   name: string;
   healthOk?: boolean;
@@ -21,15 +22,17 @@ function Category({
   isExpandable?: boolean;
   isExpanded?: boolean;
   isSelected?: boolean;
+  noBorder?: boolean;
 }) {
 
   const icon = healthOk ? ('check-circle-fill' as const) : ('exclamation-circle-fill' as const);
   return (
     <div
       className={cn(
-        'px-4 py-2 flex items-center gap-2 border-b cursor-pointer',
+        'px-4 py-2 flex items-center gap-2 cursor-pointer',
         isExpandable || isSelectable ? 'hover:bg-active-blue' : '',
-        isSelected ? 'bg-active-blue' : ''
+        isSelected ? 'bg-active-blue' : '',
+        noBorder ? '' : 'border-b',
       )}
       onClick={onClick}
     >

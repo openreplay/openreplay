@@ -24,15 +24,15 @@ function SubserviceHealth({
       {isExpanded ? (
         <div className={'p-3'}>
           {subservice?.details?.version ? (
-            <div className="flex items-center justify-between mt-2 px-2">
+            <div className="flex items-center justify-between mt-2 px-2 py-2 bg-white rounded border border-light-gray">
               <div className="py-1 px-2 font-medium">Version</div>
-              <div className="code-font text-black rounded text-base bg-active-blue px-2 py-1 whitespace-nowrap overflow-hidden text-clip">
+              <div className="code-font text-black text-base px-2 py-1 whitespace-nowrap overflow-hidden text-clip">
                 {subservice?.details?.version}
               </div>
             </div>
           ) : null}
           {subservice?.details?.errors?.length ? (
-            <div className={'py-2 px-4 bg-white rounded-xl border border-light-gray'}>
+            <div className={'py-2 px-4 bg-white rounded border border-light-gray'}>
               <div>Error log:</div>
               {subservice.details.errors.toString()}
             </div>

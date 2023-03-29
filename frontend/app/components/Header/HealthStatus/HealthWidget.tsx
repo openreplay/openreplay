@@ -39,8 +39,8 @@ function HealthWidget({
 
   return (
     <div
-      style={{ width: 220, top: '100%', right: '-30%', height: '110%' }}
-      className={'absolute group invisible group-hover:visible pt-4'}
+      style={{ width: 220, right: '-30%', height: '110%' }}
+      className={'absolute group invisible group-hover:visible'}
     >
       <div
         className={
@@ -69,11 +69,10 @@ function HealthWidget({
         </div>
         {isError && <div className={'text-secondary text-sm'}>Error getting service health status</div>}
 
-        <div className={'divider w-full border border-b-light-gray'} />
-
         <div className={'w-full'}>
           {!isError && !healthOk ? (
             <>
+              <div className={'divider w-full border border-b-light-gray my-2'} />
               <div className={'text-secondary pb-2'}>
                 Observed installation Issue with the following
               </div>
@@ -84,6 +83,7 @@ function HealthWidget({
                     healthOk={false}
                     name={service.name}
                     isSelectable
+                    noBorder={problematicServices.length === 1}
                   />
                 </React.Fragment>
               ))}
