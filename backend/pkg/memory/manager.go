@@ -17,6 +17,8 @@ type managerImpl struct {
 	current   uint64
 	maximum   uint64
 	threshold uint64
+	allocated uint64
+	total     uint64
 }
 
 func NewManager(maximumMemory, thresholdValue uint64) (Manager, error) {
@@ -58,11 +60,16 @@ func (m *managerImpl) calcMemoryUsage() {
 		log.Println("memory consumption is greater than maximum memory, current: ", allocated, "maximum: ", m.maximum)
 	}
 	current := uint64(float64(allocated*100) / float64(m.maximum))
-	// DEBUG
-	log.Printf("current memory consumption: %d, allocated: %d, maximum: %d, current usage: %d, threshold: %d", total, allocated, m.maximum, current, m.threshold)
 	m.mutex.Lock()
 	m.current = current
+	m.allocated = allocated
+	m.total = total
 	m.mutex.Unlock()
+}
+
+func (m *managerImpl) printStat() {
+	log.Printf("current memory consumption: %d, allocated: %d, maximum: %d, current usage: %d, threshold: %d",
+		m.total, m.allocated, m.maximum, m.current, m.threshold)
 }
 
 func (m *managerImpl) worker() {
@@ -71,13 +78,22 @@ func (m *managerImpl) worker() {
 		m.current = m.threshold
 		return
 	}
+
 	// First memory usage calculation
 	m.calcMemoryUsage()
+	m.printStat()
+
+	// Logs and update ticks
+	updateTick := time.Tick(time.Second)
+	logsTick := time.Tick(time.Minute)
+
+	// Start worker
 	for {
 		select {
-		// Check memory usage every 5 seconds
-		case <-time.After(5 * time.Second):
+		case <-updateTick:
 			m.calcMemoryUsage()
+		case <-logsTick:
+			m.printStat()
 		}
 	}
 }

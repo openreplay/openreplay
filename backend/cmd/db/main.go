@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/memory"
 
 	config "openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db"
@@ -53,8 +54,15 @@ func main() {
 		cfg.MessageSizeLimit,
 	)
 
+	// Init memory manager
+	memoryManager, err := memory.NewManager(cfg.MemoryLimitMB, cfg.MaxMemoryUsage)
+	if err != nil {
+		log.Printf("can't init memory manager: %s", err)
+		return
+	}
+
 	// Run service and wait for TERM signal
-	service := db.New(cfg, consumer, saver)
+	service := db.New(cfg, consumer, saver, memoryManager)
 	log.Printf("Db service started\n")
 	terminator.Wait(service)
 }
