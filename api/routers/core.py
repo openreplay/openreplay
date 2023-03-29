@@ -1,9 +1,8 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body, HTTPException, Response
+from fastapi import Depends, Body, HTTPException, Response, status
 from fastapi.responses import JSONResponse
-from starlette import status
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -11,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_elasticsearch, log_tool_datadog, \
     log_tool_stackdriver, reset_password, log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, mobile, signup, tenants, boarding, notifications, webhook, users, \
+    assist, mobile, tenants, boarding, notifications, webhook, users, \
     custom_metrics, saved_search, integrations_global
 from chalicelib.core.collaboration_msteams import MSTeams
 from chalicelib.core.collaboration_slack import Slack

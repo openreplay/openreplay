@@ -1,8 +1,7 @@
 import re
 from typing import Optional
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 from chalicelib.core import projects
 from chalicelib.utils import pg_client

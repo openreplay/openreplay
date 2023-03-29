@@ -2,11 +2,10 @@ import time
 from datetime import datetime
 
 import requests
+from fastapi import HTTPException, status
 from jira import JIRA
 from jira.exceptions import JIRAError
 from requests.auth import HTTPBasicAuth
-from starlette import status
-from fastapi import HTTPException
 
 fields = "id, summary, description, creator, reporter, created, assignee, status, updated, comment, issuetype, labels"
 

@@ -1,8 +1,7 @@
 import json
 from typing import Optional
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.core import users

@@ -2,8 +2,7 @@ import logging
 from typing import Optional
 
 import requests
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.utils import pg_client, helper
@@ -113,7 +112,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
 
 
 def exists_by_name(tenant_id: int, name: str, exclude_id: Optional[int],
-                     webhook_type: str = schemas.WebhookType.webhook) -> bool:
+                   webhook_type: str = schemas.WebhookType.webhook) -> bool:
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""SELECT EXISTS(SELECT 1 
                                 FROM public.webhooks
