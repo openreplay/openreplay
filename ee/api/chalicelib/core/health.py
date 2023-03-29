@@ -156,7 +156,7 @@ def get_health():
             "ingress-nginx": __always_healthy,
             "integrations": __check_be_service("integrations"),
             "peers": __check_be_service("peers"),
-            "quickwit": __check_be_service("quickwit"),
+            # "quickwit": __check_be_service("quickwit"),
             "sink": __check_be_service("sink"),
             "sourcemaps-reader": __check_be_service("sourcemapreader"),
             "storage": __check_be_service("storage")
