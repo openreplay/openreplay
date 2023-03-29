@@ -19,7 +19,7 @@ interface IProps {
 }
 
 type Props = IProps & RouteComponentProps;
-const MAX_CARDS = 30
+const MAX_CARDS = 29;
 function DashboardHeader(props: Props) {
   const { siteId, dashboardId } = props;
   const { dashboardStore } = useStore();

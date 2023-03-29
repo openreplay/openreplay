@@ -73,7 +73,7 @@ function MetricsList({
           toggleSelection={toggleMetricSelection}
           allSelected={cards.length === selectedMetrics.length}
           toggleAll={({ target: { checked, name } }) =>
-            setSelectedMetrics(checked ? cards.map((i: any) => i.metricId) : [])
+            setSelectedMetrics(checked ? cards.map((i: any) => i.metricId).slice(0, 30 - existingCardIds!.length) : [])
           }
         />
       ) : (
