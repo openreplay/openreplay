@@ -61,7 +61,11 @@ function WebPlayer(props: any) {
       WebPlayerInst.freeze()
     }
 
-    return () => WebPlayerInst.clean();
+    return () => {
+      WebPlayerInst.clean();
+      // @ts-ignore
+      setContextValue(defaultContextValue);
+    }
   }, [session.sessionId]);
 
   const isPlayerReady = contextValue.store?.get().ready

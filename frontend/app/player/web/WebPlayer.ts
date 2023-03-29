@@ -22,7 +22,7 @@ export default class WebPlayer extends Player {
   }
 
   private readonly inspectorController: InspectorController
-  protected readonly screen: Screen
+  protected screen: Screen
   protected readonly messageManager: MessageManager
 
   private targetMarker: TargetMarker
@@ -133,6 +133,9 @@ export default class WebPlayer extends Player {
 
   clean = () => {
     super.clean()
+    this.screen.clean()
+    // @ts-ignore
+    this.screen = undefined;
     window.removeEventListener('resize', this.scale)
   }
 }

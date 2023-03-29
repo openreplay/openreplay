@@ -82,6 +82,12 @@ export default class Screen {
     this.cursor = new Cursor(this.overlay, isMobile) // TODO: move outside
   }
 
+  clean() {
+    this.screen.removeChild(this.iframe)
+    this.screen.removeChild(this.overlay)
+    this.screen.remove();
+  }
+
   attach(parentElement: HTMLElement) {
     if (this.parentElement) {
       this.parentElement = null
