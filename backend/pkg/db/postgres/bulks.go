@@ -123,17 +123,17 @@ func (conn *BulkSet) initBulks() {
 	}
 	conn.webInputEvents, err = NewBulk(conn.c,
 		"events.inputs",
-		"(session_id, message_id, timestamp, value, label)",
-		"($%d, $%d, $%d, LEFT($%d, 2000), NULLIF(LEFT($%d, 2000),''))",
-		5, 200)
+		"(session_id, message_id, timestamp, label)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''))",
+		4, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
 	conn.webInputDurations, err = NewBulk(conn.c,
 		"events.inputs",
-		"(session_id, message_id, timestamp, value, label, hesitation, duration)",
-		"($%d, $%d, $%d, LEFT($%d, 2000), NULLIF(LEFT($%d, 2000),''), $%d, $%d)",
-		7, 200)
+		"(session_id, message_id, timestamp, label, hesitation, duration)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000),''), $%d, $%d)",
+		6, 200)
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
