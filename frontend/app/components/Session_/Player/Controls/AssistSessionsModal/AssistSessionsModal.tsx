@@ -109,6 +109,7 @@ function AssistSessionsModal(props: Props) {
       <LiveSessionSearch />
       <div className="my-4" />
       <Loader loading={loading}>
+        <div className={'overflow-y-scroll'} style={{ maxHeight: '85vh'}}>
         {list.map((session) => (
           <React.Fragment key={session.sessionId}>
             <div
@@ -139,6 +140,7 @@ function AssistSessionsModal(props: Props) {
             </div>
           </React.Fragment>
         ))}
+        </div>
       </Loader>
 
       {total > PER_PAGE && (
