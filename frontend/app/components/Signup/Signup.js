@@ -87,7 +87,7 @@ export default class Signup extends React.Component {
 
     return (
       <div className="flex justify-center items-center gap-6" style={{ height: '100vh' }}>
-        <div className={cn('relative overflow-hidden')}>
+        {/* <div className={cn('relative overflow-hidden')}>
           <div className="text-lg flex items-center" style={{ width: '350px'}}>
             <div>
               <div className="flex items-end text-3xl font-bold mb-6">
@@ -108,7 +108,7 @@ export default class Signup extends React.Component {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
         <div className="flex items-center justify-center">
           <div className="">
             <SignupForm />
