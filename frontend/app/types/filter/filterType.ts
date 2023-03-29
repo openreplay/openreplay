@@ -147,6 +147,8 @@ export enum IssueType {
   CRASH = 'crash',
   CUSTOM = 'custom',
   JS_EXCEPTION = 'js_exception',
+
+  MOUSE_THRASHING = 'mouse_thrashing',
 }
 
 export enum IssueCategory {
