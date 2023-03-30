@@ -24,7 +24,8 @@ function PlayerBlockHeader(props: any) {
   const [hideBack, setHideBack] = React.useState(false);
   const { player, store } = React.useContext(PlayerContext);
 
-  const { width, height, showEvents } = store.get();
+  const playerState = store?.get?.() || { width: 0, height: 0, showEvents: false }
+  const { width = 0, height = 0, showEvents = false } = playerState
 
   const {
     session,

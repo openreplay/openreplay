@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { Modal } from 'UI';
+import { Modal, Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { fetchList } from 'Duck/integrations';
 import { createWebPlayer } from 'Player';
@@ -100,7 +100,7 @@ function WebPlayer(props: any) {
     contextValue.player.play();
   };
 
-  if (!contextValue.player || !session) return null;
+  if (!session) return <Loader size={75} style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translateX(-50%)' }} />;
 
   return (
     <PlayerContext.Provider value={contextValue}>
@@ -112,12 +112,12 @@ function WebPlayer(props: any) {
         fullscreen={fullscreen}
       />
       {/* @ts-ignore  */}
-      <PlayerContent
+      {contextValue.player ? <PlayerContent
         activeTab={activeTab}
         fullscreen={fullscreen}
         setActiveTab={setActiveTab}
         session={session}
-      />
+      /> : <Loader style={{ position: 'fixed', top: '0%', left: '50%', transform: 'translateX(-50%)' }} />}
       <Modal open={showNoteModal} onClose={onNoteClose}>
         {showNoteModal ? (
           <ReadNote
