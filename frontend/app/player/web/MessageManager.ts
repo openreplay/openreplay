@@ -431,6 +431,7 @@ export default class MessageManager {
           Log(msg)
         )
         break;
+      case MType.ResourceTimingDeprecated:
       case MType.ResourceTiming:
         // TODO: merge `resource` and `fetch` lists into one here instead of UI
         if (msg.initiator !== ResourceType.FETCH && msg.initiator !== ResourceType.XHR) {
