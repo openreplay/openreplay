@@ -16,9 +16,8 @@ function Overview() {
       <div
         className={cn("side-menu-margined w-full")}
       >
-        <NoSessionsMessage />
-
         <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px'}}>
+          <NoSessionsMessage />
           <MainSearchBar />
           <SessionSearch />
 
