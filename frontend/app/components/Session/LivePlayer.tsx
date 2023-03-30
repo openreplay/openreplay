@@ -51,7 +51,7 @@ function LivePlayer({
       },
     };
     if (isEnterprise) {
-      new APIClient().get('/config/assist/credentials').then(r => r.json())
+      new APIClient().get('/assist/credentials').then(r => r.json())
         .then(({ data }) => {
           const [player, store] = createLiveWebPlayer(sessionWithAgentData, data, (state) =>
             makeAutoObservable(state)
