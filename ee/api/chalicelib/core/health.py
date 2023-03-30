@@ -185,7 +185,7 @@ def __check_database_ch():
                                        FROM system.functions
                                        WHERE name = 'openreplay_version';""")
         if len(schema_version) > 0:
-            schema_version = ch.execute("SELECT openreplay_version()() AS version;")
+            schema_version = ch.execute("SELECT openreplay_version() AS version;")
             schema_version = schema_version[0]["version"]
         else:
             print("!! health failed: clickhouse schema is outdated")
