@@ -28,8 +28,10 @@ def update(tenant_id, project_id, changes):
 
 def add(tenant_id, project_id, sentry_url, project_slug, organization_slug, token):
     options = {
-        "sentryUrl": sentry_url, "organizationSlug": organization_slug, "projectSlug": project_slug, "token": token
+        "organizationSlug": organization_slug, "projectSlug": project_slug, "token": token
     }
+    if sentry_url and len(sentry_url) > 0:
+        options["sentryUrl"] = sentry_url
     return log_tools.add(project_id=project_id, integration=IN_TY, options=options)
 
 
