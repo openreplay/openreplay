@@ -83,9 +83,9 @@ export default class Screen {
   }
 
   clean() {
-    this.screen.removeChild(this.iframe)
-    this.screen.removeChild(this.overlay)
-    this.screen.remove();
+    this.iframe?.remove?.();
+    this.overlay?.remove?.();
+    this.screen?.remove?.();
   }
 
   attach(parentElement: HTMLElement) {

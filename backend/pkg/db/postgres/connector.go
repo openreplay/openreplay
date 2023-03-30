@@ -17,7 +17,7 @@ type Conn struct {
 	c       Pool
 	batches *BatchSet
 	bulks   *BulkSet
-	chConn  CH
+	chConn  CH // hack for autocomplete inserts, TODO: rewrite
 }
 
 func (conn *Conn) SetClickHouse(ch CH) {

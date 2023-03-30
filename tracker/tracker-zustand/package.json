@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-zustand",
   "description": "Tracker plugin for Zustand state recording",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "keywords": [
     "zustand",
     "state",
@@ -24,7 +24,7 @@
   },
   "dependencies": {},
   "peerDependencies": {
-    "@openreplay/tracker": "^4.0.1"
+    "@openreplay/tracker": ">=4.0.1"
   },
   "devDependencies": {
     "@openreplay/tracker": "^4.0.1",

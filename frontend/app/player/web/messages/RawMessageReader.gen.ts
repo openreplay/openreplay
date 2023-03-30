@@ -403,7 +403,7 @@ export default class RawMessageReader extends PrimitiveReader {
       const url = this.readString(); if (url === null) { return resetPointer() }
       const initiator = this.readString(); if (initiator === null) { return resetPointer() }
       return {
-        tp: MType.ResourceTiming,
+        tp: MType.ResourceTimingDeprecated,
         timestamp,
         duration,
         ttfb,
@@ -627,6 +627,52 @@ export default class RawMessageReader extends PrimitiveReader {
       };
     }
 
+    case 113: {
+      const selectionStart = this.readUint(); if (selectionStart === null) { return resetPointer() }
+      const selectionEnd = this.readUint(); if (selectionEnd === null) { return resetPointer() }
+      const selection = this.readString(); if (selection === null) { return resetPointer() }
+      return {
+        tp: MType.SelectionChange,
+        selectionStart,
+        selectionEnd,
+        selection,
+      };
+    }
+
+    case 114: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      return {
+        tp: MType.MouseThrashing,
+        timestamp,
+      };
+    }
+
+    case 116: {
+      const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
+      const duration = this.readUint(); if (duration === null) { return resetPointer() }
+      const ttfb = this.readUint(); if (ttfb === null) { return resetPointer() }
+      const headerSize = this.readUint(); if (headerSize === null) { return resetPointer() }
+      const encodedBodySize = this.readUint(); if (encodedBodySize === null) { return resetPointer() }
+      const decodedBodySize = this.readUint(); if (decodedBodySize === null) { return resetPointer() }
+      const url = this.readString(); if (url === null) { return resetPointer() }
+      const initiator = this.readString(); if (initiator === null) { return resetPointer() }
+      const transferredSize = this.readUint(); if (transferredSize === null) { return resetPointer() }
+      const cached = this.readBoolean(); if (cached === null) { return resetPointer() }
+      return {
+        tp: MType.ResourceTiming,
+        timestamp,
+        duration,
+        ttfb,
+        headerSize,
+        encodedBodySize,
+        decodedBodySize,
+        url,
+        initiator,
+        transferredSize,
+        cached,
+      };
+    }
+
     case 90: {
       const timestamp = this.readUint(); if (timestamp === null) { return resetPointer() }
       const projectID = this.readUint(); if (projectID === null) { return resetPointer() }
@@ -754,8 +800,9 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     default:
-      throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
-      return null;
+      console.error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
+      // skipping unrecognized messages
+      return false;
     }
   }
 }

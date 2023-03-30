@@ -23,7 +23,7 @@ export default class WebLivePlayer extends WebPlayer {
   private lastMessageInFileTime = 0
   private lastMessageInFileIndex = 0
 
-  constructor(wpState: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[]) {
+  constructor(wpState: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[] | null) {
     super(wpState, session, true)
 
     this.assistManager = new AssistManager(
@@ -56,7 +56,7 @@ export default class WebLivePlayer extends WebPlayer {
       const bytes = await requestEFSDom(this.session.sessionId)
       const fileReader = new MFileReader(bytes, this.session.startedAt)
       for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-        this.messageManager.distributeMessage(msg, msg._index)
+        this.messageManager.distributeMessage(msg)
       }
       this.wpState.update({
         liveTimeTravel: true,

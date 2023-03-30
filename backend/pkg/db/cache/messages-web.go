@@ -30,7 +30,8 @@ func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error
 	})
 }
 
-func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error {
+func (c *PGCache) HandleWebSessionStart(s *SessionStart) error {
+	sessionID := s.SessionID()
 	if c.Cache.HasSession(sessionID) {
 		return fmt.Errorf("session %d already in cache", sessionID)
 	}
@@ -69,7 +70,8 @@ func (c *PGCache) InsertWebSessionEnd(sessionID uint64, e *SessionEnd) error {
 	return err
 }
 
-func (c *PGCache) HandleWebSessionEnd(sessionID uint64, e *SessionEnd) error {
+func (c *PGCache) HandleWebSessionEnd(e *SessionEnd) error {
+	sessionID := e.SessionID()
 	return c.HandleSessionEnd(sessionID)
 }
 
@@ -99,7 +101,8 @@ func (c *PGCache) InsertSessionReferrer(sessionID uint64, referrer string) error
 	return c.Conn.InsertSessionReferrer(sessionID, referrer)
 }
 
-func (c *PGCache) InsertWebNetworkRequest(sessionID uint64, e *NetworkRequest) error {
+func (c *PGCache) InsertWebNetworkRequest(e *NetworkRequest) error {
+	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -111,7 +114,8 @@ func (c *PGCache) InsertWebNetworkRequest(sessionID uint64, e *NetworkRequest) e
 	return c.Conn.InsertWebNetworkRequest(sessionID, session.ProjectID, project.SaveRequestPayloads, e)
 }
 
-func (c *PGCache) InsertWebGraphQL(sessionID uint64, e *GraphQL) error {
+func (c *PGCache) InsertWebGraphQL(e *GraphQL) error {
+	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -123,7 +127,8 @@ func (c *PGCache) InsertWebGraphQL(sessionID uint64, e *GraphQL) error {
 	return c.Conn.InsertWebGraphQL(sessionID, session.ProjectID, project.SaveRequestPayloads, e)
 }
 
-func (c *PGCache) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
+func (c *PGCache) InsertWebCustomEvent(e *CustomEvent) error {
+	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -131,7 +136,8 @@ func (c *PGCache) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
 	return c.Conn.InsertWebCustomEvent(sessionID, session.ProjectID, e)
 }
 
-func (c *PGCache) InsertWebUserID(sessionID uint64, userID *UserID) error {
+func (c *PGCache) InsertWebUserID(userID *UserID) error {
+	sessionID := userID.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -139,7 +145,8 @@ func (c *PGCache) InsertWebUserID(sessionID uint64, userID *UserID) error {
 	return c.Conn.InsertWebUserID(sessionID, session.ProjectID, userID)
 }
 
-func (c *PGCache) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *UserAnonymousID) error {
+func (c *PGCache) InsertWebUserAnonymousID(userAnonymousID *UserAnonymousID) error {
+	sessionID := userAnonymousID.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -147,7 +154,8 @@ func (c *PGCache) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *Us
 	return c.Conn.InsertWebUserAnonymousID(sessionID, session.ProjectID, userAnonymousID)
 }
 
-func (c *PGCache) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
+func (c *PGCache) InsertWebPageEvent(e *PageEvent) error {
+	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -155,7 +163,8 @@ func (c *PGCache) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 	return c.Conn.InsertWebPageEvent(sessionID, session.ProjectID, e)
 }
 
-func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
+func (c *PGCache) InsertWebClickEvent(e *MouseClick) error {
+	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
@@ -163,10 +172,29 @@ func (c *PGCache) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 	return c.Conn.InsertWebClickEvent(sessionID, session.ProjectID, e)
 }
 
-func (c *PGCache) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
+func (c *PGCache) InsertWebInputEvent(e *InputEvent) error {
+	sessionID := e.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
 	return c.Conn.InsertWebInputEvent(sessionID, session.ProjectID, e)
+}
+
+func (c *PGCache) InsertWebInputDuration(e *InputChange) error {
+	sessionID := e.SessionID()
+	session, err := c.Cache.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebInputDuration(sessionID, session.ProjectID, e)
+}
+
+func (c *PGCache) InsertMouseThrashing(e *MouseThrashing) error {
+	sessionID := e.SessionID()
+	session, err := c.Cache.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertMouseThrashing(sessionID, session.ProjectID, e)
 }

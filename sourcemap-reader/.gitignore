@@ -3,5 +3,5 @@ node_modules
 npm-debug.log
 .cache
 test.html
-/utils/
+utils
 mappings.wasm

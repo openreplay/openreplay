@@ -109,6 +109,6 @@ export default class ScreenRecordingState {
     this.status = RecordingState.Off
 
     this.overlayAdded = false
-    this.uiComponents.forEach((el) => el.parentElement?.removeChild(el))
+    this.uiComponents?.forEach((el) => el.parentElement?.removeChild(el))
   }
 }

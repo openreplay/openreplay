@@ -166,7 +166,7 @@ export default class MessageEncoder extends PrimitiveEncoder {
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3])
     break
 
-    case Messages.Type.ResourceTiming:
+    case Messages.Type.ResourceTimingDeprecated:
       return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8])
     break
 
@@ -252,6 +252,26 @@ export default class MessageEncoder extends PrimitiveEncoder {
 
     case Messages.Type.PartitionedMessage:
       return  this.uint(msg[1]) && this.uint(msg[2])
+    break
+
+    case Messages.Type.InputChange:
+      return  this.uint(msg[1]) && this.string(msg[2]) && this.boolean(msg[3]) && this.string(msg[4]) && this.int(msg[5]) && this.int(msg[6])
+    break
+
+    case Messages.Type.SelectionChange:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.string(msg[3])
+    break
+
+    case Messages.Type.MouseThrashing:
+      return  this.uint(msg[1])
+    break
+
+    case Messages.Type.UnbindNodes:
+      return  this.uint(msg[1])
+    break
+
+    case Messages.Type.ResourceTiming:
+      return  this.uint(msg[1]) && this.uint(msg[2]) && this.uint(msg[3]) && this.uint(msg[4]) && this.uint(msg[5]) && this.uint(msg[6]) && this.string(msg[7]) && this.string(msg[8]) && this.uint(msg[9]) && this.boolean(msg[10])
     break
 
     }

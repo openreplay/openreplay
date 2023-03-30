@@ -11,7 +11,7 @@ export enum RCStatus {
 
 
 let setInputValue = function(this: HTMLInputElement | HTMLTextAreaElement,  value: string) { this.value = value }
-const nativeInputValueDescriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')
+const nativeInputValueDescriptor = typeof window !== 'undefined' && Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')
 if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
   setInputValue = nativeInputValueDescriptor.set
 }
@@ -25,7 +25,7 @@ export default class RemoteControl {
   constructor(
     private readonly options: AssistOptions,
     private readonly onGrand: (id: string) => string | undefined,
-    private readonly onRelease: (id?: string | null) => void) {}
+    private readonly onRelease: (id?: string | null, isDenied?: boolean) => void) {}
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
@@ -55,7 +55,7 @@ export default class RemoteControl {
         this.grantControl(id)
       } else {
         this.confirm?.remove()
-        this.releaseControl()
+        this.releaseControl(true)
       }
     })
     .then(() => {
@@ -67,7 +67,7 @@ export default class RemoteControl {
       })
   }
 
-  releaseControl = () => {
+  releaseControl = (isDenied?: boolean) => {
     if (this.confirm) {
       this.confirm.remove()
       this.confirm = null
@@ -75,7 +75,7 @@ export default class RemoteControl {
     this.resetMouse()
     this.status = RCStatus.Disabled
     sessionStorage.removeItem(this.options.session_control_peer_key)
-    this.onRelease(this.agentID)
+    this.onRelease(this.agentID, isDenied)
     this.agentID = null
   }
 

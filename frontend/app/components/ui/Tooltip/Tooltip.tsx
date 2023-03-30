@@ -23,6 +23,7 @@ function Tooltip(props: Props) {
     placement,
     className = '',
     anchorClassName = '',
+    containerClassName = '',
     delay = 500,
     style = {},
     offset = 5,
@@ -39,7 +40,7 @@ function Tooltip(props: Props) {
   });
 
   return (
-    <div className="relative">
+    <div className={cn("relative", containerClassName)}>
       <TooltipAnchor className={anchorClassName} state={state}>{props.children}</TooltipAnchor>
       <FloatingTooltip
         state={state}

@@ -44,5 +44,48 @@ spec:
                   number: 8080
             path: /(api|assist|ws-assist)/(private|sockets-list|sockets-live|peers)(.*)
             pathType: Prefix
-
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: openreplay-tracker
+spec:
+  type: ExternalName
+  externalName: static.openreplay.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openreplay-tracker-ingress
+  annotations:
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+    nginx.ingress.kubernetes.io/backend-protocol: https
+    nginx.ingress.kubernetes.io/upstream-vhost: static.openreplay.com
+    nginx.ingress.kubernetes.io/rewrite-target: '/$1/openreplay$2.js'
+    nginx.ingress.kubernetes.io/proxy-body-size: 8m
+    nginx.ingress.kubernetes.io/proxy-buffering: "on"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      proxy_ssl_name static.openreplay.com;
+      proxy_ssl_server_name on;
+spec:
+  ingressClassName: openreplay
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - path: /script/(.*)/openreplay(.*).js
+            pathType: Prefix
+            backend:
+              service:
+                name: openreplay-tracker
+                port:
+                  number: 443
 {{- end }}

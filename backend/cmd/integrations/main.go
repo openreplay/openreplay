@@ -13,7 +13,6 @@ import (
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/token"
 )
@@ -25,9 +24,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	pg := postgres.NewConn(cfg.Postgres.String(), 0, 0)
 	defer pg.Close()

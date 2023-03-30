@@ -20,6 +20,9 @@ import ScreenRecorder from 'App/components/Session_/ScreenRecorder/ScreenRecorde
 function onReject() {
   toast.info(`Call was rejected.`);
 }
+function onControlReject() {
+  toast.info('Remote control request was rejected by user')
+}
 
 function onError(e: any) {
   console.log(e);
@@ -52,6 +55,7 @@ function AssistActions({
       setCallArgs,
       requestReleaseRemoteControl,
       toggleAnnotation,
+      setRemoteControlCallbacks
     },
   toggleUserName,
   } = player
@@ -153,6 +157,7 @@ function AssistActions({
   };
 
   const requestControl = () => {
+    setRemoteControlCallbacks({ onReject: onControlReject })
     if (callRequesting || remoteRequesting) return;
     requestReleaseRemoteControl();
   };

@@ -2,8 +2,7 @@ import logging
 from typing import Optional
 
 import requests
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.utils import pg_client, helper

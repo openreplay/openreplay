@@ -2,92 +2,98 @@ package sessions
 
 import (
 	"log"
-	"openreplay/backend/pkg/handlers"
+	"sync"
 	"time"
 
+	"openreplay/backend/pkg/handlers"
 	. "openreplay/backend/pkg/messages"
 )
 
-const FORCE_DELETE_TIMEOUT = 4 * time.Hour
+const ForceDeleteTimeout = 30 * time.Minute
 
 type builderMap struct {
 	handlersFabric func() []handlers.MessageProcessor
 	sessions       map[uint64]*builder
+	mutex          *sync.Mutex
+	events         chan Message
+	done           chan struct{}
 }
 
-func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) *builderMap {
-	return &builderMap{
+type EventBuilder interface {
+	Events() chan Message
+	HandleMessage(msg Message)
+	Stop()
+}
+
+func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) EventBuilder {
+	b := &builderMap{
 		handlersFabric: handlersFabric,
 		sessions:       make(map[uint64]*builder),
+		mutex:          &sync.Mutex{},
+		events:         make(chan Message, 1024*10),
+		done:           make(chan struct{}),
 	}
-}
-
-func (m *builderMap) GetBuilder(sessionID uint64) *builder {
-	b := m.sessions[sessionID]
-	if b == nil {
-		b = NewBuilder(sessionID, m.handlersFabric()...) // Should create new instances
-		m.sessions[sessionID] = b
-	}
+	go b.worker()
 	return b
 }
 
-func (m *builderMap) HandleMessage(msg Message) {
-	sessionID := msg.SessionID()
-	messageID := msg.Meta().Index
-	b := m.GetBuilder(sessionID)
-	b.handleMessage(msg, messageID)
+func (m *builderMap) getBuilder(sessionID uint64) *builder {
+	m.mutex.Lock()
+	b := m.sessions[sessionID]
+	if b == nil {
+		b = NewBuilder(sessionID, m.events, m.handlersFabric()...)
+		m.sessions[sessionID] = b
+	}
+	m.mutex.Unlock()
+	return b
 }
 
-func (m *builderMap) ClearOldSessions() {
+func (m *builderMap) Events() chan Message {
+	return m.events
+}
+
+func (m *builderMap) HandleMessage(msg Message) {
+	m.getBuilder(msg.SessionID()).handleMessage(msg)
+}
+
+func (m *builderMap) worker() {
+	tick := time.Tick(10 * time.Second)
+	for {
+		select {
+		case <-tick:
+			m.checkSessions()
+		case <-m.done:
+			return
+		}
+	}
+}
+
+func (m *builderMap) checkSessions() {
+	m.mutex.Lock()
 	deleted := 0
 	now := time.Now()
-	for id, sess := range m.sessions {
-		if sess.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(now) {
-			// Should delete zombie session
-			delete(m.sessions, id)
+	for sessID, b := range m.sessions {
+		// Check session's events
+		if b.ended || b.lastSystemTime.Add(ForceDeleteTimeout).Before(now) {
+			// Build rest of messages
+			for _, p := range b.processors {
+				if rm := p.Build(); rm != nil {
+					rm.Meta().SetSessionID(sessID)
+					m.events <- rm
+				}
+			}
+			delete(m.sessions, sessID)
 			deleted++
 		}
 	}
+	m.mutex.Unlock()
 	if deleted > 0 {
 		log.Printf("deleted %d sessions from message builder", deleted)
 	}
 }
 
-func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, iter func(msg Message)) {
-	if b.ended || b.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(time.Now()) {
-		for _, p := range b.processors {
-			if rm := p.Build(); rm != nil {
-				rm.Meta().SetSessionID(sessionID)
-				b.readyMsgs = append(b.readyMsgs, rm)
-			}
-		}
-	}
-	b.iterateReadyMessages(iter)
-	if b.ended {
-		delete(m.sessions, sessionID)
-	}
-}
-
-func (m *builderMap) IterateReadyMessages(iter func(sessionID uint64, msg Message)) {
-	for sessionID, session := range m.sessions {
-		m.iterateSessionReadyMessages(
-			sessionID,
-			session,
-			func(msg Message) {
-				iter(sessionID, msg)
-			},
-		)
-	}
-}
-
-func (m *builderMap) IterateSessionReadyMessages(sessionID uint64, iter func(msg Message)) {
-	session, ok := m.sessions[sessionID]
-	if !ok {
-		return
-	}
-	m.iterateSessionReadyMessages(
-		sessionID,
-		session,
-		iter,
-	)
+func (m *builderMap) Stop() {
+	m.done <- struct{}{}
+	m.checkSessions()
+	close(m.events)
 }

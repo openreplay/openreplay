@@ -2,8 +2,7 @@ import json
 
 import requests
 from decouple import config
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.core import webhook

@@ -58,9 +58,7 @@ export default class NewSiteForm extends React.PureComponent {
             siteList,
             location: { pathname },
         } = this.props;
-        if (!site.exists() && siteList.some(({ name }) => name === site.name)) {
-            return this.setState({ existsError: true });
-        }
+        
         if (site.exists()) {
             this.props.update(this.props.site, this.props.site.id).then((response) => {
                 if (!response || !response.errors || response.errors.size === 0) {
@@ -72,11 +70,16 @@ export default class NewSiteForm extends React.PureComponent {
                 }
             });
         } else {
-            this.props.save(this.props.site).then(() => {
-                this.props.onClose(null);
-                this.props.clearSearch();
-                this.props.clearSearchLive();
-                this.props.mstore.initClient();
+            this.props.save(this.props.site).then((response) => {
+                if (!response || !response.errors || response.errors.size === 0) {
+                    this.props.onClose(null);
+                    this.props.clearSearch();
+                    this.props.clearSearchLive();
+                    this.props.mstore.initClient();
+                    toast.success('Project added successfully');
+                } else {
+                    toast.error(response.errors[0]);
+                }
             });
         }
     };

@@ -19,7 +19,7 @@ import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
 
 import MFileReader from './messages/MFileReader';
-import { MType } from './messages';
+import { MouseThrashing, MType } from "./messages";
 import { isDOMType } from './messages/filters.gen';
 import type {
   Message,
@@ -100,6 +100,7 @@ export default class MessageManager {
   private performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
   private windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
   private clickManager: ListWalker<MouseClick> = new ListWalker();
+  private mouseThrashingManager: ListWalker<MouseThrashing> = new ListWalker();
 
   private resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
   private pagesManager: PagesManager;
@@ -108,7 +109,7 @@ export default class MessageManager {
   private scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   public readonly decoder = new Decoder();
-  private readonly lists: Lists;
+  private lists: Lists;
 
   private activityManager: ActivityManager | null = null;
 
@@ -135,6 +136,20 @@ export default class MessageManager {
     })
 
     this.activityManager = new ActivityManager(this.session.duration.milliseconds) // only if not-live
+  }
+
+  public updateLists(lists: Partial<InitialLists>) {
+    Object.keys(lists).forEach((key: 'event' | 'stack' | 'exceptions') => {
+      const currentList = this.lists.lists[key]
+      lists[key]!.forEach(item => currentList.insert(item))
+    })
+    lists?.event?.forEach((e: Record<string, string>) => {
+      if (e.type === EVENT_TYPES.LOCATION) {
+        this.locationEventManager.append(e);
+      }
+    })
+
+    this.state.update({ ...this.lists.getFullListsState() });
   }
 
   private setCSSLoading = (cssLoading: boolean) => {
@@ -206,7 +221,7 @@ export default class MessageManager {
         fileReader.append(b)
         const msgs: Array<Message> = []
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          msgs.push(msg)
+          msg && msgs.push(msg)
         }
         const sorted = msgs.sort((m1, m2) => {
           // @ts-ignore
@@ -219,7 +234,7 @@ export default class MessageManager {
         sorted.forEach(msg => {
           if (indx > msg._index) outOfOrderCounter++
           else indx = msg._index
-          this.distributeMessage(msg, msg._index)
+          this.distributeMessage(msg)
         })
 
         if (outOfOrderCounter > 0) console.warn("Unsorted mob file, error count: ", outOfOrderCounter)
@@ -337,8 +352,12 @@ export default class MessageManager {
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
       const lastClick = this.clickManager.moveGetLast(t);
-      if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
+      if (!!lastClick && t - lastClick.time < 600) { // happened during last 600ms
         this.screen.cursor.click();
+      }
+      const lastThrashing = this.mouseThrashingManager.moveGetLast(t)
+      if (!!lastThrashing && t - lastThrashing.time < 300) {
+        this.screen.cursor.shake();
       }
     })
 
@@ -361,7 +380,7 @@ export default class MessageManager {
     return { ...msg, ...decoded };
   }
 
-  distributeMessage(msg: Message, index: number): void {
+  distributeMessage(msg: Message): void {
     const lastMessageTime =  Math.max(msg.time, this.lastMessageTime)
     this.lastMessageTime = lastMessageTime
     this.state.update({ lastMessageTime })
@@ -379,6 +398,9 @@ export default class MessageManager {
         break;
       case MType.SetViewportSize:
         this.resizeManager.append(msg);
+        break;
+      case MType.MouseThrashing:
+        this.mouseThrashingManager.append(msg);
         break;
       case MType.MouseMove:
         this.mouseMoveManager.append(msg);

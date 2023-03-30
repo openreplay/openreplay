@@ -43,68 +43,8 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           env:
-            - name: AWS_ACCESS_KEY_ID
-              {{- if .Values.global.s3.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: access-key
-              {{- else }}
-              value: {{ .Values.global.s3.accessKey }}
-              {{- end }}
-            - name: AWS_SECRET_ACCESS_KEY
-              {{- if .Values.global.s3.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.s3.existingSecret }}
-                  key: secret-key
-              {{- else }}
-              value: {{ .Values.global.s3.secretKey }}
-              {{- end }}
-            - name: AWS_REGION
-              value: '{{ .Values.global.s3.region }}'
-            - name: LICENSE_KEY
-              value: '{{ .Values.global.enterpriseEditionLicense }}'
-            - name: KAFKA_SERVERS
-              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
-            - name: KAFKA_USE_SSL
-              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
-            - name: pg_password
-              {{- if .Values.global.postgresql.existingSecret }}
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.global.postgresql.existingSecret }}
-                  key: postgresql-postgres-password
-              {{- else }}
-              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
-              {{- end}}
-            - name: POSTGRES_STRING
-              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:$(pg_password)@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
-            # We need to check what is the object store endpoint.
-            # There can be 4 options
-            # 1. Using minio inside kube clster
-            # 2. Using minio managed external cluster, like aws minio offering
-            # 3. Using GCP or other object stores compatible with s3 apis
-            # 4. Using AWS itself.
-            # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
-            - name: ASSETS_ORIGIN
-            {{- if contains "minio" .Values.global.s3.endpoint }}
-              # Local minio Installation
-              value: 'frontends://{{ .Values.global.domainName }}:{{.Values.global.ingress.controller.service.ports.https}}/{{.Values.global.s3.assetsBucket}}'
-            {{- else if contains "amazonaws.com" .Values.global.s3.endpoint }}
-              # AWS S3
-              # Ref: frontends://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
-              # We need frontends://bucketname.s3endpoint
-              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
-            {{- else }}
-              # S3 compatible storage
-              value: '{{ .Values.global.s3.endpoint }}/{{.Values.global.s3.assetsBucket}}'
-            {{- end }}
-            {{- include "openreplay.env.redis_string" .Values.global.redis | nindent 12 }}
-            {{- range $key, $val := .Values.global.env }}
-            - name: {{ $key }}
-              value: '{{ $val }}'
-            {{- end }}
+            - name: TRACKER_HOST
+              value: '{{ ternary "https" "http" .Values.global.ORSecureAccess}}://{{ .Values.global.domainName }}/script'
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

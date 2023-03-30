@@ -1,4 +1,5 @@
 import type { Store, Moveable, Interval } from '../common/types';
+import MessageManager from 'App/player/web/MessageManager'
 
 const fps = 60
 const performance: { now: () => number } = window.performance || { now: Date.now.bind(Date) }
@@ -54,7 +55,7 @@ export default class Animator {
 
   private animationFrameRequestId: number = 0
 
-  constructor(private store: Store<GetState>, private mm: Moveable) {
+  constructor(private store: Store<GetState>, private mm: MessageManager) {
 
     // @ts-ignore
     window.playerJump = this.jump.bind(this)

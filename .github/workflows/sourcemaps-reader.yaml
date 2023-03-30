@@ -1,9 +1,15 @@
-# This action will push the chalice changes to aws
+# This action will push the sourcemapreader changes to aws
 on:
   workflow_dispatch:
+    inputs:
+      skip_security_checks:
+        description: 'Skip Security checks if there is a unfixable vuln or error. Value: true/false'
+        required: false
+        default: 'false'
   push:
     branches:
       - dev
+      - api-*
     paths:
       - "sourcemap-reader/**"
       - "!sourcemap-reader/.gitignore"
@@ -47,8 +53,26 @@ jobs:
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
       run: |
+        skip_security_checks=${{ github.event.inputs.skip_security_checks }}
         cd sourcemap-reader
-        PUSH_IMAGE=1 bash build.sh
+        PUSH_IMAGE=0 bash -x ./build.sh
+        [[ "x$skip_security_checks" == "xtrue" ]]  || {
+          curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
+          images=("sourcemaps-reader")
+          for image in ${images[*]};do
+            ./trivy image --exit-code 1 --security-checks vuln --vuln-type os,library --severity "HIGH,CRITICAL"  --ignore-unfixed $DOCKER_REPO/$image:$IMAGE_TAG 
+          done
+          err_code=$?
+          [[ $err_code -ne 0 ]] && {
+            exit $err_code
+          }
+        } && {
+          echo "Skipping Security Checks"
+        }
+        images=("sourcemaps-reader")
+        for image in ${images[*]};do
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG 
+        done
     - name: Creating old image input
       run: |
         #
@@ -82,18 +106,30 @@ jobs:
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
 
         # Update changed image tag
-        sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/sourcemaps-reader/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "s/sourcemaps-reader/sourcemapreader/g" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
-        mv openreplay/charts/{ingress-nginx,chalice,quickwit} /tmp
+        mv openreplay/charts/{ingress-nginx,sourcemapreader,quickwit} /tmp
         rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,chalice,quickwit} openreplay/charts/
+        mv /tmp/{ingress-nginx,sourcemapreader,quickwit} openreplay/charts/
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.ref_name }}_${{ github.sha }}
         ENVIRONMENT: staging
+
+    - name: Alert slack
+      if: ${{ failure() }}
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: foss
+        SLACK_TITLE: "Failed ${{ github.workflow }}"
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEB_HOOK }}
+        SLACK_USERNAME: "OR Bot"
+        SLACK_MESSAGE: 'Build failed :bomb:'
 
     # - name: Debug Job
     #   if: ${{ failure() }}
@@ -102,4 +138,4 @@ jobs:
     #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
     #     IMAGE_TAG: ${{ github.sha }}
     #     ENVIRONMENT: staging
-    #
+

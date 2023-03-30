@@ -25,15 +25,18 @@ export interface Options {
   onCallStart: StartEndCallback;
   onRemoteControlStart: StartEndCallback;
   onRecordingRequest?: (agentInfo: Record<string, any>) => any;
+  onCallDeny?: () => any;
+  onRemoteControlDeny?: (agentInfo: Record<string, any>) => any;
+  onRecordingDeny?: (agentInfo: Record<string, any>) => any;
   session_calling_peer_key: string;
   session_control_peer_key: string;
   callConfirm: ConfirmOptions;
   controlConfirm: ConfirmOptions;
   recordingConfirm: ConfirmOptions;
 
-  // @depricated
+  // @deprecated
   confirmText?: string;
-  // @depricated
+  // @deprecated
   confirmStyle?: Properties;
 
   config: RTCConfiguration;
@@ -46,7 +49,7 @@ enum CallingState {
   Requesting,
   True,
   False,
-};
+}
 
 
 // TODO typing????
@@ -84,7 +87,7 @@ export default class Assist {
         onAgentConnect: ()=>{},
         onRemoteControlStart: ()=>{},
         callConfirm: {},
-        controlConfirm: {}, // TODO: clear options passing/merging/overriting
+        controlConfirm: {}, // TODO: clear options passing/merging/overwriting
         recordingConfirm: {},
       },
       options,
@@ -194,7 +197,7 @@ export default class Assist {
         annot.mount()
         return callingAgents.get(id)
       },
-      id => {
+      (id, isDenied) => {
         if (id) {
           const cb = this.agents[id].onControlReleased
           delete this.agents[id].onControlReleased
@@ -210,14 +213,20 @@ export default class Assist {
           callUI?.remove()
           callUI = null
         }
+        if (isDenied) {
+          const info = id ? this.agents[id]?.agentInfo : {}
+          this.options.onRemoteControlDeny?.(info || {})
+        }
       },
     )
 
     const onAcceptRecording = () => {
       socket.emit('recording_accepted')
     }
-    const onRejectRecording = () => {
+    const onRejectRecording = (agentData) => {
       socket.emit('recording_rejected')
+
+      this.options.onRecordingDeny?.(agentData || {})
     }
     const recordingState = new ScreenRecordingState(this.options.recordingConfirm)
 
@@ -296,7 +305,7 @@ export default class Assist {
     socket.on('request_recording', (id, agentData) => {
       if (!recordingState.isActive) {
         this.options.onRecordingRequest?.(JSON.parse(agentData))
-        recordingState.requestRecording(id, onAcceptRecording, onRejectRecording)
+        recordingState.requestRecording(id, onAcceptRecording, () => onRejectRecording(agentData))
       } else {
         this.emit('recording_busy')
       }
@@ -365,7 +374,7 @@ export default class Assist {
       })
     }
 
-    const handleCallEnd = () => { // Completle stop and clear all calls
+    const handleCallEnd = () => { // Complete stop and clear all calls
       // Streams
       Object.values(calls).forEach(call => call.close())
       Object.keys(calls).forEach(peerId => {
@@ -417,6 +426,7 @@ export default class Assist {
       confirmAnswer.then(async agreed => {
         if (!agreed) {
           initiateCallEnd()
+          this.options.onCallDeny?.()
           return
         }
         // Request local stream for the new connection
@@ -428,7 +438,7 @@ export default class Assist {
           }
           calls[call.peer] = call
         } catch (e) {
-          app.debug.error('Audio mediadevice request error:', e)
+          app.debug.error('Audio media device request error:', e)
           initiateCallEnd()
           return
         }

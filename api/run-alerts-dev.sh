@@ -1,3 +1,3 @@
 #!/bin/zsh
 
-uvicorn app_alerts:app --reload
+uvicorn app_alerts:app --reload --port 8888

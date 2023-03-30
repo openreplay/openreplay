@@ -3,9 +3,9 @@ import { NoContent, Pagination } from 'UI';
 import { filterList } from 'App/utils';
 import { sliceListPerPage } from 'App/utils';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
-import AlertListItem from './AlertListItem'
-import { useStore } from 'App/mstore'
-import { observer } from 'mobx-react-lite'
+import AlertListItem from './AlertListItem';
+import { useStore } from 'App/mstore';
+import { observer } from 'mobx-react-lite';
 
 const pageSize = 10;
 
@@ -15,14 +15,19 @@ interface Props {
 
 function AlertsList({ siteId }: Props) {
   const { alertsStore, settingsStore } = useStore();
-  const { fetchWebhooks, webhooks } = settingsStore
-  const { alerts: alertsList, alertsSearch, fetchList, init } = alertsStore
+  const { fetchWebhooks, webhooks } = settingsStore;
+  const { alerts: alertsList, alertsSearch, fetchList, init } = alertsStore;
   const page = alertsStore.page;
 
-  React.useEffect(() => { fetchList(); fetchWebhooks() }, []);
-  const alertsArray = alertsList
+  React.useEffect(() => {
+    fetchList();
+    fetchWebhooks();
+  }, []);
+  const alertsArray = alertsList;
 
-  const filteredAlerts = filterList(alertsArray, alertsSearch, ['name'], (item, query) => query.test(item.query.left))
+  const filteredAlerts = filterList(alertsArray, alertsSearch, ['name'], (item, query) =>
+    query.test(item.query.left)
+  );
   const list = alertsSearch !== '' ? filteredAlerts : alertsArray;
 
   return (
@@ -31,8 +36,11 @@ function AlertsList({ siteId }: Props) {
       title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_ALERTS} size={180} />
-          <div className="text-center text-gray-600 my-4">
+          <div className="text-center mt-4">
             {alertsSearch !== '' ? 'No matching results' : "You haven't created any alerts yet"}
+          </div>
+          <div className="text-sm color-gray-medium font-normal">
+            Alerts helps your team stay up to date with the activity on your app.
           </div>
         </div>
       }

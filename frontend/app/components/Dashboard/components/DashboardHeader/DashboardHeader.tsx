@@ -19,7 +19,7 @@ interface IProps {
 }
 
 type Props = IProps & RouteComponentProps;
-const MAX_CARDS = 30
+const MAX_CARDS = 29;
 function DashboardHeader(props: Props) {
   const { siteId, dashboardId } = props;
   const { dashboardStore } = useStore();
@@ -71,7 +71,7 @@ function DashboardHeader(props: Props) {
           <PageTitle
             title={
               // @ts-ignore
-              <Tooltip delay={100} arrow title="Double click to rename">
+              <Tooltip delay={100} arrow title="Double click to edit">
                 {dashboard?.name}
               </Tooltip>
             }
@@ -118,7 +118,7 @@ function DashboardHeader(props: Props) {
       </div>
       <div className="pb-4">
         {/* @ts-ignore */}
-        <Tooltip delay={100} arrow title="Double click to rename" className="w-fit !block">
+        <Tooltip delay={100} arrow title="Double click to edit" className="w-fit !block">
           <h2
             className="my-2 font-normal w-fit text-disabled-text border-b border-b-borderColor-transparent hover:border-dotted hover:border-gray-medium cursor-pointer"
             onDoubleClick={() => onEdit(false)}

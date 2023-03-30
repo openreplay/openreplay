@@ -25,13 +25,8 @@ function MetricViewHeader() {
           </div>
         </div>
       </div>
-      <div className="text-base text-disabled-text flex items-center px-6">
-        <Icon name="info-circle-fill" className="mr-2" size={16} />
-        Create custom Cards to capture key interactions and track KPIs.
-      </div>
-      <div className="border-y px-3 py-1 mt-2 flex items-center w-full justify-between">
-        <ListViewToggler />
-
+      
+      <div className="border-y px-6 py-1 mt-2 flex items-center w-full justify-between">
         <div className="items-center flex gap-4">
           <Toggler
             label="My Cards"
@@ -53,6 +48,17 @@ function MetricViewHeader() {
             isSearchable={true}
           />
 
+          <DashboardDropdown
+            plain={true}
+            onChange={(value: any) =>
+              metricStore.updateKey('filter', { ...filter, dashboard: value })
+            }
+          />
+        </div>
+
+        <div className="flex items-center">
+          <ListViewToggler />
+
           <Select
             options={[
               { label: 'Newest', value: 'desc' },
@@ -62,13 +68,7 @@ function MetricViewHeader() {
             defaultValue={metricStore.sort.by}
             onChange={({ value }) => metricStore.updateKey('sort', { by: value.value })}
             plain={true}
-          />
-
-          <DashboardDropdown
-            plain={true}
-            onChange={(value: any) =>
-              metricStore.updateKey('filter', { ...filter, dashboard: value })
-            }
+            className="ml-4"
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ function DashboardDropdown({ onChange, plain = false }: { plain?: boolean; onCha
   return (
     <Select
       isSearchable={true}
-      placeholder="Select Dashboard"
+      placeholder="Filter by Dashboard"
       plain={plain}
       options={dashboardOptions}
       value={metricStore.filter.dashboard}

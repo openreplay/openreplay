@@ -17,7 +17,7 @@ const SessionSearchQueryParamHandler = (props: Props) => {
 
   const applyFilterFromQuery = () => {
     const filter = getFiltersFromQuery(history.location.search, appliedFilter);
-    props.updateFilter(filter, true);
+    props.updateFilter(filter, true, false);
   };
 
   const generateUrlQuery = () => {

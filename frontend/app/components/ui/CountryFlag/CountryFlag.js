@@ -4,7 +4,7 @@ import { countries } from 'App/constants';
 import { Icon } from 'UI';
 import stl from './countryFlag.module.css';
 
-const CountryFlag = ({ country = '', className = '', style = {}, label = false }) => {
+const CountryFlag = ({ country = '', className = '', style = {}, label = false, width = 22, height = 15}) => {
 	const knownCountry = !!country && country !== 'UN';
   	const countryFlag = knownCountry ? country.toLowerCase() : '';
   	const countryName = knownCountry ? countries[ country ] : 'Unknown Country';
@@ -12,7 +12,7 @@ const CountryFlag = ({ country = '', className = '', style = {}, label = false }
 	return (
 		<div className="flex items-center" style={style}>
 			{knownCountry
-				?  <div className={ cn(`flag flag-${ countryFlag }`, className, stl.default) } />
+				?  <div className={ cn(`flag flag-${ countryFlag }`, className) } style={{ width: `${width}px`, height: `${height}px` }} />
 				: (
 					<div className="flex items-center w-full">
 						<Icon name="flag-na" size="22" className="" />

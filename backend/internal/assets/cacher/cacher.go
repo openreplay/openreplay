@@ -2,9 +2,11 @@ package cacher
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime"
 	"net/http"
 	metrics "openreplay/backend/pkg/metrics/assets"
@@ -38,6 +40,35 @@ func (c *cacher) CanCache() bool {
 
 func NewCacher(cfg *config.Config) *cacher {
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	if cfg.ClientCertFilePath != "" && cfg.ClientKeyFilePath != "" && cfg.CaCertFilePath != "" {
+
+		var cert tls.Certificate
+		var err error
+
+		cert, err = tls.LoadX509KeyPair(cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
+		if err != nil {
+			log.Fatalf("Error creating x509 keypair from the client cert file %s and client key file %s , Error: %s", err, cfg.ClientCertFilePath, cfg.ClientKeyFilePath)
+		}
+
+		caCert, err := ioutil.ReadFile(cfg.CaCertFilePath)
+		if err != nil {
+			log.Fatalf("Error opening cert file %s, Error: %s", cfg.CaCertFilePath, err)
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+		tlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+			Certificates:       []tls.Certificate{cert},
+			RootCAs:            caCertPool,
+		}
+
+	}
+
 	c := &cacher{
 		timeoutMap: newTimeoutMap(),
 		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets),
@@ -45,7 +76,7 @@ func NewCacher(cfg *config.Config) *cacher {
 			Timeout: time.Duration(6) * time.Second,
 			Transport: &http.Transport{
 				Proxy:           http.ProxyFromEnvironment,
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				TLSClientConfig: tlsConfig,
 			},
 		},
 		rewriter:       rewriter,
@@ -104,6 +135,13 @@ func (c *cacher) cacheURL(t *Task) {
 	if contentType == "" {
 		contentType = mime.TypeByExtension(filepath.Ext(res.Request.URL.Path))
 	}
+
+	// Skip html file (usually it's a CDN mock for 404 error)
+	if strings.HasPrefix(contentType, "text/html") {
+		c.Errors <- errors.Wrap(fmt.Errorf("context type is text/html, sessID: %d", t.sessionID), t.urlContext)
+		return
+	}
+
 	isCSS := strings.HasPrefix(contentType, "text/css")
 
 	strData := string(data)

@@ -48,7 +48,7 @@ func (h *ClickRageDetector) Handle(message Message, messageID uint64, timestamp 
 }
 
 func (h *ClickRageDetector) Build() Message {
-	if h.countsInARow >= web.MIN_CLICKS_IN_A_ROW {
+	if h.countsInARow >= web.MinClicksInARow {
 		event := &IOSIssueEvent{
 			Type:          "click_rage",
 			ContextString: h.lastLabel,

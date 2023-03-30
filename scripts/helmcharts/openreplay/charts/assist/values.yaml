@@ -64,6 +64,7 @@ service:
   type: ClusterIP
   ports:
     socketio: 9001
+    metrics: 8888
 
 ingress:
   enabled: true

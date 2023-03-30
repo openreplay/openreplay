@@ -31,6 +31,7 @@ export default class WebPlayer extends Player {
     let initialLists = live ? {} : {
       event: session.events || [],
       stack: session.stackEvents || [],
+      frustrations: session.frustrations || [],
       exceptions: session.errors?.map(({ name, ...rest }: any) =>
         Log({
           level: LogLevel.ERROR,
@@ -66,6 +67,21 @@ export default class WebPlayer extends Player {
     // @ts-ignore
     window.playerJumpToTime = this.jump.bind(this)
 
+  }
+
+  updateLists = (session: any) => {
+    let lists = {
+      event: session.events || [],
+      stack: session.stackEvents || [],
+      exceptions: session.errors?.map(({ name, ...rest }: any) =>
+        Log({
+          level: LogLevel.ERROR,
+          value: name,
+          ...rest,
+        })
+      ) || [],
+    }
+    this.messageManager.updateLists(lists)
   }
 
   attach = (parent: HTMLElement, isClickmap?: boolean) => {
@@ -121,7 +137,7 @@ export default class WebPlayer extends Player {
   }
 
   showClickmap = (...args: Parameters<TargetMarker['injectTargets']>) => {
-    this.screen.overlay.remove() // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
+    this.screen?.overlay?.remove?.() // hack. TODO: 1.split Screen functionalities (overlay, mounter) 2. separate ClickMapPlayer class that does not create overlay
     this.freeze().then(() => {
       this.targetMarker.injectTargets(...args)
     })

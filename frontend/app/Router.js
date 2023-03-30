@@ -249,7 +249,7 @@ class Router extends React.Component {
                 <Switch>
                     <Route exact strict path={FORGOT_PASSWORD} component={ForgotPassword} />
                     <Route exact strict path={LOGIN_PATH} component={changePassword ? UpdatePassword : Login} />
-                    {!existingTenant && <Route exact strict path={SIGNUP_PATH} component={Signup} />}
+                    <Route exact strict path={SIGNUP_PATH} component={Signup} />
                     <Redirect to={LOGIN_PATH} />
                 </Switch>
                 {!isEnterprise && <SupportCallout /> }

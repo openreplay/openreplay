@@ -315,35 +315,6 @@ class InputEvent(Message):
         self.label = label
 
 
-class ClickEvent(Message):
-    __id__ = 33
-
-    def __init__(self, message_id, timestamp, hesitation_time, label, selector):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.hesitation_time = hesitation_time
-        self.label = label
-        self.selector = selector
-
-
-class ResourceEvent(Message):
-    __id__ = 35
-
-    def __init__(self, message_id, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, type, success, method, status):
-        self.message_id = message_id
-        self.timestamp = timestamp
-        self.duration = duration
-        self.ttfb = ttfb
-        self.header_size = header_size
-        self.encoded_body_size = encoded_body_size
-        self.decoded_body_size = decoded_body_size
-        self.url = url
-        self.type = type
-        self.success = success
-        self.method = method
-        self.status = status
-
-
 class CSSInsertRule(Message):
     __id__ = 37
 
@@ -470,14 +441,7 @@ class SetNodeAttributeDict(Message):
         self.value_key = value_key
 
 
-class DOMDrop(Message):
-    __id__ = 52
-
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-
-class ResourceTiming(Message):
+class ResourceTimingDeprecated(Message):
     __id__ = 53
 
     def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator):
@@ -742,6 +706,57 @@ class PartitionedMessage(Message):
     def __init__(self, part_no, part_total):
         self.part_no = part_no
         self.part_total = part_total
+
+
+class InputChange(Message):
+    __id__ = 112
+
+    def __init__(self, id, value, value_masked, label, hesitation_time, input_duration):
+        self.id = id
+        self.value = value
+        self.value_masked = value_masked
+        self.label = label
+        self.hesitation_time = hesitation_time
+        self.input_duration = input_duration
+
+
+class SelectionChange(Message):
+    __id__ = 113
+
+    def __init__(self, selection_start, selection_end, selection):
+        self.selection_start = selection_start
+        self.selection_end = selection_end
+        self.selection = selection
+
+
+class MouseThrashing(Message):
+    __id__ = 114
+
+    def __init__(self, timestamp):
+        self.timestamp = timestamp
+
+
+class UnbindNodes(Message):
+    __id__ = 115
+
+    def __init__(self, total_removed_percent):
+        self.total_removed_percent = total_removed_percent
+
+
+class ResourceTiming(Message):
+    __id__ = 116
+
+    def __init__(self, timestamp, duration, ttfb, header_size, encoded_body_size, decoded_body_size, url, initiator, transferred_size, cached):
+        self.timestamp = timestamp
+        self.duration = duration
+        self.ttfb = ttfb
+        self.header_size = header_size
+        self.encoded_body_size = encoded_body_size
+        self.decoded_body_size = decoded_body_size
+        self.url = url
+        self.initiator = initiator
+        self.transferred_size = transferred_size
+        self.cached = cached
 
 
 class IssueEvent(Message):

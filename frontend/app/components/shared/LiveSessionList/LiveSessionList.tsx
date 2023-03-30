@@ -87,7 +87,7 @@ function LiveSessionList(props: Props) {
       <div className="bg-white p-3 rounded border">
         <div className="flex mb-6 justify-between items-center">
           <div className="flex items-center">
-            <h3 className="text-2xl capitalize mr-4">
+            <h3 className="text-2xl capitalize mr-2">
               <span>Live Sessions</span>
               {/* <span className="ml-2 font-normal color-gray-medium">{numberWithCommas(total)}</span> */}
             </h3>

@@ -6,7 +6,8 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) error {
+func (c *PGCache) InsertIOSSessionStart(s *IOSSessionStart) error {
+	sessionID := s.SessionID()
 	if c.Cache.HasSession(sessionID) {
 		return fmt.Errorf("session %d already in cache", sessionID)
 	}
@@ -33,13 +34,15 @@ func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) er
 	return nil
 }
 
-func (c *PGCache) InsertIOSSessionEnd(sessionID uint64, e *IOSSessionEnd) error {
+func (c *PGCache) InsertIOSSessionEnd(e *IOSSessionEnd) error {
+	sessionID := e.SessionID()
 	_, err := c.InsertSessionEnd(sessionID, e.Timestamp)
 	return err
 }
 
-func (c *PGCache) InsertIOSScreenEnter(sessionID uint64, screenEnter *IOSScreenEnter) error {
-	if err := c.Conn.InsertIOSScreenEnter(sessionID, screenEnter); err != nil {
+func (c *PGCache) InsertIOSScreenEnter(screenEnter *IOSScreenEnter) error {
+	sessionID := screenEnter.SessionID()
+	if err := c.Conn.InsertIOSScreenEnter(screenEnter); err != nil {
 		return err
 	}
 	session, err := c.Cache.GetSession(sessionID)
@@ -50,8 +53,9 @@ func (c *PGCache) InsertIOSScreenEnter(sessionID uint64, screenEnter *IOSScreenE
 	return nil
 }
 
-func (c *PGCache) InsertIOSClickEvent(sessionID uint64, clickEvent *IOSClickEvent) error {
-	if err := c.Conn.InsertIOSClickEvent(sessionID, clickEvent); err != nil {
+func (c *PGCache) InsertIOSClickEvent(clickEvent *IOSClickEvent) error {
+	sessionID := clickEvent.SessionID()
+	if err := c.Conn.InsertIOSClickEvent(clickEvent); err != nil {
 		return err
 	}
 	session, err := c.Cache.GetSession(sessionID)
@@ -62,8 +66,9 @@ func (c *PGCache) InsertIOSClickEvent(sessionID uint64, clickEvent *IOSClickEven
 	return nil
 }
 
-func (c *PGCache) InsertIOSInputEvent(sessionID uint64, inputEvent *IOSInputEvent) error {
-	if err := c.Conn.InsertIOSInputEvent(sessionID, inputEvent); err != nil {
+func (c *PGCache) InsertIOSInputEvent(inputEvent *IOSInputEvent) error {
+	sessionID := inputEvent.SessionID()
+	if err := c.Conn.InsertIOSInputEvent(inputEvent); err != nil {
 		return err
 	}
 	session, err := c.Cache.GetSession(sessionID)
@@ -74,18 +79,15 @@ func (c *PGCache) InsertIOSInputEvent(sessionID uint64, inputEvent *IOSInputEven
 	return nil
 }
 
-func (c *PGCache) InsertIOSCrash(sessionID uint64, crash *IOSCrash) error {
+func (c *PGCache) InsertIOSCrash(crash *IOSCrash) error {
+	sessionID := crash.SessionID()
 	session, err := c.Cache.GetSession(sessionID)
 	if err != nil {
 		return err
 	}
-	if err := c.Conn.InsertIOSCrash(sessionID, session.ProjectID, crash); err != nil {
+	if err := c.Conn.InsertIOSCrash(session.ProjectID, crash); err != nil {
 		return err
 	}
 	session.ErrorsCount += 1
-	return nil
-}
-
-func (c *PGCache) InsertIOSIssueEvent(sessionID uint64, issueEvent *IOSIssueEvent) error {
 	return nil
 }

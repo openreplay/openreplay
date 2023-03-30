@@ -34,8 +34,6 @@ const (
 	MsgMetadata                    = 30
 	MsgPageEvent                   = 31
 	MsgInputEvent                  = 32
-	MsgClickEvent                  = 33
-	MsgResourceEvent               = 35
 	MsgCSSInsertRule               = 37
 	MsgCSSDeleteRule               = 38
 	MsgFetch                       = 39
@@ -50,8 +48,7 @@ const (
 	MsgPerformanceTrack            = 49
 	MsgStringDict                  = 50
 	MsgSetNodeAttributeDict        = 51
-	MsgDOMDrop                     = 52
-	MsgResourceTiming              = 53
+	MsgResourceTimingDeprecated    = 53
 	MsgConnectionInformation       = 54
 	MsgSetPageVisibility           = 55
 	MsgPerformanceTrackAggr        = 56
@@ -79,6 +76,11 @@ const (
 	MsgBatchMeta                   = 80
 	MsgBatchMetadata               = 81
 	MsgPartitionedMessage          = 82
+	MsgInputChange                 = 112
+	MsgSelectionChange             = 113
+	MsgMouseThrashing              = 114
+	MsgUnbindNodes                 = 115
+	MsgResourceTiming              = 116
 	MsgIssueEvent                  = 125
 	MsgSessionEnd                  = 126
 	MsgSessionSearch               = 127
@@ -944,78 +946,6 @@ func (msg *InputEvent) TypeID() int {
 	return 32
 }
 
-type ClickEvent struct {
-	message
-	MessageID      uint64
-	Timestamp      uint64
-	HesitationTime uint64
-	Label          string
-	Selector       string
-}
-
-func (msg *ClickEvent) Encode() []byte {
-	buf := make([]byte, 51+len(msg.Label)+len(msg.Selector))
-	buf[0] = 33
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.HesitationTime, buf, p)
-	p = WriteString(msg.Label, buf, p)
-	p = WriteString(msg.Selector, buf, p)
-	return buf[:p]
-}
-
-func (msg *ClickEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ClickEvent) TypeID() int {
-	return 33
-}
-
-type ResourceEvent struct {
-	message
-	MessageID       uint64
-	Timestamp       uint64
-	Duration        uint64
-	TTFB            uint64
-	HeaderSize      uint64
-	EncodedBodySize uint64
-	DecodedBodySize uint64
-	URL             string
-	Type            string
-	Success         bool
-	Method          string
-	Status          uint64
-}
-
-func (msg *ResourceEvent) Encode() []byte {
-	buf := make([]byte, 121+len(msg.URL)+len(msg.Type)+len(msg.Method))
-	buf[0] = 35
-	p := 1
-	p = WriteUint(msg.MessageID, buf, p)
-	p = WriteUint(msg.Timestamp, buf, p)
-	p = WriteUint(msg.Duration, buf, p)
-	p = WriteUint(msg.TTFB, buf, p)
-	p = WriteUint(msg.HeaderSize, buf, p)
-	p = WriteUint(msg.EncodedBodySize, buf, p)
-	p = WriteUint(msg.DecodedBodySize, buf, p)
-	p = WriteString(msg.URL, buf, p)
-	p = WriteString(msg.Type, buf, p)
-	p = WriteBoolean(msg.Success, buf, p)
-	p = WriteString(msg.Method, buf, p)
-	p = WriteUint(msg.Status, buf, p)
-	return buf[:p]
-}
-
-func (msg *ResourceEvent) Decode() Message {
-	return msg
-}
-
-func (msg *ResourceEvent) TypeID() int {
-	return 35
-}
-
 type CSSInsertRule struct {
 	message
 	ID    uint64
@@ -1366,28 +1296,7 @@ func (msg *SetNodeAttributeDict) TypeID() int {
 	return 51
 }
 
-type DOMDrop struct {
-	message
-	Timestamp uint64
-}
-
-func (msg *DOMDrop) Encode() []byte {
-	buf := make([]byte, 11)
-	buf[0] = 52
-	p := 1
-	p = WriteUint(msg.Timestamp, buf, p)
-	return buf[:p]
-}
-
-func (msg *DOMDrop) Decode() Message {
-	return msg
-}
-
-func (msg *DOMDrop) TypeID() int {
-	return 52
-}
-
-type ResourceTiming struct {
+type ResourceTimingDeprecated struct {
 	message
 	Timestamp       uint64
 	Duration        uint64
@@ -1399,7 +1308,7 @@ type ResourceTiming struct {
 	Initiator       string
 }
 
-func (msg *ResourceTiming) Encode() []byte {
+func (msg *ResourceTimingDeprecated) Encode() []byte {
 	buf := make([]byte, 81+len(msg.URL)+len(msg.Initiator))
 	buf[0] = 53
 	p := 1
@@ -1414,11 +1323,11 @@ func (msg *ResourceTiming) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *ResourceTiming) Decode() Message {
+func (msg *ResourceTimingDeprecated) Decode() Message {
 	return msg
 }
 
-func (msg *ResourceTiming) TypeID() int {
+func (msg *ResourceTimingDeprecated) TypeID() int {
 	return 53
 }
 
@@ -2115,6 +2024,143 @@ func (msg *PartitionedMessage) Decode() Message {
 
 func (msg *PartitionedMessage) TypeID() int {
 	return 82
+}
+
+type InputChange struct {
+	message
+	ID             uint64
+	Value          string
+	ValueMasked    bool
+	Label          string
+	HesitationTime int64
+	InputDuration  int64
+}
+
+func (msg *InputChange) Encode() []byte {
+	buf := make([]byte, 61+len(msg.Value)+len(msg.Label))
+	buf[0] = 112
+	p := 1
+	p = WriteUint(msg.ID, buf, p)
+	p = WriteString(msg.Value, buf, p)
+	p = WriteBoolean(msg.ValueMasked, buf, p)
+	p = WriteString(msg.Label, buf, p)
+	p = WriteInt(msg.HesitationTime, buf, p)
+	p = WriteInt(msg.InputDuration, buf, p)
+	return buf[:p]
+}
+
+func (msg *InputChange) Decode() Message {
+	return msg
+}
+
+func (msg *InputChange) TypeID() int {
+	return 112
+}
+
+type SelectionChange struct {
+	message
+	SelectionStart uint64
+	SelectionEnd   uint64
+	Selection      string
+}
+
+func (msg *SelectionChange) Encode() []byte {
+	buf := make([]byte, 31+len(msg.Selection))
+	buf[0] = 113
+	p := 1
+	p = WriteUint(msg.SelectionStart, buf, p)
+	p = WriteUint(msg.SelectionEnd, buf, p)
+	p = WriteString(msg.Selection, buf, p)
+	return buf[:p]
+}
+
+func (msg *SelectionChange) Decode() Message {
+	return msg
+}
+
+func (msg *SelectionChange) TypeID() int {
+	return 113
+}
+
+type MouseThrashing struct {
+	message
+	Timestamp uint64
+}
+
+func (msg *MouseThrashing) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 114
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	return buf[:p]
+}
+
+func (msg *MouseThrashing) Decode() Message {
+	return msg
+}
+
+func (msg *MouseThrashing) TypeID() int {
+	return 114
+}
+
+type UnbindNodes struct {
+	message
+	TotalRemovedPercent uint64
+}
+
+func (msg *UnbindNodes) Encode() []byte {
+	buf := make([]byte, 11)
+	buf[0] = 115
+	p := 1
+	p = WriteUint(msg.TotalRemovedPercent, buf, p)
+	return buf[:p]
+}
+
+func (msg *UnbindNodes) Decode() Message {
+	return msg
+}
+
+func (msg *UnbindNodes) TypeID() int {
+	return 115
+}
+
+type ResourceTiming struct {
+	message
+	Timestamp       uint64
+	Duration        uint64
+	TTFB            uint64
+	HeaderSize      uint64
+	EncodedBodySize uint64
+	DecodedBodySize uint64
+	URL             string
+	Initiator       string
+	TransferredSize uint64
+	Cached          bool
+}
+
+func (msg *ResourceTiming) Encode() []byte {
+	buf := make([]byte, 101+len(msg.URL)+len(msg.Initiator))
+	buf[0] = 116
+	p := 1
+	p = WriteUint(msg.Timestamp, buf, p)
+	p = WriteUint(msg.Duration, buf, p)
+	p = WriteUint(msg.TTFB, buf, p)
+	p = WriteUint(msg.HeaderSize, buf, p)
+	p = WriteUint(msg.EncodedBodySize, buf, p)
+	p = WriteUint(msg.DecodedBodySize, buf, p)
+	p = WriteString(msg.URL, buf, p)
+	p = WriteString(msg.Initiator, buf, p)
+	p = WriteUint(msg.TransferredSize, buf, p)
+	p = WriteBoolean(msg.Cached, buf, p)
+	return buf[:p]
+}
+
+func (msg *ResourceTiming) Decode() Message {
+	return msg
+}
+
+func (msg *ResourceTiming) TypeID() int {
+	return 116
 }
 
 type IssueEvent struct {

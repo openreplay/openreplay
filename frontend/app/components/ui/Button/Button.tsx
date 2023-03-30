@@ -38,7 +38,7 @@ export default (props: Props) => {
     default: 'bg-white hover:bg-gray-light border border-gray-light',
     primary: 'bg-teal color-white hover:bg-teal-dark',
     green: 'bg-green color-white hover:bg-green-dark',
-    text: 'bg-transparent color-gray-dark hover:bg-gray-light-shade hover:!text-teal hover-fill-teal',
+    text: 'bg-transparent color-gray-dark hover:bg-active-blue hover:!text-teal hover-fill-teal',
     'text-primary': 'bg-transparent color-teal hover:bg-teal-light hover:color-teal-dark',
     'text-red': 'bg-transparent color-red hover:bg-teal-light',
     outline: 'bg-white color-teal border border-teal hover:bg-teal-light',
@@ -60,7 +60,7 @@ export default (props: Props) => {
   }
 
   const render = () => (
-    <button {...rest} type={type} className={cn(classes, className)}>
+    <button {...rest} type={type} className={cn(classes, className, 'flex items-center justify-center')}>
       {icon && (
         // @ts-ignore
         <Icon className={cn({ 'mr-2': children })} name={icon} color={iconColor} size={iconSize} />

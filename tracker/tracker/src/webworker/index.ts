@@ -136,11 +136,17 @@ self.onmessage = ({ data }: any): any => {
 
   if (data.type === 'auth') {
     if (!sender) {
-      throw new Error('WebWorker: sender not initialised. Received auth.')
+      console.debug('WebWorker: sender not initialised. Received auth.')
+      initiateRestart()
+      return
     }
+
     if (!writer) {
-      throw new Error('WebWorker: writer not initialised. Received auth.')
+      console.debug('WebWorker: writer not initialised. Received auth.')
+      initiateRestart()
+      return
     }
+
     sender.authorise(data.token)
     data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
     return

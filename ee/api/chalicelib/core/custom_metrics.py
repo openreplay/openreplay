@@ -2,8 +2,7 @@ import json
 from typing import Union
 
 from decouple import config
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 import schemas
 import schemas_ee

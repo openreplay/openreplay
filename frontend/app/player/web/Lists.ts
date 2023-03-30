@@ -3,7 +3,7 @@ import ListWalkerWithMarks from '../common/ListWalkerWithMarks';
 import type { Timed } from '../common/types';
 
 
-const SIMPLE_LIST_NAMES = [ "event", "redux", "mobx", "vuex", "zustand", "ngrx", "graphql", "exceptions", "profiles"] as const
+const SIMPLE_LIST_NAMES = [ "event", "redux", "mobx", "vuex", "zustand", "ngrx", "graphql", "exceptions", "profiles", "frustrations"] as const
 const MARKED_LIST_NAMES = [ "log", "resource", "fetch", "stack" ] as const
 //const entityNamesSimple = [ "event", "profile" ];
 

@@ -18,6 +18,20 @@ type NetworkRequestFTS struct {
 	Duration  uint64 `json:"duration"`
 }
 
+func WrapNetworkRequest(m *messages.NetworkRequest, projID uint32) *NetworkRequestFTS {
+	return &NetworkRequestFTS{
+		SessionID: m.SessionID(),
+		ProjectID: projID,
+		Method:    m.Method,
+		URL:       m.URL,
+		Request:   m.Request,
+		Response:  m.Response,
+		Status:    m.Status,
+		Timestamp: m.Timestamp,
+		Duration:  m.Duration,
+	}
+}
+
 type PageEventFTS struct {
 	SessionID                  uint64 `json:"session_id"`
 	ProjectID                  uint32 `json:"project_id"`
@@ -40,6 +54,30 @@ type PageEventFTS struct {
 	TimeToInteractive          uint64 `json:"time_to_interactive"`
 }
 
+func WrapPageEvent(m *messages.PageEvent, projID uint32) *PageEventFTS {
+	return &PageEventFTS{
+		SessionID:                  m.SessionID(),
+		ProjectID:                  projID,
+		MessageID:                  m.MessageID,
+		Timestamp:                  m.Timestamp,
+		URL:                        m.URL,
+		Referrer:                   m.Referrer,
+		Loaded:                     m.Loaded,
+		RequestStart:               m.RequestStart,
+		ResponseStart:              m.ResponseStart,
+		ResponseEnd:                m.ResponseEnd,
+		DomContentLoadedEventStart: m.DomContentLoadedEventStart,
+		DomContentLoadedEventEnd:   m.DomContentLoadedEventEnd,
+		LoadEventStart:             m.LoadEventStart,
+		LoadEventEnd:               m.LoadEventEnd,
+		FirstPaint:                 m.FirstPaint,
+		FirstContentfulPaint:       m.FirstContentfulPaint,
+		SpeedIndex:                 m.SpeedIndex,
+		VisuallyComplete:           m.VisuallyComplete,
+		TimeToInteractive:          m.TimeToInteractive,
+	}
+}
+
 type GraphQLFTS struct {
 	SessionID     uint64 `json:"session_id"`
 	ProjectID     uint32 `json:"project_id"`
@@ -49,68 +87,46 @@ type GraphQLFTS struct {
 	Response      string `json:"response"`
 }
 
-func (s *Saver) SendToFTS(msg messages.Message, projID uint32) {
+func WrapGraphQL(m *messages.GraphQL, projID uint32) *GraphQLFTS {
+	return &GraphQLFTS{
+		SessionID:     m.SessionID(),
+		ProjectID:     projID,
+		OperationKind: m.OperationKind,
+		OperationName: m.OperationName,
+		Variables:     m.Variables,
+		Response:      m.Response,
+	}
+}
+
+func (s *saverImpl) sendToFTS(msg messages.Message) {
 	// Skip, if FTS is disabled
 	if s.producer == nil {
 		return
 	}
-
 	var (
-		event []byte
-		err   error
+		projID uint32
+		event  []byte
+		err    error
 	)
+
+	if sess, err := s.pg.Cache.GetSession(msg.SessionID()); err == nil {
+		projID = sess.ProjectID
+	}
 
 	switch m := msg.(type) {
 	// Common
 	case *messages.NetworkRequest:
-		event, err = json.Marshal(NetworkRequestFTS{
-			SessionID: msg.SessionID(),
-			ProjectID: projID,
-			Method:    m.Method,
-			URL:       m.URL,
-			Request:   m.Request,
-			Response:  m.Response,
-			Status:    m.Status,
-			Timestamp: m.Timestamp,
-			Duration:  m.Duration,
-		})
+		event, err = json.Marshal(WrapNetworkRequest(m, projID))
 	case *messages.PageEvent:
-		event, err = json.Marshal(PageEventFTS{
-			SessionID:                  msg.SessionID(),
-			ProjectID:                  projID,
-			MessageID:                  m.MessageID,
-			Timestamp:                  m.Timestamp,
-			URL:                        m.URL,
-			Referrer:                   m.Referrer,
-			Loaded:                     m.Loaded,
-			RequestStart:               m.RequestStart,
-			ResponseStart:              m.ResponseStart,
-			ResponseEnd:                m.ResponseEnd,
-			DomContentLoadedEventStart: m.DomContentLoadedEventStart,
-			DomContentLoadedEventEnd:   m.DomContentLoadedEventEnd,
-			LoadEventStart:             m.LoadEventStart,
-			LoadEventEnd:               m.LoadEventEnd,
-			FirstPaint:                 m.FirstPaint,
-			FirstContentfulPaint:       m.FirstContentfulPaint,
-			SpeedIndex:                 m.SpeedIndex,
-			VisuallyComplete:           m.VisuallyComplete,
-			TimeToInteractive:          m.TimeToInteractive,
-		})
+		event, err = json.Marshal(WrapPageEvent(m, projID))
 	case *messages.GraphQL:
-		event, err = json.Marshal(GraphQLFTS{
-			SessionID:     msg.SessionID(),
-			ProjectID:     projID,
-			OperationKind: m.OperationKind,
-			OperationName: m.OperationName,
-			Variables:     m.Variables,
-			Response:      m.Response,
-		})
+		event, err = json.Marshal(WrapGraphQL(m, projID))
 	}
 	if err != nil {
 		log.Printf("can't marshal json for quickwit: %s", err)
 	} else {
 		if len(event) > 0 {
-			if err := s.producer.Produce(s.topic, msg.SessionID(), event); err != nil {
+			if err := s.producer.Produce(s.cfg.QuickwitTopic, msg.SessionID(), event); err != nil {
 				log.Printf("can't send event to quickwit: %s", err)
 			}
 		}

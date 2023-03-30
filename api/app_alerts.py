@@ -1,33 +1,17 @@
 import logging
+from contextlib import asynccontextmanager
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
 from fastapi import FastAPI
-from chalicelib.utils import pg_client
 
 from chalicelib.core import alerts_processor
-
-app = FastAPI(root_path="/alerts", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""))
-logging.info("============= ALERTS =============")
+from chalicelib.utils import pg_client
 
 
-@app.get("/")
-async def root():
-    return {"status": "Running"}
-
-
-app.schedule = AsyncIOScheduler()
-
-loglevel = config("LOGLEVEL", default=logging.INFO)
-print(f">Loglevel set to: {loglevel}")
-logging.basicConfig(level=loglevel)
-ap_logger = logging.getLogger('apscheduler')
-ap_logger.setLevel(loglevel)
-app.schedule = AsyncIOScheduler()
-
-
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     logging.info(">>>>> starting up <<<<<")
     await pg_client.init()
     app.schedule.start()
@@ -39,24 +23,44 @@ async def startup():
     for job in app.schedule.get_jobs():
         ap_logger.info({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
+    # App listening
+    yield
 
-@app.on_event("shutdown")
-async def shutdown():
+    # Shutdown
     logging.info(">>>>> shutting down <<<<<")
     app.schedule.shutdown(wait=False)
     await pg_client.terminate()
 
 
-@app.get('/private/shutdown', tags=["private"])
-async def stop_server():
-    logging.info("Requested shutdown")
-    await shutdown()
-    import os, signal
-    os.kill(1, signal.SIGTERM)
+app = FastAPI(root_path="/alerts", docs_url=config("docs_url", default=""), redoc_url=config("redoc_url", default=""),
+              lifespan=lifespan)
+logging.info("============= ALERTS =============")
 
+
+@app.get("/")
+async def root():
+    return {"status": "Running"}
+
+
+@app.get("/health")
+async def get_health_status():
+    return {"data": {
+        "health": True,
+        "details": {"version": config("version_number", default="unknown")}
+    }}
+
+
+app.schedule = AsyncIOScheduler()
+
+loglevel = config("LOGLEVEL", default=logging.INFO)
+print(f">Loglevel set to: {loglevel}")
+logging.basicConfig(level=loglevel)
+ap_logger = logging.getLogger('apscheduler')
+ap_logger.setLevel(loglevel)
+app.schedule = AsyncIOScheduler()
 
 if config("LOCAL_DEV", default=False, cast=bool):
-    @app.get('/private/trigger', tags=["private"])
+    @app.get('/trigger', tags=["private"])
     async def trigger_main_cron():
         logging.info("Triggering main cron")
         alerts_processor.process()

@@ -51,7 +51,7 @@ service:
     metrics: 8888
 
 serviceMonitor:
-  enabled: true
+  enabled: false
   additionalLabels:
     release: observability
   scrapeConfigs:

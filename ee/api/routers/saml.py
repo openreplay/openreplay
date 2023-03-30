@@ -1,5 +1,4 @@
-from fastapi import HTTPException
-from fastapi import Request, Response
+from fastapi import HTTPException, Request, Response, status
 
 from chalicelib.utils import SAML2_helper
 from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
@@ -12,7 +11,6 @@ from onelogin.saml2.auth import OneLogin_Saml2_Logout_Request
 
 from chalicelib.core import users, tenants, roles
 from starlette.responses import RedirectResponse
-from starlette import status
 
 
 @public_app.get("/sso/saml2", tags=["saml2"])

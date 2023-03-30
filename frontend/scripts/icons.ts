@@ -63,12 +63,10 @@ const plugins = (removeFill = true) => {
         ]
     }
  }
-// fs.promises.mkdir('/tmp/a/apple', { recursive: true })
-//     .then(() => {
-        fs.writeFileSync(`${UI_DIRNAME}/SVG.tsx`, `
+fs.writeFileSync(`${UI_DIRNAME}/SVG.tsx`, `
 import React from 'react';
 
-export type IconNames = ${icons.map(icon => "'"+ icon.slice(0, -4) + "'").join(' | ')};
+export type IconNames = ${icons.map((icon) => "'"+ icon.slice(0, -4) + "'").join(' | ')};
 
 interface Props {
     name: IconNames;
@@ -88,10 +86,11 @@ ${icons.map(icon => {
     const { data } = optimize(svg, plugins(canOptimize));
     return `    case '${icon.slice(0, -4)}': return ${data.replace(/xlink\:href/g, 'xlinkHref')
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
-    .replace(/clip-path/g, 'clipPath')
-    .replace(/clip-rule/g, 'clipRule')
+    .replace(/clip\-path/g, 'clipPath')
+    .replace(/clip\-rule/g, 'clipRule')
     // hack to keep fill rule for some icons like stop recording square
     .replace(/clipRule="evenoddCustomFill"/g, 'clipRule="evenodd" fillRule="evenodd"')
+      
     .replace(/fill-rule/g, 'fillRule')
     .replace(/fill-opacity/g, 'fillOpacity')
     .replace(/stop-color/g, 'stopColor')

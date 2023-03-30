@@ -3,7 +3,6 @@ import type { Socket } from './types'
 import type Screen from '../Screen/Screen'
 import type { Store } from '../../common/types'
 
-
 export enum RemoteControlStatus {
   Disabled = 0,
   Requesting,
@@ -20,6 +19,7 @@ export default class RemoteControl {
 		remoteControl: RemoteControlStatus.Disabled,
 		annotating: false,
 	}
+  onReject: () => void = () => {}
 
 	constructor(
 		private store: Store<State>,
@@ -33,6 +33,7 @@ export default class RemoteControl {
     })
     socket.on("control_rejected", id => {
       id === socket.id && this.toggleRemoteControl(false)
+      this.onReject()
     })
     socket.on('SESSION_DISCONNECTED', () => {
     	if (this.store.get().remoteControl === RemoteControlStatus.Requesting) {
@@ -57,6 +58,10 @@ export default class RemoteControl {
     //throttling makes movements less smooth, so it is omitted
     //this.onMouseMove(e)
     this.socket.emit("scroll", [ e.deltaX, e.deltaY ])
+  }
+
+  public setCallbacks = ({ onReject }: { onReject: () => void }) => {
+    this.onReject = onReject
   }
 
   private onMouseClick = (e: MouseEvent): void => {

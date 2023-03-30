@@ -117,11 +117,13 @@ export default class BatchWriter {
     if (this.writeWithSize(message)) {
       return
     }
-    // buffer is too small. Create one with maximal capacity
+    // buffer is too small. Creating one with maximal capacity for this message only
     this.encoder = new MessageEncoder(this.beaconSizeLimit)
     this.prepare()
     if (!this.writeWithSize(message)) {
       console.warn('OpenReplay: beacon size overflow. Skipping large message.', message, this)
+    } else {
+      this.finaliseBatch()
     }
     // reset encoder to normal size
     this.encoder = new MessageEncoder(this.beaconSize)

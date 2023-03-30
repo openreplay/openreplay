@@ -16,7 +16,8 @@ else:
                           aws_access_key_id=config("S3_KEY"),
                           aws_secret_access_key=config("S3_SECRET"),
                           config=Config(signature_version='s3v4'),
-                          region_name=config("sessions_region"))
+                          region_name=config("sessions_region"),
+                          verify=not config("S3_DISABLE_SSL_VERIFY", default=False, cast=bool))
 
 
 def __get_s3_resource():
@@ -26,7 +27,8 @@ def __get_s3_resource():
                           aws_access_key_id=config("S3_KEY"),
                           aws_secret_access_key=config("S3_SECRET"),
                           config=Config(signature_version='s3v4'),
-                          region_name=config("sessions_region"))
+                          region_name=config("sessions_region"),
+                          verify=not config("S3_DISABLE_SSL_VERIFY", default=False, cast=bool))
 
 
 def exists(bucket, key):
@@ -81,7 +83,8 @@ def get_presigned_url_for_upload_secure(bucket, expires_in, key, conditions=None
         Conditions=conditions,
     )
     req = PreparedRequest()
-    req.prepare_url(f"{url_parts['url']}/{url_parts['fields']['key']}", url_parts['fields'])
+    req.prepare_url(
+        f"{url_parts['url']}/{url_parts['fields']['key']}", url_parts['fields'])
     return req.url
 
 
@@ -101,7 +104,8 @@ def get_file(source_bucket, source_key):
 
 def rename(source_bucket, source_key, target_bucket, target_key):
     s3 = __get_s3_resource()
-    s3.Object(target_bucket, target_key).copy_from(CopySource=f'{source_bucket}/{source_key}')
+    s3.Object(target_bucket, target_key).copy_from(
+        CopySource=f'{source_bucket}/{source_key}')
     s3.Object(source_bucket, source_key).delete()
 
 

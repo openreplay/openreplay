@@ -118,6 +118,7 @@ export const issueOptions = [
   { label: 'Crash', value: IssueType.CRASH },
   { label: 'Custom', value: IssueType.CUSTOM },
   { label: 'Error', value: IssueType.JS_EXCEPTION },
+  { label: 'Mouse Thrashing', value: IssueType.MOUSE_THRASHING }
 ]
 
 export const issueCategories = [

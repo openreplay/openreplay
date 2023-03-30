@@ -271,7 +271,7 @@ type TrSetNodeAttributeDict = [
   valueKey: number,
 ]
 
-type TrResourceTiming = [
+type TrResourceTimingDeprecated = [
   type: 53,
   timestamp: number,
   duration: number,
@@ -429,8 +429,49 @@ type TrPartitionedMessage = [
   partTotal: number,
 ]
 
+type TrInputChange = [
+  type: 112,
+  id: number,
+  value: string,
+  valueMasked: boolean,
+  label: string,
+  hesitationTime: number,
+  inputDuration: number,
+]
 
-export type TrackerMessage = TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequest | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTiming | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage
+type TrSelectionChange = [
+  type: 113,
+  selectionStart: number,
+  selectionEnd: number,
+  selection: string,
+]
+
+type TrMouseThrashing = [
+  type: 114,
+  timestamp: number,
+]
+
+type TrUnbindNodes = [
+  type: 115,
+  totalRemovedPercent: number,
+]
+
+type TrResourceTiming = [
+  type: 116,
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
+]
+
+
+export type TrackerMessage = TrTimestamp | TrSetPageLocation | TrSetViewportSize | TrSetViewportScroll | TrCreateDocument | TrCreateElementNode | TrCreateTextNode | TrMoveNode | TrRemoveNode | TrSetNodeAttribute | TrRemoveNodeAttribute | TrSetNodeData | TrSetNodeScroll | TrSetInputTarget | TrSetInputValue | TrSetInputChecked | TrMouseMove | TrNetworkRequest | TrConsoleLog | TrPageLoadTiming | TrPageRenderTiming | TrCustomEvent | TrUserID | TrUserAnonymousID | TrMetadata | TrCSSInsertRule | TrCSSDeleteRule | TrFetch | TrProfiler | TrOTable | TrStateAction | TrRedux | TrVuex | TrMobX | TrNgRx | TrGraphQL | TrPerformanceTrack | TrStringDict | TrSetNodeAttributeDict | TrResourceTimingDeprecated | TrConnectionInformation | TrSetPageVisibility | TrLoadFontFace | TrSetNodeFocus | TrLongTask | TrSetNodeAttributeURLBased | TrSetCSSDataURLBased | TrTechnicalInfo | TrCustomIssue | TrCSSInsertRuleURLBased | TrMouseClick | TrCreateIFrameDocument | TrAdoptedSSReplaceURLBased | TrAdoptedSSInsertRuleURLBased | TrAdoptedSSDeleteRule | TrAdoptedSSAddOwner | TrAdoptedSSRemoveOwner | TrJSException | TrZustand | TrBatchMetadata | TrPartitionedMessage | TrInputChange | TrSelectionChange | TrMouseThrashing | TrUnbindNodes | TrResourceTiming
 
 export default function translate(tMsg: TrackerMessage): RawMessage | null {
   switch(tMsg[0]) {
@@ -712,7 +753,7 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
     
     case 53: {
       return {
-        tp: MType.ResourceTiming,
+        tp: MType.ResourceTimingDeprecated,
         timestamp: tMsg[1],
         duration: tMsg[2],
         ttfb: tMsg[3],
@@ -864,6 +905,38 @@ export default function translate(tMsg: TrackerMessage): RawMessage | null {
         tp: MType.Zustand,
         mutation: tMsg[1],
         state: tMsg[2],
+      }
+    }
+    
+    case 113: {
+      return {
+        tp: MType.SelectionChange,
+        selectionStart: tMsg[1],
+        selectionEnd: tMsg[2],
+        selection: tMsg[3],
+      }
+    }
+    
+    case 114: {
+      return {
+        tp: MType.MouseThrashing,
+        timestamp: tMsg[1],
+      }
+    }
+    
+    case 116: {
+      return {
+        tp: MType.ResourceTiming,
+        timestamp: tMsg[1],
+        duration: tMsg[2],
+        ttfb: tMsg[3],
+        headerSize: tMsg[4],
+        encodedBodySize: tMsg[5],
+        decodedBodySize: tMsg[6],
+        url: tMsg[7],
+        initiator: tMsg[8],
+        transferredSize: tMsg[9],
+        cached: tMsg[10],
       }
     }
     

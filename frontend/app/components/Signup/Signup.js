@@ -2,11 +2,17 @@ import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Icon } from 'UI';
 
-import stl from './signup.module.css';
+import { connect } from 'react-redux';
 import cn from 'classnames';
 import SignupForm from './SignupForm';
 import RegisterBg from '../../svg/register.svg';
+import HealthModal from 'Components/Header/HealthStatus/HealthModal/HealthModal';
+import { getHealthRequest } from 'Components/Header/HealthStatus/getHealth';
+import { login } from 'App/routes';
+import { withRouter } from 'react-router-dom';
+import { fetchTenants } from 'Duck/user';
 
+const LOGIN_ROUTE = login();
 const BulletItem = ({ text }) => (
   <div className="flex items-center mb-4">
     <div className="mr-3 h-8 w-8 rounded-full bg-white shadow flex items-center justify-center">
@@ -15,28 +21,84 @@ const BulletItem = ({ text }) => (
     <div>{text}</div>
   </div>
 );
+
+const healthStatusCheck_key = '__or__healthStatusCheck_key'
+
+@connect(
+  (state, props) => ({
+    loading: state.getIn(['user', 'loginRequest', 'loading']),
+    authDetails: state.getIn(['user', 'authDetails']),
+  }), { fetchTenants }
+)
 @withPageTitle('Signup - OpenReplay')
+@withRouter
 export default class Signup extends React.Component {
+  state = {
+    healthModalPassed: localStorage.getItem(healthStatusCheck_key === 'true'),
+    healthStatusLoading: true,
+    healthStatus: null,
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { authDetails } = nextProps;
+    if (Object.keys(authDetails).length === 0) {
+      return null;
+    }
+
+    if (authDetails.tenants) {
+      nextProps.history.push(LOGIN_ROUTE);
+    }
+
+    return null;
+  }
+
+  getHealth = async () => {
+    this.setState({ healthStatusLoading: true });
+    const { healthMap } = await getHealthRequest();
+    this.setState({ healthStatus: healthMap, healthStatusLoading: false });
+  }
+
+  componentDidMount() {
+    if (!this.state.healthModalPassed) void this.getHealth();
+
+    const { authDetails } = this.props;
+    if (Object.keys(authDetails).length === 0) {
+      this.props.fetchTenants();
+    }
+  }
+
+  setHealthModalPassed = () => {
+    localStorage.setItem(healthStatusCheck_key, 'true');
+    this.setState({ healthModalPassed: true });
+  }
+
   render() {
-    return (
-      <div className="flex" style={{ height: '100vh' }}>
-        <div className={cn('w-6/12 relative overflow-hidden', stl.left)}>
-          <div className="px-6 pt-10">
-            <img src="/assets/logo-white.svg" />
-          </div>
-          <img
-            style={{ width: '800px', position: 'absolute', bottom: -100, left: 0 }}
-            src={RegisterBg}
+    if (!this.state.healthModalPassed) {
+      return (
+          <HealthModal
+              setShowModal={() => null}
+              healthResponse={this.state.healthStatus}
+              getHealth={this.getHealth}
+              isLoading={this.state.healthStatusLoading}
+              setPassed={this.setHealthModalPassed}
           />
-          <div className="color-white text-lg flex items-center px-20 pt-32">
+      )
+    }
+
+    return (
+      <div className="flex justify-center items-center gap-6" style={{ height: '100vh' }}>
+        {/* <div className={cn('relative overflow-hidden')}>
+          <div className="text-lg flex items-center" style={{ width: '350px'}}>
             <div>
-              <div className="flex items-center text-3xl font-bold mb-6">
-                OpenReplay Cloud{' '}
-                <div className="ml-2">
-                  <Icon name="signup" size="28" color="white" />
+              <div className="flex items-end text-3xl font-bold mb-6">
+                <div className="">
+                  <img src="/assets/logo.svg" width={200}/>
+                </div>{' '}
+                <div className="ml-2 text-lg color-gray-medium">
+                  Cloud
                 </div>
               </div>
-              <div>OpenReplay Cloud is the hosted version of our open-source project.</div>
+              <div className="border-b pb-2 mb-2">OpenReplay Cloud is the hosted version of our <a className="link" href="https://github.com/openreplay/openreplay" target="_blank">open-source</a> project.</div>
               <div>We’ll manage hosting, scaling and upgrades.</div>
 
               <div className="mt-8">
@@ -46,8 +108,8 @@ export default class Signup extends React.Component {
               </div>
             </div>
           </div>
-        </div>
-        <div className="w-6/12 flex items-center justify-center">
+        </div> */}
+        <div className="flex items-center justify-center">
           <div className="">
             <SignupForm />
           </div>

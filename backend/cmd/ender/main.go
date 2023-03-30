@@ -18,7 +18,6 @@ import (
 	"openreplay/backend/pkg/metrics"
 	databaseMetrics "openreplay/backend/pkg/metrics/database"
 	enderMetrics "openreplay/backend/pkg/metrics/ender"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -30,9 +29,6 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := ender.New()
-	if cfg.UseProfiler {
-		pprof.StartProfilingServer()
-	}
 
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres.String(), 0, 0), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
@@ -72,12 +68,12 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			failedSessionEnds := make(map[uint64]int64)
+			failedSessionEnds := make(map[uint64]uint64)
 			duplicatedSessionEnds := make(map[uint64]uint64)
 
 			// Find ended sessions and send notification to other services
-			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
-				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
+			sessions.HandleEndedSessions(func(sessionID uint64, timestamp uint64) bool {
+				msg := &messages.SessionEnd{Timestamp: timestamp}
 				currDuration, err := pg.GetSessionDuration(sessionID)
 				if err != nil {
 					log.Printf("getSessionDuration failed, sessID: %d, err: %s", sessionID, err)

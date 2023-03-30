@@ -48,6 +48,7 @@ service:
   type: ClusterIP
   ports:
     sourcemapreader: 9000
+    metrics: 8888
 
 serviceMonitor:
   enabled: false

@@ -33,7 +33,7 @@ export default class Call {
 	constructor(
 		private store: Store<State>,
 		private socket: Socket,
-		private config: RTCIceServer[],
+		private config: RTCIceServer[] | null,
 		private peerID: string,
 	) {
 		socket.on('call_end', this.onRemoteCallEnd)
@@ -147,13 +147,11 @@ export default class Call {
 		//this.toggleAnnotation(false)
 	}
 	private onRemoteCallEnd = () => {
-		if (this.store.get().calling === CallingState.Requesting) {
+		if ([CallingState.Requesting, CallingState.Connecting].includes(this.store.get().calling)) {
 			this.callArgs && this.callArgs.onReject()
 			this.callConnection[0] && this.callConnection[0].close()
 			this.store.update({ calling: CallingState.NoCall })
 			this.callArgs = null
-			// TODO:  We have it separated, right? (check)
-			//this.toggleAnnotation(false)
 		} else {
 			this.handleCallEnd()
 		}

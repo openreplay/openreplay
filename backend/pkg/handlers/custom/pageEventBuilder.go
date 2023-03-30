@@ -4,7 +4,7 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const PAGE_EVENT_TIMEOUT = 1 * 60 * 1000
+const PageEventTimeout = 1 * 60 * 1000
 
 type pageEventBuilder struct {
 	pageEvent          *PageEvent
@@ -16,7 +16,7 @@ func NewPageEventBuilder() *pageEventBuilder {
 	return ieBuilder
 }
 
-func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (b *pageEventBuilder) Handle(message Message, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *SetPageLocation:
 		if msg.NavigationStart == 0 { // routing without new page loading
@@ -24,7 +24,7 @@ func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp u
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    false,
-				MessageID: messageID,
+				MessageID: message.MsgID(),
 				Timestamp: timestamp,
 			}
 		} else {
@@ -33,7 +33,7 @@ func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp u
 				URL:       msg.URL,
 				Referrer:  msg.Referrer,
 				Loaded:    true,
-				MessageID: messageID,
+				MessageID: message.MsgID(),
 				Timestamp: timestamp,
 			}
 			return pageEvent
@@ -81,7 +81,7 @@ func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp u
 
 	}
 
-	if b.pageEvent != nil && b.pageEvent.Timestamp+PAGE_EVENT_TIMEOUT < timestamp {
+	if b.pageEvent != nil && b.pageEvent.Timestamp+PageEventTimeout < timestamp {
 		return b.Build()
 	}
 	return nil

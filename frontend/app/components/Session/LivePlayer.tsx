@@ -1,7 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import withRequest from 'HOCs/withRequest';
 import withPermissions from 'HOCs/withPermissions';
 import { PlayerContext, defaultContextValue, ILivePlayerContext } from './playerContext';
 import { makeAutoObservable } from 'mobx';
@@ -11,6 +10,7 @@ import PlayerBlock from './Player/LivePlayer/LivePlayerBlock';
 import styles from '../Session_/session.module.css';
 import Session from 'App/mstore/types/session';
 import withLocationHandlers from 'HOCs/withLocationHandlers';
+import APIClient from 'App/api_client';
 
 interface Props {
   session: Session;
@@ -28,14 +28,12 @@ interface Props {
 function LivePlayer({
   session,
   loadingCredentials,
-  assistCredentials,
-  request,
-  isEnterprise,
   userEmail,
   userName,
   isMultiview,
   customSession,
-  query
+  query,
+  isEnterprise
 }: Props) {
   // @ts-ignore
   const [contextValue, setContextValue] = useState<ILivePlayerContext>(defaultContextValue);
@@ -52,13 +50,21 @@ function LivePlayer({
         name: userName,
       },
     };
-    const [player, store] = createLiveWebPlayer(sessionWithAgentData, assistCredentials, (state) =>
-      makeAutoObservable(state)
-    );
-    setContextValue({ player, store });
-
-    return () => player.clean();
-  }, [session.sessionId, assistCredentials]);
+    if (isEnterprise) {
+      new APIClient().get('/config/assist/credentials').then(r => r.json())
+        .then(({ data }) => {
+          const [player, store] = createLiveWebPlayer(sessionWithAgentData, data, (state) =>
+            makeAutoObservable(state)
+          );
+          setContextValue({ player, store });
+        })
+    } else {
+      const [player, store] = createLiveWebPlayer(sessionWithAgentData, null, (state) =>
+        makeAutoObservable(state)
+      );
+      setContextValue({ player, store });
+    }
+  }, [session.sessionId]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
@@ -70,8 +76,10 @@ function LivePlayer({
       setFullView(true);
     }
 
-    if (isEnterprise) {
-      request();
+    return () => {
+      contextValue.player?.clean?.();
+      // @ts-ignore default empty
+      setContextValue(defaultContextValue)
     }
   }, []);
 
@@ -98,13 +106,7 @@ function LivePlayer({
   );
 }
 
-export default withRequest({
-  initialData: null,
-  endpoint: '/assist/credentials',
-  dataName: 'assistCredentials',
-  loadingName: 'loadingCredentials',
-})(
-  withPermissions(
+export default withPermissions(
     ['ASSIST_LIVE'],
     '',
     true
@@ -121,4 +123,3 @@ export default withRequest({
       }
     )(withLocationHandlers()(LivePlayer))
   )
-);

@@ -38,7 +38,7 @@ export default connect(
         const isEnterprise = state.getIn(['user', 'account', 'edition']) === 'ee';
         return {
             activeTab: state.getIn(['search', 'activeTab']),
-            tags: issues_types.filter((tag: any) => (isEnterprise ? tag.type !== 'bookmark' : tag.type !== 'vault')),
+            tags: issues_types.filter((tag: any) => tag.type !== 'mouse_thrashing' && (isEnterprise ? tag.type !== 'bookmark' : tag.type !== 'vault')),
             total: state.getIn(['sessions', 'total']) || 0,
         };
     },

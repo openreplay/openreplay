@@ -36,7 +36,7 @@ import type {
   RawPerformanceTrack,
   RawStringDict,
   RawSetNodeAttributeDict,
-  RawResourceTiming,
+  RawResourceTimingDeprecated,
   RawConnectionInformation,
   RawSetPageVisibility,
   RawLoadFontFace,
@@ -55,6 +55,9 @@ import type {
   RawAdoptedSsAddOwner,
   RawAdoptedSsRemoveOwner,
   RawZustand,
+  RawSelectionChange,
+  RawMouseThrashing,
+  RawResourceTiming,
   RawIosSessionStart,
   RawIosCustomEvent,
   RawIosScreenChanges,
@@ -131,7 +134,7 @@ export type StringDict = RawStringDict & Timed
 
 export type SetNodeAttributeDict = RawSetNodeAttributeDict & Timed
 
-export type ResourceTiming = RawResourceTiming & Timed
+export type ResourceTimingDeprecated = RawResourceTimingDeprecated & Timed
 
 export type ConnectionInformation = RawConnectionInformation & Timed
 
@@ -168,6 +171,12 @@ export type AdoptedSsAddOwner = RawAdoptedSsAddOwner & Timed
 export type AdoptedSsRemoveOwner = RawAdoptedSsRemoveOwner & Timed
 
 export type Zustand = RawZustand & Timed
+
+export type SelectionChange = RawSelectionChange & Timed
+
+export type MouseThrashing = RawMouseThrashing & Timed
+
+export type ResourceTiming = RawResourceTiming & Timed
 
 export type IosSessionStart = RawIosSessionStart & Timed
 

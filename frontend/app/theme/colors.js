@@ -57,5 +57,6 @@ module.exports = {
     'text-disabled': 'rgba(0,0,0, 0.38)',
     'text-primary': 'rgba(0,0,0, 0.87)',
     'outlined-border': 'rgba(0,0,0, 0.23)',
+    'divider': 'rgba(0, 0, 0, 0.12)',
   }
 }

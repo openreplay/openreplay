@@ -38,10 +38,6 @@ function AlertsView({ siteId }: IAlertsView) {
                     </div>
                 </div>
             </div>
-            <div className="text-base text-disabled-text flex items-center px-6">
-                <Icon name="info-circle-fill" className="mr-2" size={16} />
-                Alerts helps your team stay up to date with the activity on your app.
-            </div>
             <AlertsList siteId={siteId} />
         </div>
     );

@@ -10,6 +10,7 @@ import (
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
+	"os"
 	"strings"
 	"time"
 
@@ -21,9 +22,9 @@ type Connector interface {
 	Commit() error
 	Stop() error
 	InsertWebSession(session *types.Session) error
-	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error
+	InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error
 	InsertWebPageEvent(session *types.Session, msg *messages.PageEvent) error
-	InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error
+	InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error
 	InsertWebInputEvent(session *types.Session, msg *messages.InputEvent) error
 	InsertWebErrorEvent(session *types.Session, msg *types.ErrorEvent) error
 	InsertWebPerformanceTrackAggr(session *types.Session, msg *messages.PerformanceTrackAggr) error
@@ -32,6 +33,8 @@ type Connector interface {
 	InsertCustom(session *types.Session, msg *messages.CustomEvent) error
 	InsertGraphQL(session *types.Session, msg *messages.GraphQL) error
 	InsertIssue(session *types.Session, msg *messages.IssueEvent) error
+	InsertWebInputDuration(session *types.Session, msg *messages.InputChange) error
+	InsertMouseThrashing(session *types.Session, msg *messages.MouseThrashing) error
 }
 
 type task struct {
@@ -50,14 +53,25 @@ type connectorImpl struct {
 	finished   chan struct{}
 }
 
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
 func NewConnector(url string) Connector {
 	license.CheckLicense()
 	url = strings.TrimPrefix(url, "tcp://")
 	url = strings.TrimSuffix(url, "/default")
+	userName := getEnv("CH_USERNAME", "default")
+	password := getEnv("CH_PASSWORD", "")
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{url},
 		Auth: clickhouse.Auth{
 			Database: "default",
+			Username: userName,
+			Password: password,
 		},
 		MaxOpenConns:    20,
 		MaxIdleConns:    15,
@@ -65,7 +79,6 @@ func NewConnector(url string) Connector {
 		Compression: &clickhouse.Compression{
 			Method: clickhouse.CompressionLZ4,
 		},
-		// Debug: true,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -97,7 +110,7 @@ var batches = map[string]string{
 	"autocompletes": "INSERT INTO experimental.autocomplete (project_id, type, value) VALUES (?, ?, ?)",
 	"pages":         "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_start, response_start, response_end, dom_content_loaded_event_start, dom_content_loaded_event_end, load_event_start, load_event_end, first_paint, first_contentful_paint_time, speed_index, visually_complete, time_to_interactive, event_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"clicks":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, hesitation_time, event_type) VALUES (?, ?, ?, ?, ?, ?, ?)",
-	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type) VALUES (?, ?, ?, ?, ?, ?)",
+	"inputs":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, label, event_type, duration, hesitation_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
 	"errors":        "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, source, name, message, error_id, event_type, error_tags_keys, error_tags_values) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"performance":   "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, min_fps, avg_fps, max_fps, min_cpu, avg_cpu, max_cpu, min_total_js_heap_size, avg_total_js_heap_size, max_total_js_heap_size, min_used_js_heap_size, avg_used_js_heap_size, max_used_js_heap_size, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	"requests":      "INSERT INTO experimental.events (session_id, project_id, message_id, datetime, url, request_body, response_body, status, method, duration, success, event_type) VALUES (?, ?, ?, ?, SUBSTR(?, 1, 8000), ?, ?, ?, ?, ?, ?, ?)",
@@ -147,9 +160,7 @@ func (c *connectorImpl) worker() {
 	for {
 		select {
 		case t := <-c.workerTask:
-			start := time.Now()
 			c.sendBulks(t)
-			log.Printf("ch bulks dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-c.done:
 			for t := range c.workerTask {
 				c.sendBulks(t)
@@ -166,11 +177,59 @@ func (c *connectorImpl) checkError(name string, err error) {
 	}
 }
 
+func (c *connectorImpl) InsertWebInputDuration(session *types.Session, msg *messages.InputChange) error {
+	if msg.Label == "" {
+		return nil
+	}
+	if err := c.batches["inputs"].Append(
+		session.SessionID,
+		uint16(session.ProjectID),
+		msg.MsgID(),
+		datetime(msg.Timestamp),
+		msg.Label,
+		"INPUT",
+		nullableUint16(uint16(msg.InputDuration)),
+		nullableUint32(uint32(msg.HesitationTime)),
+	); err != nil {
+		c.checkError("inputs", err)
+		return fmt.Errorf("can't append to inputs batch: %s", err)
+	}
+	return nil
+}
+
+func (c *connectorImpl) InsertMouseThrashing(session *types.Session, msg *messages.MouseThrashing) error {
+	issueID := hashid.MouseThrashingID(session.ProjectID, session.SessionID, msg.Timestamp)
+	// Insert issue event to batches
+	if err := c.batches["issuesEvents"].Append(
+		session.SessionID,
+		uint16(session.ProjectID),
+		msg.MsgID(),
+		datetime(msg.Timestamp),
+		issueID,
+		"mouse_thrashing",
+		"ISSUE",
+		msg.Url,
+	); err != nil {
+		c.checkError("issuesEvents", err)
+		return fmt.Errorf("can't append to issuesEvents batch: %s", err)
+	}
+	if err := c.batches["issues"].Append(
+		uint16(session.ProjectID),
+		issueID,
+		"mouse_thrashing",
+		msg.Url,
+	); err != nil {
+		c.checkError("issues", err)
+		return fmt.Errorf("can't append to issues batch: %s", err)
+	}
+	return nil
+}
+
 func (c *connectorImpl) InsertIssue(session *types.Session, msg *messages.IssueEvent) error {
 	issueID := hashid.IssueID(session.ProjectID, msg)
 	// Check issue type before insert to avoid panic from clickhouse lib
 	switch msg.Type {
-	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception":
+	case "click_rage", "dead_click", "excessive_scrolling", "bad_request", "missing_resource", "memory", "cpu", "slow_resource", "slow_page_load", "crash", "ml_cpu", "ml_memory", "ml_dead_click", "ml_click_rage", "ml_mouse_thrashing", "ml_excessive_scrolling", "ml_slow_resources", "custom", "js_exception", "mouse_thrashing":
 	default:
 		return fmt.Errorf("unknown issueType: %s", msg.Type)
 	}
@@ -242,28 +301,25 @@ func (c *connectorImpl) InsertWebSession(session *types.Session) error {
 	return nil
 }
 
-func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceEvent) error {
-	var method interface{} = url.EnsureMethod(msg.Method)
-	if method == "" {
-		method = nil
-	}
-	resourceType := url.EnsureType(msg.Type)
+func (c *connectorImpl) InsertWebResourceEvent(session *types.Session, msg *messages.ResourceTiming) error {
+	msgType := url.GetResourceType(msg.Initiator, msg.URL)
+	resourceType := url.EnsureType(msgType)
 	if resourceType == "" {
-		return fmt.Errorf("can't parse resource type, sess: %s, type: %s", session.SessionID, msg.Type)
+		return fmt.Errorf("can't parse resource type, sess: %d, type: %s", session.SessionID, msgType)
 	}
 	if err := c.batches["resources"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		url.DiscardURLQuery(msg.URL),
-		msg.Type,
+		msgType,
 		nullableUint16(uint16(msg.Duration)),
 		nullableUint16(uint16(msg.TTFB)),
 		nullableUint16(uint16(msg.HeaderSize)),
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
-		msg.Success,
+		msg.Duration != 0,
 	); err != nil {
 		c.checkError("resources", err)
 		return fmt.Errorf("can't append to resources batch: %s", err)
@@ -298,14 +354,14 @@ func (c *connectorImpl) InsertWebPageEvent(session *types.Session, msg *messages
 	return nil
 }
 
-func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.ClickEvent) error {
+func (c *connectorImpl) InsertWebClickEvent(session *types.Session, msg *messages.MouseClick) error {
 	if msg.Label == "" {
 		return nil
 	}
 	if err := c.batches["clicks"].Append(
 		session.SessionID,
 		uint16(session.ProjectID),
-		msg.MessageID,
+		msg.MsgID(),
 		datetime(msg.Timestamp),
 		msg.Label,
 		nullableUint32(uint32(msg.HesitationTime)),
@@ -328,6 +384,8 @@ func (c *connectorImpl) InsertWebInputEvent(session *types.Session, msg *message
 		datetime(msg.Timestamp),
 		msg.Label,
 		"INPUT",
+		nil,
+		nil,
 	); err != nil {
 		c.checkError("inputs", err)
 		return fmt.Errorf("can't append to inputs batch: %s", err)

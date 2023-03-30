@@ -546,69 +546,6 @@ func DecodeInputEvent(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeClickEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &ClickEvent{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.HesitationTime, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Label, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Selector, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeResourceEvent(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &ResourceEvent{}
-	if msg.MessageID, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.Duration, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.TTFB, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.HeaderSize, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.EncodedBodySize, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.DecodedBodySize, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	if msg.URL, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Type, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Success, err = reader.ReadBoolean(); err != nil {
-		return nil, err
-	}
-	if msg.Method, err = reader.ReadString(); err != nil {
-		return nil, err
-	}
-	if msg.Status, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
 func DecodeCSSInsertRule(reader BytesReader) (Message, error) {
 	var err error = nil
 	msg := &CSSInsertRule{}
@@ -819,18 +756,9 @@ func DecodeSetNodeAttributeDict(reader BytesReader) (Message, error) {
 	return msg, err
 }
 
-func DecodeDOMDrop(reader BytesReader) (Message, error) {
+func DecodeResourceTimingDeprecated(reader BytesReader) (Message, error) {
 	var err error = nil
-	msg := &DOMDrop{}
-	if msg.Timestamp, err = reader.ReadUint(); err != nil {
-		return nil, err
-	}
-	return msg, err
-}
-
-func DecodeResourceTiming(reader BytesReader) (Message, error) {
-	var err error = nil
-	msg := &ResourceTiming{}
+	msg := &ResourceTimingDeprecated{}
 	if msg.Timestamp, err = reader.ReadUint(); err != nil {
 		return nil, err
 	}
@@ -1288,6 +1216,99 @@ func DecodePartitionedMessage(reader BytesReader) (Message, error) {
 		return nil, err
 	}
 	if msg.PartTotal, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeInputChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &InputChange{}
+	if msg.ID, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Value, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.ValueMasked, err = reader.ReadBoolean(); err != nil {
+		return nil, err
+	}
+	if msg.Label, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.HesitationTime, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	if msg.InputDuration, err = reader.ReadInt(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeSelectionChange(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &SelectionChange{}
+	if msg.SelectionStart, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.SelectionEnd, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Selection, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeMouseThrashing(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &MouseThrashing{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeUnbindNodes(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &UnbindNodes{}
+	if msg.TotalRemovedPercent, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	return msg, err
+}
+
+func DecodeResourceTiming(reader BytesReader) (Message, error) {
+	var err error = nil
+	msg := &ResourceTiming{}
+	if msg.Timestamp, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Duration, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.TTFB, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.HeaderSize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.EncodedBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.DecodedBodySize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.URL, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.Initiator, err = reader.ReadString(); err != nil {
+		return nil, err
+	}
+	if msg.TransferredSize, err = reader.ReadUint(); err != nil {
+		return nil, err
+	}
+	if msg.Cached, err = reader.ReadBoolean(); err != nil {
 		return nil, err
 	}
 	return msg, err
@@ -1812,10 +1833,6 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodePageEvent(reader)
 	case 32:
 		return DecodeInputEvent(reader)
-	case 33:
-		return DecodeClickEvent(reader)
-	case 35:
-		return DecodeResourceEvent(reader)
 	case 37:
 		return DecodeCSSInsertRule(reader)
 	case 38:
@@ -1844,10 +1861,8 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeStringDict(reader)
 	case 51:
 		return DecodeSetNodeAttributeDict(reader)
-	case 52:
-		return DecodeDOMDrop(reader)
 	case 53:
-		return DecodeResourceTiming(reader)
+		return DecodeResourceTimingDeprecated(reader)
 	case 54:
 		return DecodeConnectionInformation(reader)
 	case 55:
@@ -1902,6 +1917,16 @@ func ReadMessage(t uint64, reader BytesReader) (Message, error) {
 		return DecodeBatchMetadata(reader)
 	case 82:
 		return DecodePartitionedMessage(reader)
+	case 112:
+		return DecodeInputChange(reader)
+	case 113:
+		return DecodeSelectionChange(reader)
+	case 114:
+		return DecodeMouseThrashing(reader)
+	case 115:
+		return DecodeUnbindNodes(reader)
+	case 116:
+		return DecodeResourceTiming(reader)
 	case 125:
 		return DecodeIssueEvent(reader)
 	case 126:

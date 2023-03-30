@@ -30,7 +30,7 @@ check_prereq() {
 [[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
   image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
-  [[ $ee == "true" ]] && { 
+  [[ $ee == "true" ]] && {
     image_tag="${image_tag}-ee"
   }
 }
@@ -78,12 +78,6 @@ function build_api(){
 check_prereq
 build_api $environment
 echo buil_complete
-#IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO SIGN_IMAGE=$SIGN_IMAGE SIGN_KEY=$SIGN_KEY bash build_alerts.sh $1
-#
-#[[ $environment == "ee" ]] && {
-#  cp ../ee/api/build_crons.sh .
-#  IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO SIGN_IMAGE=$SIGN_IMAGE SIGN_KEY=$SIGN_KEY bash build_crons.sh $1
-#  exit_err $?
-#  rm build_crons.sh
-#} || true
-[[ $PATCH -eq 1 ]] && update_helm_release chalice
+if [[ $PATCH -eq 1 ]]; then
+  update_helm_release chalice
+fi

@@ -2,25 +2,24 @@ import logger from 'App/logger';
 
 import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
-
 import { MType } from '../../messages';
 import ListWalker from '../../../common/ListWalker';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
 import FocusManager from './FocusManager';
-import {
-  VElement,
-  VText,
-  VShadowRoot,
-  VDocument,
-  VNode,
-  VStyleElement,
-  PostponedStyleSheet,
-} from './VirtualDOM';
+import SelectionManager from './SelectionManager';
 import type { StyleElement } from './VirtualDOM';
-import { insertRule, deleteRule } from './safeCSSRules';
+import {
+  PostponedStyleSheet,
+  VDocument,
+  VElement,
+  VNode,
+  VShadowRoot,
+  VStyleElement,
+  VText,
+} from './VirtualDOM';
+import { deleteRule, insertRule } from './safeCSSRules';
 
-
-type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+type HTMLElementWithValue = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
 const IGNORED_ATTRS = [ "autocomplete" ];
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
@@ -44,13 +43,13 @@ export default class DOMManager extends ListWalker<Message> {
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
   private stringDict: Record<number,string> = {}
-
+  private attrsBacktrack: Message[] = []
 
   private upperBodyId: number = -1;
   private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
   private stylesManager: StylesManager
   private focusManager: FocusManager = new FocusManager(this.vElements)
-
+  private selectionManager: SelectionManager
 
   constructor(
     private readonly screen: Screen,
@@ -59,6 +58,7 @@ export default class DOMManager extends ListWalker<Message> {
     setCssLoading: ConstructorParameters<typeof StylesManager>[1],
   ) {
     super()
+    this.selectionManager = new SelectionManager(this.vElements, screen)
     this.stylesManager = new StylesManager(screen, setCssLoading)
   }
 
@@ -74,6 +74,10 @@ export default class DOMManager extends ListWalker<Message> {
     }
     if (m.tp === MType.SetNodeFocus) {
       this.focusManager.append(m)
+      return
+    }
+    if (m.tp === MType.SelectionChange) {
+      this.selectionManager.append(m)
       return
     }
     if (m.tp === MType.CreateElementNode) {
@@ -138,7 +142,8 @@ export default class DOMManager extends ListWalker<Message> {
   private setNodeAttribute(msg: { id: number, name: string, value: string }) {
     let { name, value } = msg;
     const vn = this.vElements.get(msg.id)
-    if (!vn) { logger.error("Node not found", msg); return }
+    if (!vn) { logger.error("SetNodeAttribute: Node not found", msg); return }
+
     if (vn.node.tagName === "INPUT" && name === "name") {
       // Otherwise binds local autocomplete values (maybe should ignore on the tracker level)
       return
@@ -148,9 +153,13 @@ export default class DOMManager extends ListWalker<Message> {
       // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
       //   value = value.replace("?", "%3F");
       // }
-      if (!value.startsWith("http")) { return }
-      // blob:... value happened here. https://foss.openreplay.com/3/session/7013553567419137
-      // that resulted in that link being unable to load and having 4sec timeout in the below function.
+      if (!value.startsWith("http")) {
+        return
+      }
+      // blob:... value can happen here for some reason.
+      // which will result in that link being unable to load and having 4sec timeout in the below function.
+
+      // TODO: check if node actually exists on the page, not just in memory
       this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
     }
     if (vn.node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
@@ -161,7 +170,6 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   private applyMessage = (msg: Message): Promise<any> | undefined => {
-    let node: Node | undefined
     let vn: VNode | undefined
     let doc: Document | null
     let styleSheet: CSSStyleSheet | PostponedStyleSheet | undefined
@@ -222,12 +230,15 @@ export default class DOMManager extends ListWalker<Message> {
         return
       case MType.RemoveNode:
         vn = this.vElements.get(msg.id) || this.vTexts.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
-        if (!vn.parentNode) { logger.error("Parent node not found", msg); return }
+        if (!vn) { logger.error("RemoveNode: Node not found", msg); return }
+        if (!vn.parentNode) { logger.error("RemoveNode: Parent node not found", msg); return }
         vn.parentNode.removeChild(vn)
+        this.vElements.delete(msg.id)
+        this.vTexts.delete(msg.id)
         return
       case MType.SetNodeAttribute:
-        this.setNodeAttribute(msg)
+        if (msg.name === 'href') this.attrsBacktrack.push(msg)
+        else this.setNodeAttribute(msg)
         return
       case MType.StringDict:
         this.stringDict[msg.key] = msg.value
@@ -236,20 +247,23 @@ export default class DOMManager extends ListWalker<Message> {
         this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
         this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
         if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined ) { return }
-        this.setNodeAttribute({ 
-          id: msg.id,
-          name: this.stringDict[msg.nameKey],
-          value: this.stringDict[msg.valueKey],
-        })
+        if (this.stringDict[msg.nameKey] === 'href') this.attrsBacktrack.push(msg)
+        else {
+          this.setNodeAttribute({
+            id: msg.id,
+            name: this.stringDict[msg.nameKey],
+            value: this.stringDict[msg.valueKey],
+          })
+        }
         return
       case MType.RemoveNodeAttribute:
-        vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
-        vn.removeAttribute(msg.name)
+          vn = this.vElements.get(msg.id)
+          if (!vn) { logger.error("RemoveNodeAttribute: Node not found", msg); return }
+          vn.removeAttribute(msg.name)
         return
       case MType.SetInputValue:
         vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("SetInoputValue: Node not found", msg); return }
         const nodeWithValue = vn.node
         if (!(nodeWithValue instanceof HTMLInputElement
             || nodeWithValue instanceof HTMLTextAreaElement
@@ -269,13 +283,13 @@ export default class DOMManager extends ListWalker<Message> {
         return
       case MType.SetInputChecked:
         vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("SetInputChecked: Node not found", msg); return }
         (vn.node as HTMLInputElement).checked = msg.checked
         return
       case MType.SetNodeData:
       case MType.SetCssData: // mbtodo: remove  css transitions when timeflow is not natural (on jumps)
         vn = this.vTexts.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("SetCssData: Node not found", msg); return }
         vn.setData(msg.data)
         if (vn.node instanceof HTMLStyleElement) {
           doc = this.screen.document
@@ -287,10 +301,10 @@ export default class DOMManager extends ListWalker<Message> {
         }
         return
 
-      // @depricated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
+      // @deprecated since 4.0.2 in favor of adopted_ss_insert/delete_rule + add_owner as being common case for StyleSheets
       case MType.CssInsertRule:
         vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("CssInsertRule: Node not found", msg); return }
         if (!(vn instanceof VStyleElement)) {
           logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
@@ -299,18 +313,18 @@ export default class DOMManager extends ListWalker<Message> {
         return
       case MType.CssDeleteRule:
         vn = this.vElements.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("CssDeleteRule: Node not found", msg); return }
         if (!(vn instanceof VStyleElement)) {
           logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
         vn.onStyleSheet(sheet => deleteRule(sheet, msg))
         return
-      // end @depricated
+      // end @deprecated
 
       case MType.CreateIFrameDocument:
         vn = this.vElements.get(msg.frameID)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("CreateIFrameDocument: Node not found", msg); return }
         vn.enforceInsertion()
         const host = vn.node
         if (host instanceof HTMLIFrameElement) {
@@ -370,7 +384,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (!vn) {
           // non-constructed case
           vn = this.vElements.get(msg.id)
-          if (!vn) { logger.error("Node not found", msg); return }
+          if (!vn) { logger.error("AdoptedSsAddOwner: Node not found", msg); return }
           if (!(vn instanceof VStyleElement)) { logger.error("Non-style owner", msg); return }
           this.ppStyleSheets.set(msg.sheetID, new PostponedStyleSheet(vn.node))
           return
@@ -397,13 +411,13 @@ export default class DOMManager extends ListWalker<Message> {
           return
         }
         vn = this.vRoots.get(msg.id)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("AdoptedSsRemoveOwner: Node not found", msg); return }
         //@ts-ignore
         vn.node.adoptedStyleSheets = [...vn.node.adoptedStyleSheets].filter(s => s !== styleSheet)
         return
       case MType.LoadFontFace:
         vn = this.vRoots.get(msg.parentID)
-        if (!vn) { logger.error("Node not found", msg); return }
+        if (!vn) { logger.error("LoadFontFace: Node not found", msg); return }
         if (vn instanceof VShadowRoot) { logger.error(`Node ${vn} expected to be a Document`, msg); return }
         let descr: Object
         try {
@@ -418,20 +432,62 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
+  applyBacktrack(msg: Message) {
+    // @ts-ignore
+    const target = this.vElements.get(msg.id)
+    if (!target) {
+      return
+    }
+
+    switch (msg.tp) {
+      case MType.SetNodeAttribute: {
+        this.setNodeAttribute(msg)
+        return
+      }
+      case MType.SetNodeAttributeDict: {
+        this.stringDict[msg.nameKey] === undefined && logger.error("No dictionary key for msg 'name': ", msg)
+        this.stringDict[msg.valueKey] === undefined && logger.error("No dictionary key for msg 'value': ", msg)
+        if (this.stringDict[msg.nameKey] === undefined || this.stringDict[msg.valueKey] === undefined) {
+          return
+        }
+        this.setNodeAttribute({
+          id: msg.id,
+          name: this.stringDict[msg.nameKey],
+          value: this.stringDict[msg.valueKey],
+        })
+        return;
+      }
+    }
+  }
+
   async moveReady(t: number): Promise<void> {
     // MBTODO (back jump optimisation):
     //    - store intemediate virtual dom state
     //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
     // This function autoresets pointer if necessary (better name?)
-   
-    await this.moveWait(t, this.applyMessage)
-    this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
 
+    /**
+     * Basically just skipping all set attribute with attrs being "href" if user is 'jumping'
+     * to the other point of replay to save time on NOT downloading any resources before the dom tree changes
+     * are applied, so it won't try to download and then cancel when node is created in msg N and removed in msg N+2
+     * which produces weird bug when asset is cached (10-25ms delay)
+     * */
+    // http://0.0.0.0:3333/5/session/8452905874437457
+    // 70 iframe, 8 create element - STYLE tag
+    await this.moveWait(t, this.applyMessage)
+
+    this.attrsBacktrack.forEach(msg => {
+      this.applyBacktrack(msg)
+    })
+    this.attrsBacktrack = []
+
+    this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady(t).then(() => {
       // Apply focus
       this.focusManager.move(t)
+      this.selectionManager.move(t)
       // Apply all scrolls after the styles got applied
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)

@@ -81,17 +81,23 @@ function Timeline(props: IProps) {
   };
 
   const showTimeTooltip = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target !== progressRef.current && e.target !== timelineRef.current) {
+    if (
+      e.target !== progressRef.current
+      && e.target !== timelineRef.current
+      // @ts-ignore black magic
+      && !progressRef.current.contains(e.target)
+    ) {
       return props.tooltipVisible && hideTimeTooltip();
     }
 
     const time = getTime(e);
+    if (!time) return;
     const tz = settingsStore.sessionSettings.timezone.value
     const timeStr = DateTime.fromMillis(props.startedAt + time).setZone(tz).toFormat(`hh:mm:ss a`)
     const timeLineTooltip = {
       time: Duration.fromMillis(time).toFormat(`mm:ss`),
       timeStr,
-      offset: e.nativeEvent.offsetX,
+      offset: e.nativeEvent.pageX,
       isVisible: true,
     };
 

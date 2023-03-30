@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - dev
+      - api-*
     paths:
-      - "utilities/**"
-      - "!utilities/.gitignore"
-      - "!utilities/*-dev.sh"
+      - "assist/**"
+      - "!assist/.gitignore"
+      - "!assist/*-dev.sh"
 
 name: Build and Deploy Assist
 
@@ -42,7 +43,7 @@ jobs:
         ENVIRONMENT: staging
       run: |
         skip_security_checks=${{ github.event.inputs.skip_security_checks }}
-        cd utilities
+        cd assist
         PUSH_IMAGE=0 bash -x ./build.sh
         [[ "x$skip_security_checks" == "xtrue" ]]  || {
           curl -L https://github.com/aquasecurity/trivy/releases/download/v0.34.0/trivy_0.34.0_Linux-64bit.tar.gz | tar -xzf - -C ./ 
@@ -99,9 +100,9 @@ jobs:
 
         cat /tmp/image_override.yaml
         # Deploy command
-        mv openreplay/charts/{ingress-nginx,chalice,quickwit} /tmp
+        mv openreplay/charts/{ingress-nginx,assist,quickwit} /tmp
         rm -rf  openreplay/charts/*
-        mv /tmp/{ingress-nginx,chalice,quickwit} openreplay/charts/
+        mv /tmp/{ingress-nginx,assist,quickwit} openreplay/charts/
         helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks --kube-version=$k_version | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}

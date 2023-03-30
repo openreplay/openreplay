@@ -4,43 +4,39 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-/*
-	Handler name: DeadClick
-	Input events: SetInputTarget,
-				  CreateDocument,
-				  MouseClick,
-				  SetNodeAttribute,
-				  RemoveNodeAttribute,
-				  CreateElementNode,
-				  CreateTextNode,
-				  MoveNode,
-				  RemoveNode,
-				  SetCSSData,
-				  CSSInsertRule,
-				  CSSDeleteRule
-	Output event: IssueEvent
-*/
-
-const CLICK_RELATION_TIME = 1234
+const ClickRelationTime = 1234
 
 type DeadClickDetector struct {
-	lastTimestamp      uint64
 	lastMouseClick     *MouseClick
+	lastTimestamp      uint64
 	lastClickTimestamp uint64
 	lastMessageID      uint64
 	inputIDSet         map[uint64]bool
 }
 
+func NewDeadClickDetector() *DeadClickDetector {
+	return &DeadClickDetector{inputIDSet: make(map[uint64]bool)}
+}
+
+func (d *DeadClickDetector) addInputID(id uint64) {
+	d.inputIDSet[id] = true
+}
+
+func (d *DeadClickDetector) clearInputIDs() {
+	d.inputIDSet = make(map[uint64]bool)
+}
+
 func (d *DeadClickDetector) reset() {
-	d.inputIDSet = nil
 	d.lastMouseClick = nil
 	d.lastClickTimestamp = 0
 	d.lastMessageID = 0
+	d.clearInputIDs()
 }
 
-func (d *DeadClickDetector) build(timestamp uint64) Message {
+func (d *DeadClickDetector) Build() Message {
+	// remove reset from external Build call
 	defer d.reset()
-	if d.lastMouseClick == nil || d.lastClickTimestamp+CLICK_RELATION_TIME > timestamp { // reaction is instant
+	if d.lastMouseClick == nil || d.lastClickTimestamp+ClickRelationTime > d.lastTimestamp { // reaction is instant
 		return nil
 	}
 	event := &IssueEvent{
@@ -52,42 +48,37 @@ func (d *DeadClickDetector) build(timestamp uint64) Message {
 	return event
 }
 
-func (d *DeadClickDetector) Build() Message {
-	return d.build(d.lastTimestamp)
-}
-
-func (d *DeadClickDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (d *DeadClickDetector) Handle(message Message, timestamp uint64) Message {
 	d.lastTimestamp = timestamp
 	switch msg := message.(type) {
 	case *SetInputTarget:
-		if d.inputIDSet == nil {
-			d.inputIDSet = make(map[uint64]bool)
-		}
-		d.inputIDSet[msg.ID] = true
+		d.addInputID(msg.ID)
 	case *CreateDocument:
-		d.inputIDSet = nil
+		d.clearInputIDs()
 	case *MouseClick:
 		if msg.Label == "" {
 			return nil
 		}
-		event := d.build(timestamp)
-		if d.inputIDSet[msg.ID] { // ignore if input
+		isInputEvent := d.inputIDSet[msg.ID]
+		event := d.Build()
+		if isInputEvent {
 			return event
 		}
 		d.lastMouseClick = msg
 		d.lastClickTimestamp = timestamp
-		d.lastMessageID = messageID
+		d.lastMessageID = message.MsgID()
 		return event
 	case *SetNodeAttribute,
 		*RemoveNodeAttribute,
 		*CreateElementNode,
 		*CreateTextNode,
+		*SetNodeFocus,
 		*MoveNode,
 		*RemoveNode,
 		*SetCSSData,
 		*CSSInsertRule,
 		*CSSDeleteRule:
-		return d.build(timestamp)
+		return d.Build()
 	}
 	return nil
 }

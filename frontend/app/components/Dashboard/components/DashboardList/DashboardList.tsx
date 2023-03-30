@@ -17,19 +17,19 @@ function DashboardList() {
       show={lenth === 0}
       title={
         <div className="flex flex-col items-center justify-center">
+          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
           <div className="text-center my-4">
             {dashboardsSearch !== '' ? (
               'No matching results'
             ) : (
               <div>
-                <div>Create your first Dashboard</div>
+                <div>You haven't created any dashboards yet</div>
                 <div className="text-sm color-gray-medium font-normal">
-                  A dashboard lets you visualize trends and insights of data captured by OpenReplay.
+                A Dashboard is a collection of Cards that can be shared across teams.
                 </div>
               </div>
             )}
           </div>
-          <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
         </div>
       }
     >

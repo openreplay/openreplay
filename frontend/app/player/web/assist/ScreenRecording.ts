@@ -15,6 +15,7 @@ export interface State {
 }
 
 export default class ScreenRecording {
+  onDeny: () => void = () => {}
 	static readonly INITIAL_STATE: Readonly<State> = {
 		recordingState: SessionRecordingStatus.Off,
 	}
@@ -29,6 +30,7 @@ export default class ScreenRecording {
     })
     socket.on('recording_rejected', () => {
       this.toggleRecording(false)
+      this.onDeny()
     })
     socket.on('recording_busy', () => {
       this.onRecordingBusy()
@@ -39,7 +41,8 @@ export default class ScreenRecording {
     toast.error("This session is already being recorded by another agent")
   }
 
-  requestRecording = () => {
+  requestRecording = ({ onDeny }: { onDeny: () => void }) => {
+    this.onDeny = onDeny
     const recordingState = this.store.get().recordingState
     if (recordingState === SessionRecordingStatus.Requesting) return;
 

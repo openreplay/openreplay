@@ -73,6 +73,10 @@ export default class Nodes {
     return this.nodes[id]
   }
 
+  getNodeCount() {
+    return this.nodes.filter(Boolean).length
+  }
+
   clear(): void {
     for (let id = 0; id < this.nodes.length; id++) {
       const node = this.nodes[id]

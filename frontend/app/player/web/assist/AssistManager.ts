@@ -66,7 +66,7 @@ export default class AssistManager {
     private setMessagesLoading: (flag: boolean) => void,
     private handleMessage: (m: Message, index: number) => void,
     private screen: Screen,
-    private config: RTCIceServer[],
+    private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
   ) {}
 
@@ -249,6 +249,9 @@ export default class AssistManager {
   private remoteControl: RemoteControl | null = null
   requestReleaseRemoteControl = (...args: Parameters<RemoteControl['requestReleaseRemoteControl']>) => {
     return this.remoteControl?.requestReleaseRemoteControl(...args)
+  }
+  setRemoteControlCallbacks = (...args: Parameters<RemoteControl['setCallbacks']>) => {
+    return this.remoteControl?.setCallbacks(...args)
   }
   releaseRemoteControl = (...args: Parameters<RemoteControl['releaseRemoteControl']>) => {
     return this.remoteControl?.releaseRemoteControl(...args)

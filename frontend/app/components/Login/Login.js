@@ -36,9 +36,22 @@ class Login extends React.Component {
     CAPTCHA_ENABLED: window.env.CAPTCHA_ENABLED === 'true',
   };
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { authDetails } = nextProps;
+    if (Object.keys(authDetails).length === 0) {
+      return null;
+    }
+
+    if (!authDetails.tenants) {
+      nextProps.history.push(SIGNUP_ROUTE);
+    }
+
+    return null;
+  }
+
   componentDidMount() {
     const { params } = this.props;
-    this.props.fetchTenants();
+    this.props.fetchTenants()
     const jwt = params.get('jwt');
     if (jwt) {
       this.props.setJwt(jwt);
@@ -69,18 +82,16 @@ class Login extends React.Component {
     const { CAPTCHA_ENABLED } = this.state;
 
     return (
-      <div className="flex flex-col md:flex-row" style={{ height: '100vh' }}>
-        <div className={cn('md:w-6/12 relative overflow-hidden', stl.left)}>
-          <div className="px-6 pt-10">
-            <img src="/assets/logo-white.svg" />
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center">
+          <div className="m-10 ">
+            <img src="/assets/logo.svg" width={200}/>
           </div>
-          <img style={{ width: '800px', position: 'absolute', bottom: -100, left: 0 }} src={LoginBg} />
-        </div>
-        <div className="md:w-6/12 flex items-center justify-center py-10">
-          <div className="">
+          <div className="border rounded bg-white">
             <Form onSubmit={this.onSubmit} className="flex items-center justify-center flex-col">
-              <div className="mb-8">
-                <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
+              <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">Login to your account</h2>
+              <div className="">
+                
                 {!authDetails.tenants && (
                   <div className="text-center text-xl">
                     Don't have an account?{' '}
@@ -99,22 +110,23 @@ class Login extends React.Component {
                     onChange={(token) => this.handleSubmit(token)}
                   />
                 )}
-                <div style={{ width: '350px' }}>
-                  <div className="mb-6">
-                    <label>Email</label>
+                <div style={{ width: '350px' }} className="px-8">
+                  <Form.Field>
+                    <label>Email Address</label>
                     <Input
+                      autoFocus
                       data-test-id={"login"}
                       autoFocus={true}
                       autoComplete="username"
-                      type="text"
-                      placeholder="Email"
+                      type="email"
+                      placeholder="e.g. john@example.com"
                       name="email"
                       onChange={this.write}
                       required
-                      icon="user-alt"
+                      icon="envelope"
                     />
-                  </div>
-                  <div className="mb-6">
+                  </Form.Field>
+                  <Form.Field>
                     <label className="mb-2">Password</label>
                     <Input
                       data-test-id={"password"}
@@ -124,9 +136,9 @@ class Login extends React.Component {
                       name="password"
                       onChange={this.write}
                       required
-                      icon="lock-alt"
+                      icon="key"
                     />
-                  </div>
+                  </Form.Field>
                 </div>
               </Loader>
               {errors && errors.length ? (
@@ -142,23 +154,22 @@ class Login extends React.Component {
                   ))}
                 </div>
               ) : null}
-              {/* <div className={ stl.formFooter }> */}
-              <Button data-test-id={"log-button"} className="mt-2" type="submit" variant="primary">
-                {'Login'}
-              </Button>
+              
+              <div className="px-8 w-full">
+                <Button data-test-id={"log-button"} className="mt-2 w-full text-center" type="submit" variant="primary">
+                  {'Login'}
+                </Button>
 
-              <div className={cn(stl.links, 'text-lg')}>
-                <Link to={FORGOT_PASSWORD}>{'Forgot your password?'}</Link>
+                <div className="my-8">
+                  <span className="color-gray-medium">Having trouble logging in?</span> <Link to={FORGOT_PASSWORD} className="link ml-1">{'Reset password'}</Link>
+                </div>
               </div>
-              {/* </div> */}
             </Form>
 
             <div className={cn(stl.sso, 'py-2 flex flex-col items-center')}>
-              <div className="mb-4">or</div>
-
               {authDetails.sso ? (
                 <a href="/api/sso/saml2" rel="noopener noreferrer">
-                  <Button variant="outline" type="submit">
+                  <Button variant="text-primary" type="submit">
                     {`Login with SSO ${
                       authDetails.ssoProvider ? `(${authDetails.ssoProvider})` : ''
                     }`}
@@ -167,11 +178,11 @@ class Login extends React.Component {
               ) : (
                 <Tooltip
                   delay={0}
-                  title={<div>{authDetails.edition === 'ee' ? "SSO has not been configured. Please reach out to your admin." : ENTERPRISE_REQUEIRED}</div>}
+                  title={<div className="text-center">{authDetails.edition === 'ee' ? <span>SSO has not been configured. <br /> Please reach out to your admin.</span> : ENTERPRISE_REQUEIRED}</div>}
                   placement="top"
                 >
                   <Button
-                    variant="outline"
+                    variant="text-primary"
                     type="submit"
                     className="pointer-events-none opacity-30"
                   >
@@ -182,6 +193,8 @@ class Login extends React.Component {
                 </Tooltip>
               )}
             </div>
+            
+
           </div>
         </div>
       </div>

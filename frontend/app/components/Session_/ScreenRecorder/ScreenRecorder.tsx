@@ -100,7 +100,8 @@ function ScreenRecorder({
   };
 
   const recordingRequest = () => {
-    player.assistManager.requestRecording();
+    const onDeny = () => toast.info('Recording request was rejected by user')
+    player.assistManager.requestRecording({ onDeny });
   };
 
   if (!isSupported() || !isEnterprise) {

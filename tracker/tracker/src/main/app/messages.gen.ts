@@ -498,7 +498,7 @@ export function SetNodeAttributeDict(
   ]
 }
 
-export function ResourceTiming(
+export function ResourceTimingDeprecated(
   timestamp: number,
   duration: number,
   ttfb: number,
@@ -507,9 +507,9 @@ export function ResourceTiming(
   decodedBodySize: number,
   url: string,
   initiator: string,
-): Messages.ResourceTiming {
+): Messages.ResourceTimingDeprecated {
   return [
-    Messages.Type.ResourceTiming,
+    Messages.Type.ResourceTimingDeprecated,
     timestamp,
     duration,
     ttfb,
@@ -789,6 +789,83 @@ export function PartitionedMessage(
     Messages.Type.PartitionedMessage,
     partNo,
     partTotal,
+  ]
+}
+
+export function InputChange(
+  id: number,
+  value: string,
+  valueMasked: boolean,
+  label: string,
+  hesitationTime: number,
+  inputDuration: number,
+): Messages.InputChange {
+  return [
+    Messages.Type.InputChange,
+    id,
+    value,
+    valueMasked,
+    label,
+    hesitationTime,
+    inputDuration,
+  ]
+}
+
+export function SelectionChange(
+  selectionStart: number,
+  selectionEnd: number,
+  selection: string,
+): Messages.SelectionChange {
+  return [
+    Messages.Type.SelectionChange,
+    selectionStart,
+    selectionEnd,
+    selection,
+  ]
+}
+
+export function MouseThrashing(
+  timestamp: number,
+): Messages.MouseThrashing {
+  return [
+    Messages.Type.MouseThrashing,
+    timestamp,
+  ]
+}
+
+export function UnbindNodes(
+  totalRemovedPercent: number,
+): Messages.UnbindNodes {
+  return [
+    Messages.Type.UnbindNodes,
+    totalRemovedPercent,
+  ]
+}
+
+export function ResourceTiming(
+  timestamp: number,
+  duration: number,
+  ttfb: number,
+  headerSize: number,
+  encodedBodySize: number,
+  decodedBodySize: number,
+  url: string,
+  initiator: string,
+  transferredSize: number,
+  cached: boolean,
+): Messages.ResourceTiming {
+  return [
+    Messages.Type.ResourceTiming,
+    timestamp,
+    duration,
+    ttfb,
+    headerSize,
+    encodedBodySize,
+    decodedBodySize,
+    url,
+    initiator,
+    transferredSize,
+    cached,
   ]
 }
 

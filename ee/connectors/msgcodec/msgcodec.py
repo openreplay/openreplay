@@ -321,31 +321,6 @@ class MessageCodec(Codec):
                 label=self.read_string(reader)
             )
 
-        if message_id == 33:
-            return ClickEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                hesitation_time=self.read_uint(reader),
-                label=self.read_string(reader),
-                selector=self.read_string(reader)
-            )
-
-        if message_id == 35:
-            return ResourceEvent(
-                message_id=self.read_uint(reader),
-                timestamp=self.read_uint(reader),
-                duration=self.read_uint(reader),
-                ttfb=self.read_uint(reader),
-                header_size=self.read_uint(reader),
-                encoded_body_size=self.read_uint(reader),
-                decoded_body_size=self.read_uint(reader),
-                url=self.read_string(reader),
-                type=self.read_string(reader),
-                success=self.read_boolean(reader),
-                method=self.read_string(reader),
-                status=self.read_uint(reader)
-            )
-
         if message_id == 37:
             return CSSInsertRule(
                 id=self.read_uint(reader),
@@ -444,13 +419,8 @@ class MessageCodec(Codec):
                 value_key=self.read_uint(reader)
             )
 
-        if message_id == 52:
-            return DOMDrop(
-                timestamp=self.read_uint(reader)
-            )
-
         if message_id == 53:
-            return ResourceTiming(
+            return ResourceTimingDeprecated(
                 timestamp=self.read_uint(reader),
                 duration=self.read_uint(reader),
                 ttfb=self.read_uint(reader),
@@ -658,6 +628,47 @@ class MessageCodec(Codec):
             return PartitionedMessage(
                 part_no=self.read_uint(reader),
                 part_total=self.read_uint(reader)
+            )
+
+        if message_id == 112:
+            return InputChange(
+                id=self.read_uint(reader),
+                value=self.read_string(reader),
+                value_masked=self.read_boolean(reader),
+                label=self.read_string(reader),
+                hesitation_time=self.read_int(reader),
+                input_duration=self.read_int(reader)
+            )
+
+        if message_id == 113:
+            return SelectionChange(
+                selection_start=self.read_uint(reader),
+                selection_end=self.read_uint(reader),
+                selection=self.read_string(reader)
+            )
+
+        if message_id == 114:
+            return MouseThrashing(
+                timestamp=self.read_uint(reader)
+            )
+
+        if message_id == 115:
+            return UnbindNodes(
+                total_removed_percent=self.read_uint(reader)
+            )
+
+        if message_id == 116:
+            return ResourceTiming(
+                timestamp=self.read_uint(reader),
+                duration=self.read_uint(reader),
+                ttfb=self.read_uint(reader),
+                header_size=self.read_uint(reader),
+                encoded_body_size=self.read_uint(reader),
+                decoded_body_size=self.read_uint(reader),
+                url=self.read_string(reader),
+                initiator=self.read_string(reader),
+                transferred_size=self.read_uint(reader),
+                cached=self.read_boolean(reader)
             )
 
         if message_id == 125:

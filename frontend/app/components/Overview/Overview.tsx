@@ -4,25 +4,29 @@ import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar';
 import SessionSearch from 'Shared/SessionSearch';
 import SessionListContainer from 'Shared/SessionListContainer/SessionListContainer';
+import cn from 'classnames';
+import OverviewMenu from 'Shared/OverviewMenu';
 
 function Overview() {
-    return (
-        <div className="page-margin container-90 flex relative">
-            <div className="flex-1 flex">
-                <div className={'w-full mx-auto'} style={{ maxWidth: '1300px' }}>
-                    <NoSessionsMessage />
+  return (
+    <div className="page-margin container-90 flex relative">
+      <div className={cn('side-menu')}>
+        <OverviewMenu />
+      </div>
+      <div
+        className={cn("side-menu-margined w-full")}
+      >
+        <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px'}}>
+          <NoSessionsMessage />
+          <MainSearchBar />
+          <SessionSearch />
 
-                    <div className="mb-5">
-                        <MainSearchBar />
-                        <SessionSearch />
-
-                        <div className="my-4" />
-                        <SessionListContainer />
-                    </div>
-                </div>
-            </div>
+          <div className="my-4" />
+          <SessionListContainer />
         </div>
-    );
+      </div>
+    </div>
+  );
 }
 
 export default withPageTitle('Sessions - OpenReplay')(Overview);

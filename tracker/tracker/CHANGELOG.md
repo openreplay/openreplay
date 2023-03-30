@@ -1,5 +1,19 @@
+# 6.0.0
+
+- Capture mouse thrashing, input hesitation+duration, click hesitation
+- Capture DOM node drop event (>30% nodes removed)
+- Capture iframe network requests
+- Detect cached requests to img, css and js resources; send transferred size
+- added `{ mouse: { disableClickmaps: boolean } }` to disable calculating el. selectors
+- added `{ mouse: { minSelectorDepth?: number; nthThreshold?: number; maxOptimiseTries?: number }` for selector finding optimisations
+
+## 5.0.2
+
+- fixed inline css loading in specific cases when assets gets around min flush size
+
 ## 5.0.1
 
+- Re-init worker after device sleep/hybernation
 - Default text input mode is now Obscured
 - Use `@medv/finder` instead of our own implementation of `getSelector` for better clickmaps experience
 

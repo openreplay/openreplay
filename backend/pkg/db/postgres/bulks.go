@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"log"
-	"time"
 )
 
 type bulksTask struct {
@@ -10,7 +9,7 @@ type bulksTask struct {
 }
 
 func NewBulksTask() *bulksTask {
-	return &bulksTask{bulks: make([]Bulk, 0, 14)}
+	return &bulksTask{bulks: make([]Bulk, 0, 15)}
 }
 
 type BulkSet struct {
@@ -20,6 +19,7 @@ type BulkSet struct {
 	customEvents      Bulk
 	webPageEvents     Bulk
 	webInputEvents    Bulk
+	webInputDurations Bulk
 	webGraphQL        Bulk
 	webErrors         Bulk
 	webErrorEvents    Bulk
@@ -58,6 +58,8 @@ func (conn *BulkSet) Get(name string) Bulk {
 		return conn.webPageEvents
 	case "webInputEvents":
 		return conn.webInputEvents
+	case "webInputDurations":
+		return conn.webInputDurations
 	case "webGraphQL":
 		return conn.webGraphQL
 	case "webErrors":
@@ -127,6 +129,14 @@ func (conn *BulkSet) initBulks() {
 	if err != nil {
 		log.Fatalf("can't create webPageEvents bulk: %s", err)
 	}
+	conn.webInputDurations, err = NewBulk(conn.c,
+		"events.inputs",
+		"(session_id, message_id, timestamp, value, label, hesitation, duration)",
+		"($%d, $%d, $%d, LEFT($%d, 2000), NULLIF(LEFT($%d, 2000),''), $%d, $%d)",
+		7, 200)
+	if err != nil {
+		log.Fatalf("can't create webPageEvents bulk: %s", err)
+	}
 	conn.webGraphQL, err = NewBulk(conn.c,
 		"events.graphql",
 		"(session_id, timestamp, message_id, name, request_body, response_body)",
@@ -185,9 +195,9 @@ func (conn *BulkSet) initBulks() {
 	}
 	conn.webClickEvents, err = NewBulk(conn.c,
 		"events.clicks",
-		"(session_id, message_id, timestamp, label, selector, url, path)",
-		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000))",
-		7, 200)
+		"(session_id, message_id, timestamp, label, selector, url, path, hesitation)",
+		"($%d, $%d, $%d, NULLIF(LEFT($%d, 2000), ''), LEFT($%d, 8000), LEFT($%d, 2000), LEFT($%d, 2000), $%d)",
+		8, 200)
 	if err != nil {
 		log.Fatalf("can't create webClickEvents bulk: %s", err)
 	}
@@ -210,6 +220,7 @@ func (conn *BulkSet) Send() {
 	newTask.bulks = append(newTask.bulks, conn.customEvents)
 	newTask.bulks = append(newTask.bulks, conn.webPageEvents)
 	newTask.bulks = append(newTask.bulks, conn.webInputEvents)
+	newTask.bulks = append(newTask.bulks, conn.webInputDurations)
 	newTask.bulks = append(newTask.bulks, conn.webGraphQL)
 	newTask.bulks = append(newTask.bulks, conn.webErrors)
 	newTask.bulks = append(newTask.bulks, conn.webErrorEvents)
@@ -243,9 +254,7 @@ func (conn *BulkSet) worker() {
 	for {
 		select {
 		case t := <-conn.workerTask:
-			start := time.Now()
 			conn.sendBulks(t)
-			log.Printf("pg bulks dur: %d", time.Now().Sub(start).Milliseconds())
 		case <-conn.done:
 			if len(conn.workerTask) > 0 {
 				for t := range conn.workerTask {

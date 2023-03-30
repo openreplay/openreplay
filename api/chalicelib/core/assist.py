@@ -4,8 +4,7 @@ from os.path import exists as path_exists, getsize
 import jwt
 import requests
 from decouple import config
-from starlette import status
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 import schemas
 from chalicelib.core import projects

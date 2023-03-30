@@ -8,11 +8,22 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
+  UnbindNodes,
 } from '../messages.gen.js'
 import App from '../index.js'
-import { isRootNode, isTextNode, isElementNode, isSVGElement, hasTag } from '../guards.js'
+import {
+  isRootNode,
+  isTextNode,
+  isElementNode,
+  isSVGElement,
+  hasTag,
+  isCommentNode,
+} from '../guards.js'
 
 function isIgnored(node: Node): boolean {
+  if (isCommentNode(node)) {
+    return true
+  }
   if (isTextNode(node)) {
     return false
   }
@@ -224,10 +235,19 @@ export default abstract class Observer {
         // @ts-ignore
         false,
       )
+
+      let removed = 0
+      const totalBeforeRemove = this.app.nodes.getNodeCount()
+
       while (walker.nextNode()) {
+        removed += 1
         this.app.nodes.unregisterNode(walker.currentNode)
       }
-      // MBTODO: count and send RemovedNodesCount (for the page crash detection in heuristics)
+
+      const removedPercent = Math.floor((removed / totalBeforeRemove) * 100)
+      if (removedPercent > 30) {
+        this.app.send(UnbindNodes(removedPercent))
+      }
     }
   }
 

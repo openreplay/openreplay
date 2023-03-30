@@ -1,7 +1,6 @@
 from typing import Optional
 
-from fastapi import HTTPException
-from starlette import status
+from fastapi import HTTPException, status
 
 import schemas_ee
 from chalicelib.core import users, projects
