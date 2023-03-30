@@ -139,8 +139,6 @@ def get_health():
             "clickhouse": __check_database_ch
         },
         "ingestionPipeline": {
-            **({"redis": __check_redis} if config("REDIS_STRING", default=None) is not None
-                                           and len(config("REDIS_STRING")) > 0 else {}),
             # "kafka": __check_kafka
             "kafka": __always_healthy
         },
@@ -163,6 +161,8 @@ def get_health():
             "storage": __check_be_service("storage")
         }
     }
+    if config("REDIS_STRING", default=None) is not None and len(config("REDIS_STRING")) > 0:
+        health_map["ingestionPipeline"]["redis"] = __check_redis
     for parent_key in health_map.keys():
         for element_key in health_map[parent_key]:
             health_map[parent_key][element_key] = health_map[parent_key][element_key]()
