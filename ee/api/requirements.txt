@@ -18,5 +18,5 @@ clickhouse-driver==0.2.5
 python3-saml==1.15.0
 python-multipart==0.0.6
 
-redis==4.5.3
+redis==4.5.4
 #confluent-kafka==2.0.2
