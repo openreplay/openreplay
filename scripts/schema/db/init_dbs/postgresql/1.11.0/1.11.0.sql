@@ -25,16 +25,16 @@ $$ LANGUAGE sql IMMUTABLE;
 ALTER TYPE issue_type ADD VALUE IF NOT EXISTS 'mouse_thrashing';
 
 LOCK TABLE ONLY events.inputs IN ACCESS EXCLUSIVE MODE;
-ALTER TABLE events.inputs
-    ADD COLUMN duration   integer NULL,
-    ADD COLUMN hesitation integer NULL;
+ALTER TABLE IF EXISTS events.inputs
+    ADD COLUMN IF NOT EXISTS duration   integer NULL,
+    ADD COLUMN IF NOT EXISTS hesitation integer NULL;
 
 LOCK TABLE ONLY events.clicks IN ACCESS EXCLUSIVE MODE;
-ALTER TABLE events.clicks
-    ADD COLUMN hesitation integer NULL;
+ALTER TABLE IF EXISTS events.clicks
+    ADD COLUMN IF NOT EXISTS hesitation integer NULL;
 
 LOCK TABLE ONLY public.projects IN ACCESS EXCLUSIVE MODE;
-ALTER TABLE public.projects
+ALTER TABLE IF EXISTS public.projects
     ALTER COLUMN gdpr SET DEFAULT '{
       "maskEmails": true,
       "sampleRate": 33,
