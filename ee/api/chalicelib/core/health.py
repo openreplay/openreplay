@@ -139,7 +139,8 @@ def get_health():
             "clickhouse": __check_database_ch
         },
         "ingestionPipeline": {
-            **({"redis": __check_redis} if config("REDIS_STRING", default=None) is not None else {}),
+            **({"redis": __check_redis} if config("REDIS_STRING", default=None) is not None
+                                           and len(config("REDIS_STRING")) > 0 else {}),
             # "kafka": __check_kafka
             "kafka": __always_healthy
         },
