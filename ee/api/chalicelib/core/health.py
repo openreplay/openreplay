@@ -139,7 +139,7 @@ def get_health():
             "clickhouse": __check_database_ch
         },
         "ingestionPipeline": {
-            "redis": __check_redis,
+            **({"redis": __check_redis} if config("REDIS_STRING", default=None) is not None else {}),
             # "kafka": __check_kafka
             "kafka": __always_healthy
         },
@@ -185,7 +185,7 @@ def __check_database_ch():
                                        FROM system.functions
                                        WHERE name = 'openreplay_version';""")
         if len(schema_version) > 0:
-            schema_version = ch.execute("SELECT openreplay_version()() AS version;")
+            schema_version = ch.execute("SELECT openreplay_version() AS version;")
             schema_version = schema_version[0]["version"]
         else:
             print("!! health failed: clickhouse schema is outdated")
