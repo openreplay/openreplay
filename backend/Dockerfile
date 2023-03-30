@@ -18,7 +18,7 @@ ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags dynamic openreplay/backend/cmd/$SERVICE_NAME
 
 
-FROM alpine AS entrypoint
+FROM alpine:3.17.3 AS entrypoint
 ARG GIT_SHA
 LABEL GIT_SHA=$GIT_SHA
 
