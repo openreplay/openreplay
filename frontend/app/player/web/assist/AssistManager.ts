@@ -66,7 +66,7 @@ export default class AssistManager {
     private setMessagesLoading: (flag: boolean) => void,
     private handleMessage: (m: Message, index: number) => void,
     private screen: Screen,
-    private config: RTCIceServer[],
+    private config: RTCIceServer[] | null,
     private store: Store<typeof AssistManager.INITIAL_STATE>,
   ) {}
 

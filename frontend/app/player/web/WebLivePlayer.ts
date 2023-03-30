@@ -23,7 +23,7 @@ export default class WebLivePlayer extends WebPlayer {
   private lastMessageInFileTime = 0
   private lastMessageInFileIndex = 0
 
-  constructor(wpState: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[]) {
+  constructor(wpState: Store<typeof WebLivePlayer.INITIAL_STATE>, private session:any, config: RTCIceServer[] | null) {
     super(wpState, session, true)
 
     this.assistManager = new AssistManager(

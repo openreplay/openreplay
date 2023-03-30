@@ -39,7 +39,7 @@ export function createClickMapPlayer(session: Record<string, any>, wrapStore?: (
 	return [player, store]
 }
 
-export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[], wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore): [IWebLivePlayer, IWebLivePlayerStore] {
+export function createLiveWebPlayer(session: Record<string, any>, config: RTCIceServer[] | null, wrapStore?: (s:IWebLivePlayerStore) => IWebLivePlayerStore): [IWebLivePlayer, IWebLivePlayerStore] {
 	let store: WebLivePlayerStore = new SimpleStore<WebLiveState>({
 		...WebLivePlayer.INITIAL_STATE,
 	})

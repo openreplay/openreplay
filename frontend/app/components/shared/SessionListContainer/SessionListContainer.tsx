@@ -12,9 +12,7 @@ function SessionListContainer({
   clearCurrentSession,
 }: {
   activeTab: string;
-  fetchMembers: () => void;
   members: object[];
-  clearCurrentSession: () => void;
 }) {
   React.useEffect(() => {
     clearCurrentSession()

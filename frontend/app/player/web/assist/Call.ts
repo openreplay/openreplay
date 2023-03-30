@@ -33,7 +33,7 @@ export default class Call {
 	constructor(
 		private store: Store<State>,
 		private socket: Socket,
-		private config: RTCIceServer[],
+		private config: RTCIceServer[] | null,
 		private peerID: string,
 	) {
 		socket.on('call_end', this.onRemoteCallEnd)
