@@ -139,7 +139,7 @@ def get_health():
             "clickhouse": __check_database_ch
         },
         "ingestionPipeline": {
-            "redis": __check_redis,
+            # "redis": __check_redis,
             # "kafka": __check_kafka
             "kafka": __always_healthy
         },
