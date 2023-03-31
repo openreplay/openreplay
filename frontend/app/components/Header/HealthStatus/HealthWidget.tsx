@@ -59,7 +59,7 @@ function HealthWidget({
           <span>{title}</span>
         </div>
         <div className={'text-secondary flex w-full justify-between items-center text-sm'}>
-          <span>Last checked {lastAskedDiff} mins ago.</span>
+          <span>Last checked {lastAskedDiff}min ago.</span>
           <div
             className={cn('cursor-pointer', isLoading ? 'animate-spin' : '')}
             onClick={() => getHealth()}
