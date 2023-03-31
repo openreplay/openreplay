@@ -263,7 +263,11 @@ function upgrade() {
   # 3. How to update package. Because openreplay -u will be done from old update script
   # 4. Update from Version
   exists git || log err "Git not found. Please install"
-  or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml")
+  or_version=$(busybox awk '/fromVersion/{print $2}' < "${OR_DIR}/vars.yaml") || {
+    log err "${BWHITE}${OR_DIR}/vars.yaml${RED} not found. 
+        Please do ${BWHITE}openreplay --deprecated-upgrade /path/to/vars.yaml${RED}
+      "
+  }
 
   # Creating backup dir of current installation
   [[ -d "$OR_DIR/openreplay" ]] && sudo cp -rfb "$OR_DIR/openreplay" "$OR_DIR/openreplay_${or_version//\"}" && sudo rm -rf ${OR_DIR}/openreplay
