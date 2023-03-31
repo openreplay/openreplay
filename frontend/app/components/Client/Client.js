@@ -18,41 +18,45 @@ import Roles from './Roles';
 
 @withRouter
 export default class Client extends React.PureComponent {
-  constructor(props){
+  constructor(props) {
     super(props);
-  } 
+  }
 
   setTab = (tab) => {
     this.props.history.push(clientRoute(tab));
-  }
+  };
 
   renderActiveTab = () => (
     <Switch>
-      <Route exact strict path={ clientRoute(CLIENT_TABS.PROFILE) } component={ ProfileSettings } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.INTEGRATIONS) } component={ Integrations } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.MANAGE_USERS) } component={ UserView } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.SITES) } component={ Sites } />      
-      <Route exact strict path={ clientRoute(CLIENT_TABS.CUSTOM_FIELDS) } component={ CustomFields } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.WEBHOOKS) } component={ Webhooks } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.NOTIFICATIONS) } component={ Notifications } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.MANAGE_ROLES) } component={ Roles } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.AUDIT) } component={ AuditView } />
-      <Redirect to={ clientRoute(CLIENT_TABS.PROFILE) } />
+      <Route exact strict path={clientRoute(CLIENT_TABS.PROFILE)} component={ProfileSettings} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.INTEGRATIONS)} component={Integrations} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_USERS)} component={UserView} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.SITES)} component={Sites} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.CUSTOM_FIELDS)} component={CustomFields} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.WEBHOOKS)} component={Webhooks} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.NOTIFICATIONS)} component={Notifications} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.MANAGE_ROLES)} component={Roles} />
+      <Route exact strict path={clientRoute(CLIENT_TABS.AUDIT)} component={AuditView} />
+      <Redirect to={clientRoute(CLIENT_TABS.PROFILE)} />
     </Switch>
-  )
+  );
 
   render() {
-    const { match: { params: { activeTab } } } = this.props;
+    const {
+      match: {
+        params: { activeTab },
+      },
+    } = this.props;
     return (
-      <div className={ cn(styles.wrapper, 'page-margin container-90') }>
-        <div className={ styles.main }>
-          <div className={ styles.tabMenu }>
+      <div className={cn('page-margin container-90 flex relative')}>
+          <div className={styles.tabMenu}>
             <PreferencesMenu activeTab={activeTab} />
           </div>
-          <div className="bg-white w-full rounded-lg mx-4 my-8 border">
-            { activeTab && this.renderActiveTab() }
+          <div className={cn('side-menu-margined w-full')}>
+            <div className="bg-white w-full rounded-lg mx-auto mb-8 border" style={{ maxWidth: '1300px'}}>
+              {activeTab && this.renderActiveTab()}
+            </div>
           </div>
-        </div>
       </div>
     );
   }
