@@ -83,7 +83,7 @@ function WebPlayer(props: any) {
     }
 
     if (activeTab === '' && !showNoteModal && isPlayerReady && contextValue.player) {
-     contextValue.player.play()
+      contextValue.player.play()
 
       if (visualOffset !== 0 && !visuallyAdjusted) {
         contextValue.player.jump(visualOffset)
