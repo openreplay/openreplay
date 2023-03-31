@@ -31,6 +31,7 @@ function WebPlayer(props: any) {
   const [activeTab, setActiveTab] = useState('');
   const [showNoteModal, setShowNote] = useState(false);
   const [noteItem, setNoteItem] = useState<Note | undefined>(undefined);
+  const [visuallyAdjusted, setAdjusted] = useState(false);
   // @ts-ignore
   const [contextValue, setContextValue] = useState<IPlayerContext>(defaultContextValue);
 
@@ -82,10 +83,11 @@ function WebPlayer(props: any) {
     }
 
     if (activeTab === '' && !showNoteModal && isPlayerReady && contextValue.player) {
-     contextValue.player.play()
+      contextValue.player.play()
 
-      if (visualOffset !== 0) {
+      if (visualOffset !== 0 && !visuallyAdjusted) {
         contextValue.player.jump(visualOffset)
+        setAdjusted(true)
       }
     }
   }, [activeTab, isPlayerReady, showNoteModal, visualOffset])
