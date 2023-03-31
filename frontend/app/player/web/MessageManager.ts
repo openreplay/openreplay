@@ -470,7 +470,10 @@ export default class MessageManager {
       default:
         switch (msg.tp) {
           case MType.CreateDocument:
-            if (!this.firstVisualEventSet) this.state.update({ firstVisualEvent: msg.time });
+            if (!this.firstVisualEventSet) {
+              this.state.update({ firstVisualEvent: msg.time });
+              this.firstVisualEventSet = true;
+            }
             this.windowNodeCounter.reset();
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
