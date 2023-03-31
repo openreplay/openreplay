@@ -77,12 +77,12 @@ function LiveFilterModal(props: Props) {
                   key={index}
                   className={cn('mb-3')}
                 >
-                  <div className="font-medium uppercase color-gray-medium text-sm mb-2">{option.label}</div>
+                  <div className="font-medium uppercase color-gray-medium mb-2">{option.label}</div>
                   <div>
                     {filter.map((f, i) => (
                       <div
                         key={i}
-                        className={cn(stl.filterSearchItem, "cursor-pointer px-3 py-1 text-sm flex items-center")}
+                        className={cn(stl.filterSearchItem, "cursor-pointer px-3 py-1 flex items-center")}
                         onClick={() => onFilterSearchClick({ type: key, value: f.value })}
                       >
                         <Icon className="mr-2" name={option.icon} size="16" />
@@ -106,12 +106,12 @@ function LiveFilterModal(props: Props) {
                   key={index}
                   className={cn('mb-3')}
                 >
-                  <div className="font-medium uppercase color-gray-medium text-sm mb-2">{option.label}</div>
+                  <div className="font-medium uppercase color-gray-medium mb-2">{option.label}</div>
                   <div>
                     {filter.map((f, i) => (
                       <div
                         key={i}
-                        className={cn(stl.filterSearchItem, "cursor-pointer px-3 py-1 text-sm flex items-center")}
+                        className={cn(stl.filterSearchItem, "cursor-pointer px-3 py-1 flex items-center")}
                         onClick={() => onFilterSearchClick({ type: key, value: f.value })}
                       >
                         <Icon className="mr-2" name={option.icon} size="16" />
