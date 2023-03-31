@@ -5,9 +5,9 @@ import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { edit, addFilter, fetchSessions, updateFilter } from 'Duck/search';
-import SessionSearchQueryParamHandler from 'Shared/SessionSearchQueryParamHandler';
 
 import { debounce } from 'App/utils';
+import useSessionSearchQueryHandler from 'App/hooks/useSessionSearchQueryHandler';
 
 let debounceFetch: any = () => {}
 
@@ -24,6 +24,9 @@ function SessionSearch(props: Props) {
   const { appliedFilter, saveRequestPayloads = false, metaLoading } = props;
   const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
+
+  useSessionSearchQueryHandler({ appliedFilter, applyFilter: props.updateFilter });
+
   useEffect(() => {
     debounceFetch = debounce(() => props.fetchSessions(), 500);
   }, [])
@@ -71,7 +74,6 @@ function SessionSearch(props: Props) {
 
   return !metaLoading && (
     <>
-      <SessionSearchQueryParamHandler />
       {hasEvents || hasFilters ? (
         <div className="border bg-white rounded mt-4">
           <div className="p-5">
