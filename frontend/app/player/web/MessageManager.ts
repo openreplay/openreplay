@@ -116,6 +116,7 @@ export default class MessageManager {
   private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
+  public firstVisualEvent: number = 0;
 
   constructor(
     private readonly session: any /*Session*/,
@@ -467,6 +468,7 @@ export default class MessageManager {
       default:
         switch (msg.tp) {
           case MType.CreateDocument:
+            if (this.firstVisualEvent === 0) this.firstVisualEvent = msg.time;
             this.windowNodeCounter.reset();
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;

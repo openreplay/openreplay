@@ -84,6 +84,10 @@ function WebPlayer(props: any) {
     if (activeTab === '' && !showNoteModal && isPlayerReady) {
      contextValue.player && contextValue.player.play()
     }
+    const visualOffset = contextValue.player?.checkVisualOffset?.() || 0
+    if (visualOffset !== 0) {
+      contextValue.player.jump(visualOffset)
+    }
   }, [activeTab, isPlayerReady, showNoteModal])
 
   // LAYOUT (TODO: local layout state - useContext or something..)

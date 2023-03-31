@@ -66,7 +66,6 @@ export default class WebPlayer extends Player {
 
     // @ts-ignore
     window.playerJumpToTime = this.jump.bind(this)
-
   }
 
   updateLists = (session: any) => {
@@ -145,6 +144,10 @@ export default class WebPlayer extends Player {
 
   toggleUserName = (name?: string) => {
     this.screen.cursor.showTag(name)
+  }
+
+  checkVisualOffset = () => {
+    return this.messageManager.firstVisualEvent
   }
 
   clean = () => {
