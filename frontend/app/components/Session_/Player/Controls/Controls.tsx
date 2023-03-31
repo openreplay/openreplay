@@ -31,7 +31,7 @@ import PlayerControls from './components/PlayerControls';
 import styles from './controls.module.css';
 import XRayButton from 'Shared/XRayButton';
 
-const SKIP_INTERVALS = {
+export const SKIP_INTERVALS = {
   2: 2e3,
   5: 5e3,
   10: 1e4,
