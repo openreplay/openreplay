@@ -24,7 +24,7 @@ const AUTO_SEND_INTERVAL = 10 * 1000
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
 let workerStatus: WorkerStatus = WorkerStatus.NotActive
-let afterSleepRestarts = 0
+// let afterSleepRestarts = 0
 function finalize(): void {
   if (!writer) {
     return
@@ -98,10 +98,7 @@ self.onmessage = ({ data }: any): any => {
     }
     if (!writer) {
       postMessage('not_init')
-      if (afterSleepRestarts === 0) {
-        afterSleepRestarts += 1
-        initiateRestart()
-      }
+      initiateRestart()
     }
     return
   }

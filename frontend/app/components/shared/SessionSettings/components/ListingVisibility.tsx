@@ -52,7 +52,6 @@ function ListingVisibility() {
                         min={0}
                         placeholder="E.g 10"
                         onChange={({ target: { value } }: any) => {
-                            console.log('value', value)
                             changeSettings({ count: value > 0 ? value : '' })
                         }}
                     />

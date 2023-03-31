@@ -6,15 +6,15 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/health', tags=["health-check"])
-def get_global_health_status():
+@app.get('/healthz', tags=["health-check"])
+async def get_global_health_status():
     return {"data": health.get_health()}
 
 
 if not tenants.tenants_exists(use_pool=False):
     @public_app.get('/health', tags=["health-check"])
-    def get_public_health_status():
+    async def get_public_health_status():
         if tenants.tenants_exists():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Not Found")
 
-        return get_global_health_status()
+        return await get_global_health_status()

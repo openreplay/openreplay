@@ -66,7 +66,6 @@ export default class WebPlayer extends Player {
 
     // @ts-ignore
     window.playerJumpToTime = this.jump.bind(this)
-
   }
 
   updateLists = (session: any) => {

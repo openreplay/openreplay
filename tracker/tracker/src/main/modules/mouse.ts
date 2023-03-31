@@ -142,7 +142,6 @@ export default function (app: App, options?: MouseHandlerOptions): void {
 
     const acceleration = (nextVelocity - velocity) / shakeCheckInterval
     if (directionChangeCount > 3 && acceleration > shakeThreshold) {
-      console.log('Mouse shake detected!')
       app.send(MouseThrashing(now()))
     }
 

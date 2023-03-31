@@ -118,7 +118,7 @@ function getQueryObject(search: any) {
     .split('&')
     .map((item: any) => {
       let [key, value] = item.split('=');
-      return { key: key.slice(0, -2), value };
+      return { key: key.slice(0, -2), value: decodeURI(value) };
     });
   return jsonArray;
 }

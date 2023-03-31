@@ -135,7 +135,7 @@ export class VStyleElement extends VElement {
 		    this.stylesheetCallbacks = []
 		  } else {
 		    // console.warn("Style onload: sheet is null") ?
-				// sometimes logs shit ton of errors for some reason
+				// sometimes logs sheet ton of errors for some reason
 		  }
 		  this.loaded = true
 		}

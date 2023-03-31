@@ -95,7 +95,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                                         {role_query if user_id is not None else ""}
                                 WHERE s.tenant_id =%(tenant_id)s
                                     AND s.deleted_at IS NULL
-                                ORDER BY s.project_id {") AS raw" if recorded else ""};""",
+                                ORDER BY s.name {") AS raw" if recorded else ""};""",
                             {"tenant_id": tenant_id, "user_id": user_id, "now": TimeUTC.now()})
         cur.execute(query)
         rows = cur.fetchall()

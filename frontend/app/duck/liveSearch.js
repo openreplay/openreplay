@@ -4,7 +4,7 @@ import { createRequestReducer } from './funcTools/request';
 import { mergeReducers, success } from './funcTools/tools';
 import Filter from 'Types/filter';
 import { liveFiltersMap } from 'Types/filter/newFilter';
-import { filterMap, checkFilterValue, hasFilterApplied } from './search';
+import { filterMap, checkFilterValue, hasFilterApplied, getAppliedFilterIndex } from './search';
 import Session from 'Types/session';
 
 const name = "liveSearch";
@@ -111,8 +111,18 @@ export const clearSearch = () => (dispatch, getState) => {
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
   const instance = getState().getIn([ 'liveSearch', 'instance']);
+  const filters = instance.get('filters');
 
-  if (hasFilterApplied(instance.filters, filter)) {
+  const index = getAppliedFilterIndex(filters, filter);
+  if (index !== -1) {
+    const oldFilter = filters.get(index);
+    const updatedFilter = {
+      ...oldFilter,
+      value: oldFilter.value.concat(filter.value),
+    };
+
+    const updatedFilters = filters.set(index, updatedFilter);
+    return dispatch(edit(instance.set('filters', updatedFilters)));
     // const index = instance.filters.findIndex(f => f.key === filter.key);
     // const oldFilter = instance.filters.get(index);
     // oldFilter.value = oldFilter.value.concat(filter.value);
@@ -124,7 +134,7 @@ export const addFilter = (filter) => (dispatch, getState) => {
 }
 
 export const addFilterByKeyAndValue = (key, value, operator = undefined) => (dispatch, getState) => {
-  let defaultFilter = liveFiltersMap[key];
+  let defaultFilter = { ...liveFiltersMap[key] };
   defaultFilter.value = value;
   if (operator) {
     defaultFilter.operator = operator;

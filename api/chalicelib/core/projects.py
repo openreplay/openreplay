@@ -83,7 +83,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                                 FROM public.projects AS s
                                         {extra_join}
                                 WHERE s.deleted_at IS NULL
-                                ORDER BY s.project_id {") AS raw" if recorded else ""};""", {"now": TimeUTC.now()})
+                                ORDER BY s.name {") AS raw" if recorded else ""};""", {"now": TimeUTC.now()})
         cur.execute(query)
         rows = cur.fetchall()
         # if recorded is requested, check if it was saved or computed

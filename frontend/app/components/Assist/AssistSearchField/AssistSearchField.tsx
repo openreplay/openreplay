@@ -18,7 +18,7 @@ function AssistSearchField(props: Props) {
     return (
         <div className="flex items-center w-full">
             <div style={{ width: '60%', marginRight: '10px' }}>
-                <SessionSearchField fetchFilterSearch={props.fetchFilterSearch} addFilterByKeyAndValue={props.addFilterByKeyAndValue} />
+                <SessionSearchField />
             </div>
             <Button
                 variant="text-primary"

@@ -1,5 +1,12 @@
+# 6.0.1
+
+- fix webworker writer re-init request
+- remove useless logs
+
 # 6.0.0
+
 **(Compatible with OpenReplay v1.11.0+ only)**
+
 - **[breaking]:** Capture mouse thrashing, input hesitation+duration, click hesitation
 - Capture DOM node drop event (>30% nodes removed)
 - Capture iframe network requests
@@ -18,7 +25,9 @@
 - Use `@medv/finder` instead of our own implementation of `getSelector` for better clickmaps experience
 
 ## 5.0.0
+
 **(Compatible with OpenReplay v1.10.0+ only)**
+
 - **[breaking]:** string dictionary to reduce session size
 - Added "tel" to supported input types
 - Added `{ withCurrentTime: true }` to `tracker.getSessionURL` method which will return sessionURL with current session's timestamp

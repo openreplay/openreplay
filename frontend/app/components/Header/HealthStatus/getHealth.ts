@@ -26,8 +26,8 @@ function mapResponse(resp: Record<string, any>) {
   return { overallHealth, healthMap };
 }
 
-export async function getHealthRequest() {
-    const r = await healthService.fetchStatus();
+export async function getHealthRequest(isPublic?: boolean) {
+    const r = await healthService.fetchStatus(isPublic);
     const healthMap = mapResponse(r);
     const asked = new Date().getTime();
     localStorage.setItem(healthResponseKey, JSON.stringify(healthMap));

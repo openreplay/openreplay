@@ -1,7 +1,7 @@
 import type { Timed } from './types';
 
 export default class ListWalker<T extends Timed> {
-	private p = 0
+	private p = 0  /* Pointer to the "current" item */
 	constructor(private _list: Array<T> = []) {}
 
 	append(m: T): void {
@@ -130,7 +130,7 @@ export default class ListWalker<T extends Timed> {
 		return changed ? this.list[ this.p - 1 ] : null;
 	}
 
-	moveApply(t: number, fn: (msg: T) => void, fnBack?: (msg: T) => void): void {
+	async moveWait(t: number, callback: (msg: T) => Promise<any> | undefined): Promise<void> {
 		// Applying only in increment order for now
 		if (t < this.timeNow) {
 			this.reset();
@@ -138,23 +138,8 @@ export default class ListWalker<T extends Timed> {
 
 		const list = this.list
 		while (list[this.p] && list[this.p].time <= t) {
-			fn(this.moveNext())
-		}
-		while (fnBack && this.p > 0 && list[ this.p - 1 ].time > t) {
-			fnBack(this.movePrev());
-		}
-	}
-
-	async moveWait(t: number, fn: (msg: T) => Promise<any> | undefined): Promise<void> {
-		// Applying only in increment order for now
-		if (t < this.timeNow) {
-			this.reset();
-		}
-
-		const list = this.list
-		while (list[this.p] && list[this.p].time <= t) {
-			const ret = fn(this.list[ this.p++ ]);
-			if (ret) { await ret }
+			const maybePromise = callback(this.list[ this.p++ ]);
+			if (maybePromise) { await maybePromise }
 		}
 	}
 

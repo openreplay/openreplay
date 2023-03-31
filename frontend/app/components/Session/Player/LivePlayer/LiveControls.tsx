@@ -14,7 +14,7 @@ import { fetchSessions } from 'Duck/liveSearch';
 import AssistDuration from './AssistDuration';
 import Timeline from './Timeline';
 import ControlButton from 'Components/Session_/Player/Controls/ControlButton';
-
+import { SKIP_INTERVALS } from 'Components/Session_/Player/Controls/Controls'
 import styles from 'Components/Session_/Player/Controls/controls.module.css';
 
 function Controls(props: any) {
