@@ -84,14 +84,13 @@ end
 $context = :web
 
 class Message
-  attr_reader :id, :name, :tracker, :replayer, :swift, :seq_index, :attributes, :context
-  def initialize(name:, id:, tracker: $context == :web, replayer: $context == :web, swift: $context == :ios, seq_index: false, &block)
+  attr_reader :id, :name, :tracker, :replayer, :swift, :attributes, :context
+  def initialize(name:, id:, tracker: $context == :web, replayer: $context == :web, swift: $context == :ios, &block)
     @id = id
     @name = name
     @tracker = tracker
     @replayer = replayer
     @swift = swift
-    @seq_index = seq_index
     @context = $context
     @attributes = []
     # opts.each { |key, value| send "#{key}=", value }

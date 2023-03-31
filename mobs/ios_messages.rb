@@ -35,7 +35,7 @@ message 92, 'IOSMetadata' do
     string 'Value'
 end
 
-message 93, 'IOSCustomEvent', :seq_index => true,  :replayer => true do
+message 93, 'IOSCustomEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Name'
@@ -63,7 +63,7 @@ message 96, 'IOSScreenChanges', :replayer => true do
     uint 'Height'
 end
 
-message 97, 'IOSCrash', :seq_index => true do
+message 97, 'IOSCrash' do
     uint 'Timestamp'
     uint 'Length'
     string 'Name'
@@ -71,7 +71,7 @@ message 97, 'IOSCrash', :seq_index => true do
     string 'Stacktrace' 
 end
 
-message 98, 'IOSScreenEnter', :seq_index => true do
+message 98, 'IOSScreenEnter' do
     uint 'Timestamp'
     uint 'Length'
     string 'Title'
@@ -85,7 +85,7 @@ message 99, 'IOSScreenLeave' do
     string 'ViewName'
 end
 
-message 100, 'IOSClickEvent', :seq_index => true,  :replayer => true do
+message 100, 'IOSClickEvent', :replayer => true do
     uint 'Timestamp'
     uint 'Length'
     string 'Label'
@@ -93,7 +93,7 @@ message 100, 'IOSClickEvent', :seq_index => true,  :replayer => true do
     uint 'Y'
 end
 
-message 101, 'IOSInputEvent', :seq_index => true do
+message 101, 'IOSInputEvent' do
     uint 'Timestamp'
     uint 'Length'
     string 'Value'
@@ -115,7 +115,7 @@ Name/Value may be :
 "mainThreadCPU": Possible values (0 .. 100)
 "memoryUsage": Used memory in bytes
 =end
-message 102, 'IOSPerformanceEvent', :replayer => true, :seq_index => true do
+message 102, 'IOSPerformanceEvent', :replayer => true do
   uint 'Timestamp'
   uint 'Length'
   string 'Name'
@@ -135,7 +135,7 @@ message 104, 'IOSInternalError' do
   string 'Content'
 end
 
-message 105, 'IOSNetworkCall', :replayer => true, :seq_index => true do
+message 105, 'IOSNetworkCall', :replayer => true do
   uint 'Timestamp'
   uint 'Length'
   uint 'Duration'
@@ -163,7 +163,7 @@ message 110, 'IOSPerformanceAggregated', :swift => false do
   uint 'MaxBattery'
 end
 
-message 111, 'IOSIssueEvent', :seq_index => true do
+message 111, 'IOSIssueEvent' do
   uint 'Timestamp'
   string 'Type'
   string 'ContextString'
