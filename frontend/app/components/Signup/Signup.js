@@ -54,7 +54,7 @@ export default class Signup extends React.Component {
 
   getHealth = async () => {
     this.setState({ healthStatusLoading: true });
-    const { healthMap } = await getHealthRequest();
+    const { healthMap } = await getHealthRequest(true);
     this.setState({ healthStatus: healthMap, healthStatusLoading: false });
   }
 
