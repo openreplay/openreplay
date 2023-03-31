@@ -492,5 +492,5 @@ function Performance({
 }
 
 export const ConnectedPerformance = connect((state: any) => ({
-  userDeviceHeapSize: state.getIn(['sessions', 'current']).userDeviceHeapSize,
+  userDeviceHeapSize: state.getIn(['sessions', 'current']).userDeviceHeapSize || 0,
 }))(observer(Performance));
