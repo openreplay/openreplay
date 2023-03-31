@@ -224,7 +224,7 @@ export default class MessageManager {
         fileReader.append(b)
         const msgs: Array<Message> = []
         for (let msg = fileReader.readNext();msg !== null;msg = fileReader.readNext()) {
-          msg && msgs.push(msg)
+          msgs.push(msg)
         }
         const sorted = msgs.sort((m1, m2) => {
           // @ts-ignore

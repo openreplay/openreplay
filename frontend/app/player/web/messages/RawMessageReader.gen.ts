@@ -800,9 +800,8 @@ export default class RawMessageReader extends PrimitiveReader {
     }
 
     default:
-      console.error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
-      // skipping unrecognized messages
-      return false;
+      throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
+      return null;
     }
   }
 }
