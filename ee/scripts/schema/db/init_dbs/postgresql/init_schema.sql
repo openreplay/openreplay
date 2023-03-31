@@ -414,7 +414,8 @@ $$
                     'ml_excessive_scrolling',
                     'ml_slow_resources',
                     'custom',
-                    'js_exception'
+                    'js_exception',
+                    'mouse_thrashing'
                     );
             END IF;
 

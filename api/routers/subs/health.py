@@ -6,7 +6,7 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/health', tags=["health-check"])
+@app.get('/healthz', tags=["health-check"])
 def get_global_health_status():
     return {"data": health.get_health()}
 
