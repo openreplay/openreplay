@@ -23,7 +23,6 @@ export function createWebPlayer(session: Record<string, any>, wrapStore?: (s:IWe
 	}
 
 	const player = new WebPlayer(store, session, false)
-	window.__or_player = player;
 	return [player, store]
 }
 
