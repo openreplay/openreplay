@@ -100,7 +100,7 @@ function WebPlayer(props: any) {
     contextValue.player.play();
   };
 
-  if (!session) return <Loader size={75} style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translateX(-50%)' }} />;
+  if (!session.sessionId) return <Loader size={75} style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translateX(-50%)', height: 75 }} />;
 
   return (
     <PlayerContext.Provider value={contextValue}>
