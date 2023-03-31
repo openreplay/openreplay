@@ -175,13 +175,14 @@ function main() {
     sudo mkdir -p /var/lib/openreplay
     sudo cp -f openreplay-cli /bin/openreplay
     install_openreplay
-    [[ ! -d /var/lib/openreplay/openreplay ]] || {
+    # If you install multiple times using init.sh, Only keep the latest installation
+    if [[ ! -d /var/lib/openreplay/openreplay ]] && [[ $(pwd) != "/var/lib/openreplay/openreplay/scripts/helmcharts/" ]] ; then
       cd /var/lib/openreplay/openreplay
       date +%m-%d-%Y-%H%M%S | sudo tee -a /var/lib/openreplay/or_versions.txt
       sudo git log -1 2>&1 | sudo tee -a /var/lib/openreplay/or_versions.txt
       sudo rm -rf /var/lib/openreplay/openreplay
       cd -
-    }
+    fi
     sudo cp -rf $(cd ../.. && pwd) /var/lib/openreplay/openreplay
     sudo cp -rf ./vars.yaml /var/lib/openreplay/
   }
