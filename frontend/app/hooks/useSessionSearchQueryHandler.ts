@@ -13,7 +13,6 @@ const useSessionSearchQueryHandler = (props: Props) => {
 
   useEffect(() => {
     const applyFilterFromQuery = () => {
-      console.log('called...');
       const filter = getFiltersFromQuery(history.location.search, appliedFilter);
       applyFilter(filter, true, false);
     };
