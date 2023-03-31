@@ -4,7 +4,7 @@ import type Screen from '../../Screen/Screen';
 import type { Message, SetNodeScroll } from '../../messages';
 import { MType } from '../../messages';
 import ListWalker from '../../../common/ListWalker';
-import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
+import StylesManager from './StylesManager';
 import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
 import type { StyleElement } from './VirtualDOM';
@@ -289,11 +289,6 @@ export default class DOMManager extends ListWalker<Message> {
         vn = this.vTexts.get(msg.id)
         if (!vn) { logger.error("SetCssData: Node not found", msg); return }
         vn.setData(msg.data)
-        if (vn.node instanceof HTMLStyleElement) {
-          doc = this.screen.document
-          // TODO: move to message parsing
-          doc && rewriteNodeStyleSheet(doc, vn.node)
-        }
         if (msg.tp === MType.SetCssData) { // Styles in priority  (do we need inlines as well?)
           vn.applyChanges()
         }

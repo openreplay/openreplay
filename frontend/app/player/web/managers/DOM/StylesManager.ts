@@ -1,19 +1,18 @@
 import type Screen from '../../Screen/Screen';
 import type { CssInsertRule, CssDeleteRule } from '../../messages';
+import { replaceCSSPseudoclasses } from '../../messages/rewriter/rewriteMessage'
 
 type CSSRuleMessage = CssInsertRule | CssDeleteRule;
 
-const HOVER_CN = "-openreplay-hover";
-const HOVER_SELECTOR = `.${HOVER_CN}`;
-
-// Doesn't work with css files (hasOwnProperty)
-export function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleElement) {
+// Doesn't work with css files (hasOwnProperty returns false)
+// TODO: recheck and remove if true
+function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleElement) {
   const ss = Object.values(doc.styleSheets).find(s => s.ownerNode === node);
   if (!ss || !ss.hasOwnProperty('rules')) { return; }
   for(let i = 0; i < ss.rules.length; i++){
     const r = ss.rules[i]
     if (r instanceof CSSStyleRule) {
-      r.selectorText = r.selectorText.replace('/\:hover/g', HOVER_SELECTOR)
+      r.selectorText = replaceCSSPseudoclasses(r.selectorText)
     }
   }
 }
@@ -29,7 +28,7 @@ export default class StylesManager {
     this.linkLoadingCount = 0;
     this.linkLoadPromises = [];
 
-    //cancel all promises? tothinkaboutit
+    //cancel all promises? thinkaboutit
   }
 
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
@@ -44,6 +43,7 @@ export default class StylesManager {
       }
       timeoutId = setTimeout(addSkipAndResolve, 4000);
 
+      // It would be better to make it more relyable with addEventListener
       node.onload = () => {
         const doc = this.screen.document;
         doc && rewriteNodeStyleSheet(doc, node);

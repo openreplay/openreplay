@@ -2,7 +2,7 @@ import type { Message } from './message.gen';
 import type { RawMessage } from './raw.gen';
 import { MType } from './raw.gen';
 import RawMessageReader from './RawMessageReader.gen';
-import resolveURL from './urlBasedResolver'
+import rewriteMessage from './rewriter/rewriteMessage'
 import Logger from 'App/logger'
 
 // TODO: composition instead of inheritance
@@ -77,7 +77,7 @@ export default class MFileReader extends RawMessageReader {
     }
 
     const index = this.getLastMessageID()
-    const msg = Object.assign(resolveURL(rMsg), {
+    const msg = Object.assign(rewriteMessage(rMsg), {
       time: this.currentTime,
       _index: index,
     })
