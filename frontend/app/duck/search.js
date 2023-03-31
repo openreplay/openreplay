@@ -349,7 +349,7 @@ export const hasFilterApplied = (filters, filter) => {
     return !filter.isEvent && filters.some((f) => f.key === filter.key);
 };
 
-const getAppliedFilterIndex = (filters, filterToFind) => {
+export const getAppliedFilterIndex = (filters, filterToFind) => {
     if (!filterToFind.isEvent) {
       return filters.findIndex((filter) => filter.key === filterToFind.key);
     }
@@ -357,37 +357,38 @@ const getAppliedFilterIndex = (filters, filterToFind) => {
   };
   
 export const addFilter = (filter) => (dispatch, getState) => {
-    filter.value = checkFilterValue(filter.value);
-    filter.filters = filter.filters
+  const instance = getState().getIn(['search', 'instance']);
+  const filters = instance.get('filters');
+  const index = getAppliedFilterIndex(filters, filter);
+
+  filter.value = checkFilterValue(filter.value);
+
+  filter.filters = filter.filters
     ? filter.filters.map((subFilter) => ({
         ...subFilter,
         value: checkFilterValue(subFilter.value),
-        }))
+      }))
     : null;
 
-    const instance = getState().getIn(['search', 'instance']);
-    const filters = instance.get('filters');
-    const index = getAppliedFilterIndex(filters, filter);
-
-    if (index !== -1) {
+  if (index !== -1) {
     const oldFilter = filters.get(index);
     const updatedFilter = {
-        ...oldFilter,
-        value: oldFilter.value.concat(filter.value),
+      ...oldFilter,
+      value: oldFilter.value.concat(filter.value),
     };
 
     const updatedFilters = filters.set(index, updatedFilter);
     return dispatch(edit(instance.set('filters', updatedFilters)));
-    } else {
+  } else {
     const updatedFilters = filters.push(filter);
     return dispatch(edit(instance.set('filters', updatedFilters)));
-    }
+  }
 };
 
 export const addFilterByKeyAndValue =
     (key, value, operator = undefined, sourceOperator = undefined, source = undefined) =>
     (dispatch, getState) => {
-        let defaultFilter = filtersMap[key];
+        let defaultFilter = {...filtersMap[key]};
         defaultFilter.value = value;
         if (operator) {
             defaultFilter.operator = operator;

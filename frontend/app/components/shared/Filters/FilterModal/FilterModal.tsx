@@ -70,7 +70,7 @@ function FilterModal(props: Props) {
   const showSearchList = isMainSearch && searchQuery.length > 0;
 
   const onFilterSearchClick = (filter: any) => {
-    const _filter = filtersMap[filter.type];
+    const _filter = {...filtersMap[filter.type]};
     _filter.value = [filter.value];
     onFilterClick(_filter);
   };
