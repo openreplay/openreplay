@@ -39,7 +39,6 @@ export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map() // map vs object here?
   private readonly vElements: Map<number, VElement> = new Map()
   private readonly vRoots: Map<number, VShadowRoot | VDocument> = new Map()
-  private activeIframeRoots: Map<number, number> = new Map()
   private styleSheets: Map<number, CSSStyleSheet> = new Map()
   private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
   private stringDict: Record<number,string> = {}
@@ -197,7 +196,6 @@ export default class DOMManager extends ListWalker<Message> {
         // todo: start from 0-node (sync logic with tracker)
         this.vTexts.clear()
         this.stylesManager.reset()
-        this.activeIframeRoots.clear()
         this.stringDict = {}
         return
       case MType.CreateTextNode:
@@ -333,12 +331,8 @@ export default class DOMManager extends ListWalker<Message> {
             logger.warn("No default iframe doc", msg, host)
             return
           }
-          // remove old root of the same iframe if present
-          const oldRootId = this.activeIframeRoots.get(msg.frameID)
-          oldRootId != null && this.vRoots.delete(oldRootId)
 
           const vDoc = new VDocument(doc)
-          this.activeIframeRoots.set(msg.frameID, msg.id)
           this.vRoots.set(msg.id, vDoc)
           return;
         } else if (host instanceof Element) { // shadow DOM
