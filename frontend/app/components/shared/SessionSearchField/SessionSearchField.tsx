@@ -5,16 +5,27 @@ import FilterModal from 'Shared/Filters/FilterModal';
 import { debounce } from 'App/utils';
 import { assist as assistRoute, isRoute } from 'App/routes';
 import { addFilterByKeyAndValue, fetchFilterSearch } from 'Duck/search';
+import {
+  addFilterByKeyAndValue as liveAddFilterByKeyAndValue,
+  fetchFilterSearch as liveFetchFilterSearch,
+} from 'Duck/liveSearch';
 const ASSIST_ROUTE = assistRoute();
 
 interface Props {
   fetchFilterSearch: (query: any) => void;
   addFilterByKeyAndValue: (key: string, value: string) => void;
-  filterSearchListLive: any;
+  liveAddFilterByKeyAndValue: (key: string, value: string) => void;
   filterSearchList: any;
+  liveFetchFilterSearch: any;
 }
 function SessionSearchField(props: Props) {
-  const debounceFetchFilterSearch = React.useCallback(debounce(props.fetchFilterSearch, 1000), []);
+  const isLive =
+    isRoute(ASSIST_ROUTE, window.location.pathname) ||
+    window.location.pathname.includes('multiview');
+  const debounceFetchFilterSearch = React.useCallback(
+    debounce(isLive ? props.liveFetchFilterSearch : props.fetchFilterSearch, 1000),
+    []
+  );
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -24,7 +35,9 @@ function SessionSearchField(props: Props) {
   };
 
   const onAddFilter = (filter: any) => {
-    props.addFilterByKeyAndValue(filter.key, filter.value);
+    isLive
+      ? props.liveAddFilterByKeyAndValue(filter.key, filter.value)
+      : props.addFilterByKeyAndValue(filter.key, filter.value);
   };
 
   return (
@@ -47,10 +60,7 @@ function SessionSearchField(props: Props) {
             searchQuery={searchQuery}
             isMainSearch={true}
             onFilterClick={onAddFilter}
-            isLive={
-              isRoute(ASSIST_ROUTE, window.location.pathname) ||
-              window.location.pathname.includes('multiview')
-            }
+            isLive={isLive}
           />
         </div>
       )}
@@ -58,10 +68,9 @@ function SessionSearchField(props: Props) {
   );
 }
 
-export default connect(
-  (state: any) => ({
-    filterSearchList: state.getIn(['search', 'filterSearchList']),
-    filterSearchListLive: state.getIn(['liveSearch', 'filterSearchList']),
-  }),
-  { addFilterByKeyAndValue, fetchFilterSearch }
-)(SessionSearchField);
+export default connect(null, {
+  addFilterByKeyAndValue,
+  fetchFilterSearch,
+  liveFetchFilterSearch,
+  liveAddFilterByKeyAndValue,
+})(SessionSearchField);
