@@ -134,7 +134,7 @@ export const addFilter = (filter) => (dispatch, getState) => {
 }
 
 export const addFilterByKeyAndValue = (key, value, operator = undefined) => (dispatch, getState) => {
-  let defaultFilter = liveFiltersMap[key];
+  let defaultFilter = { ...liveFiltersMap[key] };
   defaultFilter.value = value;
   if (operator) {
     defaultFilter.operator = operator;
