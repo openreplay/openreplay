@@ -74,21 +74,21 @@ function WebPlayer(props: any) {
     }
   }, [session.events, session.errors, contextValue.player])
 
-  const isPlayerReady = contextValue.store?.get().ready
+  const { ready: isPlayerReady, firstVisualEvent: visualOffset } = contextValue.store?.get() || {}
 
   React.useEffect(() => {
     if (showNoteModal) {
       contextValue.player.pause()
     }
 
-    if (activeTab === '' && !showNoteModal && isPlayerReady) {
-     contextValue.player && contextValue.player.play()
+    if (activeTab === '' && !showNoteModal && isPlayerReady && contextValue.player) {
+     contextValue.player.play()
+
+      if (visualOffset !== 0) {
+        contextValue.player.jump(visualOffset)
+      }
     }
-    const visualOffset = contextValue.player?.checkVisualOffset?.() || 0
-    if (visualOffset !== 0) {
-      contextValue.player.jump(visualOffset)
-    }
-  }, [activeTab, isPlayerReady, showNoteModal])
+  }, [activeTab, isPlayerReady, showNoteModal, visualOffset])
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(

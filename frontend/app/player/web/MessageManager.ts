@@ -65,6 +65,7 @@ export interface State extends ScreenState, ListsState {
 
   ready: boolean,
   lastMessageTime: number,
+  firstVisualEvent: number,
 }
 
 
@@ -91,6 +92,7 @@ export default class MessageManager {
     cssLoading: false,
     ready: false,
     lastMessageTime: 0,
+    firstVisualEvent: 0,
   }
 
   private locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
@@ -116,7 +118,7 @@ export default class MessageManager {
   private sessionStart: number;
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
-  public firstVisualEvent: number = 0;
+  private firstVisualEventSet = false;
 
   constructor(
     private readonly session: any /*Session*/,
@@ -468,7 +470,7 @@ export default class MessageManager {
       default:
         switch (msg.tp) {
           case MType.CreateDocument:
-            if (this.firstVisualEvent === 0) this.firstVisualEvent = msg.time;
+            if (!this.firstVisualEventSet) this.state.update({ firstVisualEvent: msg.time });
             this.windowNodeCounter.reset();
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;

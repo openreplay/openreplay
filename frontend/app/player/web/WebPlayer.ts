@@ -146,10 +146,6 @@ export default class WebPlayer extends Player {
     this.screen.cursor.showTag(name)
   }
 
-  checkVisualOffset = () => {
-    return this.messageManager.firstVisualEvent
-  }
-
   clean = () => {
     super.clean()
     this.screen.clean()
