@@ -15,6 +15,18 @@ import { MType } from '../raw.gen'
 import { resolveURL, resolveCSS } from './urlResolve'
 import { HOVER_CLASSNAME, FOCUS_CLASSNAME } from './constants'
 
+/* maybetodo:  filter out non-relevant  prefixes in CSS-rules. 
+   They might cause an error in console, but not sure if it breaks the replay.
+   (research required)
+*/
+// function replaceCSSPrefixes(css: string) {
+//   return css
+//     .replace(/\-ms\-/g, "")
+//     .replace(/\-webkit\-/g, "")
+//     .replace(/\-moz\-/g, "")
+//     .replace(/\-webkit\-/g, "")
+// }
+
 const HOVER_SELECTOR = `.${HOVER_CLASSNAME}`
 const FOCUS_SELECTOR = `.${FOCUS_CLASSNAME}`
 export function replaceCSSPseudoclasses(cssText: string): string {
