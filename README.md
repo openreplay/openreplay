@@ -1,6 +1,9 @@
 <p align="center">
-  <a href="https://openreplay.com">
-    <img src="static/logo.svg" height="70">
+  <a href="https://openreplay.com/#gh-light-mode-only">
+    <img src="static/open-replay-logo-light.svg" height="60">
+  </a>
+  <a href="https://openreplay.com/#gh-dark-mode-only">
+    <img src="static/open-replay-logo-dark.svg" height="60">
   </a>
 </p>
 
@@ -9,25 +12,25 @@
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">
-    <img src="static/deploy-aws.png" height="35"/>
+    <img src="static/btn-deploy-aws.svg" height="40"/>
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-gcp">
-    <img src="static/deploy-gcp.png" height="35" />
+    <img src="static/btn-deploy-google-cloud.svg" height="40" />
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-azure">
-    <img src="static/deploy-azure.png" height="35" />
+    <img src="static/btn-deploy-azure.svg" height="40" />
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-digitalocean">
-    <img src="static/deploy-do.png" height="35" />
+    <img src="static/btn-deploy-digital-ocean.svg" height="40" />
   </a>
 </p>
 
 <p align="center">
   <a href="https://github.com/openreplay/openreplay">
-    <img src="static/overview.png">
+    <img src="static/openreplay-git-hero.svg">
   </a>
 </p>
 
