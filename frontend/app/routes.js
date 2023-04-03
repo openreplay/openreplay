@@ -83,6 +83,8 @@ const routerOBTabString = `:activeTab(${ Object.values(OB_TABS).join('|') })`;
 export const onboarding = (tab = routerOBTabString) => `/onboarding/${ tab }`;
 
 export const sessions = params => queried('/sessions', params);
+export const fflags = params => queried('/feature-flags', params);
+export const notes = params => queried('/notes', params);
 export const assist = params => queried('/assist', params);
 export const recordings = params => queried("/recordings", params);
 export const multiviewIndex = params => queried('/multiview', params);
@@ -123,6 +125,8 @@ const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),
     session(''),
     sessions(),
+    notes(),
+    fflags(),
     assist(),
     recordings(),
     multiview(),
@@ -174,6 +178,8 @@ export function isRoute(route, path){
 
 const SITE_CHANGE_AVALIABLE_ROUTES = [
   sessions(),
+  notes(),
+  fflags(),
   funnels(),
   assist(),
   recordings(),

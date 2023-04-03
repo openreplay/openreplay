@@ -6,10 +6,22 @@ import SessionSearch from 'Shared/SessionSearch';
 import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
 import cn from 'classnames';
 import OverviewMenu from 'Shared/OverviewMenu';
-import { connect } from 'react-redux';
 import FFlagsList from "Components/FFlags";
+import { Switch, Route } from 'react-router';
+import { sessions, fflags, withSiteId } from "App/routes";
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 
-function Overview({ activeTab }: { activeTab: string }) {
+// @ts-ignore
+interface IProps extends RouteComponentProps {
+  match: {
+    params: {
+      siteId: string;
+    }
+  }
+}
+
+function Overview({ match: { params } }: IProps) {
+  const { siteId } = params;
   return (
     <div className="page-margin container-90 flex relative">
       <div className={cn('side-menu')}>
@@ -18,26 +30,23 @@ function Overview({ activeTab }: { activeTab: string }) {
       <div
         className={cn("side-menu-margined w-full")}
       >
-        {activeTab !== 'flags' ? (
-          <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px' }}>
-            <NoSessionsMessage />
-            <MainSearchBar />
-            <SessionSearch />
-
-            <div className="my-4" />
-            <SessionsTabOverview />
-          </div>
-        ) : (
-          <FFlagsList />
-        )}
+        <Switch>
+          <Route exact strict path={withSiteId(sessions(), siteId)}>
+            <div className="mb-5 w-full mx-auto" style={{ maxWidth: '1300px' }}>
+              <NoSessionsMessage />
+              <MainSearchBar />
+              <SessionSearch />
+              <div className="my-4" />
+              <SessionsTabOverview />
+            </div>
+          </Route>
+          <Route exact strict path={withSiteId(fflags(), siteId)}>
+            <FFlagsList />
+          </Route>
+        </Switch>
       </div>
     </div>
   );
 }
 
-export default connect(
-  (state) => ({
-    // @ts-ignore
-    activeTab: state.getIn(['search', 'activeTab', 'type']),
-  }),
-)(withPageTitle('Sessions - OpenReplay')(Overview));
+export default withPageTitle('Sessions - OpenReplay')(withRouter(Overview));
