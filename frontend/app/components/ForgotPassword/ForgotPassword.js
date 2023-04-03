@@ -249,6 +249,7 @@ export default class ForgotPassword extends React.PureComponent {
             </div>
           </div>
         </div>
+        <Copyright />
       </div>
     );
   }
