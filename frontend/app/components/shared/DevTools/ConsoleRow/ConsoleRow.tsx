@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
+import { Icon, TextEllipsis } from 'UI';
 import JumpButton from 'Shared/DevTools/JumpButton';
 
 interface Props {
@@ -17,7 +17,6 @@ function ConsoleRow(props: Props) {
   const [expanded, setExpanded] = useState(false);
   const lines = log.value?.split('\n').filter((l: any) => !!l) || [];
   const canExpand = lines.length > 1;
-
   const clickable = canExpand || !!log.errorId;
 
   const toggleExpand = () => {
@@ -34,7 +33,6 @@ function ConsoleRow(props: Props) {
           warn: log.isYellow,
           error: log.isRed,
           'cursor-pointer': clickable,
-          'cursor-pointer underline decoration-dotted decoration-gray-200': !!log.errorId,
         }
       )}
       onClick={clickable ? () => (!!log.errorId ? props.onClick() : toggleExpand()) : undefined}
@@ -43,11 +41,14 @@ function ConsoleRow(props: Props) {
         <Icon size="14" {...iconProps} />
       </div>
       <div key={log.key} data-scroll-item={log.isRed}>
-        <div className={cn('flex items-center')}>
-          {canExpand && (
-            <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
-          )}
-          <span>{renderWithNL(lines.pop())}</span>
+        <div className="flex items-center">
+          <div className={cn('flex items-center', { 'cursor-pointer underline decoration-dotted decoration-gray-400': !!log.errorId })}>
+            {canExpand && (
+              <Icon name={expanded ? 'caret-down-fill' : 'caret-right-fill'} className="mr-2" />
+            )}
+            <span>{renderWithNL(lines.pop())}</span>
+          </div>
+          {log.errorId && <TextEllipsis className="ml-2 overflow-hidden" text={log.message }></TextEllipsis>}
         </div>
         {canExpand &&
           expanded &&
