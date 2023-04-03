@@ -36,7 +36,7 @@ function UserMenu(props: RouteComponentProps<Props>) {
             {account.email}
           </div>
           <div className="rounded-full bg-gray-light flex items-center px-2 color-gray-medium text-sm w-fit text-center">
-            {account.superAdmin ? 'Super Admin' : account.admin ? 'Admin' : 'Member'}
+            {account.superAdmin ? 'Owner' : account.admin ? 'Admin' : 'Member'}
           </div>
         </div>
       </div>
