@@ -3,14 +3,14 @@ import FFlagsListHeader from "Components/FFlags/FFlagsListHeader";
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import { NoContent } from 'UI'
 
-function FFlagsList() {
+function FFlagsList({ siteId }: { siteId: string }) {
 
   return (
     <div
       className={'mb-5 w-full mx-auto bg-white rounded px-4 pb-10 pt-4 widget-wrapper'}
       style={{ maxWidth: '1300px' }}
     >
-      <FFlagsListHeader />
+      <FFlagsListHeader siteId={siteId} />
 
       <div className="w-full h-full">
         <NoContent

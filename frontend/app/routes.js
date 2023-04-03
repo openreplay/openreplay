@@ -84,6 +84,8 @@ export const onboarding = (tab = routerOBTabString) => `/onboarding/${ tab }`;
 
 export const sessions = params => queried('/sessions', params);
 export const fflags = params => queried('/feature-flags', params);
+export const newFFlag = () => '/feature-flags/create';
+export const fflag = (id = ':fflagId', hash) => hashed(`/feature-flags/${ id }`, hash);
 export const notes = params => queried('/notes', params);
 export const assist = params => queried('/assist', params);
 export const recordings = params => queried("/recordings", params);
@@ -99,13 +101,7 @@ export const funnels = params => queried('/funnels', params)
 export const funnelsCreate = () => `/funnels/create`;
 export const funnel = (id = ':funnelId', hash) => hashed(`/funnels/${ id }`, hash);
 export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash) => hashed(`/funnels/${ id }/${ issueId}`, hash);
-
 export const tests = () => '/tests';
-
-export const testBuilderNew = () => '/test-sessions';
-
-export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
-
 export const dashboard = () => '/dashboard';
 export const dashboardMetrics = () => '/dashboard/metrics';
 export const dashboardSelected = (id = ':dashboardId', hash) => hashed(`/dashboard/${ id }`, hash);
@@ -125,6 +121,8 @@ const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),
     session(''),
     sessions(),
+    newFFlag(),
+    fflag(),
     notes(),
     fflags(),
     assist(),

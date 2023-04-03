@@ -8,7 +8,7 @@ import cn from 'classnames';
 import OverviewMenu from 'Shared/OverviewMenu';
 import FFlagsList from "Components/FFlags";
 import { Switch, Route } from 'react-router';
-import { sessions, fflags, withSiteId } from "App/routes";
+import { sessions, fflags, withSiteId, newFFlag, fflag } from "App/routes";
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 
 // @ts-ignore
@@ -41,7 +41,10 @@ function Overview({ match: { params } }: IProps) {
             </div>
           </Route>
           <Route exact strict path={withSiteId(fflags(), siteId)}>
-            <FFlagsList />
+            <FFlagsList siteId={siteId} />
+          </Route>
+          <Route exact strict path={withSiteId(newFFlag(), siteId)}>
+            <FFlagsList siteId={siteId} />
           </Route>
         </Switch>
       </div>
