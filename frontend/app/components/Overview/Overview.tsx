@@ -3,7 +3,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import MainSearchBar from 'Shared/MainSearchBar';
 import SessionSearch from 'Shared/SessionSearch';
-import SessionsTabOverview from 'Shared/SessionsTabOverview/SessionsTabOverview';
+import SessionListContainer from 'Shared/SessionListContainer/SessionListContainer';
 import cn from 'classnames';
 import OverviewMenu from 'Shared/OverviewMenu';
 import { connect } from 'react-redux';
@@ -25,7 +25,7 @@ function Overview({ activeTab }: { activeTab: string }) {
             <SessionSearch />
 
             <div className="my-4" />
-            <SessionsTabOverview />
+            <SessionListContainer />
           </div>
         ) : (
           <FFlagsList />
