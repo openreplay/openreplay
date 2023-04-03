@@ -109,20 +109,22 @@ export default class DOMManager extends ListWalker<Message> {
     }
     const parent = this.vElements.get(parentID) || this.vRoots.get(parentID)
     if (!parent) {
-      logger.error("Insert error. Parent node not found", parentID, this.vElements, this.vRoots);
+      logger.error("Insert error. Parent vNode not found", parentID, this.vElements, this.vRoots);
       return;
     }
 
-    const pNode = parent.node // TODOTODO
-    if ((pNode instanceof HTMLStyleElement) &&  // TODO: correct ordering OR filter in tracker
-        pNode.sheet &&
-        pNode.sheet.cssRules &&
-        pNode.sheet.cssRules.length > 0 &&
-        pNode.innerText &&
-        pNode.innerText.trim().length === 0
-    ) {
-      logger.log("Trying to insert child to a style tag with virtual rules: ", parent, child);
-      return;
+    if (parent instanceof VElement && parent.tagName.toLowerCase() === "style") {
+      // TODO: if this ever happens? ; Maybe do not send empty TextNodes in tracker
+      const styleNode = parent.node as StyleElement
+      if (styleNode.sheet &&
+        styleNode.sheet.cssRules &&
+        styleNode.sheet.cssRules.length > 0 &&
+        styleNode.textContent &&
+        styleNode.textContent.trim().length === 0
+      ) {
+        logger.log("Trying to insert child to a style tag with virtual rules: ", parent, child);
+        return;
+      }
     }
 
     parent.insertChildAt(child, index)
