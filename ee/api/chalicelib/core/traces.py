@@ -108,8 +108,11 @@ async def process_trace(action: str, path_format: str, request: Request, respons
         return
     current_context: CurrentContext = request.state.currentContext
     body: json = None
-    if request.method in ["POST", "PUT", "DELETE"]:
-        body = await request.json()
+    if request.method in ["POST", "PUT"]:
+        try:
+            body = await request.json()
+        except json.decoder.JSONDecodeError:
+            pass
         intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
         for attribute in intersect:
             body[attribute] = "HIDDEN"
@@ -136,7 +139,8 @@ def trace(action: str, path_format: str, request: Request, response: Response):
             or isinstance(p["path"], re.Pattern) and re.search(p["path"], path_format)) \
                 and (p["method"][0] == "*" or request.method in p["method"]):
             return
-    background_task: BackgroundTask = BackgroundTask(process_trace, action, path_format, request, response)
+    background_task: BackgroundTask = BackgroundTask(process_trace, action=action, path_format=path_format,
+                                                     request=request, response=response)
     if response.background is None:
         response.background = background_task
     else:
