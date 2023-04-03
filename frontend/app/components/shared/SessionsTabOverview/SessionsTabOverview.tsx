@@ -5,7 +5,7 @@ import NotesList from './components/Notes/NoteList';
 import { connect } from 'react-redux';
 import LatestSessionsMessage from './components/LatestSessionsMessage';
 
-function SessionListContainer({
+function SessionsTabOverview({
   activeTab,
   members,
 }: {
@@ -29,4 +29,4 @@ export default connect(
     // @ts-ignore
     members: state.getIn(['members', 'list']),
   }),
-)(SessionListContainer);
+)(SessionsTabOverview);
