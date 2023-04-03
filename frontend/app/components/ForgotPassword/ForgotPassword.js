@@ -9,6 +9,7 @@ import { withRouter } from 'react-router-dom';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
 import stl from './forgotPassword.module.css';
+import Copyright from 'Shared/Copyright';
 
 const LOGIN = loginRoute();
 const recaptchaRef = React.createRef();
@@ -145,7 +146,7 @@ export default class ForgotPassword extends React.PureComponent {
                         <label>{'Email Address'}</label>
                         <Input
                           autoFocus={true}
-                          autocomplete="email"
+                          autoComplete="email"
                           type="email"
                           placeholder="Email"
                           name="email"
@@ -172,7 +173,7 @@ export default class ForgotPassword extends React.PureComponent {
                           <label>{'New password'}</label>
                           {/* <i className={stl.inputIconPassword} /> */}
                           <Input
-                            autocomplete="new-password"
+                            autoComplete="new-password"
                             type="password"
                             placeholder="Type here..."
                             name="password"
@@ -188,7 +189,7 @@ export default class ForgotPassword extends React.PureComponent {
                         <Form.Field>
                         <label>{'Cofirm password'}</label>
                           <Input
-                            autocomplete="new-password"
+                            autoComplete="new-password"
                             type="password"
                             placeholder="Re-enter your new password"
                             name="passwordRepeat"
@@ -207,19 +208,19 @@ export default class ForgotPassword extends React.PureComponent {
                   </div>
                 </Loader>
                 <div className="mt-4">
-                  {errors && (
-                    <div className={stl.errors}>
-                      {errors.map((error) => (
-                        <span>
-                          {error}
-                          <br />
-                        </span>
-                      ))}
+                  {errors && errors.map((error, i) => (
+                    <div className="flex items-center flex-col text-center" key={i}>
+                      <div className="w-16 h-16 rounded-full bg-red-lightest flex items-center justify-center mb-2">
+                        <Icon name="envelope-x" size="30" color="red" />
+                      </div>
+                      {error}
                     </div>
-                  )}
-                  <div data-hidden={!updated} className={stl.success}>
-                    <Icon name="check" size="30" color="green" />
-                    {'Your password has been updated sucessfully.'}
+                  ))}
+                  <div data-hidden={!updated} className="flex items-center flex-col text-center">
+                    <div className="w-10 h-10 bg-tealx-lightest rounded-full flex items-center justify-center mb-3">
+                      <Icon name="check" size="30" color="tealx" />
+                    </div>
+                    <span>{'Your password has been updated sucessfully.'}</span>
                   </div>
                 </div>
 
