@@ -12,6 +12,7 @@ import { setJwt } from 'Duck/user';
 import LoginBg from '../../svg/login-illustration.svg';
 import { ENTERPRISE_REQUEIRED } from 'App/constants';
 import { fetchTenants } from 'Duck/user';
+import Copyright from 'Shared/Copyright';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
