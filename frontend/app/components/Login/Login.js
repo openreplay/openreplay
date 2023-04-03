@@ -91,17 +91,6 @@ class Login extends React.Component {
           <div className="border rounded bg-white">
             <Form onSubmit={this.onSubmit} className="flex items-center justify-center flex-col">
               <h2 className="text-center text-2xl font-medium mb-6 border-b p-5 w-full">Login to your account</h2>
-              <div className="">
-                
-                {!authDetails.tenants && (
-                  <div className="text-center text-xl">
-                    Don't have an account?{' '}
-                    <span className="link">
-                      <Link to={SIGNUP_ROUTE}>Sign up</Link>
-                    </span>
-                  </div>
-                )}
-              </div>
               <Loader loading={loading}>
                 {CAPTCHA_ENABLED && (
                   <ReCAPTCHA
@@ -143,9 +132,9 @@ class Login extends React.Component {
                 </div>
               </Loader>
               {errors && errors.length ? (
-                <div className={stl.errors}>
+                <div className="px-8 my-2 w-full">
                   {errors.map((error) => (
-                    <div className={stl.errorItem}>
+                    <div className="flex items-center bg-red-lightest rounded p-3">
                       <Icon name="info" color="red" size="20" />
                       <span className="color-red ml-2">
                         {error}
@@ -161,7 +150,7 @@ class Login extends React.Component {
                   {'Login'}
                 </Button>
 
-                <div className="my-8">
+                <div className="my-8 text-center">
                   <span className="color-gray-medium">Having trouble logging in?</span> <Link to={FORGOT_PASSWORD} className="link ml-1">{'Reset password'}</Link>
                 </div>
               </div>

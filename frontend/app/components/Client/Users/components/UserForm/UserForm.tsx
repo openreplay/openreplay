@@ -136,6 +136,7 @@ function UserForm(props: Props) {
                     </div>
                     <div>
                         <Button
+                            disabled={user.isSuperAdmin}
                             data-hidden={ !user.exists() }
                             onClick={ deleteHandler }
                         >
