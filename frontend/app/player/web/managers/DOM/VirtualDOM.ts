@@ -41,20 +41,20 @@ export abstract class VNode<T extends Node = Node> {
 type VChild = VElement | VText
 abstract class VParent<T extends Node = Node> extends VNode<T>{
 	protected children: VChild[] = []
-	private insertedChildren: Set<VChild> = new Set()
+	private recentlyInserted: Set<VChild> = new Set()
 
 	insertChildAt(child: VChild, index: number) {
 		if (child.parentNode) {
 			child.parentNode.removeChild(child)
 		}
 		this.children.splice(index, 0, child)
-		this.insertedChildren.add(child)
+		this.recentlyInserted.add(child)
 		child.parentNode = this
 	}
 
 	removeChild(child: VChild) {
 		this.children = this.children.filter(ch => ch !== child)
-		this.insertedChildren.delete(child)
+		this.recentlyInserted.delete(child)
 		child.parentNode = null
 	}
 
@@ -63,13 +63,13 @@ abstract class VParent<T extends Node = Node> extends VNode<T>{
 		/* Inserting */
 		for (let i = this.children.length-1; i >= 0; i--) {
 			const child = this.children[i]
-			child.applyChanges()
-			if (this.insertedChildren.has(child)) {
+			child.applyChanges() /* Building the sub-tree in memory first */
+			if (this.recentlyInserted.has(child)) {
 				const nextVSibling = this.children[i+1]
 				node.insertBefore(child.node, nextVSibling ? nextVSibling.node : null)
 			}
 		}
-		this.insertedChildren.clear()
+		this.recentlyInserted.clear()
 		/* Removing in-between */
 		const realChildren = node.childNodes
 		for(let j = 0; j < this.children.length; j++) {
@@ -104,15 +104,17 @@ export class VShadowRoot extends VParent<ShadowRoot> {
 	constructor(protected readonly createNode: () => ShadowRoot) { super() }
 }
 
+export type VRoot = VDocument | VShadowRoot
+
 export class VElement extends VParent<Element> {
 	parentNode: VParent | null = null
 	private newAttributes: Map<string, string | false> = new Map()
 
 	constructor(readonly tagName: string, readonly isSVG = false) { super() }
-	protected createNode(){
+	protected createNode() {
 		return this.isSVG
-      	? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
-      	: document.createElement(this.tagName)
+			? document.createElementNS('http://www.w3.org/2000/svg', this.tagName)
+			: document.createElement(this.tagName)
 	}
 	setAttribute(name: string, value: string) {
 		this.newAttributes.set(name, value)
@@ -176,42 +178,108 @@ export class VText extends VNode<Text> {
 	}
 }
 
-export type StyleElement = HTMLStyleElement | SVGStyleElement
-
-export class PostponedStyleSheet {
-	private loaded = false
-	private stylesheetCallbacks: Callback<CSSStyleSheet>[] = []
-
-	constructor(private readonly node: StyleElement) { //TODO: use virtual DOM + onNode callback for better lazy node init
-		node.addEventListener("load", () => {
-		  const sheet = node.sheet
-		  if (sheet) {
-		    this.stylesheetCallbacks.forEach(cb => cb(sheet))
-		    this.stylesheetCallbacks = []
-		  } else {
-		    console.warn("Style node onload: sheet is null")
-		  }
-		  this.loaded = true
+class PromiseQueue<T> {
+	constructor(private promise: Promise<T>) {}
+	doNext(cb: Callback<T>) { // Doing this with callbacks list instead might be more efficient. TODO: research
+		this.promise = this.promise.then(vRoot => {
+			cb(vRoot)
+			return vRoot
 		})
 	}
+	catch(cb: Parameters<Promise<T>['catch']>[0]) {
+		this.promise.catch(cb)
+	}
+}
 
-	private applyCallback(cb: Callback<CSSStyleSheet>) {
-		if (this.loaded) {
-			if (!this.node.sheet) {
-				console.warn("Style tag is loaded, but sheet is null")
-				return
-			}
-			cb(this.node.sheet)
-		} else {
-		  this.stylesheetCallbacks.push(cb)
-		}
+/**
+ * VRoot wrapper that allows to defer all the API calls till the moment
+ * when VNode CAN be created (for example, on <iframe> mount&load)
+ * */
+export class OnloadVRoot extends PromiseQueue<VRoot> {
+	static fromDocumentNode(doc: Document): OnloadVRoot {
+		return new OnloadVRoot(Promise.resolve(new VDocument(() => doc)))
+	}
+	static fromVElement(vElem: VElement): OnloadVRoot {
+		return new OnloadVRoot(new Promise((resolve, reject) => {
+			vElem.onNode(host => {
+				if (host instanceof HTMLIFrameElement) {
+					/* IFrame case: creating Document */
+					const doc = host.contentDocument
+					if (doc) {
+						resolve(new VDocument(() => doc))
+					} else {
+						host.addEventListener('load', () => {
+							const doc = host.contentDocument
+							if (doc) {
+								resolve(new VDocument(() => doc))
+							} else {
+								reject("No default Document found on iframe load") // Send `host` for logging as well
+							}
+						})
+					}
+				} else {
+				/* ShadowDom case */
+					try {
+						const shadowRoot = host.attachShadow({ mode: 'open' })
+						resolve(new VShadowRoot(() => shadowRoot))
+					} catch(e) {
+						reject(e) // "Can not attach shadow dom"
+					}
+				}
+			})
+		}))
+	}
+	onNode(cb: Callback<Document | ShadowRoot>) {
+		this.doNext(vRoot => vRoot.onNode(cb))
+	}
+	applyChanges() {
+		this.doNext(vRoot => vRoot.applyChanges())
+	}
+	insertChildAt(...args: Parameters<VParent['insertChildAt']>) {
+		this.doNext(vRoot => vRoot.insertChildAt(...args))
+	}
+}
+
+export type StyleElement = HTMLStyleElement | SVGStyleElement
+
+/**
+ * CSSStyleSheet wrapper that collects all the insertRule/deleteRule calls 
+ * and then applies them when the sheet is ready
+ * */
+export class OnloadStyleSheet extends PromiseQueue<CSSStyleSheet> {
+	static fromStyleElement(node: StyleElement) {
+		return new OnloadStyleSheet(new Promise((resolve, reject) => {
+			node.addEventListener("load", () => {
+				const sheet = node.sheet
+				if (sheet) {
+					resolve(sheet)
+				} else {
+					reject("Style node onload: sheet is null")
+				}
+			})
+		}))
+	}
+	static fromVRootContext(vRoot: OnloadVRoot) {
+		return new OnloadStyleSheet(new Promise((resolve, reject) => 
+			vRoot.onNode(node => {
+				let context: typeof globalThis | null
+				if (node instanceof Document) {
+					context = node.defaultView
+				} else {
+					context = node.ownerDocument.defaultView
+				}
+				if (!context) { reject("Root node default view not found"); return }
+				/* a StyleSheet from another Window context won't work */
+				resolve(new context.CSSStyleSheet())
+			})
+		))
 	}
 
 	insertRule(rule: string, index: number) {
-		this.applyCallback(s => insertRule(s, { rule, index }))
+		this.doNext(s => insertRule(s, { rule, index }))
 	}
 
 	deleteRule(index: number) {
-		this.applyCallback(s => deleteRule(s, { index }))
+		this.doNext(s => deleteRule(s, { index }))
 	}
 }

@@ -9,13 +9,14 @@ import FocusManager from './FocusManager';
 import SelectionManager from './SelectionManager';
 import type { StyleElement } from './VirtualDOM';
 import {
-  PostponedStyleSheet,
+  OnloadStyleSheet,
   VDocument,
   VElement,
   VHTMLElement,
   VNode,
   VShadowRoot,
   VText,
+  OnloadVRoot,
 } from './VirtualDOM';
 import { deleteRule, insertRule } from './safeCSSRules';
 
@@ -27,11 +28,13 @@ const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 export default class DOMManager extends ListWalker<Message> {
   private readonly vTexts: Map<number, VText> = new Map() // map vs object here?
   private readonly vElements: Map<number, VElement> = new Map()
-  private readonly vRoots: Map<number, VShadowRoot | VDocument> = new Map()
-  private styleSheets: Map<number, CSSStyleSheet> = new Map()
-  private ppStyleSheets: Map<number, PostponedStyleSheet> = new Map()
+  private readonly olVRoots: Map<number, OnloadVRoot> = new Map()
+  /** Constructed StyleSheets https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptedStyleSheets
+   * as well as <style> tag owned StyleSheets
+   * */
+  private olStyleSheets: Map<number, OnloadStyleSheet> = new Map()
   /** @depreacted since tracker 4.0.2 Mapping by nodeID */
-  private ppStyleSheetsDeprecated: Map<number, PostponedStyleSheet> = new Map() 
+  private olStyleSheetsDeprecated: Map<number, OnloadStyleSheet> = new Map()
   private stringDict: Record<number,string> = {}
   private attrsBacktrack: Message[] = []
 
@@ -107,9 +110,9 @@ export default class DOMManager extends ListWalker<Message> {
       logger.error("Insert error. Node not found", id);
       return;
     }
-    const parent = this.vElements.get(parentID) || this.vRoots.get(parentID)
+    const parent = this.vElements.get(parentID) || this.olVRoots.get(parentID)
     if (!parent) {
-      logger.error("Insert error. Parent vNode not found", parentID, this.vElements, this.vRoots);
+      logger.error("Insert error. Parent vNode not found", parentID, this.vElements, this.olVRoots);
       return;
     }
 
@@ -177,10 +180,10 @@ export default class DOMManager extends ListWalker<Message> {
         const vHTMLElement = new VHTMLElement(fRoot)
         this.vElements.clear()
         this.vElements.set(0, vHTMLElement)
-        const vDoc = new VDocument(() => doc as Document)
+        const vDoc = OnloadVRoot.fromDocumentNode(doc)
         vDoc.insertChildAt(vHTMLElement, 0)
-        this.vRoots.clear()
-        this.vRoots.set(0, vDoc) // watchout: id==0 for both Document and documentElement
+        this.olVRoots.clear()
+        this.olVRoots.set(0, vDoc) // watchout: id==0 for both Document and documentElement
         // this is done for the AdoptedCSS logic
         // todo: start from 0-node (sync logic with tracker)
         this.vTexts.clear()
@@ -201,7 +204,7 @@ export default class DOMManager extends ListWalker<Message> {
         this.removeBodyScroll(msg.id, vElem)
         this.removeAutocomplete(vElem)
         if (['STYLE', 'style', 'LINK'].includes(msg.tag)) { // Styles in priority
-          vElem.enforceInsertion()
+          vElem.enforceInsertion() //TODOTODO priority mounting instead
         }
         return
       }
@@ -273,7 +276,7 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.SetNodeData:
       case MType.SetCssData: {
         const vText = this.vTexts.get(msg.id)
-        if (!vText) { logger.error("SetCssData: Node not found", msg); return }
+        if (!vText) { logger.error("SetNodeData/SetCssData: Node not found", msg); return }
         vText.setData(msg.data)
        
         if (msg.tp === MType.SetCssData) { //TODOTODO
@@ -286,19 +289,19 @@ export default class DOMManager extends ListWalker<Message> {
        * since 4.0.2 in favor of AdoptedSsInsertRule/DeleteRule + AdoptedSsAddOwner as a common case for StyleSheets
        */
       case MType.CssInsertRule: {
-        let styleSheet = this.ppStyleSheetsDeprecated.get(msg.id)
+        let styleSheet = this.olStyleSheetsDeprecated.get(msg.id)
         if (!styleSheet) {
           const vElem = this.vElements.get(msg.id)
           if (!vElem) { logger.error("CssInsertRule: Node not found", msg); return }
           if (vElem.tagName.toLowerCase() !== "style") { logger.error("CssInsertRule: Non-style elemtn", msg); return }
-          styleSheet = new PostponedStyleSheet(vElem.node as StyleElement)
-          this.ppStyleSheetsDeprecated.set(msg.id, styleSheet)
+          styleSheet = OnloadStyleSheet.fromStyleElement(vElem.node as StyleElement)
+          this.olStyleSheetsDeprecated.set(msg.id, styleSheet)
         }
         styleSheet.insertRule(msg.rule, msg.index)
         return
       }
       case MType.CssDeleteRule: {
-        const styleSheet = this.ppStyleSheetsDeprecated.get(msg.id)
+        const styleSheet = this.olStyleSheetsDeprecated.get(msg.id)
         if (!styleSheet) { logger.error("CssDeleteRule: StyleSheet was not created", msg); return }
         styleSheet.deleteRule(msg.index)
         return
@@ -307,33 +310,13 @@ export default class DOMManager extends ListWalker<Message> {
       case MType.CreateIFrameDocument: {
         const vElem = this.vElements.get(msg.frameID)
         if (!vElem) { logger.error("CreateIFrameDocument: Node not found", msg); return }
-        vElem.enforceInsertion() //TODOTODO
-        const host = vElem.node
-        if (host instanceof HTMLIFrameElement) {
-          const doc = host.contentDocument
-          if (!doc) {
-            logger.warn("No default iframe doc", msg, host)
-            return
-          }
-
-          const vDoc = new VDocument(() => doc)
-          this.vRoots.set(msg.id, vDoc)
-          return;
-        } else if (host instanceof Element) { // shadow DOM
-          try {
-            const shadowRoot = host.attachShadow({ mode: 'open' })
-            const vRoot = new VShadowRoot(() => shadowRoot)
-            this.vRoots.set(msg.id, vRoot)
-          } catch(e) {
-            logger.warn("Can not attach shadow dom", e, msg)
-          }
-        } else {
-          logger.warn("Context message host is not Element", msg)
-        }
+        const vRoot = OnloadVRoot.fromVElement(vElem)
+        vRoot.catch(e => logger.warn(e, msg))
+        this.olVRoots.set(msg.id, vRoot)
         return
       }
       case MType.AdoptedSsInsertRule: {
-        const styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
+        const styleSheet = this.olStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
@@ -342,7 +325,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
       case MType.AdoptedSsDeleteRule: {
-        const styleSheet = this.styleSheets.get(msg.sheetID) || this.ppStyleSheets.get(msg.sheetID)
+        const styleSheet = this.olStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
@@ -351,7 +334,7 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
       case MType.AdoptedSsReplace: {
-        const styleSheet = this.styleSheets.get(msg.sheetID)
+        const styleSheet = this.olStyleSheets.get(msg.sheetID)
         if (!styleSheet) {
           logger.warn("No stylesheet was created for ", msg)
           return
@@ -361,58 +344,62 @@ export default class DOMManager extends ListWalker<Message> {
         return
       }
       case MType.AdoptedSsAddOwner: {
-        const vRoot = this.vRoots.get(msg.id)
+        const vRoot = this.olVRoots.get(msg.id)
         if (!vRoot) {
           /* <style> tag case */
           const vElem = this.vElements.get(msg.id)
           if (!vElem) { logger.error("AdoptedSsAddOwner: Node not found", msg); return }
           if (vElem.tagName.toLowerCase() !== "style") { logger.error("Non-style owner", msg); return }
-          this.ppStyleSheets.set(msg.sheetID, new PostponedStyleSheet(vElem.node as StyleElement))
+          this.olStyleSheets.set(msg.sheetID, OnloadStyleSheet.fromStyleElement(vElem.node as StyleElement))
           return
         }
         /* Constructed StyleSheet case */
-        let styleSheet = this.styleSheets.get(msg.sheetID)
-        if (!styleSheet) {
-          let context: typeof globalThis | null
-          if (vRoot instanceof VDocument) {
-            context = vRoot.node.defaultView
-          } else {
-            context = vRoot.node.ownerDocument.defaultView
-          }
-          if (!context) { logger.error("AdoptedSsAddOwner: Root node default view not found", msg); return }
-          styleSheet = new context.CSSStyleSheet() /* a StyleSheet from another Window context won't work */
-          this.styleSheets.set(msg.sheetID, styleSheet)
+        let olStyleSheet = this.olStyleSheets.get(msg.sheetID)
+        if (!olStyleSheet) {
+          olStyleSheet = OnloadStyleSheet.fromVRootContext(vRoot)
+          this.olStyleSheets.set(msg.sheetID, olStyleSheet)
         }
-        // @ts-ignore
-        vRoot.node.adoptedStyleSheets = [...vRoot.node.adoptedStyleSheets, styleSheet]
+        olStyleSheet.doNext(styleSheet => {
+          vRoot.onNode(node => {
+            // @ts-ignore
+            node.adoptedStyleSheets = [...node.adoptedStyleSheets, styleSheet]
+          })
+        })
         return
       }
       case MType.AdoptedSsRemoveOwner: {
-        const styleSheet = this.styleSheets.get(msg.sheetID)
-        if (!styleSheet) {
-          logger.warn("No stylesheet was created for ", msg)
+        const olStyleSheet = this.olStyleSheets.get(msg.sheetID)
+        if (!olStyleSheet) {
+          logger.warn("AdoptedSsRemoveOwner: No stylesheet was created for ", msg)
           return
         }
-        const vRoot = this.vRoots.get(msg.id)
-        if (!vRoot) { logger.error("AdoptedSsRemoveOwner: Node not found", msg); return }
-        //@ts-ignore
-        vRoot.node.adoptedStyleSheets = [...vRoot.node.adoptedStyleSheets].filter(s => s !== styleSheet)
+        const vRoot = this.olVRoots.get(msg.id)
+        if (!vRoot) { logger.error("AdoptedSsRemoveOwner: Owner node not found", msg); return }
+        olStyleSheet.doNext(styleSheet => {
+          vRoot.onNode(node => {
+            // @ts-ignore
+            node.adoptedStyleSheets = [...vRoot.node.adoptedStyleSheets].filter(s => s !== styleSheet)
+          })
+        })
         return
       }
       case MType.LoadFontFace: {
-        const vRoot = this.vRoots.get(msg.parentID)
+        const vRoot = this.olVRoots.get(msg.parentID)
         if (!vRoot) { logger.error("LoadFontFace: Node not found", msg); return }
-        if (vRoot instanceof VShadowRoot) { logger.error(`Node ${vRoot} expected to be a Document`, msg); return }
-        let descr: Object | undefined
-        try {
-          descr = JSON.parse(msg.descriptors)
-          descr = typeof descr === 'object' ? descr : undefined
-        } catch {
-          logger.warn("Can't parse font-face descriptors: ", msg)
-        }
-        const ff = new FontFace(msg.family, msg.source, descr)
-        vRoot.node.fonts.add(ff)
-        return ff.load()
+        vRoot.doNext(vNode => {
+          if (vNode instanceof VShadowRoot) { logger.error(`Node ${vNode} expected to be a Document`, msg); return }
+          let descr: Object | undefined
+          try {
+            descr = JSON.parse(msg.descriptors)
+            descr = typeof descr === 'object' ? descr : undefined
+          } catch {
+            logger.warn("Can't parse font-face descriptors: ", msg)
+          }
+          const ff = new FontFace(msg.family, msg.source, descr)
+          vNode.node.fonts.add(ff)
+          ff.load() // TODO: wait for this one in StylesManager in a common way with styles
+        })
+        return
       }
     }
   }
@@ -445,12 +432,13 @@ export default class DOMManager extends ListWalker<Message> {
     }
   }
 
+  /**
+   * Moves and applies all the messages from the current (or from the beginning, if t < current.time) 
+   * to the one with msg.time >= `t`
+   * 
+   * This function autoresets pointer if necessary (better name?)
+   * */
   async moveReady(t: number): Promise<void> {
-    // MBTODO (back jump optimisation):
-    //    - store intemediate virtual dom state
-    //    - cancel previous moveReady tasks (is it possible?) if new timestamp is less
-    // This function autoresets pointer if necessary (better name?)
-
     /**
      * Basically just skipping all set attribute with attrs being "href" if user is 'jumping'
      * to the other point of replay to save time on NOT downloading any resources before the dom tree changes
@@ -466,7 +454,7 @@ export default class DOMManager extends ListWalker<Message> {
     })
     this.attrsBacktrack = []
 
-    this.vRoots.forEach(rt => rt.applyChanges()) // MBTODO (optimisation): affected set
+    this.olVRoots.forEach(rt => rt.applyChanges())
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
     return this.stylesManager.moveReady(t).then(() => {
@@ -477,12 +465,16 @@ export default class DOMManager extends ListWalker<Message> {
       this.nodeScrollManagers.forEach(manager => {
         const msg = manager.moveGetLast(t)
         if (msg) {
-          let vNode: VElement | VDocument | VShadowRoot | undefined
-          if (vNode = this.vElements.get(msg.id)) {
-            vNode.node.scrollLeft = msg.x
-            vNode.node.scrollTop = msg.y
-          } else if ((vNode = this.vRoots.get(msg.id)) && vNode instanceof VDocument){
-            vNode.node.defaultView?.scrollTo(msg.x, msg.y)
+          let scrollVHost: VElement | OnloadVRoot | undefined
+          if (scrollVHost = this.vElements.get(msg.id)) {
+            scrollVHost.node.scrollLeft = msg.x
+            scrollVHost.node.scrollTop = msg.y
+          } else if ((scrollVHost = this.olVRoots.get(msg.id))) {
+            scrollVHost.doNext(vNode => {
+              if (vNode instanceof VDocument) {
+                vNode.node.defaultView?.scrollTo(msg.x, msg.y)
+              }
+            })
           }
         }
       })
