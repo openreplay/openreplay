@@ -17,6 +17,7 @@ check_prereq() {
     }
 }
 
+chart=frontend
 [[ $1 == ee ]] && ee=true
 [[ $PATCH -eq 1 ]] && {
   image_tag="$(grep -ER ^.ppVersion ../scripts/helmcharts/openreplay/charts/$chart | xargs | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
@@ -25,7 +26,6 @@ check_prereq() {
   }
 }
 update_helm_release() {
-  chart=$1
   HELM_TAG="$(grep -iER ^version ../scripts/helmcharts/openreplay/charts/$chart | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
   # Update the chart version
   sed -i "s#^version.*#version: $HELM_TAG# g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
@@ -52,4 +52,4 @@ function build(){
 
 check_prereq
 build $1
-[[ $PATCH -eq 1 ]] && update_helm_release frontend
+[[ $PATCH -eq 1 ]] && update_helm_release
