@@ -300,7 +300,7 @@ def edit_member(user_id_to_update, tenant_id, changes: schemas.EditMemberSchema,
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
         if admin["admin"] and user["superAdmin"]:
-            return {"errors": ["only a superAdmin can edit his own details"]}
+            return {"errors": ["only the owner can edit his own details"]}
     else:
         if user["superAdmin"]:
             changes.admin = None
@@ -646,6 +646,4 @@ def get_user_role(tenant_id, user_id):
                     LIMIT 1""",
                 {"user_id": user_id})
         )
-        u = helper.dict_to_camel_case(cur.fetchone())
-
-    return u
+        return helper.dict_to_camel_case(cur.fetchone())
