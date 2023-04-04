@@ -1,37 +1,35 @@
-import React, { useState } from 'react'
-import { connect } from 'react-redux'
-import { SlideModal } from 'UI'
-import NewSiteForm from '../../../Client/Sites/NewSiteForm'
+import React from 'react';
+import { connect } from 'react-redux';
+import NewSiteForm from '../../../Client/Sites/NewSiteForm';
 import { init } from 'Duck/site';
+import { useModal } from 'App/components/Modal';
 
 const ProjectFormButton = ({ sites, siteId, init }) => {
-  const [showModal, setShowModal] = useState(false)
-  const site = sites.find(({ id }) => id === siteId)
-
-  const closeModal = () => setShowModal(!showModal);
-  const openModal = () => {
-    setShowModal(true)
-    init(site)
+  const site = sites.find(({ id }) => id === siteId);
+  const { showModal, hideModal } = useModal();
+  const openModal = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    init(site);
+    showModal(<NewSiteForm onClose={hideModal} />, { right: true });
   };
 
   return (
     <>
       <span
-        className="text-3xl font-bold ml-2 color-teal underline-dashed cursor-pointer"
-        onClick={ () => openModal()}
-      >{site && site.name}</span>
-      <SlideModal
-        title={ 'Project' }
-        size="small"
-        isDisplayed={ showModal }
-        content={ <NewSiteForm onClose={ closeModal } /> }
-        onClose={ closeModal }
-      />
+        className="text-2xl font-bold ml-2 color-teal underline-dashed cursor-pointer"
+        onClick={(e) => openModal(e)}
+      >
+        {site && site.name}
+      </span>
     </>
-  )
-}
+  );
+};
 
-export default connect(state => ({
-  siteId: state.getIn([ 'site', 'siteId' ]),
-  sites: state.getIn([ 'site', 'list' ]),
-}), { init })(ProjectFormButton)
+export default connect(
+  (state) => ({
+    siteId: state.getIn(['site', 'siteId']),
+    sites: state.getIn(['site', 'list']),
+  }),
+  { init }
+)(ProjectFormButton);

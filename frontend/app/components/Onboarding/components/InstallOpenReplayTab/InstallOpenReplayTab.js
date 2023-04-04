@@ -1,19 +1,28 @@
 import React from 'react'
 import OnboardingTabs from '../OnboardingTabs'
 import ProjectFormButton from '../ProjectFormButton'
+import { Button, Icon } from 'UI'
 
 export default function InstallOpenReplayTab() {
   return (
-    <div className="pt-8">
-      <h1 className="flex items-center mb-4">
-        <span className="text-3xl">👋</span>
+    <>
+      <h1 className="flex items-center mb-4 px-4 py-3 border-b text-2xl">
+        <span>👋</span>
         <div className="ml-3 flex items-end">
-          <span className="text-3xl font-bold">Hey there! Setup</span>
+          <span>Hey there! Setup</span>
           <ProjectFormButton />
         </div>
       </h1>
-      <div className="mb-6">OpenReplay can be installed via script or NPM package (recommended).</div>
-      <OnboardingTabs />
-    </div>
+      <div className="px-4">
+        <div className="mb-6 text-lg font-medium">Setup OpenReplay through NPM package <span className="text-sm">(recommended)</span> or script.</div>
+        <OnboardingTabs />
+      </div>
+      <div className="border-t px-4 py-3 flex justify-end">
+        <Button variant="primary" className="">
+          Identify Users
+          <Icon name="arrow-right-short" color="white" size={20} />
+        </Button>
+      </div>
+    </>
   )
 }

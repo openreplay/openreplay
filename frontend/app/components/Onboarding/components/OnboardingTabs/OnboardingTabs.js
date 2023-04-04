@@ -1,17 +1,13 @@
 import React from 'react';
 import { Tabs } from 'UI';
-import  ProjectCodeSnippet from './ProjectCodeSnippet';
+import ProjectCodeSnippet from './ProjectCodeSnippet';
 import InstallDocs from './InstallDocs';
 
 const PROJECT = 'SCRIPT';
 const DOCUMENTATION = 'NPM';
-// const SEGMENT = 'SEGMENT';
-// const GOOGLE_TAG = 'GOOGLE TAG';
 const TABS = [
   { key: DOCUMENTATION, text: DOCUMENTATION },
   { key: PROJECT, text: PROJECT },
-  // { key: SEGMENT, text: SEGMENT },
-  // { key: GOOGLE_TAG, text: GOOGLE_TAG }
 ];
 
 class TrackingCodeModal extends React.PureComponent {
@@ -19,28 +15,24 @@ class TrackingCodeModal extends React.PureComponent {
 
   setActiveTab = (tab) => {
     this.setState({ activeTab: tab });
-  }
+  };
 
   renderActiveTab = () => {
     switch (this.state.activeTab) {
       case PROJECT:
-        return <ProjectCodeSnippet />
+        return <ProjectCodeSnippet />;
       case DOCUMENTATION:
-        return <InstallDocs />
+        return <InstallDocs />;
     }
     return null;
-  }
+  };
 
   render() {
     const { activeTab } = this.state;
     return (
       <>
-        <Tabs
-          tabs={ TABS }
-          active={ activeTab } onClick={ this.setActiveTab } />
-        <div className="p-5 py-8">
-            { this.renderActiveTab() }
-        </div>
+        <Tabs tabs={TABS} active={activeTab} onClick={this.setActiveTab} />
+        <div className="p-5 py-8">{this.renderActiveTab()}</div>
       </>
     );
   }
