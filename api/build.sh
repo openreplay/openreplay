@@ -19,6 +19,7 @@ environment=$1
 git_sha=$(git rev-parse --short HEAD)
 image_tag=${IMAGE_TAG:-git_sha}
 envarg="default-foss"
+chart="chalice"
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
@@ -35,7 +36,6 @@ check_prereq() {
   }
 }
 update_helm_release() {
-  chart=$1
   HELM_TAG="$(grep -iER ^version ../scripts/helmcharts/openreplay/charts/$chart | awk '{print $2}'  | awk -F. -v OFS=. '{$NF += 1 ; print}')"
   # Update the chart version
   sed -i "s#^version.*#version: $HELM_TAG# g" ../scripts/helmcharts/openreplay/charts/$chart/Chart.yaml
@@ -79,5 +79,5 @@ check_prereq
 build_api $environment
 echo buil_complete
 if [[ $PATCH -eq 1 ]]; then
-  update_helm_release chalice
+  update_helm_release
 fi
