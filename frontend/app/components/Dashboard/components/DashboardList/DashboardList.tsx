@@ -9,7 +9,7 @@ import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 function DashboardList() {
   const { dashboardStore } = useStore();
   const list = dashboardStore.filteredList;
-  const dashboardsSearch = dashboardStore.dashboardsSearch;
+  const dashboardsSearch = dashboardStore.filter.query;
   const lenth = list.length;
 
   return (
@@ -18,17 +18,11 @@ function DashboardList() {
       title={
         <div className="flex flex-col items-center justify-center">
           <AnimatedSVG name={ICONS.NO_DASHBOARDS} size={180} />
-          <div className="text-center my-4">
-            {dashboardsSearch !== '' ? (
-              'No matching results'
-            ) : (
-              <div>
-                <div>You haven't created any dashboards yet</div>
-                <div className="text-sm color-gray-medium font-normal">
-                A Dashboard is a collection of Cards that can be shared across teams.
-                </div>
-              </div>
-            )}
+          <div className="text-center mt-4">
+            {dashboardsSearch !== '' ? 'No matching results' : "You haven't created any dashboards yet"}
+          </div>
+          <div className="text-sm color-gray-medium font-normal">
+            A Dashboard is a collection of Cards that can be shared across teams.
           </div>
         </div>
       }

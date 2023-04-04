@@ -15,7 +15,6 @@ interface Props {
   fetchFilterSearch: (query: any) => void;
   addFilterByKeyAndValue: (key: string, value: string) => void;
   liveAddFilterByKeyAndValue: (key: string, value: string) => void;
-  filterSearchList: any;
   liveFetchFilterSearch: any;
 }
 function SessionSearchField(props: Props) {

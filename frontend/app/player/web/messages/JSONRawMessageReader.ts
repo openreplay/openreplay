@@ -2,7 +2,7 @@ import type { RawMessage } from './raw.gen'
 import type { TrackerMessage } from './tracker.gen'
 import  translate from './tracker.gen'
 import { TP_MAP } from './tracker-legacy.gen'
-import resolveURL from './urlBasedResolver'
+import rewriteMessage from './rewriter/rewriteMessage'
 
 
 function legacyTranslate(msg: any): RawMessage | null {
@@ -30,7 +30,7 @@ export default class JSONRawMessageReader {
     if (!rawMsg) {
       return this.readMessage()
     }
-    return resolveURL(rawMsg)
+    return rewriteMessage(rawMsg)
   }
 
 }

@@ -1,19 +1,13 @@
 import type Screen from '../Screen/Screen'
 import type { MouseMove } from "../messages";
-
+import { HOVER_CLASSNAME } from '../messages/rewriter/constants'
 import ListWalker from '../../common/ListWalker'
 
-const HOVER_CLASS = "-openreplay-hover";
-const HOVER_CLASS_DEPR = "-asayer-hover";
 
 export default class MouseMoveManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = []
 
 	constructor(private screen: Screen) {super()}
-
-  // private getCursorTarget() {
-  //   return this.screen.getElementFromInternalPoint(this.current)
-  // }
 
   private getCursorTargets() {
     return this.screen.getElementsFromInternalPoint(this.current)
@@ -25,12 +19,10 @@ export default class MouseMoveManager extends ListWalker<MouseMove> {
     const diffRemove = this.hoverElements.filter(elem => !curHoverElements.includes(elem))
     this.hoverElements = curHoverElements
     diffAdd.forEach(elem => {
-      elem.classList.add(HOVER_CLASS)
-      elem.classList.add(HOVER_CLASS_DEPR)
+      elem.classList.add(HOVER_CLASSNAME)
     })
     diffRemove.forEach(elem => {
-      elem.classList.remove(HOVER_CLASS)
-      elem.classList.remove(HOVER_CLASS_DEPR)
+      elem.classList.remove(HOVER_CLASSNAME)
     })
   }
 
