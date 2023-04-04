@@ -7,20 +7,20 @@ import { debounce } from 'App/utils';
 let debounceUpdate: any = () => {};
 
 function FFlagsSearch() {
-  const { dashboardStore } = useStore();
-  const [query, setQuery] = useState(dashboardStore.dashboardsSearch);
+  const { featureFlagsStore } = useStore();
+  const [query, setQuery] = useState(featureFlagsStore.flagsSearch);
+
   useEffect(() => {
     debounceUpdate = debounce(
-      (key: string, value: any) =>
-        dashboardStore.updateKey('filter', { ...dashboardStore.filter, query: value }),
-      500
+      (value: string) =>
+        featureFlagsStore.setFlagsSearch(value),
+      250
     );
   }, []);
 
-  // @ts-ignore
-  const write = ({ target: { value } }) => {
+  const write = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(value);
-    debounceUpdate('dashboardsSearch', value);
+    debounceUpdate(value);
   };
 
   return (
@@ -28,7 +28,7 @@ function FFlagsSearch() {
       <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
       <input
         value={query}
-        name="dashboardsSearch"
+        name="flagsSearch"
         className="bg-white p-2 border border-borderColor-gray-light-shade rounded w-full pl-10"
         placeholder="Search by key"
         onChange={write}
