@@ -42,6 +42,7 @@ class EditUserSchema(BaseModel):
     email: Optional[EmailStr] = Field(None)
     admin: Optional[bool] = Field(None)
 
+    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
@@ -152,8 +153,6 @@ class EditMemberSchema(EditUserSchema):
     name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
-    _transform_name = validator('name', pre=True, allow_reuse=True)(remove_whitespace)
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
