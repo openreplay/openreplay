@@ -1,6 +1,9 @@
 <p align="center">
-  <a href="https://openreplay.com/">
-    <img src="static/openreplay-git-banner.png" width="100%">
+  <a href="https://openreplay.com/#gh-light-mode-only">
+    <img src="static/openreplay-git-banner-light.png" width="100%">
+  </a>
+    <a href="https://openreplay.com/#gh-dark-mode-only">
+    <img src="static/openreplay-git-banner-dark.png" width="100%">
   </a>
 </p>
 
