@@ -95,8 +95,44 @@ const extractPayloadFromRequest = async function (req, res) {
     debug && console.log("payload/filters:" + JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
+const getCompressionConfig = function () {
+    let perMessageDeflate = false;
+    if (process.env.COMPRESSION_LEVEL && process.env.COMPRESSION_LEVEL > 0) {
+        if (process.env.COMPRESSION_LEVEL > 3) {
+            console.log(`WS compression level: ${process.env.COMPRESSION_LEVEL} not found, ignoring`);
+        } else {
+            let windowBits;
+            switch (parseInt(process.env.COMPRESSION_LEVEL)) {
+                case 1:
+                    windowBits = 8;
+                    break;
+                case 2:
+                    windowBits = 10;
+                    break;
+                case 3:
+                    windowBits = 11;
+                    break;
+            }
+            console.log(`WS compression level: ${process.env.COMPRESSION_LEVEL} => windowBits: ${windowBits}`);
+            perMessageDeflate = {
+                zlibDeflateOptions: {
+                    windowBits: windowBits,
+                    memLevel: 1
+                },
+
+                zlibInflateOptions: {
+                    windowBits: windowBits
+                }
+            }
+        }
+    } else {
+        console.log(`WS compression level: disabled`);
+    }
+    return perMessageDeflate;
+}
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractPayloadFromRequest
+    extractPayloadFromRequest,
+    getCompressionConfig
 };

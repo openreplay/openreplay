@@ -19,7 +19,8 @@ const {
 const {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractPayloadFromRequest
+    extractPayloadFromRequest,
+    getCompressionConfig
 } = require('../utils/helper-ee');
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
@@ -39,7 +40,8 @@ const createSocketIOServer = function (server, prefix) {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            path: (prefix ? prefix : '') + '/socket'
+            path: (prefix ? prefix : '') + '/socket',
+            perMessageDeflate: getCompressionConfig()
         });
     } else {
         io = new _io.Server({
@@ -48,9 +50,8 @@ const createSocketIOServer = function (server, prefix) {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            path: (prefix ? prefix : '') + '/socket'
-            // transports: ['websocket'],
-            // upgrade: false
+            path: (prefix ? prefix : '') + '/socket',
+            perMessageDeflate: getCompressionConfig()
         });
         io.attachApp(server);
     }
