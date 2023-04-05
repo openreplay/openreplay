@@ -78,5 +78,5 @@ export default withPermissions(
             fetchSession,
             fetchSlackList,
         }
-    )(React.memo(LiveSession))
+    )(LiveSession)
 );
